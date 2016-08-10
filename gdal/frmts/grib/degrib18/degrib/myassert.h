@@ -25,8 +25,16 @@
 #endif
 
 #ifdef DEBUG
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define DEGRIB_NO_RETURN                                __attribute__((noreturn))
+#else
+#define DEGRIB_NO_RETURN
+#endif
+
+
 CPL_C_START
-   void _myAssert (const char *file, int lineNum);
+   void _myAssert (const char *file, int lineNum) DEGRIB_NO_RETURN;
 CPL_C_END
 
    #define myAssert(f) \

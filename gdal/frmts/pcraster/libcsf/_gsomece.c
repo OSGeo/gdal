@@ -27,7 +27,8 @@ size_t RgetSomeCells(
 
 	offset <<= LOG_CELLSIZE(inFileCR);
 	readAt = ADDR_DATA + (CSF_FADDR)offset;
-	fseek(map->fp, (long)readAt, SEEK_SET);
+	if( fseek(map->fp, (long)readAt, SEEK_SET) != 0 )
+            return 0;
 	cellsRead = map->read(buf, (size_t)CELLSIZE(inFileCR),
 	(size_t)nrCells, map->fp);
 

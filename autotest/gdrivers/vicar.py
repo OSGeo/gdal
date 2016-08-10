@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for PDS driver.
 # Author:   Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -57,17 +57,15 @@ def vicar_1():
         return 'fail'
 
     ds = gdal.Open('data/test_vicar_truncated.bin')
-    expected_gt = (-53960.0, 25.0, 0.0, -200830.0, 0.0, -25.0)
+    expected_gt = (-53985.0, 25.0, 0.0, -200805.0, 0.0, -25.0)
     got_gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(got_gt[i] - expected_gt[i]) > 1e-8:
             gdaltest.post_reason('failure')
             print(got_gt)
             print(expected_gt)
-            # FIXME: remove this once we have found the reason for random failures
-            if gdal.GetConfigOption('TRAVIS', None) is None and gdal.GetConfigOption('APPVEYOR', None) is None:
-                return 'fail'
-    
+            return 'fail'
+
     if ds.GetRasterBand(1).GetNoDataValue() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -79,11 +77,15 @@ def vicar_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    expected_md = {'DLRTO8.RADIANCE_SCALING_FACTOR': '1.23', 'PRODUCT_TYPE': 'IMAGE', 'CONVERSION_DETAILS': 'http://www.lpi.usra.edu/meetings/lpsc2014/pdf/1088.pdf', 'HRORTHO.DTM_NAME': 'dtm_name', 'DLRTO8.REFLECTANCE_SCALING_FACTOR': '2.34', 'HRORTHO.GEOMETRIC_CALIB_FILE_NAME': 'calib_file_name', 'HRORTHO.EXTORI_FILE_NAME': 'extori_file_name', 'DLRTO8.REFLECTANCE_OFFSET': '4.56', 'HRFOOT.BEST_GROUND_SAMPLING_DISTANCE': '1.23', 'M94_INSTRUMENT.MISSION_PHASE_NAME': 'MISSION_PHASE_NAME', 'HRCONVER.MISSING_FRAMES': '0', 'DLRTO8.RADIANCE_OFFSET': '1.23', 'SPACECRAFT_NAME': 'MARS EXPRESS', 'M94_ORBIT.STOP_TIME': 'stop_time', 'FILE.EVENT_TYPE': 'EVENT_TYPE', 'HRCONVER.OVERFLOW_FRAMES': '0', 'M94_CAMERAS.MACROPIXEL_SIZE': '1', 'HRCONVER.ERROR_FRAMES': '1', 'M94_INSTRUMENT.DETECTOR_ID': 'MEX_HRSC_NADIR', 'M94_ORBIT.START_TIME': 'start_time', 'HRORTHO.SPICE_FILE_NAME': 'SPICE_FILE_NAME'}
+    expected_md = {'DLRTO8.REFLECTANCE_OFFSET': '4.56', 'PRODUCT_TYPE': 'IMAGE', 'PIXEL-SHIFT-BUG': 'CORRECTED', 'M94_ORBIT.STOP_TIME': 'stop_time', 'FILE.EVENT_TYPE': 'EVENT_TYPE', 'M94_CAMERAS.MACROPIXEL_SIZE': '1', 'M94_INSTRUMENT.DETECTOR_ID': 'MEX_HRSC_NADIR', 'HRORTHO.SPICE_FILE_NAME': 'SPICE_FILE_NAME', 'DLRTO8.RADIANCE_SCALING_FACTOR': '1.23', 'CONVERSION_DETAILS': 'http://www.lpi.usra.edu/meetings/lpsc2014/pdf/1088.pdf', 'HRORTHO.GEOMETRIC_CALIB_FILE_NAME': 'calib_file_name', 'HRORTHO.EXTORI_FILE_NAME': "extori'_file_name", 'M94_INSTRUMENT.MISSION_PHASE_NAME': 'MISSION_PHASE_NAME', 'HRCONVER.MISSING_FRAMES': '0', 'DLRTO8.RADIANCE_OFFSET': '1.23', 'HRCONVER.OVERFLOW_FRAMES': '0', 'SPACECRAFT_NAME': 'MARS EXPRESS', 'HRFOOT.BEST_GROUND_SAMPLING_DISTANCE': '1.23', 'M94_ORBIT.START_TIME': 'start_time', 'HRORTHO.DTM_NAME': 'dtm_name', 'DLRTO8.REFLECTANCE_SCALING_FACTOR': '2.34', 'HRCONVER.ERROR_FRAMES': '1'}
     md = ds.GetMetadata()
     if len(md) != len(expected_md):
         gdaltest.post_reason('fail')
         print(md)
+        print(len(md))
+        print(len(expected_md))
+        print(sorted(md.keys()))
+        print(sorted(expected_md.keys()))
         return 'fail'
     for key in expected_md:
         if md[key] != expected_md[key]:

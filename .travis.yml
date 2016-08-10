@@ -7,19 +7,20 @@ language: cpp
 compiler:
   - clang
 
-# remove libogdi3.2-dev : it pulls projects.h from PROJ.4 which no longer exists
 before_install:
-  - sudo mv /etc/apt/sources.list.d/pgdg-source.list* /tmp
-  - sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
+  - sudo mv /etc/apt/sources.list.d/pgdg* /tmp
+  - sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.1-postgis-2.2-scripts postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo add-apt-repository -y ppa:marlam/gta
   - sudo apt-get update -qq
   - sudo apt-get install python-numpy postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev libgta-dev liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
   - sudo apt-get install python-lxml
   - sudo apt-get install python-pip
+  - sudo apt-get install libogdi3.2-dev
 # Boost for Mongo
   - sudo apt-get install libboost-regex-dev libboost-system-dev libboost-thread-dev
   - sudo pip install pyflakes
+  - sudo apt-get install doxygen texlive-latex-base
   - pyflakes autotest
   - pyflakes gdal/swig/python/scripts
   - pyflakes gdal/swig/python/samples
@@ -70,9 +71,13 @@ before_install:
 install:
   - cd gdal
   - ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-gta --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local --with-mongocxx=/usr/local
-  - make -j3
+  - make docs >docs_log.txt 2>&1
+  - if cat docs_log.txt | grep -i warning | grep -v russian | grep -v brazilian; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
+  - make man >man_log.txt 2>&1
+  - if cat man_log.txt | grep -i warning; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
+  - make USER_DEFS="-Wextra -Werror" -j3
   - cd apps
-  - make test_ogrsf
+  - make USER_DEFS="-Wextra -Werror" test_ogrsf
   - cd ..
   - cd swig/java
   - cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-amd64\//" > java.opt.tmp
@@ -149,4 +154,4 @@ notifications:
     channels:
       - "irc.freenode.org#gdal"
     use_notice: true
-
+    on_success: change

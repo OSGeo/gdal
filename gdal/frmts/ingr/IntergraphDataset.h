@@ -58,18 +58,17 @@ public:
     static GDALDataset *Create( const char *pszFilename,
         int nXSize,
         int nYSize,
-        int nBands, 
+        int nBands,
         GDALDataType eType,
         char **papszOptions );
-    static GDALDataset *CreateCopy( const char *pszFilename, 
+    static GDALDataset *CreateCopy( const char *pszFilename,
         GDALDataset *poSrcDS,
         int bStrict,
         char **papszOptions,
-        GDALProgressFunc pfnProgress, 
+        GDALProgressFunc pfnProgress,
         void * pProgressData );
 
     virtual CPLErr GetGeoTransform( double *padfTransform );
     virtual CPLErr SetGeoTransform( double *padfTransform );
     virtual CPLErr SetProjection( const char *pszProjString );
 };
-

@@ -294,12 +294,12 @@ public class GDALContour {
          */
 
         FeatureDefn feature = layer.GetLayerDefn();
-        
+
         gdal.ContourGenerate(band, contourInterval, offset, fixedLevelsDouble,
                 (ignoreNodata ? 1 : 0), sourceNodata, layer, feature.GetFieldIndex("ID"),
                 (attributName != null ? feature.GetFieldIndex(attributName) : -1),
                 progressCallback);
-        
+
         dataSource.delete();
         dataset.delete();
     }

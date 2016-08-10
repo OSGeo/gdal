@@ -9,10 +9,8 @@ ifneq ($(JPEG_SETTING),no)
 JPEG_FLAGS = -DHAVE_LIBJPEG
 endif
 
-ifeq ($(PCIDSK_SETTING),old)
-OBJ	=	pcidskdataset.o pcidsktiledrasterband.o
-CPPFLAGS	:=	 -I../raw $(CPPFLAGS)
-$(O_OBJ):	../raw/rawdataset.h gdal_pcidsk.h
+ifeq ($(PCIDSK_SETTING),no)
+# Do nothing.
 else
 OBJ	=	pcidskdataset2.o ogrpcidsklayer.o vsi_pcidsk_io.o gdal_edb.o $(SDKOBJ)
 ifeq ($(PCIDSK_SETTING),internal)

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  Functions for translating DGN floats into IEEE floats.
@@ -82,7 +81,7 @@ void    DGN2IEEEDouble(void * dbl)
     sign         = dt.hi & 0x80000000;
 
 /* -------------------------------------------------------------------- */
-/*      Adjust the exponent so that we may work with it                 */      
+/*      Adjust the exponent so that we may work with it                 */
 /* -------------------------------------------------------------------- */
     exponent = dt.hi >> 23;
     exponent = exponent & 0x000000ff;
@@ -94,7 +93,7 @@ void    DGN2IEEEDouble(void * dbl)
 /*      Save the bits that we are discarding so we can round properly   */
 /* -------------------------------------------------------------------- */
     rndbits = dt.lo & 0x00000007;
-        
+
     dt.lo = dt.lo >> 3;
     dt.lo = (dt.lo & 0x1fffffff) | (dt.hi << 29);
 
@@ -117,14 +116,8 @@ void    DGN2IEEEDouble(void * dbl)
     src = (unsigned char *) &dt;
     dest = (unsigned char *) dbl;
 
-    dest[0] = src[4];
-    dest[1] = src[5];
-    dest[2] = src[6];
-    dest[3] = src[7];
-    dest[4] = src[0];
-    dest[5] = src[1];
-    dest[6] = src[2];
-    dest[7] = src[3];
+    memcpy(dest + 0, src + 4, 4);
+    memcpy(dest + 4, src + 0, 4);
 #else
     memcpy( dbl, &dt, 8 );
 #endif
@@ -137,11 +130,10 @@ void    DGN2IEEEDouble(void * dbl)
 void    IEEE2DGNDouble(void * dbl)
 
 {
-    double64_t  dt;
-    GInt32      exponent;
-    GInt32      sign;
-    GByte       *src,*dest;
-        
+    double64_t dt;
+    GByte  *src = NULL;
+    GByte *dest = NULL;
+
 #ifdef CPL_LSB
     src  = (GByte *) dbl;
     dest = (GByte *) &dt;
@@ -158,8 +150,8 @@ void    IEEE2DGNDouble(void * dbl)
     memcpy( &dt, dbl, 8 );
 #endif
 
-    sign         = dt.hi & 0x80000000;
-    exponent = dt.hi >> 20;
+    GInt32 sign = dt.hi & 0x80000000;
+    GInt32 exponent = dt.hi >> 20;
     exponent = exponent & 0x000007ff;
 
 /* -------------------------------------------------------------------- */
@@ -175,7 +167,7 @@ void    IEEE2DGNDouble(void * dbl)
     {
         dest = (GByte *) dbl;
 
-        if (sign) 
+        if (sign)
             dest[1] = 0xff;
         else
             dest[1] = 0x7f;
@@ -189,7 +181,7 @@ void    IEEE2DGNDouble(void * dbl)
         dest[7] = 0xff;
 
         return;
-    }   
+    }
 
 /* -------------------------------------------------------------------- */
 /*      In the case of of underflow return zero                         */
@@ -219,7 +211,7 @@ void    IEEE2DGNDouble(void * dbl)
         dt.hi = dt.hi | (dt.lo >> 29);
         dt.hi = dt.hi & 0x007fffff;
         dt.hi = dt.hi | (exponent << 23) | sign;
-            
+
         dt.lo = dt.lo << 3;
     }
 
@@ -230,14 +222,10 @@ void    IEEE2DGNDouble(void * dbl)
     dest = (GByte *) dbl;
 
 #ifdef CPL_LSB
-    dest[2] = src[0];
-    dest[3] = src[1];
-    dest[0] = src[2];
-    dest[1] = src[3];
-    dest[6] = src[4];
-    dest[7] = src[5];
-    dest[4] = src[6];
-    dest[5] = src[7];
+    memcpy(dest + 2, src + 0, 2);
+    memcpy(dest + 0, src + 2, 2);
+    memcpy(dest + 6, src + 4, 2);
+    memcpy(dest + 4, src + 6, 2);
 #else
     dest[1] = src[0];
     dest[0] = src[1];

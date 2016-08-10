@@ -31,8 +31,10 @@
 #define OGR_GEOJSONREADER_H_INCLUDED
 
 #include <ogr_core.h>
+#include "cpl_string.h"
 #include "ogrsf_frmts.h"
 #include <json.h> // JSON-C
+#include <set>
 
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */
@@ -71,7 +73,7 @@ struct GeoJSONObject
         eFeature,
         eFeatureCollection
     };
-    
+
     enum CoordinateDimension
     {
         eMinCoordinateDimension = 2,
@@ -95,6 +97,8 @@ public:
     void SetPreserveGeometryType( bool bPreserve );
     void SetSkipAttributes( bool bSkip );
     void SetFlattenNestedAttributes( bool bFlatten, char chSeparator );
+    void SetStoreNativeData( bool bStoreNativeData );
+    void SetArrayAsString( bool bArrayAsString );
 
     OGRErr Parse( const char* pszText );
     void ReadLayers( OGRGeoJSONDataSource* poDS );
@@ -112,9 +116,18 @@ private:
     bool bAttributesSkip_;
     bool bFlattenNestedAttributes_;
     char chNestedAttributeSeparator_;
+    bool bStoreNativeData_;
+    bool bArrayAsString_;
+    std::set<int> aoSetUndeterminedTypeFields_;
 
+    // bFlatten... is a tri-state boolean with -1 being unset.
     int bFlattenGeocouchSpatiallistFormat;
-    bool bFoundId, bFoundRev, bFoundTypeFeature, bIsGeocouchSpatiallistFormat;
+
+    bool bFoundId;
+    bool bFoundRev;
+    bool bFoundTypeFeature;
+    bool bIsGeocouchSpatiallistFormat;
+    bool bFoundFeatureId;
 
     //
     // Copy operations not supported.
@@ -146,7 +159,9 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
                                       const char* pszKey,
                                       json_object* poVal,
                                       bool bFlattenNestedAttributes,
-                                      char chNestedAttributeSeparator);
+                                      char chNestedAttributeSeparator,
+                                      bool bArrayAsString,
+                                      std::set<int>& aoSetUndeterminedTypeFields);
 
 /************************************************************************/
 /*                 GeoJSON Parsing Utilities                            */
@@ -156,6 +171,8 @@ json_object* OGRGeoJSONFindMemberByName(json_object* poObj,  const char* pszName
 GeoJSONObject::Type OGRGeoJSONGetType( json_object* poObj );
 
 json_object* json_ex_get_object_by_path(json_object* poObj, const char* pszPath );
+
+bool OGRJSonParse(const char* pszText, json_object** ppoObj, bool bVerboseError = true);
 
 /************************************************************************/
 /*                 GeoJSON Geometry Translators                         */
@@ -217,7 +234,7 @@ private:
 OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj );
 OGRwkbGeometryType OGRESRIJSONGetGeometryType( json_object* poObj );
 OGRPoint* OGRESRIJSONReadPoint( json_object* poObj);
-OGRLineString* OGRESRIJSONReadLineString( json_object* poObj);
+OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj);
 OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj);
 OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj);
 

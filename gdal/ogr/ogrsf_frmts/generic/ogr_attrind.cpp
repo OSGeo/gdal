@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRLayerAttrIndex and OGRAttrIndex base classes.
@@ -31,6 +30,8 @@
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
+
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /* ==================================================================== */
@@ -70,7 +71,7 @@ OGRLayerAttrIndex::~OGRLayerAttrIndex()
 /*                            OGRAttrIndex()                            */
 /************************************************************************/
 
-OGRAttrIndex::OGRAttrIndex() 
+OGRAttrIndex::OGRAttrIndex()
 
 {
 }
@@ -82,3 +83,5 @@ OGRAttrIndex::OGRAttrIndex()
 OGRAttrIndex::~OGRAttrIndex()
 {
 }
+
+//! @endcond

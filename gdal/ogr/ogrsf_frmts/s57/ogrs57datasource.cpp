@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  S-57 Translator
  * Purpose:  Implements OGRS57DataSource class
@@ -28,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_s57.h"
 
 CPL_CVSID("$Id$");
 
@@ -38,52 +37,53 @@ CPL_CVSID("$Id$");
 /*                          OGRS57DataSource()                          */
 /************************************************************************/
 
-OGRS57DataSource::OGRS57DataSource(char** papszOpenOptions)
-
+OGRS57DataSource::OGRS57DataSource(char** papszOpenOptionsIn) :
+    pszName(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    poSpatialRef(new OGRSpatialReference()),
+    papszOptions(NULL),
+    nModules(0),
+    papoModules(NULL),
+    poWriter(NULL),
+    poClassContentExplorer(NULL),
+    bExtentsSet(false)
 {
-    nLayers = 0;
-    papoLayers = NULL;
-
-    nModules = 0;
-    papoModules = NULL;
-    poClassContentExplorer = NULL;
-    poWriter = NULL;
-
-    pszName = NULL;
-
-    poSpatialRef = new OGRSpatialReference();
     poSpatialRef->SetWellKnownGeogCS( "WGS84" );
-
-    bExtentsSet = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
 /* -------------------------------------------------------------------- */
-    if( papszOpenOptions != NULL )
-    {
-        papszOptions = CSLDuplicate(papszOpenOptions);
-    }
-    else
-    {
-        const char *pszOptString = CPLGetConfigOption( "OGR_S57_OPTIONS", NULL );
-        papszOptions = NULL;
+    const char *pszOptString = CPLGetConfigOption( "OGR_S57_OPTIONS", NULL );
 
-        if ( pszOptString )
+    if ( pszOptString != NULL )
+    {
+        papszOptions =
+            CSLTokenizeStringComplex( pszOptString, ",", FALSE, FALSE );
+
+        if ( papszOptions && *papszOptions )
         {
-            char    **papszCurOption;
-
-            papszOptions = 
-                CSLTokenizeStringComplex( pszOptString, ",", FALSE, FALSE );
-
-            if ( papszOptions && *papszOptions )
-            {
-                CPLDebug( "S57", "The following S57 options are being set:" );
-                papszCurOption = papszOptions;
-                while( *papszCurOption )
-                    CPLDebug( "S57", "    %s", *papszCurOption++ );
-            }
+            CPLDebug( "S57", "The following S57 options are being set:" );
+            char **papszCurOption = papszOptions;
+            while( *papszCurOption )
+                CPLDebug( "S57", "    %s", *papszCurOption++ );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      And from open options.                                          */
+/* -------------------------------------------------------------------- */
+    for(char** papszIter = papszOpenOptionsIn; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = NULL;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            papszOptions = CSLSetNameValue(papszOptions, pszKey, pszValue);
+        }
+        CPLFree(pszKey);
+    }
+
 }
 
 /************************************************************************/
@@ -154,64 +154,62 @@ int OGRS57DataSource::TestCapability( const char * )
 int OGRS57DataSource::Open( const char * pszFilename )
 
 {
-    int         iModule;
-
     pszName = CPLStrdup( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Setup reader options.                                           */
 /* -------------------------------------------------------------------- */
     char **papszReaderOptions = NULL;
-    S57Reader   *poModule = new S57Reader( pszFilename );
 
     if( GetOption(S57O_LNAM_REFS) == NULL )
-        papszReaderOptions = CSLSetNameValue(papszReaderOptions, 
-                                         S57O_LNAM_REFS, "ON" );
+        papszReaderOptions = CSLSetNameValue( papszReaderOptions,
+                                              S57O_LNAM_REFS, "ON" );
     else
-        papszReaderOptions = 
-            CSLSetNameValue( papszReaderOptions, S57O_LNAM_REFS, 
-                             GetOption(S57O_LNAM_REFS));
+        papszReaderOptions =
+            CSLSetNameValue( papszReaderOptions, S57O_LNAM_REFS,
+                             GetOption(S57O_LNAM_REFS) );
 
     if( GetOption(S57O_UPDATES) != NULL )
-        papszReaderOptions = 
-            CSLSetNameValue( papszReaderOptions, S57O_UPDATES, 
+        papszReaderOptions =
+            CSLSetNameValue( papszReaderOptions, S57O_UPDATES,
                              GetOption(S57O_UPDATES));
 
     if( GetOption(S57O_SPLIT_MULTIPOINT) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_SPLIT_MULTIPOINT,
                              GetOption(S57O_SPLIT_MULTIPOINT) );
 
     if( GetOption(S57O_ADD_SOUNDG_DEPTH) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_ADD_SOUNDG_DEPTH,
                              GetOption(S57O_ADD_SOUNDG_DEPTH));
 
     if( GetOption(S57O_PRESERVE_EMPTY_NUMBERS) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_PRESERVE_EMPTY_NUMBERS,
                              GetOption(S57O_PRESERVE_EMPTY_NUMBERS) );
 
     if( GetOption(S57O_RETURN_PRIMITIVES) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES,
                              GetOption(S57O_RETURN_PRIMITIVES) );
 
     if( GetOption(S57O_RETURN_LINKAGES) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_LINKAGES,
                              GetOption(S57O_RETURN_LINKAGES) );
 
     if( GetOption(S57O_RETURN_DSID) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_DSID,
                              GetOption(S57O_RETURN_DSID) );
 
     if( GetOption(S57O_RECODE_BY_DSSI) != NULL )
-        papszReaderOptions = 
+        papszReaderOptions =
             CSLSetNameValue( papszReaderOptions, S57O_RECODE_BY_DSSI,
                              GetOption(S57O_RECODE_BY_DSSI) );
 
+    S57Reader *poModule = new S57Reader( pszFilename );
     int bRet = poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
 
@@ -234,17 +232,17 @@ int OGRS57DataSource::Open( const char * pszFilename )
         return FALSE;
     }
 
-    int bSuccess = TRUE;
+    bool bSuccess = true;
 
     nModules = 1;
-    papoModules = (S57Reader **) CPLMalloc(sizeof(void*));
+    papoModules = static_cast<S57Reader **>( CPLMalloc(sizeof(void*)) );
     papoModules[0] = poModule;
 
 /* -------------------------------------------------------------------- */
 /*      Add the header layers if they are called for.                   */
 /* -------------------------------------------------------------------- */
-    if( GetOption( S57O_RETURN_DSID ) == NULL 
-        || CSLTestBoolean(GetOption( S57O_RETURN_DSID )) )
+    if( GetOption( S57O_RETURN_DSID ) == NULL
+        || CPLTestBool(GetOption( S57O_RETURN_DSID )) )
     {
         OGRFeatureDefn  *poDefn = S57GenerateDSIDFeatureDefn();
         AddLayer( new OGRS57Layer( this, poDefn ) );
@@ -256,16 +254,20 @@ int OGRS57DataSource::Open( const char * pszFilename )
     if( GetOption( S57O_RETURN_PRIMITIVES ) != NULL )
     {
         OGRFeatureDefn  *poDefn
-            = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VI, poModule->GetOptionFlags());
+            = S57GenerateVectorPrimitiveFeatureDefn(
+                RCNM_VI, poModule->GetOptionFlags());
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VC, poModule->GetOptionFlags());
+        poDefn = S57GenerateVectorPrimitiveFeatureDefn(
+            RCNM_VC, poModule->GetOptionFlags());
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VE, poModule->GetOptionFlags());
+        poDefn = S57GenerateVectorPrimitiveFeatureDefn(
+            RCNM_VE, poModule->GetOptionFlags());
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VF, poModule->GetOptionFlags());
+        poDefn = S57GenerateVectorPrimitiveFeatureDefn(
+            RCNM_VF, poModule->GetOptionFlags());
         AddLayer( new OGRS57Layer( this, poDefn ) );
     }
 
@@ -280,15 +282,15 @@ int OGRS57DataSource::Open( const char * pszFilename )
                                           poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateGeomFeatureDefn( wkbLineString, 
+        poDefn = S57GenerateGeomFeatureDefn( wkbLineString,
                                              poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateGeomFeatureDefn( wkbPolygon, 
+        poDefn = S57GenerateGeomFeatureDefn( wkbPolygon,
                                              poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = S57GenerateGeomFeatureDefn( wkbNone, 
+        poDefn = S57GenerateGeomFeatureDefn( wkbNone,
                                              poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     }
@@ -299,42 +301,41 @@ int OGRS57DataSource::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     else
     {
-        OGRFeatureDefn  *poDefn;
-        std::vector<int> anClassCount;
-        int              bGeneric = FALSE;
-        unsigned int     iClass;
-
         poClassContentExplorer =
             new S57ClassContentExplorer( OGRS57Driver::GetS57Registrar() );
 
-        for( iModule = 0; iModule < nModules; iModule++ )
-            papoModules[iModule]->SetClassBased( OGRS57Driver::GetS57Registrar(),
-                                                 poClassContentExplorer );
+        for( int iModule = 0; iModule < nModules; iModule++ )
+            papoModules[iModule]->SetClassBased(
+                OGRS57Driver::GetS57Registrar(), poClassContentExplorer );
 
-        for( iModule = 0; iModule < nModules; iModule++ )
+        std::vector<int> anClassCount;
+
+        for( int iModule = 0; iModule < nModules; iModule++ )
         {
-            bSuccess &= 
-                papoModules[iModule]->CollectClassList(anClassCount);
+            bSuccess &= CPL_TO_BOOL(
+                papoModules[iModule]->CollectClassList(anClassCount) );
         }
 
-        for( iClass = 0; iClass < anClassCount.size(); iClass++ )
+        bool bGeneric = false;
+
+        for( unsigned int iClass = 0; iClass < anClassCount.size(); iClass++ )
         {
             if( anClassCount[iClass] > 0 )
             {
-                poDefn = 
+                OGRFeatureDefn  *poDefn =
                     S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(),
                                                 poClassContentExplorer,
-                                                iClass, 
+                                                iClass,
                                                 poModule->GetOptionFlags() );
 
                 if( poDefn != NULL )
-                    AddLayer( new OGRS57Layer( this, poDefn, 
+                    AddLayer( new OGRS57Layer( this, poDefn,
                                                anClassCount[iClass] ) );
                 else
                 {
-                    bGeneric = TRUE;
-                    CPLDebug( "S57", 
-                              "Unable to find definition for OBJL=%d\n", 
+                    bGeneric = true;
+                    CPLDebug( "S57",
+                              "Unable to find definition for OBJL=%d\n",
                               iClass );
                 }
             }
@@ -342,8 +343,9 @@ int OGRS57DataSource::Open( const char * pszFilename )
 
         if( bGeneric )
         {
-            poDefn = S57GenerateGeomFeatureDefn( wkbUnknown, 
-                                                 poModule->GetOptionFlags() );
+            OGRFeatureDefn  *poDefn
+                = S57GenerateGeomFeatureDefn( wkbUnknown,
+                                              poModule->GetOptionFlags() );
             AddLayer( new OGRS57Layer( this, poDefn ) );
         }
     }
@@ -351,7 +353,7 @@ int OGRS57DataSource::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Attach the layer definitions to each of the readers.            */
 /* -------------------------------------------------------------------- */
-    for( iModule = 0; iModule < nModules; iModule++ )
+    for( int iModule = 0; iModule < nModules; iModule++ )
     {
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
@@ -383,8 +385,8 @@ OGRLayer *OGRS57DataSource::GetLayer( int iLayer )
 void OGRS57DataSource::AddLayer( OGRS57Layer * poNewLayer )
 
 {
-    papoLayers = (OGRS57Layer **)
-        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
+    papoLayers = static_cast<OGRS57Layer **> (
+        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers ) );
 
     papoLayers[nLayers-1] = poNewLayer;
 }
@@ -445,7 +447,7 @@ OGRErr OGRS57DataSource::GetDSExtent( OGREnvelope *psExtent, int bForce )
     }
 
     *psExtent = oExtents;
-    bExtentsSet = TRUE;
+    bExtentsSet = true;
 
     return OGRERR_NONE;
 }
@@ -457,7 +459,7 @@ OGRErr OGRS57DataSource::GetDSExtent( OGREnvelope *psExtent, int bForce )
 /************************************************************************/
 
 int OGRS57DataSource::Create( const char *pszFilename,
-                              char **papszOptions )
+                              char **papszOptionsIn )
 {
 /* -------------------------------------------------------------------- */
 /*      Instantiate the class registrar if possible.                    */
@@ -465,7 +467,7 @@ int OGRS57DataSource::Create( const char *pszFilename,
     if( OGRS57Driver::GetS57Registrar() == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to load s57objectclasses.csv, unable to continue." );
+                  "Unable to load s57objectclasses.csv.  Unable to continue." );
         return FALSE;
     }
 
@@ -487,10 +489,10 @@ int OGRS57DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Add the primitive layers if they are called for.                */
 /* -------------------------------------------------------------------- */
-    OGRFeatureDefn  *poDefn;
     int nOptionFlags = S57M_RETURN_LINKAGES | S57M_LNAM_REFS;
 
-    poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VI, nOptionFlags );
+    OGRFeatureDefn *poDefn
+        = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VI, nOptionFlags );
     AddLayer( new OGRS57Layer( this, poDefn ) );
 
     poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VC, nOptionFlags );
@@ -508,37 +510,43 @@ int OGRS57DataSource::Create( const char *pszFilename,
     poClassContentExplorer->Rewind();
     while( poClassContentExplorer->NextClass() )
     {
-        poDefn = 
-            S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(), 
+        poDefn =
+            S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(),
                                         poClassContentExplorer,
                                         poClassContentExplorer->GetOBJL(),
                                         nOptionFlags );
 
-        AddLayer( new OGRS57Layer( this, poDefn, 0, 
+        AddLayer( new OGRS57Layer( this, poDefn, 0,
                                    poClassContentExplorer->GetOBJL() ) );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Write out "header" records.                                     */
 /* -------------------------------------------------------------------- */
-    int nEXPP = 1, nINTU = 4, nAGEN = 540, nNOMR = 0, nNOGR = 0,
-        nNOLR = 0, nNOIN = 0, nNOCN = 0, nNOED = 0;
-    const char
-        *pszEXPP = CSLFetchNameValue(papszOptions, "S57_EXPP"),
-        *pszINTU = CSLFetchNameValue(papszOptions, "S57_INTU"),
-        *pszEDTN = CSLFetchNameValue(papszOptions, "S57_EDTN"),
-        *pszUPDN = CSLFetchNameValue(papszOptions, "S57_UPDN"),
-        *pszUADT = CSLFetchNameValue(papszOptions, "S57_UADT"),
-        *pszISDT = CSLFetchNameValue(papszOptions, "S57_ISDT"),
-        *pszSTED = CSLFetchNameValue(papszOptions, "S57_STED"),
-        *pszAGEN = CSLFetchNameValue(papszOptions, "S57_AGEN"),
-        *pszCOMT = CSLFetchNameValue(papszOptions, "S57_COMT"),
-        *pszNOMR = CSLFetchNameValue(papszOptions, "S57_NOMR"),
-        *pszNOGR = CSLFetchNameValue(papszOptions, "S57_NOGR"),
-        *pszNOLR = CSLFetchNameValue(papszOptions, "S57_NOLR"),
-        *pszNOIN = CSLFetchNameValue(papszOptions, "S57_NOIN"),
-        *pszNOCN = CSLFetchNameValue(papszOptions, "S57_NOCN"),
-        *pszNOED = CSLFetchNameValue(papszOptions, "S57_NOED");
+    int nEXPP = 1;
+    int nINTU = 4;
+    int nAGEN = 540;
+    int nNOMR = 0;
+    int nNOGR = 0;
+    int nNOLR = 0;
+    int nNOIN = 0;
+    int nNOCN = 0;
+    int nNOED = 0;
+    const char *pszEXPP = CSLFetchNameValue( papszOptionsIn, "S57_EXPP" );
+    const char *pszINTU = CSLFetchNameValue( papszOptionsIn, "S57_INTU" );
+    const char *pszEDTN = CSLFetchNameValue( papszOptionsIn, "S57_EDTN" );
+    const char *pszUPDN = CSLFetchNameValue( papszOptionsIn, "S57_UPDN" );
+    const char *pszUADT = CSLFetchNameValue( papszOptionsIn, "S57_UADT" );
+    const char *pszISDT = CSLFetchNameValue( papszOptionsIn, "S57_ISDT" );
+    const char *pszSTED = CSLFetchNameValue( papszOptionsIn, "S57_STED" );
+    const char *pszAGEN = CSLFetchNameValue( papszOptionsIn, "S57_AGEN" );
+    const char *pszCOMT = CSLFetchNameValue( papszOptionsIn, "S57_COMT" );
+    const char *pszNOMR = CSLFetchNameValue( papszOptionsIn, "S57_NOMR" );
+    const char *pszNOGR = CSLFetchNameValue( papszOptionsIn, "S57_NOGR" );
+    const char *pszNOLR = CSLFetchNameValue( papszOptionsIn, "S57_NOLR" );
+    const char *pszNOIN = CSLFetchNameValue( papszOptionsIn, "S57_NOIN" );
+    const char *pszNOCN = CSLFetchNameValue( papszOptionsIn, "S57_NOCN" );
+    const char *pszNOED = CSLFetchNameValue( papszOptionsIn, "S57_NOED" );
     if (pszEXPP) nEXPP = atoi(pszEXPP);
     if (pszINTU) nINTU = atoi(pszINTU);
     if (pszAGEN) nAGEN = atoi(pszAGEN);
@@ -552,12 +560,14 @@ int OGRS57DataSource::Create( const char *pszFilename,
                          pszEDTN, pszUPDN, pszUADT, pszISDT, pszSTED, nAGEN,
                          pszCOMT, nNOMR, nNOGR, nNOLR, nNOIN, nNOCN, nNOED );
 
-    int nHDAT = 2, nVDAT = 17, nSDAT = 23, nCSCL = 52000;
-    const char
-        *pszHDAT = CSLFetchNameValue(papszOptions, "S57_HDAT"),
-        *pszVDAT = CSLFetchNameValue(papszOptions, "S57_VDAT"),
-        *pszSDAT = CSLFetchNameValue(papszOptions, "S57_SDAT"),
-        *pszCSCL = CSLFetchNameValue(papszOptions, "S57_CSCL");
+    int nHDAT = 2;
+    int nVDAT = 17;
+    int nSDAT = 23;
+    int nCSCL = 52000;
+    const char *pszHDAT = CSLFetchNameValue( papszOptionsIn, "S57_HDAT" );
+    const char *pszVDAT = CSLFetchNameValue( papszOptionsIn, "S57_VDAT" );
+    const char *pszSDAT = CSLFetchNameValue( papszOptionsIn, "S57_SDAT" );
+    const char *pszCSCL = CSLFetchNameValue( papszOptionsIn, "S57_CSCL" );
     if (pszHDAT)
         nHDAT = atoi(pszHDAT);
     if (pszVDAT)

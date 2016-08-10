@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_recode_stub.cpp
  * Project:  CPL - Common Portability Library
@@ -11,7 +10,7 @@
  * The bulk of this code is derived from the utf.c module from FLTK. It
  * was originally downloaded from:
  *    http://svn.easysw.com/public/fltk/fltk/trunk/src/utf.c
- * 
+ *
  **********************************************************************
  * Copyright (c) 2008, Frank Warmerdam
  * Copyright 2006 by Bill Spitzak and others.
@@ -34,7 +33,7 @@
 
 CPL_CVSID("$Id$");
 
-#ifdef CPL_RECODE_STUB 
+#ifdef CPL_RECODE_STUB
 
 static unsigned utf8decode(const char* p, const char* end, int* len);
 static unsigned utf8towc(const char* src, unsigned srclen,
@@ -53,7 +52,7 @@ static int utf8test(const char* src, unsigned srclen);
 #include <winnls.h>
 
 static char* CPLWin32Recode( const char* src,
-                             unsigned src_code_page, unsigned dst_code_page );
+                             unsigned src_code_page, unsigned dst_code_page ) CPL_RETURNS_NONNULL;
 #endif
 
 #ifdef FUTURE_NEEDS
@@ -62,6 +61,15 @@ static const char* utf8back(const char* p, const char* start, const char*end);
 static int utf8encode(unsigned ucs, char* buf);
 static int utf8bytes(unsigned ucs);
 #endif /* def FUTURE_NEEDS */
+
+/* used by cpl_recode.cpp */
+extern void CPLClearRecodeStubWarningFlags();
+extern char *CPLRecodeStub( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
+extern char *CPLRecodeFromWCharStub( const wchar_t *,
+                                     const char *, const char * );
+extern wchar_t *CPLRecodeToWCharStub( const char *,
+                                      const char *, const char * );
+extern int CPLIsUTF8Stub( const char *, int );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -105,7 +113,7 @@ void CPLClearRecodeStubWarningFlags()
  *  <li>CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1</li>
  * </ul>
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pszSource a NULL terminated string.
  * @param pszSrcEncoding the source encoding.
@@ -114,8 +122,8 @@ void CPLClearRecodeStubWarningFlags()
  * @return a NULL terminated string which should be freed with CPLFree().
  */
 
-char *CPLRecodeStub( const char *pszSource, 
-                     const char *pszSrcEncoding, 
+char *CPLRecodeStub( const char *pszSource,
+                     const char *pszSrcEncoding,
                      const char *pszDstEncoding )
 
 {
@@ -134,28 +142,28 @@ char *CPLRecodeStub( const char *pszSource,
 /* -------------------------------------------------------------------- */
 /*      ISO8859 to UTF8                                                 */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,CPL_ENC_ISO8859_1) == 0 
+    if( strcmp(pszSrcEncoding,CPL_ENC_ISO8859_1) == 0
         && strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
     {
-        int nCharCount = strlen(pszSource);
+        int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
-        
+
         utf8froma( pszResult, nCharCount*2+1, pszSource, nCharCount );
-        
+
         return pszResult;
     }
 
 /* -------------------------------------------------------------------- */
 /*      UTF8 to ISO8859                                                 */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0 
+    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0
         && strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0 )
     {
-        int nCharCount = strlen(pszSource);
+        int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount+1);
-        
+
         utf8toa( pszSource, nCharCount, pszResult, nCharCount+1 );
-        
+
         return pszResult;
     }
 
@@ -163,7 +171,7 @@ char *CPLRecodeStub( const char *pszSource,
 /* ---------------------------------------------------------------------*/
 /*      CPXXX to UTF8                                                   */
 /* ---------------------------------------------------------------------*/
-    if( strncmp(pszSrcEncoding,"CP",2) == 0
+    if( STARTS_WITH(pszSrcEncoding, "CP")
         && strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
     {
         int nCode = atoi( pszSrcEncoding + 2 );
@@ -178,7 +186,7 @@ char *CPLRecodeStub( const char *pszSource,
 /*      UTF8 to CPXXX                                                   */
 /* ---------------------------------------------------------------------*/
     if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0
-        && strncmp(pszDstEncoding,"CP",2) == 0 )
+        && STARTS_WITH(pszDstEncoding, "CP") )
     {
          int nCode = atoi( pszDstEncoding + 2 );
          if( nCode > 0 ) {
@@ -193,7 +201,7 @@ char *CPLRecodeStub( const char *pszSource,
 /* -------------------------------------------------------------------- */
     if( strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
     {
-        int nCharCount = strlen(pszSource);
+        int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
 
         if( EQUAL( pszSrcEncoding, "CP437") ) /* For ZIP file handling */
@@ -224,7 +232,7 @@ char *CPLRecodeStub( const char *pszSource,
         }
 
         utf8froma( pszResult, nCharCount*2+1, pszSource, nCharCount );
-        
+
         return pszResult;
     }
 
@@ -232,22 +240,22 @@ char *CPLRecodeStub( const char *pszSource,
 /*      UTF-8 to anything else is treated as UTF-8 to ISO-8859-1        */
 /*      with a warning.                                                 */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0 
+    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0
         && strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0 )
     {
-        int nCharCount = strlen(pszSource);
+        int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = (char *) CPLCalloc(1,nCharCount+1);
 
         if( !bHaveWarned2 )
         {
             bHaveWarned2 = true;
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Recode from UTF-8 to %s not supported, treated as UTF-8 to ISO8859-1.", 
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Recode from UTF-8 to %s not supported, treated as UTF-8 to ISO8859-1.",
                       pszDstEncoding );
         }
-        
+
         utf8toa( pszSource, nCharCount, pszResult, nCharCount+1 );
-        
+
         return pszResult;
     }
 
@@ -262,7 +270,7 @@ char *CPLRecodeStub( const char *pszSource,
                       "Recode from %s to %s not supported, no change applied.",
                       pszSrcEncoding, pszDstEncoding );
         }
-        
+
         return CPLStrdup(pszSource);
     }
 }
@@ -272,29 +280,29 @@ char *CPLRecodeStub( const char *pszSource,
 /************************************************************************/
 
 /**
- * Convert wchar_t string to UTF-8. 
+ * Convert wchar_t string to UTF-8.
  *
  * Convert a wchar_t string into a multibyte utf-8 string.  The only
  * guaranteed supported source encoding is CPL_ENC_UCS2, and the only
  * guaranteed supported destination encodings are CPL_ENC_UTF8, CPL_ENC_ASCII
- * and CPL_ENC_ISO8859_1.  In some cases (ie. using iconv()) other encodings 
+ * and CPL_ENC_ISO8859_1.  In some cases (i.e. using iconv()) other encodings
  * may also be supported.
  *
  * Note that the wchar_t type varies in size on different systems. On
  * win32 it is normally 2 bytes, and on unix 4 bytes.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pwszSource the source wchar_t string, terminated with a 0 wchar_t.
  * @param pszSrcEncoding the source encoding, typically CPL_ENC_UCS2.
  * @param pszDstEncoding the destination encoding, typically CPL_ENC_UTF8.
  *
- * @return a zero terminated multi-byte string which should be freed with 
- * CPLFree(), or NULL if an error occurs. 
+ * @return a zero terminated multi-byte string which should be freed with
+ * CPLFree(), or NULL if an error occurs.
  */
 
-char *CPLRecodeFromWCharStub( const wchar_t *pwszSource, 
-                              const char *pszSrcEncoding, 
+char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
+                              const char *pszSrcEncoding,
                               const char *pszDstEncoding )
 
 {
@@ -310,7 +318,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Stub recoding implementation does not support\n"
-                  "CPLRecodeFromWCharStub(...,%s,%s)", 
+                  "CPLRecodeFromWCharStub(...,%s,%s)",
                   pszSrcEncoding, pszDstEncoding );
         return NULL;
     }
@@ -354,11 +362,11 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
     if( strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
         return pszResult;
 
-    char *pszFinalResult = 
+    char *pszFinalResult =
         CPLRecodeStub( pszResult, CPL_ENC_UTF8, pszDstEncoding );
 
     CPLFree( pszResult );
-    
+
     return pszFinalResult;
 }
 
@@ -374,16 +382,16 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
  * are CPL_ENC_UTF8, CPL_ENC_ASCII and CPL_ENC_ISO8869_1 (LATIN1).  The only
  * guaranteed supported destination encoding is CPL_ENC_UCS2.  Other source
  * and destination encodings may be supported depending on the underlying
- * implementation. 
+ * implementation.
  *
  * Note that the wchar_t type varies in size on different systems. On
  * win32 it is normally 2 bytes, and on unix 4 bytes.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pszSource input multi-byte character string.
  * @param pszSrcEncoding source encoding, typically CPL_ENC_UTF8.
- * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2. 
+ * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2.
  *
  * @return the zero terminated wchar_t string (to be freed with CPLFree()) or
  * NULL on error.
@@ -392,13 +400,13 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
  */
 
 wchar_t *CPLRecodeToWCharStub( const char *pszSource,
-                               const char *pszSrcEncoding, 
+                               const char *pszSrcEncoding,
                                const char *pszDstEncoding )
 
 {
     char *pszUTF8Source = (char *) pszSource;
 
-    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) != 0 
+    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) != 0
         && strcmp(pszSrcEncoding,CPL_ENC_ASCII) != 0 )
     {
         pszUTF8Source = CPLRecodeStub( pszSource, pszSrcEncoding, CPL_ENC_UTF8 );
@@ -427,7 +435,7 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
 /* -------------------------------------------------------------------- */
 /*      Do the UTF-8 to UCS-2 recoding.                                 */
 /* -------------------------------------------------------------------- */
-    int nSrcLen = strlen(pszUTF8Source);
+    int nSrcLen = static_cast<int>(strlen(pszUTF8Source));
     wchar_t *pwszResult = (wchar_t *) CPLCalloc(sizeof(wchar_t),nSrcLen+1);
 
     utf8towc( pszUTF8Source, nSrcLen, pwszResult, nSrcLen+1 );
@@ -456,7 +464,7 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
 int CPLIsUTF8Stub(const char* pabyData, int nLen)
 {
     if (nLen < 0)
-        nLen = strlen(pabyData);
+        nLen = static_cast<int>(strlen(pabyData));
     return utf8test(pabyData, (unsigned)nLen) != 0;
 }
 
@@ -495,7 +503,7 @@ int CPLIsUTF8Stub(const char* pabyData, int nLen)
 #if ERRORS_TO_CP1252
 // Codes 0x80..0x9f from the Microsoft CP1252 character set, translated
 // to Unicode:
-static unsigned short cp1252[32] = {
+static const unsigned short cp1252[32] = {
   0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
   0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008d, 0x017d, 0x008f,
   0x0090, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
@@ -510,7 +518,7 @@ static unsigned short cp1252[32] = {
 /*
     Decode a single UTF-8 encoded character starting at \e p. The
     resulting Unicode value (in the range 0-0x10ffff) is returned,
-    and \e len is set the the number of bytes in the UTF-8 encoding
+    and \e len is set the number of bytes in the UTF-8 encoding
     (adding \e len to \e p will point at the next character).
 
     If \a p points at an illegal UTF-8 encoding, including one that
@@ -632,7 +640,7 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   This function is for moving a pointer that was jumped to the
   middle of a string, such as when doing a binary search for
   a position. You should use either this or utf8back() depending
-  on which direction your algorithim can handle the pointer
+  on which direction your algorithm can handle the pointer
   moving. Do not use this to scan strings, use utf8decode()
   instead.
 */
@@ -641,7 +649,6 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
 static const char* utf8fwd(const char* p, const char* start, const char* end)
 {
   const char* a;
-  int len;
   // if we are not pointing at a continuation character, we are done:
   if ((*p&0xc0) != 0x80) return p;
   // search backwards for a 0xc0 starting the character:
@@ -650,6 +657,7 @@ static const char* utf8fwd(const char* p, const char* start, const char* end)
     if (!(a[0]&0x80)) return p;
     if ((a[0]&0x40)) break;
   }
+  int len = 0;
   utf8decode(a,end,&len);
   a += len;
   if (a > p) return a;
@@ -680,7 +688,6 @@ static const char* utf8fwd(const char* p, const char* start, const char* end)
 static const char* utf8back(const char* p, const char* start, const char* end)
 {
   const char* a;
-  int len;
   // if we are not pointing at a continuation character, we are done:
   if ((*p&0xc0) != 0x80) return p;
   // search backwards for a 0xc0 starting the character:
@@ -689,6 +696,7 @@ static const char* utf8back(const char* p, const char* start, const char* end)
     if (!(a[0]&0x80)) return p;
     if ((a[0]&0x40)) break;
   }
+  int len = 0;
   utf8decode(a,end,&len);
   if (a+len > p) return a;
   return p;
@@ -813,7 +821,8 @@ static unsigned utf8towc(const char* src, unsigned srclen,
     if (!(*p & 0x80)) { // ascii
       dst[count] = *p++;
     } else {
-      int len; unsigned ucs = utf8decode(p,e,&len);
+      int len = 0;
+      unsigned ucs = utf8decode(p,e,&len);
       p += len;
 #ifdef _WIN32
       if (ucs < 0x10000) {
@@ -835,11 +844,13 @@ static unsigned utf8towc(const char* src, unsigned srclen,
     if (!(*p & 0x80)) p++;
     else {
 #ifdef _WIN32
-      int len; unsigned ucs = utf8decode(p,e,&len);
+      int len = 0;
+      unsigned ucs = utf8decode(p,e,&len);
       p += len;
       if (ucs >= 0x10000) ++count;
 #else
-      int len; utf8decode(p,e,&len);
+      int len = 0;
+      utf8decode(p,e,&len);
       p += len;
 #endif
     }
@@ -878,14 +889,14 @@ static unsigned utf8toa(const char* src, unsigned srclen,
   const char* e = src+srclen;
   unsigned count = 0;
   if (dstlen) for (;;) {
-    unsigned char c;
     if (p >= e) {dst[count] = 0; return count;}
-    c = *(unsigned char*)p;
+    unsigned char c = *(unsigned char*)p;
     if (c < 0xC2) { // ascii or bad code
       dst[count] = c;
       p++;
     } else {
-      int len; unsigned ucs = utf8decode(p,e,&len);
+      int len = 0;
+      unsigned ucs = utf8decode(p,e,&len);
       p += len;
       if (ucs < 0x100) dst[count] = (char)ucs;
       else
@@ -906,7 +917,7 @@ static unsigned utf8toa(const char* src, unsigned srclen,
   while (p < e) {
     if (!(*p & 0x80)) p++;
     else {
-      int len;
+      int len = 0;
       utf8decode(p,e,&len);
       p += len;
     }
@@ -930,7 +941,7 @@ static unsigned utf8toa(const char* src, unsigned srclen,
     needed.
 
     \a srclen is the number of words in \a src to convert. On Windows
-    this is not necessairly the number of characters, due to there
+    this is not necessarily the number of characters, due to there
     possibly being "surrogate pairs" in the UTF-16 encoding used.
     On Unix wchar_t is 32 bits and each location is a character.
 
@@ -1018,7 +1029,7 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
 /*                             utf8froma()                              */
 /************************************************************************/
 
-/* Convert an ISO-8859-1 (ie normal c-string) byte stream to UTF-8.
+/* Convert an ISO-8859-1 (i.e. normal c-string) byte stream to UTF-8.
 
     It is possible this should convert Microsoft's CP1252 to UTF-8
     instead. This would translate the codes in the range 0x80-0x9f
@@ -1044,9 +1055,8 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
   const char* e = src+srclen;
   unsigned count = 0;
   if (dstlen) for (;;) {
-    unsigned char ucs;
     if (p >= e) {dst[count] = 0; return count;}
-    ucs = *(unsigned char*)p++;
+    unsigned char ucs = *(unsigned char*)p++;
     if (ucs < 0x80U) {
       dst[count++] = ucs;
       if (count >= dstlen) {dst[count-1] = 0; break;}
@@ -1074,8 +1084,8 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
 /*                            CPLWin32Recode()                          */
 /************************************************************************/
 
-/* Convert an CODEPAGE (ie normal c-string) byte stream
-     to another CODEPAGE (ie normal c-string) byte stream.
+/* Convert an CODEPAGE (i.e. normal c-string) byte stream
+     to another CODEPAGE (i.e. normal c-string) byte stream.
 
     \a src is target c-string byte stream (including a null terminator).
     \a src_code_page is target c-string byte code page.
@@ -1154,7 +1164,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
 
     /* Compute the length in chars */
     BOOL bUsedDefaultChar = FALSE;
-    int len;
+    int len = 0;
     if ( dst_code_page == CP_UTF7 || dst_code_page == CP_UTF8 )
         len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, NULL );
     else
@@ -1186,11 +1196,11 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
 
 
 /*
-** For now we disable the rest which is locale() related.  We may need 
-** parts of it later. 
+** For now we disable the rest which is locale() related.  We may need
+** parts of it later.
 */
 
-#ifdef notdef 
+#ifdef notdef
 
 #ifdef _WIN32
 # include <windows.h>
@@ -1206,7 +1216,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
     to a string containing the letters "utf" or "UTF" in it, or by
     deleting all $LC* and $LANG environment variables. In the future
     it is likely that all non-Asian Unix systems will return true,
-    due to the compatability of UTF-8 with ISO-8859-1.
+    due to the compatibility of UTF-8 with ISO-8859-1.
 */
 int utf8locale(void) {
   static int ret = 2;
@@ -1228,7 +1238,7 @@ int utf8locale(void) {
 
 /*! Convert the UTF-8 used by FLTK to the locale-specific encoding
     used for filenames (and sometimes used for data in files).
-    Unfortunatley due to stupid design you will have to do this as
+    Unfortunately due to stupid design you will have to do this as
     needed for filenames. This is a bug on both Unix and Windows.
 
     Up to \a dstlen bytes are written to \a dst, including a null
@@ -1272,11 +1282,11 @@ unsigned utf8tomb(const char* src, unsigned srclen,
     wchar_t lbuf[1024];
     wchar_t* buf = lbuf;
     unsigned length = utf8towc(src, srclen, buf, 1024);
-    int ret;
     if (length >= 1024) {
       buf = (wchar_t*)(malloc((length+1)*sizeof(wchar_t)));
       utf8towc(src, srclen, buf, length+1);
     }
+    int ret = 0;
     if (dstlen) {
       ret = wcstombs(dst, buf, dstlen);
       if (ret >= dstlen-1) ret = wcstombs(0,buf,0);
@@ -1339,9 +1349,8 @@ unsigned utf8frommb(char* dst, unsigned dstlen,
 #else
     wchar_t lbuf[1024];
     wchar_t* buf = lbuf;
-    int length;
     unsigned ret;
-    length = mbstowcs(buf, src, 1024);
+    int length = mbstowcs(buf, src, 1024);
     if (length >= 1024) {
       length = mbstowcs(0, src, 0)+1;
       buf = (wchar_t*)(malloc(length*sizeof(unsigned short)));
@@ -1373,7 +1382,7 @@ unsigned utf8frommb(char* dst, unsigned dstlen,
     - Returns 0 if there is any illegal UTF-8 sequences, using the
       same rules as utf8decode(). Note that some UCS values considered
       illegal by RFC 3629, such as 0xffff, are considered legal by this.
-    - Returns 1 if there are only single-byte characters (ie no bytes
+    - Returns 1 if there are only single-byte characters (i.e. no bytes
       have the high bit set). This is legal UTF-8, but also indicates
       plain ASCII. It also returns 1 if \a srclen is zero.
     - Returns 2 if there are only characters less than 0x800.
@@ -1395,7 +1404,8 @@ static int utf8test(const char* src, unsigned srclen) {
   const char* e = src+srclen;
   while (p < e) {
     if (*p & 0x80) {
-      int len; utf8decode(p,e,&len);
+      int len = 0;
+      utf8decode(p,e,&len);
       if (len < 2) return 0;
       if (len > ret) ret = len;
       p += len;

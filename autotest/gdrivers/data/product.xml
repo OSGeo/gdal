@@ -69,6 +69,27 @@
                     </geodeticCoordinate>
                 </imageTiePoint>
             </geolocationGrid>
+            <rationalFunctions>
+              <!-- dummy and invalid values ! -->
+              <biasError units="m">biasError</biasError>
+              <randomError units="m">randomError</randomError>
+              <lineFitQuality>lineFitQuality</lineFitQuality>
+              <pixelFitQuality>pixelFitQuality</pixelFitQuality>
+              <lineOffset>lineOffset</lineOffset>
+              <pixelOffset>pixelOffset</pixelOffset>
+              <latitudeOffset units="deg">latitudeOffset</latitudeOffset>
+              <longitudeOffset units="deg">longitudeOffset</longitudeOffset>
+              <heightOffset units="m">heightOffset</heightOffset>
+              <lineScale>lineScale</lineScale>
+              <pixelScale>pixelScale</pixelScale>
+              <latitudeScale>latitudeScale</latitudeScale>
+              <longitudeScale>longitudeScale</longitudeScale>
+              <heightScale>heightScale</heightScale>
+              <lineNumeratorCoefficients>lineNumeratorCoefficients</lineNumeratorCoefficients>
+              <lineDenominatorCoefficients>lineDenominatorCoefficients</lineDenominatorCoefficients>
+              <pixelNumeratorCoefficients>pixelNumeratorCoefficients</pixelNumeratorCoefficients>
+              <pixelDenominatorCoefficients>pixelDenominatorCoefficients</pixelDenominatorCoefficients>
+            </rationalFunctions>
             <referenceEllipsoidParameters>
                 <ellipsoidName>WGS84</ellipsoidName>
                 <semiMajorAxis>6378137</semiMajorAxis>

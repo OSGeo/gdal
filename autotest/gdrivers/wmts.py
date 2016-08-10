@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  WMTS driver test suite.
 # Author:   Even Rouault, even dot rouault at spatialys.com
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -48,7 +48,7 @@ def wmts_1():
     if gdaltest.wmts_drv is not None and gdal.GetDriverByName('WMS') is None:
         print('Missing WMS driver')
         gdaltest.wmts_drv = None
-    
+
     if gdaltest.wmts_drv is not None:
 
         gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
@@ -645,7 +645,7 @@ def wmts_14():
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo') 
+    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     gdal.PopErrorHandler()
     if res != '':
         gdaltest.post_reason('fail')
@@ -662,7 +662,7 @@ def wmts_14():
 
     gdaltest.wmts_drv.CreateCopy('/vsimem/gdal_nominal.xml', ds)
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/gdal_nominal.xml', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
@@ -690,12 +690,12 @@ def wmts_14():
 
     ds = gdal.Open('/vsimem/gdal_nominal.xml')
     gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/18/0/0/2/1.txt', 'foo')
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo') 
+    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != '<LocationInfo>foo</LocationInfo>':
         gdaltest.post_reason('fail')
         print(res)
         return 'fail'
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo') 
+    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != '<LocationInfo>foo</LocationInfo>':
         gdaltest.post_reason('fail')
         print(res)
@@ -728,7 +728,7 @@ def wmts_14():
 
     ds = gdal.Open('WMTS:/vsimem/nominal.xml')
     gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/18/0/0/2/1.txt', '<?xml version="1.0" encoding="UTF-8"?><xml_content/>')
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo') 
+    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != """<LocationInfo><xml_content />
 </LocationInfo>""":
         gdaltest.post_reason('fail')
@@ -849,7 +849,7 @@ def wmts_15():
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.PushErrorHandler()
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo') 
+    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     gdal.PopErrorHandler()
     if res != '':
         gdaltest.post_reason('fail')
@@ -861,7 +861,7 @@ def wmts_15():
 
     ds = gdal.Open('/vsimem/gdal_nominal_kvp.xml')
     gdal.FileFromMemBuffer('/vsimem/nominal_kvp.xml?service=WMTS&request=GetFeatureInfo&version=1.0.0&layer=lyr1&style=default_style&InfoFormat=text/plain&TileMatrixSet=tms&TileMatrix=18&TileRow=0&TileCol=0&J=2&I=1&time=2011-10-04', 'bar')
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo') 
+    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != '<LocationInfo>bar</LocationInfo>':
         gdaltest.post_reason('fail')
         print(res)
@@ -1507,7 +1507,7 @@ def wmts_cleanup():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     wmts_1,
     wmts_2,
     wmts_3,

@@ -1,26 +1,26 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Name:     gdalproximity
 #  Project:  GDAL Python Interface
 #  Purpose:  Application for computing raster proximity maps.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -30,16 +30,13 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
 import sys
+
+from osgeo import gdal
 
 def Usage():
     print("""
-gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n] 
+gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
                   [-ot Byte/Int16/Int32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
@@ -131,13 +128,13 @@ while i < len(argv):
 
 if src_filename is None or dst_filename is None:
     Usage()
-    
+
 # =============================================================================
 #    Open source file
 # =============================================================================
 
 src_ds = gdal.Open( src_filename )
-    
+
 if src_ds is None:
     print('Unable to open %s' % src_filename)
     sys.exit(1)
@@ -169,7 +166,7 @@ if dst_ds is None:
 
     dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
     dst_ds.SetProjection( src_ds.GetProjectionRef() )
-    
+
     dstband = dst_ds.GetRasterBand(1)
 
 # =============================================================================
@@ -180,16 +177,11 @@ if quiet_flag:
     prog_func = None
 else:
     prog_func = gdal.TermProgress
-    
+
 gdal.ComputeProximity( srcband, dstband, options,
                        callback = prog_func )
-    
+
 srcband = None
 dstband = None
 src_ds = None
 dst_ds = None
-
-
-
-
-

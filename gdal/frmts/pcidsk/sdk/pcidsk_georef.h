@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_GEOREF_H
-#define __INCLUDE_PCIDSK_GEOREF_H
+#ifndef INCLUDE_PCIDSK_GEOREF_H
+#define INCLUDE_PCIDSK_GEOREF_H
 
 #include <string>
 #include <vector>
@@ -80,7 +80,7 @@ pixel.  For an ungeoreferenced image the values will be
 /**
 \brief Fetch georeferencing string.
 
-Returns the short, 16 character, georeferncing string.  This string is
+Returns the short, 16 character, georeferencing string.  This string is
 sufficient to document the coordinate system of simple coordinate
 systems (like "UTM    17 S D000"), while other coordinate systems are
 only fully defined with additional projection parameters.
@@ -158,4 +158,4 @@ See GetParameters() for the description of the parameters list.
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_PCIDSK_GEOREF_H
+#endif // INCLUDE_PCIDSK_GEOREF_H

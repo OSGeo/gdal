@@ -81,24 +81,8 @@ UseExceptions = _gnm.UseExceptions
 def DontUseExceptions(*args):
   return _gnm.DontUseExceptions(*args)
 DontUseExceptions = _gnm.DontUseExceptions
-class MajorObject(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, MajorObject, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, MajorObject, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
-    __repr__ = _swig_repr
-    def GetDescription(self, *args): return _gnm.MajorObject_GetDescription(self, *args)
-    def SetDescription(self, *args): return _gnm.MajorObject_SetDescription(self, *args)
-    def GetMetadataDomainList(self, *args): return _gnm.MajorObject_GetMetadataDomainList(self, *args)
-    def GetMetadata_Dict(self, *args): return _gnm.MajorObject_GetMetadata_Dict(self, *args)
-    def GetMetadata_List(self, *args): return _gnm.MajorObject_GetMetadata_List(self, *args)
-    def SetMetadata(self, *args): return _gnm.MajorObject_SetMetadata(self, *args)
-    def GetMetadataItem(self, *args): return _gnm.MajorObject_GetMetadataItem(self, *args)
-    def SetMetadataItem(self, *args): return _gnm.MajorObject_SetMetadataItem(self, *args)
-MajorObject_swigregister = _gnm.MajorObject_swigregister
-MajorObject_swigregister(MajorObject)
-
+import ogr
+import osr
 GATDijkstraShortestPath = _gnm.GATDijkstraShortestPath
 GATKShortestPath = _gnm.GATKShortestPath
 GATConnectedComponents = _gnm.GATConnectedComponents
@@ -109,24 +93,26 @@ GNM_EDGE_DIR_TGTTOSRC = _gnm.GNM_EDGE_DIR_TGTTOSRC
 def CastToNetwork(*args):
   """CastToNetwork(MajorObject base) -> Network"""
   return _gnm.CastToNetwork(*args)
+CastToNetwork = _gnm.CastToNetwork
 
 def CastToGenericNetwork(*args):
   """CastToGenericNetwork(MajorObject base) -> GenericNetwork"""
   return _gnm.CastToGenericNetwork(*args)
-class Network(MajorObject):
+CastToGenericNetwork = _gnm.CastToGenericNetwork
+class Network(ogr.MajorObject):
     """Proxy of C++ GNMNetworkShadow class"""
     __swig_setmethods__ = {}
-    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    for _s in [ogr.MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, Network, name, value)
     __swig_getmethods__ = {}
-    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [ogr.MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, Network, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
     __swig_destroy__ = _gnm.delete_Network
     __del__ = lambda self : None;
     def ReleaseResultSet(self, *args):
-        """ReleaseResultSet(Network self, OGRLayerShadow * layer)"""
+        """ReleaseResultSet(Network self, Layer layer)"""
         return _gnm.Network_ReleaseResultSet(self, *args)
 
     def GetVersion(self, *args):
@@ -138,11 +124,11 @@ class Network(MajorObject):
         return _gnm.Network_GetName(self, *args)
 
     def GetFeatureByGlobalFID(self, *args):
-        """GetFeatureByGlobalFID(Network self, GIntBig GFID) -> OGRFeatureShadow *"""
+        """GetFeatureByGlobalFID(Network self, GIntBig GFID) -> Feature"""
         return _gnm.Network_GetFeatureByGlobalFID(self, *args)
 
     def GetPath(self, *args, **kwargs):
-        """GetPath(Network self, GIntBig nStartFID, GIntBig nEndFID, GNMGraphAlgorithmType eAlgorithm, char ** options=None) -> OGRLayerShadow *"""
+        """GetPath(Network self, GIntBig nStartFID, GIntBig nEndFID, GNMGraphAlgorithmType eAlgorithm, char ** options=None) -> Layer"""
         return _gnm.Network_GetPath(self, *args, **kwargs)
 
     def DisconnectAll(self, *args):
@@ -163,13 +149,13 @@ class Network(MajorObject):
 
     def CreateLayer(self, *args, **kwargs):
         """
-        CreateLayer(Network self, char const * name, OSRSpatialReferenceShadow * srs=None, OGRwkbGeometryType geom_type=wkbUnknown, 
-            char ** options=None) -> OGRLayerShadow *
+        CreateLayer(Network self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown, 
+            char ** options=None) -> Layer
         """
         return _gnm.Network_CreateLayer(self, *args, **kwargs)
 
     def CopyLayer(self, *args, **kwargs):
-        """CopyLayer(Network self, OGRLayerShadow * src_layer, char const * new_name, char ** options=None) -> OGRLayerShadow *"""
+        """CopyLayer(Network self, Layer src_layer, char const * new_name, char ** options=None) -> Layer"""
         return _gnm.Network_CopyLayer(self, *args, **kwargs)
 
     def DeleteLayer(self, *args):
@@ -181,11 +167,11 @@ class Network(MajorObject):
         return _gnm.Network_GetLayerCount(self, *args)
 
     def GetLayerByIndex(self, *args):
-        """GetLayerByIndex(Network self, int index=0) -> OGRLayerShadow *"""
+        """GetLayerByIndex(Network self, int index=0) -> Layer"""
         return _gnm.Network_GetLayerByIndex(self, *args)
 
     def GetLayerByName(self, *args):
-        """GetLayerByName(Network self, char const * layer_name) -> OGRLayerShadow *"""
+        """GetLayerByName(Network self, char const * layer_name) -> Layer"""
         return _gnm.Network_GetLayerByName(self, *args)
 
     def TestCapability(self, *args):

@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for PCIDSK driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -54,7 +54,7 @@ def pcidsk_2():
     tst = gdaltest.GDALTest( 'PCIDSK', 'rgba16.png', 2, 2042 )
 
     return tst.testCreate()
-    
+
 ###############################################################################
 # Test copying of georeferencing and projection.
 
@@ -104,7 +104,7 @@ def pcidsk_5():
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
-    
+
     gdaltest.pcidsk_ds.SetMetadata( [ 'ABC=DEF', 'GHI=JKL' ] )
     gdaltest.pcidsk_ds.SetMetadataItem( 'XXX',  'YYY' )
     gdaltest.pcidsk_ds.SetMetadataItem( 'XYZ',  '123', 'AltDomain' )
@@ -140,7 +140,7 @@ def pcidsk_6():
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
     band = gdaltest.pcidsk_ds.GetRasterBand(1)
-    
+
     band.SetMetadata( [ 'ABC=DEF', 'GHI=JKL' ] )
     band.SetMetadataItem( 'XXX',  'YYY' )
     band.SetMetadataItem( 'XYZ',  '123', 'AltDomain' )
@@ -193,16 +193,16 @@ def pcidsk_7():
     if ct.GetColorEntry(1) != (255,0,255,255):
         gdaltest.post_reason( 'Got wrong color table entry immediately.' )
         return 'fail'
-    
+
     ct = None
     band = None
-    
+
     # Close and reopen.
     gdaltest.pcidsk_ds = None
     gdaltest.pcidsk_ds = gdal.Open( 'tmp/pcidsk_5.pix', gdal.GA_Update )
 
     band = gdaltest.pcidsk_ds.GetRasterBand(1)
-    
+
     ct = band.GetColorTable()
 
     if ct.GetColorEntry(1) != (255,0,255,255):
@@ -220,7 +220,7 @@ def pcidsk_7():
     if band.GetColorTable() is not None:
         gdaltest.post_reason( 'color table still exists!' )
         return 'fail'
-    
+
     if band.GetColorInterpretation() != gdal.GCI_Undefined:
         gdaltest.post_reason( 'Paletted?' )
         return 'fail'
@@ -476,7 +476,7 @@ def pcidsk_15():
 def pcidsk_online_1():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
-    
+
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/irvine_gcp2.pix', 'irvine_gcp2.pix'):
         return 'skip'
 
@@ -546,4 +546,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

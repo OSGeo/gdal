@@ -1,0 +1,263 @@
+<n1:Level-2A_User_Product xmlns:n1="https://psd-12.sentinel2.eo.esa.int/PSD/User_Product_Level-2A.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-2A.xsd S2_User_Product_Level-2A_Metadata.xsd">
+  <n1:General_Info>
+    <L2A_Product_Info>
+            <PRODUCT_START_TIME>2015-12-31T23:59:59.999Z</PRODUCT_START_TIME>
+            <PRODUCT_STOP_TIME>2015-12-31T23:59:59.999Z</PRODUCT_STOP_TIME>
+            <PRODUCT_URI/>
+      <PROCESSING_LEVEL>Level-2Ap</PROCESSING_LEVEL>
+      <PRODUCT_TYPE>S2MSI2Ap</PRODUCT_TYPE>
+            <PROCESSING_BASELINE>01.03</PROCESSING_BASELINE>
+            <GENERATION_TIME>2015-12-31T23:59:59.999Z</GENERATION_TIME>
+            <PREVIEW_IMAGE_URL>http://example.com</PREVIEW_IMAGE_URL>
+            <PREVIEW_GEO_INFO>BrowseImageFootprint</PREVIEW_GEO_INFO>
+            <Datatake datatakeIdentifier="GS2A_20151231T235959_000123_N01.03">
+      <SPACECRAFT_NAME>Sentinel-2A</SPACECRAFT_NAME>
+      <DATATAKE_TYPE>INS-NOBS</DATATAKE_TYPE>
+      <DATATAKE_SENSING_START>2015-12-31T23:59:59.999Z</DATATAKE_SENSING_START>
+      <SENSING_ORBIT_NUMBER>22</SENSING_ORBIT_NUMBER>
+      <SENSING_ORBIT_DIRECTION>DESCENDING</SENSING_ORBIT_DIRECTION>
+    </Datatake>
+<Query_Options>
+<Area_Of_Interest>
+                    <Bbox>
+                        <LOWER_CORNER>-90.0 -180.0</LOWER_CORNER>
+                        <UPPER_CORNER>90.0 180.0</UPPER_CORNER>
+                    </Bbox>
+                </Area_Of_Interest>
+                <FULL_SWATH_DATATAKE>false</FULL_SWATH_DATATAKE>
+<PREVIEW_IMAGE>false</PREVIEW_IMAGE>
+<Band_List>
+<BAND_NAME>B1</BAND_NAME>
+<BAND_NAME>B2</BAND_NAME>
+<BAND_NAME>B3</BAND_NAME>
+<BAND_NAME>B4</BAND_NAME>
+<BAND_NAME>B5</BAND_NAME>
+<BAND_NAME>B6</BAND_NAME>
+<BAND_NAME>B7</BAND_NAME>
+<!--<BAND_NAME>B8</BAND_NAME>-->
+<BAND_NAME>B9</BAND_NAME>
+<BAND_NAME>B10</BAND_NAME>
+<BAND_NAME>B11</BAND_NAME>
+<BAND_NAME>B12</BAND_NAME>
+<BAND_NAME>B8A</BAND_NAME>
+</Band_List>
+<METADATA_LEVEL>Brief</METADATA_LEVEL>
+<Aux_List productLevel="Level-2Ap">
+<aux>
+                        <GIPP>YES</GIPP>
+                    </aux>
+<aux>
+                        <IERS>YES</IERS>
+                    </aux>
+</Aux_List>
+<PRODUCT_FORMAT>SAFE</PRODUCT_FORMAT>
+<AGGREGATION_FLAG>false</AGGREGATION_FLAG>
+</Query_Options>
+      <L2A_Product_Organisation>
+                <Granule_List>
+                    <Granules datastripIdentifier="S2A_USER_MSI_L2A_DS_MTI__20151231T235959_S20151231T235959_N01.03" granuleIdentifier="S2A_USER_MSI_L2A_T32TQR_N01.03" imageFormat="JPEG2000">
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B01_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B02_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B03_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B04_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B05_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B06_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B07_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B8A_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B09_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B10_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B11_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_MSI_L2A_T32TQR_B12_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_SCL_L2A_T32TQR_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_SNW_L2A_T32TQR_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_CLD_L2A_T32TQR_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_AOT_L2A_T32TQR_60m</IMAGE_ID_2A>
+                        <IMAGE_ID_2A>S2A_USER_WVP_L2A_T32TQR_60m</IMAGE_ID_2A>
+                    </Granules>
+                </Granule_List>
+            </L2A_Product_Organisation>
+        </L2A_Product_Info>
+        <L2A_Product_Image_Characteristics>
+            <Special_Values>
+                <SPECIAL_VALUE_TEXT>NODATA</SPECIAL_VALUE_TEXT>
+                <SPECIAL_VALUE_INDEX>1</SPECIAL_VALUE_INDEX>
+            </Special_Values>
+            <Special_Values>
+                <SPECIAL_VALUE_TEXT>SATURATED</SPECIAL_VALUE_TEXT>
+                <SPECIAL_VALUE_INDEX>0</SPECIAL_VALUE_INDEX>
+            </Special_Values>
+            <Image_Display_Order>
+                <RED_CHANNEL>3</RED_CHANNEL>
+                <GREEN_CHANNEL>2</GREEN_CHANNEL>
+                <BLUE_CHANNEL>1</BLUE_CHANNEL>
+            </Image_Display_Order>
+      <L1C_L2A_Quantification_Values_List>
+        <L1C_TOA_QUANTIFICATION_VALUE unit="none">1000</L1C_TOA_QUANTIFICATION_VALUE>
+        <L2A_BOA_QUANTIFICATION_VALUE unit="none">1000</L2A_BOA_QUANTIFICATION_VALUE>
+        <L2A_AOT_QUANTIFICATION_VALUE unit="none">1000.0</L2A_AOT_QUANTIFICATION_VALUE>
+        <L2A_WVP_QUANTIFICATION_VALUE unit="cm">1000.0</L2A_WVP_QUANTIFICATION_VALUE>
+      </L1C_L2A_Quantification_Values_List>
+            <Reflectance_Conversion>
+        <U>0.97</U>
+        <Solar_Irradiance_List>
+          <SOLAR_IRRADIANCE bandId="0" unit="W/m²/µm">1900</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="1" unit="W/m²/µm">1900</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="2" unit="W/m²/µm">1800</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="3" unit="W/m²/µm">1500</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="4" unit="W/m²/µm">1400</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="5" unit="W/m²/µm">1200</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="6" unit="W/m²/µm">1100</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="7" unit="W/m²/µm">1000</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="8" unit="W/m²/µm">900</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="9" unit="W/m²/µm">800</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="10" unit="W/m²/µm">300</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="11" unit="W/m²/µm">200</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="12" unit="W/m²/µm">80</SOLAR_IRRADIANCE>
+        </Solar_Irradiance_List>
+      </Reflectance_Conversion>
+            <PHYSICAL_GAINS bandId="0">4</PHYSICAL_GAINS>
+<!-- Error in sen2cor embedded schema ?
+            <PHYSICAL_GAINS bandId="1">3</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="2">3</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="3">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="4">5</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="5">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="6">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="7">6</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="8">5</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="9">8</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="10">61</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="11">37</PHYSICAL_GAINS>
+-->
+            <REFERENCE_BAND>0</REFERENCE_BAND>
+<L2A_Scene_Classification_List>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_NODATA</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>0</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_SATURATED_DEFECTIVE</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>1</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_DARK_FEATURE_SHADOW</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>2</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_CLOUD_SHADOW</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>3</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_VEGETATION</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>4</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_BARE_SOIL_DESERT</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>5</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_WATER</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>6</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_CLOUD_LOW_PROBA</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>7</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_CLOUD_MEDIUM_PROBA</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>8</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_CLOUD_HIGH_PROBA</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>9</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_THIN_CIRRUS</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>10</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+        <L2A_Scene_Classification_ID>
+          <L2A_SCENE_CLASSIFICATION_TEXT>SC_SNOW_ICE</L2A_SCENE_CLASSIFICATION_TEXT>
+          <L2A_SCENE_CLASSIFICATION_INDEX>11</L2A_SCENE_CLASSIFICATION_INDEX>
+        </L2A_Scene_Classification_ID>
+      </L2A_Scene_Classification_List>
+        </L2A_Product_Image_Characteristics>
+    </n1:General_Info>
+    <n1:Geometric_Info>
+        <Product_Footprint>
+            <Product_Footprint>
+                <Global_Footprint>
+                    <EXT_POS_LIST> 46 11 45 11 45 13 46 13 46 11</EXT_POS_LIST>
+                </Global_Footprint>
+            </Product_Footprint>
+            <RASTER_CS_TYPE>POINT</RASTER_CS_TYPE>
+            <PIXEL_ORIGIN>1</PIXEL_ORIGIN>
+        </Product_Footprint>
+        <Coordinate_Reference_System>
+            <GEO_TABLES version="1">EPSG</GEO_TABLES>
+            <HORIZONTAL_CS_TYPE>GEOGRAPHIC</HORIZONTAL_CS_TYPE>
+        </Coordinate_Reference_System>
+    </n1:Geometric_Info>
+    <n1:Auxiliary_Data_Info>
+        <GIPP_List>
+      <GIPP_FILENAME type="GIP_BLINDP" version="0003">S2A_OPER_GIP_BLINDP_MPC__20150605T094736_V20150622T000000_21000101T000000_B00</GIPP_FILENAME>
+    </GIPP_List>
+        <PRODUCTION_DEM_TYPE>S2__USER_DEM_GLOBEF_PDMC_19800101T000000_S19800101T000000</PRODUCTION_DEM_TYPE>
+        <IERS_BULLETIN_FILENAME>S2__USER_AUX_UT1UTC_PDMC_20151001T000000_V20151002T000000_20161001T000000</IERS_BULLETIN_FILENAME>
+        <GRI_FILENAME>S2A_USER_AUX_GRI065_PDMC_20130621T120000_S20130101T000000</GRI_FILENAME>
+        <ECMWF_FILENAME>S2__USER_AUX_ECMWFD_FAKE_19800101T000000_V19800101T000000_19800101T000000</ECMWF_FILENAME>
+    </n1:Auxiliary_Data_Info>
+  <n1:L2A_Auxiliary_Data_Info>
+    <Aux_Data>
+      <L2A_GIPP_List>
+        <GIPP_FILENAME type="GIP_Level-2Ap" version="2.0.5">S2A_USER_GIP_L2A_TL_MTI__20151231T235959_A000123_T32TQR</GIPP_FILENAME>
+      </L2A_GIPP_List>
+      <L2A_PRODUCTION_DEM_TYPE>http://xxxx</L2A_PRODUCTION_DEM_TYPE>
+      <L2A_LIBRADTRAN_LUTS>xxxx.atm</L2A_LIBRADTRAN_LUTS>
+      <L2A_SNOW_CLIMATOLOGY>xxxx.tiff</L2A_SNOW_CLIMATOLOGY>
+    </Aux_Data>
+  </n1:L2A_Auxiliary_Data_Info>
+    <n1:Quality_Indicators_Info>
+        <Cloud_Coverage_Assessment>0.0</Cloud_Coverage_Assessment>
+        <Technical_Quality_Assessment>
+            <DEGRADED_ANC_DATA_PERCENTAGE>0</DEGRADED_ANC_DATA_PERCENTAGE>
+            <DEGRADED_MSI_DATA_PERCENTAGE>0</DEGRADED_MSI_DATA_PERCENTAGE>
+        </Technical_Quality_Assessment>
+        <Quality_Control_Checks>
+            <Quality_Inspections>
+                <SENSOR_QUALITY_FLAG>PASSED</SENSOR_QUALITY_FLAG>
+                <GEOMETRIC_QUALITY_FLAG>PASSED</GEOMETRIC_QUALITY_FLAG>
+                <GENERAL_QUALITY_FLAG>PASSED</GENERAL_QUALITY_FLAG>
+                <FORMAT_CORRECTNESS_FLAG>PASSED</FORMAT_CORRECTNESS_FLAG>
+                <RADIOMETRIC_QUALITY_FLAG>PASSED</RADIOMETRIC_QUALITY_FLAG>
+            </Quality_Inspections>
+            <Failed_Inspections>
+                <Datastrip_Report datastripId="S2A_USER_MSI_L2A_DS_MTI__20151231T235959_S20151231T235959_N01">
+                    <REPORT_FILENAME/>
+                </Datastrip_Report>
+                <Granule_Report granuleId="">
+                    <REPORT_FILENAME/>
+                </Granule_Report>
+            </Failed_Inspections>
+        </Quality_Control_Checks>
+    </n1:Quality_Indicators_Info>
+  <n1:L2A_Quality_Indicators_Info>
+    <Image_Content_QI>
+        <NODATA_PIXEL_PERCENTAGE>0</NODATA_PIXEL_PERCENTAGE>
+        <SATURATED_DEFECTIVE_PIXEL_PERCENTAGE>0</SATURATED_DEFECTIVE_PIXEL_PERCENTAGE>
+        <DARK_FEATURES_PERCENTAGE>0</DARK_FEATURES_PERCENTAGE>
+        <CLOUD_SHADOW_PERCENTAGE>0</CLOUD_SHADOW_PERCENTAGE>
+        <VEGETATION_PERCENTAGE>0</VEGETATION_PERCENTAGE>
+        <BARE_SOILS_PERCENTAGE>0</BARE_SOILS_PERCENTAGE>
+        <WATER_PERCENTAGE>0</WATER_PERCENTAGE>
+        <LOW_PROBA_CLOUDS_PERCENTAGE>0</LOW_PROBA_CLOUDS_PERCENTAGE>
+        <MEDIUM_PROBA_CLOUDS_PERCENTAGE>0</MEDIUM_PROBA_CLOUDS_PERCENTAGE>
+        <HIGH_PROBA_CLOUDS_PERCENTAGE>0</HIGH_PROBA_CLOUDS_PERCENTAGE>
+        <THIN_CIRRUS_PERCENTAGE>0</THIN_CIRRUS_PERCENTAGE>
+        <SNOW_ICE_PERCENTAGE>0</SNOW_ICE_PERCENTAGE>
+        <RADIATIVE_TRANSFER_ACCURAY>0</RADIATIVE_TRANSFER_ACCURAY>
+        <WATER_VAPOUR_RETRIEVAL_ACCURACY>0</WATER_VAPOUR_RETRIEVAL_ACCURACY>
+        <AOT_RETRIEVAL_ACCURACY>0</AOT_RETRIEVAL_ACCURACY>
+    </Image_Content_QI>
+  </n1:L2A_Quality_Indicators_Info>
+</n1:Level-2A_User_Product>
+

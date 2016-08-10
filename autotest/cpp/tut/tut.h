@@ -23,7 +23,7 @@
 namespace tut
 {
   /**
-   * Exception to be throwed when attempted to execute 
+   * Exception to throw when attempted to execute
    * missed test by number.
    */
   struct no_such_test : public std::logic_error
@@ -46,12 +46,12 @@ namespace tut
    */
   struct no_such_group : public std::logic_error
   {
-    no_such_group(const std::string& grp) : 
+    no_such_group(const std::string& grp) :
       std::logic_error(grp){};
   };
 
   /**
-   * Internal exception to be throwed when 
+   * Internal exception to throw when
    * no more tests left in group or journal.
    */
   struct no_more_tests
@@ -60,17 +60,17 @@ namespace tut
   };
 
   /**
-   * Internal exception to be throwed when 
+   * Internal exception to throw when
    * test constructor has failed.
    */
   struct bad_ctor : public std::logic_error
   {
-    bad_ctor(const std::string& msg) : 
+    bad_ctor(const std::string& msg) :
       std::logic_error(msg){};
   };
 
   /**
-   * Exception to be throwed when ensure() fails or fail() called.
+   * Exception to be thrown when ensure() fails or fail() called.
    */
   class failure : public std::logic_error
   {
@@ -79,7 +79,7 @@ namespace tut
   };
 
   /**
-   * Exception to be throwed when test desctructor throwed an exception.
+   * Exception to be thrown when test desctructor throws an exception.
    */
   class warning : public std::logic_error
   {
@@ -88,7 +88,7 @@ namespace tut
   };
 
   /**
-   * Exception to be throwed when test issued SEH (Win32)
+   * Exception to be thrown when test issues SEH (Win32)
    */
   class seh : public std::logic_error
   {
@@ -97,7 +97,7 @@ namespace tut
   };
 
   /**
-   * Return type of runned test/test group.
+   * Return type of ran test/test group.
    *
    * For test: contains result of test and, possible, message
    * for failure or exception.
@@ -113,17 +113,17 @@ namespace tut
      * Test number in group.
      */
     int test;
-    
+
     /**
      * Test name (optional)
      */
     std::string name;
-    
+
     /**
      * ok - test finished successfully
      * fail - test failed with ensure() or fail() methods
-     * ex - test throwed an exceptions
-     * warn - test finished successfully, but test destructor throwed
+     * ex - test throws an exceptions
+     * warn - test finished successfully, but test destructor threw
      * term - test forced test application to terminate abnormally
      */
     typedef enum { ok, fail, ex, warn, term, ex_ctor } result_type;
@@ -146,7 +146,7 @@ namespace tut
     /**
      * Constructor.
      */
-    test_result(const std::string& grp, int pos, 
+    test_result(const std::string& grp, int pos,
     	const std::string& test_name, result_type res)
       : group(grp), test(pos), name(test_name), result(res)
     {
@@ -155,7 +155,7 @@ namespace tut
     /**
      * Constructor with exception.
      */
-    test_result(const std::string& grp,int pos, 
+    test_result(const std::string& grp,int pos,
     	const std::string& test_name, result_type res,
         const std::exception& ex)
       : group(grp), test(pos), name(test_name), result(res),
@@ -183,8 +183,8 @@ namespace tut
   /**
    * Test runner callback interface.
    * Can be implemented by caller to update
-   * tests results in real-time. User can implement 
-   * any of callback methods, and leave unused 
+   * tests results in real-time. User can implement
+   * any of callback methods, and leave unused
    * in default implementation.
    */
   struct callback
@@ -221,7 +221,7 @@ namespace tut
      * Called when all tests in run completed.
      */
     virtual void run_completed(){};
-    
+
     virtual bool all_ok() const { return true; }
   };
 
@@ -333,7 +333,7 @@ namespace tut
       }
 
       callback_->run_completed();
-      
+
       return callback_->all_ok();
     }
 
@@ -393,7 +393,7 @@ namespace tut
         callback_->group_completed(group_name);
         callback_->run_completed();
         throw;
-      }      
+      }
       catch( const no_such_test& )
       {
         callback_->group_completed(group_name);
@@ -436,8 +436,8 @@ namespace tut
   extern test_runner_singleton runner;
 
   /**
-   * Test object. Contains data test run upon and default test method 
-   * implementation. Inherited from Data to allow tests to  
+   * Test object. Contains data test run upon and default test method
+   * implementation. Inherited from Data to allow tests to
    * access test data as members.
    */
   template <class Data>
@@ -451,18 +451,18 @@ namespace tut
 
     /**
      * The flag is set to true by default (dummy) test.
-     * Used to detect usused test numbers and avoid unnecessary
+     * Used to detect unused test numbers and avoid unnecessary
      * test object creation which may be time-consuming depending
      * on operations described in Data::Data() and Data::~Data().
-     * TODO: replace with throwing special exception from default test.
+     * TODO: Replace with throwing special exception from default test.
      */
     bool called_method_was_a_dummy_test_;
-    
+
     void set_test_name(const std::string& current_test_name)
     {
-    	current_test_name_ = current_test_name; 
+    	current_test_name_ = current_test_name;
     }
-    
+
     const std::string& get_test_name() const
     {
     	return current_test_name_;
@@ -476,13 +476,13 @@ namespace tut
     {
       called_method_was_a_dummy_test_ = true;
     }
-    
+
     private:
-    
+
     	std::string current_test_name_;
   };
 
-  namespace 
+  namespace
   {
     /**
      * Tests provided condition.
@@ -527,6 +527,16 @@ namespace tut
       ensure_equals<>(0,actual,expected);
     }
 
+    void ensure_equals(const char* msg, const char* actual,const char* expected)
+    {
+      ensure_equals(msg, std::string(actual), std::string(expected));
+    }
+
+    void ensure_equals(const char* actual,const char* expected)
+    {
+      ensure_equals(0,actual,expected);
+    }
+
     /**
      * Tests two objects for being at most in given distance one from another.
      * Borders are excluded.
@@ -542,7 +552,7 @@ namespace tut
       if( expected-distance >= actual || expected+distance <= actual )
       {
         std::stringstream ss;
-        ss << (msg?msg:"") << (msg?": ":"") << "expected [" << expected-distance << ";" 
+        ss << (msg?msg:"") << (msg?": ":"") << "expected [" << expected-distance << ";"
            << expected+distance << "] actual " << actual;
         throw failure(ss.str().c_str());
       }
@@ -585,7 +595,7 @@ namespace tut
 
   /**
    * Test group; used to recreate test object instance for
-   * each new test since we have to have reinitialized 
+   * each new test since we have to have reinitialized
    * Data base class.
    */
   template <class Data,int MaxTestsInGroup = 50>
@@ -597,7 +607,7 @@ namespace tut
     typedef std::map<int,testmethod> tests;
     typedef typename tests::iterator tests_iterator;
     typedef typename tests::const_iterator tests_const_iterator;
-    typedef typename tests::const_reverse_iterator 
+    typedef typename tests::const_reverse_iterator
                      tests_const_reverse_iterator;
     typedef typename tests::size_type size_type;
 
@@ -618,7 +628,7 @@ namespace tut
 
       public:
       safe_holder() : p_(0),permit_throw_in_dtor(false)
-      { 
+      {
       }
 
       ~safe_holder()
@@ -637,10 +647,10 @@ namespace tut
       void permit_throw(){ permit_throw_in_dtor = true; }
 
       /**
-       * Specially treats exceptions in test object destructor; 
+       * Specially treats exceptions in test object destructor;
        * if test itself failed, exceptions in destructor
        * are ignored; if test was successful and destructor failed,
-       * warning exception throwed.
+       * warning exception thrown.
        */
       void release()
       {
@@ -653,7 +663,7 @@ namespace tut
         }
         catch( const std::exception& ex )
         {
-          if( permit_throw_in_dtor ) 
+          if( permit_throw_in_dtor )
           {
             std::string msg = "destructor of test object raised exception: ";
             msg += ex.what();
@@ -685,7 +695,7 @@ namespace tut
         __try
         {
 #endif
-          T* p = p_; 
+          T* p = p_;
           p_ = 0;
           delete p;
 #if defined(TUT_USE_SEH)
@@ -703,7 +713,7 @@ namespace tut
     };
 
     public:
-    typedef test_object<Data> object;    
+    typedef test_object<Data> object;
 
     /**
      * Creates and registers test group with specified name.
@@ -713,7 +723,7 @@ namespace tut
     {
       // register itself
       runner.get().register_group(name_,this);
-    
+
       // register all tests
       tests_registerer<object,test_group,MaxTestsInGroup>::reg(*this);
     };
@@ -725,8 +735,8 @@ namespace tut
       : name_(name)
     {
       // register itself
-      another_runner.register_group(name_,this); 
-    
+      another_runner.register_group(name_,this);
+
       // register all tests
       tests_registerer<test_object<Data>,
                        test_group,MaxTestsInGroup>::reg(*this);
@@ -768,9 +778,9 @@ namespace tut
         }
         catch( const no_such_test& )
         {
-          continue; 
+          continue;
         }
-      } 
+      }
 
       throw no_more_tests();
     }
@@ -784,7 +794,7 @@ namespace tut
       if( tests_.rbegin() == tests_.rend() ) throw beyond_last_test();
       if( tests_.rbegin()->first < n ) throw beyond_last_test();
 
-      // withing scope; check if given test exists
+      // within scope; check if given test exists
       tests_iterator ti = tests_.find(n);
       if( ti == tests_.end() ) throw no_such_test();
 
@@ -865,7 +875,7 @@ namespace tut
       __try
       {
 #endif
-        if( obj.get() == 0 ) 
+        if( obj.get() == 0 )
 	{
           reset_holder_(obj);
 	}
@@ -907,7 +917,7 @@ namespace tut
 
     void reset_holder_(safe_holder<object>& obj)
     {
-      try 
+      try
       {
         obj.reset();
       }
@@ -935,9 +945,9 @@ namespace tut
       case EXCEPTION_BREAKPOINT:
       case EXCEPTION_SINGLE_STEP:
       case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-      case EXCEPTION_FLT_DENORMAL_OPERAND:     
+      case EXCEPTION_FLT_DENORMAL_OPERAND:
       case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-      case EXCEPTION_FLT_INEXACT_RESULT:        
+      case EXCEPTION_FLT_INEXACT_RESULT:
       case EXCEPTION_FLT_INVALID_OPERATION:
       case EXCEPTION_FLT_OVERFLOW:
       case EXCEPTION_FLT_STACK_CHECK:
@@ -953,7 +963,7 @@ namespace tut
       case EXCEPTION_GUARD_PAGE:
       case EXCEPTION_INVALID_HANDLE:
         return EXCEPTION_EXECUTE_HANDLER;
-    };    
+    };
 
     return EXCEPTION_CONTINUE_SEARCH;
   }

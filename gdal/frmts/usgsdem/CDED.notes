@@ -31,7 +31,7 @@ Offset Length Name                    Notes
   156     6   Horizontal Reference    Hardcoded to "0" (Geographic)
               System
 
-  162     6   UTM/SP Zone             Harcoded to "0".
+  162     6   UTM/SP Zone             Hardcoded to "0".
 
   168   360   Projection Parameters   Each hardcoded to 0.0.
 

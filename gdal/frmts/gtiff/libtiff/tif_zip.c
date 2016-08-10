@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.33 2014-12-25 18:29:11 erouault Exp $ */
+/* $Id: tif_zip.c,v 1.35 2015-11-22 22:37:27 erouault Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -135,7 +135,7 @@ ZIPPreDecode(TIFF* tif, uint16 s)
 	assert(sizeof(sp->stream.avail_in)==4);  /* if this assert gets raised,
 	    we need to simplify this code to reflect a ZLib that is likely updated
 	    to deal with 8byte memory sizes, though this code will respond
-	    apropriately even before we simplify it */
+	    appropriately even before we simplify it */
 	sp->stream.avail_in = (uInt) tif->tif_rawcc;
 	if ((tmsize_t)sp->stream.avail_in != tif->tif_rawcc)
 	{
@@ -162,7 +162,7 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	assert(sizeof(sp->stream.avail_out)==4);  /* if this assert gets raised,
 	    we need to simplify this code to reflect a ZLib that is likely updated
 	    to deal with 8byte memory sizes, though this code will respond
-	    apropriately even before we simplify it */
+	    appropriately even before we simplify it */
 	sp->stream.avail_out = (uInt) occ;
 	if ((tmsize_t)sp->stream.avail_out != occ)
 	{
@@ -239,8 +239,8 @@ ZIPPreEncode(TIFF* tif, uint16 s)
 	assert(sizeof(sp->stream.avail_out)==4);  /* if this assert gets raised,
 	    we need to simplify this code to reflect a ZLib that is likely updated
 	    to deal with 8byte memory sizes, though this code will respond
-	    apropriately even before we simplify it */
-	sp->stream.avail_out = tif->tif_rawdatasize;
+	    appropriately even before we simplify it */
+	sp->stream.avail_out = (uInt)tif->tif_rawdatasize;
 	if ((tmsize_t)sp->stream.avail_out != tif->tif_rawdatasize)
 	{
 		TIFFErrorExt(tif->tif_clientdata, module, "ZLib cannot deal with buffers this size");
@@ -266,7 +266,7 @@ ZIPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	assert(sizeof(sp->stream.avail_in)==4);  /* if this assert gets raised,
 	    we need to simplify this code to reflect a ZLib that is likely updated
 	    to deal with 8byte memory sizes, though this code will respond
-	    apropriately even before we simplify it */
+	    appropriately even before we simplify it */
 	sp->stream.avail_in = (uInt) cc;
 	if ((tmsize_t)sp->stream.avail_in != cc)
 	{
@@ -460,7 +460,7 @@ bad:
 		     "No space for ZIP state block");
 	return (0);
 }
-#endif /* ZIP_SUPORT */
+#endif /* ZIP_SUPPORT */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
 /*

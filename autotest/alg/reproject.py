@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test ReprojectImage() algorithm.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -35,7 +35,8 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
-from osgeo import gdal,  osr
+from osgeo import gdal
+from osgeo import osr
 
 ###############################################################################
 # Test a trivial case.
@@ -63,7 +64,7 @@ def reproject_1():
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 ###############################################################################
 # Test a real reprojection case.
@@ -96,7 +97,7 @@ def reproject_2():
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 ###############################################################################
 # Test nodata values
@@ -113,7 +114,7 @@ def reproject_3():
     dst_ds.GetRasterBand(1).SetNoDataValue(3)
     dst_ds.GetRasterBand(1).Fill(3)
     dst_ds.SetGeoTransform([10,2./3.,0,10,0,-1])
-    
+
     gdal.ReprojectImage( src_ds, dst_ds, '', '', gdal.GRA_Bilinear)
     got_data = dst_ds.GetRasterBand(1).ReadRaster(0,0,6,3).decode('latin1')
     expected_data = '\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03'
@@ -139,7 +140,7 @@ def reproject_4():
     dst_ds = gdal.GetDriverByName('MEM').Create('',6,3)
     dst_ds.GetRasterBand(1).SetNoDataValue(3)
     dst_ds.SetGeoTransform([10,2./3.,0,10,0,-1])
-    
+
     gdal.ReprojectImage( src_ds, dst_ds, '', '', gdal.GRA_Bilinear, options = ['INIT_DEST=NO_DATA'])
     got_data = dst_ds.GetRasterBand(1).ReadRaster(0,0,6,3).decode('latin1')
     expected_data = '\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03'

@@ -16,15 +16,17 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.hostname = "gdal-vagrant"
   config.vm.box_url = "http://files.vagrantup.com/precise64.box"
   config.vm.host_name = "gdal-vagrant"
-  
+
   config.vm.network :forwarded_port, guest: 80, host: 8080
+
+  config.vm.synced_folder "../autotest/", "/home/vagrant/autotest/"
 
   config.vm.provider :virtualbox do |vb|
      vb.customize ["modifyvm", :id, "--memory", vm_ram]
      vb.customize ["modifyvm", :id, "--cpus", vm_cpu]
      vb.customize ["modifyvm", :id, "--ioapic", "on"]
      vb.name = "gdal-vagrant"
-   end  
+   end
 
   ppaRepos = [
     "ppa:ubuntugis/ubuntugis-unstable", "ppa:marlam/gta"

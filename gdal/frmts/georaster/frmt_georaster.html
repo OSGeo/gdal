@@ -18,7 +18,7 @@ optionally built as a GDAL plugin, but it requires Oracle client
 libraries.
 </p>
 <p>
-When opening a GeoRaster, it's name should be specified in the form:
+When opening a GeoRaster, its name should be specified in the form:
 </p>
 <p style="font-family: Courier New,Courier,monospace; margin-left: 40px;">
 georaster:&lt;user&gt;{,/}&lt;pwd&gt;{,@}[db],[schema.][table],[column],[where]<br>
@@ -47,7 +47,7 @@ geor:scott/tiger,,rdt_10$,10</p>
 <p>Note: like in the last two examples, the database name field could
 be left empty (",,") and the&nbsp;TNSNAME will be&nbsp;used.</p>
 <p>Note: If &nbsp;the query results in more than one GeoRaster it will
-be treated as a GDAL metadata's list of sub-datasets (see bellow)</p>
+be treated as a GDAL metadata's list of sub-datasets (see below)</p>
 <h3>Browsing the database for GeoRasters
 <br>
 </h3>
@@ -122,23 +122,23 @@ geor:scott/tiger@orcl,landsat,raster \<br>
   <li><strong>COMPRESS</strong>: Compression options, JPEG-F,
 DEFLATE or NONE. The two JPEG options are lossy, meaning that the
 original pixel values are changed.</li>
-  <li><strong>GENPYRAMID</strong>: Generate pyramid after a GeoRaster object have been loaded to the database. 
-The content of that parameter must be the resampling method of 
-choice NN (nearest neighbor) , BILINEAR, BIQUADRATIC, CUBIC, AVERAGE4 or AVERAGE16. If GENPYRLEVELS is not 
+  <li><strong>GENPYRAMID</strong>: Generate pyramid after a GeoRaster object have been loaded to the database.
+The content of that parameter must be the resampling method of
+choice NN (nearest neighbor) , BILINEAR, BIQUADRATIC, CUBIC, AVERAGE4 or AVERAGE16. If GENPYRLEVELS is not
 informed the PL/SQL function sdo_geor.generatePyramid will calculate the number of levels to generate.</li>
   <li><strong>GENPYRLEVELS</strong>: Define the number of pyramid levels to be generated.
 If GENPYRAMID is not informed the resample method NN (nearest neighbor) will apply.</li>
-  <li><strong>QUALITY</strong>: Quality compression option for JPEG 
+  <li><strong>QUALITY</strong>: Quality compression option for JPEG
 ranging from 0 to 100. The default is 75.</li>
   <li><strong>NBITS</strong>: Sub byte data type, options: 1, 2 or 4.</li>
-  <li><strong>SPATIALEXTENT</strong>: Generate Spatial Extents. The default for that options is 
-TRUE, that means that this option only need to be informed to force the Spatial Extent to 
-remain as NULL. If EXTENTSRID is not informed the Spatial Extent geometry will be generated with 
+  <li><strong>SPATIALEXTENT</strong>: Generate Spatial Extents. The default for that options is
+TRUE, that means that this option only need to be informed to force the Spatial Extent to
+remain as NULL. If EXTENTSRID is not informed the Spatial Extent geometry will be generated with
 the same SRID as the GeoGeoraster object.</li>
-  <li><strong>EXTENTSRID</strong>: SRID code to be used on the Spatial Extent geometry. 
-If the table/column has already a spatial extent, the value informed should be the same as the 
+  <li><strong>EXTENTSRID</strong>: SRID code to be used on the Spatial Extent geometry.
+If the table/column has already a spatial extent, the value informed should be the same as the
 SRID on the Spatial Extent of the other existing GeoRaster.</li>
-  <li><strong>OBJECTTABLE</strong>: To create RDT as SDO_RASTER object inform TRUE otherwise, the default 
+  <li><strong>OBJECTTABLE</strong>: To create RDT as SDO_RASTER object inform TRUE otherwise, the default
   is FALSE and the RDT will be created as regular relational tables. That does not apply for Oracle version older than 11.</li>
 </ul>
 <strong></strong>
@@ -230,8 +230,8 @@ gdal_translate&nbsp;</span><span style="font-family: Courier New,Courier,monospa
 gdal_translate&nbsp;</span><span style="font-family: Courier New,Courier,monospace;">geor:spock/lion@orcl,gdal_rdt,101
 out.tif<br>
 <br>
-</span>Note: On the above example that&nbsp;acessing by RDT/RID doesn't
-need schame name as long as the users is granted full acess to both
+</span>Note: On the above example that&nbsp;accessing by RDT/RID doesn't
+need schame name as long as the users is granted full access to both
 tables.<br>
 <br>
 Loading:<br>

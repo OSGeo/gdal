@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Epsilon driver
  * Purpose:  Implement GDAL Epsilon support using Epsilon library
@@ -27,8 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "epsilon.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+
+#include "epsilon.h"
 
 CPL_CVSID("$Id$");
 
@@ -68,26 +69,26 @@ class EpsilonDataset : public GDALPamDataset
 
     VSILFILE*    fp;
     vsi_l_offset nFileOff;
-    
+
     GByte*   pabyFileBuf;
     int      nFileBufMaxSize;
     int      nFileBufCurSize;
     int      nFileBufOffset;
     int      bEOF;
     int      bError;
-    
+
     GByte*   pabyBlockData;
     int      nBlockDataSize;
     vsi_l_offset nStartBlockFileOff;
-    
+
     int      bRegularTiling;
-    
+
     int        nBlocks;
     BlockDesc* pasBlocks;
-    
+
     int      nBufferedBlock;
     GByte*   pabyRGBData;
-    
+
     void     Seek(vsi_l_offset nPos);
     int      GetNextByte();
     int      GetNextBlockData();
@@ -96,7 +97,7 @@ class EpsilonDataset : public GDALPamDataset
   public:
                  EpsilonDataset();
     virtual     ~EpsilonDataset();
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 };
@@ -111,7 +112,7 @@ class EpsilonRasterBand : public GDALPamRasterBand
 {
   public:
                             EpsilonRasterBand(EpsilonDataset* poDS, int nBand);
-                 
+
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
 };
@@ -124,23 +125,23 @@ EpsilonDataset::EpsilonDataset()
 {
     fp = NULL;
     nFileOff = 0;
-    
+
     pabyFileBuf = NULL;
     nFileBufMaxSize = 0;
     nFileBufCurSize = 0;
     nFileBufOffset = 0;
     bEOF = FALSE;
     bError = FALSE;
-    
+
     pabyBlockData = NULL;
     nBlockDataSize = 0;
     nStartBlockFileOff = 0;
-    
+
     bRegularTiling = FALSE;
-    
+
     nBlocks = 0;
     pasBlocks = NULL;
-    
+
     nBufferedBlock = -1;
     pabyRGBData = NULL;
 }
@@ -162,13 +163,13 @@ EpsilonDataset::~EpsilonDataset()
 /*                       EpsilonRasterBand()                            */
 /************************************************************************/
 
-EpsilonRasterBand::EpsilonRasterBand(EpsilonDataset* poDS, int nBand)
+EpsilonRasterBand::EpsilonRasterBand(EpsilonDataset* poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     this->eDataType = GDT_Byte;
-    this->nBlockXSize = poDS->pasBlocks[0].w;
-    this->nBlockYSize = poDS->pasBlocks[0].h;
+    this->nBlockXSize = poDSIn->pasBlocks[0].w;
+    this->nBlockYSize = poDSIn->pasBlocks[0].h;
 }
 
 /************************************************************************/
@@ -201,32 +202,32 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                                       int nBlockYOff, void * pImage)
 {
     EpsilonDataset* poGDS = (EpsilonDataset*) poDS;
-    
+
     //CPLDebug("EPSILON", "IReadBlock(nBand=%d,nBlockXOff=%d,nBlockYOff=%d)",
     //         nBand, nBlockXOff, nBlockYOff);
 
-    int nBlocksPerRow = (poGDS->nRasterXSize + nBlockXSize - 1) / nBlockXSize;
-    int nBlock = nBlockXOff + nBlockYOff * nBlocksPerRow;
-    
+    int l_nBlocksPerRow = (poGDS->nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    int nBlock = nBlockXOff + nBlockYOff * l_nBlocksPerRow;
+
     BlockDesc* psDesc = &poGDS->pasBlocks[nBlock];
 #ifdef DEBUG
-    int nBlocksPerColumn = (poGDS->nRasterYSize + nBlockYSize - 1) / nBlockYSize;
+    int l_nBlocksPerColumn = (poGDS->nRasterYSize + nBlockYSize - 1) / nBlockYSize;
     CPLAssert(psDesc->x == nBlockXOff * nBlockXSize);
     CPLAssert(psDesc->y == nBlockYOff * nBlockYSize);
-    CPLAssert(psDesc->w == (nBlockXOff < nBlocksPerRow - 1) ?
+    CPLAssert(psDesc->w == (nBlockXOff < l_nBlocksPerRow - 1) ?
                                 nBlockXSize : poGDS->nRasterXSize - psDesc->x);
-    CPLAssert(psDesc->h == (nBlockYOff < nBlocksPerColumn - 1) ?
+    CPLAssert(psDesc->h == (nBlockYOff < l_nBlocksPerColumn - 1) ?
                                 nBlockYSize : poGDS->nRasterYSize - psDesc->y);
 #endif
 
     poGDS->Seek(psDesc->offset);
-        
+
     if (!poGDS->GetNextBlockData())
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize);
         return CE_Failure;
     }
-    
+
     eps_block_header hdr;
     if (eps_read_block_header (poGDS->pabyBlockData,
                                poGDS->nBlockDataSize, &hdr) != EPS_OK)
@@ -243,7 +244,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
         memset(pImage, 0, nBlockXSize * nBlockYSize);
         return CE_Failure;
     }
-    
+
     int w = GET_FIELD(hdr, w);
     int h = GET_FIELD(hdr, h);
     int i;
@@ -251,7 +252,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
     if (poGDS->nBands == 1)
     {
         unsigned char ** pTempData =
-            (unsigned char **) CPLMalloc(h * sizeof(unsigned char*));        
+            (unsigned char **) CPLMalloc(h * sizeof(unsigned char*));
         for(i=0;i<h;i++)
             pTempData[i] = ((GByte*)pImage) + i * nBlockXSize;
 
@@ -279,7 +280,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                 return CE_Failure;
             }
         }
-            
+
         if (poGDS->nBufferedBlock == nBlock)
         {
             memcpy(pImage,
@@ -287,7 +288,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                    nBlockXSize * nBlockYSize);
             return CE_None;
         }
-    
+
         unsigned char ** pTempData[3];
         int iBand;
         for(iBand=0;iBand<3;iBand++)
@@ -298,39 +299,37 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
                 pTempData[iBand][i] = poGDS->pabyRGBData +
                     iBand * nBlockXSize * nBlockYSize + i * nBlockXSize;
         }
-    
+
         if (w != nBlockXSize || h != nBlockYSize)
             memset(poGDS->pabyRGBData, 0, 3 * nBlockXSize * nBlockYSize);
-            
+
         if (eps_decode_truecolor_block (pTempData[0], pTempData[1], pTempData[2],
                                         poGDS->pabyBlockData, &hdr) != EPS_OK)
         {
-            for(iBand=0;iBand<poGDS->nBands;iBand++)
+            for(iBand=0;iBand<3;iBand++)
                 CPLFree(pTempData[iBand]);
             memset(pImage, 0, nBlockXSize * nBlockYSize);
             return CE_Failure;
         }
-        
-        for(iBand=0;iBand<poGDS->nBands;iBand++)
+
+        for(iBand=0;iBand<3;iBand++)
             CPLFree(pTempData[iBand]);
-            
+
         poGDS->nBufferedBlock = nBlock;
         memcpy(pImage,
                poGDS->pabyRGBData + (nBand - 1) * nBlockXSize * nBlockYSize,
                nBlockXSize * nBlockYSize);
-                   
+
         if (nBand == 1)
         {
             int iOtherBand;
-            for(iOtherBand=2;iOtherBand<=poGDS->nBands;iOtherBand++)
+            for(iOtherBand=2;iOtherBand<=3;iOtherBand++)
             {
-                GDALRasterBlock *poBlock;
-
-                poBlock = poGDS->GetRasterBand(iOtherBand)->
+                GDALRasterBlock *poBlock = poGDS->GetRasterBand(iOtherBand)->
                     GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
                 if (poBlock == NULL)
                     break;
-                    
+
                 GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
                 if( pabySrcBlock == NULL )
                 {
@@ -346,7 +345,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
             }
         }
     }
-    
+
     return CE_None;
 }
 
@@ -376,7 +375,7 @@ int EpsilonDataset::GetNextByte()
         nFileOff ++;
         return pabyFileBuf[nFileBufOffset ++];
     }
-        
+
     if (bError || bEOF)
         return -1;
 
@@ -399,7 +398,7 @@ int EpsilonDataset::GetNextByte()
         bEOF = TRUE;
     if (nBytesRead == 0)
         return -1;
-    
+
     nFileOff ++;
     return pabyFileBuf[nFileBufOffset ++];
 }
@@ -415,13 +414,13 @@ int EpsilonDataset::GetNextBlockData()
     int nStartBlockBufOffset = 0;
     pabyBlockData = NULL;
     nBlockDataSize = 0;
-    
+
     while (nFileBufOffset < MAX_SIZE_BEFORE_BLOCK_MARKER)
     {
         int chNextByte = GetNextByte();
         if (chNextByte < 0)
             return FALSE;
-        
+
         if (chNextByte != EPS_MARKER)
         {
             nStartBlockFileOff = nFileOff - 1;
@@ -432,7 +431,7 @@ int EpsilonDataset::GetNextBlockData()
     }
     if (nFileBufOffset == MAX_SIZE_BEFORE_BLOCK_MARKER)
         return FALSE;
-        
+
     while (nFileBufOffset < BLOCK_DATA_MAX_SIZE)
     {
         int chNextByte = GetNextByte();
@@ -444,10 +443,10 @@ int EpsilonDataset::GetNextBlockData()
             pabyBlockData = pabyFileBuf + nStartBlockBufOffset;
             return TRUE;
         }
-            
+
         nBlockDataSize ++;
     }
-    
+
     pabyBlockData = pabyFileBuf + nStartBlockBufOffset;
     return TRUE;
 }
@@ -465,21 +464,21 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
 
     int nTileW = -1;
     int nTileH = -1;
-    
+
     *pnBands = 0;
 
     bRegularTiling = TRUE;
-    
+
     eps_block_header hdr;
-    while(TRUE)
+    while( true )
     {
         Seek(nStartBlockFileOff + nBlockDataSize);
-        
+
         if (!GetNextBlockData())
         {
             break;
         }
-        
+
         /* Ignore rasterlite wavelet header */
         int nRasterliteWaveletHeaderLen = strlen(RASTERLITE_WAVELET_HEADER);
         if (nBlockDataSize >= nRasterliteWaveletHeaderLen &&
@@ -488,7 +487,7 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
         {
             continue;
         }
-        
+
         /* Stop at rasterlite wavelet footer */
         int nRasterlineWaveletFooterLen = strlen(RASTERLITE_WAVELET_FOOTER);
         if (nBlockDataSize >= nRasterlineWaveletFooterLen &&
@@ -497,7 +496,7 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
         {
             break;
         }
-        
+
         if (eps_read_block_header (pabyBlockData,
                                    nBlockDataSize, &hdr) != EPS_OK)
         {
@@ -511,7 +510,7 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
             CPLError(CE_Warning, CPLE_AppDefined, "bad CRC");
             continue;
         }
-        
+
         int W = GET_FIELD(hdr, W);
         int H = GET_FIELD(hdr, H);
         int x = GET_FIELD(hdr, x);
@@ -521,7 +520,7 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
 
         //CPLDebug("EPSILON", "W=%d,H=%d,x=%d,y=%d,w=%d,h=%d,offset=" CPL_FRMT_GUIB,
         //                    W, H, x, y, w, h, nStartBlockFileOff);
-        
+
         int nNewBands = (hdr.block_type == EPS_GRAYSCALE_BLOCK) ? 1 : 3;
         if (nRasterXSize == 0)
         {
@@ -529,13 +528,13 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
             {
                 break;
             }
-            
+
             bRet = TRUE;
             nRasterXSize = W;
             nRasterYSize = H;
             *pnBands = nNewBands;
         }
-        
+
         if (nRasterXSize != W || nRasterYSize != H || *pnBands != nNewBands ||
             x < 0 || y < 0 || x + w > W || y + h > H)
         {
@@ -543,15 +542,21 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
             bRet = FALSE;
             break;
         }
-        
+
+        BlockDesc* pasNewBlocks = (BlockDesc*)VSI_REALLOC_VERBOSE(pasBlocks, sizeof(BlockDesc) * (nBlocks+1));
+        if( pasNewBlocks == NULL )
+        {
+            bRet = FALSE;
+            break;
+        }
+        pasBlocks = pasNewBlocks;
         nBlocks++;
-        pasBlocks = (BlockDesc*)VSIRealloc(pasBlocks, sizeof(BlockDesc) * nBlocks);
         pasBlocks[nBlocks-1].x = x;
         pasBlocks[nBlocks-1].y = y;
         pasBlocks[nBlocks-1].w = w;
         pasBlocks[nBlocks-1].h = h;
         pasBlocks[nBlocks-1].offset = nStartBlockFileOff;
-        
+
         if (bRegularTiling)
         {
             if (nTileW < 0)
@@ -559,10 +564,10 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
                 nTileW = w;
                 nTileH = h;
             }
-            
+
             if (w > nTileW || h > nTileH)
                 bRegularTiling = FALSE;
-            
+
             if (x != nExpectedX)
                 bRegularTiling = FALSE;
 
@@ -571,7 +576,7 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
                 if (y + h != H)
                     bRegularTiling = FALSE;
             }
-            
+
             if (nTileW != w)
             {
                 if (x + w != W)
@@ -584,11 +589,11 @@ int EpsilonDataset::ScanBlocks(int* pnBands)
             }
             else
                 nExpectedX += nTileW;
-            
+
             //if (!bRegularTiling)
             //    CPLDebug("EPSILON", "not regular tiling!");
         }
-    } 
+    }
 
     return bRet;
 }
@@ -606,14 +611,14 @@ int EpsilonDataset::Identify(GDALOpenInfo* poOpenInfo)
     {
         return TRUE;
     }
-    
+
     if (poOpenInfo->nHeaderBytes > EPS_MIN_GRAYSCALE_BUF &&
-        (EQUALN((const char*)poOpenInfo->pabyHeader, "type=gs", 7) ||
-         EQUALN((const char*)poOpenInfo->pabyHeader, "type=tc", 7)))
+        (STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "type=gs") ||
+         STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "type=tc")))
     {
         return TRUE;
     }
-    
+
     return FALSE;
 }
 
@@ -628,7 +633,7 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The EPSILON driver does not support update access to existing"
                   " files.\n" );
         return NULL;
@@ -637,20 +642,20 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
     VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
     if (fp == NULL)
         return NULL;
-    
+
     EpsilonDataset* poDS = new EpsilonDataset();
     poDS->fp = fp;
-    
+
     poDS->nRasterXSize = 0;
     poDS->nRasterYSize = 0;
-    
+
     int nBandsToAdd = 0;
     if (!poDS->ScanBlocks(&nBandsToAdd))
     {
         delete poDS;
         return NULL;
     }
-    
+
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBandsToAdd, FALSE))
     {
@@ -659,20 +664,20 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     if (!poDS->bRegularTiling)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The EPSILON driver does not support reading "
                   "not regularly blocked files.\n" );
         delete poDS;
         return NULL;
     }
-    
+
     int i;
     for(i=1;i<=nBandsToAdd;i++)
         poDS->SetBand(i, new EpsilonRasterBand(poDS, i));
-        
+
     if (nBandsToAdd > 1)
         poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    
+
     return poDS;
 }
 
@@ -681,9 +686,9 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 /*                  EpsilonDatasetCreateCopy ()                         */
 /************************************************************************/
 
-GDALDataset *
-EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                       CPL_UNUSED int bStrict, char ** papszOptions, 
+static GDALDataset *
+EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                       CPL_UNUSED int bStrict, char ** papszOptions,
                        GDALProgressFunc pfnProgress, void * pProgressData )
 {
     int nBands = poSrcDS->GetRasterCount();
@@ -695,7 +700,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  "or 3 band (RGB) data");
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Fetch and check creation options                                */
 /* -------------------------------------------------------------------- */
@@ -712,8 +717,8 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError(CE_Failure, CPLE_NotSupported,
                 "Block size must be a power of 2 between 32 et 1024");
         return NULL;
-    }         
-    
+    }
+
     const char* pszFilter =
         CSLFetchNameValueDef(papszOptions, "FILTER", "daub97lift");
     char** papszFBID = eps_get_fb_info(EPS_FB_ID);
@@ -735,7 +740,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  pszFilter);
         return NULL;
     }
-    
+
     int eMode = EPS_MODE_OTLPF;
     const char* pszMode = CSLFetchNameValueDef(papszOptions, "MODE", "OTLPF");
     if (EQUAL(pszMode, "NORMAL"))
@@ -748,41 +753,41 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  pszMode);
         return NULL;
     }
-    
+
     char** papszFBType = eps_get_fb_info(EPS_FB_TYPE);
     int bIsBiOrthogonal = EQUAL(papszFBType[nIndexFB], "biorthogonal");
     eps_free_fb_info(papszFBType);
-    
+
     if (eMode == EPS_MODE_OTLPF && !bIsBiOrthogonal)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "MODE=OTLPF can only be used with biorthogonal filters. "
                  "Use MODE=NORMAL instead");
         return NULL;
-    }    
-    
+    }
+
     int bRasterliteOutput =
-        CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
+        CPLTestBool(CSLFetchNameValueDef(papszOptions,
                                             "RASTERLITE_OUTPUT", "NO"));
-             
+
     int nYRatio = EPS_Y_RT;
     int nCbRatio = EPS_Cb_RT;
     int nCrRatio = EPS_Cr_RT;
-    
+
     int eResample;
-    if (CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions,
                                             "RGB_RESAMPLE", "YES")))
         eResample = EPS_RESAMPLE_420;
     else
         eResample = EPS_RESAMPLE_444;
-    
+
     const char* pszTarget = CSLFetchNameValueDef(papszOptions, "TARGET", "96");
     double dfReductionFactor = 1 - CPLAtof(pszTarget) / 100;
     if (dfReductionFactor > 1)
         dfReductionFactor = 1;
     else if (dfReductionFactor < 0)
         dfReductionFactor = 0;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open file                                                       */
 /* -------------------------------------------------------------------- */
@@ -826,7 +831,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIFCloseL(fp);
         return NULL;
     }
-    
+
     GByte* pabyOutBuf = (GByte*)VSIMalloc(nTargetBlockSize);
     if (pabyOutBuf == NULL)
     {
@@ -834,7 +839,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIFCloseL(fp);
         return NULL;
     }
-    
+
     GByte** apapbyRawBuffer[3];
     int i, j;
     for(i=0;i<nBands;i++)
@@ -846,7 +851,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                             pabyBuffer + (i * nBlockXSize + j) * nBlockYSize;
         }
     }
-    
+
     if (bRasterliteOutput)
     {
         const char* pszHeader = RASTERLITE_WAVELET_HEADER;
@@ -879,7 +884,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
             if (bMustMemset)
                 memset(pabyBuffer, 0, nBands * nBlockXSize * nBlockYSize);
-            
+
             eErr = poSrcDS->RasterIO(GF_Read,
                               nBlockXOff * nBlockXSize,
                               nBlockYOff * nBlockYSize,
@@ -890,7 +895,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                               1,
                               nBlockXSize,
                               nBlockXSize * nBlockYSize, NULL);
-            
+
             int nOutBufSize = nTargetBlockSize;
             if (eErr == CE_None && nBands == 1)
             {
@@ -902,8 +907,8 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                            pabyOutBuf, &nOutBufSize,
                                            (char*) pszFilter, eMode))
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Error occured when encoding block (%d, %d)",
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Error occurred when encoding block (%d, %d)",
                              nBlockXOff, nBlockYOff);
                     eErr = CE_Failure;
                 }
@@ -924,12 +929,12 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                            (char*) pszFilter, eMode))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Error occured when encoding block (%d, %d)",
+                             "Error occurred when encoding block (%d, %d)",
                              nBlockXOff, nBlockYOff);
                     eErr = CE_Failure;
                 }
             }
-            
+
             if (eErr == CE_None)
             {
                 if ((int)VSIFWriteL(pabyOutBuf, 1, nOutBufSize, fp) !=
@@ -938,7 +943,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 char chEPSMarker = EPS_MARKER;
                 VSIFWriteL(&chEPSMarker, 1, 1, fp);
-                
+
                 if (pfnProgress && !pfnProgress(
                       1.0 * (nBlockYOff * nXBlocks + nBlockXOff + 1) / nBlocks,
                       NULL, pProgressData))
@@ -948,7 +953,7 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
         }
     }
-    
+
     if (bRasterliteOutput)
     {
         const char* pszFooter = RASTERLITE_WAVELET_FOOTER;
@@ -958,17 +963,17 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Cleanup work buffers                                            */
 /* -------------------------------------------------------------------- */
-    
+
     for(i=0;i<nBands;i++)
     {
         VSIFree(apapbyRawBuffer[i]);
     }
-    
+
     VSIFree(pabyOutBuf);
     VSIFree(pabyBuffer);
-        
+
     VSIFCloseL(fp);
-    
+
     if (eErr != CE_None)
         return NULL;
 
@@ -985,39 +990,35 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_EPSILON()
 
 {
-    GDALDriver  *poDriver;
-    
-    if (! GDAL_CHECK_VERSION("EPSILON driver"))
+    if( !GDAL_CHECK_VERSION( "EPSILON driver" ) )
         return;
 
-    if( GDALGetDriverByName( "EPSILON" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "EPSILON" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Epsilon wavelets" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_epsilon.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                                   "Byte" );
+    if( GDALGetDriverByName( "EPSILON" ) != NULL )
+        return;
 
-        CPLString osMethods;
-        char** papszFBID = eps_get_fb_info(EPS_FB_ID);
-        char** papszFBIDIter = papszFBID;
-        while(papszFBIDIter && *papszFBIDIter)
-        {
-            osMethods += "       <Value>";
-            osMethods += *papszFBIDIter;
-            osMethods += "</Value>\n";
-            papszFBIDIter ++;
-        }
-        eps_free_fb_info(papszFBID);
-        
-        CPLString osOptionList;
-        osOptionList.Printf(
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "EPSILON" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Epsilon wavelets" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_epsilon.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+
+    CPLString osMethods;
+    char** papszFBID = eps_get_fb_info(EPS_FB_ID);
+    char** papszFBIDIter = papszFBID;
+    while(papszFBIDIter && *papszFBIDIter)
+    {
+        osMethods += "       <Value>";
+        osMethods += *papszFBIDIter;
+        osMethods += "</Value>\n";
+        papszFBIDIter ++;
+    }
+    eps_free_fb_info(papszFBID);
+
+    CPLString osOptionList;
+    osOptionList.Printf(
 "<CreationOptionList>"
 "   <Option name='TARGET' type='int' description='target size reduction as a percentage of the original (0-100)' default='75'/>"
 "   <Option name='FILTER' type='string-select' description='Filter ID' default='daub97lift'>"
@@ -1033,15 +1034,14 @@ void GDALRegister_EPSILON()
 "   <Option name='RASTERLITE_OUTPUT' type='boolean' description='if Rasterlite header and footers must be inserted' default='FALSE'/>"
 "</CreationOptionList>", osMethods.c_str()  );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-                                   osOptionList.c_str() );
-                            
-        poDriver->pfnOpen = EpsilonDataset::Open;
-        poDriver->pfnIdentify = EpsilonDataset::Identify;
-        poDriver->pfnCreateCopy = EpsilonDatasetCreateCopy;
-        
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               osOptionList.c_str() );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = EpsilonDataset::Open;
+    poDriver->pfnIdentify = EpsilonDataset::Identify;
+    poDriver->pfnCreateCopy = EpsilonDatasetCreateCopy;
+
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

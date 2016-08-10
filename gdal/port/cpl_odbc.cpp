@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR ODBC Driver
  * Purpose:  Declarations for ODBC Access Cover API.
@@ -34,11 +33,9 @@
 #include "cpl_error.h"
 
 
-#ifndef WIN32CE /* ODBC is not supported on Windows CE. */
-
 CPL_CVSID("$Id$");
 
-#ifndef SQLColumns_TABLE_CAT 
+#ifndef SQLColumns_TABLE_CAT
 #define SQLColumns_TABLE_CAT 1
 #define SQLColumns_TABLE_SCHEM 2
 #define SQLColumns_TABLE_NAME 3
@@ -103,11 +100,13 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
             CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
 
             // Set ODBCSYSINI variable pointing to HOME location
-            pszEnvIni = (char *)CPLMalloc( strlen(pszEnvHome) + 12 );
+            const size_t nLen = strlen(pszEnvHome) + 12;
+            pszEnvIni = (char *)CPLMalloc( nLen );
 
-            sprintf( pszEnvIni, "ODBCSYSINI=%s", pszEnvHome );
+            snprintf( pszEnvIni, nLen, "ODBCSYSINI=%s", pszEnvHome );
             /* a 'man putenv' shows that we cannot free pszEnvIni */
             /* because the pointer is used directly by putenv in old glibc */
+            /* coverity[tainted_string] */
             putenv( pszEnvIni );
 
             CPLDebug( "ODBC", "%s", pszEnvIni );
@@ -137,7 +136,7 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
 
 int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName, int fRemoveDSN )
 {
-    CPLAssert( NULL != pszDriverName ); 
+    CPLAssert( NULL != pszDriverName );
 
     if ( FALSE == SQLRemoveDriver( pszDriverName, fRemoveDSN, &m_nUsageCount ) )
     {
@@ -158,6 +157,7 @@ int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName, int fRemove
 /*                           CPLODBCSession()                           */
 /************************************************************************/
 
+/** Constructor */
 CPLODBCSession::CPLODBCSession()
 
 {
@@ -172,6 +172,7 @@ CPLODBCSession::CPLODBCSession()
 /*                          ~CPLODBCSession()                           */
 /************************************************************************/
 
+/** Destructor */
 CPLODBCSession::~CPLODBCSession()
 
 {
@@ -182,10 +183,11 @@ CPLODBCSession::~CPLODBCSession()
 /*                            CloseSession()                            */
 /************************************************************************/
 
+/** Close session */
 int CPLODBCSession::CloseSession()
 
 {
-    if( m_hDBC!=NULL ) 
+    if( m_hDBC!=NULL )
     {
         if ( IsInTransaction() )
             CPLError( CE_Warning, CPLE_AppDefined, "Closing session with active transactions." );
@@ -194,7 +196,7 @@ int CPLODBCSession::CloseSession()
         SQLFreeConnect( m_hDBC );
         m_hDBC = NULL;
     }
-    
+
     if( m_hEnv!=NULL )
     {
         SQLFreeEnv( m_hEnv );
@@ -208,6 +210,7 @@ int CPLODBCSession::CloseSession()
 /*                       ClearTransaction()                             */
 /************************************************************************/
 
+/** Clear transaction */
 int CPLODBCSession::ClearTransaction()
 
 {
@@ -239,6 +242,7 @@ int CPLODBCSession::ClearTransaction()
 /*                       CommitTransaction()                            */
 /************************************************************************/
 
+/** Begin transaction */
 int CPLODBCSession::BeginTransaction()
 
 {
@@ -267,6 +271,7 @@ int CPLODBCSession::BeginTransaction()
 /*                       CommitTransaction()                            */
 /************************************************************************/
 
+/** Commit transaction */
 int CPLODBCSession::CommitTransaction()
 
 {
@@ -289,6 +294,7 @@ int CPLODBCSession::CommitTransaction()
 /*                       RollbackTransaction()                          */
 /************************************************************************/
 
+/** Rollback transaction */
 int CPLODBCSession::RollbackTransaction()
 
 {
@@ -296,12 +302,11 @@ int CPLODBCSession::RollbackTransaction()
 
     if (m_bInTransaction)
     {
+        /* Rollback should not hide the previous error so Failed() is not called. */
+        int nRetCode = SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK );
         m_bInTransaction = FALSE;
 
-        if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK ) ) )
-        {
-            return FALSE;
-        }
+        return (nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO );
     }
 
 #endif
@@ -310,11 +315,11 @@ int CPLODBCSession::RollbackTransaction()
 
 /************************************************************************/
 /*                               Failed()                               */
-/*                                                                      */
-/*      Test if a return code indicates failure, return TRUE if that    */
-/*      is the case. Also update error text.                            */
 /************************************************************************/
 
+/** Test if a return code indicates failure, return TRUE if that
+ * is the case. Also update error text.
+ */
 int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 
 {
@@ -328,7 +333,7 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
         return FALSE;
 
     SQLError( m_hEnv, m_hDBC, hStmt, achSQLState, &nNativeError,
-              (SQLCHAR *) m_szLastError, sizeof(m_szLastError)-1, 
+              (SQLCHAR *) m_szLastError, sizeof(m_szLastError)-1,
               &nTextLength );
     m_szLastError[nTextLength] = '\0';
 
@@ -349,22 +354,22 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
  * optional.
  *
  * @param pszUserid the userid to logon as, may be NULL if not not required,
- * or provided by the DSN. 
+ * or provided by the DSN.
  *
  * @param pszPassword the password to logon with.   May be NULL if not required
  * or provided by the DSN.
  *
  * @return TRUE on success or FALSE on failure.  Call GetLastError() to get
- * details on failure. 
+ * details on failure.
  */
 
-int CPLODBCSession::EstablishSession( const char *pszDSN, 
-                                      const char *pszUserid, 
+int CPLODBCSession::EstablishSession( const char *pszDSN,
+                                      const char *pszUserid,
                                       const char *pszPassword )
 
 {
     CloseSession();
-    
+
     if( Failed( SQLAllocEnv( &m_hEnv ) ) )
         return FALSE;
 
@@ -374,33 +379,40 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
         return FALSE;
     }
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4996 )  /*  warning C4996: 'SQLSetConnectOption': ODBC API: SQLSetConnectOption is deprecated. Please use SQLSetConnectAttr instead */
+#endif
     SQLSetConnectOption( m_hDBC,SQL_LOGIN_TIMEOUT,30 );
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
     if( pszUserid == NULL )
         pszUserid = "";
     if( pszPassword == NULL )
         pszPassword = "";
 
-    int bFailed;
+    bool bFailed = false;
     if( strstr(pszDSN,"=") != NULL )
     {
         SQLCHAR szOutConnString[1024];
         SQLSMALLINT nOutConnStringLen = 0;
 
         CPLDebug( "ODBC", "SQLDriverConnect(%s)", pszDSN );
-        bFailed = Failed(
-            SQLDriverConnect( m_hDBC, NULL, 
-                              (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN), 
-                              szOutConnString, sizeof(szOutConnString), 
-                              &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) );
+        bFailed = CPL_TO_BOOL(Failed(
+            SQLDriverConnect( m_hDBC, NULL,
+                              (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN),
+                              szOutConnString, sizeof(szOutConnString),
+                              &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) ));
     }
     else
     {
         CPLDebug( "ODBC", "SQLConnect(%s)", pszDSN );
-        bFailed = Failed(
-            SQLConnect( m_hDBC, (SQLCHAR *) pszDSN, SQL_NTS, 
-                        (SQLCHAR *) pszUserid, SQL_NTS, 
-                        (SQLCHAR *) pszPassword, SQL_NTS ) );
+        bFailed = CPL_TO_BOOL(Failed(
+            SQLConnect( m_hDBC, (SQLCHAR *) pszDSN, SQL_NTS,
+                        (SQLCHAR *) pszUserid, SQL_NTS,
+                        (SQLCHAR *) pszPassword, SQL_NTS ) ));
     }
 
     if( bFailed )
@@ -420,7 +432,7 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
 /**
  * Returns the last ODBC error message.
  *
- * @return pointer to an internal buffer with the error message in it. 
+ * @return pointer to an internal buffer with the error message in it.
  * Do not free or alter.  Will be an empty (but not NULL) string if there is
  * no pending error info.
  */
@@ -441,17 +453,11 @@ const char *CPLODBCSession::GetLastError()
 /*                          CPLODBCStatement()                          */
 /************************************************************************/
 
+/** Constructor */
 CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
 
 {
     m_poSession = poSession;
-
-    if( Failed( 
-            SQLAllocStmt( poSession->GetConnection(), &m_hStmt ) ) )
-    {
-        m_hStmt = NULL;
-        return;
-    }
 
     m_nColCount = 0;
     m_papszColNames = NULL;
@@ -468,12 +474,20 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
     m_pszStatement = NULL;
     m_nStatementMax = 0;
     m_nStatementLen = 0;
+
+    if( Failed(
+            SQLAllocStmt( poSession->GetConnection(), &m_hStmt ) ) )
+    {
+        m_hStmt = NULL;
+        return;
+    }
 }
 
 /************************************************************************/
 /*                         ~CPLODBCStatement()                          */
 /************************************************************************/
 
+/** Destructor */
 CPLODBCStatement::~CPLODBCStatement()
 
 {
@@ -490,13 +504,13 @@ CPLODBCStatement::~CPLODBCStatement()
 /**
  * Execute an SQL statement.
  *
- * This method will execute the passed (or stored) SQL statement, 
- * and initialize information about the resultset if there is one. 
+ * This method will execute the passed (or stored) SQL statement,
+ * and initialize information about the resultset if there is one.
  * If a NULL statement is passed, the internal stored statement that
- * has been previously set via Append() or Appendf() calls will be used. 
+ * has been previously set via Append() or Appendf() calls will be used.
  *
  * @param pszStatement the SQL statement to execute, or NULL if the
- * internally saved one should be used. 
+ * internally saved one should be used.
  *
  * @return TRUE on success or FALSE if there is an error.  Error details
  * can be fetched with OGRODBCSession::GetLastError().
@@ -527,7 +541,9 @@ int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
 
 #endif
 
-    if( Failed( 
+    /* SQL_NTS=-3 is a valid value for SQLExecDirect */
+    /* coverity[negative_returns] */
+    if( Failed(
             SQLExecDirect( m_hStmt, (SQLCHAR *) m_pszStatement, SQL_NTS ) ) )
         return FALSE;
 
@@ -538,6 +554,7 @@ int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
 /*                         CollectResultsInfo()                         */
 /************************************************************************/
 
+/** CollectResultsInfo */
 int CPLODBCStatement::CollectResultsInfo()
 
 {
@@ -555,11 +572,11 @@ int CPLODBCStatement::CollectResultsInfo()
 /* -------------------------------------------------------------------- */
     m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColValueLengths = (_SQLLEN *) CPLCalloc(sizeof(_SQLLEN),(m_nColCount+1));
+    m_panColValueLengths = (CPL_SQLLEN *) CPLCalloc(sizeof(CPL_SQLLEN),(m_nColCount+1));
 
     m_panColType = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
+    m_panColSize = (CPL_SQLULEN *) CPLCalloc(sizeof(CPL_SQLULEN),m_nColCount);
     m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
@@ -572,7 +589,7 @@ int CPLODBCStatement::CollectResultsInfo()
         SQLCHAR     szName[256];
         SQLSMALLINT nNameLength = 0;
 
-        if ( Failed( SQLDescribeCol(m_hStmt, iCol+1, 
+        if ( Failed( SQLDescribeCol(m_hStmt, iCol+1,
                                     szName, sizeof(szName), &nNameLength,
                                     m_panColType + iCol,
                                     m_panColSize + iCol,
@@ -594,7 +611,7 @@ int CPLODBCStatement::CollectResultsInfo()
         szName[nNameLength] = '\0';  // Paranoid
         m_papszColTypeNames[iCol] = CPLStrdup((const char*)szName);
 
-//        CPLDebug( "ODBC", "%s %s %d", m_papszColNames[iCol], 
+//        CPLDebug( "ODBC", "%s %s %d", m_papszColNames[iCol],
 //                  szName, m_panColType[iCol] );
     }
 
@@ -605,11 +622,12 @@ int CPLODBCStatement::CollectResultsInfo()
 /*                            GetRowCountAffected()                     */
 /************************************************************************/
 
+/** GetRowCountAffected */
 int CPLODBCStatement::GetRowCountAffected()
 {
     SQLLEN nResultCount=0;
     SQLRowCount( m_hStmt, &nResultCount );
-    
+
     return (int)nResultCount;
 }
 
@@ -618,7 +636,7 @@ int CPLODBCStatement::GetRowCountAffected()
 /************************************************************************/
 
 /**
- * Fetch the resultset column count. 
+ * Fetch the resultset column count.
  *
  * @return the column count, or zero if there is no resultset.
  */
@@ -639,7 +657,7 @@ int CPLODBCStatement::GetColCount()
  * @param iCol the zero based column index.
  *
  * @return NULL on failure (out of bounds column), or a pointer to an
- * internal copy of the column name. 
+ * internal copy of the column name.
  */
 
 const char *CPLODBCStatement::GetColName( int iCol )
@@ -658,9 +676,9 @@ const char *CPLODBCStatement::GetColName( int iCol )
 /**
  * Fetch a column data type.
  *
- * The return type code is a an ODBC SQL_ code, one of SQL_UNKNOWN_TYPE, 
+ * The return type code is a an ODBC SQL_ code, one of SQL_UNKNOWN_TYPE,
  * SQL_CHAR, SQL_NUMERIC, SQL_DECIMAL, SQL_INTEGER, SQL_SMALLINT, SQL_FLOAT,
- * SQL_REAL, SQL_DOUBLE, SQL_DATETIME, SQL_VARCHAR, SQL_TYPE_DATE, 
+ * SQL_REAL, SQL_DOUBLE, SQL_DATETIME, SQL_VARCHAR, SQL_TYPE_DATE,
  * SQL_TYPE_TIME, SQL_TYPE_TIMESTAMPT.
  *
  * @param iCol the zero based column index.
@@ -733,7 +751,7 @@ short CPLODBCStatement::GetColSize( int iCol )
  * @param iCol the zero based column index.
  *
  * @return column precision, may be zero or the same as column size for
- * columns to which it does not apply. 
+ * columns to which it does not apply.
  */
 
 short CPLODBCStatement::GetColPrecision( int iCol )
@@ -800,16 +818,16 @@ const char *CPLODBCStatement::GetColColumnDef( int iCol )
  * Requests the next row in the current resultset using the SQLFetchScroll()
  * call.  Note that many ODBC drivers only support the default forward
  * fetching one record at a time.  Only SQL_FETCH_NEXT (the default) should
- * be considered reliable on all drivers. 
+ * be considered reliable on all drivers.
  *
  * Currently it isn't clear how to determine whether an error or a normal
- * out of data condition has occured if Fetch() fails. 
+ * out of data condition has occurred if Fetch() fails.
  *
  * @param nOrientation One of SQL_FETCH_NEXT, SQL_FETCH_LAST, SQL_FETCH_PRIOR,
  * SQL_FETCH_ABSOLUTE, or SQL_FETCH_RELATIVE (default is SQL_FETCH_NEXT).
  *
- * @param nOffset the offset (number of records), ignored for some 
- * orientations.  
+ * @param nOffset the offset (number of records), ignored for some
+ * orientations.
  *
  * @return TRUE if a new row is successfully fetched, or FALSE if not.
  */
@@ -861,11 +879,11 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 /*      Pull out all the column values.                                 */
 /* -------------------------------------------------------------------- */
     SQLSMALLINT iCol;
-    
+
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
         char szWrkData[513];
-        _SQLLEN cbDataLen;
+        CPL_SQLLEN cbDataLen;
         SQLSMALLINT nFetchType = GetTypeMapping( m_panColType[iCol] );
 
         // Handle values other than WCHAR and BINARY as CHAR.
@@ -876,7 +894,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         szWrkData[sizeof(szWrkData)-1] = '\0';
 
         nRetCode = SQLGetData( m_hStmt, iCol + 1, nFetchType,
-                               szWrkData, sizeof(szWrkData)-1, 
+                               szWrkData, sizeof(szWrkData)-1,
                                &cbDataLen );
 
 /* SQLGetData() is giving garbage values in the first 4 bytes of cbDataLen *
@@ -902,21 +920,21 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         }
 
         // assume big result: should check for state=SQLSATE 01004.
-        else if( nRetCode == SQL_SUCCESS_WITH_INFO  ) 
+        else if( nRetCode == SQL_SUCCESS_WITH_INFO  )
         {
-            if( cbDataLen >= (_SQLLEN)(sizeof(szWrkData)-1) )
+            if( cbDataLen >= (CPL_SQLLEN)(sizeof(szWrkData)-1) )
             {
-                cbDataLen = (_SQLLEN)(sizeof(szWrkData)-1);
-                if (nFetchType == SQL_C_CHAR) 
-                    while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)) 
+                cbDataLen = (CPL_SQLLEN)(sizeof(szWrkData)-1);
+                if (nFetchType == SQL_C_CHAR)
+                    while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0))
                         --cbDataLen; // trimming the extra terminators: bug 990
                 else if (nFetchType == SQL_C_WCHAR)
                     while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)
-                        && (szWrkData[cbDataLen - 2] == 0)) 
+                        && (szWrkData[cbDataLen - 2] == 0))
                         cbDataLen -= 2; // trimming the extra terminators
 
             }
-			
+
             m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+2);
             memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
             m_papszColValues[iCol][cbDataLen] = '\0';
@@ -925,11 +943,11 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
             while( true )
             {
-                _SQLLEN nChunkLen;
+                CPL_SQLLEN nChunkLen;
 
-                nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, 
+                nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1,
                                        nFetchType,
-                                       szWrkData, sizeof(szWrkData)-1, 
+                                       szWrkData, sizeof(szWrkData)-1,
                                        &cbDataLen );
                 if( nRetCode == SQL_NO_DATA )
                     break;
@@ -945,7 +963,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                     || cbDataLen == SQL_NO_TOTAL )
                 {
                     nChunkLen = sizeof(szWrkData)-1;
-                    if (nFetchType == SQL_C_CHAR) 
+                    if (nFetchType == SQL_C_CHAR)
                         while ( (nChunkLen > 1)
                                 && (szWrkData[nChunkLen - 1] == 0) )
                             --nChunkLen;  // trimming the extra terminators
@@ -959,10 +977,10 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                     nChunkLen = cbDataLen;
                 szWrkData[nChunkLen] = '\0';
 
-                m_papszColValues[iCol] = (char *) 
-                    CPLRealloc( m_papszColValues[iCol], 
+                m_papszColValues[iCol] = (char *)
+                    CPLRealloc( m_papszColValues[iCol],
                                 m_panColValueLengths[iCol] + nChunkLen + 2 );
-                memcpy( m_papszColValues[iCol] + m_panColValueLengths[iCol], 
+                memcpy( m_papszColValues[iCol] + m_panColValueLengths[iCol],
                         szWrkData, nChunkLen );
                 m_panColValueLengths[iCol] += nChunkLen;
                 m_papszColValues[iCol][m_panColValueLengths[iCol]] = '\0';
@@ -989,12 +1007,12 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         }
 
         // Convert WCHAR to UTF-8, assuming the WCHAR is UCS-2.
-        if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != NULL 
+        if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != NULL
             && m_panColValueLengths[iCol] > 0 )
         {
             wchar_t *pwszSrc = (wchar_t *) m_papszColValues[iCol];
 
-            m_papszColValues[iCol] = 
+            m_papszColValues[iCol] =
                 CPLRecodeFromWChar( pwszSrc, CPL_ENC_UCS2, CPL_ENC_UTF8 );
             m_panColValueLengths[iCol] = strlen(m_papszColValues[iCol]);
 
@@ -1010,14 +1028,14 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 /************************************************************************/
 
 /**
- * Fetch column data. 
+ * Fetch column data.
  *
  * Fetches the data contents of the requested column for the currently loaded
- * row.  The result is returned as a string regardless of the column type.  
+ * row.  The result is returned as a string regardless of the column type.
  * NULL is returned if an illegal column is given, or if the actual column
- * is "NULL". 
- * 
- * @param iCol the zero based column to fetch. 
+ * is "NULL".
+ *
+ * @param iCol the zero based column to fetch.
  *
  * @param pszDefault the value to return if the column does not exist, or is
  * NULL.  Defaults to NULL.
@@ -1041,13 +1059,13 @@ const char *CPLODBCStatement::GetColData( int iCol, const char *pszDefault )
 /************************************************************************/
 
 /**
- * Fetch column data. 
+ * Fetch column data.
  *
  * Fetches the data contents of the requested column for the currently loaded
- * row.  The result is returned as a string regardless of the column type.  
+ * row.  The result is returned as a string regardless of the column type.
  * NULL is returned if an illegal column is given, or if the actual column
- * is "NULL". 
- * 
+ * is "NULL".
+ *
  * @param pszColName the name of the column requested.
  *
  * @param pszDefault the value to return if the column does not exist, or is
@@ -1056,7 +1074,7 @@ const char *CPLODBCStatement::GetColData( int iCol, const char *pszDefault )
  * @return pointer to internal column data or NULL on failure.
  */
 
-const char *CPLODBCStatement::GetColData( const char *pszColName, 
+const char *CPLODBCStatement::GetColData( const char *pszColName,
                                           const char *pszDefault )
 
 {
@@ -1072,6 +1090,7 @@ const char *CPLODBCStatement::GetColData( const char *pszColName,
 /*                          GetColDataLength()                          */
 /************************************************************************/
 
+/** GetColDataLength */
 int CPLODBCStatement::GetColDataLength( int iCol )
 
 {
@@ -1091,9 +1110,9 @@ int CPLODBCStatement::GetColDataLength( int iCol )
  * Fetch column index.
  *
  * Gets the column index corresponding with the passed name.  The
- * name comparisons are case insensitive. 
+ * name comparisons are case insensitive.
  *
- * @param pszColName the name to search for. 
+ * @param pszColName the name to search for.
  *
  * @return the column index, or -1 if not found.
  */
@@ -1104,7 +1123,7 @@ int CPLODBCStatement::GetColId( const char *pszColName )
     for( SQLSMALLINT iCol = 0; iCol < m_nColCount; iCol++ )
         if( EQUAL(pszColName, m_papszColNames[iCol]) )
             return iCol;
-    
+
     return -1;
 }
 
@@ -1112,6 +1131,7 @@ int CPLODBCStatement::GetColId( const char *pszColName )
 /*                          ClearColumnData()                           */
 /************************************************************************/
 
+/** ClearColumnData */
 void CPLODBCStatement::ClearColumnData()
 
 {
@@ -1132,6 +1152,7 @@ void CPLODBCStatement::ClearColumnData()
 /*                               Failed()                               */
 /************************************************************************/
 
+/** Failed */
 int CPLODBCStatement::Failed( int nResultCode )
 
 {
@@ -1148,7 +1169,7 @@ int CPLODBCStatement::Failed( int nResultCode )
 /**
  * Append text to internal command.
  *
- * The passed text is appended to the internal SQL command text. 
+ * The passed text is appended to the internal SQL command text.
  *
  * @param pszText text to append.
  */
@@ -1183,9 +1204,9 @@ void CPLODBCStatement::Append( const char *pszText )
 /**
  * Append text to internal command.
  *
- * The passed text is appended to the internal SQL command text after 
+ * The passed text is appended to the internal SQL command text after
  * escaping any special characters so it can be used as a character string
- * in an SQL statement. 
+ * in an SQL statement.
  *
  * @param pszText text to append.
  */
@@ -1233,9 +1254,9 @@ void CPLODBCStatement::AppendEscaped( const char *pszText )
 void CPLODBCStatement::Append( int nValue )
 
 {
-    char szFormattedValue[100];
+    char szFormattedValue[32];
 
-    sprintf( szFormattedValue, "%d", nValue );
+    snprintf( szFormattedValue, sizeof(szFormattedValue), "%d", nValue );
     Append( szFormattedValue );
 }
 
@@ -1256,7 +1277,7 @@ void CPLODBCStatement::Append( double dfValue )
 {
     char szFormattedValue[100];
 
-    sprintf( szFormattedValue, "%24g", dfValue );
+    snprintf( szFormattedValue, sizeof(szFormattedValue), "%24g", dfValue );
     Append( szFormattedValue );
 }
 
@@ -1272,24 +1293,28 @@ void CPLODBCStatement::Append( double dfValue )
  * properly, and should be appended with the direct Append() methods.
  *
  * @param pszFormat printf() style format string.
- * 
- * @return FALSE if formatting fails dueto result being too large.
+ *
+ * @return FALSE if formatting fails due to result being too large.
  */
 
 int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 
 {
     va_list args;
-    char    szFormattedText[8000];
-    int     bSuccess;
 
     va_start( args, pszFormat );
+
+    char szFormattedText[8000];  // TODO: Move this off the stack.
+    szFormattedText[0] = '\0';
+
 #if defined(HAVE_VSNPRINTF)
-    bSuccess = vsnprintf( szFormattedText, sizeof(szFormattedText)-1, 
-                          pszFormat, args ) < (int) sizeof(szFormattedText)-1;
+    const bool bSuccess =
+        vsnprintf( szFormattedText, sizeof(szFormattedText)-1,
+                   pszFormat, args )
+        < static_cast<int>( sizeof(szFormattedText) - 1 );
 #else
     vsprintf( szFormattedText, pszFormat, args );
-    bSuccess = TRUE;
+    const bool bSuccess = true;
 #endif
     va_end( args );
 
@@ -1298,7 +1323,7 @@ int CPLODBCStatement::Appendf( const char *pszFormat, ... )
 
     return bSuccess;
 }
-                                
+
 /************************************************************************/
 /*                               Clear()                                */
 /************************************************************************/
@@ -1313,7 +1338,7 @@ void CPLODBCStatement::Clear()
     /* Closing the cursor if opened */
     if( m_hStmt != NULL )
         SQLFreeStmt( m_hStmt, SQL_CLOSE );
-    
+
     ClearColumnData();
 
     if( m_pszStatement != NULL )
@@ -1367,7 +1392,7 @@ void CPLODBCStatement::Clear()
  * Fetch column definitions for a table.
  *
  * The SQLColumn() method is used to fetch the definitions for the columns
- * of a table (or other queriable object such as a view).  The column
+ * of a table (or other queryable object such as a view).  The column
  * definitions are digested and used to populate the CPLODBCStatement
  * column definitions essentially as if a "SELECT * FROM tablename" had
  * been done; however, no resultset will be available.
@@ -1376,15 +1401,15 @@ void CPLODBCStatement::Clear()
  * should not be empty.
  *
  * @param pszCatalog the catalog to find the table in, use NULL (the
- * default) if no catalog is available. 
+ * default) if no catalog is available.
  *
  * @param pszSchema the schema to find the table in, use NULL (the
- * default) if no schema is available. 
+ * default) if no schema is available.
  *
- * @return TRUE on success or FALSE on failure. 
+ * @return TRUE on success or FALSE on failure.
  */
 
-int CPLODBCStatement::GetColumns( const char *pszTable, 
+int CPLODBCStatement::GetColumns( const char *pszTable,
                                   const char *pszCatalog,
                                   const char *pszSchema )
 
@@ -1408,7 +1433,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 /* -------------------------------------------------------------------- */
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
-    if( Failed( SQLColumns( m_hStmt, 
+    if( Failed( SQLColumns( m_hStmt,
                             (SQLCHAR *) pszCatalog, SQL_NTS,
                             (SQLCHAR *) pszSchema, SQL_NTS,
                             (SQLCHAR *) pszTable, SQL_NTS,
@@ -1433,13 +1458,13 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 #endif
 
     m_nColCount = 500;
-    
+
     m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
 
     m_panColType = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
+    m_panColSize = (CPL_SQLULEN *) CPLCalloc(sizeof(CPL_SQLULEN),m_nColCount);
     m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
@@ -1452,7 +1477,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
         char szWrkData[8193];
-        _SQLLEN cbDataLen;
+        CPL_SQLLEN cbDataLen;
 
         if( Failed( SQLFetch( m_hStmt ) ) )
         {
@@ -1513,15 +1538,15 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
  * should not be empty.
  *
  * @param pszCatalog the catalog to find the table in, use NULL (the
- * default) if no catalog is available. 
+ * default) if no catalog is available.
  *
  * @param pszSchema the schema to find the table in, use NULL (the
- * default) if no schema is available. 
+ * default) if no schema is available.
  *
- * @return TRUE on success or FALSE on failure. 
+ * @return TRUE on success or FALSE on failure.
  */
 
-int CPLODBCStatement::GetPrimaryKeys( const char *pszTable, 
+int CPLODBCStatement::GetPrimaryKeys( const char *pszTable,
                                       const char *pszCatalog,
                                       const char *pszSchema )
 
@@ -1544,7 +1569,7 @@ int CPLODBCStatement::GetPrimaryKeys( const char *pszTable,
 /* -------------------------------------------------------------------- */
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
-    if( Failed( SQLPrimaryKeys( m_hStmt, 
+    if( Failed( SQLPrimaryKeys( m_hStmt,
                                 (SQLCHAR *) pszCatalog, SQL_NTS,
                                 (SQLCHAR *) pszSchema, SQL_NTS,
                                 (SQLCHAR *) pszTable, SQL_NTS ) ) )
@@ -1563,15 +1588,15 @@ int CPLODBCStatement::GetPrimaryKeys( const char *pszTable,
  * The SQLTables() function is used to fetch a list tables in the
  * database.    The result is returned as a result set matching
  * the SQLTables() function result set.  The 3rd column in the result
- * set is the table name.  Only tables of type "TABLE" are returned. 
+ * set is the table name.  Only tables of type "TABLE" are returned.
  *
  * @param pszCatalog the catalog to find the table in, use NULL (the
- * default) if no catalog is available. 
+ * default) if no catalog is available.
  *
  * @param pszSchema the schema to find the table in, use NULL (the
- * default) if no schema is available. 
+ * default) if no schema is available.
  *
- * @return TRUE on success or FALSE on failure. 
+ * @return TRUE on success or FALSE on failure.
  */
 
 int CPLODBCStatement::GetTables( const char *pszCatalog,
@@ -1594,7 +1619,7 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 /* -------------------------------------------------------------------- */
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
-    if( Failed( SQLTables( m_hStmt, 
+    if( Failed( SQLTables( m_hStmt,
                            (SQLCHAR *) pszCatalog, SQL_NTS,
                            (SQLCHAR *) pszSchema, SQL_NTS,
                            (SQLCHAR *) NULL, SQL_NTS,
@@ -1613,9 +1638,9 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
  *
  * The contents of the current resultset are dumped in a simply formatted
  * form to the provided file.  If requested, the schema definition will
- * be written first. 
+ * be written first.
  *
- * @param fp the file to write to.  stdout or stderr are acceptable. 
+ * @param fp the file to write to.  stdout or stderr are acceptable.
  *
  * @param bShowSchema TRUE to force writing schema information for the rowset
  * before the rowset data itself.  Default is FALSE.
@@ -1624,20 +1649,18 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
 
 {
-    int iCol;
-
 /* -------------------------------------------------------------------- */
 /*      Display schema                                                  */
 /* -------------------------------------------------------------------- */
     if( bShowSchema )
     {
         fprintf( fp, "Column Definitions:\n" );
-        for( iCol = 0; iCol < GetColCount(); iCol++ )
+        for( int iCol = 0; iCol < GetColCount(); iCol++ )
         {
             fprintf( fp, " %2d: %-24s ", iCol, GetColName(iCol) );
-            if( GetColPrecision(iCol) > 0 
+            if( GetColPrecision(iCol) > 0
                 && GetColPrecision(iCol) != GetColSize(iCol) )
-                fprintf( fp, " Size:%3d.%d", 
+                fprintf( fp, " Size:%3d.%d",
                          GetColSize(iCol), GetColPrecision(iCol) );
             else
                 fprintf( fp, " Size:%5d", GetColSize(iCol) );
@@ -1658,8 +1681,8 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
     while( Fetch() )
     {
         fprintf( fp, "Record %d\n", iRecord++ );
-        
-        for( iCol = 0; iCol < GetColCount(); iCol++ )
+
+        for( int iCol = 0; iCol < GetColCount(); iCol++ )
         {
             fprintf( fp, "  %s: %s\n", GetColName(iCol), GetColData(iCol) );
         }
@@ -1678,7 +1701,7 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
  *
  * @param nTypeCode the SQL_ code, such as SQL_CHAR.
  *
- * @return internal string, "UNKNOWN" if code not recognised. 
+ * @return internal string, "UNKNOWN" if code not recognised.
  */
 
 CPLString CPLODBCStatement::GetTypeName( int nTypeCode )
@@ -1688,29 +1711,28 @@ CPLString CPLODBCStatement::GetTypeName( int nTypeCode )
     {
       case SQL_CHAR:
         return "CHAR";
-        
+
       case SQL_NUMERIC:
         return "NUMERIC";
-        
+
       case SQL_DECIMAL:
         return "DECIMAL";
-        
+
       case SQL_INTEGER:
         return "INTEGER";
-        
+
       case SQL_SMALLINT:
         return "SMALLINT";
 
-        
       case SQL_FLOAT:
         return "FLOAT";
-        
+
       case SQL_REAL:
         return "REAL";
 
       case SQL_DOUBLE:
         return "DOUBLE";
-        
+
       case SQL_DATETIME:
         return "DATETIME";
 
@@ -1722,7 +1744,7 @@ CPLString CPLODBCStatement::GetTypeName( int nTypeCode )
 
       case SQL_TYPE_TIME:
         return "TIME";
-        
+
       case SQL_TYPE_TIMESTAMP:
         return "TIMESTAMP";
 
@@ -1819,11 +1841,10 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_BINARY:
         case SQL_VARBINARY:
         case SQL_LONGVARBINARY:
+        case -151: /*SQL_SS_UDT*/
             return SQL_C_BINARY;
 
         default:
             return SQL_C_CHAR;
     }
 }
-
-#endif /* #ifndef WIN32CE */

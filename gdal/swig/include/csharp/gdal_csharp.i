@@ -27,7 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
- 
+
 %include cpl_exceptions.i
 
 %rename (GetMetadata) GetMetadata_List;
@@ -72,7 +72,7 @@ DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
       GC.KeepAlive(this);
       return retval;
   }
-  
+
 %enddef
 
 %typemap(cscode, noblock="1") GDALRasterBandShadow {
@@ -85,18 +85,18 @@ DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
 
 /*! Sixteen bit unsigned integer */ //%rasterio_functions(DataType.GDT_UInt16,ushort)
 /*! Thirty two bit unsigned integer */ //%rasterio_functions(DataType.GDT_UInt32,uint)
-/*! Complex Int16 */ //%rasterio_functions(DataType.GDT_CInt16,int)                 
-/*! Complex Int32 */ //%rasterio_functions(DataType.GDT_CInt32,int)                 
-/*! Complex Float32 */ //%rasterio_functions(DataType.GDT_CFloat32,int)              
-/*! Complex Float64 */ //%rasterio_functions(DataType.GDT_CFloat64,int)               
+/*! Complex Int16 */ //%rasterio_functions(DataType.GDT_CInt16,int)
+/*! Complex Int32 */ //%rasterio_functions(DataType.GDT_CInt32,int)
+/*! Complex Float32 */ //%rasterio_functions(DataType.GDT_CFloat32,int)
+/*! Complex Float64 */ //%rasterio_functions(DataType.GDT_CFloat64,int)
 
 %define %ds_rasterio_functions(GDALTYPE,CSTYPE)
- public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, 
+ public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
      int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace) {
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
-          retval = ReadRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE, 
+          retval = ReadRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE,
                                bandCount, bandMap, pixelSpace, lineSpace, bandSpace);
       } finally {
           handle.Free();
@@ -117,7 +117,7 @@ DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
       GC.KeepAlive(this);
       return retval;
   }
-  
+
 %enddef
 
 %typemap(cscode, noblock="1") GDALDatasetShadow {
@@ -131,7 +131,7 @@ public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALPr
       int retval;
       if (overviewlist.Length <= 0)
         throw new ArgumentException("overviewlist size is small (BuildOverviews)");
-        
+
       IntPtr ptr = Marshal.AllocHGlobal(overviewlist.Length * Marshal.SizeOf(overviewlist[0]));
       try {
           Marshal.Copy(overviewlist, 0, ptr, overviewlist.Length);
@@ -145,7 +145,7 @@ public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALPr
 public int BuildOverviews( string resampling, int[] overviewlist) {
       return BuildOverviews( resampling, overviewlist, null, null);
   }
-  
+
 public GCP[] GetGCPs() {
       /*hello*/
       IntPtr cPtr = __GetGCPs();
@@ -160,7 +160,7 @@ public GCP[] GetGCPs() {
       GC.KeepAlive(this);
       return ret;
   }
-  
+
 public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
      CPLErr ret = 0;
      if (pGCPs != null && pGCPs.Length > 0)
@@ -168,11 +168,11 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
          IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
          if (cPtr == IntPtr.Zero)
             throw new ApplicationException("Error allocating CArray with __AllocCArray_GDAL_GCP");
-            
+
          try {
              for (int i=0; i < pGCPs.Length; i++)
                 __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
-             
+
              ret = __SetGCPs(pGCPs.Length, cPtr, pszGCPProjection);
          }
          finally
@@ -187,9 +187,9 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
 
 /*! Sixteen bit unsigned integer */ //%ds_rasterio_functions(DataType.GDT_UInt16,ushort)
 /*! Thirty two bit unsigned integer */ //%ds_rasterio_functions(DataType.GDT_UInt32,uint)
-/*! Complex Int16 */ //%ds_rasterio_functions(DataType.GDT_CInt16,int)                 
-/*! Complex Int32 */ //%ds_rasterio_functions(DataType.GDT_CInt32,int)                 
-/*! Complex Float32 */ //%ds_rasterio_functions(DataType.GDT_CFloat32,int)              
+/*! Complex Int16 */ //%ds_rasterio_functions(DataType.GDT_CInt16,int)
+/*! Complex Int32 */ //%ds_rasterio_functions(DataType.GDT_CInt32,int)
+/*! Complex Float32 */ //%ds_rasterio_functions(DataType.GDT_CFloat32,int)
 /*! Complex Float64 */ //%ds_rasterio_functions(DataType.GDT_CFloat64,int)
 
 %pragma(csharp) modulecode=%{
@@ -200,11 +200,11 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
          IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
          if (cPtr == IntPtr.Zero)
             throw new ApplicationException("Error allocating CArray with __AllocCArray_GDAL_GCP");
-            
-         try {   
+
+         try {
              for (int i=0; i < pGCPs.Length; i++)
                 __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
-             
+
              ret = GCPsToGeoTransform(pGCPs.Length, cPtr, argout, bApproxOK);
          }
          finally
@@ -214,7 +214,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
      }
      return ret;
    }
-   
+
  public static void FileFromMemBuffer(string utf8_path, byte[] bytes) {
      GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
      try {

@@ -38,6 +38,9 @@ static int bWarnedTwoComplement = FALSE;
 
 static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo);
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+CPL_INLINE static void CPL_IGNORE_RET_VAL_SIZET(CPL_UNUSED size_t unused) {}
+
 /************************************************************************/
 /*                            DTEDGetField()                            */
 /*                                                                      */
@@ -97,7 +100,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
         pszAccess = "rb";
     else
         pszAccess = "r+b";
-    
+
     fp = VSIFOpenL( pszFilename, pszAccess );
 
     if( fp == NULL )
@@ -107,7 +110,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 #ifndef AVOID_CPL
             CPLError( CE_Failure, CPLE_OpenFailed,
 #else
-            fprintf( stderr, 
+            fprintf( stderr,
 #endif
                       "Failed to open file %s.",
                       pszFilename );
@@ -153,33 +156,33 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
 #ifndef AVOID_CPL
                CPLError( CE_Failure, CPLE_OpenFailed,
 #else
-               fprintf( stderr, 
+               fprintf( stderr,
 #endif
                           "Unable to read header, %s is not DTED.",
                           pszFilename );
             }
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
             return NULL;
         }
 
-    } while( EQUALN(achRecord,"VOL",3) || EQUALN(achRecord,"HDR",3) );
+    } while( STARTS_WITH_CI(achRecord, "VOL") || STARTS_WITH_CI(achRecord, "HDR") );
 
-    if( !EQUALN(achRecord,"UHL",3) )
+    if( !STARTS_WITH_CI(achRecord, "UHL") )
     {
         if( !bTestOpen )
         {
 #ifndef AVOID_CPL
             CPLError( CE_Failure, CPLE_OpenFailed,
 #else
-            fprintf( stderr, 
+            fprintf( stderr,
 #endif
                       "No UHL record.  %s is not a DTED file.",
                       pszFilename );
         }
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create and initialize the DTEDInfo structure.                   */
 /* -------------------------------------------------------------------- */
@@ -196,23 +199,23 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
 
     psDInfo->nDSIOffset = (int)VSIFTellL( fp );
     psDInfo->pachDSIRecord = (char *) CPLMalloc(DTED_DSI_SIZE);
-    VSIFReadL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, fp );
-    
+    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, fp ));
+
     psDInfo->nACCOffset = (int)VSIFTellL( fp );
     psDInfo->pachACCRecord = (char *) CPLMalloc(DTED_ACC_SIZE);
-    VSIFReadL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp );
+    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp ));
 
-    if( !EQUALN(psDInfo->pachDSIRecord,"DSI",3)
-        || !EQUALN(psDInfo->pachACCRecord,"ACC",3) )
+    if( !STARTS_WITH_CI(psDInfo->pachDSIRecord, "DSI")
+        || !STARTS_WITH_CI(psDInfo->pachACCRecord, "ACC") )
     {
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_OpenFailed,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                  "DSI or ACC record missing.  DTED access to\n%s failed.",
                  pszFilename );
-        
+
         DTEDClose(psDInfo);
         return NULL;
     }
@@ -282,10 +285,10 @@ DTEDInfo * DTEDOpenEx( VSILFILE   *fp,
     }
 
     /* NOTE : The first version of MIL-D-89020 was buggy.
-       The latitude and longitude of the LL cornder of the UHF record was inverted.
-       This was fixed in MIL-D-89020 Amendement 1, but some products may be affected.
+       The latitude and longitude of the LL corner of the UHF record was inverted.
+       This was fixed in MIL-D-89020 Amendment 1, but some products may be affected.
        We detect this situation by looking at N/S in the longitude field and
-       E/W in the latitude one
+       E/W in the latitude one.
     */
 
     dfLLOriginX = deg + min / 60.0 + sec / 3600.0;
@@ -352,8 +355,8 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
     int nSize;
     int nColByteSize = 12 + psDInfo->nYSize*2;
 
-    VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset, SEEK_SET);
-    if (VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
+    if (VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset, SEEK_SET) < 0 ||
+        VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
         pabyRecordHeader[0] != 0252)
     {
         CPLDebug("DTED", "Cannot find signature of first column");
@@ -363,7 +366,7 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
     nFirstDataBlockCount = (pabyRecordHeader[2] << 8) | pabyRecordHeader[3];
     nFirstLongitudeCount = (pabyRecordHeader[4] << 8) | pabyRecordHeader[5];
 
-    VSIFSeekL(psDInfo->fp, 0, SEEK_END);
+    CPL_IGNORE_RET_VAL_SIZET(VSIFSeekL(psDInfo->fp, 0, SEEK_END));
     nSize = (int)VSIFTellL(psDInfo->fp);
     if (nSize < 12 + psDInfo->nYSize*2)
     {
@@ -371,8 +374,8 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
         return;
     }
 
-    VSIFSeekL(psDInfo->fp, nSize - nColByteSize, SEEK_SET);
-    if (VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
+    if (VSIFSeekL(psDInfo->fp, nSize - nColByteSize, SEEK_SET) < 0 ||
+        VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
         pabyRecordHeader[0] != 0252)
     {
         CPLDebug("DTED", "Cannot find signature of last column");
@@ -440,8 +443,8 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
         {
             int nDataBlockCount, nLongitudeCount;
 
-            VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset + i * nColByteSize, SEEK_SET);
-            if (VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
+            if (VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset + i * nColByteSize, SEEK_SET) < 0 ||
+                VSIFReadL(pabyRecordHeader, 1, 8, psDInfo->fp) != 8 ||
                 pabyRecordHeader[0] != 0252)
             {
                 CPLDebug("DTED", "Cannot find signature of physical column %d", i);
@@ -475,7 +478,7 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo)
 /*                                                                      */
 /*      Read one single sample. The coordinates are given from the      */
 /*      top-left corner of the file (contrary to the internal           */
-/*      organisation or a DTED file)                                    */
+/*      organization or a DTED file)                                    */
 /************************************************************************/
 
 int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal)
@@ -488,7 +491,7 @@ int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal)
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_AppDefined,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                   "Invalid raster coordinates (%d,%d) in DTED file.\n", nXOff, nYOff);
         return FALSE;
@@ -513,7 +516,7 @@ int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal)
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                   "Failed to seek to, or read (%d,%d) at offset %d\n"
                   "in DTED file.\n",
@@ -601,7 +604,7 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                   "Failed to seek to, or read profile %d at offset %d\n"
                   "in DTED file.\n",
@@ -676,7 +679,7 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
                         (pabyRecord[8+psDInfo->nYSize*2+2] << 8) |
                         pabyRecord[8+psDInfo->nYSize*2+3];
 
-        if ((GIntBig)fileCheckSum > (GIntBig)(0xff * (8+psDInfo->nYSize*2)))
+        if (fileCheckSum > 0xff * (8+(unsigned int)psDInfo->nYSize*2))
         {
             static int bWarned = FALSE;
             if (! bWarned)
@@ -741,7 +744,7 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
 /*      Format the data record.                                         */
 /* -------------------------------------------------------------------- */
     pabyRecord = (GByte *) CPLMalloc(12 + psDInfo->nYSize*2);
-    
+
     for( i = 0; i < psDInfo->nYSize; i++ )
     {
         int     nABSVal = ABS(panData[psDInfo->nYSize-i-1]);
@@ -783,7 +786,7 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
 #else
-        fprintf( stderr, 
+        fprintf( stderr,
 #endif
                   "Failed to seek to, or write profile %d at offset %d\n"
                   "in DTED file.\n",
@@ -795,15 +798,14 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
     CPLFree( pabyRecord );
 
     return TRUE;
-    
 }
 
 /************************************************************************/
 /*                      DTEDGetMetadataLocation()                       */
 /************************************************************************/
 
-static void DTEDGetMetadataLocation( DTEDInfo *psDInfo, 
-                                     DTEDMetaDataCode eCode, 
+static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
+                                     DTEDMetaDataCode eCode,
                                      char **ppszLocation, int *pnLength )
 {
     int bIsWeirdDTED = psDInfo->pachUHLRecord[4] == ' ';
@@ -910,9 +912,9 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
         if (bIsWeirdDTED)
             *ppszLocation = psDInfo->pachDSIRecord + 270;
         else
-            *ppszLocation = psDInfo->pachDSIRecord + 144; 
-        *pnLength = 5; 
-        break; 
+            *ppszLocation = psDInfo->pachDSIRecord + 144;
+        *pnLength = 5;
+        break;
 
       case DTEDMD_DIGITIZING_SYS:
         if (bIsWeirdDTED)
@@ -1011,7 +1013,7 @@ char *DTEDGetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode )
 /*                          DTEDSetMetadata()                           */
 /************************************************************************/
 
-int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode, 
+int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
                      const char *pszNewValue )
 
 {
@@ -1032,7 +1034,7 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 /*      Update it, padding with spaces.                                 */
 /* -------------------------------------------------------------------- */
     memset( pszFieldSrc, ' ', nFieldLen );
-    strncpy( pszFieldSrc, pszNewValue, 
+    strncpy( pszFieldSrc, pszNewValue,
              MIN((size_t)nFieldLen,strlen(pszNewValue)) );
 
     /* Turn the flag on, so that the headers are rewritten at file */
@@ -1054,17 +1056,17 @@ void DTEDClose( DTEDInfo * psDInfo )
 /* -------------------------------------------------------------------- */
 /*      Write all headers back to disk.                                 */
 /* -------------------------------------------------------------------- */
-        VSIFSeekL( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET );
-        VSIFWriteL( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFSeekL( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET ));
+        CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp ));
 
-        VSIFSeekL( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET );
-        VSIFWriteL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFSeekL( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET ));
+        CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp ));
 
-        VSIFSeekL( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET );
-        VSIFWriteL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp );
+        CPL_IGNORE_RET_VAL_INT(VSIFSeekL( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET ));
+        CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp ));
     }
 
-    VSIFCloseL( psDInfo->fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( psDInfo->fp ));
 
     CPLFree( psDInfo->pachUHLRecord );
     CPLFree( psDInfo->pachDSIRecord );

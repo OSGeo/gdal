@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Cloudant Translator
  * Purpose:  Definition of classes for OGR Cloudant driver.
@@ -41,15 +40,13 @@ CPL_CVSID("$Id$");
 /*                       OGRCloudantTableLayer()                         */
 /************************************************************************/
 
-OGRCloudantTableLayer::OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
-                                           const char* pszName) :
-                                                        OGRCouchDBTableLayer((OGRCouchDBDataSource*) poDS, pszName)
-
-{
-    bHasStandardSpatial = -1;
-    pszSpatialView = NULL;
-    pszSpatialDDoc = NULL;
-}
+OGRCloudantTableLayer::OGRCloudantTableLayer( OGRCloudantDataSource* poDSIn,
+                                              const char* pszName) :
+    OGRCouchDBTableLayer((OGRCouchDBDataSource*) poDSIn, pszName),
+    bHasStandardSpatial(-1),
+    pszSpatialView(NULL),
+    pszSpatialDDoc(NULL)
+{}
 
 /************************************************************************/
 /*                      ~OGRCouchDBTableLayer()                         */
@@ -57,7 +54,7 @@ OGRCloudantTableLayer::OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
 
 OGRCloudantTableLayer::~OGRCloudantTableLayer()
 
-{ 
+{
     if( bMustWriteMetadata )
     {
         WriteMetadata();
@@ -65,7 +62,7 @@ OGRCloudantTableLayer::~OGRCloudantTableLayer()
     }
 
     if (pszSpatialDDoc)
-        free((void*)pszSpatialDDoc);
+        CPLFree(pszSpatialDDoc);
 }
 
 /************************************************************************/
@@ -220,21 +217,22 @@ void OGRCloudantTableLayer::GetSpatialView()
         if (bHasStandardSpatial)
             pszSpatialView = "_design/SpatialView/_geo/spatial";
 
-        papszTokens = 
+        papszTokens =
             CSLTokenizeString2( pszSpatialView, "/", 0);
 
         if ((papszTokens[0] == NULL) || (papszTokens[1] == NULL))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "GetSpatialView() failed, invalid spatial design doc.");
+            CSLDestroy(papszTokens);
             return;
         }
 
-        pszSpatialDDoc = (char*) calloc(strlen(papszTokens[0]) + strlen(papszTokens[1]) + 2, 1);
+        const size_t nLen = strlen(papszTokens[0]) + strlen(papszTokens[1]) + 2;
+        pszSpatialDDoc = (char*) CPLCalloc(nLen, 1);
 
-        sprintf(pszSpatialDDoc, "%s/%s", papszTokens[0], papszTokens[1]);
+        snprintf(pszSpatialDDoc, nLen, "%s/%s", papszTokens[0], papszTokens[1]);
 
-        CSLDestroy(papszTokens);  
-
+        CSLDestroy(papszTokens);
     }
 }
 
@@ -294,17 +292,17 @@ void OGRCloudantTableLayer::WriteMetadata()
         if (poSRS->IsProjected())
         {
             pszAuthName = poSRS->GetAuthorityName("PROJCS");
-            if ((pszAuthName != NULL) && (strncmp(pszAuthName, "EPSG", 4) == 0))
+            if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
                 pszEpsg = poSRS->GetAuthorityCode("PROJCS");
         }
         else
         {
             pszAuthName = poSRS->GetAuthorityName("GEOGCS");
-            if ((pszAuthName != NULL) && (strncmp(pszAuthName, "EPSG", 4) == 0))
+            if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
                 pszEpsg = poSRS->GetAuthorityCode("GEOGCS");
         }
 
-        if (pszEpsg != NULL) 
+        if (pszEpsg != NULL)
         {
             const char * pszUrn = "urn:ogc:def:crs:epsg::";
             CPLStrlcpy(szSrid, pszUrn, sizeof(szSrid));
@@ -313,7 +311,7 @@ void OGRCloudantTableLayer::WriteMetadata()
                 json_object_object_add(poDDocObj, "srsid",
                                    json_object_new_string(pszUrn));
 
-            } 
+            }
         }
     }
 
@@ -339,7 +337,7 @@ void OGRCloudantTableLayer::WriteMetadata()
     json_object* poFields = json_object_new_array();
     json_object_object_add(poDDocObj, "fields", poFields);
 
-    for(int i=FIRST_FIELD;i<poFeatureDefn->GetFieldCount();i++)
+    for(int i=COUCHDB_FIRST_FIELD;i<poFeatureDefn->GetFieldCount();i++)
     {
         json_object* poField = json_object_new_object();
         json_object_array_add(poFields, poField);
@@ -494,7 +492,7 @@ void OGRCloudantTableLayer::LoadMetadata()
         poFeatureDefn->Reference();
 
         poFeatureDefn->SetGeomType(eGeomType);
-        if( poFeatureDefn->GetGeomFieldCount() != 0 ) 
+        if( poFeatureDefn->GetGeomFieldCount() != 0 )
             poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
         OGRFieldDefn oFieldId("_id", OFTString);

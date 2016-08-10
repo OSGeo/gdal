@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keacopy.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -7,23 +6,23 @@
  *
  *  This file is part of LibKEA.
  *
- *  Permission is hereby granted, free of charge, to any person 
- *  obtaining a copy of this software and associated documentation 
- *  files (the "Software"), to deal in the Software without restriction, 
- *  including without limitation the rights to use, copy, modify, 
- *  merge, publish, distribute, sublicense, and/or sell copies of the 
- *  Software, and to permit persons to whom the Software is furnished 
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without restriction,
+ *  including without limitation the rights to use, copy, modify,
+ *  merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished
  *  to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be 
+ *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
@@ -31,9 +30,10 @@
 #include <cmath>
 #include "gdal_priv.h"
 #include "gdal_rat.h"
-#include "libkea/KEAImageIO.h"
-#include "libkea/KEAAttributeTable.h"
-#include "libkea/KEAAttributeTableInMem.h"
+
+#include "keacopy.h"
+
+CPL_CVSID("$Id$");
 
 // Support functions for CreateCopy()
 
@@ -59,11 +59,11 @@ bool KEACopyRasterData( GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int
     void *pData = VSIMalloc3( nPixelSize, nBlockSize, nBlockSize);
     if( pData == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Unable to allocate memory" );        
+        CPLError( CE_Failure, CPLE_AppDefined, "Unable to allocate memory" );
         return false;
     }
     // for progress
-    int nTotalBlocks = std::ceil( (double)nXSize / (double)nBlockSize ) * std::ceil( (double)nYSize / (double)nBlockSize );
+    int nTotalBlocks = static_cast<int>(std::ceil( (double)nXSize / (double)nBlockSize ) * std::ceil( (double)nYSize / (double)nBlockSize ));
     int nBlocksComplete = 0;
     double dLastFraction = -1;
     // go through the image
@@ -83,9 +83,12 @@ bool KEACopyRasterData( GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int
                 nxsize -= (nxtotalsize - nXSize);
 
             // read in from GDAL
-            if( pBand->RasterIO( GF_Read, nX, nY, nxsize, nysize, pData, nxsize, nysize, eGDALType, nPixelSize, nPixelSize * nBlockSize, NULL) != CE_None )
+            if( pBand->RasterIO( GF_Read, nX, nY, nxsize, nysize, pData,
+                                 nxsize, nysize, eGDALType, nPixelSize,
+                                 nPixelSize * nBlockSize, NULL) != CE_None )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, "Unable to read blcok at %d %d\n", nX, nY );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unable to read block at %d %d\n", nX, nY );
                 return false;
             }
             // write out to KEA
@@ -111,7 +114,7 @@ bool KEACopyRasterData( GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int
             }
         }
     }
-    
+
     CPLFree( pData );
     return true;
 }
@@ -137,7 +140,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
         int blueIdx = -1;
         bool alphaDef = false;
         int alphaIdx = -1;*/
-        
+
         int numCols = gdalAtt->GetColumnCount();
         std::vector<kealib::KEAATTField*> *fields = new std::vector<kealib::KEAATTField*>();
         kealib::KEAATTField *field;
@@ -145,7 +148,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
         {
             field = new kealib::KEAATTField();
             field->name = gdalAtt->GetNameOfCol(ni);
-            
+
             field->dataType = kealib::kea_att_string;
             switch(gdalAtt->GetTypeOfCol(ni))
             {
@@ -162,7 +165,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                     // leave as "kea_att_string"
                     break;
             }
-            
+
             if(bInputHFA && (field->name == "Histogram"))
             {
                 field->usage = "PixelCount";
@@ -222,12 +225,14 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                         break;
                 }
             }
-            
+
             fields->push_back(field);
         }
-        
-        keaAtt->addFields(fields); // This function will populate the field indexs used within the KEA RAT.
-        
+
+        // This function will populate the field indexes used within
+        // the KEA RAT.
+        keaAtt->addFields(fields);
+
         int numRows = gdalAtt->GetRowCount();
         keaAtt->addRows(numRows);
 
@@ -248,7 +253,8 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                 switch(field->dataType)
                 {
                     case kealib::kea_att_int:
-                        ((GDALRasterAttributeTable*)gdalAtt)->ValuesIO(GF_Read, nj, ni, nLength, pnIntBuffer);
+                        ((GDALRasterAttributeTable*)gdalAtt)->ValuesIO(
+                            GF_Read, nj, ni, nLength, pnIntBuffer);
                         for( int i = 0; i < nLength; i++ )
                         {
                             pnInt64Buffer[i] = pnIntBuffer[i];
@@ -260,10 +266,10 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                         keaAtt->setFloatFields(ni, nLength, field->idx, pfDoubleBuffer);
                         break;
                     case kealib::kea_att_string:
-                        {   
+                        {
                             char **papszColData = (char**)VSIMalloc2(nLength, sizeof(char*));
                             ((GDALRasterAttributeTable*)gdalAtt)->ValuesIO(GF_Read, nj, ni, nLength, papszColData);
-                     
+
                             std::vector<std::string> aStringBuffer;
                             for( int i = 0; i < nLength; i++ )
                             {
@@ -305,18 +311,17 @@ static void KEACopyMetadata( GDALMajorObject *pObject, kealib::KEAImageIO *pImag
     char **ppszMetadata = pObject->GetMetadata();
     if( ppszMetadata != NULL )
     {
-        char *pszName;
-        const char *pszValue;
         int nCount = 0;
         while( ppszMetadata[nCount] != NULL )
         {
-            pszName = NULL;
-            pszValue = CPLParseNameValue( ppszMetadata[nCount], &pszName );
+            char *pszName = NULL;
+            const char *pszValue =
+                CPLParseNameValue( ppszMetadata[nCount], &pszName );
             if( pszValue == NULL )
                 pszValue = "";
             if( pszName != NULL )
             {
-                // it is LAYER_TYPE and a Band? if so handle seperately
+                // it is LAYER_TYPE and a Band? if so handle separately
                 if( ( nBand != -1 ) && EQUAL( pszName, "LAYER_TYPE" ) )
                 {
                     if( EQUAL( pszValue, "athematic" ) )
@@ -330,8 +335,8 @@ static void KEACopyMetadata( GDALMajorObject *pObject, kealib::KEAImageIO *pImag
                 }
                 else if( ( nBand != -1 ) && EQUAL( pszName, "STATISTICS_HISTOBINVALUES") )
                 {
-                    // this gets copied accross as part of the attributes
-                    // so ignore for now
+                    // This gets copied across as part of the attributes
+                    // so ignore for now.
                 }
                 else
                 {
@@ -355,7 +360,7 @@ static void KEACopyDescription(GDALRasterBand *pBand, kealib::KEAImageIO *pImage
     pImageIO->setImageBandDescription(nBand, pszDesc);
 }
 
-// copies the no data value accross
+// copies the no data value across
 static void KEACopyNoData(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int nBand)
 {
     int bSuccess = 0;
@@ -384,7 +389,7 @@ static bool KEACopyBand( GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, in
             return false;
     }
 
-    // now metadata 
+    // now metadata
     KEACopyMetadata(pBand, pImageIO, nBand);
 
     // and attributes
@@ -421,7 +426,7 @@ static void KEACopySpatialInfo(GDALDataset *pDataset, kealib::KEAImageIO *pImage
     pImageIO->setSpatialInfo( pSpatialInfo );
 }
 
-// copies the GCP's accross
+// copies the GCP's across
 static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
 {
     int nGCPs = pDataset->GetGCPCount();
@@ -449,7 +454,7 @@ static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
         {
             pImageIO->setGCPs(&KEAGCPs, pszGCPProj);
         }
-        catch(kealib::KEAException &e)
+        catch(const kealib::KEAException &)
         {
         }
 
@@ -462,11 +467,12 @@ static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
 
 
 
-bool KEACopyFile( GDALDataset *pDataset, kealib::KEAImageIO *pImageIO, GDALProgressFunc pfnProgress, void *pProgressData )
+bool KEACopyFile( GDALDataset *pDataset, kealib::KEAImageIO *pImageIO,
+                  GDALProgressFunc pfnProgress, void *pProgressData )
 {
     // Main function - copies pDataset to pImageIO
 
-    // copy accross the spatial info
+    // Copy across the spatial info.
     KEACopySpatialInfo( pDataset, pImageIO);
 
     // dataset metadata
@@ -474,13 +480,14 @@ bool KEACopyFile( GDALDataset *pDataset, kealib::KEAImageIO *pImageIO, GDALProgr
 
     // GCPs
     KEACopyGCPs(pDataset, pImageIO);
-    
+
     // now copy all the bands over
     int nBands = pDataset->GetRasterCount();
     for( int nBand = 0; nBand < nBands; nBand++ )
     {
         GDALRasterBand *pBand = pDataset->GetRasterBand(nBand + 1);
-        if( !KEACopyBand( pBand, pImageIO, nBand +1, nBands, pfnProgress, pProgressData ) )
+        if( !KEACopyBand( pBand, pImageIO, nBand +1, nBands, pfnProgress,
+                          pProgressData ) )
             return false;
     }
 

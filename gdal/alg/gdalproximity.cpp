@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Compute each pixel's proximity to a set of target pixels.
@@ -28,14 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_alg.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gdal_alg.h"
 
 CPL_CVSID("$Id$");
 
 static CPLErr
-ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY, 
+ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
                       int bForward, int iLine, int nXSize, double nMaxDist,
                       float *pafProximity, double *pdfSrcNoDataValue,
                       int nTargetValues, int *panTargetValues );
@@ -45,7 +44,8 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /************************************************************************/
 
 /**
-Compute the proximity of all pixels in the image to a set of pixels in the source image.
+Compute the proximity of all pixels in the image to a set of pixels in
+the source image.
 
 This function attempts to compute the proximity of all pixels in
 the image to a set of pixels in the source image.  The following
@@ -56,7 +56,7 @@ that target pixels are set to the value corresponding to a distance
 of zero.
 
 The progress function args may be NULL or a valid progress reporting function
-such as GDALTermProgress/NULL. 
+such as GDALTermProgress/NULL.
 
 Options:
 
@@ -70,14 +70,14 @@ integers.
   DISTUNITS=[PIXEL]/GEO
 
 Indicates whether distances will be computed in pixel units or
-in georeferenced units.  The default is pixel units.  This also 
+in georeferenced units.  The default is pixel units.  This also
 determines the interpretation of MAXDIST.
 
   MAXDIST=n
 
 The maximum distance to search.  Proximity distances greater than
 this value will not be computed.  Instead output pixels will be
-set to a nodata value. 
+set to a nodata value.
 
   NODATA=n
 
@@ -94,23 +94,18 @@ the proximity output.
   FIXED_BUF_VAL=n
 
 If this option is set, all pixels within the MAXDIST threadhold are
-set to this fixed value instead of to a proximity distance.  
+set to this fixed value instead of to a proximity distance.
 */
 
 
-CPLErr CPL_STDCALL 
-GDALComputeProximity( GDALRasterBandH hSrcBand, 
+CPLErr CPL_STDCALL
+GDALComputeProximity( GDALRasterBandH hSrcBand,
                       GDALRasterBandH hProximityBand,
                       char **papszOptions,
-                      GDALProgressFunc pfnProgress, 
+                      GDALProgressFunc pfnProgress,
                       void * pProgressArg )
 
 {
-    int nXSize, nYSize, i, bFixedBufVal = FALSE;
-    const char *pszOpt;
-    double dfMaxDist;
-    double dfFixedBufVal = 0.0;
-
     VALIDATE_POINTER1( hSrcBand, "GDALComputeProximity", CE_Failure );
     VALIDATE_POINTER1( hProximityBand, "GDALComputeProximity", CE_Failure );
 
@@ -121,7 +116,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      Are we using pixels or georeferenced coordinates for distances? */
 /* -------------------------------------------------------------------- */
     double dfDistMult = 1.0;
-    pszOpt = CSLFetchNameValue( papszOptions, "DISTUNITS" );
+    const char *pszOpt = CSLFetchNameValue( papszOptions, "DISTUNITS" );
     if( pszOpt )
     {
         if( EQUAL(pszOpt,"GEO") )
@@ -129,20 +124,22 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
             GDALDatasetH hSrcDS = GDALGetBandDataset( hSrcBand );
             if( hSrcDS )
             {
-                double adfGeoTransform[6];
+                double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
                 GDALGetGeoTransform( hSrcDS, adfGeoTransform );
                 if( ABS(adfGeoTransform[1]) != ABS(adfGeoTransform[5]) )
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                              "Pixels not square, distances will be inaccurate." );
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Pixels not square, distances will be inaccurate." );
                 dfDistMult = ABS(adfGeoTransform[1]);
             }
         }
-        else if( !EQUAL(pszOpt,"PIXEL") )
+        else if( !EQUAL(pszOpt, "PIXEL") )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unrecognised DISTUNITS value '%s', should be GEO or PIXEL.",
-                      pszOpt );
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Unrecognized DISTUNITS value '%s', should be GEO or PIXEL.",
+                pszOpt );
             return CE_Failure;
         }
     }
@@ -151,22 +148,21 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      What is our maxdist value?                                      */
 /* -------------------------------------------------------------------- */
     pszOpt = CSLFetchNameValue( papszOptions, "MAXDIST" );
-    if( pszOpt )
-        dfMaxDist = CPLAtof(pszOpt) / dfDistMult;
-    else
-        dfMaxDist = GDALGetRasterBandXSize(hSrcBand) + GDALGetRasterBandYSize(hSrcBand);
+    const double dfMaxDist = pszOpt ?
+        CPLAtof(pszOpt) / dfDistMult :
+        GDALGetRasterBandXSize(hSrcBand) + GDALGetRasterBandYSize(hSrcBand);
 
     CPLDebug( "GDAL", "MAXDIST=%g, DISTMULT=%g", dfMaxDist, dfDistMult );
 
 /* -------------------------------------------------------------------- */
 /*      Verify the source and destination are compatible.               */
 /* -------------------------------------------------------------------- */
-    nXSize = GDALGetRasterBandXSize( hSrcBand );
-    nYSize = GDALGetRasterBandYSize( hSrcBand );
+    const int nXSize = GDALGetRasterBandXSize( hSrcBand );
+    const int nYSize = GDALGetRasterBandYSize( hSrcBand );
     if( nXSize != GDALGetRasterBandXSize( hProximityBand )
         || nYSize != GDALGetRasterBandYSize( hProximityBand ))
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Source and proximity bands are not the same size." );
         return CE_Failure;
     }
@@ -176,7 +172,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     double dfSrcNoDataValue = 0.0;
     double *pdfSrcNoData = NULL;
-    if( CSLFetchBoolean( papszOptions, "USE_INPUT_NODATA", FALSE ) )
+    if( CPLFetchBool( papszOptions, "USE_INPUT_NODATA", false ) )
     {
         int bSrcHasNoData = 0;
         dfSrcNoDataValue = GDALGetRasterNoDataValue( hSrcBand, &bSrcHasNoData );
@@ -187,46 +183,51 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Get output NODATA value.                                        */
 /* -------------------------------------------------------------------- */
-    float fNoDataValue;
+    float fNoDataValue = 0.0f;
     pszOpt = CSLFetchNameValue( papszOptions, "NODATA" );
     if( pszOpt != NULL )
-        fNoDataValue = (float) CPLAtof(pszOpt);
+    {
+        fNoDataValue = static_cast<float>(CPLAtof(pszOpt));
+    }
     else
     {
-        int bSuccess;
+        int bSuccess = FALSE;
 
-        fNoDataValue = (float) GDALGetRasterNoDataValue( hProximityBand, &bSuccess );
+        fNoDataValue = static_cast<float>(
+            GDALGetRasterNoDataValue( hProximityBand, &bSuccess ) );
         if( !bSuccess )
             fNoDataValue = 65535.0;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is there a fixed value we wish to force the buffer area to?     */
 /* -------------------------------------------------------------------- */
+    double dfFixedBufVal = 0.0;
+    bool bFixedBufVal = false;
     pszOpt = CSLFetchNameValue( papszOptions, "FIXED_BUF_VAL" );
     if( pszOpt )
     {
         dfFixedBufVal = CPLAtof(pszOpt);
-        bFixedBufVal = TRUE;
+        bFixedBufVal = true;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Get the target value(s).                                        */
 /* -------------------------------------------------------------------- */
     int *panTargetValues = NULL;
-    int  nTargetValues = 0;
-    
+    int nTargetValues = 0;
+
     pszOpt = CSLFetchNameValue( papszOptions, "VALUES" );
     if( pszOpt != NULL )
     {
-        char **papszValuesTokens;
+        char **papszValuesTokens =
+            CSLTokenizeStringComplex( pszOpt, ",", FALSE,FALSE);
 
-        papszValuesTokens = CSLTokenizeStringComplex( pszOpt, ",", FALSE,FALSE);
-        
         nTargetValues = CSLCount(papszValuesTokens);
-        panTargetValues = (int *) CPLCalloc(sizeof(int),nTargetValues);
-        
-        for( i = 0; i < nTargetValues; i++ )
+        panTargetValues = static_cast<int *>(
+            CPLCalloc(sizeof(int), nTargetValues) );
+
+        for( int i = 0; i < nTargetValues; i++ )
             panTargetValues[i] = atoi(papszValuesTokens[i]);
         CSLDestroy( papszValuesTokens );
     }
@@ -249,26 +250,26 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     GDALRasterBandH hWorkProximityBand = hProximityBand;
     GDALDatasetH hWorkProximityDS = NULL;
     GDALDataType eProxType = GDALGetRasterDataType( hProximityBand );
-    int   *panNearX = NULL, *panNearY = NULL;
+    int *panNearX = NULL;
+    int *panNearY = NULL;
     float *pafProximity = NULL;
     GInt32 *panSrcScanline = NULL;
-    int iLine;
     CPLErr eErr = CE_None;
 
-    if( eProxType == GDT_Byte 
+    if( eProxType == GDT_Byte
         || eProxType == GDT_UInt16
         || eProxType == GDT_UInt32 )
     {
         GDALDriverH hDriver = GDALGetDriverByName("GTiff");
         if (hDriver == NULL)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "GDALComputeProximity needs GTiff driver");
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "GDALComputeProximity needs GTiff driver" );
             eErr = CE_Failure;
             goto end;
         }
         CPLString osTmpFile = CPLGenerateTempFilename( "proximity" );
-        hWorkProximityDS = 
+        hWorkProximityDS =
             GDALCreate( hDriver, osTmpFile,
                         nXSize, nYSize, 1, GDT_Float32, NULL );
         if (hWorkProximityDS == NULL)
@@ -283,18 +284,18 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      Allocate buffer for two scanlines of distances as floats        */
 /*      (the current and last line).                                    */
 /* -------------------------------------------------------------------- */
-    pafProximity = (float *) VSIMalloc2(sizeof(float), nXSize);
-    panNearX = (int *) VSIMalloc2(sizeof(int), nXSize);
-    panNearY = (int *) VSIMalloc2(sizeof(int), nXSize);
-    panSrcScanline = (GInt32 *) VSIMalloc2(sizeof(GInt32), nXSize);
+    pafProximity = static_cast<float *>(
+        VSI_MALLOC2_VERBOSE(sizeof(float), nXSize) );
+    panNearX = static_cast<int *>( VSI_MALLOC2_VERBOSE(sizeof(int), nXSize) );
+    panNearY = static_cast<int *>( VSI_MALLOC2_VERBOSE(sizeof(int), nXSize) );
+    panSrcScanline = static_cast<GInt32 *>(
+        VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize) );
 
-    if( pafProximity== NULL 
-        || panNearX == NULL 
+    if( pafProximity == NULL
+        || panNearX == NULL
         || panNearY == NULL
         || panSrcScanline == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory allocating working buffers.");
         eErr = CE_Failure;
         goto end;
     }
@@ -303,39 +304,39 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      Loop from top to bottom of the image.                           */
 /* -------------------------------------------------------------------- */
 
-    for( i = 0; i < nXSize; i++ )
+    for( int i = 0; i < nXSize; i++ )
         panNearX[i] = panNearY[i] = -1;
 
-    for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
+    for( int iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
         // Read for target values.
-        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iLine, nXSize, 1, 
+        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iLine, nXSize, 1,
                              panSrcScanline, nXSize, 1, GDT_Int32, 0, 0 );
         if( eErr != CE_None )
             break;
 
-        for( i = 0; i < nXSize; i++ )
+        for( int i = 0; i < nXSize; i++ )
             pafProximity[i] = -1.0;
 
         // Left to right
-        ProcessProximityLine( panSrcScanline, panNearX, panNearY, 
+        ProcessProximityLine( panSrcScanline, panNearX, panNearY,
                               TRUE, iLine, nXSize, dfMaxDist, pafProximity,
                               pdfSrcNoData, nTargetValues, panTargetValues );
 
         // Right to Left
-        ProcessProximityLine( panSrcScanline, panNearX, panNearY, 
+        ProcessProximityLine( panSrcScanline, panNearX, panNearY,
                               FALSE, iLine, nXSize, dfMaxDist, pafProximity,
                               pdfSrcNoData, nTargetValues, panTargetValues );
 
         // Write out results.
-        eErr = 
-            GDALRasterIO( hWorkProximityBand, GF_Write, 0, iLine, nXSize, 1, 
+        eErr =
+            GDALRasterIO( hWorkProximityBand, GF_Write, 0, iLine, nXSize, 1,
                           pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
 
         if( eErr != CE_None )
             break;
 
-        if( !pfnProgress( 0.5 * (iLine+1) / (double) nYSize, 
+        if( !pfnProgress( 0.5 * (iLine+1) / static_cast<double>(nYSize),
                           "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -346,14 +347,17 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Loop from bottom to top of the image.                           */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nXSize; i++ )
-        panNearX[i] = panNearY[i] = -1;
+    for( int i = 0; i < nXSize; i++ )
+    {
+        panNearX[i] = -1;
+        panNearY[i] = -1;
+    }
 
-    for( iLine = nYSize-1; eErr == CE_None && iLine >= 0; iLine-- )
+    for( int iLine = nYSize-1; eErr == CE_None && iLine >= 0; iLine-- )
     {
         // Read first pass proximity
-        eErr = 
-            GDALRasterIO( hWorkProximityBand, GF_Read, 0, iLine, nXSize, 1, 
+        eErr =
+            GDALRasterIO( hWorkProximityBand, GF_Read, 0, iLine, nXSize, 1,
                           pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
 
         if( eErr != CE_None )
@@ -361,44 +365,46 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 
         // Read pixel values.
 
-        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iLine, nXSize, 1, 
+        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iLine, nXSize, 1,
                              panSrcScanline, nXSize, 1, GDT_Int32, 0, 0 );
         if( eErr != CE_None )
             break;
 
         // Right to left
-        ProcessProximityLine( panSrcScanline, panNearX, panNearY, 
+        ProcessProximityLine( panSrcScanline, panNearX, panNearY,
                               FALSE, iLine, nXSize, dfMaxDist, pafProximity,
                               pdfSrcNoData, nTargetValues, panTargetValues );
 
         // Left to right
-        ProcessProximityLine( panSrcScanline, panNearX, panNearY, 
+        ProcessProximityLine( panSrcScanline, panNearX, panNearY,
                               TRUE, iLine, nXSize, dfMaxDist, pafProximity,
                               pdfSrcNoData, nTargetValues, panTargetValues );
 
-        // Final post processing of distances. 
-        for( i = 0; i < nXSize; i++ )
+        // Final post processing of distances.
+        for( int i = 0; i < nXSize; i++ )
         {
             if( pafProximity[i] < 0.0 )
                 pafProximity[i] = fNoDataValue;
             else if( pafProximity[i] > 0.0 )
             {
                 if( bFixedBufVal )
-                    pafProximity[i] = (float) dfFixedBufVal;
-                else 
-                    pafProximity[i] = (float)(pafProximity[i] * dfDistMult);
+                    pafProximity[i] = static_cast<float>( dfFixedBufVal );
+                else
+                    pafProximity[i] =
+                        static_cast<float>(pafProximity[i] * dfDistMult);
             }
         }
-  
+
         // Write out results.
-        eErr = 
-            GDALRasterIO( hProximityBand, GF_Write, 0, iLine, nXSize, 1, 
+        eErr =
+            GDALRasterIO( hProximityBand, GF_Write, 0, iLine, nXSize, 1,
                           pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
 
         if( eErr != CE_None )
             break;
 
-        if( !pfnProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, 
+        if( !pfnProgress( 0.5 +
+                          0.5 * (nYSize-iLine) / static_cast<double>( nYSize ),
                           "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -414,7 +420,7 @@ end:
     CPLFree( panNearY );
     CPLFree( panSrcScanline );
     CPLFree( pafProximity );
-    CPLFree(panTargetValues);
+    CPLFree( panTargetValues );
 
     if( hWorkProximityDS != NULL )
     {
@@ -429,43 +435,32 @@ end:
 /************************************************************************/
 /*                        ProcessProximityLine()                        */
 /************************************************************************/
-                      
+
 static CPLErr
-ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY, 
+ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
                       int bForward, int iLine, int nXSize, double dfMaxDist,
                       float *pafProximity, double *pdfSrcNoDataValue,
                       int nTargetValues, int *panTargetValues )
 
 {
-    int iStart, iEnd, iStep, iPixel;
+    const int iStart = bForward ? 0 : nXSize - 1;
+    const int iEnd = bForward ? nXSize : -1;
+    const int iStep = bForward ? 1 : -1;
 
-    if( bForward )
+    for( int iPixel = iStart; iPixel != iEnd; iPixel += iStep )
     {
-        iStart = 0;
-        iEnd = nXSize; 
-        iStep = 1;
-    }
-    else
-    {
-        iStart = nXSize-1;
-        iEnd = -1; 
-        iStep = -1;
-    }
-
-    for( iPixel = iStart; iPixel != iEnd; iPixel += iStep )
-    {
-        int bIsTarget = FALSE;
+        bool bIsTarget = false;
 
 /* -------------------------------------------------------------------- */
 /*      Is the current pixel a target pixel?                            */
 /* -------------------------------------------------------------------- */
         if( nTargetValues == 0 )
-            bIsTarget = (panSrcScanline[iPixel] != 0);
+        {
+            bIsTarget = panSrcScanline[iPixel] != 0;
+        }
         else
         {
-            int i;
-
-            for( i = 0; i < nTargetValues; i++ )
+            for( int i = 0; i < nTargetValues; i++ )
             {
                 if( panSrcScanline[iPixel] == panTargetValues[i] )
                     bIsTarget = TRUE;
@@ -484,13 +479,14 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Are we near(er) to the closest target to the above (below)      */
 /*      pixel?                                                          */
 /* -------------------------------------------------------------------- */
-        float fNearDistSq = (float) (MAX(dfMaxDist,nXSize) * MAX(dfMaxDist,nXSize) * 2);
-        float fDistSq;
+        float fNearDistSq =
+            static_cast<float>(MAX(dfMaxDist,nXSize) *
+                               MAX(dfMaxDist,nXSize) * 2);
 
         if( panNearX[iPixel] != -1 )
         {
-            fDistSq = (float)
-                ((panNearX[iPixel] - iPixel) * (panNearX[iPixel] - iPixel)
+            const float fDistSq = static_cast<float>(
+                (panNearX[iPixel] - iPixel) * (panNearX[iPixel] - iPixel)
                  + (panNearY[iPixel] - iLine) * (panNearY[iPixel] - iLine));
 
             if( fDistSq < fNearDistSq )
@@ -508,12 +504,12 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Are we near(er) to the closest target to the left (right)       */
 /*      pixel?                                                          */
 /* -------------------------------------------------------------------- */
-        int iLast = iPixel-iStep;
+        const int iLast = iPixel - iStep;
 
         if( iPixel != iStart && panNearX[iLast] != -1 )
         {
-            fDistSq = (float)
-                ((panNearX[iLast] - iPixel) * (panNearX[iLast] - iPixel)
+            const float fDistSq = static_cast<float>(
+                (panNearX[iLast] - iPixel) * (panNearX[iLast] - iPixel)
                  + (panNearY[iLast] - iLine) * (panNearY[iLast] - iLine));
 
             if( fDistSq < fNearDistSq )
@@ -528,12 +524,12 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Are we near(er) to the closest target to the topright           */
 /*      (bottom left) pixel?                                            */
 /* -------------------------------------------------------------------- */
-        int iTR = iPixel+iStep;
+        const int iTR = iPixel + iStep;
 
         if( iTR != iEnd && panNearX[iTR] != -1 )
         {
-            fDistSq = (float)
-                ((panNearX[iTR] - iPixel) * (panNearX[iTR] - iPixel)
+            const float fDistSq = static_cast<float>(
+                (panNearX[iTR] - iPixel) * (panNearX[iTR] - iPixel)
                  + (panNearY[iTR] - iLine) * (panNearY[iTR] - iLine));
 
             if( fDistSq < fNearDistSq )
@@ -547,11 +543,11 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /* -------------------------------------------------------------------- */
 /*      Update our proximity value.                                     */
 /* -------------------------------------------------------------------- */
-        if( panNearX[iPixel] != -1 
+        if( panNearX[iPixel] != -1
             && (pdfSrcNoDataValue == NULL
                 || panSrcScanline[iPixel] != *pdfSrcNoDataValue)
             && fNearDistSq <= dfMaxDist * dfMaxDist
-            && (pafProximity[iPixel] < 0 
+            && (pafProximity[iPixel] < 0
                 || fNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]) )
             pafProximity[iPixel] = sqrt(fNearDistSq);
     }

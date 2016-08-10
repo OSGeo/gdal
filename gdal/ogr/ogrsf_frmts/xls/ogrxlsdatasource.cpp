@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XLS Translator
  * Purpose:  Implements OGRXLSDataSource class
@@ -107,7 +106,7 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
 #ifdef _WIN32
-    if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
         pszName = CPLRecode( pszFilename, CPL_ENC_UTF8, CPLString().Printf( "CP%d", GetACP() ) );
     else
         pszName = CPLStrdup( pszFilename );
@@ -115,7 +114,7 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
     pszName = CPLStrdup( pszFilename );
 #endif
 
-// -------------------------------------------------------------------- 
+// --------------------------------------------------------------------
 //      Does this appear to be a .xls file?
 // --------------------------------------------------------------------
 

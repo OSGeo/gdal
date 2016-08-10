@@ -37,9 +37,12 @@ this file is only about 3k of object code.  */
 #include "config.h"
 #endif
 
-#include <string.h>	/* for memcpy() and memset() */
+#include <string.h>  /* for memcpy() and memset() */
 
 #include "md5.h"
+#include "cpl_port.h"
+
+CPL_CVSID("$Id$");
 
 /* Little-endian byte-swapping routines.  Note that these do not
 depend on the size of datatypes such as cvs_uint32, nor do they require
@@ -97,10 +100,10 @@ struct cvs_MD5Context *ctx,
 
     t = ctx->bits[0];
     if ((ctx->bits[0] = (t + ((cvs_uint32)len << 3)) & 0xffffffff) < t)
-        ctx->bits[1]++;	/* Carry from low to high */
+        ctx->bits[1]++;  /* Carry from low to high */
     ctx->bits[1] += len >> 29;
 
-    t = (t >> 3) & 0x3f;	/* Bytes already in shsInfo->data */
+    t = (t >> 3) & 0x3f;  /* Bytes already in shsInfo->data */
 
     /* Handle any leading odd-sized chunks */
 
@@ -115,7 +118,7 @@ struct cvs_MD5Context *ctx,
         memcpy(p, buf, t);
         cvs_MD5Transform (ctx->buf, ctx->in);
         buf += t;
-        len -= t;
+        len -= (unsigned)t;
     }
 
     /* Process data in 64-byte chunks */
@@ -133,7 +136,7 @@ struct cvs_MD5Context *ctx,
 }
 
 /*
-* Final wrapup - pad to 64-byte boundary with the bit pattern 
+* Final wrapup - pad to 64-byte boundary with the bit pattern
 * 1 0* (64-bit count of bits processed, MSB-first)
 */
 void
@@ -145,7 +148,7 @@ struct cvs_MD5Context *ctx)
     unsigned char *p;
 
     /* Compute number of bytes mod 64 */
-    count = (ctx->bits[0] >> 3) & 0x3F;
+    count = (unsigned)((ctx->bits[0] >> 3) & 0x3F);
 
     /* Set the first char of padding to 0x80.  This is safe since there is
     always at least one byte free */
@@ -177,7 +180,7 @@ struct cvs_MD5Context *ctx)
     putu32(ctx->buf[1], digest + 4);
     putu32(ctx->buf[2], digest + 8);
     putu32(ctx->buf[3], digest + 12);
-    memset(ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
+    memset(ctx, 0, sizeof(*ctx));  /* In case it's sensitive */
 }
 
 #ifndef ASM_MD5
@@ -204,7 +207,7 @@ cvs_MD5Transform (
                   cvs_uint32 buf[4],
                   const unsigned char inraw[64])
 {
-    register cvs_uint32 a, b, c, d;
+    cvs_uint32 a, b, c, d;
     cvs_uint32 in[16];
     int i;
 

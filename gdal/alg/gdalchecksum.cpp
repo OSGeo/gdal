@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
- * Purpose:  Compute simple checksum for a region of image data. 
+ * Purpose:  Compute simple checksum for a region of image data.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -38,12 +37,12 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 /**
- * Compute checksum for image region. 
+ * Compute checksum for image region.
  *
- * Computes a 16bit (0-65535) checksum from a region of raster data on a GDAL 
- * supported band.   Floating point data is converted to 32bit integer 
+ * Computes a 16bit (0-65535) checksum from a region of raster data on a GDAL
+ * supported band.   Floating point data is converted to 32bit integer
  * so decimal portions of such raster data will not affect the checksum.
- * Real and Imaginary components of complex bands influence the result. 
+ * Real and Imaginary components of complex bands influence the result.
  *
  * @param hBand the raster band to read from.
  * @param nXOff pixel offset of window to read.
@@ -51,41 +50,38 @@ CPL_CVSID("$Id$");
  * @param nXSize pixel size of window to read.
  * @param nYSize line size of window to read.
  *
- * @return Checksum value. 
+ * @return Checksum value.
  */
 
-int CPL_STDCALL 
-GDALChecksumImage( GDALRasterBandH hBand, 
+int CPL_STDCALL
+GDALChecksumImage( GDALRasterBandH hBand,
                    int nXOff, int nYOff, int nXSize, int nYSize )
 
 {
     VALIDATE_POINTER1( hBand, "GDALChecksumImage", 0 );
 
-    const static int anPrimes[11] = 
+    const static int anPrimes[11] =
         { 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43 };
 
     int  iLine, i, nChecksum = 0, iPrime = 0, nCount;
     GDALDataType eDataType = GDALGetRasterDataType( hBand );
     int  bComplex = GDALDataTypeIsComplex( eDataType );
-    
+
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64 ||
         eDataType == GDT_CFloat32 || eDataType == GDT_CFloat64)
     {
         double* padfLineData;
         GDALDataType eDstDataType = (bComplex) ? GDT_CFloat64 : GDT_Float64;
 
-        padfLineData = (double *) VSIMalloc2(nXSize, sizeof(double) * 2);
+        padfLineData = (double *) VSI_MALLOC2_VERBOSE(nXSize, sizeof(double) * 2);
         if (padfLineData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "VSIMalloc2(): Out of memory in GDALChecksumImage. "
-                    "Checksum value couldn't be computed\n");
             return 0;
         }
 
         for( iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
         {
-            if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
+            if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1,
                               padfLineData, nXSize, 1, eDstDataType, 0, 0 ) != CE_None)
             {
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -134,22 +130,20 @@ GDALChecksumImage( GDALRasterBandH hBand,
         int  *panLineData;
         GDALDataType eDstDataType = (bComplex) ? GDT_CInt32 : GDT_Int32;
 
-        panLineData = (GInt32 *) VSIMalloc2(nXSize, sizeof(GInt32) * 2);
+        panLineData = (GInt32 *) VSI_MALLOC2_VERBOSE(nXSize, sizeof(GInt32) * 2);
         if (panLineData == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "VSIMalloc2(): Out of memory in GDALChecksumImage. "
-                    "Checksum value couldn't be computed\n");
             return 0;
         }
 
         for( iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
         {
-            if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
+            if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1,
                             panLineData, nXSize, 1, eDstDataType, 0, 0 ) != CE_None)
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                        "Checksum value couldn't be computed due to I/O read error.\n");
+                          "Checksum value could not be computed due to I/O "
+                          "read error.\n");
                 break;
             }
             nCount = (bComplex) ? nXSize * 2 : nXSize;
@@ -169,4 +163,3 @@ GDALChecksumImage( GDALRasterBandH hBand,
 
     return nChecksum;
 }
-                       

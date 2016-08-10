@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for JP2OpenJPEG driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -55,7 +55,7 @@ def jp2openjpeg_1():
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
 
     return 'success'
-	
+
 ###############################################################################
 # Open byte.jp2
 
@@ -224,7 +224,7 @@ def jp2openjpeg_6():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
@@ -232,10 +232,10 @@ def jp2openjpeg_7():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
-    
+
     tst = gdaltest.GDALTest( 'JP2OpenJPEG', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
     return tst.testOpen()
-    
+
 ###############################################################################
 # Test a JP2OpenJPEG with the 3 bands having 13bit depth and the 4th one 1 bit
 
@@ -243,22 +243,11 @@ def jp2openjpeg_8():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
-    
-    # This test will cause a crash with an unpatched version of Jasper, such as the one of Ubuntu 8.04 LTS
-    # --> "jpc_dec.c:1072: jpc_dec_tiledecode: Assertion `dec->numcomps == 3' failed."
-    # Recent Debian/Ubuntu have the appropriate patch.
-    # So we try to run in a subprocess first
-    import test_cli_utilities
-    if test_cli_utilities.get_gdalinfo_path() is not None:
-        ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --config GDAL_SKIP "JP2ECW JP2MRSID JP2KAK" data/3_13bit_and_1bit.jp2')
-        if ret.find('Band 1') == -1:
-            gdaltest.post_reason('Jasper library would need patches')
-            return 'fail'
-    
+
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
-    
+
     expected_checksums = [ 64570, 57277, 56048, 61292]
-    
+
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
             gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
@@ -267,7 +256,7 @@ def jp2openjpeg_8():
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         gdaltest.post_reason('unexpected data type')
         return 'fail'
-            
+
     return 'success'
 
 ###############################################################################
@@ -294,7 +283,7 @@ def jp2openjpeg_9():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test YCBCR420 creation option
 
@@ -562,7 +551,7 @@ def jp2openjpeg_16():
         return 'fail'
 
     return 'success'
- 
+
 ###############################################################################
 # Test writing PixelIsPoint file (#5437)
 
@@ -579,7 +568,7 @@ def jp2openjpeg_17():
     if gdal.VSIStatL('/vsimem/jp2openjpeg_17.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     ds = gdal.Open( '/vsimem/jp2openjpeg_17.jp2' )
     gt = ds.GetGeoTransform()
     if ds.GetMetadataItem('AREA_OR_POINT') != 'Point':
@@ -671,7 +660,7 @@ def jp2openjpeg_20():
         os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
     except:
         pass
-    
+
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd')
     except:
@@ -710,7 +699,7 @@ def jp2openjpeg_20():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test YCC=NO creation option
 
@@ -732,7 +721,7 @@ def jp2openjpeg_21():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test RGBA support
 
@@ -1084,7 +1073,7 @@ def jp2openjpeg_26():
     # Nominal case: tiled
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options = ['INSPIRE_TG=YES'])
     overview_count = out_ds.GetRasterBand(1).GetOverviewCount()
-    # We have 2x2 1024x1024 tiles. Each of them can be reconstructed down to 128x128. 
+    # We have 2x2 1024x1024 tiles. Each of them can be reconstructed down to 128x128.
     # So for full raster the smallest overview is 2*128
     if out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize != 2*128 or \
        out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize != 2*128:
@@ -1355,7 +1344,7 @@ def jp2openjpeg_28():
         return 'skip'
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
-    
+
     tests = [ ( ['CODEBLOCK_WIDTH=2'], 64, 64, True ),
               ( ['CODEBLOCK_WIDTH=2048'], 64, 64, True ),
               ( ['CODEBLOCK_HEIGHT=2'], 64, 64, True ),
@@ -1393,7 +1382,7 @@ def jp2openjpeg_29():
         return 'skip'
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 128, 128, 1)
-    
+
     tests = [ ( ['TILEPARTS=DISABLED'], False ),
               ( ['TILEPARTS=RESOLUTIONS'], False ),
               ( ['TILEPARTS=LAYERS'], True ), # warning since there's only one quality layer
@@ -1436,7 +1425,7 @@ def jp2openjpeg_30():
     ct.SetColorEntry( 2, (255,0,255,255) )
     ct.SetColorEntry( 3, (0,255,255,255) )
     src_ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
-    
+
     tests = [ ( [], False ),
               ( ['QUALITY=100', 'REVERSIBLE=YES'], False ),
               ( ['QUALITY=50'], True ),
@@ -1507,7 +1496,7 @@ def jp2openjpeg_30():
         return 'fail'
     del out_ds
     gdal.Unlink('/vsimem/jp2openjpeg_30.jp2')
-    
+
     # Not supported: color table on first band, and other bands
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2)
     ct = gdal.ColorTable()
@@ -1867,7 +1856,7 @@ def jp2openjpeg_39():
     # This GML has srsName only on RectifiedGrid (taken from D.2.2.2 from DGIWG_Profile_of_JPEG2000_for_Georeferenced_Imagery.pdf)
     gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
 <gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml"
-                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                        xmlns:gmd="http://www.isotc211.org/2005/gmd"
                        xmlns:gco="http://www.isotc211.org/2005/gco"
                        xsi:schemaLocation="http://www.opengis.net/gml file:///D:/dgiwg/jp2/GML-3.1.1/profiles/DGIWGgmlJP2Profile/1.1.0/DGIWGgmlJP2Profile.xsd">
@@ -1941,10 +1930,10 @@ def jp2openjpeg_40():
     gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
 <?xml version="1.0" encoding="UTF-8"?>
 <gmljp2:GMLJP2CoverageCollection gml:id="JPEG2000_0"
-    xmlns:gml="http://www.opengis.net/gml/3.2" 
-    xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" 
-    xmlns:gmljp2="http://www.opengis.net/gmljp2/2.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0"
+    xmlns:gmljp2="http://www.opengis.net/gmljp2/2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.opengis.net/gmljp2/2.0 http://schemas.opengis.net/gmljp2/2.0/gmljp2.xsd">
     <gml:gridDomain/>
     <gml:rangeSet>
@@ -1958,7 +1947,7 @@ def jp2openjpeg_40():
     <gmljp2:featureMember>
         <gmljp2:GMLJP2RectifiedGridCoverage gml:id="CodeStream">
             <gml:domainSet>
-                <gml:RectifiedGrid gml:id="rg0001" dimension="2" 
+                <gml:RectifiedGrid gml:id="rg0001" dimension="2"
                             srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
                     <gml:limits>
                         <gml:GridEnvelope>
@@ -2105,7 +2094,7 @@ def jp2openjpeg_42():
     if ds.GetGCPCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    if len(ds.GetMetadataDomainList()) != 1 :
+    if len(ds.GetMetadataDomainList()) != 2 :
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2120,12 +2109,13 @@ def jp2openjpeg_42():
     # Check we have no longer metadata or GCP
     ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
     if ds.GetMetadata() != {}:
+        print(ds.GetMetadata())
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetGCPCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetMetadataDomainList() is not None :
+    if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2148,7 +2138,7 @@ def jp2openjpeg_42():
         print(ds.GetGeoTransform())
         return 'fail'
     # Check that we have a GMLJP2 box
-    if ds.GetMetadataDomainList() != ['xml:gml.root-instance'] :
+    if ds.GetMetadataDomainList() != ['xml:gml.root-instance', 'DERIVED_SUBDATASETS'] :
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2170,7 +2160,7 @@ def jp2openjpeg_42():
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
-    if ds.GetMetadataDomainList() is not None:
+    if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2197,7 +2187,7 @@ def jp2openjpeg_42():
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
-    if ds.GetMetadataDomainList() is not None:
+    if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2228,7 +2218,7 @@ def jp2openjpeg_42():
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
-    if ds.GetMetadataDomainList() is None:
+    if ds.GetMetadataDomainList() != ['xml:gml.root-instance', 'DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2245,7 +2235,7 @@ def jp2openjpeg_42():
     if len(ds.GetGCPs()) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetMetadataDomainList() is not None:
+    if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2374,7 +2364,7 @@ def jp2openjpeg_45():
         gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
-    
+
     ret = validate('/vsimem/jp2openjpeg_45.jp2', inspire_tg = False)
     if ret == 'fail':
         gdaltest.post_reason('fail')
@@ -2446,7 +2436,6 @@ def jp2openjpeg_45():
     if out_ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-        
 
     conf = {
     "root_instance": {
@@ -2518,7 +2507,7 @@ def jp2openjpeg_45():
 """<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Second metadata</dc:title>
 </gmljp2:dcMetadata>""")
-    
+
     gdal.FileFromMemBuffer("/vsimem/third_metadata.xml",
 """<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Third metadata</dc:title>
@@ -2969,6 +2958,11 @@ def jp2openjpeg_45():
     del out_ds
     if gdal.VSIStatL('/vsimem/jp2openjpeg_45.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
+        fp = gdal.VSIFOpenL('/vsimem/jp2openjpeg_45.jp2.aux.xml', 'rb')
+        if fp is not None:
+            data = gdal.VSIFReadL(1, 100000, fp).decode('ascii')
+            gdal.VSIFCloseL(fp)
+            print(data)
         return 'fail'
 
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
@@ -2979,8 +2973,7 @@ def jp2openjpeg_45():
     ds = None
 
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
-    
-    
+
     # Test writing&reading a gmljp2:featureMember pointing to a remote resource
     conf = {"root_instance":{"gml_filelist": [ { "remote_resource":"http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/expected_gml_gml32.gml" } ]  }}
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
@@ -2992,8 +2985,8 @@ def jp2openjpeg_45():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
-    # We have to explicitely allow it
+
+    # We have to explicitly allow it.
     ds = gdal.OpenEx('/vsimem/jp2openjpeg_45.jp2', open_options = ['OPEN_REMOTE_GML=YES'])
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
@@ -3034,7 +3027,7 @@ def jp2openjpeg_46():
 }
 
     gdal.FileFromMemBuffer("/vsimem/template.xml",
-"""<gmljp2:metadata>{{{ XPATH(1) }}} {{{ XPATH('str') }}} {{{ XPATH(true()) }}} {{{ XPATH(//B) }}} {{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
+"""<gmljp2:metadata>{{{ XPATH(1) }}} {{{ XPATH('str') }}} {{{ XPATH(true()) }}}X{{{ XPATH(//B) }}} {{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/source.xml",
 """<A><B>my_value</B></A>""")
@@ -3047,14 +3040,20 @@ def jp2openjpeg_46():
     if gdal.GetLastErrorMsg().find('dynamic_metadata not supported') >= 0:
         gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
         return 'skip'
+    # Maybe a conflict with FileGDB libxml2
+    if gdal.GetLastErrorMsg().find('An error occurred in libxml2') >= 0:
+        gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
+        return 'skip'
 
     ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    if gmljp2.find("""<gmljp2:metadata>1 str true 
+    if gmljp2.find("""<gmljp2:metadata>1 str trueX
         <B>my_value</B>
 yeah: """) < 0:
         gdaltest.post_reason('fail')
         print(gmljp2)
+        if gmljp2.find("""<gmljp2:metadata>1 str true""") >= 0:
+            return 'skip'
         return 'fail'
     ds = None
 
@@ -3082,7 +3081,7 @@ yeah: """) < 0:
         gdal.Unlink("/vsimem/template.xml")
         gdal.Unlink("/vsimem/source.xml")
         del out_ds
-        
+
         ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
         gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
         ds = None
@@ -3096,7 +3095,7 @@ yeah: """) < 0:
             return 'fail'
 
 
-    # Inexisting template
+    # Nonexistent template.
     gdal.FileFromMemBuffer("/vsimem/source.xml","""<A/>""")
     conf = {
     "root_instance": {
@@ -3119,8 +3118,9 @@ yeah: """) < 0:
     gdal.Unlink("/vsimem/source.xml")
     gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
-    # Inexisting source
-    gdal.FileFromMemBuffer("/vsimem/template.xml","""<gmljp2:metadata></gmljp2:metadata>""")
+    # Nonexistent source
+    gdal.FileFromMemBuffer(
+        "/vsimem/template.xml","""<gmljp2:metadata></gmljp2:metadata>""")
     conf = {
     "root_instance": {
         "metadata": [
@@ -3195,6 +3195,27 @@ def jp2openjpeg_47():
     ds = None
 
     gdal.Unlink('/vsimem/jp2openjpeg_47.jp2')
+
+    return 'success'
+
+###############################################################################
+# Test reading a dataset whose tile dimensions are larger than dataset ones
+
+def jp2openjpeg_48():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_tile_2048.jp2')
+    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
+    if (blockxsize, blockysize) != (20,20):
+        gdaltest.post_reason('fail')
+        print(blockxsize, blockysize)
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 4610:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
 
     return 'success'
 
@@ -3356,8 +3377,138 @@ def jp2openjpeg_online_6():
         print(cs1, cs2, cs3)
         gdaltest.post_reason('Did not get expected checksums')
         return 'fail'
-        
+
     ds = None
+
+    return 'success'
+
+###############################################################################
+# Test GDAL_GEOREF_SOURCES
+
+def jp2openjpeg_49():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    tests = [ (None, True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              (None, False, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              (None, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('INTERNAL', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('INTERNAL,WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('INTERNAL,PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('INTERNAL,WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM,INTERNAL', False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('PAM,WORLDFILE,INTERNAL', False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ]
+
+    for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
+        gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
+        gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2', open('data/byte_nogeoref.jp2', 'rb').read())
+        if copy_pam:
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2.aux.xml', open('data/byte_nogeoref.jp2.aux.xml', 'rb').read())
+        if copy_worldfile:
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.j2w', open('data/byte_nogeoref.j2w', 'rb').read())
+        ds = gdal.Open('/vsimem/byte_nogeoref.jp2')
+        gt = ds.GetGeoTransform()
+        srs_wkt = ds.GetProjectionRef()
+        ds = None
+        gdal.SetConfigOption('GDAL_GEOREF_SOURCES', None)
+        gdal.Unlink('/vsimem/byte_nogeoref.jp2')
+        gdal.Unlink('/vsimem/byte_nogeoref.jp2.aux.xml')
+        gdal.Unlink('/vsimem/byte_nogeoref.j2w')
+
+        if gt != expected_gt:
+            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            print('Got ' + str(gt))
+            print('Expected ' + str(expected_gt))
+            return 'fail'
+
+        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            print('Got ' + srs_wkt)
+            print('Expected ' + expected_srs)
+            return 'fail'
+
+    tests = [ (None, True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              (None, True, False, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              (None, False, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              (None, False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL,PAM', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL,WORLDFILE', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL,PAM,WORLDFILE', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('INTERNAL,WORLDFILE,PAM', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('WORLDFILE,PAM,INTERNAL', False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('PAM,WORLDFILE,INTERNAL', False, False, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('GEOJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('GEOJP2,GMLJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('GMLJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+              ('GMLJP2,GEOJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+              ('MSIG', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ('MSIG,GMLJP2,GEOJP2', True, True, '26712', (439970.0, 60.0, 0.0, 3751030.0, 0.0, -60.0)),
+              ('MSIG,GEOJP2,GMLJP2', True, True, '26711', (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)),
+              ('PAM', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('PAM,WORLDFILE', True, True, 'LOCAL_CS["PAM"]', (100.0, 1.0, 0.0, 300.0, 0.0, -1.0)),
+              ('WORLDFILE', True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,PAM,INTERNAL', True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('WORLDFILE,INTERNAL,PAM', True, True, '26711', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
+              ('NONE', True, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+              ]
+
+    for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
+        gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/inconsitant_geojp2_gmljp2.jp2', 'rb').read())
+        if copy_pam:
+            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2.aux.xml', open('data/inconsitant_geojp2_gmljp2.jp2.aux.xml', 'rb').read())
+        if copy_worldfile:
+            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.j2w', open('data/inconsitant_geojp2_gmljp2.j2w', 'rb').read())
+        open_options = []
+        if config_option_value is not None:
+            open_options += [ 'GEOREF_SOURCES=' + config_option_value ]
+        ds = gdal.OpenEx('/vsimem/inconsitant_geojp2_gmljp2.jp2', open_options = open_options)
+        gt = ds.GetGeoTransform()
+        srs_wkt = ds.GetProjectionRef()
+        ds = None
+        gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.jp2')
+        gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.jp2.aux.xml')
+        gdal.Unlink('/vsimem/inconsitant_geojp2_gmljp2.j2w')
+
+        if gt != expected_gt:
+            gdaltest.post_reason('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            print('Got ' + str(gt))
+            print('Expected ' + str(expected_gt))
+            return 'fail'
+
+        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and srs_wkt.find(expected_srs) < 0):
+            gdaltest.post_reason('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value,str(copy_pam),str(copy_worldfile)))
+            print('Got ' + srs_wkt)
+            print('Expected ' + expected_srs)
+            return 'fail'
+
+    ds = gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options = [ 'GEOREF_SOURCES=PAM,WORLDFILE' ] )
+    fl = ds.GetFileList()
+    if set(fl) != set(['data/inconsitant_geojp2_gmljp2.jp2', 'data/inconsitant_geojp2_gmljp2.jp2.aux.xml']):
+        gdaltest.post_reason('Did not get expected filelist')
+        print(fl)
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options = [ 'GEOREF_SOURCES=unhandled' ] )
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('expected warning')
+            return 'fail'
 
     return 'success'
 
@@ -3417,6 +3568,8 @@ gdaltest_list = [
     jp2openjpeg_45,
     jp2openjpeg_46,
     jp2openjpeg_47,
+    jp2openjpeg_48,
+    jp2openjpeg_49,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
@@ -3427,9 +3580,7 @@ gdaltest_list = [
 
 disabled_gdaltest_list = [
     jp2openjpeg_1,
-    jp2openjpeg_45,
-    jp2openjpeg_46,
-    jp2openjpeg_47,
+    jp2openjpeg_49,
     jp2openjpeg_cleanup ]
 
 if __name__ == '__main__':

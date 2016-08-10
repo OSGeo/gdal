@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGREMULATEDTRANSACTION_H_INCLUDED
-#define _OGREMULATEDTRANSACTION_H_INCLUDED
+#ifndef OGREMULATEDTRANSACTION_H_INCLUDED
+#define OGREMULATEDTRANSACTION_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -93,7 +93,7 @@ class CPL_DLL IOGRTransactionBehaviour
 
 
 /** Returns a new datasource object that adds transactional behaviour to an existing datasource.
- * 
+ *
  * The provided poTransactionBehaviour object should implement driver-specific
  * behaviour for transactions.
  *
@@ -125,4 +125,4 @@ OGRDataSource CPL_DLL* OGRCreateEmulatedTransactionDataSourceWrapper(
                                 int bTakeOwnershipDataSource,
                                 int bTakeOwnershipTransactionBehaviour);
 
-#endif // _OGREMULATEDTRANSACTION_H_INCLUDED
+#endif // OGREMULATEDTRANSACTION_H_INCLUDED

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id $
  *
  * Project:  WFS Translator
  * Purpose:  Implements OGRWFSDriver.
@@ -43,11 +42,11 @@ extern "C" void RegisterOGRWFS();
 static int OGRWFSDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !EQUALN(poOpenInfo->pszFilename, "WFS:", 4) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "WFS:") )
     {
         if( poOpenInfo->fpL == NULL )
             return FALSE;
-        if( !EQUALN((const char*)poOpenInfo->pabyHeader,"<OGRWFSDataSource>",18) &&
+        if( !STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "<OGRWFSDataSource>") &&
             strstr((const char*)poOpenInfo->pabyHeader,"<WFS_Capabilities") == NULL &&
             strstr((const char*)poOpenInfo->pabyHeader,"<wfs:WFS_Capabilities") == NULL)
         {
@@ -87,22 +86,20 @@ static GDALDataset *OGRWFSDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRWFS()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "WFS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "WFS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "WFS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OGC WFS (Web Feature Service)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_wfs.html" );
+    poDriver->SetDescription( "WFS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "OGC WFS (Web Feature Service)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_wfs.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WFS:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WFS:" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='URL' type='string' description='URL to the WFS server endpoint' required='true'/>"
 "  <Option name='TRUST_CAPABILITIES_BOUNDS' type='boolean' description='Whether to trust layer bounds declared in GetCapabilities response' default='NO'/>"
@@ -116,12 +113,10 @@ void RegisterOGRWFS()
 "  <Option name='EXPOSE_GML_ID' type='boolean' description='Whether to make feature gml:id as a gml_id attribute.' default='YES'/>"
 "</OpenOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = OGRWFSDriverIdentify;
-        poDriver->pfnOpen = OGRWFSDriverOpen;
+    poDriver->pfnIdentify = OGRWFSDriverIdentify;
+    poDriver->pfnOpen = OGRWFSDriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

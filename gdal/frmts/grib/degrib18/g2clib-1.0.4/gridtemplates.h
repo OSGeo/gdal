@@ -1,12 +1,12 @@
-#ifndef _gridtemplates_H
-#define _gridtemplates_H
+#ifndef gridtemplates_H
+#define gridtemplates_H
 #include "grib2.h"
 
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2001-10-26
 //
 // ABSTRACT: This Fortran Module contains info on all the available 
 //   GRIB2 Grid Definition Templates used in Section 3 (GDS).
-//   The information decribing each template is stored in the
+//   The information describing each template is stored in the
 //   gridtemplate structure defined below.
 //
 //   Each Template has three parts: The number of entries in the template
@@ -43,7 +43,7 @@
       };
 
 
-const struct gridtemplate *get_templatesgrid();
+const struct gridtemplate *get_templatesgrid(void);
 g2int getgridindex(g2int number);
 
-#endif  /*  _gridtemplates_H  */
+#endif  /*  gridtemplates_H  */

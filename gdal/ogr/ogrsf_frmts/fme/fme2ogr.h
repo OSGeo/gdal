@@ -14,21 +14,21 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _FME2OGR_H_INCLUDED
-#define _FME2OGR_H_INCLUDED
+#ifndef FME2OGR_H_INCLUDED
+#define FME2OGR_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_minixml.h"
@@ -68,7 +68,7 @@ class OGRFMELayer : public OGRLayer
                                     OGRSpatialReference * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
-    
+
     OGRSpatialReference *GetSpatialRef();
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
@@ -85,23 +85,23 @@ class OGRFMELayerCached : public OGRFMELayer
 
     char               *pszIndexBase;
     IFMESpatialIndex   *poIndex;
-    
+
     OGRFeature *        ReadNextIndexFeature();
 
     OGREnvelope         sExtents;
 
     int                 bQueryActive;
-    
+
   public:
                        OGRFMELayerCached( OGRFMEDataSource * );
     virtual            ~OGRFMELayerCached();
-                       
+
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
     virtual GIntBig     GetFeatureCount( int bForce );
 
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    
+
     virtual int         TestCapability( const char * );
 
     int                 AssignIndex( const char *pszBase, const OGREnvelope*,
@@ -126,16 +126,16 @@ class OGRFMELayerDB : public OGRFMELayer
     IFMEStringArray     *poUserDirectives;
 
     int                 CreateReader();
-    
+
   public:
                        OGRFMELayerDB( OGRFMEDataSource * poDSIn,
                                       const char *pszReaderName,
                                       const char *pszDataset,
                                       IFMEStringArray *poUserDirectives );
     virtual            ~OGRFMELayerDB();
-                       
+
     virtual OGRErr      SetAttributeFilter( const char * );
-    
+
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
     virtual GIntBig     GetFeatureCount( int bForce );
@@ -151,12 +151,12 @@ class OGRFMELayerDB : public OGRFMELayer
 
 class OGRFMEDataSource : public OGRDataSource
 {
-    char                *pszName;          // full name, ie. "SHAPE:D:\DATA"
-    char                *pszReaderName;    // reader/driver name, ie. "SHAPE"
-    char                *pszDataset;       // FME dataset name, ie. "D:\DATA"
+    char                *pszName;          // full name, i.e. "SHAPE:D:\DATA"
+    char                *pszReaderName;    // reader/driver name, i.e. "SHAPE"
+    char                *pszDataset;       // FME dataset name, i.e. "D:\DATA"
 
     IFMEStringArray   *poUserDirectives;
-    
+
     IFMESession         *poSession;
     IFMEUniversalReader *poReader;
 
@@ -182,15 +182,14 @@ class OGRFMEDataSource : public OGRDataSource
 
     void                ClarifyGeometryClass( IFMEFeature *poFeature,
                                           OGRwkbGeometryType &eBestGeomType );
-                                              
-    
+
   public:
                         OGRFMEDataSource();
                         ~OGRFMEDataSource();
 
     IFMESession *       AcquireSession();
     void                ReleaseSession();
-    
+
     int                 TestCapability( const char * );
 
     OGRGeometry        *ProcessGeometry( OGRFMELayer *, IFMEFeature *,
@@ -210,8 +209,8 @@ class OGRFMEDataSource : public OGRDataSource
     void                BuildSpatialIndexes();
 
     OGRSpatialReference *FME2OGRSpatialRef( const char *pszFMECoordsys );
-    
-    // Stuff related to persistent feature caches. 
+
+    // Stuff related to persistent feature caches.
     CPLXMLNode          *SerializeToXML();
     int                 InitializeFromXML( CPLXMLNode * );
 };
@@ -257,12 +256,12 @@ class OGRFMECacheIndex
 
     int         Lock();
     int         Unlock();
-    
+
     void        Touch( CPLXMLNode * );
     void        Add( CPLXMLNode * );
     void        Reference( CPLXMLNode * );
     void        Dereference( CPLXMLNode * );
-    
+
     int         ExpireOldCaches( IFMESession * );
 };
 
@@ -280,10 +279,10 @@ class OGRFMECacheIndex
 #endif
 
 // The number of seconds from creation a spatial cache should be retained in
-// the cache index before cleaning it up. 
+// the cache index before cleaning it up.
 // Default: 1hour
 #ifndef FMECACHE_MAX_RETENTION
-#  define FMECACHE_MAX_RETENTION    3600   
+#  define FMECACHE_MAX_RETENTION    3600
 #endif
 
 
@@ -291,4 +290,4 @@ CPL_C_START
 void RegisterOGRFME();
 CPL_C_END
 
-#endif /* ndef _FME2OGR_H_INCLUDED */
+#endif /* ndef FME2OGR_H_INCLUDED */

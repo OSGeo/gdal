@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Azavea Raster Grid format driver.
  * Purpose:  Implements support for reading and writing Azavea Raster Grid
@@ -30,7 +29,8 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
-#include <ogr_spatialref.h>
+#include "gdal_frmts.h"
+#include "ogr_spatialref.h"
 #include "rawdataset.h"
 
 #include <json.h>
@@ -108,7 +108,7 @@ CPLErr ARGDataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 /*                         GetJsonFilename()                            */
 /************************************************************************/
-CPLString GetJsonFilename(CPLString pszFilename)
+static CPLString GetJsonFilename(CPLString pszFilename)
 {
     return CPLSPrintf( "%s/%s.json", CPLGetDirname(pszFilename), CPLGetBasename(pszFilename) );
 }
@@ -116,7 +116,7 @@ CPLString GetJsonFilename(CPLString pszFilename)
 /************************************************************************/
 /*                           GetJsonObject()                            */
 /************************************************************************/
-json_object * GetJsonObject(CPLString pszFilename)
+static json_object * GetJsonObject(CPLString pszFilename)
 {
     CPLString osJSONFilename = GetJsonFilename(pszFilename);
 
@@ -133,7 +133,7 @@ json_object * GetJsonObject(CPLString pszFilename)
 /************************************************************************/
 /*                          GetJsonValueStr()                           */
 /************************************************************************/
-const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
+static const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
 {
     json_object *pJSONItem = json_object_object_get(pJSONObject, pszKey.c_str());
     if (pJSONItem == NULL) {
@@ -148,7 +148,7 @@ const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
 /************************************************************************/
 /*                          GetJsonValueDbl()                           */
 /************************************************************************/
-double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
+static double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
 {
     const char *pszJSONStr = GetJsonValueStr(pJSONObject, pszKey.c_str());
     if (pszJSONStr == NULL) {
@@ -168,7 +168,7 @@ double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
 /************************************************************************/
 /*                           GetJsonValueInt()                          */
 /************************************************************************/
-int GetJsonValueInt(json_object *pJSONObject, CPLString pszKey)
+static int GetJsonValueInt(json_object *pJSONObject, CPLString pszKey)
 {
     double dfTmp = GetJsonValueDbl(pJSONObject, pszKey.c_str());
     if (CPLIsNan(dfTmp)) {
@@ -248,12 +248,11 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         return NULL;
     }
 
-    double dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
+    double dfNoDataValue;
+    GDALDataType eType;
+    int nPixelOffset;
 
     // get the datatype
-    GDALDataType eType = GDT_Unknown;
-    int nPixelOffset = 0;
-
     pszJSONStr = GetJsonValueStr(pJSONObject, "datatype");
     if (pszJSONStr == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -427,9 +426,10 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
                 "The EPSG provided did not import cleanly. Defaulting to EPSG:3857");
         }
         else {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "The 'epsg' value did not transate to a known spatial reference."
-                " Please check the 'epsg' value and try again.");
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "The 'epsg' value did not translate to a known "
+                      "spatial reference. "
+                      "Please check the 'epsg' value and try again.");
 
             json_object_put(pJSONObject);
             pJSONObject = NULL;
@@ -719,8 +719,6 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
 
     void *pabyData = CPLMalloc(nXBlockSize * nPixelOffset);
 
-    CPLErr eErr;
-
     // convert any blocks into scanlines
     for (int nYBlock = 0; nYBlock * nYBlockSize < nYSize; nYBlock++) {
         for (int nYScanline = 0; nYScanline < nYBlockSize; nYScanline++) {
@@ -736,7 +734,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
                 else
                     nXValid = nXBlockSize;
 
-                eErr = poSrcBand->RasterIO(GF_Read, nXBlock * nXBlockSize,
+                CPLErr eErr = poSrcBand->RasterIO(GF_Read, nXBlock * nXBlockSize,
                     nYBlock * nYBlockSize + nYScanline, nXValid, 1, pabyData, nXBlockSize,
                     1, eType, 0, 0, NULL);
 

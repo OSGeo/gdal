@@ -60,16 +60,16 @@ g2int getdrsindex(g2int number)
 !
 !$$$*/
 {
-           g2int j,getdrsindex=-1;
+           g2int j,l_getdrsindex=-1;
 
            for (j=0;j<MAXDRSTEMP;j++) {
               if (number == templatesdrs[j].template_num) {
-                 getdrsindex=j;
-                 return(getdrsindex);
+                 l_getdrsindex=j;
+                 return(l_getdrsindex);
               }
            }
 
-           return(getdrsindex);
+           return(l_getdrsindex);
 }
 
 
@@ -105,18 +105,18 @@ xxtemplate *getdrstemplate(g2int number)
 !
 !$$$*/
 {
-           g2int index;
+           g2int l_index;
            xxtemplate *new;
 
-           index=getdrsindex(number);
+           l_index=getdrsindex(number);
 
-           if (index != -1) {
+           if (l_index != -1) {
               new=(xxtemplate *)malloc(sizeof(xxtemplate));
               new->type=5;
-              new->num=templatesdrs[index].template_num;
-              new->maplen=templatesdrs[index].mapdrslen;
-              new->needext=templatesdrs[index].needext;
-              new->map=(g2int *)templatesdrs[index].mapdrs;
+              new->num=templatesdrs[l_index].template_num;
+              new->maplen=templatesdrs[l_index].mapdrslen;
+              new->needext=templatesdrs[l_index].needext;
+              new->map=(g2int *)templatesdrs[l_index].mapdrs;
               new->extlen=0;
               new->ext=0;        //NULL
               return(new);
@@ -162,12 +162,13 @@ xxtemplate *extdrstemplate(g2int number,g2int *list)
 !$$$*/
 {
            xxtemplate *new;
-           g2int index,i;
+           g2int l_index,i;
 
-           index=getdrsindex(number);
-           if (index == -1) return(0);
+           l_index=getdrsindex(number);
+           if (l_index == -1) return(0);
 
            new=getdrstemplate(number);
+           if (new == NULL) return NULL;
 
            if ( ! new->needext ) return(new);
 

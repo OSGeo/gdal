@@ -1,6 +1,7 @@
 #include <cpl_conv.h>
 #include <cpl_string.h>
 #include <gdal.h>
+#include <gdal_priv.h>
 #include <gdal_alg.h>
 #include <cassert>
 
@@ -102,7 +103,7 @@ int main(int /* argc*/ , char* /* argv */[])
     hDS = GDALOpen("byte.tif", GA_ReadOnly);
     nOvrLevel = 2;
     nBandNum = 1;
-    GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL);
+    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL));
     GDALClose(hDS);
 
     hDS = GDALOpen("byte.tif", GA_ReadOnly);
@@ -116,7 +117,7 @@ int main(int /* argc*/ , char* /* argv */[])
     hDS = GDALOpen("byte2.tif", GA_Update);
     nOvrLevel = 2;
     nBandNum = 1;
-    GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL);
+    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL));
     GDALClose(hDS);
 
     hDS = GDALOpen("byte2.tif", GA_ReadOnly);
@@ -151,7 +152,7 @@ int main(int /* argc*/ , char* /* argv */[])
     hDS = GDALOpen("byte.vrt", GA_ReadOnly);
     nOvrLevel = 2;
     nBandNum = 1;
-    GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL);
+    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL));
     GDALClose(hDS);
 
     hDS = GDALOpen("byte.vrt", GA_ReadOnly);
@@ -180,7 +181,7 @@ int main(int /* argc*/ , char* /* argv */[])
     hDS = GDALOpen("RASTERLITE:../gdrivers/data/rasterlite_pyramids.sqlite,table=test,level=1", GA_ReadOnly);
 
     OpenJPEG2000("../gdrivers/data/rgbwcmyk01_YeGeo_kakadu.jp2");
-    
+
     hDS = GDALOpen("../gdrivers/tmp/cache/Europe 2001_OZF.map", GA_ReadOnly);
 
     CPLDebug("TEST","Call GDALDestroyDriverManager()");

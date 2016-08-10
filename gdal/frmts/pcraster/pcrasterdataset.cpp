@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster CSF 2.0 raster file driver
@@ -27,41 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef INCLUDED_IOSTREAM
-#include <iostream>
-#define INCLUDED_IOSTREAM
-#endif
-
-#ifndef INCLUDED_GDAL_PAM
-#include "gdal_pam.h"
-#define INCLUDED_GDAL_PAM
-#endif
-
-#ifndef INCLUDED_CPL_STRING
 #include "cpl_string.h"
-#define INCLUDED_CPL_STRING
-#endif
+#include "gdal_pam.h"
+
+#include "pcrasterrasterband.h"
+#include "pcrasterdataset.h"
+#include "pcrasterutil.h"
 
 CPL_CVSID("$Id$");
-
-// PCRaster library headers.
-
-// Module headers.
-#ifndef INCLUDED_PCRASTERRASTERBAND
-#include "pcrasterrasterband.h"
-#define INCLUDED_PCRASTERRASTERBAND
-#endif
-
-#ifndef INCLUDED_PCRASTERDATASET
-#include "pcrasterdataset.h"
-#define INCLUDED_PCRASTERDATASET
-#endif
-
-#ifndef INCLUDED_PCRASTERUTIL
-#include "pcrasterutil.h"
-#define INCLUDED_PCRASTERUTIL
-#endif
-
 
 
 /*!
@@ -80,15 +52,15 @@ CPL_CVSID("$Id$");
   \param     info Object with information about the dataset to open.
   \return    Pointer to newly allocated GDALDataset or 0.
 
-  Returns 0 if the file could not be opened.
+  Returns a nullptr if the file could not be opened.
 */
 GDALDataset* PCRasterDataset::open(
          GDALOpenInfo* info)
 {
-  PCRasterDataset* dataset = 0;
+  PCRasterDataset* dataset = NULL;
 
   if(info->fpL && info->nHeaderBytes >= static_cast<int>(CSF_SIZE_SIG) &&
-         strncmp((char*)info->pabyHeader, CSF_SIG, CSF_SIZE_SIG) == 0) {
+     strncmp(reinterpret_cast<char*>( info->pabyHeader ), CSF_SIG, CSF_SIZE_SIG) == 0) {
     MOPEN_PERM mode = info->eAccess == GA_Update
          ? M_READ_WRITE
          : M_READ;
@@ -96,7 +68,13 @@ GDALDataset* PCRasterDataset::open(
     MAP* map = mapOpen(info->pszFilename, mode);
 
     if(map) {
+      CPLErrorReset();
       dataset = new PCRasterDataset(map);
+      if( CPLGetLastErrorType() != CE_None )
+      {
+          delete dataset;
+          return NULL;
+      }
     }
   }
 
@@ -138,19 +116,16 @@ GDALDataset* PCRasterDataset::createCopy(
     void* progressData)
 {
   // Checks.
-  int nrBands = source->GetRasterCount();
+  const int nrBands = source->GetRasterCount();
   if(nrBands != 1) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Too many bands ('%d'): must be 1 band", nrBands);
-    return 0;
+    return NULL;
   }
 
   GDALRasterBand* raster = source->GetRasterBand(1);
 
   // Create PCRaster raster. Determine properties of raster to create.
-  size_t nrRows = raster->GetYSize();
-  size_t nrCols = raster->GetXSize();
-  std::string string;
 
   // The in-file type of the cells.
   CSF_CR fileCellRepresentation = GDALType2CellRepresentation(
@@ -159,27 +134,28 @@ GDALDataset* PCRasterDataset::createCopy(
   if(fileCellRepresentation == CR_UNDEFINED) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot determine a valid cell representation");
-    return 0;
+    return NULL;
   }
 
   // The value scale of the values.
   CSF_VS valueScale = VS_UNDEFINED;
+  std::string osString;
   if(source->GetMetadataItem("PCRASTER_VALUESCALE")) {
-    string = source->GetMetadataItem("PCRASTER_VALUESCALE");
+    osString = source->GetMetadataItem("PCRASTER_VALUESCALE");
   }
 
-  valueScale = !string.empty()
-         ? string2ValueScale(string)
+  valueScale = !osString.empty()
+         ? string2ValueScale(osString)
          : GDALType2ValueScale(raster->GetRasterDataType());
 
   if(valueScale == VS_UNDEFINED) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot determine a valid value scale");
-    return 0;
+    return NULL;
   }
 
   CSF_PT const projection = PT_YDECT2B;
-  REAL8  const angle = 0.0;
+  const REAL8 angle = 0.0;
   REAL8 west = 0.0;
   REAL8 north = 0.0;
   REAL8 cellSize = 1.0;
@@ -201,7 +177,7 @@ GDALDataset* PCRasterDataset::createCopy(
   if(appCellRepresentation == CR_UNDEFINED) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot determine a valid cell representation");
-    return 0;
+    return NULL;
   }
 
   // Check whether value scale fits the cell representation. Adjust when
@@ -209,13 +185,15 @@ GDALDataset* PCRasterDataset::createCopy(
   valueScale = fitValueScale(valueScale, appCellRepresentation);
 
   // Create a raster with the in file cell representation.
+  const size_t nrRows = raster->GetYSize();
+  const size_t nrCols = raster->GetXSize();
   MAP* map = Rcreate(filename, nrRows, nrCols, fileCellRepresentation,
          valueScale, projection, west, north, angle, cellSize);
 
   if(!map) {
     CPLError(CE_Failure, CPLE_OpenFailed,
          "PCRaster driver: Unable to create raster %s", filename);
-    return 0;
+    return NULL;
   }
 
   // Try to convert in app cell representation to the cell representation
@@ -224,7 +202,7 @@ GDALDataset* PCRasterDataset::createCopy(
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot convert cells: %s", MstrError());
     Mclose(map);
-    return 0;
+    return NULL;
   }
 
   int hasMissingValue;
@@ -239,8 +217,9 @@ GDALDataset* PCRasterDataset::createCopy(
     missingValue = ::missingValue(fileCellRepresentation);
   }
 
-  // TODO conversie van INT2 naar INT4 ondersteunen. zie ruseas.c regel 503.
-  // conversie op r 159.
+  // TODO: Proper translation of TODO.
+  // TODO: Support conversion to INT2 (?) INT4. ruseas.c see line 503.
+  // Conversion r 159.
 
   // Create buffer for one row of values.
   void* buffer = Rmalloc(map, nrCols);
@@ -250,7 +229,9 @@ GDALDataset* PCRasterDataset::createCopy(
   for(size_t row = 0; errorCode == CE_None && row < nrRows; ++row) {
 
     // Get row from source.
-    if(raster->RasterIO(GF_Read, 0, row, nrCols, 1, buffer, nrCols, 1,
+    if(raster->RasterIO(GF_Read, 0, static_cast<int>(row),
+        static_cast<int>(nrCols), 1, buffer,
+        static_cast<int>(nrCols), 1,
          raster->GetRasterDataType(), 0, 0, NULL) != CE_None) {
       CPLError(CE_Failure, CPLE_FileIO,
          "PCRaster driver: Error reading from source raster");
@@ -274,7 +255,7 @@ GDALDataset* PCRasterDataset::createCopy(
     // Write row in target.
     RputRow(map, row, buffer);
 
-    if(!progress((row + 1) / (static_cast<double>(nrRows)), 0, progressData)) {
+    if(!progress((row + 1) / (static_cast<double>(nrRows)), NULL, progressData)) {
       CPLError(CE_Failure, CPLE_UserInterrupt,
          "PCRaster driver: User terminated CreateCopy()");
       errorCode = CE_Failure;
@@ -283,10 +264,10 @@ GDALDataset* PCRasterDataset::createCopy(
   }
 
   Mclose(map);
-  map = 0;
+  map = NULL;
 
   free(buffer);
-  buffer = 0;
+  buffer = NULL;
 
   if( errorCode != CE_None )
       return NULL;
@@ -294,8 +275,8 @@ GDALDataset* PCRasterDataset::createCopy(
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxiliary pam information.        */
 /* -------------------------------------------------------------------- */
-  GDALPamDataset *poDS = (GDALPamDataset *)
-        GDALOpen( filename, GA_Update );
+  GDALPamDataset *poDS = reinterpret_cast<GDALPamDataset *>(
+      GDALOpen( filename, GA_Update ) );
 
   if( poDS )
       poDS->CloneInfo( source, GCIF_PAM_DEFAULT );
@@ -313,25 +294,31 @@ GDALDataset* PCRasterDataset::createCopy(
 /*!
   \param     map PCRaster map handle. It is ours to close.
 */
-PCRasterDataset::PCRasterDataset(
-         MAP* map)
-
-  : GDALPamDataset(),
-    d_map(map), d_west(0.0), d_north(0.0), d_cellSize(0.0)
-
+PCRasterDataset::PCRasterDataset( MAP* mapIn) :
+    GDALPamDataset(),
+    d_map(mapIn),
+    d_west(0.0),
+    d_north(0.0),
+    d_cellSize(0.0),
+    d_location_changed(false)
 {
   // Read header info.
-  nRasterXSize = RgetNrCols(d_map);
-  nRasterYSize = RgetNrRows(d_map);
+  nRasterXSize = static_cast<int>(RgetNrCols(d_map));
+  nRasterYSize = static_cast<int>(RgetNrRows(d_map));
   d_west = static_cast<double>(RgetXUL(d_map));
   d_north = static_cast<double>(RgetYUL(d_map));
   d_cellSize = static_cast<double>(RgetCellSize(d_map));
   d_cellRepresentation = RgetUseCellRepr(d_map);
-  CPLAssert(d_cellRepresentation != CR_UNDEFINED);
+  if( d_cellRepresentation == CR_UNDEFINED )
+  {
+      CPLError(CE_Failure, CPLE_AssertionFailed, "d_cellRepresentation != CR_UNDEFINED");
+  }
   d_valueScale = RgetValueScale(d_map);
-  CPLAssert(d_valueScale != VS_UNDEFINED);
+  if( d_valueScale == VS_UNDEFINED )
+  {
+      CPLError(CE_Failure, CPLE_AssertionFailed, "d_valueScale != VS_UNDEFINED");
+  }
   d_defaultNoDataValue = ::missingValue(d_cellRepresentation);
-  d_location_changed = false;
 
   // Create band information objects.
   nBands = 1;
@@ -444,7 +431,7 @@ GDALDataset* PCRasterDataset::create(
     return NULL;
   }
 
-  int row_col_max = INT4_MAX - 1;
+  const int row_col_max = INT4_MAX - 1;
   if(nr_cols > row_col_max){
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver : "
@@ -521,8 +508,8 @@ GDALDataset* PCRasterDataset::create(
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxiliary pam information.        */
 /* -------------------------------------------------------------------- */
-  GDALPamDataset *poDS = (GDALPamDataset *)
-        GDALOpen(filename, GA_Update);
+  GDALPamDataset *poDS = reinterpret_cast<GDALPamDataset *>(
+      GDALOpen(filename, GA_Update) );
 
   return poDS;
 }
@@ -556,14 +543,3 @@ CPLErr PCRasterDataset::SetGeoTransform(double* transform)
 bool PCRasterDataset::location_changed() const {
   return d_location_changed;
 }
-
-
-//------------------------------------------------------------------------------
-// DEFINITION OF FREE OPERATORS
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-// DEFINITION OF FREE FUNCTIONS
-//------------------------------------------------------------------------------

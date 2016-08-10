@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMutexedLayer class
@@ -26,6 +25,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#ifndef DOXYGEN_SKIP
 
 #include "ogrmutexedlayer.h"
 #include "cpl_multiproc.h"
@@ -192,10 +193,10 @@ OGRErr      OGRMutexedLayer::ReorderFields( int* panMap )
     return OGRLayerDecorator::ReorderFields(panMap);
 }
 
-OGRErr      OGRMutexedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr      OGRMutexedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::AlterFieldDefn(iField, poNewFieldDefn, nFlags);
+    return OGRLayerDecorator::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
 }
 
 OGRErr      OGRMutexedLayer::SyncToDisk()
@@ -292,7 +293,9 @@ CPLErr      OGRMutexedLayer::SetMetadataItem( const char * pszName,
 void OGRRegisterMutexedLayer();
 void OGRRegisterMutexedLayer()
 {
-    CPLAssert(FALSE); // Never call this function: it will segfault
+    CPLAssert(false); // Never call this function: it will segfault
     delete new OGRMutexedLayer(NULL, FALSE, NULL);
 }
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */

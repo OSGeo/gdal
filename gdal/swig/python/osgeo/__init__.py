@@ -23,5 +23,5 @@ if version_info >= (2,6,0):
 else:
     import _gdal
 
-__version__ = _gdal.__version__ = _gdal.VersionInfo("RELEASE_NAME") 
+__version__ = _gdal.__version__ = _gdal.VersionInfo("RELEASE_NAME")
 

@@ -26,8 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
  
-#ifndef __INCLUDE_SEGMENT_PCIDSKSEGMENTBUILDER_H
-#define __INCLUDE_SEGMENT_PCIDSKSEGMENTBUILDER_H
+#ifndef INCLUDE_SEGMENT_PCIDSKSEGMENTBUILDER_H
+#define INCLUDE_SEGMENT_PCIDSKSEGMENTBUILDER_H
 
 namespace PCIDSK
 {
@@ -36,7 +36,7 @@ namespace PCIDSK
 
     /**
      * PCIDSK Abstract Builder class. Given a segment pointer, constructs
-     * an instance of a given PCIDSKSegment implementor. Typically an instance
+     * an instance of a given PCIDSKSegment implementer. Typically an instance
      * of this will be registered with the PCIDSK Segment Factory.
      */
     struct IPCIDSKSegmentBuilder
@@ -60,4 +60,4 @@ namespace PCIDSK
 
 }; // end namespace PCIDSK
 
-#endif // __INCLUDE_SEGMENT_PCIDSKSEGMENTBUILDER_H
+#endif // INCLUDE_SEGMENT_PCIDSKSEGMENTBUILDER_H

@@ -1,9 +1,8 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  FMEObjects Translator
  * Purpose:  Implement the OGRFMECacheIndex class, a mechanism to manage a
- *           persisent index list of cached datasets.
+ *           persistent index list of cached datasets.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -15,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -41,7 +40,7 @@ CPL_CVSID("$Id$");
 /*                          OGRFMECacheIndex()                          */
 /************************************************************************/
 
-OGRFMECacheIndex::OGRFMECacheIndex( const char * pszPathIn ) 
+OGRFMECacheIndex::OGRFMECacheIndex( const char * pszPathIn )
 
 {
     psTree = NULL;
@@ -61,7 +60,7 @@ OGRFMECacheIndex::~OGRFMECacheIndex()
         Unlock();
         CPLDestroyXMLNode( psTree );
         psTree = NULL;
-    }       
+    }
     CPLFree( pszPath );
 }
 
@@ -130,7 +129,7 @@ int OGRFMECacheIndex::Load()
         psTree = CPLCreateXMLNode( NULL, CXT_Element, "OGRFMECacheIndex" );
         return TRUE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Load the data from the file.                                    */
 /* -------------------------------------------------------------------- */
@@ -141,7 +140,7 @@ int OGRFMECacheIndex::Load()
     pszIndexBuffer = (char *) CPLMalloc(nLength+1);
     if( (int) VSIFRead( pszIndexBuffer, 1, nLength, fpIndex ) != nLength )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Read of %d byte index file failed.", nLength );
         return FALSE;
     }
@@ -154,7 +153,7 @@ int OGRFMECacheIndex::Load()
     psTree = CPLParseXMLString( pszIndexBuffer );
 
     CPLFree( pszIndexBuffer );
-    
+
     return psTree != NULL;
 }
 
@@ -198,8 +197,8 @@ int OGRFMECacheIndex::Save()
 /*      component values.                                               */
 /************************************************************************/
 
-CPLXMLNode *OGRFMECacheIndex::FindMatch( const char *pszDriver, 
-                                         const char *pszDataset, 
+CPLXMLNode *OGRFMECacheIndex::FindMatch( const char *pszDriver,
+                                         const char *pszDataset,
                                          IFMEStringArray &oUserDirectives )
 
 {
@@ -221,8 +220,8 @@ CPLXMLNode *OGRFMECacheIndex::FindMatch( const char *pszDriver,
         int        iDir;
 
         psDirective = CPLGetXMLNode( psCDS, "UserDirectives.Directive" );
-        for( iDir = 0; 
-             iDir < (int)oUserDirectives.entries() && bMatch; 
+        for( iDir = 0;
+             iDir < (int)oUserDirectives.entries() && bMatch;
              iDir++ )
         {
             if( psDirective == NULL || psDirective->psChild == NULL )
@@ -230,11 +229,11 @@ CPLXMLNode *OGRFMECacheIndex::FindMatch( const char *pszDriver,
             else if( !EQUAL(psDirective->psChild->pszValue,
                             oUserDirectives(iDir)) )
                 bMatch = FALSE;
-            else 
+            else
                 psDirective = psDirective->psNext;
         }
 
-        if( iDir < (int) oUserDirectives.entries() || !bMatch 
+        if( iDir < (int) oUserDirectives.entries() || !bMatch
             || (psDirective != NULL && psDirective->psNext != NULL) )
             continue;
 
@@ -281,7 +280,7 @@ void OGRFMECacheIndex::Reference( CPLXMLNode *psDSNode )
 
     char szNewRefCount[32];
 
-    sprintf( szNewRefCount, "%d", 
+    sprintf( szNewRefCount, "%d",
              atoi(CPLGetXMLValue(psDSNode, "RefCount", "0")) + 1 );
 
     CPLSetXMLValue( psDSNode, "RefCount", szNewRefCount );
@@ -296,8 +295,8 @@ void OGRFMECacheIndex::Reference( CPLXMLNode *psDSNode )
 void OGRFMECacheIndex::Dereference( CPLXMLNode *psDSNode )
 
 {
-    if( psDSNode == NULL 
-        || !EQUAL(psDSNode->pszValue,"DataSource") 
+    if( psDSNode == NULL
+        || !EQUAL(psDSNode->pszValue,"DataSource")
         || CPLGetXMLNode(psDSNode,"RefCount") == NULL )
         return;
 
@@ -365,7 +364,7 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
     if( psTree == NULL )
         return FALSE;
 
-    for( psLastDSNode = NULL; TRUE; psLastDSNode = psDSNode )
+    for( psLastDSNode = NULL; true; psLastDSNode = psDSNode )
     {
         if( psLastDSNode != NULL )
             psDSNode = psLastDSNode->psNext;
@@ -376,21 +375,21 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
 
         if( !EQUAL(psDSNode->pszValue,"DataSource") )
             continue;
-        
+
 /* -------------------------------------------------------------------- */
 /*      When was this datasource last accessed?                         */
 /* -------------------------------------------------------------------- */
         unsigned long nLastUseTime = 0;
 
-        sscanf( CPLGetXMLValue( psDSNode, "LastUseTime", "0" ), 
+        sscanf( CPLGetXMLValue( psDSNode, "LastUseTime", "0" ),
                 "%lu", &nLastUseTime );
-        
+
 /* -------------------------------------------------------------------- */
 /*      When was this datasource created.                               */
 /* -------------------------------------------------------------------- */
         unsigned long nCreationTime = 0;
 
-        sscanf( CPLGetXMLValue( psDSNode, "CreationTime", "0" ), 
+        sscanf( CPLGetXMLValue( psDSNode, "CreationTime", "0" ),
                 "%lu", &nCreationTime );
 
 /* -------------------------------------------------------------------- */
@@ -399,16 +398,16 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
 /* -------------------------------------------------------------------- */
         int bCleanup = FALSE;
 
-        // Do we want to cleanup this node? 
-        if( atoi(CPLGetXMLValue( psDSNode, "RefCount", "0" )) > 0 
+        // Do we want to cleanup this node?
+        if( atoi(CPLGetXMLValue( psDSNode, "RefCount", "0" )) > 0
              && nLastUseTime + FMECACHE_REF_TIMEOUT < nCurTime )
             bCleanup = TRUE;
 
-        if( atoi(CPLGetXMLValue( psDSNode, "RefCount", "0" )) < 1 
+        if( atoi(CPLGetXMLValue( psDSNode, "RefCount", "0" )) < 1
             && nLastUseTime + FMECACHE_RETENTION < nCurTime )
             bCleanup = TRUE;
 
-        if( atoi(CPLGetXMLValue( psDSNode, "RefCount", "0" )) < 1 
+        if( atoi(CPLGetXMLValue( psDSNode, "RefCount", "0" )) < 1
             && nCreationTime + FMECACHE_MAX_RETENTION < nCurTime )
             bCleanup = TRUE;
 
@@ -417,7 +416,7 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
 
         bChangeMade = TRUE;
 
-        CPLDebug( "OGRFMECacheIndex", 
+        CPLDebug( "OGRFMECacheIndex",
                   "ExpireOldCaches() cleaning up data source %s - %ds since last use, %ds old.",
                   CPLGetXMLValue( psDSNode, "DSName", "<missing name>" ),
                   nCurTime - nLastUseTime,
@@ -429,7 +428,7 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
 /* -------------------------------------------------------------------- */
         CPLXMLNode *psLayerN;
 
-        for( psLayerN = psDSNode->psChild; 
+        for( psLayerN = psDSNode->psChild;
              psLayerN != NULL;
              psLayerN = psLayerN->psNext )
         {
@@ -454,11 +453,11 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
             {
                 CPLDebug( "OGRFMECacheIndex", "Failed to open FME index %s.",
                           pszBase );
-                          
+
                 poSession->destroySpatialIndex( poIndex );
                 continue;
             }
-         
+
             poIndex->close( FME_TRUE );
             poSession->destroySpatialIndex( poIndex );
         }

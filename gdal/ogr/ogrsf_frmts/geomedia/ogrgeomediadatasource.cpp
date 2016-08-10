@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeomediaDataSource class.
@@ -48,6 +47,7 @@ OGRGeomediaDataSource::OGRGeomediaDataSource()
     papoLayersInvisible = NULL;
     nLayers = 0;
     nLayersWithInvisible = 0;
+    bDSUpdate = FALSE;
 }
 
 /************************************************************************/
@@ -116,7 +116,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /*                                                                      */
 /* -------------------------------------------------------------------- */
     char *pszDSN;
-    if( EQUALN(pszNewName,"GEOMEDIA:",9) )
+    if( STARTS_WITH_CI(pszNewName, "GEOMEDIA:") )
         pszDSN = CPLStrdup( pszNewName + 9 );
     else
     {
@@ -129,7 +129,10 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
             return FALSE;
         }
         pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-        sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+        /* coverity[tainted_string] */
+        snprintf( pszDSN,
+                  strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+                  pszDSNStringTemplate,  pszNewName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -139,7 +142,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to initialize ODBC connection to DSN for %s,\n"
                   "%s", pszDSN, oSession.GetLastError() );
         CPLFree( pszDSN );
@@ -149,7 +152,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
     CPLFree( pszDSN );
 
     pszName = CPLStrdup( pszNewName );
-    
+
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
@@ -179,7 +182,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 
         while( oStmt.Fetch() )
         {
-            int i, iNew = apapszGeomColumns.size();
+            int i, iNew = static_cast<int>(apapszGeomColumns.size());
             char **papszRecord = NULL;
             for( i = 0; i < 2; i++ )
                 papszRecord = CSLAddString( papszRecord,
@@ -345,12 +348,12 @@ OGRLayer *OGRGeomediaDataSource::GetLayer( int iLayer )
 /*                          GetLayerByName()                            */
 /************************************************************************/
 
-OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszName )
+OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszNameIn )
 
 {
-    if (pszName == NULL)
+    if (pszNameIn == NULL)
         return NULL;
-    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszName);
+    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszNameIn);
     if (poLayer)
         return poLayer;
 
@@ -358,7 +361,7 @@ OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszName )
     {
         poLayer = papoLayersInvisible[i];
 
-        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+        if( strcmp( pszNameIn, poLayer->GetName() ) == 0 )
             return poLayer;
     }
 
@@ -366,7 +369,7 @@ OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszName )
 
     poGeomediaLayer = new OGRGeomediaTableLayer( this );
 
-    if( poGeomediaLayer->Initialize(pszName, NULL, NULL) != CE_None )
+    if( poGeomediaLayer->Initialize(pszNameIn, NULL, NULL) != CE_None )
     {
         delete poGeomediaLayer;
         return NULL;
@@ -392,8 +395,8 @@ OGRLayer * OGRGeomediaDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -404,8 +407,9 @@ OGRLayer * OGRGeomediaDataSource::ExecuteSQL( const char *pszSQLCommand,
     poStmt->Append( pszSQLCommand );
     if( !poStmt->ExecuteSQL() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
+        delete poStmt;
         return NULL;
     }
 
@@ -424,12 +428,12 @@ OGRLayer * OGRGeomediaDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
     OGRGeomediaSelectLayer *poLayer = NULL;
-        
+
     poLayer = new OGRGeomediaSelectLayer( this, poStmt );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
-    
+
     return poLayer;
 }
 

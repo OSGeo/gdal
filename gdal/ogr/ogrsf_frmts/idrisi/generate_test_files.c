@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  
+ * Project:
  * Purpose:  Generate sample .VCT files
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
@@ -200,8 +200,6 @@ int main(int argc, char* argv[])
     fwrite(&x, 1, sizeof(double), f);
     fwrite(&y, 1, sizeof(double), f);
 
-
-    
     id = 2;
     minx = 400000;
     miny = 4000000;

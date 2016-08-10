@@ -2,7 +2,7 @@
 /* pngpread.c - read a png file in push mode
  *
  * Last changed in libpng 1.2.44 [June 26, 2010]
- * Copyright (c) 1998-2010 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2002,2004,2006-2010 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -685,9 +685,12 @@ png_push_save_buffer(png_structp png_ptr)
         png_free(png_ptr, old_buffer);
         png_error(png_ptr, "Insufficient memory for save_buffer");
       }
-      png_memcpy(png_ptr->save_buffer, old_buffer, png_ptr->save_buffer_size);
-      png_free(png_ptr, old_buffer);
-      png_ptr->save_buffer_max = new_max;
+      else
+      {
+        png_memcpy(png_ptr->save_buffer, old_buffer, png_ptr->save_buffer_size);
+        png_free(png_ptr, old_buffer);
+        png_ptr->save_buffer_max = new_max;
+      }
    }
    if (png_ptr->current_buffer_size)
    {

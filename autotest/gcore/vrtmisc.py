@@ -95,7 +95,7 @@ def vrtmisc_3():
     return 'success'
 
 ###############################################################################
-# Test multi-band linear scaling with a single -scale occurence
+# Test multi-band linear scaling with a single -scale occurrence.
 
 def vrtmisc_4():
 
@@ -161,7 +161,7 @@ def vrtmisc_6():
     return 'success'
 
 ###############################################################################
-# Test multi-band power scaling with a single -scale occurence and -exponent occurence
+# Test multi-band power scaling with a single -scale and -exponent occurrence.
 
 def vrtmisc_7():
 
@@ -374,6 +374,144 @@ def vrtmisc_12():
     return "success"
 
 ###############################################################################
+# Test CreateCopy() preserve NBITS
+
+def vrtmisc_13():
+
+    ds = gdal.Open('data/oddsize1bit.tif')
+    out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
+    if out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return "success"
+
+###############################################################################
+# Test SrcRect/DstRect are serialized as integers
+
+def vrtmisc_14():
+
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 123456789, 1, options = [ 'SPARSE_OK=YES', 'TILED=YES' ] )
+    gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
+    src_ds = None
+    fp = gdal.VSIFOpenL('/vsimem/vrtmisc_14.vrt', 'rb')
+    content = gdal.VSIFReadL(1, 10000, fp).decode('latin1')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
+    gdal.Unlink("/vsimem/vrtmisc_14.vrt")
+
+    if content.find('<SrcRect xOff="0" yOff="0" xSize="123456789" ySize="1"') < 0 or \
+       content.find('<DstRect xOff="0" yOff="0" xSize="123456789" ySize="1"') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 1, 123456789, options = [ 'SPARSE_OK=YES', 'TILED=YES' ] )
+    gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
+    src_ds = None
+    fp = gdal.VSIFOpenL('/vsimem/vrtmisc_14.vrt', 'rb')
+    content = gdal.VSIFReadL(1, 10000, fp).decode('latin1')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
+    gdal.Unlink("/vsimem/vrtmisc_14.vrt")
+
+    if content.find('<SrcRect xOff="0" yOff="0" xSize="1" ySize="123456789"') < 0 or \
+       content.find('<DstRect xOff="0" yOff="0" xSize="1" ySize="123456789"') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    return "success"
+
+###############################################################################
+# Test CreateCopy() preserve SIGNEDBYTE
+
+def vrtmisc_15():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_15.tif', 1, 1, options = ['PIXELTYPE=SIGNEDBYTE'])
+    out_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
+    if out_ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/vrtmisc_15.tif')
+
+    return "success"
+
+###############################################################################
+# Test rounding to closest int for coordinates
+
+def vrtmisc_16():
+
+    gdal.BuildVRT('/vsimem/vrtmisc_16.vrt', [ 'data/vrtmisc16_tile1.tif', 'data/vrtmisc16_tile2.tif' ])
+    fp = gdal.VSIFOpenL('/vsimem/vrtmisc_16.vrt', 'rb')
+    content = gdal.VSIFReadL(1, 100000, fp).decode('latin1')
+    gdal.VSIFCloseL(fp)
+
+    if content.find('<SrcRect xOff="0" yOff="0" xSize="952" ySize="1189"') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+    if content.find('<DstRect xOff="0" yOff="0" xSize="952" ySize="1189"') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+    if content.find('<SrcRect xOff="0" yOff="0" xSize="494" ySize="893"') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+    if content.find('<DstRect xOff="1680" yOff="5922" xSize="494" ySize="893"') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrtmisc_16.tif', gdal.Open('/vsimem/vrtmisc_16.vrt'))
+    ds = gdal.Open('/vsimem/vrtmisc_16.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 206:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    gdal.Unlink('/vsimem/vrtmisc_16.tif')
+    gdal.Unlink('/vsimem/vrtmisc_16.vrt')
+
+    gdal.FileFromMemBuffer('/vsimem/vrtmisc_16.vrt', """<VRTDataset rasterXSize="2174" rasterYSize="6815">
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>0</NoDataValue>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/vrtmisc16_tile1.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="952" RasterYSize="1189" DataType="Byte" BlockXSize="952" BlockYSize="8" />
+      <SrcRect xOff="0" yOff="0" xSize="952" ySize="1189" />
+      <DstRect xOff="0" yOff="0" xSize="951.999999999543" ySize="1189.0000000031" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/vrtmisc16_tile2.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="494" RasterYSize="893" DataType="Byte" BlockXSize="494" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="494" ySize="893" />
+      <DstRect xOff="1680.00000000001" yOff="5921.99999999876" xSize="494.000000000237" ySize="892.99999999767" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrtmisc_16.tif', gdal.Open('/vsimem/vrtmisc_16.vrt'))
+    ds = gdal.Open('/vsimem/vrtmisc_16.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 206:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    gdal.Unlink('/vsimem/vrtmisc_16.tif')
+    gdal.Unlink('/vsimem/vrtmisc_16.vrt')
+
+    return "success"
+
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -392,6 +530,10 @@ gdaltest_list = [
     vrtmisc_10,
     vrtmisc_11,
     vrtmisc_12,
+    vrtmisc_13,
+    vrtmisc_14,
+    vrtmisc_15,
+    vrtmisc_16,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':

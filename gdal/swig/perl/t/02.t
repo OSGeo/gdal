@@ -1,9 +1,8 @@
 use strict;
+use warnings;
 use Carp;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
-
-my $dataset;
 
 # package Geo::GDAL::Dataset
 #
@@ -41,7 +40,7 @@ ok($dataset, "OpenEx");
 # sub StartTransaction
 # sub WriteRaster
 
-$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff');
+$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 123);
 my @list = $dataset->GetFileList();
 undef $dataset;
 
@@ -66,13 +65,13 @@ for my $dt (Geo::GDAL::Driver('MEM')->Create->Domains()) {
     ok($dt{$dt}, "Dataset domain: $dt");
 }
 
-my $dataset = Geo::GDAL::Driver('MEM')->Create(Width => 8, Height => 10);
+$dataset = Geo::GDAL::Driver('MEM')->Create(Width => 8, Height => 10);
 my $band = $dataset->Band;
 my $band2 = $dataset->Band(1);
 my @bands = $dataset->Bands;
 ok(@bands == 1, "Bands");
 
-my @list = Geo::GDAL::DataTypes();
+@list = Geo::GDAL::DataTypes();
 #print "@list\n";
 $dataset->AddBand('Int32', {a => 1});
 @bands = $dataset->Bands;
@@ -103,6 +102,14 @@ $buf = pack("$pc*", @data[80..159]);
 $dataset->WriteRaster(XOff => 0, yoff => 0, buf => $buf, BandList => [1]);
 my $data = $dataset->Band(1)->ReadTile;
 ok(($data->[0][0] == 1 and $data->[9][7] == 2), "WriteRaster ReadTile");
+
+$data[80] = 1;
+$data[159] = 2;
+$buf = pack("$pc*", @data[80..159]);
+$dataset->WriteRaster(XOff => 0, yoff => 0, buf => \$buf, BandList => [1]);
+$data = $dataset->Band(1)->ReadTile;
+ok(($data->[0][0] == 1 and $data->[9][7] == 2), "WriteRaster ReadTile 2");
+
 
 $data->[5][5] = 3;
 $dataset->Band(1)->WriteTile($data);

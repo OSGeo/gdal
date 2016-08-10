@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SOSI Translator
  * Purpose:  Implements OGRSOSIDriver.
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "ogr_sosi.h"
+
+CPL_CVSID("$Id$");
 
 static int bFYBAInit = FALSE;
 
@@ -70,6 +71,7 @@ static GDALDataset *OGRSOSIDriverOpen( GDALOpenInfo* poOpenInfo )
     return poDS;
 }
 
+#ifdef WRITE_SUPPORT
 /************************************************************************/
 /*                              Create()                                */
 /************************************************************************/
@@ -79,7 +81,6 @@ static GDALDataset *OGRSOSIDriverCreate( const char * pszName,
                                          CPL_UNUSED int nYSize, CPL_UNUSED GDALDataType eDT,
                                          CPL_UNUSED char **papszOptions )
 {
-    
     if ( !bFYBAInit )
     {
         LC_Init();  /* Init FYBA */
@@ -92,29 +93,28 @@ static GDALDataset *OGRSOSIDriverCreate( const char * pszName,
     }
     return poDS;
 }
+#endif
 
 /************************************************************************/
 /*                         RegisterOGRSOSI()                            */
 /************************************************************************/
 
 void RegisterOGRSOSI() {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "SOSI" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "SOSI" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "SOSI" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Norwegian SOSI Standard" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_sosi.html" );
+    poDriver->SetDescription( "SOSI" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Norwegian SOSI Standard" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sosi.html" );
 
-        poDriver->pfnOpen = OGRSOSIDriverOpen;
-        poDriver->pfnCreate = OGRSOSIDriverCreate;
-        poDriver->pfnUnloadDriver = OGRSOSIDriverUnload;
+    poDriver->pfnOpen = OGRSOSIDriverOpen;
+#ifdef WRITE_SUPPORT
+    poDriver->pfnCreate = OGRSOSIDriverCreate;
+#endif
+    poDriver->pfnUnloadDriver = OGRSOSIDriverUnload;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

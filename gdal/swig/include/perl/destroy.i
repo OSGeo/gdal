@@ -2,20 +2,25 @@
 %feature("shadow") ~class()
 %{
 sub DESTROY {
-    my $self;
-    if ($_[0]->isa('SCALAR')) {
-        $self = $_[0];
-    } else {
-        return unless $_[0]->isa('HASH');
-        $self = tied(%{$_[0]});
+    my $self = shift;
+    unless ($self->isa('SCALAR')) {
+        return unless $self->isa('HASH');
+        $self = tied(%{$self});
         return unless defined $self;
     }
+    my $code = $Geo::GDAL::stdout_redirection{$self};
+    delete $Geo::GDAL::stdout_redirection{$self};
     delete $ITERATORS{$self};
     if (exists $OWNER{$self}) {
         Geo::modulec::delete_class($self);
         delete $OWNER{$self};
     }
     $self->RELEASE_PARENTS();
+    if ($code) {
+        Geo::GDAL::VSIStdoutUnsetRedirection();
+        $code->close;
+    }
+
 }
 %}
 %enddef

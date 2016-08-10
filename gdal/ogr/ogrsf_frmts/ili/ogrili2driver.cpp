@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 2 Translator
  * Purpose:  Implements OGRILI2Layer class.
@@ -27,10 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili2.h"
+#include "xercesc_headers.h"
+
 #include "cpl_conv.h"
+#include "ogr_ili2.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
+
 
 /************************************************************************/
 /*                                Open()                                */
@@ -39,15 +42,13 @@ CPL_CVSID("$Id$");
 static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRILI2DataSource    *poDS;
-
     if( poOpenInfo->eAccess == GA_Update ||
         (!poOpenInfo->bStatOK && strchr(poOpenInfo->pszFilename, ',') == NULL) )
         return NULL;
 
     if( poOpenInfo->fpL != NULL )
     {
-        if( poOpenInfo->pabyHeader[0] != '<' 
+        if( poOpenInfo->pabyHeader[0] != '<'
             || strstr((const char*)poOpenInfo->pabyHeader,"interlis.ch/INTERLIS2") == NULL )
         {
             return NULL;
@@ -56,16 +57,17 @@ static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
     else if( poOpenInfo->bIsDirectory )
         return NULL;
 
-    poDS = new OGRILI2DataSource();
+    OGRILI2DataSource *poDS = new OGRILI2DataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions, TRUE )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions,
+                     TRUE )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -73,21 +75,31 @@ static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRILI2DriverCreate( const char * pszName,
-                                         CPL_UNUSED int nBands,
-                                         CPL_UNUSED int nXSize,
-                                         CPL_UNUSED int nYSize,
-                                         CPL_UNUSED GDALDataType eDT,
+                                         int /* nBands */,
+                                         int /* nXSize */,
+                                         int /* nYSize */,
+                                         GDALDataType /* eDT */,
                                          char **papszOptions )
 {
-    OGRILI2DataSource    *poDS = new OGRILI2DataSource();
+    OGRILI2DataSource *poDS = new OGRILI2DataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                         OGRILI2DriverUnload()                        */
+/************************************************************************/
+
+static void OGRILI2DriverUnload ( GDALDriver* )
+{
+    if( getenv("ILI2_TERMINATE_XERCES") )
+        XMLPlatformUtils::Terminate();
 }
 
 /************************************************************************/
@@ -95,28 +107,24 @@ static GDALDataset *OGRILI2DriverCreate( const char * pszName,
 /************************************************************************/
 
 void RegisterOGRILI2() {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "Interlis 2" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "Interlis 2" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "Interlis 2" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Interlis 2" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_ili.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "xtf xml ili" );
-
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetDescription( "Interlis 2" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Interlis 2" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ili.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "xtf xml ili" );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='MODEL' type='string' description='Filename of the model in IlisMeta format (.imd)'/>"
 "</OpenOptionList>" );
 
-        poDriver->pfnOpen = OGRILI2DriverOpen;
-        poDriver->pfnCreate = OGRILI2DriverCreate;
+    poDriver->pfnOpen = OGRILI2DriverOpen;
+    poDriver->pfnCreate = OGRILI2DriverCreate;
+    poDriver->pfnUnloadDriver = OGRILI2DriverUnload;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

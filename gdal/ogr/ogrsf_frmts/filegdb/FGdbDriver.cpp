@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements FileGDB OGR driver.
@@ -80,7 +79,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 
 {
     // First check if we have to do any work.
-    int nLen = strlen(pszFilename);
+    size_t nLen = strlen(pszFilename);
     if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
           (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
         return NULL;
@@ -98,7 +97,6 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
     }
 
     CPLMutexHolderD(&hMutex);
-    Geodatabase* pGeoDatabase = NULL;
 
     FGdbDatabaseConnection* pConnection = oMapConnections[pszFilename];
     if( pConnection != NULL )
@@ -110,14 +108,13 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
             return NULL;
         }
 
-        pGeoDatabase = pConnection->m_pGeodatabase;
         pConnection->m_nRefCount ++;
         CPLDebug("FileGDB", "ref_count of %s = %d now", pszFilename,
                  pConnection->m_nRefCount);
     }
     else
     {
-        pGeoDatabase = new Geodatabase;
+        Geodatabase* pGeoDatabase = new Geodatabase;
         hr = ::OpenGeodatabase(StringToWString(pszFilename), *pGeoDatabase);
 
         if (FAILED(hr))
@@ -129,7 +126,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
                 std::wstring fgdb_error_desc_w;
                 std::string fgdb_error_desc("Unknown error");
                 fgdbError er;
-                er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+                er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr), fgdb_error_desc_w);
                 if ( er == S_OK )
                 {
                     fgdb_error_desc = WStringToString(fgdb_error_desc_w);
@@ -292,7 +289,7 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
     osEditedName += ".ogredited";
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    CPLUnlinkTree(osEditedName);
+    CPL_IGNORE_RET_VAL(CPLUnlinkTree(osEditedName));
     CPLPopErrorHandler();
 
     OGRErr eErr = OGRERR_NONE;
@@ -798,14 +795,15 @@ void RegisterOGRFileGDB()
 {
     if (! GDAL_CHECK_VERSION("OGR FGDB"))
         return;
+
     OGRSFDriver* poDriver = new FGdbDriver;
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "ESRI FileGDB" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_filegdb.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_filegdb.html" );
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>" );
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
@@ -833,12 +831,12 @@ void RegisterOGRFileGDB()
 "    <Value>GEOMETRY_AND_BLOB_OUTOFLINE</Value>"
 "  </Option>"
 "</LayerCreationOptionList>");
-    
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date DateTime Binary" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Real String Date DateTime Binary" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-

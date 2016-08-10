@@ -1,0 +1,44 @@
+<VRTDataset rasterXSize="7200" rasterYSize="7200">
+  <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
+  <GeoTransform> -1,  1.3888888888888889e-04,  0.0000000000000000e+00,  1,  0.0000000000000000e+00, -1.3888888888888889e-04</GeoTransform>
+  <VRTRasterBand dataType="Int16" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">test_gdalwarp_lib_129_upper_left.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Int16" BlockXSize="10" BlockYSize="10" />
+      <SrcRect xOff="0" yOff="0" xSize="1" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="7200" ySize="7200" />
+      <ScaleOffset>1727</ScaleOffset>
+      <ScaleRatio>0</ScaleRatio>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">test_gdalwarp_lib_129_upper_left.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Int16" BlockXSize="10" BlockYSize="10" />
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="910" yOff="3510" xSize="10" ySize="10" />
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">test_gdalwarp_lib_129_upper_right.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Int16" BlockXSize="10" BlockYSize="10" />
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="2680" yOff="3540" xSize="10" ySize="10" />
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">test_gdalwarp_lib_129_lower_right.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Int16" BlockXSize="10" BlockYSize="10" />
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="2650" yOff="5160" xSize="10" ySize="10" />
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">test_gdalwarp_lib_129_lower_left.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Int16" BlockXSize="10" BlockYSize="10" />
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="880" yOff="5140" xSize="10" ySize="10" />
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>

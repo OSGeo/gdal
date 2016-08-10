@@ -34,15 +34,15 @@
 
 CPL_C_START
 #include "EnvisatFile.h"
-#include "records.h"
 CPL_C_END
+#include "records.h"
 
 #include "timedelta.hpp"
 
 /* -------------------------------------------------------------------- */
 /*
  * class ADSRange 
- * 
+ *
  * Range of ADS record matching the range of the MDS records. 
  *
  */
@@ -71,16 +71,16 @@ class ADSRange
     { 
     } 
 
-    ADSRange( const int idx_first, const int idx_last, 
-        const int off_first, const int off_last, 
-        const TimeDelta &mjd_first, const TimeDelta &mjd_last, 
-        const TimeDelta &mjd_m_first, const TimeDelta &mjd_m_last ) :
-        idx_first(idx_first), idx_last(idx_last), off_first(off_first),
-        off_last(off_last), mjd_first(mjd_first), mjd_last(mjd_last),
-        mjd_m_first(mjd_m_first), mjd_m_last(mjd_m_last) 
+    ADSRange( const int idx_firstIn, const int idx_lastIn, 
+        const int off_firstIn, const int off_lastIn, 
+        const TimeDelta &mjd_firstIn, const TimeDelta &mjd_lastIn, 
+        const TimeDelta &mjd_m_firstIn, const TimeDelta &mjd_m_lastIn ) :
+        idx_first(idx_firstIn), idx_last(idx_lastIn), off_first(off_firstIn),
+        off_last(off_lastIn), mjd_first(mjd_firstIn), mjd_last(mjd_lastIn),
+        mjd_m_first(mjd_m_firstIn), mjd_m_last(mjd_m_lastIn) 
     { 
     } 
-    
+
     /* get count of matched records */
     inline int getDSRCount( void ) const 
     { 
@@ -136,38 +136,35 @@ class ADSRange
     { 
         return this->mjd_m_last ; 
     } 
-
-} ;  
+};
 
 
 /* -------------------------------------------------------------------- */
-/* 
- * NOTE: There are two kinds of ADS records: 
+/*
+ * NOTE: There are two kinds of ADS records:
  *
- *  1) One ADS record appliable to all consequent MDS records until replaced 
- *     by another ADS record, i.e., last MDS records does no need to be 
+ *  1) One ADS record applicable to all consequent MDS records until replaced
+ *     by another ADS record, i.e., last MDS records does no need to be
  *     followed by an ADS record.
  *
- *  2) Two ADS records applicable to all MDS records between them 
- *     (e.g., tiepoints ADS), i.e., last MDS record should be followed 
- *     by an ADS rescord having the same or later time-stamp.  
- *  
- *  The type of the ADS afects the way how the ADS records corresponding 
- *  to a set of MDS records should be selected. 
+ *  2) Two ADS records applicable to all MDS records between them
+ *     (e.g., tiepoints ADS), i.e., last MDS record should be followed
+ *     by an ADS record having the same or later time-stamp.
+ *
+ *  The type of the ADS affects the way how the ADS records corresponding
+ *  to a set of MDS records should be selected.
  */
 
 
 class ADSRangeLastAfter: public ADSRange
-{ 
+{
 
-  public: 
+  public:
 
     /* CONSTRUCTOR */ 
     ADSRangeLastAfter( EnvisatFile & envfile, int  ads_idx , int mds_idx,
             const TimeDelta & line_interval ) ; 
-
-} ;  
+};
 
 
 #endif /*tiepointrange_hpp*/
-

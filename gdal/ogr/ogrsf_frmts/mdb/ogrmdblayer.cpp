@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMDBLayer class
@@ -39,11 +38,11 @@ CPL_CVSID("$Id$");
 /*                            OGRMDBLayer()                            */
 /************************************************************************/
 
-OGRMDBLayer::OGRMDBLayer(OGRMDBDataSource* poDS, OGRMDBTable* poMDBTable)
+OGRMDBLayer::OGRMDBLayer(OGRMDBDataSource* poDSIn, OGRMDBTable* poMDBTableIn)
 
 {
-    this->poDS = poDS;
-    this->poMDBTable = poMDBTable;
+    this->poDS = poDSIn;
+    this->poMDBTable = poMDBTableIn;
 
     eGeometryType = MDB_GEOM_NONE;
 
@@ -73,7 +72,7 @@ OGRMDBLayer::~OGRMDBLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "MDB", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -133,13 +132,13 @@ CPLErr OGRMDBLayer::BuildFeatureDefn()
         }
 
         if( eGeometryType == MDB_GEOM_PGEO
-            && pszGeomColumn == NULL 
+            && pszGeomColumn == NULL
             && EQUAL(pszColName,"Shape") )
         {
             pszGeomColumn = CPLStrdup(pszColName);
             continue;
         }
-        
+
         switch( poMDBTable->GetColumnType(iCol) )
         {
           case MDB_Boolean:
@@ -215,7 +214,7 @@ GIntBig OGRMDBLayer::GetFeatureCount(int bForce)
 OGRFeature *OGRMDBLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 
@@ -252,7 +251,7 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     if( pszFIDColumn != NULL && poMDBTable->GetColumnIndex(pszFIDColumn) > -1 )
-        poFeature->SetFID( 
+        poFeature->SetFID(
             poMDBTable->GetColumnAsInt(poMDBTable->GetColumnIndex(pszFIDColumn)) );
     else
         poFeature->SetFID( iNextShapeId );
@@ -275,7 +274,7 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
         {
             int nBytes = 0;
             GByte* pData = poMDBTable->GetColumnAsBinary( iSrcField, &nBytes);
-            poFeature->SetField( iField, 
+            poFeature->SetField( iField,
                                  nBytes,
                                  pData );
             CPLFree(pData);
@@ -446,7 +445,7 @@ void OGRMDBLayer::LookupSRID( int nSRID )
     char* pszSRTextPtr = pszSRText;
     if( poSRS->importFromWkt( &pszSRTextPtr ) != OGRERR_NONE )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "importFromWKT() failed on SRS '%s'.",
                   pszSRText);
         delete poSRS;
@@ -454,7 +453,7 @@ void OGRMDBLayer::LookupSRID( int nSRID )
     }
     else if( poSRS->morphFromESRI() != OGRERR_NONE )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "morphFromESRI() failed on SRS." );
         delete poSRS;
         poSRS = NULL;
@@ -570,9 +569,9 @@ CPLErr OGRMDBLayer::Initialize( CPL_UNUSED const char *pszTableName,
 /*                             Initialize()                             */
 /************************************************************************/
 
-CPLErr OGRMDBLayer::Initialize( CPL_UNUSED const char *pszTableName,
+CPLErr OGRMDBLayer::Initialize( const char * /*pszTableName */,
                                 const char *pszGeomCol,
-                                OGRSpatialReference* poSRS )
+                                OGRSpatialReference* poSRSIn )
 
 
 {
@@ -591,7 +590,7 @@ CPLErr OGRMDBLayer::Initialize( CPL_UNUSED const char *pszTableName,
 
     eGeometryType = MDB_GEOM_GEOMEDIA;
 
-    this->poSRS = poSRS;
+    this->poSRS = poSRSIn;
 
     CPLErr eErr;
     eErr = BuildFeatureDefn();

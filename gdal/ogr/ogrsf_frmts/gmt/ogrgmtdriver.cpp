@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrmemdriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGmtDriver class.
@@ -31,16 +30,13 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: ogrmemdriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ~OGRGmtDriver()                           */
 /************************************************************************/
 
-OGRGmtDriver::~OGRGmtDriver()
-
-{
-}
+OGRGmtDriver::~OGRGmtDriver() {}
 
 /************************************************************************/
 /*                              GetName()                               */
@@ -69,8 +65,8 @@ OGRDataSource *OGRGmtDriver::Open( const char * pszFilename, int bUpdate )
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -85,11 +81,10 @@ OGRDataSource *OGRGmtDriver::CreateDataSource( const char * pszName,
 
     if( poDS->Create( pszName, papszOptions ) )
         return poDS;
-    else
-    {
-        delete poDS;
-        return NULL;
-    }
+
+
+    delete poDS;
+    return NULL;
 }
 
 /************************************************************************/
@@ -101,8 +96,8 @@ int OGRGmtDriver::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -113,11 +108,8 @@ void RegisterOGRGMT()
 
 {
     OGRSFDriver* poDriver = new OGRGmtDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "GMT ASCII Vectors (.gmt)" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GMT ASCII Vectors (.gmt)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gmt" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_gmt.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gmt.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-

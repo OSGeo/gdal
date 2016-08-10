@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Purpose:  Implementation of ReflectanceCalculator class. Calculate
  *           reflectance values from radiance, for visual bands.
@@ -30,6 +29,9 @@
 #include "reflectancecalculator.h"
 #include <cmath>
 #include <cstdlib>
+
+CPL_CVSID("$Id$");
+
 using namespace std;
 
 //////////////////////////////////////////////////////////////////////
@@ -48,12 +50,12 @@ ReflectanceCalculator::ReflectanceCalculator(std::string sTimeStamp, double rRTO
   m_iYear = atoi(sYear.c_str());
   int iMonth = atoi(sMonth.c_str());
   m_iDay = atoi(sDay.c_str());
-	for (int i = 1; i < iMonth; ++i)
-		m_iDay += iDaysInMonth(i, m_iYear);
+  for (int i = 1; i < iMonth; ++i)
+      m_iDay += iDaysInMonth(i, m_iYear);
   int iHours = atoi(sHours.c_str());
   int iMins = atoi(sMins.c_str());
 
-	m_rHours = iHours + iMins / 60.0;
+        m_rHours = iHours + iMins / 60.0;
 }
 
 ReflectanceCalculator::~ReflectanceCalculator()
@@ -86,7 +88,7 @@ const double ReflectanceCalculator::rDeclination() const
   double rJulianDay = m_iDay - 1;
   double yearFraction = (rJulianDay + m_rHours / 24) / iDaysInYear(m_iYear);
   double T = 2 * M_PI * yearFraction;
-  
+
   double declin = 0.006918 - 0.399912 * cos(T) + 0.070257 * sin(T)
           - 0.006758 * cos(2 * T) + 0.000907 * sin(2 * T)
           - 0.002697 * cos(3 * T) + 0.00148 * sin(3 * T);
@@ -95,8 +97,8 @@ const double ReflectanceCalculator::rDeclination() const
 
 double ReflectanceCalculator::rHourAngle(double rLon) const
 {
-	// In: rLon (in degrees)
-	// Out: hourAngle (in radians)
+  // In: rLon (in degrees)
+  // Out: hourAngle (in radians)
   double rJulianDay = m_iDay - 1;
   double yearFraction = (rJulianDay + m_rHours / 24) / iDaysInYear(m_iYear);
   double T = 2 * M_PI * yearFraction;
@@ -117,8 +119,8 @@ const double ReflectanceCalculator::rSunDistance() const
 {
   int iJulianDay = m_iDay - 1;
   double theta = 2*M_PI *(iJulianDay - 3) / 365.25;
-	// rE0 is the inverse of the square of the sun-distance ratio
-	double rE0 = 1.000110 + 0.034221*cos(theta)+0.00128*sin(theta) + 0.000719*cos(2*theta)+0.000077*sin(2*theta);
+        // rE0 is the inverse of the square of the sun-distance ratio
+        double rE0 = 1.000110 + 0.034221*cos(theta)+0.00128*sin(theta) + 0.000719*cos(2*theta)+0.000077*sin(2*theta);
   // The calculated distance is expressed as a factor of the "average sun-distance" (on 1 Jan approx. 0.98, on 1 Jul approx. 1.01)
   return 1 / sqrt(rE0);
 }
@@ -126,7 +128,7 @@ const double ReflectanceCalculator::rSunDistance() const
 int ReflectanceCalculator::iDaysInYear(int iYear) const
 {
   bool fLeapYear = iDaysInMonth(2, iYear) == 29;
-  
+
   if (fLeapYear)
       return 366;
   else

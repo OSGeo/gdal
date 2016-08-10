@@ -36,9 +36,9 @@ using namespace PCIDSK;
 /*                            CPCIDSK_PCT()                             */
 /************************************************************************/
 
-CPCIDSK_PCT::CPCIDSK_PCT( PCIDSKFile *file, int segment,
+CPCIDSK_PCT::CPCIDSK_PCT( PCIDSKFile *fileIn, int segmentIn,
                           const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer )
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer )
 
 {
 }

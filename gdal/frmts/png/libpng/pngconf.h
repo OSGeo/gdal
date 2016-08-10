@@ -1,17 +1,17 @@
 
 /* pngconf.h - machine configurable file for libpng
  *
- * libpng version 1.2.52 - November 20, 2014
- * Copyright (c) 1998-2013 Glenn Randers-Pehrson
+ * libpng version 1.2.56, December 17, 2015
+ *
+ * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
  * This code is released under the libpng license.
  * For conditions of distribution and use, see the disclaimer
  * and license in png.h
- */
-
-/* Any machine specific code is near the front of this file, so if you
+ *
+ * Any machine specific code is near the front of this file, so if you
  * are configuring libpng for a machine, you may want to read the section
  * starting here down to where it starts to typedef png_color, png_text,
  * and png_info.
@@ -313,7 +313,7 @@
 #endif
 
 /* This macro protects us against machines that don't have function
- * prototypes (ie K&R style headers).  If your compiler does not handle
+ * prototypes (i.e. K&R style headers).  If your compiler does not handle
  * function prototypes, define this macro and use the included ansi2knr.
  * I've always been able to use _NO_PROTO as the indicator, but you may
  * need to drag the empty declaration out in front of here, or change the
@@ -361,7 +361,7 @@
 
 #ifdef PNG_SETJMP_SUPPORTED
 /* This is an attempt to force a single setjmp behaviour on Linux.  If
- * the X config stuff didn't define _BSD_SOURCE we wouldn't need this.
+ * the X config stuff did not define _BSD_SOURCE we would not need this.
  *
  * You can bypass this test if you know that your application uses exactly
  * the same setjmp.h that was included when libpng was built.  Only define
@@ -885,7 +885,7 @@
 
 /* Added at libpng-1.2.43 */
 #ifndef PNG_USER_CHUNK_MALLOC_MAX
-#  define PNG_USER_CHUNK_MALLOC_MAX 0
+#  define PNG_USER_CHUNK_MALLOC_MAX 8000000
 #endif
 
 #ifndef PNG_LITERAL_SHARP
@@ -939,7 +939,7 @@
 */
 
 /* Any chunks you are not interested in, you can undef here.  The
- * ones that allocate memory may be expecially important (hIST,
+ * ones that allocate memory may be especially important (hIST,
  * tEXt, zTXt, tRNS, pCAL).  Others will just save time and make png_info
  * a bit smaller.
  */
@@ -1297,7 +1297,7 @@ typedef unsigned char png_byte;
 
 /* Suggest testing for specific compiler first before testing for
  * FAR.  The Watcom compiler defines both __MEDIUM__ and M_I86MM,
- * making reliance oncertain keywords suspect. (SJT)
+ * making reliance on certain keywords suspect. (SJT)
  */
 
 /* MSC Medium model */

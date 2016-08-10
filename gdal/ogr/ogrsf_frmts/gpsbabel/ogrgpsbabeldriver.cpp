@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGPSbabelDriver class.
@@ -27,11 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_gpsbabel.h"
 #include "cpl_conv.h"
 #include "cpl_spawn.h"
 
-// g++ -g -Wall -fPIC  ogr/ogrsf_frmts/gpsbabel/*.cpp -shared -o ogr_GPSBabel.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpsbabel -L. -lgdal
+#include "ogr_gpsbabel.h"
 
 CPL_CVSID("$Id$");
 
@@ -39,30 +37,31 @@ CPL_CVSID("$Id$");
 /*                         OGRGPSBabelDriverIdentify()                  */
 /************************************************************************/
 
-static int OGRGPSBabelDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
-                                              const char** ppszGSPBabelDriverName )
+static bool OGRGPSBabelDriverIdentifyInternal(
+    GDALOpenInfo* poOpenInfo,
+    const char** ppszGSPBabelDriverName )
 {
-    if( EQUALN(poOpenInfo->pszFilename, "GPSBABEL:", strlen("GPSBABEL:")) )
-        return TRUE;
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPSBABEL:") )
+        return true;
 
     const char* pszGPSBabelDriverName = NULL;
     if( poOpenInfo->fpL == NULL )
-            return FALSE;
+            return false;
 
     if (memcmp(poOpenInfo->pabyHeader, "MsRcd", 5) == 0)
         pszGPSBabelDriverName = "mapsource";
     else if (memcmp(poOpenInfo->pabyHeader, "MsRcf", 5) == 0)
         pszGPSBabelDriverName = "gdb";
-    else if (strstr((const char*)poOpenInfo->pabyHeader, "<osm") != NULL)
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<osm") != NULL)
         pszGPSBabelDriverName = "osm";
-    else if (strstr((const char*)poOpenInfo->pabyHeader, "$GPGSA") != NULL ||
-                strstr((const char*)poOpenInfo->pabyHeader, "$GPGGA") != NULL)
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGSA") != NULL ||
+                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$GPGGA") != NULL)
         pszGPSBabelDriverName = "nmea";
-    else if (EQUALN((const char*)poOpenInfo->pabyHeader, "OziExplorer",11))
+    else if (STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "OziExplorer"))
         pszGPSBabelDriverName = "ozi";
-    else if (strstr((const char*)poOpenInfo->pabyHeader, "Grid") &&
-                strstr((const char*)poOpenInfo->pabyHeader, "Datum") &&
-                strstr((const char*)poOpenInfo->pabyHeader, "Header"))
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "Grid") &&
+                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "Datum") &&
+                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "Header"))
         pszGPSBabelDriverName = "garmin_txt";
     else if (poOpenInfo->pabyHeader[0] == 13 && poOpenInfo->pabyHeader[10] == 'M' && poOpenInfo->pabyHeader[11] == 'S' &&
                 (poOpenInfo->pabyHeader[12] >= '0' && poOpenInfo->pabyHeader[12] <= '9') &&
@@ -71,8 +70,8 @@ static int OGRGPSBabelDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
                 (poOpenInfo->pabyHeader[14] == 1 || poOpenInfo->pabyHeader[14] == 2) && poOpenInfo->pabyHeader[15] == 0 &&
                 poOpenInfo->pabyHeader[16] == 0 && poOpenInfo->pabyHeader[17] == 0)
         pszGPSBabelDriverName = "mapsend";
-    else if (strstr((const char*)poOpenInfo->pabyHeader, "$PMGNWPL") != NULL ||
-                strstr((const char*)poOpenInfo->pabyHeader, "$PMGNRTE") != NULL)
+    else if (strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$PMGNWPL") != NULL ||
+                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "$PMGNRTE") != NULL)
         pszGPSBabelDriverName = "magellan";
     else if (poOpenInfo->pabyHeader[0] == 'A' &&
                 poOpenInfo->pabyHeader[1] >= 'A' && poOpenInfo->pabyHeader[1] <= 'Z' &&
@@ -101,15 +100,16 @@ static int OGRGPSBabelDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
 
     if( bGPSBabelFound )
         *ppszGSPBabelDriverName = pszGPSBabelDriverName;
-    return ( *ppszGSPBabelDriverName != NULL );
+    return *ppszGSPBabelDriverName != NULL;
 }
 
 static int OGRGPSBabelDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
     const char* pszGPSBabelDriverName = NULL;
-    return OGRGPSBabelDriverIdentifyInternal(poOpenInfo, &pszGPSBabelDriverName);
+    return OGRGPSBabelDriverIdentifyInternal( poOpenInfo,
+                                              &pszGPSBabelDriverName );
 }
-    
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -122,7 +122,7 @@ static GDALDataset *OGRGPSBabelDriverOpen( GDALOpenInfo* poOpenInfo )
         !OGRGPSBabelDriverIdentifyInternal(poOpenInfo, &pszGPSBabelDriverName))
         return NULL;
 
-    OGRGPSBabelDataSource   *poDS = new OGRGPSBabelDataSource();
+    OGRGPSBabelDataSource *poDS = new OGRGPSBabelDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, pszGPSBabelDriverName,
                      poOpenInfo->papszOpenOptions ) )
@@ -139,13 +139,13 @@ static GDALDataset *OGRGPSBabelDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGPSBabelDriverCreate( const char * pszName,
-                                             CPL_UNUSED int nBands,
-                                             CPL_UNUSED int nXSize,
-                                             CPL_UNUSED int nYSize,
-                                             CPL_UNUSED GDALDataType eDT,
+                                             int /* nBands */,
+                                             int /* nXSize */,
+                                             int /* nYSize */,
+                                             GDALDataType /* eDT */,
                                              char **papszOptions )
 {
-    OGRGPSBabelWriteDataSource   *poDS = new OGRGPSBabelWriteDataSource();
+    OGRGPSBabelWriteDataSource *poDS = new OGRGPSBabelWriteDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
@@ -165,8 +165,8 @@ static CPLErr OGRGPSBabelDriverDelete( const char *pszFilename )
 {
     if( VSIUnlink( pszFilename ) == 0 )
         return CE_None;
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -178,37 +178,33 @@ void RegisterOGRGPSBabel()
     if (! GDAL_CHECK_VERSION("OGR/GPSBabel driver"))
         return;
 
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "GPSBabel" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GPSBabel" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GPSBabel" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GPSBabel" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_gpsbabel.html" );
+    poDriver->SetDescription( "GPSBabel" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPSBabel" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gpsbabel.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "GPSBABEL:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "GPSBABEL:" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='FILENAME' type='string' description='Filename to open'/>"
 "  <Option name='GPSBABEL_DRIVER' type='string' description='Name of the GPSBabel to use'/>"
 "</OpenOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='GPSBABEL_DRIVER' type='string' description='Name of the GPSBabel to use'/>"
 "</CreationOptionList>");
 
-        poDriver->pfnOpen = OGRGPSBabelDriverOpen;
-        poDriver->pfnIdentify = OGRGPSBabelDriverIdentify;
-        poDriver->pfnCreate = OGRGPSBabelDriverCreate;
-        poDriver->pfnDelete = OGRGPSBabelDriverDelete;
+    poDriver->pfnOpen = OGRGPSBabelDriverOpen;
+    poDriver->pfnIdentify = OGRGPSBabelDriverIdentify;
+    poDriver->pfnCreate = OGRGPSBabelDriverCreate;
+    poDriver->pfnDelete = OGRGPSBabelDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

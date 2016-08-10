@@ -7,11 +7,7 @@ GDAL_ROOT = 	..
 
 !INCLUDE ..\nmake.opt
 
-!IFDEF INCLUDE_OGR_FRMTS
-EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED -DHAVE_MITAB
-!ELSE
 EXTRAFLAGS = $(EXTRAFLAGS) -DHAVE_MITAB
-!ENDIF
 
 !IFDEF EXPAT_DIR
 EXTRAFLAGS = $(EXTRAFLAGS) $(EXPAT_INCLUDE) -DHAVE_EXPAT
@@ -66,9 +62,3 @@ allclean:	clean
 	cd ogrsf_frmts
 	$(MAKE) /f makefile.vc clean
 	cd ..
-
-# special override to avoid some warnings with this generated code.
-
-swq_parser.obj:	swq_parser.cpp
-	$(CC) $(CFLAGS) $(SOFTWARNFLAGS) /c $*.cpp
-

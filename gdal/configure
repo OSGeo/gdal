@@ -675,6 +675,7 @@ FREEXL_INCLUDE
 HAVE_FREEXL
 OPENCL_LIB
 OPENCL_FLAGS
+QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
 QHULL_SETTING
 GEOS_CONFIG
 GEOS_VERSION
@@ -693,13 +694,14 @@ HAVE_PCRE
 SQLITE_HAS_COLUMN_METADATA
 HAVE_SQLITE
 SQLITE_INC
-SQLITE3_LDFLAGS
-SQLITE3_CFLAGS
-SQLITE3_VERSION
 SPATIALITE_412_OR_LATER
 SPATIALITE_AMALGAMATION
 SPATIALITE_INC
+SPATIALITE_SONAME
 HAVE_SPATIALITE
+SQLITE3_LDFLAGS
+SQLITE3_CFLAGS
+SQLITE3_VERSION
 LIBXML2_LIB
 LIBXML2_INC
 HAVE_LIBXML2
@@ -740,7 +742,6 @@ MYSQL_INC
 HAVE_MYSQL
 MYSQL_CONFIG
 GNM_ENABLED
-OGR_ENABLED
 OPT_GDAL_FORMATS
 ORACLE_OCI_LDFLAGS
 ORACLE_OCI_CFLAGS
@@ -817,11 +818,16 @@ LIBZ_SETTING
 RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
 RENAME_INTERNAL_LIBTIFF_SYMBOLS
 HAVE_HIDE_INTERNAL_SYMBOLS
+CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT
+CFLAGS_NO_LTO_IF_AVX_NONDEFAULT
 HAVE_AVX_AT_COMPILE_TIME
 AVXFLAGS
 HAVE_SSE_AT_COMPILE_TIME
 SSEFLAGS
+HAVE_GCC_BSWAP
 HAVE_GCC_ATOMIC_BUILTINS
+CXXFLAGS_NOFTRAPV
+CFLAGS_NOFTRAPV
 HAVE_LIBTOOL
 SO_EXT
 LD_SHARED
@@ -851,6 +857,10 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+NO_LOGICAL_OP_FLAG
+NO_NON_VIRTUAL_DTOR_FLAG
+NO_SIGN_COMPARE
+NO_UNUSED_PARAMETER_FLAG
 C_WFLAGS
 CXX_WFLAGS
 ac_ct_CXX
@@ -925,6 +935,7 @@ with_unix_stdio_64
 enable_debug
 with_sse
 with_avx
+enable_lto
 with_hide_internal_symbols
 with_rename_internal_libtiff_symbols
 with_rename_internal_libgeotiff_symbols
@@ -971,7 +982,6 @@ with_oci
 with_oci_include
 with_oci_lib
 with_grib
-with_ogr
 with_gnm
 with_mysql
 with_ingres
@@ -989,6 +999,7 @@ with_dods_root
 with_curl
 with_xml2
 with_spatialite
+with_spatialite_soname
 with_sqlite3
 with_pcre
 with_dwgdirect
@@ -1660,6 +1671,8 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-debug          enable debugging (disabled by default)
+  --enable-lto            enable LTO(link time optimization) (disabled by
+                          default)
   --disable-rpath         do not hardcode runtime library paths
   --enable-pdf-plugin     enable PDF driver as a plugin (included in libgdal
                           by default)
@@ -1696,7 +1709,7 @@ Optional Packages:
   --with-png=ARG        Include PNG support (ARG=internal, no or path)
   --with-dds=ARG        Include DDS support (ARG=no, or path)
   --with-gta=ARG        Include GTA support (ARG=no or libgta tree prefix)
-  --with-pcidsk=ARG     Path to external PCIDSK SDK, or internal (default), or old
+  --with-pcidsk=ARG     Path to external PCIDSK SDK or internal (default)
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
   --with-jpeg=ARG       Include JPEG support (ARG=internal, no or path)
@@ -1728,7 +1741,6 @@ Optional Packages:
                           use Oracle OCI API headers from given path
   --with-oci-lib=[DIR]    use Oracle OCI API libraries from given path
   --without-grib          Disable GRIB driver
-  --without-ogr         Don't build OGR into shared library
   --with-gnm            Build GNM into shared library
   --with-mysql=ARG      Include MySQL (ARG=path to mysql_config) [default=no]
   --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)
@@ -1748,7 +1760,8 @@ Optional Packages:
   --with-dods-root=ARG  Include DODS support (ARG=no or absolute path)
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
   --with-xml2=ARG       Include libxml2 (ARG=path to xml2-config.)
-  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes or path)
+  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)
+  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
   --with-pcre             Include libpcre support (REGEXP support for SQLite)
@@ -1764,17 +1777,17 @@ Optional Packages:
   --with-qhull=ARG     Include QHull support (ARG=no, yes, internal)
   --with-opencl=ARG       Include OpenCL (GPU) support
   --with-opencl-include=ARG OpenCL Include directory (with a CL subdirectory)
-  --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)
+  --with-opencl-lib=ARG   OpenCL Link Flags (i.e. -L/xxx -lOpenCL)
   --with-freexl=ARG    Include freexl support (ARG=no, yes (default) or libfreexl install path)
   --with-libjson-c=ARG       Include libjson-c support (ARG=internal or libjson-c directory)
   --without-pam         Disable PAM (.aux.xml) support
   --with-poppler=ARG    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)
   --with-podofo=ARG    Include podofo(for PDF) support (ARG=no(default), yes or podofo install path)
-  --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...). Mainly for static libpodofo
-  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpodofo
+  --with-podofo-lib=ARG   podofo Link Flags (i.e. -L/xxx -lpodofo ...). Mainly for static libpodofo
+  --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpodofo
   --with-pdfium=ARG    Include pdfium (for PDF) support (ARG=no(default), yes or pdfium install path)
-  --with-pdfium-lib=ARG   pdfium Link Flags (ie. -L/xxx -lpdfium ...). Mainly for static libpdfium
-  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpdfium
+  --with-pdfium-lib=ARG   pdfium Link Flags (i.e. -L/xxx -lpdfium ...). Mainly for static libpdfium
+  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpdfium
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -1788,6 +1801,7 @@ Optional Packages:
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
+  --without-mrf           Disable MRF driver
 
 Some influential environment variables:
   CC          C compiler command
@@ -4257,9 +4271,774 @@ case ".$ac_cv_cxxflags_warn_all" in
  ;;
 esac
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wextra" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wextra... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wextra+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wextra"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wextra=yes
+else
+  ax_cv_check_cflags___Werror__Wextra=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wextra" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wextra" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wextra" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wextra" CXX_WFLAGS="$CXX_WFLAGS -Wextra"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Winit-self" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Winit-self... " >&6; }
+if ${ax_cv_check_cflags___Werror__Winit_self+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Winit-self"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Winit_self=yes
+else
+  ax_cv_check_cflags___Werror__Winit_self=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Winit_self" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Winit_self" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Winit_self" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS="$CXX_WFLAGS -Winit-self"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wunused-parameter" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wunused-parameter... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wunused_parameter+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wunused-parameter"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wunused_parameter=yes
+else
+  ax_cv_check_cflags___Werror__Wunused_parameter=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wunused_parameter" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wunused_parameter" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wunused_parameter" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wmissing-prototypes" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wmissing-prototypes... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wmissing_prototypes+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wmissing-prototypes"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wmissing_prototypes=yes
+else
+  ax_cv_check_cflags___Werror__Wmissing_prototypes=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wmissing_prototypes" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wmissing_prototypes" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wmissing_prototypes" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wmissing-declarations" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wmissing-declarations... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wmissing_declarations+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wmissing-declarations"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wmissing_declarations=yes
+else
+  ax_cv_check_cflags___Werror__Wmissing_declarations=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wmissing_declarations" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wmissing_declarations" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wmissing_declarations" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wmissing-declarations"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wformat" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wformat... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wformat+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wformat"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wformat=yes
+else
+  ax_cv_check_cflags___Werror__Wformat=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wformat" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wformat" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wformat" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFLAGS="$CXX_WFLAGS -Wformat"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wformat -Werror=format-security -Wno-format-nonliteral" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wformat -Werror=format-security -Wno-format-nonliteral... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wformat -Werror=format-security -Wno-format-nonliteral"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral=yes
+else
+  ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wformat__Werror_format_security__Wno_format_nonliteral" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wshorten-64-to-32" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wshorten-64-to-32... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wshorten_64_to_32+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wshorten-64-to-32"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wshorten_64_to_32=yes
+else
+  ax_cv_check_cflags___Werror__Wshorten_64_to_32=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wshorten_64_to_32" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wshorten_64_to_32" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wshorten_64_to_32" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wlogical-op" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wlogical-op... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wlogical_op+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wlogical-op"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wlogical_op=yes
+else
+  ax_cv_check_cflags___Werror__Wlogical_op=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wlogical_op" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wlogical_op" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wlogical_op" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wshadow" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wshadow... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wshadow+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wshadow"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wshadow=yes
+else
+  ax_cv_check_cflags___Werror__Wshadow=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wshadow" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wshadow" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wshadow" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"
+else
+  :
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Werror=vla" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Werror=vla... " >&6; }
+if ${ax_cv_check_cflags___Werror__Werror_vla+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Werror=vla"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Werror_vla=yes
+else
+  ax_cv_check_cflags___Werror__Werror_vla=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Werror_vla" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Werror_vla" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Werror_vla" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Werror=declaration-after-statement" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Werror=declaration-after-statement... " >&6; }
+if ${ax_cv_check_cflags___Werror__Werror_declaration_after_statement+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Werror=declaration-after-statement"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Werror_declaration_after_statement=yes
+else
+  ax_cv_check_cflags___Werror__Werror_declaration_after_statement=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Werror_declaration_after_statement" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Werror_declaration_after_statement" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Werror_declaration_after_statement" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"
+else
+  :
+fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wnull-dereference" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wnull-dereference... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wnull_dereference+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wnull-dereference"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wnull_dereference=yes
+else
+  ax_cv_check_cflags___Werror__Wnull_dereference=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wnull_dereference" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wnull_dereference" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wnull_dereference" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wnull-dereference" CXX_WFLAGS="$CXX_WFLAGS -Wnull-dereference"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wduplicated-cond" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wduplicated-cond... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wduplicated_cond+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wduplicated-cond"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wduplicated_cond=yes
+else
+  ax_cv_check_cflags___Werror__Wduplicated_cond=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wduplicated_cond" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wduplicated_cond" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wduplicated_cond" = xyes; then :
+  C_WFLAGS="$C_WFLAGS -Wduplicated-cond" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-cond"
+else
+  :
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror -Wno-sign-compare" >&5
+$as_echo_n "checking whether C compiler accepts -Werror -Wno-sign-compare... " >&6; }
+if ${ax_cv_check_cflags___Werror__Wno_sign_compare+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS  -Werror -Wno-sign-compare"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags___Werror__Wno_sign_compare=yes
+else
+  ax_cv_check_cflags___Werror__Wno_sign_compare=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__Wno_sign_compare" >&5
+$as_echo "$ax_cv_check_cflags___Werror__Wno_sign_compare" >&6; }
+if test "x$ax_cv_check_cflags___Werror__Wno_sign_compare" = xyes; then :
+  NO_SIGN_COMPARE="-Wno-sign-compare"
+else
+  :
+fi
+
+
+
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -Wunused-private-field" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -Wunused-private-field... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__Wunused_private_field+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -Wunused-private-field"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__Wunused_private_field=yes
+else
+  ax_cv_check_cxxflags___Werror__Wunused_private_field=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__Wunused_private_field" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__Wunused_private_field" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__Wunused_private_field" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -Wmissing-prototypes" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -Wmissing-prototypes... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__Wmissing_prototypes+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -Wmissing-prototypes"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__Wmissing_prototypes=yes
+else
+  ax_cv_check_cxxflags___Werror__Wmissing_prototypes=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__Wmissing_prototypes" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__Wmissing_prototypes" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__Wmissing_prototypes" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -Wmissing-declarations" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -Wmissing-declarations... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__Wmissing_declarations+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -Wmissing-declarations"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__Wmissing_declarations=yes
+else
+  ax_cv_check_cxxflags___Werror__Wmissing_declarations=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__Wmissing_declarations" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__Wmissing_declarations" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__Wmissing_declarations" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"
+else
+  :
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -Wnon-virtual-dtor" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -Wnon-virtual-dtor... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -Wnon-virtual-dtor"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor=yes
+else
+  ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__Wnon_virtual_dtor" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"
+else
+  :
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -Woverloaded-virtual" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -Woverloaded-virtual... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__Woverloaded_virtual+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -Woverloaded-virtual"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__Woverloaded_virtual=yes
+else
+  ax_cv_check_cxxflags___Werror__Woverloaded_virtual=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__Woverloaded_virtual" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__Woverloaded_virtual" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__Woverloaded_virtual" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"
+else
+  :
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Werror -fno-operator-names" >&5
+$as_echo_n "checking whether C++ compiler accepts -Werror -fno-operator-names... " >&6; }
+if ${ax_cv_check_cxxflags___Werror__fno_operator_names+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -Werror -fno-operator-names"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___Werror__fno_operator_names=yes
+else
+  ax_cv_check_cxxflags___Werror__fno_operator_names=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___Werror__fno_operator_names" >&5
+$as_echo "$ax_cv_check_cxxflags___Werror__fno_operator_names" >&6; }
+if test "x$ax_cv_check_cxxflags___Werror__fno_operator_names" = xyes; then :
+  CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"
+else
+  :
+fi
+
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
 CXX_WFLAGS=$CXX_WFLAGS
 
 C_WFLAGS=$C_WFLAGS
+
+NO_UNUSED_PARAMETER_FLAG=$NO_UNUSED_PARAMETER_FLAG
+
+NO_SIGN_COMPARE=$NO_SIGN_COMPARE
+
+NO_NON_VIRTUAL_DTOR_FLAG=$NO_NON_VIRTUAL_DTOR_FLAG
+
+NO_LOGICAL_OP_FLAG=$NO_LOGICAL_OP_FLAG
 
 
 ac_ext=c
@@ -6106,10 +6885,10 @@ else
   cygwin* | mingw* | cegcc*)
     # On Win9x/ME, this test blows up -- it succeeds, but takes
     # about 5 minutes as the teststring grows exponentially.
-    # Worse, since 9x/ME are not pre-emptively multitasking,
+    # Worse, since 9x/ME are not preemptively multitasking,
     # you end up with a "frozen" computer, even though with patience
     # the test eventually succeeds (with a max line length of 256k).
-    # Instead, let's just punt: use the minimum linelength reported by
+    # Instead, let's just punt: use the minimum line length reported by
     # all of the supported platforms: 8192 (on NT/2K/XP).
     lt_cv_sys_max_cmd_len=8192;
     ;;
@@ -9988,7 +10767,7 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
 
   case $host_os in
   cygwin* | mingw* | pw32* | cegcc*)
-    # FIXME: the MSVC++ port hasn't been tested in a loooong time
+    # FIXME: the MSVC++ port hasn't been tested in a long time
     # When not using gcc, we currently assume that we are using
     # Microsoft Visual C++.
     if test "$GCC" != yes; then
@@ -12559,7 +13338,7 @@ else
 #  endif
 #endif
 
-/* When -fvisbility=hidden is used, assume the code has been annotated
+/* When -fvisibility=hidden is used, assume the code has been annotated
    correspondingly for the symbols needed.  */
 #if defined(__GNUC__) && (((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)) || (__GNUC__ > 3))
 int fnord () __attribute__((visibility("default")));
@@ -12665,7 +13444,7 @@ else
 #  endif
 #endif
 
-/* When -fvisbility=hidden is used, assume the code has been annotated
+/* When -fvisibility=hidden is used, assume the code has been annotated
    correspondingly for the symbols needed.  */
 #if defined(__GNUC__) && (((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)) || (__GNUC__ > 3))
 int fnord () __attribute__((visibility("default")));
@@ -16052,6 +16831,42 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __cplusplus
+    #error "broken C++"
+    #endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+else
+  CXX=;
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+if test "x$CXX" == x ; then
+  as_fn_error $? "\"You don't have a working C++ compiler.\"" "$LINENO" 5
+fi
+
 
 # Check whether --with-libtool was given.
 if test "${with_libtool+set}" = set; then :
@@ -17284,12 +18099,45 @@ _ACEOF
 fi
 done
 
+for ac_func in posix_memalign
+do :
+  ac_fn_c_check_func "$LINENO" "posix_memalign" "ac_cv_func_posix_memalign"
+if test "x$ac_cv_func_posix_memalign" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_POSIX_MEMALIGN 1
+_ACEOF
+
+fi
+done
+
 for ac_func in vfork
 do :
   ac_fn_c_check_func "$LINENO" "vfork" "ac_cv_func_vfork"
 if test "x$ac_cv_func_vfork" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_VFORK 1
+_ACEOF
+
+fi
+done
+
+for ac_func in mmap
+do :
+  ac_fn_c_check_func "$LINENO" "mmap" "ac_cv_func_mmap"
+if test "x$ac_cv_func_mmap" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MMAP 1
+_ACEOF
+
+fi
+done
+
+for ac_func in statvfs
+do :
+  ac_fn_c_check_func "$LINENO" "statvfs" "ac_cv_func_statvfs"
+if test "x$ac_cv_func_statvfs" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STATVFS 1
 _ACEOF
 
 fi
@@ -17382,12 +18230,6 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-ac_fn_c_check_func "$LINENO" "setlocale" "ac_cv_func_setlocale"
-if test "x$ac_cv_func_setlocale" = xyes; then :
-
-fi
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for uselocale" >&5
 $as_echo_n "checking for uselocale... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -17444,6 +18286,9 @@ else
 fi
 
 
+CFLAGS_NOFTRAPV="$CFLAGS"
+CXXFLAGS_NOFTRAPV="$CXXFLAGS"
+
 if test "x$enable_debug" = "xyes" ; then
 
 
@@ -17460,20 +18305,45 @@ if test "x$enable_debug" = "xyes" ; then
   CXXFLAGS="$CXXFLAGS -g -DDEBUG"
   CFLAGS="$CFLAGS -g -DDEBUG"
 
+  CFLAGS_NOFTRAPV="$CFLAGS"
+  CXXFLAGS_NOFTRAPV="$CXXFLAGS"
+
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, modified CFLAGS=\"$CFLAGS\"" >&5
 $as_echo "yes, modified CFLAGS=\"$CFLAGS\"" >&6; }
+
+  # Some clang version on 32 bits have linking error with 64bit operations (undefined reference to `__mulodi4')
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether -ftrapv can be used" >&5
+$as_echo_n "checking whether -ftrapv can be used... " >&6; }
+  rm -f testftrapv.c
+  echo 'int main(int argc, char** argv) { return (long long)argc * argc; } ' > testftrapv.c
+  if test -z "`${CC} ${CFLAGS} -ftrapv testftrapv.c -o testftrapv 2>&1`" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    CFLAGS="$CFLAGS -ftrapv"
+    CXXFLAGS="$CXXFLAGS -ftrapv"
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  fi
+  rm -f testftrapv.* testftrapv
+
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, CFLAGS=\"$CFLAGS\"" >&5
 $as_echo "no, CFLAGS=\"$CFLAGS\"" >&6; }
 fi
+
+CFLAGS_NOFTRAPV=$CFLAGS_NOFTRAPV
+
+CXXFLAGS_NOFTRAPV=$CXXFLAGS_NOFTRAPV
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether GCC 4.1 atomic builtins are available" >&5
 $as_echo_n "checking whether GCC 4.1 atomic builtins are available... " >&6; }
 
 rm -f atomicbuiltins.c
-echo 'int main(int argc, char* argv) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); __sync_bool_compare_and_swap(&i, 0, 1); return 0; } ' > atomicbuiltins.c
-if test -z "`${CC} atomicbuiltins.c -o atomicbuiltins 2>&1`" ; then
+echo 'int main(int argc, char** argv) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); __sync_bool_compare_and_swap(&i, 0, 1); return 0; } ' > atomicbuiltins.c
+if test -z "`${CC} ${CFLAGS} atomicbuiltins.c -o atomicbuiltins 2>&1`" ; then
     HAVE_GCC_ATOMIC_BUILTINS=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -17491,6 +18361,70 @@ rm -f atomicbuiltins.* atomicbuiltins
 
 HAVE_GCC_ATOMIC_BUILTINS=$HAVE_GCC_ATOMIC_BUILTINS
 
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether GCC bswap builtins are available" >&5
+$as_echo_n "checking whether GCC bswap builtins are available... " >&6; }
+
+rm -f bswapbuiltins.c
+echo '#include <x86intrin.h>' > bswapbuiltins.c
+echo 'int main(int argc, char** argv) { (void)__builtin_bswap32(0); (void)__builtin_bswap64(0); return 0; } ' >> bswapbuiltins.c
+if test -z "`${CC} ${CFLAGS} bswapbuiltins.c -o bswapbuiltins 2>&1`" ; then
+    HAVE_GCC_BSWAP=yes
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GCC_BSWAP 1
+_ACEOF
+
+else
+    HAVE_GCC_BSWAP=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f bswapbuiltins.* bswapbuiltins
+
+HAVE_GCC_BSWAP=$HAVE_GCC_BSWAP
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __uint128_t" >&5
+$as_echo_n "checking for __uint128_t... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+
+      unsigned long long v1 = 1024ULL;
+      unsigned long long v2 = 0x8000000000000000ULL;
+      __uint128_t u = ((__uint128_t)v1)*((__uint128_t)v2);
+      return u == 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UINT128_T 1
+_ACEOF
+
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
@@ -17582,7 +18516,12 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
     rm -f detectavx.cpp
     echo '#ifdef __AVX__' > detectavx.cpp
     echo '#include <immintrin.h>' >> detectavx.cpp
-    echo 'void foo() { unsigned int nXCRLow, nXCRHigh; __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0)); float fEpsilon = 0.0000000000001f; __m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon); } int main() { return 0; }' >> detectavx.cpp
+    echo 'int foo() { unsigned int nXCRLow, nXCRHigh;' >> detectavx.cpp
+    echo '__asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0));' >> detectavx.cpp
+    echo 'float fEpsilon = 0.0000000000001f;' >> detectavx.cpp
+    echo '__m256 ymm_small = _mm256_set_ps(fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon,fEpsilon);' >> detectavx.cpp
+    echo 'return (int)nXCRLow + _mm256_movemask_ps(ymm_small); }' >> detectavx.cpp
+    echo 'int main(int argc, char**) { if( argc == 0 ) return foo(); return 0; }' >> detectavx.cpp
     echo '#else' >> detectavx.cpp
     echo 'some_error' >> detectavx.cpp
     echo '#endif' >> detectavx.cpp
@@ -17638,6 +18577,49 @@ fi
 AVXFLAGS=$AVXFLAGS
 
 HAVE_AVX_AT_COMPILE_TIME=$HAVE_AVX_AT_COMPILE_TIME
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking to enable LTO (link time optimization) build" >&5
+$as_echo_n "checking to enable LTO (link time optimization) build... " >&6; }
+
+# Check whether --enable-lto was given.
+if test "${enable_lto+set}" = set; then :
+  enableval=$enable_lto;
+fi
+
+
+CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
+CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+
+if test "x$enable_lto" = "xyes" ; then
+
+
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"`
+  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"`
+
+
+  CXXFLAGS="$CXXFLAGS -flto"
+  CFLAGS="$CFLAGS -flto"
+  LDFLAGS="$LDFLAGS -flto"
+
+      if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+    if test "$AVXFLAGS" = ""; then
+        CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
+        CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+    fi
+  fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+CFLAGS_NO_LTO_IF_AVX_NONDEFAULT=$CFLAGS_NO_LTO_IF_AVX_NONDEFAULT
+
+CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT=$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT
 
 
 
@@ -20257,11 +21239,11 @@ $as_echo_n "checking for PCIDSK... " >&6; }
 PCIDSK_LIB=
 PCIDSK_INCLUDE=
 
-if test "$with_pcidsk" = "old" -o "$with_pcidsk" = "no" ; then
+if test "$with_pcidsk" = "no" ; then
 
-  PCIDSK_SETTING=old
+  PCIDSK_SETTING=no
 
-  echo "pcidsk support using pre-PCIDSK SDK (old) implementation."
+  echo "pcidsk support disabled."
 
 elif test "$with_pcidsk" = "" -o "$with_pcidsk" = "yes" -o "$with_pcidsk" = "internal" ; then
 
@@ -20279,12 +21261,16 @@ else
 
 fi
 
-PCIDSK_SETTING=$PCIDSK_SETTING
+if test "$with_pcidsk" != "no" ; then
 
-PCIDSK_LIB=$PCIDSK_LIB
+  PCIDSK_SETTING=$PCIDSK_SETTING
 
-PCIDSK_INCLUDE=$PCIDSK_INCLUDE
+  PCIDSK_LIB=$PCIDSK_LIB
 
+  PCIDSK_INCLUDE=$PCIDSK_INCLUDE
+
+
+fi
 
 
 
@@ -21302,30 +22288,49 @@ if test -z "$with_sosi" -o "$with_sosi" = "no" ; then
 
   echo "SOSI support disabled."
 
-elif test "$with_sosi" = "yes" -o "$with_sosi" = "" ; then
+elif test "$with_sosi" = "yes" ; then
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libfyba" >&5
+$as_echo_n "checking for libfyba... " >&6; }
+
+    rm -f testfyba.*
+    rm -f testfyba
+    echo "#include <fyba.h>" > testfyba.cpp
+    echo "int main() { LC_Init(); return 0; }" >> testfyba.cpp
+    if test  -r /usr/include/fyba -a -z "`${CXX} ${CPPFLAGS} -I/usr/include/fyba -DLINUX testfyba.cpp -lfyba -lfygm -lfyut -o testfyba 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+        SOSI_ENABLED=yes
+        SOSI_LIB="-lfyba -lfygm -lfyut"
+        SOSI_INC="-I/usr/include/fyba"
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib" >&5
 $as_echo_n "checking for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib... " >&6; }
-    if test -r /usr/local/lib/libfyba.a -a -r /usr/local/lib/libfygm.a -a -r /usr/local/lib/libfyut.a ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+        if test -r /usr/local/lib/libfyba.a -a -r /usr/local/lib/libfygm.a -a -r /usr/local/lib/libfyut.a ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
 $as_echo "found" >&6; }
-        SOSI_ENABLED=yes
-        SOSI_LIB="/usr/local/lib/libfyba.a /usr/local/lib/libfygm.a /usr/local/lib/libfyut.a"
-    else
-        as_fn_error $? "not found." "$LINENO" 5
-    fi
+            SOSI_ENABLED=yes
+            SOSI_LIB="/usr/local/lib/libfyba.a /usr/local/lib/libfygm.a /usr/local/lib/libfyut.a"
+        else
+            as_fn_error $? "not found." "$LINENO" 5
+        fi
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba" >&5
 $as_echo_n "checking for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba... " >&6; }
-    if test -r /usr/local/include/fyba/fyba.h -a -r /usr/local/include/fyba/fygm.h -a -r /usr/local/include/fyba/fyut.h ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+        if test -r /usr/local/include/fyba/fyba.h -a -r /usr/local/include/fyba/fygm.h -a -r /usr/local/include/fyba/fyut.h ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
 $as_echo "found" >&6; }
-        SOSI_ENABLED=yes
-        SOSI_INC="-I/usr/local/include/fyba"
-    else
-        as_fn_error $? "not found." "$LINENO" 5
+            SOSI_ENABLED=yes
+            SOSI_INC="-I/usr/local/include/fyba"
+        else
+            as_fn_error $? "not found." "$LINENO" 5
+        fi
     fi
 
+    rm -f testfyba.*
+    rm -f testfyba
 else
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libfyba.a, libfygm.a and libfyut.a in $with_sosi/lib" >&5
@@ -23858,22 +24863,7 @@ OPT_GDAL_FORMATS=$OPT_GDAL_FORMATS
 
 
 
-
-# Check whether --with-ogr was given.
-if test "${with_ogr+set}" = set; then :
-  withval=$with_ogr;
-fi
-
-
-if test "$with_ogr" = yes -o x"$with_ogr" = x ; then
-  echo checking for OGR ... enabled
-  OGR_ENABLED=yes
-else
-  echo checking for OGR ... disabled by user
-  OGR_ENABLED=no
-fi
-OGR_ENABLED=$OGR_ENABLED
-
+OGR_ENABLED=yes
 
 
 GNM_ENABLED=no
@@ -25230,7 +26220,9 @@ if test "$with_odbc" = "no" ; then
   echo "ODBC support disabled."
 
 elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
+  ODBC_SETTING=no
 
+  echo "check for unixODBC"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLConnect in -lodbc" >&5
 $as_echo_n "checking for SQLConnect in -lodbc... " >&6; }
 if ${ac_cv_lib_odbc_SQLConnect+:} false; then :
@@ -25268,9 +26260,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc_SQLConnect" >&5
 $as_echo "$ac_cv_lib_odbc_SQLConnect" >&6; }
 if test "x$ac_cv_lib_odbc_SQLConnect" = xyes; then :
-  ODBC_SETTING=yes
-else
-  ODBC_SETTING=no
+  ODBC_LIBS="-lodbc -lodbcinst"
 fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLInstallDriverEx in -lodbcinst" >&5
@@ -25311,28 +26301,205 @@ fi
 $as_echo "$ac_cv_lib_odbcinst_SQLInstallDriverEx" >&6; }
 if test "x$ac_cv_lib_odbcinst_SQLInstallDriverEx" = xyes; then :
   ODBC_SETTING=yes
+fi
+
+
+  if test "$ODBC_SETTING" = "no" ; then
+    echo "check for windows ODBC"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lodbc32" >&5
+$as_echo_n "checking for main in -lodbc32... " >&6; }
+if ${ac_cv_lib_odbc32_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbc32  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbc32_main=yes
+else
+  ac_cv_lib_odbc32_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc32_main" >&5
+$as_echo "$ac_cv_lib_odbc32_main" >&6; }
+if test "x$ac_cv_lib_odbc32_main" = xyes; then :
+  ODBC_LIBS="-lodbc32 -lodbccp32"
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLInstallDriverEx in -lodbccp32" >&5
+$as_echo_n "checking for SQLInstallDriverEx in -lodbccp32... " >&6; }
+if ${ac_cv_lib_odbccp32_SQLInstallDriverEx+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbccp32  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SQLInstallDriverEx ();
+int
+main ()
+{
+return SQLInstallDriverEx ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbccp32_SQLInstallDriverEx=yes
+else
+  ac_cv_lib_odbccp32_SQLInstallDriverEx=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbccp32_SQLInstallDriverEx" >&5
+$as_echo "$ac_cv_lib_odbccp32_SQLInstallDriverEx" >&6; }
+if test "x$ac_cv_lib_odbccp32_SQLInstallDriverEx" = xyes; then :
+  ODBC_SETTING=yes
+fi
+
+  fi
+
+  if test "$ODBC_SETTING" = "yes" ; then
+    for ac_header in sql.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "sql.h" "ac_cv_header_sql_h" "#ifdef _WIN32
+# include <windows.h>
+#endif
+
+"
+if test "x$ac_cv_header_sql_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SQL_H 1
+_ACEOF
+
 else
   ODBC_SETTING=no
 fi
 
+done
 
-  if test "$ODBC_SETTING" = "yes" ; then
-    if test -f /usr/local/include/sql.h -o -f /usr/include/sql.h ; then
-      ODBC_SETTING=yes
-    else
-      echo "odbc library found, but sql.h missing, ODBC support disabled."
-      ODBC_SETTING=no
+    if test "$ODBC_SETTING" = "no" ; then
+      if test -f /usr/local/include/sql.h ; then
+        ODBC_SETTING=yes
+        echo "using sql.h from /usr/local/include"
+      elif test -f /usr/include/sql.h ; then
+        ODBC_SETTING=yes
+        echo "using sql.h from /usr/include"
+      else
+        echo "sql.h not found"
+      fi
     fi
   fi
 
   if test "$ODBC_SETTING" = "yes"  ; then
-    LIBS="-lodbc -lodbcinst $LIBS"
+    LIBS="$ODBC_LIBS $LIBS"
   fi
 
 else
 
   ODBC_SETTING=yes
-  LIBS="-L$with_odbc -L$with_odbc/lib -lodbc -lodbcinst $LIBS"
+  ODBC_LIBS=""
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLConnect in -lodbc" >&5
+$as_echo_n "checking for SQLConnect in -lodbc... " >&6; }
+if ${ac_cv_lib_odbc_SQLConnect+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbc  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SQLConnect ();
+int
+main ()
+{
+return SQLConnect ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbc_SQLConnect=yes
+else
+  ac_cv_lib_odbc_SQLConnect=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc_SQLConnect" >&5
+$as_echo "$ac_cv_lib_odbc_SQLConnect" >&6; }
+if test "x$ac_cv_lib_odbc_SQLConnect" = xyes; then :
+  ODBC_LIBS="-lodbc -lodbcinst"
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lodbc32" >&5
+$as_echo_n "checking for main in -lodbc32... " >&6; }
+if ${ac_cv_lib_odbc32_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbc32  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbc32_main=yes
+else
+  ac_cv_lib_odbc32_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc32_main" >&5
+$as_echo "$ac_cv_lib_odbc32_main" >&6; }
+if test "x$ac_cv_lib_odbc32_main" = xyes; then :
+  ODBC_LIBS="-lodbc32 -lodbccp32"
+fi
+
+  if test "$ODBC_LIBS" = ""; then
+    as_fn_error $? "Cannot find ODBC libs" "$LINENO" 5
+  fi
+  LIBS="-L$with_odbc -L$with_odbc/lib $ODBC_LIBS $LIBS"
   EXTRA_INCLUDES="-I$with_odbc -I$with_odbc/include $EXTRA_INCLUDES"
 
   echo "using odbc library from $with_odbc."
@@ -25691,8 +26858,8 @@ OCI_INCLUDE=$OCI_INCLUDE
 
 HAVE_DODS=no
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for DODS" >&5
-$as_echo_n "checking Checking for DODS... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for DODS" >&5
+$as_echo_n "checking for DODS... " >&6; }
 
 # Check whether --with-dods_root was given.
 if test "${with_dods_root+set}" = set; then :
@@ -26033,10 +27200,20 @@ LIBXML2_LIB=$LIBXML2_LIB
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite" >&5
+$as_echo_n "checking for spatialite... " >&6; }
+
 
 # Check whether --with-spatialite was given.
 if test "${with_spatialite+set}" = set; then :
   withval=$with_spatialite;
+fi
+
+
+
+# Check whether --with-spatialite-soname was given.
+if test "${with_spatialite_soname+set}" = set; then :
+  withval=$with_spatialite_soname;
 fi
 
 
@@ -26118,6 +27295,16 @@ fi
 $as_echo "not found : spatialite support disabled" >&6; }
         fi
     fi
+elif test "$with_spatialite" = "dlopen"; then
+  HAVE_SPATIALITE=dlopen
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: dlopen" >&5
+$as_echo "dlopen" >&6; }
+
+  if test "$with_spatialite_soname" != ""; then
+      SPATIALITE_SONAME="$with_spatialite_soname"
+  else
+      SPATIALITE_SONAME="spatialite.so"
+  fi
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
 $as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
@@ -26181,26 +27368,324 @@ $as_echo "enabled" >&6; }
 
     elif test -f "$with_spatialite/include/spatialite.h" -a \
         "$SPATIALITE_INIT_FOUND" = "yes"; then
-        for ac_header in sqlite3.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "sqlite3.h" "ac_cv_header_sqlite3_h" "$ac_includes_default"
-if test "x$ac_cv_header_sqlite3_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_SQLITE3_H 1
-_ACEOF
+
+        SQLITE3_REQ_VERSION="3.0.0"
+
+
+# Check whether --with-sqlite3 was given.
+if test "${with_sqlite3+set}" = set; then :
+  withval=$with_sqlite3;
+        if test "$withval" = "no"; then
+            WANT_SQLITE3="no"
+        elif test "$withval" = "yes"; then
+            WANT_SQLITE3="yes"
+            ac_sqlite3_path=""
+        else
+            WANT_SQLITE3="yes"
+            ac_sqlite3_path="$withval"
+        fi
+
+else
+  WANT_SQLITE3="yes"
 
 fi
 
-done
 
-        if test "$ac_cv_header_sqlite3_h" = "yes"; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
+    SQLITE3_CFLAGS=""
+    SQLITE3_LDFLAGS=""
+    SQLITE3_VERSION=""
+    HAVE_SQLITE3="no"
+
+    sqlite3_version_req=$SQLITE3_REQ_VERSION
+    sqlite3_version_req_shorten=`expr $sqlite3_version_req : '\([0-9]*\.[0-9]*\)'`
+    sqlite3_version_req_major=`expr $sqlite3_version_req : '\([0-9]*\)'`
+    sqlite3_version_req_minor=`expr $sqlite3_version_req : '[0-9]*\.\([0-9]*\)'`
+    sqlite3_version_req_micro=`expr $sqlite3_version_req : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
+    if test "x$sqlite3_version_req_micro" = "x" ; then
+        sqlite3_version_req_micro="0"
+    fi
+
+    sqlite3_version_req_number=`expr $sqlite3_version_req_major \* 1000000 \
+                               \+ $sqlite3_version_req_minor \* 1000 \
+                               \+ $sqlite3_version_req_micro`
+
+    if test "x$WANT_SQLITE3" = "xyes"; then
+        ac_sqlite3_header="sqlite3.h"
+        LIB_SQLITE3_FOUND=no
+
+        if test "$ac_sqlite3_path" != ""; then
+
+            unset ac_cv_lib_sqlite3_sqlite3_open
+            saved_LIBS="$LIBS"
+            LIBS=""
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
+$as_echo_n "checking for sqlite3_open in -lsqlite3... " >&6; }
+if ${ac_cv_lib_sqlite3_sqlite3_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsqlite3 -L$ac_sqlite3_path/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sqlite3_open ();
+int
+main ()
+{
+return sqlite3_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_sqlite3_sqlite3_open=yes
+else
+  ac_cv_lib_sqlite3_sqlite3_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sqlite3_sqlite3_open" >&5
+$as_echo "$ac_cv_lib_sqlite3_sqlite3_open" >&6; }
+if test "x$ac_cv_lib_sqlite3_sqlite3_open" = xyes; then :
+  LIB_SQLITE3_FOUND=yes
+else
+  LIB_SQLITE3_FOUND=no
+fi
+
+            LIBS="$saved_LIBS"
+            if test "$LIB_SQLITE3_FOUND" = "yes"; then
+                ac_sqlite3_ldflags="-L$ac_sqlite3_path/lib"
+            fi
+
+            ac_sqlite3_cppflags="-I$ac_sqlite3_path/include"
+        else
+            for ac_sqlite3_path_tmp in /usr /usr/local /opt ; do
+                if test -f "$ac_sqlite3_path_tmp/include/$ac_sqlite3_header" \
+                    && test -r "$ac_sqlite3_path_tmp/include/$ac_sqlite3_header"; then
+                    ac_sqlite3_path=$ac_sqlite3_path_tmp
+
+                    unset ac_cv_lib_sqlite3_sqlite3_open
+                    saved_LIBS="$LIBS"
+                    LIBS=""
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
+$as_echo_n "checking for sqlite3_open in -lsqlite3... " >&6; }
+if ${ac_cv_lib_sqlite3_sqlite3_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsqlite3  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sqlite3_open ();
+int
+main ()
+{
+return sqlite3_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_sqlite3_sqlite3_open=yes
+else
+  ac_cv_lib_sqlite3_sqlite3_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sqlite3_sqlite3_open" >&5
+$as_echo "$ac_cv_lib_sqlite3_sqlite3_open" >&6; }
+if test "x$ac_cv_lib_sqlite3_sqlite3_open" = xyes; then :
+  LIB_SQLITE3_FOUND=yes
+else
+  LIB_SQLITE3_FOUND=no
+fi
+
+                    LIBS="$saved_LIBS"
+                    if test "$LIB_SQLITE3_FOUND" = "yes"; then
+                        ac_sqlite3_ldflags=""
+                    else
+                        unset ac_cv_lib_sqlite3_sqlite3_open
+                        saved_LIBS="$LIBS"
+                        LIBS=""
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
+$as_echo_n "checking for sqlite3_open in -lsqlite3... " >&6; }
+if ${ac_cv_lib_sqlite3_sqlite3_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsqlite3 -L$ac_sqlite3_path_tmp/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sqlite3_open ();
+int
+main ()
+{
+return sqlite3_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_sqlite3_sqlite3_open=yes
+else
+  ac_cv_lib_sqlite3_sqlite3_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sqlite3_sqlite3_open" >&5
+$as_echo "$ac_cv_lib_sqlite3_sqlite3_open" >&6; }
+if test "x$ac_cv_lib_sqlite3_sqlite3_open" = xyes; then :
+  LIB_SQLITE3_FOUND=yes
+else
+  LIB_SQLITE3_FOUND=no
+fi
+
+                        LIBS="$saved_LIBS"
+                        if test "$LIB_SQLITE3_FOUND" = "yes"; then
+                            ac_sqlite3_ldflags="-L$ac_sqlite3_path_tmp/lib"
+                        fi
+                    fi
+
+                    ac_sqlite3_cppflags="-I$ac_sqlite3_path_tmp/include"
+                    break;
+                fi
+            done
+        fi
+
+        if test "$LIB_SQLITE3_FOUND" = "no"; then
+            WANT_SQLITE3="no"
+        fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLite3 library >= $sqlite3_version_req" >&5
+$as_echo_n "checking for SQLite3 library >= $sqlite3_version_req... " >&6; }
+
+    if test "x$WANT_SQLITE3" = "xyes"; then
+
+        ac_sqlite3_ldflags="$ac_sqlite3_ldflags -lsqlite3"
+
+        saved_CPPFLAGS="$CPPFLAGS"
+        CPPFLAGS="$CPPFLAGS $ac_sqlite3_cppflags"
+
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+            #include <sqlite3.h>
+int
+main ()
+{
+
+#if (SQLITE_VERSION_NUMBER >= $sqlite3_version_req_number)
+// Everything is okay
+#else
+#  error SQLite version is too old
+#endif
+
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            HAVE_SQLITE3="yes"
+            success="yes"
+
+else
+
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+            HAVE_SQLITE3="no"
+            success="no"
+
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+        CPPFLAGS="$saved_CPPFLAGS"
+
+        if test "$success" = "yes"; then
+
+            SQLITE3_CFLAGS="$ac_sqlite3_cppflags"
+            SQLITE3_LDFLAGS="$ac_sqlite3_ldflags"
+
+            ac_sqlite3_header_path="$ac_sqlite3_path/include/$ac_sqlite3_header"
+
+                        if test "x$ac_sqlite3_header_path" != "x"; then
+                ac_sqlite3_version=`cat $ac_sqlite3_header_path \
+                    | grep '#define.*SQLITE_VERSION.*\"' | sed -e 's/.* "//' \
+                        | sed -e 's/"//'`
+                if test $ac_sqlite3_version != ""; then
+                    SQLITE3_VERSION=$ac_sqlite3_version
+                else
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!" >&5
+$as_echo "$as_me: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!" >&2;}
+                fi
+            fi
+
+
+        fi
+
+
+
+
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+    fi
+
+
+        if test "$HAVE_SQLITE3" = "yes"; then
             SPATIALITE_INC="-I$with_spatialite/include"
             HAVE_SPATIALITE=yes
-            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite -lsqlite3"
-            LIBS="$LIBS $SPATIALITE_LIBS"
-            HAVE_SQLITE3=yes
+            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: spatialite enabled" >&5
+$as_echo "spatialite enabled" >&6; }
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: spatialite disabled" >&5
+$as_echo "spatialite disabled" >&6; }
         fi
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
@@ -26258,6 +27743,8 @@ fi
 
 HAVE_SPATIALITE=$HAVE_SPATIALITE
 
+SPATIALITE_SONAME=$SPATIALITE_SONAME
+
 SPATIALITE_INC=$SPATIALITE_INC
 
 SPATIALITE_AMALGAMATION=$SPATIALITE_AMALGAMATION
@@ -26266,7 +27753,7 @@ SPATIALITE_412_OR_LATER=$SPATIALITE_412_OR_LATER
 
 
 
-if test "${HAVE_SPATIALITE}" = "no" ; then
+if test "${HAVE_SPATIALITE}" = "no" -o "${HAVE_SPATIALITE}" = "dlopen" ; then
     SQLITE3_REQ_VERSION="3.0.0"
 
 
@@ -26529,7 +28016,7 @@ else
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
             HAVE_SQLITE3="no"
-            succees="no"
+            success="no"
 
 
 fi
@@ -27768,26 +29255,88 @@ fi
 
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/qhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/include/local/qhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=0
         LIBS="-lqhull $LIBS"
     fi
   fi
+  for ac_header in libqhull/libqhull.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "libqhull/libqhull.h" "ac_cv_header_libqhull_libqhull_h" "$ac_includes_default"
+if test "x$ac_cv_header_libqhull_libqhull_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBQHULL_LIBQHULL_H 1
+_ACEOF
+
+fi
+
+done
+
+  if test "$ac_cv_header_libqhull_libqhull_h" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for qh_new_qhull in -lqhull" >&5
+$as_echo_n "checking for qh_new_qhull in -lqhull... " >&6; }
+if ${ac_cv_lib_qhull_qh_new_qhull+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lqhull  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char qh_new_qhull ();
+int
+main ()
+{
+return qh_new_qhull ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_qhull_qh_new_qhull=yes
+else
+  ac_cv_lib_qhull_qh_new_qhull=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_qhull_qh_new_qhull" >&5
+$as_echo "$ac_cv_lib_qhull_qh_new_qhull" >&6; }
+if test "x$ac_cv_lib_qhull_qh_new_qhull" = xyes; then :
+  QHULL_SETTING=yes
+else
+  QHULL_SETTING=no
+fi
+
+    if test "$QHULL_SETTING" = "yes"; then
+        QHULL_SETTING=external
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
+        LIBS="-lqhull $LIBS"
+    fi
+  fi
+
   if test "$QHULL_SETTING" = "no" ; then
     if test "$with_qhull" = "yes"; then
         as_fn_error $? "--with-qhull requested, but library not found!" "$LINENO" 5
     else
         QHULL_SETTING=internal
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
     fi
   fi
 else
   QHULL_SETTING=internal
+  QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
 fi
 
 QHULL_SETTING=$QHULL_SETTING
+
+QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=$QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
 
 
 
@@ -28171,7 +29720,7 @@ fi
     rm -f testrlist.*
     echo '#include <freexl.h>' > testfreexl.c
     echo 'int main(int argc, char** argv) { FreeXL_CellValue s; freexl_get_cell_value (0,0,0,&s); return 0; } ' >> testfreexl.c
-    if test -z "`${CC} testfreexl.c -c 2>&1`" ; then
+    if test -z "`${CC} ${CFLAGS} testfreexl.c -c 2>&1`" ; then
         HAVE_FREEXL=yes
         LIBS="$FREEXL_LIBS $LIBS"
     else
@@ -28415,13 +29964,13 @@ fi
 
   fi
 
-  if test "FREEXL_LIBS" != "missing" -a -f "$with_freexl/include/freexl.h" ; then
+  if test "$FREEXL_LIBS" != "missing" -a -f "$with_freexl/include/freexl.h" ; then
 
     # Check that freexl is recent enough
     rm -f testrlist.*
     echo '#include <freexl.h>' > testfreexl.c
     echo 'int main(int argc, char** argv) { FreeXL_CellValue s; freexl_get_cell_value (0,0,0,&s); return 0; } ' >> testfreexl.c
-    if test -z "`${CC} -I$with_freexl/include testfreexl.c -c 2>&1`" ; then
+    if test -z "`${CC} ${CFLAGS} -I$with_freexl/include testfreexl.c -c 2>&1`" ; then
         HAVE_FREEXL=yes
         LIBS="$FREEXL_LIBS $LIBS"
         FREEXL_INCLUDE="-I$with_freexl/include"
@@ -28830,7 +30379,7 @@ $as_echo "yes" >&6; }
         if test "x$with_podofo_lib" != "x" ; then
             PODOFO_LIB="$with_podofo_lib"
         else
-            # This may be a static libpodofo.a, so add dependant libraries
+            # This may be a static libpodofo.a, so add dependent libraries.
             PODOFO_LIB="$PODOFO_LIB -lfreetype -lfontconfig -lpthread"
         fi
 
@@ -28944,7 +30493,7 @@ $as_echo "yes" >&6; }
         if test "x$with_pdfium_lib" != "x" ; then
             PDFIUM_LIB="$with_pdfium_lib"
         else
-            # This may be a static libpdfium.a, so add dependant libraries
+            # This may be a static libpdfium.a, so add dependent libraries.
             PDFIUM_LIB="-L$PDFIUM_LIBDIR -L$PDFIUM_LIBDIR/lib/pdfium -lpdfium -lfpdfdoc -lfpdfapi -lfpdftext -lformfiller -lpdfwindow"
             PDFIUM_LIB="$PDFIUM_LIB -lfxedit -lfpdfdoc -lfxcodec -lfx_libopenjpeg -lfx_lcms2 -lfx_libjpeg -lfx_zlib"
             PDFIUM_LIB="$PDFIUM_LIB -lfdrm -lfxge -lfreetype -lfx_agg -lfxcrt -lbigint"
@@ -30356,6 +31905,51 @@ HAVE_CRYPTOPP=$HAVE_CRYPTOPP
 
 USE_ONLY_CRYPTODLL_ALG=$USE_ONLY_CRYPTODLL_ALG
 
+
+
+
+
+# Check whether --with-grib was given.
+if test "${with_grib+set}" = set; then :
+  withval=$with_grib;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MRF" >&5
+$as_echo_n "checking for MRF... " >&6; }
+if test "$with_mrf" = yes -o x"$with_mrf" = x ; then
+    OPT_GDAL_FORMATS="mrf $OPT_GDAL_FORMATS"
+    HAVE_MRF=yes
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+else
+    HAVE_MRF=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
+$as_echo "disabled by user" >&6; }
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if sprintf can be overloaded for GDAL compilation" >&5
+$as_echo_n "checking if sprintf can be overloaded for GDAL compilation... " >&6; }
+echo '#define _XOPEN_SOURCE' > testdeprecated.cpp
+echo '#include <vector>' >> testdeprecated.cpp
+echo '#include <stdio.h>' >> testdeprecated.cpp
+echo 'extern "C"' >> testdeprecated.cpp
+echo '{' >> testdeprecated.cpp
+echo 'int sprintf(char *str, const char* fmt, ...);' >> testdeprecated.cpp
+echo '}' >> testdeprecated.cpp
+${CXX} ${CXXFLAGS} testdeprecated.cpp -c 2>/dev/null
+RETVAL=$?
+if test $RETVAL -eq 0; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+    CPPFLAGS="$CPPFLAGS -DDONT_DEPRECATE_SPRINTF"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f testdeprecated.*
+rm -f testdeprecated
 
 ac_config_files="$ac_config_files GDALmake.opt"
 
@@ -32881,6 +34475,9 @@ echo "  cURL support (wms/wcs/...):${CURL_SETTING}"
 echo "  PostgreSQL support:        ${HAVE_PG}"
 
 
+echo "  MRF support:               ${HAVE_MRF}"
+
+
 echo "  MySQL support:             ${HAVE_MYSQL}"
 
 
@@ -32940,6 +34537,11 @@ echo "  PCRE support:              ${HAVE_PCRE}"
 
 echo "  SpatiaLite support:        ${HAVE_SPATIALITE}"
 
+if test "x$SPATIALITE_SONAME" != "x"; then
+
+echo "  SpatiaLite shared obj name:${SPATIALITE_SONAME}"
+
+fi
 
 echo "  DWGdirect support          ${HAVE_DWGDIRECT}"
 
@@ -33000,9 +34602,6 @@ echo ""
 
 
 echo "  Statically link PROJ.4:    ${PROJ_STATIC}"
-
-
-echo "  enable OGR building:       ${OGR_ENABLED}"
 
 
 echo "  enable GNM building:       ${GNM_ENABLED}"

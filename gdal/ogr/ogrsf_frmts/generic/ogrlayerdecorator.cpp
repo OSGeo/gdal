@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRLayerDecorator class
@@ -27,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrlayerdecorator.h"
 
 CPL_CVSID("$Id$");
@@ -36,8 +37,8 @@ OGRLayerDecorator::OGRLayerDecorator(OGRLayer* poDecoratedLayer,
                                         m_poDecoratedLayer(poDecoratedLayer),
                                         m_bHasOwnership(bTakeOwnership)
 {
-    SetDescription( poDecoratedLayer->GetDescription() );
     CPLAssert(poDecoratedLayer != NULL);
+    SetDescription( poDecoratedLayer->GetDescription() );
 }
 
 OGRLayerDecorator::~OGRLayerDecorator()
@@ -194,10 +195,17 @@ OGRErr      OGRLayerDecorator::ReorderFields( int* panMap )
     return m_poDecoratedLayer->ReorderFields(panMap);
 }
 
-OGRErr      OGRLayerDecorator::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr      OGRLayerDecorator::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    return m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlags);
+    return m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
+}
+
+OGRErr      OGRLayerDecorator::CreateGeomField( OGRGeomFieldDefn *poField,
+                                            int bApproxOK )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    return m_poDecoratedLayer->CreateGeomField(poField, bApproxOK);
 }
 
 OGRErr      OGRLayerDecorator::SyncToDisk()
@@ -287,3 +295,5 @@ CPLErr      OGRLayerDecorator::SetMetadataItem( const char * pszName,
     if( !m_poDecoratedLayer ) return CE_Failure;
     return m_poDecoratedLayer->SetMetadataItem(pszName, pszValue, pszDomain);
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

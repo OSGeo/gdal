@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The generic portions of the OGRSFDriver class.
@@ -35,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                            ~OGRSFDriver()                            */
 /************************************************************************/
@@ -53,7 +54,7 @@ OGRDataSource *OGRSFDriver::CreateDataSource( const char *, char ** )
 {
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateDataSource() not supported by this driver.\n" );
-              
+
     return NULL;
 }
 
@@ -62,7 +63,7 @@ OGRDataSource *OGRSFDriver::CreateDataSource( const char *, char ** )
 /************************************************************************/
 
 OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
-                                        const char *pszName, 
+                                        const char *pszName,
                                         char ** papszOptions )
 
 {
@@ -93,7 +94,7 @@ OGRErr OGRSFDriver::DeleteDataSource( const char *pszDataSource )
     (void) pszDataSource;
     CPLError( CE_Failure, CPLE_NotSupported,
               "DeleteDataSource() not supported by this driver." );
-              
+
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
@@ -101,7 +102,7 @@ OGRErr OGRSFDriver::DeleteDataSource( const char *pszDataSource )
 /*                      OGR_Dr_DeleteDataSource()                       */
 /************************************************************************/
 
-OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver, 
+OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver,
                                 const char *pszDataSource )
 
 {
@@ -135,7 +136,7 @@ const char *OGR_Dr_GetName( OGRSFDriverH hDriver )
 /*                            OGR_Dr_Open()                             */
 /************************************************************************/
 
-OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName, 
+OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
                             int bUpdate )
 
 {
@@ -189,11 +190,11 @@ int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap )
 /*                       OGR_Dr_CopyDataSource()                        */
 /************************************************************************/
 
-OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver, 
-                                      OGRDataSourceH hSrcDS, 
+OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
+                                      OGRDataSourceH hSrcDS,
                                       const char *pszNewName,
                                       char **papszOptions )
-                                      
+
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_CopyDataSource", NULL );
     VALIDATE_POINTER1( hSrcDS, "OGR_Dr_CopyDataSource", NULL );
@@ -202,16 +203,15 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
     GDALDriver* poDriver = (GDALDriver*)hDriver;
     if( !poDriver->GetMetadataItem( GDAL_DCAP_CREATE ) )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "%s driver does not support data source creation.",
                   poDriver->GetDescription() );
         return NULL;
     }
 
     GDALDataset *poSrcDS = (GDALDataset*) hSrcDS;
-    GDALDataset *poODS;
-
-    poODS = poDriver->Create( pszNewName, 0, 0, 0, GDT_Unknown, papszOptions );
+    GDALDataset *poODS =
+        poDriver->Create( pszNewName, 0, 0, 0, GDT_Unknown, papszOptions );
     if( poODS == NULL )
         return NULL;
 
@@ -225,10 +225,11 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
         if( poLayer == NULL )
             continue;
 
-        poODS->CopyLayer( poLayer, poLayer->GetLayerDefn()->GetName(), 
+        poODS->CopyLayer( poLayer, poLayer->GetLayerDefn()->GetName(),
                           papszOptions );
     }
 
     return (OGRDataSourceH)poODS;
 }
 
+//! @endcond

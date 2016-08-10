@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SUA Translator
  * Purpose:  Implements OGRSUADriver.
@@ -106,24 +105,22 @@ static GDALDataset *OGRSUADriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRSUA()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "SUA" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "SUA" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "SUA" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Tim Newport-Peace's Special Use Airspace Format" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_sua.html" );
+    poDriver->SetDescription( "SUA" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Tim Newport-Peace's Special Use Airspace "
+                               "Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "drv_sua.html" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRSUADriverOpen;
+    poDriver->pfnOpen = OGRSUADriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

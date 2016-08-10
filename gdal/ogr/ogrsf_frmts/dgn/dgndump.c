@@ -92,7 +92,7 @@ int main( int argc, char ** argv )
         }
         else if( argv[iArg][0] == '-' || pszFilename != NULL )
             Usage();
-        else 
+        else
             pszFilename = argv[iArg];
     }
 
@@ -125,7 +125,7 @@ int main( int argc, char ** argv )
                 if( DGNGetElementExtents( hDGN, psElement, &sMin, &sMax ) )
                     printf( "  Extents: (%.6f,%.6f,%.6f)\n"
                             "        to (%.6f,%.6f,%.6f)\n",
-                            sMin.x, sMin.y, sMin.z, 
+                            sMin.x, sMin.y, sMin.z,
                             sMax.x, sMax.y, sMax.z );
             }
 
@@ -142,17 +142,17 @@ int main( int argc, char ** argv )
         double                  adfExtents[6];
 
         DGNGetExtents( hDGN, adfExtents );
-        printf( "X Range: %.2f to %.2f\n", 
+        printf( "X Range: %.2f to %.2f\n",
                 adfExtents[0], adfExtents[3] );
-        printf( "Y Range: %.2f to %.2f\n", 
+        printf( "Y Range: %.2f to %.2f\n",
                 adfExtents[1], adfExtents[4] );
-        printf( "Z Range: %.2f to %.2f\n", 
+        printf( "Z Range: %.2f to %.2f\n",
                 adfExtents[2], adfExtents[5] );
 
         pasEI = DGNGetElementIndex( hDGN, &nCount );
 
         printf( "Total Elements: %d\n", nCount );
-        
+
         memset( anLevelTypeCount, 0, 128*64*sizeof(int) );
         memset( anLevelCount, 0, 64*sizeof(int) );
         memset( anTypeCount, 0, 128*sizeof(int) );
@@ -172,8 +172,8 @@ int main( int argc, char ** argv )
         {
             if( anTypeCount[nType] != 0 )
             {
-                printf( "Type %s: %d\n", 
-                        DGNTypeToName( nType ), 
+                printf( "Type %s: %d\n",
+                        DGNTypeToName( nType ),
                         anTypeCount[nType] );
             }
         }
@@ -187,16 +187,16 @@ int main( int argc, char ** argv )
             if( anLevelCount[nLevel] == 0 )
                 continue;
 
-            printf( "Level %d, %d elements:\n", 
-                    nLevel, 
+            printf( "Level %d, %d elements:\n",
+                    nLevel,
                     anLevelCount[nLevel] );
 
             for( nType = 0; nType < 128; nType++ )
             {
                 if( anLevelTypeCount[nLevel * 128 + nType] != 0 )
                 {
-                    printf( "  Type %s: %d\n", 
-                            DGNTypeToName( nType ), 
+                    printf( "  Type %s: %d\n",
+                            DGNTypeToName( nType ),
                             anLevelTypeCount[nLevel*128 + nType] );
                 }
             }
@@ -214,7 +214,7 @@ int main( int argc, char ** argv )
 /*                         DGNDumpRawElement()                          */
 /************************************************************************/
 
-static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore, 
+static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
                                FILE *fpOut )
 
 {
@@ -226,7 +226,7 @@ static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
     {
         char    szHex[3];
 
-        if( (i % 16) == 0 )                                             
+        if( (i % 16) == 0 )
         {
             sprintf( szLine, "%6d: %71s", i, " " );
             iChar = 0;
@@ -234,7 +234,7 @@ static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
 
         sprintf( szHex, "%02x", psCore->raw_data[i] );
         strncpy( szLine+8+iChar*2, szHex, 2 );
-        
+
         if( psCore->raw_data[i] < 32 || psCore->raw_data[i] > 127 )
             szLine[42+iChar] = '.';
         else
@@ -248,6 +248,3 @@ static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
         iChar++;
     }
 }
-
-
-

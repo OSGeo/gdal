@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _gstEndian_h_
-#define _gstEndian_h_
+#ifndef gstEndian_h_
+#define gstEndian_h_
 
 // endian swapping tools
 
@@ -78,7 +78,7 @@ static inline void gst_swap32(void * value)
 
 static inline void gst_swap16(void * value)
 {
-    *(uint16 *)(value) = 
+    *(uint16 *)(value) =
 		   ( ((*(uint16 *)(value) & 0x00ff) << 8) |
              ((*(uint16 *)(value) >> 8) & 0x00ff) );
 }
@@ -114,9 +114,9 @@ static inline void gst_swapbytes(void * value, int size)
 #define swapped_fwrite(ptr, size, nitems, stream) \
 	fwrite(ptr, size, nitems, stream)
 
-#define gst_swap64( vlaue )
-#define gst_swap32( vlaue )
-#define gst_swap16( vlaue )
+#define gst_swap64( value )
+#define gst_swap32( value )
+#define gst_swap16( value )
 #define gst_swapbytes( value, size )
 #define gst_swapb( value )
 
@@ -124,4 +124,4 @@ static inline void gst_swapbytes(void * value, int size)
 
 } // gstEndian namespace
 
-#endif // ! _gstEndian_h_
+#endif // ! gstEndian_h_

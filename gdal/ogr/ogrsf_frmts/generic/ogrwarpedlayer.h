@@ -27,8 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRWARPEDLAYER_H_INCLUDED
-#define _OGRWARPEDLAYER_H_INCLUDED
+#ifndef OGRWARPEDLAYER_H_INCLUDED
+#define OGRWARPEDLAYER_H_INCLUDED
+
+#ifndef DOXYGEN_SKIP
 
 #include "ogrlayerdecorator.h"
 
@@ -88,4 +90,6 @@ class OGRWarpedLayer : public OGRLayerDecorator
     virtual int         TestCapability( const char * );
 };
 
-#endif //  _OGRWARPEDLAYER_H_INCLUDED
+#endif /* #ifndef DOXYGEN_SKIP */
+
+#endif //  OGRWARPEDLAYER_H_INCLUDED

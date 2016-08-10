@@ -7,11 +7,11 @@
 
 <h1>KML - Keyhole Markup Language</h1>
 
-<p>Keyhole Markup Language (KML) is an XML-based language for managing the display of 3D geospatial data. 
+<p>Keyhole Markup Language (KML) is an XML-based language for managing the display of 3D geospatial data.
 KML has been accepted as an OGC standard, and is supported in one way or another
-on the major GeoBrowsers. 
-Note that KML by specification uses only a single projection, EPSG:4326. All OGR KML output will be 
-presented in EPSG:4326. As such OGR will create layers in the correct coordinate system and transform 
+on the major GeoBrowsers.
+Note that KML by specification uses only a single projection, EPSG:4326. All OGR KML output will be
+presented in EPSG:4326. As such OGR will create layers in the correct coordinate system and transform
 any geometries.</p>
 
 <p>At this time, only vector layers are handled by the KML driver. <em>(there are additional scripts
@@ -41,7 +41,7 @@ it considers valid, for example '<code>Layer #0</code>', the default name of the
 Layer, becomes <code>'Layer__0'</code>.</p>
 
 
-<p>KML is mix of formatting and feature data. The &lt;description&gt; tag of a Placemark will 
+<p>KML is mix of formatting and feature data. The &lt;description&gt; tag of a Placemark will
 be displayed in most geobrowsers as an HTML-filled balloon. When writing KML, Layer element
 attributes are added as simple schema fields. This best preserves feature type information.</p>
 <p>Limited support is available for fills, line color and other styling attributes. Please try a few sample
@@ -77,12 +77,12 @@ When writing a KML file, the driver expects UTF-8 content to be passed in.<p>
 <pre>ogr2ogr -f KML output.kml input.shp -dsco NameField=RegionName</pre>
 <li><b>DescriptionField</b>: Allows you to specify the field to use for the KML &lt;description&gt; element. Default value : 'Description'</li>
 </li>
-<li><b>AltitudeMode</b>: Allows you to specify the AltitudeMode to use for KML geometries. This will only affect 3D geometries   
-and must be one of the valid KML options.  
-See the <a href="http://code.google.com/apis/kml/documentation/kml_tags_21.html#altitudemode">relevant KML reference material</a>  
-for further information. 
+<li><b>AltitudeMode</b>: Allows you to specify the AltitudeMode to use for KML geometries. This will only affect 3D geometries
+and must be one of the valid KML options.
+See the <a href="http://code.google.com/apis/kml/documentation/kml_tags_21.html#altitudemode">relevant KML reference material</a>
+for further information.
 <pre>ogr2ogr -f KML output.kml input.shp -dsco AltitudeMode=absolute</pre>
-</li>  
+</li>
 </ul>
 
 

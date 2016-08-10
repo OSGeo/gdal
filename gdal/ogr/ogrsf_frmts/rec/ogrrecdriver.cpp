@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  REC Translator
  * Purpose:  Implements EpiInfo .REC driver.
@@ -39,15 +38,13 @@ CPL_CVSID("$Id$");
 static GDALDataset *OGRRECDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRRECDataSource   *poDS;
-
     if( poOpenInfo->fpL == NULL ||
         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "REC") )
     {
         return NULL;
     }
 
-    poDS = new OGRRECDataSource();
+    OGRRECDataSource *poDS = new OGRRECDataSource();
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
@@ -61,7 +58,7 @@ static GDALDataset *OGRRECDriverOpen( GDALOpenInfo* poOpenInfo )
         delete poDS;
         poDS = NULL;
     }
-    
+
     return poDS;
 }
 
@@ -72,21 +69,17 @@ static GDALDataset *OGRRECDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRREC()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "REC" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "REC" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "REC" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rec" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "EPIInfo .REC " );
+    poDriver->SetDescription( "REC" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rec" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "EPIInfo .REC " );
 
-        poDriver->pfnOpen = OGRRECDriverOpen;
+    poDriver->pfnOpen = OGRRECDriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

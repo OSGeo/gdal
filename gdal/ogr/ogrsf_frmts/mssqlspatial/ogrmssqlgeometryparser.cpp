@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Implements OGRMSSQLGeometryParser class to parse native SqlGeometries.
@@ -68,7 +67,7 @@ FigureAttribute (1 byte)
   0x02 = Exterior Ring
 
 Shape
-  [ParentFigureOffset][FigureOffset][ShapeType]
+  [ParentOffset][FigureOffset][ShapeType]
 
 ShapeType (1 byte)
   0x00 = Unknown
@@ -85,23 +84,6 @@ ShapeType (1 byte)
 /************************************************************************/
 /*                         Geometry parser macros                       */
 /************************************************************************/
-
-#define SP_NONE 0
-#define SP_HASZVALUES 1
-#define SP_HASMVALUES 2
-#define SP_ISVALID 4
-#define SP_ISSINGLEPOINT 8
-#define SP_ISSINGLELINESEGMENT 0x10
-#define SP_ISWHOLEGLOBE 0x20
-
-#define ST_UNKNOWN 0
-#define ST_POINT 1
-#define ST_LINESTRING 2
-#define ST_POLYGON 3
-#define ST_MULTIPOINT 4
-#define ST_MULTILINESTRING 5
-#define ST_MULTIPOLYGON 6
-#define ST_GEOMETRYCOLLECTION 7
 
 #define ReadInt32(nPos) (*((unsigned int*)(pszData + (nPos))))
 
@@ -131,6 +113,16 @@ ShapeType (1 byte)
 OGRMSSQLGeometryParser::OGRMSSQLGeometryParser(int nGeomColumnType)
 {
     nColType = nGeomColumnType;
+    pszData = NULL;
+    chProps = 0;
+    nPointSize = 0;
+    nPointPos = 0;
+    nNumPoints = 0;
+    nFigurePos = 0;
+    nNumFigures = 0;
+    nShapePos = 0;
+    nNumShapes = 0;
+    nSRSId = 0;
 }
 
 /************************************************************************/
@@ -219,7 +211,7 @@ OGRLineString* OGRMSSQLGeometryParser::ReadLineString(int iShape)
             else
                 poLineString->setPoint(i, ReadX(iPoint), ReadY(iPoint) );
         }
-        
+
         ++iPoint;
         ++i;
     }
@@ -260,7 +252,7 @@ OGRPolygon* OGRMSSQLGeometryParser::ReadPolygon(int iShape)
 {
     int iFigure, iPoint, iNextPoint, i;
     int iNextFigure = NextFigureOffset(iShape);
-    
+
     OGRPolygon* poPoly = new OGRPolygon();
     for (iFigure = FigureOffset(iShape); iFigure < iNextFigure; iFigure++)
     {
@@ -272,7 +264,7 @@ OGRPolygon* OGRMSSQLGeometryParser::ReadPolygon(int iShape)
         while (iPoint < iNextPoint)
         {
             if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
-            {  
+            {
                 if ( chProps & SP_HASZVALUES )
                     poRing->setPoint(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint) );
                 else
@@ -371,17 +363,17 @@ OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape
 /************************************************************************/
 
 
-OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput, 
+OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
                                 int nLen, OGRGeometry **poGeom)
 {
     if (nLen < 10)
         return OGRERR_NOT_ENOUGH_DATA;
 
     pszData = pszInput;
-    
+
     /* store the SRS id for further use */
     nSRSId = ReadInt32(0);
-    
+
     if ( ReadByte(4) != 1 )
     {
         return OGRERR_CORRUPT_DATA;
@@ -435,7 +427,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
 
         OGRLineString* line = new OGRLineString();
         line->setNumPoints(2);
-        
+
         if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
         {
             if ( chProps & SP_HASZVALUES )
@@ -462,7 +454,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
                 line->setPoint(1, ReadX(1), ReadY(1));
             }
         }
-        
+
         *poGeom = line;
     }
     else
@@ -480,7 +472,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
 
         // position of the figures
         nFigurePos = nPointPos + nPointSize * nNumPoints + 4;
-        
+
         if (nLen < nFigurePos)
         {
             return OGRERR_NOT_ENOUGH_DATA;
@@ -492,7 +484,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
         {
             return OGRERR_NONE;
         }
-        
+
         // position of the shapes
         nShapePos = nFigurePos + 5 * nNumFigures + 4;
 
@@ -550,4 +542,3 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
 
     return OGRERR_NONE;
 }
-

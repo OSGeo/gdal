@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Implements OGRMSSQLGeometryValidator class to create valid SqlGeometries.

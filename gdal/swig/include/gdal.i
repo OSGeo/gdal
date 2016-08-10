@@ -58,6 +58,7 @@ using namespace std;
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "cpl_http.h"
+#include "cpl_vsi_error.h"
 
 #include "gdal.h"
 #include "gdal_priv.h"
@@ -74,9 +75,9 @@ typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
 %}
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
 %{
-#ifdef DEBUG 
+#ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
@@ -163,7 +164,7 @@ typedef enum
 
 /*! Types of color interpretations for a GDALColorTable. */
 %rename (PaletteInterp) GDALPaletteInterp;
-typedef enum 
+typedef enum
 {
   /*! Grayscale (in GDALColorEntry.c1) */                      GPI_Gray=0,
   /*! Red, Green, Blue and Alpha in (in c1, c2, c3 and c4) */  GPI_RGB=1,
@@ -196,7 +197,7 @@ typedef enum
     /*! Average */                          GRIORA_Average = 5,
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                             GRIORA_Mode = 6,
-    /*! Gauss bluring */                    GRIORA_Gauss = 7
+    /*! Gauss blurring */                   GRIORA_Gauss = 7
 } GDALRIOResampleAlg;
 
 /*! Warp Resampling Algorithm */
@@ -207,7 +208,7 @@ typedef enum {
   /*! Cubic Convolution Approximation (4x4 kernel) */  GRA_Cubic=2,
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
-  /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5, 
+  /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5,
   /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6
 } GDALResampleAlg;
 
@@ -236,7 +237,6 @@ typedef enum {
 %include "gdal_typemaps.i"
 #endif
 
-
 /* Default memberin typemaps required to support SWIG 1.3.39 and above */
 %typemap(memberin) char *Info %{
 /* char* Info memberin typemap */
@@ -249,7 +249,7 @@ $1;
 %}
 
 //************************************************************************
-// Apply NONNULL to all utf8_path's. 
+// Apply NONNULL to all utf8_path's.
 %apply Pointer NONNULL { const char* utf8_path };
 
 //************************************************************************
@@ -281,7 +281,6 @@ $1;
 //
 //************************************************************************
 %include "Driver.i"
-
 
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
@@ -352,16 +351,20 @@ $1;
 //************************************************************************
 #if !defined(SWIGPERL) && !defined(SWIGJAVA)
 %rename (ColorEntry) GDALColorEntry;
+#ifdef SWIGPYTHON
+%nodefaultctor GDALColorEntry;
+%nodefaultdtor GDALColorEntry;
+#endif
 typedef struct
 {
     /*! gray, red, cyan or hue */
-    short      c1;      
-    /*! green, magenta, or lightness */    
-    short      c2;      
+    short      c1;
+    /*! green, magenta, or lightness */
+    short      c2;
     /*! blue, yellow, or saturation */
-    short      c3;      
+    short      c3;
     /*! alpha or blackband */
-    short      c4;      
+    short      c4;
 } GDALColorEntry;
 #endif
 
@@ -410,8 +413,6 @@ struct GDAL_GCP {
       CPLFree( self->pszId );
     CPLFree( self );
   }
-
-
 } /* extend */
 }; /* GDAL_GCP */
 
@@ -452,7 +453,7 @@ const char * GDAL_GCP_Info_get( GDAL_GCP *gcp ) {
   return gcp->pszInfo;
 }
 void GDAL_GCP_Info_set( GDAL_GCP *gcp, const char * pszInfo ) {
-  if ( gcp->pszInfo ) 
+  if ( gcp->pszInfo )
     CPLFree( gcp->pszInfo );
   gcp->pszInfo = CPLStrdup(pszInfo);
 }
@@ -460,15 +461,15 @@ const char * GDAL_GCP_Id_get( GDAL_GCP *gcp ) {
   return gcp->pszId;
 }
 void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
-  if ( gcp->pszId ) 
+  if ( gcp->pszId )
     CPLFree( gcp->pszId );
   gcp->pszId = CPLStrdup(pszId);
 }
-%} //%inline 
+%} //%inline
 
 #if defined(SWIGCSHARP)
 %inline %{
-/* Duplicate, but transposed names for C# because 
+/* Duplicate, but transposed names for C# because
 *  the C# module outputs backwards names
 */
 double GDAL_GCP_get_GCPX( GDAL_GCP *gcp ) {
@@ -505,7 +506,7 @@ const char * GDAL_GCP_get_Info( GDAL_GCP *gcp ) {
   return gcp->pszInfo;
 }
 void GDAL_GCP_set_Info( GDAL_GCP *gcp, const char * pszInfo ) {
-  if ( gcp->pszInfo ) 
+  if ( gcp->pszInfo )
     CPLFree( gcp->pszInfo );
   gcp->pszInfo = CPLStrdup(pszInfo);
 }
@@ -513,11 +514,11 @@ const char * GDAL_GCP_get_Id( GDAL_GCP *gcp ) {
   return gcp->pszId;
 }
 void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
-  if ( gcp->pszId ) 
+  if ( gcp->pszId )
     CPLFree( gcp->pszId );
   gcp->pszId = CPLStrdup(pszId);
 }
-%} //%inline 
+%} //%inline
 #endif //if defined(SWIGCSHARP)
 
 %clear GDAL_GCP *gcp;
@@ -526,7 +527,7 @@ void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
 %rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
 %inline
 {
-int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
+int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
     	                             double argout[6], int bApproxOK = 1 )
 {
     return GDALGCPsToGeoTransform(nGCPs, pGCPs, argout, bApproxOK);
@@ -534,8 +535,8 @@ int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 }
 #else
 %apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
-RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
-    	                             double argout[6], int bApproxOK = 1 ); 
+RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
+    	                             double argout[6], int bApproxOK = 1 );
 %clear (RETURN_NONE);
 #endif
 
@@ -579,8 +580,8 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 %apply (double argin[ANY]) {(double padfGeoTransform[6])};
 %apply (double *OUTPUT) {(double *pdfGeoX)};
 %apply (double *OUTPUT) {(double *pdfGeoY)};
-void GDALApplyGeoTransform( double padfGeoTransform[6], 
-                            double dfPixel, double dfLine, 
+void GDALApplyGeoTransform( double padfGeoTransform[6],
+                            double dfPixel, double dfLine,
                             double *pdfGeoX, double *pdfGeoY );
 %clear (double *padfGeoTransform);
 %clear (double *pdfGeoX);
@@ -617,7 +618,7 @@ void GDALAllRegister();
 
 void GDALDestroyDriverManager();
 
-#ifdef SWIGPYTHON
+#if defined(SWIGPYTHON) || defined(SWIGPERL)
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
 {
@@ -740,11 +741,19 @@ int GetDriverCount() {
 
 %apply Pointer NONNULL { char const *name };
 %inline %{
+static
 GDALDriverShadow* GetDriverByName( char const *name ) {
   return (GDALDriverShadow*) GDALGetDriverByName( name );
 }
 %}
 
+#ifdef SWIGPERL
+%inline %{
+GDALDriverShadow* GetDriver( char const *name ) {
+  return (GDALDriverShadow*) GDALGetDriverByName( name );
+}
+%}
+#endif
 %inline %{
 GDALDriverShadow* GetDriver( int i ) {
   return (GDALDriverShadow*) GDALGetDriver( i );
@@ -754,6 +763,7 @@ GDALDriverShadow* GetDriver( int i ) {
 #ifdef SWIGJAVA
 %newobject Open;
 %inline %{
+static
 GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess) {
   CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
@@ -840,9 +850,9 @@ GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_Re
 
 %apply (char **options) {char **papszSiblings};
 %inline %{
-GDALDriverShadow *IdentifyDriver( const char *utf8_path, 
+GDALDriverShadow *IdentifyDriver( const char *utf8_path,
                                   char **papszSiblings = NULL ) {
-    return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path, 
+    return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path,
 	                                            papszSiblings );
 }
 %}
@@ -858,7 +868,6 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 // CreateAndReprojectImage
 // GCPsToGeoTransform
 
-
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 /* FIXME: other bindings should also use those typemaps to avoid memory leaks */
 %apply (char **options) {char ** papszArgv};
@@ -869,17 +878,18 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 
 #ifdef SWIGJAVA
 %inline %{
+  static
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
     int nResArgCount;
-    
+
     /* We must add a 'dummy' element in front of the real argument list */
     /* as Java doesn't include the binary name as the first */
     /* argument, as C does... */
     char** papszArgvModBefore = CSLInsertString(CSLDuplicate(papszArgv), 0, "dummy");
     char** papszArgvModAfter = papszArgvModBefore;
 
-    nResArgCount = 
-      GDALGeneralCmdLineProcessor( CSLCount(papszArgvModBefore), &papszArgvModAfter, nOptions ); 
+    nResArgCount =
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgvModBefore), &papszArgvModAfter, nOptions );
 
     CSLDestroy(papszArgvModBefore);
 
@@ -901,8 +911,11 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
     int nResArgCount;
 
-    nResArgCount = 
-      GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
+    if( papszArgv == NULL )
+        return NULL;
+
+    nResArgCount =
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions );
 
     if( nResArgCount <= 0 )
         return NULL;
@@ -927,7 +940,7 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 #ifdef SWIGPYTHON
 /* Add a __version__ attribute to match the convention */
 %pythoncode %{
-__version__ = _gdal.VersionInfo("RELEASE_NAME") 
+__version__ = _gdal.VersionInfo("RELEASE_NAME")
 %}
 #endif
 
@@ -938,9 +951,14 @@ __version__ = _gdal.VersionInfo("RELEASE_NAME")
 //************************************************************************
 
 %{
-#include "gdal_utils.h"   
+#include "gdal_utils.h"
 %}
 
+%apply (const char* utf8_path) {(const char* dest)};
+
+//************************************************************************
+// gdal.Info()
+//************************************************************************
 
 #ifdef SWIGJAVA
 %rename (InfoOptions) GDALInfoOptions;
@@ -960,7 +978,7 @@ struct GDALInfoOptions {
 #ifdef SWIGPYTHON
 %rename (InfoInternal) GDALInfo;
 #endif
-char *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
+retStringAndCPLFree *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
 
 #ifdef SWIGJAVA
 %rename (TranslateOptions) GDALTranslateOptions;
@@ -976,6 +994,10 @@ struct GDALTranslateOptions {
     }
 }
 };
+
+//************************************************************************
+// gdal.Translate()
+//************************************************************************
 
 #ifdef SWIGPYTHON
 %rename (TranslateInternal) wrapper_GDALTranslate;
@@ -1002,12 +1024,16 @@ GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
         }
         GDALTranslateOptionsSetProgress(translateOptions, callback, callback_data);
     }
-    GDALDatasetH hDSRet = GDALTranslate(dest, dataset, translateOptions, &usageError);    
+    GDALDatasetH hDSRet = GDALTranslate(dest, dataset, translateOptions, &usageError);
     if( bFreeOptions )
         GDALTranslateOptionsFree(translateOptions);
     return hDSRet;
 }
 %}
+
+//************************************************************************
+// gdal.Warp()
+//************************************************************************
 
 #ifdef SWIGJAVA
 %rename (WarpOptions) GDALWarpAppOptions;
@@ -1028,8 +1054,7 @@ struct GDALWarpAppOptions {
 %rename (Warp) wrapper_GDALWarpDestDS;
 #endif
 
-/* Note: we must use 2 distinct names since there's a bug/feature in swig */
-/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+/* Note: we must use 2 distinct names due to different ownership of the result */
 
 %inline %{
 int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
@@ -1087,6 +1112,10 @@ GDALDatasetShadow* wrapper_GDALWarpDestName( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.VectorTranslate()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (VectorTranslateOptions) GDALVectorTranslateOptions;
 #endif
@@ -1102,8 +1131,7 @@ struct GDALVectorTranslateOptions {
 }
 };
 
-/* Note: we must use 2 distinct names since there's a bug/feature in swig */
-/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+/* Note: we must use 2 distinct names due to different ownership of the result */
 
 #ifdef SWIGJAVA
 %rename (VectorTranslate) wrapper_GDALVectorTranslateDestDS;
@@ -1164,6 +1192,10 @@ GDALDatasetShadow* wrapper_GDALVectorTranslateDestName( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.DEMProcessing()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (DEMProcessingOptions) GDALDEMProcessingOptions;
 #endif
@@ -1207,12 +1239,16 @@ GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
         }
         GDALDEMProcessingOptionsSetProgress(options, callback, callback_data);
     }
-    GDALDatasetH hDSRet = GDALDEMProcessing(dest, dataset, pszProcessing, pszColorFilename, options, &usageError);    
+    GDALDatasetH hDSRet = GDALDEMProcessing(dest, dataset, pszProcessing, pszColorFilename, options, &usageError);
     if( bFreeOptions )
         GDALDEMProcessingOptionsFree(options);
     return hDSRet;
 }
 %}
+
+//************************************************************************
+// gdal.NearBlack()
+//************************************************************************
 
 #ifdef SWIGJAVA
 %rename (NearblackOptions) GDALNearblackOptions;
@@ -1229,8 +1265,7 @@ struct GDALNearblackOptions {
 }
 };
 
-/* Note: we must use 2 distinct names since there's a bug/feature in swig */
-/* that doesn't play nicely with the (int object_list_count, GDALDatasetShadow** poObjects) input typemap */
+/* Note: we must use 2 distinct names due to different ownership of the result */
 
 #ifdef SWIGJAVA
 %rename (Nearblack) wrapper_GDALNearblackDestDS;
@@ -1290,6 +1325,10 @@ GDALDatasetShadow* wrapper_GDALNearblackDestName( const char* dest,
 }
 %}
 
+//************************************************************************
+// gdal.Grid()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (GridOptions) GDALGridOptions;
 #endif
@@ -1330,9 +1369,178 @@ GDALDatasetShadow* wrapper_GDALGrid( const char* dest,
         }
         GDALGridOptionsSetProgress(options, callback, callback_data);
     }
-    GDALDatasetH hDSRet = GDALGrid(dest, dataset, options, &usageError);    
+    GDALDatasetH hDSRet = GDALGrid(dest, dataset, options, &usageError);
     if( bFreeOptions )
         GDALGridOptionsFree(options);
     return hDSRet;
 }
 %}
+
+//************************************************************************
+// gdal.Rasterize()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (RasterizeOptions) GDALRasterizeOptions;
+#endif
+struct GDALRasterizeOptions {
+%extend {
+    GDALRasterizeOptions(char** options) {
+        return GDALRasterizeOptionsNew(options, NULL);
+    }
+
+    ~GDALRasterizeOptions() {
+        GDALRasterizeOptionsFree( self );
+    }
+}
+};
+
+/* Note: we must use 2 distinct names due to different ownership of the result */
+
+#ifdef SWIGJAVA
+%rename (Rasterize) wrapper_GDALRasterizeDestDS;
+#endif
+%inline %{
+int wrapper_GDALRasterizeDestDS( GDALDatasetShadow* dstDS,
+                            GDALDatasetShadow* srcDS,
+                            GDALRasterizeOptions* options,
+                            GDALProgressFunc callback=NULL,
+                            void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALRasterizeOptionsNew(NULL, NULL);
+        }
+        GDALRasterizeOptionsSetProgress(options, callback, callback_data);
+    }
+    int bRet = (GDALRasterize(NULL, dstDS, srcDS, options, &usageError) != NULL);
+    if( bFreeOptions )
+        GDALRasterizeOptionsFree(options);
+    return bRet;
+}
+%}
+
+#ifdef SWIGJAVA
+%rename (Rasterize) wrapper_GDALRasterizeDestName;
+#endif
+%newobject wrapper_GDALRasterizeDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALRasterizeDestName( const char* dest,
+                                             GDALDatasetShadow* srcDS,
+                                             GDALRasterizeOptions* options,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALRasterizeOptionsNew(NULL, NULL);
+        }
+        GDALRasterizeOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALRasterize(dest, NULL, srcDS, options, &usageError);
+    if( bFreeOptions )
+        GDALRasterizeOptionsFree(options);
+    return hDSRet;
+}
+%}
+
+//************************************************************************
+// gdal.BuildVRT()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (BuildVRTOptions) GDALBuildVRTOptions;
+#endif
+struct GDALBuildVRTOptions {
+%extend {
+    GDALBuildVRTOptions(char** options) {
+        return GDALBuildVRTOptionsNew(options, NULL);
+    }
+
+    ~GDALBuildVRTOptions() {
+        GDALBuildVRTOptionsFree( self );
+    }
+}
+};
+
+#ifdef SWIGPYTHON
+%rename (BuildVRTInternalObjects) wrapper_GDALBuildVRT_objects;
+#elif defined(SWIGJAVA)
+%rename (BuildVRT) wrapper_GDALBuildVRT_objects;
+#endif
+
+%newobject wrapper_GDALBuildVRT_objects;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALBuildVRT_objects( const char* dest,
+                                             int object_list_count, GDALDatasetShadow** poObjects,
+                                             GDALBuildVRTOptions* options,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALBuildVRTOptionsNew(NULL, NULL);
+        }
+        GDALBuildVRTOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALBuildVRT(dest, object_list_count, poObjects, NULL, options, &usageError);
+    if( bFreeOptions )
+        GDALBuildVRTOptionsFree(options);
+    return hDSRet;
+}
+%}
+
+
+#ifdef SWIGPYTHON
+%rename (BuildVRTInternalNames) wrapper_GDALBuildVRT_names;
+#elif defined(SWIGJAVA)
+%rename (BuildVRT) wrapper_GDALBuildVRT_names;
+#endif
+
+%newobject wrapper_GDALBuildVRT_names;
+%apply (char **options) {char** source_filenames};
+%inline %{
+GDALDatasetShadow* wrapper_GDALBuildVRT_names( const char* dest,
+                                         char ** source_filenames,
+                                         GDALBuildVRTOptions* options,
+                                         GDALProgressFunc callback=NULL,
+                                         void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( options == NULL )
+        {
+            bFreeOptions = true;
+            options = GDALBuildVRTOptionsNew(NULL, NULL);
+        }
+        GDALBuildVRTOptionsSetProgress(options, callback, callback_data);
+    }
+    GDALDatasetH hDSRet = GDALBuildVRT(dest, CSLCount(source_filenames), NULL, source_filenames, options, &usageError);
+    if( bFreeOptions )
+        GDALBuildVRTOptionsFree(options);
+    return hDSRet;
+}
+%}
+%clear char** source_filenames;
+
+
+%clear (const char* dest);

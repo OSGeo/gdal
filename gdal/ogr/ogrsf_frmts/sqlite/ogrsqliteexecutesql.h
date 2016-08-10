@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SQLITE_EXECUTE_SQL_H_INCLUDED
-#define _OGR_SQLITE_EXECUTE_SQL_H_INCLUDED
+#ifndef OGR_SQLITE_EXECUTE_SQL_H_INCLUDED
+#define OGR_SQLITE_EXECUTE_SQL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include <set>
@@ -62,6 +62,6 @@ class LayerDesc
 
 std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement);
 
-#endif /* ndef _OGR_SQLITE_EXECUTE_SQL_H_INCLUDED */
+#endif /* ndef OGR_SQLITE_EXECUTE_SQL_H_INCLUDED */
 
 

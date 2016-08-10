@@ -208,7 +208,7 @@ namespace tut
         ensure_equals("Invalid authority code",
             std::string(OSRGetAuthorityCode(srs_, "DATUM")), std::string("6269"));
 
-        ensure("Got a PROJCS Authority but we shouldn\'t",
+        ensure("Got a PROJCS Authority but we should not",
             NULL == OSRGetAuthorityName(srs_, "PROJCS"));
 
         ensure("Got METER authority code on linear units",
@@ -217,7 +217,8 @@ namespace tut
         char* unitsName = NULL;
         val = OSRGetLinearUnits(srs_, &unitsName);
         ensure("Units name is NULL", NULL != unitsName);
-        ensure("Didn\'t get Foot linear units", std::string("Foot") == unitsName);
+        ensure( "Did not get Foot linear units",
+                std::string("Foot") == unitsName);
     }
 
     // Translate a coordinate system with NAD shift into to PROJ.4 and back.
@@ -309,7 +310,7 @@ namespace tut
         char* wkt1 = NULL;
         err_ = OSRExportToWkt(srs_, &wkt1);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt1); 
+        ensure("OSRExportToWkt returned NULL", NULL != wkt1);
 
         err_ = OSRSetFromUserInput(srs_, "EPSGA:4326");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
@@ -338,7 +339,7 @@ namespace tut
         char* wkt1 = NULL;
         err_ = OSRExportToWkt(srs_, &wkt1);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt1); 
+        ensure("OSRExportToWkt returned NULL", NULL != wkt1);
 
         std::string expect("PROJCS[\"UTM Zone 11, Northern Hemisphere\","
                            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","

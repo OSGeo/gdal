@@ -163,12 +163,28 @@
 </td><td> Yes
 </td></tr>
 
+<tr><td> <a href="drv_db2_raster.html">DB2</a>
+</td><td> DB2
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td><td> No, needs ODBC (and any or all of PNG, JPEG, WEBP drivers)
+</td></tr>
+
 <tr><td> <a href="frmt_various.html#DDS">DirectDraw Surface</a>
 </td><td> DDS
 </td><td> Yes
 </td><td> No
-</td><td> 
+</td><td>
+</td><td> No, needs Crunch Lib
+</td></tr>
+
+<tr><td> <a href="frmt_derived.html">Derived</a>
+</td><td> DERIVED
 </td><td> No
+</td><td> Yes
+</td><td> --
+</td><td> Yes
 </td></tr>
 
 <tr><td> <a href="frmt_various.html#DIMAP">Spot DIMAP (metadata.dim)</a>
@@ -287,7 +303,7 @@
 </td><td> ERS
 </td><td> Yes
 </td><td> Yes
-</td><td> 
+</td><td>
 </td><td> Yes
 </td></tr>
 
@@ -351,7 +367,7 @@
 </td><td> GEORASTER
 </td><td> Yes
 </td><td> Yes
-</td><td> --
+</td><td> No limits
 </td><td> No, needs Oracle client libraries
 </td></tr>
 
@@ -455,7 +471,7 @@
 </td><td> GTX
 </td><td> Yes
 </td><td> Yes
-</td><td> 
+</td><td>
 </td><td> Yes
 </td></tr>
 
@@ -531,7 +547,7 @@
 </td><td> Yes
 </td></tr>
 
-<tr><td> <a href="frmt_isce.html">ISCE raster</a>
+<tr><td> <a href="frmt_various.html#ISCE">ISCE raster</a>
 </td><td> ISCE
 </td><td> Yes
 </td><td> No
@@ -575,7 +591,7 @@
 </td><td> JPEG
 </td><td> Yes
 </td><td> Yes
-</td><td> 4GiB (max dimentions 65500x65500)
+</td><td> 4GiB (max dimensions 65500x65500)
 </td><td> Yes (internal libjpeg provided)
 </td></tr>
 
@@ -615,7 +631,7 @@
 </td><td> JP2MrSID
 </td><td> Yes
 </td><td> Yes
-</td><td> 
+</td><td>
 </td><td> No, needs MrSID SDK
 </td></tr>
 
@@ -683,7 +699,7 @@
 </td><td> Yes
 </td></tr>
 
-<tr><td> <a href="frmt_leveller.html">Daylon Leveller Heightfield</a> 
+<tr><td> <a href="frmt_leveller.html">Daylon Leveller Heightfield</a>
 </td><td> Leveller
 </td><td> No
 </td><td> Yes
@@ -701,7 +717,7 @@
 
 <tr><td> <a href="frmt_mbtiles.html">MBTiles</a>
 </td><td> MBTiles
-</td><td> No
+</td><td> Yes
 </td><td> Yes
 </td><td> --
 </td><td> No (needs OGR SQLite driver)
@@ -719,7 +735,7 @@
 </td><td> MEM
 </td><td> Yes
 </td><td> Yes
-</td><td> 
+</td><td>
 </td><td> Yes
 </td></tr>
 
@@ -747,6 +763,14 @@
 </td><td> No, needs LIDAR SDK
 </td></tr>
 
+<tr><td> <a href="frmt_marfa.html">Meta Raster Format</a>
+</td><td> MRF
+</td><td> Yes
+</td><td> Yes
+</td><td> --
+</td><td> Yes
+</td></tr>
+
 <tr><td> <a href="frmt_mrsid.html">Multi-resolution Seamless Image Database</a>
 </td><td> MrSID
 </td><td> No
@@ -759,7 +783,7 @@
 </td><td> MSG
 </td><td> No
 </td><td> Yes
-</td><td> 
+</td><td>
 </td><td> No, needs msg library
 </td></tr>
 
@@ -767,7 +791,7 @@
 </td><td> MSGN
 </td><td> No
 </td><td> Yes
-</td><td> 
+</td><td>
 </td><td> Yes
 </td></tr>
 
@@ -811,7 +835,7 @@
 </td><td> Yes
 </td></tr>
 
-<tr><td> Northwood/VerticalMapper Classified Grid Format .grc/.tab
+<tr><td> <a href="frmt_nwtgrd.html">Northwood/VerticalMapper Classified Grid Format .grc/.tab</a>
 </td><td> NWT_GRC
 </td><td> No
 </td><td> Yes
@@ -819,7 +843,7 @@
 </td><td> Yes
 </td></tr>
 
-<tr><td> Northwood/VerticalMapper Numeric Grid Format .grd/.tab
+<tr><td> <a href="frmt_nwtgrd.html">Northwood/VerticalMapper Numeric Grid Format .grd/.tab</a>
 </td><td> NWT_GRD
 </td><td> No
 </td><td> Yes
@@ -979,6 +1003,14 @@
 </td><td> Yes
 </td></tr>
 
+<tr><td> <a href="frmt_various.html#RRASTER">R Raster (.grd)</a>
+</td><td> RRASTER
+</td><td> No
+</td><td> Yes
+</td><td> -
+</td><td> Yes
+</td></tr>
+
 <tr><td> <a href="frmt_Idrisi.html">Idrisi Raster</a>
 </td><td> RST
 </td><td> Yes
@@ -987,8 +1019,16 @@
 </td><td> Yes
 </td></tr>
 
-<tr><td> <a href="frmt_safe.html">Sentinel SAFE (manifest.safe)</a>
+<tr><td> <a href="frmt_safe.html">Sentinel 1 SAR SAFE (manifest.safe)</a>
 </td><td> SAFE
+</td><td> No
+</td><td> Yes
+</td><td> No limits
+</td><td> Yes
+</td></tr>
+
+<tr><td> <a href="frmt_sentinel2.html">Sentinel 2</a>
+</td><td> SENTINEL2
 </td><td> No
 </td><td> Yes
 </td><td> No limits
@@ -1123,7 +1163,7 @@
 </td><td> No, needs libwebp
 </td></tr>
 
-<tr><td> <a href="frmt_wms.html">OGC Web Map Service</a>
+<tr><td> <a href="frmt_wms.html">OGC Web Map Service, and TMS, WorldWind, On Earth tiled, VirtualEarth, ArcGIS REST, IIP)</a>
 </td><td> WMS
 </td><td> No
 </td><td> Yes
@@ -1159,7 +1199,7 @@
 </td><td> ZMap
 </td><td> Yes
 </td><td> Yes
-</td><td> 
+</td><td>
 </td><td> Yes
 </td></tr>
 

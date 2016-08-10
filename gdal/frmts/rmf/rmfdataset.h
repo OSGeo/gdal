@@ -43,6 +43,14 @@ enum RMFType
     RMFT_MTW        // Digital elevation model
 };
 
+enum RMFVersion
+{
+    RMF_VERSION = 0x0200,        // Version for "small" files less than 4 Gb
+    RMF_VERSION_HUGE = 0x0201    // Version for "huge" files less than 4 Tb. Since GIS Panorama v11
+};
+
+#define RMF_HUGE_OFFSET_FACTOR  256
+
 /************************************************************************/
 /*                            RMFHeader                                 */
 /************************************************************************/
@@ -72,7 +80,7 @@ typedef struct
     GUInt32     nClrTblOffset;                  // Position and size
     GUInt32     nClrTblSize;                    // of the colour table
     GUInt32     nTileTblOffset;                 // Position and size of the
-    GUInt32     nTileTblSize;                   // tile offsets/sizes table 
+    GUInt32     nTileTblSize;                   // tile offsets/sizes table
     GInt32      iMapType;
     GInt32      iProjection;
     double      dfScale;
@@ -130,7 +138,7 @@ class RMFDataset : public GDALDataset
     GUInt32         nXTiles;
     GUInt32         nYTiles;
     GUInt32         *paiTiles;
-    
+
     GUInt32         nColorTableSize;
     GByte           *pabyColorTable;
     GDALColorTable  *poColorTable;
@@ -164,6 +172,9 @@ class RMFDataset : public GDALDataset
     virtual CPLErr      SetGeoTransform( double * );
     virtual const char  *GetProjectionRef();
     virtual CPLErr      SetProjection( const char * );
+
+    vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset );
+    GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset );
 };
 
 /************************************************************************/
@@ -178,7 +189,7 @@ class RMFRasterBand : public GDALRasterBand
 
     GUInt32     nBytesPerPixel;
     GUInt32     nBlockSize, nBlockBytes;
-    GUInt32     nLastTileXBytes, nLastTileHeight;
+    GUInt32     nLastTileWidth, nLastTileHeight;
     GUInt32     nDataSize;
 
     CPLErr   ReadBuffer( GByte *, GUInt32 ) const;
@@ -197,4 +208,3 @@ class RMFRasterBand : public GDALRasterBand
     virtual CPLErr          SetUnitType(const char *);
     virtual CPLErr          SetColorTable( GDALColorTable * );
 };
-

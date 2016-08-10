@@ -56,47 +56,6 @@
 #define DEF_NCEP_TABLE rean_nowarn
 enum Def_NCEP_Table { rean, opn, rean_nowarn, opn_nowarn };
 
-extern GRIB1ParmTable parm_table_ncep_opn[256];
-extern GRIB1ParmTable parm_table_ncep_reanal[256];
-extern GRIB1ParmTable parm_table_ncep_tdl[256];
-extern GRIB1ParmTable parm_table_ncep_mdl[256];
-extern GRIB1ParmTable parm_table_omb[256];
-extern GRIB1ParmTable parm_table_nceptab_129[256];
-extern GRIB1ParmTable parm_table_nceptab_130[256];
-extern GRIB1ParmTable parm_table_nceptab_131[256];
-
-extern GRIB1ParmTable parm_table_nohrsc[256];
-
-extern GRIB1ParmTable parm_table_cptec_254[256];
-
-extern GRIB1ParmTable parm_table_afwa_000[256];
-extern GRIB1ParmTable parm_table_afwa_001[256];
-extern GRIB1ParmTable parm_table_afwa_002[256];
-extern GRIB1ParmTable parm_table_afwa_003[256];
-extern GRIB1ParmTable parm_table_afwa_010[256];
-extern GRIB1ParmTable parm_table_afwa_011[256];
-
-extern GRIB1ParmTable parm_table_dwd_002[256];
-extern GRIB1ParmTable parm_table_dwd_201[256];
-extern GRIB1ParmTable parm_table_dwd_202[256];
-extern GRIB1ParmTable parm_table_dwd_203[256];
-
-extern GRIB1ParmTable parm_table_ecmwf_128[256];
-extern GRIB1ParmTable parm_table_ecmwf_129[256];
-extern GRIB1ParmTable parm_table_ecmwf_130[256];
-extern GRIB1ParmTable parm_table_ecmwf_131[256];
-extern GRIB1ParmTable parm_table_ecmwf_140[256];
-extern GRIB1ParmTable parm_table_ecmwf_150[256];
-extern GRIB1ParmTable parm_table_ecmwf_160[256];
-extern GRIB1ParmTable parm_table_ecmwf_170[256];
-extern GRIB1ParmTable parm_table_ecmwf_180[256];
-
-extern GRIB1ParmTable parm_table_athens[256];
-
-extern GRIB1ParmTable parm_table_cmc[256];
-
-extern GRIB1ParmTable parm_table_undefined[256];
-
 /*****************************************************************************
  * Choose_ParmTable() --
  *
@@ -123,7 +82,7 @@ extern GRIB1ParmTable parm_table_undefined[256];
  * NOTES
  *****************************************************************************
  */
-static GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
+static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
                                          unsigned short int center,
                                          unsigned short int subcenter)
 {
@@ -285,7 +244,7 @@ static void GRIB1_Table2LookUp (pdsG1Type *pdsMeta, const char **name,
                                 unsigned short int center,
                                 unsigned short int subcenter)
 {
-   GRIB1ParmTable *table; /* The parameter table choosen by the pdsMeta data */
+   const GRIB1ParmTable *table; /* The parameter table chosen by the pdsMeta data */
 
    table = Choose_ParmTable (pdsMeta, center, subcenter);
    if ((center == NMC) && (pdsMeta->mstrVersion == 129)
@@ -304,8 +263,6 @@ static void GRIB1_Table2LookUp (pdsG1Type *pdsMeta, const char **name,
    *convert = table[pdsMeta->cat].convert;
 /*   printf ("%s %s %s\n", *name, *comment, *unit);*/
 }
-
-extern GRIB1SurfTable GRIB1Surface[256];
 
 /* Similar to metaname.c :: ParseLevelName() */
 static void GRIB1_Table3LookUp (pdsG1Type *pdsMeta, char **shortLevelName,
@@ -698,7 +655,17 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
       errSprintf ("Ran out of data in PDS (GRIB1_Inventory)\n");
       return -1;
    }
+   if( sectLen < 3 )
+   {
+       errSprintf ("Invalid sectLen.\n");
+       return -1;
+   }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
+   if( pds == NULL )
+   {
+       errSprintf ("Ran out of memory.\n");
+       return -1;
+   }
    *pds = *temp;
    pds[1] = temp[1];
    pds[2] = temp[2];
@@ -724,11 +691,15 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
    strcpy (inv->element, varName);
    inv->unitName = (char *) malloc ((1 + 2 + strlen (varUnit)) *
                                     sizeof (char));
-   sprintf (inv->unitName, "[%s]", varUnit);
+   snprintf (inv->unitName, (1 + 2 + strlen (varUnit)) *
+                                    sizeof (char), "[%s]", varUnit);
    inv->comment = (char *) malloc ((1 + strlen (varComment) +
                                     strlen (varUnit) + 2 + 1) *
                                    sizeof (char));
-   sprintf (inv->comment, "%s [%s]", varComment, varUnit);
+   snprintf (inv->comment, (1 + strlen (varComment) +
+                                    strlen (varUnit) + 2 + 1) *
+                                   sizeof (char),
+             "%s [%s]", varComment, varUnit);
 
    GRIB1_Table3LookUp (&(pdsMeta), &(inv->shortFstLevel),
                        &(inv->longFstLevel));
@@ -816,7 +787,7 @@ int GRIB1_RefTime (DataSource &fp, uInt4 gribLen, double *refTime)
  *  12/2003 AAT: adas data encoder seems to have # of vertical data = 1, but
  *        parameters of vertical data = 255, which doesn't make sense.
  *        Changed the error from "fatal" to a warning in debug mode.
- *   6/2004 AAT: Modified to allow "extended" lat/lon grids (ie stretched or
+ *   6/2004 AAT: Modified to allow "extended" lat/lon grids (i.e. stretched or
  *        stretched and rotated).
  *
  * NOTES
@@ -1383,7 +1354,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    uInt4 sectLen;       /* Length in bytes of the current section. */
    short int ESF;       /* Power of 2 scaling factor. */
    uInt4 uli_temp;      /* Used to store sInt4s (temporarily) */
-   double refVal;       /* The refrence value for the grid, also the minimum
+   double refVal;       /* The reference value for the grid, also the minimum
                          * value. */
    uChar numBits;       /* # of bits for a single element of data. */
    uChar numUnusedBit;  /* # of extra bits at end of record. */
@@ -1751,7 +1722,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       return -1;
    }
 
-   /* Preceeding was in degrib2, next part is specific to GRIB1. */
+   /* Preceding was in degrib2, next part is specific to GRIB1. */
    curLoc = 8;
    if (ReadGrib1Sect1 (c_ipack + curLoc, gribLen, &curLoc, &(meta->pds1),
                        &f_gds, &gridID, &f_bms, &DSF, &(meta->center),
@@ -1830,16 +1801,23 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    meta->unitName = (char *) realloc ((void *) (meta->unitName),
                                       (1 + 2 + strlen (varUnit)) *
                                       sizeof (char));
-   sprintf (meta->unitName, "[%s]", varUnit);
+   snprintf (meta->unitName,
+            (1 + 2 + strlen (varUnit)) *
+                                      sizeof (char),
+            "[%s]", varUnit);
    meta->comment = (char *) realloc ((void *) (meta->comment),
                                      (1 + strlen (varComment) +
                                       strlen (varUnit)
                                       + 2 + 1) * sizeof (char));
-   sprintf (meta->comment, "%s [%s]", varComment, varUnit);
+   snprintf (meta->comment,
+            (1 + strlen (varComment) +
+                                      strlen (varUnit)
+                                      + 2 + 1) * sizeof (char),
+            "%s [%s]", varComment, varUnit);
 
    if (ComputeUnit (meta->convert, meta->unitName, f_unit, &unitM, &unitB,
                     unitName) == 0) {
-      unitLen = strlen (unitName);
+      unitLen = static_cast<int>(strlen (unitName));
       meta->unitName = (char *) realloc ((void *) (meta->unitName),
                                          1 + unitLen * sizeof (char));
       strncpy (meta->unitName, unitName, unitLen);
@@ -1881,11 +1859,10 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
               "section 5 is missing\n");
       return 0;
    }
-   if (curLoc + 4 > gribLen) {
-      errSprintf ("Ran out of bytes looking for the end of the message.\n");
+   if (curLoc + 4 != gribLen) {
+      errSprintf ("Invalid number of bytes for the end of the message.\n");
       return -5;
    }
-   myAssert (curLoc + 4 == gribLen);
    memcpy (&li_temp, c_ipack + curLoc, 4);
    if (li_temp != 926365495L) {
       errSprintf ("Did not find the end of the message.\n");

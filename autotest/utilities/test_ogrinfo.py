@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  ogrinfo testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -182,6 +182,8 @@ def test_ogrinfo_9():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -where "EAS_ID=171"')
     if ret.find('Feature Count: 1') == -1:
+        gdaltest.post_reason('fail')
+        print(ret)
         return 'fail'
 
     return 'success'
@@ -229,7 +231,7 @@ def test_ogrinfo_12():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --config
+# Test erroneous use of --config
 
 def test_ogrinfo_13():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -243,7 +245,7 @@ def test_ogrinfo_13():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --mempreload
+# Test erroneous use of --mempreload.
 
 def test_ogrinfo_14():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -271,7 +273,7 @@ def test_ogrinfo_15():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --debug
+# Test erroneous use of --debug.
 
 def test_ogrinfo_16():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -285,7 +287,7 @@ def test_ogrinfo_16():
     return 'success'
 
 ###############################################################################
-# Test erroenous use of --optfile
+# Test erroneous use of --optfile.
 
 def test_ogrinfo_17():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -550,7 +552,6 @@ def test_ogrinfo_24():
   </OGRVRTLayer>
 </OGRVRTDataSource>""" )
     f.close()
-   
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro -al tmp/test_ogrinfo_24.vrt -so', check_memleak = False )
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_24.vrt'
@@ -626,7 +627,7 @@ PRFEDEA: String (16.0)
         if expected_lines[i] != lines[i]:
             print(ret)
             return 'fail'
-            
+
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro -al tmp/test_ogrinfo_24.vrt -so -nomd', check_memleak = False )
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_24.vrt'
       using driver `OGR_VRT' successful.

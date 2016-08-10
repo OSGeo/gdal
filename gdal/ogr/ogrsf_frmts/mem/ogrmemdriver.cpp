@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMemDriver class.
@@ -27,20 +26,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_mem.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_mem.h"
 
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          ~OGRMemDriver()                           */
+/*                          ~OGRMemDriver()                             */
 /************************************************************************/
 
-OGRMemDriver::~OGRMemDriver()
-
-{
-}
+OGRMemDriver::~OGRMemDriver() {}
 
 /************************************************************************/
 /*                              GetName()                               */
@@ -56,7 +52,7 @@ const char *OGRMemDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRMemDriver::Open( CPL_UNUSED const char * pszFilename, int )
+OGRDataSource *OGRMemDriver::Open( const char * /* pszFilename */, int )
 {
     return NULL;
 }

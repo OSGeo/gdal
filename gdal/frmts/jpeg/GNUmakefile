@@ -30,16 +30,16 @@ OBJ :=	jcapimin12.o jcapistd12.o jccoefct12.o jccolor12.o jcdctmgr12.o jchuff12.
         jdpostct12.o jdsample12.o jdtrans12.o jerror12.o jfdctflt12.o jfdctfst12.o \
         jfdctint12.o jidctflt12.o jidctfst12.o jidctint12.o jidctred12.o jquant112.o \
         jquant212.o jutils12.o jmemmgr12.o jmemansi12.o \
-	$(OBJ) jpgdataset_12.o 
+        $(OBJ) jpgdataset_12.o vsidataio_12.o
 endif
 
-CPPFLAGS	:=	$(XTRA_OPT)  $(CPPFLAGS) -I../mem
+CPPFLAGS	:=	$(XTRA_OPT)  $(CPPFLAGS) -I../mem -DENABLE_LIBJPEG_NO_RETURN
 # # Enable this to compile with -Wextra -Werror and get around the jump complaint.
 # CPPFLAGS += -Wno-clobbered
 
 default:	install-obj
 
-$(O_OBJ): jpgdataset.cpp
+$(O_OBJ): jpgdataset.cpp vsidataio.cpp
 
 clean:
 	rm -f *.o $(O_OBJ) libjpeg12/*.c libjpeg12/*.h

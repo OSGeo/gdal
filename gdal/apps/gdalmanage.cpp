@@ -1,9 +1,8 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline utility for GDAL identify, delete, rename and copy 
- *           (by file) operations. 
+ * Purpose:  Command line utility for GDAL identify, delete, rename and copy
+ *           (by file) operations.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * ****************************************************************************
@@ -53,8 +52,8 @@ static void Usage()
 /*                       ProcessIdentifyTarget()                        */
 /************************************************************************/
 
-static void ProcessIdentifyTarget( const char *pszTarget, 
-                                   char **papszSiblingList, 
+static void ProcessIdentifyTarget( const char *pszTarget,
+                                   char **papszSiblingList,
                                    int bRecursive, int bReportFailures )
 
 {
@@ -67,26 +66,26 @@ static void ProcessIdentifyTarget( const char *pszTarget,
     if( hDriver != NULL )
         printf( "%s: %s\n", pszTarget, GDALGetDriverShortName( hDriver ) );
     else if( bReportFailures )
-        printf( "%s: unrecognised\n", pszTarget );
+        printf( "%s: unrecognized\n", pszTarget );
 
     if( !bRecursive || hDriver != NULL )
         return;
 
-    if( VSIStatL( pszTarget, &sStatBuf ) != 0 
+    if( VSIStatL( pszTarget, &sStatBuf ) != 0
         || !VSI_ISDIR( sStatBuf.st_mode ) )
         return;
 
     papszSiblingList = VSIReadDir( pszTarget );
     for( i = 0; papszSiblingList && papszSiblingList[i]; i++ )
     {
-        if( EQUAL(papszSiblingList[i],"..") 
+        if( EQUAL(papszSiblingList[i],"..")
             || EQUAL(papszSiblingList[i],".") )
             continue;
 
-        CPLString osSubTarget = 
+        CPLString osSubTarget =
             CPLFormFilename( pszTarget, papszSiblingList[i], NULL );
 
-        ProcessIdentifyTarget( osSubTarget, papszSiblingList, 
+        ProcessIdentifyTarget( osSubTarget, papszSiblingList,
                                bRecursive, bReportFailures );
     }
     CSLDestroy(papszSiblingList);
@@ -100,7 +99,7 @@ static void Identify( int nArgc, char **papszArgv )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Scan for commandline switches                                   */
+/*      Scan for command line switches                                   */
 /* -------------------------------------------------------------------- */
     int bRecursive = FALSE, bReportFailures = FALSE;
 
@@ -122,7 +121,7 @@ static void Identify( int nArgc, char **papszArgv )
 /* -------------------------------------------------------------------- */
     while( nArgc > 0 )
     {
-        ProcessIdentifyTarget( papszArgv[0], NULL, 
+        ProcessIdentifyTarget( papszArgv[0], NULL,
                                bRecursive, bReportFailures );
         nArgc--;
         papszArgv++;
@@ -221,7 +220,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Split out based on operation.                                   */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(argv[1],"identify",5) )
+    if( STARTS_WITH_CI(argv[1],"ident" /* identify" */ ) )
         Identify( nRemainingArgc, papszRemainingArgv );
 
     else if( EQUAL(argv[1],"copy") )
@@ -229,7 +228,7 @@ int main( int argc, char ** argv )
 
     else if( EQUAL(argv[1],"rename") )
         Copy( hDriver, nRemainingArgc, papszRemainingArgv, "rename" );
-    
+
     else if( EQUAL(argv[1],"delete") )
         Delete( hDriver, nRemainingArgc, papszRemainingArgv );
 
@@ -244,4 +243,3 @@ int main( int argc, char ** argv )
 
     exit( 0 );
 }
-

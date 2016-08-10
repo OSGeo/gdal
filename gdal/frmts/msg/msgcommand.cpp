@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Purpose:  Implementation of MSGCommand class. Parse the src_dataset
  *           string that is meant for the MSG driver.
@@ -30,6 +29,9 @@
 #include "msgcommand.h"
 #include <cstdlib>
 #include <cstdio>
+
+CPL_CVSID("$Id$");
+
 using namespace std;
 
 #ifdef _WIN32
@@ -392,7 +394,7 @@ std::string MSGCommand::sCycle(int iCycle)
   // 200405311115 should result in 200405311130
   // 200405311101 should result in 200405311115
   // 200412312345 should result in 200501010000
-  
+
   std::string sYear (sTimeStamp.substr(0, 4));
   std::string sMonth (sTimeStamp.substr(4, 2));
   std::string sDay (sTimeStamp.substr(6, 2));
@@ -432,9 +434,9 @@ std::string MSGCommand::sCycle(int iCycle)
   }
 
   char sRet [100];
-  sprintf(sRet, "%.4d%.2d%.2d%.2d%.2d", iYear, iMonth, iDay, iHours, iMins);
+  snprintf(sRet, sizeof(sRet), "%.4d%.2d%.2d%.2d%.2d", iYear, iMonth, iDay, iHours, iMins);
 
-  return sRet;  
+  return sRet;
 }
 
 std::string MSGCommand::sFileName(int iSatellite, int iSequence, int iStrip)
@@ -445,9 +447,9 @@ std::string MSGCommand::sFileName(int iSatellite, int iSequence, int iStrip)
   char sRet [4096];
   std::string siThCycle (sCycle(iCycle));
   if (fUseTimestampFolder)
-    sprintf(sRet, "%s%sH-000-MSG%d__-MSG%d________-%s-%.6d___-%s-C_", sRootFolder.c_str(), sTimeStampToFolder(siThCycle).c_str(), iSatellite, iSatellite, sChannel(iChannel(iChannelNumber)).c_str(), iStrip, siThCycle.c_str());
+    snprintf(sRet, sizeof(sRet), "%s%sH-000-MSG%d__-MSG%d________-%s-%.6d___-%s-C_", sRootFolder.c_str(), sTimeStampToFolder(siThCycle).c_str(), iSatellite, iSatellite, sChannel(iChannel(iChannelNumber)).c_str(), iStrip, siThCycle.c_str());
   else
-    sprintf(sRet, "%sH-000-MSG%d__-MSG%d________-%s-%.6d___-%s-C_", sRootFolder.c_str(), iSatellite, iSatellite, sChannel(iChannel(iChannelNumber)).c_str(), iStrip, siThCycle.c_str());
+    snprintf(sRet, sizeof(sRet), "%sH-000-MSG%d__-MSG%d________-%s-%.6d___-%s-C_", sRootFolder.c_str(), iSatellite, iSatellite, sChannel(iChannel(iChannelNumber)).c_str(), iStrip, siThCycle.c_str());
   return sRet;
 }
 
@@ -457,9 +459,8 @@ std::string MSGCommand::sPrologueFileName(int iSatellite, int iSequence)
   char sRet [4096];
   std::string siThCycle (sCycle(iCycle));
   if (fUseTimestampFolder)
-    sprintf(sRet, "%s%sH-000-MSG%d__-MSG%d________-_________-PRO______-%s-__", sRootFolder.c_str(), sTimeStampToFolder(siThCycle).c_str(), iSatellite, iSatellite, siThCycle.c_str());
+    snprintf(sRet, sizeof(sRet), "%s%sH-000-MSG%d__-MSG%d________-_________-PRO______-%s-__", sRootFolder.c_str(), sTimeStampToFolder(siThCycle).c_str(), iSatellite, iSatellite, siThCycle.c_str());
   else
-    sprintf(sRet, "%sH-000-MSG%d__-MSG%d________-_________-PRO______-%s-__", sRootFolder.c_str(), iSatellite, iSatellite, siThCycle.c_str());
+    snprintf(sRet, sizeof(sRet), "%sH-000-MSG%d__-MSG%d________-_________-PRO______-%s-__", sRootFolder.c_str(), iSatellite, iSatellite, siThCycle.c_str());
   return sRet;
 }
-

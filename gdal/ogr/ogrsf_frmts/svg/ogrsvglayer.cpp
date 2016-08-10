@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SVG Translator
  * Purpose:  Implements OGRSVGLayer class.
@@ -38,8 +37,8 @@ CPL_CVSID("$Id$");
 
 OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
                           const char* pszLayerName,
-                          SVGGeometryType svgGeomType,
-                          OGRSVGDataSource* poDS) :
+                          SVGGeometryType svgGeomTypeIn,
+                          OGRSVGDataSource* poDSIn) :
     poFeatureDefn(NULL),
     poSRS(NULL),
     poDS(NULL),
@@ -69,8 +68,8 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
 #endif
 
 {
-    this->poDS = poDS;
-    this->svgGeomType = svgGeomType;
+    this->poDS = poDSIn;
+    this->svgGeomType = svgGeomTypeIn;
     osLayerName = pszLayerName;
     SetDescription( pszLayerName );
 
@@ -120,7 +119,7 @@ OGRSVGLayer::~OGRSVGLayer()
 #endif
     if (poFeatureDefn)
         poFeatureDefn->Release();
-    
+
     if( poSRS != NULL )
         poSRS->Release();
 
@@ -234,7 +233,7 @@ static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
     int bRelativeLineto = FALSE;
     double dfX = 0, dfY = 0;
     int nPointCount = 0;
-    while(TRUE)
+    while( true )
     {
         ch = *(pszIter ++);
 
@@ -425,7 +424,7 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     }
     else if (inInterestingElement &&
              depthLevel == interestingDepthLevel + 1 &&
-             strncmp(pszName, "cm:", 3) == 0)
+             STARTS_WITH(pszName, "cm:"))
     {
         iCurrentField = poFeatureDefn->GetFieldIndex(pszName + 3);
     }
@@ -506,11 +505,10 @@ void OGRSVGLayer::dataHandlerCbk(const char *data, int nLen)
 
     if (iCurrentField >= 0)
     {
-        char* pszNewSubElementValue = (char*) VSIRealloc(pszSubElementValue,
+        char* pszNewSubElementValue = (char*) VSI_REALLOC_VERBOSE(pszSubElementValue,
                                            nSubElementValueLen + nLen + 1);
         if (pszNewSubElementValue == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             XML_StopParser(oParser, XML_FALSE);
             bStopParsing = TRUE;
             return;
@@ -548,12 +546,12 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
     {
         return ppoFeatureTab[nFeatureTabIndex++];
     }
-    
+
     if (VSIFEofL(fpSVG))
         return NULL;
-    
+
     char aBuf[BUFSIZ];
-    
+
     CPLFree(ppoFeatureTab);
     ppoFeatureTab = NULL;
     nFeatureTabLength = 0;
@@ -742,7 +740,7 @@ void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
     else if (inInterestingElement)
     {
         if (depthLevel == interestingDepthLevel + 1 &&
-            strncmp(pszName, "cm:", 3) == 0)
+            STARTS_WITH(pszName, "cm:"))
         {
             pszName += 3;
             if (poCurLayer->poFeatureDefn->GetFieldIndex(pszName) < 0)

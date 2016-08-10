@@ -11,6 +11,57 @@ toolkit:
 <li> \ref ogrlineref - Create linear reference and provide some calculations using it
 </ul>
 
+\section gdal_utilities_switches General Command Line Switches
+All GDAL OGR command line utility programs support the following 
+"general" options.<p>
+
+<dl>
+<dt> <b>\-\-version</b></dt><dd> Report the version of GDAL and exit.</dd>
+
+<dt> <b>\-\-formats</b></dt><dd> List all vector formats supported by this
+GDAL build (read-only and read-write) and exit. The format support is indicated
+ as follows: 'ro' is read-only driver; 
+'rw' is read or write (i.e. supports CreateCopy);
+'rw+' is read, write and update (i.e. supports Create).
+A 'v' is appended for formats supporting virtual IO (/vsimem, /vsigzip, /vsizip, etc).
+A 's' is appended for formats supporting subdatasets.
+</dd>
+
+<dt> <b>\-\-format</b> <i>format</i></dt><dd>
+List detailed information about a single format driver.  The <i>format</i> 
+should be the short name reported in the <b>\-\-formats</b> list, such as 
+GML.</dd>
+
+<dt> <b>\-\-optfile</b> <i>file</i></dt><dd>
+Read the named file and substitute the contents into the command line
+options list.  Lines beginning with # will be ignored.  Multi-word arguments
+may be kept together with double quotes. 
+</dd>
+
+<dt> <b>\-\-config</b> <i>key value</i></dt><dd>
+Sets the named <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">
+configuration keyword</a> to the given value, as opposed to 
+setting them as environment variables.  Some common configuration keywords
+are SHAPE_ENCODING (force shapefile driver to read DBF files with the given
+character encoding) and CPL_TEMPDIR (define the location of temporary files).
+Individual drivers may be influenced by other configuration options.  
+</dd>
+
+<dt> <b>\-\-debug</b> <i>value</i></dt><dd>
+Control what debugging messages are emitted.  A value of <i>ON</i> will
+enable all debug messages.  A value of <i>OFF</i> will disable all debug
+messages.  Another value will select only debug messages containing that
+string in the debug prefix code.  
+</dd>
+
+<dt> <b>\-\-help-general</b></dt><dd>
+Gives a brief usage message for the generic GDAL OGR command line options 
+and exit.
+</dd>
+
+</dl>
+
+
 */
 
 /*! \page ogrinfo ogrinfo
@@ -24,10 +75,10 @@ Usage:
 \endhtmlonly
 
 \verbatim
-ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|@filename]
+ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|\@filename]
         [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
-        [-sql statement|@filename] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
-        [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]
+        [-sql statement|\@filename] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
+        [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [-formats] [[-oo NAME=VALUE] ...]
         [-nomd] [-listmdd] [-mdd domain|`all`]*
         [-nocount] [-noextent]
         datasource_name [layer [layer ...]]
@@ -50,10 +101,10 @@ extents.</dd>
 coordinate system, layer schema, extents, and feature count. </dd>
 <dt> <b>-where</b> <i>restricted_where</i>:</dt><dd> An attribute query in a restricted
 form of the queries used in the SQL WHERE statement.   Only features matching
-the attribute query will be reported. Starting with GDAL 2.1, the @filename syntax
+the attribute query will be reported. Starting with GDAL 2.1, the @\filename syntax
 can be used to indicate that the content is in the pointed filename.</dd>
 <dt> <b>-sql</b> <i>statement</i>:</dt><dd> Execute the indicated SQL statement
-and return the result. Starting with GDAL 2.1, the @filename syntax
+and return the result. Starting with GDAL 2.1, the \@filename syntax
 can be used to indicate that the content is in the pointed filename.</dd>
 <dt> <b>-dialect</b> <em>dialect</em>:</dt><dd> SQL dialect.  In some cases can be used to use (unoptimized) OGR SQL instead of the native SQL of an RDBMS by passing OGRSQL.
 Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasource.</dd>
@@ -68,10 +119,14 @@ also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-wher
 would select features 1, 3 and 5.</dd>
 <dt> <b>-fields</b>={YES/NO}:</dt><dd> (starting with GDAL 1.6.0) If set to NO,
 the feature dump will not display field values. Default value is YES.</dd>
-<dt> <b>-geom</b>={YES/NO/SUMMARY}:</dt><dd> (starting with GDAL 1.6.0) If set to NO,
-the feature dump will not display the geometry. If set to SUMMARY, only a
-summary of the geometry will be displayed. If set to YES, the geometry will be reported in full OGC WKT format.
-Default value is YES.</dd>
+<dt> <b>-geom</b>={YES/NO/SUMMARY/WKT/ISO_WKT}:</dt><dd> (starting
+with GDAL 1.6.0) If set to NO, the feature dump will not display the
+geometry. If set to SUMMARY, only a summary of the geometry will be
+displayed. If set to YES or ISO_WKT, the geometry will be reported in
+full OGC WKT format. If set to WKT the geometry will be reported in
+legacy WKT. Default value is YES. (WKT and ISO_WKT are available
+starting with GDAL 2.1, which also changes the default to
+ISO_WKT)</dd>
 <dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
 <dt> <b>-nomd</b></dt><dd>(starting with GDAL 2.0)  Suppress metadata printing. Some datasets may contain a lot
 of metadata strings.</dd>
@@ -80,16 +135,16 @@ of metadata strings.</dd>
 "all" can be used to report metadata in all domains</dd>
 <dt> <b>-nocount</b></dt><dd>(starting with GDAL 2.0)  Suppress feature count printing.</dd>
 <dt> <b>-noextent</b></dt><dd>(starting with GDAL 2.0)  Suppress spatial extent printing.</dd>
-<dt> <b>--formats</b>:</dt><dd> List the format drivers that are
+<dt> <b>\-\-formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
-directory or other virtual name.  See the <a href="ogr/ogr_formats.html">OGR Vector
+directory or other virtual name.  See the <a href="ogr_formats.html">OGR Vector
 Formats</a> list for supported datasources.</dd>
 <dt> <i>layer</i>:</dt><dd> One or more layer names may be reported.</dd>
 </dl>
 
 If no layer names are passed then ogrinfo will report a list of available
-layers (and their layerwide geometry type).  If layer name(s) are given then
+layers (and their layer wide geometry type).  If layer name(s) are given then
 their extents, coordinate system, feature count, geometry type, schema and
 all features matching query parameters will be reported to the terminal. 
 If no query parameters are provided, all features are reported.  
@@ -184,16 +239,16 @@ Usage:
 
 \verbatim
 Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
-               [-select field_list] [-where restricted_where|@filename] 
-               [-progress] [-sql <sql statement>|@filename] [-dialect dialect]
+               [-select field_list] [-where restricted_where|\@filename] 
+               [-progress] [-sql <sql statement>|\@filename] [-dialect dialect]
                [-preserve_fid] [-fid FID]
                [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name]
-               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR]
-               [-dim 2|3|layer_dim] [layer [layer ...]]
+               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]
+               [-dim XY|XYZ|XYM|XYZM|2|3|layer_dim] [layer [layer ...]]
 
 Advanced options :
                [-gt n]
@@ -214,7 +269,7 @@ Advanced options :
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
                [-gcp pixel line easting northing [elevation]]* [-order n | -tps]
-               [-nomd] [-mo \"META-TAG=VALUE\"]*
+               [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
 
 \endverbatim
 
@@ -247,12 +302,12 @@ same name is found.) Starting with OGR 1.11, geometry fields can also be specifi
 in the list.</dd>
 <dt> <b>-progress</b>:</dt><dd> (starting with GDAL 1.7.0) Display progress on terminal. Only works if input layers have the "fast feature count" capability.</dd>
 <dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
-The resulting table/layer will be saved to the output. Starting with GDAL 2.1, the @filename syntax
+The resulting table/layer will be saved to the output. Starting with GDAL 2.1, the \@filename syntax
 can be used to indicate that the content is in the pointed filename.</dd>
 <dt> <b>-dialect</b> <em>dialect</em>:</dt><dd> SQL dialect.  In some cases can be used to use (unoptimized) OGR SQL instead of the native SQL of an RDBMS by passing OGRSQL.
 Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasource.</dd>
 <dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE).
-Starting with GDAL 2.1, the @filename syntax can be used to indicate that the content is in the pointed filename.</dd>
+Starting with GDAL 2.1, the \@filename syntax can be used to indicate that the content is in the pointed filename.</dd>
 <dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
 <dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents, in the
 SRS of the source layer(s) (or the one specified with -spat_srs). Only features
@@ -263,23 +318,32 @@ on which the spatial filter operates on.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
 <dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
-<dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for the 
-created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
-GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. And CIRCULARSTRING,
-COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and MULTISURFACE for GDAL 2.0 non-linear geometry
-types. 
-Add "25D" to the name to get 2.5D versions.
-Starting with GDAL 1.10, PROMOTE_TO_MULTI can be used to automatically promote layers
-that mix polygon or multipolygons to multipolygons, and layers that mix linestrings or
-multilinestrings to multilinestrings. Can be useful when converting shapefiles to PostGIS
-(and other target drivers) that implements strict checks for geometry type.
-Starting with GDAL 2.0, CONVERT_TO_LINEAR can be used to to convert non-linear geometries
-types into linear geometries by approximating them.</dd>
-<dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force the coordinate dimension to val (valid values are 2 or 3).
-This affects both the layer geometry type, and feature geometries.
-Starting with GDAL 1.11, the value can be set to "layer_dim" to instruct feature geometries to be promoted
-to the coordinate dimension declared by the layer.
-</dd>
+<dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for
+the created layer. One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON,
+GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. And
+CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and
+MULTISURFACE for GDAL 2.0 non-linear geometry types. Add "Z", "M", or
+"ZM" to the name to get coordinates with elevation, measure, or
+elevation and measure. Starting with GDAL 1.10, PROMOTE_TO_MULTI can
+be used to automatically promote layers that mix polygon or
+multipolygons to multipolygons, and layers that mix linestrings or
+multilinestrings to multilinestrings. Can be useful when converting
+shapefiles to PostGIS and other target drivers that implement strict
+checks for geometry types. Starting with GDAL 2.0, CONVERT_TO_LINEAR
+can be used to to convert non-linear geometries types into linear
+geometries by approximating them, and CONVERT_TO_CURVE to promote a
+non-linear type to its generalized curve type (POLYGON to CURVEPOLYGON,
+MULTIPOLYGON to MULTISURFACE, LINESTRING to COMPOUNDCURVE, MULTILINESTRING to
+MULTICURVE). Starting with 2.1 the type can be
+defined as measured ("25D" remains as an alias for single "Z").</dd>
+<dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force
+the coordinate dimension to val (valid values are XY, XYZ, XYM, and
+XYZM - for backwards compatibility 2 is an alias for XY and 3 is an
+alias for XYZ). This affects both the layer geometry type, and feature
+geometries. Starting with GDAL 1.11, the value can be set to
+"layer_dim" to instruct feature geometries to be promoted to the
+coordinate dimension declared by the layer. Support for M was added in
+GDAL 2.1</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
@@ -296,7 +360,7 @@ would select features 1, 3 and 5.</dd>
 </dl>
 
 Srs_def can be a full WKT definition (hard to escape properly), or a well
-known definition (ie. EPSG:4326) or a file with a WKT definition.
+known definition (i.e. EPSG:4326) or a file with a WKT definition.
 
 Advanced options :
 
@@ -327,7 +391,7 @@ you will generally want to use it in combination of the -clipdstlayer, -clipdstw
 <dt> <b>-clipdstlayer</b> <em>layername</em>:</dt><dd>Select the named layer from the destination clip datasource.</dd>
 <dt> <b>-clipdstwhere</b> <em>expression</em>:</dt><dd>Restrict desired geometries based on attribute query.</dd>
 <dt> <b>-wrapdateline</b>:</dt><dd> (starting with GDAL 1.7.0) split geometries crossing the dateline meridian (long. = +/- 180deg)</dd>
-<dt> <b>-datelineoffset</b>:</dt><dd> (starting with GDAL 1.10) offset from dateline in degrees (default long. = +/- 10deg, geometries within 170deg to -170deg will be splited)</dd>
+<dt> <b>-datelineoffset</b>:</dt><dd> (starting with GDAL 1.10) offset from dateline in degrees (default long. = +/- 10deg, geometries within 170deg to -170deg will be split)</dd>
 <dt> <b>-simplify</b><em> tolerance</em>:</dt><dd> (starting with GDAL 1.9.0) distance tolerance for simplification.
 Note: the algorithm used preserves topology per feature, in particular for polygon geometries, but not for a whole layer.</dd>
 <dt> <b>-segmentize</b><em> max_dist</em>:</dt><dd> (starting with GDAL 1.6.0) maximum distance between 2 nodes.
@@ -385,6 +449,9 @@ from source dataset and layers into target dataset and layers, when supported by
 output driver.</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd>(starting with GDAL 2.0)  Passes a metadata key and
 value to set on the output dataset, when supported by output driver.</dd>
+<dt> <b>-noNativeData</b>:</dt><dd>(starting with GDAL 2.1) To disable copying of
+native data, i.e. details of source format not captured by OGR abstraction, that
+are otherwise preserved by some drivers (like GeoJSON) when converting to same format.</dd>
 
 </dl>
 
@@ -398,10 +465,14 @@ This number is specified with the -gt option. For example, for SQLite, explicitl
 populating some table containing many hundredth thousand or million rows. However, note that
 if there are failed insertions, the scope of -skipfailures is a whole transaction.
 
-For PostgreSQL, the PG_USE_COPY config option can be set to YES for significantly insertion
-performance boot. See the PG driver documentation page.
+For PostgreSQL, the PG_USE_COPY config option can be set to YES for a significant insertion
+performance boost. See the PG driver documentation page.
 
 More generally, consult the documentation page of the input and output drivers for performance hints.
+
+\section ogr2ogr_api C API
+
+Starting with GDAL 2.1, this utility is also callable from C with GDALVectorTranslate().
 
 \section ogr2ogr_example EXAMPLE
 
@@ -536,10 +607,10 @@ The ogrlineref program can be used to create a linear reference - a file contain
 a segments of special length (e.g. 1 km in reference units) and get coordinates, 
 linear referenced distances or sublines (subpaths) from this file. The utility not
 required the M or Z values in geometry. The results can be stored in any OGR supported 
-format. Also some information writed to the stdout.  
+format. Also some information is written to the stdout.
 
 <dl>
-<dt><b>--help-general</b>:</dt><dd> Show the usage.</dd>
+<dt><b>\-\-help-general</b>:</dt><dd> Show the usage.</dd>
 <dt><b>-progress</b>:</dt><dd> Show progress.</dd>
 <dt><b>-quiet</b>:</dt><dd> Suppress all messages except errors and results.</dd>
 <dt><b>-f</b> <em>format_name</em>:</dt><dd> Select an output format name.
@@ -552,14 +623,14 @@ format. Also some information writed to the stdout.
 <dt> <b>-l</b><em>src_line_datasource_name</em>:</dt><dd> The path to input linestring 
     datasource (e.g. the road)</dd>
 <dt> <b>-ln</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
-<dt> <b>-lf</b><em>field_name</em>:</dt><dd> The field name of uniq values to 
+<dt> <b>-lf</b><em>field_name</em>:</dt><dd> The field name of unique values to 
     separate the input lines (e.g. the set of roads)</dd>
 <dt> <b>-p</b><em>src_repers_datasource_name</em>:</dt><dd> The path to linear 
     references points (e.g. the road mile-stones)</dd>
 <dt> <b>-pn</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
 <dt> <b>-pm</b><em>pos_field_name</em>:</dt><dd> The field name of distances 
     along path (e.g. mile-stones values)</dd>
-<dt> <b>-pf</b><em>field_name</em>:</dt><dd> The field name of uniq values to 
+<dt> <b>-pf</b><em>field_name</em>:</dt><dd> The field name of unique values to 
     map input reference points to lines</dd>
 <dt> <b>-r</b><em>src_parts_datasource_name</em>:</dt><dd> The path to linear 
     reference file</dd>
@@ -568,9 +639,9 @@ format. Also some information writed to the stdout.
     reference file (linestring datasource)</dd>
 <dt> <b>-on</b><em>layer_name</em>:</dt><dd> The layer name in datasource</dd>
 <dt> <b>-of</b><em>field_name</em>:</dt><dd> The field name for storing the 
-    uniq values of input lines</dd>
+    unique values of input lines</dd>
 <dt> <b>-s</b><em>step</em>:</dt><dd> The part size in linear units</dd>
-<dt> <b>-get_pos</b>:</dt><dd> Return linear referenced postion for input X, Y</dd>
+<dt> <b>-get_pos</b>:</dt><dd> Return linear referenced position for input X, Y</dd>
 <dt> <b>-x</b><em>long</em>:</dt><dd> Input X coordinate</dd>
 <dt> <b>-y</b><em>lat</em>:</dt><dd> Input Y coordinate</dd>
 <dt> <b>-get_coord</b>:</dt><dd> Return point on path for input linear distance</dd>

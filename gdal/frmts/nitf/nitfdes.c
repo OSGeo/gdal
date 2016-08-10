@@ -35,6 +35,8 @@
 
 CPL_CVSID("$Id$");
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 /************************************************************************/
 /*                          NITFDESAccess()                             */
 /************************************************************************/
@@ -49,7 +51,7 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
     int        nOffset;
     int        bHasDESOFLW;
     int        nDESSHL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify segment, and return existing DES accessor if there       */
 /*      is one.                                                         */
@@ -75,21 +77,19 @@ NITFDES *NITFDESAccess( NITFFile *psFile, int iSegment )
         return NULL;
     }
 
-    pachHeader = (char*) VSIMalloc(psSegInfo->nSegmentHeaderSize);
+    pachHeader = (char*) VSI_MALLOC_VERBOSE(psSegInfo->nSegmentHeaderSize);
     if (pachHeader == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate memory for segment header");
         return NULL;
     }
 
 retry:
-    if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart, 
-                  SEEK_SET ) != 0 
-        || VSIFReadL( pachHeader, 1, psSegInfo->nSegmentHeaderSize, 
+    if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart,
+                  SEEK_SET ) != 0
+        || VSIFReadL( pachHeader, 1, psSegInfo->nSegmentHeaderSize,
                      psFile->fp ) != psSegInfo->nSegmentHeaderSize )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %u byte DES subheader from " CPL_FRMT_GUIB ".",
                   psSegInfo->nSegmentHeaderSize,
                   psSegInfo->nSegmentHeaderStart );
@@ -97,9 +97,9 @@ retry:
         return NULL;
     }
 
-    if (!EQUALN(pachHeader, "DE", 2))
+    if (!STARTS_WITH_CI(pachHeader, "DE"))
     {
-        if (EQUALN(pachHeader + 4, "DERegistered", 12))
+        if (STARTS_WITH_CI(pachHeader + 4, "DERegistered"))
         {
             /* BAO_46_Ed1/rpf/conc/concz10/000fz010.ona and cie are buggy */
             CPLDebug("NITF", "Patching nSegmentHeaderStart and nSegmentStart for DE segment %d", iSegment);
@@ -161,7 +161,7 @@ retry:
     /* For NITF < 02.10, we cannot rely on DESID=TRE_OVERFLOW to detect */
     /* if DESOFLW and DESITEM are present. So if the next 4 bytes are non */
     /* numeric, we'll assume that DESOFLW is there */
-    bHasDESOFLW = EQUALN(szDESID, "TRE_OVERFLOW", strlen("TRE_OVERFLOW")) ||
+    bHasDESOFLW = STARTS_WITH_CI(szDESID, "TRE_OVERFLOW") ||
        (!((pachHeader[nOffset+0] >= '0' && pachHeader[nOffset+0] <= '9') &&
           (pachHeader[nOffset+1] >= '0' && pachHeader[nOffset+1] <= '9') &&
           (pachHeader[nOffset+2] >= '0' && pachHeader[nOffset+2] <= '9') &&
@@ -206,7 +206,7 @@ retry:
         return NULL;
     }
 
-    if (EQUALN(szDESID, "CSSHPA DES", strlen("CSSHPA DES")))
+    if (STARTS_WITH_CI(szDESID, "CSSHPA DES"))
     {
         if ( nDESSHL != 62 && nDESSHL != 80)
         {
@@ -227,7 +227,7 @@ retry:
         GetMD(  3, SHAPE3_NAME );
         GetMD(  6, SHAPE3_START );
     }
-    else if (EQUALN(szDESID, "XML_DATA_CONTENT", strlen("XML_DATA_CONTENT")))
+    else if (STARTS_WITH_CI(szDESID, "XML_DATA_CONTENT"))
     {
         /* TODO : handle nDESSHL = 0005 and 0283 */
         if (nDESSHL >= 5)
@@ -253,7 +253,7 @@ retry:
             }
         }
     }
-    else if (EQUALN(szDESID, "CSATTA DES", strlen("CSATTA DES")) && nDESSHL == 52)
+    else if (STARTS_WITH_CI(szDESID, "CSATTA DES") && nDESSHL == 52)
     {
         GetMD( 12, ATT_TYPE );
         GetMD( 14, DT_ATT );
@@ -267,8 +267,8 @@ retry:
     if ((int)psSegInfo->nSegmentHeaderSize > nOffset)
     {
         char* pszEscapedDESDATA =
-                CPLEscapeString( pachHeader + nOffset, 
-                                 (int)psSegInfo->nSegmentHeaderSize - nOffset, 
+                CPLEscapeString( pachHeader + nOffset,
+                                 (int)psSegInfo->nSegmentHeaderSize - nOffset,
                                  CPLES_BackslashQuotable );
         psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
                                                 "NITF_DESDATA",
@@ -279,27 +279,25 @@ retry:
     {
 
 #define TEN_MEGABYTES 10485760
-            
+
         if (psSegInfo->nSegmentSize > TEN_MEGABYTES)
         {
             const char* pszOffset = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentStart);
             const char* pszSize = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentSize);
-            
+
             psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
                                                     "NITF_DESDATA_OFFSET",
                                                     pszOffset );
             psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
                                                     "NITF_DESDATA_LENGTH",
                                                     pszSize);
-            
         }
         else
         {
-            char* pachData = (char*)VSIMalloc((size_t)psSegInfo->nSegmentSize);
+            char* pachData = (char*)VSI_MALLOC_VERBOSE((size_t)psSegInfo->nSegmentSize);
             if (pachData == NULL )
             {
-                CPLDebug("NITF", "Cannot allocate " CPL_FRMT_GUIB " bytes DES data",
-                         psSegInfo->nSegmentSize);
+                /* nothing */
             }
             else if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart,
                         SEEK_SET ) != 0
@@ -321,14 +319,13 @@ retry:
                                                         "NITF_DESDATA",
                                                         pszEscapedDESDATA );
                 CPLFree(pszEscapedDESDATA);
-                
             }
             CPLFree(pachData);
         }
 
 #ifdef notdef
         /* Disabled because might generate a huge amount of elements */
-        if (EQUALN(szDESID, "CSATTA DES", strlen("CSATTA DES")))
+        if (STARTS_WITH_CI(szDESID, "CSATTA DES"))
         {
             int nNumAtt = atoi(CSLFetchNameValueDef(psDES->papszMetadata, "NITF_NUM_ATT", "0"));
             if (nNumAtt * 8 * 4 == psSegInfo->nSegmentSize)
@@ -360,7 +357,6 @@ retry:
         }
 #endif
 
-        
     }
 
     return psDES;
@@ -432,14 +428,13 @@ int   NITFDESGetTRE( NITFDES* psDES,
     if ((size_t)nOffset >= psSegInfo->nSegmentSize)
         return FALSE;
 
-    VSIFSeekL(fp, psSegInfo->nSegmentStart + nOffset, SEEK_SET);
-
-    if (VSIFReadL(szTREHeader, 1, 11, fp) != 11)
+    if( VSIFSeekL(fp, psSegInfo->nSegmentStart + nOffset, SEEK_SET) != 0 ||
+        VSIFReadL(szTREHeader, 1, 11, fp) != 11)
     {
-        /* Some files have a nSegmentSize larger than what is is in reality */
-        /* So exit silently if we're at end of file */ 
-        VSIFSeekL(fp, 0, SEEK_END);
-        if (VSIFTellL(fp) == psSegInfo->nSegmentStart + nOffset)
+        /* Some files have a nSegmentSize larger than what it is in reality */
+        /* So exit silently if we're at end of file */
+        if( VSIFSeekL(fp, 0, SEEK_END) != 0 ||
+            VSIFTellL(fp) == psSegInfo->nSegmentStart + nOffset)
             return FALSE;
 
         CPLError(CE_Failure, CPLE_FileIO,
@@ -472,12 +467,9 @@ int   NITFDESGetTRE( NITFDES* psDES,
     if (ppabyTREData)
     {
         /* Allocate one extra byte for the NULL terminating character */
-        *ppabyTREData = (char*) VSIMalloc(nTRESize + 1);
+        *ppabyTREData = (char*) VSI_MALLOC_VERBOSE(nTRESize + 1);
         if (*ppabyTREData  == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                    "Cannot allocate %d bytes for TRE %s",
-                    nTRESize, szTRETempName);
             return FALSE;
         }
         (*ppabyTREData)[nTRESize] = '\0';
@@ -521,6 +513,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
     int anOffset[4];
     int iShpFile;
     char* pszFilename;
+    size_t nFilenameLen;
 
     if ( CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE_USE") == NULL )
         return FALSE;
@@ -547,7 +540,8 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
             return FALSE;
     }
 
-    pszFilename = (char*) VSIMalloc(strlen(pszRadixFileName) + 4 + 1);
+    nFilenameLen = strlen(pszRadixFileName) + 4 + 1;
+    pszFilename = (char*) VSI_MALLOC_VERBOSE(nFilenameLen);
     if (pszFilename == NULL)
         return FALSE;
 
@@ -557,22 +551,22 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
         GByte* pabyBuffer;
         int nSize = anOffset[iShpFile+1] - anOffset[iShpFile];
 
-        pabyBuffer = (GByte*) VSIMalloc(nSize);
+        pabyBuffer = (GByte*) VSI_MALLOC_VERBOSE(nSize);
         if (pabyBuffer == NULL)
         {
             VSIFree(pszFilename);
             return FALSE;
         }
 
-        VSIFSeekL(psDES->psFile->fp, psSegInfo->nSegmentStart + anOffset[iShpFile], SEEK_SET);
-        if (VSIFReadL(pabyBuffer, 1, nSize, psDES->psFile->fp) != (size_t)nSize)
+        if( VSIFSeekL(psDES->psFile->fp, psSegInfo->nSegmentStart + anOffset[iShpFile], SEEK_SET) != 0 ||
+            VSIFReadL(pabyBuffer, 1, nSize, psDES->psFile->fp) != (size_t)nSize)
         {
             VSIFree(pabyBuffer);
             VSIFree(pszFilename);
             return FALSE;
         }
 
-        sprintf(pszFilename, "%s.%s", pszRadixFileName, apszExt[iShpFile]);
+        snprintf(pszFilename, nFilenameLen, "%s.%s", pszRadixFileName, apszExt[iShpFile]);
         fp = VSIFOpenL(pszFilename, "wb");
         if (fp == NULL)
         {
@@ -581,8 +575,14 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
             return FALSE;
         }
 
-        VSIFWriteL(pabyBuffer, 1, nSize, fp);
-        VSIFCloseL(fp);
+        if( (int) VSIFWriteL(pabyBuffer, 1, nSize, fp) != nSize )
+        {
+            CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
+            VSIFree(pabyBuffer);
+            VSIFree(pszFilename);
+            return FALSE;
+        }
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         VSIFree(pabyBuffer);
     }
 

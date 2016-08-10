@@ -15,21 +15,21 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_ATOMIC_OPS_INCLUDED
-#define _CPL_ATOMIC_OPS_INCLUDED
+#ifndef CPL_ATOMIC_OPS_INCLUDED
+#define CPL_ATOMIC_OPS_INCLUDED
 
 #include "cpl_port.h"
 
@@ -51,7 +51,7 @@ CPL_C_START
   * supported by GCC 4.1 or higher. For other platforms supporting
   * the pthread library, and when GDAL is configured with thread-support,
   * the atomicity will be done with a mutex, but with
-  * reduced efficiently. For the remaining platforms, a simple addition
+  * reduced efficiency. For the remaining platforms, a simple addition
   * with no locking will be done...
   *
   * @param ptr a pointer to an integer to increment
@@ -67,7 +67,7 @@ int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
   *      operation
   *
   * @param ptr a pointer to an integer to increment
-  * @return the pointed value AFTER the opeation: *ptr + 1
+  * @return the pointed value AFTER the operation: *ptr + 1
   */
 #define CPLAtomicInc(ptr) CPLAtomicAdd(ptr, 1)
 
@@ -78,7 +78,7 @@ int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
   *      operation
   *
   * @param ptr a pointer to an integer to decrement
-  * @return the pointed value AFTER the opeation: *ptr - 1
+  * @return the pointed value AFTER the operation: *ptr - 1
   */
 #define CPLAtomicDec(ptr) CPLAtomicAdd(ptr, -1)
 
@@ -91,8 +91,8 @@ int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
   * supported by GCC 4.1 or higher. For other platforms supporting
   * the pthread library, and when GDAL is configured with thread-support,
   * the atomicity will be done with a mutex, but with
-  * reduced efficiently. For the remaining platforms, a simple addition
-  * with no locking will be done...
+  * reduced efficiency. For the remaining platforms, a simple compare and
+  * exchange with no locking will be done...
   *
   * @param ptr a pointer to an integer (aligned on 32bit boundary).
   * @param oldval old value
@@ -103,4 +103,4 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval);
 
 CPL_C_END
 
-#endif /* _CPL_ATOMIC_OPS_INCLUDED */
+#endif /* CPL_ATOMIC_OPS_INCLUDED */

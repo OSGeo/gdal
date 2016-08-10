@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.31 2010-01-07 20:39:12 aboudreault Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -18,16 +17,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -60,7 +59,7 @@
  * (MITAB bug 1737, GDAL ticket 1678))
  *
  * Revision 1.23  2007/06/12 14:43:19  dmorissette
- * Use iswspace instead of sispace in IMapInfoFile::SmartOpen() (bug 1737)
+ * Use iswspace instead of ispace in IMapInfoFile::SmartOpen() (bug 1737)
  *
  * Revision 1.22  2007/06/12 13:52:37  dmorissette
  * Added IMapInfoFile::SetCharset() method (bug 1734)
@@ -141,6 +140,8 @@
 #  include <wctype.h>      /* iswspace() */
 #endif
 
+CPL_CVSID("$Id$");
+
 /**********************************************************************
  *                   IMapInfoFile::IMapInfoFile()
  *
@@ -182,9 +183,9 @@ IMapInfoFile::~IMapInfoFile()
 int IMapInfoFile::Open(const char *pszFname, const char* pszAccess,
                        GBool bTestOpenNoError)
 {
-    if( EQUALN(pszAccess, "r", 1) )
+    if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, bTestOpenNoError);
-    else if( EQUALN(pszAccess, "w", 1) )
+    else if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite, bTestOpenNoError);
     else
     {
@@ -214,7 +215,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
     int nLen = 0;
 
     if (pszFname)
-        nLen = strlen(pszFname);
+        nLen = static_cast<int>(strlen(pszFname));
 
     if (nLen > 4 && (EQUAL(pszFname + nLen-4, ".MIF") ||
                      EQUAL(pszFname + nLen-4, ".MID") ) )
@@ -230,21 +231,20 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
          * .TAB file ... is it a TABFileView or a TABFile?
          * We have to read the .tab header to find out.
          *------------------------------------------------------------*/
-        VSILFILE *fp;
-        const char *pszLine;
         char *pszAdjFname = CPLStrdup(pszFname);
         GBool bFoundFields = FALSE, bFoundView=FALSE, bFoundSeamless=FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
-        fp = VSIFOpenL(pszAdjFname, "r");
+        VSILFILE *fp = VSIFOpenL(pszAdjFname, "r");
+        const char *pszLine = NULL;
         while(fp && (pszLine = CPLReadLineL(fp)) != NULL)
         {
             while (isspace((unsigned char)*pszLine))  pszLine++;
-            if (EQUALN(pszLine, "Fields", 6))
+            if (STARTS_WITH_CI(pszLine, "Fields"))
                 bFoundFields = TRUE;
-            else if (EQUALN(pszLine, "create view", 11))
+            else if (STARTS_WITH_CI(pszLine, "create view"))
                 bFoundView = TRUE;
-            else if (EQUALN(pszLine, "\"\\IsSeamless\" = \"TRUE\"", 21))
+            else if (STARTS_WITH_CI(pszLine, "\"\\IsSeamless\" = \"TRUE\""))
                 bFoundSeamless = TRUE;
         }
 
@@ -285,17 +285,16 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
  *                   IMapInfoFile::GetNextFeature()
  *
  * Standard OGR GetNextFeature implementation.  This method is used
- * to retreive the next OGRFeature.
+ * to retrieve the next OGRFeature.
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetNextFeature()
 {
-    OGRFeature *poFeatureRef;
-    OGRGeometry *poGeom;
-    GIntBig nFeatureId;
+    GIntBig nFeatureId = 0;
 
     while( (nFeatureId = GetNextFeatureId(m_nCurFeatureId)) != -1 )
     {
-        poFeatureRef = GetFeatureRef(nFeatureId);
+        OGRGeometry *poGeom = NULL;
+        OGRFeature *poFeatureRef = GetFeatureRef(nFeatureId);
         if (poFeatureRef == NULL)
             return NULL;
         else if( (m_poFilterGeom == NULL ||
@@ -306,7 +305,7 @@ OGRFeature *IMapInfoFile::GetNextFeature()
         {
             // Avoid cloning feature... return the copy owned by the class
             CPLAssert(poFeatureRef == m_poCurFeature);
-            m_poCurFeature = NULL;  
+            m_poCurFeature = NULL;
             if( poFeatureRef->GetGeometryRef() != NULL )
                 poFeatureRef->GetGeometryRef()->assignSpatialReference(GetSpatialRef());
             return poFeatureRef;
@@ -318,13 +317,13 @@ OGRFeature *IMapInfoFile::GetNextFeature()
 /**********************************************************************
  *                   IMapInfoFile::CreateTABFeature()
  *
- * Instanciate a TABFeature* from a OGRFeature* (or NULL on error)
+ * Instantiate a TABFeature* from a OGRFeature* (or NULL on error)
  **********************************************************************/
 
 TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
 {
-    TABFeature *poTABFeature;
-    OGRGeometry   *poGeom;
+    TABFeature *poTABFeature = NULL;
+    OGRGeometry   *poGeom = NULL;
     OGRwkbGeometryType eGType;
     TABPoint *poTABPointFeature = NULL;
     TABRegion *poTABRegionFeature = NULL;
@@ -411,20 +410,20 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
        *------------------------------------------------------------*/
       case wkbUnknown:
       default:
-         poTABFeature = new TABFeature(poFeature->GetDefnRef()); 
+         poTABFeature = new TABFeature(poFeature->GetDefnRef());
         break;
     }
 
     if( poGeom != NULL )
         poTABFeature->SetGeometryDirectly(poGeom->clone());
-    
+
     for (int i=0; i< poFeature->GetDefnRef()->GetFieldCount();i++)
     {
         poTABFeature->SetField(i,poFeature->GetRawFieldRef( i ));
     }
-    
+
     poTABFeature->SetFID(poFeature->GetFID());
-    
+
     return poTABFeature;
 }
 
@@ -432,23 +431,20 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
  *                   IMapInfoFile::ICreateFeature()
  *
  * Standard OGR CreateFeature implementation.  This method is used
- * to create a new feature in current dataset 
+ * to create a new feature in current dataset
  **********************************************************************/
 OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
 {
-    TABFeature *poTABFeature;
-    OGRErr  eErr;
-
-    poTABFeature = CreateTABFeature(poFeature);
+    TABFeature *poTABFeature = CreateTABFeature(poFeature);
     if( poTABFeature == NULL ) /* MultiGeometry */
         return OGRERR_NONE;
 
-    eErr = CreateFeature(poTABFeature);
+    OGRErr eErr = CreateFeature(poTABFeature);
     if( eErr == OGRERR_NONE )
         poFeature->SetFID(poTABFeature->GetFID());
 
     delete poTABFeature;
-    
+
     return eErr;
 }
 
@@ -456,21 +452,19 @@ OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
  *                   IMapInfoFile::GetFeature()
  *
  * Standard OGR GetFeature implementation.  This method is used
- * to get the wanted (nFeatureId) feature, a NULL value will be 
+ * to get the wanted (nFeatureId) feature, a NULL value will be
  * returned on error.
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
 {
-    OGRFeature *poFeatureRef;
-    
     /*fprintf(stderr, "GetFeature(%ld)\n", nFeatureId);*/
 
-    poFeatureRef = GetFeatureRef(nFeatureId);
+    OGRFeature *poFeatureRef = GetFeatureRef(nFeatureId);
     if (poFeatureRef)
     {
         // Avoid cloning feature... return the copy owned by the class
         CPLAssert(poFeatureRef == m_poCurFeature);
-        m_poCurFeature = NULL;  
+        m_poCurFeature = NULL;
 
         return poFeatureRef;
     }
@@ -486,10 +480,12 @@ OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
 
 int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
                               TABFieldType* peTABType,
-                              int *pnWidth)
+                              int *pnWidth,
+                              int *pnPrecision)
 {
     TABFieldType        eTABType;
     int                 nWidth = poField->GetWidth();
+    int                 nPrecision = poField->GetPrecision();
 
     if( poField->GetType() == OFTInteger )
     {
@@ -507,6 +503,21 @@ int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
         else
         {
             eTABType = TABFDecimal;
+            // Enforce Mapinfo limits, otherwise MapInfo will crash (#6392)
+            if( nWidth > 20 || nWidth - nPrecision < 2 || nPrecision > 16 )
+            {
+                if( nWidth > 20 )
+                    nWidth = 20;
+                if( nWidth - nPrecision < 2 )
+                    nPrecision = nWidth - 2;
+                if( nPrecision > 16 )
+                    nPrecision = 16;
+                CPLDebug( "MITAB",
+                          "Adjusting initial width,precision of %s from %d,%d to %d,%d",
+                          poField->GetNameRef(),
+                          poField->GetWidth(), poField->GetPrecision(),
+                          nWidth, nPrecision );
+            }
         }
     }
     else if( poField->GetType() == OFTDate )
@@ -548,6 +559,7 @@ int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
 
     *peTABType = eTABType;
     *pnWidth = nWidth;
+    *pnPrecision = nPrecision;
 
     return 0;
 }
@@ -563,12 +575,13 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 {
     TABFieldType        eTABType;
     int                 nWidth;
+    int                 nPrecision;
 
-    if( GetTABType( poField, &eTABType, &nWidth ) < 0 )
+    if( GetTABType( poField, &eTABType, &nWidth, &nPrecision ) < 0 )
         return OGRERR_FAILURE;
 
     if( AddFieldNative( poField->GetNameRef(), eTABType,
-                        nWidth, poField->GetPrecision(), FALSE, FALSE, bApproxOK ) > -1 )
+                        nWidth, nPrecision, FALSE, FALSE, bApproxOK ) > -1 )
         return OGRERR_NONE;
     else
         return OGRERR_FAILURE;
@@ -578,7 +591,7 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 /**********************************************************************
  *                   IMapInfoFile::SetCharset()
  *
- * Set the charset for the tab header. 
+ * Set the charset for the tab header.
  *
  *
  * Returns 0 on success, -1 on error.
@@ -593,4 +606,3 @@ int IMapInfoFile::SetCharset(const char* pszCharset)
     }
     return -1;
 }
-

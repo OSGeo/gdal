@@ -1,5 +1,4 @@
 /* ****************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Example program dumping data in 8211 data to stdout.
@@ -85,8 +84,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Loop reading records till there are none left.                  */
 /* -------------------------------------------------------------------- */
-    DDFRecord   *poRecord;
-    int         iRecord = 0;
+    DDFRecord *poRecord = NULL;
+    int iRecord = 0;
 
     while( (poRecord = oModule.ReadRecord()) != NULL )
     {
@@ -114,8 +113,6 @@ int main( int nArgc, char ** papszArgv )
 static void ViewRecordField( DDFField * poField )
 
 {
-    int         nBytesRemaining;
-    const char  *pachFieldData;
     DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
 
     // Report general information about the field.
@@ -125,32 +122,26 @@ static void ViewRecordField( DDFField * poField )
     // Get pointer to this fields raw data.  We will move through
     // it consuming data as we report subfield values.
 
-    pachFieldData = poField->GetData();
-    nBytesRemaining = poField->GetDataSize();
+    const char  *pachFieldData = poField->GetData();
+    int nBytesRemaining = poField->GetDataSize();
 
     /* -------------------------------------------------------- */
     /*      Loop over the repeat count for this fields          */
     /*      subfields.  The repeat count will almost            */
     /*      always be one.                                      */
     /* -------------------------------------------------------- */
-    int         iRepeat;
-
-    for( iRepeat = 0; iRepeat < poField->GetRepeatCount(); iRepeat++ )
+    for( int iRepeat = 0; iRepeat < poField->GetRepeatCount(); iRepeat++ )
     {
 
         /* -------------------------------------------------------- */
         /*   Loop over all the subfields of this field, advancing   */
         /*   the data pointer as we consume data.                   */
         /* -------------------------------------------------------- */
-        int     iSF;
-
-        for( iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
+        for( int iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield( iSF );
-            int         nBytesConsumed;
-
-            nBytesConsumed = ViewSubfield( poSFDefn, pachFieldData,
-                                           nBytesRemaining );
+            int nBytesConsumed =
+                ViewSubfield( poSFDefn, pachFieldData, nBytesRemaining );
 
             nBytesRemaining -= nBytesConsumed;
             pachFieldData += nBytesConsumed;

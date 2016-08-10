@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Implements OGRODBCLayer class, code shared between 
+ * Purpose:  Implements OGRODBCLayer class, code shared between
  *           the direct table access, and the generic SQL results.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -53,7 +52,8 @@ OGRODBCLayer::OGRODBCLayer()
     iNextShapeId = 0;
 
     poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet. 
+    nSRSId = -2; // we haven't even queried the database for it yet.
+    poFeatureDefn = NULL;
 }
 
 /************************************************************************/
@@ -66,7 +66,7 @@ OGRODBCLayer::~OGRODBCLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "OGR_ODBC", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -99,13 +99,13 @@ OGRODBCLayer::~OGRODBCLayer()
 /*      set on a statement.  Sift out geometry and FID fields.          */
 /************************************************************************/
 
-CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName, 
-                                    CPLODBCStatement *poStmt )
+CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
+                                    CPLODBCStatement *poStmtIn )
 
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
-    int    nRawColumns = poStmt->GetColCount();
+    int    nRawColumns = poStmtIn->GetColCount();
 
     poFeatureDefn->Reference();
 
@@ -113,15 +113,15 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
 
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
-        OGRFieldDefn    oField( poStmt->GetColName(iCol), OFTString );
+        OGRFieldDefn    oField( poStmtIn->GetColName(iCol), OFTString );
 
-        oField.SetWidth( MAX(0,poStmt->GetColSize( iCol )) );
+        oField.SetWidth( MAX(0,poStmtIn->GetColSize( iCol )) );
 
-        if( pszGeomColumn != NULL 
-            && EQUAL(poStmt->GetColName(iCol),pszGeomColumn) )
+        if( pszGeomColumn != NULL
+            && EQUAL(poStmtIn->GetColName(iCol),pszGeomColumn) )
             continue;
 
-        switch( CPLODBCStatement::GetTypeMapping(poStmt->GetColType(iCol)) )
+        switch( CPLODBCStatement::GetTypeMapping(poStmtIn->GetColType(iCol)) )
         {
             case SQL_C_SSHORT:
             case SQL_C_USHORT:
@@ -141,7 +141,7 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
 
             case SQL_C_NUMERIC:
                 oField.SetType( OFTReal );
-                oField.SetPrecision( poStmt->GetColPrecision(iCol) );
+                oField.SetPrecision( poStmtIn->GetColPrecision(iCol) );
                 break;
 
             case SQL_C_FLOAT:
@@ -209,7 +209,7 @@ void OGRODBCLayer::ResetReading()
 OGRFeature *OGRODBCLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    while( true )
     {
         OGRFeature      *poFeature;
 
@@ -250,11 +250,10 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
-    int         iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     if( pszFIDColumn != NULL && poStmt->GetColId(pszFIDColumn) > -1 )
-        poFeature->SetFID( 
+        poFeature->SetFID(
             atoi(poStmt->GetColData(poStmt->GetColId(pszFIDColumn))) );
     else
         poFeature->SetFID( iNextShapeId );
@@ -265,7 +264,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Set the fields.                                                 */
 /* -------------------------------------------------------------------- */
-    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         int iSrcField = panFieldOrdinals[iField]-1;
         const char *pszValue = poStmt->GetColData( iSrcField );
@@ -273,7 +272,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
         if( pszValue == NULL )
             /* no value */;
         else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
-            poFeature->SetField( iField, 
+            poFeature->SetField( iField,
                                  poStmt->GetColDataLength(iSrcField),
                                  (GByte *) pszValue );
         else
@@ -304,7 +303,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
                 OGRGeometryFactory::createFromWkb((unsigned char *) pszGeomText,
                                                   NULL, &poGeom, nLength);
         }
-        
+
         if ( eErr != OGRERR_NONE )
         {
             const char *pszMessage;

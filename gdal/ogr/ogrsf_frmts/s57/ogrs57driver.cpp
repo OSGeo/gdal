@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  S-57 Translator
  * Purpose:  Implements OGRS57Driver
@@ -41,10 +40,7 @@ static CPLMutex* hS57RegistrarMutex = NULL;
 /*                            OGRS57Driver()                            */
 /************************************************************************/
 
-OGRS57Driver::OGRS57Driver()
-
-{
-}
+OGRS57Driver::OGRS57Driver() {}
 
 /************************************************************************/
 /*                           ~OGRS57Driver()                            */
@@ -74,14 +70,14 @@ static int OGRS57DriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes < 10 )
-        return FALSE;
-    const char* pachLeader = (const char* )poOpenInfo->pabyHeader;
+        return false;
+    const char* pachLeader = reinterpret_cast<char *>( poOpenInfo->pabyHeader );
     if( (pachLeader[5] != '1' && pachLeader[5] != '2'
                 && pachLeader[5] != '3' )
             || pachLeader[6] != 'L'
             || (pachLeader[8] != '1' && pachLeader[8] != ' ') )
     {
-        return FALSE;
+        return false;
     }
     return strstr( pachLeader, "DSID") != NULL;
 }
@@ -93,7 +89,6 @@ static int OGRS57DriverIdentify( GDALOpenInfo* poOpenInfo )
 GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
 
 {
-
     if( !OGRS57DriverIdentify(poOpenInfo) )
         return NULL;
 
@@ -120,21 +115,19 @@ GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 GDALDataset *OGRS57Driver::Create( const char * pszName,
-                                   CPL_UNUSED int nBands,
-                                   CPL_UNUSED int nXSize,
-                                   CPL_UNUSED int nYSize,
-                                   CPL_UNUSED GDALDataType eDT,
+                                   int /* nBands */,
+                                   int /* nXSize */,
+                                   int /* nYSize */,
+                                   GDALDataType /* eDT */,
                                    char **papszOptions )
 {
     OGRS57DataSource *poDS = new OGRS57DataSource();
 
     if( poDS->Create( pszName, papszOptions ) )
         return poDS;
-    else
-    {
-        delete poDS;
-        return NULL;
-    }
+
+    delete poDS;
+    return NULL;
 }
 
 /************************************************************************/
@@ -177,11 +170,9 @@ void RegisterOGRS57()
 
     poDriver->SetDescription( "S57" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "IHO S-57 (ENC)" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "IHO S-57 (ENC)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "000" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drv_s57.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_s57.html" );
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -195,7 +186,7 @@ void RegisterOGRS57()
         "  <Option name='" S57O_RETURN_PRIMITIVES "' type='boolean' description='Should all the low level geometry primitives be returned as special IsolatedNode, ConnectedNode, Edge and Face layers' default='NO'/>"
         "  <Option name='" S57O_PRESERVE_EMPTY_NUMBERS "' type='boolean' description='If enabled, numeric attributes assigned an empty string as a value will be preserved as a special numeric value' default='NO'/>"
         "  <Option name='" S57O_LNAM_REFS "' type='boolean' description='Should LNAM and LNAM_REFS fields be attached to features capturing the feature to feature relationships in the FFPT group of the S-57 file' default='YES'/>"
-        "  <Option name='" S57O_RETURN_LINKAGES "' type='boolean' description='Should additional attributes relating features to their underlying geometric primtives be attached' default='NO'/>"
+        "  <Option name='" S57O_RETURN_LINKAGES "' type='boolean' description='Should additional attributes relating features to their underlying geometric primitives be attached' default='NO'/>"
         "  <Option name='" S57O_RECODE_BY_DSSI "' type='boolean' description='Should attribute values be recoded to UTF-8 from the character encoding specified in the S57 DSSI record.' default='NO'/>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(

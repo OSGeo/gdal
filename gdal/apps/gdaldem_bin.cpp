@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL DEM Utilities
- * Purpose:  
+ * Purpose:
  * Authors:  Even Rouault, <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
@@ -148,6 +147,7 @@ int main( int argc, char ** argv )
     {
         printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                 argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+        CSLDestroy( argv );
         return 0;
     }
     else if( EQUAL(argv[1],"--help") )
@@ -185,7 +185,7 @@ int main( int argc, char ** argv )
 
     // Open Dataset and get raster band
     GDALDatasetH hSrcDataset = GDALOpen( psOptionsForBinary->pszSrcFilename, GA_ReadOnly );
-    
+
     if( hSrcDataset == NULL )
     {
         fprintf( stderr,
@@ -203,7 +203,7 @@ int main( int argc, char ** argv )
     if(bUsageError == TRUE)
         Usage();
     int nRetCode = (hOutDS) ? 0 : 1;
-    
+
     GDALClose(hSrcDataset);
     GDALClose(hOutDS);
     GDALDEMProcessingOptionsFree(psOptions);

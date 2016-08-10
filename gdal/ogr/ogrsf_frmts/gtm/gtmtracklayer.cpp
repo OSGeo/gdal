@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTM Driver
  * Purpose:  Implementation of GTMTrackLayer class.
@@ -29,10 +28,11 @@
  ****************************************************************************/
 #include "ogr_gtm.h"
 
+CPL_CVSID("$Id$");
 
-GTMTrackLayer::GTMTrackLayer( const char* pszName,
-                              OGRSpatialReference* poSRSIn,
-                              CPL_UNUSED int bWriterIn,
+GTMTrackLayer::GTMTrackLayer( const char* pszNameIn,
+                              OGRSpatialReference *poSRSIn,
+                              int /* bWriterIn */,
                               OGRGTMDataSource* poDSIn )
 {
     poCT = NULL;
@@ -41,7 +41,7 @@ GTMTrackLayer::GTMTrackLayer( const char* pszName,
        formats. */
     if( poSRSIn != NULL )
     {
-        poSRS = new OGRSpatialReference(NULL);   
+        poSRS = new OGRSpatialReference(NULL);
         poSRS->SetWellKnownGeogCS( "WGS84" );
         if (!poSRS->IsSame(poSRSIn))
         {
@@ -55,16 +55,19 @@ GTMTrackLayer::GTMTrackLayer( const char* pszName,
                 poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
 
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to create coordinate transformation between the\n"
-                          "input coordinate system and WGS84.  This may be because they\n"
-                          "are not transformable, or because projection services\n"
-                          "(PROJ.4 DLL/.so) could not be loaded.\n" 
+                          "Failed to create coordinate transformation between "
+                          "the\n"
+                          "input coordinate system and WGS84.  This may be "
+                          "because they\n"
+                          "are not transformable, or because projection "
+                          "services\n"
+                          "(PROJ.4 DLL/.so) could not be loaded.\n"
                           "This message will not be issued any more. \n"
-                          "\nSource:\n%s\n", 
+                          "\nSource:\n%s",
                           pszWKT );
 
                 CPLFree( pszWKT );
-                poDSIn->issuedFirstCTError(); 
+                poDSIn->issuedFirstCTError();
             }
         }
     }
@@ -77,6 +80,8 @@ GTMTrackLayer::GTMTrackLayer( const char* pszName,
 
     nNextFID = 0;
     nTotalFCount = poDS->getNTracks();
+
+    pszName = CPLStrdup(pszNameIn);
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );
@@ -95,14 +100,13 @@ GTMTrackLayer::GTMTrackLayer( const char* pszName,
 
     OGRFieldDefn oFieldColor( "color", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oFieldColor );
-  
-    this->pszName = CPLStrdup(pszName);
+
 }
 
 GTMTrackLayer::~GTMTrackLayer()
 {
-    /* poDS, poSRS, poCT, pszName, and poFeatureDefn are released on
-       parent class*/
+    /* poDS, poSRS, poCT, pszName, and poFeatureDefn are released in
+       parent class */
 }
 
 
@@ -119,15 +123,15 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
         if( poFeature->IsFieldSet( i ) )
         {
-            const char* pszName = poFieldDefn->GetNameRef();
+            const char* l_pszName = poFieldDefn->GetNameRef();
             /* track name */
-            if (strncmp(pszName, "name", 4) == 0)
+            if (STARTS_WITH(l_pszName, "name"))
             {
                 CPLFree(psztrackname);
                 psztrackname = CPLStrdup( poFeature->GetFieldAsString( i ) );
             }
             /* track type */
-            else if (strncmp(pszName, "type", 4) == 0)
+            else if (STARTS_WITH(l_pszName, "type"))
             {
                 type = poFeature->GetFieldAsInteger( i );
                 // Check if it is a valid type
@@ -135,7 +139,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                     type = 1;
             }
             /* track color */
-            else if (strncmp(pszName, "color", 5) == 0)
+            else if (STARTS_WITH(l_pszName, "color"))
             {
                 color = (unsigned int) poFeature->GetFieldAsInteger( i );
                 if (color > 0xFFFFFF)
@@ -147,9 +151,9 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     if (psztrackname == NULL)
         psztrackname = CPLStrdup( "" );
 
-    const int trackNameLength = strlen(psztrackname);
+    const size_t trackNameLength = strlen(psztrackname);
 
-    const int bufferSize = 14 + trackNameLength;
+    const size_t bufferSize = 14 + trackNameLength;
     void* pBuffer = CPLMalloc(bufferSize);
     void* pBufferAux = pBuffer;
     /* Write track string name size to buffer */
@@ -189,23 +193,24 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
 /************************************************************************/
 /*                          WriteTrackpoint()                           */
 /************************************************************************/
-inline void GTMTrackLayer::WriteTrackpoint( double lat, double lon, float altitude, bool start )
+inline void GTMTrackLayer::WriteTrackpoint( double lat, double lon,
+                                            float altitude, bool start )
 {
     void* pBuffer = CPLMalloc(25);
     void* pBufferAux = pBuffer;
-    //latitude
+    // latitude
     appendDouble(pBufferAux, lat);
-    pBufferAux = (char*)pBufferAux + 8; 
-    //longitude
+    pBufferAux = (char*)pBufferAux + 8;
+    // longitude
     appendDouble(pBufferAux, lon);
-    pBufferAux = (char*)pBufferAux + 8; 
-    //date
+    pBufferAux = (char*)pBufferAux + 8;
+    // date
     appendInt(pBufferAux, 0);
-    pBufferAux = (char*)pBufferAux + 4; 
-    //start
-    appendUChar(pBufferAux, start);
-    pBufferAux = (char*)pBufferAux + 1; 
-    //altitude
+    pBufferAux = (char*)pBufferAux + 4;
+    // start
+    appendUChar(pBufferAux, static_cast<int>(start));
+    pBufferAux = (char*)pBufferAux + 1;
+    // altitude
     appendFloat(pBufferAux, altitude);
     VSIFWriteL(pBuffer, 25, 1, poDS->getTmpTrackpointsFP());
     poDS->incNumTrackpoints();
@@ -229,24 +234,25 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     if ( poGeom == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Features without geometry not supported by GTM writer in track layer." );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Features without geometry not supported by GTM writer in "
+                  "track layer." );
         return OGRERR_FAILURE;
     }
-   
+
     if (NULL != poCT)
     {
         poGeom = poGeom->clone();
         poGeom->transform( poCT );
     }
-    
+
     switch( poGeom->getGeometryType() )
     {
     case wkbLineString:
     case wkbLineString25D:
     {
         WriteFeatureAttributes(poFeature);
-        OGRLineString* line = (OGRLineString*)poGeom;
+        OGRLineString* line = reinterpret_cast<OGRLineString *>(poGeom);
         for(int i = 0; i < line->getNumPoints(); ++i)
         {
             double lat = line->getY(i);
@@ -255,7 +261,7 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
             CheckAndFixCoordinatesValidity(lat, lon);
             poDS->checkBounds((float)lat, (float)lon);
             if (line->getGeometryType() == wkbLineString25D)
-	      altitude = (float)line->getZ(i);
+                altitude = static_cast<float>(line->getZ(i));
             WriteTrackpoint( lat, lon, altitude, i==0 );
         }
         break;
@@ -277,13 +283,13 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
                 float altitude = 0;
                 CheckAndFixCoordinatesValidity(lat, lon);
                 if (line->getGeometryType() == wkbLineString25D)
-		  altitude = (float) line->getZ(i);
+                    altitude = static_cast<float>(line->getZ(i));
                 WriteTrackpoint( lat, lon, altitude, i==0 );
             }
         }
         break;
     }
-    
+
     default:
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -294,7 +300,7 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
         return OGRERR_FAILURE;
     }
     }
-    
+
     if (NULL != poCT)
         delete poGeom;
 
@@ -304,9 +310,9 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
 
 OGRFeature* GTMTrackLayer::GetNextFeature()
 {
-    if (bError)
+    if( bError )
         return NULL;
-        
+
     while (poDS->hasNextTrack())
     {
         Track* poTrack = poDS->fetchNextTrack();
@@ -314,16 +320,16 @@ OGRFeature* GTMTrackLayer::GetNextFeature()
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not read track. File probably corrupted");
-            bError = TRUE;
+            bError = true;
             return NULL;
         }
         OGRFeature* poFeature = new OGRFeature( poFeatureDefn );
         OGRLineString* lineString = new OGRLineString ();
-    
+
         for (int i = 0; i < poTrack->getNumPoints(); ++i)
         {
             const TrackPoint* psTrackPoint = poTrack->getPoint(i);
-            lineString->addPoint(psTrackPoint->x, 
+            lineString->addPoint(psTrackPoint->x,
                                  psTrackPoint->y);
         }
         if (poSRS)
@@ -350,7 +356,7 @@ GIntBig GTMTrackLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
         return poDS->getNTracks();
-        
+
     return OGRLayer::GetFeatureCount(bForce);
 }
 

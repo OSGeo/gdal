@@ -10,7 +10,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //   PRGMMR: Gilbert          ORG: W/NP11    DATE: 2000-06-21
 //
 // ABSTRACT: This subroutine packs up a data field using a complex
-//   packing algorithm as defined in the GRIB2 documention.  It
+//   packing algorithm as defined in the GRIB2 documentation.  It
 //   supports GRIB2 complex packing templates with or without
 //   spatial differences (i.e. DRTs 5.2 and 5.3).
 //   It also fills in GRIB2 Data Representation Template 5.2 or 5.3 
@@ -66,7 +66,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 
       g2int  *ifld, *ifldmiss, *jfld;
       g2int  *jmin, *jmax, *lbit;
-      static g2int zero=0;
+      const g2int zero=0;
       g2int  *gref, *gwidth, *glen;
       g2int  glength, grpwidth;
       g2int  i, n, iofst, imin, ival1, ival2, isd, minsd, nbitsd = 0;
@@ -77,9 +77,9 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
       g2int  imax, lg, mtemp, ier, igmax;
       g2int  kfildo, minpk, inc, maxgrps, ibit, jbit, kbit, novref, lbitref;
       g2float  rmissp, rmisss, bscale, dscale, rmin, temp;
-      static g2int simple_alg = 0;
-      static g2float alog2=0.69314718;       //  ln(2.0)
-      static g2int one=1;
+      const g2int simple_alg = 0;
+      const g2float alog2=0.69314718;       //  ln(2.0)
+      const g2int one=1;
 
       bscale=int_power(2.0,-idrstmpl[1]);
       dscale=int_power(10.0,idrstmpl[2]);
@@ -128,7 +128,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //  Allocate work arrays:
 //  Note: -ifldmiss[j],j=0,ndpts-1 is a map of original field indicating 
 //         which of the original data values
-//         are primary missing (1), sencondary missing (2) or non-missing (0).
+//         are primary missing (1), secondary missing (2) or non-missing (0).
 //        -jfld[j],j=0,nonmiss-1 is a subarray of just the non-missing values 
 //         from the original field.
 //

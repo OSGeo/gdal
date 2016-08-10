@@ -3,8 +3,6 @@ include ../../GDALmake.opt
 
 OBJ	=	mapdataset.o
 
-
-
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:

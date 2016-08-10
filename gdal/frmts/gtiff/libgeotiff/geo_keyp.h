@@ -10,8 +10,8 @@
  *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
-#ifndef __geo_keyp_h_
-#define __geo_keyp_h_
+#ifndef LIBGEOTIFF_GEO_KEYP_H_
+#define LIBGEOTIFF_GEO_KEYP_H_
 
 #include <stdlib.h> /* for size_t */
 
@@ -72,22 +72,22 @@ struct gtiff {
    tiff_t*    gt_tif;      /* TIFF file descriptor  */
    struct _TIFFMethod gt_methods;  /* TIFF i/o methods      */
    int        gt_flags;    /* file flags            */
-   
+
    pinfo_t    gt_version;  /* GeoTIFF Version       */
    pinfo_t    gt_rev_major;/* GeoKey Key Revision   */
    pinfo_t    gt_rev_minor;/* GeoKey Code Revision  */
-   
+
    int        gt_num_keys; /* number of keys        */
    GeoKey*    gt_keys;     /* array of keys         */
    int*       gt_keyindex; /* index of a key, if set*/
    int        gt_keymin;   /* smallest key set      */
    int        gt_keymax;   /* largest key set       */
-   
+
    pinfo_t*   gt_short;    /* array of SHORT vals   */
    double*    gt_double;   /* array of DOUBLE vals  */
    int        gt_nshorts;  /* number of SHORT vals  */
    int        gt_ndoubles; /* number of DOUBLE vals */
-};  
+};
 
 typedef enum {
 	FLAG_FILE_OPEN=1,
@@ -98,5 +98,4 @@ typedef enum {
 #define MAX_KEYS 100         /* maximum keys in a file  */
 #define MAX_VALUES 1000      /* maximum values in a tag */
 
-#endif /* __geo_keyp_h_ */
-
+#endif /* LIBGEOTIFF_GEO_KEYP_H_ */

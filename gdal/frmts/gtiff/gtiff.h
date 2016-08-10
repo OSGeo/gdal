@@ -33,8 +33,8 @@
 
 #include "cpl_port.h"
 
-#include "tiffio.h"
 #include "gdal.h"
+#include "tiffio.h"
 
 CPL_C_START
 int    GTiffOneTimeInit();
@@ -42,9 +42,11 @@ void CPL_DLL LibgeotiffOneTimeInit();
 void   LibgeotiffOneTimeCleanupMutex();
 CPL_C_END
 
-void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
-void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality);
-int     GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName);
+void    GTIFFSetInExternalOvr( bool b );
+void    GTIFFGetOverviewBlockSize( int* pnBlockXSize, int* pnBlockYSize );
+void    GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
+int     GTIFFGetCompressionMethod( const char* pszValue,
+                                   const char* pszVariableName );
 
 void GTiffDatasetWriteRPCTag( TIFF *hTIFF, char **papszRPCMD );
 char** GTiffDatasetReadRPCTag( TIFF *hTIFF );

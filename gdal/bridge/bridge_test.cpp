@@ -34,8 +34,8 @@
 #include <math.h>
 #include "gdalbridge.h"
 
-static int 
-GDALInfoReportCorner( GDALDatasetH hDataset, 
+static int
+GDALInfoReportCorner( GDALDatasetH hDataset,
                       const char * corner_name,
                       double x, double y );
 
@@ -52,7 +52,7 @@ int main( int argc, char ** argv )
 
     if( !GDALBridgeInitialize( "..", stderr ) )
     {
-        fprintf( stderr, "Unable to intiailize GDAL bridge.\n" );
+        fprintf( stderr, "Unable to initialize GDAL bridge.\n" );
         exit( 10 );
     }
 
@@ -65,7 +65,7 @@ int main( int argc, char ** argv )
     GDALAllRegister();
 
     hDataset = GDALOpen( argv[1], GA_ReadOnly );
-    
+
     if( hDataset == NULL )
     {
         fprintf( stderr,
@@ -73,7 +73,7 @@ int main( int argc, char ** argv )
                  CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
         exit( 1 );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Report general info.                                            */
 /* -------------------------------------------------------------------- */
@@ -83,7 +83,7 @@ int main( int argc, char ** argv )
             GDALGetDriverLongName( hDriver ) );
 
     printf( "Size is %d, %d\n",
-            GDALGetRasterXSize( hDataset ), 
+            GDALGetRasterXSize( hDataset ),
             GDALGetRasterYSize( hDataset ) );
 
 /* -------------------------------------------------------------------- */
@@ -132,13 +132,13 @@ int main( int argc, char ** argv )
         for( i = 0; i < GDALGetGCPCount(hDataset); i++ )
         {
             const GDAL_GCP	*psGCP;
-            
+
             psGCP = GDALGetGCPs( hDataset ) + i;
 
             printf( "GCP[%3d]: Id=%s, Info=%s\n"
-                    "          (%g,%g) -> (%g,%g,%g)\n", 
-                    i, psGCP->pszId, psGCP->pszInfo, 
-                    psGCP->dfGCPPixel, psGCP->dfGCPLine, 
+                    "          (%g,%g) -> (%g,%g,%g)\n",
+                    i, psGCP->pszId, psGCP->pszInfo,
+                    psGCP->dfGCPPixel, psGCP->dfGCPLine,
                     psGCP->dfGCPX, psGCP->dfGCPY, psGCP->dfGCPZ );
         }
     }
@@ -173,17 +173,17 @@ int main( int argc, char ** argv )
 /*      Report corners.                                                 */
 /* -------------------------------------------------------------------- */
     printf( "Corner Coordinates:\n" );
-    GDALInfoReportCorner( hDataset, "Upper Left", 
+    GDALInfoReportCorner( hDataset, "Upper Left",
                           0.0, 0.0 );
-    GDALInfoReportCorner( hDataset, "Lower Left", 
+    GDALInfoReportCorner( hDataset, "Lower Left",
                           0.0, GDALGetRasterYSize(hDataset));
-    GDALInfoReportCorner( hDataset, "Upper Right", 
+    GDALInfoReportCorner( hDataset, "Upper Right",
                           GDALGetRasterXSize(hDataset), 0.0 );
-    GDALInfoReportCorner( hDataset, "Lower Right", 
-                          GDALGetRasterXSize(hDataset), 
+    GDALInfoReportCorner( hDataset, "Lower Right",
+                          GDALGetRasterXSize(hDataset),
                           GDALGetRasterYSize(hDataset) );
-    GDALInfoReportCorner( hDataset, "Center", 
-                          GDALGetRasterXSize(hDataset)/2.0, 
+    GDALInfoReportCorner( hDataset, "Center",
+                          GDALGetRasterXSize(hDataset)/2.0,
                           GDALGetRasterYSize(hDataset)/2.0 );
 
 /* ==================================================================== */
@@ -205,11 +205,11 @@ int main( int argc, char ** argv )
         dfMin = GDALGetRasterMinimum( hBand, &bGotMin );
         dfMax = GDALGetRasterMaximum( hBand, &bGotMax );
         printf( "  Min=%.3f/%d, Max=%.3f/%d",  dfMin, bGotMin, dfMax, bGotMax);
-        
+
         if( bComputeMinMax )
         {
             GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
-            printf( ", Computed Min/Max=%.3f,%.3f", 
+            printf( ", Computed Min/Max=%.3f,%.3f",
                     adfCMinMax[0], adfCMinMax[1] );
         }
         printf( "\n" );
@@ -225,7 +225,7 @@ int main( int argc, char ** argv )
             int		iOverview;
 
             printf( "  Overviews: " );
-            for( iOverview = 0; 
+            for( iOverview = 0;
                  iOverview < GDALGetOverviewCount(hBand);
                  iOverview++ )
             {
@@ -235,7 +235,7 @@ int main( int argc, char ** argv )
                     printf( ", " );
 
                 hOverview = GDALGetOverview( hBand, iOverview );
-                printf( "%dx%d", 
+                printf( "%dx%d",
                         GDALGetRasterBandXSize( hOverview ),
                         GDALGetRasterBandYSize( hOverview ) );
             }
@@ -258,9 +258,9 @@ int main( int argc, char ** argv )
             int			i;
 
             hTable = GDALGetRasterColorTable( hBand );
-            printf( "  Color Table (%s with %d entries)\n", 
+            printf( "  Color Table (%s with %d entries)\n",
                     GDALGetPaletteInterpretationName(
-                        GDALGetPaletteInterpretation( hTable )), 
+                        GDALGetPaletteInterpretation( hTable )),
                     GDALGetColorEntryCount( hTable ) );
 
             for( i = 0; i < GDALGetColorEntryCount( hTable ); i++ )
@@ -268,8 +268,8 @@ int main( int argc, char ** argv )
                 GDALColorEntry	sEntry;
 
                 GDALGetColorEntryAsRGB( hTable, i, &sEntry );
-                printf( "  %3d: %d,%d,%d,%d\n", 
-                        i, 
+                printf( "  %3d: %d,%d,%d,%d\n",
+                        i,
                         sEntry.c1,
                         sEntry.c2,
                         sEntry.c3,
@@ -279,7 +279,7 @@ int main( int argc, char ** argv )
     }
 
     GDALClose( hDataset );
-    
+
     exit( 0 );
 }
 
@@ -287,8 +287,8 @@ int main( int argc, char ** argv )
 /*                        GDALInfoReportCorner()                        */
 /************************************************************************/
 
-static int 
-GDALInfoReportCorner( GDALDatasetH hDataset, 
+static int
+GDALInfoReportCorner( GDALDatasetH hDataset,
                       const char * corner_name,
                       double x, double y )
 
@@ -297,9 +297,9 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
     const char  *pszProjection;
     double	adfGeoTransform[6];
     OGRCoordinateTransformationH hTransform = NULL;
-        
+
     printf( "%-11s ", corner_name );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Transform the point into georeferenced coordinates.             */
 /* -------------------------------------------------------------------- */
@@ -356,19 +356,18 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 /* -------------------------------------------------------------------- */
 /*      Transform to latlong and report.                                */
 /* -------------------------------------------------------------------- */
-    if( hTransform != NULL 
+    if( hTransform != NULL
         && OCTTransform(hTransform,1,&dfGeoX,&dfGeoY,NULL) )
     {
-        
+
         printf( "(%s,", GDALDecToDMS( dfGeoX, "Long", 2 ) );
         printf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
     }
 
     if( hTransform != NULL )
         OCTDestroyCoordinateTransformation( hTransform );
-    
+
     printf( "\n" );
 
     return TRUE;
 }
-

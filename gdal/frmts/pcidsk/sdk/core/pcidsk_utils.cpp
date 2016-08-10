@@ -134,9 +134,9 @@ int64 PCIDSK::atoint64( const char *str_value )
 /*                            SwapPixels()                              */
 /************************************************************************/
 /**
- * @brief Perform an endianess swap for a given buffer of pixels
+ * @brief Perform an endianness swap for a given buffer of pixels
  *
- * Baed on the provided data type, do an appropriate endianess swap for
+ * Baed on the provided data type, do an appropriate endianness swap for
  * a buffer of pixels. Deals with the Complex case specially, in
  * particular.
  *
@@ -153,15 +153,15 @@ void PCIDSK::SwapPixels(void* const data,
     case CHN_16U:
     case CHN_16S:
     case CHN_32R:
-        SwapData(data, DataTypeSize(type), count);
+        SwapData(data, DataTypeSize(type), static_cast<int>(count));
         break;
     case CHN_C16U:
     case CHN_C16S:
     case CHN_C32R:
-        SwapData(data, DataTypeSize(type) / 2, count * 2);
+        SwapData(data, DataTypeSize(type) / 2, static_cast<int>(count) * 2);
         break;
     default:
-        ThrowPCIDSKException("Unknown data type passed to SwapPixels."
+        return ThrowPCIDSKException("Unknown data type passed to SwapPixels."
             "This is a software bug. Please contact your vendor.");
     }
 }
@@ -234,7 +234,7 @@ void PCIDSK::SwapData( void* const data, const int size, const int wcount )
         }
     }
     else
-        ThrowPCIDSKException( "Unsupported data size in SwapData()" );
+        return ThrowPCIDSKException( "Unsupported data size in SwapData()" );
 }
 
 /************************************************************************/
@@ -273,7 +273,7 @@ void PCIDSK::ParseTileFormat( std::string full_text,
 /* -------------------------------------------------------------------- */
 /*      Only operate on tiled stuff.                                    */
 /* -------------------------------------------------------------------- */
-    if( strncmp(full_text.c_str(),"TILED",5) != 0 )
+    if( !STARTS_WITH(full_text.c_str(), "TILED") )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -300,11 +300,11 @@ void PCIDSK::ParseTileFormat( std::string full_text,
         if (compression == "NO_WARNINGS")
             compression = "";
         else if( compression != "RLE"
-            && strncmp(compression.c_str(),"JPEG",4) != 0 
+            && !STARTS_WITH(compression.c_str(), "JPEG") 
             && compression != "NONE"
             && compression != "QUADTREE" )
         {
-            ThrowPCIDSKException( "Unsupported tile compression scheme '%s' requested.",
+            return ThrowPCIDSKException( "Unsupported tile compression scheme '%s' requested.",
                                   compression.c_str() );
         }
     }    
@@ -347,10 +347,10 @@ int PCIDSK::pci_strcasecmp( const char *string1, const char *string2 )
 /*                          pci_strncasecmp()                           */
 /************************************************************************/
 
-int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, int len )
+int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, size_t len )
 
 {
-    for( int i = 0; i < len; i++ )
+    for( size_t i = 0; i < len; i++ )
     {
         if( string1[i] == '\0' && string2[i] == '\0' )
             return 0;
@@ -389,9 +389,8 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
 
 {
     std::vector<double> dparms;
-    const char *next = sparms.c_str();
 
-    for( next = sparms.c_str(); *next != '\0'; )
+    for( const char* next = sparms.c_str(); *next != '\0'; )
     {
         dparms.push_back( CPLAtof(next) );
 
@@ -407,21 +406,21 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
     dparms.resize(18);
 
     // This is rather iffy!
-    if( EQUALN(geosys.c_str(),"DEGREE",3) )
+    if( STARTS_WITH_CI(geosys.c_str(),"DEG" /* "DEGREE" */) )
         dparms[17] = (double) (int) UNIT_DEGREE;
-    else if( EQUALN(geosys.c_str(),"MET",3) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "MET") )
         dparms[17] = (double) (int) UNIT_METER;
-    else if( EQUALN(geosys.c_str(),"FOOT",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "FOOT") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
-    else if( EQUALN(geosys.c_str(),"FEET",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "FEET") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
-    else if( EQUALN(geosys.c_str(),"INTL FOOT",5) )
+    else if( STARTS_WITH_CI(geosys.c_str(),"INTL " /* "INTL FOOT" */) )
         dparms[17] = (double) (int) UNIT_INTL_FOOT;
-    else if( EQUALN(geosys.c_str(),"SPCS",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPCS") )
         dparms[17] = (double) (int) UNIT_METER;
-    else if( EQUALN(geosys.c_str(),"SPIF",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPIF") )
         dparms[17] = (double) (int) UNIT_INTL_FOOT;
-    else if( EQUALN(geosys.c_str(),"SPAF",4) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "SPAF") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
     else
         dparms[17] = -1.0; /* unknown */
@@ -467,7 +466,7 @@ std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
 /*                                                                      */
 /*      Extract the directory path portion of the passed filename.      */
 /*      It assumes the last component is a filename and should not      */
-/*      be passed a bare path.  The trailing directory delimeter is     */
+/*      be passed a bare path.  The trailing directory delimiter is     */
 /*      removed from the result.  The return result is an empty         */
 /*      string for a simple filename passed in with no directory        */
 /*      component.                                                      */
@@ -478,7 +477,7 @@ std::string PCIDSK::ExtractPath( std::string filename )
 {
     int i;
 
-    for( i = filename.size()-1; i >= 0; i-- )
+    for( i = static_cast<int>(filename.size())-1; i >= 0; i-- )
     {
         if( filename[i] == '\\' || filename[i] == '/' )
             break;

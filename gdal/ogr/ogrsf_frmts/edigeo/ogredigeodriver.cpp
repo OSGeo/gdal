@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EDIGEO Translator
  * Purpose:  Implements OGREDIGEODriver.
@@ -76,26 +75,22 @@ static GDALDataset *OGREDIGEODriverOpen( GDALOpenInfo * poOpenInfo )
 void RegisterOGREDIGEO()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "EDIGEO" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "EDIGEO" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "EDIGEO" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "French EDIGEO exchange format" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "thf" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_edigeo.html" );
+    poDriver->SetDescription( "EDIGEO" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "French EDIGEO exchange format" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "thf" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_edigeo.html" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGREDIGEODriverOpen;
-        poDriver->pfnIdentify = OGREDIGEODriverIdentify;
+    poDriver->pfnOpen = OGREDIGEODriverOpen;
+    poDriver->pfnIdentify = OGREDIGEODriverIdentify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

@@ -28,7 +28,7 @@
  *****************************************************************************/
 
 /* For Python we don't import, but include MajorObject.i to avoid */
-/* cyclic dependency betwenn gdal.py and ogr.py. Python2 is fine with that */
+/* cyclic dependency between gdal.py and ogr.py. Python2 is fine with that */
 /* but Python3 not */
 /* We should probably define a new module for MajorObject, or merge gdal and ogr */
 /* modules */
@@ -92,7 +92,7 @@ public:
 /*
  * SetMetadata methods
  */
- 
+
 #ifdef SWIGJAVA
 %apply (char **options) { char ** papszMetadata };
   CPLErr SetMetadata( char ** papszMetadata, const char * pszDomain = "" ) {

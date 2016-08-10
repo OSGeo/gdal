@@ -36,7 +36,7 @@ The BNA driver support reading of polygons with holes or lakes. It determines wh
 geometrical analysis (inclusion, non-intersection tests) and ignores completely the notion of polygon winding (whether the
 polygon edges are described clockwise or counter-clockwise). GDAL must be built with GEOS enabled to make geometry test work. Polygons are exposed as multipolygons in the OGR Simple Feature model.<p>
 
-Ellipses and circles are discretized as polygons with 360 points.<p> 
+Ellipses and circles are discretized as polygons with 360 points.<p>
 
 <h2>Creation Issues</h2>
 
@@ -48,7 +48,7 @@ The BNA writer supports the following creation options (dataset options):
 <ul>
 <li> <b>LINEFORMAT</b>:
 By default when creating new .BNA files they are created with the line
-termination conventions of the local platform (CR/LF on win32 or 
+termination conventions of the local platform (CR/LF on win32 or
 LF on all other systems).  This may be overridden through use of the
 LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
 (DOS format) or <b>LF</b> (Unix format). <p>

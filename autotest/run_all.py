@@ -3,22 +3,22 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  High level test executive ... it runs sub test scripts. 
+# Purpose:  High level test executive ... it runs sub test scripts.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -64,7 +64,7 @@ for arg in gdaltest.argv[1:]:
 if len(test_list) == 0:
     test_list = all_test_list
 
-# we set ECW to not resolve projection and datum strings to get 3.x behavior.     
+# we set ECW to not resolve projection and datum strings to get 3.x behavior.
 gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
 gdaltest.setup_run( 'gdalautotest_all' )

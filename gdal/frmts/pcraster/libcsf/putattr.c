@@ -87,17 +87,17 @@ CSF_ATTR_ID CsfPutAttribute(
 		M_ERROR(WRITE_ERROR);
 		goto error;
 	}
-	return(id); 		/* succes */
+	return(id); 		/* success */
 error:	return(0);	/* failure */
 }
 
-/* seek to space for attribute  (LIBRARY_INTERNAL)
+/* Seek to space for attribute  (LIBRARY_INTERNAL)
  * CsfSeekAttrSpace seeks to the a point in the file where
  * the attribute must be stored and update the attribute control
  * blocks accordingly.
  * Writing can still fail since there is no check if that space is really
- * avalaible on the device. After this call returns the file is already
- * seeked to the point the functions returns.
+ * available on the device. After this call returns the file is already
+ * sought to the point the functions returns.
  * returns the file position or 0 in case of error.
  *
  * Merrno
@@ -107,13 +107,15 @@ error:	return(0);	/* failure */
  */
 CSF_FADDR32 CsfSeekAttrSpace(
 	MAP *m,       		/* map handle */
-	CSF_ATTR_ID id,               /* attribute identification only for check if avalaible */
-	size_t size)            /* size to be seeked to */
+	CSF_ATTR_ID id,         /* attribute identification only for check if available */
+	size_t size)            /* size to be sought to */
 {
 	ATTR_CNTRL_BLOCK b;
 	CSF_FADDR32 currBlockPos, prevBlockPos=USED_UNINIT_ZERO, newPos, endBlock, resultPos=0;
 	int noPosFound;
 	int i;
+        
+        memset(&b, 0, sizeof(b));
 
 	if (MattributeAvail(m ,id))
 	{
@@ -135,10 +137,10 @@ CSF_FADDR32 CsfSeekAttrSpace(
 		{
 			if (m->main.attrTable == 0)
 			{ /* FIRST BLOCK */
-				newPos =( (CSF_FADDR)(m->raster.nrRows)*
+				newPos =(CSF_FADDR32)(( (CSF_FADDR)(m->raster.nrRows)*
 					   (CSF_FADDR)(m->raster.nrCols)*
 					  (CSF_FADDR)(CELLSIZE(RgetCellRepr(m))))
-					  + ADDR_DATA;
+					  + ADDR_DATA);
 				m->main.attrTable = newPos;
 			}
 			else
@@ -150,7 +152,7 @@ CSF_FADDR32 CsfSeekAttrSpace(
 				if (CsfWriteAttrBlock(m, prevBlockPos, &b))
 				{
 					M_ERROR(WRITE_ERROR);
-					resultPos = 0;
+					/*resultPos = 0;*/
 				}
 			}
 			InitBlock(&b);
@@ -175,7 +177,7 @@ CSF_FADDR32 CsfSeekAttrSpace(
 					noPosFound = 0;
                                         break;
 				case ATTR_NOT_USED:
-					if (i == NR_ATTR_IN_BLOCK)
+					if (i+1 == NR_ATTR_IN_BLOCK)
 						endBlock = b.next;
 					else
 						endBlock = b.attrs[i+1].attrOffset;
@@ -199,7 +201,7 @@ CSF_FADDR32 CsfSeekAttrSpace(
 			currBlockPos = b.next;
  	} /* while */
 
-	b.attrs[i].attrSize = size;
+	b.attrs[i].attrSize = (UINT4)size;
 	b.attrs[i].attrId   = id;
 	resultPos = b.attrs[i].attrOffset;
 
@@ -208,6 +210,10 @@ CSF_FADDR32 CsfSeekAttrSpace(
 		M_ERROR(WRITE_ERROR);
 		resultPos = 0;
 	}
-	fseek(m->fp, (long)resultPos, SEEK_SET); /* fsetpos() is better */
+	if( fseek(m->fp, (long)resultPos, SEEK_SET) != 0 ) /* fsetpos() is better */
+        {
+                M_ERROR(WRITE_ERROR);
+                resultPos = 0;
+        }
 error:	return resultPos;
 } /* CsfSeekAttrSpace */

@@ -1,8 +1,8 @@
 /******************************************************************************
- * $Id: gt_overview.h 13297 2007-12-09 19:03:50Z rouault $
+ * $Id$
  *
  * Project:  GeoTIFF Driver
- * Purpose:  Code to build overviews of external databases as a TIFF file. 
+ * Purpose:  Code to build overviews of external databases as a TIFF file.
  *           Only used by the GDALDefaultOverviews::BuildOverviews() method.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -35,21 +35,22 @@
 #include "gdal_priv.h"
 #include "tiffio.h"
 
-toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize,
-                           int nBitsPerPixel, int nPlanarConfig, int nSamples, 
-                           int nBlockXSize, int nBlockYSize,
-                           int bTiled, int nCompressFlag, int nPhotometric,
-                           int nSampleFormat, 
-                           int nPredictor,
-                           unsigned short *panRed,
-                           unsigned short *panGreen,
-                           unsigned short *panBlue,
-                           int nExtraSamples,
-                           unsigned short *panExtraSampleValues,
-                           const char *pszMetadata );
+toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
+                            int nXSize, int nYSize,
+                            int nBitsPerPixel, int nPlanarConfig, int nSamples,
+                            int nBlockXSize, int nBlockYSize,
+                            int bTiled, int nCompressFlag, int nPhotometric,
+                            int nSampleFormat,
+                            int nPredictor,
+                            unsigned short *panRed,
+                            unsigned short *panGreen,
+                            unsigned short *panBlue,
+                            int nExtraSamples,
+                            unsigned short *panExtraSampleValues,
+                            const char *pszMetadata );
 
 void GTIFFBuildOverviewMetadata( const char *pszResampling,
-                                 GDALDataset *poBaseDS, 
+                                 GDALDataset *poBaseDS,
                                  CPLString &osMetadata );
 
 #endif

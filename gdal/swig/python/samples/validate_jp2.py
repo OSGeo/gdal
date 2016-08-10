@@ -2,24 +2,24 @@
 # -*- coding: utf-8 -*-
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Project:  GDAL
 #  Purpose:  Validate JPEG2000 file structure
 #  Author:   Even Rouault, <even dot rouault at spatialys dot com>
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2015, European Union (European Environment Agency)
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -1080,7 +1080,8 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                             if count_fields != Csiz:
                                 error_report.EmitError('INSPIRE_TG', 'count(OrthoImageryCoverage.rangeType.field)(=%d) != Csiz(=%d) ' % (count_fields, Csiz), conformance_class = 'A.8.6')
                             else:
-                                # Check consistency of each channel bit-deph with the corresponding rangeType.field
+                                # Check consistency of each channel bit-depth
+                                # with the corresponding rangeType.field.
                                 for i in range(Csiz):
                                     if tab_Ssiz[i] >= 128:
                                         tab_Ssiz[i] -= 128
@@ -1133,7 +1134,10 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
             for i in range(SPcod_NumDecompositions+1):
                 SPcod_Precincts = get_field_val(cod, 'SPcod_Precincts%d' % i)
                 if SPcod_Precincts is not None and (Scod & 1) == 0:
-                    error_report.EmitWarning('GENERAL', 'User-defined precincts %d found but SPcod_transformation dit not advertize it' % i)
+                    error_report.EmitWarning(
+                        'GENERAL',
+                        'User-defined precincts %d found but '
+                        'SPcod_transformation did not advertize it' % i)
                 elif SPcod_Precincts is None and (Scod & 1) != 0:
                     error_report.EmitWarning('GENERAL', 'No user-defined precincts %d defined but SPcod_transformation advertized it' % i)
                 elif SPcod_Precincts is None and inspire_tg:

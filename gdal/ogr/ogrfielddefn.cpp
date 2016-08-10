@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRFieldDefn class implementation.
@@ -208,7 +207,7 @@ void OGR_Fld_SetName( OGRFieldDefnH hDefn, const char *pszName )
  *
  * @param hDefn handle to the field definition.
  * @return the name of the field definition.
- * 
+ *
  */
 
 const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
@@ -228,7 +227,7 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn OGRFieldType OGRFieldDefn::GetType();
+ * \fn OGRFieldType OGRFieldDefn::GetType() const;
  *
  * \brief Fetch type of this field.
  *
@@ -272,7 +271,7 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
  *
  * This method is the same as the C function OGR_Fld_SetType().
  *
- * @param eType the new field type.
+ * @param eTypeIn the new field type.
  */
 
 void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
@@ -280,7 +279,7 @@ void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
     if( !OGR_AreTypeSubTypeCompatible(eTypeIn, eSubType) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Type and subtype of field definition are not compatible. Reseting to OFSTNone");
+                 "Type and subtype of field definition are not compatible. Resetting to OFSTNone");
         eSubType = OFSTNone;
     }
     eType = eTypeIn;
@@ -312,7 +311,7 @@ void OGR_Fld_SetType( OGRFieldDefnH hDefn, OGRFieldType eType )
 /************************************************************************/
 
 /**
- * \fn OGRFieldSubType OGRFieldDefn::GetSubType();
+ * \fn OGRFieldSubType OGRFieldDefn::GetSubType() const;
  *
  * \brief Fetch subtype of this field.
  *
@@ -358,7 +357,7 @@ OGRFieldSubType OGR_Fld_GetSubType( OGRFieldDefnH hDefn )
  *
  * This method is the same as the C function OGR_Fld_SetSubType().
  *
- * @param eSubType the new field subtype.
+ * @param eSubTypeIn the new field subtype.
  * @since GDAL 2.0
  */
 void OGRFieldDefn::SetSubType( OGRFieldSubType eSubTypeIn )
@@ -366,7 +365,7 @@ void OGRFieldDefn::SetSubType( OGRFieldSubType eSubTypeIn )
     if( !OGR_AreTypeSubTypeCompatible(eType, eSubTypeIn) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Type and subtype of field definition are not compatible. Reseting to OFSTNone");
+                 "Type and subtype of field definition are not compatible. Resetting to OFSTNone");
         eSubType = OFSTNone;
     }
     else
@@ -410,7 +409,7 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  * low-level layers to do the job. So retrieving the feature from the layer is
  * recommended.
  *
- * The accepted values are NULL, a numeric value, a litteral value enclosed
+ * The accepted values are NULL, a numeric value, a literal value enclosed
  * between single quote characters (and inner single quote characters escaped by
  * repetition of the single quote character),
  * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
@@ -423,7 +422,7 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  *
  * This function is the same as the C function OGR_Fld_SetDefault().
  *
- * @param pszDefault new default field value or NULL pointer.
+ * @param pszDefaultIn new default field value or NULL pointer.
  *
  * @since GDAL 2.0
  */
@@ -480,7 +479,7 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
  * low-level layers to do the job. So retrieving the feature from the layer is
  * recommended.
  *
- * The accepted values are NULL, a numeric value, a litteral value enclosed
+ * The accepted values are NULL, a numeric value, a literal value enclosed
  * between single quote characters (and inner single quote characters escaped by
  * repetition of the single quote character),
  * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
@@ -549,11 +548,13 @@ const char *OGR_Fld_GetDefault( OGRFieldDefnH hDefn )
 /**
  * \brief Returns whether the default value is driver specific.
  *
- * Driver specific default values are those that are *not* NULL, a numeric value,
- * a litteral value enclosed between single quote characters, CURRENT_TIMESTAMP,
- * CURRENT_TIME, CURRENT_DATE or datetime literal value.
+ * Driver specific default values are those that are *not* NULL, a
+ * numeric value, a literal value enclosed between single quote
+ * characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
+ * datetime literal value.
  *
- * This method is the same as the C function OGR_Fld_IsDefaultDriverSpecific().
+ * This method is the same as the C function
+ * OGR_Fld_IsDefaultDriverSpecific().
  *
  * @return TRUE if the default value is driver specific.
  * @since GDAL 2.0
@@ -588,11 +589,13 @@ int OGRFieldDefn::IsDefaultDriverSpecific() const
 /**
  * \brief Returns whether the default value is driver specific.
  *
- * Driver specific default values are those that are *not* NULL, a numeric value,
- * a litteral value enclosed between single quote characters, CURRENT_TIMESTAMP,
- * CURRENT_TIME, CURRENT_DATE or datetime literal value.
+ * Driver specific default values are those that are *not* NULL, a
+ * numeric value, a literal value enclosed between single quote
+ * characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
+ * datetime literal value.
  *
- * This function is the same as the C++ method OGRFieldDefn::IsDefaultDriverSpecific().
+ * This function is the same as the C++ method
+ * OGRFieldDefn::IsDefaultDriverSpecific().
  *
  * @param hDefn handle to the field definition
  * @return TRUE if the default value is driver specific.
@@ -671,7 +674,7 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
 /**
  * \brief Fetch human readable name for a field type.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRFieldDefn::GetFieldTypeName().
  *
  * @param eType the field type to get name for.
@@ -729,7 +732,7 @@ const char * OGRFieldDefn::GetFieldSubTypeName( OGRFieldSubType eSubType )
 /**
  * \brief Fetch human readable name for a field subtype.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRFieldDefn::GetFieldSubTypeName().
  *
  * @param eSubType the field subtype to get name for.
@@ -773,7 +776,7 @@ int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
 /************************************************************************/
 
 /**
- * \fn OGRJustification OGRFieldDefn::GetJustify();
+ * \fn OGRJustification OGRFieldDefn::GetJustify() const;
  *
  * \brief Get the justification for this field.
  *
@@ -845,13 +848,13 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
 /************************************************************************/
 
 /**
- * \fn int OGRFieldDefn::GetWidth();
+ * \fn int OGRFieldDefn::GetWidth() const;
  *
  * \brief Get the formatting width for this field.
  *
  * This method is the same as the C function OGR_Fld_GetWidth().
  *
- * @return the width, zero means no specified width. 
+ * @return the width, zero means no specified width.
  */
 
 /************************************************************************/
@@ -863,7 +866,7 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
  * This function is the same as the CPP method OGRFieldDefn::GetWidth().
  *
  * @param hDefn handle to the field definition to get width from.
- * @return the width, zero means no specified width. 
+ * @return the width, zero means no specified width.
  */
 
 int OGR_Fld_GetWidth( OGRFieldDefnH hDefn )
@@ -909,7 +912,7 @@ void OGR_Fld_SetWidth( OGRFieldDefnH hDefn, int nNewWidth )
 /************************************************************************/
 
 /**
- * \fn int OGRFieldDefn::GetPrecision();
+ * \fn int OGRFieldDefn::GetPrecision() const;
  *
  * \brief Get the formatting precision for this field.
  * This should normally be
@@ -948,12 +951,12 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
  * \fn void OGRFieldDefn::SetPrecision( int nPrecision );
  *
  * \brief Set the formatting precision for this field in characters.
- * 
- * This should normally be zero for fields of types other than OFTReal. 
+ *
+ * This should normally be zero for fields of types other than OFTReal.
  *
  * This method is the same as the C function OGR_Fld_SetPrecision().
  *
- * @param nPrecision the new precision. 
+ * @param nPrecision the new precision.
  */
 
 /************************************************************************/
@@ -961,13 +964,13 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
 /************************************************************************/
 /**
  * \brief Set the formatting precision for this field in characters.
- * 
- * This should normally be zero for fields of types other than OFTReal. 
+ *
+ * This should normally be zero for fields of types other than OFTReal.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetPrecision().
  *
  * @param hDefn handle to the field definition to set precision to.
- * @param nPrecision the new precision. 
+ * @param nPrecision the new precision.
  */
 
 void OGR_Fld_SetPrecision( OGRFieldDefnH hDefn, int nPrecision )
@@ -986,7 +989,7 @@ void OGR_Fld_SetPrecision( OGRFieldDefnH hDefn, int nPrecision )
  * This method is the same as the C function OGR_Fld_Set().
  *
  * @param pszNameIn the new name to assign.
- * @param eTypeIn the new type (one of the OFT values like OFTInteger). 
+ * @param eTypeIn the new type (one of the OFT values like OFTInteger).
  * @param nWidthIn the preferred formatting width.  Defaults to zero indicating
  * undefined.
  * @param nPrecisionIn number of decimals places for formatting, defaults to
@@ -1017,7 +1020,7 @@ void OGRFieldDefn::Set( const char *pszNameIn,
  *
  * @param hDefn handle to the field definition to set to.
  * @param pszNameIn the new name to assign.
- * @param eTypeIn the new type (one of the OFT values like OFTInteger). 
+ * @param eTypeIn the new type (one of the OFT values like OFTInteger).
  * @param nWidthIn the preferred formatting width.  Defaults to zero indicating
  * undefined.
  * @param nPrecisionIn number of decimals places for formatting, defaults to
@@ -1026,13 +1029,13 @@ void OGRFieldDefn::Set( const char *pszNameIn,
  * to OJUndefined.
  */
 
-void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn, 
+void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
                         OGRFieldType eTypeIn,
                         int nWidthIn, int nPrecisionIn,
                         OGRJustification eJustifyIn )
 
 {
-    ((OGRFieldDefn *) hDefn)->Set( pszNameIn, eTypeIn, nWidthIn, 
+    ((OGRFieldDefn *) hDefn)->Set( pszNameIn, eTypeIn, nWidthIn,
                                    nPrecisionIn, eJustifyIn );
 }
 
@@ -1041,7 +1044,7 @@ void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
 /************************************************************************/
 
 /**
- * \fn int OGRFieldDefn::IsIgnored();
+ * \fn int OGRFieldDefn::IsIgnored() const;
  *
  * \brief Return whether this field should be omitted when fetching features
  *

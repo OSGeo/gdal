@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSG Native Reader
  * Purpose:  Basic types implementation.
@@ -27,8 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "msg_basic_types.h"
 #include "cpl_port.h"
+#include "msg_basic_types.h"
 
 CPL_CVSID("$Id$");
 
@@ -36,7 +35,7 @@ CPL_CVSID("$Id$");
 
 namespace msg_native_format {
 
-#ifndef SQR 
+#ifndef SQR
 #define SQR(x) ((x)*(x))
 #endif
 
@@ -64,7 +63,7 @@ static void swap_64_bits(unsigned char* b) {
     }
 }
 
-void to_native(RADIOMETRIC_PROCCESSING_RECORD& r) {
+void to_native(RADIOMETRIC_PROCESSING_RECORD& r) {
     for (int i=0; i < 12; i++) {
         swap_64_bits((unsigned char*)&r.level1_5ImageCalibration[i].cal_slope);
         swap_64_bits((unsigned char*)&r.level1_5ImageCalibration[i].cal_offset);
@@ -123,8 +122,8 @@ const double Conversions::altitude      =   42164;          // from origin
 const double Conversions::req           =   6378.1690;       // earthequatorial radius
 const double Conversions::rpol          =   6356.5838;       // earth polar radius
 const double Conversions::oblate        =   1.0/298.257;    // oblateness of earth
-const double Conversions::deg_to_rad    =   M_PI/180.0; 
-const double Conversions::rad_to_deg    =   180.0/M_PI; 
+const double Conversions::deg_to_rad    =   M_PI/180.0;
+const double Conversions::rad_to_deg    =   180.0/M_PI;
 const double Conversions::nlines        =   3712;           // number of lines in an image
 const double Conversions::step          =   17.83/nlines;    // pixel / line step in degrees
 
@@ -138,17 +137,17 @@ const int Conversions::LOFF    = 1856;
 void Conversions::convert_pixel_to_geo(double line, double column, double&longitude, double& latitude) {
     double x = (column - COFF - 0.0) / double(CFAC >> 16);
     double y = (line - LOFF - 0.0) / double(LFAC >> 16);
-    
-    double sd = sqrt(SQR(altitude*cos(x)*cos(y)) - (SQR(cos(y)) + 1.006803*SQR(sin(y)))*1737121856); 
+
+    double sd = sqrt(SQR(altitude*cos(x)*cos(y)) - (SQR(cos(y)) + 1.006803*SQR(sin(y)))*1737121856);
     double sn = (altitude*cos(x)*cos(y) - sd)/(SQR(cos(y)) + 1.006803*SQR(sin(y)));
     double s1 = altitude - sn*cos(x)*cos(y);
     double s2 = sn*sin(x)*cos(y);
     double s3 = -sn*sin(y);
     double sxy = sqrt(s1*s1 + s2*s2);
-    
+
     longitude = atan(s2/s1);
     latitude  = atan(1.006803*s3/sxy);
-    
+
     longitude = longitude / M_PI * 180.0;
     latitude  = latitude  / M_PI * 180.0;
 }
@@ -156,30 +155,30 @@ void Conversions::convert_pixel_to_geo(double line, double column, double&longit
 void Conversions::compute_pixel_xyz(double line, double column, double& x,double& y, double& z) {
     double asamp = -(column - (nlines/2.0 + 0.5)) * step;
     double aline = (line - (nlines/2.0 + 0.5)) * step;
-    
+
     asamp *= deg_to_rad;
     aline *= deg_to_rad;
-    
+
     double tanal = tan(aline);
     double tanas = tan(asamp);
-    
+
     double p = -1;
     double q = tanas;
     double r = tanal * sqrt(1 + q*q);
-    
+
    double a = q*q + (r*req/rpol)*(r*req/rpol) + p*p;
     double b = 2 * altitude * p;
     double c = altitude * altitude  - req*req;
-    
+
     double det = b*b - 4*a*c;
-     
+
     if (det > 0) {
         double k = (-b - sqrt(det))/(2*a);
         x = altitude + k*p;
         y = k * q;
         z = k * r;
-        
     } else {
+        x = y = z = 0;
         fprintf(stderr, "Warning: pixel not visible\n");
     }
 }
@@ -191,13 +190,13 @@ double Conversions::compute_pixel_area_sqkm(double line, double column) {
 
     compute_pixel_xyz(line-0.5, column-0.5, x1, y1, z1);
     compute_pixel_xyz(line+0.5, column-0.5, x2, y2, z2);
-    
+
     double xlen = sqrt(SQR(x1 - x2) + SQR(y1 - y2) + SQR(z1 - z2));
-    
+
     compute_pixel_xyz(line-0.5, column+0.5, x2, y2, z2);
-    
+
     double ylen = sqrt(SQR(x1 - x2) + SQR(y1 - y2) + SQR(z1 - z2));
-    
+
     return xlen*ylen;
 }
 
@@ -212,10 +211,10 @@ void Conversions::convert_geo_to_pixel(double longitude, double latitude,unsigne
     double r2 = -r_l*cos(c_lat)*sin(longitude);
     double r3 = r_l*sin(c_lat);
     double rn = sqrt(r1*r1 + r2*r2 + r3*r3);
-    
+
     double x = atan(-r2/r1) * (CFAC >> 16) + COFF;
     double y = asin(-r3/rn) * (LFAC >> 16) + LOFF;
-    
+
     line = (unsigned int)floor(x + 0.5);
     column = (unsigned int)floor(y + 0.5);
 }

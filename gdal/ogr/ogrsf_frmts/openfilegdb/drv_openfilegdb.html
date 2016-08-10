@@ -20,6 +20,7 @@ It can also read directly zipped .gdb directories (.gdb.zip)
 A specific .gdbtable file (including "system" tables) can also be opened
 directly.
 </p>
+<p>Curve in geometries are supported with GDAL &gt;= 2.2.</p>
 
 <h2>Spatial filtering</h2>
 
@@ -48,7 +49,7 @@ ArcGIS 10 or above)
 <h2>Comparison with the FileGDB driver</h2>
 
 <p>
-(Comparison done with a FileGDB driver using FileGDB API SDK 1.3)
+(Comparison done with a FileGDB driver using FileGDB API SDK 1.4)
 </p>
 
 <p>
@@ -73,7 +74,7 @@ Drawbacks of the OpenFileGDB driver:
 <ul>
 <li>Read-only.</li>
 <li>Cannot use spatial indexes.</li>
-<li>Cannot read data from compressed feature classes (SDC, Smart Data Compression). Nor can can FileGDB driver because the ESRI FileGDB SDK lacks also this feature.</li>
+<li>Cannot read data from compressed data in CDF format (Compressed Data Format).</li>
 </ul>
 
 <h2>Examples</h2>

@@ -10,9 +10,11 @@ GDALLIB	=    $(GDAL_ROOT)\gdal.lib
 
 JAVA_RUN = $(JAVA) -Djava.library.path=. -cp gdal.jar;build\apps
 
-OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj gnm_wrap.obj
+OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
+#gnm_wrap.obj
 
-all:  ogr_dir gdal_dir const_dir osr_dir gnm_dir
+# gnm_dir
+all:  ogr_dir gdal_dir const_dir osr_dir
 	set JAVA_HOME="$(JAVA_HOME)"
 	$(ANT_HOME)\bin\ant
 
@@ -24,12 +26,12 @@ ogr_dir:
 	link ogr_wrap.obj $(GDALLIB) /out:ogrjni.dll /DLL
 	if exist ogrjni.dll.manifest mt -manifest ogrjni.dll.manifest -outputresource:ogrjni.dll;2
 
-gnm_dir:
-	cd gnm
-	$(MAKE) /f makefile.vc
-	cd ..
-	link gnm_wrap.obj $(GDALLIB) /out:gnmjni.dll /DLL
-	if exist gnmjni.dll.manifest mt -manifest gnmjni.dll.manifest -outputresource:gnmjni.dll;2
+#gnm_dir:
+#	cd gnm
+#	$(MAKE) /f makefile.vc
+#	cd ..
+#	link gnm_wrap.obj $(GDALLIB) /out:gnmjni.dll /DLL
+#	if exist gnmjni.dll.manifest mt -manifest gnmjni.dll.manifest -outputresource:gnmjni.dll;2
 
 gdal_dir:
 	cd gdal
@@ -66,6 +68,11 @@ test:
 	$(JAVA_RUN) GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
 	$(JAVA_RUN) testgetpoints
 	$(JAVA_RUN) ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
+	$(JAVA_RUN) OSRTest
+
+#	cd gnm
+#	$(MAKE) /f makefile.vc clean
+#	cd ..
 
 clean:
 	if exist org\nul rmdir /s /q org
@@ -74,9 +81,6 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd ogr
-	$(MAKE) /f makefile.vc clean
-	cd ..
-	cd gnm
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd const

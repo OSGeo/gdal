@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -28,12 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import ogr
-except ImportError:
-    import ogr
-
 import sys
+
+from osgeo import ogr
 
 #############################################################################
 def Usage():
@@ -58,7 +55,7 @@ while i < len(sys.argv):
         s_maxx = int(sys.argv[i+3])
         s_maxy = int(sys.argv[i+4])
         i = i + 4
-        
+
     elif infile is None:
         infile = arg
 
@@ -104,7 +101,7 @@ in_field_count = in_defn.GetFieldCount()
 
 for fld_index in range(in_field_count):
     src_fd = in_defn.GetFieldDefn( fld_index )
-    
+
     fd = ogr.FieldDefn( src_fd.GetName(), src_fd.GetType() )
     fd.SetWidth( src_fd.GetWidth() )
     fd.SetPrecision( src_fd.GetPrecision() )

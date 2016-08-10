@@ -188,13 +188,13 @@ void mySplit (const char *data, char symbol, size_t *Argc, char ***Argv,
 
 int myAtoI (const char *ptr, sInt4 *value)
 {
-   char *extra;         /* The data after the end of the double. */
+   char *extra = NULL;         /* The data after the end of the double. */
 
    myAssert (ptr != NULL);
    *value = 0;
    while (*ptr != '\0') {
       if (isdigit (*ptr) || (*ptr == '+') || (*ptr == '-')) {
-         *value = strtol (ptr, &extra, 10);
+         *value = (int)strtol (ptr, &extra, 10);
          myAssert (extra != NULL);
          if (*extra == '\0') {
             return 1;
@@ -256,7 +256,7 @@ int myAtoI (const char *ptr, sInt4 *value)
  */
 int myAtoF (const char *ptr, double *value)
 {
-   char *extra;         /* The data after the end of the double. */
+   char *extra = NULL;         /* The data after the end of the double. */
 
    myAssert (ptr != NULL);
    *value = 0;
@@ -388,7 +388,7 @@ int myStat (char *filename, char *perm, sInt4 *size, double *mtime)
    if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
       /* Is a directory */
       if (size)
-         *size = stbuf.st_size;
+         *size = (sInt4)stbuf.st_size;
       if (mtime)
          *mtime = stbuf.st_mtime;
       if (perm) {
@@ -402,7 +402,7 @@ int myStat (char *filename, char *perm, sInt4 *size, double *mtime)
    } else if ((stbuf.st_mode & S_IFMT) == S_IFREG) {
       /* Is a file */
       if (size)
-         *size = stbuf.st_size;
+         *size = (sInt4)stbuf.st_size;
       if (mtime)
          *mtime = stbuf.st_mtime;
       if (perm) {
@@ -505,7 +505,7 @@ return 0; // TODO: reimplement for Win32
  *
  * ARGUMENTS
  *  fileIn = source file to read from. (Input)
- * fileOut = destation file to write to. (Input)
+ *  fileOut = destination file to write to. (Input)
  *
  * RETURNS: int
  *   0 = success.
@@ -614,7 +614,7 @@ void FileTail (const char *fileName, char **tail)
  *     primarily as an example, but it can be used for some rounding.
  *****************************************************************************
  */
-double POWERS_ONE[] = {
+static const double POWERS_ONE[] = {
    1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
    1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17
 };
@@ -1020,17 +1020,17 @@ int GetIndexFromStr (const char *str, char **Opt, int *Index)
  */
 static sChar Clock_GetTimeZone ()
 {
-   struct tm time;
+   struct tm l_time;
    time_t ansTime;
    struct tm *gmTime;
    static sChar timeZone = 127;
 
    if (timeZone == 127) {
       /* Cheap method of getting global time_zone variable. */
-      memset (&time, 0, sizeof (struct tm));
-      time.tm_year = 70;
-      time.tm_mday = 2;
-      ansTime = mktime (&time);
+      memset (&l_time, 0, sizeof (struct tm));
+      l_time.tm_year = 70;
+      l_time.tm_mday = 2;
+      ansTime = mktime (&l_time);
       gmTime = gmtime (&ansTime);
       timeZone = gmTime->tm_hour;
       if (gmTime->tm_mday != 2) {
@@ -1076,12 +1076,12 @@ int myParseTime3 (const char *is, time_t * AnsTime)
    uChar hour;          /* The hour. */
    uChar min;           /* The minute. */
    uChar sec;           /* The second. */
-   struct tm time;      /* A temporary variable to put the time info into. */
+   struct tm l_time;      /* A temporary variable to put the time info into. */
 
-   memset (&time, 0, sizeof (struct tm));
+   memset (&l_time, 0, sizeof (struct tm));
    myAssert (strlen (is) == 14);
    if (strlen (is) != 14) {
-      printf ("%s is not formated correctly\n", is);
+      printf ("%s is not formatted correctly\n", is);
       return 1;
    }
    strncpy (buffer, is, 4);
@@ -1104,13 +1104,13 @@ int myParseTime3 (const char *is, time_t * AnsTime)
       printf ("%d %d %d %d %d %d\n", year, mon, day, hour, min, sec);
       return 1;
    }
-   time.tm_year = year - 1900;
-   time.tm_mon = mon - 1;
-   time.tm_mday = day;
-   time.tm_hour = hour;
-   time.tm_min = min;
-   time.tm_sec = sec;
-   *AnsTime = mktime (&time) - (Clock_GetTimeZone () * 3600);
+   l_time.tm_year = year - 1900;
+   l_time.tm_mon = mon - 1;
+   l_time.tm_mday = day;
+   l_time.tm_hour = hour;
+   l_time.tm_min = min;
+   l_time.tm_sec = sec;
+   *AnsTime = mktime (&l_time) - (Clock_GetTimeZone () * 3600);
    return 0;
 }
 

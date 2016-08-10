@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.33 2008-02-01 19:36:31 dmorissette Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -18,16 +17,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -139,6 +138,8 @@
 
 #include "mitab.h"
 
+CPL_CVSID("$Id$");
+
 #ifdef WIN32
 inline double round(double r) {
     return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
@@ -150,16 +151,15 @@ inline double round(double r) {
  *--------------------------------------------------------------------*/
 #define HDR_MAGIC_COOKIE        42424242
 #define HDR_VERSION_NUMBER      500
-#define HDR_DATA_BLOCK_SIZE     512
 
 #define HDR_DEF_ORG_QUADRANT    1       // N-E Quadrant
 #define HDR_DEF_REFLECTXAXIS    0
 
 /*---------------------------------------------------------------------
- * The header block starts with an array of map object lenght constants.
+ * The header block starts with an array of map object length constants.
  *--------------------------------------------------------------------*/
 #define HDR_OBJ_LEN_ARRAY_SIZE   73
-static GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
+static const GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0x00,0x0a,0x0e,0x15,0x0e,0x16,0x1b,0xa2,
             0xa6,0xab,0x1a,0x2a,0x2f,0xa5,0xa9,0xb5,
             0xa7,0xb5,0xd9,0x0f,0x17,0x23,0x13,0x1f,
@@ -213,7 +213,7 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
      * Set acceptable default values for member vars.
      *----------------------------------------------------------------*/
     m_nMAPVersionNumber = HDR_VERSION_NUMBER;
-    m_nBlockSize = HDR_DATA_BLOCK_SIZE;
+    m_nRegularBlockSize = TAB_MIN_BLOCK_SIZE;
 
     m_dCoordsys2DistUnits = 1.0;
     m_nXMin = -1000000000;
@@ -248,7 +248,7 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
     m_sProj.nEllipsoidId = 0;
     m_sProj.nUnitsId = 7;
     m_sProj.nDatumId = 0;
-    m_XScale = 1000.0;  // Default coord range (before SetCoordSysBounds()) 
+    m_XScale = 1000.0;  // Default coord range (before SetCoordSysBounds())
     m_YScale = 1000.0;  // will be [-1000000.000 .. 1000000.000]
     m_XDispl = 0.0;
     m_YDispl = 0.0;
@@ -281,13 +281,13 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
  * Perform some initialization on the block after its binary data has
  * been set or changed (or loaded from a file).
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, 
-                                             int nBlockSize, int nSizeUsed, 
+int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
+                                             int nBlockSize, int nSizeUsed,
                                              GBool bMakeCopy /* = TRUE */,
-                                             VSILFILE *fpSrc /* = NULL */, 
+                                             VSILFILE *fpSrc /* = NULL */,
                                              int nOffset /* = 0 */)
 {
     int i, nStatus;
@@ -296,11 +296,11 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf, 
+    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf,
                                                 nBlockSize, nSizeUsed,
                                                 bMakeCopy,
                                                 fpSrc, nOffset);
-    if (nStatus != 0)   
+    if (nStatus != 0)
         return nStatus;
 
     /*-----------------------------------------------------------------
@@ -321,13 +321,21 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
 
     /*-----------------------------------------------------------------
      * Init member variables
-     * Instead of having over 30 get/set methods, we'll make all data 
-     * members public and we will initialize them here.  
+     * Instead of having over 30 get/set methods, we'll make all data
+     * members public and we will initialize them here.
      * For this reason, this class should be used with care.
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x104);
     m_nMAPVersionNumber = ReadInt16();
-    m_nBlockSize = ReadInt16();
+    m_nRegularBlockSize = ReadInt16();
+    if( m_nRegularBlockSize < TAB_MIN_BLOCK_SIZE )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+              "ReadFromFile(): Invalid block size %d", m_nRegularBlockSize);
+        CPLFree(m_pabyBuf);
+        m_pabyBuf = NULL;
+        return -1;
+    }
 
     m_dCoordsys2DistUnits = ReadDouble();
     m_nXMin = ReadInt32();
@@ -340,7 +348,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
         CPLErrorReset();
     }
 
-    GotoByteInBlock(0x130);     // Skip 16 unknown bytes 
+    GotoByteInBlock(0x130);     // Skip 16 unknown bytes
 
     m_nFirstIndexBlock = ReadInt32();
     m_nFirstGarbageBlock = ReadInt32();
@@ -412,10 +420,10 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     }
 
     m_sProj.nAffineFlag = 0;
-    if (m_nMAPVersionNumber >= 500 && m_nSizeUsed > 512)
+    if (m_nMAPVersionNumber >= 500 && m_nSizeUsed > TAB_MIN_BLOCK_SIZE)
     {
-        // Read Affine parameters A,B,C,D,E,F 
-        // only if version 500+ and block is larger than 512 bytes
+        // Read Affine parameters A,B,C,D,E,F
+        // only if version 500+ and block is larger than TAB_MIN_BLOCK_SIZE bytes
         int nInUse = ReadByte();
         if (nInUse)
         {
@@ -448,16 +456,16 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY, 
+int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
                                     double &dX, double &dY)
 {
     if (m_pabyBuf == NULL)
         return -1;
 
-    // For some obscure reason, some guy decided that it would be 
+    // For some obscure reason, some guy decided that it would be
     // more fun to be able to define our own origin quadrant!
     //
-    // In version 100 .tab files (version 400 .map), it is possible to have 
+    // In version 100 .tab files (version 400 .map), it is possible to have
     // a quadrant 0 and it should be treated the same way as quadrant 3
 
     if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
@@ -486,7 +494,7 @@ int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
 /**********************************************************************
  *                   TABMAPHeaderBlock::Coordsys2Int()
  *
- * Convert from coordinates system units as defined in the file's 
+ * Convert from coordinates system units as defined in the file's
  * coordsys clause to long integer (internal) coordinates.
  *
  * Note that the false easting/northing and the conversion factor from
@@ -494,21 +502,21 @@ int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, 
+int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
                                     GInt32 &nX, GInt32 &nY,
                                     GBool bIgnoreOverflow /*=FALSE*/)
 {
     if (m_pabyBuf == NULL)
         return -1;
 
-    // For some obscure reason, some guy decided that it would be 
+    // For some obscure reason, some guy decided that it would be
     // more fun to be able to define our own origin quadrant!
     //
-    // In version 100 .tab files (version 400 .map), it is possible to have 
+    // In version 100 .tab files (version 400 .map), it is possible to have
     // a quadrant 0 and it should be treated the same way as quadrant 3
 
     /*-----------------------------------------------------------------
-     * NOTE: double values must be used here, the limit of integer value 
+     * NOTE: double values must be used here, the limit of integer value
      * have been reached some times due to the very big numbers used here.
      *----------------------------------------------------------------*/
     double dTempX, dTempY;
@@ -559,7 +567,7 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
     {
         m_bIntBoundsOverflow = TRUE;
 #ifdef DEBUG
-        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningBoundsOverflow, 
+        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningBoundsOverflow,
                  "Integer bounds overflow: (%f, %f) -> (%d, %d)\n",
                  dX, dY, nX, nY);
 #endif
@@ -574,7 +582,7 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
  * Convert from compressed integer (internal) to coordinates system units
  * as defined in the file's coordsys clause.
  * The difference between long integer and compressed integer coords is
- * that compressed coordinates are scaled displacement relative to an 
+ * that compressed coordinates are scaled displacement relative to an
  * object centroid.
  *
  * Note that the false easting/northing and the conversion factor from
@@ -582,8 +590,8 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY, 
-                                         int nDeltaX, int nDeltaY, 
+int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
+                                         int nDeltaX, int nDeltaY,
                                          double &dX, double &dY)
 {
     if (m_pabyBuf == NULL)
@@ -597,7 +605,7 @@ int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
  *                   TABMAPHeaderBlock::Int2CoordsysDist()
  *
  * Convert a pair of X and Y size (or distance) value from long integer
- * (internal) to coordinates system units as defined in the file's 
+ * (internal) to coordinates system units as defined in the file's
  * coordsys clause.
  *
  * The difference with Int2Coordsys() is that this function only applies
@@ -608,7 +616,7 @@ int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY, 
+int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY,
                                     double &dX, double &dY)
 {
     if (m_pabyBuf == NULL)
@@ -635,7 +643,7 @@ int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY, 
+int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY,
                                         GInt32 &nX, GInt32 &nY)
 {
     if (m_pabyBuf == NULL)
@@ -659,7 +667,7 @@ int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::SetCoordsysBounds(double dXMin, double dYMin, 
+int TABMAPHeaderBlock::SetCoordsysBounds(double dXMin, double dYMin,
                                          double dXMax, double dYMax)
 {
 //printf("SetCoordsysBounds(%10g, %10g, %10g, %10g)\n", dXMin, dYMin, dXMax, dYMax);
@@ -807,23 +815,23 @@ int  TABMAPHeaderBlock::SetProjInfo(TABProjInfo *psProjInfo)
 /**********************************************************************
  *                   TABMAPHeaderBlock::CommitToFile()
  *
- * Commit the current state of the binary block to the file to which 
+ * Commit the current state of the binary block to the file to which
  * it has been previously attached.
  *
  * This method makes sure all values are properly set in the header
  * block buffer and then calls TABRawBinBlock::CommitToFile() to do
  * the actual writing to disk.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPHeaderBlock::CommitToFile()
 {
     int i, nStatus = 0;
 
-    if ( m_pabyBuf == NULL || m_nBlockSize != HDR_DATA_BLOCK_SIZE )
+    if ( m_pabyBuf == NULL || m_nRegularBlockSize == 0 )
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
         "TABRawBinBlock::CommitToFile(): Block has not been initialized yet!");
         return -1;
     }
@@ -844,7 +852,7 @@ int     TABMAPHeaderBlock::CommitToFile()
         // Default value for HDR_VERSION_NUMBER is 500 so this error should
         // never happen unless the caller changed the value, in which case they
         // deserve to get a failure
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
                  "TABRawBinBlock::CommitToFile(): .MAP version 500 or more is "
                  "required for affine projection parameter support.");
         return -1;
@@ -852,7 +860,7 @@ int     TABMAPHeaderBlock::CommitToFile()
 
     WriteInt16(m_nMAPVersionNumber);
 
-    WriteInt16(HDR_DATA_BLOCK_SIZE);
+    WriteInt16(m_nRegularBlockSize);
 
     WriteDouble(m_dCoordsys2DistUnits);
     WriteInt32(m_nXMin);
@@ -931,7 +939,7 @@ int     TABMAPHeaderBlock::CommitToFile()
     if (nStatus == 0)
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("MITAB", "Commiting HEADER block to offset %d", m_nFileOffset);
+        CPLDebug("MITAB", "Committing HEADER block to offset %d", m_nFileOffset);
 #endif
         nStatus = TABRawBinBlock::CommitToFile();
     }
@@ -943,30 +951,36 @@ int     TABMAPHeaderBlock::CommitToFile()
  *                   TABMAPHeaderBlock::InitNewBlock()
  *
  * Initialize a newly created block so that it knows to which file it
- * is attached, its block size, etc . and then perform any specific 
- * initialization for this block type, including writing a default 
+ * is attached, its block size, etc . and then perform any specific
+ * initialization for this block type, including writing a default
  * block header, etc. and leave the block ready to receive data.
  *
  * This is an alternative to calling ReadFromFile() or InitBlockFromData()
  * that puts the block in a stable state without loading any initial
  * data in it.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
+int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                                         int nFileOffset /* = 0*/)
 {
     /*-----------------------------------------------------------------
-     * Start with the default initialisation
+     * Start with the default initialization
      *----------------------------------------------------------------*/
-    if ( TABRawBinBlock::InitNewBlock(fpSrc, nBlockSize, nFileOffset) != 0)
+
+    /* .MAP files of Version 500 and up appear to have a 1024 bytes
+     * header.  The last 512 bytes are usually all zeros. */
+    if ( TABRawBinBlock::InitNewBlock(fpSrc, 1024, nFileOffset) != 0)
         return -1;
 
     /*-----------------------------------------------------------------
      * Set acceptable default values for member vars.
      *----------------------------------------------------------------*/
     InitMembersWithDefaultValues();
+
+    CPLAssert( nBlockSize >= 0 && nBlockSize <= 32767 );
+    m_nRegularBlockSize = static_cast<GInt16>(nBlockSize);
 
     /*-----------------------------------------------------------------
      * And Set the map object length array in the buffer...
@@ -1018,7 +1032,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
     else
     {
         fprintf(fpOut,"Version %d header block.\n", m_nMAPVersionNumber);
-        fprintf(fpOut,"  m_nBlockSize          = %d\n", m_nBlockSize);
+        fprintf(fpOut,"  m_nRegularBlockSize       = %d\n", m_nRegularBlockSize);
         fprintf(fpOut,"  m_nFirstIndexBlock    = %d\n", m_nFirstIndexBlock);
         fprintf(fpOut,"  m_nFirstGarbageBlock  = %d\n", m_nFirstGarbageBlock);
         fprintf(fpOut,"  m_nFirstToolBlock     = %d\n", m_nFirstToolBlock);
@@ -1055,7 +1069,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut,"\n");
         fprintf(fpOut,"  m_sProj.nDatumId      = %d\n", m_sProj.nDatumId);
         fprintf(fpOut,"  m_sProj.nProjId       = %d\n", (int)m_sProj.nProjId);
-        fprintf(fpOut,"  m_sProj.nEllipsoidId  = %d\n", 
+        fprintf(fpOut,"  m_sProj.nEllipsoidId  = %d\n",
                                                     (int)m_sProj.nEllipsoidId);
         fprintf(fpOut,"  m_sProj.nUnitsId      = %d\n", (int)m_sProj.nUnitsId);
         fprintf(fpOut,"  m_sProj.adProjParams  =");
@@ -1074,7 +1088,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
         // Dump array of map object lengths... optional
         if (FALSE)
         {
-            fprintf(fpOut, "-- Header bytes 00-FF: Array of map object lenghts --\n");
+            fprintf(fpOut, "-- Header bytes 00-FF: Array of map object lengths --\n");
             for(i=0; i<256; i++)
             {
                 fprintf(fpOut, "0x%2.2x", (int)m_pabyBuf[i]);

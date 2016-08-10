@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic GDAL open
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -40,47 +40,56 @@ from osgeo import gdal
 # Nothing exciting here. Just trying to open non existing files,
 # or empty names, or files that are not valid datasets...
 
+def matches_non_existing_error_msg(msg):
+    m1 = "does not exist in the file system,\nand is not recognized as a supported dataset name.\n" in msg
+    m2 = 'No such file or directory' in msg
+    return m1 or m2
+
 def basic_test_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`non_existing_ds\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+    if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
     else:
+        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
         return 'fail'
 
 def basic_test_2():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('non_existing_ds', gdal.GA_Update)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`non_existing_ds\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+    if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
     else:
+        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
         return 'fail'
 
 def basic_test_3():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+    if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
     else:
+        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
         return 'fail'
 
 def basic_test_4():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_Update)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
+    if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return 'success'
     else:
+        gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
         return 'fail'
 
 def basic_test_5():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('data/doctype.xml', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognised as a supported file format.\n':
+    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognized as a supported file format.\n':
         return 'success'
     else:
         return 'fail'
@@ -106,8 +115,8 @@ def basic_test_7_internal():
     except:
         # Special case: we should still be able to get the error message
         # until we call a new GDAL function
-        if gdal.GetLastErrorMsg() != '`non_existing_ds\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
-            gdaltest.post_reason('did not get expected error message')
+        if not matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
+            gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
             return 'fail'
 
         if gdal.GetLastErrorType() == 0:
@@ -200,32 +209,36 @@ def basic_test_9():
 
 class my_python_error_handler_class:
     def __init__(self):
-        pass
+        self.eErrClass = None
+        self.err_no = None
+        self.msg = None
 
     def handler(self, eErrClass, err_no, msg):
-        gdaltest.eErrClass = eErrClass
-        gdaltest.err_no = err_no
-        gdaltest.msg = msg
+        self.eErrClass = eErrClass
+        self.err_no = err_no
+        self.msg = msg
 
 def basic_test_10():
 
-    gdaltest.eErrClass = 0
-    gdaltest.err_no = 0
-    gdaltest.msg = ''
     # Check that reference counting works OK
     gdal.PushErrorHandler(my_python_error_handler_class().handler)
     gdal.Error(1,2,'test')
     gdal.PopErrorHandler()
 
-    if gdaltest.eErrClass != 1:
+    error_handler = my_python_error_handler_class()
+    gdal.PushErrorHandler(error_handler.handler)
+    gdal.Error(1,2,'test')
+    gdal.PopErrorHandler()
+
+    if error_handler.eErrClass != 1:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if gdaltest.err_no != 2:
+    if error_handler.err_no != 2:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if gdaltest.msg != 'test':
+    if error_handler.msg != 'test':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -544,6 +557,69 @@ def basic_test_14():
 
     return 'success'
 
+###############################################################################
+# Test errors with progress callback
+
+def basic_test_15_cbk_no_argument():
+    return None
+
+def basic_test_15_cbk_no_ret(a, b, c):
+    return None
+
+def basic_test_15_cbk_bad_ret(a, b, c):
+    return 'ok'
+
+def basic_test_15():
+
+    try:
+        with gdaltest.error_handler():
+            gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = 'foo')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_no_argument)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_no_ret)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.GetDriverByName('MEM').Create('',1,1), callback = basic_test_15_cbk_bad_ret)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test unrecognized and recognized open options prefixed by @
+
+def basic_test_16():
+
+    gdal.ErrorReset()
+    gdal.OpenEx('data/byte.tif', open_options=['@UNRECOGNIZED=FOO'])
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx('data/byte.tif', gdal.OF_UPDATE, open_options=['@NUM_THREADS=INVALID'])
+    if gdal.GetLastErrorMsg() != 'Invalid value for NUM_THREADS: INVALID':
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
@@ -557,11 +633,13 @@ gdaltest_list = [ basic_test_1,
                   basic_test_11,
                   basic_test_12,
                   basic_test_13,
-                  basic_test_14 ]
+                  basic_test_14,
+                  basic_test_15,
+                  basic_test_16 ]
 
 
 if __name__ == '__main__':
-    
+
     if len(sys.argv) == 3 and sys.argv[1] == "LICENSE":
         if sys.argv[2] == '0':
             gdal.SetConfigOption('GDAL_DATA', '/foo')

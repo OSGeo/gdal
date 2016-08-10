@@ -1,9 +1,8 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Implements translation support for DIMENSION elements as a part
- *           of the OGRDXFLayer class.  
+ *           of the OGRDXFLayer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -124,7 +123,7 @@ OGRFeature *OGRDXFLayer::TranslateDIMENSION()
 
 /*************************************************************************
 
-   DIMENSION geometry layout 
+   DIMENSION geometry layout
 
                   (11,21)(text center point)
         |          DimText                  |
@@ -138,14 +137,14 @@ OGRFeature *OGRDXFLayer::TranslateDIMENSION()
 
 Given:
   Locations Arrow1, Target1, and Target2 we need to compute Arrow2.
- 
+
 Steps:
  1) Compute direction vector from Target1 to Arrow1 (Vec1).
  2) Compute direction vector for arrow as perpendicular to Vec1 (call Vec2).
- 3) Compute Arrow2 location as intersection between line defined by 
+ 3) Compute Arrow2 location as intersection between line defined by
     Vec2 and Arrow1 and line defined by Target2 and direction Vec1 (call Arrow2)
 
-Then we can draw lines for the various components.  
+Then we can draw lines for the various components.
 
 Note that Vec1 and Vec2 may be horizontal, vertical or on an angle but
 the approach is as above in all these cases.
@@ -153,7 +152,7 @@ the approach is as above in all these cases.
 *************************************************************************/
 
     ;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Step 1, compute direction vector between Target1 and Arrow1.    */
 /* -------------------------------------------------------------------- */
@@ -161,13 +160,13 @@ the approach is as above in all these cases.
 
     dfVec1X = (dfArrowX1 - dfTargetX1);
     dfVec1Y = (dfArrowY1 - dfTargetY1);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Step 2, compute the direction vector from Arrow1 to Arrow2      */
-/*      as a perpendicluar to Vec1.                                     */
+/*      as a perpendicular to Vec1.                                     */
 /* -------------------------------------------------------------------- */
     double dfVec2X, dfVec2Y;
-    
+
     dfVec2X = dfVec1Y;
     dfVec2Y = -dfVec1X;
 
@@ -178,7 +177,7 @@ the approach is as above in all these cases.
 /* -------------------------------------------------------------------- */
     double dfL1M, dfL1B, dfL2M, dfL2B;
     double dfArrowX2, dfArrowY2;
-    
+
     // special case if vec1 is vertical.
     if( dfVec1X == 0.0 )
     {
@@ -201,12 +200,12 @@ the approach is as above in all these cases.
         dfL1B = dfTargetY2 - dfL1M * dfTargetX2;
 
         // convert vec2 + Arrow1 into y = mx + b format, call this L2
-        
+
         dfL2M = dfVec2Y / dfVec2X;
         dfL2B = dfArrowY1 - dfL2M * dfArrowX1;
-        
+
         // Compute intersection x = (b2-b1) / (m1-m2)
-        
+
         dfArrowX2 = (dfL2B - dfL1B) / (dfL1M-dfL2M);
         dfArrowY2 = dfL2M * dfArrowX2 + dfL2B;
     }
@@ -237,7 +236,7 @@ the approach is as above in all these cases.
     dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec1X,dfVec1Y);
     dfVec1X *= dfScaleFactor;
     dfVec1Y *= dfScaleFactor;
-    
+
     // vector 2
     dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec2X,dfVec2Y);
     dfVec2X *= dfScaleFactor;
@@ -259,7 +258,7 @@ the approach is as above in all these cases.
     oLine.setPoint( 0, dfTargetX1, dfTargetY1 );
     oLine.setPoint( 1, dfArrowX1 + dfVec1X, dfArrowY1 + dfVec1Y );
     poMLS->addGeometry( &oLine );
-    
+
     // dimension line from Target2 to Arrow2 with a small extension.
     oLine.setPoint( 0, dfTargetX2, dfTargetY2 );
     oLine.setPoint( 1, dfArrowX2 + dfVec1X, dfArrowY2 + dfVec1Y );
@@ -268,13 +267,13 @@ the approach is as above in all these cases.
     // add arrow1 arrow head.
 
     oLine.setPoint( 0, dfArrowX1, dfArrowY1 );
-    oLine.setPoint( 1, 
+    oLine.setPoint( 1,
                     dfArrowX1 + dfVec2X*3 + dfVec1X,
                     dfArrowY1 + dfVec2Y*3 + dfVec1Y );
     poMLS->addGeometry( &oLine );
 
     oLine.setPoint( 0, dfArrowX1, dfArrowY1 );
-    oLine.setPoint( 1, 
+    oLine.setPoint( 1,
                     dfArrowX1 + dfVec2X*3 - dfVec1X,
                     dfArrowY1 + dfVec2Y*3 - dfVec1Y );
     poMLS->addGeometry( &oLine );
@@ -282,13 +281,13 @@ the approach is as above in all these cases.
     // add arrow2 arrow head.
 
     oLine.setPoint( 0, dfArrowX2, dfArrowY2 );
-    oLine.setPoint( 1, 
+    oLine.setPoint( 1,
                     dfArrowX2 - dfVec2X*3 + dfVec1X,
                     dfArrowY2 - dfVec2Y*3 + dfVec1Y );
     poMLS->addGeometry( &oLine );
 
     oLine.setPoint( 0, dfArrowX2, dfArrowY2 );
-    oLine.setPoint( 1, 
+    oLine.setPoint( 1,
                     dfArrowX2 - dfVec2X*3 - dfVec1X,
                     dfArrowY2 - dfVec2Y*3 - dfVec1Y );
     poMLS->addGeometry( &oLine );
@@ -314,7 +313,7 @@ the approach is as above in all these cases.
     // Do we need to compute the dimension value?
     if( osText.size() == 0 )
     {
-        FormatDimension( osText, POINT_DIST( dfArrowX1, dfArrowY1, 
+        FormatDimension( osText, POINT_DIST( dfArrowX1, dfArrowY1,
                                              dfArrowX2, dfArrowY2 ) );
     }
 
@@ -362,9 +361,9 @@ void OGRDXFLayer::FormatDimension( CPLString &osText, double dfValue )
 
     // we could do a significantly more precise formatting if we want
     // to spend the effort.  See QCAD's rs_dimlinear.cpp and related files
-    // for example.  
+    // for example.
 
-    sprintf(szFormat, "%%.%df", nPrecision );
+    snprintf(szFormat, sizeof(szFormat), "%%.%df", nPrecision );
     CPLsnprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);
     osText = szBuffer;
 }

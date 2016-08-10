@@ -1,7 +1,7 @@
 
 class ERSHdrNode;
 
-class ERSHdrNode 
+class ERSHdrNode
 {
     CPLString osTempReturn;
 
@@ -21,7 +21,7 @@ public:
     int    WriteSelf( VSILFILE *fp, int nIndent );
 
     const char *Find( const char *pszPath, const char *pszDefault = NULL );
-    const char *FindElem( const char *pszPath, int iElem, 
+    const char *FindElem( const char *pszPath, int iElem,
                           const char *pszDefault = NULL );
     ERSHdrNode *FindNode( const char *pszPath );
 

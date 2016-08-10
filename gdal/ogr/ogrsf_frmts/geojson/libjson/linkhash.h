@@ -9,9 +9,9 @@
  * it under the terms of the MIT license. See COPYING for details.
  *
  */
- 
-#ifndef _linkhash_h_
-#define _linkhash_h_
+
+#ifndef linkhash_h_
+#define linkhash_h_
 
 #include "json_object.h"
 
@@ -26,7 +26,7 @@ extern "C" {
 
 /**
  * The fraction of filled hash buckets until an insert will cause the table
- * to be resized.  
+ * to be resized.
  * This can range from just above 0 up to 1.0.
  */
 #define LH_LOAD_FACTOR 0.66
@@ -282,7 +282,7 @@ extern int lh_table_delete(struct lh_table *t, const void *k);
 
 extern int lh_table_length(struct lh_table *t);
 
-void lh_abort(const char *msg, ...);
+void lh_abort(const char *msg, ...) CPL_NO_RETURN;
 void lh_table_resize(struct lh_table *t, int new_size);
 
 #ifdef __cplusplus

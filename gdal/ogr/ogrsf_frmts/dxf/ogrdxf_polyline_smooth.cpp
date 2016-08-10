@@ -32,6 +32,7 @@
 #include "math.h"
 #include "ogrdxf_polyline_smooth.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                Local helper functions                                */
@@ -46,7 +47,7 @@ static double GetRadius(double bulge, double length)
 
 static double GetLength
 (
-    const DXFSmoothPolylineVertex& start, 
+    const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end
 )
 {
@@ -56,7 +57,7 @@ static double GetLength
 
 static double GetAngle
 (
-    const DXFSmoothPolylineVertex& start, 
+    const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end
 )
 {
@@ -72,6 +73,7 @@ static double GetOGRangle(double angle)
 }
 
 
+// TODO: Spelling Tesselate -> Tessellate
 /************************************************************************/
 /*                DXFSmoothPolyline::Tesselate()                        */
 /************************************************************************/
@@ -102,20 +104,20 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
     m_blinestringstarted = false;
 
-    std::vector<DXFSmoothPolylineVertex>::const_iterator iter = m_vertices.begin();
-    std::vector<DXFSmoothPolylineVertex>::const_iterator eiter = m_vertices.end();
+    std::vector<DXFSmoothPolylineVertex>::const_iterator oIter = m_vertices.begin();
+    std::vector<DXFSmoothPolylineVertex>::const_iterator oEndIter = m_vertices.end();
 
-    eiter--;
+    oEndIter--;
 
-    DXFSmoothPolylineVertex begin = *iter;
+    DXFSmoothPolylineVertex begin = *oIter;
 
     double dfZ = 0.0;
     const bool bConstantZ = this->HasConstantZ(dfZ);
 
-    while(iter != eiter)
+    while(oIter != oEndIter)
     {
-        iter++;
-        DXFSmoothPolylineVertex end = *iter;
+        oIter++;
+        DXFSmoothPolylineVertex end = *oIter;
 
         const double len = GetLength(begin,end);
 
@@ -175,7 +177,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
 void DXFSmoothPolyline::EmitArc
 (
-    const DXFSmoothPolylineVertex& start, 
+    const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end,
     double radius, double len, double bulge,
     OGRLineString* poLS,
@@ -203,7 +205,7 @@ void DXFSmoothPolyline::EmitArc
 /* -------------------------------------------------------------------- */
 
     const double saggita = fabs(bulge * (len / 2.0));
-    const double apo = bClockwise 
+    const double apo = bClockwise
                         ? -(ogrArcRadius - saggita)
                         : -(saggita - ogrArcRadius);
 
@@ -262,8 +264,8 @@ void DXFSmoothPolyline::EmitArc
     if(!bClockwise && (ogrArcStartAngle < ogrArcEndAngle))
         ogrArcEndAngle = -180.0 + (linedir * a);
 
-    if(bClockwise && (ogrArcStartAngle > ogrArcEndAngle)) 
-        ogrArcEndAngle += 360.0; 
+    if(bClockwise && (ogrArcStartAngle > ogrArcEndAngle))
+        ogrArcEndAngle += 360.0;
 
 /* -------------------------------------------------------------------- */
 /*      Flip arc's rotation if necessary.                               */
@@ -274,10 +276,10 @@ void DXFSmoothPolyline::EmitArc
 
 
 /* -------------------------------------------------------------------- */
-/*      Tesselate the arc segment and append to the linestring.         */
+/*      Tessellate the arc segment and append to the linestring.        */
 /* -------------------------------------------------------------------- */
 
-    OGRLineString* poArcpoLS = 
+    OGRLineString* poArcpoLS =
         (OGRLineString*)OGRGeometryFactory::approximateArcAngles(
             ogrArcCenter.x, ogrArcCenter.y, dfZ,
             ogrArcRadius, ogrArcRadius, ogrArcRotation,
@@ -297,7 +299,7 @@ void DXFSmoothPolyline::EmitArc
 
 void DXFSmoothPolyline::EmitLine
 (
-    const DXFSmoothPolylineVertex& start, 
+    const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end,
     OGRLineString* poLS,
     bool bConstantZ,
@@ -308,12 +310,12 @@ void DXFSmoothPolyline::EmitLine
 
     if(!m_blinestringstarted)
     {
-        poLS->addPoint(start.x, start.y, 
+        poLS->addPoint(start.x, start.y,
             bConstantZ ? dfZ : start.z);
         m_blinestringstarted = true;
     }
 
-    poLS->addPoint(end.x, end.y, 
+    poLS->addPoint(end.x, end.y,
         bConstantZ ? dfZ : end.z);
 }
 
@@ -367,4 +369,3 @@ bool DXFSmoothPolyline::HasConstantZ(double& dfZ) const
     dfZ = d;
     return true;
 }
-

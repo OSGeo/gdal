@@ -4,7 +4,7 @@
 
 The OGRSpatialReference, and OGRCoordinateTransformation classes provide
 services to represent coordinate systems (projections and datums) and to
-transform between them.  These services are loosely modelled on the 
+transform between them.  These services are loosely modeled on the 
 OpenGIS Coordinate Transformations specification, and use the same 
 Well Known Text format for describing coordinate systems. 
 
@@ -178,7 +178,7 @@ The following code (from ogr_srs_proj4.cpp) demonstrates use
 of GetAttrValue() to get the projection, and GetProjParm() to get projection
 parameters.  The GetAttrValue() method searches for the first "value" 
 node associated with the named entry in the WKT text representation.  
-The #define'ed constants for projection parameters (such as 
+The \#define'ed constants for projection parameters (such as 
 SRS_PP_CENTRAL_MERIDIAN) should be used when fetching projection parameter
 with GetProjParm().   The code for the Set methods of the various projections
 in ogrspatialreference.cpp can be consulted to find which parameters apply to 
@@ -255,10 +255,10 @@ if any of the points fail to transform.  The point array is
 left in an indeterminate state on error.
 
 Though not shown above, the coordinate transformation service can
-take 3D points, and will adjust elevations for elevation differents
+take 3D points, and will adjust elevations for elevation differences
 in spheroids, and datums.  At some point in the future shifts 
 between different vertical datums may also be applied.  If no Z is
-passed, it is assume that the point is on the geoide. 
+passed, it is assume that the point is on the geoid. 
 
 The following example shows how to conveniently create a lat/long coordinate
 system using the same geographic coordinate system as a projected coordinate

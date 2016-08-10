@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SVG Translator
  * Purpose:  Implements OGRSVGDataSource class
@@ -39,11 +38,15 @@ CPL_CVSID("$Id$");
 OGRSVGDataSource::OGRSVGDataSource() :
     pszName(NULL),
     papoLayers(NULL),
-    nLayers(0),
-    bIsCloudmade(FALSE)
+    nLayers(0)
+#ifdef HAVE_EXPAT
+    ,
+    eValidity(SVG_VALIDITY_UNKNOWN),
+    bIsCloudmade(false),
+    oCurrentParser(NULL),
+    nDataHandlerCounter(0)
+#endif
 {
-
-
 }
 
 /************************************************************************/
@@ -78,12 +81,12 @@ OGRLayer *OGRSVGDataSource::GetLayer( int iLayer )
 /*                startElementValidateCbk()                             */
 /************************************************************************/
 
-void OGRSVGDataSource::startElementValidateCbk(const char *pszName,
+void OGRSVGDataSource::startElementValidateCbk(const char *pszNameIn,
                                                const char **ppszAttr)
 {
     if (eValidity == SVG_VALIDITY_UNKNOWN)
     {
-        if (strcmp(pszName, "svg") == 0)
+        if (strcmp(pszNameIn, "svg") == 0)
         {
             int i;
             eValidity = SVG_VALIDITY_VALID;
@@ -92,7 +95,7 @@ void OGRSVGDataSource::startElementValidateCbk(const char *pszName,
                 if (strcmp(ppszAttr[i], "xmlns:cm") == 0 &&
                     strcmp(ppszAttr[i+1], "http://cloudmade.com/") == 0)
                 {
-                    bIsCloudmade = TRUE;
+                    bIsCloudmade = true;
                     break;
                 }
             }
@@ -160,7 +163,7 @@ int OGRSVGDataSource::Open( const char * pszFilename )
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp == NULL)
         return FALSE;
-    
+
     eValidity = SVG_VALIDITY_UNKNOWN;
 
     XML_Parser oParser = OGRCreateExpatXMLParser();
@@ -168,12 +171,12 @@ int OGRSVGDataSource::Open( const char * pszFilename )
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
-    
+
     char aBuf[BUFSIZ];
     int nDone;
     unsigned int nLen;
     int nCount = 0;
-    
+
     /* Begin to parse the file and look for the <svg> element */
     /* It *MUST* be the first element of an XML file */
     /* So once we have read the first element, we know if we can */

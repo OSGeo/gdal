@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Oracle Spatial Driver
- * Purpose:  Simple string buffer used to accumulate text of commands 
+ * Purpose:  Simple string buffer used to accumulate text of commands
  *           efficiently.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -78,7 +77,7 @@ void OGROCIStringBuf::MakeRoomFor( int nCharacters )
 void OGROCIStringBuf::Append( const char *pszNewText )
 
 {
-    int  nNewLen = strlen(pszNewText);
+    int  nNewLen = static_cast<int>(strlen(pszNewText));
 
     MakeRoomFor( nNewLen );
     strcat( pszString+nLen, pszNewText );
@@ -96,7 +95,7 @@ void OGROCIStringBuf::Appendf( int nMax, const char *pszFormat, ... )
     char    szSimpleBuf[100];
     char    *pszBuffer;
 
-    if( nMax > (int) sizeof(szSimpleBuf-1) )
+    if( nMax > (int) sizeof(szSimpleBuf)-1 )
         pszBuffer = (char *) CPLMalloc(nMax+1);
     else
         pszBuffer = szSimpleBuf;
@@ -117,7 +116,7 @@ void OGROCIStringBuf::Appendf( int nMax, const char *pszFormat, ... )
 void OGROCIStringBuf::UpdateEnd()
 
 {
-    nLen += strlen(pszString+nLen);
+    nLen += static_cast<int>(strlen(pszString+nLen));
 }
 
 /************************************************************************/

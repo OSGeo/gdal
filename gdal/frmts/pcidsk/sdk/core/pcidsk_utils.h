@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_CORE_PCIDSK_UTILS_H
-#define __INCLUDE_CORE_PCIDSK_UTILS_H
+#ifndef INCLUDE_CORE_PCIDSK_UTILS_H
+#define INCLUDE_CORE_PCIDSK_UTILS_H
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
@@ -44,10 +44,16 @@ namespace PCIDSK
     uint64 atouint64( const char *);
     int64  atoint64( const char *);
     int    pci_strcasecmp( const char *, const char * );
-    int    pci_strncasecmp( const char *, const char *, int );
+    int    pci_strncasecmp( const char *, const char *, size_t );
 
+#ifndef EQUAL
 #define EQUAL(x,y) (pci_strcasecmp(x,y) == 0)
 #define EQUALN(x,y,n) (pci_strncasecmp(x,y,n) == 0)
+#endif
+#ifndef STARTS_WITH_CI
+#define STARTS_WITH_CI(x,y) EQUALN(x,y,strlen(y))
+#define STARTS_WITH(x,y) (std::strncmp(x,y,strlen(y)) == 0)
+#endif
   
     void   SwapData( void* const data, const int size, const int wcount );
     bool   BigEndianSystem(void);
@@ -76,8 +82,8 @@ namespace PCIDSK
         int xsize, int ysize, eChanType pixel_type, int quality );
 
     void                DefaultDebug( const char * );
-    void                Debug( void (*)(const char *), const char *fmt, ... );
+    void                Debug( void (*)(const char *), const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
 
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_CORE_PCIDSK_UTILS_H
+#endif // INCLUDE_CORE_PCIDSK_UTILS_H

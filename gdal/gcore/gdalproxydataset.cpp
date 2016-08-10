@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  A dataset and raster band classes that act as proxy for underlying
@@ -32,6 +31,7 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
 /* ******************************************************************** */
 /*                        GDALProxyDataset                              */
 /* ******************************************************************** */
@@ -53,28 +53,85 @@ retType GDALProxyDataset::methodName argList \
     return ret; \
 }
 
-
-D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
-                        ( GDALRWFlag eRWFlag,
+CPLErr GDALProxyDataset::IRasterIO( GDALRWFlag eRWFlag,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         void * pData, int nBufXSize, int nBufYSize,
-                        GDALDataType eBufType, 
+                        GDALDataType eBufType,
                         int nBandCount, int *panBandMap,
                         GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
-                        GDALRasterIOExtraArg* psExtraArg),
-                        ( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                        pData, nBufXSize, nBufYSize,
-                        eBufType, nBandCount, panBandMap,
-                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg ))
+                        GDALRasterIOExtraArg* psExtraArg)
+{
+    CPLErr ret;
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
+    if (poUnderlyingDataset)
+    {
+/* -------------------------------------------------------------------- */
+/*      Do some validation of parameters.                               */
+/* -------------------------------------------------------------------- */
+        if( nXOff + nXSize > poUnderlyingDataset->GetRasterXSize() ||
+            nYOff + nYSize > poUnderlyingDataset->GetRasterYSize() )
+        {
+            ReportError( CE_Failure, CPLE_IllegalArg,
+                         "Access window out of range in RasterIO().  Requested\n"
+                         "(%d,%d) of size %dx%d on raster of %dx%d.",
+                         nXOff, nYOff, nXSize, nYSize,
+                         poUnderlyingDataset->GetRasterXSize(),
+                         poUnderlyingDataset->GetRasterYSize() );
+            ret = CE_Failure;
+        }
+        else if( panBandMap == NULL && nBandCount > poUnderlyingDataset->GetRasterCount() )
+        {
+            ReportError( CE_Failure, CPLE_IllegalArg,
+                        "%s: nBandCount cannot be greater than %d",
+                        "IRasterIO", poUnderlyingDataset->GetRasterCount() );
+            ret = CE_Failure;
+        }
+        else
+        {
+            ret = CE_None;
+            for( int i = 0; i < nBandCount && ret == CE_None; ++i )
+            {
+                int iBand = (panBandMap != NULL) ? panBandMap[i] : i + 1;
+                if( iBand < 1 || iBand > poUnderlyingDataset->GetRasterCount() )
+                {
+                    ReportError( CE_Failure, CPLE_IllegalArg,
+                              "%s: panBandMap[%d] = %d, this band does not exist on dataset.",
+                              "IRasterIO", i, iBand );
+                    ret = CE_Failure;
+                }
 
+                if( ret == CE_None && poUnderlyingDataset->GetRasterBand( iBand ) == NULL )
+                {
+                    ReportError( CE_Failure, CPLE_IllegalArg,
+                              "%s: panBandMap[%d]=%d, this band should exist but is NULL!",
+                              "IRasterIO", i, iBand );
+                    ret = CE_Failure;
+                }
+            }
+            if( ret != CE_Failure )
+            {
+                ret = poUnderlyingDataset->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                pData, nBufXSize, nBufYSize,
+                                eBufType, nBandCount, panBandMap,
+                                nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+            }
+        }
+        UnrefUnderlyingDataset(poUnderlyingDataset);
+    }
+    else
+    {
+        ret = CE_Failure;
+    }
+    return ret;
+}
 
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,
-                        ( const char *pszResampling, 
-                          int nOverviews, int *panOverviewList, 
+                        ( const char *pszResampling,
+                          int nOverviews, int *panOverviewList,
                           int nListBands, int *panBandList,
-                          GDALProgressFunc pfnProgress, 
+                          GDALProgressFunc pfnProgress,
                           void * pProgressData ),
-                        ( pszResampling, nOverviews, panOverviewList, 
+                        ( pszResampling, nOverviews, panOverviewList,
                           nListBands, panBandList, pfnProgress, pProgressData ))
 
 void  GDALProxyDataset::FlushCache()
@@ -116,20 +173,20 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGCPs,
                         (nGCPCount, pasGCPList, pszGCPProjection))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         ( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize, 
-                                GDALDataType eDT, 
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eDT,
                                 int nBandCount, int *panBandList,
                                 char **papszOptions ),
                         (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT, nBandCount, panBandList, papszOptions))
-D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlags ), (nFlags))
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (nFlagsIn))
 
 /************************************************************************/
 /*                    UnrefUnderlyingDataset()                        */
 /************************************************************************/
 
-void GDALProxyDataset::UnrefUnderlyingDataset(CPL_UNUSED GDALDataset* poUnderlyingDataset)
-{
-}
+void GDALProxyDataset::UnrefUnderlyingDataset(
+    GDALDataset* /* poUnderlyingDataset */)
+{}
 
 /* ******************************************************************** */
 /*                        GDALProxyRasterBand                           */
@@ -164,7 +221,24 @@ retType GDALProxyRasterBand::methodName argList \
         if( !poSrcBand->InitBlockInfo() ) \
             ret = CE_Failure; \
         else \
-            ret = poSrcBand->methodName argParams; \
+        { \
+            int nSrcBlockXSize, nSrcBlockYSize; \
+            poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize); \
+            if( poSrcBand->GetRasterDataType() != GetRasterDataType() ) \
+            { \
+                CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent datatype between proxy and source"); \
+                ret = CE_Failure; \
+            } \
+            else if( nSrcBlockXSize != nBlockXSize || nSrcBlockYSize != nBlockYSize) \
+            { \
+                CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent block dimensions between proxy and source"); \
+                ret = CE_Failure; \
+            } \
+            else \
+            { \
+                ret = poSrcBand->methodName argParams; \
+            } \
+        } \
         UnrefUnderlyingRasterBand(poSrcBand); \
     } \
     else \
@@ -175,22 +249,49 @@ retType GDALProxyRasterBand::methodName argList \
 }
 
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IReadBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage), 
+                                ( int nXBlockOff, int nYBlockOff, void* pImage),
                                 (nXBlockOff, nYBlockOff, pImage) )
 RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(CPLErr, CE_Failure, IWriteBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage), 
+                                ( int nXBlockOff, int nYBlockOff, void* pImage),
                                 (nXBlockOff, nYBlockOff, pImage) )
-RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IRasterIO,
-                        ( GDALRWFlag eRWFlag,
+
+CPLErr GDALProxyRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                 int nXOff, int nYOff, int nXSize, int nYSize,
                                 void * pData, int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType,
                                 GSpacing nPixelSpace,
                                 GSpacing nLineSpace,
-                                GDALRasterIOExtraArg* psExtraArg ), 
-                        (eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                GDALRasterIOExtraArg* psExtraArg )
+{
+    CPLErr ret;
+    GDALRasterBand* poSrcBand = RefUnderlyingRasterBand();
+    if (poSrcBand)
+    {
+/* -------------------------------------------------------------------- */
+/*      Do some validation of parameters.                               */
+/* -------------------------------------------------------------------- */
+        if( nXOff + nXSize > poSrcBand->GetXSize() || nYOff + nYSize > poSrcBand->GetYSize() )
+        {
+            ReportError( CE_Failure, CPLE_IllegalArg,
+                      "Access window out of range in RasterIO().  Requested\n"
+                      "(%d,%d) of size %dx%d on raster of %dx%d.",
+                      nXOff, nYOff, nXSize, nYSize, poSrcBand->GetXSize(), poSrcBand->GetYSize() );
+            ret =  CE_Failure;
+        }
+        else
+        {
+            ret = poSrcBand->IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                 pData, nBufXSize, nBufYSize, eBufType,
-                                nPixelSpace, nLineSpace, psExtraArg ) )
+                                nPixelSpace, nLineSpace, psExtraArg );
+        }
+        UnrefUnderlyingRasterBand(poSrcBand);
+    }
+    else
+    {
+        ret = CE_Failure;
+    }
+    return ret;
+}
 
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadataDomainList, (), ())
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))
@@ -230,17 +331,17 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetUnitType, ( const char * arg ), 
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetStatistics,
                         ( int bApproxOK, int bForce,
-                        double *pdfMin, double *pdfMax, 
+                        double *pdfMin, double *pdfMax,
                         double *pdfMean, double *padfStdDev ),
                         (bApproxOK, bForce, pdfMin, pdfMax, pdfMean, padfStdDev))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeStatistics,
-                        ( int bApproxOK, 
-                        double *pdfMin, double *pdfMax, 
+                        ( int bApproxOK,
+                        double *pdfMin, double *pdfMax,
                         double *pdfMean, double *pdfStdDev,
                         GDALProgressFunc pfn, void *pProgressData ),
                         ( bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfn, pProgressData))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetStatistics,
-                        ( double dfMin, double dfMax, 
+                        ( double dfMin, double dfMax,
                         double dfMean, double dfStdDev ),
                         (dfMin, dfMax, dfMean, dfStdDev))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeRasterMinMax,
@@ -259,7 +360,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         ( int nXOff, int nYOff, int nXSize, int nYSize,
-                        int nBufXSize, int nBufYSize, 
+                        int nBufXSize, int nBufYSize,
                         GDALDataType eDT, char **papszOptions ),
                         (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT, papszOptions))
 
@@ -291,7 +392,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultRAT,
 
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL, GetMaskBand, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
-RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlags ), (nFlags))
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (nFlagsIn))
 
 RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, NULL, GetVirtualMemAuto,
                          ( GDALRWFlag eRWFlag, int *pnPixelSpace, GIntBig *pnLineSpace, char **papszOptions ),
@@ -301,6 +402,8 @@ RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, NULL, GetVirtualMemAuto,
 /*                 UnrefUnderlyingRasterBand()                        */
 /************************************************************************/
 
-void GDALProxyRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand* poUnderlyingRasterBand)
-{
-}
+void GDALProxyRasterBand::UnrefUnderlyingRasterBand(
+    GDALRasterBand* /* poUnderlyingRasterBand */ )
+{}
+
+/*! @endcond */

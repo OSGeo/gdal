@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_COUCHDB_H_INCLUDED
-#define _OGR_COUCHDB_H_INCLUDED
+#ifndef OGR_COUCHDB_H_INCLUDED
+#define OGR_COUCHDB_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
@@ -37,9 +37,9 @@
 #include <vector>
 #include <map>
 
-#define _ID_FIELD       0
-#define _REV_FIELD      1
-#define FIRST_FIELD     2
+#define COUCHDB_ID_FIELD       0
+#define COUCHDB_REV_FIELD      1
+#define COUCHDB_FIRST_FIELD    2
 
 typedef enum
 {
@@ -142,7 +142,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     CPLString                 osEscapedName;
     int                       bMustWriteMetadata;
     int                       bMustRunSpatialFilter;
-    std::vector<CPLString>    aosIdsToFetch;   
+    std::vector<CPLString>    aosIdsToFetch;
     int                       bServerSideSpatialFilteringWorks;
     int                       bHasLoadedMetadata;
     CPLString                 osMetadataRev;
@@ -204,7 +204,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
 
-    void                        SetCoordinatePrecision(int nCoordPrecision) { this->nCoordPrecision = nCoordPrecision; }
+    void                        SetCoordinatePrecision(int nCoordPrecisionIn) { this->nCoordPrecision = nCoordPrecisionIn; }
 
     virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
 
@@ -246,7 +246,7 @@ class OGRCouchDBDataSource : public OGRDataSource
 
     int                 bReadWrite;
 
-    int                 bMustCleanPersistant;
+    int                 bMustCleanPersistent;
 
     CPLString           osURL;
     CPLString           osUserPwd;
@@ -319,4 +319,4 @@ class OGRCouchDBDriver : public OGRSFDriver
     virtual int                 TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_COUCHDB_H_INCLUDED */
+#endif /* ndef OGR_COUCHDB_H_INCLUDED */

@@ -198,7 +198,7 @@ typedef double              REAL8; /* IEEE-754 64-bit */
                             */
 #define PT_UTM 1  /* Universal Transverse Mercator (= PT_YDECT2B)
                             */
-#define PT_LATLON 2  /* Lattitude / Longitude (= PT_YDECT2B)
+#define PT_LATLON 2  /* Latitude / Longitude (= PT_YDECT2B)
                             */
 #define PT_CART        3  /* Carthesian (= PT_YDECT2B)
                             */

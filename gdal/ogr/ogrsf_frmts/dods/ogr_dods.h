@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_DODS_H_INCLUDED
-#define _OGR_DODS_H_INCLUDED
+#ifndef OGR_DODS_H_INCLUDED
+#define OGR_DODS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
@@ -84,8 +84,8 @@ class OGRDODSFieldDefn {
 public:
     OGRDODSFieldDefn();
     ~OGRDODSFieldDefn();
-    
-    int Initialize( AttrTable *, 
+
+    int Initialize( AttrTable *,
                     BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
     int Initialize( const char *, const char * = "das",
                     BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
@@ -106,7 +106,7 @@ public:
 /************************************************************************/
 
 class OGRDODSDataSource;
-    
+
 class OGRDODSLayer : public OGRLayer
 {
   protected:
@@ -133,14 +133,14 @@ class OGRDODSLayer : public OGRLayer
     DataDDS            *poDataDDS;
 
     BaseType           *poTargetVar;
-    
+
     AttrTable          *poOGRLayerInfo;
 
     int                 bKnowExtent;
     OGREnvelope         sExtent;
 
   public:
-                        OGRDODSLayer( OGRDODSDataSource *poDS, 
+                        OGRDODSLayer( OGRDODSDataSource *poDS,
                                       const char *pszTarget,
                                       AttrTable *poAttrInfo );
     virtual             ~OGRDODSLayer();
@@ -178,7 +178,7 @@ private:
     int                 iLastSuperSeq;
 
     int                 nRecordCount; /* -1 if not yet known */
-    int                 nSuperSeqCount; 
+    int                 nSuperSeqCount;
     int                *panSubSeqSize;
 
     double              GetFieldValueAsDouble( OGRDODSFieldDefn *, int );
@@ -186,8 +186,8 @@ private:
                                        Sequence * );
 
     double              BaseTypeToDouble( BaseType * );
-    
-    int                 BuildFields( BaseType *, const char *, 
+
+    int                 BuildFields( BaseType *, const char *,
                                      const char * );
 
     Sequence           *FindSuperSequence( BaseType * );
@@ -196,13 +196,13 @@ protected:
     virtual int         ProvideDataDDS();
 
 public:
-                        OGRDODSSequenceLayer( OGRDODSDataSource *poDS, 
+                        OGRDODSSequenceLayer( OGRDODSDataSource *poDS,
                                               const char *pszTarget,
                                               AttrTable *poAttrInfo );
     virtual             ~OGRDODSSequenceLayer();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual GIntBig     GetFeatureCount( int );
 };
 
@@ -213,7 +213,7 @@ public:
 class OGRDODSDim
 {
 public:
-    OGRDODSDim() { 
+    OGRDODSDim() {
         pszDimName = NULL;
         nDimStart = 0;
         nDimEnd = 0;
@@ -241,7 +241,7 @@ public:
 class OGRDODSArrayRef
 {
 public:
-    OGRDODSArrayRef() { 
+    OGRDODSArrayRef() {
         pszName = NULL;
         iFieldIndex = -1;
         poArray = NULL;
@@ -276,21 +276,21 @@ class OGRDODSGridLayer : public OGRDODSLayer
 
     void               *pRawData;
 
-    int                 ArrayEntryToField( Array *poArray, void *pRawData, 
+    int                 ArrayEntryToField( Array *poArray, void *pRawData,
                                            int iArrayIndex,
                                            OGRFeature *poFeature, int iField);
-								       
+
 protected:
     virtual int         ProvideDataDDS();
 
 public:
-                        OGRDODSGridLayer( OGRDODSDataSource *poDS, 
+                        OGRDODSGridLayer( OGRDODSDataSource *poDS,
                                          const char *pszTarget,
                                          AttrTable *poAttrInfo );
     virtual             ~OGRDODSGridLayer();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual GIntBig     GetFeatureCount( int );
 
 };
@@ -303,7 +303,7 @@ class OGRDODSDataSource : public OGRDataSource
 {
     OGRDODSLayer        **papoLayers;
     int                 nLayers;
-    
+
     char               *pszName;
 
     void                AddLayer( OGRDODSLayer * );
@@ -352,6 +352,4 @@ int  OGRDODSGetVarIndex( Sequence *poParent, string oVarName );
 int  OGRDODSIsFloatInvalid( const float * );
 int  OGRDODSIsDoubleInvalid( const double * );
 
-#endif /* ndef _OGR_DODS_H_INCLUDED */
-
-
+#endif /* ndef OGR_DODS_H_INCLUDED */

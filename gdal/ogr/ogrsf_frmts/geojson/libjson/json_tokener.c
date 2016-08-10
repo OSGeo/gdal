@@ -76,7 +76,7 @@ const char* json_tokener_errors[] = {
 const char *json_tokener_error_desc(enum json_tokener_error jerr)
 {
 	int jerr_int = (int)jerr;
-	if (jerr_int < 0 || jerr_int > (int)sizeof(json_tokener_errors))
+	if (jerr_int < 0 || jerr_int >= (int)(sizeof(json_tokener_errors) / sizeof(json_tokener_errors[0])))
 		return "Unknown error, invalid json_tokener_error value passed to json_tokener_error_desc()";
 	return json_tokener_errors[jerr];
 }
@@ -260,11 +260,15 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 	state = json_tokener_state_eatws;
 	saved_state = json_tokener_state_object_field_start;
 	current = json_object_new_object();
+        if( current == NULL )
+            goto out;
 	break;
       case '[':
 	state = json_tokener_state_eatws;
 	saved_state = json_tokener_state_array;
 	current = json_object_new_array();
+        if( current == NULL )
+            goto out;
 	break;
       case 'N':
       case 'n':
@@ -396,6 +400,8 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 	  if(c == tok->quote_char) {
 	    printbuf_memappend_fast(tok->pb, case_start, str-case_start);
 	    current = json_object_new_string_len(tok->pb->buf, tok->pb->bpos);
+            if( current == NULL )
+                goto out;
 	    saved_state = json_tokener_state_finish;
 	    state = json_tokener_state_eatws;
 	    break;
@@ -457,14 +463,14 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 
                 if (got_hi_surrogate) {
 		  if (IS_LOW_SURROGATE(tok->ucs_char)) {
-                    /* Recalculate the ucs_char, then fall thru to process normally */
+                    /* Recalculate the ucs_char, then fall through to process normally */
                     tok->ucs_char = DECODE_SURROGATE_PAIR(got_hi_surrogate, tok->ucs_char);
                   } else {
                     /* Hi surrogate was not followed by a low surrogate */
                     /* Replace the hi and process the rest normally */
 		    printbuf_memappend_fast(tok->pb, (char*)utf8_replacement_char, 3);
                   }
-                  got_hi_surrogate = 0;
+                  /*got_hi_surrogate = 0;*/
                 }
 
 		if (tok->ucs_char < 0x80) {
@@ -550,6 +556,8 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 		     json_min(tok->st_pos+1, (int)strlen(json_true_str))) == 0) {
 	if(tok->st_pos == (int)strlen(json_true_str)) {
 	  current = json_object_new_boolean(1);
+          if( current == NULL )
+              goto out;
 	  saved_state = json_tokener_state_finish;
 	  state = json_tokener_state_eatws;
 	  goto redo_char;
@@ -558,6 +566,8 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 			    json_min(tok->st_pos+1, (int)strlen(json_false_str))) == 0) {
 	if(tok->st_pos == (int)strlen(json_false_str)) {
 	  current = json_object_new_boolean(0);
+          if( current == NULL )
+              goto out;
 	  saved_state = json_tokener_state_finish;
 	  state = json_tokener_state_eatws;
 	  goto redo_char;
@@ -590,9 +600,13 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 	int64_t num64;
 	double  numd;
 	if (!tok->is_double && json_parse_int64(tok->pb->buf, &num64) == 0) {
-		current = json_object_new_int64(num64);
+            current = json_object_new_int64(num64);
+            if( current == NULL )
+              goto out;
 	} else if(tok->is_double && json_parse_double(tok->pb->buf, &numd) == 0) {
           current = json_object_new_double(numd);
+          if( current == NULL )
+              goto out;
         } else {
           tok->err = json_tokener_error_parse_number;
           goto out;
@@ -627,7 +641,10 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
       break;
 
     case json_tokener_state_array_add:
-      json_object_array_add(current, obj);
+      if( json_object_array_add(current, obj) != 0 )
+      {
+          goto out;
+      }
       saved_state = json_tokener_state_array_sep;
       state = json_tokener_state_eatws;
       goto redo_char;

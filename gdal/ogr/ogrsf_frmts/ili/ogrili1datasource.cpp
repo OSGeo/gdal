@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 1 Translator
  * Purpose:  Implements OGRILI1DataSource class.
@@ -28,11 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili1.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
 #include "ili1reader.h"
+#include "ogr_ili1.h"
 
 #include <string>
 
@@ -42,17 +41,15 @@ CPL_CVSID("$Id$");
 /*                         OGRILI1DataSource()                         */
 /************************************************************************/
 
-OGRILI1DataSource::OGRILI1DataSource()
-
-{
-    pszName = NULL;
-    poImdReader = new ImdReader(1);
-    poReader = NULL;
-    fpTransfer = NULL;
-    pszTopic = NULL;
-    nLayers = 0;
-    papoLayers = NULL;
-}
+OGRILI1DataSource::OGRILI1DataSource() :
+    pszName(NULL),
+    poImdReader(new ImdReader(1)),
+    poReader(NULL),
+    fpTransfer(NULL),
+    pszTopic(NULL),
+    nLayers(0),
+    papoLayers(NULL)
+{}
 
 /************************************************************************/
 /*                        ~OGRILI1DataSource()                         */
@@ -61,9 +58,7 @@ OGRILI1DataSource::OGRILI1DataSource()
 OGRILI1DataSource::~OGRILI1DataSource()
 
 {
-    int i;
-
-    for(i=0;i<nLayers;i++)
+    for( int i=0; i<nLayers; i++)
     {
         delete papoLayers[i];
     }
@@ -87,22 +82,21 @@ OGRILI1DataSource::~OGRILI1DataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, int bTestOpen )
+int OGRILI1DataSource::Open( const char * pszNewName,
+                             char** papszOpenOptionsIn, int bTestOpen )
 
 {
-    FILE        *fp;
-    char        szHeader[1000];
-    std::string osBasename, osModelFilename;
-
     if (strlen(pszNewName) == 0)
     {
         return FALSE;
     }
-    
-    if( CSLFetchNameValue(papszOpenOptions, "MODEL") != NULL )
+
+    std::string osBasename;
+    std::string osModelFilename;
+    if( CSLFetchNameValue(papszOpenOptionsIn, "MODEL") != NULL )
     {
         osBasename = pszNewName;
-        osModelFilename = CSLFetchNameValue(papszOpenOptions, "MODEL");
+        osModelFilename = CSLFetchNameValue(papszOpenOptionsIn, "MODEL");
     }
     else
     {
@@ -119,7 +113,7 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( osBasename.c_str(), "r" );
+    FILE *fp = VSIFOpen( osBasename.c_str(), "r" );
     if( fp == NULL )
     {
         if( !bTestOpen )
@@ -134,6 +128,8 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
 /*      If we aren't sure it is ILI1, load a header chunk and check      */
 /*      for signs it is ILI1                                             */
 /* -------------------------------------------------------------------- */
+    char szHeader[1000];
+
     if( bTestOpen )
     {
         int nLen = (int)VSIFRead( szHeader, 1, sizeof(szHeader), fp );
@@ -159,8 +155,8 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
     if( poReader == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "File %s appears to be ILI1 but the ILI1 reader can't\n"
-                  "be instantiated, likely because Xerces support wasn't\n"
+                  "File %s appears to be ILI1 but the ILI1 reader cannot\n"
+                  "be instantiated, likely because Xerces support was not\n"
                   "configured in.",
                   pszNewName );
         return FALSE;
@@ -180,9 +176,9 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", "0.96");
     }
 
-    //Parse model and read data - without surface join and area polygonizing
+    // Parse model and read data - without surface join and area polygonizing.
     poReader->ReadFeatures();
-    
+
     if( bResetConfigOption )
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", NULL);
 
@@ -194,13 +190,13 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
 /************************************************************************/
 
 int OGRILI1DataSource::Create( const char *pszFilename,
-                               CPL_UNUSED char **papszOptions )
+                               char ** /* papszOptions */)
 {
-    std::string osBasename, osModelFilename;
     char **filenames = CSLTokenizeString2( pszFilename, ",", 0 );
 
-    osBasename = filenames[0];
+    std::string osBasename = filenames[0];
 
+    std::string osModelFilename;
     if( CSLCount(filenames) > 1 )
         osModelFilename = filenames[1];
 
@@ -220,7 +216,6 @@ int OGRILI1DataSource::Create( const char *pszFilename,
         return FALSE;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Parse model                                                     */
 /* -------------------------------------------------------------------- */
@@ -238,7 +233,8 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /*      Write headers                                                   */
 /* -------------------------------------------------------------------- */
     VSIFPrintf( fpTransfer, "SCNT\n" );
-    VSIFPrintf( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n", GDAL_RELEASE_NAME );
+    VSIFPrintf( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n",
+                GDAL_RELEASE_NAME );
     VSIFPrintf( fpTransfer, "////\n" );
     VSIFPrintf( fpTransfer, "MTID INTERLIS1\n" );
     const char* modelname = poImdReader->mainModelName.c_str();
@@ -251,7 +247,8 @@ static char *ExtractTopic(const char * pszLayerName)
 {
   const char *table = strchr(pszLayerName, '_');
   while (table && table[1] !=  '_') table = strchr(table+1, '_');
-  return (table) ? CPLScanString(pszLayerName, table-pszLayerName, FALSE, FALSE) : NULL;
+  return (table) ? CPLScanString(
+      pszLayerName, static_cast<int>(table-pszLayerName), FALSE, FALSE) : NULL;
 }
 
 /************************************************************************/
@@ -264,7 +261,8 @@ OGRILI1DataSource::ICreateLayer( const char * pszLayerName,
                                OGRwkbGeometryType eType,
                                CPL_UNUSED char ** papszOptions )
 {
-    FeatureDefnInfo featureDefnInfo = poImdReader->GetFeatureDefnInfo(pszLayerName);
+    FeatureDefnInfo featureDefnInfo
+        = poImdReader->GetFeatureDefnInfo(pszLayerName);
     const char *table = pszLayerName;
     char * topic = ExtractTopic(pszLayerName);
     if (nLayers) VSIFPrintf( fpTransfer, "ETAB\n" );
@@ -295,12 +293,15 @@ OGRILI1DataSource::ICreateLayer( const char * pszLayerName,
 
     OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(table);
     poFeatureDefn->SetGeomType( eType );
-    OGRILI1Layer *poLayer = new OGRILI1Layer(poFeatureDefn, featureDefnInfo.poGeomFieldInfos, this);
+    OGRILI1Layer *poLayer
+        = new OGRILI1Layer(poFeatureDefn, featureDefnInfo.poGeomFieldInfos,
+                           this);
 
     nLayers ++;
-    papoLayers = (OGRILI1Layer**)CPLRealloc(papoLayers, sizeof(OGRILI1Layer*) * nLayers);
+    papoLayers = static_cast<OGRILI1Layer **>(
+        CPLRealloc(papoLayers, sizeof(OGRILI1Layer*) * nLayers) );
     papoLayers[nLayers-1] = poLayer;
-    
+
     return poLayer;
 }
 
@@ -313,10 +314,10 @@ int OGRILI1DataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+    if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -334,5 +335,6 @@ OGRLayer *OGRILI1DataSource::GetLayer( int iLayer )
 
 OGRILI1Layer *OGRILI1DataSource::GetLayerByName( const char* pszLayerName )
 {
-  return (OGRILI1Layer*)poReader->GetLayerByName( pszLayerName );
+  return reinterpret_cast<OGRILI1Layer *>(
+      poReader->GetLayerByName( pszLayerName ) );
 }

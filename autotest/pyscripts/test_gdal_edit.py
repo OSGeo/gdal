@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_edit.py testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -194,7 +194,7 @@ def test_gdal_edit_py_4():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = band = None
-    
+
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -unsetstats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
@@ -204,7 +204,7 @@ def test_gdal_edit_py_4():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = band = None
-    
+
     try:
         os.stat('tmp/test_gdal_edit_py.tif.aux.xml')
         gdaltest.post_reason('fail')
@@ -265,7 +265,7 @@ def test_gdal_edit_py_5():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -stats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')

@@ -74,7 +74,8 @@ public class gdalinfo {
 			double[] adfGeoTransform = new double[6];
 			Driver hDriver;
 			Vector papszMetadata;
-			boolean bComputeMinMax = false /* , bSample = false */;
+                        boolean bComputeMinMax = false;
+                        /* boolean bSample = false; */
 			boolean bShowGCPs = true, bShowMetadata = true;
 			boolean bStats = false, bApproxStats = true;
                         boolean bShowColorTable = true, bComputeChecksum = false;
@@ -252,7 +253,7 @@ public class gdalinfo {
 					System.out.println("  " + (String) keys.nextElement());
 				}
 			}
-                        
+
                         Enumeration eExtraMDDDomains = papszExtraMDDomains.elements();
                         while(eExtraMDDDomains.hasMoreElements())
                         {
@@ -289,7 +290,7 @@ public class gdalinfo {
 					System.out.println("  " + (String) keys.nextElement());
 				}
 			}
-                    
+
                     /* -------------------------------------------------------------------- */
                     /*      Report geolocation.                                             */
                     /* -------------------------------------------------------------------- */
@@ -301,7 +302,7 @@ public class gdalinfo {
                                     System.out.println("  " + (String) keys.nextElement());
                             }
                         }
-                    
+
                     /* -------------------------------------------------------------------- */
                     /*      Report RPCs                                                     */
                     /* -------------------------------------------------------------------- */
@@ -373,14 +374,14 @@ public class gdalinfo {
                                         System.out.print( "Min=" + pass1[0] + " ");
                                     if( pass2[0] != null )
                                         System.out.print( "Max=" + pass2[0] + " ");
-                                
+
                                     if( bComputeMinMax )
                                     {
                                         hBand.ComputeRasterMinMax(adfCMinMax, 0);
                                         System.out.print( "  Computed Min/Max=" + adfCMinMax[0]
 							+ "," + adfCMinMax[1]);
                                     }
-                        
+
                                     System.out.print( "\n" );
 				}
 
@@ -446,10 +447,10 @@ public class gdalinfo {
                                                 iOverview++ )
                                             {
                                                 Band	hOverview;
-                            
+
                                                 if( iOverview != 0 )
                                                     System.out.print( ", " );
-                            
+
                                                 hOverview = hBand.GetOverview(iOverview);
                                                 System.out.print( hOverview.Checksum());
                                             }
@@ -467,7 +468,7 @@ public class gdalinfo {
                                 if( (nMaskFlags & (gdalconstConstants.GMF_NODATA|gdalconstConstants.GMF_ALL_VALID)) == 0 )
                                 {
                                     Band hMaskBand = hBand.GetMaskBand() ;
-                        
+
                                     System.out.print( "  Mask Flags: " );
                                     if( (nMaskFlags & gdalconstConstants.GMF_PER_DATASET) != 0 )
                                         System.out.print( "PER_DATASET " );
@@ -478,22 +479,22 @@ public class gdalinfo {
                                     if( (nMaskFlags & gdalconstConstants.GMF_ALL_VALID) != 0 )
                                         System.out.print( "ALL_VALID " );
                                     System.out.print( "\n" );
-                        
+
                                     if( hMaskBand != null &&
                                         hMaskBand.GetOverviewCount() > 0 )
                                     {
                                         int		iOverview;
-                        
+
                                         System.out.print( "  Overviews of mask band: " );
                                         for( iOverview = 0; 
                                             iOverview < hMaskBand.GetOverviewCount();
                                             iOverview++ )
                                         {
                                             Band	hOverview;
-                        
+
                                             if( iOverview != 0 )
                                                 System.out.print( ", " );
-                        
+
                                             hOverview = hMaskBand.GetOverview( iOverview );
                                             System.out.print( 
                                                     hOverview.getXSize() + "x" +
@@ -502,7 +503,7 @@ public class gdalinfo {
                                         System.out.print( "\n" );
                                     }
                                 }
-                                
+
 				if( hBand.GetUnitType() != null && hBand.GetUnitType().length() > 0)
 				{
 				     System.out.println( "  Unit Type: " + hBand.GetUnitType() );

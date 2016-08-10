@@ -20,7 +20,7 @@
 #define GRIB_SIGN_INT2(a,b) ((1-(int) ((unsigned) (a & 0x80) >> 6)) * (int) (((a & 0x7f) << 8) + b))
 
 /* *INDENT-OFF* */
-TDLP_TableType TDLP_B_Table[5] = {
+static const TDLP_TableType TDLP_B_Table[5] = {
    /* 0 */ {0, "Continuous field"},
    /* 1 */ {1, "Point Binary - cumulative from above"},
    /* 2 */ {2, "Point Binary - cumulative from below"},
@@ -28,7 +28,7 @@ TDLP_TableType TDLP_B_Table[5] = {
    /* 4 */ {5, "Grid Binary - "},
 };
 
-TDLP_TableType TDLP_DD_Table[9] = {
+static const TDLP_TableType TDLP_DD_Table[9] = {
    /* 0 */ {0, "Independent of model"},
    /* 1 */ {6, "NGM model"},
    /* 2 */ {7, "Eta model"},
@@ -40,20 +40,20 @@ TDLP_TableType TDLP_DD_Table[9] = {
    /* 8 */ {82, "Obs matching AEV Forecasts"},
 };
 
-TDLP_TableType TDLP_V_Table[4] = {
+static const TDLP_TableType TDLP_V_Table[4] = {
    /* 0 */ {0, "No vertical processing"},
    /* 1 */ {1, "Difference Levels (UUUU - LLLL)"},
    /* 2 */ {2, "Sum Levels (UUUU + LLLL)"},
    /* 3 */ {3, "Mean Levels (UUUU + LLLL) / 2."},
 };
 
-TDLP_TableType TDLP_T_Table[3] = {
-   /* 0 */ {0, "No nolinear tranform"},
+static const TDLP_TableType TDLP_T_Table[3] = {
+   /* 0 */ {0, "No nolinear transform"},  // TODO: "No no"?
    /* 1 */ {1, "Square transform"},
-   /* 2 */ {2, "Square root tranform"},
+   /* 2 */ {2, "Square root transform"},
 };
 
-TDLP_TableType TDLP_Oper_Table[9] = {
+static const TDLP_TableType TDLP_Oper_Table[9] = {
    /* 0 */ {0, "No time operator"},
    /* 1 */ {1, "Mean (Var 1, Var 2)"},
    /* 2 */ {2, "Difference (Var 1 - Var 2)"},
@@ -65,14 +65,14 @@ TDLP_TableType TDLP_Oper_Table[9] = {
    /* 8 */ {8, "Minimum (Var 1, Var 2)"},
 };
 
-TDLP_TableType TDLP_I_Table[4] = {
+static const TDLP_TableType TDLP_I_Table[4] = {
    /* 0 */ {0, "No interpolation"},
    /* 1 */ {1, "Bi-quadratic interpolation"},
    /* 2 */ {2, "Bi-linear interpolation"},
    /* 3 */ {3, "Special interpolation for QPF"},
 };
 
-TDLP_TableType TDLP_S_Table[6] = {
+static const TDLP_TableType TDLP_S_Table[6] = {
    /* 0 */ {0, "No smoothing"},
    /* 1 */ {1, "5-point smoothing"},
    /* 2 */ {2, "9-point smoothing"},
@@ -151,7 +151,10 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
       errSprintf ("Ran out of data in PDS (TDLP Section 1)\n");
       return -1;
    }
-   myAssert (sectLen <= 71);
+   if( sectLen > 71 ) {
+      errSprintf ("TDLP Section 1 is too big.\n");
+      return -1;
+   }
    if (sectLen < 39) {
       errSprintf ("TDLP Section 1 is too small.\n");
       return -1;
@@ -167,10 +170,10 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    min = *(pds++);
    MEMCPY_BIG (&li_temp, pds, sizeof (sInt4));
    pds += 4;
-   t_year = li_temp / 1000000L;
-   li_temp -= t_year * 1000000L;
-   t_month = li_temp / 10000L;
-   li_temp -= t_month * 10000L;
+   t_year = li_temp / 1000000;
+   li_temp -= t_year * 1000000;
+   t_month = li_temp / 10000;
+   li_temp -= t_month * 10000;
    t_day = li_temp / 100;
    t_hour = li_temp - t_day * 100;
    if ((t_year != year) || (t_month != month) || (t_day != day) ||
@@ -185,8 +188,8 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID1 = li_temp;
-   pdsMeta->CCC = li_temp / 1000000L;
-   li_temp -= pdsMeta->CCC * 1000000L;
+   pdsMeta->CCC = li_temp / 1000000;
+   li_temp -= pdsMeta->CCC * 1000000;
    pdsMeta->FFF = li_temp / 1000;
    li_temp -= pdsMeta->FFF * 1000;
    pdsMeta->B = li_temp / 100;
@@ -194,39 +197,39 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID2 = li_temp;
-   pdsMeta->V = li_temp / 100000000L;
-   li_temp -= pdsMeta->V * 100000000L;
+   pdsMeta->V = li_temp / 100000000;
+   li_temp -= pdsMeta->V * 100000000;
    pdsMeta->LLLL = li_temp / 10000;
    pdsMeta->UUUU = li_temp - pdsMeta->LLLL * 10000;
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID3 = li_temp;
-   pdsMeta->T = li_temp / 100000000L;
-   li_temp -= pdsMeta->T * 100000000L;
-   pdsMeta->RR = li_temp / 1000000L;
-   li_temp -= pdsMeta->RR * 1000000L;
-   pdsMeta->Oper = li_temp / 100000L;
-   li_temp -= pdsMeta->Oper * 100000L;
+   pdsMeta->T = li_temp / 100000000;
+   li_temp -= pdsMeta->T * 100000000;
+   pdsMeta->RR = li_temp / 1000000;
+   li_temp -= pdsMeta->RR * 1000000;
+   pdsMeta->Oper = li_temp / 100000;
+   li_temp -= pdsMeta->Oper * 100000;
    pdsMeta->HH = li_temp / 1000;
    pdsMeta->ttt = li_temp - pdsMeta->HH * 1000;
    MEMCPY_BIG (&(li_temp), pds, sizeof (sInt4));
    pds += 4;
    pdsMeta->ID4 = li_temp;
-   W = li_temp / 1000000000L;
-   li_temp -= W * 1000000000L;
-   XXXX = li_temp / 100000L;
-   li_temp -= XXXX * 100000L;
+   W = li_temp / 1000000000;
+   li_temp -= W * 1000000000;
+   XXXX = li_temp / 100000;
+   li_temp -= XXXX * 100000;
    if (W) {
       XXXX = -1 * XXXX;
    }
-   YY = li_temp / 1000L;
-   li_temp -= YY * 1000L;
+   YY = li_temp / 1000;
+   li_temp -= YY * 1000;
    if (YY >= 50) {
       YY = -1 * (YY - 50);
    }
    pdsMeta->thresh = (XXXX / 10000.) * pow (10.0, YY);
    pdsMeta->I = li_temp / 100;
-   li_temp -= pdsMeta->I * 100L;
+   li_temp -= pdsMeta->I * 100;
    pdsMeta->S = li_temp / 10;
    pdsMeta->G = li_temp - pdsMeta->S * 10;
    project_hr = GRIB_UNSIGN_INT2 (*pds, pds[1]);
@@ -291,7 +294,7 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
  * NOTES
  *****************************************************************************
  */
-static const char *TDLP_TableLookUp(TDLP_TableType * table, int tableLen,
+static const char *TDLP_TableLookUp(const TDLP_TableType * table, int tableLen,
                                     int index)
 {
    int i;               /* Loop counter. */
@@ -336,43 +339,43 @@ void PrintPDS_TDLP (pdsTDLPType * pds)
 
    Print ("PDS-TDLP", "Reference Time", Prt_S, buffer);
    Print ("PDS-TDLP", "Plain Language", Prt_S, pds->Descriptor);
-   sprintf (buffer, "%09d", pds->ID1);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID1);
    Print ("PDS-TDLP", "ID 1", Prt_S, buffer);
-   sprintf (buffer, "%09d", pds->ID2);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID2);
    Print ("PDS-TDLP", "ID 2", Prt_S, buffer);
-   sprintf (buffer, "%09d", pds->ID3);
+   snprintf(buffer, sizeof(buffer), "%09d", pds->ID3);
    Print ("PDS-TDLP", "ID 3", Prt_S, buffer);
    Print ("PDS-TDLP", "ID 4", Prt_D, pds->ID4);
    Print ("PDS-TDLP", "Model or Process Number", Prt_D, pds->procNum);
    Print ("PDS-TDLP", "Sequence Number", Prt_D, pds->seqNum);
 
-   sprintf (buffer, "%03d", pds->CCC);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->CCC);
    Print ("PDS-TDLP", "ID1-CCC", Prt_S, buffer);
-   sprintf (buffer, "%03d", pds->FFF);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->FFF);
    Print ("PDS-TDLP", "ID1-FFF", Prt_S, buffer);
    Print ("PDS-TDLP", "ID1-B", Prt_DS, pds->B,
           TDLP_TableLookUp (TDLP_B_Table, sizeof (TDLP_B_Table), pds->B));
-   sprintf (buffer, "%02d", pds->DD);
+   snprintf(buffer, sizeof(buffer), "%02d", pds->DD);
    Print ("PDS-TDLP", "ID1-DD", Prt_SS, buffer,
           TDLP_TableLookUp (TDLP_DD_Table, sizeof (TDLP_DD_Table), pds->DD));
 
    Print ("PDS-TDLP", "ID2-V", Prt_DS, pds->V,
           TDLP_TableLookUp (TDLP_V_Table, sizeof (TDLP_V_Table), pds->V));
-   sprintf (buffer, "%04d", pds->LLLL);
+   snprintf(buffer, sizeof(buffer), "%04d", pds->LLLL);
    Print ("PDS-TDLP", "ID2-LLLL", Prt_S, buffer);
-   sprintf (buffer, "%04d", pds->UUUU);
+   snprintf(buffer, sizeof(buffer), "%04d", pds->UUUU);
    Print ("PDS-TDLP", "ID2-UUUU", Prt_S, buffer);
 
    if (pds->Oper != 0) {
       Print ("PDS-TDLP", "ID3-T", Prt_DS, pds->T,
              TDLP_TableLookUp (TDLP_T_Table, sizeof (TDLP_T_Table), pds->T));
-      sprintf (buffer, "%02d", pds->RR);
+      snprintf(buffer, sizeof(buffer), "%02d", pds->RR);
       Print ("PDS-TDLP", "ID3-RR", Prt_SS, buffer,
              "Run time offset in hours");
       Print ("PDS-TDLP", "ID3-Oper", Prt_DS, pds->Oper,
              TDLP_TableLookUp (TDLP_Oper_Table, sizeof (TDLP_Oper_Table),
                                pds->Oper));
-      sprintf (buffer, "%02d", pds->HH);
+      snprintf(buffer, sizeof(buffer), "%02d", pds->HH);
       Print ("PDS-TDLP", "ID3-HH", Prt_SS, buffer,
              "Number of hours between variables");
    } else {
@@ -380,7 +383,7 @@ void PrintPDS_TDLP (pdsTDLPType * pds)
              TDLP_TableLookUp (TDLP_Oper_Table, sizeof (TDLP_Oper_Table),
                                pds->Oper));
    }
-   sprintf (buffer, "%03d", pds->ttt);
+   snprintf(buffer, sizeof(buffer), "%03d", pds->ttt);
    Print ("PDS-TDLP", "ID3-ttt", Prt_SS, buffer, "Forecast Projection");
 
    Print ("PDS-TDLP", "ID4-thresh", Prt_F, pds->thresh);
@@ -493,7 +496,7 @@ static void TDLP_ElemSurfUnit (pdsTDLPType * pds, char **element,
  *
  * NOTES
  *   Speed improvements...
- * 1) pds doen't need to be allocated each time.
+ * 1) pds does not need to be allocated each time.
  * 2) Not all data is needed, do something like TDLP_RefTime
  * 3) TDLP_ElemSurfUnit may be slow?
  *****************************************************************************
@@ -521,7 +524,16 @@ int TDLP_Inventory (DataSource &fp, sInt4 tdlpLen, inventoryType *inv)
       errSprintf ("Ran out of data in PDS (TDLP_Inventory)\n");
       return -1;
    }
+   if( sectLen < 1 ) {
+       errSprintf ("Wrong sectLen (TDLP_Inventory)\n");
+       return -1;
+   }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
+   if( pds == NULL ) 
+   {
+      errSprintf ("Ran out of memory in PDS (TDLP_Inventory)\n");
+      return -1;
+   }
    *pds = sectLen;
    if (fp.DataSourceFread (pds + 1, sizeof (char), sectLen - 1) + 1 != sectLen) {
       errSprintf ("Ran out of file.\n");
@@ -599,7 +611,10 @@ int TDLP_RefTime (DataSource &fp, sInt4 tdlpLen, double *refTime)
       errSprintf ("Ran out of data in PDS (TDLP_RefTime)\n");
       return -1;
    }
-   myAssert (sectLen <= 71);
+   if( sectLen > 71 ) {
+      errSprintf ("TDLP Section 1 is too big.\n");
+      return -1;
+   }
    if (sectLen < 39) {
       errSprintf ("TDLP Section 1 is too small.\n");
       return -1;
@@ -625,10 +640,10 @@ int TDLP_RefTime (DataSource &fp, sInt4 tdlpLen, double *refTime)
 
    if (FREAD_BIG (&li_temp, sizeof (sInt4), 1, fp) != 1)
       goto error;
-   t_year = li_temp / 1000000L;
-   li_temp -= t_year * 1000000L;
-   t_month = li_temp / 10000L;
-   li_temp -= t_month * 10000L;
+   t_year = li_temp / 1000000;
+   li_temp -= t_year * 1000000;
+   t_month = li_temp / 10000;
+   li_temp -= t_month * 10000;
    t_day = li_temp / 100;
    t_hour = li_temp - t_day * 100;
 
@@ -692,7 +707,10 @@ static int ReadTDLPSect2 (uChar *gds, sInt4 tdlpLen, sInt4 *curLoc,
       errSprintf ("Ran out of data in GDS (TDLP Section 2)\n");
       return -1;
    }
-   myAssert (sectLen == 28);
+   if( sectLen != 28 ) {
+      errSprintf ("Wrong sectLen (TDLP Section 2)\n");
+      return -1;
+   }
 
    gridType = *(gds++);
    gdsMeta->Nx = GRIB_UNSIGN_INT2 (*gds, gds[1]);
@@ -880,13 +898,13 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
    uChar kbit;          /* # of bits for # values in a group. */
    TDLGroupType *grp;   /* Holds the info about each group. */
    size_t i, j;         /* Loop counters. */
-   uInt4 t_numPack;     /* Used to total number of values in a group to check 
+   uInt4 t_numPack;     /* Used to total number of values in a group to check
                          * the numPack value. */
    uInt4 t_numBits;     /* Used to total number of bits used in the groups. */
    uInt4 t_numBytes;    /* Used to total number of bytes used to compare to
                          * sectLen. */
    sInt4 maxVal;        /* The max value in a group. */
-   uInt4 dataCnt;       /* How many values (miss or othewise) we have read. */
+   uInt4 dataCnt;       /* How many values (miss or otherwise) we have read. */
    uInt4 lastData;      /* Index to last actual data. */
    uInt4 numVal;        /* # of actual (non-missing values) we have. */
    double scale;        /* Amount to scale values by. */
@@ -971,8 +989,8 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
       memBitRead (&uli_temp, sizeof (sInt4), bds, 31, &bufLoc, &numUsed);
       myAssert (numUsed == 4);
       bds += numUsed;
-      t_numBytes += numUsed;
-      origVal = (f_negative) ? -1 * uli_temp : uli_temp;
+      t_numBytes += static_cast<uInt4>(numUsed);
+      origVal = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
       memBitRead (&mbit, sizeof (mbit), bds, 5, &bufLoc, &numUsed);
       memBitRead (&f_negative, sizeof (f_negative), bds, 1, &bufLoc,
                   &numUsed);
@@ -980,36 +998,36 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
       myAssert ((mbit > 0) && (mbit < 32));
       memBitRead (&uli_temp, sizeof (sInt4), bds, mbit, &bufLoc, &numUsed);
       bds += numUsed;
-      t_numBytes += numUsed;
-      fstDiff = (f_negative) ? -1 * uli_temp : uli_temp;
+      t_numBytes += static_cast<uInt4>(numUsed);
+      fstDiff = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
    }
    memBitRead (&nbit, sizeof (nbit), bds, 5, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    memBitRead (&f_negative, sizeof (f_negative), bds, 1, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    myAssert ((nbit > 0) && (nbit < 32));
    memBitRead (&uli_temp, sizeof (sInt4), bds, nbit, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
-   minVal = (f_negative) ? -1 * uli_temp : uli_temp;
+   t_numBytes += static_cast<uInt4>(numUsed);
+   minVal = (f_negative) ? -1 * (sInt4)uli_temp : uli_temp;
    memBitRead (&LX, sizeof (LX), bds, 16, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    grp = (TDLGroupType *) malloc (LX * sizeof (TDLGroupType));
    memBitRead (&ibit, sizeof (ibit), bds, 5, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    memBitRead (&jbit, sizeof (jbit), bds, 5, &bufLoc, &numUsed);
    /* Following assert is because it is the # of bits of # of bits.  Which
     * means that # of bits of value that has a max of 64. */
    myAssert (jbit < 6);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    memBitRead (&kbit, sizeof (kbit), bds, 5, &bufLoc, &numUsed);
    bds += numUsed;
-   t_numBytes += numUsed;
+   t_numBytes += static_cast<uInt4>(numUsed);
    myAssert (ibit < 33);
    for (i = 0; i < LX; i++) {
       if (ibit == 0) {
@@ -1018,7 +1036,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
          memBitRead (&(grp[i].min), sizeof (sInt4), bds, ibit, &bufLoc,
                      &numUsed);
          bds += numUsed;
-         t_numBytes += numUsed;
+         t_numBytes += static_cast<uInt4>(numUsed);
       }
    }
    myAssert (jbit < 8);
@@ -1030,7 +1048,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
          memBitRead (&(grp[i].bit), sizeof (uChar), bds, jbit, &bufLoc,
                      &numUsed);
          bds += numUsed;
-         t_numBytes += numUsed;
+         t_numBytes += static_cast<uInt4>(numUsed);
       }
       myAssert (grp[i].bit < 32);
    }
@@ -1044,7 +1062,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
          memBitRead (&(grp[i].num), sizeof (sInt4), bds, kbit, &bufLoc,
                      &numUsed);
          bds += numUsed;
-         t_numBytes += numUsed;
+         t_numBytes += static_cast<uInt4>(numUsed);
       }
       t_numPack += grp[i].num;
       t_numBits += grp[i].num * grp[i].bit;
@@ -1521,7 +1539,7 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
       return -1;
    }
 
-   /* Preceeding was in degrib2, next part is specific to TDLP. */
+   /* Preceding was in degrib2, next part is specific to TDLP. */
    curLoc = 8;
    if (ReadTDLPSect1 (c_ipack + curLoc, tdlpLen, &curLoc, &(meta->pdsTdlp),
                       &f_gds, &f_bms, &DSF, &BSF) != 0) {
@@ -1670,7 +1688,7 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
  * NOTES
  *****************************************************************************
  */
-#define SCALE_MISSING 10000L
+#define SCALE_MISSING 10000
 static void TDL_ScaleData (double *Src, sInt4 *Dst, sInt4 numData,
                            int DSF, int BSF, char *f_primMiss,
                            double *primMiss, char *f_secMiss,
@@ -1696,7 +1714,7 @@ static void TDL_ScaleData (double *Src, sInt4 *Dst, sInt4 numData,
          src++;
          f_actualSec = 1;
       } else {
-         *(dst) = (long int) (floor ((*(src++) / scale) + .5));
+         *(dst) = (sInt4) (floor ((*(src++) / scale) + .5));
          /* Check if scaled value == primary missing value. */
          if (((*f_primMiss) || (*f_secMiss)) && (*dst == li_primMiss)) {
             *dst = *dst - 1;
@@ -1886,8 +1904,8 @@ static int TDL_GetSecDiff (sInt4 *Data, int numData, sInt4 *SecDiff,
  *
  * PURPOSE
  *   Checks if the average range of 2nd order differences < average range of
- * 0 order differnces, to determine if we should use second order differences
- *   This deals with the case when we have primary missing values.
+ *   0 order differences, to determine if we should use second order
+ *   differences. This deals with the case when we have primary missing values.
  *
  * ARGUMENTS
  *        Data = The data. (Input)
@@ -2001,7 +2019,8 @@ static int TDL_UseSecDiff_Prim (sInt4 *Data, sInt4 numData,
  *
  * PURPOSE
  *   Checks if the average range of 2nd order differences < average range of
- * 0 order differnces, to determine if we should use second order differences
+ *   0 order differences, to determine if we should use second order
+ *   differences.
  *
  * ARGUMENTS
  *        Data = The data. (Input)
@@ -2140,7 +2159,7 @@ static int power (uInt4 val, int extra)
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *         min = The min value found (Output)
@@ -2195,7 +2214,7 @@ static char findMaxMin2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *         min = The min value found (Output)
  *         max = The max value found (Output)
@@ -2248,7 +2267,7 @@ static char findMaxMin1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *  Data = The data. (Input)
  * start = The starting index in data (Input)
- *  stop = The stoping index in data (Input)
+ *  stop = The stopping index in data (Input)
  *   min = The min value found (Output)
  *   max = The max value found (Output)
  *
@@ -2290,7 +2309,7 @@ static void findMaxMin0 (sInt4 *Data, int start, int stop, sInt4 *min,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *       range = The range to use (Input)
@@ -2354,7 +2373,7 @@ static void findGroup2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is out of the range (Output)
@@ -2417,7 +2436,7 @@ static void findGroup1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  *       range = The range to use (Input)
  *       split = The first index that is out of the range (Output)
  *         min = The min value for the group. (Output)
@@ -2470,7 +2489,7 @@ static void findGroup0 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *       range = The range to use (Input)
@@ -2534,7 +2553,7 @@ static void findGroupRev2 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is still in the range (Output)
@@ -2597,7 +2616,7 @@ static void findGroupRev1 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *       start = The starting index in data (Input)
- *        stop = The stoping index in data (Input)
+ *        stop = The stopping index in data (Input)
  * li_primMiss = scaled primary missing value (Input)
  *       range = The range to use (Input)
  *       split = The first index that is still in the range (Output)
@@ -2656,8 +2675,8 @@ static void findGroupRev0 (sInt4 *Data, int start, int stop,
  * ARGUMENTS
  *        Data = The data. (Input)
  *      start1 = The starting index in data (Input)
- *      start2 = The starting index of the earlier group (ie don't go to any
- *               earlier indicies than this. (Input)
+ *      start2 = The starting index of the earlier group (i.e. don't go to any
+ *               earlier indices than this. (Input)
  * li_primMiss = scaled primary missing value (Input)
  *  li_secMiss = scaled secondary missing value (Input)
  *         bit = The range we are allowed to store this in. (Input)
@@ -2724,8 +2743,8 @@ static void shiftGroup2 (sInt4 *Data, int start1, int start2,
  * ARGUMENTS
  *        Data = The data. (Input)
  *      start1 = The starting index in data (Input)
- *      start2 = The starting index of the earlier group (ie don't go to any
- *               earlier indicies than this. (Input)
+ *      start2 = The starting index of the earlier group (i.e. don't go to any
+ *               earlier indices than this. (Input)
  * li_primMiss = scaled primary missing value (Input)
  *         bit = The range we are allowed to store this in. (Input)
  *         min = The min value for the group. (Input/Output)
@@ -2791,8 +2810,8 @@ static void shiftGroup1 (sInt4 *Data, int start1, int start2,
  * ARGUMENTS
  *        Data = The data. (Input)
  *      start1 = The starting index in data (Input)
- *      start2 = The starting index of the earlier group (ie don't go to any
- *               earlier indicies than this. (Input)
+ *      start2 = The starting index of the earlier group (i.e. don't go to any
+ *               earlier indices than this. (Input)
  *         bit = The range we are allowed to store this in. (Input)
  *         min = The min value for the group. (Input/Output)
  *         max = The max value for the group. (Input/Output)
@@ -3130,7 +3149,7 @@ static sInt4 ComputeGroupSize (TDLGroupType * group, int numGroup,
    }
    /* Allow 0 bits for min.  Assumes that decoder allows 0 bits */
    *kbit = i;
-   ans += ((*ibit) + (*jbit) + (*kbit)) * numGroup;
+   ans += (sInt4) (((*ibit) + (*jbit) + (*kbit)) * numGroup);
    return ans;
 }
 
@@ -3219,12 +3238,12 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
           (group[i].bit > minBit)) {
          f_keep = 0;
          doSplit (Data, numData, &(group[i]), &subGroup, &numSubGroup,
-                  f_primMiss, li_primMiss, f_secMiss, li_secMiss, xFactor);
+                  f_primMiss, li_primMiss, f_secMiss, li_secMiss, static_cast<int>(xFactor));
          if (numSubGroup != 1) {
-            scoreA = group[i].bit * group[i].num + xFactor;
+            scoreA = static_cast<sInt4>(group[i].bit * group[i].num + xFactor);
             scoreB = 0;
             for (sub = 0; sub < numSubGroup; sub++) {
-               scoreB += subGroup[sub].bit * subGroup[sub].num + xFactor;
+               scoreB += (sInt4) (subGroup[sub].bit * subGroup[sub].num + xFactor);
             }
             if (scoreB < scoreA) {
                f_keep = 1;
@@ -3253,8 +3272,8 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
                subGroup[1].f_trySplit = 1;
                subGroup[1].f_tryShift = 1;
                numSubGroup = 2;
-               scoreB = subGroup[0].bit * subGroup[0].num + xFactor;
-               scoreB += subGroup[1].bit * subGroup[1].num + xFactor;
+               scoreB = static_cast<sInt4>(subGroup[0].bit * subGroup[0].num + xFactor);
+               scoreB += static_cast<sInt4>(subGroup[1].bit * subGroup[1].num + xFactor);
                if (scoreB < scoreA) {
                   f_keep = 1;
                }
@@ -3270,9 +3289,9 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
             doSplitRight (Data, numData, &(group[i]), &(subGroup[1]),
                           &(subGroup[0]), f_primMiss, li_primMiss, f_secMiss,
                           li_secMiss);
-            scoreA = group[i].bit * group[i].num + xFactor;
-            scoreB = subGroup[0].bit * subGroup[0].num + xFactor;
-            scoreB += subGroup[1].bit * subGroup[1].num + xFactor;
+            scoreA = static_cast<sInt4>(group[i].bit * group[i].num + xFactor);
+            scoreB = static_cast<sInt4>(subGroup[0].bit * subGroup[0].num + xFactor);
+            scoreB += static_cast<sInt4>(subGroup[1].bit * subGroup[1].num + xFactor);
             if (scoreB < scoreA) {
                f_keep = 1;
             }
@@ -3371,7 +3390,7 @@ static void shiftGroup (sInt4 *Data,
                         char f_secMiss, sInt4 li_secMiss, int xFactor)
 {
    TDLGroupType *group = (*Group); /* Local pointer to Group. */
-   int numGroup = (*NumGroup); /* # elements in group. */
+   int numGroup = static_cast<int>(*NumGroup); /* # elements in group. */
    int i, j;            /* loop counters. */
    sInt4 A_max;         /* Max value of a given group. */
    sInt4 A_min;         /* Min value of a given group. */
@@ -3407,7 +3426,7 @@ static void shiftGroup (sInt4 *Data,
          /* See if that affects any of the previous groups. */
          for (j = i + 1; j < numGroup; j++) {
             if (group[j].num != 0) {
-               G1.start = G1.start;
+               /*G1.start = G1. start;*/ /* self-assignment... */
                G1.num = group[i - 1].num + group[j].num;
                G1.min = (group[i - 1].min < group[j].min) ?
                      group[i - 1].min : group[j].min;
@@ -3457,7 +3476,7 @@ static void shiftGroup (sInt4 *Data,
                G2 = group[i];
                G2.min = A_min;
                G2.max = A_max;
-               G1.num -= (group[i].start - begin);
+               G1.num -= static_cast<uInt4>(group[i].start - begin);
                if (f_secMiss) {
                   findMaxMin2 (Data, G1.start, G1.start + G1.num,
                                li_primMiss, li_secMiss, &A_min, &A_max);
@@ -3476,8 +3495,8 @@ static void shiftGroup (sInt4 *Data,
                   G1.f_trySplit = 1;
                   G1.f_tryShift = 1;
                }
-               G2.num += (group[i].start - begin);
-               G2.start = begin;
+               G2.num += static_cast<uInt4>(group[i].start - begin);
+               G2.start = static_cast<uInt4>(begin);
                G2.f_trySplit = 1;
                G2.f_tryShift = 1;
                scoreA = group[i].bit * group[i].num + xFactor;
@@ -3533,7 +3552,7 @@ static void shiftGroup (sInt4 *Data,
  *   Attempts to find groups for packing the data.  It starts by preparing
  * the data, by removing the overall min value.
  *
- *   Next it Creates any 0 bit groups (primary missing: missings are all 0
+ *   Next it Creates any 0 bit groups (primary missing: missing are all 0
  * bit groups, const values are 0 bit groups.  No missing: const values are
  * 0 bit groups.)
  *
@@ -3600,8 +3619,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
          for (i = 0; i < numData; i++) {
             if ((Data[i] != li_secMiss) && (Data[i] != li_primMiss)) {
                Data[i] -= OverallMin;
-               /* Check if we accidently adjusted to prim or sec, if so add
-                * 1. */
+               // Check if we accidentally adjusted to prim or sec, if so add 1.
                if ((Data[i] == li_secMiss) || (Data[i] == li_primMiss)) {
                   myAssert (1 == 2);
                   Data[i]++;
@@ -3616,8 +3634,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
          for (i = 0; i < numData; i++) {
             if (Data[i] != li_primMiss) {
                Data[i] -= OverallMin;
-               /* Check if we accidently adjusted to prim or sec, if so add
-                * 1. */
+               // Check if we accidentally adjusted to prim or sec, if so add 1.
                if (Data[i] == li_primMiss) {
                   myAssert (1 == 2);
                   Data[i]++;
@@ -3663,7 +3680,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                   G.min = Data[i];
                   G.max = Data[i];
                   G.num = 1;
-                  G.start = i;
+                  G.start = static_cast<uInt4>(i);
                }
             } else {
                /* Close a missing group */
@@ -3681,7 +3698,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                G.min = Data[i];
                G.max = Data[i];
                G.num = 1;
-               G.start = i;
+               G.start = static_cast<uInt4>(i);
             }
          } else {
             if (Data[i] == li_primMiss) {
@@ -3705,7 +3722,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                G.min = Data[i];
                G.max = Data[i];
                G.num = 1;
-               G.start = i;
+               G.start = static_cast<uInt4>(i);
             } else {
                if (G.min > Data[i]) {
                   G.min = Data[i];
@@ -3749,13 +3766,13 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
    } else {
       /* Already handled the f_primMiss case */
       if (f_secMiss) {
-         findMaxMin2 (Data, 0, numData, li_primMiss, li_secMiss, &A_min,
+         findMaxMin2 (Data, 0, static_cast<int>(numData), li_primMiss, li_secMiss, &A_min,
                       &A_max);
       } else {
-         findMaxMin0 (Data, 0, numData, &A_min, &A_max);
+         findMaxMin0 (Data, 0, static_cast<int>(numData), &A_min, &A_max);
       }
       G.start = 0;
-      G.num = numData;
+      G.num = static_cast<uInt4>(numData);
       G.min = A_min;
       G.max = A_max;
       G.bit = (char) power ((uInt4) (A_max - A_min), f_secMiss + f_primMiss);
@@ -3768,7 +3785,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
 
    lclGroup = NULL;
    numLclGroup = 0;
-   *groupSize = ComputeGroupSize (*group, *numGroup, ibit, jbit, kbit);
+   *groupSize = ComputeGroupSize (*group, static_cast<int>(*numGroup), ibit, jbit, kbit);
    xFactor = *ibit + *jbit + *kbit;
 #ifdef DEBUG
 /*
@@ -3779,7 +3796,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
 
    f_adjust = 1;
    while (f_adjust) {
-      f_adjust = splitGroup (Data, numData, *group, *numGroup, &lclGroup,
+      f_adjust = splitGroup (Data, static_cast<int>(numData), *group, static_cast<int>(*numGroup), &lclGroup,
                              &numLclGroup, f_primMiss, li_primMiss,
                              f_secMiss, li_secMiss, xFactor);
       free (*group);
@@ -3787,9 +3804,9 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
       *numGroup = numLclGroup;
 
       if (f_adjust) {
-         shiftGroup (Data, numData, group, numGroup, f_primMiss,
-                     li_primMiss, f_secMiss, li_secMiss, xFactor);
-         *groupSize = ComputeGroupSize (*group, *numGroup, ibit, jbit, kbit);
+         shiftGroup (Data, static_cast<int>(numData), group, numGroup, f_primMiss,
+                     li_primMiss, f_secMiss, li_secMiss, static_cast<int>(xFactor));
+         *groupSize = ComputeGroupSize (*group, static_cast<int>(*numGroup), ibit, jbit, kbit);
          if (xFactor != *ibit + *jbit + *kbit) {
             for (i = 0; i < *numGroup; i++) {
                if (((*group)[i].num > *ibit + *jbit + *kbit) &&
@@ -3832,7 +3849,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
  *     f_grid = Flag if this is grid data (or vector) (Input)
  *         NX = The number of X values. (Input)
  *         NY = The number of Y values. (Input)
- * f_sndOrder = Flag if we should do second order diffencing (Output)
+ * f_sndOrder = Flag if we should do second order differencing (Output)
  *      group = Resulting groups. (Output)
  *   numGroup = Number of groups. (Output)
  *        Min = Overall minimum. (Output)
@@ -3914,7 +3931,7 @@ static int GroupPack (double *Src, sInt4 **Dst, sInt4 numData,
       li_secMiss = (sInt4) (*secMiss * SCALE_MISSING + .5);
    }
 
-   /* Reason this is after TDL_ScaleData is we don't want to reoder the
+   /* Reason this is after TDL_ScaleData is we don't want to reorder the
     * caller's copy of the data. */
    if (f_grid) {
       TDL_ReorderGrid (Data, NX, NY);
@@ -4072,10 +4089,10 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    short int si_temp;   /* Temporary variable (short int). */
    double d_temp;       /* Temporary variable (double). */
    char buffer[6];      /* Used to write reserved values */
-   uChar pbuf;          /* A buffer of bits that weren't written to disk */
+   uChar pbuf;          /* A buffer of bits that were not written to disk */
    sChar pbufLoc;       /* Where in pbuf to add more bits. */
 
-   commentLen = strlen (comment);
+   commentLen = static_cast<int>(strlen (comment));
    if (commentLen > 32) {
       errSprintf ("Error: '%s' is > 32 bytes long\n", comment);
       return -1;
@@ -4213,7 +4230,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    if (f_bitmap) {
       i |= 2;
    }
-   fputc (i, fp);
+   fputc (static_cast<int>(i), fp);
 /*   tempTime = gmtime (&(refTime));*/
    Clock_PrintDate (refTime, &year, &month, &day, &hour, &min, &sec);
 /* year = tempTime->tm_year + 1900;
@@ -4228,7 +4245,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    fputc (day, fp);
    fputc (hour, fp);
    fputc (min, fp);
-   li_temp = (year * 1000000L + month * 10000L + day * 100 + hour);
+   li_temp = (year * 1000000 + month * 10000 + day * 100 + hour);
    FWRITE_BIG (&li_temp, sizeof (sInt4), 1, fp);
    FWRITE_BIG (&ID1, sizeof (sInt4), 1, fp);
    FWRITE_BIG (&ID2, sizeof (sInt4), 1, fp);
@@ -4239,9 +4256,9 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    fputc (processNum, fp);
    fputc (seqNum, fp);
    i = (DSF < 0) ? 128 - DSF : DSF;
-   fputc (i, fp);
+   fputc (static_cast<int>(i), fp);
    i = (BSF < 0) ? 128 - BSF : BSF;
-   fputc (i, fp);
+   fputc (static_cast<int>(i), fp);
    /* Reserved: 3 bytes of 0. */
    li_temp = 0;
    fwrite (&li_temp, sizeof (char), 3, fp);
@@ -4327,7 +4344,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
       i |= 8;
    if (!f_grid)
       i |= 16;
-   fputc (i, fp);
+   fputc (static_cast<int>(i), fp);
    li_temp = DataLen;
    FWRITE_BIG (&li_temp, sizeof (sInt4), 1, fp);
    if (f_primMiss) {

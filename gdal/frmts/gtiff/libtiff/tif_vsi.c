@@ -35,6 +35,8 @@
 #include "tiffiop.h"
 #include "cpl_vsi.h"
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 static tsize_t
 _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
 {
@@ -69,10 +71,10 @@ _tiffSizeProc(thandle_t fd)
     toff_t        file_size;
 
     old_off = VSIFTellL( (VSILFILE *) fd );
-    VSIFSeekL( (VSILFILE *) fd, 0, SEEK_END );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( (VSILFILE *) fd, 0, SEEK_END ));
 
     file_size = (toff_t) VSIFTellL( (VSILFILE *) fd );
-    VSIFSeekL( (VSILFILE *) fd, old_off, SEEK_SET );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( (VSILFILE *) fd, old_off, SEEK_SET ));
 
     return file_size;
 }
@@ -107,12 +109,12 @@ TIFFOpen(const char* name, const char* mode)
 {
 	static const char module[] = "TIFFOpen";
 	int           i, a_out;
-        char          access[32];
+        char          szAccess[32];
         VSILFILE          *fp;
         TIFF          *tif;
 
         a_out = 0;
-        access[0] = '\0';
+        szAccess[0] = '\0';
         for( i = 0; mode[i] != '\0'; i++ )
         {
             if( mode[i] == 'r'
@@ -120,14 +122,14 @@ TIFFOpen(const char* name, const char* mode)
                 || mode[i] == '+'
                 || mode[i] == 'a' )
             {
-                access[a_out++] = mode[i];
-                access[a_out] = '\0';
+                szAccess[a_out++] = mode[i];
+                szAccess[a_out] = '\0';
             }
         }
 
-        strcat( access, "b" );
+        strcat( szAccess, "b" );
 
-        fp = VSIFOpenL( name, access );
+        fp = VSIFOpenL( name, szAccess );
 	if (fp == NULL) {
             if( errno >= 0 )
                 TIFFError(module,"%s: %s", name, VSIStrerror( errno ) );
@@ -145,7 +147,7 @@ TIFFOpen(const char* name, const char* mode)
         if( tif != NULL )
             tif->tif_fd = 0;
         else
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
         
 	return tif;
 }

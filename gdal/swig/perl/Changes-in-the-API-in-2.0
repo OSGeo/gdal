@@ -11,7 +11,7 @@ constructors:
 
     Geo::GDAL does not use the "create" constructors any more.  All
     constructors are called "new" and use the new syntax.  This
-    applieds to classes Geo::GDAL::ColorTable, Geo::OGR::Feature,
+    applies to classes Geo::GDAL::ColorTable, Geo::OGR::Feature,
     Geo::OGR::FeatureDefn, Geo::OGR::FieldDefn,
     Geo::OGR::GeomFieldDefn, Geo::OGR::Geometry, and
     Geo::OSR::SpatialReference.

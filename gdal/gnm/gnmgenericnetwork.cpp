@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM network class.
@@ -34,6 +33,9 @@
 
 #include <set>
 
+CPL_CVSID("$Id$");
+
+//! @cond Doxygen_Suppress
 GNMGenericNetwork::GNMGenericNetwork() :
     GNMNetwork(),
     m_nVersion(0),
@@ -50,7 +52,8 @@ GNMGenericNetwork::GNMGenericNetwork() :
 
 GNMGenericNetwork::~GNMGenericNetwork()
 {
-
+    for(size_t i = 0; i < m_apoLayers.size(); i++)
+        delete m_apoLayers[i];
 }
 
 int GNMGenericNetwork::GetLayerCount()
@@ -86,7 +89,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         if(EQUAL(pFeatureClass, pszLayerName))
         {
             anGFIDs.insert(poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID));
-            m_poFeaturesLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poFeaturesLayer->DeleteFeature(poFeature->GetFID()));
         }
         OGRFeature::DestroyFeature(poFeature);
     }
@@ -100,7 +103,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -109,7 +112,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -118,7 +121,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
         it = anGFIDs.find(nGFID);
         if( it != anGFIDs.end())
         {
-            m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -222,8 +225,8 @@ CPLErr GNMGenericNetwork::AddFeatureGlobalFID(GNMGFID nFID,
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID, 
-                                          GNMGFID nConGFID, double dfCost, 
+CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
+                                          GNMGFID nConGFID, double dfCost,
                                           double dfInvCost, GNMDirection eDir)
 {
     if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
@@ -294,7 +297,7 @@ CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::DisconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID, 
+CPLErr GNMGenericNetwork::DisconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
                                              GNMGFID nConGFID)
 {
     if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
@@ -343,7 +346,7 @@ CPLErr GNMGenericNetwork::DisconnectFeaturesWithId(GNMGFID nFID)
     m_poGraphLayer->ResetReading();
     OGRFeature* poFeature;
     while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
-    {       
+    {
         if(m_poGraphLayer->DeleteFeature(poFeature->GetFID()) != CE_None)
         {
             OGRFeature::DestroyFeature( poFeature );
@@ -410,7 +413,7 @@ CPLErr GNMGenericNetwork::DisconnectAll()
     m_poGraphLayer->ResetReading();
     while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
     {
-        m_poGraphLayer->DeleteFeature(poFeature->GetFID());
+        CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
         OGRFeature::DestroyFeature( poFeature );
     }
 
@@ -501,7 +504,7 @@ CPLErr GNMGenericNetwork::DeleteAllRules()
     m_poMetadataLayer->SetAttributeFilter(NULL);
     for(size_t i = 0; i < aFIDs.size(); ++i)
     {
-        m_poMetadataLayer->DeleteFeature(aFIDs[i]);
+        CPL_IGNORE_RET_VAL(m_poMetadataLayer->DeleteFeature(aFIDs[i]));
     }
 
     return CE_None;
@@ -533,7 +536,7 @@ char **GNMGenericNetwork::GetRules() const
 }
 
 CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
-                                               double dfTolerance, double dfCost, 
+                                               double dfTolerance, double dfCost,
                                                double dfInvCost, GNMDirection eDir)
 {
     if( CSLCount(papszLayerList) < 2 )
@@ -590,7 +593,7 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
                     const OGRLineString* poLineString =
                                                   (const OGRLineString*) poGeom;
                     ConnectPointsByLine(poFeature->GetFID(), poLineString,
-                                        paPointLayers, dfTolerance, dfCost, 
+                                        paPointLayers, dfTolerance, dfCost,
                                         dfInvCost, eDir);
                 }
                 else if( eType == wkbMultiLineString)
@@ -791,8 +794,8 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
     OGRGNMWrappedResultLayer* poResLayer =
                               new OGRGNMWrappedResultLayer(poMEMDS, poMEMLayer);
 
-    bool bReturnEdges = CSLFetchBoolean(papszOptions, GNM_MD_FETCHEDGES, TRUE);
-    bool bReturnVertices = CSLFetchBoolean(papszOptions, GNM_MD_FETCHVERTEX, TRUE);
+    const bool bReturnEdges = CPLFetchBool(papszOptions, GNM_MD_FETCHEDGES, true);
+    const bool bReturnVertices = CPLFetchBool(papszOptions, GNM_MD_FETCHVERTEX, true);
 
     switch (eAlgorithm)
     {
@@ -817,7 +820,7 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
             // fill features in result layer
             for(size_t i = 0; i < paths.size(); ++i)
             {
-                FillResultLayer(poResLayer, paths[i], i + 1, bReturnVertices,
+                FillResultLayer(poResLayer, paths[i], static_cast<int>(i + 1), bReturnVertices,
                                 bReturnEdges);
             }
         }
@@ -833,6 +836,7 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
                     GNMGFID nEmitter = atol(papszEmitter[i]);
                     anEmitters.push_back(nEmitter);
                 }
+                CSLDestroy(papszEmitter);
             }
 
             if(nStartFID != -1)
@@ -859,7 +863,7 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
 void GNMGenericNetwork::ConnectPointsByMultiline(GIntBig nFID,
                                     const OGRMultiLineString* poMultiLineString,
                                     const std::vector<OGRLayer*>& paPointLayers,
-                                    double dfTolerance, double dfCost, 
+                                    double dfTolerance, double dfCost,
                                     double dfInvCost, GNMDirection eDir)
 {
     VALIDATE_POINTER0(poMultiLineString,
@@ -868,7 +872,7 @@ void GNMGenericNetwork::ConnectPointsByMultiline(GIntBig nFID,
     {
         const OGRLineString* poLinestring =
                 (OGRLineString*)poMultiLineString->getGeometryRef(i);
-        ConnectPointsByLine(nFID, poLinestring, paPointLayers, dfTolerance, 
+        ConnectPointsByLine(nFID, poLinestring, paPointLayers, dfTolerance,
                             dfCost, dfInvCost, eDir);
     }
 }
@@ -876,7 +880,7 @@ void GNMGenericNetwork::ConnectPointsByMultiline(GIntBig nFID,
 void GNMGenericNetwork::ConnectPointsByLine(GIntBig nFID,
                                     const OGRLineString* poLineString,
                                     const std::vector<OGRLayer*>& paPointLayers,
-                                    double dfTolerance, double dfCost, 
+                                    double dfTolerance, double dfCost,
                                     double dfInvCost, GNMDirection eDir)
 {
     VALIDATE_POINTER0(poLineString, "GNMGenericNetwork::ConnectPointsByLine");
@@ -887,15 +891,15 @@ void GNMGenericNetwork::ConnectPointsByLine(GIntBig nFID,
 
     GNMGFID nSrcFID = FindNearestPoint(&oStartPoint, paPointLayers, dfHalfTolerance);
     GNMGFID nTgtFID = FindNearestPoint(&oEndPoint, paPointLayers, dfHalfTolerance);
-    
+
     if(nSrcFID == -1 || nTgtFID == -1)
         return;
-    
+
     // connect nSrcFID with nTgtFID via nFID
     ConnectFeatures(nSrcFID, nTgtFID, (GNMGFID)nFID, dfCost, dfInvCost, eDir);
 }
 
-GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint, 
+GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
                                     const std::vector<OGRLayer*>& paPointLayers,
                                     double dfTolerance)
 {
@@ -906,11 +910,11 @@ GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
     double dfMaxY = poPoint->getY() + dfTolerance;
 
     OGRFeature *poFeature;
-    
+
     for(size_t i = 0; i < paPointLayers.size(); ++i)
     {
         OGRLayer *poLayer = paPointLayers[i];
-    
+
         poLayer->SetSpatialFilterRect(dfMinX, dfMinY,
                                       dfMaxX, dfMaxY);
         poLayer->ResetReading();
@@ -921,7 +925,7 @@ GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
             return nRetFID;
         }
     }
-    
+
     return -1;
 }
 
@@ -961,10 +965,10 @@ void GNMGenericNetwork::SaveRules()
         poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, m_asRules[i]);
         if(m_poMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
         {
-            OGRFeature::DestroyFeature( poFeature );
             CPLError( CE_Failure, CPLE_AppDefined, "Write rule '%s' failed",
                       m_asRules[i].c_str());
             // TODO: do we need interrupt here?
+            //OGRFeature::DestroyFeature( poFeature );
             // return CE_Failure;
         }
         OGRFeature::DestroyFeature(poFeature);
@@ -1059,9 +1063,9 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     }
 
     OGRFieldDefn oFieldKey(GNM_SYSFIELD_PARAMNAME, OFTString);
-    oFieldKey.SetWidth(nFieldSize);
+    oFieldKey.SetWidth(static_cast<int>(nFieldSize));
     OGRFieldDefn oFieldValue(GNM_SYSFIELD_PARAMVALUE, OFTString);
-    oFieldValue.SetWidth(nFieldSize);
+    oFieldValue.SetWidth(static_cast<int>(nFieldSize));
 
     if(pMetadataLayer->CreateField(&oFieldKey) != OGRERR_NONE ||
        pMetadataLayer->CreateField(&oFieldValue) != OGRERR_NONE)
@@ -1097,7 +1101,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     }
     OGRFeature::DestroyFeature(poFeature);
 
-    // write decription
+    // write description
     if(!sDescription.empty())
     {
         poFeature = OGRFeature::CreateFeature(pMetadataLayer->GetLayerDefn());
@@ -1133,8 +1137,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
             }
             OGRFeature::DestroyFeature(poFeature);
         }
-    }    
-
+    }
 
     m_poMetadataLayer = pMetadataLayer;
 
@@ -1225,7 +1228,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
     }
 
     std::map<int, GNMRule> moRules;
-    int nRulePrefixLen = CPLStrnlen(GNM_MD_RULE, 255);
+    int nRulePrefixLen = static_cast<int>(CPLStrnlen(GNM_MD_RULE, 255));
     OGRFeature *poFeature;
     m_poMetadataLayer->ResetReading();
     while ((poFeature = m_poMetadataLayer->GetNextFeature()) != NULL)
@@ -1314,7 +1317,7 @@ CPLErr GNMGenericNetwork::LoadGraph()
 
         int nBlockState = poFeature->GetFieldAsInteger(GNM_SYSFIELD_BLOCKED);
 
-        bool bIsBlock = GNM_BLOCK_NONE == nBlockState;
+        bool bIsBlock = GNM_BLOCK_NONE != nBlockState;
 
         m_oGraph.AddEdge(nConFID, nSrcFID, nTgtFID, eDir == GNM_EDGE_DIR_BOTH,
                          dfCost, dfInvCost);
@@ -1523,3 +1526,4 @@ CPLErr CPL_STDCALL GNMChangeAllBlockState (GNMGenericNetworkH hNet,
 
     return ((GNMGenericNetwork*)hNet)->ChangeAllBlockState(bIsBlock == TRUE);
 }
+//! @endcond

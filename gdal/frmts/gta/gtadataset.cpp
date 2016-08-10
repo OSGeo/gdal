@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTA read/write Driver
  * Purpose:  GDAL bindings over GTA library.
@@ -48,7 +47,7 @@
  * - GDAL metadata is assumed to be in UTF-8 encoding, so that no conversion is
  *   necessary to store it in GTA tags. I'm not sure that this is correct, but
  *   since some metadata might not be representable in the local encoding (e.g.
- *   a chinese description in latin1), using UTF-8 seems reasonable.
+ *   a Chinese description in latin1), using UTF-8 seems reasonable.
  *
  * The following could be implemented, but currently is not:
  * - Allow metadata updates by using a special GDAL/METADATA_BUFFER tag that
@@ -88,15 +87,11 @@
 
 #include <limits.h>
 #include "cpl_port.h" // for snprintf for MSVC
-#include <gta/gta.hpp>
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gta_headers.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_GTA(void);
-CPL_C_END
-
 
 /************************************************************************/
 /* Helper functions                                                     */
@@ -144,6 +139,7 @@ class GTAIO : public gta::custom_io
         : fp( NULL )
     {
     }
+
     ~GTAIO( )
     {
         close( );
@@ -309,14 +305,14 @@ class GTARasterBand : public GDALPamRasterBand
 /*                           GTARasterBand()                            */
 /************************************************************************/
 
-GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
+GTARasterBand::GTARasterBand( GTADataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     // Data type
-    switch( poDS->oHeader.component_type( nBand-1 ) )
+    switch( poDSIn->oHeader.component_type( nBand-1 ) )
     {
     case gta::int8:
         eDataType = GDT_Byte;
@@ -359,24 +355,24 @@ GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
     nBlockYSize = 1;
 
     // Component information
-    sComponentSize = poDS->oHeader.component_size( nBand-1 );
+    sComponentSize = static_cast<size_t>(poDSIn->oHeader.component_size( nBand-1 ));
     sComponentOffset = 0;
     for( int i = 0; i < nBand-1; i++ )
     {
-        sComponentOffset += poDS->oHeader.component_size( i );
+        sComponentOffset += poDSIn->oHeader.component_size( i );
     }
 
     // Metadata
     papszCategoryNames = NULL;
     papszMetaData = NULL;
-    if( poDS->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) )
+    if( poDSIn->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) )
     {
-        SetDescription( poDS->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) );
+        SetDescription( poDSIn->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) );
     }
-    for( uintmax_t i = 0; i < poDS->oHeader.component_taglist( nBand-1 ).tags(); i++)
+    for( uintmax_t i = 0; i < poDSIn->oHeader.component_taglist( nBand-1 ).tags(); i++)
     {
-        const char *pszTagName = poDS->oHeader.component_taglist( nBand-1 ).name( i );
-        if( strncmp( pszTagName, "GDAL/META/", 10 ) == 0 )
+        const char *pszTagName = poDSIn->oHeader.component_taglist( nBand-1 ).name( i );
+        if( STARTS_WITH(pszTagName, "GDAL/META/") )
         {
             const char *pDomainEnd = strchr( pszTagName + 10, '/' );
             if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )
@@ -393,7 +389,7 @@ GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
                 }
                 pszDomain[j] = '\0';
                 const char *pszName = pszTagName + 10 + j + 1;
-                const char *pszValue = poDS->oHeader.component_taglist( nBand-1 ).value( i );
+                const char *pszValue = poDSIn->oHeader.component_taglist( nBand-1 ).value( i );
                 SetMetadataItem( pszName, pszValue,
                         strcmp( pszDomain, "DEFAULT" ) == 0 ? NULL : pszDomain );
                 VSIFree( pszDomain );
@@ -746,7 +742,7 @@ CPLErr GTARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         memcpy( (void *) pDst, (void *) pSrc, sComponentSize );
     }
 
-    // Write the block that conatins all bands at once
+    // Write the block that contains all bands at once
     if( poGDS->WriteBlock( ) != CE_None )
     {
         return CE_Failure;
@@ -777,6 +773,7 @@ GTADataset::GTADataset()
     nLastBlockXOff = -1;
     nLastBlockYOff = -1;
     pBlock = NULL;
+    DataOffset = 0;
 }
 
 /************************************************************************/
@@ -812,7 +809,7 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
         if( pBlock == NULL )
         {
             if( oHeader.data_size() > (size_t)(-1)
-                    || ( pBlock = VSIMalloc( oHeader.data_size() ) ) == NULL )
+                    || ( pBlock = VSI_MALLOC_VERBOSE( static_cast<size_t>(oHeader.data_size()) ) ) == NULL )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory,
                         "Cannot allocate buffer for the complete data set.\n"
@@ -843,11 +840,9 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
 
         if( pBlock == NULL )
         {
-            pBlock = VSIMalloc2( oHeader.element_size(), nBlockXSize );
+            pBlock = VSI_MALLOC2_VERBOSE( static_cast<size_t>(oHeader.element_size()), nBlockXSize );
             if( pBlock == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Cannot allocate scanline buffer" );
                 return CE_Failure;
             }
         }
@@ -1002,15 +997,13 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 5 )
         return NULL;
 
-    if( !EQUALN((char *)poOpenInfo->pabyHeader,"GTA",3) )
+    if( !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GTA") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GTADataset  *poDS;
-
-    poDS = new GTADataset();
+    GTADataset *poDS = new GTADataset();
 
     if( poDS->oGTAIO.open( poOpenInfo->pszFilename,
             poOpenInfo->eAccess == GA_Update ? "r+" : "r" ) != 0 )
@@ -1067,8 +1060,8 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    poDS->nRasterXSize = poDS->oHeader.dimension_size(0);
-    poDS->nRasterYSize = poDS->oHeader.dimension_size(1);
+    poDS->nRasterXSize = static_cast<int>(poDS->oHeader.dimension_size(0));
+    poDS->nRasterYSize = static_cast<int>(poDS->oHeader.dimension_size(1));
 
     // Check the number of bands (called components in GTA)
     if( poDS->oHeader.components() > INT_MAX-1
@@ -1080,7 +1073,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    poDS->nBands = poDS->oHeader.components();
+    poDS->nBands = static_cast<int>(poDS->oHeader.components());
 
     // Check the data types (called component types in GTA)
     for( int iBand = 0; iBand < poDS->nBands; iBand++ )
@@ -1132,10 +1125,9 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else
         {
-            poDS->pasGCPs = (GDAL_GCP *)VSIMalloc2( poDS->nGCPs, sizeof(GDAL_GCP) );
+            poDS->pasGCPs = (GDAL_GCP *)VSI_MALLOC2_VERBOSE( poDS->nGCPs, sizeof(GDAL_GCP) );
             if( poDS->pasGCPs == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate GCP list" );
                 delete poDS;
                 return NULL;
             }
@@ -1150,8 +1142,8 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->pasGCPs[i].pszId = VSIStrdup( CPLSPrintf( "%d", i ) );
                 char pszGCPTagName[64];
                 char pszGCPInfoTagName[64];
-                strcpy( pszGCPTagName, CPLSPrintf( "GDAL/GCP%d", i ) );
-                strcpy( pszGCPInfoTagName, CPLSPrintf( "GDAL/GCP%d_INFO", i ) );
+                snprintf( pszGCPTagName, sizeof(pszGCPTagName), "GDAL/GCP%d", i );
+                snprintf( pszGCPInfoTagName, sizeof(pszGCPTagName), "GDAL/GCP%d_INFO", i );
                 if( poDS->oHeader.global_taglist().get(pszGCPInfoTagName) )
                 {
                     poDS->pasGCPs[i].pszInfo = VSIStrdup( poDS->oHeader.global_taglist().get(pszGCPInfoTagName) );
@@ -1181,15 +1173,14 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
     for( uintmax_t i = 0; i < poDS->oHeader.global_taglist().tags(); i++)
     {
         const char *pszTagName = poDS->oHeader.global_taglist().name( i );
-        if( strncmp( pszTagName, "GDAL/META/", 10 ) == 0 )
+        if( STARTS_WITH(pszTagName, "GDAL/META/") )
         {
             const char *pDomainEnd = strchr( pszTagName + 10, '/' );
             if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )
             {
-                char *pszDomain = (char *)VSIMalloc( pDomainEnd - (pszTagName + 10) + 1 );
+                char *pszDomain = (char *)VSI_MALLOC_VERBOSE( pDomainEnd - (pszTagName + 10) + 1 );
                 if( !pszDomain )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate metadata buffer" );
                     delete poDS;
                     return NULL;
                 }
@@ -1313,10 +1304,9 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       pszCompressionValue );
     }
 
-    gta::type *peGTATypes = (gta::type *)VSIMalloc2( poSrcDS->GetRasterCount(), sizeof(gta::type) );
+    gta::type *peGTATypes = (gta::type *)VSI_MALLOC2_VERBOSE( poSrcDS->GetRasterCount(), sizeof(gta::type) );
     if( peGTATypes == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate GTA type list" );
         return NULL;
     }
     for( int i = 0; i < poSrcDS->GetRasterCount(); i++ )
@@ -1457,8 +1447,8 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             {
                 char pszGCPTagName[64];
                 char pszGCPInfoTagName[64];
-                strcpy( pszGCPTagName, CPLSPrintf( "GDAL/GCP%d", i ) );
-                strcpy( pszGCPInfoTagName, CPLSPrintf( "GDAL/GCP%d_INFO", i ) );
+                snprintf( pszGCPTagName, sizeof(pszGCPTagName), "GDAL/GCP%d", i );
+                snprintf( pszGCPInfoTagName, sizeof(pszGCPInfoTagName), "GDAL/GCP%d_INFO", i );
                 if( pasGCPs[i].pszInfo && pasGCPs[i].pszInfo[0] != '\0' )
                 {
                     oHeader.global_taglist().set( pszGCPInfoTagName, pasGCPs[i].pszInfo );
@@ -1608,10 +1598,9 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    void *pLine = VSIMalloc2( oHeader.element_size(), oHeader.dimension_size(0) );
+    void *pLine = VSI_MALLOC2_VERBOSE( static_cast<size_t>(oHeader.element_size()), static_cast<size_t>(oHeader.dimension_size(0)) );
     if( pLine == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate scanline buffer.\n" );
         VSIFree( pLine );
         return NULL;
     }
@@ -1690,46 +1679,44 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_GTA()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "GTA" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GTA" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GTA" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                "Generic Tagged Arrays (.gta)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                "frmt_gta.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gta" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 "
-                "CInt16 CInt32 CFloat32 CFloat64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-                "<CreationOptionList>"
-                "  <Option name='COMPRESS' type='string-select'>"
-                "    <Value>NONE</Value>"
-                "    <Value>BZIP2</Value>"
-                "    <Value>XZ</Value>"
-                "    <Value>ZLIB</Value>"
-                "    <Value>ZLIB1</Value>"
-                "    <Value>ZLIB2</Value>"
-                "    <Value>ZLIB3</Value>"
-                "    <Value>ZLIB4</Value>"
-                "    <Value>ZLIB5</Value>"
-                "    <Value>ZLIB6</Value>"
-                "    <Value>ZLIB7</Value>"
-                "    <Value>ZLIB8</Value>"
-                "    <Value>ZLIB9</Value>"
-                "  </Option>"
-                "</CreationOptionList>" );
+    poDriver->SetDescription( "GTA" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Generic Tagged Arrays (.gta)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gta.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gta" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 "
+                               "CInt16 CInt32 CFloat32 CFloat64" );
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='COMPRESS' type='string-select'>"
+        "    <Value>NONE</Value>"
+        "    <Value>BZIP2</Value>"
+        "    <Value>XZ</Value>"
+        "    <Value>ZLIB</Value>"
+        "    <Value>ZLIB1</Value>"
+        "    <Value>ZLIB2</Value>"
+        "    <Value>ZLIB3</Value>"
+        "    <Value>ZLIB4</Value>"
+        "    <Value>ZLIB5</Value>"
+        "    <Value>ZLIB6</Value>"
+        "    <Value>ZLIB7</Value>"
+        "    <Value>ZLIB8</Value>"
+        "    <Value>ZLIB9</Value>"
+        "  </Option>"
+        "</CreationOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = GTADataset::Open;
-        poDriver->pfnCreateCopy = GTACreateCopy;
+    poDriver->pfnOpen = GTADataset::Open;
+    poDriver->pfnCreateCopy = GTACreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

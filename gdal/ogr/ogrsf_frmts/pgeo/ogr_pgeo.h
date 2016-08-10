@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_ODBC_H_INCLUDED
-#define _OGR_ODBC_H_INCLUDED
+#ifndef OGR_ODBC_H_INCLUDED
+#define OGR_ODBC_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
@@ -40,7 +40,7 @@
 /************************************************************************/
 
 class OGRPGeoDataSource;
-    
+
 class OGRPGeoLayer : public OGRLayer
 {
   protected:
@@ -77,7 +77,7 @@ class OGRPGeoLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual int         TestCapability( const char * );
@@ -107,7 +107,7 @@ class OGRPGeoTableLayer : public OGRPGeoLayer
                         OGRPGeoTableLayer( OGRPGeoDataSource * );
                         ~OGRPGeoTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
                                     int nShapeType,
                                     double dfExtentLeft,
@@ -122,7 +122,7 @@ class OGRPGeoTableLayer : public OGRPGeoLayer
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual int         TestCapability( const char * );
 
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
@@ -144,7 +144,7 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
     virtual CPLODBCStatement *  GetStatement();
 
   public:
-                        OGRPGeoSelectLayer( OGRPGeoDataSource *, 
+                        OGRPGeoSelectLayer( OGRPGeoDataSource *,
                                            CPLODBCStatement * );
                         ~OGRPGeoSelectLayer();
 
@@ -152,7 +152,7 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
     virtual GIntBig     GetFeatureCount( int );
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual int         TestCapability( const char * );
 };
 
@@ -164,7 +164,7 @@ class OGRPGeoDataSource : public OGRDataSource
 {
     OGRPGeoLayer        **papoLayers;
     int                 nLayers;
-    
+
     char               *pszName;
 
     int                 bDSUpdate;
@@ -175,7 +175,7 @@ class OGRPGeoDataSource : public OGRDataSource
                         ~OGRPGeoDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
 
@@ -221,7 +221,7 @@ class OGRPGeoDriver : public OGRODBCMDBDriver
 {
   public:
                 ~OGRPGeoDriver();
-                
+
     const char  *GetName();
     OGRDataSource *Open( const char *, int );
 

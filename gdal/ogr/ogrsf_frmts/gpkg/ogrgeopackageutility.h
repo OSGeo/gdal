@@ -30,10 +30,10 @@
 #include "ogrsf_frmts.h"
 #include "sqlite3.h"
 
-#ifndef _OGR_GEOPACKAGEUTILITY_H_INCLUDED
-#define _OGR_GEOPACKAGEUTILITY_H_INCLUDED
+#ifndef OGR_GEOPACKAGEUTILITY_H_INCLUDED
+#define OGR_GEOPACKAGEUTILITY_H_INCLUDED
 
-typedef struct 
+typedef struct
 {
     char** papszResult;
     int nRowCount;
@@ -42,14 +42,21 @@ typedef struct
     int rc;
 } SQLResult;
 
-typedef struct 
+typedef struct
 {
     OGRBoolean bEmpty;
     OGRBoolean bExtended;
     OGRwkbByteOrder eByteOrder;
     int iSrsId;
-    int iDims;
+    bool bExtentHasXY;
+    bool bExtentHasZ;
+#ifdef notdef
+    bool bExtentHasM;
+#endif
     double MinX, MaxX, MinY, MaxY, MinZ, MaxZ;
+#ifdef notdef
+    double MinM, MaxM;
+#endif
     size_t szHeader;
 } GPkgHeader;
 
@@ -69,12 +76,12 @@ int                 SQLiteFieldFromOGR(OGRFieldType nType);
 
 OGRFieldType        GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType, int& nMaxWidth);
 const char*         GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType, int nMaxWidth);
-OGRwkbGeometryType  GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ);
+OGRwkbGeometryType  GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bool bHasM);
 
 GByte*              GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *szWkb);
 OGRGeometry*        GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs);
 OGRErr              GPkgEnvelopeToOGR(GByte *pabyGpkg, size_t szGpkg, OGREnvelope *poEnv);
 
-OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, GPkgHeader *poHeader);
+OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader);
 
 #endif

@@ -45,7 +45,7 @@ namespace tut
           rc += ('a'+(((unsigned int)*i)&0xF));
         }
 
-        ++i;         
+        ++i;
       }
       return rc;
     }
@@ -74,10 +74,10 @@ namespace tut
           unsigned int c2 = *i;
           rc += (((c1-'a')<<4) + (c2-'a'));
         }
- 
+
         ++i;
       }
-      return rc;         
+      return rc;
     }
 
     /**
@@ -95,7 +95,7 @@ namespace tut
         case test_result::warn: os << 3; break;
         case test_result::term: os << 4; break;
         default: throw std::logic_error("operator << : bad result_type");
-      }  
+      }
       os << ' ' << escape(tr.message) << std::endl;
     }
 
@@ -121,8 +121,8 @@ namespace tut
         case 3: tr.result = test_result::warn; break;
         case 4: tr.result = test_result::term; break;
         default: throw std::logic_error("operator >> : bad result_type");
-      }  
- 
+      }
+
       is.ignore(1); // space
       std::getline(is,tr.message);
       tr.message = unescape(tr.message);
@@ -147,7 +147,7 @@ namespace tut
      * Default constructor.
      * @param dir Directory where to search/put log and journal files
      */
-    restartable_wrapper(const std::string& dir = ".") 
+    restartable_wrapper(const std::string& dir = ".")
       : runner_(runner.get()), callback_(0), dir_(dir)
     {
       // dozen: it works, but it would be better to use system path separator
@@ -240,7 +240,7 @@ namespace tut
           ++test;
         }
 
-        ++gni;      
+        ++gni;
       }
 
       // show final results to user
@@ -321,8 +321,8 @@ namespace tut
       fail_group = util::unescape(fail_group);
       ilog >> fail_test;
       if( !ilog.good() )
-      { 
-        fail_group = ""; fail_test = -1; 
+      {
+        fail_group = ""; fail_test = -1;
         truncate_();
       }
       else

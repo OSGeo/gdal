@@ -66,7 +66,7 @@ int main(int /* argc */, char* /* argv */ [])
                               (GDALDataType)intype,
                               GDALGetDataTypeSize((GDALDataType)intype) / 8,
                               out,
-                              (GDALDataType)outtype, 
+                              (GDALDataType)outtype,
                               GDALGetDataTypeSize((GDALDataType)outtype) / 8,
                               256 * 256);
 

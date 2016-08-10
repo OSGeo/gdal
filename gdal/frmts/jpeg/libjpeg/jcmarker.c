@@ -142,16 +142,16 @@ emit_2bytes (j_compress_ptr cinfo, int value)
  */
 
 LOCAL(int)
-emit_dqt (j_compress_ptr cinfo, int index)
+emit_dqt (j_compress_ptr cinfo, int l_index)
 /* Emit a DQT marker */
 /* Returns the precision used (0 = 8bits, 1 = 16bits) for baseline checking */
 {
-  JQUANT_TBL * qtbl = cinfo->quant_tbl_ptrs[index];
+  JQUANT_TBL * qtbl = cinfo->quant_tbl_ptrs[l_index];
   int prec;
   int i;
 
   if (qtbl == NULL)
-    ERREXIT1(cinfo, JERR_NO_QUANT_TABLE, index);
+    ERREXIT1(cinfo, JERR_NO_QUANT_TABLE, l_index);
 
   prec = 0;
   for (i = 0; i < DCTSIZE2; i++) {
@@ -164,7 +164,7 @@ emit_dqt (j_compress_ptr cinfo, int index)
 
     emit_2bytes(cinfo, prec ? DCTSIZE2*2 + 1 + 2 : DCTSIZE2 + 1 + 2);
 
-    emit_byte(cinfo, index + (prec<<4));
+    emit_byte(cinfo, l_index + (prec<<4));
 
     for (i = 0; i < DCTSIZE2; i++) {
       /* The table entries must be emitted in zigzag order. */
@@ -182,21 +182,21 @@ emit_dqt (j_compress_ptr cinfo, int index)
 
 
 LOCAL(void)
-emit_dht (j_compress_ptr cinfo, int index, boolean is_ac)
+emit_dht (j_compress_ptr cinfo, int l_index, boolean is_ac)
 /* Emit a DHT marker */
 {
   JHUFF_TBL * htbl;
   int length, i;
   
   if (is_ac) {
-    htbl = cinfo->ac_huff_tbl_ptrs[index];
-    index += 0x10;		/* output index has AC bit set */
+    htbl = cinfo->ac_huff_tbl_ptrs[l_index];
+    l_index += 0x10;		/* output l_index has AC bit set */
   } else {
-    htbl = cinfo->dc_huff_tbl_ptrs[index];
+    htbl = cinfo->dc_huff_tbl_ptrs[l_index];
   }
 
   if (htbl == NULL)
-    ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, index);
+    ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, l_index);
   
   if (! htbl->sent_table) {
     emit_marker(cinfo, M_DHT);
@@ -206,7 +206,7 @@ emit_dht (j_compress_ptr cinfo, int index, boolean is_ac)
       length += htbl->bits[i];
     
     emit_2bytes(cinfo, length + 2 + 1 + 16);
-    emit_byte(cinfo, index);
+    emit_byte(cinfo, l_index);
     
     for (i = 1; i <= 16; i++)
       emit_byte(cinfo, htbl->bits[i]);

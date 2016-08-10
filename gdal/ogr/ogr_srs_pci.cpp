@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference translation to/from PCI georeferencing
@@ -36,7 +35,7 @@
 
 CPL_CVSID("$Id$");
 
-typedef struct 
+typedef struct
 {
     const char  *pszPCIDatum;
     int         nEPSGCode;
@@ -102,7 +101,7 @@ static const PCIDatums asEllips[] =
     { "E006", 7042 },     // Everest, 1830
     { "E008", 7019 },     // GRS, 1980 (NAD1983)
     { "E009", 7001 },     // Airy, 1830
-    { "E010", 7018 },     // Modified Everest 
+    { "E010", 7018 },     // Modified Everest
     { "E011", 7002 },     // Modified Airy
     { "E012", 7030 },     // WGS, 1984 (GPS)
     { "E014", 7003 },     // Australian National, 1965
@@ -182,10 +181,10 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
  * [16] Landsat path number
  *
  * Particular projection uses different parameters, unused ones may be set to
- * zero. If NULL suppliet instead of array pointer default values will be
+ * zero. If NULL is supplied instead of an array pointer, default values will be
  * used (i.e., zeroes).
  *
- * @return OGRERR_NONE on success or an error code in case of failure. 
+ * @return OGRERR_NONE on success or an error code in case of failure.
  */
 
 OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
@@ -234,7 +233,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             int nCode = atoi(pszEM+1);
 
             if( nCode >= -99 && nCode <= 999 )
-                sprintf( szEarthModel, "%c%03d", toupper(*pszEM), nCode );
+                snprintf( szEarthModel, sizeof(szEarthModel), "%c%03d", toupper(*pszEM), nCode );
 
             break;
         }
@@ -242,7 +241,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         pszEM--;
     }
 
-    if( EQUAL(pszEM,"E000") 
+    if( EQUAL(pszEM,"E000")
         || EQUAL(pszEM,"D-01")
         || EQUAL(pszEM,"D-03")
         || EQUAL(pszEM,"D-07")
@@ -251,63 +250,63 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         || EQUAL(pszEM,"D-13")
         || EQUAL(pszEM,"D-17") )
         bIsNAD27 = TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
-    if( EQUALN( pszProj, "LONG/LAT", 8 ) )
+    if( STARTS_WITH_CI(pszProj, "LONG/LAT") )
     {
     }
-    
-    else if( EQUALN( pszProj, "METER", 5 ) 
-             || EQUALN( pszProj, "METRE", 5 ) )
+
+    else if( STARTS_WITH_CI(pszProj, "METER")
+             || STARTS_WITH_CI(pszProj, "METRE") )
     {
         SetLocalCS( "METER" );
         SetLinearUnits( "METER", 1.0 );
     }
 
-    else if( EQUALN( pszProj, "FEET", 4 ) 
-             || EQUALN( pszProj, "FOOT", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "FEET")
+             || STARTS_WITH_CI(pszProj, "FOOT") )
     {
         SetLocalCS( "FEET" );
         SetLinearUnits( "FEET", CPLAtof(SRS_UL_FOOT_CONV) );
     }
 
-    else if( EQUALN( pszProj, "ACEA", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "ACEA") )
     {
         SetACEA( padfPrjParams[4], padfPrjParams[5],
                  padfPrjParams[3], padfPrjParams[2],
                  padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "AE", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "AE") )
     {
         SetAE( padfPrjParams[3], padfPrjParams[2],
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "CASS ", 5 ) )
+    else if( STARTS_WITH_CI(pszProj, "CASS ") )
     {
         SetCS( padfPrjParams[3], padfPrjParams[2],
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "EC", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "EC") )
     {
         SetEC( padfPrjParams[4], padfPrjParams[5],
                padfPrjParams[3], padfPrjParams[2],
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "ER", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "ER") )
     {
-        // PCI and GCTP don't support natural origin lat. 
+        // PCI and GCTP don't support natural origin lat.
         SetEquirectangular2( 0.0, padfPrjParams[2],
-                             padfPrjParams[3], 
+                             padfPrjParams[3],
                              padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "GNO", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "GNO") )
     {
         SetGnomonic( padfPrjParams[3], padfPrjParams[2],
                      padfPrjParams[6], padfPrjParams[7] );
@@ -317,46 +316,46 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     // FIXME: GOOD -- our Goode's is not the interrupted version from pci
 
-    else if( EQUALN( pszProj, "LAEA", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "LAEA") )
     {
         SetLAEA( padfPrjParams[3], padfPrjParams[2],
                  padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "LCC ", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "LCC ") )
     {
         SetLCC( padfPrjParams[4], padfPrjParams[5],
                 padfPrjParams[3], padfPrjParams[2],
                 padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "LCC_1SP ", 7 ) )
+    else if( STARTS_WITH_CI(pszProj, "LCC_1SP ") )
     {
         SetLCC1SP( padfPrjParams[3], padfPrjParams[2],
                    padfPrjParams[8],
                    padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "MC", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "MC") )
     {
         SetMC( padfPrjParams[3], padfPrjParams[2],
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "MER", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "MER") )
     {
         SetMercator( padfPrjParams[3], padfPrjParams[2],
                      (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                      padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "OG", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "OG") )
     {
         SetOrthographic( padfPrjParams[3], padfPrjParams[2],
                          padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "OM ", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "OM ") )
     {
         if( padfPrjParams[10] == 0.0
             && padfPrjParams[11] == 0.0
@@ -364,14 +363,14 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             && padfPrjParams[13] == 0.0 )
         {
             SetHOM( padfPrjParams[3], padfPrjParams[2],
-                    padfPrjParams[14], 
+                    padfPrjParams[14],
                     padfPrjParams[14], // use azimuth for grid angle
                     padfPrjParams[8],
                     padfPrjParams[6], padfPrjParams[7] );
         }
         else
         {
-            SetHOM2PNO( padfPrjParams[3], 
+            SetHOM2PNO( padfPrjParams[3],
                         padfPrjParams[11], padfPrjParams[10],
                         padfPrjParams[13], padfPrjParams[12],
                         padfPrjParams[8],
@@ -379,40 +378,40 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         }
     }
 
-    else if( EQUALN( pszProj, "PC", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "PC") )
     {
         SetPolyconic( padfPrjParams[3], padfPrjParams[2],
                       padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "PS", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "PS") )
     {
         SetPS( padfPrjParams[3], padfPrjParams[2],
                (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "ROB", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "ROB") )
     {
         SetRobinson( padfPrjParams[2],
                      padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "SGDO", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "SGDO") )
     {
         SetOS( padfPrjParams[3], padfPrjParams[2],
                (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "SG", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "SG") )
     {
         SetStereographic( padfPrjParams[3], padfPrjParams[2],
                           (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                           padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "SIN", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "SIN") )
     {
         SetSinusoidal( padfPrjParams[2],
                        padfPrjParams[6], padfPrjParams[7] );
@@ -420,50 +419,50 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     // FIXME: SOM --- Space Oblique Mercator skipped
 
-    else if( EQUALN( pszProj, "SPCS", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "SPCS") )
     {
         int     iZone;
 
-        iZone = CPLScanLong( (char *)pszProj + 5, 4 );
+        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
     }
 
-    else if( EQUALN( pszProj, "SPIF", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "SPIF") )
     {
         int     iZone;
 
-        iZone = CPLScanLong( (char *)pszProj + 5, 4 );
+        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT,
                                            CPLAtof(SRS_UL_FOOT_CONV) );
     }
 
-    else if( EQUALN( pszProj, "SPAF", 4 ) )
+    else if( STARTS_WITH_CI(pszProj, "SPAF") )
     {
         int     iZone;
 
-        iZone = CPLScanLong( (char *)pszProj + 5, 4 );
+        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT,
                                            CPLAtof(SRS_UL_US_FOOT_CONV) );
     }
 
-    else if( EQUALN( pszProj, "TM", 2 ) )
+    else if( STARTS_WITH_CI(pszProj, "TM") )
     {
         SetTM( padfPrjParams[3], padfPrjParams[2],
                (padfPrjParams[8] != 0.0) ? padfPrjParams[8] : 1.0,
                padfPrjParams[6], padfPrjParams[7] );
     }
 
-    else if( EQUALN( pszProj, "UTM", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "UTM") )
     {
         int     iZone, bNorth = TRUE;
 
-        iZone = CPLScanLong( (char *)pszProj + 4, 5 );;
+        iZone = (int)CPLScanLong( (char *)pszProj + 4, 5 );;
         if ( iZone < 0 )
         {
             iZone = -iZone;
@@ -497,11 +496,11 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 // an MGRS zone code so we ignore it.
             }
         }
-        
+
         SetUTM( iZone, bNorth );
     }
 
-    else if( EQUALN( pszProj, "VDG", 3 ) )
+    else if( STARTS_WITH_CI(pszProj, "VDG") )
     {
         SetVDG( padfPrjParams[2],
                 padfPrjParams[6], padfPrjParams[7] );
@@ -520,11 +519,11 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      We have an earthmodel string, look it up in the datum list.     */
 /* -------------------------------------------------------------------- */
-    if( strlen(szEarthModel) > 0 
+    if( strlen(szEarthModel) > 0
         && (poRoot == NULL || IsProjected() || IsGeographic()) )
     {
         const PCIDatums   *pasDatum = asDatums;
-        
+
         // Search for matching datum
         while ( pasDatum->pszPCIDatum )
         {
@@ -537,9 +536,9 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             }
             pasDatum++;
         }
-        
+
 /* -------------------------------------------------------------------- */
-/*      If we did not find a datum definition in our incode epsg        */
+/*      If we did not find a datum definition in our in-code EPSG        */
 /*      lookup table, then try fetching from the pci_datum.txt          */
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
@@ -548,18 +547,18 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         if( !pasDatum->pszPCIDatum && szEarthModel[0] == 'D' )
         {
             const char *pszDatumCSV = CSVFilename( "pci_datum.txt" );
-            FILE *fp = NULL;
+            VSILFILE *fp = NULL;
 
             if( pszDatumCSV )
-                fp = VSIFOpen( pszDatumCSV, "r" );
-            
+                fp = VSIFOpenL( pszDatumCSV, "r" );
+
             if( fp != NULL )
             {
                 char **papszLineItems = NULL;
 
-                while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
+                while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
                 {
-                    if( CSLCount(papszLineItems) > 3 
+                    if( CSLCount(papszLineItems) > 3
                         && EQUALN(papszLineItems[0],szEarthModel,4) )
                     {
                         papszDatumDefn = papszLineItems;
@@ -569,10 +568,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                     CSLDestroy( papszLineItems );
                 }
 
-                VSIFClose( fp );
+                VSIFCloseL( fp );
             }
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      If not, look in the ellipsoid/EPSG matching list.               */
 /* -------------------------------------------------------------------- */
@@ -582,7 +581,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             double  dfSemiMajor = 0.0;
             double  dfInvFlattening = 0.0;
             int     nEPSGCode = 0;
-                    
+
             pasDatum = asEllips;
 
             while ( pasDatum->pszPCIDatum )
@@ -590,8 +589,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 if( EQUALN( szEarthModel, pasDatum->pszPCIDatum, 4 ) )
                 {
                     nEPSGCode = pasDatum->nEPSGCode;
-                    OSRGetEllipsoidInfo( pasDatum->nEPSGCode, &pszName,
-                                         &dfSemiMajor, &dfInvFlattening );
+                    CPL_IGNORE_RET_VAL(OSRGetEllipsoidInfo( pasDatum->nEPSGCode, &pszName,
+                                         &dfSemiMajor, &dfInvFlattening ));
                     break;
 
                 }
@@ -605,18 +604,18 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             if( !pasDatum->pszPCIDatum && szEarthModel[0] == 'E' )
             {
                 const char *pszCSV = CSVFilename( "pci_ellips.txt" );
-                FILE *fp = NULL;
-                
+                VSILFILE *fp = NULL;
+
                 if( pszCSV )
-                    fp = VSIFOpen( pszCSV, "r" );
-                
+                    fp = VSIFOpenL( pszCSV, "r" );
+
                 if( fp != NULL )
                 {
                     char **papszLineItems = NULL;
-                    
-                    while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
+
+                    while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
                     {
-                        if( CSLCount(papszLineItems) > 3 
+                        if( CSLCount(papszLineItems) > 3
                             && EQUALN(papszLineItems[0],szEarthModel,4) )
                         {
                             dfSemiMajor = CPLAtof( papszLineItems[2] );
@@ -627,15 +626,15 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                         CSLDestroy( papszLineItems );
                     }
                     CSLDestroy( papszLineItems );
-                    
-                    VSIFClose( fp );
+
+                    VSIFCloseL( fp );
                 }
             }
 
 /* -------------------------------------------------------------------- */
 /*      Custom spheroid?                                                */
 /* -------------------------------------------------------------------- */
-            if( dfSemiMajor == 0.0 && EQUALN(szEarthModel,"E999",4) 
+            if( dfSemiMajor == 0.0 && STARTS_WITH_CI(szEarthModel, "E999")
                 && padfPrjParams[0] != 0.0 )
             {
                 dfSemiMajor = padfPrjParams[0];
@@ -677,13 +676,14 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 SetAuthority( "SPHEROID", "EPSG", nEPSGCode );
 
             // Do we have 7 datum shift parameters?
-            if( CSLCount(papszDatumDefn) >= 15 
+            if( papszDatumDefn != NULL &&
+                CSLCount(papszDatumDefn) >= 15
                 && CPLAtof(papszDatumDefn[14]) != 0.0 )
             {
                 double dfScale = CPLAtof(papszDatumDefn[14]);
 
                 // we want scale in parts per million off 1.0
-                // but pci uses a mix of forms. 
+                // but pci uses a mix of forms.
                 if( dfScale >= 0.999 && dfScale <= 1.001 )
                     dfScale = (dfScale-1.0) * 1000000.0;
 
@@ -697,9 +697,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             }
 
             // Do we have 7 datum shift parameters?
-            else if( CSLCount(papszDatumDefn) == 11 
-                     && (CPLAtof(papszDatumDefn[3]) != 0.0 
-                         || CPLAtof(papszDatumDefn[4]) != 0.0 
+            else if( papszDatumDefn != NULL &&
+                     CSLCount(papszDatumDefn) == 11
+                     && (CPLAtof(papszDatumDefn[3]) != 0.0
+                         || CPLAtof(papszDatumDefn[4]) != 0.0
                          || CPLAtof(papszDatumDefn[5]) != 0.0 ) )
             {
                 SetTOWGS84( CPLAtof(papszDatumDefn[3]),
@@ -735,7 +736,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /************************************************************************/
 /*                          OSRExportToPCI()                            */
 /************************************************************************/
-/** 
+/**
  * \brief Export coordinate system in PCI projection definition.
  *
  * This function is the same as OGRSpatialReference::exportToPCI().
@@ -768,21 +769,21 @@ OGRErr OSRExportToPCI( OGRSpatialReferenceH hSRS,
  * with CPLFree() when no longer needed.
  *
  * LOCAL_CS coordinate systems are not translatable.  An empty string
- * will be returned along with OGRERR_NONE.  
+ * will be returned along with OGRERR_NONE.
  *
- * This method is the equivelent of the C function OSRExportToPCI().
+ * This method is the equivalent of the C function OSRExportToPCI().
  *
  * @param ppszProj pointer to which dynamically allocated PCI projection
  * definition will be assigned.
- * 
- * @param ppszUnits pointer to which dynamically allocated units definition 
+ *
+ * @param ppszUnits pointer to which dynamically allocated units definition
  * will be assigned.
  *
  * @param ppadfPrjParams pointer to which dynamically allocated array of
  * 17 projection parameters will be assigned. See importFromPCI() for the list
  * of parameters.
- * 
- * @return OGRERR_NONE on success or an error code on failure. 
+ *
+ * @return OGRERR_NONE on success or an error code on failure.
  */
 
 OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
@@ -1066,7 +1067,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                 CPLPrintInt32( szProj + 5, nZone, 4 );
             else
                 CPLPrintInt32( szProj + 5, -nZone, 4 );
-        }            
+        }
         else
         {
             CPLPrintStringFill( szProj, "TM", 16 );
@@ -1096,7 +1097,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                   "PIXEL value will be used.", pszProjection );
         CPLPrintStringFill( szProj, "PIXEL", 16 );
     }
-    
+
 /* ==================================================================== */
 /*      Translate the earth model.                                      */
 /* ==================================================================== */
@@ -1127,12 +1128,11 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
     if( szEarthModel[0] == '\0' )
     {
         const char *pszAuthority = GetAuthorityName("GEOGCS");
-        
+
         if( pszAuthority && EQUAL(pszAuthority,"EPSG") )
         {
             int nGCS_EPSG = atoi(GetAuthorityCode("GEOGCS"));
-            int i;
-            
+
             for( i = 0; asDatums[i].nEPSGCode != 0; i++ )
             {
                 if( asDatums[i].nEPSGCode == nGCS_EPSG )
@@ -1176,17 +1176,17 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         if( szEarthModel[0] == '\0' )
         {
             const char *pszCSV = CSVFilename( "pci_ellips.txt" );
-            FILE *fp = NULL;
+            VSILFILE *fp = NULL;
             double dfSemiMinor = OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
 
             if( pszCSV )
-                fp = VSIFOpen( pszCSV, "r" );
-        
+                fp = VSIFOpenL( pszCSV, "r" );
+
             if( fp != NULL )
             {
                 char **papszLineItems = NULL;
 
-                while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
+                while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
                 {
                     if( CSLCount(papszLineItems) >= 4
                         && CPLIsEqual(dfSemiMajor,CPLAtof(papszLineItems[2]))
@@ -1201,13 +1201,13 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                 }
 
                 CSLDestroy( papszLineItems );
-                VSIFClose( fp );
-            }            
+                VSIFCloseL( fp );
+            }
         }
 
         // custom ellipsoid parameters
         if( szEarthModel[0] == '\0' )
-        {                                   
+        {
             CPLPrintStringFill( szEarthModel, "E999", 4 );
             (*ppadfPrjParams)[0] = dfSemiMajor;
             (*ppadfPrjParams)[1] = OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
@@ -1218,30 +1218,30 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /*      If we have a non-parameteric ellipsoid, scan the                */
 /*      pci_datum.txt for a match.                                      */
 /* -------------------------------------------------------------------- */
-    if( szEarthModel[0] == 'E' 
+    if( szEarthModel[0] == 'E'
         && !EQUAL(szEarthModel,"E999")
         && pszDatum != NULL )
     {
         const char *pszDatumCSV = CSVFilename( "pci_datum.txt" );
-        FILE *fp = NULL;
+        VSILFILE *fp = NULL;
         double adfTOWGS84[7];
         int    bHaveTOWGS84;
 
         bHaveTOWGS84 = (GetTOWGS84( adfTOWGS84, 7 ) == OGRERR_NONE);
-        
+
         if( pszDatumCSV )
-            fp = VSIFOpen( pszDatumCSV, "r" );
-        
+            fp = VSIFOpenL( pszDatumCSV, "r" );
+
         if( fp != NULL )
         {
             char **papszLineItems = NULL;
-            
-            while( (papszLineItems = CSVReadParseLine( fp )) != NULL )
+
+            while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
             {
                 // Compare based on datum name.  This is mostly for
                 // PCI round-tripping.  We won't usually get exact matches
                 // from other sources.
-                if( CSLCount(papszLineItems) > 3 
+                if( CSLCount(papszLineItems) > 3
                     && EQUAL(papszLineItems[1],pszDatum)
                     && EQUAL(papszLineItems[2],szEarthModel) )
                 {
@@ -1255,13 +1255,13 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                 if( CSLCount(papszLineItems) < 11 )
                     bTOWGS84Match = FALSE;
 
-                if( bTOWGS84Match 
+                if( bTOWGS84Match
                     && (!CPLIsEqual(adfTOWGS84[0],CPLAtof(papszLineItems[3]))
                         || !CPLIsEqual(adfTOWGS84[1],CPLAtof(papszLineItems[4]))
                         || !CPLIsEqual(adfTOWGS84[2],CPLAtof(papszLineItems[5]))))
                     bTOWGS84Match = FALSE;
 
-                if( bTOWGS84Match && CSLCount(papszLineItems) >= 15 
+                if( bTOWGS84Match && CSLCount(papszLineItems) >= 15
                     && (!CPLIsEqual(adfTOWGS84[3],CPLAtof(papszLineItems[11]))
                         || !CPLIsEqual(adfTOWGS84[4],CPLAtof(papszLineItems[12]))
                         || !CPLIsEqual(adfTOWGS84[5],CPLAtof(papszLineItems[13]))))
@@ -1297,7 +1297,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
             }
 
             CSLDestroy( papszLineItems );
-            VSIFClose( fp );
+            VSIFCloseL( fp );
         }
     }
 
@@ -1309,8 +1309,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /*      Translate the linear units.                                     */
 /* -------------------------------------------------------------------- */
     const char  *pszUnits;
-        
-    if( EQUALN( szProj, "LONG/LAT", 8 ) )
+
+    if( STARTS_WITH_CI(szProj, "LONG/LAT") )
         pszUnits = "DEGREE";
     else
         pszUnits = "METRE";

@@ -27,8 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GDAL_UTILS_PRIV_H_INCLUDED
-#define _GDAL_UTILS_PRIV_H_INCLUDED
+#ifndef GDAL_UTILS_PRIV_H_INCLUDED
+#define GDAL_UTILS_PRIV_H_INCLUDED
+
+#ifndef DOXYGEN_SKIP
 
 #include "cpl_port.h"
 #include "gdal_utils.h"
@@ -125,6 +127,27 @@ struct GDALGridOptionsForBinary
     char* pszFormat;
 };
 
+struct GDALRasterizeOptionsForBinary
+{
+    char* pszSource;
+    char* pszDest;
+    int bQuiet;
+    int bFormatExplicitlySet;
+    char* pszFormat;
+    int bCreateOutput;
+};
+
+struct GDALBuildVRTOptionsForBinary
+{
+    int nSrcFiles;
+    char** papszSrcFiles;
+    char* pszDstFilename;
+    int bQuiet;
+    int bOverwrite;
+};
+
 CPL_C_END
 
-#endif /* _GDAL_UTILS_PRIV_H_INCLUDED */
+#endif /* #ifndef DOXYGEN_SKIP */
+
+#endif /* GDAL_UTILS_PRIV_H_INCLUDED */

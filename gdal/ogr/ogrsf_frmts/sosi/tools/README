@@ -1,0 +1,7 @@
+Use this script to create a valid "ogrsosidatatypes.h" include file based on the element definitions in the standard. You can extract the XML files by exporting the tables of the same name from the official Access-Database at
+
+http://www.primar.org/statkart.ny.no/nor/SOSI/SOSI-std/SOSI-db_versjoner/SOSI-db+-+SOSI+standarden+i+en+Access-database.d25-SwBDU1O.ips
+
+Note: to avoid too big files to be kept in SVN,  Elementdefinisjoner.xml and 
+Gruppeelement_sammensetning.xml have been put in http://download.osgeo.org/gdal/tools/sosi/
+Download them locally before running the script.

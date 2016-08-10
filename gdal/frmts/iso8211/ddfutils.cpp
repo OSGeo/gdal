@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISO 8211 Access
  * Purpose:  Various utility functions.
@@ -39,7 +38,7 @@ CPL_CVSID("$Id$");
 /*      as an integer.                                                  */
 /************************************************************************/
 
-long DDFScanInt( const char * pszString, int nMaxChars )
+int DDFScanInt( const char * pszString, int nMaxChars )
 
 {
     char        szWorking[33];
@@ -63,9 +62,9 @@ long DDFScanInt( const char * pszString, int nMaxChars )
 int DDFScanVariable( const char *pszRecord, int nMaxChars, int nDelimChar )
 
 {
-    int         i;
-    
-    for( i = 0; i < nMaxChars-1 && pszRecord[i] != nDelimChar; i++ ) {}
+    int i = 0;  // Used after for.
+
+    for( ; i < nMaxChars-1 && pszRecord[i] != nDelimChar; i++ ) {}
 
     return i;
 }
@@ -82,18 +81,19 @@ char * DDFFetchVariable( const char *pszRecord, int nMaxChars,
                          int *pnConsumedChars )
 
 {
-    int         i;
-    char        *pszReturn;
-
-    for( i = 0; i < nMaxChars-1 && pszRecord[i] != nDelimChar1
-                                && pszRecord[i] != nDelimChar2; i++ ) {}
+    int i = 0;  // Used after for.
+    for( ;
+         i < nMaxChars-1 && pszRecord[i] != nDelimChar1
+         && pszRecord[i] != nDelimChar2;
+         i++ )
+    {}
 
     *pnConsumedChars = i;
     if( i < nMaxChars
         && (pszRecord[i] == nDelimChar1 || pszRecord[i] == nDelimChar2) )
         (*pnConsumedChars)++;
 
-    pszReturn = (char *) CPLMalloc(i+1);
+    char  *pszReturn = (char *) CPLMalloc(i+1);
     pszReturn[i] = '\0';
     strncpy( pszReturn, pszRecord, i );
 

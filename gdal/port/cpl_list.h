@@ -15,21 +15,21 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_LIST_H_INCLUDED
-#define _CPL_LIST_H_INCLUDED
+#ifndef CPL_LIST_H_INCLUDED
+#define CPL_LIST_H_INCLUDED
 
 #include "cpl_port.h"
 
@@ -57,16 +57,16 @@ typedef struct _CPLList
     struct _CPLList    *psNext;
 } CPLList;
 
-CPLList CPL_DLL *CPLListAppend( CPLList *psList, void *pData );
-CPLList CPL_DLL *CPLListInsert( CPLList *psList, void *pData, int nPosition );
+CPLList CPL_DLL *CPLListAppend( CPLList *psList, void * pData );
+CPLList CPL_DLL *CPLListInsert( CPLList *psList, void * pData, int nPosition );
 CPLList CPL_DLL *CPLListGetLast( CPLList *psList );
-CPLList CPL_DLL *CPLListGet( CPLList *psList, int nPosition );
-int CPL_DLL CPLListCount( CPLList *psList );
+CPLList CPL_DLL *CPLListGet( CPLList * const psList, int nPosition );
+int CPL_DLL CPLListCount( const CPLList *psList );
 CPLList CPL_DLL *CPLListRemove( CPLList *psList, int nPosition );
 void CPL_DLL CPLListDestroy( CPLList *psList );
-CPLList CPL_DLL *CPLListGetNext( CPLList *psElement );
-void CPL_DLL *CPLListGetData( CPLList *psElement );
+CPLList CPL_DLL *CPLListGetNext( const CPLList *psElement );
+void CPL_DLL *CPLListGetData( const CPLList *psElement );
 
 CPL_C_END
 
-#endif /* _CPL_LIST_H_INCLUDED */
+#endif /* CPL_LIST_H_INCLUDED */

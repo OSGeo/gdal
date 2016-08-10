@@ -3,7 +3,7 @@
  *
  * Project:  GDAL SWIG Interface
  * Purpose:  GDAL XML SWIG Interface declarations.
- * Author:   Tamas Szekeres (szekerest@gmeil.com)
+ * Author:   Tamas Szekeres (szekerest@gmail.com)
  *
  ******************************************************************************
  * Copyright (c) 2005, Tamas Szekeres
@@ -28,13 +28,13 @@
  *****************************************************************************/
 
 %rename (XMLNodeType) CPLXMLNodeType;
-typedef enum 
+typedef enum
 {
     CXT_Element = 0,
     CXT_Text = 1,
-    CXT_Attribute = 2,  
-    CXT_Comment = 3,    
-    CXT_Literal = 4     
+    CXT_Attribute = 2,
+    CXT_Comment = 3,
+    CXT_Literal = 4
 } CPLXMLNodeType;
 
 %rename (XMLNode) CPLXMLNode;
@@ -45,18 +45,18 @@ typedef enum
 typedef struct CPLXMLNode
 {
 %immutable;
-    CPLXMLNodeType      eType;       
-    char                *pszValue;   
+    CPLXMLNodeType      eType;
+    char                *pszValue;
     struct CPLXMLNode *psNext;
     struct CPLXMLNode *psChild;
-%mutable;  
+%mutable;
 } CPLXMLNode;
 
-%extend CPLXMLNode 
+%extend CPLXMLNode
 {
-    CPLXMLNode(const char *pszString) 
+    CPLXMLNode(const char *pszString)
     {
-        return CPLParseXMLString( pszString );     
+        return CPLParseXMLString( pszString );
     }
 
     /* Interface method added for GDAL 1.7.0 */
@@ -65,11 +65,11 @@ typedef struct CPLXMLNode
         return CPLCreateXMLNode(NULL, eType, pszText);
     }
 
-    ~CPLXMLNode() 
+    ~CPLXMLNode()
     {
         CPLDestroyXMLNode( self );
     }
-    
+
     /* Interface method added for GDAL 1.7.0 */
 #ifdef SWIGJAVA
     %newobject ParseXMLFile;
@@ -78,7 +78,7 @@ typedef struct CPLXMLNode
         return CPLParseXMLFile(pszFilename);
     }
 #endif
-    
+
 #if defined(SWIGJAVA) || defined(SWIGCSHARP) || defined(SWIGPERL)
     retStringAndCPLFree *SerializeXMLTree( )
 #else
@@ -95,25 +95,25 @@ typedef struct CPLXMLNode
         return CPLSerializeXMLTree( self );
     }
 #endif
-    
+
     CPLXMLNode *SearchXMLNode( const char *pszElement )
     {
         return CPLSearchXMLNode(self, pszElement);
     }
-    
+
     CPLXMLNode *GetXMLNode( const char *pszPath )
     {
         return CPLGetXMLNode( self, pszPath );
     }
-    
-    const char *GetXMLValue( const char *pszPath, 
+
+    const char *GetXMLValue( const char *pszPath,
                             const char *pszDefault )
     {
-        return CPLGetXMLValue( self, pszPath, pszDefault );                    
+        return CPLGetXMLValue( self, pszPath, pszDefault );
     }
-    
-    // for Java, I don't want to deal with ownerships issues
-    // so I just clone
+
+    // For Java, I don't want to deal with ownership issues,
+    // so I just clone.
 #ifdef SWIGJAVA
     %apply Pointer NONNULL {CPLXMLNode *psChild};
     void AddXMLChild( CPLXMLNode *psChild )
@@ -133,46 +133,46 @@ typedef struct CPLXMLNode
     {
         CPLAddXMLChild( self, psChild );
     }
-    
+
     int RemoveXMLChild( CPLXMLNode *psChild )
     {
         return CPLRemoveXMLChild( self, psChild );
     }
-    
+
     void AddXMLSibling( CPLXMLNode *psNewSibling )
     {
         CPLAddXMLSibling( self, psNewSibling );
     }
-    
-    CPLXMLNode *CreateXMLElementAndValue( const char *pszName, 
+
+    CPLXMLNode *CreateXMLElementAndValue( const char *pszName,
                                          const char *pszValue )
     {
-        return CPLCreateXMLElementAndValue( self, pszName, pszValue );                                 
+        return CPLCreateXMLElementAndValue( self, pszName, pszValue );
     }
-    
+
     %newobject CloneXMLTree;
     CPLXMLNode *CloneXMLTree( CPLXMLNode *psTree )
     {
         return CPLCloneXMLTree( psTree );
     }
 #endif
-    
+
     /* Interface method added for GDAL 1.7.0 */
     %newobject Clone;
     CPLXMLNode *Clone()
     {
         return CPLCloneXMLTree( self );
     }
-    
+
     int SetXMLValue( const char *pszPath,
                     const char *pszValue )
     {
-        return CPLSetXMLValue( self,  pszPath, pszValue );           
+        return CPLSetXMLValue( self,  pszPath, pszValue );
     }
-    
-    void StripXMLNamespace( const char *pszNamespace, 
+
+    void StripXMLNamespace( const char *pszNamespace,
                            int bRecurse )
     {
-        CPLStripXMLNamespace( self, pszNamespace, bRecurse );                  
+        CPLStripXMLNamespace( self, pszNamespace, bRecurse );
     }
 }

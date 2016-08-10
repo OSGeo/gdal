@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some USGS specific translation issues.
 # Author:   Andrey Kiselev, dron@remotesensing.org
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Andrey Kiselev <dron@remotesensing.org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -41,7 +41,7 @@ from osgeo import osr
 #
 
 def osr_usgs_1():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromUSGS(8, 0, \
 		       (0.0, 0.0, \
@@ -66,7 +66,7 @@ def osr_usgs_1():
 #
 
 def osr_usgs_2():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
     DATUM["North_American_Datum_1927",\
@@ -93,7 +93,7 @@ def osr_usgs_2():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_usgs_1,
     osr_usgs_2,
     None ]

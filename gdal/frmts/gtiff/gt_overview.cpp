@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoTIFF Driver
- * Purpose:  Code to build overviews of external databases as a TIFF file. 
+ * Purpose:  Code to build overviews of external databases as a TIFF file.
  *           Only used by the GDALDefaultOverviews::BuildOverviews() method.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -30,14 +29,15 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
-#define CPL_SERV_H_INCLUDED
-
-#include "tifvsi.h"
-#include "xtiffio.h"
 #include "gt_overview.h"
 #include "gtiff.h"
+#include "tifvsi.h"
+#include "xtiffio.h"
 
 CPL_CVSID("$Id$");
+
+// TODO(schwehr): Explain why 128 and not 127.
+static const int knMaxOverviews = 128;
 
 /************************************************************************/
 /*                         GTIFFWriteDirectory()                        */
@@ -49,31 +49,33 @@ CPL_CVSID("$Id$");
 /*      function is called.                                             */
 /************************************************************************/
 
-toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize,
-                           int nBitsPerPixel, int nPlanarConfig, int nSamples, 
-                           int nBlockXSize, int nBlockYSize,
-                           int bTiled, int nCompressFlag, int nPhotometric,
-                           int nSampleFormat, 
-                           int nPredictor,
-                           unsigned short *panRed,
-                           unsigned short *panGreen,
-                           unsigned short *panBlue,
-                           int nExtraSamples,
-                           unsigned short *panExtraSampleValues,
-                           const char *pszMetadata )
+toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
+                            int nXSize, int nYSize,
+                            int nBitsPerPixel, int nPlanarConfig, int nSamples,
+                            int nBlockXSize, int nBlockYSize,
+                            int bTiled, int nCompressFlag, int nPhotometric,
+                            int nSampleFormat,
+                            int nPredictor,
+                            unsigned short *panRed,
+                            unsigned short *panGreen,
+                            unsigned short *panBlue,
+                            int nExtraSamples,
+                            unsigned short *panExtraSampleValues,
+                            const char *pszMetadata )
 
 {
-    toff_t	nBaseDirOffset;
-    toff_t	nOffset;
+    toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
 
-    nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
+    // This is a bit of a hack to cause (*tif->tif_cleanup)(tif); to be called.
+    // See https://trac.osgeo.org/gdal/ticket/2055
+    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE );
 
-#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20051201 /* 3.8.0 */
+#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20051201  // 3.8.0
     TIFFFreeDirectory( hTIFF );
 #endif
 
     TIFFCreateDirectory( hTIFF );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Setup TIFF fields.                                              */
 /* -------------------------------------------------------------------- */
@@ -96,21 +98,24 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
         TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize );
     }
     else
+    {
         TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nBlockYSize );
+    }
 
     TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, nSubfileType );
 
-    if (panExtraSampleValues != NULL)
+    if( panExtraSampleValues != NULL )
     {
-        TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples, panExtraSampleValues );
+        TIFFSetField( hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples,
+                      panExtraSampleValues );
     }
 
-    if ( nCompressFlag == COMPRESSION_LZW ||
+    if( nCompressFlag == COMPRESSION_LZW ||
          nCompressFlag == COMPRESSION_ADOBE_DEFLATE )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
 
 /* -------------------------------------------------------------------- */
-/*	Write color table if one is present.				*/
+/*      Write color table if one is present.                            */
 /* -------------------------------------------------------------------- */
     if( panRed != NULL )
     {
@@ -135,7 +140,7 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
     TIFFWriteDirectory( hTIFF );
     TIFFSetDirectory( hTIFF, (tdir_t) (TIFFNumberOfDirectories(hTIFF)-1) );
 
-    nOffset = TIFFCurrentDirOffset( hTIFF );
+    const toff_t nOffset = TIFFCurrentDirOffset( hTIFF );
 
     TIFFSetSubDirectory( hTIFF, nBaseDirOffset );
 
@@ -147,20 +152,20 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize
 /************************************************************************/
 
 void GTIFFBuildOverviewMetadata( const char *pszResampling,
-                                 GDALDataset *poBaseDS, 
+                                 GDALDataset *poBaseDS,
                                  CPLString &osMetadata )
 
 {
     osMetadata = "<GDALMetadata>";
 
-    if( pszResampling && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
-        osMetadata += "<Item name=\"RESAMPLING\" sample=\"0\">AVERAGE_BIT2GRAYSCALE</Item>";
+    if( pszResampling && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
+        osMetadata +=
+            "<Item name=\"RESAMPLING\" sample=\"0\">"
+            "AVERAGE_BIT2GRAYSCALE</Item>";
 
     if( poBaseDS->GetMetadataItem( "INTERNAL_MASK_FLAGS_1" ) )
     {
-        int iBand;
-
-        for( iBand = 0; iBand < 200; iBand++ )
+        for( int iBand = 0; iBand < 200; iBand++ )
         {
             CPLString osItem;
             CPLString osName;
@@ -168,8 +173,8 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
             osName.Printf( "INTERNAL_MASK_FLAGS_%d", iBand+1 );
             if( poBaseDS->GetMetadataItem( osName ) )
             {
-                osItem.Printf( "<Item name=\"%s\">%s</Item>", 
-                               osName.c_str(), 
+                osItem.Printf( "<Item name=\"%s\">%s</Item>",
+                               osName.c_str(),
                                poBaseDS->GetMetadataItem( osName ) );
                 osMetadata += osItem;
             }
@@ -177,10 +182,11 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
     }
 
     const char* pszNoDataValues = poBaseDS->GetMetadataItem("NODATA_VALUES");
-    if (pszNoDataValues)
+    if( pszNoDataValues )
     {
         CPLString osItem;
-        osItem.Printf( "<Item name=\"NODATA_VALUES\">%s</Item>", pszNoDataValues );
+        osItem.Printf( "<Item name=\"NODATA_VALUES\">%s</Item>",
+                       pszNoDataValues );
         osMetadata += osItem;
     }
 
@@ -194,32 +200,38 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
 /*                        GTIFFBuildOverviews()                         */
 /************************************************************************/
 
-CPLErr 
+CPLErr
 GTIFFBuildOverviews( const char * pszFilename,
-                     int nBands, GDALRasterBand **papoBandList, 
+                     int nBands, GDALRasterBand **papoBandList,
                      int nOverviews, int * panOverviewList,
-                     const char * pszResampling, 
+                     const char * pszResampling,
                      GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    TIFF    *hOTIFF;
-    int     nBitsPerPixel=0, nCompression=COMPRESSION_NONE, nPhotometric=0;
-    int     nSampleFormat=0, nPlanarConfig, iOverview, iBand;
-    int     nXSize=0, nYSize=0;
-
     if( nBands == 0 || nOverviews == 0 )
         return CE_None;
 
-    if (!GTiffOneTimeInit())
+    if( !GTiffOneTimeInit() )
         return CE_Failure;
+
+    TIFF *hOTIFF = NULL;
+    int nBitsPerPixel = 0;
+    int nCompression = COMPRESSION_NONE;
+    int nPhotometric = 0;
+    int nSampleFormat = 0;
+    int nPlanarConfig = 0;
+    int iOverview = 0;
+    int nXSize = 0;
+    int nYSize = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Verify that the list of bands is suitable for emitting in       */
 /*      TIFF file.                                                      */
 /* -------------------------------------------------------------------- */
-    for( iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        int     nBandBits, nBandFormat;
+        int nBandBits = 0;
+        int nBandFormat = 0;
         GDALRasterBand *hBand = papoBandList[iBand];
 
         switch( hBand->GetRasterDataType() )
@@ -280,17 +292,17 @@ GTIFFBuildOverviews( const char * pszFilename,
             break;
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             return CE_Failure;
         }
 
         if( hBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) )
         {
-            nBandBits = 
+            nBandBits =
                 atoi(hBand->GetMetadataItem("NBITS","IMAGE_STRUCTURE"));
 
-            if( nBandBits == 1 
-                && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+            if( nBandBits == 1
+                && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
                 nBandBits = 8;
         }
 
@@ -303,22 +315,22 @@ GTIFFBuildOverviews( const char * pszFilename,
         }
         else if( nBitsPerPixel != nBandBits || nSampleFormat != nBandFormat )
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                       "GTIFFBuildOverviews() doesn't support a mixture of band"
                       " data types." );
             return CE_Failure;
         }
         else if( hBand->GetColorTable() != NULL )
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                       "GTIFFBuildOverviews() doesn't support building"
                       " overviews of multiple colormapped bands." );
             return CE_Failure;
         }
-        else if( hBand->GetXSize() != nXSize 
+        else if( hBand->GetXSize() != nXSize
                  || hBand->GetYSize() != nYSize )
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                       "GTIFFBuildOverviews() doesn't support building"
                       " overviews of different sized bands." );
             return CE_Failure;
@@ -332,16 +344,17 @@ GTIFFBuildOverviews( const char * pszFilename,
 
     if( pszCompress != NULL && pszCompress[0] != '\0' )
     {
-        nCompression = GTIFFGetCompressionMethod(pszCompress, "COMPRESS_OVERVIEW");
-        if (nCompression < 0)
+        nCompression =
+            GTIFFGetCompressionMethod(pszCompress, "COMPRESS_OVERVIEW");
+        if( nCompression < 0 )
             return CE_Failure;
     }
-    
+
     if( nCompression == COMPRESSION_JPEG && nBitsPerPixel > 8 )
-    {  
+    {
         if( nBitsPerPixel > 16 )
         {
-            CPLError( CE_Failure, CPLE_NotSupported, 
+            CPLError( CE_Failure, CPLE_NotSupported,
                       "GTIFFBuildOverviews() doesn't support building"
                       " JPEG compressed overviews of nBitsPerPixel > 16." );
             return CE_Failure;
@@ -358,8 +371,9 @@ GTIFFBuildOverviews( const char * pszFilename,
     else
         nPlanarConfig = PLANARCONFIG_SEPARATE;
 
-    const char* pszInterleave = CPLGetConfigOption( "INTERLEAVE_OVERVIEW", NULL );
-    if (pszInterleave != NULL && pszInterleave[0] != '\0')
+    const char* pszInterleave =
+        CPLGetConfigOption( "INTERLEAVE_OVERVIEW", NULL );
+    if( pszInterleave != NULL && pszInterleave[0] != '\0' )
     {
         if( EQUAL( pszInterleave, "PIXEL" ) )
             nPlanarConfig = PLANARCONFIG_CONTIG;
@@ -367,9 +381,11 @@ GTIFFBuildOverviews( const char * pszFilename,
             nPlanarConfig = PLANARCONFIG_SEPARATE;
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "INTERLEAVE_OVERVIEW=%s unsupported, value must be PIXEL or BAND. ignoring",
-                      pszInterleave );
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "INTERLEAVE_OVERVIEW=%s unsupported, "
+                "value must be PIXEL or BAND. ignoring",
+                pszInterleave );
         }
     }
 
@@ -378,17 +394,18 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( nBands == 3 )
         nPhotometric = PHOTOMETRIC_RGB;
-    else if( papoBandList[0]->GetColorTable() != NULL 
-             && !EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+    else if( papoBandList[0]->GetColorTable() != NULL
+             && !STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
     {
         nPhotometric = PHOTOMETRIC_PALETTE;
-        /* should set the colormap up at this point too! */
+        // Should set the colormap up at this point too!
     }
     else
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
-    const char* pszPhotometric = CPLGetConfigOption( "PHOTOMETRIC_OVERVIEW", NULL );
-    if (pszPhotometric != NULL && pszPhotometric[0] != '\0')
+    const char* pszPhotometric =
+        CPLGetConfigOption( "PHOTOMETRIC_OVERVIEW", NULL );
+    if( pszPhotometric != NULL && pszPhotometric[0] != '\0' )
     {
         if( EQUAL( pszPhotometric, "MINISBLACK" ) )
             nPhotometric = PHOTOMETRIC_MINISBLACK;
@@ -406,21 +423,27 @@ GTIFFBuildOverviews( const char * pszFilename,
         {
             nPhotometric = PHOTOMETRIC_YCBCR;
 
-            /* Because of subsampling, setting YCBCR without JPEG compression leads */
-            /* to a crash currently. Would need to make GTiffRasterBand::IWriteBlock() */
-            /* aware of subsampling so that it doesn't overrun buffer size returned */
-            /* by libtiff */
-            if ( nCompression != COMPRESSION_JPEG )
+            // Because of subsampling, setting YCBCR without JPEG compression
+            // leads to a crash currently. Would need to make
+            // GTiffRasterBand::IWriteBlock() aware of subsampling so that it
+            // doesn't overrun buffer size returned by libtiff.
+            if( nCompression != COMPRESSION_JPEG )
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Currently, PHOTOMETRIC_OVERVIEW=YCBCR requires COMPRESS_OVERVIEW=JPEG");
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "Currently, PHOTOMETRIC_OVERVIEW=YCBCR requires "
+                    "COMPRESS_OVERVIEW=JPEG" );
                 return CE_Failure;
             }
 
-            if (pszInterleave != NULL && pszInterleave[0] != '\0' && nPlanarConfig == PLANARCONFIG_SEPARATE)
+            if( pszInterleave != NULL &&
+                pszInterleave[0] != '\0' &&
+                nPlanarConfig == PLANARCONFIG_SEPARATE )
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "PHOTOMETRIC_OVERVIEW=YCBCR requires INTERLEAVE_OVERVIEW=PIXEL");
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "PHOTOMETRIC_OVERVIEW=YCBCR requires "
+                    "INTERLEAVE_OVERVIEW=PIXEL" );
                 return CE_Failure;
             }
             else
@@ -428,13 +451,15 @@ GTIFFBuildOverviews( const char * pszFilename,
                 nPlanarConfig = PLANARCONFIG_CONTIG;
             }
 
-            /* YCBCR strictly requires 3 bands. Not less, not more */
-            /* Issue an explicit error message as libtiff one is a bit cryptic : */
-            /* JPEGLib:Bogus input colorspace */
-            if ( nBands != 3 )
+            // YCBCR strictly requires 3 bands. Not less, not more
+            // Issue an explicit error message as libtiff one is a bit cryptic:
+            // JPEGLib:Bogus input colorspace.
+            if( nBands != 3 )
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "PHOTOMETRIC_OVERVIEW=YCBCR requires a source raster with only 3 bands (RGB)");
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "PHOTOMETRIC_OVERVIEW=YCBCR requires a source raster "
+                    "with only 3 bands (RGB)" );
                 return CE_Failure;
             }
         }
@@ -452,9 +477,10 @@ GTIFFBuildOverviews( const char * pszFilename,
         }
         else
         {
-            CPLError( CE_Warning, CPLE_IllegalArg, 
-                      "PHOTOMETRIC_OVERVIEW=%s value not recognised, ignoring.\n",
-                      pszPhotometric );
+            CPLError(
+                CE_Warning, CPLE_IllegalArg,
+                "PHOTOMETRIC_OVERVIEW=%s value not recognised, ignoring.",
+                pszPhotometric );
         }
     }
 
@@ -462,10 +488,11 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      Figure out the predictor value to use.                          */
 /* -------------------------------------------------------------------- */
     int nPredictor = PREDICTOR_NONE;
-    if ( nCompression == COMPRESSION_LZW ||
-         nCompression == COMPRESSION_ADOBE_DEFLATE )
+    if( nCompression == COMPRESSION_LZW ||
+        nCompression == COMPRESSION_ADOBE_DEFLATE )
     {
-        const char* pszPredictor = CPLGetConfigOption( "PREDICTOR_OVERVIEW", NULL );
+        const char* pszPredictor =
+            CPLGetConfigOption( "PREDICTOR_OVERVIEW", NULL );
         if( pszPredictor  != NULL )
         {
             nPredictor =  atoi( pszPredictor );
@@ -484,29 +511,30 @@ GTIFFBuildOverviews( const char * pszFilename,
     /*      Compute the uncompressed size.                                  */
     /* -------------------------------------------------------------------- */
         double  dfUncompressedOverviewSize = 0;
-        int nDataTypeSize = GDALGetDataTypeSize(papoBandList[0]->GetRasterDataType())/8;
+        int nDataTypeSize =
+            GDALGetDataTypeSizeBytes(papoBandList[0]->GetRasterDataType());
 
         for( iOverview = 0; iOverview < nOverviews; iOverview++ )
         {
-            int    nOXSize, nOYSize;
-
-            nOXSize = (nXSize + panOverviewList[iOverview] - 1) 
+            const int nOXSize = (nXSize + panOverviewList[iOverview] - 1)
                 / panOverviewList[iOverview];
-            nOYSize = (nYSize + panOverviewList[iOverview] - 1) 
+            const int nOYSize = (nYSize + panOverviewList[iOverview] - 1)
                 / panOverviewList[iOverview];
 
-            dfUncompressedOverviewSize += 
-                nOXSize * ((double)nOYSize) * nBands * nDataTypeSize;
+            dfUncompressedOverviewSize +=
+                nOXSize * static_cast<double>(nOYSize) * nBands * nDataTypeSize;
         }
 
-        if( nCompression == COMPRESSION_NONE 
+        if( nCompression == COMPRESSION_NONE
             && dfUncompressedOverviewSize > 4200000000.0 )
         {
     #ifndef BIGTIFF_SUPPORT
-            CPLError( CE_Failure, CPLE_NotSupported, 
-                    "The overview file would be larger than 4GB\n"
-                    "but this is the largest size a TIFF can be, and BigTIFF is unavailable.\n"
-                    "Creation failed." );
+            CPLError(
+                CE_Failure, CPLE_NotSupported,
+                "The overview file would be larger than 4GB, "
+                "but this is the largest size a TIFF can be, "
+                "and BigTIFF is unavailable.  "
+                "Creation failed." );
             return CE_Failure;
     #endif
         }
@@ -518,33 +546,35 @@ GTIFFBuildOverviews( const char * pszFilename,
         if( pszBIGTIFF == NULL )
             pszBIGTIFF = "IF_NEEDED";
 
-        int bCreateBigTIFF = FALSE;
+        bool bCreateBigTIFF = false;
         if( EQUAL(pszBIGTIFF,"IF_NEEDED") )
         {
-            if( nCompression == COMPRESSION_NONE 
+            if( nCompression == COMPRESSION_NONE
                 && dfUncompressedOverviewSize > 4200000000.0 )
                 bCreateBigTIFF = TRUE;
         }
         else if( EQUAL(pszBIGTIFF,"IF_SAFER") )
         {
-            /* Look at the size of the base image and suppose that */
-            /* the added overview levels won't be more than 1/2 of */
-            /* the size of the base image. The theory says 1/3 of the */
-            /* base image size if the overview levels are 2, 4, 8, 16... */
-            /* Thus take 1/2 as the security margin for 1/3 */
-            double dfUncompressedImageSize =
-                        nXSize * ((double)nYSize) * nBands * nDataTypeSize;
-            if( dfUncompressedImageSize * .5 > 4200000000.0 )
-                bCreateBigTIFF = TRUE;
+            // Look at the size of the base image and suppose that
+            // the added overview levels won't be more than 1/2 of
+            // the size of the base image. The theory says 1/3 of the
+            // base image size if the overview levels are 2, 4, 8, 16.
+            // Thus take 1/2 as the security margin for 1/3.
+            const double dfUncompressedImageSize =
+                nXSize * static_cast<double>(nYSize) * nBands * nDataTypeSize;
+            if( dfUncompressedImageSize * 0.5 > 4200000000.0 )
+                bCreateBigTIFF = true;
         }
         else
         {
-            bCreateBigTIFF = CSLTestBoolean( pszBIGTIFF );
-            if (!bCreateBigTIFF && nCompression == COMPRESSION_NONE 
+            bCreateBigTIFF = CPLTestBool( pszBIGTIFF );
+            if( !bCreateBigTIFF && nCompression == COMPRESSION_NONE
                 && dfUncompressedOverviewSize > 4200000000.0 )
             {
-                CPLError( CE_Failure, CPLE_NotSupported, 
-                    "The overview file will be larger than 4GB, so BigTIFF is necessary.\n"
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "The overview file will be larger than 4GB, "
+                    "so BigTIFF is necessary.  "
                     "Creation failed.");
                 return CE_Failure;
             }
@@ -553,9 +583,10 @@ GTIFFBuildOverviews( const char * pszFilename,
     #ifndef BIGTIFF_SUPPORT
         if( bCreateBigTIFF )
         {
-            CPLError( CE_Warning, CPLE_NotSupported,
-                    "BigTIFF requested, but GDAL built without BigTIFF\n"
-                    "enabled libtiff, request ignored." );
+            CPLError(
+                CE_Warning, CPLE_NotSupported,
+                "BigTIFF requested, but GDAL built without BigTIFF "
+                "enabled libtiff, request ignored." );
             bCreateBigTIFF = FALSE;
         }
     #endif
@@ -567,23 +598,24 @@ GTIFFBuildOverviews( const char * pszFilename,
         if( fpL == NULL )
             hOTIFF = NULL;
         else
-            hOTIFF = VSI_TIFFOpen( pszFilename, (bCreateBigTIFF) ? "w+8" : "w+", fpL );
+            hOTIFF =
+               VSI_TIFFOpen( pszFilename, bCreateBigTIFF ? "w+8" : "w+", fpL );
         if( hOTIFF == NULL )
         {
             if( CPLGetLastErrorNo() == 0 )
                 CPLError( CE_Failure, CPLE_OpenFailed,
-                          "Attempt to create new tiff file `%s'\n"
-                          "failed in VSI_TIFFOpen().\n",
+                          "Attempt to create new tiff file `%s' "
+                          "failed in VSI_TIFFOpen().",
                           pszFilename );
             if( fpL != NULL )
-                VSIFCloseL(fpL);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
             return CE_Failure;
         }
     }
 /* -------------------------------------------------------------------- */
 /*      Otherwise just open it for update access.                       */
 /* -------------------------------------------------------------------- */
-    else 
+    else
     {
         fpL = VSIFOpenL( pszFilename, "r+" );
         if( fpL == NULL )
@@ -594,11 +626,11 @@ GTIFFBuildOverviews( const char * pszFilename,
         {
             if( CPLGetLastErrorNo() == 0 )
                 CPLError( CE_Failure, CPLE_OpenFailed,
-                          "Attempt to create new tiff file `%s'\n"
-                          "failed in VSI_TIFFOpen().\n",
+                          "Attempt to create new tiff file `%s' "
+                          "failed in VSI_TIFFOpen().",
                           pszFilename );
             if( fpL != NULL )
-                VSIFCloseL(fpL);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
             return CE_Failure;
         }
     }
@@ -606,34 +638,36 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
+    unsigned short *panRed = NULL;
+    unsigned short *panGreen = NULL;
+    unsigned short *panBlue = NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE )
     {
         GDALColorTable *poCT = papoBandList[0]->GetColorTable();
-        int nColorCount;
+        int nColorCount = 65536;
 
         if( nBitsPerPixel <= 8 )
             nColorCount = 256;
-        else
-            nColorCount = 65536;
 
-        panRed   = (unsigned short *) 
-            CPLCalloc(nColorCount,sizeof(unsigned short));
-        panGreen = (unsigned short *) 
-            CPLCalloc(nColorCount,sizeof(unsigned short));
-        panBlue  = (unsigned short *) 
-            CPLCalloc(nColorCount,sizeof(unsigned short));
+        panRed = static_cast<unsigned short *>(
+            CPLCalloc(nColorCount, sizeof(unsigned short)) );
+        panGreen = static_cast<unsigned short *>(
+            CPLCalloc(nColorCount, sizeof(unsigned short)) );
+        panBlue = static_cast<unsigned short *>(
+            CPLCalloc(nColorCount, sizeof(unsigned short)) );
 
         for( int iColor = 0; iColor < nColorCount; iColor++ )
         {
-            GDALColorEntry  sRGB;
+          GDALColorEntry sRGB = { 0, 0, 0, 0 };
 
             if( poCT->GetColorEntryAsRGB( iColor, &sRGB ) )
             {
-                panRed[iColor] = (unsigned short) (257 * sRGB.c1);
-                panGreen[iColor] = (unsigned short) (257 * sRGB.c2);
-                panBlue[iColor] = (unsigned short) (257 * sRGB.c3);
+                // TODO(schwehr): Check for underflow.
+                // Going from signed short to unsigned short.
+                panRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
+                panGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
+                panBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
             }
         }
     }
@@ -649,60 +683,64 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Loop, creating overviews.                                       */
 /* -------------------------------------------------------------------- */
-    int nOvrBlockXSize, nOvrBlockYSize;
+    int nOvrBlockXSize = 0;
+    int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
-        int    nOXSize, nOYSize;
-
-        nOXSize = (nXSize + panOverviewList[iOverview] - 1) 
+        const int nOXSize = (nXSize + panOverviewList[iOverview] - 1)
             / panOverviewList[iOverview];
-        nOYSize = (nYSize + panOverviewList[iOverview] - 1) 
+        const int nOYSize = (nYSize + panOverviewList[iOverview] - 1)
             / panOverviewList[iOverview];
 
-        GTIFFWriteDirectory(hOTIFF, FILETYPE_REDUCEDIMAGE,
-                            nOXSize, nOYSize, nBitsPerPixel, 
-                            nPlanarConfig, nBands,
-                            nOvrBlockXSize, nOvrBlockYSize, TRUE, nCompression,
-                            nPhotometric, nSampleFormat, nPredictor,
-                            panRed, panGreen, panBlue,
-                            0, NULL, /* FIXME? how can we fetch extrasamples */
-                            osMetadata );
+        GTIFFWriteDirectory( hOTIFF, FILETYPE_REDUCEDIMAGE,
+                             nOXSize, nOYSize, nBitsPerPixel,
+                             nPlanarConfig, nBands,
+                             nOvrBlockXSize, nOvrBlockYSize, TRUE, nCompression,
+                             nPhotometric, nSampleFormat, nPredictor,
+                             panRed, panGreen, panBlue,
+                             0,
+                             NULL, // TODO: How can we fetch extrasamples?
+                             osMetadata );
     }
 
-    if (panRed)
+    if( panRed )
     {
         CPLFree(panRed);
         CPLFree(panGreen);
         CPLFree(panBlue);
-        panRed = panGreen = panBlue = NULL;
+        panRed = NULL;
+        panGreen = NULL;
+        panBlue = NULL;
     }
 
     XTIFFClose( hOTIFF );
-    VSIFCloseL(fpL);
+    if( VSIFCloseL(fpL) != 0 )
+        return CE_Failure;
     fpL = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Open the overview dataset so that we can get at the overview    */
 /*      bands.                                                          */
 /* -------------------------------------------------------------------- */
-    GDALDataset *hODS;
     CPLErr eErr = CE_None;
 
-    hODS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    GDALDataset *hODS =
+        static_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
     if( hODS == NULL )
         return CE_Failure;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to set the jpeg quality?                             */
 /* -------------------------------------------------------------------- */
-    TIFF *hTIFF = (TIFF*) hODS->GetInternalHandle(NULL);
+    TIFF *hTIFF = static_cast<TIFF *>( hODS->GetInternalHandle(NULL) );
 
-    if( nCompression == COMPRESSION_JPEG 
+    if( nCompression == COMPRESSION_JPEG
         && CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
     {
-        int nJpegQuality = atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
-        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, 
+        const int nJpegQuality =
+            atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
+        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY,
                       nJpegQuality );
         GTIFFSetJpegQuality((GDALDatasetH)hODS, nJpegQuality);
     }
@@ -711,52 +749,65 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      Loop writing overview data.                                     */
 /* -------------------------------------------------------------------- */
 
-    if (nCompression != COMPRESSION_NONE &&
+    GTIFFSetInExternalOvr(true);
+
+    if( nCompression != COMPRESSION_NONE &&
         nPlanarConfig == PLANARCONFIG_CONTIG &&
         GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) == FALSE &&
         papoBandList[0]->GetColorTable() == NULL &&
-        (EQUALN(pszResampling, "NEAR", 4) || EQUAL(pszResampling, "AVERAGE") ||
-         EQUAL(pszResampling, "GAUSS") || EQUAL(pszResampling, "CUBIC") ||
-         EQUAL(pszResampling, "CUBICSPLINE") || EQUAL(pszResampling, "LANCZOS") ||
+        (STARTS_WITH_CI(pszResampling, "NEAR") ||
+         EQUAL(pszResampling, "AVERAGE") ||
+         EQUAL(pszResampling, "GAUSS") ||
+         EQUAL(pszResampling, "CUBIC") ||
+         EQUAL(pszResampling, "CUBICSPLINE") ||
+         EQUAL(pszResampling, "LANCZOS") ||
          EQUAL(pszResampling, "BILINEAR")))
     {
-        /* In the case of pixel interleaved compressed overviews, we want to generate */
-        /* the overviews for all the bands block by block, and not band after band, */
-        /* in order to write the block once and not loose space in the TIFF file */
-        GDALRasterBand ***papapoOverviewBands;
-
-        papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
-        for( iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
+        // In the case of pixel interleaved compressed overviews, we want to
+        // generate the overviews for all the bands block by block, and not
+        // band after band, in order to write the block once and not loose
+        // space in the TIFF file.
+        GDALRasterBand ***papapoOverviewBands =
+            static_cast<GDALRasterBand ***>(
+                CPLCalloc(sizeof(void *), nBands) );
+        for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
-            GDALRasterBand    *hSrcBand = papoBandList[iBand];
-            GDALRasterBand    *hDstBand = hODS->GetRasterBand( iBand+1 );
-            papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
+            GDALRasterBand *hSrcBand = papoBandList[iBand];
+            GDALRasterBand *hDstBand = hODS->GetRasterBand( iBand+1 );
+            papapoOverviewBands[iBand] =
+                static_cast<GDALRasterBand **>(
+                    CPLCalloc(sizeof(void *), nOverviews) );
             papapoOverviewBands[iBand][0] = hDstBand;
 
-            int bHasNoData;
-            double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
-            if (bHasNoData)
+            int bHasNoData = FALSE;
+            const double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
+            if( bHasNoData )
                 hDstBand->SetNoDataValue(noDataValue);
 
             for( int i = 0; i < nOverviews-1 && eErr == CE_None; i++ )
             {
                 papapoOverviewBands[iBand][i+1] = hDstBand->GetOverview(i);
-                if (papapoOverviewBands[iBand][i+1] == NULL)
+                if( papapoOverviewBands[iBand][i+1] == NULL )
+                {
                     eErr = CE_Failure;
+                }
                 else
                 {
-                    if (bHasNoData)
-                        papapoOverviewBands[iBand][i+1]->SetNoDataValue(noDataValue);
+                    if( bHasNoData )
+                        papapoOverviewBands[iBand][i+1]->
+                            SetNoDataValue(noDataValue);
                 }
             }
         }
 
-        if (eErr == CE_None)
-            eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBandList,
-                                            nOverviews, papapoOverviewBands,
-                                            pszResampling, pfnProgress, pProgressData );
+        if( eErr == CE_None )
+            eErr =
+                GDALRegenerateOverviewsMultiBand(
+                    nBands, papoBandList,
+                    nOverviews, papapoOverviewBands,
+                    pszResampling, pfnProgress, pProgressData );
 
-        for( iBand = 0; iBand < nBands; iBand++ )
+        for( int iBand = 0; iBand < nBands; iBand++ )
         {
             CPLFree(papapoOverviewBands[iBand]);
         }
@@ -764,55 +815,55 @@ GTIFFBuildOverviews( const char * pszFilename,
     }
     else
     {
-        GDALRasterBand   **papoOverviews;
+        GDALRasterBand **papoOverviews =
+            static_cast<GDALRasterBand **>(
+                CPLCalloc( sizeof(void*), knMaxOverviews ) );
 
-        papoOverviews = (GDALRasterBand **) CPLCalloc(sizeof(void*),128);
-
-        for( iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
+        for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
-            GDALRasterBand    *hSrcBand = papoBandList[iBand];
-            GDALRasterBand    *hDstBand;
-            int               nDstOverviews;
+            GDALRasterBand *hSrcBand = papoBandList[iBand];
+            GDALRasterBand *hDstBand = hODS->GetRasterBand( iBand+1 );
 
-            hDstBand = hODS->GetRasterBand( iBand+1 );
-
-            int bHasNoData;
-            double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
-            if (bHasNoData)
+            int bHasNoData = FALSE;
+            const double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
+            if( bHasNoData )
                 hDstBand->SetNoDataValue(noDataValue);
 
             papoOverviews[0] = hDstBand;
-            nDstOverviews = hDstBand->GetOverviewCount() + 1;
-            CPLAssert( nDstOverviews < 128 );
-            nDstOverviews = MIN(128,nDstOverviews);
+            int nDstOverviews = hDstBand->GetOverviewCount() + 1;
+            CPLAssert( nDstOverviews < knMaxOverviews );
+            nDstOverviews = MIN(knMaxOverviews, nDstOverviews);
 
+            // TODO(schwehr): Convert to starting with i = 1 and remove +1.
             for( int i = 0; i < nDstOverviews-1 && eErr == CE_None; i++ )
             {
                 papoOverviews[i+1] = hDstBand->GetOverview(i);
-                if (papoOverviews[i+1] == NULL)
+                if( papoOverviews[i+1] == NULL )
+                {
                     eErr = CE_Failure;
+                }
                 else
                 {
-                    if (bHasNoData)
+                    if( bHasNoData )
                         papoOverviews[i+1]->SetNoDataValue(noDataValue);
                 }
             }
 
-            void         *pScaledProgressData;
+            void *pScaledProgressData =
+                GDALCreateScaledProgress(
+                    iBand / static_cast<double>( nBands ),
+                    (iBand+1) / static_cast<double>( nBands ),
+                    pfnProgress, pProgressData );
 
-            pScaledProgressData = 
-                GDALCreateScaledProgress( iBand / (double) nBands, 
-                                        (iBand+1) / (double) nBands,
-                                        pfnProgress, pProgressData );
-
-            if (eErr == CE_None)
-                eErr = 
-                    GDALRegenerateOverviews( (GDALRasterBandH) hSrcBand, 
-                                        nDstOverviews, 
-                                        (GDALRasterBandH *) papoOverviews, 
-                                        pszResampling,
-                                        GDALScaledProgress, 
-                                        pScaledProgressData);
+            if( eErr == CE_None )
+                eErr =
+                    GDALRegenerateOverviews(
+                        hSrcBand,
+                        nDstOverviews,
+                        reinterpret_cast<GDALRasterBandH *>( papoOverviews ),
+                        pszResampling,
+                        GDALScaledProgress,
+                        pScaledProgressData );
 
             GDALDestroyScaledProgress( pScaledProgressData );
         }
@@ -823,12 +874,13 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    if (eErr == CE_None)
+    if( eErr == CE_None )
         hODS->FlushCache();
     delete hODS;
+
+    GTIFFSetInExternalOvr(false);
 
     pfnProgress( 1.0, NULL, pProgressData );
 
     return eErr;
 }
-    

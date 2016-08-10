@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test RFC 30 (UTF filename handling) support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010 Frank Warmerdam
 # Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -38,7 +38,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
-# Try opening a file with a chinese name using the Python utf-8 string.
+# Try opening a file with a Chinese name using the Python UTF-8 string.
 
 def rfc30_1():
 
@@ -60,7 +60,7 @@ def rfc30_1():
 
     if ds is None:
         gdaltest.post_reason( 'failed to open utf filename.' )
-        return 'failure'
+        return 'fail'
 
     ds = None
 
@@ -68,7 +68,7 @@ def rfc30_1():
 
     if ds is None:
         gdaltest.post_reason( 'failed to open utf filename (2).' )
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -87,7 +87,7 @@ def rfc30_2():
     fd = gdal.VSIFOpenL( filename, 'w' )
     if fd is None:
         gdaltest.post_reason( 'failed to create utf-8 named file.' )
-        return 'failure'
+        return 'fail'
 
     gdal.VSIFWriteL( 'abc', 3, 1, fd )
     gdal.VSIFCloseL( fd )
@@ -104,13 +104,13 @@ def rfc30_2():
 
     if gdal.Rename( filename_for_rename, new_filename ) != 0:
         gdaltest.post_reason( 'utf-8 rename failed.' )
-        return 'failure'
+        return 'fail'
 
     fd = gdal.VSIFOpenL( new_filename, 'r' )
     if fd is None:
         gdaltest.post_reason( 'reopen failed with utf8' )
-        return 'failure'
-    
+        return 'fail'
+
     data = gdal.VSIFReadL( 3, 1, fd )
     gdal.VSIFCloseL( fd )
 
@@ -120,15 +120,15 @@ def rfc30_2():
         ok = data == 'abc'
     if not ok:
         gdaltest.post_reason( 'did not get expected data.' )
-        return 'failure'
+        return 'fail'
 
     gdal.Unlink( new_filename )
 
     fd = gdal.VSIFOpenL( new_filename, 'r' )
     if fd is not None:
         gdaltest.post_reason( 'did unlink fail on utf8 filename?' )
-        return 'failure'
-    
+        return 'fail'
+
     return 'success'
 
 
@@ -143,4 +143,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

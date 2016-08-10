@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: ntfstroke.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                   OGROCIArcCenterFromEdgePoints()                    */
@@ -38,12 +38,12 @@ CPL_CVSID("$Id: ntfstroke.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 /*      Compute the center of an arc/circle from three edge points.     */
 /************************************************************************/
 
-static int 
+static int
 OGROCIArcCenterFromEdgePoints( double x_c0, double y_c0,
-                               double x_c1, double y_c1, 
-                               double x_c2, double y_c2, 
+                               double x_c1, double y_c1,
+                               double x_c2, double y_c2,
                                double *x_center, double *y_center )
-    
+
 {
 
 /* -------------------------------------------------------------------- */
@@ -93,29 +93,29 @@ OGROCIArcCenterFromEdgePoints( double x_c0, double y_c0,
 /* -------------------------------------------------------------------- */
 /*      Turn these into the Ax+By+C = 0 form of the lines.              */
 /* -------------------------------------------------------------------- */
-    double      a1, a2, b1, b2, c1, c2;
+    double      a1, a2, l_b1, l_b2, c1, c2;
 
     a1 = m1;
     a2 = m2;
 
-    b1 = -1.0;
-    b2 = -1.0;
-    
+    l_b1 = -1.0;
+    l_b2 = -1.0;
+
     c1 = (y1 - m1*x1);
     c2 = (y2 - m2*x2);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Compute the intersection of the two lines through the center    */
 /*      of the circle, using Kramers rule.                              */
 /* -------------------------------------------------------------------- */
     double      det_inv;
 
-    if( a1*b2 - a2*b1 == 0.0 )
+    if( a1*l_b2 - a2*l_b1 == 0.0 )
         return FALSE;
 
-    det_inv = 1 / (a1*b2 - a2*b1);
+    det_inv = 1 / (a1*l_b2 - a2*l_b1);
 
-    *x_center = (b1*c2 - b2*c1) * det_inv;
+    *x_center = (l_b1*c2 - l_b2*c1) * det_inv;
     *y_center = (a2*c1 - a1*c2) * det_inv;
 
     return TRUE;
@@ -125,9 +125,9 @@ OGROCIArcCenterFromEdgePoints( double x_c0, double y_c0,
 /*                OGROCIStrokeArcToOGRGeometry_Angles()                 */
 /************************************************************************/
 
-static int 
-OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY, 
-                                     double dfRadius, 
+static int
+OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
+                                     double dfRadius,
                                      double dfStartAngle, double dfEndAngle,
                                      double dfMaxAngleStepSizeDegrees,
                                      OGRLineString *poLine )
@@ -137,10 +137,11 @@ OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
     int                iPoint, iAppendLocation, nVertexCount;
     double             dfEps = dfRadius / 100000.0;
 
-    nVertexCount = (int) 
+    nVertexCount = (int)
         ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1;
     nVertexCount = MAX(2,nVertexCount);
     dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+    iAppendLocation = poLine->getNumPoints();
 
     for( iPoint=0; iPoint < nVertexCount; iPoint++ )
     {
@@ -153,18 +154,16 @@ OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 
         if( iPoint == 0 )
         {
-            iAppendLocation = poLine->getNumPoints();
-
-            if( poLine->getNumPoints() > 0 
+            if( poLine->getNumPoints() > 0
                 && fabs(poLine->getX(poLine->getNumPoints()-1)-dfArcX) < dfEps
                 && fabs(poLine->getY(poLine->getNumPoints()-1)-dfArcY) < dfEps)
             {
-                poLine->setNumPoints( 
+                poLine->setNumPoints(
                     poLine->getNumPoints() + nVertexCount - 1 );
             }
             else
             {
-                poLine->setNumPoints( 
+                poLine->setNumPoints(
                     poLine->getNumPoints() + nVertexCount - 1 );
                 poLine->setPoint( iAppendLocation++, dfArcX, dfArcY );
             }
@@ -181,21 +180,21 @@ OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 /*                OGROCIStrokeArcToOGRGeometry_Points()                 */
 /************************************************************************/
 
-int 
+int
 OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                      double dfAlongX, double dfAlongY,
                                      double dfEndX, double dfEndY,
                                      double dfMaxAngleStepSizeDegrees,
                                      int bForceWholeCircle,
                                      OGRLineString *poLine )
-    
+
 {
     double      dfStartAngle, dfEndAngle, dfAlongAngle;
     double      dfCenterX, dfCenterY, dfRadius;
 
-    if( !OGROCIArcCenterFromEdgePoints( dfStartX, dfStartY, 
+    if( !OGROCIArcCenterFromEdgePoints( dfStartX, dfStartY,
                                         dfAlongX, dfAlongY,
-                                        dfEndX, dfEndY, 
+                                        dfEndX, dfEndY,
                                         &dfCenterX, &dfCenterY ) )
         return FALSE;
 
@@ -232,7 +231,7 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
         {
             while( dfAlongAngle > dfStartAngle )
                 dfAlongAngle -= 360.0;
-            
+
             while( dfEndAngle > dfAlongAngle )
                 dfEndAngle -= 360.0;
         }
@@ -243,9 +242,9 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
     int bResult;
 
-    bResult = 
-        OGROCIStrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY, 
-                                             dfRadius, 
+    bResult =
+        OGROCIStrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY,
+                                             dfRadius,
                                              dfStartAngle, dfEndAngle,
                                              dfMaxAngleStepSizeDegrees,
                                              poLine );
@@ -258,7 +257,7 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 /* -------------------------------------------------------------------- */
     if( bResult && !bForceWholeCircle )
     {
-        poLine->setPoint( poLine->getNumPoints() - 1, 
+        poLine->setPoint( poLine->getNumPoints() - 1,
                           dfEndX, dfEndY );
     }
 

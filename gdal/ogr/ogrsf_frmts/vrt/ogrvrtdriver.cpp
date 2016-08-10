@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRVRTDriver class.
@@ -60,7 +59,7 @@ static int OGRVRTDriverIdentify( GDALOpenInfo* poOpenInfo )
         const char *pszTestXML = poOpenInfo->pszFilename;
         while( *pszTestXML != '\0' && isspace( (unsigned char)*pszTestXML ) )
             pszTestXML++;
-        if( EQUALN(pszTestXML,"<OGRVRTDataSource>",18) )
+        if( STARTS_WITH_CI(pszTestXML, "<OGRVRTDataSource>") )
         {
             return TRUE;
         }
@@ -90,7 +89,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
         pszTestXML++;
 
     char *pszXML = NULL;
-    if( EQUALN(pszTestXML, "<OGRVRTDataSource>", 18) )
+    if( STARTS_WITH_CI(pszTestXML, "<OGRVRTDataSource>") )
     {
         pszXML = CPLStrdup(pszTestXML);
     }
@@ -113,7 +112,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
         int nLen = (int) sStatBuf.st_size;
 
-        pszXML = (char *) VSIMalloc(nLen+1);
+        pszXML = (char *) VSI_MALLOC_VERBOSE(nLen+1);
         if (pszXML == NULL)
             return NULL;
 
@@ -142,7 +141,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      XML Validation.                                                 */
 /* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")) )
+    if( CPLTestBool(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")) )
     {
         const char* pszXSD = CPLFindFile( "gdal", "ogrvrt.xsd" );
         if( pszXSD != NULL )
@@ -198,12 +197,9 @@ void RegisterOGRVRT()
 
     poDriver->SetDescription( "OGR_VRT" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "VRT - Virtual Datasource" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "VRT - Virtual Datasource" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drv_vrt.html" );
-
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_vrt.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRVRTDriverOpen;

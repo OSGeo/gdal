@@ -1207,29 +1207,29 @@ const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(
     const EnvisatRecordDescr *pRecordDescr = NULL;
     int nLen;
 
-    if( EQUALN(pszProduct,"ASA",3) )
+    if( STARTS_WITH_CI(pszProduct, "ASA") )
         paRecords = aASAR_Records;
-    else if( EQUALN(pszProduct,"MER",3) )
+    else if( STARTS_WITH_CI(pszProduct, "MER") )
     {
-        if ( EQUALN(pszProduct + 6,"C_2P",4) )
+        if ( STARTS_WITH_CI(pszProduct + 6, "C_2P") )
             paRecords = aMERIS_2P_C_Records;
-        else if ( EQUALN(pszProduct + 6,"V_2P",4) )
+        else if ( STARTS_WITH_CI(pszProduct + 6, "V_2P") )
             paRecords = aMERIS_2P_V_Records;
-        else if ( EQUALN(pszProduct + 8,"1P",2) )
+        else if ( STARTS_WITH_CI(pszProduct + 8, "1P") )
             paRecords = aMERIS_1P_Records;
-        else if ( EQUALN(pszProduct + 8,"2P",2) )
+        else if ( STARTS_WITH_CI(pszProduct + 8, "2P") )
             paRecords = aMERIS_2P_Records;
         else
             return NULL;
     }
-    else if( EQUALN(pszProduct,"SAR",3) )
+    else if( STARTS_WITH_CI(pszProduct, "SAR") )
         /* ERS products in ENVISAT format have the same records of ASAR ones */
         paRecords = aASAR_Records;
     else
         return NULL;
 
     /* strip trailing spaces */
-    for( nLen = strlen(pszDataset); nLen && pszDataset[nLen-1] == ' '; --nLen );
+    for( nLen = (int)strlen(pszDataset); nLen && pszDataset[nLen-1] == ' '; --nLen );
 
     pRecordDescr = paRecords;
     while ( pRecordDescr->szName != NULL )
@@ -1244,7 +1244,7 @@ const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(
 }
 
 CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
-                        const EnvisatFieldDescr* pField, char *szBuf)
+                        const EnvisatFieldDescr* pField, char *szBuf, size_t nBufLen)
 {
     int i, nOffset = 0;
     const void *pData;
@@ -1274,7 +1274,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
             {
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += sprintf(szBuf + nOffset, "%d",
+                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
                                    ((const char*)pData)[i]);
             }
             break;
@@ -1283,7 +1283,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
             {
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += sprintf(szBuf + nOffset, "%d",
+                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
                                    CPL_MSBWORD16(((const GInt16*)pData)[i]));
             }
             break;
@@ -1292,7 +1292,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
             {
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += sprintf(szBuf + nOffset, "%d",
+                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
                                    CPL_MSBWORD16(((const GUInt16*)pData)[i]));
             }
             break;
@@ -1301,7 +1301,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
             {
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += sprintf(szBuf + nOffset, "%d",
+                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
                                    CPL_MSBWORD32(((const GInt32*)pData)[i]));
             }
             break;
@@ -1310,7 +1310,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
             {
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += sprintf(szBuf + nOffset, "%d",
+                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
                                    CPL_MSBWORD32(((const GUInt32*)pData)[i]));
             }
             break;
@@ -1324,7 +1324,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
 
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += CPLsprintf(szBuf + nOffset, "%f", fValue);
+                nOffset += CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", fValue);
             }
             break;
         case EDT_Float64:
@@ -1336,7 +1336,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
 #endif
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += CPLsprintf(szBuf + nOffset, "%f", dfValue);
+                nOffset += CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", dfValue);
             }
             break;
 /*
@@ -1399,13 +1399,13 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                 seconds = CPL_MSBWORD32(((const GUInt32*)pData)[1]);
                 microseconds = CPL_MSBWORD32(((const GUInt32*)pData)[2]);
 
-                sprintf(szBuf, "%d, %d, %d", days, seconds, microseconds);
+                snprintf(szBuf, nBufLen, "%d, %d, %d", days, seconds, microseconds);
             }
             break;
         default:
             CPLDebug( "EnvisatDataset",
                       "Unabe to convert '%s' field to string: "
-                      "unsecpected data type '%d'.",
+                      "unexpected data type '%d'.",
                       pField->szName, pField->eType );
             return CE_Failure;
     }

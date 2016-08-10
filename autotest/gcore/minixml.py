@@ -122,7 +122,7 @@ def minixml_2():
         gdaltest.post_reason( 'serialize xml tree failed.' )
         print(doc_got)
         return 'fail'
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Read XML document with complex DOCTYPE element.
@@ -203,7 +203,7 @@ def minixml_4():
     return 'success'
 
 ###############################################################################
-# Parse manformed xml.  Complains, but still makes a tree.
+# Parse malformed XML.  Complains, but still makes a tree.
 
 def minixml_5():
 
@@ -231,7 +231,7 @@ def minixml_5():
     return 'success'
 
 ###############################################################################
-# Parse manformed xml.
+# Parse malformed XML.
 
 def minixml_6():
 
@@ -269,7 +269,7 @@ def minixml_6():
     return 'success'
 
 ###############################################################################
-# Parse manformed xml.  Pass withou warning, but should not pass.
+# Parse malformed XML.  Pass without warning, but should not pass.
 
 def minixml_7():
 
@@ -294,6 +294,26 @@ def minixml_7():
 
     return 'success'
 
+###############################################################################
+# Parse XML with too many nesting
+
+def minixml_8():
+
+    xml_str = ''.join('<a>' for i in range(10001))
+    xml_str += ''.join('</a>' for i in range(10001))
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        tree = gdal.ParseXMLString( xml_str )
+    if tree is not None:
+        gdaltest.post_reason('expected None tree')
+        return 'fail'
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expected error message')
+        return 'fail'
+
+    return 'success'
+
 
 ###############################################################################
 # Cleanup
@@ -309,6 +329,7 @@ gdaltest_list = [
     minixml_5,
     minixml_6,
     minixml_7,
+    minixml_8,
     minixml_cleanup ]
 
 if __name__ == '__main__':

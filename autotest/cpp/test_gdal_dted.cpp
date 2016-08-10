@@ -4,21 +4,21 @@
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test DTED support. Ported from gdrivers/dted.py.
 // Author:   Mateusz Loskot <mateusz@loskot.net>
-// 
+//
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 // Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-//  
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
 // License as published by the Free Software Foundation; either
 // version 2 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Library General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Library General Public
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -273,7 +273,7 @@ namespace tut
     {
         // Index of test file being tested
         const std::size_t fileIdx = 0;
-        
+
         std::string file(data_ + SEP);
         file += rasters_.at(fileIdx).file_;
 

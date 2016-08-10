@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for PNG driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -53,9 +53,9 @@ def png_2():
     tst = gdaltest.GDALTest( 'PNG', 'test.png', 1, 57921 )
 
     return tst.testCreateCopy()
-    
+
 ###############################################################################
-# Verify the geotransform, colormap, and nodata setting for test file. 
+# Verify the geotransform, colormap, and nodata setting for test file.
 
 def png_3():
 
@@ -84,12 +84,12 @@ def png_3():
         if abs(gt[i] - gt_expected[i]) > 0.0001:
             print('expected:', gt_expected)
             print('got:', gt)
-            
+
             gdaltest.post_reason( 'Mixed locale world file read improperly.' )
             return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test RGB mode creation and reading.
 
@@ -124,7 +124,7 @@ def png_7():
 
     drv = gdal.GetDriverByName( 'PNG' )
     srcds = gdal.Open( 'data/tbbn2c16.png' )
-    
+
     dstds = drv.CreateCopy( 'tmp/png7.png', srcds )
     srcds = None
 
@@ -206,7 +206,7 @@ def png_9():
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
-# Test outputing to /vsistdout/
+# Test writing to /vsistdout/
 
 def png_10():
 
@@ -242,7 +242,7 @@ def png_11():
 def png_12():
     ds = gdal.Open( '../gcore/data/stefan_full_rgba.png' )
     cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
-    
+
     # Band interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
@@ -250,8 +250,8 @@ def png_12():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
-        
+        return 'fail'
+
     # Pixel interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = ds.RasterCount, buf_band_space = 1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
@@ -259,7 +259,7 @@ def png_12():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
+        return 'fail'
 
     # Pixel interleaved with padding
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 5, buf_band_space = 1)
@@ -268,19 +268,19 @@ def png_12():
     got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
-        return 'fail'    
-    
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
 # Test metadata
 
 def png_13():
-    
+
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
     src_ds.SetMetadataItem('foo', 'bar')
     src_ds.SetMetadataItem('COPYRIGHT', 'copyright value')
-    src_ds.SetMetadataItem('DESCRIPTION', 'will be overriden by creation option')
+    src_ds.SetMetadataItem('DESCRIPTION', 'will be overridden by creation option')
     out_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['WRITE_METADATA_AS_TEXT=YES', 'DESCRIPTION=my desc'])
     md = out_ds.GetMetadata()
     if len(md) != 3 or md['foo'] != 'bar' or md['Copyright'] != 'copyright value' or md['Description'] != 'my desc':
@@ -293,6 +293,58 @@ def png_13():
         gdaltest.post_reason('failure')
         return 'fail'
     gdal.Unlink('/vsimem/tmp.png')
+    return 'success'
+
+###############################################################################
+# Test support for nbits < 8
+
+def png_14():
+
+    src_ds = gdal.Open('../gcore/data/oddsize1bit.tif')
+    expected_cs = src_ds.GetRasterBand(1).Checksum()
+    gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds)
+    out_ds = gdal.Open('/vsimem/tmp.png')
+    cs = out_ds.GetRasterBand(1).Checksum()
+    nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
+    gdal.Unlink('/vsimem/tmp.png')
+
+    if cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+
+    if nbits != '1':
+        gdaltest.post_reason('failure')
+        print(nbits)
+        return 'fail'
+
+
+    # check that no PAM file is created
+    if gdal.VSIStatL('/vsimem/tmp.png.aux.xml') == 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Test explicit NBITS
+    gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['NBITS=2'])
+    out_ds = gdal.Open('/vsimem/tmp.png')
+    nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
+    gdal.Unlink('/vsimem/tmp.png')
+    if nbits != '2':
+        gdaltest.post_reason('failure')
+        print(nbits)
+        return 'fail'
+
+    # Test (wrong) explicit NBITS
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['NBITS=7'])
+    out_ds = gdal.Open('/vsimem/tmp.png')
+    nbits = out_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE')
+    gdal.Unlink('/vsimem/tmp.png')
+    if nbits is not None:
+        gdaltest.post_reason('failure')
+        print(nbits)
+        return 'fail'
+
     return 'success'
 
 gdaltest_list = [
@@ -308,7 +360,8 @@ gdaltest_list = [
     png_10,
     png_11,
     png_12,
-    png_13
+    png_13,
+    png_14
     ]
 
 if __name__ == '__main__':

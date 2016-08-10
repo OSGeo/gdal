@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_WFS_H_INCLUDED
-#define _OGR_WFS_H_INCLUDED
+#ifndef OGR_WFS_H_INCLUDED
+#define OGR_WFS_H_INCLUDED
 
 #include <vector>
 #include <set>
@@ -64,8 +64,8 @@ class OGRWFSSortDesc
     public:
         CPLString osColumn;
         int       bAsc;
-        
-        OGRWFSSortDesc(const CPLString& osColumn, int bAsc) : osColumn(osColumn), bAsc(bAsc) {}
+
+        OGRWFSSortDesc(const CPLString& osColumnIn, int bAscIn) : osColumn(osColumnIn), bAsc(bAscIn) {}
         OGRWFSSortDesc(const OGRWFSSortDesc& other) : osColumn(other.osColumn), bAsc(other.bAsc) {}
 };
 
@@ -124,7 +124,7 @@ class OGRWFSLayer : public OGRLayer
     int                 nExpectedInserts;
     CPLString           osGlobalInsert;
     std::vector<CPLString> aosFIDList;
-    
+
     int                 bInTransaction;
 
     CPLString           GetPostHeader();
@@ -187,6 +187,8 @@ class OGRWFSLayer : public OGRLayer
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
 
+    virtual OGRErr      SetIgnoredFields( const char **papszFields );
+
     int                 HasLayerDefn() { return poFeatureDefn != NULL; }
 
     OGRFeatureDefn*     ParseSchema(CPLXMLNode* psSchema);
@@ -204,7 +206,7 @@ class OGRWFSLayer : public OGRLayer
 
     void                SetOrderBy(const std::vector<OGRWFSSortDesc>& aoSortColumnsIn);
     int                 HasGotApproximateLayerDefn() { GetLayerDefn(); return bGotApproximateLayerDefn; }
-    
+
     const char*         GetNamespacePrefix() { return pszNS; }
     const char*         GetNamespaceName() { return pszNSVal; }
 };
@@ -234,9 +236,9 @@ class OGRWFSJoinLayer : public OGRLayer
     int                 nPagingStartIndex;
     int                 nFeatureRead;
     int                 nFeatureCountRequested;
-    
+
     std::vector<CPLString> aoSrcFieldNames, aoSrcGeomFieldNames;
-    
+
     CPLString           osFeatureTypes;
 
                         OGRWFSJoinLayer(OGRWFSDataSource* poDS,
@@ -258,7 +260,7 @@ class OGRWFSJoinLayer : public OGRLayer
     virtual OGRFeatureDefn *    GetLayerDefn();
 
     virtual int                 TestCapability( const char * );
-    
+
     virtual GIntBig             GetFeatureCount( int bForce = TRUE );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
@@ -330,9 +332,9 @@ class OGRWFSDataSource : public OGRDataSource
     OGRLayer           *poLayerGetCapabilitiesLayer;
 
     int                 bKeepLayerNamePrefix;
-    
+
     int                 bEmptyAsNull;
-    
+
     int                 bInvertAxisOrderIfLatLong;
     CPLString           osConsiderEPSGAsURN;
     int                 bExposeGMLId;
@@ -396,15 +398,15 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                         GetKeepLayerNamePrefix() { return bKeepLayerNamePrefix; }
     const CPLString&            GetBaseURL() { return osBaseURL; }
-    
+
     int                         IsEmptyAsNull() const { return bEmptyAsNull; }
     int                         InvertAxisOrderIfLatLong() const { return bInvertAxisOrderIfLatLong; }
     const CPLString&            GetConsiderEPSGAsURN() const { return osConsiderEPSGAsURN; }
-    
+
     int                         ExposeGMLId() const { return bExposeGMLId; }
 
     virtual char**              GetMetadataDomainList();
     virtual char**              GetMetadata( const char * pszDomain = "" );
 };
 
-#endif /* ndef _OGR_WFS_H_INCLUDED */
+#endif /* ndef OGR_WFS_H_INCLUDED */

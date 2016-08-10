@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for ADRG driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2007-2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -61,7 +61,7 @@ def adrg_read_subdataset_img():
 
     tst = gdaltest.GDALTest( 'ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute = 1 )
     return tst.testOpen()
-    
+
 ###############################################################################
 # Test copying.
 
@@ -69,9 +69,9 @@ def adrg_copy():
 
     drv = gdal.GetDriverByName( 'ADRG' )
     srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
-    
+
     dstds = drv.CreateCopy( 'tmp/ABCDEF01.GEN', srcds )
-    
+
     chksum = dstds.GetRasterBand(1).Checksum()
 
     if chksum != 62833:
@@ -79,11 +79,11 @@ def adrg_copy():
         return 'fail'
 
     dstds = None
-    
+
     drv.Delete( 'tmp/ABCDEF01.GEN' )
 
     return 'success'
-    
+
 ###############################################################################
 # Test creating a fake 2 subdataset image and reading it.
 
@@ -91,34 +91,34 @@ def adrg_2subdatasets():
 
     drv = gdal.GetDriverByName( 'ADRG' )
     srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
-    
+
     gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'ON')
     dstds = drv.CreateCopy( 'tmp/XXXXXX01.GEN', srcds )
     del dstds
     gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'OFF')
-    
+
     shutil.copy('tmp/XXXXXX01.IMG', 'tmp/XXXXXX02.IMG')
-    
+
     ds = gdal.Open('tmp/TRANSH01.THF')
     if ds.RasterCount != 0:
         gdaltest.post_reason('did not expected non 0 RasterCount')
         return 'fail'
     ds = None
-    
+
     ds = gdal.Open('ADRG:tmp/XXXXXX01.GEN,tmp/XXXXXX02.IMG')
     chksum = ds.GetRasterBand(1).Checksum()
 
     if chksum != 62833:
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
-        
+
     md = ds.GetMetadata('')
     if md['ADRG_NAM'] != 'XXXXXX02':
         gdaltest.post_reason( 'metadata wrong.' )
         return 'fail'
 
-    ds = None        
-        
+    ds = None
+
     os.remove('tmp/XXXXXX01.GEN')
     os.remove('tmp/XXXXXX01.GEN.aux.xml')
     os.remove('tmp/XXXXXX01.IMG')
@@ -126,7 +126,7 @@ def adrg_2subdatasets():
     os.remove('tmp/TRANSH01.THF')
 
     return 'success'
-    
+
 ###############################################################################
 # Test creating an in memory copy.
 
@@ -134,9 +134,9 @@ def adrg_copy_vsimem():
 
     drv = gdal.GetDriverByName( 'ADRG' )
     srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
-    
+
     dstds = drv.CreateCopy( '/vsimem/ABCDEF01.GEN', srcds )
-    
+
     chksum = dstds.GetRasterBand(1).Checksum()
 
     if chksum != 62833:
@@ -144,21 +144,21 @@ def adrg_copy_vsimem():
         return 'fail'
 
     dstds = None
-    
+
     # Reopen file
     ds = gdal.Open( '/vsimem/ABCDEF01.GEN' )
-    
+
     chksum = ds.GetRasterBand(1).Checksum()
     if chksum != 62833:
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
 
     ds = None
-    
+
     drv.Delete( '/vsimem/ABCDEF01.GEN' )
 
     return 'success'
-    
+
 
 ###############################################################################
 gdaltest_list = [

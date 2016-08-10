@@ -1,5 +1,4 @@
 /****************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements the Golden Software Surfer 7 Binary Grid Format.
@@ -30,12 +29,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <float.h>
-#include <limits.h>
-#include <math.h>
-#include <assert.h>
+#include <cassert>
+#include <cfloat>
+#include <climits>
+#include <cmath>
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+
+CPL_CVSID("$Id$");
 
 #ifndef DBL_MAX
 # ifdef __DBL_MAX__
@@ -61,12 +63,6 @@
 # define SHRT_MAX 32767
 #endif /* SHRT_MAX */
 
-CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_GS7BG(void);
-CPL_C_END
-
 /************************************************************************/
 /* ==================================================================== */
 /*                GS7BGDataset                */
@@ -75,13 +71,15 @@ CPL_C_END
 
 class GS7BGRasterBand;
 
+static const double dfDefaultNoDataValue = 1.701410009187828e+38f;
+
 class GS7BGDataset : public GDALPamDataset
 {
     friend class GS7BGRasterBand;
 
-    static double dfNoData_Value;
+    double dfNoData_Value;
     static const size_t nHEADER_SIZE;
-    static size_t nData_Position;
+    size_t nData_Position;
 
     static CPLErr WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
                    double dfMinX, double dfMaxX,
@@ -91,7 +89,12 @@ class GS7BGDataset : public GDALPamDataset
     VSILFILE    *fp;
 
   public:
-    GS7BGDataset() : fp(NULL) { }
+    GS7BGDataset() :
+    /* NOTE:  This is not mentioned in the spec, but Surfer 8 uses this value */
+    /* 0x7effffee (Little Endian: eeffff7e) */
+        dfNoData_Value(dfDefaultNoDataValue),
+        nData_Position(0),
+        fp(NULL) { }
     ~GS7BGDataset();
 
     static int          Identify( GDALOpenInfo * );
@@ -111,18 +114,11 @@ class GS7BGDataset : public GDALPamDataset
 };
 
 
-
-/* NOTE:  This is not mentioned in the spec, but Surfer 8 uses this value */
-/* 0x7effffee (Little Endian: eeffff7e) */
-double GS7BGDataset::dfNoData_Value = 1.701410009187828e+38f;
-
 const size_t GS7BGDataset::nHEADER_SIZE = 100;
 
-size_t GS7BGDataset::nData_Position = 0;
-
-const long  nHEADER_TAG = 0x42525344;
-const long  nGRID_TAG = 0x44495247;
-const long  nDATA_TAG = 0x41544144;
+static const long  nHEADER_TAG = 0x42525344;
+static const long  nGRID_TAG = 0x44495247;
+static const long  nDATA_TAG = 0x41544144;
 #if 0 /* Unused */
 const long  nFAULT_TAG = 0x49544c46;
 #endif
@@ -168,7 +164,7 @@ class GS7BGRasterBand : public GDALPamRasterBand
 /*                           GS7BGRasterBand()                          */
 /************************************************************************/
 
-GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDS, int nBand ) :
+GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDSIn, int nBandIn ) :
     dfMinX(0.0), dfMaxX(0.0), dfMinY(0.0), dfMaxY(0.0), dfMinZ(0.0),
     dfMaxZ(0.0),
     pafRowMinZ(NULL),
@@ -177,8 +173,8 @@ GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDS, int nBand ) :
     nMaxZRow(-1)
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     eDataType = GDT_Float64;
 
@@ -193,10 +189,8 @@ GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDS, int nBand ) :
 GS7BGRasterBand::~GS7BGRasterBand( )
 
 {
-    if( pafRowMinZ != NULL )
-        CPLFree( pafRowMinZ );
-    if( pafRowMaxZ != NULL )
-        CPLFree( pafRowMaxZ );
+    CPLFree( pafRowMinZ );
+    CPLFree( pafRowMaxZ );
 }
 
 /************************************************************************/
@@ -206,12 +200,11 @@ GS7BGRasterBand::~GS7BGRasterBand( )
 CPLErr GS7BGRasterBand::ScanForMinMaxZ()
 
 {
-    double *pafRowVals = (double *)VSIMalloc2( nRasterXSize, sizeof(double));
+    GS7BGDataset* poGDS = reinterpret_cast<GS7BGDataset*>(poDS);
+    double *pafRowVals = (double *)VSI_MALLOC2_VERBOSE( nRasterXSize, sizeof(double));
 
     if( pafRowVals == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-          "Unable to allocate row buffer to scan grid file.\n" );
         return CE_Failure;
     }
 
@@ -237,7 +230,7 @@ CPLErr GS7BGRasterBand::ScanForMinMaxZ()
         pafRowMaxZ[iRow] = -FLT_MAX;
         for( int iCol=0; iCol<nRasterXSize; iCol++ )
         {
-            if( pafRowVals[iCol] == GS7BGDataset::dfNoData_Value )
+            if( pafRowVals[iCol] == poGDS->dfNoData_Value )
                 continue;
 
             if( pafRowVals[iCol] < pafRowMinZ[iRow] )
@@ -301,8 +294,8 @@ CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GS7BGDataset *poGDS = (GS7BGDataset *) ( poDS );
 
     if( VSIFSeekL( poGDS->fp,
-        ( GS7BGDataset::nData_Position +
-            sizeof(double) * nRasterXSize * (nRasterYSize - nBlockYOff - 1) ),
+        ( poGDS->nData_Position +
+            sizeof(double) * static_cast<vsi_l_offset>(nRasterXSize) * (nRasterYSize - nBlockYOff - 1) ),
         SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -350,21 +343,17 @@ CPLErr GS7BGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( pafRowMinZ == NULL || pafRowMaxZ == NULL
         || nMinZRow < 0 || nMaxZRow < 0 )
     {
-        pafRowMinZ = (double *)VSIMalloc2( nRasterYSize,sizeof(double) );
+        pafRowMinZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
         if( pafRowMinZ == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-              "Unable to allocate space for row minimums array.\n" );
             return CE_Failure;
         }
 
-        pafRowMaxZ = (double *)VSIMalloc2( nRasterYSize,sizeof(double) );
+        pafRowMaxZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
         if( pafRowMaxZ == NULL )
         {
             VSIFree( pafRowMinZ );
             pafRowMinZ = NULL;
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-              "Unable to allocate space for row maximums array.\n" );
             return CE_Failure;
         }
 
@@ -388,7 +377,7 @@ CPLErr GS7BGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     pafRowMaxZ[nBlockYOff] = -DBL_MAX;
     for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
     {
-        if( pdfImage[iPixel] != GS7BGDataset::dfNoData_Value )
+        if( pdfImage[iPixel] != poGDS->dfNoData_Value )
         {
             if( pdfImage[iPixel] < pafRowMinZ[nBlockYOff] )
                 pafRowMinZ[nBlockYOff] = pdfImage[iPixel];
@@ -484,10 +473,11 @@ CPLErr GS7BGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
 double GS7BGRasterBand::GetNoDataValue( int * pbSuccess )
 {
+    GS7BGDataset* poGDS = reinterpret_cast<GS7BGDataset*>(poDS);
     if( pbSuccess )
         *pbSuccess = TRUE;
 
-    return GS7BGDataset::dfNoData_Value;
+    return poGDS->dfNoData_Value;
 }
 
 /************************************************************************/
@@ -538,7 +528,7 @@ int GS7BGDataset::Identify( GDALOpenInfo * poOpenInfo )
     /* Check for signature - for GS7BG the signature is the */
     /* nHEADER_TAG with reverse byte order.                 */
     if( poOpenInfo->nHeaderBytes < 4
-        || !EQUALN((const char *) poOpenInfo->pabyHeader,"DSRB",4) )
+        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DSRB") )
     {
         return FALSE;
     }
@@ -594,9 +584,6 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     GInt32 nTag;
-    GInt32 nSize;
-    GInt32 nVersion;
-
     if( VSIFReadL( (void *)&nTag, sizeof(GInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
@@ -613,7 +600,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
+    GUInt32 nSize;
+    if( VSIFReadL( (void *)&nSize, sizeof(GUInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
@@ -623,6 +611,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPL_LSBPTR32( &nSize );
 
+    GInt32 nVersion;
     if( VSIFReadL( (void *)&nVersion, sizeof(GInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
@@ -636,7 +625,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
     if(nVersion != 1 && nVersion != 2)
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Incorrect file version (%d).", nVersion );
         return NULL;
     }
@@ -653,7 +642,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPL_LSBPTR32( &nTag );
 
-        if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
+        if( VSIFReadL( (void *)&nSize, sizeof(GUInt32), 1, poDS->fp ) != 1 )
         {
             delete poDS;
             CPLError( CE_Failure, CPLE_FileIO,
@@ -665,7 +654,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if(nTag != nGRID_TAG)
         {
-            if( VSIFSeekL( poDS->fp, nSize, SEEK_SET ) != 0 )
+            if( VSIFSeekL( poDS->fp, nSize, SEEK_CUR ) != 0 )
             {
                 delete poDS;
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -910,7 +899,6 @@ CPLErr GS7BGDataset::SetGeoTransform( double *padfGeoTransform )
         return CE_Failure;
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
-    CPLErr eErr = CE_None;
     /*if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0
     || padfGeoTransform[1] < 0.0 || padfGeoTransform[5] < 0.0 )
     eErr = GDALPamDataset::SetGeoTransform( padfGeoTransform );
@@ -923,7 +911,7 @@ CPLErr GS7BGDataset::SetGeoTransform( double *padfGeoTransform )
     double dfMinY = padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
     double dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
-    eErr = WriteHeader( fp, poGRB->nRasterXSize, poGRB->nRasterYSize,
+    CPLErr eErr = WriteHeader( fp, poGRB->nRasterXSize, poGRB->nRasterYSize,
             dfMinX, dfMaxX, dfMinY, dfMaxY,
             poGRB->dfMinZ, poGRB->dfMaxZ );
 
@@ -1076,7 +1064,7 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
         return CE_Failure;
     }
 
-    dfTemp = dfNoData_Value;  
+    dfTemp = dfDefaultNoDataValue;
     CPL_LSBPTR64( &dfTemp );
     if( VSIFWriteL( (void *)&dfTemp, sizeof(double), 1, fp ) != 1 )
     {
@@ -1094,7 +1082,7 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
         return CE_Failure;
     }
 
-    int nSize = nXSize * nYSize * sizeof(double);
+    int nSize = nXSize * nYSize * (int)sizeof(double);
     nTemp = CPL_LSBWORD32(nSize); // Mark size of data
     if( VSIFWriteL( (void *)&nTemp, sizeof(GInt32), 1, fp ) != 1 )
     {
@@ -1165,7 +1153,7 @@ GDALDataset *GS7BGDataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    double dfVal = dfNoData_Value;
+    double dfVal = dfDefaultNoDataValue;
     CPL_LSBPTR64( &dfVal );
     for( int iRow = 0; iRow < nYSize; iRow++ )
     {
@@ -1203,7 +1191,7 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "Driver does not support source dataset with zero band.\n");
         return NULL;
     }
@@ -1223,7 +1211,7 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
-    
+
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated\n" );
@@ -1262,12 +1250,10 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy band data.                                                 */
 /* -------------------------------------------------------------------- */
-    double *pfData = (double *)VSIMalloc2( nXSize, sizeof( double ) );
+    double *pfData = (double *)VSI_MALLOC2_VERBOSE( nXSize, sizeof( double ) );
     if( pfData == NULL )
     {
         VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-              "Unable to create copy, unable to allocate line buffer.\n" );
         return NULL;
     }
 
@@ -1292,7 +1278,7 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
         {
             if( bSrcHasNDValue && pfData[iCol] == dfSrcNoDataValue )
             {
-                pfData[iCol] = dfNoData_Value;
+                pfData[iCol] = dfDefaultNoDataValue;
             }
             else
             {
@@ -1303,7 +1289,7 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
                     dfMinZ = pfData[iCol];
             }
 
-            CPL_LSBPTR32( pfData+iCol );
+            CPL_LSBPTR64( pfData+iCol );
         }
 
         if( VSIFWriteL( (void *)pfData, sizeof( double ), nXSize,
@@ -1356,28 +1342,25 @@ GDALDataset *GS7BGDataset::CreateCopy( const char *pszFilename,
 void GDALRegister_GS7BG()
 
 {
-    GDALDriver    *poDriver;
+    if( GDALGetDriverByName( "GS7BG" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GS7BG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GS7BG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Golden Software 7 Binary Grid (.grd)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#GS7BG" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-            "Byte Int16 UInt16 Float32 Float64" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "GS7BG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Golden Software 7 Binary Grid (.grd)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GS7BG" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16 Float32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = GS7BGDataset::Identify;
-        poDriver->pfnOpen = GS7BGDataset::Open;
-        poDriver->pfnCreate = GS7BGDataset::Create;
-        poDriver->pfnCreateCopy = GS7BGDataset::CreateCopy;
+    poDriver->pfnIdentify = GS7BGDataset::Identify;
+    poDriver->pfnOpen = GS7BGDataset::Open;
+    poDriver->pfnCreate = GS7BGDataset::Create;
+    poDriver->pfnCreateCopy = GS7BGDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

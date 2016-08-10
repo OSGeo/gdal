@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PRIV_METADATASET_H
-#define __INCLUDE_PRIV_METADATASET_H
+#ifndef INCLUDE_PRIV_METADATASET_H
+#define INCLUDE_PRIV_METADATASET_H
 
 #include "pcidsk_config.h"
 #include "pcidsk_file.h"
@@ -64,4 +64,4 @@ namespace PCIDSK
     };
     
 } // end namespace PCIDSK
-#endif // __INCLUDE_PRIV_METADATASET_H
+#endif // INCLUDE_PRIV_METADATASET_H

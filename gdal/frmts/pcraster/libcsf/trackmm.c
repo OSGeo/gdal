@@ -24,7 +24,7 @@
 
 /* disable automatic tracking of minimum and maximum value 
  * A call to RdontTrackMinMax disables the automatic tracking
- * of the min/max value in succesive cell writes. 
+ * of the min/max value in successive cell writes.
  * If used, one must always
  * use RputMinVal and RputMaxVal to set the correct values.
  */

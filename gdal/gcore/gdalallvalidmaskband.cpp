@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALAllValidMaskBand, a class implementing all
@@ -32,13 +31,13 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                        GDALAllValidMaskBand()                        */
 /************************************************************************/
 
 GDALAllValidMaskBand::GDALAllValidMaskBand( GDALRasterBand *poParent ) :
-                                                        GDALRasterBand(FALSE)
-
+    GDALRasterBand(FALSE)
 {
     poDS = NULL;
     nBand = 0;
@@ -54,18 +53,15 @@ GDALAllValidMaskBand::GDALAllValidMaskBand( GDALRasterBand *poParent ) :
 /*                       ~GDALAllValidMaskBand()                        */
 /************************************************************************/
 
-GDALAllValidMaskBand::~GDALAllValidMaskBand()
-
-{
-}
+GDALAllValidMaskBand::~GDALAllValidMaskBand() {}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GDALAllValidMaskBand::IReadBlock( CPL_UNUSED int nXBlockOff,
-                                         CPL_UNUSED int nYBlockOff,
-                                         void * pImage )
+CPLErr GDALAllValidMaskBand::IReadBlock( int /* nXBlockOff */,
+                                         int /* nYBlockOff */,
+                                         void *pImage )
 {
     memset( pImage, 255, nBlockXSize * nBlockYSize );
 
@@ -91,3 +87,4 @@ int GDALAllValidMaskBand::GetMaskFlags()
 {
     return GMF_ALL_VALID;
 }
+//! @endcond

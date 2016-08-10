@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  JP2 Box Reader (and GMLJP2 Interpreter)
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -31,11 +31,13 @@
 #ifndef GDAL_JP2READER_H_INCLUDED
 #define GDAL_JP2READER_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "cpl_minixml.h"
 
 /************************************************************************/
 /*                              GDALJP2Box                              */
@@ -77,7 +79,7 @@ public:
     GIntBig     GetDataLength();
 
     const char *GetType() { return szBoxType; }
-    
+
     GByte      *ReadBoxData();
 
     int         IsSuperBox();
@@ -104,7 +106,7 @@ public:
     static GDALJP2Box *CreateLblBox( const char *pszLabel );
     static GDALJP2Box *CreateLabelledXMLAssoc( const char *pszLabel,
                                                const char *pszXML );
-    static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID, 
+    static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID,
                                       int nDataSize, const GByte *pabyData );
 };
 
@@ -126,7 +128,7 @@ private:
 
     int    nMSIGSize;
     GByte  *pabyMSIGData;
-    
+
     int      GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
                                           double adfOrigin[2],
                                           double adfXVector[2],
@@ -140,16 +142,16 @@ private:
 
 public:
     char  **papszGMLMetadata;
-    
-    int     bHaveGeoTransform;
+
+    bool    bHaveGeoTransform;
     double  adfGeoTransform[6];
-    int     bPixelIsPoint;
+    bool    bPixelIsPoint;
 
     char   *pszProjection;
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
-    
+
     char **papszRPCMD;
 
     char  **papszMetadata; /* TIFFTAG_?RESOLUTION* for now from resd box */
@@ -167,15 +169,19 @@ public:
     int     ParseMSIG();
     int     ParseGMLCoverageDesc();
 
-    int     ReadAndParse( VSILFILE * fpVSIL );
-    int     ReadAndParse( const char *pszFilename );
+    int     ReadAndParse( VSILFILE * fpVSIL,
+                          int nGEOJP2Index = 0, int nGMLJP2Index = 1,
+                          int nMSIGIndex = 2, int *pnIndexUsed = NULL );
+    int     ReadAndParse( const char *pszFilename, int nGEOJP2Index = 0,
+                          int nGMLJP2Index = 1, int nMSIGIndex = 2,
+                          int nWorldFileIndex = 3, int *pnIndexUsed = NULL );
 
-    // Write oriented. 
+    // Write oriented.
     void    SetProjection( const char *pszWKT );
     void    SetGeoTransform( double * );
     void    SetGCPs( int, const GDAL_GCP * );
     void    SetRPCMD( char** papszRPCMDIn );
-    
+
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );
     GDALJP2Box *CreateGMLJP2V2( int nXSize, int nYSize,
@@ -192,5 +198,7 @@ public:
     static int   IsUUID_MSI(const GByte *abyUUID);
     static int   IsUUID_XMP(const GByte *abyUUID);
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef GDAL_JP2READER_H_INCLUDED */

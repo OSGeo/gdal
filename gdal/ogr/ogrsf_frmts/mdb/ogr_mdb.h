@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_MDB_H_INCLUDED
-#define _OGR_MDB_H_INCLUDED
+#ifndef OGR_MDB_H_INCLUDED
+#define OGR_MDB_H_INCLUDED
 
 #include <jni.h>
 #include <vector>
@@ -54,7 +54,7 @@ class OGRMDBJavaEnv
     JNIEnv *env;
     int bCalledFromJava;
 
-    int ExceptionOccured();
+    int ExceptionOccurred();
 
     jclass byteArray_class;
 
@@ -105,7 +105,7 @@ class OGRMDBJavaEnv
 
     jclass short_class;
     jmethodID short_shortValue;
-    
+
     jclass integer_class;
     jmethodID integer_intValue;
 
@@ -188,7 +188,7 @@ public:
 
 };
 
-typedef enum 
+typedef enum
 {
     MDB_Boolean = 0x01,
     MDB_Byte = 0x02,
@@ -219,7 +219,7 @@ typedef enum
 /************************************************************************/
 
 class OGRMDBDataSource;
-    
+
 class OGRMDBLayer : public OGRLayer
 {
   protected:
@@ -274,7 +274,7 @@ class OGRMDBLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual int         TestCapability( const char * );
@@ -314,7 +314,7 @@ class OGRMDBDataSource : public OGRDataSource
                         ~OGRMDBDataSource();
 
     int                 Open( const char * );
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
 
@@ -341,4 +341,4 @@ class OGRMDBDriver : public OGRSFDriver
     int          TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_MDB_H_INCLUDED */
+#endif /* ndef OGR_MDB_H_INCLUDED */

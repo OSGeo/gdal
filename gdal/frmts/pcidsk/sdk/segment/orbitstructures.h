@@ -24,10 +24,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_ORBIT_INFORMATION_H
-#define __INCLUDE_PCIDSK_ORBIT_INFORMATION_H
+#ifndef INCLUDE_PCIDSK_ORBIT_INFORMATION_H
+#define INCLUDE_PCIDSK_ORBIT_INFORMATION_H
 
 #include <string>
+#include <cstring>
 #include <vector>
 
 namespace PCIDSK
@@ -51,7 +52,15 @@ namespace PCIDSK
         /**
          * Default constrcutor
          */
-        AncillaryData_t()
+        AncillaryData_t() :
+            SlantRangeFstPixel(0),
+            SlantRangeLastPixel(0),
+            FstPixelLat(0.f),
+            MidPixelLat(0.f),
+            LstPixelLat(0.f),
+            FstPixelLong(0.f),
+            MidPixelLong(0.f),
+            LstPixelLong(0.f)
         {
         }
         /**
@@ -64,7 +73,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAD the ancillary data to assign
          */
         AncillaryData_t& operator=(const AncillaryData_t& oAD)
@@ -111,7 +120,15 @@ namespace PCIDSK
         /**
          * Default constrcutor
          */
-        RadarSeg_t()
+        RadarSeg_t() :
+            EquatorialRadius(0.0),
+            PolarRadius(0.0),
+            IncidenceAngle(0.0),
+            PixelSpacing(0.0),
+            LineSpacing(0.0),
+            ClockAngle(0.0),
+            NumberBlockData(0),
+            NumberData(0)
         {
         }
         /**
@@ -124,7 +141,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oRS the radar segment to assign
          */
         RadarSeg_t& operator=(const RadarSeg_t& oRS)
@@ -190,7 +207,9 @@ namespace PCIDSK
         /**
          * Default constrcutor
          */
-        AttitudeLine_t()
+        AttitudeLine_t():
+            ChangeInAttitude(0.0),
+            ChangeEarthSatelliteDist(0.0)
         {
         }
         /**
@@ -203,7 +222,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAL the attitude line to assign
          */
         AttitudeLine_t& operator=(const AttitudeLine_t& oAL)
@@ -226,7 +245,7 @@ namespace PCIDSK
             ChangeEarthSatelliteDist = oAL.ChangeEarthSatelliteDist;
         }
 
-        double ChangeInAttitude; /* Change in satellite attiutde (D22.16) */
+        double ChangeInAttitude; /* Change in satellite attitude (D22.16) */
         double ChangeEarthSatelliteDist; /* Change in earth-satellite distance
                                          (D22.16) */
     } ;
@@ -239,7 +258,12 @@ namespace PCIDSK
         /**
          * Default constrcutor
          */
-        AttitudeSeg_t()
+        AttitudeSeg_t() :
+            Roll(0.0),
+            Pitch(0.0),
+            Yaw(0.0),
+            NumberOfLine(0),
+            NumberBlockData(0)
         {
         }
         /**
@@ -252,7 +276,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAS the avhrr segment to assign
          */
         AttitudeSeg_t& operator=(const AttitudeSeg_t& oAS)
@@ -305,6 +329,14 @@ namespace PCIDSK
          */
         AvhrrLine_t()
         {
+            nScanLineNum = 0;
+            nStartScanTimeGMTMsec = 0;
+            std::memset(abyScanLineQuality, 0, sizeof(abyScanLineQuality));
+            std::memset(aabyBadBandIndicators, 0, sizeof(aabyBadBandIndicators));
+            std::memset(abySatelliteTimeCode, 0, sizeof(abySatelliteTimeCode));
+            std::memset(anTargetTempData, 0, sizeof(anTargetTempData));
+            std::memset(anTargetScanData, 0, sizeof(anTargetScanData));
+            std::memset(anSpaceScanData, 0, sizeof(anSpaceScanData));
         }
         /**
          * Copy constructor
@@ -316,7 +348,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAL the avhrr line to assign
          */
         AvhrrLine_t& operator=(const AvhrrLine_t& oAL)
@@ -376,7 +408,16 @@ namespace PCIDSK
         /**
          * Default constrcutor
          */
-        AvhrrSeg_t()
+        AvhrrSeg_t() :
+            nImageXSize(0),
+            nImageYSize(0),
+            bIsAscending(false),
+            bIsImageRotated(false),
+            nRecordSize(0),
+            nBlockSize(0),
+            nNumRecordsPerBlock(0),
+            nNumBlocks(0),
+            nNumScanlineRecords(0)
         {
         }
         /**
@@ -389,7 +430,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oAS the avhrr segment to assign
          */
         AvhrrSeg_t& operator=(const AvhrrSeg_t& oAS)
@@ -446,14 +487,14 @@ namespace PCIDSK
             Line = oAS.Line;
         }
 
-        /* Nineth Block Part 1 - General/header information */
+        /* Ninth Block Part 1 - General/header information */
         std::string  szImageFormat;
         int   nImageXSize;
         int   nImageYSize;
         bool bIsAscending;
         bool bIsImageRotated;
 
-        /* Nineth Block Part 2 - Ephemeris information */
+        /* Ninth Block Part 2 - Ephemeris information */
         std::string  szOrbitNumber;
         std::string  szAscendDescendNodeFlag;
         std::string  szEpochYearAndDay;
@@ -515,6 +556,74 @@ namespace PCIDSK
          */
         EphemerisSeg_t()
         {
+            SupSegExist = false;
+            FieldOfView = 0.0;
+            ViewAngle = 0.0;
+            NumColCentre = 0.0;
+            RadialSpeed = 0.0;
+            Eccentricity = 0.0;
+            Height = 0.0;
+            Inclination = 0.0;
+            TimeInterval = 0.0;
+            NumLineCentre = 0.0;
+            LongCentre = 0.0;
+            AngularSpd = 0.0;
+            AscNodeLong = 0.0; 
+            ArgPerigee = 0.0;
+            LatCentre = 0.0;
+            EarthSatelliteDist = 0.0;
+            NominalPitch = 0.0;
+            TimeAtCentre = 0.0;
+            SatelliteArg = 0.0;
+            XCentre = 0.0;
+            YCentre = 0.0;
+            UtmYCentre = 0.0;
+            UtmXCentre = 0.0;
+            PixelRes = 0.0;
+            LineRes = 0.0;
+            CornerAvail = false;
+            XUL = 0.0;
+            YUL = 0.0;
+            XUR = 0.0;
+            YUR = 0.0;
+            XLR = 0.0;
+            YLR = 0.0;
+            XLL = 0.0;
+            YLL = 0.0;
+            UtmYUL = 0.0;
+            UtmXUL = 0.0;
+            UtmYUR = 0.0;
+            UtmXUR = 0.0;
+            UtmYLR = 0.0;
+            UtmXLR = 0.0;
+            UtmYLL = 0.0;
+            UtmXLL = 0.0;
+            LatCentreDeg = 0.0;
+            LongCentreDeg = 0.0;
+            LatUL = 0.0;
+            LongUL = 0.0;
+            LatUR = 0.0;
+            LongUR = 0.0;
+            LatLR = 0.0;
+            LongLR = 0.0;
+            LatLL = 0.0;
+            LongLL = 0.0;
+            HtCentre = 0.0;
+            HtUL = 0.0;
+            HtUR = 0.0;
+            HtLR = 0.0;
+            HtLL = 0.0;
+            std::memset(SPCoeff1B, 0, sizeof(SPCoeff1B));
+            std::memset(SPCoeffSg, 0, sizeof(SPCoeffSg));
+            ImageRecordLength = 0;
+            NumberImageLine = 0;
+            NumberBytePerPixel = 0;
+            NumberSamplePerLine = 0;
+            NumberPrefixBytes = 0;
+            NumberSuffixBytes = 0;
+            SPNCoeff = 0;
+            bDescending = false;
+            Type = OrbNone;
             AttitudeSeg = NULL;
             RadarSeg = NULL;
             AvhrrSeg = NULL;
@@ -543,7 +652,7 @@ namespace PCIDSK
         }
 
         /**
-         * assignement operator
+         * assignment operator
          * @param oES the ephemeris segment to assign
          */
         EphemerisSeg_t& operator=(const EphemerisSeg_t& oES)
@@ -842,4 +951,4 @@ namespace PCIDSK
 		HJ_CCD_1A, HJ_CCD_1B, NEW, AVHRR} TypeDeCapteur;
 }
 
-#endif // __INCLUDE_PCIDSK_ORBIT_INFORMATION_H
+#endif // INCLUDE_PCIDSK_ORBIT_INFORMATION_H

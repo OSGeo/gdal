@@ -126,7 +126,7 @@ typedef enum
 
 class GDALWMSMiniDriverCapabilities {
 public:
-  GDALWMSMiniDriverCapabilities() : 
+  GDALWMSMiniDriverCapabilities() :
       m_capabilities_version(0),
       m_has_image_request(0),
       m_has_tiled_image_requeset(0),
@@ -274,7 +274,7 @@ public:
     virtual CPLErr GetGeoTransform(double *gt);
     virtual CPLErr SetGeoTransform(double *gt);
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options);
-    
+
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
@@ -342,7 +342,7 @@ public:
     void WMSSetNeedsDataWindow(int flag) {
         m_bNeedsDataWindow = flag;
     }
-    
+
     static void list2vec(std::vector<double> &v,const char *pszList) {
         if ((pszList==NULL)||(pszList[0]==0)) return;
         char **papszTokens=CSLTokenizeString2(pszList," \t\n\r",

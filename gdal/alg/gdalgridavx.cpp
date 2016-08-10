@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Gridding API.
  * Purpose:  Implementation of GDAL scattered data gridder.
@@ -198,4 +197,4 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     return CE_None;
 }
 
-#endif
+#endif /* HAVE_AVX_AT_COMPILE_TIME */

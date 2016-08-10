@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_CHANNEL_CTILEDCHANNEL_H
-#define __INCLUDE_CHANNEL_CTILEDCHANNEL_H
+#ifndef INCLUDE_CHANNEL_CTILEDCHANNEL_H
+#define INCLUDE_CHANNEL_CTILEDCHANNEL_H
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
@@ -107,4 +107,4 @@ namespace PCIDSK
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_CHANNEL_CTILEDCHANNEL_H
+#endif // INCLUDE_CHANNEL_CTILEDCHANNEL_H

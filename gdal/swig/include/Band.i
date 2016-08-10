@@ -34,20 +34,13 @@
  *
 *************************************************************************/
 
-
 %{
-/* Returned size is in bytes or 0 if an error occured */
+/* Returned size is in bytes or 0 if an error occurred. */
 static
 GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                  GIntBig nPixelSpace, GIntBig nLineSpace,
                                  int bSpacingShouldBeMultipleOfPixelSize )
 {
-#if SIZEOF_VOIDP == 8
-    const GIntBig MAX_INT = (((GIntBig)0x7fffffff) << 32) | 0xffffffff;
-#else
-    const GIntBig MAX_INT = 0x7fffffff;
-#endif
-
     if (buf_xsize <= 0 || buf_ysize <= 0)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
@@ -85,11 +78,13 @@ GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
     }
 
     GIntBig nRet = (GIntBig)(buf_ysize - 1) * nLineSpace + (GIntBig)(buf_xsize - 1) * nPixelSpace + nPixelSize;
-    if (nRet > MAX_INT)
+#if SIZEOF_VOIDP == 4
+    if (nRet > INT_MAX)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
         return 0;
     }
+#endif
 
     return nRet;
 }
@@ -98,7 +93,7 @@ GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
 #if defined(SWIGPERL)
 %{
 static
-CPLErr ReadRaster_internal( GDALRasterBandShadow *obj, 
+CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
                             int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
@@ -110,13 +105,13 @@ CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
 
   *buf_size = ComputeBandRasterIOSize( buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
                                        pixel_space, line_space, FALSE );
-  
+
   if ( *buf_size == 0 )
   {
       *buf = 0;
       return CE_Failure;
   }
-  
+
   *buf = (char*) malloc( *buf_size );
   if ( *buf )
   {
@@ -158,13 +153,13 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                                                    pixel_space, line_space, FALSE );
     if ( min_buffer_size == 0 )
       return CE_Failure;
-      
+
     if ( buf_size < min_buffer_size ) {
       CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
       return CE_Failure;
     }
 
-    return GDALRasterIOEx( obj, GF_Write, xoff, yoff, xsize, ysize, 
+    return GDALRasterIOEx( obj, GF_Write, xoff, yoff, xsize, ysize,
                            (void *) buffer, buf_xsize, buf_ysize, buf_type, pixel_space, line_space, psExtraArg );
 }
 %}
@@ -233,7 +228,7 @@ public:
   CPLErr SetNoDataValue( double d) {
     return GDALSetRasterNoDataValue( self, d );
   }
-  
+
   CPLErr DeleteNoDataValue() {
     return GDALDeleteRasterNoDataValue( self );
   }
@@ -253,7 +248,7 @@ public:
     return GDALGetRasterCategoryNames( self );
   }
   %clear (char **);
-  
+
   %apply (char **options) { (char **names) };
   CPLErr SetRasterCategoryNames( char **names ) {
     return GDALSetRasterCategoryNames( self, names );
@@ -285,23 +280,23 @@ public:
   CPLErr SetScale( double val ) {
     return GDALSetRasterScale( self, val );
   }
-  
+
 %apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
-  CPLErr GetStatistics( int approx_ok, int force, 
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
+  CPLErr GetStatistics( int approx_ok, int force,
                       double *min, double *max, double *mean, double *stddev ){
     if (min) *min = 0;
     if (max) *max = 0;
     if (mean) *mean = 0;
     if (stddev) *stddev = -1; /* This is the only way to recognize from Python if GetRasterStatistics() has updated the values */
-    return GDALGetRasterStatistics( self, approx_ok, force, 
+    return GDALGetRasterStatistics( self, approx_ok, force,
 				    min, max, mean, stddev );
   }
 %clear (CPLErr);
 
   /* Interface method added for GDAL 1.7.0 */
 %apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
   CPLErr ComputeStatistics( bool approx_ok, double *min = NULL, double *max = NULL, double *mean = NULL, double *stddev = NULL,
                             GDALProgressFunc callback = NULL, void* callback_data=NULL){
     return GDALComputeRasterStatistics( self, approx_ok, min, max, mean, stddev, callback, callback_data );
@@ -340,7 +335,7 @@ public:
   }
 
   void ComputeBandStats( double argout[2], int samplestep = 1) {
-    GDALComputeBandStats( self, samplestep, argout+0, argout+1, 
+    GDALComputeBandStats( self, samplestep, argout+0, argout+1,
                           NULL, NULL );
   }
 
@@ -430,13 +425,13 @@ public:
   int SetRasterColorTable( GDALColorTableShadow *arg ) {
     return GDALSetRasterColorTable( self, arg );
   }
- 
+
   // Preferred name to match C++ API
   int SetColorTable( GDALColorTableShadow *arg ) {
     return GDALSetRasterColorTable( self, arg );
   }
- 
-  GDALRasterAttributeTableShadow *GetDefaultRAT() { 
+
+  GDALRasterAttributeTableShadow *GetDefaultRAT() {
       return (GDALRasterAttributeTableShadow*) GDALGetDefaultRAT(self);
   }
 
@@ -459,7 +454,7 @@ public:
 #if defined(SWIGPYTHON) || defined(SWIGPERL)
 #if defined(SWIGPERL)
 %apply (int len, GUIntBig *output) {(int buckets, GUIntBig *panHistogram)};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
 #endif
 %feature( "kwargs" ) GetHistogram;
   CPLErr GetHistogram( double min=-0.5,
@@ -470,7 +465,7 @@ public:
                      int approx_ok = 1,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL ) {
-    CPLErrorReset(); 
+    CPLErrorReset();
     CPLErr err = GDALGetRasterHistogramEx( self, min, max, buckets, panHistogram,
                                          include_out_of_range, approx_ok,
                                          callback, callback_data );
@@ -494,7 +489,7 @@ public:
                      int approx_ok = 1,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL ) {
-    CPLErrorReset(); 
+    CPLErrorReset();
     CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
                                          include_out_of_range, approx_ok,
                                          callback, callback_data );
@@ -510,15 +505,15 @@ public:
 #if defined(SWIGPERL)
 %apply (double *OUTPUT){double *min_ret, double *max_ret}
 %apply (int *nLen, const GUIntBig **pList) {(int *buckets_ret, GUIntBig **ppanHistogram)};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
 #endif
 %feature ("kwargs") GetDefaultHistogram;
-CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL, 
-                            GUIntBig **ppanHistogram = NULL, int force = 1, 
+CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL,
+                            GUIntBig **ppanHistogram = NULL, int force = 1,
                             GDALProgressFunc callback = NULL,
                             void* callback_data=NULL ) {
     return GDALGetDefaultHistogramEx( self, min_ret, max_ret, buckets_ret,
-                                    ppanHistogram, force, 
+                                    ppanHistogram, force,
                                     callback, callback_data );
 }
 #if defined(SWIGPERL)
@@ -529,12 +524,12 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 #else
 #ifndef SWIGJAVA
 %feature ("kwargs") GetDefaultHistogram;
-CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL, 
-                            int **ppanHistogram = NULL, int force = 1, 
+CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL,
+                            int **ppanHistogram = NULL, int force = 1,
 			    GDALProgressFunc callback = NULL,
                             void* callback_data=NULL ) {
     return GDALGetDefaultHistogram( self, min_ret, max_ret, buckets_ret,
-                                    ppanHistogram, force, 
+                                    ppanHistogram, force,
                                     callback, callback_data );
 }
 #endif
@@ -542,9 +537,9 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 
 #if defined(SWIGPYTHON) || defined(SWIGPERL)
 %apply (int nList, GUIntBig* pList) {(int buckets_in, GUIntBig *panHistogram_in)}
-CPLErr SetDefaultHistogram( double min, double max, 
+CPLErr SetDefaultHistogram( double min, double max,
                             int buckets_in, GUIntBig *panHistogram_in ) {
-    return GDALSetDefaultHistogramEx( self, min, max, 
+    return GDALSetDefaultHistogramEx( self, min, max,
                                     buckets_in, panHistogram_in );
 }
 %clear (int buckets_in, GUIntBig *panHistogram_in);
@@ -552,9 +547,9 @@ CPLErr SetDefaultHistogram( double min, double max,
 #if defined(SWIGJAVA)
 %apply (int nList, int* pList) {(int buckets_in, int *panHistogram_in)}
 #endif
-CPLErr SetDefaultHistogram( double min, double max, 
+CPLErr SetDefaultHistogram( double min, double max,
        			    int buckets_in, int *panHistogram_in ) {
-    return GDALSetDefaultHistogram( self, min, max, 
+    return GDALSetDefaultHistogram( self, min, max,
     	   			    buckets_in, panHistogram_in );
 }
 #if defined(SWIGJAVA)
@@ -680,6 +675,24 @@ CPLErr SetDefaultHistogram( double min, double max,
     }
 
 #endif /* #if defined(SWIGPYTHON) */
+
+#if defined(SWIGPYTHON)
+    // Check with other bindings how to return both the integer status and
+    // *pdfDataPct
+
+    %apply (double *OUTPUT) {(double *)};
+    int GetDataCoverageStatus( int nXOff, int nYOff,
+                               int nXSize, int nYSize,
+                               int nMaskFlagStop = 0,
+                               double* pdfDataPct = NULL)
+    {
+        return GDALGetDataCoverageStatus(self, nXOff, nYOff,
+                                         nXSize, nYSize,
+                                         nMaskFlagStop,
+                                         pdfDataPct);
+    }
+    %clear (double *);
+#endif
 
 } /* %extend */
 

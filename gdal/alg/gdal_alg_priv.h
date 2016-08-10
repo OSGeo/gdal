@@ -32,6 +32,8 @@
 #ifndef GDAL_ALG_PRIV_H_INCLUDED
 #define GDAL_ALG_PRIV_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "gdal_alg.h"
 
 CPL_C_START
@@ -71,18 +73,18 @@ void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
                         double *padfX, double *padfY, double *padfVariant,
                         llPointFunc pfnPointFunc, void *pCBData );
 
-void GDALdllImageLine( int nRasterXSize, int nRasterYSize, 
+void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                        int nPartCount, int *panPartSize,
                        double *padfX, double *padfY, double *padfVariant,
                        llPointFunc pfnPointFunc, void *pCBData );
 
-void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize, 
+void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                                 int nPartCount, int *panPartSize,
                                 double *padfX, double *padfY,
                                 double *padfVariant,
                                 llPointFunc pfnPointFunc, void *pCBData );
 
-void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize, 
+void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                                int nPartCount, int *panPartSize,
                                double *padfX, double *padfY,
                                double *padfVariant,
@@ -118,7 +120,7 @@ public:
             ~GDALRasterPolygonEnumeratorT();
 
     void     ProcessLine( DataType *panLastLineVal, DataType *panThisLineVal,
-                          GInt32 *panLastLineId,  GInt32 *panThisLineId, 
+                          GInt32 *panLastLineId,  GInt32 *panThisLineId,
                           int nXSize );
 
     void     CompleteMerges();
@@ -144,46 +146,48 @@ void GDALCleanupTransformDeserializerMutex();
 
 /* Transformer cloning */
 
-void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList, 
+void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
                                    int bReversed, char** papszOptions );
 
-void CPL_DLL * GDALCloneTransformer( void *pTranformerArg );
+void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
 
 /************************************************************************/
 /*      Color table related                                             */
 /************************************************************************/
 
-int
-GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed, 
-                           GDALRasterBandH hGreen, 
-                           GDALRasterBandH hBlue, 
+/* definitions exists for T = GUInt32 and T = GUIntBig */
+template<class T> int
+GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
+                           GDALRasterBandH hGreen,
+                           GDALRasterBandH hBlue,
                            GByte* pabyRedBand,
                            GByte* pabyGreenBand,
                            GByte* pabyBlueBand,
                            int (*pfnIncludePixel)(int,int,void*),
-                           int nColors, 
+                           int nColors,
                            int nBits,
-                           int* panHistogram,
+                           T* panHistogram,
                            GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress, 
+                           GDALProgressFunc pfnProgress,
                            void * pProgressArg );
 
-int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed, 
-                               GDALRasterBandH hGreen, 
-                               GDALRasterBandH hBlue, 
-                               GDALRasterBandH hTarget, 
+int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
+                               GDALRasterBandH hGreen,
+                               GDALRasterBandH hBlue,
+                               GDALRasterBandH hTarget,
                                GDALColorTableH hColorTable,
                                int nBits,
                                GInt16* pasDynamicColorMap,
                                int bDither,
-                               GDALProgressFunc pfnProgress, 
+                               GDALProgressFunc pfnProgress,
                                void * pProgressArg );
 
 #define PRIME_FOR_65536                                 98317
+
+/* See HashHistogram structure in gdalmediancut.cpp and ColorIndex structure in gdaldither.cpp */
+/* 6 * sizeof(int) should be the size of the largest of both structures */
 #define MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536         (6 * sizeof(int) * PRIME_FOR_65536)
 
-
-#ifdef OGR_ENABLED
 
 /************************************************************************/
 /*      Float comparison function.                                      */
@@ -193,7 +197,7 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
  * Units in the Last Place. This specifies how big an error we are willing to
  * accept in terms of the value of the least significant digit of the floating
  * point number’s representation. MAX_ULPS can also be interpreted in terms of
- * how many representable floats we are willing to accept between A and B. 
+ * how many representable floats we are willing to accept between A and B.
  */
 #define MAX_ULPS 10
 
@@ -201,9 +205,9 @@ GBool GDALFloatEquals(float A, float B);
 
 struct FloatEqualityTest
 {
-    bool operator()(float a, float b) { return GDALFloatEquals(a,b); }
+    bool operator()(float a, float b) { return GDALFloatEquals(a,b) == TRUE; }
 };
 
-#endif /* OGR_ENABLED */
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef GDAL_ALG_PRIV_H_INCLUDED */

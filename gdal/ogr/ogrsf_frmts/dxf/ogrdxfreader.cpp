@@ -1,9 +1,8 @@
 /******************************************************************************
- * $Id: ogrdxf_diskio.cpp 20278 2010-08-14 15:11:01Z warmerdam $
  *
  * Project:  DXF Translator
  * Purpose:  Implements low level DXF reading with caching and parsing of
- *           of the code/value pairs. 
+ *           of the code/value pairs.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -33,24 +32,20 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
-CPL_CVSID("$Id: ogrdxf_diskio.cpp 20278 2010-08-14 15:11:01Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRDXFReader()                            */
 /************************************************************************/
 
-OGRDXFReader::OGRDXFReader()
-
-{
-    fp = NULL;
-
-    iSrcBufferOffset = 0;
-    nSrcBufferBytes = 0;
-    iSrcBufferFileOffset = 0;
-
-    nLastValueSize = 0;
-    nLineNumber = 0;
-}
+OGRDXFReader::OGRDXFReader() :
+    fp(NULL),
+    iSrcBufferOffset(0),
+    nSrcBufferBytes(0),
+    iSrcBufferFileOffset(0),
+    nLastValueSize(0),
+    nLineNumber(0)
+{}
 
 /************************************************************************/
 /*                           ~OGRDXFReader()                            */
@@ -65,10 +60,10 @@ OGRDXFReader::~OGRDXFReader()
 /*                             Initialize()                             */
 /************************************************************************/
 
-void OGRDXFReader::Initialize( VSILFILE *fp )
+void OGRDXFReader::Initialize( VSILFILE *fpIn )
 
 {
-    this->fp = fp;
+    fp = fpIn;
 }
 
 /************************************************************************/
@@ -109,13 +104,13 @@ void OGRDXFReader::LoadDiskChunk()
 
         memmove( achSrcBuffer, achSrcBuffer + iSrcBufferOffset,
                  nSrcBufferBytes - iSrcBufferOffset );
-        iSrcBufferFileOffset += iSrcBufferOffset; 
+        iSrcBufferFileOffset += iSrcBufferOffset;
         nSrcBufferBytes -= iSrcBufferOffset;
         iSrcBufferOffset = 0;
     }
 
-    nSrcBufferBytes += VSIFReadL( achSrcBuffer + nSrcBufferBytes, 
-                                  1, 512, fp );
+    nSrcBufferBytes += static_cast<int>(VSIFReadL( achSrcBuffer + nSrcBufferBytes,
+                                  1, 512, fp ));
     achSrcBuffer[nSrcBufferBytes] = '\0';
 
     CPLAssert( nSrcBufferBytes <= 1024 );
@@ -149,9 +144,9 @@ int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
     nLineNumber ++;
 
     // proceed to newline.
-    while( achSrcBuffer[iSrcBufferOffset] != '\n' 
-           && achSrcBuffer[iSrcBufferOffset] != '\r' 
-           && achSrcBuffer[iSrcBufferOffset] != '\0' ) 
+    while( achSrcBuffer[iSrcBufferOffset] != '\n'
+           && achSrcBuffer[iSrcBufferOffset] != '\r'
+           && achSrcBuffer[iSrcBufferOffset] != '\0' )
         iSrcBufferOffset++;
 
     if( achSrcBuffer[iSrcBufferOffset] == '\0' )
@@ -177,9 +172,9 @@ int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
     nLineNumber ++;
 
     // proceed to newline.
-    while( achSrcBuffer[iEOL] != '\n' 
-           && achSrcBuffer[iEOL] != '\r' 
-           && achSrcBuffer[iEOL] != '\0' ) 
+    while( achSrcBuffer[iEOL] != '\n'
+           && achSrcBuffer[iEOL] != '\r'
+           && achSrcBuffer[iEOL] != '\0' )
         iEOL++;
 
     if( achSrcBuffer[iEOL] == '\0' )
@@ -187,7 +182,7 @@ int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
 
     if( (iEOL - iSrcBufferOffset) > nValueBufSize-1 )
     {
-        strncpy( pszValueBuf, achSrcBuffer + iSrcBufferOffset, 
+        strncpy( pszValueBuf, achSrcBuffer + iSrcBufferOffset,
                  nValueBufSize-1 );
         pszValueBuf[nValueBufSize-1] = '\0';
 
@@ -197,7 +192,7 @@ int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
     }
     else
     {
-        strncpy( pszValueBuf, achSrcBuffer + iSrcBufferOffset, 
+        strncpy( pszValueBuf, achSrcBuffer + iSrcBufferOffset,
                  iEOL - iSrcBufferOffset );
         pszValueBuf[iEOL - iSrcBufferOffset] = '\0';
     }
@@ -244,4 +239,3 @@ void OGRDXFReader::UnreadValue()
 
     nLastValueSize = 0;
 }
-

@@ -67,7 +67,7 @@ is available in Python 1.5 and later versions, see
 http://www.python.org/doc/lib/module-zlib.html
 
 A zlib binding for TCL written by Andreas Kupries <a.kupries@westend.com>
-is availlable at http://www.westend.com/~kupries/doc/trf/man/man.html
+is available at http://www.westend.com/~kupries/doc/trf/man/man.html
 
 An experimental package to read and write files in .zip format,
 written on top of zlib by Gilles Vollant <info@winimage.com>, is
@@ -95,7 +95,7 @@ Notes for some targets:
 - zlib doesn't work with gcc 2.6.3 on a DEC 3000/300LX under OSF/1 2.1   
   it works when compiled with cc.
 
-- on Digital Unix 4.0D (formely OSF/1) on AlphaServer, the cc option -std1
+- on Digital Unix 4.0D (formerly OSF/1) on AlphaServer, the cc option -std1
   is necessary to get gzprintf working correctly. This is done by configure.
 
 - zlib doesn't work on HP-UX 9.05 with some versions of /bin/cc. It works

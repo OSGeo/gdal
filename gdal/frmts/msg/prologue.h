@@ -99,7 +99,7 @@ public:
   double Cal_Offset [12];
 };
 
-class Prologue  
+class Prologue
 {
 public:
   Prologue();

@@ -1,0 +1,94 @@
+Introduction
+
+This software is designed for encoding image data into Tiled WMS format, known as Meta Raster Format or MRF.  TWMS is based on packing all tiles into a single binary data file with external index and header files.  MRF data encoding is performed using a custom GDAL driver.
+
+Requirements
+
+gdal 1.9.0  (NOTE:  Source code must be retained to build MRF driver.)
+
+Step 1 – Install GDAL
+
+The MRF driver plugin links with the rest of GDAL and it has to be compiled with the same compiler, libraries and same options that GDAL was compiled.  It is a plugin, but that doesn’t mean you compile it once and it works on any system with any GDAL.
+
+Download gdal-1.9.0 source:
+wget http://download.osgeo.org/gdal/gdal190.zip
+
+Unpack gdal-1.9.0 source:
+mkdir src
+mv gdal190.zip src/
+cd src/
+unzip gdal190.zip
+
+Go to the gdal source directory:
+cd gdal-1.9.0/
+
+Configure gdal source install:
+set LD_LIBRARY_PATH "<gdal install location>/lib:$LD_LIBRARY_PATH"
+./configure --prefix=<gdal install location>
+The <gdal install location> should be different from where you build the source code for gdal.
+
+Make gdal:
+make
+
+Install gdal:
+make install
+
+
+Step 2 – Install MRF driver
+
+Where,
+<tag location>
+configuration management
+
+<destination_directory>
+location of the MRF driver plugin source code
+
+<gdal source directory>
+location of GDAL source code
+
+<gdal install location>
+location of GDAL installed software
+
+Check out tagged copy of twms gdal driver:
+Eg: svn co https://<tag location> <destination_directory>
+
+Copy the mrf gdal driver to the gdal source tree (this plugin must be compiled here):
+cp -R <destination_directory>/GDAL_MRF/*  <gdal source directory>/frmts/
+
+Go to the mrf driver source directory:
+cd frmts/mrf
+
+Make the driver:
+cp GNUMake Makefile
+make plugin
+
+Install the driver:
+mkdir –p <gdal install location>/lib/gdalplugins
+
+make iplugin
+-OR-
+cp gdal_mrf.so.1 <gdal install location>/lib/gdalplugins
+
+Create links:
+cd <gdal install location>/lib/gdalplugins
+ln -s gdal_mrf.so.1 gdal_mrf.so
+ln –s <gdal install location>/lib/gdalplugins <destination_directory>
+
+Step 3 – Testing
+Verify that the MRF driver is recognized by GDAL:
+gdalinfo --format MRF
+
+List of delivered files
+frmt_marfa.html
+GNUmakefile
+JPEG_band.cpp
+makefile.vc
+marfa_dataset.cpp
+marfa.h
+mrf_band.cpp
+PNG_band.cpp
+Raw_band.cpp
+Tif_band.cpp
+util.cpp
+ZLIB_band.cpp
+

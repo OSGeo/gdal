@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GFT Translator
  * Purpose:  Implements OGRGFTDriver.
@@ -63,8 +62,8 @@ const char *OGRGFTDriver::GetName()
 OGRDataSource *OGRGFTDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    if (!EQUALN(pszFilename, "GFT:", 4))
-        return FALSE;
+    if (!STARTS_WITH_CI(pszFilename, "GFT:"))
+        return NULL;
 
     OGRGFTDataSource   *poDS = new OGRGFTDataSource();
 
@@ -117,9 +116,7 @@ void RegisterOGRGFT()
 
 {
     OGRSFDriver* poDriver = new OGRGFTDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Google Fusion Tables" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_gft.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Google Fusion Tables" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gft.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

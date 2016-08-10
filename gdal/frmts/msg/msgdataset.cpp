@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSG Driver
  * Purpose:  GDALDataset driver for MSG translator for read support.
@@ -28,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+#include "gdal_frmts.h"
 #include "msgdataset.h"
 #include "prologue.h"
 #include "xritheaderparser.h"
@@ -44,10 +44,14 @@
 #include <stdio.h>
 #endif
 
+CPL_CVSID("$Id$");
+
 const double MSGDataset::rCentralWvl[12] = {0.635, 0.810, 1.640, 3.900, 6.250, 7.350, 8.701, 9.660, 10.800, 12.000, 13.400, 0.750};
 const double MSGDataset::rVc[12] = {-1, -1, -1, 2569.094, 1598.566, 1362.142, 1149.083, 1034.345, 930.659, 839.661, 752.381, -1};
 const double MSGDataset::rA[12] = {-1, -1, -1, 0.9959, 0.9963, 0.9991, 0.9996, 0.9999, 0.9983, 0.9988, 0.9981, -1};
 const double MSGDataset::rB[12] = {-1, -1, -1, 3.471, 2.219, 0.485, 0.181, 0.060, 0.627, 0.397, 0.576, -1};
+const int MSGDataset::iCentralPixelVIS_IR = 1856; // center pixel VIS and IR
+const int MSGDataset::iCentralPixelHRV = 5566; // center pixel HRV
 int MSGDataset::iCurrentSatellite = 1; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
 
 #define MAX_SATELLITES 4
@@ -137,7 +141,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     if (sErr.length() > 0)
     {
         if (sErr.compare("-") != 0) // this driver does not recognize this format .. be silent and return false so that another driver can try
-          CPLError( CE_Failure, CPLE_AppDefined, (sErr+"\n").c_str() );
+          CPLError( CE_Failure, CPLE_AppDefined, "%s", (sErr+"\n").c_str() );
         return FALSE;
     }
 
@@ -181,20 +185,19 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         std::string sErr = "The prologue of the data set could not be found at the location specified:\n" + sPrologueFileName + "\n";
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLError( CE_Failure, CPLE_AppDefined, "%s",
                   sErr.c_str() );
         return FALSE;
     }
-      
+
 
 // We're confident the string is formatted as an MSG command_line
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    
-    MSGDataset   *poDS;
-    poDS = new MSGDataset();
+
+    MSGDataset *poDS = new MSGDataset();
     poDS->command = command; // copy it
 
 /* -------------------------------------------------------------------- */
@@ -225,15 +228,17 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
       rPixelSizeX = 1000 * pp.idr()->ReferenceGridHRV->ColumnDirGridStep;
       rPixelSizeY = 1000 * pp.idr()->ReferenceGridHRV->LineDirGridStep;
-      rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns / 2.0); // assumption: (0,0) falls in centre
-      rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridHRV->NumberOfLines / 2.0);
+      // The MSG Level 1.5 Image Data Format Description (page 22f) defines the center of pixel (5566,5566) from SE as sub satellite point for the HRV channel (0°,0° for operational MSG).
+      rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns - iCentralPixelHRV + 0.5);
+      rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridHRV->NumberOfLines - iCentralPixelHRV + 0.5); //scan direction south -> north
     }
     else
     {
       rPixelSizeX = 1000 * pp.idr()->ReferenceGridVIS_IR->ColumnDirGridStep;
       rPixelSizeY = 1000 * pp.idr()->ReferenceGridVIS_IR->LineDirGridStep;
-      rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridVIS_IR->NumberOfColumns / 2.0); // assumption: (0,0) falls in centre
-      rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridVIS_IR->NumberOfLines / 2.0);
+      // The MSG Level 1.5 Image Data Format Description (page 22f) defines the center of pixel (1856,1856) from SE as sub satellite point for the VIS_IR channels (0°,0° for operational MSG).
+      rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridVIS_IR->NumberOfColumns  - iCentralPixelVIS_IR + 0.5);
+      rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridVIS_IR->NumberOfLines - iCentralPixelVIS_IR + 0.5); // The y scan direction is always south -> north
     }
     poDS->adfGeoTransform[0] = rMinX;
     poDS->adfGeoTransform[3] = rMaxY;
@@ -254,11 +259,11 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     // The following are 3 different try-outs for also setting the ellips a and b parameters.
     // We leave them out for now however because this does not work. In gdalwarp, when choosing some
     // specific target SRS, the result is an error message:
-    // 
+    //
     // ERROR 1: geocentric transformation missing z or ellps
     // ERROR 1: GDALWarperOperation::ComputeSourceWindow() failed because
     // the pfnTransformer failed.
-    // 
+    //
     // I can't explain the reason for the message at this time (could be a problem in the way the SRS is set here,
     // but also a bug in Proj.4 or GDAL.
     /*
@@ -276,11 +281,10 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*   Create a transformer to LatLon (only for Reflectance calculation)  */
 /* -------------------------------------------------------------------- */
 
-    char *pszLLTemp;
-    char *pszLLTemp_bak;
+    char *pszLLTemp = NULL;
 
     (poDS->oSRS.GetAttrNode("GEOGCS"))->exportToWkt(&pszLLTemp);
-    pszLLTemp_bak = pszLLTemp; // importFromWkt() changes the pointer
+    char *pszLLTemp_bak = pszLLTemp; // importFromWkt() changes the pointer
     poDS->oLL.importFromWkt(&pszLLTemp);
     CPLFree( pszLLTemp_bak );
 
@@ -301,19 +305,19 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetBand( iBand+1, new MSGRasterBand( poDS, iBand+1 ) );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The MSG driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
     }
-    
+
     return( poDS );
 }
 
@@ -332,7 +336,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
 {
     this->poDS = poDS;
     this->nBand = nBand;
-		
+
     // Find if we're dealing with MSG1, MSG2, MSG3 or MSG4
     // Doing this per band is the only way to guarantee time-series when the satellite is changed
 
@@ -475,9 +479,8 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-        
-    MSGDataset  *poGDS = (MSGDataset *) poDS;
 
+    MSGDataset  *poGDS = (MSGDataset *) poDS;
 
     int iBytesPerPixel = 1;
     if (eDataType == GDT_UInt16)
@@ -497,7 +500,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       strip_number = poGDS->command.iNrStrips(iChannel) - nBlockYOff;
 
     std::string strip_input_file = poGDS->command.sFileName(iSatellite, nBand, strip_number);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the input file                                             */
 /* -------------------------------------------------------------------- */
@@ -512,10 +515,10 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if (xhp.isValid())
         {
           std::vector <short> QualityInfo;
-          unsigned short chunck_height = xhp.nrRows();
-          unsigned short chunck_bpp = xhp.nrBitsPerPixel();
-          unsigned short chunck_width = xhp.nrColumns();
-          unsigned __int8 NR = (unsigned __int8)chunck_bpp;
+          unsigned short chunk_height = xhp.nrRows();
+          unsigned short chunk_bpp = xhp.nrBitsPerPixel();
+          unsigned short chunk_width = xhp.nrColumns();
+          unsigned __int8 NR = (unsigned __int8)chunk_bpp;
           unsigned int nb_ibytes = xhp.dataSize();
           int iShift = 0;
           bool fSplitStrip = false; // in the split strip the "shift" only happens before the split "row"
@@ -529,30 +532,30 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             // When iLowerShift > 0, the lower HRV image is shifted to the right
             // When iLowerShift < 0, the lower HRV image is shifted to the left
             // The available raster may be wider than needed, so that time series don't fall outside the raster.
-            
+
             if (nBlockYOff <= iSplitBlock)
               iShift = -iLowerShift;
             // iShift < 0 means upper image moves to the left
             // iShift > 0 means upper image moves to the right
           }
-          
+
           std::auto_ptr< unsigned char > ibuf( new unsigned char[nb_ibytes]);
-          
+
           if (ibuf.get() == 0)
           {
-             CPLError( CE_Failure, CPLE_AppDefined, 
+             CPLError( CE_Failure, CPLE_AppDefined,
                   "Not enough memory to perform wavelet decompression\n");
             return CE_Failure;
           }
 
           i_file.read( (char *)(ibuf.get()), nb_ibytes);
-          
+
           Util::CDataFieldCompressedImage  img_compressed(ibuf.release(),
                                   nb_ibytes*8,
-                                  (unsigned char)chunck_bpp,
-                                  chunck_width,
-                                  chunck_height      );
-          
+                                  (unsigned char)chunk_bpp,
+                                  chunk_width,
+                                  chunk_height      );
+
           Util::CDataFieldUncompressedImage img_uncompressed;
 
           //****************************************************
@@ -565,20 +568,20 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           // 8 bits -> 8 bits
           // 10 bits -> 16 bits (img_uncompressed contains the 10 bits data in packed form)
           // Geometry:
-          // chunck_width x chunck_height to nBlockXSize x nBlockYSize
+          // chunk_width x chunk_height to nBlockXSize x nBlockYSize
 
           // cases:
           // combination of the following:
           // - scan direction can be north or south
           // - eDataType can be GDT_Byte, GDT_UInt16 or GDT_Float32
-          // - nBlockXSize == chunck_width or nBlockXSize > chunck_width
-          // - when nBlockXSize > chunck_width, fSplitStrip can be true or false
+          // - nBlockXSize == chunk_width or nBlockXSize > chunk_width
+          // - when nBlockXSize > chunk_width, fSplitStrip can be true or false
           // we won't distinguish the following cases:
           // - NR can be == 8 or != 8
-          // - when nBlockXSize > chunck_width, iShift iMinCOff-iMaxCOff <= iShift <= 0
+          // - when nBlockXSize > chunk_width, iShift iMinCOff-iMaxCOff <= iShift <= 0
 
           int nBlockSize = nBlockXSize * nBlockYSize;
-          int y = chunck_width * chunck_height;
+          int y = chunk_width * chunk_height;
           int iStep = -1;
           if (fScanNorth) // image is the other way around
           {
@@ -589,7 +592,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           COMP::CImage cimg (img_uncompressed); // unpack
           if (eDataType == GDT_Byte)
           {
-            if (nBlockXSize == chunck_width) // optimized version
+            if (nBlockXSize == chunk_width) // optimized version
             {
               if (poGDS->command.cDataConversion == 'B')
               {
@@ -608,25 +611,25 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               memset(pImage, 0, nBlockXSize * nBlockYSize * iBytesPerPixel);
               if (poGDS->command.cDataConversion == 'B')
               {
-                for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
-                { 
+                for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
+                {
                   int iXOffset = j * nBlockXSize + iShift;
                   iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
-                  for (int i = 0; i < chunck_width; ++i)
+                  for (int i = 0; i < chunk_width; ++i)
                     ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep] / 4;
                 }
               }
               else
               {
-                for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
-                { 
+                for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
+                {
                   int iXOffset = j * nBlockXSize + iShift;
                   iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
-                  for (int i = 0; i < chunck_width; ++i)
+                  for (int i = 0; i < chunk_width; ++i)
                     ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
                 }
               }
@@ -634,7 +637,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           }
           else if (eDataType == GDT_UInt16) // this is our "normal case" if scan direction is South: 10 bit MSG data became 2 bytes per pixel
           {
-            if (nBlockXSize == chunck_width) // optimized version
+            if (nBlockXSize == chunk_width) // optimized version
             {
               for( int i = 0; i < nBlockSize; ++i )
                   ((GUInt16 *)pImage)[i] = cimg.Get()[y+=iStep];
@@ -643,20 +646,20 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
               // initialize to 0's (so that it does not have to be done in an 'else' statement <performance>)
               memset(pImage, 0, nBlockXSize * nBlockYSize * iBytesPerPixel);
-              for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
+              for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
               {
                 int iXOffset = j * nBlockXSize + iShift;
                 iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                 if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                   iXOffset -= iShift;
-                for (int i = 0; i < chunck_width; ++i)
+                for (int i = 0; i < chunk_width; ++i)
                   ((GUInt16 *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
               }
             }
           }
           else if (eDataType == GDT_Float32) // radiometric calibration is requested
           {
-            if (nBlockXSize == chunck_width) // optimized version
+            if (nBlockXSize == chunk_width) // optimized version
             {
               for( int i = 0; i < nBlockSize; ++i )
                 ((float *)pImage)[i] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], iChannel, nBlockYOff * nBlockYSize + i / nBlockXSize, i % nBlockXSize, poGDS);
@@ -665,15 +668,15 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
               // initialize to 0's (so that it does not have to be done in an 'else' statement <performance>)
               memset(pImage, 0, nBlockXSize * nBlockYSize * iBytesPerPixel);
-              for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
+              for( int j = 0; j < chunk_height; ++j ) // assumption: nBlockYSize == chunk_height
               {
                 int iXOffset = j * nBlockXSize + iShift;
                 iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                 if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                   iXOffset -= iShift;
                 int iXFrom = nBlockXSize - iLowerWestColumnPlanned + iShift; // i is used as the iCol parameter in rRadiometricCorrection
-                int iXTo = nBlockXSize - iLowerWestColumnPlanned + chunck_width + iShift;
-                for (int i = iXFrom; i < iXTo; ++i) // range always equal to chunck_width .. this is to utilize i to get iCol
+                int iXTo = nBlockXSize - iLowerWestColumnPlanned + chunk_width + iShift;
+                for (int i = iXFrom; i < iXTo; ++i) // range always equal to chunk_width .. this is to utilize i to get iCol
                   ((float *)pImage)[++iXOffset] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], iChannel, nBlockYOff * nBlockYSize + j, (fSplitStrip && (j >= iSplitRow))?(i - iShift):i, poGDS);
               }
             }
@@ -695,34 +698,35 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS)
 {
-	int iIndex = iChannel - 1; // just for speed optimization
+  int iIndex = iChannel - 1; // just for speed optimization
 
   double rSlope = poGDS->rCalibrationSlope[iIndex];
   double rOffset = poGDS->rCalibrationOffset[iIndex];
-  
-  if (poGDS->command.cDataConversion == 'T') // reflectance for visual bands, temperatore for IR bands
+
+  // Reflectance for visual bands, temperature for IR bands.
+  if (poGDS->command.cDataConversion == 'T')
   {
     double rRadiance = rOffset + (iDN * rSlope);
 
-		if (iChannel >= 4 && iChannel <= 11) // Channels 4 to 11 (infrared): Temperature
-		{
-			const double rC1 = 1.19104e-5;
-			const double rC2 = 1.43877e+0;
+                if (iChannel >= 4 && iChannel <= 11) // Channels 4 to 11 (infrared): Temperature
+                {
+                        const double rC1 = 1.19104e-5;
+                        const double rC2 = 1.43877e+0;
 
-			double cc2 = rC2 * poGDS->rVc[iIndex];
-			double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
-			double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
-			return rTemperature;
-		}
-		else // Channels 1,2,3 and 12 (visual): Reflectance
-		{
+                        double cc2 = rC2 * poGDS->rVc[iIndex];
+                        double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
+                        double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
+                        return rTemperature;
+                }
+                else // Channels 1,2,3 and 12 (visual): Reflectance
+                {
       double rLon = poGDS->adfGeoTransform[0] + iCol * poGDS->adfGeoTransform[1]; // X, in "geos" meters
       double rLat = poGDS->adfGeoTransform[3] + iRow * poGDS->adfGeoTransform[5]; // Y, in "geos" meters
       if ((poGDS->poTransform != NULL) && poGDS->poTransform->Transform( 1, &rLon, &rLat )) // transform it to latlon
-	      return m_rc->rGetReflectance(rRadiance, rLat, rLon);
-			else
-				return 0;
-		}
+              return m_rc->rGetReflectance(rRadiance, rLat, rLon);
+                        else
+                                return 0;
+                }
   }
   else // radiometric
   {
@@ -743,20 +747,16 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
 void GDALRegister_MSG()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "MSG" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "MSG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "MSG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "MSG HRIT Data" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = MSGDataset::Open;
+    poDriver->SetDescription( "MSG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,  "MSG HRIT Data" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = MSGDataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

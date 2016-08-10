@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
- 
+
 # Setup script for GDAL Python bindings.
 # Inspired by psycopg2 setup.py file
 # http://www.initd.org/tracker/psycopg/browser/psycopg2/trunk/setup.py
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '2.1.0'
+gdal_version = '2.2.0'
 
 import sys
 import os
-import string
 
 from glob import glob
 
@@ -22,10 +21,11 @@ from glob import glob
 HAVE_NUMPY=False
 HAVE_SETUPTOOLS = False
 BUILD_FOR_CHEESESHOP = False
+GNM_ENABLED = False
 
 # ---------------------------------------------------------------------------
 # Default build options
-# (may be overriden with setup.cfg or command line switches).
+# (may be overridden with setup.cfg or command line switches).
 # ---------------------------------------------------------------------------
 
 include_dirs = ['../../port', '../../gcore', '../../alg', '../../ogr/', '../../ogr/ogrsf_frmts', '../../gnm', '../../apps']
@@ -104,7 +104,6 @@ class gdal_config_error(Exception): pass
 
 from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
-from distutils.sysconfig import get_python_inc
 
 def fetch_config(option, gdal_config='gdal-config'):
 
@@ -132,16 +131,16 @@ except OSError, e:
         p.wait()
 
     except ImportError:
-        
+
         import popen2
-        
+
         p = popen2.popen3(command)
         r = p[0].readline().strip()
         if not r:
             raise Warning(p[2].readline())
-    
+
     return r
-    
+
 class gdal_ext(build_ext):
 
     GDAL_CONFIG = 'gdal-config'
@@ -161,20 +160,20 @@ class gdal_ext(build_ext):
 
     def get_compiler(self):
         return self.compiler or get_default_compiler()
-    
+
     def get_gdal_config(self, option):
         try:
             return fetch_config(option, gdal_config = self.gdal_config)
         except gdal_config_error:
-            # If an error is thrown, it is possibly because 
-            # the gdal-config location given in setup.cfg is 
+            # If an error is thrown, it is possibly because
+            # the gdal-config location given in setup.cfg is
             # incorrect, or possibly the default -- ../../apps/gdal-config
-            # We'll try one time to use the gdal-config that might be 
+            # We'll try one time to use the gdal-config that might be
             # on the path. If that fails, we're done, however.
             if not self.already_raised_no_config_error:
                 self.already_raised_no_config_error = True
                 return fetch_config(option)
-            
+
     def finalize_options(self):
         if self.include_dirs is None:
             self.include_dirs = include_dirs
@@ -187,9 +186,9 @@ class gdal_ext(build_ext):
             self.libraries = libraries
 
         build_ext.finalize_options(self)
-        
+
         self.include_dirs.append(self.numpy_include_dir)
-        
+
         if self.get_compiler() == 'msvc':
             return True
 
@@ -240,15 +239,24 @@ gnm_module = Extension('osgeo._gnm',
 ext_modules = [gdal_module,
               gdalconst_module,
               osr_module,
-              ogr_module,
-              gnm_module]
+              ogr_module]
 
 py_modules = ['gdal',
               'ogr',
               'osr',
-              'gdalconst',
-              'gnm']
-      
+              'gdalconst']
+
+if os.path.exists('setup_vars.ini'):
+    with open('setup_vars.ini') as f:
+        lines = f.readlines()
+        if 'GNM_ENABLED=yes' in lines or 'GNM_ENABLED=yes\n' in lines:
+            GNM_ENABLED = True
+
+if GNM_ENABLED:
+    ext_modules.append(gnm_module)
+    py_modules.append('gnm')
+
+
 if HAVE_NUMPY:
     ext_modules.append(array_module)
     py_modules.append('gdalnumeric')
@@ -279,16 +287,15 @@ classifiers = [
         'Programming Language :: C++',
         'Topic :: Scientific/Engineering :: GIS',
         'Topic :: Scientific/Engineering :: Information Analysis',
-        
-]
 
+]
 
 
 if BUILD_FOR_CHEESESHOP:
     data_files = [("osgeo/data/gdal", glob(os.path.join("../../data", "*")))]
 else:
     data_files = None
-    
+
 exclude_package_data = {'':['GNUmakefile']}
 
 if HAVE_SETUPTOOLS:

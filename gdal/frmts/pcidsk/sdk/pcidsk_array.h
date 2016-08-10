@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_ARRAY_H
-#define __INCLUDE_PCIDSK_ARRAY_H
+#ifndef INCLUDE_PCIDSK_ARRAY_H
+#define INCLUDE_PCIDSK_ARRAY_H
 
 #include <string>
 #include <vector>
@@ -53,4 +53,4 @@ namespace PCIDSK
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_PCIDSK_ARRAY_H
+#endif // INCLUDE_PCIDSK_ARRAY_H

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM db based generic driver.
@@ -31,6 +30,8 @@
 
 #include "gnmdb.h"
 #include "gnm_priv.h"
+
+CPL_CVSID("$Id$");
 
 GNMDatabaseNetwork::GNMDatabaseNetwork() : GNMGenericNetwork()
 {
@@ -105,14 +106,14 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
         return CE_Failure;
     }
 
-    GDALDriver *poDriver = m_poDS->GetDriver();
-    if(NULL == poDriver)
+    GDALDriver *l_poDriver = m_poDS->GetDriver();
+    if(NULL == l_poDriver)
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Get dataset driver failed");
         return CE_Failure;
     }
 
-    if(!CheckStorageDriverSupport(poDriver->GetDescription()))
+    if(!CheckStorageDriverSupport(l_poDriver->GetDescription()))
     {
         return CE_Failure;
     }
@@ -214,7 +215,7 @@ int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename, char **papszO
                                       GDAL_OF_UPDATE, NULL, NULL, papszOptions );
     }
 
-    bool bOverwrite = CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE);
+    const bool bOverwrite = CPLFetchBool(papszOptions, "OVERWRITE", false);
 
     std::vector<int> anDeleteLayers;
     int i;
@@ -235,7 +236,7 @@ int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename, char **papszO
     if(anDeleteLayers.empty())
         return FALSE;
 
-    if(bOverwrite)
+    if( bOverwrite )
     {
         for(i = (int)anDeleteLayers.size(); i > 0; i--)
         {
@@ -264,7 +265,7 @@ CPLErr GNMDatabaseNetwork::DeleteGraphLayer()
 }
 
 CPLErr GNMDatabaseNetwork::DeleteFeaturesLayer()
-{    
+{
     return DeleteLayerByName(GNM_SYSLAYER_FEATURES);
 }
 

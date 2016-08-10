@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Simple client for viewing OGR driver data.
@@ -51,7 +50,7 @@ int main( int nArgc, char ** papszArgv )
 {
     const char  *pszDataSource = NULL;
     char        **papszLayers = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */
@@ -102,7 +101,7 @@ int main( int nArgc, char ** papszArgv )
     if( poDS == NULL )
     {
         OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-        
+
         printf( "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
                 pszDataSource );
@@ -123,11 +122,9 @@ int main( int nArgc, char ** papszArgv )
         printf( "INFO: Open of `%s'\n"
                 "using driver `%s' successful.\n",
                 pszDataSource, poDriver->GetName() );
-        printf("Tiger Version: %s\n", 
+        printf("Tiger Version: %s\n",
                TigerVersionString(((OGRTigerDataSource*)poDS)->GetVersion()));
     }
-
-
 
     if( bVerbose && !EQUAL(pszDataSource,poDS->GetName()) )
     {
@@ -135,7 +132,6 @@ int main( int nArgc, char ** papszArgv )
                 "      different from user name `%s'.\n",
                 poDS->GetName(), pszDataSource );
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
@@ -172,7 +168,7 @@ int main( int nArgc, char ** papszArgv )
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
-    
+
     return 0;
 }
 
@@ -197,7 +193,7 @@ static void ReportOnLayer( OGRLayer * poLayer )
     OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
 
     printf( "\n" );
-    
+
     printf( "Layer name: %s\n", poDefn->GetName() );
 
     printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
@@ -205,7 +201,7 @@ static void ReportOnLayer( OGRLayer * poLayer )
     if( bVerbose )
     {
         char    *pszWKT;
-        
+
         if( poLayer->GetSpatialRef() == NULL )
             pszWKT = CPLStrdup( "(NULL)" );
         else
@@ -214,7 +210,7 @@ static void ReportOnLayer( OGRLayer * poLayer )
         printf( "Layer SRS WKT: %s\n", pszWKT );
         CPLFree( pszWKT );
     }
-    
+
     for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
     {
         OGRFieldDefn    *poField = poDefn->GetFieldDefn( iAttr );

@@ -13,8 +13,8 @@
  * (http://www.opensource.org/licenses/mit-license.php)
  */
 
-#ifndef _printbuf_h_
-#define _printbuf_h_
+#ifndef printbuf_h_
+#define printbuf_h_
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +45,7 @@ do {                                                         \
     memcpy(p->buf + p->bpos, (bufptr), bufsize);             \
     p->bpos += bufsize;                                      \
     p->buf[p->bpos]= '\0';                                   \
-  } else {  printbuf_memappend(p, (bufptr), bufsize); }      \
+  } else {  printbuf_memappend(p, (bufptr), (int)(bufsize)); }      \
 } while (0)
 
 #define printbuf_length(p) ((p)->bpos)

@@ -5,7 +5,7 @@
  * MgetAttribute reads an attribute if it is available.
  * Be aware that you can't pass a simple pointer to some 
  * (array of) structure(s) due to allignment en endian problems.
- * At some time there will be a seperate get function for each attribute
+ * At some time there will be a separate get function for each attribute
  * returns 0 if the attribute is not found, arg id if
  * the attribute is found.
  */
@@ -13,7 +13,7 @@ CSF_ATTR_ID CsfGetAttribute(
 	 MAP *m, /* map handle */
 	 CSF_ATTR_ID id, /* id of attribute to be read */
 	 size_t  elSize, /* size of each data-element */
-	 size_t *nmemb, /* write-only. how many elSize mebers are read */
+	 size_t *nmemb, /* write-only. How many elSize members are read. */
 	 void  *attr) /* write-only. buffer where attribute is read in.
 	               * Must be big enough to hold buffer.
 	               */

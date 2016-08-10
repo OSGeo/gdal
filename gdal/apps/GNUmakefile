@@ -14,9 +14,8 @@ BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
 		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
 
 OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o \
-	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o
+	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o gdal_rasterize_lib.o gdalbuildvrt_lib.o
 
-ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
 		gdaltindex$(EXE) \
 		gdal_rasterize$(EXE) \
@@ -27,7 +26,6 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		ogrlineref$(EXE) \
 		testepsg$(EXE) \
 		gdalbuildvrt$(EXE)
-endif
 
 ifeq ($(GNM_ENABLED),yes)
 BIN_LIST += 	gnmmanage$(EXE) gnmanalyse$(EXE)
@@ -74,6 +72,12 @@ nearblack_lib.$(OBJ_EXT): nearblack_lib.cpp
 gdal_grid_lib.$(OBJ_EXT): gdal_grid_lib.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
+gdal_rasterize_lib.$(OBJ_EXT): gdal_rasterize_lib.cpp
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+gdalbuildvrt_lib.$(OBJ_EXT): gdalbuildvrt_lib.cpp
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
 gdalinfo$(EXE):	gdalinfo_bin.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) $(CONFIG_LIB_UTILS) -o $@
 
@@ -98,13 +102,13 @@ nearblack$(EXE):	nearblack_bin.$(OBJ_EXT) $(DEP_LIBS)
 gdalmanage$(EXE):	gdalmanage.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdal_rasterize$(EXE):	gdal_rasterize.$(OBJ_EXT) $(DEP_LIBS)
+gdal_rasterize$(EXE):	gdal_rasterize_bin.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdaltindex$(EXE):	gdaltindex.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
-gdalbuildvrt$(EXE):	gdalbuildvrt.$(OBJ_EXT) $(DEP_LIBS)
+gdalbuildvrt$(EXE):	gdalbuildvrt_bin.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 multireadtest$(EXE):	multireadtest.$(OBJ_EXT) $(DEP_LIBS)
@@ -188,7 +192,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts -I$(GDAL_ROOT)/frmts/vrt -I$(GDAL_ROOT)/apps"' >> gdal-config
 	echo 'CONFIG_DATA="$(GDAL_ROOT)/data"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
-	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config
+	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config  # Deprecated.  Always true.
 	echo 'CONFIG_GNM_ENABLED=$(GNM_ENABLED)' >> gdal-config
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config
 	cat gdal-config.in >> gdal-config
@@ -203,7 +207,7 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_CFLAGS="-I$(INST_INCLUDE)"' >> gdal-config-inst
 	echo 'CONFIG_DATA="$(INST_DATA)"' >> gdal-config-inst
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
-	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config-inst
+	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config-inst  # Deprecated.  Always true.
 	echo 'CONFIG_GNM_ENABLED=$(GNM_ENABLED)' >> gdal-config-inst
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config-inst
 	cat gdal-config.in >> gdal-config-inst

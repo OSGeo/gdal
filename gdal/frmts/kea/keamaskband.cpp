@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keamaskband.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -7,31 +6,33 @@
  *
  *  This file is part of LibKEA.
  *
- *  Permission is hereby granted, free of charge, to any person 
- *  obtaining a copy of this software and associated documentation 
- *  files (the "Software"), to deal in the Software without restriction, 
- *  including without limitation the rights to use, copy, modify, 
- *  merge, publish, distribute, sublicense, and/or sell copies of the 
- *  Software, and to permit persons to whom the Software is furnished 
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without restriction,
+ *  including without limitation the rights to use, copy, modify,
+ *  merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished
  *  to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be 
+ *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
 #include "keamaskband.h"
 
+CPL_CVSID("$Id$");
+
 // constructor
-KEAMaskBand::KEAMaskBand(GDALRasterBand *pParent, 
+KEAMaskBand::KEAMaskBand(GDALRasterBand *pParent,
                 kealib::KEAImageIO *pImageIO, int *pRefCount)
 {
     m_nSrcBand = pParent->GetBand();
@@ -65,7 +66,7 @@ KEAMaskBand::~KEAMaskBand()
         {
             m_pImageIO->close();
         }
-        catch (kealib::KEAIOException &e)
+        catch (const kealib::KEAIOException &)
         {
         }
         delete m_pImageIO;
@@ -95,7 +96,7 @@ CPLErr KEAMaskBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
         this->m_pImageIO->readImageBlock2BandMask( this->m_nSrcBand,
                                             pImage, this->nBlockXSize * nBlockXOff,
                                             this->nBlockYSize * nBlockYOff,
-                                            nxsize, nysize, this->nBlockXSize, this->nBlockYSize, 
+                                            nxsize, nysize, this->nBlockXSize, this->nBlockYSize,
                                             kealib::kea_8uint );
     }
     catch (kealib::KEAIOException &e)
@@ -127,7 +128,7 @@ CPLErr KEAMaskBand::IWriteBlock( int nBlockXOff, int nBlockYOff, void * pImage )
             nysize -= (nytotalsize - this->nRasterYSize);
         }
 
-        this->m_pImageIO-> writeImageBlock2BandMask( this->m_nSrcBand, 
+        this->m_pImageIO-> writeImageBlock2BandMask( this->m_nSrcBand,
                                             pImage, this->nBlockXSize * nBlockXOff,
                                             this->nBlockYSize * nBlockYOff,
                                             nxsize, nysize, this->nBlockXSize, this->nBlockYSize,

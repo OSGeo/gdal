@@ -1,12 +1,12 @@
-#ifndef _drstemplates_H
-#define _drstemplates_H
+#ifndef drstemplates_H
+#define drstemplates_H
 #include "grib2.h"
 
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-26
 //
 // ABSTRACT: This Fortran Module contains info on all the available 
 //   GRIB2 Data Representation Templates used in Section 5 (DRS).
-//   The information decribing each template is stored in the
+//   The information describing each template is stored in the
 //   drstemplate structure defined below.
 //
 //   Each Template has three parts: The number of entries in the template
@@ -42,7 +42,7 @@
           g2int mapdrs[MAXDRSMAPLEN];
       };
 
-const struct drstemplate *get_templatesdrs();
+const struct drstemplate *get_templatesdrs(void);
 g2int getdrsindex(g2int number);
 
-#endif  /*  _drstemplates_H  */
+#endif  /*  drstemplates_H  */

@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_grid testing
 # Author:   Even Rouault <even dot rouault @ spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2015, Even Rouault <even dot rouault at spatialys dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -40,11 +40,9 @@ import gdaltest
 import ogrtest
 
 ###############################################################################
-# 
+#
 
 def test_gdal_grid_lib_1():
-
-    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
 
     # Create an OGR grid from the values of n43.dt0
     ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -68,7 +66,7 @@ def test_gdal_grid_lib_1():
     shape_ds.ExecuteSQL('CREATE SPATIAL INDEX ON n43')
 
     shape_ds = None
-    
+
     spatFilter = None
     if ogrtest.have_geos():
         spatFilter = [ -180, -90, 180, 90 ]
@@ -93,6 +91,49 @@ def test_gdal_grid_lib_1():
     return 'success'
 
 ###############################################################################
+# Test with a point number not multiple of 8 or 16
+
+def test_gdal_grid_lib_2():
+
+    shape_ds = ogr.Open( '/vsimem/tmp', update = 1 )
+    shape_lyr = shape_ds.CreateLayer( 'test_gdal_grid_lib_2' )
+    dst_feat = ogr.Feature( feature_def = shape_lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0 100)'))
+    shape_lyr.CreateFeature( dst_feat )
+    shape_ds = None
+
+    for env_list in [ [('GDAL_USE_AVX', 'NO'), ('GDAL_USE_SSE', 'NO')], [('GDAL_USE_AVX', 'NO')], [] ]:
+
+        for (key,value) in env_list:
+            gdal.SetConfigOption(key,value)
+
+        # Point strictly on grid
+        ds1 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format = 'MEM', \
+                        outputBounds = [ -0.5, -0.5, 0.5, 0.5 ], \
+                        width = 1, height = 1, outputType = gdal.GDT_Byte)
+
+        ds2 = gdal.Grid('', '/vsimem/tmp/test_gdal_grid_lib_2.shp', format = 'MEM', \
+                        outputBounds = [ -0.4, -0.4, 0.6, 0.6 ], \
+                        width = 10, height = 10, outputType = gdal.GDT_Byte)
+
+        gdal.SetConfigOption('GDAL_USE_AVX', None)
+        gdal.SetConfigOption('GDAL_USE_SSE', None)
+
+        cs = ds1.GetRasterBand(1).Checksum()
+        if cs != 2:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+
+        cs = ds2.GetRasterBand(1).Checksum()
+        if cs != 1064:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_grid_lib_cleanup():
@@ -103,6 +144,7 @@ def test_gdal_grid_lib_cleanup():
 
 gdaltest_list = [
     test_gdal_grid_lib_1,
+    test_gdal_grid_lib_2,
     test_gdal_grid_lib_cleanup,
     ]
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements TigerOverUnder, providing access to .RTU files.
@@ -81,6 +80,6 @@ OGRFeature *TigerOverUnder::GetFeature( int nRecordId )
 
 OGRErr TigerOverUnder::CreateFeature( OGRFeature *poFeature )
 {
-  return TigerPoint::CreateFeature( poFeature, 
+  return TigerPoint::CreateFeature( poFeature,
                                     62 );
 }

@@ -20,7 +20,7 @@ g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl
 //                          g2int **igdstmpl,g2int *mapgridlen,
 //                          g2int **ideflist,g2int *idefnum)
 //   INPUT ARGUMENTS:
-//     cgrib    - Char array ontaining Section 3 of the GRIB2 message
+//     cgrib    - Char array containing Section 3 of the GRIB2 message.
 //     iofst    - Bit offset for the beginning of Section 3 in cgrib.
 //
 //   OUTPUT ARGUMENTS:      
@@ -42,9 +42,9 @@ g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl
 //                the specified Grid Definition
 //                Template ( NN=igds[4] ).  Each element of this integer 
 //                array contains an entry (in the order specified) of Grid
-//                Defintion Template 3.NN
+//                Definition Template 3.NN
 //     mapgridlen- Number of elements in igdstmpl[].  i.e. number of entries
-//                in Grid Defintion Template 3.NN  ( NN=igds[4] ).
+//                in Grid Definition Template 3.NN  ( NN=igds[4] ).
 //     ideflist - (Used if igds[2] .ne. 0)  Pointer to integer array containing
 //                the number of grid points contained in each row ( or column ).
 //                (part of Section 3)

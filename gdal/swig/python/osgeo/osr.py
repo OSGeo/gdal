@@ -138,6 +138,7 @@ SRS_PT_WINKEL_TRIPEL = _osr.SRS_PT_WINKEL_TRIPEL
 SRS_PT_CRASTER_PARABOLIC = _osr.SRS_PT_CRASTER_PARABOLIC
 SRS_PT_LOXIMUTHAL = _osr.SRS_PT_LOXIMUTHAL
 SRS_PT_QUARTIC_AUTHALIC = _osr.SRS_PT_QUARTIC_AUTHALIC
+SRS_PT_SCH = _osr.SRS_PT_SCH
 SRS_PP_CENTRAL_MERIDIAN = _osr.SRS_PP_CENTRAL_MERIDIAN
 SRS_PP_SCALE_FACTOR = _osr.SRS_PP_SCALE_FACTOR
 SRS_PP_STANDARD_PARALLEL_1 = _osr.SRS_PP_STANDARD_PARALLEL_1
@@ -167,6 +168,10 @@ SRS_PP_LATITUDE_OF_1ST_POINT = _osr.SRS_PP_LATITUDE_OF_1ST_POINT
 SRS_PP_LONGITUDE_OF_1ST_POINT = _osr.SRS_PP_LONGITUDE_OF_1ST_POINT
 SRS_PP_LATITUDE_OF_2ND_POINT = _osr.SRS_PP_LATITUDE_OF_2ND_POINT
 SRS_PP_LONGITUDE_OF_2ND_POINT = _osr.SRS_PP_LONGITUDE_OF_2ND_POINT
+SRS_PP_PEG_POINT_LATITUDE = _osr.SRS_PP_PEG_POINT_LATITUDE
+SRS_PP_PEG_POINT_LONGITUDE = _osr.SRS_PP_PEG_POINT_LONGITUDE
+SRS_PP_PEG_POINT_HEADING = _osr.SRS_PP_PEG_POINT_HEADING
+SRS_PP_PEG_POINT_HEIGHT = _osr.SRS_PP_PEG_POINT_HEIGHT
 SRS_UL_METER = _osr.SRS_UL_METER
 SRS_UL_FOOT = _osr.SRS_UL_FOOT
 SRS_UL_FOOT_CONV = _osr.SRS_UL_FOOT_CONV
@@ -230,6 +235,13 @@ SRS_DN_WGS72 = _osr.SRS_DN_WGS72
 SRS_DN_WGS84 = _osr.SRS_DN_WGS84
 SRS_WGS84_SEMIMAJOR = _osr.SRS_WGS84_SEMIMAJOR
 SRS_WGS84_INVFLATTENING = _osr.SRS_WGS84_INVFLATTENING
+OAO_Other = _osr.OAO_Other
+OAO_North = _osr.OAO_North
+OAO_South = _osr.OAO_South
+OAO_East = _osr.OAO_East
+OAO_West = _osr.OAO_West
+OAO_Up = _osr.OAO_Up
+OAO_Down = _osr.OAO_Down
 
 def GetUseExceptions(*args):
   """GetUseExceptions() -> int"""
@@ -332,6 +344,10 @@ class SpatialReference(_object):
         """GetAngularUnits(SpatialReference self) -> double"""
         return _osr.SpatialReference_GetAngularUnits(self, *args)
 
+    def GetAngularUnitsName(self, *args):
+        """GetAngularUnitsName(SpatialReference self) -> char const *"""
+        return _osr.SpatialReference_GetAngularUnitsName(self, *args)
+
     def SetTargetLinearUnits(self, *args):
         """SetTargetLinearUnits(SpatialReference self, char const * target, char const * name, double to_meters) -> OGRErr"""
         return _osr.SpatialReference_SetTargetLinearUnits(self, *args)
@@ -359,6 +375,14 @@ class SpatialReference(_object):
     def GetAuthorityName(self, *args):
         """GetAuthorityName(SpatialReference self, char const * target_key) -> char const *"""
         return _osr.SpatialReference_GetAuthorityName(self, *args)
+
+    def GetAxisName(self, *args):
+        """GetAxisName(SpatialReference self, char const * target_key, int iAxis) -> char const *"""
+        return _osr.SpatialReference_GetAxisName(self, *args)
+
+    def GetAxisOrientation(self, *args):
+        """GetAxisOrientation(SpatialReference self, char const * target_key, int iAxis) -> OGRAxisOrientation"""
+        return _osr.SpatialReference_GetAxisOrientation(self, *args)
 
     def SetUTM(self, *args):
         """SetUTM(SpatialReference self, int zone, int north=1) -> OGRErr"""

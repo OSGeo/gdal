@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR XLSX driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -386,11 +386,11 @@ def ogr_xlsx_9():
 
 def ogr_xlsx_10():
 
-    drv = ogr.GetDriverByName('ODS')
+    drv = ogr.GetDriverByName('XLSX')
     if drv is None:
         return 'skip'
 
-    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_10.ods')
+    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_10.xlsx')
     lyr = ds.CreateLayer('foo')
     lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTDateTime))
     lyr.CreateField(ogr.FieldDefn('Field2', ogr.OFTDateTime))
@@ -403,7 +403,7 @@ def ogr_xlsx_10():
     f = None
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_xlsx_10.ods')
+    ds = ogr.Open('/vsimem/ogr_xlsx_10.xlsx')
     lyr = ds.GetLayer(0)
     for i in range(3):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
@@ -424,7 +424,27 @@ def ogr_xlsx_10():
         return 'fail'
     ds = None
 
-    gdal.Unlink('/vsimem/ogr_xlsx_10.ods')
+    gdal.Unlink('/vsimem/ogr_xlsx_10.xlsx')
+
+    return 'success'
+
+###############################################################################
+# Test reading sheet with more than 26 columns with holes (#6363)"
+
+def ogr_xlsx_11():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/not_all_columns_present.xlsx')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    for i in (0,27,28,29):
+        if f['Field%d' % (i+1)] != 'val%d' % (i+1):
+            f.DumpReadable()
+            return 'fail'
+    ds = None
 
     return 'success'
 
@@ -438,7 +458,8 @@ gdaltest_list = [
     ogr_xlsx_7,
     ogr_xlsx_8,
     ogr_xlsx_9,
-    ogr_xlsx_10
+    ogr_xlsx_10,
+    ogr_xlsx_11
 ]
 
 if __name__ == '__main__':

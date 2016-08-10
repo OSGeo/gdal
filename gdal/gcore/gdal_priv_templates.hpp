@@ -71,6 +71,7 @@ inline void GDALGetDataLimits(Tin &tMaxValue, Tin &tMinValue)
     else if (std::numeric_limits<Tout>::is_integer)
     {
         // the output is unsigned, so we just need to determine the max
+        /* coverity[same_on_both_sides] */
         if (std::numeric_limits<Tout>::digits <= std::numeric_limits<Tin>::digits)
         {
             // Tout is smaller than Tin, so we need to clamp the input values
@@ -267,7 +268,7 @@ inline void GDALCopyWord(const float fValueIn, int &nValueOut)
     }
     else
     {
-        nValueOut = static_cast<int>(fValueIn > 0.0f ? 
+        nValueOut = static_cast<int>(fValueIn > 0.0f ?
             fValueIn + 0.5f : fValueIn - 0.5f);
     }
 }
@@ -376,11 +377,11 @@ inline void GDALCopy4WordsSSE(const float* pValueIn, Tout* const &pValueOut)
     float fMaxVal, fMinVal;
     GDALGetDataLimits<float, Tout>(fMaxVal, fMinVal);
     __m128 xmm = _mm_loadu_ps(pValueIn);
-    
+
     __m128 xmm_min = _mm_set1_ps(fMinVal);
     __m128 xmm_max = _mm_set1_ps(fMaxVal);
     xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
-    
+
 #ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
     __m128 p0d5 = _mm_set1_ps(0.5f);
      if (std::numeric_limits<Tout>::is_signed)

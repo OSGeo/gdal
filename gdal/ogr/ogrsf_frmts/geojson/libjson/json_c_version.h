@@ -5,8 +5,8 @@
  * it under the terms of the MIT license. See COPYING for details.
  */
 
-#ifndef _json_c_version_h_
-#define _json_c_version_h_
+#ifndef json_c_version_h_
+#define json_c_version_h_
 
 #define JSON_C_MAJOR_VERSION 0
 #define JSON_C_MINOR_VERSION 11

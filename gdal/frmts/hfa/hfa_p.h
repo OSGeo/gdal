@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _HFA_P_H_INCLUDED
-#define _HFA_P_H_INCLUDED
+#ifndef HFA_P_H_INCLUDED
+#define HFA_P_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -42,6 +42,8 @@
 #else
    void HFAStandard( int, void *);
 #endif
+
+#include "hfa.h"
 
 class HFAEntry;
 class HFAType;
@@ -63,7 +65,7 @@ typedef enum {
 /*      This is just a structure, and used hold info about the whole    */
 /*      dataset within hfaopen.cpp                                      */
 /************************************************************************/
-typedef struct hfainfo {
+struct hfainfo {
     VSILFILE	*fp;
 
     char	*pszPath;
@@ -75,7 +77,7 @@ typedef struct hfainfo {
     GUInt32     nEndOfFile;
     GUInt32	nRootPos;
     GUInt32	nDictionaryPos;
-    
+
     GInt16	nEntryHeaderLength;
     GInt32	nVersion;
 
@@ -96,24 +98,42 @@ typedef struct hfainfo {
     void        *pProParameters;
 
     struct hfainfo *psDependent;
-} HFAInfo_t;
+};
+
+typedef struct hfainfo HFAInfo_t;
 
 GUInt32 HFAAllocateSpace( HFAInfo_t *, GUInt32 );
 CPLErr  HFAParseBandInfo( HFAInfo_t * );
 HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
 HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase );
-int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers, 
-                         int nBlockSize, int nDataType,
-                         GIntBig *pnValidFlagsOffset, 
+int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers,
+                         int nBlockSize, EPTType eDataType,
+                         GIntBig *pnValidFlagsOffset,
                          GIntBig *pnDataOffset );
 
-const char ** GetHFAAuxMetaDataList();
+const char * const * GetHFAAuxMetaDataList();
 
 double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors );
 
-#define HFA_PRIVATE
+int CPL_DLL
+HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
+                const char *pszLayerName,
+                int bOverview, int nBlockSize,
+                int bCreateCompressed, int bCreateLargeRaster,
+                int bDependentLayer,
+                int nXSize, int nYSize, EPTType eDataType,
+                char **papszOptions,
 
-#include "hfa.h"
+                // these are only related to external (large) files
+                GIntBig nStackValidFlagsOffset,
+                GIntBig nStackDataOffset,
+                int nStackCount, int nStackIndex );
+
+char *
+HFAPCSStructToWKT( const Eprj_Datum *psDatum,
+                   const Eprj_ProParameters *psPro,
+                   const Eprj_MapInfo *psMapInfo,
+                   HFAEntry *poMapInformation );
 
 /************************************************************************/
 /*                               HFABand                                */
@@ -134,7 +154,7 @@ class HFABand
     int         nLayerStackCount;
     int         nLayerStackIndex;
 
-#define BFLG_VALID	0x01    
+#define BFLG_VALID	0x01
 #define BFLG_COMPRESSED	0x02
 
     int		nPCTColors;
@@ -143,7 +163,7 @@ class HFABand
 
     CPLErr	LoadBlockInfo();
     CPLErr	LoadExternalBlockInfo();
-    
+
     void ReAllocBlock( int iBlock, int nSize );
     void NullBlock( void * );
 
@@ -152,12 +172,12 @@ class HFABand
   public:
     		HFABand( HFAInfo_t *, HFAEntry * );
                 ~HFABand();
-                
+
     HFAInfo_t	*psInfo;
 
     VSILFILE	*fpExternal;
-                         
-    int		nDataType;
+
+    EPTType	eDataType;
     HFAEntry	*poNode;
 
     int		nBlockXSize;
@@ -175,10 +195,10 @@ class HFABand
     int         bOverviewsPending;
     int		nOverviews;
     HFABand     **papoOverviews;
-    
+
     CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDataSize );
     CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
-    
+
     const char * GetBandName();
     void SetBandName(const char *pszName);
 
@@ -206,14 +226,14 @@ class HFAEntry
 {
     int         bDirty;
     GUInt32	nFilePos;
-    
+
     HFAInfo_t	*psHFA;
     HFAEntry	*poParent;
     HFAEntry	*poPrev;
 
     GUInt32	nNextPos;
     HFAEntry	*poNext;
-    
+
     GUInt32	nChildPos;
     HFAEntry	*poChild;
 
@@ -235,56 +255,58 @@ class HFAEntry
     int         bIsMIFObject;
 
                 HFAEntry();
-                HFAEntry( HFAEntry *poContainer,
-                          const char *pszMIFObjectPath,
-                          const char * pszDictionnary, 
+                HFAEntry( const char * pszDictionary,
                           const char * pszTypeName,
                           int nDataSizeIn,
                           GByte* pabyDataIn );
-    std::vector<HFAEntry*> FindChildren( const char *pszName, 
+    std::vector<HFAEntry*> FindChildren( const char *pszName,
                                          const char *pszType,
                                          int nRecLevel,
                                          int* pbErrorDetected);
 
 public:
     static HFAEntry* New( HFAInfo_t * psHFA, GUInt32 nPos,
-                          HFAEntry * poParent, HFAEntry *poPrev);
+                          HFAEntry * poParent, HFAEntry *poPrev) CPL_WARN_UNUSED_RESULT;
 
-                 HFAEntry( HFAInfo_t *psHFA, 
+                 HFAEntry( HFAInfo_t *psHFA,
                           const char *pszNodeName,
                           const char *pszTypeName,
                           HFAEntry *poParent );
 
-                          
-    virtual     ~HFAEntry();                
-    
-    static HFAEntry*  BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath );
+    static HFAEntry* New( HFAInfo_t *psHFA,
+                          const char *pszNodeName,
+                          const char *pszTypeName,
+                          HFAEntry *poParent ) CPL_WARN_UNUSED_RESULT;
+
+    virtual     ~HFAEntry();
+
+    static HFAEntry*  BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath ) CPL_WARN_UNUSED_RESULT;
 
     CPLErr      RemoveAndDestroy();
 
-    GUInt32	GetFilePos() { return nFilePos; }
+    GUInt32	GetFilePos() CPL_WARN_UNUSED_RESULT { return nFilePos; }
 
-    const char	*GetName() { return szName; }
+    const char	*GetName() CPL_WARN_UNUSED_RESULT { return szName; }
     void SetName( const char *pszNodeName );
-    
-    const char  *GetType() { return szType; }
-    HFAType     *GetTypeObject();
 
-    GByte      *GetData() { LoadData(); return pabyData; }
-    GUInt32	GetDataPos() { return nDataPos; }
-    GUInt32	GetDataSize() { return nDataSize; }
+    const char  *GetType() CPL_WARN_UNUSED_RESULT { return szType; }
+    HFAType     *GetTypeObject() CPL_WARN_UNUSED_RESULT;
 
-    HFAEntry	*GetChild();
-    HFAEntry	*GetNext();
-    HFAEntry    *GetNamedChild( const char * );
-    std::vector<HFAEntry*> FindChildren( const char *pszName, 
-                                         const char *pszType);
+    GByte      *GetData() CPL_WARN_UNUSED_RESULT { LoadData(); return pabyData; }
+    GUInt32	GetDataPos() CPL_WARN_UNUSED_RESULT { return nDataPos; }
+    GUInt32	GetDataSize() CPL_WARN_UNUSED_RESULT { return nDataSize; }
 
-    GInt32	GetIntField( const char *, CPLErr * = NULL );
-    double	GetDoubleField( const char *, CPLErr * = NULL );
-    const char	*GetStringField( const char *, CPLErr * = NULL, int *pnRemainingDataSize = NULL );
-    GIntBig     GetBigIntField( const char *, CPLErr * = NULL );
-    int         GetFieldCount( const char *, CPLErr * = NULL );
+    HFAEntry	*GetChild() CPL_WARN_UNUSED_RESULT;
+    HFAEntry	*GetNext() CPL_WARN_UNUSED_RESULT;
+    HFAEntry    *GetNamedChild( const char * ) CPL_WARN_UNUSED_RESULT;
+    std::vector<HFAEntry*> FindChildren( const char *pszName,
+                                         const char *pszType) CPL_WARN_UNUSED_RESULT;
+
+    GInt32	GetIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    double	GetDoubleField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    const char	*GetStringField( const char *, CPLErr * = NULL, int *pnRemainingDataSize = NULL ) CPL_WARN_UNUSED_RESULT;
+    GIntBig     GetBigIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    int         GetFieldCount( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
 
     CPLErr      SetIntField( const char *, int );
     CPLErr      SetDoubleField( const char *, double );
@@ -309,7 +331,7 @@ class HFAField
 {
   public:
     int		nBytes;
-    
+
     int		nItemCount;
     char	chPointer; 	/* '\0', '*' or 'p' */
     char	chItemType;	/* 1|2|4|e|... */
@@ -340,10 +362,10 @@ class HFAField
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                      char chReqType, void *pValue );
 
-    void	DumpInstValue( FILE *fpOut, 
+    void	DumpInstValue( FILE *fpOut,
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                      const char *pszPrefix = NULL );
-    
+
     int		GetInstBytes( GByte *, int );
     int		GetInstCount( GByte * pabyData, int nDataSize );
 };
@@ -361,7 +383,7 @@ class HFAType
 
   public:
     int		nBytes;
-    
+
     int		nFields;
     HFAField	**papoFields;
 
@@ -369,7 +391,7 @@ class HFAType
 
     		HFAType();
                 ~HFAType();
-                
+
     const char *Initialize( const char * );
 
     void	CompleteDefn( HFADictionary * );
@@ -377,7 +399,7 @@ class HFAType
     void	Dump( FILE * );
 
     int		GetInstBytes( GByte *, int );
-    int         GetInstCount( const char *pszField, 
+    int         GetInstCount( const char *pszField,
                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize);
     int         ExtractInstValue( const char * pszField,
                                   GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
@@ -385,7 +407,7 @@ class HFAType
     CPLErr      SetInstValue( const char * pszField,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            char chReqType, void * pValue );
-    void	DumpInstValue( FILE *fpOut, 
+    void	DumpInstValue( FILE *fpOut,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            const char *pszPrefix = NULL );
 };
@@ -403,7 +425,7 @@ class HFADictionary
 
     CPLString   osDictionaryText;
     int         bDictionaryTextDirty;
-    
+
                 HFADictionary( const char *pszDict );
                 ~HFADictionary();
 
@@ -425,14 +447,14 @@ class HFADictionary
 class HFACompress
 {
 public:
-  HFACompress( void *pData, GUInt32 nBlockSize, int nDataType );
+  HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType );
   ~HFACompress();
-  
+
   // This is the method that does the work.
   bool compressBlock();
 
   // static method to allow us to query whether HFA type supported
-  static bool QueryDataTypeSupported( int nHFADataType );
+  static bool QueryDataTypeSupported( EPTType eHFADataType );
 
   // Get methods - only valid after compressBlock has been called.
   GByte*  getCounts()     { return m_pCounts; };
@@ -442,7 +464,7 @@ public:
   GUInt32 getMin()        { return m_nMin; };
   GUInt32 getNumRuns()    { return m_nNumRuns; };
   GByte   getNumBits()    { return m_nNumBits; };
-  
+
 private:
   void makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount );
   GUInt32 findMin( GByte *pNumBits );
@@ -452,21 +474,21 @@ private:
   void *m_pData;
   GUInt32 m_nBlockSize;
   GUInt32 m_nBlockCount;
-  int m_nDataType;
+  EPTType m_eDataType;
   int m_nDataTypeNumBits; // the number of bits the datatype we are trying to compress takes
-  
+
   GByte   *m_pCounts;
   GByte   *m_pCurrCount;
   GUInt32  m_nSizeCounts;
-  
+
   GByte   *m_pValues;
   GByte   *m_pCurrValues;
   GUInt32  m_nSizeValues;
-  
+
   GUInt32  m_nMin;
   GUInt32  m_nNumRuns;
   GByte    m_nNumBits; // the number of bits needed to compress the range of values in the block
-  
+
 };
 
-#endif /* ndef _HFA_P_H_INCLUDED */
+#endif /* ndef HFA_P_H_INCLUDED */

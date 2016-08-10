@@ -25,7 +25,7 @@ Multipage documents are exposed as subdatasets, one subdataset par page of the d
 
 <p>
 Starting with GDAL 1.10, this driver can read and write geospatial PDF with vector features.
-Vector read support requires linking to one of the above mentionned dependent libraries, but write support does not.
+Vector read support requires linking to one of the above mentioned dependent libraries, but write support does not.
 
 The driver can read vector features encoded according to PDF's logical structure facilities (as described by "§10.6 - Logical Structure" of PDF spec),
 or retrieve only vector geometries for other vector PDF files.<p>
@@ -184,6 +184,17 @@ Set the compression to use for stream objects. DEFLATE is the default.</p></li>
 Set the DPI to use. Default to 72. May be automatically adjusted to higher value
 so that page dimension does not exceed the 14400 maximum value (in user units)
 allowed by Acrobat.</p></li>
+
+<li><p><b>WRITE_USERUNIT=YES/NO</b>: (GDAL &gt;= 2.2)
+Whether the UserUnit setting computed from the DPI (UserUnit = DPI / 72.0)
+should be recorded in the file. When UserUnit is recorded, the raster size in
+pixels recognized by GDAL on reading remains identical to the source raster.
+When UserUnit is not recorded, the printed size will depends on the DPI value.
+If this parameter is not set, but DPI is specified, then it will default to NO
+(so that the printed size depends on the DPI value). If this parameter is not
+set and DPI is not specified, then UserUnit will be recorded (so that the
+raster size in pixels recognized by GDAL on reading remain identical to the
+source raster).</p></li>
 
 <li><p><b>PREDICTOR=[1/2]</b>:
 Only for DEFLATE compression. Might be set to 2 to use horizontal predictor that can make files smaller (but not always!).
@@ -405,7 +416,7 @@ if (button == 4) app.launchURL('http://gdal.org/');
 Specifications :
 
 <ul>
-<li><a href="ogr/ogr_feature_style.html">OGR Feature Style Specification</a></li>
+<li><a href="ogr_feature_style.html">OGR Feature Style Specification</a></li>
 <li><a href="http://portal.opengeospatial.org/files/?artifact_id=40537">OGC GeoPDF Encoding Best Practice Version 2.2 (08-139r3)</a></li>
 <li><a href="http://www.adobe.com/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf">Adobe Supplement to ISO 32000</a></li>
 <li><a href="http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf">PDF Reference, version 1.7</a></li>

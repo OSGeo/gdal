@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 1/2 Translator
  * Purpose:  IlisMeta model reader.
@@ -30,8 +29,9 @@
 // IlisMeta model: http://www.interlis.ch/models/core/IlisMeta07-20111222.ili
 
 
-#include "imdreader.h"
 #include "cpl_minixml.h"
+#include "imdreader.h"
+
 #include <set>
 #include <vector>
 #include <algorithm>
@@ -39,12 +39,12 @@
 
 CPL_CVSID("$Id$");
 
-
 typedef std::map<CPLString,CPLXMLNode*> StrNodeMap;
 typedef std::vector<CPLXMLNode*> NodeVector;
 typedef std::map<CPLXMLNode*,int> NodeCountMap;
 class IliClass;
-typedef std::map<CPLXMLNode*,IliClass*> ClassesMap; /* all classes with XML node for lookup */
+// All classes with XML node for lookup.
+typedef std::map<CPLXMLNode*,IliClass*> ClassesMap;
 
 /* Helper class for collection class infos */
 class IliClass
@@ -62,17 +62,21 @@ public:
     bool isAssocClass;
     bool hasDerivedClasses;
 
-    IliClass(CPLXMLNode* node_, int iliVersion_, StrNodeMap& oTidLookup_, ClassesMap& oClasses_, NodeCountMap& oAxisCount_) :
-        node(node_), iliVersion(iliVersion_), oTidLookup(oTidLookup_), oClasses(oClasses_), oAxisCount(oAxisCount_),
-        poGeomFieldInfos(), poStructFieldInfos(), oFields(), isAssocClass(false), hasDerivedClasses(false)
+    IliClass( CPLXMLNode* node_, int iliVersion_, StrNodeMap& oTidLookup_,
+              ClassesMap& oClasses_, NodeCountMap& oAxisCount_) :
+        node(node_), iliVersion(iliVersion_), oTidLookup(oTidLookup_),
+        oClasses(oClasses_), oAxisCount(oAxisCount_),
+        poGeomFieldInfos(), poStructFieldInfos(), oFields(),
+        isAssocClass(false), hasDerivedClasses(false)
     {
         char* layerName = LayerName();
         poTableDefn = new OGRFeatureDefn(layerName);
+        poTableDefn->Reference();
         CPLFree(layerName);
     };
     ~IliClass()
     {
-        delete poTableDefn;
+        poTableDefn->Release();
     };
     const char* GetName() {
         return poTableDefn->GetName();
@@ -96,35 +100,42 @@ public:
             }
             CSLDestroy( papszTokens );
             return CPLStrdup(layername);
-        } else {
-            return CPLStrdup(psClassTID);
         }
+
+        return CPLStrdup(psClassTID);
     };
-    void AddFieldNode(CPLXMLNode* node, int iOrderPos)
+    void AddFieldNode(CPLXMLNode* nodeIn, int iOrderPos)
     {
         if (iOrderPos >= (int)oFields.size())
             oFields.resize(iOrderPos+1);
-        //CPLDebug( "OGR_ILI", "Register field with OrderPos %d to Class %s", iOrderPos, GetName());
-        oFields[iOrderPos] = node;
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "OGR_ILI", "Register field with OrderPos %d to Class %s",
+                  iOrderPos, GetName() );
+#endif
+        oFields[iOrderPos] = nodeIn;
     }
-    void AddRoleNode(CPLXMLNode* node, int iOrderPos)
+    void AddRoleNode(CPLXMLNode* nodeIn, int iOrderPos)
     {
         isAssocClass = true;
-        AddFieldNode(node, iOrderPos);
+        AddFieldNode(nodeIn, iOrderPos);
     }
     bool isEmbedded()
     {
         if (isAssocClass)
-            for (NodeVector::const_iterator it = oFields.begin(); it != oFields.end(); ++it)
+            for( NodeVector::const_iterator it = oFields.begin();
+                 it != oFields.end();
+                 ++it )
             {
                 if (*it == NULL) continue;
-                if (CSLTestBoolean(CPLGetXMLValue( *it, "EmbeddedTransfer", "FALSE" )))
+                if( CPLTestBool(
+                        CPLGetXMLValue( *it, "EmbeddedTransfer", "FALSE" ) ) )
                     return true;
             }
         return false;
     }
     // Add additional Geometry table for Interlis 1
-    void AddGeomTable(CPLString layerName, const char* psFieldName, OGRwkbGeometryType eType, bool bRefTIDField = false)
+    void AddGeomTable( CPLString layerName, const char* psFieldName,
+                       OGRwkbGeometryType eType, bool bRefTIDField = false )
     {
         OGRFeatureDefn* poGeomTableDefn = new OGRFeatureDefn(layerName);
         OGRFieldDefn fieldDef("_TID", OFTString);
@@ -137,8 +148,9 @@ public:
         poGeomTableDefn->DeleteGeomFieldDefn(0);
         OGRGeomFieldDefn fieldDefGeom(psFieldName, eType);
         poGeomTableDefn->AddGeomFieldDefn(&fieldDefGeom);
-        CPLDebug( "OGR_ILI", "Adding geometry table %s for field %s", poGeomTableDefn->GetName(), psFieldName);
-        poGeomFieldInfos[psFieldName].geomTable = poGeomTableDefn;
+        CPLDebug( "OGR_ILI", "Adding geometry table %s for field %s",
+                  poGeomTableDefn->GetName(), psFieldName);
+        poGeomFieldInfos[psFieldName].SetGeomTableDefn(poGeomTableDefn);
     }
     void AddField(const char* psName, OGRFieldType fieldType)
     {
@@ -151,7 +163,8 @@ public:
         OGRGeomFieldDefn fieldDef(psName, geomType);
         //oGFld.SetSpatialRef(geomlayer->GetSpatialRef());
         poTableDefn->AddGeomFieldDefn(&fieldDef);
-        CPLDebug( "OGR_ILI", "Adding geometry field '%s' to Class %s", psName, GetName());
+        CPLDebug( "OGR_ILI", "Adding geometry field '%s' to Class %s",
+                  psName, GetName());
     }
     void AddCoord(const char* psName, CPLXMLNode* psTypeNode)
     {
@@ -167,13 +180,13 @@ public:
         OGRwkbGeometryType geomType = (dim > 2) ? wkbPoint25D : wkbPoint;
         AddGeomField(psName, geomType);
     }
-    OGRFieldType GetFormattedType(CPLXMLNode* node)
+    OGRFieldType GetFormattedType(CPLXMLNode* nodeIn)
     {
-        const char* psRefSuper = CPLGetXMLValue( node, "Super.REF", NULL );
+        const char* psRefSuper = CPLGetXMLValue( nodeIn, "Super.REF", NULL );
         if (psRefSuper)
             return GetFormattedType(oTidLookup[psRefSuper]);
-        else
-            return OFTString; //TODO: Time, Date, etc. if possible
+
+        return OFTString; //TODO: Time, Date, etc. if possible
     }
     void InitFieldDefinitions()
     {
@@ -181,7 +194,10 @@ public:
         poTableDefn->DeleteGeomFieldDefn(0);
 
         const char* psKind = CPLGetXMLValue( node, "Kind", NULL );
-        //CPLDebug( "OGR_ILI", "InitFieldDefinitions of '%s' kind: %s", GetName(), psKind);
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "OGR_ILI", "InitFieldDefinitions of '%s' kind: %s",
+                  GetName(), psKind );
+#endif
         if (EQUAL(psKind, "Structure"))
         {
             // add foreign_key field
@@ -195,12 +211,14 @@ public:
             OGRFieldDefn ofieldDefn(psTidColName, OFTString);
             poTableDefn->AddFieldDefn(&ofieldDefn);
         }
-        if (CSLTestBoolean(CPLGetXMLValue( node, "Abstract", "FALSE" )))
+        if (CPLTestBool(CPLGetXMLValue( node, "Abstract", "FALSE" )))
             hasDerivedClasses = true;
     }
     void AddFieldDefinitions(NodeVector oArcLineTypes)
     {
-        for (NodeVector::const_iterator it = oFields.begin(); it != oFields.end(); ++it)
+        for( NodeVector::const_iterator it = oFields.begin();
+             it != oFields.end();
+             ++it)
         {
             if (*it == NULL) continue;
             const char* psName = CPLGetXMLValue( *it, "Name", NULL );
@@ -260,7 +278,7 @@ public:
                     const char* psKind = CPLGetXMLValue( psElementNode, "Kind", NULL );
                     poGeomFieldInfos[psName].iliGeomType = psKind;
                     bool isLinearType = (std::find(oArcLineTypes.begin(), oArcLineTypes.end(), psElementNode) == oArcLineTypes.end());
-                    bool linearGeom = isLinearType || CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE"));
+                    bool linearGeom = isLinearType || CPLTestBool(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE"));
                     OGRwkbGeometryType multiLineType = linearGeom ? wkbMultiLineString : wkbMultiCurve;
                     OGRwkbGeometryType polyType = linearGeom ? wkbPolygon : wkbCurvePolygon;
                     if (iliVersion == 1)
@@ -306,28 +324,31 @@ public:
     FeatureDefnInfo tableDefs()
     {
         FeatureDefnInfo poLayerInfo;
-        poLayerInfo.poTableDefn = NULL;
         if (!hasDerivedClasses && !isEmbedded())
         {
-            poLayerInfo.poTableDefn = poTableDefn;
+            poLayerInfo.SetTableDefn(poTableDefn);
             poLayerInfo.poGeomFieldInfos = poGeomFieldInfos;
         }
         return poLayerInfo;
     }
 
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(IliClass);
 };
 
 
-ImdReader::ImdReader(int iliVersionIn) : iliVersion(iliVersionIn), modelInfos() {
-  mainModelName = "OGR";
-  mainTopicName = "OGR";
-  codeBlank = '_';
-  codeUndefined = '@';
-  codeContinue = '\\';
+ImdReader::ImdReader(int iliVersionIn) :
+    iliVersion(iliVersionIn),
+    modelInfos()
+{
+    mainModelName = "OGR";
+    mainTopicName = "OGR";
+    codeBlank = '_';
+    codeUndefined = '@';
+    codeContinue = '\\';
 }
 
-ImdReader::~ImdReader() {
-}
+ImdReader::~ImdReader() {}
 
 void ImdReader::ReadModel(const char *pszFilename) {
     CPLDebug( "OGR_ILI", "Reading model '%s'", pszFilename);
@@ -335,7 +356,8 @@ void ImdReader::ReadModel(const char *pszFilename) {
     CPLXMLNode* psRootNode = CPLParseXMLFile(pszFilename);
     if( psRootNode == NULL )
         return;
-    CPLXMLNode *psSectionNode = CPLGetXMLNode( psRootNode, "=TRANSFER.DATASECTION" );
+    CPLXMLNode *psSectionNode
+        = CPLGetXMLNode( psRootNode, "=TRANSFER.DATASECTION" );
     if( psSectionNode == NULL )
         return;
 
@@ -343,43 +365,54 @@ void ImdReader::ReadModel(const char *pszFilename) {
     ClassesMap oClasses;
     NodeCountMap oAxisCount;
     NodeVector oArcLineTypes;
-    const char *modelName;
 
     /* Fill TID lookup map and IliClasses lookup map */
     CPLXMLNode* psModel = psSectionNode->psChild;
     while( psModel != NULL )
     {
-        modelName = CPLGetXMLValue( psModel, "BID", NULL );
-        //CPLDebug( "OGR_ILI", "Model: '%s'", modelName);
+        const char *modelName = CPLGetXMLValue( psModel, "BID", NULL );
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "OGR_ILI", "Model: '%s'", modelName);
+#endif
 
         CPLXMLNode* psEntry = psModel->psChild;
         while( psEntry != NULL )
                 {
             if (psEntry->eType != CXT_Attribute) //ignore BID
             {
-                //CPLDebug( "OGR_ILI", "Node tag: '%s'", psEntry->pszValue);
+#ifdef DEBUG_VERBOSE
+                CPLDebug( "OGR_ILI", "Node tag: '%s'", psEntry->pszValue);
+#endif
                 const char* psTID = CPLGetXMLValue( psEntry, "TID", NULL );
                 if( psTID != NULL )
                     oTidLookup[psTID] = psEntry;
 
 
-                if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Model") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Model") &&
+                    !EQUAL(modelName, "MODEL.INTERLIS"))
                 {
                     IliModelInfo modelInfo;
                     modelInfo.name = CPLGetXMLValue( psEntry, "Name", "OGR" );
                     modelInfo.version = CPLGetXMLValue( psEntry, "Version", "" );
                     modelInfo.uri = CPLGetXMLValue( psEntry, "At", "" );
                     modelInfos.push_back(modelInfo);
-                    mainModelName = modelInfo.name; //FIXME: check model inheritance
+                    mainModelName = modelInfo.name; // FIXME: check model inheritance
                     //version = CPLGetXMLValue(psEntry, "iliVersion", "0"); //1 or 2.3
 
-                    CPLXMLNode *psFormatNode = CPLGetXMLNode( psEntry, "ili1Format" );
+                    CPLXMLNode *psFormatNode
+                        = CPLGetXMLNode( psEntry, "ili1Format" );
                     if (psFormatNode != NULL)
                     {
                         psFormatNode = psFormatNode->psChild;
-                        codeBlank = atoi(CPLGetXMLValue(psFormatNode, "blankCode", "95"));
-                        codeUndefined = atoi(CPLGetXMLValue(psFormatNode, "undefinedCode", "64"));
-                        codeContinue = atoi(CPLGetXMLValue(psFormatNode, "continueCode", "92"));
+                        codeBlank = static_cast<char>(
+                            atoi( CPLGetXMLValue(
+                                psFormatNode, "blankCode", "95")));
+                        codeUndefined = static_cast<char>(
+                            atoi( CPLGetXMLValue(
+                                psFormatNode, "undefinedCode", "64")));
+                        codeContinue = static_cast<char>(
+                            atoi( CPLGetXMLValue(
+                                psFormatNode, "continueCode", "92")));
                     }
                 }
                 else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.SubModel"))
@@ -390,7 +423,8 @@ void ImdReader::ReadModel(const char *pszFilename) {
                 else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Class") )
                 {
                     CPLDebug( "OGR_ILI", "Class name: '%s'", psTID);
-                    oClasses[psEntry] = new IliClass(psEntry, iliVersion, oTidLookup, oClasses, oAxisCount);
+                    oClasses[psEntry] = new IliClass(
+                      psEntry, iliVersion, oTidLookup, oClasses, oAxisCount);
                 }
             }
             psEntry = psEntry->psNext;
@@ -402,45 +436,64 @@ void ImdReader::ReadModel(const char *pszFilename) {
         {
             if (psEntry->eType != CXT_Attribute) //ignore BID
             {
-                //CPLDebug( "OGR_ILI", "Node tag: '%s'", psEntry->pszValue);
-                if( iliVersion == 1 && EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Ili1TransferElement"))
+#ifdef DEBUG_VERBOSE
+                CPLDebug( "OGR_ILI", "Node tag: '%s'", psEntry->pszValue);
+#endif
+                if( iliVersion == 1 &&
+                    EQUAL( psEntry->pszValue,
+                           "IlisMeta07.ModelData.Ili1TransferElement"))
                 {
-                    const char* psClassRef = CPLGetXMLValue( psEntry, "Ili1TransferClass.REF", NULL );
-                    const char* psElementRef = CPLGetXMLValue( psEntry, "Ili1RefAttr.REF", NULL );
-                    int iOrderPos = atoi(CPLGetXMLValue( psEntry, "Ili1RefAttr.ORDER_POS", "0" ))-1;
+                    const char* psClassRef = CPLGetXMLValue(
+                      psEntry, "Ili1TransferClass.REF", NULL );
+                    const char* psElementRef
+                        = CPLGetXMLValue( psEntry, "Ili1RefAttr.REF", NULL );
+                    int iOrderPos = atoi(CPLGetXMLValue(
+                        psEntry, "Ili1RefAttr.ORDER_POS", "0" ))-1;
                     IliClass* psParentClass = oClasses[oTidLookup[psClassRef]];
                     CPLXMLNode* psElementNode = oTidLookup[psElementRef];
                     psParentClass->AddFieldNode(psElementNode, iOrderPos);
                 }
-                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.TransferElement"))
+                else if( EQUAL( psEntry->pszValue,
+                                "IlisMeta07.ModelData.TransferElement"))
                 {
-                    const char* psClassRef = CPLGetXMLValue( psEntry, "TransferClass.REF", NULL );
-                    const char* psElementRef = CPLGetXMLValue( psEntry, "TransferElement.REF", NULL );
-                    int iOrderPos = atoi(CPLGetXMLValue( psEntry, "TransferElement.ORDER_POS", "0" ))-1;
+                    const char* psClassRef
+                        = CPLGetXMLValue( psEntry, "TransferClass.REF", NULL );
+                    const char* psElementRef = CPLGetXMLValue(
+                        psEntry, "TransferElement.REF", NULL );
+                    int iOrderPos = atoi(CPLGetXMLValue(
+                        psEntry, "TransferElement.ORDER_POS", "0" ))-1;
                     IliClass* psParentClass = oClasses[oTidLookup[psClassRef]];
                     CPLXMLNode* psElementNode = oTidLookup[psElementRef];
                     psParentClass->AddFieldNode(psElementNode, iOrderPos);
                 }
                 else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Role"))
                 {
-                    const char* psRefParent = CPLGetXMLValue( psEntry, "Association.REF", NULL );
-                    int iOrderPos = atoi(CPLGetXMLValue( psEntry, "Association.ORDER_POS", "0" ))-1;
+                    const char* psRefParent
+                        = CPLGetXMLValue( psEntry, "Association.REF", NULL );
+                    int iOrderPos = atoi(
+                        CPLGetXMLValue( psEntry,
+                                        "Association.ORDER_POS", "0" ))-1;
                     IliClass* psParentClass = oClasses[oTidLookup[psRefParent]];
                     if (psParentClass)
                         psParentClass->AddRoleNode(psEntry, iOrderPos);
                 }
                 else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.AxisSpec"))
                 {
-                    const char* psClassRef = CPLGetXMLValue( psEntry, "CoordType.REF", NULL );
-                    //int iOrderPos = atoi(CPLGetXMLValue( psEntry, "Axis.ORDER_POS", "0" ))-1;
+                    const char* psClassRef
+                        = CPLGetXMLValue( psEntry, "CoordType.REF", NULL );
+                    // int iOrderPos = atoi(
+                    //     CPLGetXMLValue( psEntry, "Axis.ORDER_POS", "0" ))-1;
                     CPLXMLNode* psCoordTypeNode = oTidLookup[psClassRef];
                     oAxisCount[psCoordTypeNode] += 1;
                 }
-                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.LinesForm"))
+                else if( EQUAL( psEntry->pszValue,
+                                "IlisMeta07.ModelData.LinesForm"))
                 {
-                    const char* psLineForm = CPLGetXMLValue( psEntry, "LineForm.REF", NULL );
+                    const char* psLineForm
+                        = CPLGetXMLValue( psEntry, "LineForm.REF", NULL );
                     if (EQUAL(psLineForm, "INTERLIS.ARCS")) {
-                        const char* psElementRef = CPLGetXMLValue( psEntry, "LineType.REF", NULL );
+                        const char* psElementRef
+                            = CPLGetXMLValue( psEntry, "LineType.REF", NULL );
                         CPLXMLNode* psElementNode = oTidLookup[psElementRef];
                         oArcLineTypes.push_back(psElementNode);
                     }
@@ -454,9 +507,13 @@ void ImdReader::ReadModel(const char *pszFilename) {
     }
 
     /* Analyze class inheritance & add fields to class table defn */
-    for (ClassesMap::const_iterator it = oClasses.begin(); it != oClasses.end(); ++it)
+    for( ClassesMap::const_iterator it = oClasses.begin();
+         it != oClasses.end();
+         ++it )
     {
-        //CPLDebug( "OGR_ILI", "Class: '%s'", it->second->GetName());
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "OGR_ILI", "Class: '%s'", it->second->GetName());
+#endif
         const char* psRefSuper = CPLGetXMLValue( it->first, "Super.REF", NULL );
         if (psRefSuper) {
             if (oTidLookup.find(psRefSuper) != oTidLookup.end() &&
@@ -472,12 +529,20 @@ void ImdReader::ReadModel(const char *pszFilename) {
     }
 
     /* Filter relevant classes */
-    for (ClassesMap::const_iterator it = oClasses.begin(); it != oClasses.end(); ++it)
+    for( ClassesMap::const_iterator it = oClasses.begin();
+         it != oClasses.end();
+         ++it)
     {
         const char* className = it->second->GetIliName();
         FeatureDefnInfo oClassInfo = it->second->tableDefs();
-        if (!EQUALN(className, "INTERLIS.", 9) && oClassInfo.poTableDefn)
+        if (!STARTS_WITH_CI(className, "INTERLIS.") &&
+            oClassInfo.GetTableDefnRef())
             featureDefnInfos.push_back(oClassInfo);
+    }
+
+    for (ClassesMap::iterator it = oClasses.begin(); it != oClasses.end(); ++it)
+    {
+        delete it->second;
     }
 
     CPLDestroyXMLNode(psRootNode);
@@ -485,9 +550,11 @@ void ImdReader::ReadModel(const char *pszFilename) {
 
 FeatureDefnInfo ImdReader::GetFeatureDefnInfo(const char *pszLayerName) {
     FeatureDefnInfo featureDefnInfo;
-    for (FeatureDefnInfos::const_iterator it = featureDefnInfos.begin(); it != featureDefnInfos.end(); ++it)
+    for( FeatureDefnInfos::const_iterator it = featureDefnInfos.begin();
+         it != featureDefnInfos.end();
+         ++it )
     {
-        OGRFeatureDefn* fdefn = it->poTableDefn;
+        OGRFeatureDefn* fdefn = it->GetTableDefnRef();
         if (EQUAL(fdefn->GetName(), pszLayerName)) featureDefnInfo = *it;
     }
     return featureDefnInfo;

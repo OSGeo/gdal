@@ -27,11 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_PDS_H_INCLUDED
-#define _OGR_PDS_H_INCLUDED
+#ifndef OGR_PDS_H_INCLUDED
+#define OGR_PDS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "nasakeywordhandler.h"
+
+namespace OGRPDS {
 
 /************************************************************************/
 /*                              OGRPDSLayer                             */
@@ -71,7 +73,7 @@ class OGRPDSLayer : public OGRLayer
     int                nLatitudeIndex;
 
     FieldDesc*         pasFieldDesc;
-    
+
     void               ReadStructure(CPLString osStructureFilename);
     OGRFeature        *GetNextRawFeature();
 
@@ -82,7 +84,7 @@ class OGRPDSLayer : public OGRLayer
                                          CPLString osStructureFilename,
                                          int nRecords,
                                          int nStartBytes, int nRecordSize,
-                                         GByte* pabyRecord, int bIsASCII);
+                                         GByte* pabyRecord, bool bIsASCII);
                         ~OGRPDSLayer();
 
 
@@ -100,6 +102,8 @@ class OGRPDSLayer : public OGRLayer
     virtual OGRErr              SetNextByIndex( GIntBig nIndex );
 };
 
+} /* end of OGRPDS namespace */
+
 /************************************************************************/
 /*                           OGRPDSDataSource                           */
 /************************************************************************/
@@ -114,7 +118,7 @@ class OGRPDSDataSource : public OGRDataSource
     NASAKeywordHandler  oKeywords;
 
     CPLString           osTempResult;
-    const char         *GetKeywordSub( const char *pszPath, 
+    const char         *GetKeywordSub( const char *pszPath,
                                        int iSubscript,
                                        const char *pszDefault );
 
@@ -138,4 +142,4 @@ class OGRPDSDataSource : public OGRDataSource
     static void         CleanString( CPLString &osInput );
 };
 
-#endif /* ndef _OGR_PDS_H_INCLUDED */
+#endif /* ndef OGR_PDS_H_INCLUDED */

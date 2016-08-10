@@ -17,14 +17,14 @@
 
 static double RoundDown(
 	double v,
-	double round)
+	double dfRound)
 {
-	double rVal = fmod(v, round);
+	double rVal = fmod(v, dfRound);
 	double x;
 	if(rVal == 0)
-		return v-round;
+		return v-dfRound;
 	if (v < 0)
-		x = v-round-rVal;
+		x = v-dfRound-rVal;
 	else
 		x = v-rVal;
 	return  x;
@@ -32,15 +32,15 @@ static double RoundDown(
 
 static double RoundUp(
 	double v,
-	double round)
+	double dfRound)
 {
-	double rVal = fmod(v, round);
+	double rVal = fmod(v, dfRound);
 	if(rVal == 0)
-		return v+round;
+		return v+dfRound;
 	if (v < 0)
 	  return v-rVal;
 	else
-	  return v+round-rVal; 
+	  return v+dfRound-rVal; 
 }
 
 /* compute (xUL,yUL) and nrRows, nrCols from some coordinates

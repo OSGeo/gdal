@@ -230,12 +230,13 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
     if (nShapeCount < 0 || nShapeCount > 256000000 )
     {
         char szErrorMsg[64];
-        sprintf(szErrorMsg, "Invalid shape count in .sbn : %d", nShapeCount );
+        snprintf(szErrorMsg, sizeof(szErrorMsg),
+                "Invalid shape count in .sbn : %d", nShapeCount );
         hSBN->sHooks.Error( szErrorMsg );
         SBNCloseDiskTree(hSBN);
         return NULL;
     }
-    
+
     /* Empty spatial index */
     if( nShapeCount == 0 )
     {
@@ -279,13 +280,14 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
         nNodeDescCount < 0 || nNodeDescCount > nMaxNodes )
     {
         char szErrorMsg[64];
-        sprintf(szErrorMsg,
+        snprintf(szErrorMsg, sizeof(szErrorMsg),
                 "Invalid node descriptor size in .sbn : %d", nNodeDescSize );
         hSBN->sHooks.Error( szErrorMsg );
         SBNCloseDiskTree(hSBN);
         return NULL;
     }
 
+    /* coverity[tainted_data] */
     pabyData = (uchar*) malloc( nNodeDescSize );
     pasNodeDescriptor = (SBNNodeDescriptor*)
                 calloc ( nMaxNodes, sizeof(SBNNodeDescriptor) );
@@ -350,7 +352,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
     }
 
     pasNodeDescriptor[nCurNode].nBinOffset =
-        hSBN->sHooks.FTell(hSBN->fpSBN);
+        (int) hSBN->sHooks.FTell(hSBN->fpSBN);
 
     /* Compute the index of the next non empty node. */
     nNextNonEmptyNode = nCurNode + 1;
@@ -398,7 +400,7 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
         {
             nCurNode = nNextNonEmptyNode;
             pasNodeDescriptor[nCurNode].nBinOffset =
-                hSBN->sHooks.FTell(hSBN->fpSBN) - 8;
+                (int) hSBN->sHooks.FTell(hSBN->fpSBN) - 8;
 
             /* Compute the index of the next non empty node. */
             nNextNonEmptyNode = nCurNode + 1;
@@ -720,7 +722,7 @@ static int SBNSearchDiskInternal( SearchStruct* psSearch,
                     nShapeId = READ_MSB_INT(pabyBinShape + 4);
 
                     /* Caution : we count shape id starting from 0, and not 1 */
-                    nShapeId --; 
+                    nShapeId --;
 
                     /*printf("shape=%d, minx=%d, miny=%d, maxx=%d, maxy=%d\n",
                         nShapeId, bMinX, bMinY, bMaxX, bMaxY);*/
@@ -931,7 +933,7 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
     sSearch.bMaxY = (coord) (bMaxY <= 255 ? bMaxY : 255);
     sSearch.nShapeCount = 0;
     sSearch.nShapeAlloc = 0;
-    sSearch.panShapeId = NULL;
+    sSearch.panShapeId = (int*) calloc(1, sizeof(int));
 #ifdef DEBUG_IO
     sSearch.nBytesRead = 0;
 #endif
@@ -945,8 +947,7 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
 
     if( !bRet )
     {
-        if( sSearch.panShapeId != NULL )
-            free( sSearch.panShapeId );
+        free( sSearch.panShapeId );
         *pnShapeCount = 0;
         return NULL;
     }
@@ -957,10 +958,6 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
 /*      Sort the id array                                               */
 /* -------------------------------------------------------------------- */
     qsort(sSearch.panShapeId, *pnShapeCount, sizeof(int), compare_ints);
-
-    /* To distinguish between empty intersection from error case */
-    if( sSearch.panShapeId == NULL )
-        sSearch.panShapeId = (int*) calloc(1, sizeof(int));
 
     return sSearch.panShapeId;
 }

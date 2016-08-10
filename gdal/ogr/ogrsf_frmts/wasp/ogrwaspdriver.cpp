@@ -30,6 +30,8 @@
 #include "cpl_conv.h"
 #include <cassert>
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -53,7 +55,7 @@ OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
         /*CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszFilename );*/
         return NULL;
     }
-    std::auto_ptr<OGRWAsPDataSource> pDataSource( new OGRWAsPDataSource( pszFilename, fh ));
+    UNIQUEPTR<OGRWAsPDataSource> pDataSource( new OGRWAsPDataSource( pszFilename, fh ));
 
     if ( pDataSource->Load(true) != OGRERR_NONE )
     {
@@ -69,7 +71,7 @@ OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
 int OGRWAsPDriver::TestCapability( const char * pszCap )
 
 {
-    return EQUAL(pszCap,ODrCCreateDataSource) 
+    return EQUAL(pszCap,ODrCCreateDataSource)
         || EQUAL(pszCap,ODrCDeleteDataSource);
 }
 
@@ -96,7 +98,7 @@ OGRDataSource * OGRWAsPDriver::CreateDataSource( const char *pszName, char ** )
 OGRErr OGRWAsPDriver::DeleteDataSource (const char *pszName)
 
 {
-    return VSIUnlink( pszName ) == 0 ? OGRERR_NONE : OGRERR_FAILURE;  	
+    return VSIUnlink( pszName ) == 0 ? OGRERR_NONE : OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -107,13 +109,11 @@ void RegisterOGRWAsP()
 
 {
     OGRSFDriver* poDriver = new OGRWAsPDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "WAsP .map format" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_wasp.html" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "WAsP .map format" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_wasp.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-

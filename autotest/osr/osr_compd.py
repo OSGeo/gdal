@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test COMPD_CS support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -72,7 +72,7 @@ def osr_compd_1():
         print( 'Expected: %s' % expected_proj4 )
         gdaltest.post_reason( 'did not get expected proj.4 translation of compd_cs' )
         return 'fail'
-    
+
     if srs.GetLinearUnitsName() != 'metre_1':
         gdaltest.post_reason( 'Did not get expected linear units.' )
         return 'fail'
@@ -145,7 +145,7 @@ def osr_compd_3():
         AXIS["Up",UP],
         AUTHORITY["EPSG","5719"]],
     AUTHORITY["EPSG","7401"]]"""
-    wkt = srs.ExportToPrettyWkt() 
+    wkt = srs.ExportToPrettyWkt()
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7401')
         return 'fail'
@@ -187,7 +187,7 @@ def osr_compd_4():
         AXIS["Up",UP],
         AUTHORITY["EPSG","5720"]],
     AUTHORITY["EPSG","7400"]]"""
-    wkt = srs.ExportToPrettyWkt() 
+    wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7400')
@@ -243,7 +243,7 @@ def osr_compd_5():
             AUTHORITY["EPSG","9001"]],
         AXIS["Up",UP],
         AUTHORITY["EPSG","5703"]]]"""
-    wkt = srs.ExportToPrettyWkt() 
+    wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         return 'fail'
@@ -260,7 +260,7 @@ def osr_compd_5():
     if proj4 != exp_proj4:
         gdaltest.post_reason( 'Did not get expected proj.4 string, got:' + proj4 )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -298,10 +298,11 @@ def osr_compd_6():
             EXTENSION["PROJ4_GRIDS","g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx"]],
         UNIT["Foot_US",0.3048006096012192],
         AXIS["Up",UP]]]"""
-            
-    wkt = srs.ExportToPrettyWkt() 
+
+    wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
+        gdaltest.post_reason('fail')
         return 'fail'
     elif exp_wkt != wkt:
         print('warning they are equivalent, but not completely the same')
@@ -316,7 +317,7 @@ def osr_compd_6():
     if proj4 != exp_proj4:
         gdaltest.post_reason( 'Did not get expected proj.4 string, got:' + proj4 )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -356,8 +357,8 @@ def osr_compd_7():
         UNIT["foot",0.304800609601219],
         AXIS["Up",UP],
         AUTHORITY["EPSG","5703"]]]"""
-        
-    wkt = srs.ExportToPrettyWkt() 
+
+    wkt = srs.ExportToPrettyWkt()
 
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         return 'fail'
@@ -387,7 +388,7 @@ def osr_compd_8():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_compd_1,
     osr_compd_2,
     osr_compd_3,

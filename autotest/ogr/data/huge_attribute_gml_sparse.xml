@@ -1,0 +1,22 @@
+<VSISparseFile>
+  <Length>2200000076</Length>
+  <SubfileRegion> 
+    <Filename relative="1">huge_attribute_start.gml</Filename>
+    <DestinationOffset>0</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>338</RegionLength>
+  </SubfileRegion>
+
+  <ConstantRegion>
+    <DestinationOffset>338</DestinationOffset>
+    <RegionLength>2199999662</RegionLength>
+    <Value>32</Value>
+  </ConstantRegion>
+
+  <SubfileRegion>
+    <Filename relative="1">huge_attribute_end.gml</Filename>
+    <DestinationOffset>2200000000</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>76</RegionLength>
+  </SubfileRegion>
+</VSISparseFile>

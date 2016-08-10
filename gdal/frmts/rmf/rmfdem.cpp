@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: rmflzw.cpp 11865 2007-08-09 11:53:57Z warmerdam $
  *
  * Project:  Raster Matrix Format
  * Purpose:  Implementation of the ad-hoc compression algorithm used in
@@ -31,6 +30,8 @@
 #include "cpl_conv.h"
 
 #include "rmfdataset.h"
+
+CPL_CVSID("$Id$");
 
 /*
  * The encoded data stream is a series of records.
@@ -86,6 +87,18 @@
 #define INV_INT24   0xFF000000L
 
 
+// Not sure which behaviour we wish for int32 overflow, so just do the
+// addition as uint32 to workaround -ftrapv
+static GInt32 AddInt32(GInt32& nTarget, GInt32 nVal)
+{
+    GUInt32 nTargetU, nValU;
+    memcpy(&nTargetU, &nTarget, 4);
+    memcpy(&nValU, &nVal, 4);
+    nTargetU += nValU;
+    memcpy(&nTarget, &nTargetU, 4);
+    return nTarget;
+}
+
 /************************************************************************/
 /*                           DEMDecompress()                            */
 /************************************************************************/
@@ -94,20 +107,18 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                                GByte* pabyOut, GUInt32 nSizeOut )
 {
     GUInt32 nCount;             // Number of encoded data elements to read
-    char* pabyTempIn;
-    GInt32* paiOut;
     GInt32 nType;               // The encoding type
     GInt32 iPrev = 0;           // The last data value decoded
     GInt32 nCode;
 
-    if ( pabyIn == 0 ||
-         pabyOut == 0 ||
+    if ( pabyIn == NULL ||
+         pabyOut == NULL ||
          nSizeOut < nSizeIn ||
          nSizeIn < 2 )
         return 0;
 
-    pabyTempIn  = (char*)pabyIn;
-    paiOut = (GInt32*)pabyOut;
+    char* pabyTempIn  = (char*)pabyIn;
+    GInt32* paiOut = (GInt32*)pabyOut;
     nSizeOut /= sizeof(GInt32);
 
     while ( nSizeIn > 0 )
@@ -143,11 +154,11 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 break;
 
             case TYPE_INT4:
-                if ( nSizeIn < nCount / 2 )
+                if ( nSizeIn < (nCount + 1) / 2 )
                     break;
                 if ( nSizeOut < nCount )
                     break;
-                nSizeIn -= nCount / 2;
+                nSizeIn -= (nCount + 1) / 2;
                 nSizeOut -= nCount;
                 while ( nCount-- > 0 )
                 {
@@ -155,12 +166,15 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT4 )
                         nCode |= INV_INT4;
                     *paiOut++ = ( nCode == OUT_INT4 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
 
                     if ( nCount-- == 0 )
                     {
-                        pabyTempIn++;
-                        nSizeIn--;
+                        if( nSizeIn )
+                        {
+                            pabyTempIn++;
+                            nSizeIn--;
+                        }
                         break;
                     }
 
@@ -168,7 +182,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT4 )
                         nCode |= INV_INT4;
                     *paiOut++ = ( nCode == OUT_INT4 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -182,16 +196,16 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 while ( nCount-- > 0 )
                 {
                     *paiOut++ = ( (nCode = *pabyTempIn++) == OUT_INT8 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
             case TYPE_INT12:
-                if ( nSizeIn < 3 * nCount / 2 )
+                if ( nSizeIn < (3 * nCount + 1) / 2 )
                     break;
                 if ( nSizeOut < nCount )
                     break;
-                nSizeIn -= 3 * nCount / 2;
+                nSizeIn -= (3 * nCount + 1) / 2;
                 nSizeOut -= nCount;
 
                 while ( nCount-- > 0 )
@@ -200,12 +214,15 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT12 )
                         nCode |= INV_INT12;
                     *paiOut++ = ( nCode == OUT_INT12 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
 
                     if ( nCount-- == 0 )
                     {
-                        pabyTempIn++;
-                        nSizeIn--;
+                        if( nSizeIn )
+                        {
+                            pabyTempIn++;
+                            nSizeIn--;
+                        }
                         break;
                     }
 
@@ -214,7 +231,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT12 )
                         nCode |= INV_INT12;
                     *paiOut++ = ( nCode == OUT_INT12 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -231,7 +248,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     nCode = *((GInt16*)pabyTempIn);
                     pabyTempIn += 2;
                     *paiOut++ = ( nCode == OUT_INT16 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -250,7 +267,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     if ( nCode > RANGE_INT24 )
                         nCode |= INV_INT24;
                     *paiOut++ = ( nCode == OUT_INT24 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
 
@@ -267,12 +284,11 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     nCode = *(GInt32 *)pabyTempIn;
                     pabyTempIn += 4;
                     *paiOut++ = ( nCode == OUT_INT32 ) ?
-                        OUT_INT32 : iPrev += nCode;
+                        OUT_INT32 : AddInt32(iPrev, nCode);
                 }
                 break;
     }
   }
 
-  return ((GByte*)paiOut - pabyOut);
+  return static_cast<int>((GByte*)paiOut - pabyOut);
 }
-

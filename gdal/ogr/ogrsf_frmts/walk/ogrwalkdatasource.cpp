@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwalkdatasource.cpp
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkDatasource class.
@@ -29,6 +28,8 @@
 
 #include "ogrwalk.h"
 #include <vector>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRWalkDataSource()                          */
@@ -72,14 +73,16 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
     char *pszDSN;
 
-    if( EQUALN(pszNewName,"WALK:",5) )
+    if( STARTS_WITH_CI(pszNewName, "WALK:") )
         pszDSN = CPLStrdup( pszNewName + 5 );
     else
     {
         const char *pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
         pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
 
-        sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+        snprintf( pszDSN,
+                  strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+                  pszDSNStringTemplate,  pszNewName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -89,7 +92,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 
     if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to initialize ODBC connection to DSN for %s,\n"
                   "%s", pszDSN, oSession.GetLastError() );
         CPLFree( pszDSN );
@@ -112,17 +115,17 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 
     if( !oStmt.ExecuteSQL() )
     {
-        CPLDebug( "Walk", 
-                  "SELECT on WalkLayers fails, perhaps not a walk database?\n%s", 
+        CPLDebug( "Walk",
+                  "SELECT on WalkLayers fails, perhaps not a walk database?\n%s",
                   oSession.GetLastError() );
         return FALSE;
     }
 
     while( oStmt.Fetch() )
     {
-        int i, iNew = apapszGeomColumns.size();
+        int i, iNew = static_cast<int>(apapszGeomColumns.size());
         char **papszRecord = NULL;
-        
+
         for( i = 1; i < 7; i++ )
             papszRecord = CSLAddString( papszRecord, oStmt.GetColData(i) ); //Add LayerName, Extent and Memo
 
@@ -190,8 +193,8 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -205,8 +208,9 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
     poStmt->Append( pszSQLCommand );
     if( !poStmt->ExecuteSQL() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
+        delete poStmt;
         return NULL;
     }
 
@@ -230,7 +234,7 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
-    
+
     return poLayer;
 }
 

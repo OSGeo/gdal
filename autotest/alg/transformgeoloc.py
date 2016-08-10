@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test TransformGeoloc algorithm.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2012, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -60,16 +60,16 @@ def transformgeoloc_1():
                                      [-116.5, -115.5]])
     lat_array = gdalnumeric.asarray([[45.0, 45.5],
                                      [44.0, 44.5]])
-    
+
     geoloc_ds.GetRasterBand(1).WriteArray(lon_array)
     geoloc_ds.GetRasterBand(2).WriteArray(lat_array)
     # Z left as default zero.
 
     # Create a wgs84 to utm transformer.
-    
+
     wgs84_wkt = osr.GetUserInputAsWKT('WGS84')
     utm_wkt = osr.GetUserInputAsWKT('+proj=utm +zone=11 +datum=WGS84')
-    
+
     ll_utm_transformer = gdal.Transformer(None, None,
                                           ['SRC_SRS='+wgs84_wkt,
                                            'DST_SRS='+utm_wkt] )
@@ -84,7 +84,7 @@ def transformgeoloc_1():
 
     print(geoloc_ds.ReadAsArray())
 
-    return 'success' 
+    return 'success'
 
 
 gdaltest_list = [

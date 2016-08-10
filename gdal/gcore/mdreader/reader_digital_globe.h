@@ -27,7 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #ifndef READER_DIGITAL_GLOBE_H_INCLUDED
 #define READER_DIGITAL_GLOBE_H_INCLUDED
 
@@ -65,7 +65,7 @@ protected:
     virtual void LoadMetadata();
     char** LoadRPBXmlNode(CPLXMLNode* psNode);
     char** LoadIMDXmlNode(CPLXMLNode* psNode);
-protected:    
+protected:
     CPLString m_osXMLSourceFilename;
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;

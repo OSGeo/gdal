@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR/DODS Interface
  * Purpose:  Implements OGRDODSLayer class.
@@ -36,28 +35,24 @@ CPL_CVSID("$Id$");
 /*                            OGRDODSLayer()                            */
 /************************************************************************/
 
-OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn, 
+OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
                             const char *pszTargetIn,
-                            AttrTable *poOGRLayerInfoIn )
-
+                            AttrTable *poOGRLayerInfoIn ) :
+    poFeatureDefn(NULL),
+    poSRS(NULL),
+    iNextShapeId(0),
+    poDS(poDSIn),
+    pszQuery(NULL),
+    pszFIDColumn (NULL),
+    pszTarget(CPLStrdup( pszTargetIn )),
+    papoFields(NULL),
+    bDataLoaded(FALSE),
+    poConnection(NULL),
+    poDataDDS(new DataDDS( poDSIn->poBTF )),
+    poTargetVar(NULL),
+    poOGRLayerInfo(poOGRLayerInfoIn),
+    bKnowExtent(FALSE)
 {
-    poDS = poDSIn;
-    poFeatureDefn = NULL;
-    pszQuery = NULL;
-    pszFIDColumn = NULL;
-    poSRS = NULL;
-    iNextShapeId = 0;
-    pszTarget = CPLStrdup( pszTargetIn );
-    papoFields = NULL;
-
-    bDataLoaded = FALSE;
-    poConnection = NULL;
-    poTargetVar = NULL;
-    poOGRLayerInfo = poOGRLayerInfoIn;
-    bKnowExtent = FALSE;
-
-    poDataDDS = new DataDDS( poDSIn->poBTF );
-
 /* ==================================================================== */
 /*      Harvest some metadata if available.                             */
 /* ==================================================================== */
@@ -74,8 +69,8 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
             poSRS = new OGRSpatialReference();
             if( poSRS->SetFromUserInput( oMValue.c_str() ) != OGRERR_NONE )
             {
-                CPLError( CE_Warning, CPLE_AppDefined, 
-                          "Ignoring unreconised SRS '%s'", 
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Ignoring unrecognized SRS '%s'",
                           oMValue.c_str() );
                 delete poSRS;
                 poSRS = NULL;
@@ -114,7 +109,7 @@ OGRDODSLayer::~OGRDODSLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "DODS", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -163,9 +158,7 @@ void OGRDODSLayer::ResetReading()
 OGRFeature *OGRDODSLayer::GetNextFeature()
 
 {
-    OGRFeature *poFeature;
-
-    for( poFeature = GetFeature( iNextShapeId++ ); 
+    for( OGRFeature *poFeature = GetFeature( iNextShapeId++ );
          poFeature != NULL;
          poFeature = GetFeature( iNextShapeId++ ) )
     {
@@ -218,14 +211,14 @@ int OGRDODSLayer::ProvideDataDDS()
                   poDS->oBaseURL.c_str(),
                   (poDS->oProjection + poDS->oConstraints).c_str() );
 
-        // We may need to use custom constraints here. 
-        poConnection->request_data( *poDataDDS, 
+        // We may need to use custom constraints here.
+        poConnection->request_data( *poDataDDS,
                                     poDS->oProjection + poDS->oConstraints );
     }
     catch (Error &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "DataDDS request failed:\n%s", 
+                  "DataDDS request failed:\n%s",
                   e.get_error_message().c_str() );
         return FALSE;
     }

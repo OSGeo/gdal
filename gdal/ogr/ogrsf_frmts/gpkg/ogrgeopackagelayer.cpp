@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements OGRGeoPackageLayer class
@@ -32,6 +31,8 @@
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                      OGRGeoPackageLayer()                            */
 /************************************************************************/
@@ -46,8 +47,7 @@ OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) :
     iFIDCol(-1),
     iGeomCol(-1),
     panFieldOrdinals(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                      ~OGRGeoPackageLayer()                           */
@@ -103,8 +103,6 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 {
     for( ; true; )
     {
-        OGRFeature      *poFeature;
-
         if( m_poQueryStatement == NULL )
         {
             ResetStatement();
@@ -117,9 +115,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
     /* -------------------------------------------------------------------- */
         if( bDoStep )
         {
-            int rc;
-
-            rc = sqlite3_step( m_poQueryStatement );
+            int rc = sqlite3_step( m_poQueryStatement );
             if( rc != SQLITE_ROW )
             {
                 if ( rc != SQLITE_DONE )
@@ -138,7 +134,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
         else
             bDoStep = TRUE;
 
-        poFeature = TranslateFeature(m_poQueryStatement);
+        OGRFeature *poFeature = TranslateFeature(m_poQueryStatement);
         if( poFeature == NULL )
             return NULL;
 
@@ -159,7 +155,6 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
@@ -220,17 +215,17 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         switch( poFieldDefn->GetType() )
         {
             case OFTInteger:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_int( hStmt, iRawField ) );
                 break;
 
             case OFTInteger64:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_int64( hStmt, iRawField ) );
                 break;
 
             case OFTReal:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_double( hStmt, iRawField ) );
                 break;
 
@@ -262,7 +257,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             }
 
             case OFTString:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                         (const char *) sqlite3_column_text( hStmt, iRawField ) );
                 break;
 
@@ -293,7 +288,7 @@ const char* OGRGeoPackageLayer::GetFIDColumn()
 int OGRGeoPackageLayer::TestCapability ( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCIgnoreFields) )
-        return TRUE; 
+        return TRUE;
     else if ( EQUAL(pszCap, OLCStringsAsUTF8) )
         return m_poDS->GetUTF8();
     else
@@ -359,14 +354,14 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if( nColType == SQLITE_BLOB && m_poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );
-            if( nBytes > 4 )
+            if( nBytes >= 8 )
             {
-                int iGpkgSize = sqlite3_column_bytes(hStmt, iCol);
                 const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
                 GPkgHeader oHeader;
                 OGRGeometry* poGeom = NULL;
                 int nSRID;
-                if( GPkgHeaderFromWKB(pabyGpkg, &oHeader) == OGRERR_NONE )
+                if( GPkgHeaderFromWKB(pabyGpkg, nBytes, &oHeader) == OGRERR_NONE &&
+                    (poGeom = GPkgGeometryToOGR(pabyGpkg, nBytes, NULL)) != NULL )
                 {
                     OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
 
@@ -381,10 +376,11 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                     OGRwkbGeometryType eGeomType = wkbUnknown;
                     if( pszDeclType != NULL )
                     {
-                        eGeomType = GPkgGeometryTypeToWKB(pszDeclType, (oHeader.iDims == 3));
-                        if( eGeomType != wkbNone )
-                            oGeomField.SetType( eGeomType );
+                        eGeomType = poGeom->getGeometryType();
+                        oGeomField.SetType( eGeomType );
                     }
+                    delete poGeom;
+                    poGeom = NULL;
 
 #ifdef SQLITE_HAS_COLUMN_METADATA
                     const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
@@ -405,7 +401,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                 }
 
                 // Try also spatialite geometry blobs
-                else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
+                else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, nBytes,
                                                                    &poGeom, &nSRID ) == OGRERR_NONE )
                 {
                     OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
@@ -434,7 +430,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         switch( nColType )
         {
           case SQLITE_INTEGER:
-            if( CSLTestBoolean(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
+            if( CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
                 oField.SetType( OFTInteger64 );
             else
             {

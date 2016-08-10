@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.26 2011-06-16 15:53:12 fwarmerdam Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -16,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -64,7 +63,7 @@
  * Don't filter chars in TABCleanFieldName() if we're on a DBCS system
  *
  * Revision 1.14  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
+ * Avoid warnings for unused, and uninitialized variables
  *
  * Revision 1.13  2000/09/20 18:35:51  daniel
  * Fixed TABAdjustFilenameExtension() to also handle basename and path
@@ -119,15 +118,16 @@
 #  include <mbctype.h>  /* Multibyte chars stuff */
 #endif
 
+CPL_CVSID("$Id$");
 
 /**********************************************************************
  *                       TABGenerateArc()
  *
- * Generate the coordinates for an arc and ADD the coordinates to the 
+ * Generate the coordinates for an arc and ADD the coordinates to the
  * geometry object.  If the geometry already contains some points then
  * these won't be lost.
  *
- * poLine can be a OGRLineString or one of its derived classes, such as 
+ * poLine can be a OGRLineString or one of its derived classes, such as
  *        OGRLinearRing
  * numPoints is the number of points to generate.
  * Angles are specified in radians, valid values are in the range [0..2*PI]
@@ -136,7 +136,7 @@
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABGenerateArc(OGRLineString *poLine, int numPoints, 
+int TABGenerateArc(OGRLineString *poLine, int numPoints,
                    double dCenterX, double dCenterY,
                    double dXRadius, double dYRadius,
                    double dStartAngle, double dEndAngle)
@@ -158,8 +158,8 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
         poLine->addPoint(dX, dY);
     }
 
-    // Complete the arc with the last EndAngle, to make sure that 
-    // the arc is correcly close.
+    // Complete the arc with the last EndAngle, to make sure that
+    // the arc is correctly closed.
 
     dX = dCenterX + dXRadius*cos(dAngle);
     dY = dCenterY + dYRadius*sin(dAngle);
@@ -199,7 +199,11 @@ int TABCloseRing(OGRLineString *poRing)
  * This function works on the original buffer and returns a reference to it.
  * It does nothing on Windows systems where filenames are not case sensitive.
  **********************************************************************/
-GBool TABAdjustCaseSensitiveFilename(char *pszFname)
+static GBool TABAdjustCaseSensitiveFilename(char *
+#ifndef _WIN32
+                                            pszFname
+#endif
+                                            )
 {
 
 #ifdef _WIN32
@@ -230,7 +234,7 @@ GBool TABAdjustCaseSensitiveFilename(char *pszFname)
      * go backwards until we find a portion of the path that is valid.
      *----------------------------------------------------------------*/
     pszTmpPath = CPLStrdup(pszFname);
-    nTotalLen = strlen(pszTmpPath);
+    nTotalLen = static_cast<int>(strlen(pszTmpPath));
     iTmpPtr = nTotalLen;
     bValidPath = FALSE;
 
@@ -259,7 +263,7 @@ GBool TABAdjustCaseSensitiveFilename(char *pszFname)
 
     /*-----------------------------------------------------------------
      * OK, now that we have a valid base, reconstruct the whole path
-     * by scanning all the sub-directories.  
+     * by scanning all the sub-directories.
      * If we get to a point where a path component does not exist then
      * we simply return the rest of the path as is.
      *----------------------------------------------------------------*/
@@ -269,7 +273,7 @@ GBool TABAdjustCaseSensitiveFilename(char *pszFname)
         int     iEntry, iLastPartStart;
 
         iLastPartStart = iTmpPtr;
-        papszDir = CPLReadDir(pszTmpPath);
+        papszDir = VSIReadDir(pszTmpPath);
 
         /*-------------------------------------------------------------
          * Add one component to the current path
@@ -344,19 +348,19 @@ GBool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL  sStatBuf;
     int         i;
-    
+
     /*-----------------------------------------------------------------
      * First try using filename as provided
      *----------------------------------------------------------------*/
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
-    }     
+    }
 
     /*-----------------------------------------------------------------
      * Try using uppercase extension (we assume that fname contains a '.')
      *----------------------------------------------------------------*/
-    for(i = strlen(pszFname)-1; i >= 0 && pszFname[i] != '.'; i--)
+    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
     {
         pszFname[i] = (char)toupper(pszFname[i]);
     }
@@ -364,12 +368,12 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
-    }     
-    
+    }
+
     /*-----------------------------------------------------------------
      * Try using lowercase extension
      *----------------------------------------------------------------*/
-    for(i = strlen(pszFname)-1; i >= 0 && pszFname[i] != '.'; i--)
+    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
     {
         pszFname[i] = (char)tolower(pszFname[i]);
     }
@@ -377,11 +381,11 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
-    }     
+    }
 
     /*-----------------------------------------------------------------
-     * None of the extensions worked!  
-     * Try adjusting cases in the whole path and filename 
+     * None of the extensions worked!
+     * Try adjusting cases in the whole path and filename
      *----------------------------------------------------------------*/
     return TABAdjustCaseSensitiveFilename(pszFname);
 }
@@ -394,7 +398,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
  * Extract the basename part of a complete file path.
  *
  * Returns a newly allocated string without the leading path (dirs) and
- * the extenstion.  The returned string should be freed using CPLFree().
+ * the extension.  The returned string should be freed using CPLFree().
  **********************************************************************/
 char *TABGetBasename(const char *pszFname)
 {
@@ -405,8 +409,8 @@ char *TABGetBasename(const char *pszFname)
      * encountered.
      *----------------------------------------------------------------*/
     pszTmp = pszFname + strlen(pszFname) - 1;
-    while ( pszTmp != pszFname 
-            && *pszTmp != '/' && *pszTmp != '\\' ) 
+    while ( pszTmp != pszFname
+            && *pszTmp != '/' && *pszTmp != '\\' )
         pszTmp--;
 
     if( pszTmp != pszFname )
@@ -417,7 +421,7 @@ char *TABGetBasename(const char *pszFname)
      *----------------------------------------------------------------*/
     char *pszBasename = CPLStrdup(pszTmp);
     int i;
-    for(i=strlen(pszBasename)-1; i >= 0; i-- )
+    for(i=static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
     {
         if (pszBasename[i] == '.')
         {
@@ -443,16 +447,15 @@ char *TABGetBasename(const char *pszFname)
  **********************************************************************/
 char **TAB_CSLLoad(const char *pszFname)
 {
-    VSILFILE    *fp;
-    const char  *pszLine;
-    char        **papszStrList=NULL;
+    char **papszStrList = NULL;
 
-    fp = VSIFOpenL(pszFname, "rt");
+    VSILFILE *fp = VSIFOpenL(pszFname, "rt");
 
-    if (fp)
+    if( fp )
     {
         while(!VSIFEofL(fp))
         {
+            const char *pszLine = NULL;
             if ( (pszLine = CPLReadLineL(fp)) != NULL )
             {
                 papszStrList = CSLAddString(papszStrList, pszLine);
@@ -507,7 +510,7 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
     if (bSrcIsConst)
     {
         // We have to create a copy to work on.
-        pszWorkString = (char *)CPLMalloc(sizeof(char) * 
+        pszWorkString = (char *)CPLMalloc(sizeof(char) *
                                           (strlen(pszString) +1));
     }
     else
@@ -519,13 +522,13 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
 
     while (pszString[i])
     {
-        if (pszString[i] =='\\' && 
+        if (pszString[i] =='\\' &&
             pszString[i+1] == 'n')
         {
             pszWorkString[j++] = '\n';
             i+= 2;
         }
-        else if (pszString[i] =='\\' && 
+        else if (pszString[i] =='\\' &&
                  pszString[i+1] == '\\')
         {
             pszWorkString[j++] = '\\';
@@ -537,7 +540,7 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
         }
     }
     pszWorkString[j++] = '\0';
-   
+
     return pszWorkString;
 }
 
@@ -569,7 +572,7 @@ char *TABEscapeString(char *pszString)
      * OK, we need to do some replacements... alloc a copy big enough
      * to hold the worst possible case
      *----------------------------------------------------------------*/
-    char *pszWorkString = (char *)CPLMalloc(2*sizeof(char) * 
+    char *pszWorkString = (char *)CPLMalloc(2*sizeof(char) *
                                             (strlen(pszString) +1));
 
     int i =0;
@@ -609,10 +612,8 @@ char *TABEscapeString(char *pszString)
  **********************************************************************/
 char *TABCleanFieldName(const char *pszSrcName)
 {
-    char *pszNewName;
-    int numInvalidChars = 0;
 
-    pszNewName = CPLStrdup(pszSrcName);
+    char *pszNewName = CPLStrdup(pszSrcName);
 
     if (strlen(pszNewName) > 31)
     {
@@ -625,7 +626,7 @@ char *TABCleanFieldName(const char *pszSrcName)
 #if defined(_WIN32) && !defined(unix)
     /*-----------------------------------------------------------------
      * On Windows, check if we're using a double-byte codepage, and
-     * if so then just keep the field name as is... 
+     * if so then just keep the field name as is...
      *----------------------------------------------------------------*/
     if (_getmbcp() != 0)
         return pszNewName;
@@ -637,15 +638,16 @@ char *TABCleanFieldName(const char *pszSrcName)
      *  Name:
      * Displays the field name in the name box. You can also enter new field
      * names here. Defaults are Field1, Field2, etc. A field name can contain
-     * up to 31 alphanumeric characters. Use letters, numbers, and the 
+     * up to 31 alphanumeric characters. Use letters, numbers, and the
      * underscore. Do not use spaces; instead, use the underscore character
      * (_) to separate words in a field name. Use upper and lower case for
      * legibility, but MapInfo is not case-sensitive.
      *
-     * It was also verified that extended chars with accents are also 
+     * It was also verified that extended chars with accents are also
      * accepted.
      *----------------------------------------------------------------*/
-    for(int i=0; pszSrcName && pszSrcName[i] != '\0'; i++)
+    int numInvalidChars = 0;
+    for( int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++ )
     {
         if ( pszSrcName[i]=='#' )
 	{
@@ -656,8 +658,8 @@ char *TABCleanFieldName(const char *pszSrcName)
             }
         }
         else if ( !( pszSrcName[i] == '_' ||
-                     (i!=0 && pszSrcName[i]>='0' && pszSrcName[i]<='9') || 
-                     (pszSrcName[i]>='a' && pszSrcName[i]<='z') || 
+                     (i!=0 && pszSrcName[i]>='0' && pszSrcName[i]<='9') ||
+                     (pszSrcName[i]>='a' && pszSrcName[i]<='z') ||
                      (pszSrcName[i]>='A' && pszSrcName[i]<='Z') ||
                      (GByte)pszSrcName[i]>=192 ) )
         {
@@ -680,13 +682,13 @@ char *TABCleanFieldName(const char *pszSrcName)
 /**********************************************************************
  * MapInfo Units string to numeric ID conversion
  **********************************************************************/
-typedef struct 
+typedef struct
 {
     int         nUnitId;
     const char *pszAbbrev;
 } MapInfoUnitsInfo;
 
-static MapInfoUnitsInfo gasUnitsList[] = 
+static const MapInfoUnitsInfo gasUnitsList[] =
 {
     {0, "mi"},
     {1, "km"},
@@ -717,13 +719,11 @@ static MapInfoUnitsInfo gasUnitsList[] =
  **********************************************************************/
 const char *TABUnitIdToString(int nId)
 {
-    MapInfoUnitsInfo *psList;
-
-    psList = gasUnitsList;
+    const MapInfoUnitsInfo *psList = gasUnitsList;
 
     while(psList->nUnitId != -1)
     {
-        if (psList->nUnitId == nId) 
+        if (psList->nUnitId == nId)
             return psList->pszAbbrev;
         psList++;
     }
@@ -740,20 +740,35 @@ const char *TABUnitIdToString(int nId)
  **********************************************************************/
 int TABUnitIdFromString(const char *pszName)
 {
-    MapInfoUnitsInfo *psList;
+    const MapInfoUnitsInfo *psList = gasUnitsList;
 
-    psList = gasUnitsList;
-    
     if( pszName == NULL )
         return 13;
 
     while(psList->nUnitId != -1)
     {
         if (psList->pszAbbrev != NULL &&
-            EQUAL(psList->pszAbbrev, pszName)) 
+            EQUAL(psList->pszAbbrev, pszName))
             return psList->nUnitId;
         psList++;
     }
 
     return -1;
+}
+
+
+/**********************************************************************
+ *                       TABSaturatedAdd()
+ ***********************************************************************/
+
+void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd)
+{
+    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
+        nVal = INT_MAX;
+    else if( nAdd == INT_MIN && nVal < 0 )
+        nVal = INT_MIN;
+    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
+        nVal = INT_MIN;
+    else
+        nVal += nAdd;
 }

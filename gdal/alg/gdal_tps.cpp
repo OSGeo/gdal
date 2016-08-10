@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Thin Plate Spline transformer (GDAL wrapper portion)
@@ -36,6 +35,7 @@
 #include "cpl_string.h"
 #include "cpl_atomic_ops.h"
 #include "cpl_multiproc.h"
+#include <map>
 
 CPL_CVSID("$Id$");
 
@@ -57,9 +57,9 @@ typedef struct
 
     int       nGCPCount;
     GDAL_GCP *pasGCPList;
-    
+
     volatile int nRefCount;
-    
+
 } TPSTransformInfo;
 
 /************************************************************************/
@@ -72,7 +72,7 @@ void* GDALCreateSimilarTPSTransformer( void *hTransformArg, double dfRatioX, dou
     VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarTPSTransformer", NULL );
 
     TPSTransformInfo *psInfo = (TPSTransformInfo *) hTransformArg;
-    
+
     if( dfRatioX == 1.0 && dfRatioY == 1.0 )
     {
         /* We can just use a ref count, since using the source transformation */
@@ -106,31 +106,31 @@ void* GDALCreateSimilarTPSTransformer( void *hTransformArg, double dfRatioX, dou
  *
  * The thin plate spline transformer produces exact transformation
  * at all control points and smoothly varying transformations between
- * control points with greatest influence from local control points. 
- * It is suitable for for many applications not well modelled by polynomial
- * transformations. 
+ * control points with greatest influence from local control points.
+ * It is suitable for for many applications not well modeled by polynomial
+ * transformations.
  *
  * Creating the TPS transformer involves solving systems of linear equations
  * related to the number of control points involved.  This solution is
  * computed within this function call.  It can be quite an expensive operation
- * for large numbers of GCPs.  For instance, for reference, it takes on the 
- * order of 10s for 400 GCPs on a 2GHz Athlon processor. 
+ * for large numbers of GCPs.  For instance, for reference, it takes on the
+ * order of 10s for 400 GCPs on a 2GHz Athlon processor.
  *
- * TPS Transformers are serializable. 
+ * TPS Transformers are serializable.
  *
  * The GDAL Thin Plate Spline transformer is based on code provided by
- * Gilad Ronnen on behalf of VIZRT Inc (http://www.visrt.com).  Incorporation 
- * of the algorithm into GDAL was supported by the Centro di Ecologia Alpina 
- * (http://www.cealp.it). 
+ * Gilad Ronnen on behalf of VIZRT Inc (http://www.visrt.com).  Incorporation
+ * of the algorithm into GDAL was supported by the Centro di Ecologia Alpina
+ * (http://www.cealp.it).
  *
  * @param nGCPCount the number of GCPs in pasGCPList.
  * @param pasGCPList an array of GCPs to be used as input.
  * @param bReversed set it to TRUE to compute the reversed transformation.
- * 
- * @return the transform argument or NULL if creation fails. 
+ *
+ * @return the transform argument or NULL if creation fails.
  */
 
-void *GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+void *GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int bReversed )
 {
     return GDALCreateTPSTransformerInt(nGCPCount, pasGCPList, bReversed, NULL);
@@ -142,7 +142,7 @@ static void GDALTPSComputeForwardInThread(void* pData)
     psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
 }
 
-void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList, 
+void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
                                    int bReversed, char** papszOptions )
 
 {
@@ -171,6 +171,8 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
 /* -------------------------------------------------------------------- */
 /*      Attach all the points to the transformation.                    */
 /* -------------------------------------------------------------------- */
+    std::map< std::pair<double, double>, int > oMapPixelLineToIdx;
+    std::map< std::pair<double, double>, int > oMapXYToIdx;
     for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
     {
         double    afPL[2], afXY[2];
@@ -180,15 +182,60 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
         afXY[0] = pasGCPList[iGCP].dfGCPX;
         afXY[1] = pasGCPList[iGCP].dfGCPY;
 
-        if( bReversed )
+        std::map< std::pair<double, double>, int >::iterator oIter;
+        oIter = oMapPixelLineToIdx.find( std::pair<double,double>(afPL[0], afPL[1]) );
+        if( oIter != oMapPixelLineToIdx.end() )
         {
-            psInfo->poReverse->add_point( afPL[0], afPL[1], afXY );
-            psInfo->poForward->add_point( afXY[0], afXY[1], afPL );
+            if( afXY[0] == pasGCPList[oIter->second].dfGCPX &&
+                afXY[1] == pasGCPList[oIter->second].dfGCPY )
+            {
+                continue;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "GCP %d and %d have same (pixel,line)=(%f,%f) but different (X,Y): (%f,%f) vs (%f,%f)",
+                         iGCP + 1, oIter->second,
+                         afPL[0], afPL[1],
+                         afXY[0], afXY[1],
+                         pasGCPList[oIter->second].dfGCPX, pasGCPList[oIter->second].dfGCPY);
+            }
         }
         else
         {
-            psInfo->poForward->add_point( afPL[0], afPL[1], afXY );
-            psInfo->poReverse->add_point( afXY[0], afXY[1], afPL );
+            oMapPixelLineToIdx[ std::pair<double,double>(afPL[0], afPL[1]) ] = iGCP;
+        }
+
+        oIter = oMapXYToIdx.find( std::pair<double,double>(afXY[0], afXY[1]) );
+        if( oIter != oMapXYToIdx.end() )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                        "GCP %d and %d have same (x,y)=(%f,%f) but different (pixel,line): (%f,%f) vs (%f,%f)",
+                        iGCP + 1, oIter->second,
+                        afXY[0], afXY[1],
+                        afPL[0], afPL[1],
+                        pasGCPList[oIter->second].dfGCPPixel, pasGCPList[oIter->second].dfGCPLine);
+        }
+        else
+        {
+            oMapXYToIdx[ std::pair<double,double>(afXY[0], afXY[1]) ] = iGCP;
+        }
+
+        bool bOK = true;
+        if( bReversed )
+        {
+            bOK &= psInfo->poReverse->add_point( afPL[0], afPL[1], afXY );
+            bOK &= psInfo->poForward->add_point( afXY[0], afXY[1], afPL );
+        }
+        else
+        {
+            bOK &= psInfo->poForward->add_point( afPL[0], afPL[1], afXY );
+            bOK &= psInfo->poReverse->add_point( afXY[0], afXY[1], afPL );
+        }
+        if( !bOK )
+        {
+            GDALDestroyTPSTransformer(psInfo);
+            return NULL;
         }
     }
 
@@ -239,10 +286,10 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
  * Destroy TPS transformer.
  *
  * This function is used to destroy information about a GCP based
- * polynomial transformation created with GDALCreateTPSTransformer(). 
+ * polynomial transformation created with GDALCreateTPSTransformer().
  *
- * @param pTransformArg the transform arg previously returned by 
- * GDALCreateTPSTransformer(). 
+ * @param pTransformArg the transform arg previously returned by
+ * GDALCreateTPSTransformer().
  */
 
 void GDALDestroyTPSTransformer( void *pTransformArg )
@@ -260,7 +307,7 @@ void GDALDestroyTPSTransformer( void *pTransformArg )
 
         GDALDeinitGCPs( psInfo->nGCPCount, psInfo->pasGCPList );
         CPLFree( psInfo->pasGCPList );
-        
+
         CPLFree( pTransformArg );
     }
 }
@@ -276,8 +323,8 @@ void GDALDestroyTPSTransformer( void *pTransformArg )
  * used to transform one or more points from pixel/line coordinates to
  * georeferenced coordinates (SrcToDst) or vice versa (DstToSrc).
  *
- * @param pTransformArg return value from GDALCreateTPSTransformer(). 
- * @param bDstToSrc TRUE if transformation is from the destination 
+ * @param pTransformArg return value from GDALCreateTPSTransformer().
+ * @param bDstToSrc TRUE if transformation is from the destination
  * (georeferenced) coordinates to pixel/line or FALSE when transforming
  * from pixel/line to georeferenced coordinates.
  * @param nPointCount the number of values in the x, y and z arrays.
@@ -340,12 +387,12 @@ CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
 /*      Serialize bReversed.                                            */
 /* -------------------------------------------------------------------- */
-    CPLCreateXMLElementAndValue( 
-        psTree, "Reversed", 
+    CPLCreateXMLElementAndValue(
+        psTree, "Reversed",
         CPLString().Printf( "%d", psInfo->bReversed ) );
-                                 
+
 /* -------------------------------------------------------------------- */
-/*	Attach GCP List. 						*/
+/*      Attach GCP List.                                                */
 /* -------------------------------------------------------------------- */
     if( psInfo->nGCPCount > 0 )
     {
@@ -365,7 +412,7 @@ CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
 void *GDALDeserializeTPSTransformer( CPLXMLNode *psTree )
 
 {
-    GDAL_GCP *pasGCPList = 0;
+    GDAL_GCP *pasGCPList = NULL;
     int nGCPCount = 0;
     void *pResult;
     int bReversed;
@@ -392,7 +439,7 @@ void *GDALDeserializeTPSTransformer( CPLXMLNode *psTree )
 /*      Generate transformation.                                        */
 /* -------------------------------------------------------------------- */
     pResult = GDALCreateTPSTransformer( nGCPCount, pasGCPList, bReversed );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup GCP copy.                                               */
 /* -------------------------------------------------------------------- */

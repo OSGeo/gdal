@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader - Property definition
  * Purpose:  Implements VFKProperty class.
@@ -35,6 +34,8 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+CPL_CVSID("$Id$");
+
 /*!
   \brief Set VFK property (null)
 */
@@ -46,7 +47,7 @@ VFKProperty::VFKProperty()
 /*!
   \brief Set VFK property (integer)
 */
-VFKProperty::VFKProperty(int iValue) 
+VFKProperty::VFKProperty(int iValue)
     : m_bIsNull(FALSE), m_nValue(iValue), m_dValue(0.0)
 {
 }
@@ -63,7 +64,7 @@ VFKProperty::VFKProperty(double dValue)
   \brief Set VFK property (string)
 */
 VFKProperty::VFKProperty(const char *pszValue)
-    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(0 != pszValue ? pszValue : "")
+    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(NULL != pszValue ? pszValue : "")
 {
 }
 
@@ -107,9 +108,9 @@ VFKProperty& VFKProperty::operator=(VFKProperty const& other)
 
 /*!
   \brief Get string property
-  
+
   \param escape TRUE to escape characters for SQL
-  
+
   \return string buffer
 */
 const char *VFKProperty::GetValueS(bool escape) const

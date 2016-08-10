@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Rasterlite driver
  * Purpose:  Implement GDAL Rasterlite support using OGR SQLite driver
@@ -27,12 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_frmts.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
 #include "rasterlitedataset.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -45,10 +46,11 @@ OGRDataSourceH RasterliteOpenSQLiteDB(const char* pszFilename,
                                       GDALAccess eAccess)
 {
     const char* const apszAllowedDrivers[] = { "SQLITE", NULL };
-    return (OGRDataSourceH)GDALOpenEx(pszFilename,
-                                      GDAL_OF_VECTOR |
-                                      ((eAccess == GA_Update) ? GDAL_OF_UPDATE : 0),
-                                      apszAllowedDrivers, NULL, NULL);
+    return reinterpret_cast<OGRDataSourceH>(
+        GDALOpenEx( pszFilename,
+                    GDAL_OF_VECTOR |
+                    ((eAccess == GA_Update) ? GDAL_OF_UPDATE : 0),
+                    apszAllowedDrivers, NULL, NULL ));
 }
 
 /************************************************************************/
@@ -92,15 +94,15 @@ CPLString RasterliteGetSpatialFilterCond(double minx, double miny,
 /*                            RasterliteBand()                          */
 /************************************************************************/
 
-RasterliteBand::RasterliteBand(RasterliteDataset* poDS, int nBand,
-                                GDALDataType eDataType,
-                                int nBlockXSize, int nBlockYSize)
+RasterliteBand::RasterliteBand(RasterliteDataset* poDSIn, int nBandIn,
+                                GDALDataType eDataTypeIn,
+                                int nBlockXSizeIn, int nBlockYSizeIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = eDataType;
-    this->nBlockXSize = nBlockXSize;
-    this->nBlockYSize = nBlockYSize;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->eDataType = eDataTypeIn;
+    this->nBlockXSize = nBlockXSizeIn;
+    this->nBlockYSize = nBlockYSizeIn;
 }
 
 /************************************************************************/
@@ -111,8 +113,8 @@ RasterliteBand::RasterliteBand(RasterliteDataset* poDS, int nBand,
 
 CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
 {
-    RasterliteDataset* poGDS = (RasterliteDataset*) poDS;
-    
+    RasterliteDataset* poGDS = reinterpret_cast<RasterliteDataset *>( poDS );
+
     double minx = poGDS->adfGeoTransform[0] +
                   nBlockXOff * nBlockXSize * poGDS->adfGeoTransform[1];
     double maxx = poGDS->adfGeoTransform[0] +
@@ -131,7 +133,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 nBlockXOff, nBlockYOff, nBlockXSize, nBlockYSize, minx, miny, maxx, maxy);
     }
 #endif
-    
+
     CPLString osSQL;
     osSQL.Printf("SELECT m.geometry, r.raster, m.id, m.width, m.height FROM \"%s_metadata\" AS m, "
                  "\"%s_rasters\" AS r WHERE m.rowid IN "
@@ -142,7 +144,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                  poGDS->osTableName.c_str(),
                  RasterliteGetSpatialFilterCond(minx, miny, maxx, maxy).c_str(),
                  RasterliteGetPixelSizeCond(poGDS->adfGeoTransform[1], -poGDS->adfGeoTransform[5], "m.").c_str());
-    
+
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, osSQL.c_str(), NULL, NULL);
     if (hSQLLyr == NULL)
     {
@@ -152,19 +154,21 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
     CPLString osMemFileName;
     osMemFileName.Printf("/vsimem/%p", this);
-    
-    int bHasFoundTile = FALSE;
-    int bHasMemsetTile = FALSE;
 
 #ifdef RASTERLITE_DEBUG
     if (nBand == 1)
     {
-        printf("nTiles = %d\n", OGR_L_GetFeatureCount(hSQLLyr, TRUE));
+        printf("nTiles = %d\n", static_cast<int>(
+            OGR_L_GetFeatureCount(hSQLLyr, TRUE) ));
     }
 #endif
 
+    bool bHasFoundTile = false;
+    bool bHasMemsetTile = false;
+
     OGRFeatureH hFeat;
-    while( (hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL )
+    CPLErr eErr = CE_None;
+    while( (hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL && eErr == CE_None )
     {
         OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
         if (hGeom == NULL)
@@ -174,22 +178,22 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
             return CE_Failure;
         }
-        
+
         OGREnvelope oEnvelope;
         OGR_G_GetEnvelope(hGeom, &oEnvelope);
 
-        int nTileId = OGR_F_GetFieldAsInteger(hFeat, 1);
-        int nTileXSize = OGR_F_GetFieldAsInteger(hFeat, 2);
-        int nTileYSize = OGR_F_GetFieldAsInteger(hFeat, 3);
-        
-        int nDstXOff =
-            (int)((oEnvelope.MinX - minx) / poGDS->adfGeoTransform[1] + 0.5);
-        int nDstYOff =
-            (int)((maxy - oEnvelope.MaxY) / (-poGDS->adfGeoTransform[5]) + 0.5);
-        
+        const int nTileId = OGR_F_GetFieldAsInteger(hFeat, 1);
+        const int nTileXSize = OGR_F_GetFieldAsInteger(hFeat, 2);
+        const int nTileYSize = OGR_F_GetFieldAsInteger(hFeat, 3);
+
+        int nDstXOff = static_cast<int>(
+            ( oEnvelope.MinX - minx ) / poGDS->adfGeoTransform[1] + 0.5 );
+        int nDstYOff = static_cast<int>(
+            ( maxy - oEnvelope.MaxY ) / ( -poGDS->adfGeoTransform[5] ) + 0.5 );
+
         int nReqXSize = nTileXSize;
         int nReqYSize = nTileYSize;
-        
+
         int nSrcXOff, nSrcYOff;
 
         if (nDstXOff >= 0)
@@ -202,8 +206,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             nReqXSize += nDstXOff;
             nDstXOff = 0;
         }
-        
-        
+
         if (nDstYOff >= 0)
         {
             nSrcYOff = 0;
@@ -214,10 +217,10 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             nReqYSize += nDstYOff;
             nDstYOff = 0;
         }
-        
+
         if (nDstXOff + nReqXSize > nBlockXSize)
             nReqXSize = nBlockXSize - nDstXOff;
-            
+
         if (nDstYOff + nReqYSize > nBlockYSize)
             nReqYSize = nBlockYSize - nDstYOff;
 
@@ -237,7 +240,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
         if (nReqXSize > 0 && nReqYSize > 0 &&
             nSrcXOff < nTileXSize && nSrcYOff < nTileYSize)
         {
-                
+
 #ifdef RASTERLITE_DEBUG
             if (nBand == 1)
             {
@@ -250,7 +253,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
                                               nDataSize, FALSE);
             VSIFCloseL(fp);
-            
+
             GDALDatasetH hDSTile = GDALOpenEx(osMemFileName.c_str(),
                                               GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                                               NULL, NULL, NULL);
@@ -265,7 +268,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d", 
                          nTileId);
             }
-            
+
             int nReqBand = 1;
             if (nTileBands == poGDS->nBands)
                 nReqBand = nBand;
@@ -276,16 +279,25 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 GDALClose(hDSTile);
                 hDSTile = NULL;
             }
-                
+            
+            if( hDSTile )
+            {
+                if( GDALGetRasterXSize(hDSTile) != nTileXSize ||
+                    GDALGetRasterYSize(hDSTile) != nTileYSize )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions for tile %d", 
+                             nTileId);
+                    GDALClose(hDSTile);
+                    hDSTile = NULL;
+                }
+            }
+
             if (hDSTile)
             {
-                CPLAssert(GDALGetRasterXSize(hDSTile) == nTileXSize);
-                CPLAssert(GDALGetRasterYSize(hDSTile) == nTileYSize);
+                bHasFoundTile = true;
 
-                bHasFoundTile = TRUE;
-                
-                int bHasJustMemsetTileBand1 = FALSE;
-                
+                bool bHasJustMemsetTileBand1 = false;
+
                 /* If the source tile doesn't fit the entire block size, then */
                 /* we memset 0 before */
                 if (!(nDstXOff == 0 && nDstYOff == 0 &&
@@ -293,40 +305,45 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                     !bHasMemsetTile)
                 {
                     memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
-                    bHasMemsetTile = TRUE;
-                    bHasJustMemsetTileBand1 = TRUE;
+                    bHasMemsetTile = true;
+                    bHasJustMemsetTileBand1 = true;
                 }
-                
+
                 GDALColorTable* poTileCT =
-                    (GDALColorTable* )GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1));
+                    reinterpret_cast<GDALColorTable *>(
+                        GDALGetRasterColorTable(
+                            GDALGetRasterBand( hDSTile, 1 ) ) );
                 unsigned char* pabyTranslationTable = NULL;
                 if (poGDS->nBands == 1 && poGDS->poCT != NULL && poTileCT != NULL)
                 {
                     pabyTranslationTable =
-                        ((GDALRasterBand*)GDALGetRasterBand(hDSTile, 1))->
+                        reinterpret_cast<GDALRasterBand *>(
+                            GDALGetRasterBand( hDSTile, 1 ) )->
                                 GetIndexColorTranslationTo(this, NULL, NULL);
                 }
-                    
+
 /* -------------------------------------------------------------------- */
 /*      Read tile data                                                  */
 /* -------------------------------------------------------------------- */
-                GDALRasterIO(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
-                             nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
-                             ((char*) pImage) + (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
-                             nReqXSize, nReqYSize,
-                             eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize);
+                eErr = GDALRasterIO(
+                    GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
+                    nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
+                    reinterpret_cast<char*>( pImage )
+                    + (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
+                    nReqXSize, nReqYSize,
+                    eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize);
 
                 if (eDataType == GDT_Byte && pabyTranslationTable)
                 {
 /* -------------------------------------------------------------------- */
 /*      Convert from tile CT to band CT                                 */
 /* -------------------------------------------------------------------- */
-                    int i, j;
-                    for(j=nDstYOff;j<nDstYOff + nReqYSize;j++)
+                    for( int j = nDstYOff; j < nDstYOff + nReqYSize; j++ )
                     {
-                        for(i=nDstXOff;i<nDstXOff + nReqXSize;i++)
+                        for( int i = nDstXOff; i < nDstXOff + nReqXSize; i++ )
                         {
-                            GByte* pPixel = ((GByte*) pImage) + i + j * nBlockXSize;
+                            GByte* pPixel = reinterpret_cast<GByte *>( pImage )
+                                + i + j * nBlockXSize;
                             *pPixel = pabyTranslationTable[*pPixel];
                         }
                     }
@@ -339,55 +356,56 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 /* -------------------------------------------------------------------- */
 /*      Expand from PCT to RGB                                          */
 /* -------------------------------------------------------------------- */
-                    int i, j;
                     GByte abyCT[256];
-                    int nEntries = MIN(256, poTileCT->GetColorEntryCount());
-                    for(i=0;i<nEntries;i++)
+                    const int nEntries = std::min(256, poTileCT->GetColorEntryCount());
+                    for( int i = 0; i < nEntries; i++ )
                     {
                         const GDALColorEntry* psEntry = poTileCT->GetColorEntry(i);
                         if (nBand == 1)
-                            abyCT[i] = (GByte)psEntry->c1;
+                            abyCT[i] = static_cast<GByte>( psEntry->c1 );
                         else if (nBand == 2)
-                            abyCT[i] = (GByte)psEntry->c2;
+                            abyCT[i] = static_cast<GByte>( psEntry->c2 );
                         else
-                            abyCT[i] = (GByte)psEntry->c3;
+                            abyCT[i] = static_cast<GByte>( psEntry->c3 );
                     }
-                    for(;i<256;i++)
+                    for( int i = nEntries; i < 256; i++ )
                         abyCT[i] = 0;
-                    
-                    for(j=nDstYOff;j<nDstYOff + nReqYSize;j++)
+
+                    for( int j = nDstYOff; j < nDstYOff + nReqYSize; j++ )
                     {
-                        for(i=nDstXOff;i<nDstXOff + nReqXSize;i++)
+                        for( int i = nDstXOff; i < nDstXOff + nReqXSize; i++ )
                         {
-                            GByte* pPixel = ((GByte*) pImage) + i + j * nBlockXSize;
+                            GByte* pPixel = reinterpret_cast<GByte *>( pImage )
+                                + i + j * nBlockXSize;
                             *pPixel = abyCT[*pPixel];
                         }
                     }
                 }
-                
+
 /* -------------------------------------------------------------------- */
 /*      Put in the block cache the data for this block into other bands */
 /*      while the underlying dataset is opened                          */
 /* -------------------------------------------------------------------- */
                 if (nBand == 1 && poGDS->nBands > 1)
                 {
-                    int iOtherBand;
-                    for(iOtherBand=2;iOtherBand<=poGDS->nBands;iOtherBand++)
+                    for( int iOtherBand = 2;
+                         iOtherBand<=poGDS->nBands && eErr == CE_None;
+                         iOtherBand++ )
                     {
-                        GDALRasterBlock *poBlock;
-
-                        poBlock = poGDS->GetRasterBand(iOtherBand)->
+                        GDALRasterBlock *poBlock
+                            = poGDS->GetRasterBand(iOtherBand)->
                             GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
                         if (poBlock == NULL)
                             break;
-                            
-                        GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
+
+                        GByte* pabySrcBlock = reinterpret_cast<GByte *>(
+                            poBlock->GetDataRef() );
                         if( pabySrcBlock == NULL )
                         {
                             poBlock->DropLock();
                             break;
                         }
-            
+
                         if (nTileBands == 1)
                             nReqBand = 1;
                         else
@@ -396,17 +414,19 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                         if (bHasJustMemsetTileBand1)
                             memset(pabySrcBlock, 0,
                                    nBlockXSize * nBlockYSize * nDataTypeSize);
-            
+
 /* -------------------------------------------------------------------- */
 /*      Read tile data                                                  */
 /* -------------------------------------------------------------------- */
-                        GDALRasterIO(GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
-                                     nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
-                                     ((char*) pabySrcBlock) +
-                                     (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
-                                     nReqXSize, nReqYSize,
-                                     eDataType, nDataTypeSize, nBlockXSize * nDataTypeSize);
-                        
+                        eErr = GDALRasterIO(
+                            GDALGetRasterBand(hDSTile, nReqBand), GF_Read,
+                            nSrcXOff, nSrcYOff, nReqXSize, nReqYSize,
+                            reinterpret_cast<char *>( pabySrcBlock ) +
+                            (nDstXOff + nDstYOff * nBlockXSize) * nDataTypeSize,
+                            nReqXSize, nReqYSize,
+                            eDataType, nDataTypeSize,
+                            nBlockXSize * nDataTypeSize);
+
                         if (eDataType == GDT_Byte && nTileBands == 1 &&
                             poGDS->nBands == 3 && poTileCT != NULL)
                         {
@@ -414,39 +434,41 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 /*      Expand from PCT to RGB                                          */
 /* -------------------------------------------------------------------- */
 
-                            int i, j;
                             GByte abyCT[256];
-                            int nEntries = MIN(256, poTileCT->GetColorEntryCount());
-                            for(i=0;i<nEntries;i++)
+                            const int nEntries
+                                = std::min(256, poTileCT->GetColorEntryCount());
+                            for( int i=0; i < nEntries; i++ )
                             {
                                 const GDALColorEntry* psEntry = poTileCT->GetColorEntry(i);
                                 if (iOtherBand == 1)
-                                    abyCT[i] = (GByte)psEntry->c1;
+                                    abyCT[i] = static_cast<GByte>( psEntry->c1 );
                                 else if (iOtherBand == 2)
-                                    abyCT[i] = (GByte)psEntry->c2;
+                                    abyCT[i] = static_cast<GByte>( psEntry->c2 );
                                 else
-                                    abyCT[i] = (GByte)psEntry->c3;
+                                    abyCT[i] = static_cast<GByte>( psEntry->c3 );
                             }
-                            for(;i<256;i++)
+                            for( int i = nEntries; i < 256; i++ )
                                 abyCT[i] = 0;
-                            
-                            for(j=nDstYOff;j<nDstYOff + nReqYSize;j++)
+
+                            for( int j = nDstYOff; j < nDstYOff + nReqYSize; j++ )
                             {
-                                for(i=nDstXOff;i<nDstXOff + nReqXSize;i++)
+                                for( int i = nDstXOff; i < nDstXOff + nReqXSize; i++ )
                                 {
-                                    GByte* pPixel = ((GByte*) pabySrcBlock) + i + j * nBlockXSize;
+                                  GByte* pPixel
+                                      = reinterpret_cast<GByte*>( pabySrcBlock )
+                                      + i + j * nBlockXSize;
                                     *pPixel = abyCT[*pPixel];
                                 }
                             }
                         }
-                        
+
                         poBlock->DropLock();
                     }
-                  
+
                 }
                 GDALClose(hDSTile);
             }
-            
+
             VSIUnlink(osMemFileName.c_str());
         }
         else
@@ -458,23 +480,22 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             }
 #endif
         }
-        
         OGR_F_Destroy(hFeat);
     }
-    
+
     if (!bHasFoundTile)
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
     }
-            
+
     OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
-    
+
 #ifdef RASTERLITE_DEBUG
     if (nBand == 1)
         printf("\n");
 #endif
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -483,8 +504,8 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
 int RasterliteBand::GetOverviewCount()
 {
-    RasterliteDataset* poGDS = (RasterliteDataset*) poDS;
-    
+    RasterliteDataset* poGDS = reinterpret_cast<RasterliteDataset *>( poDS );
+
     if (poGDS->nLimitOvrCount >= 0)
         return poGDS->nLimitOvrCount;
     else if (poGDS->nResolutions > 1)
@@ -499,25 +520,25 @@ int RasterliteBand::GetOverviewCount()
 
 GDALRasterBand* RasterliteBand::GetOverview(int nLevel)
 {
-    RasterliteDataset* poGDS = (RasterliteDataset*) poDS;
-    
+    RasterliteDataset* poGDS = reinterpret_cast<RasterliteDataset *>( poDS );
+
     if (poGDS->nLimitOvrCount >= 0)
     {
         if (nLevel < 0 || nLevel >= poGDS->nLimitOvrCount)
             return NULL;
     }
-    
+
     if (poGDS->nResolutions == 1)
         return GDALPamRasterBand::GetOverview(nLevel);
-    
+
     if (nLevel < 0 || nLevel >= poGDS->nResolutions - 1)
         return NULL;
-        
+
     GDALDataset* poOvrDS = poGDS->papoOverviews[nLevel];
     if (poOvrDS)
         return poOvrDS->GetRasterBand(nBand);
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -526,13 +547,13 @@ GDALRasterBand* RasterliteBand::GetOverview(int nLevel)
 
 GDALColorInterp RasterliteBand::GetColorInterpretation()
 {
-    RasterliteDataset* poGDS = (RasterliteDataset*) poDS;
+    RasterliteDataset* poGDS = reinterpret_cast<RasterliteDataset *>( poDS );
     if (poGDS->nBands == 1)
     {
         if (poGDS->poCT != NULL)
             return GCI_PaletteIndex;
-        else
-            return GCI_GrayIndex;
+
+        return GCI_GrayIndex;
     }
     else if (poGDS->nBands == 3)
     {
@@ -543,7 +564,7 @@ GDALColorInterp RasterliteBand::GetColorInterpretation()
         else if (nBand == 3)
             return GCI_BlueBand;
     }
-    
+
     return GCI_Undefined;
 }
 
@@ -553,69 +574,68 @@ GDALColorInterp RasterliteBand::GetColorInterpretation()
 
 GDALColorTable* RasterliteBand::GetColorTable()
 {
-    RasterliteDataset* poGDS = (RasterliteDataset*) poDS;
+    RasterliteDataset* poGDS = reinterpret_cast<RasterliteDataset *>( poDS );
     if (poGDS->nBands == 1)
         return poGDS->poCT;
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
 /*                         RasterliteDataset()                          */
 /************************************************************************/
 
-RasterliteDataset::RasterliteDataset()
+RasterliteDataset::RasterliteDataset() :
+    bMustFree(FALSE),
+    poMainDS(NULL),
+    nLevel(0),
+    papszMetadata(NULL),
+    papszSubDatasets(NULL),
+    nResolutions(0),
+    padfXResolutions(NULL),
+    padfYResolutions(NULL),
+    papoOverviews(NULL),
+    nLimitOvrCount(-1),
+    bValidGeoTransform(FALSE),
+    pszSRS(NULL),
+    poCT(NULL),
+    bCheckForExistingOverview(TRUE),
+    hDS(NULL)
 {
-    nLimitOvrCount = -1;
-    bValidGeoTransform = FALSE;
-    bMustFree = FALSE;
-    nLevel = 0;
-    poMainDS = NULL;
-    nResolutions = 0;
-    padfXResolutions = NULL;
-    padfYResolutions = NULL;
-    pszSRS = NULL;
-    hDS = NULL;
-    papoOverviews = NULL;
-    papszMetadata = NULL;
-    papszSubDatasets = NULL;
     papszImageStructure =
         CSLAddString(NULL, "INTERLEAVE=PIXEL");
-    poCT = NULL;
-    bCheckForExistingOverview = TRUE;
 }
 
 /************************************************************************/
 /*                         RasterliteDataset()                          */
 /************************************************************************/
 
-RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDS, int nLevel)
+RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDSIn, int nLevelIn) :
+    bMustFree(FALSE),
+    poMainDS(poMainDSIn),
+    nLevel(nLevelIn),
+    papszMetadata(poMainDSIn->papszMetadata),
+    papszImageStructure(poMainDSIn->papszImageStructure),
+    papszSubDatasets(poMainDS->papszSubDatasets),
+    nResolutions(poMainDSIn->nResolutions - nLevelIn),
+    padfXResolutions(poMainDSIn->padfXResolutions + nLevelIn),
+    padfYResolutions(poMainDSIn->padfYResolutions + nLevelIn),
+    papoOverviews(poMainDSIn->papoOverviews + nLevelIn),
+    nLimitOvrCount(-1),
+    bValidGeoTransform(TRUE),
+    pszSRS(poMainDSIn->pszSRS),
+    poCT(poMainDSIn->poCT),
+    osTableName(poMainDSIn->osTableName),
+    osFileName(poMainDSIn->osFileName),
+    bCheckForExistingOverview(TRUE),
+    // TODO: osOvrFileName?
+    hDS(poMainDSIn->hDS)
 {
-    nLimitOvrCount = -1;
-    bMustFree = FALSE;
-    this->nLevel = nLevel;
-    this->poMainDS = poMainDS;
-    nResolutions = poMainDS->nResolutions - nLevel;
-    padfXResolutions = poMainDS->padfXResolutions + nLevel;
-    padfYResolutions = poMainDS->padfYResolutions + nLevel;
-    pszSRS = poMainDS->pszSRS;
-    hDS = poMainDS->hDS;
-    papoOverviews = poMainDS->papoOverviews + nLevel;
-    papszMetadata = poMainDS->papszMetadata;
-    papszSubDatasets = poMainDS->papszSubDatasets;
-    papszImageStructure =  poMainDS->papszImageStructure;
-    poCT =  poMainDS->poCT;
-    bCheckForExistingOverview = TRUE;
-
-    osTableName = poMainDS->osTableName;
-    osFileName = poMainDS->osFileName;
-    
-    nRasterXSize = (int)(poMainDS->nRasterXSize *
+    nRasterXSize = static_cast<int>(poMainDS->nRasterXSize *
         (poMainDS->padfXResolutions[0] / padfXResolutions[0]) + 0.5);
-    nRasterYSize = (int)(poMainDS->nRasterYSize *
+    nRasterYSize = static_cast<int>(poMainDS->nRasterYSize *
         (poMainDS->padfYResolutions[0] / padfYResolutions[0]) + 0.5);
 
-    bValidGeoTransform = TRUE;
     memcpy(adfGeoTransform, poMainDS->adfGeoTransform, 6 * sizeof(double));
     adfGeoTransform[1] = padfXResolutions[0];
     adfGeoTransform[5] = - padfYResolutions[0];
@@ -651,8 +671,7 @@ int RasterliteDataset::CloseDependentDatasets()
 
         if (papoOverviews)
         {
-            int i;
-            for(i=1;i<nResolutions;i++)
+            for( int i = 1; i < nResolutions; i++ )
             {
                 if (papoOverviews[i-1] != NULL &&
                     papoOverviews[i-1]->bMustFree)
@@ -695,15 +714,15 @@ int RasterliteDataset::CloseDependentDatasets()
 
 void RasterliteDataset::AddSubDataset( const char* pszDSName)
 {
-    char	szName[80];
-    int		nCount = CSLCount(papszSubDatasets ) / 2;
+    char szName[80];
+    const int nCount = CSLCount(papszSubDatasets ) / 2;
 
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
-    papszSubDatasets = 
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszDSName);
 
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
-    papszSubDatasets = 
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszDSName);
 }
 
@@ -727,14 +746,14 @@ char **RasterliteDataset::GetMetadata( const char *pszDomain )
 {
     if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
         return papszSubDatasets;
-        
+
     if( CSLCount(papszSubDatasets) < 2 &&
         pszDomain != NULL && EQUAL(pszDomain,"IMAGE_STRUCTURE") )
         return papszImageStructure;
-        
+
     if ( pszDomain == NULL || EQUAL(pszDomain, "") )
         return papszMetadata;
-        
+
     return GDALPamDataset::GetMetadata( pszDomain );
 }
 
@@ -749,16 +768,15 @@ const char *RasterliteDataset::GetMetadataItem( const char *pszName,
     {
         if (nResolutions > 1 || CSLCount(papszSubDatasets) > 2)
             return NULL;
-        else
-        {
-            osOvrFileName.Printf("%s_%s", osFileName.c_str(), osTableName.c_str());
-            if (bCheckForExistingOverview == FALSE ||
-                CPLCheckForFile((char*) osOvrFileName.c_str(), NULL))
-                return osOvrFileName.c_str();
-            else
-                return NULL;
-        }
+
+        osOvrFileName.Printf("%s_%s", osFileName.c_str(), osTableName.c_str());
+        if (bCheckForExistingOverview == FALSE ||
+            CPLCheckForFile(const_cast<char *>( osOvrFileName.c_str() ), NULL))
+            return osOvrFileName.c_str();
+
+        return NULL;
     }
+
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
@@ -773,8 +791,8 @@ CPLErr RasterliteDataset::GetGeoTransform( double* padfGeoTransform )
         memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
         return CE_None;
     }
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -785,8 +803,8 @@ const char* RasterliteDataset::GetProjectionRef()
 {
     if (pszSRS)
         return pszSRS;
-    else
-        return "";
+
+    return "";
 }
 
 /************************************************************************/
@@ -795,8 +813,8 @@ const char* RasterliteDataset::GetProjectionRef()
 
 char** RasterliteDataset::GetFileList()
 {
-    char** papszFileList = NULL;
-    papszFileList = CSLAddString(papszFileList, osFileName);
+    char** papszFileList
+        = CSLAddString(NULL, osFileName);
     return papszFileList;
 }
 
@@ -804,53 +822,54 @@ char** RasterliteDataset::GetFileList()
 /*                         GetBlockParams()                             */
 /************************************************************************/
 
-int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
+int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevelIn,
                                       int* pnBands, GDALDataType* peDataType,
                                       int* pnBlockXSize, int* pnBlockYSize)
 {
     CPLString osSQL;
-    
     osSQL.Printf("SELECT m.geometry, r.raster, m.id "
                  "FROM \"%s_metadata\" AS m, \"%s_rasters\" AS r "
                  "WHERE %s AND r.id = m.id",
                  osTableName.c_str(), osTableName.c_str(),
-                 RasterliteGetPixelSizeCond(padfXResolutions[nLevel],padfYResolutions[nLevel], "m.").c_str());
-    
+                 RasterliteGetPixelSizeCond(padfXResolutions[nLevelIn],padfYResolutions[nLevelIn], "m.").c_str());
+
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
     if (hSQLLyr == NULL)
     {
         return FALSE;
     }
-    
+
     OGRFeatureH hFeat = OGR_L_GetNextFeature(hRasterLyr);
     if (hFeat == NULL)
     {
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
         return FALSE;
     }
-    
+
     int nDataSize;
     GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
-    
+
     if (nDataSize > 32 &&
-        EQUALN((const char*)pabyData, "StartWaveletsImage$$", strlen("StartWaveletsImage$$")))
+        STARTS_WITH_CI(reinterpret_cast<const char *>(pabyData),
+                       "StartWaveletsImage$$"))
     {
         if (GDALGetDriverByName("EPSILON") == NULL)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Rasterlite driver doesn't support WAVELET compressed images if EPSILON driver is not compiled");
+                     "Rasterlite driver doesn't support WAVELET compressed "
+                     "images if EPSILON driver is not compiled");
             OGR_F_Destroy(hFeat);
             OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
             return FALSE;
         }
     }
-    
+
     CPLString osMemFileName;
     osMemFileName.Printf("/vsimem/%p", this);
-    VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
-                                      nDataSize, FALSE);
+    VSILFILE *fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
+                                         nDataSize, FALSE);
     VSIFCloseL(fp);
-    
+
     GDALDatasetH hDSTile = GDALOpen(osMemFileName.c_str(), GA_ReadOnly);
     if (hDSTile)
     {
@@ -866,13 +885,12 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
         CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d", 
                  OGR_F_GetFieldAsInteger(hFeat, 1));
     }
-    
+
     if (hDSTile)
     {
-        int iBand;
         *peDataType = GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1));
-        
-        for(iBand=2;iBand<=*pnBands;iBand++)
+
+        for( int iBand = 2; iBand <= *pnBands; iBand++ )
         {
             if (*peDataType != GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)))
             {
@@ -882,7 +900,7 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
                 goto end;
             }
         }
-        
+
         *pnBlockXSize = GDALGetRasterXSize(hDSTile);
         *pnBlockYSize = GDALGetRasterYSize(hDSTile);
         if (CSLFindName(papszImageStructure, "COMPRESSION") == -1)
@@ -893,32 +911,32 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevel,
                 papszImageStructure =
                     CSLAddString(papszImageStructure, "COMPRESSION=JPEG");
         }
-        
+
         if (CSLFindName(papszMetadata, "TILE_FORMAT") == -1)
         {
             papszMetadata =
                 CSLSetNameValue(papszMetadata, "TILE_FORMAT",
                            GDALGetDriverShortName(GDALGetDatasetDriver(hDSTile)));
         }
-        
-        
+
         if (*pnBands == 1 && this->poCT == NULL)
         {
-            GDALColorTable* poCT =
-                (GDALColorTable*)GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1));
-            if (poCT)
-                this->poCT = poCT->Clone();
+            GDALColorTable* l_poCT =
+                reinterpret_cast<GDALColorTable *>(
+                    GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1) ) );
+            if (l_poCT)
+                this->poCT = l_poCT->Clone();
         }
 
         GDALClose(hDSTile);
     }
-end:    
+end:
     VSIUnlink(osMemFileName.c_str());
-    
+
     OGR_F_Destroy(hFeat);
-    
+
     OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-    
+
     return hDSTile != NULL;
 }
 
@@ -931,16 +949,18 @@ int RasterliteDataset::Identify(GDALOpenInfo* poOpenInfo)
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") &&
         poOpenInfo->nHeaderBytes >= 1024 &&
-        EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
+        STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3") &&
+        // Do not match direct Amazon S3 signed URLs that contains .mbtiles in the middle of the URL
+        strstr(poOpenInfo->pszFilename, ".mbtiles") == NULL)
     {
         // Could be a SQLite/Spatialite file as well
         return -1;
     }
-    else if (EQUALN(poOpenInfo->pszFilename, "RASTERLITE:", 11))
+    else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE:"))
     {
         return TRUE;
     }
-    
+
     return FALSE;
 }
 
@@ -950,6 +970,9 @@ int RasterliteDataset::Identify(GDALOpenInfo* poOpenInfo)
 
 GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 {
+    if( Identify(poOpenInfo) == FALSE )
+        return NULL;
+
     CPLString osFileName;
     CPLString osTableName;
     char **papszTokens = NULL;
@@ -958,14 +981,12 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     int bMinXSet = FALSE, bMinYSet = FALSE, bMaxXSet = FALSE, bMaxYSet = FALSE;
     int nReqBands = 0;
 
-    if( Identify(poOpenInfo) == FALSE )
-        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Parse "file name"                                               */
 /* -------------------------------------------------------------------- */
     if (poOpenInfo->nHeaderBytes >= 1024 &&
-        EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
+        STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
         osFileName = poOpenInfo->pszFilename;
     }
@@ -979,37 +1000,36 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             CSLDestroy(papszTokens);
             return NULL;
         }
-                
+
         osFileName = papszTokens[0];
-        
-        int i;
-        for(i=1;i<nTokens;i++)
+
+        for( int i=1; i < nTokens; i++)
         {
-            if (EQUALN(papszTokens[i], "table=", 6))
+            if (STARTS_WITH_CI(papszTokens[i], "table="))
                 osTableName = papszTokens[i] + 6;
-            else if (EQUALN(papszTokens[i], "level=", 6))
+            else if (STARTS_WITH_CI(papszTokens[i], "level="))
                 nLevel = atoi(papszTokens[i] + 6);
-            else if (EQUALN(papszTokens[i], "minx=", 5))
+            else if (STARTS_WITH_CI(papszTokens[i], "minx="))
             {
                 bMinXSet = TRUE;
                 minx = CPLAtof(papszTokens[i] + 5);
             }
-            else if (EQUALN(papszTokens[i], "miny=", 5))
+            else if (STARTS_WITH_CI(papszTokens[i], "miny="))
             {
                 bMinYSet = TRUE;
                 miny = CPLAtof(papszTokens[i] + 5);
             }
-            else if (EQUALN(papszTokens[i], "maxx=", 5))
+            else if (STARTS_WITH_CI(papszTokens[i], "maxx="))
             {
                 bMaxXSet = TRUE;
                 maxx = CPLAtof(papszTokens[i] + 5);
             }
-            else if (EQUALN(papszTokens[i], "maxy=", 5))
+            else if (STARTS_WITH_CI(papszTokens[i], "maxy="))
             {
                 bMaxYSet = TRUE;
                 maxy = CPLAtof(papszTokens[i] + 5);
             }
-            else if (EQUALN(papszTokens[i], "bands=", 6))
+            else if (STARTS_WITH_CI(papszTokens[i], "bands="))
             {
                 nReqBands = atoi(papszTokens[i] + 6);
             }
@@ -1020,39 +1040,38 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             }
         }
     }
-    
+
     if (OGRGetDriverCount() == 0)
         OGRRegisterAll();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open underlying OGR DB                                          */
 /* -------------------------------------------------------------------- */
 
     OGRDataSourceH hDS = RasterliteOpenSQLiteDB(osFileName.c_str(), poOpenInfo->eAccess);
     CPLDebug("RASTERLITE", "SQLite DB Open");
-    
+
     RasterliteDataset* poDS = NULL;
 
     if (hDS == NULL)
         goto end;
-    
+
     if (strlen(osTableName) == 0)
     {
         int nCountSubdataset = 0;
         int nLayers = OGR_DS_GetLayerCount(hDS);
-        int i;
 /* -------------------------------------------------------------------- */
 /*      Add raster layers as subdatasets                                */
 /* -------------------------------------------------------------------- */
-        for(i=0;i<nLayers;i++)
-        {   
+        for( int i=0; i < nLayers; i++ )
+        {
             OGRLayerH hLyr = OGR_DS_GetLayer(hDS, i);
             const char* pszLayerName = OGR_FD_GetName(OGR_L_GetLayerDefn(hLyr));
             if (strstr(pszLayerName, "_metadata"))
             {
                 char* pszShortName = CPLStrdup(pszLayerName);
                 *strstr(pszShortName, "_metadata") = '\0';
-                
+
                 CPLString osRasterTableName = pszShortName;
                 osRasterTableName += "_rasters";
 
@@ -1063,22 +1082,22 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
                         poDS = new RasterliteDataset();
                         osTableName = pszShortName;
                     }
-                        
+
                     CPLString osSubdatasetName;
-                    if (!EQUALN(poOpenInfo->pszFilename, "RASTERLITE:", 11))
+                    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE:"))
                         osSubdatasetName += "RASTERLITE:";
                     osSubdatasetName += poOpenInfo->pszFilename;
                     osSubdatasetName += ",table=";
                     osSubdatasetName += pszShortName;
                     poDS->AddSubDataset(osSubdatasetName.c_str());
-                    
+
                     nCountSubdataset++;
                 }
-                
+
                 CPLFree(pszShortName);
             }
         }
-        
+
         if (nCountSubdataset == 0)
         {
             goto end;
@@ -1088,46 +1107,43 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             poDS->SetDescription( poOpenInfo->pszFilename );
             goto end;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      If just one subdataset, then open it                            */
 /* -------------------------------------------------------------------- */
         delete poDS;
         poDS = NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build dataset                                                   */
 /* -------------------------------------------------------------------- */
     {
-        CPLString osMetadataTableName, osRasterTableName;
-        CPLString osSQL;
-        OGRLayerH hMetadataLyr, hRasterLyr, hRasterPyramidsLyr;
-        OGRLayerH hSQLLyr;
-        OGRFeatureH hFeat;
-        int i, nResolutions = 0;
-        int iBand, nBands, nBlockXSize, nBlockYSize;
         GDALDataType eDataType;
 
-        osMetadataTableName = osTableName;
-        osMetadataTableName += "_metadata";
-        
-        hMetadataLyr = OGR_DS_GetLayerByName(hDS, osMetadataTableName.c_str());
+        const CPLString osMetadataTableName = osTableName + "_metadata";
+
+        OGRLayerH hMetadataLyr
+            = OGR_DS_GetLayerByName(hDS, osMetadataTableName.c_str());
         if (hMetadataLyr == NULL)
             goto end;
-            
-        osRasterTableName = osTableName;
-        osRasterTableName += "_rasters";
-        
-        hRasterLyr = OGR_DS_GetLayerByName(hDS, osRasterTableName.c_str());
+
+        const CPLString osRasterTableName = osTableName + "_rasters";
+
+        OGRLayerH hRasterLyr
+            = OGR_DS_GetLayerByName(hDS, osRasterTableName.c_str());
         if (hRasterLyr == NULL)
             goto end;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Fetch resolutions                                               */
 /* -------------------------------------------------------------------- */
+        CPLString osSQL;
+        OGRLayerH hSQLLyr;
+        int nResolutions = 0;
 
-        hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
+        OGRLayerH hRasterPyramidsLyr
+            = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
         if (hRasterPyramidsLyr)
         {
             osSQL.Printf("SELECT pixel_x_size, pixel_y_size "
@@ -1138,7 +1154,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
             if (hSQLLyr != NULL)
             {
-                nResolutions = OGR_L_GetFeatureCount(hSQLLyr, TRUE);
+                nResolutions = static_cast<int>(OGR_L_GetFeatureCount(hSQLLyr, TRUE));
                 if( nResolutions == 0 )
                 {
                     OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
@@ -1160,7 +1176,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             if (hSQLLyr == NULL)
                 goto end;
 
-            nResolutions = OGR_L_GetFeatureCount(hSQLLyr, TRUE);
+            nResolutions = static_cast<int>(OGR_L_GetFeatureCount(hSQLLyr, TRUE));
 
             if (nResolutions == 0)
             {
@@ -1179,10 +1195,10 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->osTableName = osTableName;
         poDS->osFileName = osFileName;
         poDS->hDS = hDS;
-        
+
         /* poDS will release it from now */
         hDS = NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Fetch spatial extent or use the one provided by the user        */
 /* -------------------------------------------------------------------- */
@@ -1203,38 +1219,44 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             //printf("minx=%.15f miny=%.15f maxx=%.15f maxy=%.15f\n",
             //       oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX, oEnvelope.MaxY);
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Store resolutions                                               */
 /* -------------------------------------------------------------------- */
         poDS->nResolutions = nResolutions;
-        poDS->padfXResolutions =
-            (double*)CPLMalloc(sizeof(double) * poDS->nResolutions);
-        poDS->padfYResolutions =
-            (double*)CPLMalloc(sizeof(double) * poDS->nResolutions);
+        poDS->padfXResolutions = reinterpret_cast<double *>(
+            CPLMalloc( sizeof(double) * poDS->nResolutions ) );
+        poDS->padfYResolutions = reinterpret_cast<double *>(
+            CPLMalloc( sizeof(double) * poDS->nResolutions ) );
 
-        i = 0;
-        while((hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL)
         {
+          // Add a scope for i.
+          OGRFeatureH hFeat;
+          int i = 0;
+          while((hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL)
+          {
             poDS->padfXResolutions[i] = OGR_F_GetFieldAsDouble(hFeat, 0);
             poDS->padfYResolutions[i] = OGR_F_GetFieldAsDouble(hFeat, 1);
 
             OGR_F_Destroy(hFeat);
-            
-            //printf("[%d] xres=%.15f yres=%.15f\n", i,
-            //       poDS->padfXResolutions[i], poDS->padfYResolutions[i]);
-            
+
+#ifdef RASTERLITE_DEBUG
+            printf("[%d] xres=%.15f yres=%.15f\n", i,
+                   poDS->padfXResolutions[i], poDS->padfYResolutions[i]);
+#endif
+
             if (poDS->padfXResolutions[i] <= 0 || poDS->padfYResolutions[i] <= 0)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "res=%d, xres=%.15f, yres=%.15f",
                          i, poDS->padfXResolutions[i], poDS->padfYResolutions[i]);
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+                OGR_DS_ReleaseResultSet(poDS->hDS, hSQLLyr);
                 delete poDS;
                 poDS = NULL;
                 goto end;
             }
-            i ++;
+            i++;
+          }
         }
 
         OGR_DS_ReleaseResultSet(poDS->hDS, hSQLLyr);
@@ -1243,10 +1265,10 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Compute raster size, geotransform and projection                */
 /* -------------------------------------------------------------------- */
-        poDS->nRasterXSize =
-            (int)((oEnvelope.MaxX - oEnvelope.MinX) / poDS->padfXResolutions[0] + 0.5);
-        poDS->nRasterYSize =
-            (int)((oEnvelope.MaxY - oEnvelope.MinY) / poDS->padfYResolutions[0] + 0.5);
+        poDS->nRasterXSize = static_cast<int>(
+            (oEnvelope.MaxX - oEnvelope.MinX) / poDS->padfXResolutions[0] + 0.5 );
+        poDS->nRasterYSize = static_cast<int>(
+            (oEnvelope.MaxY - oEnvelope.MinY) / poDS->padfYResolutions[0] + 0.5 );
 
         poDS->bValidGeoTransform = TRUE;
         poDS->adfGeoTransform[0] = oEnvelope.MinX;
@@ -1255,17 +1277,19 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->adfGeoTransform[3] = oEnvelope.MaxY;
         poDS->adfGeoTransform[4] = 0;
         poDS->adfGeoTransform[5] = - poDS->padfYResolutions[0];
-        
+
         OGRSpatialReferenceH hSRS = OGR_L_GetSpatialRef(hMetadataLyr);
         if (hSRS)
         {
             OSRExportToWkt(hSRS, &poDS->pszSRS);
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Get number of bands and block size                              */
 /* -------------------------------------------------------------------- */
 
+        int nBands;
+        int nBlockXSize, nBlockYSize;
         if (poDS->GetBlockParams(hRasterLyr, 0, &nBands, &eDataType,
                                  &nBlockXSize, &nBlockYSize) == FALSE)
         {
@@ -1274,7 +1298,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             poDS = NULL;
             goto end;
         }
-        
+
         if (eDataType == GDT_Byte && nBands == 1 && nReqBands == 3)
             nBands = 3;
         else if (nReqBands != 0)
@@ -1282,24 +1306,23 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Parameters bands=%d ignored", nReqBands);
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Add bands                                                       */
 /* -------------------------------------------------------------------- */
-        
-        for(iBand=0;iBand<nBands;iBand++)
-            poDS->SetBand(iBand+1, new RasterliteBand(poDS, iBand+1, eDataType, 
-                                                  nBlockXSize, nBlockYSize));
-        
+
+        for( int iBand=0; iBand < nBands; iBand++ )
+            poDS->SetBand(iBand+1, new RasterliteBand(poDS, iBand+1, eDataType,
+                                                      nBlockXSize, nBlockYSize));
+
 /* -------------------------------------------------------------------- */
 /*      Add overview levels as internal datasets                        */
 /* -------------------------------------------------------------------- */
         if (nResolutions > 1)
         {
-            poDS->papoOverviews = (RasterliteDataset**)
-                CPLCalloc(nResolutions - 1, sizeof(RasterliteDataset*));
-            int nLev;
-            for(nLev=1;nLev<nResolutions;nLev++)
+            poDS->papoOverviews = reinterpret_cast<RasterliteDataset **>(
+                CPLCalloc(nResolutions - 1, sizeof(RasterliteDataset*)) );
+            for( int nLev = 1; nLev < nResolutions; nLev++ )
             {
                 int nOvrBands;
                 GDALDataType eOvrDataType;
@@ -1312,10 +1335,10 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
                     poDS = NULL;
                     goto end;
                 }
-                
+
                 if (eDataType == GDT_Byte && nOvrBands == 1 && nReqBands == 3)
                     nOvrBands = 3;
-                    
+
                 if (nBands != nOvrBands || eDataType != eOvrDataType)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1324,10 +1347,10 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
                     poDS = NULL;
                     goto end;
                 }
-                
+
                 poDS->papoOverviews[nLev-1] = new RasterliteDataset(poDS, nLev);
-                    
-                for(iBand=0;iBand<nBands;iBand++)
+
+                for( int iBand = 0; iBand < nBands; iBand++ )
                 {
                     poDS->papoOverviews[nLev-1]->SetBand(iBand+1,
                         new RasterliteBand(poDS->papoOverviews[nLev-1], iBand+1, eDataType,
@@ -1335,7 +1358,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
                 }
             }
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Select an overview if the user has requested so                 */
 /* -------------------------------------------------------------------- */
@@ -1364,7 +1387,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Setup PAM info for this subdatasets                             */
 /* -------------------------------------------------------------------- */
         poDS->SetPhysicalFilename( osFileName.c_str() );
-        
+
         CPLString osSubdatasetName;
         osSubdatasetName.Printf("RASTERLITE:%s:table=%s",
                                 osFileName.c_str(), osTableName.c_str());
@@ -1373,12 +1396,11 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
     }
 
-    
 end:
     if (hDS)
         OGRReleaseDataSource(hDS);
     CSLDestroy(papszTokens);
-    
+
     return poDS;
 }
 
@@ -1389,29 +1411,26 @@ end:
 void GDALRegister_Rasterlite()
 
 {
-    GDALDriver  *poDriver;
-    
-    if (! GDAL_CHECK_VERSION("Rasterlite driver"))
+    if( !GDAL_CHECK_VERSION("Rasterlite driver") )
         return;
 
-    if( GDALGetDriverByName( "Rasterlite" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "Rasterlite" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Rasterlite" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_rasterlite.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sqlite" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 "
-                                   "Float64 CInt16 CInt32 CFloat32 CFloat64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    if( GDALGetDriverByName( "Rasterlite" ) != NULL )
+        return;
+
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "Rasterlite" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Rasterlite" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rasterlite.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sqlite" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                               "Float64 CInt16 CInt32 CFloat32 CFloat64" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
-"   <Option name='WIPE' type='boolean' default='NO' description='Erase all prexisting data in the specified table'/>"
+"   <Option name='WIPE' type='boolean' default='NO' description='Erase all preexisting data in the specified table'/>"
 "   <Option name='TILED' type='boolean' default='YES' description='Use tiling'/>"
 "   <Option name='BLOCKXSIZE' type='int' default='256' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' default='256' description='Tile Height'/>"
@@ -1433,11 +1452,10 @@ void GDALRegister_Rasterlite()
 "   <Option name='FILTER' type='string' description='(EPSILON driver) Filter ID' default='daub97lift'/>"
 "</CreationOptionList>" );
 
-        poDriver->pfnOpen = RasterliteDataset::Open;
-        poDriver->pfnIdentify = RasterliteDataset::Identify;
-        poDriver->pfnCreateCopy = RasterliteCreateCopy;
-        poDriver->pfnDelete = RasterliteDelete;
+    poDriver->pfnOpen = RasterliteDataset::Open;
+    poDriver->pfnIdentify = RasterliteDataset::Identify;
+    poDriver->pfnCreateCopy = RasterliteCreateCopy;
+    poDriver->pfnDelete = RasterliteDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

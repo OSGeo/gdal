@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Oracle Spatial Driver
- * Purpose:  Implementation of the OGROCISelectLayer class.  This class 
+ * Purpose:  Implementation of the OGROCISelectLayer class.  This class
  *           provides read semantics on the result of a SELECT statement.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -38,7 +37,7 @@ CPL_CVSID("$Id$");
 /*                          OGROCISelectLayer()                         */
 /************************************************************************/
 
-OGROCISelectLayer::OGROCISelectLayer( OGROCIDataSource *poDSIn, 
+OGROCISelectLayer::OGROCISelectLayer( OGROCIDataSource *poDSIn,
                                       const char * pszQuery,
                                       OGROCIStatement *poDescribedCommand )
 
@@ -51,7 +50,7 @@ OGROCISelectLayer::OGROCISelectLayer( OGROCIDataSource *poDSIn,
     SetDescription( poFeatureDefn->GetName() );
 
     pszQueryStatement = CPLStrdup(pszQuery);
-    
+
     ResetReading();
 }
 
@@ -80,17 +79,17 @@ OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
-    for( int iParm = 0; TRUE; iParm++ )
-    {                                                           
+    for( int iParm = 0; true; iParm++ )
+    {
         OGRFieldDefn oField( "", OFTString );
         int          nStatus;
         OCIParam     *hParmDesc;
         ub2          nOCIType;
         ub4          nOCILen;
 
-        nStatus = 
-            OCIParamGet( poCommand->GetStatement(), OCI_HTYPE_STMT, 
-                         poSession->hError, (dvoid**)&hParmDesc, 
+        nStatus =
+            OCIParamGet( poCommand->GetStatement(), OCI_HTYPE_STMT,
+                         poSession->hError, (dvoid**)&hParmDesc,
                          (ub4) iParm+1 );
 
         if( nStatus == OCI_ERROR )
@@ -122,7 +121,7 @@ OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
 /* -------------------------------------------------------------------- */
 /*      Do we have an FID?                                              */
 /* -------------------------------------------------------------------- */
-    const char *pszExpectedFIDName = 
+    const char *pszExpectedFIDName =
         CPLGetConfigOption( "OCI_FID", "OGR_FID" );
     if( poDefn->GetFieldIndex(pszExpectedFIDName) > -1 )
     {

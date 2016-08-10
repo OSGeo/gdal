@@ -32,6 +32,9 @@
 
 CPL_CVSID("$Id$");
 
+
+#define SAFE_strcat(x,y) snprintf(x + strlen(x),sizeof(x) - strlen(x), "%s", y)
+
 /************************************************************************/
 /*                     GXFGetMapProjectionAsPROJ4()                     */
 /************************************************************************/
@@ -45,11 +48,11 @@ CPL_CVSID("$Id$");
  *
  * The mapping of GXF projections to PROJ.4 format is not complete.  Please
  * see the gxf_proj4.c code to better understand limitations of this
- * translation.  Noteable PROJ.4 knows little about datums.
+ * translation.  In particular, PROJ.4 knows little about datums.
  *
  * For example, the following GXF definitions:
  * <pre>
- * #UNIT_LENGTH                        
+ * #UNIT_LENGTH
  * m,1
  * #MAP_PROJECTION
  * "NAD83 / UTM zone 19N"
@@ -95,282 +98,282 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
 
 #ifdef DBMALLOC
     malloc_chain_check(1);
-#endif    
-    
+#endif
+
     if( papszMethods == NULL
-        || papszMethods[0] == NULL 
+        || papszMethods[0] == NULL
         || EQUAL(papszMethods[0],"Geographic") )
     {
-        strcat( szPROJ4, "+proj=longlat" );
+        SAFE_strcat( szPROJ4, "+proj=longlat" );
     }
 
-#ifdef notdef    
+#ifdef notdef
     else if( EQUAL(papszMethods[0],"Lambert Conic Conformal (1SP)")
              && CSLCount(papszMethods) > 5 )
     {
         /* notdef: It isn't clear that this 1SP + scale method is even
            supported by PROJ.4
            Later note: It is not. */
-        
-        strcat( szPROJ4, "+proj=lcc" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
+        SAFE_strcat( szPROJ4, "+proj=lcc" );
 
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[3] );
-        
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
     }
-#endif    
+#endif
     else if( EQUAL(papszMethods[0],"Lambert Conic Conformal (2SP)")
              || EQUAL(papszMethods[0],"Lambert Conformal (2SP Belgium)") )
     {
         /* notdef: Note we are apparently losing whatever makes the
            Belgium variant different than normal LCC, but hopefully
            they are close! */
-        
-        strcat( szPROJ4, "+proj=lcc" );
+
+        SAFE_strcat( szPROJ4, "+proj=lcc" );
 
         if( CSLCount(papszMethods) > 1 )
         {
-            strcat( szPROJ4, " +lat_1=" );
-            strcat( szPROJ4, papszMethods[1] );
+            SAFE_strcat( szPROJ4, " +lat_1=" );
+            SAFE_strcat( szPROJ4, papszMethods[1] );
         }
 
         if( CSLCount(papszMethods) > 2 )
         {
-            strcat( szPROJ4, " +lat_2=" );
-            strcat( szPROJ4, papszMethods[2] );
+            SAFE_strcat( szPROJ4, " +lat_2=" );
+            SAFE_strcat( szPROJ4, papszMethods[2] );
         }
 
         if( CSLCount(papszMethods) > 3 )
         {
-            strcat( szPROJ4, " +lat_0=" );
-            strcat( szPROJ4, papszMethods[3] );
+            SAFE_strcat( szPROJ4, " +lat_0=" );
+            SAFE_strcat( szPROJ4, papszMethods[3] );
         }
 
         if( CSLCount(papszMethods) > 4 )
         {
-            strcat( szPROJ4, " +lon_0=" );
-            strcat( szPROJ4, papszMethods[4] );
+            SAFE_strcat( szPROJ4, " +lon_0=" );
+            SAFE_strcat( szPROJ4, papszMethods[4] );
         }
 
         if( CSLCount(papszMethods) > 5 )
         {
-            strcat( szPROJ4, " +x_0=" );
-            strcat( szPROJ4, papszMethods[5] );
+            SAFE_strcat( szPROJ4, " +x_0=" );
+            SAFE_strcat( szPROJ4, papszMethods[5] );
         }
 
         if( CSLCount(papszMethods) > 6 )
         {
-            strcat( szPROJ4, " +y_0=" );
-            strcat( szPROJ4, papszMethods[6] );
+            SAFE_strcat( szPROJ4, " +y_0=" );
+            SAFE_strcat( szPROJ4, papszMethods[6] );
         }
     }
-    
+
     else if( EQUAL(papszMethods[0],"Mercator (1SP)")
              && CSLCount(papszMethods) > 5 )
     {
-        /* notdef: it isn't clear that +proj=merc support a scale of other 
+        /* notdef: it isn't clear that +proj=merc support a scale of other
            than 1.0 in PROJ.4 */
-        
-        strcat( szPROJ4, "+proj=merc" );
 
-        strcat( szPROJ4, " +lat_ts=" );
-        strcat( szPROJ4, papszMethods[1] );
+        SAFE_strcat( szPROJ4, "+proj=merc" );
 
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
+        SAFE_strcat( szPROJ4, " +lat_ts=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[3] );
-        
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Mercator (2SP)")
              && CSLCount(papszMethods) > 4 )
     {
-        /* notdef: it isn't clear that +proj=merc support a scale of other 
+        /* notdef: it isn't clear that +proj=merc support a scale of other
            than 1.0 in PROJ.4 */
-        
-        strcat( szPROJ4, "+proj=merc" );
 
-        strcat( szPROJ4, " +lat_ts=" );
-        strcat( szPROJ4, papszMethods[1] );
+        SAFE_strcat( szPROJ4, "+proj=merc" );
 
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
+        SAFE_strcat( szPROJ4, " +lat_ts=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
     }
-    
-    else if( EQUAL(papszMethods[0],"Hotine Oblique Mercator") 
+
+    else if( EQUAL(papszMethods[0],"Hotine Oblique Mercator")
              && CSLCount(papszMethods) > 7 )
     {
         /* Note that only the second means of specifying omerc is supported
            by this code in GXF. */
-        strcat( szPROJ4, "+proj=omerc" );
+        SAFE_strcat( szPROJ4, "+proj=omerc" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lonc=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +alpha=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
+
+        SAFE_strcat( szPROJ4, " +lonc=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +alpha=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
 
         if( CPLAtof(papszMethods[4]) < 0.00001 )
         {
-            strcat( szPROJ4, " +not_rot" );
+            SAFE_strcat( szPROJ4, " +not_rot" );
         }
         else
         {
-#ifdef notdef            
+#ifdef notdef
             if( CPLAtof(papszMethods[4]) + CPLAtof(papszMethods[3]) < 0.00001 )
                 /* ok */;
             else
                 /* notdef: no way to specify arbitrary angles! */;
-#endif            
+#endif
         }
 
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
 
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[6] );
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[6] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[7] );
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[7] );
     }
 
     else if( EQUAL(papszMethods[0],"Laborde Oblique Mercator")
              && CSLCount(papszMethods) > 6 )
     {
-        strcat( szPROJ4, "+proj=labrd" );
+        SAFE_strcat( szPROJ4, "+proj=labrd" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +azi=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
 
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +azi=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[6] );
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[6] );
     }
-    
+
     else if( EQUAL(papszMethods[0],"New Zealand Map Grid")
              && CSLCount(papszMethods) > 4 )
     {
-        strcat( szPROJ4, "+proj=nzmg" );
+        SAFE_strcat( szPROJ4, "+proj=nzmg" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
     }
-    
+
     else if( EQUAL(papszMethods[0],"New Zealand Map Grid")
              && CSLCount(papszMethods) > 4 )
     {
-        strcat( szPROJ4, "+proj=nzmg" );
+        SAFE_strcat( szPROJ4, "+proj=nzmg" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
     }
-    
-    else if( EQUAL(papszMethods[0],"Oblique Stereographic") 
+
+    else if( EQUAL(papszMethods[0],"Oblique Stereographic")
              && CSLCount(papszMethods) > 5 )
     {
         /* there is an option to produce +lat_ts, which we ignore */
-        
-        strcat( szPROJ4, "+proj=stere" );
 
-        strcat( szPROJ4, " +lat_0=45" );
+        SAFE_strcat( szPROJ4, "+proj=stere" );
 
-        strcat( szPROJ4, " +lat_ts=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +lat_0=45" );
 
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lat_ts=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Polar Stereographic")
              && CSLCount(papszMethods) > 5 )
     {
         /* there is an option to produce +lat_ts, which we ignore */
-        
-        strcat( szPROJ4, "+proj=stere" );
 
-        strcat( szPROJ4, " +lat_0=90" );
+        SAFE_strcat( szPROJ4, "+proj=stere" );
 
-        strcat( szPROJ4, " +lat_ts=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +lat_0=90" );
 
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lat_ts=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
     }
-    
+
     else if( EQUAL(papszMethods[0],"Swiss Oblique Cylindrical")
              && CSLCount(papszMethods) > 4 )
     {
@@ -378,19 +381,19 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
            ObliqueMercator_Rosenmund, which GG's geotiff support just
            maps directly to +proj=omerc, though I find that questionable. */
 
-        strcat( szPROJ4, "+proj=omerc" );
+        SAFE_strcat( szPROJ4, "+proj=omerc" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lonc=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lonc=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
     }
 
     else if( EQUAL(papszMethods[0],"Transverse Mercator")
@@ -400,22 +403,22 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
            ObliqueMercator_Rosenmund, which GG's geotiff support just
            maps directly to +proj=omerc, though I find that questionable. */
 
-        strcat( szPROJ4, "+proj=tmerc" );
+        SAFE_strcat( szPROJ4, "+proj=tmerc" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[3] );
-        
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
     }
 
     else if( EQUAL(papszMethods[0],"Transverse Mercator (South Oriented)")
@@ -425,74 +428,74 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
            normal, and I don't find any mention of it in Geotiff;s geo_ctrans.
            Translating as tmerc, but that is presumably wrong. */
 
-        strcat( szPROJ4, "+proj=tmerc" );
+        SAFE_strcat( szPROJ4, "+proj=tmerc" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[3] );
-        
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
     }
 
     else if( EQUAL(papszMethods[0],"*Equidistant Conic")
              && CSLCount(papszMethods) > 6 )
     {
-        strcat( szPROJ4, "+proj=eqdc" );
+        SAFE_strcat( szPROJ4, "+proj=eqdc" );
 
-        strcat( szPROJ4, " +lat_1=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lat_2=" );
-        strcat( szPROJ4, papszMethods[2] );
-        
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[3] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[4] );
-        
-        strcat( szPROJ4, " +x_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +lat_1=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[6] );
+        SAFE_strcat( szPROJ4, " +lat_2=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
+
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
+
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
+
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
+
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[6] );
     }
 
-    else if( EQUAL(papszMethods[0],"*Polyconic") 
+    else if( EQUAL(papszMethods[0],"*Polyconic")
              && CSLCount(papszMethods) > 5 )
     {
-        strcat( szPROJ4, "+proj=poly" );
+        SAFE_strcat( szPROJ4, "+proj=poly" );
 
-        strcat( szPROJ4, " +lat_0=" );
-        strcat( szPROJ4, papszMethods[1] );
-        
-        strcat( szPROJ4, " +lon_0=" );
-        strcat( szPROJ4, papszMethods[2] );
+        SAFE_strcat( szPROJ4, " +lat_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[1] );
+
+        SAFE_strcat( szPROJ4, " +lon_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[2] );
 
 #ifdef notdef
         /*not supported by PROJ.4 */
-        strcat( szPROJ4, " +k=" );
-        strcat( szPROJ4, papszMethods[3] );
+        SAFE_strcat( szPROJ4, " +k=" );
+        SAFE_strcat( szPROJ4, papszMethods[3] );
 #endif
-        strcat( szPROJ4, " +x_0=" ); 
-        strcat( szPROJ4, papszMethods[4] );
+        SAFE_strcat( szPROJ4, " +x_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[4] );
 
-        strcat( szPROJ4, " +y_0=" );
-        strcat( szPROJ4, papszMethods[5] );
+        SAFE_strcat( szPROJ4, " +y_0=" );
+        SAFE_strcat( szPROJ4, papszMethods[5] );
     }
 
     else
     {
-        strcat( szPROJ4, "unknown" );
+        SAFE_strcat( szPROJ4, "unknown" );
     }
 
     CSLDestroy( papszMethods );
@@ -505,35 +508,35 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
     if( CSLCount(psGXF->papszMapProjection) > 1 )
     {
         char	**papszTokens;
-        
+
         if( strlen(psGXF->papszMapProjection[1]) > 80 )
             return CPLStrdup("");
-        
+
         papszTokens = CSLTokenizeStringComplex(psGXF->papszMapProjection[1],
                                                ",", TRUE, TRUE );
 
 
         if( EQUAL(papszTokens[0],"WGS 84") )
-            strcat( szPROJ4, " +ellps=WGS84" );
+            SAFE_strcat( szPROJ4, " +ellps=WGS84" );
         else if( EQUAL(papszTokens[0],"*WGS 72") )
-            strcat( szPROJ4, " +ellps=WGS72" );
+            SAFE_strcat( szPROJ4, " +ellps=WGS72" );
         else if( EQUAL(papszTokens[0],"*WGS 66") )
-            strcat( szPROJ4, " +ellps=WGS66" );
+            SAFE_strcat( szPROJ4, " +ellps=WGS66" );
         else if( EQUAL(papszTokens[0],"*WGS 60") )
-            strcat( szPROJ4, " +ellps=WGS60" );
+            SAFE_strcat( szPROJ4, " +ellps=WGS60" );
         else if( EQUAL(papszTokens[0],"Clarke 1866") )
-            strcat( szPROJ4, " +ellps=clrk66" );
+            SAFE_strcat( szPROJ4, " +ellps=clrk66" );
         else if( EQUAL(papszTokens[0],"Clarke 1880") )
-            strcat( szPROJ4, " +ellps=clrk80" );
+            SAFE_strcat( szPROJ4, " +ellps=clrk80" );
         else if( EQUAL(papszTokens[0],"GRS 1980") )
-            strcat( szPROJ4, " +ellps=GRS80" );
+            SAFE_strcat( szPROJ4, " +ellps=GRS80" );
         else if( CSLCount( papszTokens ) > 2 )
         {
-            sprintf( szPROJ4+strlen(szPROJ4),
+            snprintf( szPROJ4+strlen(szPROJ4), sizeof(szPROJ4)-strlen(szPROJ4),
                      " +a=%s +e=%s",
                      papszTokens[1], papszTokens[2] );
         }
-        
+
         CSLDestroy(papszTokens);
     }
 
@@ -544,34 +547,34 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
     {
         if( EQUAL(psGXF->pszUnitName,"ft") )
         {
-            strcat( szPROJ4, " +units=ft" );
+            SAFE_strcat( szPROJ4, " +units=ft" );
         }
         else if( EQUAL(psGXF->pszUnitName,"ftUS") )
         {
-            strcat( szPROJ4, " +units=us-ft" );
+            SAFE_strcat( szPROJ4, " +units=us-ft" );
         }
         else if( EQUAL(psGXF->pszUnitName,"km") )
         {
-            strcat( szPROJ4, " +units=km" );
+            SAFE_strcat( szPROJ4, " +units=km" );
         }
         else if( EQUAL(psGXF->pszUnitName,"mm") )
         {
-            strcat( szPROJ4, " +units=mm" );
+            SAFE_strcat( szPROJ4, " +units=mm" );
         }
         else if( EQUAL(psGXF->pszUnitName,"in") )
         {
-            strcat( szPROJ4, " +units=in" );
+            SAFE_strcat( szPROJ4, " +units=in" );
         }
         else if( EQUAL(psGXF->pszUnitName,"ftInd") )
         {
-            strcat( szPROJ4, " +units=ind-ft" );
+            SAFE_strcat( szPROJ4, " +units=ind-ft" );
         }
         else if( EQUAL(psGXF->pszUnitName,"lk") )
         {
-            strcat( szPROJ4, " +units=link" );
+            SAFE_strcat( szPROJ4, " +units=link" );
         }
     }
-    
+
     return( CPLStrdup( szPROJ4 ) );
 }
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from RapidEye imagery.
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "reader_rapid_eye.h"
+
+CPL_CVSID("$Id$");
 
 /**
  * GDALMDReaderRapidEye()

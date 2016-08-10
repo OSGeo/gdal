@@ -8,7 +8,7 @@
 <h1>OGDI Vectors</h1>
 
 OGDI vector support is optional in OGR, and is normally only configured if
-OGDI is installed on the build system.  If available OGDI vectors are 
+OGDI is installed on the build system.  If available OGDI vectors are
 supported for read access for the following family types:
 <ul>
   <li> Point
@@ -23,7 +23,7 @@ OGDI can (among other formats) read VPF products, such as DCW and VMAP.<p>
 If an OGDI gltp url is opened directly the OGDI 3.1 capabilities for the
 driver/server are queried to get a list of layers.  One OGR layer is created
 for each OGDI family available for each layer in the datastore.  For drivers
-such as VRF this can result in alot of layers.  Each of the layers has an
+such as VRF this can result in a lot of layers.  Each of the layers has an
 OGR name based on the OGDI name plus an underscore and the family name.  For
 instance a layer might be called <b>watrcrsl@hydro(*)_line</b> if coming
 out of the VRF driver.<p>
@@ -32,7 +32,7 @@ From GDAL/OGR 1.8.0, setting the <i>OGR_OGDI_LAUNDER_LAYER_NAMES</i> configurati
 option (or environment variable) to YES causes the layer names to be simplified. For example :
 <i>watrcrsl_hydro</i> instead of 'watrcrsl@hydro(*)_line'<p>
 
-Alternatively to accessing all the layers in a datastore, it is possible to 
+Alternatively to accessing all the layers in a datastore, it is possible to
 open a particular layer using a customized filename consisting
 of the regular GLTP URL to
 which you append the layer name and family type (separated by colons).  This
@@ -46,7 +46,7 @@ OGDI 3.1 there was no regular way to discover available layers in OGDI.<p>
 Where &lt;layer_name&gt; is the OGDI Layer name, and &lt;family&gt; is one of:
 "line", "area", "point", or "text".<p>
 
-OGDI coordinate system information is supported for most coordinate systems. 
+OGDI coordinate system information is supported for most coordinate systems.
 A warning will be produced when a layer is opened if the coordinate
 system cannot be translated.<p>
 
@@ -55,10 +55,22 @@ There is no update or creation support in the OGDI driver.<p>
 Raster layers cannot be accessed with this driver but can be accessed
 using the GDAL OGDI Raster driver.<p>
 
+<H3>Error handling</H3>
+
+<p>
+Starting with GDAL 2.2 and OGDI > 3.2.0beta2, if the OGDI_STOP_ON_ERROR environment
+variable is set to NO, some errors can be gracefully recovered by OGDI (in VPF driver).
+They will still be caught by GDAL and emitted as regular GDAL errors.
+</p>
+<p>
+Note: be aware that this is a work in progress. Not all recoverable errors can be recovered, and
+some errors might be recovered silently.
+</p>
+
 <H3>Examples</H3>
 
 Usage example 'ogrinfo':<BR>
- 
+
 <PRE>
    ogrinfo gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'watrcrsl@hydro(*)_line'
 </PRE>

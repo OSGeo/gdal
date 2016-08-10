@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_ILI1_H_INCLUDED
-#define _OGR_ILI1_H_INCLUDED
+#ifndef OGR_ILI1_H_INCLUDED
+#define OGR_ILI1_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "ili1reader.h"
@@ -44,7 +44,7 @@ class OGRILI1DataSource;
 class OGRILI1Layer : public OGRLayer
 {
 private:
-#ifdef notused
+#if 0
     OGRSpatialReference *poSRS;
 #endif
     OGRFeatureDefn      *poFeatureDefn;
@@ -54,7 +54,7 @@ private:
     OGRFeature          **papoFeatures;
     int                 nFeatureIdx;
 
-    int                 bGeomsJoined;
+    bool                bGeomsJoined;
 
     OGRILI1DataSource   *poDS;
 
@@ -70,7 +70,8 @@ private:
     void                ResetReading();
     OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextFeatureRef();
-    OGRFeature *        GetFeatureRef( long nFID );
+    OGRFeature *        GetFeatureRef( long nFid );
+    OGRFeature *        GetFeatureRef( const char* );
 
     GIntBig             GetFeatureCount( int bForce = TRUE );
 
@@ -128,4 +129,4 @@ class OGRILI1DataSource : public OGRDataSource
     int         TestCapability( const char * );
 };
 
-#endif /* _OGR_ILI1_H_INCLUDED */
+#endif /* OGR_ILI1_H_INCLUDED */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Personal Geodatabase driver.
@@ -68,13 +67,13 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
     if( bUpdate )
         return NULL;
 
-    if( EQUALN(pszFilename, "PGEO:", strlen("PGEO:")) )
+    if( STARTS_WITH_CI(pszFilename, "PGEO:") )
         return NULL;
 
-    if( EQUALN(pszFilename, "GEOMEDIA:", strlen("GEOMEDIA:")) )
+    if( STARTS_WITH_CI(pszFilename, "GEOMEDIA:") )
         return NULL;
 
-    if( EQUALN(pszFilename, "WALK:", strlen("WALK:")) )
+    if( STARTS_WITH_CI(pszFilename, "WALK:") )
         return NULL;
 
     if( !EQUAL(CPLGetExtension(pszFilename),"mdb") )
@@ -116,10 +115,8 @@ void RegisterOGRMDB()
 {
     OGRSFDriver* poDriver = new OGRMDBDriver;
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "Access MDB (PGeo and Geomedia capable)" );
+                               "Access MDB (PGeo and Geomedia capable)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_mdb.html" );
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mdb.html" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
-

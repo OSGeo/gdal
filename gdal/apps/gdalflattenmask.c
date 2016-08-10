@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: gdalflattenmask.c $
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL mask flattening utility
@@ -30,6 +29,8 @@
 #include "gdal.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -181,7 +182,7 @@ int main(int argc, char* argv[])
 /* -------------------------------------------------------------------- */
 /*      Write geotransform, projection, color interpretations, no data  */
 /*      values, color tables, metadata, etc. before the file is         */
-/*       crystalized                                                    */
+/*      crystallized.                                                   */
 /* -------------------------------------------------------------------- */
     if( GDALGetGeoTransform( hSrcDS, adfGeoTransform ) == CE_None )
     {

@@ -69,7 +69,7 @@ def ogr_sql_sqlite_available():
 # Tests that don't involve geometry
 
 def ogr_sql_sqlite_1():
-    
+
     ret = ogr_sql_sqlite_available()
     if ret == 'fail':
         gdaltest.post_reason('fail')
@@ -216,7 +216,7 @@ def ogr_sql_sqlite_1():
             return 'fail'
         feat = None
         ds.ReleaseResultSet( sql_lyr )
-        
+
         # Test SELECT with filters
 
         # Success filters
@@ -1317,7 +1317,7 @@ def ogr_sql_sqlite_24():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
-    # Big very compressable string
+    # Big very compressible string
     bigstr = ''.join(['a' for i in range(10000)])
     sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('%s')) AS VARCHAR)" % bigstr, dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
@@ -1496,14 +1496,14 @@ def ogr_sql_sqlite_26():
     geom2_wkt = 'POLYGON((0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5))'
     geom3_wkt = 'POLYGON((0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25))'
     geom4_wkt = 'POLYGON((1 0,1 1,2 1,2 0,1 0))'
-    
+
     # Test ST_Buffer
     op_str = 'Buffer'
     sql_lyr = ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'),0.1)" % (op_str, geom1_wkt), dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
     geom_sql = feat.GetGeometryRef()
     ds.ReleaseResultSet(sql_lyr)
-    
+
     geom = ogr.CreateGeometryFromWkt(geom1_wkt)
     geom_geos = geom.Buffer(0.1)
 
@@ -1730,13 +1730,66 @@ def ogr_sql_sqlite_29():
     got_wkt = f.GetGeometryRef().ExportToWkt()
     ds.ReleaseResultSet(sql_lyr)
     ds = None
-    
+
     if geom_type != ogr.wkbCircularString:
         gdaltest.post_reason('fail')
         print(geom_type)
         return 'fail'
-    
+
     if got_wkt != 'CIRCULARSTRING (0 0,1 0,0 0)':
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test compat with M geometries
+
+def ogr_sql_sqlite_30():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('testm', geom_type = ogr.wkbLineStringM)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING M (1 2 3)'))
+    lyr.CreateFeature(f)
+    f = None
+    lyr = ds.CreateLayer('testzm', geom_type = ogr.wkbLineStringZM)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING ZM (1 2 3 4)'))
+    lyr.CreateFeature(f)
+    f = None
+    sql_lyr = ds.ExecuteSQL('select * from testm', dialect = 'SQLite')
+    geom_type = sql_lyr.GetGeomType()
+    f = sql_lyr.GetNextFeature()
+    got_wkt = f.GetGeometryRef().ExportToIsoWkt()
+    ds.ReleaseResultSet(sql_lyr)
+
+    if geom_type != ogr.wkbLineStringM:
+        gdaltest.post_reason('fail')
+        print(geom_type)
+        return 'fail'
+
+    if got_wkt != 'LINESTRING M (1 2 3)':
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL('select * from testzm', dialect = 'SQLite')
+    geom_type = sql_lyr.GetGeomType()
+    f = sql_lyr.GetNextFeature()
+    got_wkt = f.GetGeometryRef().ExportToIsoWkt()
+    ds.ReleaseResultSet(sql_lyr)
+
+    if geom_type != ogr.wkbLineStringZM:
+        gdaltest.post_reason('fail')
+        print(geom_type)
+        return 'fail'
+
+    if got_wkt != 'LINESTRING ZM (1 2 3 4)':
         gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
@@ -1774,7 +1827,8 @@ gdaltest_list = [
     ogr_sql_sqlite_26,
     ogr_sql_sqlite_27,
     ogr_sql_sqlite_28,
-    ogr_sql_sqlite_29
+    ogr_sql_sqlite_29,
+    ogr_sql_sqlite_30
 ]
 
 if __name__ == '__main__':

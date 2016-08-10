@@ -1,9 +1,8 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGRASSDataSource class.
- * Author:   Radim Blazek, radim.blazek@gmail.com 
+ * Author:   Radim Blazek, radim.blazek@gmail.com
  *
  ******************************************************************************
  * Copyright (c) 2005, Radim Blazek <radim.blazek@gmail.com>
@@ -73,14 +72,14 @@ OGRGRASSDataSource::~OGRGRASSDataSource()
 {
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     if ( pszName ) CPLFree( pszName );
     if ( papoLayers ) CPLFree( papoLayers );
     if ( pszGisdbase ) G_free( pszGisdbase );
     if ( pszLocation ) G_free( pszLocation );
     if ( pszMapset ) G_free( pszMapset );
     if ( pszMap ) G_free( pszMap );
-    
+
     if (bOpened)
         Vect_close(&map);
 }
@@ -89,7 +88,7 @@ OGRGRASSDataSource::~OGRGRASSDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-#if (GRASS_VERSION_MAJOR  >= 6 && GRASS_VERSION_MINOR  >= 3) || GRASS_VERSION_MAJOR  >= 7 
+#if (GRASS_VERSION_MAJOR  >= 6 && GRASS_VERSION_MINOR  >= 3) || GRASS_VERSION_MAJOR  >= 7
 typedef int (*GrassErrorHandler)(const char *, int);
 #else
 typedef int (*GrassErrorHandler)(char *, int);
@@ -99,9 +98,9 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
                               int bTestOpen, int bSingleNewFileIn )
 {
     VSIStatBuf  stat;
-    
+
     CPLAssert( nLayers == 0 );
-    
+
     pszName = CPLStrdup( pszNewName ); // Released by destructor
 
 /* -------------------------------------------------------------------- */
@@ -116,7 +115,7 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 	}
 	return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Is the given a regular file?                                    */
 /* -------------------------------------------------------------------- */
@@ -134,18 +133,18 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Parse datasource name                                           */
 /* -------------------------------------------------------------------- */
-    if ( !SplitPath(pszName, &pszGisdbase, &pszLocation, 
-		    &pszMapset, &pszMap) ) 
+    if ( !SplitPath(pszName, &pszGisdbase, &pszLocation,
+		    &pszMapset, &pszMap) )
     {
         if( !bTestOpen )
 	{
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s is not GRASS datasource name, access failed.\n", 
+                      "%s is not GRASS datasource name, access failed.\n",
 		      pszName );
 	}
 	return FALSE;
     }
-			
+
     CPLDebug ( "GRASS", "Gisdbase: %s", pszGisdbase );
     CPLDebug ( "GRASS", "Location: %s", pszLocation );
     CPLDebug ( "GRASS", "Mapset: %s", pszMapset );
@@ -170,13 +169,13 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
         putenv( gisbaseEnv );
     }
 
-    // Don't use GISRC file and read/write GRASS variables 
+    // Don't use GISRC file and read/write GRASS variables
     // (from location G_VAR_GISRC) to memory only.
     G_set_gisrc_mode ( G_GISRC_MODE_MEMORY );
 
-    // Init GRASS libraries (required). G_no_gisinit() doesn't check 
+    // Init GRASS libraries (required). G_no_gisinit() doesn't check
     // write permissions for mapset compare to G_gisinit()
-    G_no_gisinit();  
+    G_no_gisinit();
 
     // Set error function
     G_set_error_routine ( (GrassErrorHandler) Grass2OGRErrorHook );
@@ -186,7 +185,7 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
      G__setenv( "GISDBASE", pszGisdbase );
      G__setenv( "LOCATION_NAME", pszLocation );
-     G__setenv( "MAPSET", pszMapset); 
+     G__setenv( "MAPSET", pszMapset);
      G_reset_mapsets();
      G_add_mapset_to_search_path ( pszMapset );
 
@@ -206,7 +205,7 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     CPLDebug ( "GRASS", "Num lines = %d", Vect_get_num_lines(&map) );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build a list of layers.                                         */
 /* -------------------------------------------------------------------- */
@@ -218,15 +217,15 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 	OGRGRASSLayer       *poLayer;
 
         poLayer = new OGRGRASSLayer( i, &map );
-	
+
         // Add layer to data source layer list
 	papoLayers = (OGRGRASSLayer **)
 	    CPLRealloc( papoLayers,  sizeof(OGRGRASSLayer *) * (nLayers+1) );
 	papoLayers[nLayers++] = poLayer;
     }
-    
+
     bOpened = TRUE;
-    
+
     return TRUE;
 }
 
@@ -274,24 +273,24 @@ OGRLayer *OGRGRASSDataSource::GetLayer( int iLayer )
 /* Returns: true - OK                                                   */
 /*          false - failed                                              */
 /************************************************************************/
-bool OGRGRASSDataSource::SplitPath( char *path, char **gisdbase, 
+bool OGRGRASSDataSource::SplitPath( char *path, char **gisdbase,
 	                     char **location, char **mapset, char **map )
 {
     char *p, *ptr[5], *tmp;
     int  i = 0;
-    
+
     CPLDebug ( "GRASS", "OGRGRASSDataSource::SplitPath" );
-    
+
     *gisdbase = *location = *mapset = *map = NULL;
-    
-    if ( !path || strlen(path) == 0 ) 
+
+    if ( !path || strlen(path) == 0 )
 	return false;
 
     tmp = G_store ( path );
 
     while ( (p = strrchr(tmp,'/')) != NULL  && i < 5 ) {
 	*p = '\0';
-	
+
 	if ( strlen(p+1) == 0 ) /* repeated '/' */
 	    continue;
 
@@ -306,7 +305,7 @@ bool OGRGRASSDataSource::SplitPath( char *path, char **gisdbase,
 
     if ( strcmp(ptr[0],"head") != 0 || strcmp(ptr[2],"vector") != 0 ) {
        return false;
-    }       
+    }
 
     *gisdbase = G_store ( tmp );
     *location = G_store ( ptr[4] );
@@ -316,4 +315,3 @@ bool OGRGRASSDataSource::SplitPath( char *path, char **gisdbase,
     free ( tmp );
     return true;
 }
-

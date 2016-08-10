@@ -26,39 +26,36 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <kml/dom.h>
+#ifndef OGR_LIBKML_GEOMETRY_H
+#define OGR_LIBKML_GEOMETRY_H
 
-using kmldom::ElementPtr;
-using kmldom::KmlFactory;
-using kmldom::GeometryPtr;
-using kmldom::LatLonBoxPtr;
-using kmldom::GxLatLonQuadPtr;
+#include "libkml_headers.h"
 
 /*******************************************************************************
-	funtion to write out a ogr geometry to kml
-	
+ Function to write out a ogr geometry to km.
+
 args:
-						poOgrGeom		the ogr geometry
-						extra		used in recursion, just pass -1
-						poKmlFactory	pointer to the libkml dom factory
+            poOgrGeom     the ogr geometry
+            extra         used in recursion, just pass -1
+            poKmlFactory  pointer to the libkml dom factory
 
 returns:
-						ElementPtr to the geometry created
+            ElementPtr to the geometry created
 
 *******************************************************************************/
 
-ElementPtr geom2kml (
+kmldom::ElementPtr geom2kml (
     OGRGeometry * poOgrGeom,
     int extra,
-    KmlFactory * poKmlFactory );
+    kmldom::KmlFactory * poKmlFactory );
 
 
 /******************************************************************************
- function to read a kml geometry and translate to ogr
+ Function to read a kml geometry and translate to ogr.
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
-            poOgrSRS        pointer to the spatial ref to set on the geometry 
+            poOgrSRS        pointer to the spatial ref to set on the geometry
 
 Returns:
             pointer to the new ogr geometry object
@@ -66,13 +63,15 @@ Returns:
 ******************************************************************************/
 
 OGRGeometry *kml2geom (
-    GeometryPtr poKmlGeometry,
-    OGRSpatialReference *poOgrSRS);
+    kmldom::GeometryPtr poKmlGeometry,
+    OGRSpatialReference *poOgrSRS );
 
 OGRGeometry *kml2geom_latlonbox (
-    LatLonBoxPtr poKmlLatLonBox,
-    OGRSpatialReference *poOgrSRS);
+    kmldom::LatLonBoxPtr poKmlLatLonBox,
+    OGRSpatialReference *poOgrSRS );
 
 OGRGeometry *kml2geom_latlonquad (
-    GxLatLonQuadPtr poKmlLatLonQuad,
-    OGRSpatialReference *poOgrSRS);
+    kmldom::GxLatLonQuadPtr poKmlLatLonQuad,
+    OGRSpatialReference *poOgrSRS );
+
+#endif  // OGR_LIBKML_GEOMETRY_H

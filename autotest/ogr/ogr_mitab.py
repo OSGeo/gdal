@@ -316,7 +316,7 @@ def ogr_mitab_9():
         return 'fail'
 
 ###############################################################################
-# Read mif file with 2 character .mid delimeter and verify operation.
+# Read mif file with 2 character .mid delimiter and verify operation.
 
 def ogr_mitab_10():
     if gdaltest.mapinfo_drv is None:
@@ -355,7 +355,7 @@ def ogr_mitab_10():
 # Verify support for NTF datum with non-greenwich datum per
 #    http://trac.osgeo.org/gdal/ticket/1416
 #
-# This test also excercises srs reference counting as described in issue:
+# This test also exercises SRS reference counting as described in issue:
 #    http://trac.osgeo.org/gdal/ticket/1680
 
 def ogr_mitab_11():
@@ -395,7 +395,7 @@ def ogr_mitab_12():
     return 'success'
 
 ###############################################################################
-# Verify that field widths and precisions are propogated correctly in TAB
+# Verify that field widths and precisions are propagated correctly in TAB.
 
 def ogr_mitab_13():
 
@@ -445,7 +445,7 @@ def ogr_mitab_13():
     return 'success'
 
 ###############################################################################
-# Verify that field widths and precisions are propogated correctly in MIF
+# Verify that field widths and precisions are propagated correctly in MIF.
 
 def ogr_mitab_14():
 
@@ -709,7 +709,7 @@ def ogr_mitab_20():
             lyr.CreateFeature(feat)
             ds = None
             gdal.SetConfigOption('MITAB_BOUNDS_FILE', None)
-            
+
             ds = ogr.Open('/vsimem/ogr_mitab_20.' + fmt)
             lyr = ds.GetLayer(0)
             feat = lyr.GetNextFeature()
@@ -795,7 +795,7 @@ def ogr_mitab_21():
 
     if gdaltest.mapinfo_drv is None:
         return 'skip'
-        
+
     ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_21.tab')
     lyr = ds.CreateLayer('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -804,7 +804,7 @@ def ogr_mitab_21():
     lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_mitab_21.tab')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -821,7 +821,7 @@ def ogr_mitab_21():
 # Test append in update mode
 
 def ogr_mitab_22():
-    
+
     filename = '/vsimem/ogr_mitab_22.tab'
     for nb_features in (2, 1000):
         if nb_features == 2:
@@ -903,7 +903,7 @@ def ogr_mitab_23():
             gdaltest.post_reason('fail')
             return 'fail'
         ds = None
-        
+
         ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
 
@@ -944,7 +944,7 @@ def ogr_mitab_24():
             feat.SetField('ID', nb_features / 2 + i+1)
             feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
             lyr.CreateFeature(feat)
-            
+
         lyr.ResetReading()
         for i in range(nb_features):
             f = lyr.GetNextFeature()
@@ -959,7 +959,7 @@ def ogr_mitab_24():
             return 'fail'
 
         ds = None
-        
+
         ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
 
@@ -1029,7 +1029,7 @@ def ogr_mitab_25():
                 print('mtime of .%s has changed !' % ext)
                 gdaltest.post_reason('fail')
                 return 'fail'
-                
+
         if test_cli_utilities.get_test_ogrsf_path() is not None:
             ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro -fsf ' + filename)
             if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
@@ -1136,13 +1136,13 @@ def ogr_mitab_26():
 def ogr_mitab_27():
 
     filename = '/vsimem/ogr_mitab_27.tab'
-    
+
     ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('realfield', ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn('stringfield', ogr.OFTString))
-    
+
     # Invalid call : feature without FID
     f = ogr.Feature(lyr.GetLayerDefn())
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -1186,7 +1186,7 @@ def ogr_mitab_27():
     lyr.SetFeature(f)
 
     ds = None
-    
+
     ds = ogr.Open(filename, update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1202,7 +1202,7 @@ def ogr_mitab_27():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (2 3)'))
     lyr.SetFeature(f)
     ds = None
-    
+
     ds = ogr.Open(filename, update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1214,7 +1214,7 @@ def ogr_mitab_27():
 
     lyr.DeleteFeature(f.GetFID())
     ds = None
-    
+
     ds = ogr.Open(filename, update = 1)
     lyr = ds.GetLayer(0)
     # SetFeature() on a deleted feature
@@ -1241,7 +1241,7 @@ def ogr_mitab_27():
     stat = gdal.VSIStatL(filename[0:-3]+"map")
     old_size = stat.size
 
-    # This used to trigger a bug: when using SetFeature() repeatly, we
+    # This used to trigger a bug: when using SetFeature() repeatedly, we
     # can create object blocks in the .map that are made only of deleted
     # objects.
     ds = ogr.Open(filename, update = 1)
@@ -1259,7 +1259,7 @@ def ogr_mitab_27():
     if stat.size != old_size:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     ds = ogr.Open(filename, update = 1)
     lyr = ds.GetLayer(0)
 
@@ -1334,9 +1334,9 @@ def ogr_mitab_28():
         f.SetFID(i+1)
         i = i + 1
         lyr.SetFeature(f)
-        
+
     ds = None
-    
+
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     i = 0
@@ -1478,16 +1478,16 @@ def ogr_mitab_30(update = 0):
         feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (j,j)))
         lyr.CreateFeature(feat)
         feat = None
-        
+
         if not (j <= 10 or (j % 5) == 0):
             continue
-        
+
         for i in range(2):
             ret = lyr.SyncToDisk()
             if ret != 0:
                 gdaltest.post_reason('fail')
                 return 'fail'
-                
+
             if i == 0:
                 for ext in ('map', 'tab', 'dat', 'id'):
                     stat[ext] = gdal.VSIStatL(filename[0:-3]+ext)
@@ -1589,7 +1589,7 @@ def ogr_mitab_33():
     shutil.copy('data/single_point_mapinfo.dat', 'tmp')
     shutil.copy('data/single_point_mapinfo.id', 'tmp')
     shutil.copy('data/single_point_mapinfo.map', 'tmp')
-    
+
     ds = ogr.Open('tmp/single_point_mapinfo.tab', update = 1)
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1618,7 +1618,7 @@ def ogr_mitab_33():
     shutil.copy('data/single_point_mapinfo.dat', 'tmp')
     shutil.copy('data/single_point_mapinfo.id', 'tmp')
     shutil.copy('data/single_point_mapinfo.map', 'tmp')
-    
+
     ds = ogr.Open('tmp/single_point_mapinfo.tab', update = 1)
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1647,7 +1647,7 @@ def ogr_mitab_33():
 # Test updating a line that spans over several coordinate blocks
 
 def ogr_mitab_34():
-    
+
     filename = '/vsimem/ogr_mitab_34.tab'
     ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
     lyr = ds.CreateLayer('ogr_mitab_34', options = ['BOUNDS=-1000,0,1000,3000'])
@@ -1670,7 +1670,7 @@ def ogr_mitab_34():
     geom.SetPoint_2D(0, -1000, 3000)
     lyr.SetFeature(f)
     ds = None
-    
+
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1854,7 +1854,7 @@ def ogr_mitab_35():
                       'CoordSys Earth Projection 28, 104, "m", 1, 2, 90',
                       #'CoordSys Earth Projection 29, 104, "m", 1, 90, 90', # alias of 4
                       'CoordSys Earth Projection 30, 104, "m", 1, 2, 3, 4',
-                      #'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5', # alias of 20
+                      'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5',
                       'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
                       'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
                       ]:
@@ -1980,7 +1980,7 @@ def ogr_mitab_36():
     shutil.copy('data/polygon_without_index.dat', 'tmp')
     shutil.copy('data/polygon_without_index.id', 'tmp')
     shutil.copy('data/polygon_without_index.map', 'tmp')
-    
+
     ds = ogr.Open('tmp/polygon_without_index.tab', update = 1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1992,7 +1992,7 @@ def ogr_mitab_36():
     lyr.SetFeature(f)
     f = None
     ds = None
-    
+
     ds = ogr.Open('tmp/polygon_without_index.tab')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -2081,6 +2081,187 @@ def ogr_mitab_38():
     return 'success'
 
 ###############################################################################
+# Read various geometry types from .mif
+
+def ogr_mitab_39():
+
+    ds = ogr.Open('data/all_geoms.mif')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/all_geoms.mif.golden.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+
+    while True:
+        f = lyr.GetNextFeature()
+        f_ref = lyr_ref.GetNextFeature()
+        if f is None:
+            if f_ref is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
+           f.GetStyleString() != f_ref.GetStyleString() :
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read various geometry types from .mif but potentially truncated
+
+def ogr_mitab_40():
+
+    content = open('data/all_geoms.mif', 'rt').read()
+
+    for i in range(len(content)):
+        gdal.FileFromMemBuffer('/vsimem/ogr_mitab_40.mif', content[0:i])
+        with gdaltest.error_handler():
+            ds = ogr.Open('/vsimem/ogr_mitab_40.mif')
+            if ds is not None:
+                lyr = ds.GetLayer(0)
+                for f in lyr:
+                    pass
+
+    gdal.Unlink('/vsimem/ogr_mitab_40.mif')
+
+    return 'success'
+
+###############################################################################
+# Read various geometry types from .tab
+
+def ogr_mitab_41():
+
+    ds = ogr.Open('data/all_geoms.tab')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/all_geoms.mif.golden.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+
+    while True:
+        f = lyr.GetNextFeature()
+        f_ref = lyr_ref.GetNextFeature()
+        if f is None:
+            if f_ref is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
+           f.GetStyleString() != f_ref.GetStyleString() :
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read various geometry types from .tab with block size = 32256
+
+def ogr_mitab_42():
+
+    ds = ogr.Open('/vsizip/data/all_geoms_block_32256.zip')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/all_geoms.mif.golden.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+
+    while True:
+        f = lyr.GetNextFeature()
+        f_ref = lyr_ref.GetNextFeature()
+        if f is None:
+            if f_ref is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
+           f.GetStyleString() != f_ref.GetStyleString() :
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test creating tab with block size = 32256
+
+def ogr_mitab_43():
+
+    src_ds = gdal.OpenEx('/vsizip/data/all_geoms_block_32256.zip')
+    gdal.VectorTranslate('/vsimem/all_geoms_block_512.tab', src_ds, format = 'MapInfo File')
+    gdal.VectorTranslate('/vsimem/all_geoms_block_32256.tab', src_ds, format = 'MapInfo File', datasetCreationOptions = ['BLOCKSIZE=32256'])
+    with gdaltest.error_handler():
+        out_ds = gdal.VectorTranslate('/vsimem/all_geoms_block_invalid.tab', src_ds, format = 'MapInfo File', datasetCreationOptions = ['BLOCKSIZE=32768'])
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    src_ds = None
+
+    size = gdal.VSIStatL('/vsimem/all_geoms_block_512.map').size
+    if size != 6144:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    size = gdal.VSIStatL('/vsimem/all_geoms_block_32256.map').size
+    if size != 161280:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/all_geoms_block_32256.tab')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('/vsimem/all_geoms_block_512.tab')
+    lyr_ref = ds_ref.GetLayer(0)
+
+    while True:
+        f = lyr.GetNextFeature()
+        f_ref = lyr_ref.GetNextFeature()
+        if f is None:
+            if f_ref is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0 or \
+           f.GetStyleString() != f_ref.GetStyleString() :
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+
+    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/all_geoms_block_512.tab' )
+    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/all_geoms_block_32256.tab' )
+    gdal.Unlink('/vsimem/all_geoms_block_32768.dat')
+
+    return 'success'
+
+###############################################################################
+# Test limitation on width and precision of numeric fields in creation (#6392)
+
+def ogr_mitab_44():
+
+    ds = gdaltest.mapinfo_drv.CreateDataSource('/vsimem/ogr_mitab_44.mif')
+    lyr = ds.CreateLayer('test')
+    fld_defn = ogr.FieldDefn('test', ogr.OFTReal)
+    fld_defn.SetWidth(30)
+    fld_defn.SetPrecision(29)
+    lyr.CreateField(fld_defn)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_mitab_44.mif')
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    if fld_defn.GetWidth() != 20 or fld_defn.GetPrecision() != 16:
+        gdaltest.post_reason('fail')
+        print(fld_defn.GetWidth())
+        print(fld_defn.GetPrecision())
+        return 'fail'
+    ds = None
+
+    gdaltest.mapinfo_drv.DeleteDataSource( '/vsimem/ogr_mitab_44.mif' )
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2132,6 +2313,12 @@ gdaltest_list = [
     ogr_mitab_36,
     ogr_mitab_37,
     ogr_mitab_38,
+    ogr_mitab_39,
+    ogr_mitab_40,
+    ogr_mitab_41,
+    ogr_mitab_42,
+    ogr_mitab_43,
+    ogr_mitab_44,
     ogr_mitab_cleanup
     ]
 

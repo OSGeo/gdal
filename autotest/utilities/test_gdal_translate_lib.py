@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  test librarified gdal_translate
 # Author:   Faza Mahamood <fazamhd at gmail dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -41,7 +41,7 @@ import gdaltest
 # Simple test
 
 def test_gdal_translate_lib_1():
-    
+
     ds = gdal.Open('../gcore/data/byte.tif')
 
     ds = gdal.Translate('tmp/test1.tif', ds)
@@ -54,7 +54,7 @@ def test_gdal_translate_lib_1():
         return 'fail'
 
     ds = None
-    
+
     ds = gdal.Open('tmp/test1.tif')
     if ds is None:
         return 'fail'
@@ -98,7 +98,7 @@ def test_gdal_translate_lib_2():
 # Test outputType option
 
 def test_gdal_translate_lib_3():
-    
+
     ds = gdal.Open('../gcore/data/byte.tif')
     ds = gdal.Translate('tmp/test3.tif', ds, outputType = gdal.GDT_Int16)
     if ds is None:
@@ -330,13 +330,13 @@ def test_gdal_translate_lib_12():
 # Test metadataOptions
 
 def test_gdal_translate_lib_13():
-    
+
     ds = gdal.Open('../gcore/data/byte.tif')
     ds = gdal.Translate('tmp/test13.tif', ds, metadataOptions = ['TIFFTAG_DOCUMENTNAME=test13'])
     if ds is None:
         return 'fail'
 
-    md = ds.GetMetadata() 
+    md = ds.GetMetadata()
     if 'TIFFTAG_DOCUMENTNAME' not in md:
         gdaltest.post_reason('Did not get TIFFTAG_DOCUMENTNAME')
         return 'fail'
@@ -355,7 +355,7 @@ def test_gdal_translate_lib_14():
     if ds is None:
         return 'fail'
 
-    md = ds.GetMetadata('IMAGE_STRUCTURE') 
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
     if 'COMPRESSION' not in md or md['COMPRESSION'] != 'LZW':
         gdaltest.post_reason('Did not get COMPRESSION')
         return 'fail'
@@ -378,8 +378,79 @@ def test_gdal_translate_lib_100():
         gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress)
 
     # Null dest name
-    with gdaltest.error_handler():
+    try:
         gdal.TranslateInternal(None, gdal.Open('../gcore/data/byte.tif'), None)
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test behaviour with SIGNEDBYTE
+
+def test_gdal_translate_lib_101():
+
+    ds = gdal.Translate('/vsimem/test_gdal_translate_lib_101.tif', gdal.Open('../gcore/data/byte.tif'), creationOptions = ['PIXELTYPE=SIGNEDBYTE'], noData = -128)
+    if ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
+        gdaltest.post_reason('Did not get SIGNEDBYTE')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != -128:
+        gdaltest.post_reason('Did not get -128')
+        return 'fail'
+    ds2 = gdal.Translate('/vsimem/test_gdal_translate_lib_101_2.tif', ds, noData = -127)
+    if ds2.GetRasterBand(1).GetNoDataValue() != -127:
+        gdaltest.post_reason('Did not get -127')
+        return 'fail'
+    ds = None
+    ds2 = None
+    gdal.Unlink('/vsimem/test_gdal_translate_lib_101.tif')
+    gdal.Unlink('/vsimem/test_gdal_translate_lib_101_2.tif')
+    return 'success'
+
+###############################################################################
+# Test -scale
+
+def test_gdal_translate_lib_102():
+
+    ds = gdal.Translate('', gdal.Open('../gcore/data/byte.tif'), format = 'MEM', scaleParams = [[0, 255, 0, 65535]], outputType = gdal.GDT_UInt16)
+    (min, max) = ds.GetRasterBand(1).ComputeRasterMinMax(False)
+    if (min, max) != (19018.0, 65535.0):
+        gdaltest.post_reason('failure')
+        print(min, max)
+        return 'fail'
+
+    (approx_min, approx_max) = ds.GetRasterBand(1).ComputeRasterMinMax(True)
+    ds2 = gdal.Translate('', ds, format = 'MEM', scaleParams = [[approx_min, approx_max]], outputType = gdal.GDT_Byte)
+    expected_stats = ds2.GetRasterBand(1).ComputeStatistics(False)
+
+    # Implicit source statistics use approximate source min/max
+    ds2 = gdal.Translate('', ds, format = 'MEM', scaleParams = [[]], outputType = gdal.GDT_Byte)
+    stats = ds2.GetRasterBand(1).ComputeStatistics(False)
+    for i in range(4):
+        if abs(stats[i] - expected_stats[i]) > 1e-3:
+            gdaltest.post_reason('failure')
+            print(stats)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that -projwin with nearest neighbor resampling uses integer source
+# pixel boundaries (#6610)
+
+def test_gdal_translate_lib_103():
+
+    ds = gdal.Translate('', '../gcore/data/byte.tif', format = 'MEM', projWin = [440730, 3751310, 441910, 3750140])
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+        gdaltest.post_reason('Bad geotransform')
+        return 'fail'
 
     return 'success'
 
@@ -415,6 +486,9 @@ gdaltest_list = [
     test_gdal_translate_lib_13,
     test_gdal_translate_lib_14,
     test_gdal_translate_lib_100,
+    test_gdal_translate_lib_101,
+    test_gdal_translate_lib_102,
+    test_gdal_translate_lib_103,
     test_gdal_translate_lib_cleanup
     ]
 

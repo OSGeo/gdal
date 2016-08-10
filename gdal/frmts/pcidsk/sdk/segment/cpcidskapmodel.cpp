@@ -27,6 +27,7 @@
 #include "pcidsk_airphoto.h"
 #include "pcidsk_exception.h"
 #include "segment/cpcidskapmodel.h"
+#include "core/pcidsk_utils.h"
 
 #include <utility>
 #include <vector>
@@ -207,8 +208,8 @@ bool PCIDSKAPModelMiscParams::HasRadius(void) const
 /**
  * Create a new PCIDSK APMODEL segment
  */
-CPCIDSKAPModelSegment::CPCIDSKAPModelSegment(PCIDSKFile *file, int segment, const char *segment_pointer) : 
-    CPCIDSKSegment(file, segment, segment_pointer)
+CPCIDSKAPModelSegment::CPCIDSKAPModelSegment(PCIDSKFile *fileIn, int segmentIn, const char *segment_pointer) : 
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer)
 {
     filled_ = false;
     io_params_ = NULL;
@@ -227,7 +228,7 @@ CPCIDSKAPModelSegment::~CPCIDSKAPModelSegment()
 unsigned int CPCIDSKAPModelSegment::GetWidth(void) const
 {
     if (!filled_) {
-        ThrowPCIDSKException("Failed to determine width from APModel.");
+        return ThrowPCIDSKException(0 , "Failed to determine width from APModel.");
     }
     return width_;
 }
@@ -235,7 +236,7 @@ unsigned int CPCIDSKAPModelSegment::GetWidth(void) const
 unsigned int CPCIDSKAPModelSegment::GetHeight(void) const
 {
     if (!filled_) {
-        ThrowPCIDSKException("Failed to determine height from APModel.");
+        return ThrowPCIDSKException(0, "Failed to determine height from APModel.");
     }
     return height_;
 }
@@ -243,7 +244,7 @@ unsigned int CPCIDSKAPModelSegment::GetHeight(void) const
 unsigned int CPCIDSKAPModelSegment::GetDownsampleFactor(void) const
 {
     if (!filled_) {
-        ThrowPCIDSKException("Failed to determine APModel downsample factor.");
+        return ThrowPCIDSKException(0, "Failed to determine APModel downsample factor.");
     }
     return downsample_;
 }
@@ -252,7 +253,7 @@ unsigned int CPCIDSKAPModelSegment::GetDownsampleFactor(void) const
 PCIDSKAPModelIOParams const& CPCIDSKAPModelSegment::GetInteriorOrientationParams(void) const
 {
     if (io_params_ == NULL) {
-        ThrowPCIDSKException("There was a failure in reading the APModel IO params.");
+        throw PCIDSKException("There was a failure in reading the APModel IO params.");
     }
     return *io_params_;
 }
@@ -261,7 +262,7 @@ PCIDSKAPModelIOParams const& CPCIDSKAPModelSegment::GetInteriorOrientationParams
 PCIDSKAPModelEOParams const& CPCIDSKAPModelSegment::GetExteriorOrientationParams(void) const
 {
     if (eo_params_ == NULL) {
-        ThrowPCIDSKException("There was a failure in reading the APModel EO params.");
+        throw PCIDSKException("There was a failure in reading the APModel EO params.");
     }
     return *eo_params_;
 }
@@ -269,7 +270,7 @@ PCIDSKAPModelEOParams const& CPCIDSKAPModelSegment::GetExteriorOrientationParams
 PCIDSKAPModelMiscParams const& CPCIDSKAPModelSegment::GetAdditionalParams(void) const
 {
     if (misc_params_ == NULL) {
-        ThrowPCIDSKException("There was a failure in reading the APModel camera params.");
+        throw PCIDSKException("There was a failure in reading the APModel camera params.");
     }
     return *misc_params_;
 }
@@ -326,10 +327,10 @@ namespace {
     /*	Read the header block						    */
     /* -------------------------------------------------------------------- */
     
-        if(strncmp(buf.buffer,"APMODEL ",8))
+        if(!STARTS_WITH(buf.buffer,"APMODEL "))
         {
             std::string magic(buf.buffer, 8);
-            ThrowPCIDSKException("Bad segment magic found. Found: [%s] expecting [APMODEL ]",
+            return ThrowPCIDSKException("Bad segment magic found. Found: [%s] expecting [APMODEL ]",
                 magic.c_str());
         }
 
@@ -365,7 +366,7 @@ namespace {
         eo_params = new PCIDSKAPModelEOParams("",
                                               earth_to_body,
                                               perspective_centre,
-                                              -1);
+                                              0 /* FIXME?: this was originally -1 */);
     
         std::vector<double> x3d(3);
         std::vector<double> y3d(3);
@@ -465,7 +466,7 @@ namespace {
     /* -------------------------------------------------------------------- */
         buf.Get(512 * 4, 16, map_units);
     
-        if (!std::strncmp(buf.Get(512 * 4 + 16, 3), "UTM", 3))
+        if (STARTS_WITH(buf.Get(512 * 4 + 16, 3), "UTM"))
         {
             buf.Get(512 * 4, 3, utm_units);
         }
@@ -503,8 +504,8 @@ void CPCIDSKAPModelSegment::UpdateFromDisk(void)
     // Start reading in the APModel segment. APModel segments should be
     // 7 blocks long.
     if (data_size < (1024 + 7 * 512)) {
-        ThrowPCIDSKException("APMODEL segment is smaller than expected. A "
-            "segment of size %d was found", data_size);
+        return ThrowPCIDSKException("APMODEL segment is smaller than expected. A "
+            "segment of size %d was found", static_cast<int>(data_size));
     }
     buf.SetSize( (int) (data_size - 1024) );
     ReadFromFile(buf.buffer, 0, data_size - 1024);

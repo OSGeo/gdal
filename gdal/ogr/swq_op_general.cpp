@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Component: OGR SQL Engine
- * Purpose: Implementation of SWQGeneralEvaluator and SWQGeneralChecker 
+ * Purpose: Implementation of SWQGeneralEvaluator and SWQGeneralChecker
  *          functions used to represent functions during evaluation and
  *          parsing.
  * Author: Frank Warmerdam <warmerdam@pobox.com>
@@ -33,13 +33,15 @@
 #include "swq.h"
 #include "ogr_geometry.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                           swq_test_like()                            */
 /*                                                                      */
 /*      Does input match pattern?                                       */
 /************************************************************************/
 
-int swq_test_like( const char *input, const char *pattern, char chEscape )
+static int swq_test_like( const char *input, const char *pattern, char chEscape )
 
 {
     if( input == NULL || pattern == NULL )
@@ -219,7 +221,7 @@ char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey)
     char* pszHStoreIter = pszHStoreDup;
     char* pszRet = NULL;
 
-    while( TRUE )
+    while( true )
     {
         char* pszKey, *pszValue;
         pszHStoreIter = OGRHStoreGetNextKeyValue(pszHStoreIter, &pszKey, &pszValue);
@@ -254,8 +256,8 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 /* -------------------------------------------------------------------- */
 /*      Floating point operations.                                      */
 /* -------------------------------------------------------------------- */
-    if( sub_node_values[0]->field_type == SWQ_FLOAT 
-        || (node->nSubExprCount > 1 
+    if( sub_node_values[0]->field_type == SWQ_FLOAT
+        || (node->nSubExprCount > 1
             && sub_node_values[1]->field_type == SWQ_FLOAT) )
     {
         poRet = new swq_expr_node(0);
@@ -299,32 +301,32 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
         switch( (swq_op) node->nOperation )
         {
           case SWQ_EQ:
-            poRet->int_value = sub_node_values[0]->float_value 
+            poRet->int_value = sub_node_values[0]->float_value
                 == sub_node_values[1]->float_value;
             break;
 
           case SWQ_NE:
-            poRet->int_value = sub_node_values[0]->float_value 
+            poRet->int_value = sub_node_values[0]->float_value
                 != sub_node_values[1]->float_value;
             break;
 
           case SWQ_GT:
-            poRet->int_value = sub_node_values[0]->float_value 
+            poRet->int_value = sub_node_values[0]->float_value
                 > sub_node_values[1]->float_value;
             break;
 
           case SWQ_LT:
-            poRet->int_value = sub_node_values[0]->float_value 
+            poRet->int_value = sub_node_values[0]->float_value
                 < sub_node_values[1]->float_value;
             break;
 
           case SWQ_GE:
-            poRet->int_value = sub_node_values[0]->float_value 
+            poRet->int_value = sub_node_values[0]->float_value
                 >= sub_node_values[1]->float_value;
             break;
 
           case SWQ_LE:
-            poRet->int_value = sub_node_values[0]->float_value 
+            poRet->int_value = sub_node_values[0]->float_value
                 <= sub_node_values[1]->float_value;
             break;
 
@@ -334,7 +336,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               poRet->int_value = 0;
               for( i = 1; i < node->nSubExprCount; i++ )
               {
-                  if( sub_node_values[0]->float_value 
+                  if( sub_node_values[0]->float_value
                       == sub_node_values[i]->float_value )
                   {
                       poRet->int_value = 1;
@@ -356,17 +358,17 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
 
           case SWQ_ADD:
-            poRet->float_value = sub_node_values[0]->float_value 
+            poRet->float_value = sub_node_values[0]->float_value
                 + sub_node_values[1]->float_value;
             break;
 
           case SWQ_SUBTRACT:
-            poRet->float_value = sub_node_values[0]->float_value 
+            poRet->float_value = sub_node_values[0]->float_value
                 - sub_node_values[1]->float_value;
             break;
 
           case SWQ_MULTIPLY:
-            poRet->float_value = sub_node_values[0]->float_value 
+            poRet->float_value = sub_node_values[0]->float_value
                 * sub_node_values[1]->float_value;
             break;
 
@@ -374,7 +376,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             if( sub_node_values[1]->float_value == 0 )
                 poRet->float_value = INT_MAX;
             else
-                poRet->float_value = sub_node_values[0]->float_value 
+                poRet->float_value = sub_node_values[0]->float_value
                     / sub_node_values[1]->float_value;
             break;
 
@@ -391,7 +393,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;
@@ -430,12 +432,12 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
         switch( (swq_op) node->nOperation )
         {
           case SWQ_AND:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 && sub_node_values[1]->int_value;
             break;
 
           case SWQ_OR:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 || sub_node_values[1]->int_value;
             break;
 
@@ -444,32 +446,32 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
 
           case SWQ_EQ:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 == sub_node_values[1]->int_value;
             break;
 
           case SWQ_NE:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 != sub_node_values[1]->int_value;
             break;
 
           case SWQ_GT:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 > sub_node_values[1]->int_value;
             break;
 
           case SWQ_LT:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 < sub_node_values[1]->int_value;
             break;
 
           case SWQ_GE:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 >= sub_node_values[1]->int_value;
             break;
 
           case SWQ_LE:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 <= sub_node_values[1]->int_value;
             break;
 
@@ -478,7 +480,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               poRet->int_value = 0;
               for( int i = 1; i < node->nSubExprCount; i++ )
               {
-                  if( sub_node_values[0]->int_value 
+                  if( sub_node_values[0]->int_value
                       == sub_node_values[i]->int_value )
                   {
                       poRet->int_value = 1;
@@ -500,17 +502,17 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
 
           case SWQ_ADD:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 + sub_node_values[1]->int_value;
             break;
 
           case SWQ_SUBTRACT:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 - sub_node_values[1]->int_value;
             break;
 
           case SWQ_MULTIPLY:
-            poRet->int_value = sub_node_values[0]->int_value 
+            poRet->int_value = sub_node_values[0]->int_value
                 * sub_node_values[1]->int_value;
             break;
 
@@ -518,7 +520,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             if( sub_node_values[1]->int_value == 0 )
                 poRet->int_value = INT_MAX;
             else
-                poRet->int_value = sub_node_values[0]->int_value 
+                poRet->int_value = sub_node_values[0]->int_value
                     / sub_node_values[1]->int_value;
             break;
 
@@ -531,7 +533,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;
@@ -582,7 +584,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                 (strcmp(sub_node_values[0]->string_value + strlen(sub_node_values[0]->string_value)-3, "+00") == 0 &&
                  sub_node_values[1]->string_value[strlen(sub_node_values[1]->string_value)-3] == ':') )
             {
-                poRet->int_value = 
+                poRet->int_value =
                     EQUALN(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value,
                            strlen(sub_node_values[1]->string_value));
@@ -596,14 +598,14 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                      (sub_node_values[0]->string_value[strlen(sub_node_values[0]->string_value)-3] == ':')  &&
                       strcmp(sub_node_values[1]->string_value + strlen(sub_node_values[1]->string_value)-3, "+00") == 0)
             {
-                poRet->int_value = 
+                poRet->int_value =
                     EQUALN(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value,
                            strlen(sub_node_values[0]->string_value));
             }
             else
             {
-                poRet->int_value = 
+                poRet->int_value =
                     strcasecmp(sub_node_values[0]->string_value,
                             sub_node_values[1]->string_value) == 0;
             }
@@ -611,31 +613,31 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
 
           case SWQ_NE:
-            poRet->int_value = 
+            poRet->int_value =
                 strcasecmp(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value) != 0;
             break;
 
           case SWQ_GT:
-            poRet->int_value = 
+            poRet->int_value =
                 strcasecmp(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value) > 0;
             break;
 
           case SWQ_LT:
-            poRet->int_value = 
+            poRet->int_value =
                 strcasecmp(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value) < 0;
             break;
 
           case SWQ_GE:
-            poRet->int_value = 
+            poRet->int_value =
                 strcasecmp(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value) >= 0;
             break;
 
           case SWQ_LE:
-            poRet->int_value = 
+            poRet->int_value =
                 strcasecmp(sub_node_values[0]->string_value,
                            sub_node_values[1]->string_value) <= 0;
             break;
@@ -700,7 +702,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               if( SWQ_IS_INTEGER(sub_node_values[1]->field_type) )
                   nOffset = (int)sub_node_values[1]->int_value;
               else if( sub_node_values[1]->field_type == SWQ_FLOAT )
-                  nOffset = (int) sub_node_values[1]->float_value; 
+                  nOffset = (int) sub_node_values[1]->float_value;
               else
                   nOffset = 0;
 
@@ -709,7 +711,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               else if( SWQ_IS_INTEGER(sub_node_values[2]->field_type) )
                   nSize = (int)sub_node_values[2]->int_value;
               else if( sub_node_values[2]->field_type == SWQ_FLOAT )
-                  nSize = (int) sub_node_values[2]->float_value; 
+                  nSize = (int) sub_node_values[2]->float_value;
               else
                   nSize = 0;
 
@@ -758,7 +760,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;
@@ -781,7 +783,7 @@ static void SWQAutoPromoteIntegerToInteger64OrFloat( swq_expr_node *poNode )
     swq_field_type eArgType = poNode->papoSubExpr[0]->field_type;
 
     // We allow mixes of integer, integer64 and float, and string and dates.
-    // When encountered, we promote integers/integer64 to floats, 
+    // When encountered, we promote integers/integer64 to floats,
     // integer to integer64 and strings to dates.  We do that now.
     for( int i = 1; i < poNode->nSubExprCount; i++ )
     {
@@ -848,7 +850,7 @@ static void SWQAutoPromoteStringToDateTime( swq_expr_node *poNode )
         swq_expr_node *poSubNode = poNode->papoSubExpr[i];
 
         if( eArgType == SWQ_TIMESTAMP
-            && (poSubNode->field_type == SWQ_STRING 
+            && (poSubNode->field_type == SWQ_STRING
                 || poSubNode->field_type == SWQ_DATE
                 || poSubNode->field_type == SWQ_TIME) )
         {
@@ -1039,17 +1041,17 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
         eRetType = SWQ_STRING;
         if( poNode->nSubExprCount > 3 || poNode->nSubExprCount < 2 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Expected 2 or 3 arguments to SUBSTR(), but got %d.",
                       poNode->nSubExprCount );
             return SWQ_ERROR;
         }
-        if( poNode->papoSubExpr[0]->field_type != SWQ_STRING 
+        if( poNode->papoSubExpr[0]->field_type != SWQ_STRING
             || poNode->papoSubExpr[1]->field_type != SWQ_INTEGER
-            || (poNode->nSubExprCount > 2 
+            || (poNode->nSubExprCount > 2
                 && poNode->papoSubExpr[2]->field_type != SWQ_INTEGER) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Wrong argument type for SUBSTR(), expected SUBSTR(string,int,int) or SUBSTR(string,int)." );
             return SWQ_ERROR;
         }
@@ -1061,15 +1063,15 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
         eRetType = SWQ_STRING;
         if( poNode->nSubExprCount != 2 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Expected 2 arguments to hstore_get_value(), but got %d.",
                       poNode->nSubExprCount );
             return SWQ_ERROR;
         }
-        if( poNode->papoSubExpr[0]->field_type != SWQ_STRING 
+        if( poNode->papoSubExpr[0]->field_type != SWQ_STRING
             || poNode->papoSubExpr[1]->field_type != SWQ_STRING )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Wrong argument type for hstore_get_value(), expected hstore_get_value(string,string)." );
             return SWQ_ERROR;
         }
@@ -1077,7 +1079,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
 
       default:
       {
-          const swq_operation *poOp = 
+          const swq_operation *poOp =
               swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
 
           CPLError( CE_Failure, CPLE_AppDefined,
@@ -1102,7 +1104,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
 
             if( eArgType != eThisArgType )
             {
-                // Conveniency for join. We allow comparing numeric columns
+                // Convenience for join. We allow comparing numeric columns
                 // and string columns, by casting string columns to numeric
                 if( bAllowMismatchTypeOnFieldComparison &&
                     poNode->nSubExprCount == 2 &&
@@ -1212,6 +1214,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
         {
             poRetNode = new swq_expr_node( 0 );
             poRetNode->is_null = poSrcNode->is_null;
+            poRetNode->field_type = SWQ_INTEGER64;
 
             switch( poSrcNode->field_type )
             {
@@ -1367,7 +1370,17 @@ swq_field_type SWQCastChecker( swq_expr_node *poNode,
     else if( EQUAL(pszTypeName,"integer") )
         eType = SWQ_INTEGER;
     else if( EQUAL(pszTypeName,"bigint") )
+    {
+        // Handle CAST(fid AS bigint) by changing the field_type of fid to Integer64
+        // A bit of a hack
+        if( poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+            poNode->papoSubExpr[0]->field_type == SWQ_INTEGER &&
+            strcmp(poNode->papoSubExpr[0]->string_value, "fid") == 0 )
+        {
+            poNode->papoSubExpr[0]->field_type = SWQ_INTEGER64;
+        }
         eType = SWQ_INTEGER64;
+    }
     else if( EQUAL(pszTypeName,"smallint") )
         eType = SWQ_INTEGER;
     else if( EQUAL(pszTypeName,"float") )

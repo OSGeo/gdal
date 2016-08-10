@@ -1,5 +1,4 @@
 /******************************************************************************
-* $Id$
 *
 * Project:  OpenGIS Simple Features Reference Implementation
 * Purpose:  Different utility functions used in FileGDB OGR driver.
@@ -72,7 +71,7 @@ bool GDBErr(long int hr, std::string desc, CPLErr errType, const char* pszAddMsg
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
-    er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+    er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr), fgdb_error_desc_w);
     if ( er == S_OK )
     {
         std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
@@ -99,7 +98,7 @@ bool GDBDebug(long int hr, std::string desc)
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
-    er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+    er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr), fgdb_error_desc_w);
     if ( er == S_OK )
     {
         std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
@@ -120,28 +119,28 @@ bool GDBDebug(long int hr, std::string desc)
 /*                            GDBToOGRGeometry()                         */
 /*************************************************************************/
 
-bool GDBToOGRGeometry(string geoType, bool hasZ, OGRwkbGeometryType* pOut)
+bool GDBToOGRGeometry(string geoType, bool hasZ, bool hasM, OGRwkbGeometryType* pOut)
 {
     if (geoType == "esriGeometryPoint")
     {
-        *pOut = hasZ? wkbPoint25D : wkbPoint;
+        *pOut = wkbPoint;
     }
     else if (geoType == "esriGeometryMultipoint")
     {
-        *pOut = hasZ? wkbMultiPoint25D : wkbMultiPoint;
+        *pOut = wkbMultiPoint;
     }
     else if (geoType == "esriGeometryLine")
     {
-        *pOut = hasZ? wkbLineString25D : wkbLineString;
+        *pOut = wkbLineString;
     }
     else if (geoType == "esriGeometryPolyline")
     {
-        *pOut = hasZ? wkbMultiLineString25D : wkbMultiLineString;
+        *pOut = wkbMultiLineString;
     }
     else if (geoType == "esriGeometryPolygon" ||
             geoType == "esriGeometryMultiPatch")
     {
-        *pOut = hasZ? wkbMultiPolygon25D : wkbMultiPolygon; // no mapping to single polygon
+        *pOut = wkbMultiPolygon; // no mapping to single polygon
     }
     else
     {
@@ -149,6 +148,10 @@ bool GDBToOGRGeometry(string geoType, bool hasZ, OGRwkbGeometryType* pOut)
                 "Cannot map esriGeometryType(%s) to OGRwkbGeometryType", geoType.c_str());
         return false;
     }
+    if( hasZ )
+        *pOut = wkbSetZ(*pOut);
+    if( hasM )
+        *pOut = wkbSetM(*pOut);
 
     return true;
 }
@@ -157,53 +160,21 @@ bool GDBToOGRGeometry(string geoType, bool hasZ, OGRwkbGeometryType* pOut)
 /*                            OGRGeometryToGDB()                         */
 /*************************************************************************/
 
-bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ)
+bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ, bool *hasM)
 {
-    switch (ogrType)
+    *hasZ = wkbHasZ(ogrType);
+    *hasM = wkbHasM(ogrType);
+    switch (wkbFlatten(ogrType))
     {
-        /* 3D forms */
-        case wkbPoint25D:
-        {
-            *gdbType = "esriGeometryPoint";
-            *hasZ = true;
-            break;
-        }
-
-        case wkbMultiPoint25D:
-        {
-            *gdbType = "esriGeometryMultipoint";
-            *hasZ = true;
-            break;
-        }
-
-        case wkbLineString25D:
-        case wkbMultiLineString25D:
-        {
-            *gdbType = "esriGeometryPolyline";
-            *hasZ = true;
-            break;
-        }
-
-        case wkbPolygon25D:
-        case wkbMultiPolygon25D:
-        {
-            *gdbType = "esriGeometryPolygon";
-            *hasZ = true;
-            break;
-        }
-
-        /* 2D forms */
         case wkbPoint:
         {
             *gdbType = "esriGeometryPoint";
-            *hasZ = false;
             break;
         }
 
         case wkbMultiPoint:
         {
             *gdbType = "esriGeometryMultipoint";
-            *hasZ = false;
             break;
         }
 
@@ -211,7 +182,6 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
         case wkbMultiLineString:
         {
             *gdbType = "esriGeometryPolyline";
-            *hasZ = false;
             break;
         }
 
@@ -219,7 +189,6 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
         case wkbMultiPolygon:
         {
             *gdbType = "esriGeometryPolygon";
-            *hasZ = false;
             break;
         }
         
@@ -237,8 +206,9 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
 /*                            GDBToOGRFieldType()                        */
 /*************************************************************************/
 
-// We could make this function far more robust by doing automatic coertion of types,
-// and/or skipping fields we do not know. But our purposes this works fine
+// We could make this function far more robust by doing automatic coercion of
+// types, and/or skipping fields we do not know. But, for our purposes. this
+// works fine.
 bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut, OGRFieldSubType* pSubType)
 {
     /*
@@ -456,7 +426,7 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
 
     OGRErr eErr = OGRCreateFromShapeBin( pGdbGeometry->shapeBuffer,
                                 &pOGRGeometry,
-                                pGdbGeometry->inUseLength);
+                                static_cast<int>(pGdbGeometry->inUseLength));
 
     //OGRErr eErr = OGRGeometryFactory::createFromWkb(pGdbGeometry->shapeBuffer, pOGRSR, &pOGRGeometry, pGdbGeometry->inUseLength );
 
@@ -471,17 +441,30 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
         // force geometries to multi if requested
 
         // If it is a polygon, force to MultiPolygon since we always produce multipolygons
-        if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbPolygon)
+        OGRwkbGeometryType eFlattenType = wkbFlatten(pOGRGeometry->getGeometryType());
+        if (eFlattenType == wkbPolygon)
         {
             pOGRGeometry = OGRGeometryFactory::forceToMultiPolygon(pOGRGeometry);
         }
+        else if (eFlattenType == wkbCurvePolygon)
+        {
+            OGRMultiSurface* poMS = new OGRMultiSurface();
+            poMS->addGeometryDirectly( pOGRGeometry );
+            pOGRGeometry = poMS;
+        }
         else if (forceMulti)
         {
-            if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbLineString)
+            if (eFlattenType == wkbLineString)
             {
                 pOGRGeometry = OGRGeometryFactory::forceToMultiLineString(pOGRGeometry);
             }
-            else if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbPoint)
+            else if (eFlattenType == wkbCompoundCurve)
+            {
+                OGRMultiCurve* poMC = new OGRMultiCurve();
+                poMC->addGeometryDirectly( pOGRGeometry );
+                pOGRGeometry = poMC;
+            }
+            else if (eFlattenType == wkbPoint)
             {
                 pOGRGeometry = OGRGeometryFactory::forceToMultiPoint(pOGRGeometry);
             }
@@ -523,7 +506,7 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
         *ppSR = NULL;
 
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed morhping from ESRI Geometry: %s", wkt.c_str());
+                  "Failed morphing from ESRI Geometry: %s", wkt.c_str());
 
         return false;
     }
@@ -576,7 +559,7 @@ std::string FGDBEscapeUnsupportedPrefixes(const std::string className)
     std::string newName = className;
     // From ESRI docs
     // Feature classes starting with these strings are unsupported.
-    static const char* UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", NULL};
+    static const char* const UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", NULL};
 
     for (int i = 0; UNSUPPORTED_PREFIXES[i] != NULL; i++)
     {
@@ -601,7 +584,7 @@ std::string FGDBEscapeReservedKeywords(const std::string name)
     std::transform(upperName.begin(), upperName.end(), upperName.begin(), ::toupper);
 
     // From ESRI docs
-    static const char* RESERVED_WORDS[] = {FGDB_OID_NAME, "ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
+    static const char* const RESERVED_WORDS[] = {FGDB_OID_NAME, "ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
                                     "BY", "COLUMN", "CREATE", "DATE", "DELETE", "DESC",
                                     "DROP", "EXISTS", "FOR", "FROM", "IN", "INSERT", "INTO",
                                     "IS", "LIKE", "NOT", "NULL", "OR", "ORDER", "SELECT",

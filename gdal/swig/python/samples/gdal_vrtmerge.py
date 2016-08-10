@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 # Copyright (c) 2000, Atlantis Scientific Inc. (www.atlsci.com)
 # Copyright (C) 2005  Gabriel Ebner <ge@gabrielebner.at>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -23,12 +23,9 @@
 # precision as the gdal 'C' utilities
 # Norman Vine  nhv@cape.com  03-Oct-2005 6:23:45 am
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
 import sys
+
+from osgeo import gdal
 
 # =============================================================================
 def names_to_fileinfos( names ):
@@ -40,7 +37,7 @@ def names_to_fileinfos( names ):
     Returns a list of file_info objects.  There may be less file_info objects
     than names if some of the names could not be opened as GDAL files.
     """
-    
+
     file_infos = []
     for name in names:
         fi = file_info()
@@ -79,14 +76,14 @@ class file_info:
         self.lry = self.uly + self.geotransform[5] * self.ysize
 
         self.band_types = [None]
-        self.block_sizes = [None] 
+        self.block_sizes = [None]
         self.nodata = [None]
         self.cts = [None]
         self.color_interps = [None]
         for i in range(1, fh.RasterCount+1):
             band = fh.GetRasterBand(i)
             self.band_types.append(band.DataType)
-            self.block_sizes.append(band.GetBlockSize()) 
+            self.block_sizes.append(band.GetBlockSize())
             if band.GetNoDataValue() != None:
                 self.nodata.append(band.GetNoDataValue())
             self.color_interps.append(band.GetRasterColorInterpretation())
@@ -113,7 +110,7 @@ class file_info:
         else:
             tgw_uly = max(t_uly,self.uly)
             tgw_lry = min(t_lry,self.lry)
-        
+
         # do they even intersect?
         if tgw_ulx >= tgw_lrx:
             return 1
@@ -121,7 +118,7 @@ class file_info:
             return 1
         if t_geotransform[5] > 0 and tgw_uly >= tgw_lry:
             return 1
-            
+
         # compute target window in pixel coordinates.
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
@@ -145,11 +142,11 @@ class file_info:
             return 1
 
         t_fh.write('\t\t<SimpleSource>\n')
-        t_fh.write(('\t\t\t<SourceFilename relativeToVRT="1">%s' + 
+        t_fh.write(('\t\t\t<SourceFilename relativeToVRT="1">%s' +
             '</SourceFilename>\n') % self.filename)
         t_fh.write('\t\t\t<SourceBand>%i</SourceBand>\n' % s_band)
-        data_type_name = gdal.GetDataTypeName(self.band_types[s_band]) 
-        block_size_x, block_size_y = self.block_sizes[s_band] 
+        data_type_name = gdal.GetDataTypeName(self.band_types[s_band])
+        block_size_x, block_size_y = self.block_sizes[s_band]
         t_fh.write('\t\t\t<SourceProperties RasterXSize="%i" RasterYSize="%i"' \
                     ' DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n' \
                     % (self.xsize, self.ysize, data_type_name, block_size_x, block_size_y))
@@ -192,11 +189,11 @@ if __name__ == '__main__':
         if arg == '-o':
             i = i + 1
             out_file = argv[i]
-            
-        elif arg == '-i': 
-            i = i + 1 
-            in_file_list = open(argv[i]) 
-            names.extend(in_file_list.read().split()) 
+
+        elif arg == '-i':
+            i = i + 1
+            in_file_list = open(argv[i])
+            names.extend(in_file_list.read().split())
 
         elif arg == '-separate':
             separate = True
@@ -209,13 +206,13 @@ if __name__ == '__main__':
             i = i + 4
 
         elif arg[:1] == '-':
-            print ('Unrecognised command option: ', arg)
+            print ('Unrecognized command option: ', arg)
             Usage()
             sys.exit( 1 )
 
         else:
             names.append( arg )
-            
+
         i = i + 1
 
     if len(names) == 0:
@@ -234,7 +231,7 @@ if __name__ == '__main__':
         uly = file_infos[0].uly
         lrx = file_infos[0].lrx
         lry = file_infos[0].lry
-        
+
         for fi in file_infos:
             ulx = min(ulx, fi.ulx)
             uly = max(uly, fi.uly)
@@ -244,9 +241,9 @@ if __name__ == '__main__':
     if psize_x is None:
         psize_x = file_infos[0].geotransform[1]
         psize_y = file_infos[0].geotransform[5]
-    
+
     projection = file_infos[0].projection
-    
+
     for fi in file_infos:
         if fi.geotransform[1] != psize_x or fi.geotransform[5] != psize_y:
             print ("All files must have the same scale; %s does not" \
@@ -286,7 +283,8 @@ if __name__ == '__main__':
         for fi in file_infos:
             band_n = band_n + 1
             if len(fi.band_types) != 2:
-                print ('File %s has %d bands. Only first band will be taken into accout' % (fi.filename, len(fi.band_types)-1))
+                print ( 'File %s has %d bands. Only first band will be taken '
+                        'into account' % (fi.filename, len(fi.band_types)-1))
             dataType = gdal.GetDataTypeName(fi.band_types[1])
 
             t_fh.write('\t<VRTRasterBand dataType="%s" band="%i">\n'

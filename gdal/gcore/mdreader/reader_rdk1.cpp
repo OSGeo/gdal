@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from Resurs-DK1 imagery.
@@ -157,7 +156,7 @@ time_t GDALMDReaderResursDK1::GetAcquisitionTimeFromString(
     int iMin;
     int iSec;
 
-// string exampe: <Normal>
+// string example <Normal>
 //                  tSceneTime = 10:21:36.000000
 //                  dSceneDate = 16/9/2008
 //                </Normal>

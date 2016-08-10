@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -30,6 +29,8 @@
 
 #include "wmsdriver.h"
 
+CPL_CVSID("$Id$");
+
 GDALWMSCache::GDALWMSCache() {
     m_cache_path = "./gdalwmscache";
     m_postfix = "";
@@ -40,9 +41,9 @@ GDALWMSCache::~GDALWMSCache() {
 }
 
 CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
-    const char *xmlcache_path = CPLGetXMLValue(config, "Path", NULL); 
-    const char *usercache_path = CPLGetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", NULL); 
-    if(xmlcache_path) 
+    const char *xmlcache_path = CPLGetXMLValue(config, "Path", NULL);
+    const char *usercache_path = CPLGetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", NULL);
+    if(xmlcache_path)
     {
         m_cache_path = xmlcache_path;
     }
@@ -54,7 +55,7 @@ CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
         }
         else
         {
-            m_cache_path = "./gdalwmscache"; 
+            m_cache_path = "./gdalwmscache";
         }
     }
 
@@ -69,7 +70,7 @@ CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
 
 CPLErr GDALWMSCache::Write(const char *key, const CPLString &file_name) {
     CPLString cache_file(KeyToCacheFile(key));
-    //	printf("GDALWMSCache::Write(%s, %s) -> %s\n", key, file_name.c_str());
+    // printf("GDALWMSCache::Write(%s, %s) -> %s\n", key, file_name.c_str());
     if (CPLCopyFile(cache_file.c_str(), file_name.c_str()) != CE_None) {
         MakeDirs(cache_file.c_str());
         CPLCopyFile(cache_file.c_str(), file_name.c_str());

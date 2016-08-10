@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test default implementation of GDALRasterBand::IRasterIO
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -328,7 +328,7 @@ def rasterio_6():
 def rasterio_7():
 
     ds = gdal.Open('data/byte.tif')
-    
+
     data = ds.GetRasterBand(1).ReadRaster()
     l = len(data)
     if l != 400:
@@ -374,7 +374,7 @@ def rasterio_8():
     if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
        gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
         return 'skip'
-    
+
     # Test RasterBand.ReadRaster
     tab = [ 0, True ]
     data = ds.GetRasterBand(1).ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
@@ -399,7 +399,7 @@ def rasterio_8():
     if tab[0] < 0.50:
         gdaltest.post_reason('failure')
         return 'fail'
-    
+
     # Test RasterBand.ReadRaster with type change
     tab = [ 0, True ]
     data = ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Int16,
@@ -787,7 +787,7 @@ def rasterio_10():
 # Test cubic resampling and nbits
 
 def rasterio_11():
-    
+
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
@@ -828,7 +828,7 @@ def rasterio_12_progress_callback(pct, message, user_data):
     return 1 # 1 to continue, 0 to stop
 
 def rasterio_12():
-    
+
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros

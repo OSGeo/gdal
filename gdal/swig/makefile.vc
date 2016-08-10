@@ -12,6 +12,8 @@ gdalvars:
 
 python: gdalvars 
         cd python
+        -del setup_vars.ini
+        echo 'GNM_ENABLED=$(GNM_ENABLED)' > setup_vars.ini
         $(SWIG) -python -modern -new_repr -o extensions/gdalconst_wrap.c -outdir osgeo ..\include\gdalconst.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/gdal_wrap.cpp -outdir osgeo ..\include\gdal.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/osr_wrap.cpp -outdir osgeo ..\include\osr.i

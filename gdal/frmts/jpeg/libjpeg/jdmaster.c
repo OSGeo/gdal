@@ -76,7 +76,7 @@ use_merged_upsample (j_decompress_ptr cinfo)
 /*
  * Compute output image dimensions and related values.
  * NOTE: this is exported for possible use by application.
- * Hence it mustn't do anything that can't be done twice.
+ * Hence it must not do anything that can't be done twice.
  * Also note that it may be called before the master module is initialized!
  */
 

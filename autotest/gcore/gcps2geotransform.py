@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test the GDALGCPsToGeoTransform() method.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2013 Frank Warmerdam
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -62,7 +62,7 @@ def gcps2gt_1():
                 ]))
     if not gdaltest.geotransform_equals(
         gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001):
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -79,7 +79,7 @@ def gcps2gt_2():
                 ]))
     if not gdaltest.geotransform_equals(
         gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001):
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -97,7 +97,7 @@ def gcps2gt_3():
                 ]), approx_ok)
     if gt is not None:
         gdaltest.post_reason('Expected failure when no good solution.')
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -111,7 +111,7 @@ def gcps2gt_4():
                 ]))
     if gt is not None:
         gdaltest.post_reason('Expected failure for single GCP.')
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -126,7 +126,7 @@ def gcps2gt_5():
                 ]))
     if not gdaltest.geotransform_equals(
         gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001):
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -143,7 +143,7 @@ def gcps2gt_6():
                 ]))
     if not gdaltest.geotransform_equals(
         gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001):
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -160,7 +160,7 @@ def gcps2gt_7():
                 ]))
     if not gdaltest.geotransform_equals(
         gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001):
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
@@ -177,15 +177,15 @@ def gcps2gt_8():
                 (1477.41, 2400.83, -87.013419295885001, 39.304705030894979),
                 (1466.02, 2376.92, -87.013906298363295, 39.304056190007913),
                 ]))
-    gt_expected = (-87.056612873288, -2.232795668658e-05, 3.178617809303e-05, 
+    gt_expected = (-87.056612873288, -2.232795668658e-05, 3.178617809303e-05,
                     39.227856615716, 2.6091510188921e-05, 1.596921026218e-05)
     if not gdaltest.geotransform_equals(gt, gt_expected, 0.00001):
-        return 'failure'
+        return 'fail'
 
     return 'success'
 
-    
-gdaltest_list = [ 
+
+gdaltest_list = [
     gcps2gt_1,
     gcps2gt_2,
     gcps2gt_3,
@@ -203,4 +203,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

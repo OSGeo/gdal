@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2014, Matthieu Volat <matthieu.volat@ujf-grenoble.fr>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -53,19 +53,19 @@ def roipac_1():
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
-    
+
     return tst.testOpen( check_prj = prj,
                          check_gt = (-180.0083333, 0.0083333333, 0.0,
                                      -59.9916667, 0.0, -0.0083333333) )
 
 ###############################################################################
-# Test reading of metadata from the ROI_PAC metadata domain 
+# Test reading of metadata from the ROI_PAC metadata domain
 
 def roipac_2():
 
     ds = gdal.Open( 'data/srtm.dem' )
-    val = ds.GetMetadataItem( 'Z_SCALE', 'ROI_PAC' )
-    if val != '1':
+    val = ds.GetMetadataItem( 'YMAX', 'ROI_PAC' )
+    if val != '9':
         return 'fail'
 
     return 'success'
@@ -86,13 +86,40 @@ def roipac_4():
     tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
     return tst.testCreateCopy( check_gt = 1, new_filename = 'strm.tst.dem', vsimem = 1 )
 
+###############################################################################
+# Verify offset/scale metadata reading
+
+def roipac_5():
+
+    ds = gdal.Open( 'data/srtm.dem' )
+    band = ds.GetRasterBand( 1 )
+    offset = band.GetOffset( )
+    if offset != 1:
+        return 'fail'
+    scale = band.GetScale( )
+    if scale != 2:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test .flg
+
+def roipac_6():
+
+    tst = gdaltest.GDALTest( 'roi_pac', 'byte.tif', 1, 4672 )
+    with gdaltest.error_handler():
+        ret = tst.testCreateCopy( check_gt = 1, new_filename = 'byte.flg', vsimem = 1 )
+    return ret
+
 gdaltest_list = [
     roipac_1,
     roipac_2,
     roipac_3,
     roipac_4,
+    roipac_5,
+    roipac_6,
     ]
-  
 
 
 if __name__ == '__main__':

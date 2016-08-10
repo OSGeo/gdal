@@ -21,7 +21,7 @@ clean:	$(foreach d,$(GDAL_FORMATS),$(d)-clean)
 	$(RM) o/*.lo
 
 o/gdalallregister.$(OBJ_EXT):	gdalallregister.cpp ../GDALmake.opt
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(FRMT_FLAGS) \
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $(FRMT_FLAGS) \
 		-DGDAL_FORMATS="$(GDAL_FORMATS)" \
 		gdalallregister.cpp -o o/gdalallregister.$(OBJ_EXT)
 

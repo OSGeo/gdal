@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  ECW (ERDAS Wavelet Compression Format) Driver
@@ -28,8 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_ecw.h"
 #include "cpl_minixml.h"
+#include "gdal_ecw.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "ogr_geometry.h"
@@ -43,7 +43,7 @@ CPL_CVSID("$Id$");
 #ifdef FRMT_ecw
 
 static const unsigned char jpc_header[] = {0xff,0x4f};
-static const unsigned char jp2_header[] = 
+static const unsigned char jp2_header[] =
     {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
 
 static CPLMutex *hECWDatasetMutex = NULL;
@@ -65,11 +65,11 @@ void ECWReportError(CNCSError& oErr, const char* pszMsg)
 {
 #if ECWSDK_VERSION<50
     char* pszErrorMessage = oErr.GetErrorMessage();
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "%s%s", pszMsg, pszErrorMessage );
     NCSFree(pszErrorMessage);
 #else
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
              "%s%s", pszMsg, NCSGetLastErrorText(oErr) );
 #endif
 }
@@ -78,16 +78,16 @@ void ECWReportError(CNCSError& oErr, const char* pszMsg)
 /*                           ECWRasterBand()                            */
 /************************************************************************/
 
-ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
+ECWRasterBand::ECWRasterBand( ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
                               char** papszOpenOptions )
 
 {
-    this->poDS = poDS;
-    poGDS = poDS;
+    this->poDS = poDSIn;
+    poGDS = poDSIn;
 
-    this->iOverview = iOverview;
-    this->nBand = nBand;
-    eDataType = poDS->eRasterDataType;
+    this->iOverview = iOverviewIn;
+    this->nBand = nBandIn;
+    eDataType = poDSIn->eRasterDataType;
 
     nRasterXSize = poDS->GetRasterXSize() / ( 1 << (iOverview+1));
     nRasterYSize = poDS->GetRasterYSize() / ( 1 << (iOverview+1));
@@ -98,20 +98,20 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
 /* -------------------------------------------------------------------- */
 /*      Work out band color interpretation.                             */
 /* -------------------------------------------------------------------- */
-    if( poDS->psFileInfo->eColorSpace == NCSCS_NONE )
+    if( poDSIn->psFileInfo->eColorSpace == NCSCS_NONE )
         eBandInterp = GCI_Undefined;
-    else if( poDS->psFileInfo->eColorSpace == NCSCS_GREYSCALE )
+    else if( poDSIn->psFileInfo->eColorSpace == NCSCS_GREYSCALE )
     {
         eBandInterp = GCI_GrayIndex;
-        //we could also have alpha band. 
-        if ( strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0 ||
-             strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_GreyscaleOpacity) ==0 ){
+        //we could also have alpha band.
+        if ( strcmp(poDSIn->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0 ||
+             strcmp(poDSIn->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_GreyscaleOpacity) ==0 ){
             eBandInterp = GCI_AlphaBand;
         }
-    }else if (poDS->psFileInfo->eColorSpace == NCSCS_MULTIBAND ){
-        eBandInterp = ECWGetColorInterpretationByName(poDS->psFileInfo->pBands[nBand-1].szDesc);
-    }else if (poDS->psFileInfo->eColorSpace == NCSCS_sRGB){
-        eBandInterp = ECWGetColorInterpretationByName(poDS->psFileInfo->pBands[nBand-1].szDesc);
+    }else if (poDSIn->psFileInfo->eColorSpace == NCSCS_MULTIBAND ){
+        eBandInterp = ECWGetColorInterpretationByName(poDSIn->psFileInfo->pBands[nBand-1].szDesc);
+    }else if (poDSIn->psFileInfo->eColorSpace == NCSCS_sRGB){
+        eBandInterp = ECWGetColorInterpretationByName(poDSIn->psFileInfo->pBands[nBand-1].szDesc);
         if( eBandInterp == GCI_Undefined )
         {
             if( nBand == 1 )
@@ -122,7 +122,7 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
                 eBandInterp = GCI_BlueBand;
             else if (nBand == 4 )
             {
-                if (strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0)
+                if (strcmp(poDSIn->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0)
                     eBandInterp = GCI_AlphaBand;
                 else
                     eBandInterp = GCI_Undefined;
@@ -133,9 +133,9 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
             }
         }
     }
-    else if( poDS->psFileInfo->eColorSpace == NCSCS_YCbCr )
+    else if( poDSIn->psFileInfo->eColorSpace == NCSCS_YCbCr )
     {
-        if( CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ))
+        if( CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ))
         {
             if( nBand == 1 )
                 eBandInterp = GCI_RedBand;
@@ -167,33 +167,35 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
     if( iOverview == -1 )
     {
         int i;
-        for( i = 0; 
-             nRasterXSize / (1 << (i+1)) > 128 
+        for( i = 0;
+             nRasterXSize / (1 << (i+1)) > 128
                  && nRasterYSize / (1 << (i+1)) > 128;
              i++ )
         {
-            apoOverviews.push_back( new ECWRasterBand( poDS, nBand, i, papszOpenOptions ) );
+            apoOverviews.push_back( new ECWRasterBand( poDSIn, nBandIn, i, papszOpenOptions ) );
         }
     }
 
-    bPromoteTo8Bit = 
-        poDS->psFileInfo->nBands == 4 && nBand == 4 &&
-        poDS->psFileInfo->pBands[0].nBits == 8 &&
-        poDS->psFileInfo->pBands[1].nBits == 8 &&
-        poDS->psFileInfo->pBands[2].nBits == 8 &&
-        poDS->psFileInfo->pBands[3].nBits == 1 &&
-        eBandInterp == GCI_AlphaBand && 
-        CSLFetchBoolean(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-            CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
+    bPromoteTo8Bit =
+        poDSIn->psFileInfo->nBands == 4 && nBand == 4 &&
+        poDSIn->psFileInfo->pBands[0].nBits == 8 &&
+        poDSIn->psFileInfo->pBands[1].nBits == 8 &&
+        poDSIn->psFileInfo->pBands[2].nBits == 8 &&
+        poDSIn->psFileInfo->pBands[3].nBits == 1 &&
+        eBandInterp == GCI_AlphaBand &&
+        CPLFetchBool(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+            CPLTestBool(
+                CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT",
+                                   "YES")));
     if( bPromoteTo8Bit )
         CPLDebug("ECW", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
-    if( (poDS->psFileInfo->pBands[nBand-1].nBits % 8) != 0 && !bPromoteTo8Bit )
+    if( (poDSIn->psFileInfo->pBands[nBand-1].nBits % 8) != 0 && !bPromoteTo8Bit )
         SetMetadataItem("NBITS",
-                        CPLString().Printf("%d",poDS->psFileInfo->pBands[nBand-1].nBits),
+                        CPLString().Printf("%d",poDSIn->psFileInfo->pBands[nBand-1].nBits),
                         "IMAGE_STRUCTURE" );
 
-    SetDescription(poDS->psFileInfo->pBands[nBand-1].szDesc);
+    SetDescription(poDSIn->psFileInfo->pBands[nBand-1].szDesc);
 }
 
 /************************************************************************/
@@ -216,11 +218,11 @@ ECWRasterBand::~ECWRasterBand()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-GDALRasterBand *ECWRasterBand::GetOverview( int iOverview )
+GDALRasterBand *ECWRasterBand::GetOverview( int iOverviewIn )
 
 {
-    if( iOverview >= 0 && iOverview < (int) apoOverviews.size() )
-        return apoOverviews[iOverview];
+    if( iOverviewIn >= 0 && iOverviewIn < (int) apoOverviews.size() )
+        return apoOverviews[iOverviewIn];
     else
         return NULL;
 }
@@ -257,21 +259,21 @@ CPLErr ECWRasterBand::SetColorInterpretation( GDALColorInterp eNewInterp )
 /************************************************************************/
 
 CPLErr ECWRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                  int nBufXSize, int nBufYSize, 
-                                  GDALDataType eDT, 
+                                  int nBufXSize, int nBufYSize,
+                                  GDALDataType eDT,
                                   char **papszOptions )
 {
     int nResFactor = 1 << (iOverview+1);
 
-    return poGDS->AdviseRead( nXOff * nResFactor, 
-                              nYOff * nResFactor, 
-                              nXSize * nResFactor, 
-                              nYSize * nResFactor, 
-                              nBufXSize, nBufYSize, eDT, 
+    return poGDS->AdviseRead( nXOff * nResFactor,
+                              nYOff * nResFactor,
+                              nXSize * nResFactor,
+                              nYSize * nResFactor,
+                              nBufXSize, nBufYSize, eDT,
                               1, &nBand, papszOptions );
 }
 
-//statistics support: 
+//statistics support:
 #if ECWSDK_VERSION >= 50
 
 /************************************************************************/
@@ -285,11 +287,11 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 {
     int bForceCoalesced = bForce;
     // If file version is smaller than 3, there will be no statistics in the file. But if it is version 3 or higher we don't want underlying implementation to compute histogram
-    // so we set bForceCoalesced to FALSE. 
+    // so we set bForceCoalesced to FALSE.
     if (poGDS->psFileInfo->nFormatVersion >= 3){
         bForceCoalesced = FALSE;
     }
-    // We check if we have PAM histogram. If we have them we return them. This will allow to override statistics stored in the file. 
+    // We check if we have PAM histogram. If we have them we return them. This will allow to override statistics stored in the file.
     CPLErr pamError =  GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets, ppanHistogram, bForceCoalesced, f, pProgressData);
     if ( pamError == CE_None || poGDS->psFileInfo->nFormatVersion<3 || eBandInterp == GCI_AlphaBand){
         return pamError;
@@ -311,8 +313,8 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
             for (size_t i = 0; i < bandStats.nHistBucketCount; i++){
                 (*ppanHistogram)[i] = (GUIntBig) bandStats.Histogram[i];
             }
-            //JTO: this is not perfect as You can't tell who wrote the histogram !!! 
-            //It will offset it unnecesarilly for files with hists not modified by GDAL. 
+            //JTO: this is not perfect as You can't tell who wrote the histogram !!!
+            //It will offset it unnecessarily for files with hists not modified by GDAL.
             double dfHalfBucket = (bandStats.fMaxHist -  bandStats.fMinHist) / (2 * (*pnBuckets - 1));
             if ( pdfMin != NULL ){
                 *pdfMin = bandStats.fMinHist - dfHalfBucket;
@@ -333,23 +335,27 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
             //compute. Save.
             pamError = GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets, ppanHistogram, TRUE, f,pProgressData);
             if (pamError == CE_None){
-                CPLErr error = SetDefaultHistogram(*pdfMin, *pdfMax, *pnBuckets, *ppanHistogram);
-                if (error != CE_None){
-                    //Histogram is there but we failed to save it back to file. 
+                CPLErr error2 = SetDefaultHistogram(*pdfMin, *pdfMax, *pnBuckets, *ppanHistogram);
+                if (error2 != CE_None){
+                    //Histogram is there but we failed to save it back to file.
                     CPLError (CE_Warning, CPLE_AppDefined,
                         "SetDefaultHistogram failed in ECWRasterBand::GetDefaultHistogram. Histogram might not be saved in .ecw file." );
                 }
                 return CE_None;
             }else{
-                //Something went wrong during histogram computation. 
+                //Something went wrong during histogram computation.
                 return pamError;
             }
-        }else{
-            //No histogram, no forced computation. 
+        }
+        else
+        {
+            // No histogram, no forced computation.
             return CE_Warning;
         }
-    }else {
-        //Statistics were already there and were used. 
+    }
+    else
+    {
+        // Statistics were already there and were used.
         return CE_None;
     }
 }
@@ -359,23 +365,28 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 /************************************************************************/
 
 CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
-                                           int nBuckets, GUIntBig *panHistogram )
+                                           int nBuckets,
+                                           GUIntBig *panHistogram )
 {
-    //Only version 3 supports saving statistics. 
+    //Only version 3 supports saving statistics.
     if (poGDS->psFileInfo->nFormatVersion < 3 || eBandInterp == GCI_AlphaBand){
         return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
     }
 
-    //determine if there are statistics in PAM file. 
+    //determine if there are statistics in PAM file.
     double dummy;
     int dummy_i;
-    GUIntBig *dummy_histogram;
-    bool hasPAMDefaultHistogram = GDALPamRasterBand::GetDefaultHistogram(&dummy, &dummy, &dummy_i, &dummy_histogram, FALSE, NULL, NULL) == CE_None;
-    if (hasPAMDefaultHistogram){
+    GUIntBig *dummy_histogram = NULL;
+    bool hasPAMDefaultHistogram =
+        GDALPamRasterBand::GetDefaultHistogram(
+            &dummy, &dummy, &dummy_i, &dummy_histogram,
+            FALSE, NULL, NULL) == CE_None;
+    if( hasPAMDefaultHistogram ) {
         VSIFree(dummy_histogram);
     }
 
-    //ECW SDK ignores statistics for opacity bands. So we need to compute number of bands without opacity.
+    // ECW SDK ignores statistics for opacity bands. So we need to compute
+    // number of bands without opacity.
     GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
     UINT32 bucketCounts[256];
     std::fill_n(bucketCounts, nStatsBandCount, 0);
@@ -399,12 +410,12 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
                         "NCSEcwInitStatistics failed in ECWRasterBand::SetDefaultHistogram." );
             return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
         }
-        //no error statistics properly initialized but there were no statistics previously. 
+        //no error statistics properly initialized but there were no statistics previously.
     }else{
-        //is there a room for our band already? 
-        //This should account for following cases: 
-        //1. Existing histogram (for this or different band) has smaller bucket count. 
-        //2. There is no existing histogram but statistics are set for one or more bands (pStatistics->nHistBucketCounts is zero). 
+        //is there a room for our band already?
+        //This should account for following cases:
+        //1. Existing histogram (for this or different band) has smaller bucket count.
+        //2. There is no existing histogram but statistics are set for one or more bands (pStatistics->nHistBucketCounts is zero).
         if ((int)pStatistics->BandsStats[nStatsBandIndex].nHistBucketCount != nBuckets){
             //no. There is no room. We need more!
             NCSFileStatistics *pNewStatistics = NULL;
@@ -418,7 +429,8 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
             error = NCSEcwInitStatistics(&pNewStatistics, nStatsBandCount, bucketCounts);
             if (!error.Success()){
                 CPLError( CE_Warning, CPLE_AppDefined,
-                            "NCSEcwInitStatistics failed in ECWRasterBand::SetDefaultHistogram (realocate)." );
+                          "NCSEcwInitStatistics failed in "
+                          "ECWRasterBand::SetDefaultHistogram (reallocate)." );
                 return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
             }
             //we need to copy existing statistics.
@@ -528,16 +540,16 @@ double ECWRasterBand::GetMaximum(int* pbSuccess)
 /************************************************************************/
 
 CPLErr ECWRasterBand::GetStatistics( int bApproxOK, int bForce,
-                                  double *pdfMin, double *pdfMax, 
+                                  double *pdfMin, double *pdfMax,
                                   double *pdfMean, double *padfStdDev )
 {
     int bForceCoalesced = bForce;
     // If file version is smaller than 3, there will be no statistics in the file. But if it is version 3 or higher we don't want underlying implementation to compute histogram
-    // so we set bForceCoalesced to FALSE. 
+    // so we set bForceCoalesced to FALSE.
     if (poGDS->psFileInfo->nFormatVersion >= 3){
         bForceCoalesced = FALSE;
     }
-    // We check if we have PAM histogram. If we have them we return them. This will allow to override statistics stored in the file. 
+    // We check if we have PAM histogram. If we have them we return them. This will allow to override statistics stored in the file.
     CPLErr pamError =  GDALPamRasterBand::GetStatistics(bApproxOK, bForceCoalesced, pdfMin, pdfMax, pdfMean, padfStdDev);
     if ( pamError == CE_None || poGDS->psFileInfo->nFormatVersion<3 || eBandInterp == GCI_AlphaBand){
         return pamError;
@@ -578,13 +590,13 @@ CPLErr ECWRasterBand::GetStatistics( int bApproxOK, int bForce,
         }
         if (bStatisticsFromFile) return CE_None;
     }
-    //no required statistics. 
+    //no required statistics.
     if (!bStatisticsFromFile && bForce == TRUE){
         double dfMin, dfMax, dfMean,dfStdDev;
-        pamError = GDALPamRasterBand::GetStatistics(bApproxOK, TRUE, 
+        pamError = GDALPamRasterBand::GetStatistics(bApproxOK, TRUE,
             &dfMin,
             &dfMax,
-            &dfMean, 
+            &dfMean,
             &dfStdDev);
         if (pdfMin!=NULL) {
             *pdfMin = dfMin;
@@ -606,11 +618,11 @@ CPLErr ECWRasterBand::GetStatistics( int bApproxOK, int bForce,
             }
             return CE_None;
         }else{
-            //whatever happened we return. 
+            //whatever happened we return.
             return pamError;
         }
     }else{
-        //no statistics and we are not forced to return. 
+        //no statistics and we are not forced to return.
         return CE_Warning;
     }
 }
@@ -619,7 +631,7 @@ CPLErr ECWRasterBand::GetStatistics( int bApproxOK, int bForce,
 /*                          SetStatistics()                             */
 /************************************************************************/
 
-CPLErr ECWRasterBand::SetStatistics( double dfMin, double dfMax, 
+CPLErr ECWRasterBand::SetStatistics( double dfMin, double dfMax,
                                   double dfMean, double dfStdDev ){
     if (poGDS->psFileInfo->nFormatVersion < 3 || eBandInterp == GCI_AlphaBand){
         return GDALPamRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
@@ -648,7 +660,7 @@ CPLErr ECWRasterBand::SetStatistics( double dfMin, double dfMax,
     poGDS->pStatistics->BandsStats[nStatsBandIndex].fMeanVal = (IEEE4)dfMean;
     poGDS->pStatistics->BandsStats[nStatsBandIndex].fStandardDev = (IEEE4)dfStdDev;
     poGDS->bStatisticsDirty = TRUE;
-    //if we have PAM statistics we need to save them as well. Better option would be to remove them from PAM file but I don't know how to do that without messing in PAM internals. 
+    //if we have PAM statistics we need to save them as well. Better option would be to remove them from PAM file but I don't know how to do that without messing in PAM internals.
     if ( hasPAMStatistics ){
         CPLError( CE_Debug, CPLE_AppDefined,
                         "PAM statistics will be overwritten." );
@@ -689,11 +701,11 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
 /* -------------------------------------------------------------------- */
-    int nRet = poGDS->TryWinRasterIO( eRWFlag, 
-                               nXOff, nYOff, 
-                               nXSize, nYSize, 
-                               (GByte *) pData, nBufXSize, nBufYSize, 
-                               eBufType, 1, &nBand, 
+    int nRet = poGDS->TryWinRasterIO( eRWFlag,
+                               nXOff, nYOff,
+                               nXSize, nYSize,
+                               (GByte *) pData, nBufXSize, nBufYSize,
+                               eBufType, 1, &nBand,
                                nPixelSpace, nLineSpace, 0 , psExtraArg);
     if( nRet == TRUE )
         return CE_None;
@@ -767,7 +779,7 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
 
         if ( nNewYSize == nBufYSize || iSrcLine == (int)(iDstLine * dfSrcYInc) )
         {
-            eRStatus = poGDS->poFileView->ReadLineBIL( 
+            eRStatus = poGDS->poFileView->ReadLineBIL(
                 poGDS->eNCSRequestDataType, 1, (void **) &pabySrcBuf );
 
             if( eRStatus != NCSECW_READ_OK )
@@ -791,9 +803,9 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
             {
                 if ( nNewXSize == nBufXSize )
                 {
-                    GDALCopyWords( pabyWorkBuffer, poGDS->eRasterDataType, 
-                                nRawPixelSize, 
-                                ((GByte *)pData) + iDstLine * nLineSpace, 
+                    GDALCopyWords( pabyWorkBuffer, poGDS->eRasterDataType,
+                                nRawPixelSize,
+                                ((GByte *)pData) + iDstLine * nLineSpace,
                                 eBufType, (int)nPixelSpace, nBufXSize );
                 }
                 else
@@ -802,7 +814,7 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
 
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
-                        GDALCopyWords( pabyWorkBuffer 
+                        GDALCopyWords( pabyWorkBuffer
                                     + nRawPixelSize*((int)(iPixel*dfSrcXInc)),
                                     poGDS->eRasterDataType, nRawPixelSize,
                                     (GByte *)pData + iDstLineOff
@@ -861,8 +873,8 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     if ( nLineSpace == 0 )
         nLineSpace = nPixelSpace * nBufXSize;
 
-    CPLDebug( "ECWRasterBand", 
-            "RasterIO(nBand=%d,iOverview=%d,nXOff=%d,nYOff=%d,nXSize=%d,nYSize=%d -> %dx%d)", 
+    CPLDebug( "ECWRasterBand",
+            "RasterIO(nBand=%d,iOverview=%d,nXOff=%d,nYOff=%d,nXSize=%d,nYSize=%d -> %dx%d)",
             nBand, iOverview, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 
 #if !defined(SDK_CAN_DO_SUPERSAMPLING)
@@ -928,10 +940,10 @@ CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
 /*                            ECWDataset()                              */
 /************************************************************************/
 
-ECWDataset::ECWDataset(int bIsJPEG2000)
+ECWDataset::ECWDataset(int bIsJPEG2000In)
 
 {
-    this->bIsJPEG2000 = bIsJPEG2000;
+    this->bIsJPEG2000 = bIsJPEG2000In;
     bUsingCustomStream = FALSE;
     poFileView = NULL;
     bWinActive = FALSE;
@@ -972,6 +984,18 @@ ECWDataset::ECWDataset(int bIsJPEG2000)
     nBandIndexToPromoteTo8Bit = -1;
 
     poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2ECW" : "ECW" );
+
+    psFileInfo =  NULL;
+    eNCSRequestDataType = NCSCT_UINT8;
+    nWinXOff = 0;
+    nWinYOff = 0;
+    nWinXSize = 0;
+    nWinYSize = 0;
+    nWinBufXSize = 0;
+    nWinBufYSize = 0;
+    nWinBandCount = 0;
+    nWinBufLoaded = FALSE;
+    papCurLineBuf = NULL;
 }
 
 /************************************************************************/
@@ -995,11 +1019,11 @@ ECWDataset::~ECWDataset()
 /* -------------------------------------------------------------------- */
 /*      Release / dereference iostream.                                 */
 /* -------------------------------------------------------------------- */
-    // The underlying iostream of the CNCSJP2FileView (poFileView) object may 
-    // also be the underlying iostream of other CNCSJP2FileView (poFileView) 
-    // objects.  Consequently, when we delete the CNCSJP2FileView (poFileView) 
+    // The underlying iostream of the CNCSJP2FileView (poFileView) object may
+    // also be the underlying iostream of other CNCSJP2FileView (poFileView)
+    // objects.  Consequently, when we delete the CNCSJP2FileView (poFileView)
     // object, we must decrement the nFileViewCount attribute of the underlying
-    // VSIIOStream object, and only delete the VSIIOStream object when 
+    // VSIIOStream object, and only delete the VSIIOStream object when
     // nFileViewCount is equal to zero.
 
     CPLMutexHolder oHolder( &hECWDatasetMutex );
@@ -1028,9 +1052,10 @@ ECWDataset::~ECWDataset()
         #13 0x00007fffb7551c61 in GDALDestroy () at gdaldllmain.cpp:80
         #14 0x00007ffff7de990e in _dl_fini () at dl-fini.c:254
     */
-    // Not replicable with similar test in C++, but this might be just a matter of luck related
-    // to the order in which the libraries are unloaded, so just don't try
-    // to delete poFileView from the GDAL destructor.
+    // Not reproducible with similar test in C++, but this might be
+    // just a matter of luck related to the order in which the
+    // libraries are unloaded, so just don't try to delete poFileView
+    // from the GDAL destructor.
     if( poFileView != NULL && !GDALIsInGlobalDestructor() )
     {
         VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;
@@ -1063,7 +1088,7 @@ ECWDataset::~ECWDataset()
         WriteFileMetaData(pFileMetaDataCopy);
         NCSFreeMetaData(pFileMetaDataCopy);
     }
-#endif 
+#endif
 
     CSLDestroy( papszGMLMetadata );
 
@@ -1203,7 +1228,7 @@ CPLErr ECWDataset::SetMetadataItem( const char * pszName,
             m_osDatumCode = osNewVal;
             bHdrDirty |= bDatumCodeChanged;
         }
-        else 
+        else
         {
             bUnitsCodeChanged |= (osNewVal != m_osUnitsCode)?TRUE:FALSE;
             m_osUnitsCode = osNewVal;
@@ -1217,7 +1242,7 @@ CPLErr ECWDataset::SetMetadataItem( const char * pszName,
               eAccess == GA_Update &&
               (pszDomain == NULL || EQUAL(pszDomain, "")) &&
               pszName != NULL &&
-              strncmp(pszName, "FILE_METADATA_", strlen("FILE_METADATA_")) == 0 )
+              STARTS_WITH(pszName, "FILE_METADATA_") )
     {
         bFileMetaDataDirty = TRUE;
 
@@ -1320,7 +1345,7 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
                     EQUAL(pszKey, "CLOCKWISE_ROTATION_DEG") ||
                     EQUAL(pszKey, "COLORSPACE") ||
                     EQUAL(pszKey, "COMPRESSION_DATE") ||
-                    EQUALN(pszKey, "FILE_METADATA_", strlen("FILE_METADATA_")) ) )
+                    STARTS_WITH_CI(pszKey, "FILE_METADATA_") ) )
             {
                 /* do nothing */
             }
@@ -1357,7 +1382,7 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
             CSLFetchNameValue(papszMetadata, "FILE_METADATA_COMPANY") != NULL ||
             CSLFetchNameValue(papszMetadata, "FILE_METADATA_EMAIL") != NULL ||
             CSLFetchNameValue(papszMetadata, "FILE_METADATA_ADDRESS") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_TELEPHONE") != NULL)) 
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_TELEPHONE") != NULL))
 #endif
         )
     {
@@ -1365,10 +1390,10 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
         char** papszIter = papszMetadata;
         while(*papszIter)
         {
-            if (strncmp(*papszIter, "PROJ=", 5) == 0 ||
-                strncmp(*papszIter, "DATUM=", 6) == 0 ||
-                strncmp(*papszIter, "UNITS=", 6) == 0 ||
-                (strncmp(*papszIter, "FILE_METADATA_", strlen("FILE_METADATA_")) == 0 && strchr(*papszIter, '=') != NULL) )
+            if (STARTS_WITH(*papszIter, "PROJ=") ||
+                STARTS_WITH(*papszIter, "DATUM=") ||
+                STARTS_WITH(*papszIter, "UNITS=") ||
+                (STARTS_WITH(*papszIter, "FILE_METADATA_") && strchr(*papszIter, '=') != NULL) )
             {
                 char* pszKey = NULL;
                 const char* pszValue = CPLParseNameValue(*papszIter, &pszKey );
@@ -1408,7 +1433,7 @@ void ECWDataset::WriteHeader()
     /* Load original header info */
 #if ECWSDK_VERSION<50
     eErr = NCSEcwEditReadInfo((char*) GetDescription(), &psEditInfo);
-#else 
+#else
     eErr = NCSEcwEditReadInfo(  NCS::CString::Utf8Decode(GetDescription()).c_str(), &psEditInfo);
 #endif
     if (eErr != NCS_SUCCESS)
@@ -1517,7 +1542,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     int bStopProcessing = FALSE;
     eErr = ValidateRasterIOOrAdviseReadParameters( "AdviseRead()", &bStopProcessing,
                                                     nXOff, nYOff, nXSize, nYSize,
-                                                    nBufXSize, nBufYSize, 
+                                                    nBufXSize, nBufYSize,
                                                     nBandCount, panBandList);
     if( eErr != CE_None || bStopProcessing )
         return eErr;
@@ -1532,7 +1557,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Adjust band numbers to be zero based.                           */
 /* -------------------------------------------------------------------- */
-    panAdjustedBandList = (int *) 
+    panAdjustedBandList = (int *)
         CPLMalloc(sizeof(int) * nBandCount );
     nBandIndexToPromoteTo8Bit = -1;
     for( int ii= 0; ii < nBandCount; ii++ )
@@ -1550,10 +1575,8 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Set the new requested window.                                   */
 /* -------------------------------------------------------------------- */
-    CNCSError oErr;
-
-    oErr = poFileView->SetView( nBandCount, (UINT32 *) panAdjustedBandList, 
-                                nXOff, nYOff, 
+    CNCSError oErr = poFileView->SetView( nBandCount, (UINT32 *) panAdjustedBandList,
+                                nXOff, nYOff,
                                 nXOff + nXSize-1, nYOff + nYSize-1,
                                 nBufXSize, nBufYSize );
 
@@ -1597,7 +1620,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     papCurLineBuf = (void **) CPLMalloc(sizeof(void*) * nWinBandCount );
     for( int iBand = 0; iBand < nWinBandCount; iBand++ )
-        papCurLineBuf[iBand] = 
+        papCurLineBuf[iBand] =
             CPLMalloc(nBufXSize * (GDALGetDataTypeSize(eRasterDataType)/8) );
 
     return CE_None;
@@ -1638,7 +1661,7 @@ int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
 /*      satisfy our requirement.                                        */
 /* -------------------------------------------------------------------- */
 #ifdef NOISY_DEBUG
-    CPLDebug( "ECW", "TryWinRasterIO(%d,%d,%d,%d,%d,%d)", 
+    CPLDebug( "ECW", "TryWinRasterIO(%d,%d,%d,%d,%d,%d)",
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 #endif
 
@@ -1673,8 +1696,8 @@ int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
         static int nDebugCount = 0;
 
         if( nDebugCount < 30 )
-            CPLDebug( "ECW", 
-                      "TryWinRasterIO(%d,%d,%d,%d -> %dx%d) - doing advised read.", 
+            CPLDebug( "ECW",
+                      "TryWinRasterIO(%d,%d,%d,%d -> %dx%d) - doing advised read.",
                       nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 
         if( nDebugCount == 29 )
@@ -1691,7 +1714,7 @@ int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
     for( iBufLine = 0; iBufLine < nBufYSize; iBufLine++ )
     {
         double fFileLine = ((iBufLine+0.5) / nBufYSize) * nYSize + nYOff;
-        int iWinLine = 
+        int iWinLine =
             (int) (((fFileLine - nWinYOff) / nWinYSize) * nWinBufYSize);
 
         if( iWinLine == nWinBufLoaded + 1 )
@@ -1713,8 +1736,8 @@ int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
             }
 
             GDALCopyWords( papCurLineBuf[iWinBand], eRasterDataType,
-                           GDALGetDataTypeSize( eRasterDataType ) / 8, 
-                           pabyData + nBandSpace * iBand 
+                           GDALGetDataTypeSize( eRasterDataType ) / 8,
+                           pabyData + nBandSpace * iBand
                            + iBufLine * nLineSpace, eDT, (int)nPixelSpace,
                            nBufXSize );
         }
@@ -1747,7 +1770,7 @@ CPLErr ECWDataset::LoadNextLine()
     }
 
     NCSEcwReadStatus  eRStatus;
-    eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, 
+    eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType,
                                         (UINT16) nWinBandCount,
                                         papCurLineBuf );
     if( eRStatus != NCSECW_READ_OK )
@@ -1793,7 +1816,7 @@ void ECWDataset::CleanupWindow()
 CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType, 
+                              GDALDataType eBufType,
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
@@ -1807,7 +1830,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
 
     if( bUseOldBandRasterIOImplementation )
-        /* Sanity check. Shouldn't happen */
+        /* Sanity check. Should not happen */
         return CE_Failure;
     int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
 
@@ -1819,7 +1842,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         nLineSpace = nPixelSpace*nBufXSize;
     }
     if ( nBandSpace == 0 ){
-        nBandSpace = nDataTypeSize*nBufXSize*nBufYSize;
+        nBandSpace = static_cast<GSpacing>(nDataTypeSize)*nBufXSize*nBufYSize;
     }
 
     // Use GDAL upsampling if non nearest
@@ -1827,12 +1850,9 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
     {
         int nBufDataTypeSize = (GDALGetDataTypeSize(eBufType) / 8);
-        GByte* pabyTemp = (GByte*)VSIMalloc3(nXSize, nYSize, nBufDataTypeSize * nBandCount);
+        GByte* pabyTemp = (GByte*)VSI_MALLOC3_VERBOSE(nXSize, nYSize, nBufDataTypeSize * nBandCount);
         if( pabyTemp == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                          "Failed to allocate %d byte intermediate decompression buffer for jpeg2000.", 
-                          nXSize * nYSize * nBufDataTypeSize * nBandCount );
             return CE_Failure;
         }
 
@@ -1876,12 +1896,12 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
             sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
 
-            poMEMDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize,
+            CPL_IGNORE_RET_VAL(poMEMDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize,
                                 pData, nBufXSize, nBufYSize,
                                 eBufType,
                                 nBandCount, NULL,
                                 nPixelSpace, nLineSpace, nBandSpace,
-                                &sExtraArgTmp);
+                                &sExtraArgTmp));
 
             GDALClose(poMEMDS);
         }
@@ -1913,7 +1933,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             return GDALDataset::IRasterIO(
                                     eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize,
-                                    eBufType, 
+                                    eBufType,
                                     nBandCount, panBandMap,
                                     nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
         }
@@ -1939,13 +1959,13 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             sCachedMultiBandIO.pabyData != NULL )
         {
             int j;
-            int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+            int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             for(j = 0; j < nBufYSize; j++)
             {
                 GDALCopyWords(sCachedMultiBandIO.pabyData +
-                                    (*panBandMap - 1) * nBufXSize * nBufYSize * nDataTypeSize +
-                                    j * nBufXSize * nDataTypeSize,
-                            eBufType, nDataTypeSize,
+                                    (*panBandMap - 1) * nBufXSize * nBufYSize * nBufTypeSize +
+                                    j * nBufXSize * nBufTypeSize,
+                            eBufType, nBufTypeSize,
                             ((GByte*)pData) + j * nLineSpace, eBufType, (int)nPixelSpace,
                             nBufXSize);
             }
@@ -1954,7 +1974,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         if( !(sCachedMultiBandIO.bEnabled) &&
             sCachedMultiBandIO.nBandsTried == nBands &&
-            CSLTestBoolean(CPLGetConfigOption("ECW_CLEVER", "YES")) )
+            CPLTestBool(CPLGetConfigOption("ECW_CLEVER", "YES")) )
         {
             sCachedMultiBandIO.bEnabled = TRUE;
             CPLDebug("ECW", "Detecting successive band reading pattern (for next time)");
@@ -1964,8 +1984,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
 /* -------------------------------------------------------------------- */
-    int nRet = TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                        (GByte *) pData, nBufXSize, nBufYSize, 
+    int nRet = TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                        (GByte *) pData, nBufXSize, nBufYSize,
                         eBufType, nBandCount, panBandMap,
                         nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
     if( nRet == TRUE )
@@ -1993,10 +2013,10 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     else if( nXSize < nBufXSize || nYSize < nBufYSize )
     {
         bUseOldBandRasterIOImplementation = TRUE;
-        CPLErr eErr = 
+        CPLErr eErr =
             GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                     pData, nBufXSize, nBufYSize,
-                                    eBufType, 
+                                    eBufType,
                                     nBandCount, panBandMap,
                                     nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
         bUseOldBandRasterIOImplementation = FALSE;
@@ -2006,25 +2026,27 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     else if( nBufYSize == 1 )
     {
-        //JTO: this is tricky, because it expects the rest of the image with this bufer width to be 
-        //read. The prefered way to achieve this behaviour would be to call AdviseRead before call IRasterIO.
-        //ERO; indeed, the logic could be improved to detect successive pattern of single line reading
-        //before doing an AdviseRead.
+        // This is tricky, because it expects the rest of the image
+        // with this buffer width to be read. The preferred way to
+        // achieve this behaviour would be to call AdviseRead before
+        // call IRasterIO.  The logic could be improved to detect
+        // successive pattern of single line reading before doing an
+        // AdviseRead.
         CPLErr eErr;
 
         eErr = AdviseRead( nXOff, nYOff, nXSize, GetRasterYSize() - nYOff,
-                           nBufXSize, (nRasterYSize - nYOff) / nYSize, eBufType, 
+                           nBufXSize, (nRasterYSize - nYOff) / nYSize, eBufType,
                            nBandCount, panBandMap, NULL );
-        if( eErr == CE_None 
-            && TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                               (GByte *) pData, nBufXSize, nBufYSize, 
+        if( eErr == CE_None
+            && TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                               (GByte *) pData, nBufXSize, nBufYSize,
                                eBufType, nBandCount, panBandMap,
                                nPixelSpace, nLineSpace, nBandSpace, psExtraArg ) )
             return CE_None;
     }
 
-    CPLDebug( "ECW", 
-              "RasterIO(%d,%d,%d,%d -> %dx%d) - doing interleaved read.", 
+    CPLDebug( "ECW",
+              "RasterIO(%d,%d,%d,%d -> %dx%d) - doing interleaved read.",
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 
 /* -------------------------------------------------------------------- */
@@ -2033,7 +2055,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     UINT32 anBandIndices[100];
     int    i;
     NCSError     eNCSErr;
-    CNCSError    oErr;
+    CNCSError    oErr(GetCNCSError(NCS_SUCCESS));
 
     for( i = 0; i < nBandCount; i++ )
         anBandIndices[i] = panBandMap[i] - 1;
@@ -2060,13 +2082,13 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         sCachedMultiBandIO.eBufType = eBufType;
         sCachedMultiBandIO.nBandsTried = 1;
 
-        int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+        int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
 
         if( sCachedMultiBandIO.bEnabled )
         {
             GByte* pNew = (GByte*)VSIRealloc(
                 sCachedMultiBandIO.pabyData,
-                    nBufXSize * nBufYSize * nBands * nDataTypeSize);
+                    nBufXSize * nBufYSize * nBands * nBufTypeSize);
             if( pNew == NULL )
                 CPLFree(sCachedMultiBandIO.pabyData);
             sCachedMultiBandIO.pabyData = pNew;
@@ -2084,15 +2106,15 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             }
 
             oErr = poFileView->SetView( nBands, anBandIndices,
-                                        nXOff, nYOff, 
-                                        nXOff + nXSize - 1, 
+                                        nXOff, nYOff,
+                                        nXOff + nXSize - 1,
                                         nYOff + nYSize - 1,
                                         nBufXSize, nBufYSize );
             eNCSErr = oErr.GetErrorNumber();
 
             if( eNCSErr != NCS_SUCCESS )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                         "%s", NCSGetErrorText(eNCSErr) );
 
                 return CE_Failure;
@@ -2101,9 +2123,9 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             CPLErr eErr = ReadBands(sCachedMultiBandIO.pabyData,
                                     nBufXSize, nBufYSize, eBufType,
                                     nBands,
-                                    nDataTypeSize,
-                                    nBufXSize * nDataTypeSize,
-                                    nBufXSize * nBufYSize * nDataTypeSize,
+                                    nBufTypeSize,
+                                    nBufXSize * nBufTypeSize,
+                                    nBufXSize * nBufYSize * nBufTypeSize,
                                     psExtraArg);
             if( eErr != CE_None )
                 return eErr;
@@ -2112,8 +2134,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             for(j = 0; j < nBufYSize; j++)
             {
                 GDALCopyWords(sCachedMultiBandIO.pabyData +
-                                    j * nBufXSize * nDataTypeSize,
-                              eBufType, nDataTypeSize,
+                                    j * nBufXSize * nBufTypeSize,
+                              eBufType, nBufTypeSize,
                               ((GByte*)pData) + j * nLineSpace, eBufType, (int)nPixelSpace,
                               nBufXSize);
             }
@@ -2128,15 +2150,15 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             nBandIndexToPromoteTo8Bit = i;
     }
     oErr = poFileView->SetView( nBandCount, anBandIndices,
-                                nXOff, nYOff, 
-                                nXOff + nXSize - 1, 
+                                nXOff, nYOff,
+                                nXOff + nXSize - 1,
                                 nYOff + nYSize - 1,
                                 nBufXSize, nBufYSize );
     eNCSErr = oErr.GetErrorNumber();
 
     if( eNCSErr != NCS_SUCCESS )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", NCSGetErrorText(eNCSErr) );
 
         return CE_Failure;
@@ -2171,14 +2193,14 @@ CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
     }
 
     CPLErr eErr = CE_None;
-    for(int nR = 0; nR < nBufYSize; nR++) 
+    for(int nR = 0; nR < nBufYSize; nR++)
     {
         if (poFileView->ReadLineBIL(eNCSRequestDataType,(UINT16) nBandCount, (void**)pBIL) != NCSECW_READ_OK)
         {
             eErr = CE_Failure;
             break;
         }
-        for(int nB = 0; nB < nBandCount; nB++) 
+        for(int nB = 0; nB < nBandCount; nB++)
         {
             if( nB == nBandIndexToPromoteTo8Bit )
             {
@@ -2210,8 +2232,8 @@ CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
 /************************************************************************/
 
 CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
-                             GDALDataType eBufType, 
-                             int nBandCount, 
+                             GDALDataType eBufType,
+                             int nBandCount,
                              GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                              GDALRasterIOExtraArg* psExtraArg)
 {
@@ -2220,15 +2242,15 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
 /*      Setup working scanline, and the pointers into it.               */
 /* -------------------------------------------------------------------- */
     int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
-    bool bDirect = (eBufType == eRasterDataType) && nDataTypeSize == nPixelSpace && 
-        nLineSpace == (nPixelSpace*nBufXSize) && nBandSpace == (nDataTypeSize*nBufXSize*nBufYSize) ;
+    bool bDirect = (eBufType == eRasterDataType) && nDataTypeSize == nPixelSpace &&
+        nLineSpace == (nPixelSpace*nBufXSize) && nBandSpace == (static_cast<GSpacing>(nDataTypeSize)*nBufXSize*nBufYSize) ;
     if (bDirect)
     {
-        return ReadBandsDirectly(pData, nBufXSize, nBufYSize,eBufType, 
+        return ReadBandsDirectly(pData, nBufXSize, nBufYSize,eBufType,
             nBandCount, nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
     }
-     CPLDebug( "ECW", 
-              "ReadBands(-> %dx%d) - reading lines using GDALCopyWords.", 
+     CPLDebug( "ECW",
+              "ReadBands(-> %dx%d) - reading lines using GDALCopyWords.",
               nBufXSize, nBufYSize);
     CPLErr eErr = CE_None;
     GByte *pabyBILScanline = (GByte *) CPLMalloc(nBufXSize * nDataTypeSize *
@@ -2245,7 +2267,7 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
     {
         NCSEcwReadStatus  eRStatus;
 
-        eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, 
+        eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType,
                                             (UINT16) nBandCount,
                                             (void **) papabyBIL );
         if( eRStatus != NCSECW_READ_OK )
@@ -2266,11 +2288,11 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
                 }
             }
 
-            GDALCopyWords( 
+            GDALCopyWords(
                 pabyBILScanline + i * nDataTypeSize * nBufXSize,
-                eRasterDataType, nDataTypeSize, 
-                ((GByte *) pData) + nLineSpace * iScanline + nBandSpace * i, 
-                eBufType, (int)nPixelSpace, 
+                eRasterDataType, nDataTypeSize,
+                ((GByte *) pData) + nLineSpace * iScanline + nBandSpace * i,
+                eBufType, (int)nPixelSpace,
                 nBufXSize );
         }
 
@@ -2298,13 +2320,13 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
 int ECWDataset::IdentifyJPEG2000( GDALOpenInfo * poOpenInfo )
 
 {
-    if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "J2K_SUBFILE:") )
         return TRUE;
 
-    else if( poOpenInfo->nHeaderBytes >= 16 
-        && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
+    else if( poOpenInfo->nHeaderBytes >= 16
+        && (memcmp( poOpenInfo->pabyHeader, jpc_header,
                     sizeof(jpc_header) ) == 0
-            || memcmp( poOpenInfo->pabyHeader, jp2_header, 
+            || memcmp( poOpenInfo->pabyHeader, jp2_header,
                     sizeof(jp2_header) ) == 0) )
         return TRUE;
 
@@ -2342,8 +2364,8 @@ int ECWDataset::IdentifyECW( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
          || poOpenInfo->nHeaderBytes == 0)
-        && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5)
-        && !EQUALN(poOpenInfo->pszFilename,"ecwps:",5) )
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "ecwp:")
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename,"ecwps:") )
         return FALSE;
 
     return TRUE;
@@ -2380,18 +2402,30 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
 /* -------------------------------------------------------------------- */
     CNCSJP2FileView *poFileView = NULL;
     NCSError         eErr;
-    CNCSError        oErr;
+    CNCSError        oErr(GetCNCSError(NCS_SUCCESS));
 
     bUsingCustomStream = FALSE;
     poFileView = new CNCSFile();
     //we always open in read only mode. This should be improved in the future.
     try
     {
-        oErr = poFileView->Open( (char *) pszDatasetName, bProgressive, false );
+#ifdef WIN32
+        if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+        {
+            wchar_t *pwszDatasetName = CPLRecodeToWChar( pszDatasetName, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+            oErr = poFileView->Open( pwszDatasetName, bProgressive, false );
+            CPLFree( pwszDatasetName );
+        }
+        else
+#endif
+        {
+            oErr = poFileView->Open( (char *) pszDatasetName, bProgressive, false );
+        }
     }
     catch(...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception occured in ECW SDK");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unexpected exception occurred in ECW SDK");
         delete poFileView;
         return NULL;
     }
@@ -2402,8 +2436,8 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
 /* -------------------------------------------------------------------- */
     if( eErr != NCS_SUCCESS )
     {
-        CPLDebug( "ECW", 
-                  "NCScbmOpenFileView(%s): eErr=%d, will try VSIL stream.", 
+        CPLDebug( "ECW",
+                  "NCScbmOpenFileView(%s): eErr=%d, will try VSIL stream.",
                   pszDatasetName, (int) eErr );
 
         delete poFileView;
@@ -2411,7 +2445,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
         VSILFILE *fpVSIL = VSIFOpenL( pszDatasetName, "rb" );
         if( fpVSIL == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to open %s.", pszDatasetName );
             return NULL;
         }
@@ -2434,27 +2468,27 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
         poFileView = new CNCSJP2FileView();
         oErr = poFileView->Open( poIOStream, bProgressive );
 
-        // The CNCSJP2FileView (poFileView) object may not use the iostream 
-        // (poIOStream) passed to the CNCSJP2FileView::Open() method if an 
+        // The CNCSJP2FileView (poFileView) object may not use the iostream
+        // (poIOStream) passed to the CNCSJP2FileView::Open() method if an
         // iostream is already available to the ECW JPEG 2000 SDK for a given
-        // file.  Consequently, if the iostream passed to 
-        // CNCSJP2FileView::Open() does not become the underlying iostream 
+        // file.  Consequently, if the iostream passed to
+        // CNCSJP2FileView::Open() does not become the underlying iostream
         // of the CNCSJP2FileView object, then it should be deleted.
         //
         // In addition, the underlying iostream of the CNCSJP2FileView object
-        // should not be deleted until all CNCSJP2FileView objects using the 
-        // underlying iostream are deleted. Consequently, each time a 
-        // CNCSJP2FileView object is created, the nFileViewCount attribute 
-        // of the underlying VSIIOStream object must be incremented for use 
+        // should not be deleted until all CNCSJP2FileView objects using the
+        // underlying iostream are deleted. Consequently, each time a
+        // CNCSJP2FileView object is created, the nFileViewCount attribute
+        // of the underlying VSIIOStream object must be incremented for use
         // in the ECWDataset destructor.
 
-        VSIIOStream * poUnderlyingIOStream = 
+        VSIIOStream * poUnderlyingIOStream =
             ((VSIIOStream *)(poFileView->GetStream()));
 
         if ( poUnderlyingIOStream )
             poUnderlyingIOStream->nFileViewCount++;
 
-        if ( poIOStream != poUnderlyingIOStream ) 
+        if ( poIOStream != poUnderlyingIOStream )
         {
             delete poIOStream;
         }
@@ -2467,8 +2501,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
 
         if( oErr.GetErrorNumber() != NCS_SUCCESS )
         {
-            if (poFileView)
-                delete poFileView;
+            delete poFileView;
             ECWReportError(oErr);
 
             return NULL;
@@ -2503,7 +2536,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /*      From: J2K_SUBFILE:offset,size,filename                           */
 /*      To: /vsisubfile/offset_size,filename                            */
 /* -------------------------------------------------------------------- */
-    if (EQUALN(osFilename,"J2K_SUBFILE:",12))
+    if (STARTS_WITH_CI(osFilename, "J2K_SUBFILE:"))
     {
         char** papszTokens = CSLTokenizeString2(osFilename.c_str()+12, ",", 0);
         if (CSLCount(papszTokens) >= 3)
@@ -2513,7 +2546,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         }
         else
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to parse J2K_SUBFILE specification." );
             CSLDestroy(papszTokens);
             return NULL;
@@ -2531,7 +2564,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         /* Detect what is apparently the ECW v3 file format signature */
         if( EQUAL(CPLGetExtension(osFilename), "ECW") &&
             poOpenInfo->nHeaderBytes > 0x30 &&
-            EQUALN((const char*)(poOpenInfo->pabyHeader + 0x20), "ecw ECW3", 8) )
+            STARTS_WITH_CI((const char*)(poOpenInfo->pabyHeader + 0x20), "ecw ECW3") )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot open %s which looks like a ECW format v3 file, that requires ECW SDK 5.0 or later",
@@ -2544,15 +2577,13 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    ECWDataset  *poDS;
-
-    poDS = new ECWDataset(bIsJPEG2000);
+    ECWDataset  *poDS = new ECWDataset(bIsJPEG2000);
     poDS->poFileView = poFileView;
     poDS->eAccess = poOpenInfo->eAccess;
 
     // Disable .aux.xml writing for subfiles and such.  Unfortunately
-    // this will also disable it in some cases where it might be 
-    // applicable. 
+    // this will also disable it in some cases where it might be
+    // applicable.
     if( bUsingCustomStream )
         poDS->nPamFlags |= GPF_DISABLED;
 
@@ -2565,7 +2596,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
     CPLDebug( "ECW", "FileInfo: SizeXY=%d,%d Bands=%d\n"
               "       OriginXY=%g,%g  CellIncrementXY=%g,%g\n"
-              "       ColorSpace=%d, eCellType=%d\n", 
+              "       ColorSpace=%d, eCellType=%d\n",
               poDS->psFileInfo->nSizeX,
               poDS->psFileInfo->nSizeY,
               poDS->psFileInfo->nBands,
@@ -2579,7 +2610,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = poDS->psFileInfo->nSizeX; 
+    poDS->nRasterXSize = poDS->psFileInfo->nSizeX;
     poDS->nRasterYSize = poDS->psFileInfo->nSizeY;
 
 /* -------------------------------------------------------------------- */
@@ -2652,7 +2683,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     /* -------------------------------------------------------------------- */
         if( !poDS->bGeoTransformValid )
         {
-            poDS->bGeoTransformValid |= 
+            poDS->bGeoTransformValid |=
                 GDALReadWorldFile2( osFilename, NULL,
                                     poDS->adfGeoTransform,
                                     poOpenInfo->GetSiblingFiles(), NULL )
@@ -2756,7 +2787,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
         // Progression Order
         char *csOrder = NULL;
-        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:PROGRESSION:ORDER", &csOrder);	
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:PROGRESSION:ORDER", &csOrder);
         if (csOrder) {
             poDS->SetMetadataItem("PROGRESSION_ORDER", csOrder, JPEG2000_DOMAIN_NAME);
             NCSFree(csOrder);
@@ -2792,10 +2823,10 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         poDS->SetMetadataItem("COMPRESSION_RATE_ACTUAL", CPLString().Printf("%f", poDS->psFileInfo->fActualCompressionRate));
         poDS->SetMetadataItem("CLOCKWISE_ROTATION_DEG", CPLString().Printf("%f", poDS->psFileInfo->fCWRotationDegrees));
         poDS->SetMetadataItem("COMPRESSION_DATE", poDS->psFileInfo->sCompressionDate);
-        //Get file metadata. 
+        //Get file metadata.
         poDS->ReadFileMetaDataFromFile();
     }
-#else 
+#else
     poDS->SetMetadataItem("VERSION", CPLString().Printf("%d",bIsJPEG2000?1:2));
 #endif
 
@@ -2811,7 +2842,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     if( bIsJPEG2000 && poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
     {
         poDS->LoadVectorLayers(
-            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML", FALSE));
+            CPLFetchBool(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML",
+                         false));
 
         // If file opened in vector-only mode and there's no vector,
         // return
@@ -2880,9 +2912,9 @@ char **ECWDataset::GetMetadata( const char *pszDomain )
 /************************************************************************/
 /*                   ReadFileMetaDataFromFile()                         */
 /*                                                                      */
-/* Gets relevant information from NCSFileMetadata and populates			*/
-/* GDAL metadata														*/
-/*																		*/
+/* Gets relevant information from NCSFileMetadata and populates         */
+/* GDAL metadata.                                                       */
+/*                                                                      */
 /************************************************************************/
 #if ECWSDK_VERSION >= 50
 void ECWDataset::ReadFileMetaDataFromFile()
@@ -2908,7 +2940,7 @@ void ECWDataset::ReadFileMetaDataFromFile()
     if (psFileInfo->pFileMetaData->sAddress != NULL )
         GDALDataset::SetMetadataItem("FILE_METADATA_ADDRESS", NCS::CString(psFileInfo->pFileMetaData->sAddress));
     if (psFileInfo->pFileMetaData->sTelephone != NULL )
-        GDALDataset::SetMetadataItem("FILE_METADATA_TELEPHONE", NCS::CString(psFileInfo->pFileMetaData->sTelephone));		
+        GDALDataset::SetMetadataItem("FILE_METADATA_TELEPHONE", NCS::CString(psFileInfo->pFileMetaData->sTelephone));
 }
 
 /************************************************************************/
@@ -2948,7 +2980,7 @@ void ECWDataset::WriteFileMetaData(NCSFileMetaData* pFileMetaDataCopy)
     NCSEditClose(psFileView);
 }
 
-#endif 
+#endif
 /************************************************************************/
 /*                         ECW2WKTProjection()                          */
 /*                                                                      */
@@ -2975,11 +3007,11 @@ void ECWDataset::ECW2WKTProjection()
 /*      origin (0,0) and pixel size (1,1).  I think sometimes I have    */
 /*      also seen pixel increments of 0 on invalid datasets.            */
 /* -------------------------------------------------------------------- */
-    if( psFileInfo->fOriginX != 0.0 
-        || psFileInfo->fOriginY != 0.0 
-        || (psFileInfo->fCellIncrementX != 0.0 
+    if( psFileInfo->fOriginX != 0.0
+        || psFileInfo->fOriginY != 0.0
+        || (psFileInfo->fCellIncrementX != 0.0
             && psFileInfo->fCellIncrementX != 1.0)
-        || (psFileInfo->fCellIncrementY != 0.0 
+        || (psFileInfo->fCellIncrementY != 0.0
             && psFileInfo->fCellIncrementY != 1.0) )
     {
         bGeoTransformValid = TRUE;
@@ -2990,7 +3022,18 @@ void ECWDataset::ECW2WKTProjection()
 
         adfGeoTransform[3] = psFileInfo->fOriginY;
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -fabs(psFileInfo->fCellIncrementY);
+
+        /* By default, set Y-resolution negative assuming images always */
+        /* have "Upward" orientation (Y coordinates increase "Upward"). */
+        /* Setting ECW_ALWAYS_UPWARD=FALSE option relexes that policy   */
+        /* and makes the driver rely on the actual Y-resolution         */
+        /* value (sign) of an image. This allows to correctly process   */
+        /* rare images with "Downward" orientation, where Y coordinates */
+        /* increase "Downward" and Y-resolution is positive.            */
+        if( CPLTestBool( CPLGetConfigOption("ECW_ALWAYS_UPWARD","TRUE") ) )
+            adfGeoTransform[5] = -fabs(psFileInfo->fCellIncrementY);
+        else
+            adfGeoTransform[5] = psFileInfo->fCellIncrementY;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3019,8 +3062,8 @@ void ECWDataset::ECW2WKTProjection()
     m_osDatumCode = psFileInfo->szDatum;
     m_osProjCode = psFileInfo->szProjection;
     m_osUnitsCode = osUnits;
-    if( oSRS.importFromERM( psFileInfo->szProjection, 
-                            psFileInfo->szDatum, 
+    if( oSRS.importFromERM( psFileInfo->szProjection,
+                            psFileInfo->szDatum,
                             osUnits ) == OGRERR_NONE )
     {
         oSRS.exportToWkt( &pszProjection );
@@ -3074,20 +3117,18 @@ int ECWTranslateFromWKT( const char *pszWKT,
         pszAuthorityName =  oSRS.GetAuthorityName( "GEOGCS" );
     }
 
-    if( pszAuthorityName != NULL && EQUAL(pszAuthorityName,"EPSG") 
+    if( pszAuthorityName != NULL && EQUAL(pszAuthorityName,"EPSG")
         && pszAuthorityCode != NULL && atoi(pszAuthorityCode) > 0 )
         nEPSGCode = (UINT32) atoi(pszAuthorityCode);
 
     if( nEPSGCode != 0 )
     {
         char *pszEPSGProj = NULL, *pszEPSGDatum = NULL;
-        CNCSError oErr;
-
-        oErr = 
-            CNCSJP2FileView::GetProjectionAndDatum( atoi(pszAuthorityCode), 
+        CNCSError oErr =
+            CNCSJP2FileView::GetProjectionAndDatum( atoi(pszAuthorityCode),
                                                  &pszEPSGProj, &pszEPSGDatum );
 
-        CPLDebug( "ECW", "GetGDTProjDat(%d) = %s/%s", 
+        CPLDebug( "ECW", "GetGDTProjDat(%d) = %s/%s",
                   atoi(pszAuthorityCode),
                   pszEPSGProj ? pszEPSGProj : "(null)",
                   pszEPSGDatum ? pszEPSGDatum : "(null)");
@@ -3146,7 +3187,7 @@ CellSizeUnits ECWTranslateToCellSizeUnits(const char* pszUnits)
 
 GDALColorInterp ECWGetColorInterpretationByName(const char *pszName)
 {
-    if (EQUAL(pszName, NCS_BANDDESC_AllOpacity)) 
+    if (EQUAL(pszName, NCS_BANDDESC_AllOpacity))
         return GCI_AlphaBand;
     else if (EQUAL(pszName, NCS_BANDDESC_Blue))
         return GCI_BlueBand;
@@ -3167,38 +3208,37 @@ GDALColorInterp ECWGetColorInterpretationByName(const char *pszName)
 
 const char* ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation, int nBandNumber)
 {
-    const char *result;
+    const char *pszResult = NULL;
     switch (eColorInterpretation){
-    case GCI_AlphaBand: 
-        result = NCS_BANDDESC_AllOpacity;
+    case GCI_AlphaBand:
+        pszResult = NCS_BANDDESC_AllOpacity;
         break;
-    case GCI_GrayIndex: 
-        result = NCS_BANDDESC_Greyscale;
+    case GCI_GrayIndex:
+        pszResult = NCS_BANDDESC_Greyscale;
         break;
     case GCI_RedBand:
     case GCI_GreenBand:
-    case GCI_BlueBand: 
-        result = GDALGetColorInterpretationName(eColorInterpretation);
+    case GCI_BlueBand:
+        pszResult = GDALGetColorInterpretationName(eColorInterpretation);
         break;
     case GCI_Undefined:
-        if (nBandNumber <=3){
-            if (nBandNumber == 0 ) {
-                result = "Red";
-            }else if (nBandNumber == 1) {
-                result = "Green";
-            }else if (nBandNumber == 2) {
-                result = "Blue";
-            }
+        if (nBandNumber == 0 ) {
+            pszResult = "Red";
+        }else if (nBandNumber == 1) {
+            pszResult = "Green";
+        }else if (nBandNumber == 2) {
+            pszResult = "Blue";
         }
         else
         {
-            result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+            pszResult = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
         }
         break;
     default:
-        result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+        pszResult = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+        break;
     }
-    return result;
+    return pszResult;
 }
 
 /************************************************************************/
@@ -3218,11 +3258,11 @@ const char* ECWGetColorSpaceName(NCSFileColorSpace colorSpace)
         case NCSCS_MULTIBAND:
             return "MULTIBAND"; break;
         case NCSCS_sRGB:
-            return  "RGB"; break;
+            return "RGB"; break;
         case NCSCS_YCbCr:
             return "YCbCr"; break;
         default:
-            return  "unrecognised";
+            return "unrecognized";
     }
 }
 /************************************************************************/
@@ -3270,15 +3310,16 @@ void ECWInitialize()
 /*      This will disable automatic conversion of YCbCr to RGB by       */
 /*      the toolkit.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
+    if( !CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
         NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
 #if ECWSDK_VERSION>= 50
-	NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT, "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
-#endif 
+    NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT,
+                    "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
+#endif
 /* -------------------------------------------------------------------- */
 /*      Initialize cache memory limit.  Default is apparently 1/4 RAM.  */
 /* -------------------------------------------------------------------- */
-    const char *pszEcwCacheSize = 
+    const char *pszEcwCacheSize =
         CPLGetConfigOption("GDAL_ECW_CACHE_MAXMEM",NULL);
     if( pszEcwCacheSize == NULL )
         pszEcwCacheSize = CPLGetConfigOption("ECW_CACHE_MAXMEM",NULL);
@@ -3287,20 +3328,20 @@ void ECWInitialize()
         NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, (UINT32) atoi(pszEcwCacheSize) );
 
     /* -------------------------------------------------------------------- */
-    /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and         */
-    /*      projection to EPSG code using internal mapping.					*/
-    /*		Version 5.x do so we provide means to achieve old		*/
-    /*		behaviour.														*/
+    /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and */
+    /*      projection to EPSG code using internal mapping.                 */
+    /*      Version 5.x do so we provide means to achieve old               */
+    /*      behaviour.                                                      */
     /* -------------------------------------------------------------------- */
     #if ECWSDK_VERSION >= 50
-    if( CSLTestBoolean( CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION","NO") ) == TRUE) 
+    if( CPLTestBool( CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION","NO") ) == TRUE)
         NCSecwSetConfig(NCSCFG_PROJECTION_FORMAT, NCS_PROJECTION_ERMAPPER_FORMAT);
     #endif
 /* -------------------------------------------------------------------- */
 /*      Allow configuration of a local cache based on configuration     */
 /*      options.  Setting the location turns things on.                 */
 /* -------------------------------------------------------------------- */
-    const char *pszOpt;
+    const char *pszOpt = NULL;
 
 #if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECWP_CACHE_SIZE_MB", NULL );
@@ -3320,26 +3361,26 @@ void ECWInitialize()
 /* -------------------------------------------------------------------- */
     pszOpt = CPLGetConfigOption( "ECWP_BLOCKING_TIME_MS", NULL );
     if( pszOpt )
-        NCSecwSetConfig( NCSCFG_BLOCKING_TIME_MS, 
+        NCSecwSetConfig( NCSCFG_BLOCKING_TIME_MS,
                          (NCSTimeStampMs) atoi(pszOpt) );
 
     // I believe 10s means we wait for complete data back from
     // ECWP almost all the time which is good for our blocking model.
     pszOpt = CPLGetConfigOption( "ECWP_REFRESH_TIME_MS", "10000" );
     if( pszOpt )
-        NCSecwSetConfig( NCSCFG_REFRESH_TIME_MS, 
+        NCSecwSetConfig( NCSCFG_REFRESH_TIME_MS,
                          (NCSTimeStampMs) atoi(pszOpt) );
 
     pszOpt = CPLGetConfigOption( "ECW_TEXTURE_DITHER", NULL );
     if( pszOpt )
-        NCSecwSetConfig( NCSCFG_TEXTURE_DITHER, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+        NCSecwSetConfig( NCSCFG_TEXTURE_DITHER,
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 
 
     pszOpt = CPLGetConfigOption( "ECW_FORCE_FILE_REOPEN", NULL );
     if( pszOpt )
-        NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+        NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN,
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 
     pszOpt = CPLGetConfigOption( "ECW_CACHE_MAXOPEN", NULL );
     if( pszOpt )
@@ -3348,19 +3389,19 @@ void ECWInitialize()
 #if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECW_AUTOGEN_J2I", NULL );
     if( pszOpt )
-        NCSecwSetConfig( NCSCFG_JP2_AUTOGEN_J2I, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+        NCSecwSetConfig( NCSCFG_JP2_AUTOGEN_J2I,
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 
     pszOpt = CPLGetConfigOption( "ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", NULL );
     if( pszOpt )
-        NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+        NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 
 
     pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", NULL );
     if( pszOpt )
-        NCSecwSetConfig( NCSCFG_RESILIENT_DECODING, 
-                         (BOOLEAN) CSLTestBoolean( pszOpt ) );
+        NCSecwSetConfig( NCSCFG_RESILIENT_DECODING,
+                         (BOOLEAN) CPLTestBool( pszOpt ) );
 #endif
 }
 
@@ -3368,7 +3409,7 @@ void ECWInitialize()
 /*                         GDALDeregister_ECW()                         */
 /************************************************************************/
 
-void GDALDeregister_ECW( GDALDriver * )
+static void GDALDeregister_ECW( GDALDriver * )
 
 {
     /* For unknown reason, this cleanup can take up to 3 seconds (see #3134) for SDK 3.3. */
@@ -3394,7 +3435,7 @@ void GDALDeregister_ECW( GDALDriver * )
 }
 
 /************************************************************************/
-/*                          GDALRegister_ECW()                        */
+/*                          GDALRegister_ECW()                          */
 /************************************************************************/
 
 /* Needed for v4.3 and v5.0 */
@@ -3405,50 +3446,47 @@ void GDALDeregister_ECW( GDALDriver * )
 void GDALRegister_ECW()
 
 {
-#ifdef FRMT_ecw 
-    GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("ECW driver"))
+#ifdef FRMT_ecw
+    if( !GDAL_CHECK_VERSION( "ECW driver" ) )
         return;
 
-    if( GDALGetDriverByName( "ECW" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "ECW" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "ECW" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        CPLString osLongName = "ERDAS Compressed Wavelets (SDK ";
+    poDriver->SetDescription( "ECW" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+
+    CPLString osLongName = "ERDAS Compressed Wavelets (SDK ";
 
 #ifdef NCS_ECWSDK_VERSION_STRING
-        osLongName += NCS_ECWSDK_VERSION_STRING;
+    osLongName += NCS_ECWSDK_VERSION_STRING;
 #else
-        osLongName += "3.x";
+    osLongName += "3.x";
 #endif
-        osLongName += ")";
+    osLongName += ")";
 
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_ecw.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ecw.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
 
-        poDriver->pfnIdentify = ECWDataset::IdentifyECW;
-        poDriver->pfnOpen = ECWDataset::OpenECW;
-        poDriver->pfnUnloadDriver = GDALDeregister_ECW;
+    poDriver->pfnIdentify = ECWDataset::IdentifyECW;
+    poDriver->pfnOpen = ECWDataset::OpenECW;
+    poDriver->pfnUnloadDriver = GDALDeregister_ECW;
 #ifdef HAVE_COMPRESS
-// The create method does not work with SDK 3.3 ( crash in CNCSJP2FileView::WriteLineBIL() due to m_pFile being NULL )
+    // The create method does not work with SDK 3.3 ( crash in
+    // CNCSJP2FileView::WriteLineBIL() due to m_pFile being NULL ).
 #if ECWSDK_VERSION >= 50
-        poDriver->pfnCreate = ECWCreateECW;  
+    poDriver->pfnCreate = ECWCreateECW;
 #endif
-        poDriver->pfnCreateCopy = ECWCreateCopyECW;
+    poDriver->pfnCreateCopy = ECWCreateCopyECW;
 #if ECWSDK_VERSION >= 50
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16" );
-#else 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16" );
+#else
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,  "Byte" );
 #endif
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
 "   <Option name='PROJ' type='string' description='ECW Projection Name'/>"
@@ -3467,13 +3505,12 @@ void GDALRegister_ECW()
 
 "</CreationOptionList>" );
 #else
-        /* In read-only mode, we support VirtualIO. This is not the case */
-        /* for ECWCreateCopyECW() */
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    // In read-only mode, we support VirtualIO. This is not the case
+    // for ECWCreateCopyECW().
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 #endif /* def FRMT_ecw */
 }
 
@@ -3505,50 +3542,50 @@ GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo)
 void GDALRegister_JP2ECW()
 
 {
-#ifdef FRMT_ecw 
-    GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("JP2ECW driver"))
+#ifdef FRMT_ecw
+    if( !GDAL_CHECK_VERSION( "JP2ECW driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JP2ECW" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "JP2ECW" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "JP2ECW" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        CPLString osLongName = "ERDAS JPEG2000 (SDK ";
+    poDriver->SetDescription( "JP2ECW" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+
+    CPLString osLongName = "ERDAS JPEG2000 (SDK ";
 
 #ifdef NCS_ECWSDK_VERSION_STRING
-        osLongName += NCS_ECWSDK_VERSION_STRING;
+    osLongName += NCS_ECWSDK_VERSION_STRING;
 #else
-        osLongName += "3.x";
+    osLongName += "3.x";
 #endif
-        osLongName += ")";
+    osLongName += ")";
 
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_jp2ecw.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2ecw.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = ECWDataset::IdentifyJPEG2000;
-        poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
+    poDriver->pfnIdentify = ECWDataset::IdentifyJPEG2000;
+    poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
 
-        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
+"   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/GMLJP2/GEOJP2/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,GEOJP2,GMLJP2,WORLDFILE'/>"
 "</OpenOptionList>" );
 
 #ifdef HAVE_COMPRESS
-        poDriver->pfnCreate = ECWCreateJPEG2000;
-        poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    poDriver->pfnCreate = ECWCreateJPEG2000;
+    poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 UInt32 Int32 "
+                               "Float32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
 "   <Option name='PROJ' type='string' description='ECW Projection Name'/>"
@@ -3596,7 +3633,6 @@ void GDALRegister_JP2ECW()
 "</CreationOptionList>" );
 #endif
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 #endif /* def FRMT_ecw */
 }

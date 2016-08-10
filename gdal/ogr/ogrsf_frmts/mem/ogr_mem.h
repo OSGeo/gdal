@@ -28,37 +28,53 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRMEM_H_INCLUDED
-#define _OGRMEM_H_INCLUDED
+#ifndef OGRMEM_H_INCLUDED
+#define OGRMEM_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+
+#include <map>
 
 /************************************************************************/
 /*                             OGRMemLayer                              */
 /************************************************************************/
 class OGRMemDataSource;
 
+class IOGRMemLayerFeatureIterator;
+
 class OGRMemLayer : public OGRLayer
 {
-    OGRFeatureDefn     *poFeatureDefn;
+    typedef std::map<GIntBig, OGRFeature*>           FeatureMap;
+    typedef std::map<GIntBig, OGRFeature*>::iterator FeatureIterator;
 
-    GIntBig             nFeatureCount;
-    GIntBig             nMaxFeatureCount;
-    OGRFeature        **papoFeatures;
+    OGRFeatureDefn     *m_poFeatureDefn;
 
-    GIntBig             iNextReadFID;
-    GIntBig             iNextCreateFID;
+    GIntBig             m_nFeatureCount;
 
-    int                 bUpdatable;
-    int                 bAdvertizeUTF8;
+    GIntBig             m_iNextReadFID;
+    GIntBig             m_nMaxFeatureCount;  // Max size of papoFeatures.
+    OGRFeature        **m_papoFeatures;
+    bool                m_bHasHoles;
 
-    int                 bHasHoles;
+    FeatureMap          m_oMapFeatures;
+    FeatureIterator     m_oMapFeaturesIter;
+
+    GIntBig             m_iNextCreateFID;
+
+    bool                m_bUpdatable;
+    bool                m_bAdvertizeUTF8;
+
+    bool                m_bUpdated;
+
+    // Only use it in the lifetime of a function where the list of features
+    // doesn't change.
+    IOGRMemLayerFeatureIterator* GetIterator();
 
   public:
                         OGRMemLayer( const char * pszName,
                                      OGRSpatialReference *poSRS,
                                      OGRwkbGeometryType eGeomType );
-                        ~OGRMemLayer();
+    virtual            ~OGRMemLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
@@ -69,7 +85,7 @@ class OGRMemLayer : public OGRLayer
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( GIntBig nFID );
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return m_poFeatureDefn; }
 
     GIntBig             GetFeatureCount( int );
 
@@ -77,16 +93,23 @@ class OGRMemLayer : public OGRLayer
                                      int bApproxOK = TRUE );
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
-    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+    virtual OGRErr      AlterFieldDefn( int iField,
+                                        OGRFieldDefn* poNewFieldDefn,
+                                        int nFlags );
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
                                          int bApproxOK = TRUE );
 
     int                 TestCapability( const char * );
 
-    void                SetUpdatable(int bUpdatableIn) { bUpdatable = bUpdatableIn; }
-    void                SetAdvertizeUTF8(int bAdvertizeUTF8In) { bAdvertizeUTF8 = bAdvertizeUTF8In; }
+    void                SetUpdatable( bool bUpdatableIn )
+        { m_bUpdatable = bUpdatableIn; }
+    void                SetAdvertizeUTF8( bool bAdvertizeUTF8In )
+        { m_bAdvertizeUTF8 = bAdvertizeUTF8In; }
 
-    GIntBig             GetNextReadFID() { return iNextReadFID; }
+    bool                HasBeenUpdated() const { return m_bUpdated; }
+    void                SetUpdated(bool bUpdated) { m_bUpdated = bUpdated; }
+
+    GIntBig             GetNextReadFID() { return m_iNextReadFID; }
 };
 
 /************************************************************************/
@@ -109,9 +132,9 @@ class OGRMemDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int );
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                       OGRSpatialReference * = NULL,
+                                       OGRwkbGeometryType = wkbUnknown,
+                                       char ** = NULL );
     OGRErr              DeleteLayer( int iLayer );
 
     int                 TestCapability( const char * );
@@ -124,7 +147,7 @@ class OGRMemDataSource : public OGRDataSource
 class OGRMemDriver : public OGRSFDriver
 {
   public:
-                ~OGRMemDriver();
+    virtual ~OGRMemDriver();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
@@ -132,8 +155,8 @@ class OGRMemDriver : public OGRSFDriver
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
 
-    int                 TestCapability( const char * );
+    int TestCapability( const char * );
 };
 
 
-#endif /* ndef _OGRMEM_H_INCLUDED */
+#endif  // ndef OGRMEM_H_INCLUDED

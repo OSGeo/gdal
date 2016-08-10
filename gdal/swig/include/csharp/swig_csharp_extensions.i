@@ -3,13 +3,13 @@
  * $Id$
  *
  * Name:     swig_csharp_extensions.i
- * Purpose:  Fix for the SWIG Interface problems (early GC) 
- *           and implementing SWIGTYPE *DISOWN 
+ * Purpose:  Fix for the SWIG Interface problems (early GC)
+ *           and implementing SWIGTYPE *DISOWN
  * Author:   Tamas Szekeres
  *
 */
 
-// Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4 
+// Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4
 %pragma(csharp) imclasscode=%{
   static $imclassname() {
   }
@@ -45,12 +45,12 @@
     $*csclassname ret = (cPtr == IntPtr.Zero) ? null : new $*csclassname(cPtr, $owner, ThisOwn_$owner());$excode
     return ret;
   }
-// Proxy classes (base classes, ie, not derived classes)
+// Proxy classes (base classes, i.e, not derived classes)
 %typemap(csbody) SWIGTYPE %{
   private HandleRef swigCPtr;
   protected bool swigCMemOwn;
   protected object swigParentRef;
-  
+
   protected static object ThisOwn_true() { return null; }
   protected object ThisOwn_false() { return this; }
 
@@ -182,7 +182,7 @@
 %pragma(csharp) modulecode=%{
   internal class $moduleObject : IDisposable {
 	public virtual void Dispose() {
-      
+
     }
   }
   internal static $moduleObject the$moduleObject = new $moduleObject();
@@ -194,7 +194,7 @@
 /******************************************************************************
  * Generic functions to marshal SWIGTYPE arrays                               *
  *****************************************************************************/
-  
+
 %define IMPLEMENT_ARRAY_MARSHALER(CTYPE)
 %csmethodmodifiers __WriteCArrayItem_##CTYPE "private";
 %csmethodmodifiers __ReadCArrayItem_##CTYPE "private";

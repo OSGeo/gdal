@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -30,7 +29,11 @@
 #include "cpl_progress.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: gdal_misc.cpp 25494 2013-01-13 12:55:17Z etourigny $");
+#include <cmath>
+
+#include <algorithm>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         GDALDummyProgress()                          */
@@ -45,9 +48,9 @@ CPL_CVSID("$Id: gdal_misc.cpp 25494 2013-01-13 12:55:17Z etourigny $");
  * to use one of the other progress functions that actually do something.
  */
 
-int CPL_STDCALL GDALDummyProgress( CPL_UNUSED double dfComplete,
-                                   CPL_UNUSED const char *pszMessage,
-                                   CPL_UNUSED void *pData )
+int CPL_STDCALL GDALDummyProgress( double /* dfComplete */ ,
+                                   const char * /* pszMessage */ ,
+                                   void * /* pData */ )
 {
     return TRUE;
 }
@@ -73,9 +76,11 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
                                     void *pData )
 
 {
-    GDALScaledProgressInfo *psInfo = (GDALScaledProgressInfo *) pData;
+    GDALScaledProgressInfo *psInfo
+        = reinterpret_cast<GDALScaledProgressInfo *>( pData );
 
-    /* optimization if GDALCreateScaledProgress() provided with GDALDummyProgress */
+    // Optimization if GDALCreateScaledProgress() provided with
+    // GDALDummyProgress.
     if( psInfo == NULL )
         return TRUE;
 
@@ -133,19 +138,18 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
  */
 
 void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
-                                GDALProgressFunc pfnProgress,
-                                void * pData )
+                                             GDALProgressFunc pfnProgress,
+                                             void * pData )
 
 {
-    GDALScaledProgressInfo *psInfo;
-    
     if( pfnProgress == NULL || pfnProgress == GDALDummyProgress )
         return NULL;
 
-    psInfo = (GDALScaledProgressInfo *)
-        CPLCalloc(sizeof(GDALScaledProgressInfo),1);
+    GDALScaledProgressInfo *psInfo
+        = static_cast<GDALScaledProgressInfo *>(
+            CPLCalloc( sizeof(GDALScaledProgressInfo), 1 ) );
 
-    if( ABS(dfMin-dfMax) < 0.0000001 )
+    if( std::abs(dfMin-dfMax) < 0.0000001 )
         dfMax = dfMin + 0.01;
 
     psInfo->pData = pData;
@@ -153,7 +157,7 @@ void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
     psInfo->dfMin = dfMin;
     psInfo->dfMax = dfMax;
 
-    return (void *) psInfo;
+    return static_cast<void *>( psInfo );
 }
 
 /************************************************************************/
@@ -197,7 +201,7 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  *
  * The GDALTermProgress() function maintains an internal memory of the
  * last percentage complete reported in a static variable, and this makes
- * it unsuitable to have multiple GDALTermProgress()'s active eithin a
+ * it unsuitable to have multiple GDALTermProgress()'s active either in a
  * single thread or across multiple threads.
  *
  * @param dfComplete completion ratio from 0.0 to 1.0.
@@ -211,7 +215,8 @@ int CPL_STDCALL GDALTermProgress( CPL_UNUSED double dfComplete,
                                   CPL_UNUSED const char *pszMessage,
                                   void * /* pProgressArg */ )
 {
-    int nThisTick = MIN(40,MAX(0, int(dfComplete * 40.0)));
+    int nThisTick = std::min(40, std::max(0,
+        static_cast<int>(dfComplete * 40.0) ));
 
     // Have we started a new progress run?
     static int nLastTick = -1;

@@ -1,8 +1,8 @@
 use strict;
+use warnings;
 use Scalar::Util 'blessed';
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
-Geo::GDAL::PushFinderLocation('../../data');
 
 # list of subs to test (documented subroutines) obtained with
 # perl parse-for-doxygen.pl | grep '^sub \|package'
@@ -65,6 +65,7 @@ my $dms = Geo::GDAL::DecToDMS(62, 'Long');
 ok($dms eq " 62d 0' 0.00\"E", "DecToDMS, got '$dms'"),
 $dms = Geo::GDAL::DecToPackedDMS(62.15);
 my $dec = Geo::GDAL::PackedDMSToDec($dms);
+$dec = sprintf("%.2f", $dec);
 ok($dec == 62.15, "DecToPackedDMS and PackedDMSToDec, got $dec");
 
 # sub DitherRGB2PCT

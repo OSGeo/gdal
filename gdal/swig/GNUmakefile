@@ -14,7 +14,7 @@ default: generate
 # The dist target should generate all the wrapper files for all supported
 # language bindings.  This should be called by the top level distribution
 # maker script prior to bundling up the source.  It eliminates the installer
-# from having the proper version of swig installled.
+# from having the proper version of swig installed.
 dist: generate
 
 clean:

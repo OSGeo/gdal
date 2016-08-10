@@ -6,21 +6,21 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic OGR functionality against test shapefiles.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -108,6 +108,7 @@ def ogr_basic_3():
     poly.AddGeometryDirectly( ring )
 
     gdaltest.lyr.SetSpatialFilter( poly )
+    gdaltest.lyr.SetSpatialFilter( gdaltest.lyr.GetSpatialFilter() )
     gdaltest.lyr.ResetReading()
 
     count = gdaltest.lyr.GetFeatureCount()
@@ -152,12 +153,12 @@ def ogr_basic_5():
 
     gdaltest.lyr.SetAttributeFilter( 'FID = 3' )
     gdaltest.lyr.ResetReading()
-    
+
     feat1 = gdaltest.lyr.GetNextFeature()
     feat2 = gdaltest.lyr.GetNextFeature()
 
     gdaltest.lyr.SetAttributeFilter( None )
-    
+
     if feat1 is None or feat2 is not None:
         gdaltest.post_reason( 'unexpected result count.' )
         return 'fail'
@@ -197,7 +198,7 @@ def ogr_basic_7():
     feat = ogr.Feature(feat_defn)
     if not feat.Equal(feat):
         return 'fail'
-        
+
     try:
         feat.SetFieldIntegerList
     except:
@@ -234,7 +235,7 @@ def ogr_basic_7():
     feat_defn.AddFieldDefn(field_defn)
     field_defn = ogr.FieldDefn('field11', ogr.OFTInteger64)
     feat_defn.AddFieldDefn(field_defn)
-    
+
     feat = ogr.Feature(feat_defn)
     feat.SetFID(100)
     feat.SetField(0, 1)
@@ -349,7 +350,7 @@ def ogr_basic_7():
     for num_field in [6, 7, 8]:
         for i in range(7):
             feat_almost_clone = feat.Clone()
-            feat_almost_clone.SetField(num_field, 2010+(i==0), 1+(i==1), 
+            feat_almost_clone.SetField(num_field, 2010+(i==0), 1+(i==1),
                                        8+(i==2), 22+(i==3), 48+(i==4),
                                        15+(i==5), 4+(i==6))
             if feat.Equal(feat_almost_clone):
@@ -413,7 +414,7 @@ def ogr_basic_9():
                          [ ogr.wkbMultiLineString25D, "3D Multi Line String"],
                          [ ogr.wkbMultiPolygon25D, "3D Multi Polygon"],
                          [ ogr.wkbGeometryCollection25D, "3D Geometry Collection"],
-                         [ 123456, "Unrecognised: 123456" ]
+                         [ 123456, "Unrecognized: 123456" ]
                        ]
 
     for geom_type_tuple in geom_type_tuples:
@@ -633,6 +634,49 @@ def ogr_basic_12():
     return 'success'
 
 ###############################################################################
+# Test OGRParseDate (#6452)
+
+def ogr_basic_13():
+    feat_defn = ogr.FeatureDefn('test')
+    field_defn = ogr.FieldDefn('date', ogr.OFTDateTime)
+    feat_defn.AddFieldDefn(field_defn)
+
+    tests = [ ('2016/1/1', '2016/01/01 00:00:00'),
+              ('2016/1/1 12:34', '2016/01/01 12:34:00'),
+              ('2016/1/1 12:34:56', '2016/01/01 12:34:56'),
+              ('2016/1/1 12:34:56.789', '2016/01/01 12:34:56.789'),
+              ('2016/12/31', '2016/12/31 00:00:00'),
+              ('-2016/12/31', '-2016/12/31 00:00:00'),
+              ('2016-12-31', '2016/12/31 00:00:00'),
+              ('0080/1/1', '0080/01/01 00:00:00'),
+              ('80/1/1', '1980/01/01 00:00:00'),
+              ('0010/1/1', '0010/01/01 00:00:00'),
+              ('9/1/1', '2009/01/01 00:00:00'),
+              ('10/1/1', '2010/01/01 00:00:00'),
+              ('2016-13-31', None),
+              ('2016-0-31', None),
+              ('2016-1-32', None),
+              ('2016-1-0', None),
+              ('0/1/1','2000/01/01 00:00:00'),
+              ('00/1/1', '2000/01/01 00:00:00'),
+              ('00/00/00', None),
+              ('000/00/00', None),
+              ('0000/00/00', None),
+              ('//foo', None) ]
+
+    for (val, expected_ret) in tests:
+        f = ogr.Feature(feat_defn)
+        f.SetField('date', val)
+        if f.GetField('date') != expected_ret:
+            gdaltest.post_reason('fail')
+            print(val)
+            print(f.GetField('date'))
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -654,7 +698,10 @@ gdaltest_list = [
     ogr_basic_10,
     ogr_basic_11,
     ogr_basic_12,
+    ogr_basic_13,
     ogr_basic_cleanup ]
+
+#gdaltest_list = [ ogr_basic_13 ]
 
 if __name__ == '__main__':
 

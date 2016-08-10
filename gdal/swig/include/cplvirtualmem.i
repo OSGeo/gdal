@@ -86,5 +86,5 @@ public:
         CPLVirtualMemPin(self->vmem, start_addr, nsize, bWriteOp);
     }
 } /* extend */
-}; /* CPLVirtualMemShadow */ 
+}; /* CPLVirtualMemShadow */
 #endif

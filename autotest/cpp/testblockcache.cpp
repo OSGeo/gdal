@@ -108,6 +108,7 @@ static void Check(GByte* pBuffer, int nXSize, int nYSize, int nBands,
                 unsigned long seed = iBand * nXSize * nYSize + (iY + nYOff) * nXSize + iX + nXOff;
                 GByte expected = (GByte)(myrand_r(&seed) & 0xff);
                 assert( pBuffer[iBand * nXWin * nYWin + iY * nXWin + iX] == expected );
+                (void)expected;
             }
         }
     }
@@ -116,7 +117,7 @@ static void Check(GByte* pBuffer, int nXSize, int nYSize, int nBands,
 static void ReadRaster(GDALDataset* poDS, int nXSize, int nYSize, int nBands,
                        GByte* pBuffer, int nXOff, int nYOff, int nXWin, int nYWin)
 {
-    poDS->RasterIO(GF_Read, nXOff, nYOff, nXWin, nYWin,
+    CPL_IGNORE_RET_VAL(poDS->RasterIO(GF_Read, nXOff, nYOff, nXWin, nYWin,
                     pBuffer, nXWin, nYWin,
                     GDT_Byte,
                     nBands, NULL,
@@ -124,7 +125,7 @@ static void ReadRaster(GDALDataset* poDS, int nXSize, int nYSize, int nBands,
 #ifdef GDAL_COMPILATION
                     , NULL
 #endif
-                    );
+                    ));
     if( bCheck )
     {
         Check(pBuffer, nXSize, nYSize, nBands,
@@ -445,7 +446,7 @@ int main(int argc, char* argv[])
                         pabyLine[iBand * nXSize + iX] = (GByte)(myrand_r(&seed) & 0xff);
                     }
                 }
-                poDS->RasterIO(GF_Write, 0, iY, nXSize, 1,
+                CPL_IGNORE_RET_VAL(poDS->RasterIO(GF_Write, 0, iY, nXSize, 1,
                                pabyLine, nXSize, 1,
                                GDT_Byte,
                                nBands, NULL,
@@ -453,11 +454,11 @@ int main(int argc, char* argv[])
 #ifdef GDAL_COMPILATION
                                , NULL
 #endif
-                               );
+                               ));
             }
             VSIFree(pabyLine);
         }
-        if( bMemDriver ) 
+        if( bMemDriver )
             poMEMDS = poDS;
         else
             GDALClose(poDS);
@@ -468,7 +469,7 @@ int main(int argc, char* argv[])
     }
     CSLDestroy(papszOptions);
     papszOptions = NULL;
-    
+
     Request* psGlobalRequestLast = NULL;
 
     for(i = 0; i < nThreads; i++ )
@@ -477,7 +478,7 @@ int main(int argc, char* argv[])
         // Since GDAL 2.0, the MEM driver is thread-safe, i.e. does not use the block
         // cache, but only for operations not involving resampling, which is
         // the case here
-        if( poMEMDS ) 
+        if( poMEMDS )
             poDS = poMEMDS;
         else
         {
@@ -527,7 +528,7 @@ int main(int argc, char* argv[])
         VSIUnlink(pszDataset);
         CPLPopErrorHandler();
     }
-    
+
     if( bMigrate )
     {
         psLock = CPLCreateLock(LOCK_SPIN);

@@ -37,7 +37,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-from osgeo import gdal, ogr, osr
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 # Test if driver is available
@@ -132,7 +134,7 @@ def ogr_mongodb_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # URI to non exhisting host
+    # URI to non existent host.
     gdal.PushErrorHandler()
     ds = ogr.Open("mongodb://non_existing")
     gdal.PopErrorHandler()
@@ -140,7 +142,7 @@ def ogr_mongodb_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Connect to non exhisting host
+    # Connect to non existent host.
     gdal.PushErrorHandler()
     ds = gdal.OpenEx('mongodb:', open_options = ['HOST=non_existing'] )
     gdal.PopErrorHandler()
@@ -335,7 +337,7 @@ def ogr_mongodb_2():
     lyr.CreateField(ogr.FieldDefn('realist', ogr.OFTRealList))
     lyr.CreateField(ogr.FieldDefn('embed.embed2.int', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('embed.embed2.real', ogr.OFTReal))
-    
+
     # Test CreateFeature()
     f = ogr.Feature(lyr.GetLayerDefn())
     f['str'] = 'str'
@@ -440,7 +442,7 @@ def ogr_mongodb_2():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-        
+
     # Test geometry filter
     lyr.SetAttributeFilter(None)
     lyr.SetSpatialFilterRect(2.1,49.1,2.9,49.9)
@@ -450,7 +452,7 @@ def ogr_mongodb_2():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-        
+
     lyr.SetSpatialFilterRect(1.1,49.1,1.9,49.9)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
@@ -494,8 +496,8 @@ def ogr_mongodb_2():
     gdal.PushErrorHandler()
     sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('{', dialect = 'MongoDB')
     gdal.PopErrorHandler()
-    
-    # MongoDB dialect of ExecuteSQL() with inexisting command
+
+    # MongoDB dialect of ExecuteSQL() with nonexistent command.
     sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('{ "foo": 1 }', dialect = 'MongoDB')
     if sql_lyr is None:
         gdaltest.post_reason('fail')
@@ -503,7 +505,8 @@ def ogr_mongodb_2():
     ogrtest.mongodb_ds.ReleaseResultSet(sql_lyr)
 
     # MongoDB dialect of ExecuteSQL() with existing commnand
-    sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('{ "listCommands" : 1 }', dialect = 'MongoDB')
+    sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('{ "listCommands" : 1 }',
+                                            dialect = 'MongoDB')
     if sql_lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -519,7 +522,7 @@ def ogr_mongodb_2():
     sql_lyr.ResetReading()
     sql_lyr.TestCapability('')
     ogrtest.mongodb_ds.ReleaseResultSet(sql_lyr)
-    
+
     # Regular ExecuteSQL()
     sql_lyr = ogrtest.mongodb_ds.ExecuteSQL('SELECT * FROM ' + ogrtest.mongodb_layer_name)
     if sql_lyr is None:
@@ -649,7 +652,7 @@ def ogr_mongodb_2():
     if lyr.CreateFeature(f) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-        
+
     # This new features will not be taken into account by below the FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=2
     f = ogr.Feature(lyr.GetLayerDefn())
     f['_json'] = '{'
@@ -663,7 +666,7 @@ def ogr_mongodb_2():
     if lyr.CreateFeature(f) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-        
+
     f = ogr.Feature(lyr.GetLayerDefn())
     f['_json'] = '{'
     f['_json'] += '"int": { "$maxKey": 1 }, '
@@ -673,7 +676,7 @@ def ogr_mongodb_2():
     if lyr.CreateFeature(f) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-        
+
     ogrtest.mongodb_layer_name_with_2d_index = ogrtest.mongodb_layer_name + "_with_2d_index"
     gdal.SetConfigOption('OGR_MONGODB_SPAT_INDEX_TYPE', '2d')
     lyr = ogrtest.mongodb_ds.CreateLayer(ogrtest.mongodb_layer_name_with_2d_index, geom_type = ogr.wkbPoint, options = ['FID=', 'WRITE_OGR_METADATA=NO'])
@@ -755,7 +758,7 @@ def ogr_mongodb_2():
         return 'fail'
 
     lyr = ogrtest.mongodb_ds.GetLayerByName(ogrtest.mongodb_layer_name_guess_types)
-    
+
     expected_fields = [
   ("int", ogr.OFTInteger),
   ("int64", ogr.OFTInteger64),
@@ -831,7 +834,7 @@ def ogr_mongodb_2():
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     lyr = ogrtest.mongodb_ds.GetLayerByName(ogrtest.mongodb_layer_name_no_spatial_index)
     if lyr.TestCapability(ogr.OLCFastSpatialFilter) != 0:
         gdaltest.post_reason('fail')
@@ -882,7 +885,7 @@ def ogr_mongodb_2():
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     f = ogr.Feature(lyr.GetLayerDefn())
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
@@ -890,14 +893,14 @@ def ogr_mongodb_2():
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(f)
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
     gdal.PushErrorHandler()
     ret = lyr.DeleteFeature(1)
     gdal.PopErrorHandler()
@@ -949,10 +952,10 @@ def ogr_mongodb_cleanup():
         ogrtest.mongodb_ds.ExecuteSQL('DELLAYER:' + ogrtest.mongodb_layer_name_no_spatial_index)
 
     ogrtest.mongodb_ds = None
-    
+
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_mongodb_init,
     ogr_mongodb_1,
     ogr_mongodb_2,

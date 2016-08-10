@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _json_object_h_
-#define _json_object_h_
+#ifndef json_object_h_
+#define json_object_h_
 
 #include "symbol_renames.h"
 #include "cpl_port.h"
@@ -106,7 +106,7 @@ typedef enum json_type {
 /* reference counting functions */
 
 /**
- * Increment the reference count of json_object, thereby grabbing shared 
+ * Increment the reference count of json_object, thereby grabbing shared
  * ownership of obj.
  *
  * @param obj the json_object instance
@@ -173,7 +173,7 @@ flags);
  * Set a custom serialization function to be used when this particular object
  * is converted to a string by json_object_to_json_string.
  *
- * If a custom serializer is already set on this object, any existing 
+ * If a custom serializer is already set on this object, any existing
  * user_delete function is called before the new one is set.
  *
  * If to_string_func is NULL, the other parameters are ignored
@@ -265,9 +265,9 @@ extern void CPL_DLL json_object_object_add(struct json_object* obj, const char *
 extern struct json_object* json_object_object_get(struct json_object* obj,
 						  const char *key);
 
-/** Get the json_object associated with a given object field.  
+/** Get the json_object associated with a given object field.
  *
- * This returns true if the key is found, false in all other cases (including 
+ * This returns true if the key is found, false in all other cases (including
  * if obj isn't a json_type_object).
  *
  * *No* reference counts will be changed.  There is no need to manually adjust
@@ -277,7 +277,7 @@ extern struct json_object* json_object_object_get(struct json_object* obj,
  *
  * @param obj the json_object instance
  * @param key the object field name
- * @param value a pointer where to store a reference to the json_object 
+ * @param value a pointer where to store a reference to the json_object
  *              associated with the given field name.
  *
  *              It is safe to pass a NULL value.
@@ -346,7 +346,7 @@ extern void json_object_object_del(struct json_object* obj, const char *key);
  * @param iter the object iterator
  */
 #define json_object_object_foreachC(obj,iter) \
- for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, iter.entry) : 0); iter.entry = iter.entry->next)
+ for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, 1) : 0); iter.entry = iter.entry->next)
 
 /* Array type methods */
 
@@ -407,7 +407,7 @@ extern int CPL_DLL json_object_array_add(struct json_object *obj,
 extern int json_object_array_put_idx(struct json_object *obj, int idx,
 				     struct json_object *val);
 
-/** Get the element at specificed index of the array (a json_object of type json_type_array)
+/** Get the element at specified index of the array (a json_object of type json_type_array)
  * @param obj the json_object instance
  * @param idx the index to get the element at
  * @returns the json_object at the specified index (or NULL)

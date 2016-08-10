@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWarpedLayer class
@@ -26,6 +25,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#ifndef DOXYGEN_SKIP
 
 #include "ogrwarpedlayer.h"
 
@@ -221,7 +222,7 @@ OGRFeature *OGRWarpedLayer::WarpedFeatureToSrcFeature(OGRFeature* poFeature)
 
 OGRFeature *OGRWarpedLayer::GetNextFeature()
 {
-    while(TRUE)
+    while( true )
     {
         OGRFeature* poFeature = m_poDecoratedLayer->GetNextFeature();
         if( poFeature == NULL )
@@ -287,7 +288,7 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
     OGRFeature* poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
     if( poFeatureNew == NULL )
         return OGRERR_FAILURE;
-   
+
     eErr = m_poDecoratedLayer->CreateFeature(poFeatureNew);
 
     delete poFeatureNew;
@@ -435,13 +436,13 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
 #define NSTEP   20
     double dfXStep = (psEnvelope->MaxX - psEnvelope->MinX) / NSTEP;
     double dfYStep = (psEnvelope->MaxY - psEnvelope->MinY) / NSTEP;
-    int i, j;
-    double *padfX, *padfY;
-    int* pabSuccess;
 
-    padfX = (double*) VSIMalloc((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
-    padfY = (double*) VSIMalloc((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
-    pabSuccess = (int*) VSIMalloc((NSTEP + 1) * (NSTEP + 1) * sizeof(int));
+    double *padfX = (double*)
+        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
+    double *padfY = (double*)
+        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
+    int* pabSuccess = (int*)
+        VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(int));
     if( padfX == NULL || padfY == NULL || pabSuccess == NULL)
     {
         VSIFree(padfX);
@@ -450,9 +451,9 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
         return FALSE;
     }
 
-    for(j = 0; j <= NSTEP; j++)
+    for( int j = 0; j <= NSTEP; j++ )
     {
-        for(i = 0; i <= NSTEP; i++)
+        for( int i = 0; i <= NSTEP; i++ )
         {
             padfX[j * (NSTEP + 1) + i] = psEnvelope->MinX + i * dfXStep;
             padfY[j * (NSTEP + 1) + i] = psEnvelope->MinY + j * dfYStep;
@@ -464,14 +465,17 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
     if( poCT->TransformEx( (NSTEP + 1) * (NSTEP + 1), padfX, padfY, NULL,
                             pabSuccess ) )
     {
-        double dfMinX = 0.0, dfMinY = 0.0, dfMaxX = 0.0, dfMaxY = 0.0;
+        double dfMinX = 0.0;
+        double dfMinY = 0.0;
+        double dfMaxX = 0.0;
+        double dfMaxY = 0.0;
         int bSet = FALSE;
-        for(j = 0; j <= NSTEP; j++)
+        for( int j = 0; j <= NSTEP; j++ )
         {
             double dfXOld = 0.0;
             double dfDXOld = 0.0;
             int iOld = -1, iOldOld = -1;
-            for(i = 0; i <= NSTEP; i++)
+            for( int i = 0; i <= NSTEP; i++ )
             {
                 if( pabSuccess[j * (NSTEP + 1) + i] )
                 {
@@ -570,3 +574,5 @@ void OGRWarpedLayer::SetExtent( double dfXMin, double dfYMin,
     sStaticEnvelope.MaxX = dfXMax;
     sStaticEnvelope.MaxY = dfYMax;
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

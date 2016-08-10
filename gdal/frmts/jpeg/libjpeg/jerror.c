@@ -71,6 +71,9 @@ const char * const jpeg_std_message_table[] = {
  */
 
 METHODDEF(void)
+error_exit (j_common_ptr cinfo) LIBJPEG_NO_RETURN;
+
+METHODDEF(void)
 error_exit (j_common_ptr cinfo)
 {
   /* Always display the message */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRGeomFieldDefn class implementation.
@@ -102,6 +101,7 @@ OGRGeomFieldDefnH OGR_GFld_Create( const char *pszName,
 /*                             Initialize()                             */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
                                    OGRwkbGeometryType eTypeIn )
 
@@ -112,6 +112,7 @@ void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
     bIgnore = FALSE;
     bNullable = TRUE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                         ~OGRGeomFieldDefn()                          */
@@ -235,7 +236,7 @@ const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn OGRwkbGeometryType OGRGeomFieldDefn::GetType();
+ * \fn OGRwkbGeometryType OGRGeomFieldDefn::GetType() const;
  *
  * \brief Fetch geometry type of this field.
  *
@@ -330,7 +331,7 @@ void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
 /************************************************************************/
 
 /**
- * \fn int OGRGeomFieldDefn::IsIgnored();
+ * \fn int OGRGeomFieldDefn::IsIgnored() const;
  *
  * \brief Return whether this field should be omitted when fetching features
  *

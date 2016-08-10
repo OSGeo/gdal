@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Simple client for translating between formats.
@@ -32,6 +31,8 @@
 #include "ogr_p.h"
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
+#include <vector>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -74,6 +75,8 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
     int i;
     char* pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
 
+    if( EQUAL(pszDriverName, "GMT") )
+        pszDriverName = "OGR_GMT";
     CheckExtensionConsistency(pszDestFilename, pszDriverName);
 
     static const char* apszBeginName[][2] =  { { "PG:"      , "PostgreSQL" },
@@ -135,9 +138,13 @@ int main( int nArgc, char ** papszArgv )
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
     nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
-    
+
     if( nArgc < 1 )
+    {
+        papszArgv = NULL;
+        nRetCode = -nArgc;
         goto exit;
+    }
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
@@ -145,6 +152,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            nRetCode = 0;
             goto exit;
         }
         else if( EQUAL(papszArgv[iArg],"--help") )
@@ -161,7 +169,6 @@ int main( int nArgc, char ** papszArgv )
 
     psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
     psOptions = GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
-    CSLDestroy( papszArgv );
 
     if( psOptions == NULL )
     {
@@ -182,7 +189,11 @@ int main( int nArgc, char ** papszArgv )
         goto exit;
     }
 
-    if (!psOptionsForBinary->bQuiet && psOptionsForBinary->bFormatExplicitlySet)
+    if( strcmp(psOptionsForBinary->pszDestDataSource, "/vsistdout/") == 0 )
+        psOptionsForBinary->bQuiet = TRUE;
+
+    if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet &&
+        psOptionsForBinary->eAccessMode == ACCESS_CREATION)
     {
         CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
                                            psOptionsForBinary->pszFormat);
@@ -230,7 +241,7 @@ int main( int nArgc, char ** papszArgv )
     if( hDS == NULL )
     {
         OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
-        
+
         fprintf( stderr, "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
                 psOptionsForBinary->pszDataSource );
@@ -263,9 +274,10 @@ int main( int nArgc, char ** papszArgv )
     if(hDS)
         GDALClose(hDS);
     if(bCloseODS)
-        GDALClose(hODS);
+        GDALClose(hDstDS);
 
 exit:
+    CSLDestroy( papszArgv );
     OGRCleanupAll();
 
     return nRetCode;
@@ -278,6 +290,11 @@ exit:
 static void Usage(int bShort)
 {
     Usage(NULL, bShort);
+}
+
+static bool StringCISortFunction(const CPLString& a, const CPLString& b)
+{
+    return STRCASECMP(a.c_str(), b.c_str()) < 0;
 }
 
 static void Usage(const char* pszAdditionalMsg, int bShort)
@@ -295,7 +312,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               dst_datasource_name src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] \n"
-            "               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR]\n"
+            "               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]\n"
             "               [-dim 2|3|layer_dim] [layer [layer ...]]\n"
             "\n"
             "Advanced options :\n"
@@ -317,7 +334,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-splitlistfields] [-maxsubfields val]\n"
             "               [-explodecollections] [-zfield field_name]\n"
             "               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]\n"
-            "               [-nomd] [-mo \"META-TAG=VALUE\"]*\n");
+            "               [-nomd] [-mo \"META-TAG=VALUE\"]* [-noNativeData]\n");
 
     if (bShort)
     {
@@ -329,12 +346,18 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
 
     printf("\n -f format_name: output file format name, possible values are:\n");
 
+    std::vector<CPLString> aoSetDrivers;
     for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
     {
         GDALDriver *poDriver = poR->GetDriver(iDriver);
 
-        if( CSLTestBoolean( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
-            printf( "     -f \"%s\"\n", poDriver->GetDescription() );
+        if( CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
+            aoSetDrivers.push_back( poDriver->GetDescription() );
+    }
+    std::sort (aoSetDrivers.begin(), aoSetDrivers.end(), StringCISortFunction);
+    for( size_t i = 0; i < aoSetDrivers.size(); i++ )
+    {
+        printf( "     -f \"%s\"\n", aoSetDrivers[i].c_str() );
     }
 
     printf( " -append: Append to existing layer instead of creating new if it exists\n"
@@ -343,13 +366,13 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             " -progress: Display progress on terminal. Only works if input layers have the \n"
             "                                          \"fast feature count\" capability\n"
             " -select field_list: Comma-delimited list of fields from input layer to\n"
-            "                     copy to the new layer (defaults to all)\n" 
-            " -where restricted_where: Attribute query (like SQL WHERE)\n" 
+            "                     copy to the new layer (defaults to all)\n"
+            " -where restricted_where: Attribute query (like SQL WHERE)\n"
             " -wrapdateline: split geometries crossing the dateline meridian\n"
-            "                (long. = +/- 180deg)\n" 
+            "                (long. = +/- 180deg)\n"
             " -datelineoffset: offset from dateline in degrees\n"
             "                (default long. = +/- 10deg,\n"
-            "                geometries within 170deg to -170deg will be splited)\n" 
+            "                geometries within 170deg to -170deg will be split)\n"
             " -sql statement: Execute given SQL statement and save result.\n"
             " -dialect value: select a dialect, usually OGRSQL to avoid native sql.\n"
             " -skipfailures: skip features or layers that fail to convert\n"
@@ -384,9 +407,9 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"
            " -s_srs srs_def: Override source SRS\n"
-           "\n" 
+           "\n"
            " Srs_def can be a full WKT definition (hard to escape properly),\n"
-           " or a well known definition (ie. EPSG:4326) or a file with a WKT\n"
+           " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n"
            " definition.\n" );
 
     if( pszAdditionalMsg )

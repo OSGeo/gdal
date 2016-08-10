@@ -43,7 +43,6 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
-    
     if( EnvisatFile_Open( &es_file, argv[1], "r" ) != 0 )
     {
         printf( "EnvisatFile_Open(%s) failed.\n", argv[1] );
@@ -55,9 +54,9 @@ int main( int argc, char ** argv )
     {
         printf( "Can't find geolocation grid ads.\n" );
         exit( 3 );
-    }        
+    }
 
-    EnvisatFile_GetDatasetInfo( es_file, 
+    EnvisatFile_GetDatasetInfo( es_file,
                                 ds_index, NULL, NULL, NULL,
                                 &ds_offset, &ds_size,
                                 &num_dsr, &dsr_size );
@@ -76,10 +75,10 @@ int main( int argc, char ** argv )
         float   fValue;
         int	sample;
 
-        EnvisatFile_ReadDatasetRecord( es_file, ds_index, i_record, 
+        EnvisatFile_ReadDatasetRecord( es_file, ds_index, i_record,
                                        abyRecord );
 
-        printf( "<====================== Record %d ==================>\n", 
+        printf( "<====================== Record %d ==================>\n",
                 i_record );
 
         /* field 1 */
@@ -87,7 +86,7 @@ int main( int argc, char ** argv )
         CPL_SWAP32PTR( abyRecord + 4 );
         CPL_SWAP32PTR( abyRecord + 8 );
 
-        printf( "start line: mjd_days = %d, sec = %d, msec = %d\n", 
+        printf( "start line: mjd_days = %d, sec = %d, msec = %d\n",
                 ((int *) abyRecord)[0],
                 ((unsigned int *) abyRecord)[1],
                 ((unsigned int *) abyRecord)[2] );
@@ -97,7 +96,7 @@ int main( int argc, char ** argv )
 
         /* field 3 */
         memcpy( &unValue, abyRecord + 13, 4 );
-        printf( "range line (first in granule) = %d\n", 
+        printf( "range line (first in granule) = %d\n",
                 CPL_SWAP32( unValue ) );
 
         /* field 4 */
@@ -137,7 +136,7 @@ int main( int argc, char ** argv )
         CPL_SWAP32PTR( abyRecord + 271 );
         CPL_SWAP32PTR( abyRecord + 275 );
 
-        printf( "end line: mjd_days = %d, sec = %d, msec = %d\n", 
+        printf( "end line: mjd_days = %d, sec = %d, msec = %d\n",
                 ((int *) (abyRecord + 267))[0],
                 ((unsigned int *) (abyRecord + 267))[1],
                 ((unsigned int *) (abyRecord + 267))[2] );

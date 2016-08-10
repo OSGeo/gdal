@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_xplane_apt_reader.h
+ * $Id: ogr_xplane_apt_reader.h$
  *
  * Project:  X-Plane apt.dat file reader headers
  * Purpose:  Definition of classes for X-Plane apt.dat file reader
@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_XPLANE_APT_READER_H_INCLUDED
-#define _OGR_XPLANE_APT_READER_H_INCLUDED
+#ifndef OGR_XPLANE_APT_READER_H_INCLUDED
+#define OGR_XPLANE_APT_READER_H_INCLUDED
 
 #include "ogr_xplane.h"
 #include "ogr_xplane_reader.h"
@@ -142,7 +142,7 @@ static const sEnumerationElement runwayREILType[] =
     { 2, "Unidirectional" }
 };
 
-static const sEnumerationElement runwayVisualApproachPathIndicatorTypeV810[] = 
+static const sEnumerationElement runwayVisualApproachPathIndicatorTypeV810[] =
 {
     { 1, "None" },
     { 2, "VASI" },
@@ -290,7 +290,7 @@ class OGRXPlaneWaterRunwayLayer : public OGRXPlaneLayer
 static const sEnumerationElement helipadEdgeLigthingType[] =
 {
     { 0, "None" },
-    { 1, "Yellow" }, 
+    { 1, "Yellow" },
     { 2, "White" }, /* proposed for V90x */
     { 3, "Red" } /* proposed for V90x */
 };

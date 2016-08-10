@@ -40,17 +40,17 @@ using namespace PCIDSK;
 /*                      CPixelInterleavedChannel()                      */
 /************************************************************************/
 
-CPixelInterleavedChannel::CPixelInterleavedChannel( PCIDSKBuffer &image_header,
-                                                    uint64 ih_offset,
-                                                    CPL_UNUSED PCIDSKBuffer &file_header,
-                                                    int channelnum,
-                                                    CPCIDSKFile *file,
-                                                    int image_offset,
-                                                    eChanType pixel_type )
-        : CPCIDSKChannel( image_header, ih_offset, file, pixel_type, channelnum)
+CPixelInterleavedChannel::CPixelInterleavedChannel( PCIDSKBuffer &image_headerIn,
+                                                    uint64 ih_offsetIn,
+                                                    CPL_UNUSED PCIDSKBuffer &file_headerIn,
+                                                    int channelnumIn,
+                                                    CPCIDSKFile *fileIn,
+                                                    int image_offsetIn,
+                                                    eChanType pixel_typeIn )
+        : CPCIDSKChannel( image_headerIn, ih_offsetIn, fileIn, pixel_typeIn, channelnumIn)
 
 {
-    this->image_offset = image_offset;
+    this->image_offset = image_offsetIn;
 }
 
 /************************************************************************/
@@ -88,7 +88,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
     if( win_xoff < 0 || win_xoff + win_xsize > GetBlockWidth()
         || win_yoff < 0 || win_yoff + win_ysize > GetBlockHeight() )
     {
-        ThrowPCIDSKException( 
+        return ThrowPCIDSKException(0, 
             "Invalid window in ReadBloc(): win_xoff=%d,win_yoff=%d,xsize=%d,ysize=%d",
             win_xoff, win_yoff, win_xsize, win_ysize );
     }
@@ -148,10 +148,10 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
             }
         }
         else
-            ThrowPCIDSKException( "Unsupported pixel type..." );
+            return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
     
-    file->UnlockBlock( 0 );
+    file->UnlockBlock( false );
 
 /* -------------------------------------------------------------------- */
 /*      Do byte swapping if needed.                                     */
@@ -163,7 +163,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
 }
 
 template <typename T>
-void CopyPixels(const T* const src, T* const dst,
+static void CopyPixels(const T* const src, T* const dst,
                 std::size_t offset, std::size_t count)
 {
     for (std::size_t i = 0; i < count; i++)
@@ -180,7 +180,7 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
 
 {
     if( !file->GetUpdatable() )
-        throw PCIDSKException( "File not open for update in WriteBlock()" );
+        return ThrowPCIDSKException(0, "File not open for update in WriteBlock()" );
 
     InvalidateOverviews();
 
@@ -248,10 +248,10 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
             }
         }
         else
-            ThrowPCIDSKException( "Unsupported pixel type..." );
+            return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
     
-    file->UnlockBlock( 1 );
+    file->UnlockBlock( true );
 
 /* -------------------------------------------------------------------- */
 /*      Do byte swapping if needed.                                     */

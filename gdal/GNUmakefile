@@ -5,14 +5,16 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
 			$(GDAL_ROOT)/alg/*.o \
- 			$(GDAL_ROOT)/apps/commonutils.o \
+			$(GDAL_ROOT)/apps/commonutils.o \
 			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
 			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
 			$(GDAL_ROOT)/apps/gdalwarp_lib.o \
 			$(GDAL_ROOT)/apps/ogr2ogr_lib.o \
 			$(GDAL_ROOT)/apps/gdaldem_lib.o \
 			$(GDAL_ROOT)/apps/nearblack_lib.o \
-			$(GDAL_ROOT)/apps/gdal_grid_lib.o
+			$(GDAL_ROOT)/apps/gdal_grid_lib.o \
+			$(GDAL_ROOT)/apps/gdal_rasterize_lib.o \
+			$(GDAL_ROOT)/apps/gdalbuildvrt_lib.o
 
 GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
 
@@ -51,7 +53,7 @@ $(GDAL_SLIB):	$(GDAL_OBJ) $(GDAL_LIB)
 		-o $(GDAL_SLIB)
 
 $(LIBGDAL):	$(GDAL_OBJ:.o=.lo)
-	$(LD) $(LDFLAGS) $(LIBS) -o $@ $(GDAL_OBJ:.o=.lo) \
+	$(LD) $(LDFLAGS) $(LIBS) -o $@ $(sort $(wildcard $(GDAL_OBJ:.o=.lo))) \
 	    -rpath $(INST_LIB) \
 	    -no-undefined \
 	    -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
@@ -165,6 +167,8 @@ docs:
 man:
 # Generate man pages
 	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
+# Remove "Directory reference" file. Not sure if there's a better way of doing it.
+	 @find man -name '_home_*_gdal_apps_.1' -exec rm {} \;
 
 all:	default ogr-all
 
@@ -209,6 +213,7 @@ endif
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)
 endif
+	(cd scripts; $(MAKE) install)
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig

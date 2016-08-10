@@ -28,6 +28,7 @@
 
 #include "aoutils.h"
 
+CPL_CVSID("$Id$");
 
 bool AOErr(HRESULT hr, std::string desc)
 {
@@ -60,7 +61,7 @@ bool AOToOGRGeometry(IGeometryDef* pGeoDef, OGRwkbGeometryType* pOut)
 
   pGeoDef->get_GeometryType(&geo);
   pGeoDef->get_HasZ(&hasZ);
-  
+
   switch (geo)
   {
     case esriGeometry::esriGeometryPoint:      *pOut = hasZ == VARIANT_TRUE? wkbPoint25D      : wkbPoint;                break;
@@ -115,7 +116,7 @@ bool AOToOGRFields(IFields* pFields, OGRFeatureDefn* pOGRFeatureDef, std::vector
       CPLError( CE_Warning, CPLE_AppDefined, "Skipping field %s", CW2A(name) );
       continue;
     }
-      
+
     OGRFieldDefn fieldTemplate( CW2A(name), ogrType);
     pOGRFeatureDef->AddFieldDefn( &fieldTemplate );
 
@@ -127,8 +128,9 @@ bool AOToOGRFields(IFields* pFields, OGRFeatureDefn* pOGRFeatureDef, std::vector
   return true;
 }
 
-// We could make this function far more robust by doing automatic coertion of types,
-// and/or skipping fields we do not know. But our purposes this works fine
+// We could make this function far more robust by doing automatic coercion of
+// types, and/or skipping fields we do not know. But, for our purposes, this
+// works fine.
 
 bool AOToOGRFieldType(esriFieldType aoType, OGRFieldType* pOut)
 {
@@ -150,7 +152,7 @@ bool AOToOGRFieldType(esriFieldType aoType, OGRFieldType* pOut)
   */
 
   //OGR Types
-  
+
   //            Desc                                 Name                AO->OGR Mapped By Us?
   /** Simple 32bit integer *///                   OFTInteger = 0,             YES 
   /** List of 32bit integers *///                 OFTIntegerList = 1,         NO
@@ -315,7 +317,7 @@ bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialRef
   }
 
   *ppSR = new OGRSpatialReference(strESRIWKT);
-  
+
   OGRErr result = (*ppSR)->morphFromESRI();
 
   if (result == OGRERR_NONE)
@@ -327,8 +329,9 @@ bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialRef
     delete *ppSR;
     *ppSR = NULL;
 
-    CPLError( CE_Failure, CPLE_AppDefined, "Failed morhping from ESRI Geometry: %s", strESRIWKT);
-   
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "Failed morphing from ESRI Geometry: %s", strESRIWKT);
+
     return false;
   }
 }
@@ -340,7 +343,7 @@ bool OGRGeometryToAOGeometry(OGRGeometry* pOGRGeom, esriGeometry::IGeometry** pp
   *ppGeometry = NULL;
 
   GByte* pWKB = NULL;
-  
+
   long wkbSize = pOGRGeom->WkbSize();
   pWKB = (GByte *) CPLMalloc(wkbSize);
 

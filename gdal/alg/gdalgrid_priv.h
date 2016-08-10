@@ -27,8 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef GDALGRID_PRIV_H
+#define GDALGRID_PRIV_H
+
 #include "cpl_error.h"
 #include "cpl_quad_tree.h"
+
+//! @cond Doxygen_Suppress
 
 typedef struct
 {
@@ -46,9 +51,9 @@ typedef struct
 {
     CPLQuadTree* hQuadTree;
     double       dfInitialSearchRadius;
-    const float *pafX;
-    const float *pafY;
-    const float *pafZ;
+    float *pafX; // Aligned to be usable with AVX
+    float *pafY;
+    float *pafZ;
     GDALTriangulation* psTriangulation;
     int                nInitialFacetIdx;
     /*! Weighting power divided by 2 (pre-computation). */
@@ -87,7 +92,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
                                         double *pdfValue,
                                         void* hExtraParamsIn );
 #endif
-#if defined(__GNUC__) 
+#if defined(__GNUC__)
 #if defined(__x86_64)
 #define GCC_CPUID(level, a, b, c, d)            \
   __asm__ ("xchgq %%rbx, %q1\n"                 \
@@ -104,3 +109,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
        : "0" (level))
 #endif
 #endif
+
+//! @endcond
+
+#endif // GDALGRID_PRIV_H

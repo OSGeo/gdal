@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  The library set-up/clean-up routines.
@@ -73,13 +72,11 @@ void GDALDestroy(void)
     bInGDALGlobalDestructor = TRUE;
     GDALDestroyDriverManager();
 
-#ifdef OGR_ENABLED
     OGRCleanupAll();
-#endif
     bInGDALGlobalDestructor = FALSE;
 
     /* See https://trac.osgeo.org/gdal/ticket/6139 */
-    /* Needed in case no driver manager has been instanciated */
+    /* Needed in case no driver manager has been instantiated. */
     CPLFreeConfig();
     CPLFinalizeTLS();
     CPLCleanupMasterMutex();
@@ -120,7 +117,7 @@ static void GDALDestructor(void)
 {
     if( bGDALDestroyAlreadyCalled )
         return;
-    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_DESTROY", "YES")) )
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_DESTROY", "YES")) )
         return;
     GDALDestroy();
 }
@@ -136,11 +133,10 @@ static void GDALDestructor(void)
 
 #include <windows.h>
 
-extern "C" int WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+extern "C" int WINAPI DllMain( HINSTANCE /* hInstance */,
+                               DWORD dwReason,
+                               LPVOID /* lpReserved */ )
 {
-    UNREFERENCED_PARAMETER(hInstance);
-    UNREFERENCED_PARAMETER(lpReserved);
-
     if (dwReason == DLL_PROCESS_ATTACH)
     {
         // nothing to do

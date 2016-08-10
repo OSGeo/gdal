@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRCircularString geometry class.
@@ -32,7 +31,7 @@
 #include <assert.h>
 #include <vector>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRCircularString()                          */
@@ -53,10 +52,10 @@ OGRCircularString::OGRCircularString()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -80,10 +79,10 @@ OGRCircularString::~OGRCircularString()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
@@ -103,7 +102,11 @@ OGRCircularString& OGRCircularString::operator=( const OGRCircularString& other 
 OGRwkbGeometryType OGRCircularString::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbCircularStringZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbCircularStringM;
+    else if( flags & OGR_G_3D )
         return wkbCircularStringZ;
     else
         return wkbCircularString;
@@ -159,7 +162,8 @@ OGRErr  OGRCircularString::exportToWkb( OGRwkbByteOrder eByteOrder,
         return OGRERR_FAILURE;
     }
 
-    if( eWkbVariant == wkbVariantOldOgc ) /* does not make sense for new geometries, so patch it */
+    // Does not make sense for new geometries, so patch it.
+    if( eWkbVariant == wkbVariantOldOgc )
         eWkbVariant = wkbVariantIso;
     return OGRSimpleCurve::exportToWkb(eByteOrder, pabyData, eWkbVariant);
 }
@@ -205,7 +209,7 @@ OGRErr OGRCircularString::exportToWkt( char ** ppszDstText,
 /************************************************************************/
 /*                             get_Length()                             */
 /*                                                                      */
-/*      For now we return a simple euclidian 2D distance.               */
+/*      For now we return a simple euclidean 2D distance.               */
 /************************************************************************/
 
 double OGRCircularString::get_Length() const
@@ -214,7 +218,7 @@ double OGRCircularString::get_Length() const
     double dfLength = 0.0;
     double R, cx, cy, alpha0, alpha1, alpha2;
     int i;
-    for(i=0;i<nPointCount-2;i+=2)
+    for( i = 0; i < nPointCount-2; i += 2 )
     {
         double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
                x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
@@ -241,9 +245,9 @@ void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) c
     if( !IsValidFast() || nPointCount == 0 )
         return;
 
-    /* Loop through circular portions and determine if they include some */
-    /* extremities of the circle */
-    for(int i=0;i<nPointCount-2;i+=2)
+    // Loop through circular portions and determine if they include some
+    // extremities of the circle.
+    for( int i = 0; i < nPointCount - 2; i += 2 )
     {
         double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
                x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
@@ -260,8 +264,8 @@ void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) c
                 quadrantStart = quadrantEnd;
                 quadrantEnd = tmp;
             }
-            /* Transition trough quadrants in counter-clock wise direction */
-            for( int j=quadrantStart+1; j<=quadrantEnd; j++)
+            // Transition trough quadrants in counter-clock wise direction.
+            for( int j = quadrantStart + 1; j <= quadrantEnd; ++j )
             {
                 switch( ((j+8)%4) )
                 {
@@ -278,7 +282,7 @@ void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) c
                         psEnvelope->MinY = MIN(psEnvelope->MaxY, cy - R);
                         break;
                     default:
-                        CPLAssert(FALSE);
+                        CPLAssert(false);
                         break;
                 }
             }
@@ -317,8 +321,8 @@ void OGRCircularString::segmentize( double dfMaxLength )
     if( !IsValidFast() || nPointCount == 0 )
         return;
 
-    /* So as to make sure that the same line followed in both directions */
-    /* result in the same segmentized line */
+    // So as to make sure that the same line followed in both directions
+    // result in the same segmentized line.
     if ( paoPoints[0].x < paoPoints[nPointCount - 1].x ||
          (paoPoints[0].x == paoPoints[nPointCount - 1].x &&
           paoPoints[0].y < paoPoints[nPointCount - 1].y) )
@@ -330,7 +334,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
 
     std::vector<OGRRawPoint> aoRawPoint;
     std::vector<double> adfZ;
-    for(int i=0;i<nPointCount-2;i+=2)
+    for( int i = 0; i < nPointCount - 2; i += 2 )
     {
         double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
                x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
@@ -341,20 +345,20 @@ void OGRCircularString::segmentize( double dfMaxLength )
         if( padfZ )
             adfZ.push_back(padfZ[i]);
 
-        /* We have strong constraints on the number of intermediate points */
-        /* we can add */
+        // We have strong constraints on the number of intermediate points
+        // we can add.
 
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
                                             R, cx, cy, alpha0, alpha1, alpha2) )
         {
-            /* It is an arc circle */
+            // It is an arc circle.
             double dfSegmentLength1 = fabs(alpha1 - alpha0) * R;
             double dfSegmentLength2 = fabs(alpha2 - alpha1) * R;
             if( dfSegmentLength1 > dfMaxLength || dfSegmentLength2 > dfMaxLength )
             {
                 int nIntermediatePoints = 1 + 2 * (int)floor(dfSegmentLength1 / dfMaxLength / 2);
                 double dfStep = (alpha1 - alpha0) / (nIntermediatePoints + 1);
-                for(int j=1;j<=nIntermediatePoints;j++)
+                for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
                     double alpha = alpha0 + dfStep * j;
                     double x = cx + R * cos(alpha), y = cy + R * sin(alpha);
@@ -374,7 +378,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
             {
                 int nIntermediatePoints = 1 + 2 * (int)floor(dfSegmentLength2 / dfMaxLength / 2);
                 double dfStep = (alpha2 - alpha1) / (nIntermediatePoints + 1);
-                for(int j=1;j<=nIntermediatePoints;j++)
+                for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
                     double alpha = alpha1 + dfStep * j;
                     double x = cx + R * cos(alpha), y = cy + R * sin(alpha);
@@ -389,13 +393,13 @@ void OGRCircularString::segmentize( double dfMaxLength )
         }
         else
         {
-            /* It is a straight line */
+            // It is a straight line.
             double dfSegmentLength1 = sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0));
             double dfSegmentLength2 = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
             if( dfSegmentLength1 > dfMaxLength || dfSegmentLength2 > dfMaxLength )
             {
                 int nIntermediatePoints = 1 + 2 * (int)ceil(dfSegmentLength1 / dfMaxLength / 2);
-                for(int j=1;j<=nIntermediatePoints;j++)
+                for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
                     aoRawPoint.push_back(OGRRawPoint(
                             x0 + j * (x1-x0) / (nIntermediatePoints + 1),
@@ -412,7 +416,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
             if( dfSegmentLength1 > dfMaxLength || dfSegmentLength2 > dfMaxLength )
             {
                 int nIntermediatePoints = 1 + 2 * (int)ceil(dfSegmentLength2 / dfMaxLength / 2);
-                for(int j=1;j<=nIntermediatePoints;j++)
+                for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
                     aoRawPoint.push_back(OGRRawPoint(
                             x1 + j * (x2-x1) / (nIntermediatePoints + 1),
@@ -433,7 +437,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
         CPLAssert(adfZ.size() == aoRawPoint.size());
     }
 
-    /* Is there actually something to modify ? */
+    // Is there actually something to modify?
     if( nPointCount < (int)aoRawPoint.size() )
     {
         nPointCount = (int)aoRawPoint.size();
@@ -458,38 +462,37 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
 
 {
     double      dfLength = 0;
-    int         i;
 
     if( dfDistance < 0 )
     {
         StartPoint( poPoint );
         return;
     }
-    
-    for(i=0;i<nPointCount-2;i+=2)
+
+    for( int i = 0; i < nPointCount - 2; i += 2 )
     {
         double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
                x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
                x2 = paoPoints[i+2].x, y2 = paoPoints[i+2].y;
         double R, cx, cy, alpha0, alpha1, alpha2;
 
-        /* We have strong constraints on the number of intermediate points */
-        /* we can add */
+        // We have strong constraints on the number of intermediate points
+        // we can add.
 
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
                                             R, cx, cy, alpha0, alpha1, alpha2) )
         {
-            /* It is an arc circle */
+            // It is an arc circle.
             double dfSegLength = fabs(alpha2 - alpha0) * R;
             if (dfSegLength > 0)
             {
-                if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >= 
+                if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                                 dfDistance) )
                 {
                     double      dfRatio;
 
                     dfRatio = (dfDistance - dfLength) / dfSegLength;
-                    
+
                     double alpha = alpha0 * (1 - dfRatio) + alpha2 * dfRatio;
                     double x = cx + R * cos(alpha), y = cy + R * sin(alpha);
 
@@ -499,7 +502,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
                     if( getCoordinateDimension() == 3 )
                         poPoint->setZ( padfZ[i] * (1 - dfRatio)
                                     + padfZ[i+2] * dfRatio );
-                    
+
                     return;
                 }
 
@@ -508,11 +511,11 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
         }
         else
         {
-            /* It is a straight line */
+            // It is a straight line.
             double dfSegLength = sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0));
             if (dfSegLength > 0)
             {
-                if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >= 
+                if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                                 dfDistance) )
                 {
                     double      dfRatio;
@@ -527,7 +530,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
                     if( getCoordinateDimension() == 3 )
                         poPoint->setZ( padfZ[i] * (1 - dfRatio)
                                     + padfZ[i+2] * dfRatio );
-                    
+
                     return;
                 }
 
@@ -550,8 +553,7 @@ OGRLineString* OGRCircularString::CurveToLine(double dfMaxAngleStepSizeDegrees,
     poLine->assignSpatialReference(getSpatialReference());
 
     int bHasZ = (getCoordinateDimension() == 3);
-    int i;
-    for(i=0;i<nPointCount-2;i+=2)
+    for( int i = 0; i < nPointCount - 2; i += 2 )
     {
         OGRLineString* poArc = OGRGeometryFactory::curveToLineString(
                 paoPoints[i].x, paoPoints[i].y, padfZ ? padfZ[i] : 0.0,
@@ -612,6 +614,7 @@ OGRGeometry* OGRCircularString::getLinearGeometry(double dfMaxAngleStepSizeDegre
     return CurveToLine(dfMaxAngleStepSizeDegrees, papszOptions);
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
@@ -627,6 +630,7 @@ OGRCurveCasterToLineString OGRCircularString::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRCircularString::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRGeometry::CastToError;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            IsFullCircle()                            */
@@ -645,7 +649,7 @@ int OGRCircularString::IsFullCircle( double& cx, double& cy, double& square_R ) 
         square_R = (x1-cx)*(x1-cx)+(y1-cy)*(y1-cy);
         return TRUE;
     }
-    /* Full circle defined by 2 arcs ? */
+    // Full circle defined by 2 arcs?
     else if( getNumPoints() == 5 && get_IsClosed() )
     {
         double R_1, cx_1, cy_1, alpha0_1, alpha1_1, alpha2_1;
@@ -678,6 +682,7 @@ int OGRCircularString::IsFullCircle( double& cx, double& cy, double& square_R ) 
 /*                       get_AreaOfCurveSegments()                      */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 double OGRCircularString::get_AreaOfCurveSegments() const
 {
     double dfArea = 0;
@@ -690,16 +695,18 @@ double OGRCircularString::get_AreaOfCurveSegments() const
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
                                             R, cx, cy, alpha0, alpha1, alpha2))
         {
-            double delta_alpha01 = alpha1 - alpha0; /* should be <= PI in absolute value */
-            double delta_alpha12 = alpha2 - alpha1; /* same */
-            /* This is my maths, but wikipedia confirms it... */
-            /* Cf http://en.wikipedia.org/wiki/Circular_segment */
+            // Should be <= PI in absolute value.
+            double delta_alpha01 = alpha1 - alpha0;
+            double delta_alpha12 = alpha2 - alpha1; // Same.
+            // This is my maths, but wikipedia confirms it.
+            // c.f http://en.wikipedia.org/wiki/Circular_segment
             dfArea += 0.5 * R * R * fabs( delta_alpha01 - sin(delta_alpha01) +
                                           delta_alpha12 - sin(delta_alpha12) );
         }
     }
     return dfArea;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           get_Area()                                 */
@@ -717,13 +724,13 @@ double OGRCircularString::get_Area() const
         return M_PI * square_R;
     }
 
-    /* Optimization for convex rings */
+    // Optimization for convex rings.
     if( IsConvex() )
     {
-        /* Compute area of shape without the circular segments */
+        // Compute area of shape without the circular segments.
         double dfArea = get_LinearArea();
 
-        /* Add the area of the spherical segments */
+        // Add the area of the spherical segments.
         dfArea += get_AreaOfCurveSegments();
 
         return dfArea;
@@ -742,6 +749,7 @@ double OGRCircularString::get_Area() const
 /*                           ContainsPoint()                            */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
 {
     double cx, cy, square_R;
@@ -753,3 +761,4 @@ int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
     }
     return -1;
 }
+//! @endcond

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_EDIGEO_H_INCLUDED
-#define _OGR_EDIGEO_H_INCLUDED
+#ifndef OGR_EDIGEO_H_INCLUDED
+#define OGR_EDIGEO_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include <vector>
@@ -151,6 +151,7 @@ class OGREDIGEODataSource : public OGRDataSource
     VSILFILE*           OpenFile(const char *pszType,
                                  const CPLString& osExt);
 
+    // TODO: Tranlate comments to English.
     CPLString osLON; /* Nom du lot */
     CPLString osGNN; /* Nom du sous-ensemble de données générales */
     CPLString osGON; /* Nom du sous-ensemble de la référence de coordonnées */
@@ -242,4 +243,4 @@ class OGREDIGEODataSource : public OGRDataSource
 };
 
 
-#endif /* ndef _OGR_EDIGEO_H_INCLUDED */
+#endif /* ndef OGR_EDIGEO_H_INCLUDED */

@@ -6,12 +6,12 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some PROJ.4 specific translation issues.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 2014, Kyle Shannon <kyle at pobox dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -58,13 +58,13 @@ def have_proj480():
         return have_proj480_flag
 
     handle = None
-    for name in ["libproj.so", "proj.dll",  "libproj-0.dll", "libproj.dylib"]:
+    for name in ["libproj.so", "proj.dll",  "libproj-0.dll", "libproj-10.dll", "cygproj-10.dll", "libproj.dylib"]:
         try:
             handle = ctypes.cdll.LoadLibrary(name)
         except:
             pass
     if handle is None:
-        print('cannot load libproj.so, proj.dll, libproj-0.dll or libproj.dylib')
+        print('cannot load libproj.so, proj.dll, libproj-0.dll, libproj-10.dll, cygproj-10.dll or libproj.dylib')
         have_proj480_flag = False
         return have_proj480_flag
 
@@ -86,12 +86,12 @@ def have_proj480():
         return have_proj480_flag
 
 ###############################################################################
-# Test the the +k_0 flag works as well as +k when consuming PROJ.4 format.
+# Test the +k_0 flag works as well as +k when consuming PROJ.4 format.
 # This is from Bugzilla bug 355.
 #
 
 def osr_proj4_1():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromProj4( '+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000 +k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000 +a=6377340.189000 +rf=299.324965 +towgs84=482.530,-130.596,564.557,-1.042,-0.214,-0.631,8.15' )
 
@@ -103,11 +103,11 @@ def osr_proj4_1():
 
 ###############################################################################
 # Verify that we can import strings with parameter values that are exponents
-# and contain a plus sign.  As per bug 355 in GDAL/OGR's bugzilla. 
+# and contain a plus sign.  As per bug 355 in GDAL/OGR's bugzilla.
 #
 
 def osr_proj4_2():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromProj4( "+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat +units=m" )
 
@@ -127,14 +127,14 @@ def osr_proj4_2():
 #
 
 def osr_proj4_3():
-    
+
     srs = osr.SpatialReference()
 
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         srs.ExportToProj4()
         gdal.PopErrorHandler()
-        
+
     except RuntimeError:
         gdal.PopErrorHandler()
 
@@ -145,21 +145,21 @@ def osr_proj4_3():
     return 'fail'
 
 ###############################################################################
-# Verify that unrecognised projections return an error, not those
+# Verify that unrecognized projections return an error, not those
 # annoying ellipsoid-only results.
 #
 
 def osr_proj4_4():
-    
+
     srs = osr.SpatialReference()
     srs.SetFromUserInput( '+proj=utm +zone=11 +datum=WGS84' )
     srs.SetAttrValue( 'PROJCS|PROJECTION', 'FakeTransverseMercator' )
-    
+
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         srs.ExportToProj4()
         gdal.PopErrorHandler()
-        
+
     except RuntimeError:
         gdal.PopErrorHandler()
 
@@ -174,7 +174,7 @@ def osr_proj4_4():
 #
 
 def osr_proj4_5():
-    
+
     srs = osr.SpatialReference()
 
     srs.ImportFromProj4( '+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356515 +towgs84=-168,-60,320,0,0,0,0 +pm=paris +units=m +no_defs' )
@@ -195,7 +195,7 @@ def osr_proj4_5():
         gdaltest.post_reason( 'round trip via PROJ.4 damaged srs?' )
         print(srs.ExportToPrettyWkt())
         print(srs2.ExportToPrettyWkt())
-    
+
     return 'success'
 
 ###############################################################################
@@ -205,7 +205,7 @@ def osr_proj4_5():
 def osr_proj4_6():
 
     expect_proj4 = '+proj=merc +lon_0=0 +lat_ts=46.1333331 +x_0=1000 +y_0=2000 +datum=WGS84 +units=m +no_defs '
-    
+
     wkt = """PROJCS["unnamed",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
@@ -223,7 +223,7 @@ def osr_proj4_6():
     PARAMETER["false_northing",2000],
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromWkt(wkt)
     proj4 = srs.ExportToProj4()
@@ -269,7 +269,7 @@ def osr_proj4_6():
 #
 
 def osr_proj4_7():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 23700 )
 
@@ -283,7 +283,7 @@ def osr_proj4_7():
         return 'fail'
 
     srs.ImportFromProj4( proj4 )
-    
+
     expected = """PROJCS["unnamed",
     GEOGCS["GRS 67(IUGG 1967)",
         DATUM["unknown",
@@ -300,26 +300,25 @@ def osr_proj4_7():
     PARAMETER["false_easting",650000],
     PARAMETER["false_northing",200000],
     UNIT["Meter",1]]"""
-    
+
     srs_expected = osr.SpatialReference( wkt = expected )
     if not srs.IsSame(srs_expected):
         gdaltest.post_reason( 'did not get expected wkt.' )
         print( 'Got: %s' % srs.ExportToPrettyWkt() )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
-# Check EPSG:3857, confirm google mercator hackery.
-#
+# Check EPSG:3857, confirm Google Mercator hackery.
 
 def osr_proj4_8():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 3857 )
 
     proj4 = srs.ExportToProj4()
-    expected = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs'
+    expected = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs'
     if proj4 != expected:
         gdaltest.post_reason( 'did not get expected EPSG:3857 (google mercator) result.' )
         print(proj4)
@@ -341,7 +340,7 @@ def osr_proj4_8():
 #
 
 def osr_proj4_9():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 4267 )
 
@@ -364,11 +363,11 @@ def osr_proj4_9():
     return 'success'
 
 ###############################################################################
-# Does geocentric work ok?
+# Does geocentric work okay?
 #
 
 def osr_proj4_10():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromProj4( '+proj=geocent +ellps=WGS84 +towgs84=0,0,0 ' )
 
@@ -387,7 +386,7 @@ def osr_proj4_10():
         print(srs.ExportToPrettyWkt())
         print(srs2.ExportToPrettyWkt())
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -457,6 +456,7 @@ def osr_proj4_11():
                      '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +no_defs',
 
                      '+proj=qsc +lat_0=0 +lon_0=0 +ellps=WGS84 +units=m +no_defs ',
+                     '+proj=sch +plat_0=1 +plon_0=2 +phdg_0=3 +h_0=4'
                      ]
 
     for proj4str in proj4strlist:
@@ -592,6 +592,17 @@ def osr_proj4_14():
     proj4str = srs.ExportToProj4()
     gdal.SetConfigOption('OSR_USE_ETMERC', None)
     expect_proj4str = '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs '
+    if proj4str != expect_proj4str:
+        print('Got:%s' % proj4str)
+        print('Expected:%s' % expect_proj4str)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
+    # Test exporting standard Transverse_Mercator, with OSR_USE_ETMERC=NO
+    gdal.SetConfigOption('OSR_USE_ETMERC', 'NO')
+    proj4str = srs.ExportToProj4()
+    gdal.SetConfigOption('OSR_USE_ETMERC', None)
+    expect_proj4str = '+proj=tmerc +lat_0=0 +lon_0=9 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs '
     if proj4str != expect_proj4str:
         print('Got:%s' % proj4str)
         print('Expected:%s' % expect_proj4str)
@@ -763,7 +774,221 @@ def osr_proj4_20():
 
     return 'success'
 
-gdaltest_list = [ 
+###############################################################################
+# Test importing datum other than WGS84, WGS72, NAD27 or NAD83
+
+def osr_proj4_21():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +datum=nzgd49" )
+
+    gdal.SetConfigOption('OVERRIDE_PROJ_DATUM_WITH_TOWGS84', 'NO')
+    got = srs.ExportToProj4()
+    gdal.SetConfigOption('OVERRIDE_PROJ_DATUM_WITH_TOWGS84', None)
+
+    if got.find('+proj=longlat +datum=nzgd49') != 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing ellipsoid defined with +R
+
+def osr_proj4_22():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +R=1" )
+    got = srs.ExportToProj4()
+
+    if got.find('+proj=longlat +a=1 +b=1') != 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing ellipsoid defined with +a and +f
+
+def osr_proj4_23():
+
+    # +f=0 particular case
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +a=1 +f=0" )
+    got = srs.ExportToProj4()
+
+    if got.find('+proj=longlat +a=1 +b=1') != 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=longlat +a=2 +f=0.5" )
+    got = srs.ExportToProj4()
+
+    if got.find('+proj=longlat +a=2 +b=1') != 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing linear units defined with +to_meter
+
+def osr_proj4_24():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +to_meter=1.0" )
+    got = srs.ExportToProj4()
+
+    if got.find('+units=m') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # Intl foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +to_meter=0.3048" )
+    got = srs.ExportToProj4()
+
+    if got.find('+units=ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # US foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +to_meter=0.3048006096012192" )
+    got = srs.ExportToProj4()
+
+    if got.find('+units=us-ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # unknown
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +to_meter=0.4" )
+    got = srs.ExportToProj4()
+
+    if got.find('+to_meter=0.4') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing linear units defined with +vto_meter
+
+def osr_proj4_25():
+
+    if not have_proj480():
+        return 'skip'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vto_meter=1.0" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=m') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # Intl foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vto_meter=0.3048" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # US foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vto_meter=0.3048006096012192" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=us-ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # Unknown
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vto_meter=0.4" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vto_meter=0.4') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing linear units defined with +vunits
+
+def osr_proj4_26():
+
+    if not have_proj480():
+        return 'skip'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vunits=m" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=m') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # Intl foot
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vunits=ft" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=ft') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # US yard
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=merc +geoidgrids=foo +vunits=us-yd" )
+    got = srs.ExportToProj4()
+
+    if got.find('+vunits=us-yd') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test geostationary +sweep (#6030)
+
+def osr_proj4_27():
+
+    if not have_proj480():
+        return 'skip'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m" )
+    got = srs.ExportToProj4()
+
+    if got.find('+proj=geos +h=35785831 +lon_0=0 +datum=WGS84 +sweep=x +units=m') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
+gdaltest_list = [
     osr_proj4_1,
     osr_proj4_2,
     osr_proj4_3,
@@ -783,8 +1008,15 @@ gdaltest_list = [
     osr_proj4_17,
     osr_proj4_18,
     osr_proj4_19,
-    osr_proj4_20 ]
-    
+    osr_proj4_20,
+    osr_proj4_21,
+    osr_proj4_22,
+    osr_proj4_23,
+    osr_proj4_24,
+    osr_proj4_25,
+    osr_proj4_26,
+    osr_proj4_27 ]
+
 
 if __name__ == '__main__':
 
@@ -793,4 +1025,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

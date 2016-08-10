@@ -33,7 +33,7 @@
 #elif defined(SWIGCSHARP)
 %module GdalConst
 #else
-%module gdalconst 
+%module gdalconst
 #endif
 
 #if defined(SWIGJAVA)
@@ -208,8 +208,8 @@
 
 // GDALRATFieldType
 %constant GFT_Integer             = GFT_Integer;
-%constant GFT_Real                = GFT_Real;   
-%constant GFT_String              = GFT_String;  
+%constant GFT_Real                = GFT_Real;
+%constant GFT_String              = GFT_String;
 
 // GDALRATFieldUsage
 %constant GFU_Generic             = GFU_Generic;
@@ -236,6 +236,10 @@
 %constant GMF_PER_DATASET         = 0x02;
 %constant GMF_ALPHA               = 0x04;
 %constant GMF_NODATA              = 0x08;
+
+%constant GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED  = 0x01;
+%constant GDAL_DATA_COVERAGE_STATUS_DATA           = 0x02;
+%constant GDAL_DATA_COVERAGE_STATUS_EMPTY          = 0x04;
 
 // GDALAsyncStatusType
 %constant GARIO_PENDING = GARIO_PENDING;

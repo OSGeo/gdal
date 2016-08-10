@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements OGRGeoPackageSelectLayer class
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "ogr_geopackage.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        OGRGeoPackageSelectLayer()                    */
@@ -106,7 +107,8 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     CPLDebug( "OGR_GPKG", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
-    rc = sqlite3_prepare( m_poDS->GetDB(), poBehaviour->osSQLCurrent, poBehaviour->osSQLCurrent.size(),
+    rc = sqlite3_prepare( m_poDS->GetDB(), poBehaviour->osSQLCurrent,
+                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
                           &m_poQueryStatement, NULL );
 
     if( rc == SQLITE_OK )
@@ -115,8 +117,8 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
                   poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(m_poDS->GetDB()) );
         m_poQueryStatement = NULL;
         return OGRERR_FAILURE;

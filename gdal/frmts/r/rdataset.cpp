@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  R Format Driver
  * Purpose:  Read/write R stats package object format.
@@ -28,27 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "../raw/rawdataset.h"
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void    GDALRegister_R(void);
-CPL_C_END
-
 GDALDataset *
-RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-             int bStrict, char ** papszOptions, 
+RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+             int bStrict, char ** papszOptions,
              GDALProgressFunc pfnProgress, void * pProgressData );
 
-#define R_NILSXP        0
-#define R_LISTSXP       2
-#define R_CHARSXP       9
-#define R_INTSXP        13
-#define R_REALSXP       14
-#define R_STRSXP        16
+// static const int R_NILSXP = 0;
+static const int R_LISTSXP = 2;
+static const int R_CHARSXP = 9;
+static const int R_INTSXP = 13;
+static const int R_REALSXP = 14;
+static const int R_STRSXP = 16;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -59,7 +55,7 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 class RDataset : public GDALPamDataset
 {
     friend class RRasterBand;
-    VSILFILE       *fp;
+    VSILFILE   *fp;
     int         bASCII;
     CPLString   osLastStringRead;
 
@@ -94,9 +90,8 @@ class RRasterBand : public GDALPamRasterBand
     const double *padfMatrixValues;
 
   public:
-
                 RRasterBand( RDataset *, int, const double * );
-                ~RRasterBand();
+    virtual ~RRasterBand() {}
 
     virtual CPLErr          IReadBlock( int, int, void * );
 };
@@ -105,32 +100,24 @@ class RRasterBand : public GDALPamRasterBand
 /*                            RRasterBand()                             */
 /************************************************************************/
 
-RRasterBand::RRasterBand( RDataset *poDS, int nBand, 
-                          const double *padfMatrixValues )
+RRasterBand::RRasterBand( RDataset *poDSIn, int nBandIn,
+                          const double *padfMatrixValuesIn ) :
+    padfMatrixValues(padfMatrixValuesIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->padfMatrixValues = padfMatrixValues;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Float64;
 
-    nBlockXSize = poDS->nRasterXSize;
+    nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
-}
-
-/************************************************************************/
-/*                            ~RRasterBand()                            */
-/************************************************************************/
-
-RRasterBand::~RRasterBand()
-{
 }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr RRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+CPLErr RRasterBand::IReadBlock( int /* nBlockXOff */,
                                 int nBlockYOff,
                                 void * pImage )
 {
@@ -178,11 +165,11 @@ RDataset::~RDataset()
 const char *RDataset::ASCIIFGets()
 
 {
-    char chNextChar;
+    char chNextChar = '\0';
 
     osLastStringRead.resize(0);
 
-    do 
+    do
     {
         chNextChar = '\n';
         VSIFReadL( &chNextChar, 1, 1, fp );
@@ -229,7 +216,7 @@ double RDataset::ReadFloat()
     }
     else
     {
-        double  dfValue;
+        double dfValue = 0.0;
 
         if( VSIFReadL( &dfValue, 8, 1, fp ) != 1 )
             return -1;
@@ -252,9 +239,15 @@ const char *RDataset::ReadString()
         return "";
     }
 
-    size_t nLen = ReadInteger();
-        
-    char *pachWrkBuf = (char *) VSIMalloc(nLen);
+    const int nLenSigned = ReadInteger();
+    if( nLenSigned < 0 )
+    {
+        osLastStringRead = "";
+        return "";
+    }
+    const size_t nLen = static_cast<size_t>(nLenSigned);
+
+    char *pachWrkBuf = static_cast<char *>( VSIMalloc(nLen) );
     if (pachWrkBuf == NULL)
     {
         osLastStringRead = "";
@@ -266,13 +259,13 @@ const char *RDataset::ReadString()
         CPLFree( pachWrkBuf );
         return "";
     }
-    
+
     if( bASCII )
     {
-        /* suck up newline and any extra junk */
+        // Suck up newline and any extra junk.
         ASCIIFGets();
     }
-    
+
     osLastStringRead.assign( pachWrkBuf, nLen );
     CPLFree( pachWrkBuf );
 
@@ -292,7 +285,7 @@ int RDataset::ReadPair( CPLString &osObjName, int &nObjCode )
 
     if( (nObjCode % 256) != R_LISTSXP )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Did not find expected object pair object." );
         return FALSE;
     }
@@ -300,7 +293,7 @@ int RDataset::ReadPair( CPLString &osObjName, int &nObjCode )
     int nPairCount = ReadInteger();
     if( nPairCount != 1 )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Did not find expected pair count of 1." );
         return FALSE;
     }
@@ -333,17 +326,17 @@ int RDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 /* -------------------------------------------------------------------- */
 /*      If the extension is .rda and the file type is gzip              */
-/*      compressed we assume it is a gziped R binary file.              */
+/*      compressed we assume it is a gzipped R binary file.              */
 /* -------------------------------------------------------------------- */
-    if( memcmp(poOpenInfo->pabyHeader,"\037\213\b",3) == 0 
+    if( memcmp(poOpenInfo->pabyHeader,"\037\213\b",3) == 0
         && EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"rda") )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Is this an ASCII or XDR binary R file?                          */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"RDA2\nA\n",7) 
-        && !EQUALN((const char *)poOpenInfo->pabyHeader,"RDX2\nX\n",7) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDA2\nA\n")
+        && !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDX2\nX\n") )
         return FALSE;
 
     return TRUE;
@@ -363,12 +356,12 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The R driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to route the file through the decompression          */
 /*      machinery?                                                      */
@@ -392,7 +385,8 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS->bASCII = EQUALN((const char *)poOpenInfo->pabyHeader,"RDA2\nA\n",7);
+    poDS->bASCII =
+        STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "RDA2\nA\n");
 
 /* -------------------------------------------------------------------- */
 /*      Confirm this is a version 2 file.                               */
@@ -401,7 +395,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->ReadInteger() != R_LISTSXP )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "It appears %s is not a version 2 R object file after all!",
                   poOpenInfo->pszFilename );
         return NULL;
@@ -507,13 +501,13 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
             while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
                 poDS->ReadInteger();
         }
-        else if( nObjCode % 256 == R_STRSXP )			
+        else if( nObjCode % 256 == R_STRSXP )
         {
             int nCount = poDS->ReadInteger();
             while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
                 poDS->ReadString();
         }
-        else if( nObjCode % 256 == R_CHARSXP )			
+        else if( nObjCode % 256 == R_CHARSXP )
         {
             poDS->ReadString();
         }
@@ -534,7 +528,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( nValueCount 
+    if( nValueCount
         < ((GIntBig) nBandCount) * poDS->nRasterXSize * poDS->nRasterYSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -548,19 +542,19 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
-        GDALRasterBand *poBand;
+        GDALRasterBand *poBand = NULL;
 
         if( poDS->bASCII )
-            poBand = new RRasterBand( poDS, iBand+1, 
+            poBand = new RRasterBand( poDS, iBand+1,
                                       poDS->padfMatrixValues + iBand * poDS->nRasterXSize * poDS->nRasterYSize );
         else
             poBand = new RawRasterBand( poDS, iBand+1, poDS->fp,
-                                        poDS->nStartOfData 
-                                        + poDS->nRasterXSize*poDS->nRasterYSize*8*iBand, 
+                                        poDS->nStartOfData
+                                        + poDS->nRasterXSize*poDS->nRasterYSize*8*iBand,
                                         8, poDS->nRasterXSize * 8,
                                         GDT_Float64, !CPL_IS_LSB,
                                         TRUE, FALSE );
-                                      
+
         poDS->SetBand( iBand+1, poBand );
     }
 
@@ -585,32 +579,28 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_R()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "R" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "R" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "R" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "R Object Data Store" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_r.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rda" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Float32" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "R" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "R Object Data Store" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_r.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rda" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Float32" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='ASCII' type='boolean' description='For ASCII output, default NO'/>"
 "   <Option name='COMPRESS' type='boolean' description='Produced Compressed output, default YES'/>"
 "</CreationOptionList>" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = RDataset::Open;
-        poDriver->pfnIdentify = RDataset::Identify;
-        poDriver->pfnCreateCopy = RCreateCopy;
+    poDriver->pfnOpen = RDataset::Open;
+    poDriver->pfnIdentify = RDataset::Identify;
+    poDriver->pfnCreateCopy = RCreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

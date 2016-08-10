@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  FMEObjects Translator
  * Purpose:  Implementation of the OGRFMELayer base class.  The class
@@ -16,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -61,7 +60,7 @@ OGRFMELayer::~OGRFMELayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "FME", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -91,7 +90,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 
 {
     IFMEString  *poFMEString = NULL;
-    
+
     poFMEString = poDS->GetFMESession()->createString();
     poFMEFeature = poDS->GetFMESession()->createFeature();
 
@@ -124,7 +123,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
     OGRwkbGeometryType eGeomType = wkbNone;
     IFMEString  *poAttrValue;
     poAttrValue = poDS->GetFMESession()->createString();
-    
+
     for( int iAttr = 0; iAttr < (int)poAttrNames->entries(); iAttr++ )
     {
         const char       *pszAttrName = (*poAttrNames)(iAttr);
@@ -140,7 +139,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 /*      the geometry type of this layer.  If we get conflicting         */
 /*      geometries just fall back to the generic geometry type.         */
 /* -------------------------------------------------------------------- */
-        if( EQUALN(pszAttrName,"fme_geometry",12) )
+        if( STARTS_WITH_CI(pszAttrName, "fme_geometry") )
         {
             OGRwkbGeometryType eAttrGeomType = wkbNone;
 
@@ -166,9 +165,9 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
                 eAttrGeomType = wkbNone;
             else
             {
-                CPLDebug( "FME_OLEDB", 
+                CPLDebug( "FME_OLEDB",
                           "geometry field %s has unknown value %s, ignored.",
-                          pszAttrName, 
+                          pszAttrName,
                           poAttrValue->data() );
                 continue;
             }
@@ -185,9 +184,9 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 /*      with * appear to be massaged suitably for use, with fme         */
 /*      standard data types.                                            */
 /* -------------------------------------------------------------------- */
-        if( EQUALN(pszAttrName,"fme_geometry",12) 
+        if( STARTS_WITH_CI(pszAttrName, "fme_geometry")
             || pszAttrName[0] == '*'
-            || EQUALN(pszAttrName,"fme_geomattr",12) )
+            || STARTS_WITH_CI(pszAttrName, "fme_geomattr") )
         {
             continue;
         }
@@ -211,7 +210,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
             eType = OFTString;
             nWidth = atoi(papszTokens[1]);
         }
-        else if( CSLCount(papszTokens) == 3 
+        else if( CSLCount(papszTokens) == 3
                  && EQUAL(papszTokens[0],"fme_decimal") )
         {
             nWidth = atoi(papszTokens[1]);
@@ -236,7 +235,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
             eType = OFTInteger;
         }
         else if( CSLCount(papszTokens) == 1
-                 && (EQUAL(papszTokens[0],"fme_real32") 
+                 && (EQUAL(papszTokens[0],"fme_real32")
                      || EQUAL(papszTokens[0],"fme_real64")) )
         {
             nWidth = 0;
@@ -252,7 +251,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
         }
         else
         {
-            printf( "Not able to translate field type: %s\n", 
+            printf( "Not able to translate field type: %s\n",
                     poAttrValue->data() );
             CSLDestroy( papszTokens );
             continue;
@@ -262,7 +261,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 /*      Add the field to the feature definition.                        */
 /* -------------------------------------------------------------------- */
         OGRFieldDefn  oFieldDefn( pszAttrName, eType );
-        
+
         oFieldDefn.SetWidth( nWidth );
         oFieldDefn.SetPrecision( nPrecision );
 
@@ -282,12 +281,12 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 /* -------------------------------------------------------------------- */
 /*      Translate the spatial reference system.                         */
 /* -------------------------------------------------------------------- */
-    if( poSchemaFeature->getCoordSys() != NULL 
+    if( poSchemaFeature->getCoordSys() != NULL
         && strlen(poSchemaFeature->getCoordSys()) > 0
         && poSpatialRef == NULL )
     {
         CPLDebug( "FME_OLEDB", "Layer %s has COORDSYS=%s on schema feature.",
-                  poFeatureDefn->GetName(), 
+                  poFeatureDefn->GetName(),
                   poSchemaFeature->getCoordSys() );
         poSpatialRef = poDS->FME2OGRSpatialRef(poSchemaFeature->getCoordSys());
     }

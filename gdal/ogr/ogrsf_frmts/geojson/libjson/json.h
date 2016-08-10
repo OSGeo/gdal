@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _json_h_
-#define _json_h_
+#ifndef json_h_
+#define json_h_
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WFS Translator
  * Purpose:  Implements OGR SQL into OGC Filter translation.
@@ -228,7 +227,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                 }
             }
         }
-        
+
         if( psOptions->poFDefn == NULL && psOptions->poDS == NULL )
             pszFieldname = poExpr->string_value;
 
@@ -270,9 +269,9 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
 
         return TRUE;
     }
-    
+
     if( poExpr->eNodeType != SNT_OPERATION )
-        return FALSE; /* shouldn't happen */
+        return FALSE; // Should not happen.
 
     if( poExpr->nOperation == SWQ_NOT )
     {
@@ -300,8 +299,8 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
             return FALSE;
         osFilter += CPLSPrintf("<%sLiteral>", psOptions->pszNSPrefix);
 
-        /* Escape value according to above special characters */
-        /* For URL compatibility reason, we remap the OGR SQL '%' wildchard into '*' */
+        // Escape value according to above special characters.  For URL
+        // compatibility reason, we remap the OGR SQL '%' wildcard into '*'.
         i = 0;
         ch = poExpr->papoSubExpr[1]->string_value[i];
         if (ch == '\'' || ch == '"')
@@ -407,7 +406,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         osFilter += ">";
         return TRUE;
     }
-    
+
     if( poExpr->nOperation == SWQ_CUSTOM_FUNC &&
         EQUAL(poExpr->string_value, "ST_MakeEnvelope") )
     {
@@ -466,7 +465,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                     poPROJCS->StripNodes( "AXIS" );
             }
 
-            if( EQUALN(pszSRSName, "urn:ogc:def:crs:EPSG::", strlen("urn:ogc:def:crs:EPSG::")) )
+            if( STARTS_WITH_CI(pszSRSName, "urn:ogc:def:crs:EPSG::") )
                 papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "YES");
             else
                 papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "NO");
@@ -627,7 +626,7 @@ static swq_field_type OGRWFSSpatialBooleanPredicateChecker( swq_expr_node *op,
 /*                           OGRWFSCheckSRIDArg()                       */
 /************************************************************************/
 
-static int OGRWFSCheckSRIDArg( swq_expr_node *op, int iSubArgIndex ) 
+static int OGRWFSCheckSRIDArg( swq_expr_node *op, int iSubArgIndex )
 {
     if( op->papoSubExpr[iSubArgIndex]->field_type == SWQ_INTEGER )
     {

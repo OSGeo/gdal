@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR SDE driver.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- * Copyright (c) 2008, Shawn Gervais <project10@project10.net> 
+ * Copyright (c) 2008, Shawn Gervais <project10@project10.net>
  * Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
  *
  ******************************************************************************
@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SDE_H_INCLUDED
-#define _OGR_SDE_H_INCLUDED
+#ifndef OGR_SDE_H_INCLUDED
+#define OGR_SDE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -62,18 +62,18 @@ class OGRSDELayer : public OGRLayer
 
     char               *pszOwnerName;
     char               *pszDbTableName;
-    
+
     int                 bUpdateAccess;
     int                 bVersioned;
     int                 bPreservePrecision;
-    
+
     CPLString           osAttributeFilter;
 
     int                 bQueryInstalled;
     int                 bQueryActive;
 
     SE_STREAM           hStream;
-    
+
     int                 bHaveLayerInfo;
     SE_LAYERINFO        hLayerInfo;
     SE_COORDREF         hCoordRef;
@@ -88,7 +88,7 @@ class OGRSDELayer : public OGRLayer
 
     int                 iShapeColumn;
 
-    int                 bUseNSTRING; 
+    int                 bUseNSTRING;
 
 
     char              **papszAllColumns;
@@ -115,7 +115,7 @@ class OGRSDELayer : public OGRLayer
 
     CPLString           osFIDColumnName;
     CPLString           osShapeColumnName;
-    
+
     int                 Initialize( const char *, const char *, const char * );
 
     virtual void        ResetReading();
@@ -129,23 +129,23 @@ class OGRSDELayer : public OGRLayer
     virtual GIntBig     GetFeatureCount( int bForce );
 
     virtual OGRErr      SetAttributeFilter( const char *pszQuery );
-    
+
     virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn,
                                      int bApproxOK );
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( GIntBig nFID );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    
+
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
-    
+
     // The following methods are not base class overrides
     //void                SetOptions( char ** );
-    
+
     void                SetFIDColType( LONG nType )
                                 { nFIDColumnType = nType; }
     void                SetPrecisionFlag( int bFlag )
@@ -163,11 +163,11 @@ class OGRSDEDataSource : public OGRDataSource
     int                 nLayers;
 
     char               *pszName;
-    
+
     int                 bDSUpdate;
     int                 bDSUseVersionEdits;
     int                 bDSVersionLocked;
-    
+
     SE_CONNECTION       hConnection;
     LONG                nState;
     LONG                nNextState;
@@ -178,22 +178,22 @@ class OGRSDEDataSource : public OGRDataSource
                         ~OGRSDEDataSource();
 
     int                 Open( const char *, int );
-    int                 OpenTable( const char *pszTableName, 
-                                   const char *pszFIDColumn, 
+    int                 OpenTable( const char *pszTableName,
+                                   const char *pszFIDColumn,
                                    const char *pszShapeColumn,
                                    LONG nFIDColumnType );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
-    
+
     virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
-    
+
     virtual OGRErr      DeleteLayer( int );
-    
+
     int                 TestCapability( const char * );
 
     SE_CONNECTION       GetConnection() { return hConnection; }
@@ -204,9 +204,9 @@ class OGRSDEDataSource : public OGRDataSource
 
     OGRErr              ConvertOSRtoSDESpatRef( OGRSpatialReference *,
                                                 SE_COORDREF * );
-    int                 IsOpenForUpdate() { return bDSUpdate; } 
+    int                 IsOpenForUpdate() { return bDSUpdate; }
     int                 UseVersionEdits() { return bDSUseVersionEdits; }
-    
+
   protected:
     void                EnumerateSpatialTables();
     void                OpenSpatialTable( const char* pszTableName );
@@ -235,5 +235,3 @@ class OGRSDEDriver : public OGRSFDriver
 
 
 #endif /* ndef _OGR_PG_H_INCLUDED */
-
-

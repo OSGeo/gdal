@@ -32,8 +32,6 @@
 
 #include "cpl_port.h"
 
-#ifndef WIN32CE /* ODBC is not supported on Windows CE. */
-
 #ifdef WIN32
 #  include <windows.h>
 #endif
@@ -43,13 +41,14 @@
 #include <odbcinst.h>
 #include "cpl_string.h"
 
+/*! @cond Doxygen_Suppress */
 #ifdef PATH_MAX
 #  define ODBC_FILENAME_MAX PATH_MAX
 #else
 #  define ODBC_FILENAME_MAX (255 + 1) /* Max path length */
 #endif
+/*! @endcond */
 
- 
 /**
  * \file cpl_odbc.h
  *
@@ -67,7 +66,7 @@ class CPL_DLL CPLODBCDriverInstaller
     DWORD m_nUsageCount;
 
   public:
-    
+
     // Default constructor.
     CPLODBCDriverInstaller();
 
@@ -75,7 +74,7 @@ class CPL_DLL CPLODBCDriverInstaller
     /**
      * Installs ODBC driver or updates definition of already installed driver.
      * Interanally, it calls ODBC's SQLInstallDriverEx function.
-     * 
+     *
      * @param pszDriver - The driver definition as a list of keyword-value
      * pairs describing the driver (See ODBC API Reference).
      *
@@ -98,10 +97,10 @@ class CPL_DLL CPLODBCDriverInstaller
      *
      * @param pszDriverName - The name of the driver as registered in
      * the Odbcinst.ini key of the system information.
-     * 
-     * @param fRemoveDSN - TRUE: Remove DSNs associated with the driver 
+     *
+     * @param fRemoveDSN - TRUE: Remove DSNs associated with the driver
      * specified in lpszDriver. FALSE: Do not remove DSNs associated
-     * with the driver specified in lpszDriver. 
+     * with the driver specified in lpszDriver.
      *
      * @return The function returns TRUE if it is successful,
      * FALSE if it fails. If no entry exists in the system information
@@ -111,32 +110,34 @@ class CPL_DLL CPLODBCDriverInstaller
     int RemoveDriver( const char* pszDriverName, int fRemoveDSN = FALSE );
 
 
-    // The usage count of the driver after this function has been called
+    /** The usage count of the driver after this function has been called */
     int GetUsageCount() const {  return m_nUsageCount; }
 
 
-    // Path of the target directory where the driver should be installed.
-    // For details, see ODBC API Reference and lpszPathOut
-    // parameter of SQLInstallDriverEx 
+    /** Path of the target directory where the driver should be installed.
+     * For details, see ODBC API Reference and lpszPathOut
+     * parameter of SQLInstallDriverEx
+     */
     const char* GetPathOut() const { return m_szPathOut; }
 
 
-    // If InstallDriver returns FALSE, then GetLastError then
-    // error message can be obtained by calling this function.
-    // Internally, it calls ODBC's SQLInstallerError function.
+    /** If InstallDriver returns FALSE, then GetLastError then
+     * error message can be obtained by calling this function.
+     * Internally, it calls ODBC's SQLInstallerError function.
+     */
     const char* GetLastError() const { return m_szError; }
-   
 
-    // If InstallDriver returns FALSE, then GetLastErrorCode then
-    // error code can be obtained by calling this function.
-    // Internally, it calls ODBC's SQLInstallerError function.
-    // See ODBC API Reference for possible error flags.
+    /** If InstallDriver returns FALSE, then GetLastErrorCode then
+     * error code can be obtained by calling this function.
+     * Internally, it calls ODBC's SQLInstallerError function.
+     * See ODBC API Reference for possible error flags.
+     */
     DWORD GetLastErrorCode() const { return m_nErrorCode; }
 };
 
 class CPLODBCStatement;
 
-/* On MSVC SQLULEN is missing in some cases (ie. VC6)
+/* On MSVC SQLULEN is missing in some cases (i.e. VC6)
 ** but it is always a #define so test this way.   On Unix
 ** it is a typedef so we can't always do this.
 */
@@ -144,18 +145,19 @@ class CPLODBCStatement;
 #  define MISSING_SQLULEN
 #endif
 
+/*! @cond Doxygen_Suppress */
 #if !defined(MISSING_SQLULEN)
 /* ODBC types to support 64 bit compilation */
-#  define _SQLULEN SQLULEN
-#  define _SQLLEN  SQLLEN
+#  define CPL_SQLULEN SQLULEN
+#  define CPL_SQLLEN  SQLLEN
 #else
-#  define _SQLULEN SQLUINTEGER
-#  define _SQLLEN  SQLINTEGER
+#  define CPL_SQLULEN SQLUINTEGER
+#  define CPL_SQLLEN  SQLINTEGER
 #endif	/* ifdef SQLULEN */
-
+/*! @endcond */
 
 /**
- * A class representing an ODBC database session. 
+ * A class representing an ODBC database session.
  *
  * Includes error collection services.
  */
@@ -171,8 +173,8 @@ class CPL_DLL CPLODBCSession {
     CPLODBCSession();
     ~CPLODBCSession();
 
-    int         EstablishSession( const char *pszDSN, 
-                                  const char *pszUserid, 
+    int         EstablishSession( const char *pszDSN,
+                                  const char *pszUserid,
                                   const char *pszPassword );
     const char  *GetLastError();
 
@@ -182,14 +184,17 @@ class CPL_DLL CPLODBCSession {
     int         BeginTransaction();
     int         CommitTransaction();
     int         RollbackTransaction();
+    /** Returns whether a transaction is active */
     int         IsInTransaction() { return m_bInTransaction; }
 
-    // Essentially internal. 
+    // Essentially internal.
 
     int         CloseSession();
 
     int         Failed( int, HSTMT = NULL );
+    /** Return connection handle */
     HDBC        GetConnection() { return m_hDBC; }
+    /** Return GetEnvironment handle */
     HENV        GetEnvironment()  { return m_hEnv; }
 };
 
@@ -211,14 +216,14 @@ class CPL_DLL CPLODBCStatement {
     char         **m_papszColNames;
     SQLSMALLINT   *m_panColType;
     char         **m_papszColTypeNames;
-    _SQLULEN      *m_panColSize;
+    CPL_SQLULEN      *m_panColSize;
     SQLSMALLINT   *m_panColPrecision;
     SQLSMALLINT   *m_panColNullable;
     char         **m_papszColColumnDef;
 
     char         **m_papszColValues;
-    _SQLLEN       *m_panColValueLengths;
-    
+    CPL_SQLLEN       *m_panColValueLengths;
+
     int            Failed( int );
 
     char          *m_pszStatement;
@@ -229,6 +234,7 @@ class CPL_DLL CPLODBCStatement {
     CPLODBCStatement( CPLODBCSession * );
     ~CPLODBCStatement();
 
+    /** Return statement handle */
     HSTMT          GetStatement() { return m_hStmt; }
 
     // Command buffer related.
@@ -238,12 +244,13 @@ class CPL_DLL CPLODBCStatement {
     void           Append( int );
     void           Append( double );
     int            Appendf( const char *, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
+    /** Return statement string */
     const char    *GetCommand() { return m_pszStatement; }
 
     int            ExecuteSQL( const char * = NULL );
 
     // Results fetching
-    int            Fetch( int nOrientation = SQL_FETCH_NEXT, 
+    int            Fetch( int nOrientation = SQL_FETCH_NEXT,
                           int nOffset = 0 );
     void           ClearColumnData();
 
@@ -263,10 +270,10 @@ class CPL_DLL CPLODBCStatement {
     int            GetRowCountAffected();
 
     // Fetch special metadata.
-    int            GetColumns( const char *pszTable, 
+    int            GetColumns( const char *pszTable,
                                const char *pszCatalog = NULL,
                                const char *pszSchema = NULL );
-    int            GetPrimaryKeys( const char *pszTable, 
+    int            GetPrimaryKeys( const char *pszTable,
                                    const char *pszCatalog = NULL,
                                    const char *pszSchema = NULL );
 
@@ -281,8 +288,4 @@ class CPL_DLL CPLODBCStatement {
     int            CollectResultsInfo();
 };
 
-#endif /* #ifndef WIN32CE */
-
 #endif
-
-

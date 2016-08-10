@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SRTM HGT Driver
  * Purpose:  SRTM HGT File Read Support.
@@ -31,22 +30,21 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-#define SRTMHG_NODATA_VALUE -32768
+#include <cmath>
+
+static const GInt16 SRTMHG_NODATA_VALUE = -32768;
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void	GDALRegister_SRTMHGT(void);
-CPL_C_END
-
 /************************************************************************/
 /* ==================================================================== */
-/*				SRTMHGTDataset				*/
+/*                              SRTMHGTDataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -66,11 +64,11 @@ class SRTMHGTDataset : public GDALPamDataset
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform(double*);
-    
+
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset* Open(GDALOpenInfo*);
-    static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                                    int bStrict, char ** papszOptions, 
+    static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress, void * pProgressData );
 
 };
@@ -85,8 +83,8 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
 {
     friend class SRTMHGTDataset;
 
-    int	        bNoDataSet;
-    double	dfNoDataValue;
+    int         bNoDataSet;
+    double      dfNoDataValue;
 
   public:
     SRTMHGTRasterBand(SRTMHGTDataset*, int);
@@ -105,36 +103,25 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
 /*                           SRTMHGTRasterBand()                            */
 /************************************************************************/
 
-SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDS, int nBand)
+SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDSIn, int nBandIn) :
+    bNoDataSet(TRUE),
+    dfNoDataValue(SRTMHG_NODATA_VALUE)
 {
-  this->poDS = poDS;
-  this->nBand = nBand;
-  eDataType = GDT_Int16;
-  nBlockXSize = poDS->nRasterXSize;
-  nBlockYSize = 1;
-  bNoDataSet = TRUE;
-  dfNoDataValue = SRTMHG_NODATA_VALUE;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = GDT_Int16;
+    nBlockXSize = poDSIn->nRasterXSize;
+    nBlockYSize = 1;
 }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                                      void* pImage)
 {
-  SRTMHGTDataset* poGDS = (SRTMHGTDataset*) poDS;
-
-  CPLAssert(nBlockXOff == 0);
-  if(nBlockXOff != 0)
-  {
-      CPLError(CE_Failure, CPLE_NotSupported,
-               "unhandled nBlockXOff value : %d", nBlockXOff);
-      return CE_Failure;
-  }
-
-  if((poGDS == NULL) || (poGDS->fpImage == NULL))
-    return CE_Failure;
+  SRTMHGTDataset* poGDS = reinterpret_cast<SRTMHGTDataset *>( poDS );
 
 /* -------------------------------------------------------------------- */
 /*      Load the desired data into the working buffer.                  */
@@ -152,18 +139,11 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage)
+CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff, void* pImage)
 {
-    SRTMHGTDataset* poGDS = (SRTMHGTDataset*) poDS;
+    SRTMHGTDataset* poGDS = reinterpret_cast<SRTMHGTDataset *>( poDS );
 
-    CPLAssert(nBlockXOff == 0);
-    if(nBlockXOff != 0)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "unhandled nBlockXOff value : %d", nBlockXOff);
-        return CE_Failure;
-    }
-
-    if((poGDS == NULL) || (poGDS->fpImage == NULL) || (poGDS->eAccess != GA_Update))
+    if( poGDS->eAccess != GA_Update )
         return CE_Failure;
 
     VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*2, SEEK_SET);
@@ -171,9 +151,11 @@ CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pIma
 #ifdef CPL_LSB
     memcpy(poGDS->panBuffer, pImage, nBlockXSize*sizeof(GInt16));
     GDALSwapWords(poGDS->panBuffer, 2, nBlockXSize, 2);
-    VSIFWriteL((unsigned char*)poGDS->panBuffer, nBlockXSize, 2, poGDS->fpImage);
+    VSIFWriteL( reinterpret_cast<unsigned char *>( poGDS->panBuffer ),
+                nBlockXSize, 2, poGDS->fpImage );
 #else
-    VSIFWriteL((unsigned char*)pImage, nBlockXSize, 2, poGDS->fpImage);
+    VSIFWriteL( reinterpret_cast<unsigned char *>( pImage ),
+                nBlockXSize, 2, poGDS->fpImage );
 #endif
 
     return CE_None;
@@ -211,7 +193,9 @@ GDALColorInterp SRTMHGTRasterBand::GetColorInterpretation()
 /*                            SRTMHGTDataset()                              */
 /************************************************************************/
 
-SRTMHGTDataset::SRTMHGTDataset()
+SRTMHGTDataset::SRTMHGTDataset() :
+    fpImage(NULL),
+    panBuffer(NULL)
 {
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
@@ -219,8 +203,6 @@ SRTMHGTDataset::SRTMHGTDataset()
   adfGeoTransform[3] = 0.0;
   adfGeoTransform[4] = 0.0;
   adfGeoTransform[5] = 1.0;
-  fpImage = NULL;
-  panBuffer = NULL;
 }
 
 /************************************************************************/
@@ -263,12 +245,26 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
-  if( strlen(fileName) < 11 || !EQUALN(&fileName[7], ".hgt", 4) )
+  if( strlen(fileName) < 11 || fileName[7] != '.' )
+    return FALSE;
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+  {
+    CPLString osNewName("/vsizip/");
+    osNewName += poOpenInfo->pszFilename;
+    osNewName += "/";
+    osNewName += CPLString(fileName).substr(0, 7);
+    osNewName += ".hgt";
+    GDALOpenInfo oOpenInfo(osNewName, GA_ReadOnly);
+    return Identify(&oOpenInfo);
+  }
+
+  if( !EQUAL(fileName + strlen(fileName) - strlen(".hgt"), ".hgt") )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	We check the file size to see if it is 25,934,402 bytes	        */
-/*	(SRTM 1) or 2,884,802 bytes (SRTM 3)				*/    
+/*      We check the file size to see if it is 25,934,402 bytes         */
+/*      (SRTM 1) or 2,884,802 bytes (SRTM 3)                            */
 /* -------------------------------------------------------------------- */
   VSIStatBufL fileStat;
 
@@ -288,8 +284,19 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 {
   if (!Identify(poOpenInfo))
       return NULL;
-  
+
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+  {
+      CPLString osFilename ("/vsizip/");
+      osFilename += poOpenInfo->pszFilename;
+      osFilename += "/";
+      osFilename += CPLString(fileName).substr(0, 7);
+      osFilename += ".hgt";
+      GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
+      return Open(&oOpenInfo);
+  }
 
   char latLonValueString[4];
   memset(latLonValueString, 0, 4);
@@ -318,16 +325,8 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
   SRTMHGTDataset* poDS  = new SRTMHGTDataset();
 
-/* -------------------------------------------------------------------- */
-/*      Open the file using the large file api.                         */
-/* -------------------------------------------------------------------- */
-  poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb");
-  if(poDS->fpImage == NULL)
-  {
-      CPLError(CE_Failure, CPLE_OpenFailed, "VSIFOpenL(%s) failed unexpectedly in srtmhgtdataset.cpp", poOpenInfo->pszFilename);
-      delete poDS;
-      return NULL;
-  }
+  poDS->fpImage = poOpenInfo->fpL;
+  poOpenInfo->fpL = NULL;
 
   VSIStatBufL fileStat;
   if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
@@ -335,13 +334,14 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
       delete poDS;
       return NULL;
   }
-  int numPixels = (fileStat.st_size == 25934402) ? 3601 : /* 2884802 */ 1201;
+  const int numPixels = (fileStat.st_size == 25934402) ? 3601 : /* 2884802 */ 1201;
 
   poDS->eAccess = poOpenInfo->eAccess;
 #ifdef CPL_LSB
   if(poDS->eAccess == GA_Update)
   {
-      poDS->panBuffer = (GInt16*) CPLMalloc(numPixels * sizeof(GInt16));
+      poDS->panBuffer
+          = reinterpret_cast<GInt16 *>( CPLMalloc(numPixels * sizeof(GInt16)) );
   }
 #endif
 
@@ -354,13 +354,13 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 
   poDS->adfGeoTransform[0] = southWestLon - 0.5 / (numPixels - 1);
   poDS->adfGeoTransform[1] = 1.0 / (numPixels-1);
-  poDS->adfGeoTransform[2] = 0.0000000000;
+  poDS->adfGeoTransform[2] = 0.0;
   poDS->adfGeoTransform[3] = southWestLat + 1 + 0.5 / (numPixels - 1);
-  poDS->adfGeoTransform[4] = 0.0000000000;
+  poDS->adfGeoTransform[4] = 0.0;
   poDS->adfGeoTransform[5] = -1.0 / (numPixels-1);
 
   poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
-  
+
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
@@ -388,29 +388,23 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
                                           GDALDataset *poSrcDS,
                                           int bStrict,
-                                          CPL_UNUSED char ** papszOptions,
+                                          char ** /* papszOptions*/,
                                           GDALProgressFunc pfnProgress,
                                           void * pProgressData )
 {
-    const int nBands = poSrcDS->GetRasterCount();
-    const int nXSize = poSrcDS->GetRasterXSize();
-    const int nYSize = poSrcDS->GetRasterYSize();
-
-    if( pfnProgress && !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
+    const int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "SRTMHGT driver does not support source dataset with zero band.\n");
         return NULL;
     }
     else if (nBands != 1)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "SRTMHGT driver only uses the first band of the dataset.\n");
         if (bStrict)
             return NULL;
@@ -420,42 +414,46 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /*      Checks the input SRS                                            */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference ogrsr_input;
-    OGRSpatialReference ogrsr_wgs84;
-    char* c = (char*)poSrcDS->GetProjectionRef();
+    char* c = const_cast<char *>( poSrcDS->GetProjectionRef() );
     ogrsr_input.importFromWkt(&c);
+
+    OGRSpatialReference ogrsr_wgs84;
     ogrsr_wgs84.SetWellKnownGeogCS( "WGS84" );
+
     if ( ogrsr_input.IsSameGeogCS(&ogrsr_wgs84) == FALSE)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "The source projection coordinate system is %s. Only WGS 84 is supported.\n"
-                  "The SRTMHGT driver will generate a file as if the source was WGS 84 projection coordinate system.",
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "The source projection coordinate system is %s. Only WGS 84 "
+                  "is supported.\nThe SRTMHGT driver will generate a file as "
+                  "if the source was WGS 84 projection coordinate system.",
                   poSrcDS->GetProjectionRef() );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Work out the LL origin.                                         */
 /* -------------------------------------------------------------------- */
-    int  nLLOriginLat, nLLOriginLong;
     double adfGeoTransform[6];
-
     if (poSrcDS->GetGeoTransform( adfGeoTransform ) != CE_None)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Source image must have a geo transform matrix.");
         return NULL;
     }
 
-    nLLOriginLat = (int) 
-        floor(adfGeoTransform[3] 
-              + poSrcDS->GetRasterYSize() * adfGeoTransform[5] + 0.5);
+    const int nLLOriginLat = static_cast<int>(
+        std::floor(adfGeoTransform[3]
+              + poSrcDS->GetRasterYSize() * adfGeoTransform[5] + 0.5) );
 
-    nLLOriginLong = (int) floor(adfGeoTransform[0] + 0.5);
+    int nLLOriginLong = static_cast<int>(
+        std::floor(adfGeoTransform[0] + 0.5) );
 
-    if (fabs(nLLOriginLat - (adfGeoTransform[3] 
-              + (poSrcDS->GetRasterYSize() - 0.5) * adfGeoTransform[5])) > 1e-10 ||
-        fabs(nLLOriginLong - (adfGeoTransform[0] + 0.5 * adfGeoTransform[1])) > 1e-10)
+    if (std::abs(nLLOriginLat - (
+            adfGeoTransform[3] + (poSrcDS->GetRasterYSize() - 0.5 )
+            * adfGeoTransform[5] ) ) > 1e-10 ||
+        std::abs(nLLOriginLong - (
+            adfGeoTransform[0] + 0.5 * adfGeoTransform[1])) > 1e-10 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                "The corner coordinates of the source are not properly "
                "aligned on plain latitude/longitude boundaries.");
     }
@@ -463,9 +461,12 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Check image dimensions.                                         */
 /* -------------------------------------------------------------------- */
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+
     if (!((nXSize == 1201 && nYSize == 1201) || (nXSize == 3601 && nYSize == 3601)))
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Image dimensions should be 1201x1201 or 3601x3601.");
         return NULL;
     }
@@ -481,7 +482,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
              (nLLOriginLong >= 0) ? nLLOriginLong : -nLLOriginLong);
     if (!EQUAL(expectedFileName, CPLGetFilename(pszFilename)))
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Expected output filename is %s.", expectedFileName);
     }
 
@@ -496,7 +497,8 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
 
-    GInt16* panData = (GInt16*) CPLMalloc(sizeof(GInt16) * nXSize);
+    GInt16* panData
+        = reinterpret_cast<GInt16 *>( CPLMalloc(sizeof(GInt16) * nXSize) );
     GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(1);
 
     int bSrcBandHasNoData;
@@ -504,9 +506,14 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 
     for( int iY = 0; iY < nYSize; iY++ )
     {
-        poSrcBand->RasterIO( GF_Read, 0, iY, nXSize, 1,
-                            (void *) panData, nXSize, 1,
-                            GDT_Int16, 0, 0, NULL );
+        if( poSrcBand->RasterIO( GF_Read, 0, iY, nXSize, 1,
+                                 reinterpret_cast<void *>( panData ), nXSize, 1,
+                                 GDT_Int16, 0, 0, NULL ) != CE_None )
+        {
+            VSIFCloseL(fp);
+            CPLFree( panData );
+            return NULL;
+        }
 
         /* Translate nodata values */
         if (bSrcBandHasNoData && srcBandNoData != SRTMHG_NODATA_VALUE)
@@ -532,9 +539,10 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
             return NULL;
         }
 
-        if( pfnProgress && !pfnProgress((iY+1) / (double) nYSize, NULL, pProgressData ) )
+        if( pfnProgress && !pfnProgress( (iY+1) / static_cast<double>( nYSize ),
+                                         NULL, pProgressData ) )
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, 
+            CPLError( CE_Failure, CPLE_UserInterrupt,
                         "User terminated CreateCopy()" );
             VSIFCloseL(fp);
             CPLFree( panData );
@@ -548,8 +556,8 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Reopen and copy missing information into a PAM file.            */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *) 
-        GDALOpen( pszFilename, GA_ReadOnly );
+    GDALPamDataset *poDS = reinterpret_cast<GDALPamDataset *>(
+        GDALOpen( pszFilename, GA_ReadOnly ) );
 
     if( poDS )
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT);
@@ -558,24 +566,23 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_SRTMHGT()                          */
+/*                         GDALRegister_SRTMHGT()                       */
 /************************************************************************/
 void GDALRegister_SRTMHGT()
 {
-  GDALDriver*  poDriver;
+    if( GDALGetDriverByName( "SRTMHGT" ) != NULL )
+        return;
 
-  if(GDALGetDriverByName("SRTMHGT") == NULL)
-  {
-    poDriver = new GDALDriver();
-    poDriver->SetDescription("SRTMHGT");
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "SRTMHGT File Format");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hgt");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, 
-                              "frmt_various.html#SRTMHGT" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16" );
+    GDALDriver *poDriver = new GDALDriver();
 
+    poDriver->SetDescription( "SRTMHGT" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SRTMHGT File Format");
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hgt");
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#SRTMHGT" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = SRTMHGTDataset::Identify;
@@ -583,5 +590,4 @@ void GDALRegister_SRTMHGT()
     poDriver->pfnCreateCopy = SRTMHGTDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
-  }
 }

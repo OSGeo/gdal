@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test VRTRawRasterBand support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -65,7 +65,7 @@ def vrtrawlink_2():
         'subClass=VRTRawRasterBand',
         'SourceFilename=data/small.raw'
         ]
-    
+
     result = ds.AddBand( gdal.GDT_Byte, options )
     if result != gdal.CE_None:
         gdaltest.post_reason( 'AddBand() returned error code' )
@@ -78,7 +78,7 @@ def vrtrawlink_2():
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
 
-    # Force it to be written to disk. 
+    # Force it to be written to disk.
     ds = None
 
     return 'success'
@@ -105,19 +105,19 @@ def vrtrawlink_3():
     return 'success'
 
 ###############################################################################
-# Add a new band, and we will test if we can write to it. 
+# Add a new band, and we will test if we can write to it.
 
 def vrtrawlink_4():
 
     # force creation of the file.
     open( 'tmp/rawlink.dat', 'w' ).write( chr(0) )
 
-    # Add a new band pointing to this bogus file. 
+    # Add a new band pointing to this bogus file.
     options = [
         'subClass=VRTRawRasterBand',
         'SourceFilename=tmp/rawlink.dat',
         'relativeToVRT=0',
-        'ImageOffset=100',
+        'ImageOffset=                      100',
         'PixelOffset=3',
         'LineOffset=93',
         'ByteOrder=MSB'
@@ -143,7 +143,7 @@ def vrtrawlink_4():
     if chksum != 12481:
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
-    
+
     band_1 = None
     band = None
 
@@ -261,7 +261,7 @@ def vrtrawlink_6():
     return 'success'
 
 ###############################################################################
-# Add a new band with relativeToVRT=1, change direcotry and re-open the dataset.
+# Add a new band with relativeToVRT=1, change directory and re-open the dataset.
 
 def vrtrawlink_7():
 
@@ -310,7 +310,7 @@ def vrtrawlink_7():
 
 def vrtrawlink_cleanup():
     gdaltest.rawlink_ds = None
-        
+
     try:
         os.remove( 'tmp/rawlink.vrt' )
         os.remove( 'tmp/rawlink.dat' )
@@ -338,4 +338,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

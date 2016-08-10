@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Microstation DGN Access Library
- * Purpose:  Internal (privatE) datastructures, and prototypes for DGN Access 
+ * Purpose:  Internal (privatE) datastructures, and prototypes for DGN Access
  *           Library.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -28,13 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _DGNLIBP_H_INCLUDED
-#define _DGNLIBP_H_INCLUDED
+#ifndef DGNLIBP_H_INCLUDED
+#define DGNLIBP_H_INCLUDED
 
 #include "dgnlib.h"
-
-#define _USE_MATH_DEFINES  // For MSVC to get M_PI.
-#include <cmath>
 
 typedef struct {
     FILE        *fp;
@@ -88,7 +85,7 @@ typedef struct {
                         + ((p)[3] << 8) \
                         + ((p)[1] << 24) \
                         + ((p)[0] << 16))
-#define DGN_WRITE_INT32( n, p ) { GInt32 nMacroWork = (n);                   \
+#define DGN_WRITE_INT32( n, p ) { GInt32 nMacroWork = (GInt32)(n);                   \
  ((unsigned char *)p)[0] = (unsigned char)((nMacroWork & 0x00ff0000) >> 16); \
  ((unsigned char *)p)[1] = (unsigned char)((nMacroWork & 0xff000000) >> 24); \
  ((unsigned char *)p)[2] = (unsigned char)((nMacroWork & 0x000000ff) >> 0);  \
@@ -106,4 +103,4 @@ void DGNAsciiToRad50( const char *str, unsigned short *rad50 );
 void DGNSpatialFilterToUOR( DGNInfo *);
 int  DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel );
 
-#endif /* ndef _DGNLIBP_H_INCLUDED */
+#endif /* ndef DGNLIBP_H_INCLUDED */

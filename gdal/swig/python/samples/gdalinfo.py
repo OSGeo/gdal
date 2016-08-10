@@ -1,47 +1,44 @@
 #!/usr/bin/env python
-#/******************************************************************************
-# * $Id$
-# *
-# * Project:  GDAL Utilities
-# * Purpose:  Python port of Commandline application to list info about a file.
-# * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# *
-# * Port from gdalinfo.c whose author is Frank Warmerdam
-# *
-# ******************************************************************************
-# * Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# * Copyright (c) 1998, Frank Warmerdam
-# *
-# * Permission is hereby granted, free of charge, to any person obtaining a
-# * copy of this software and associated documentation files (the "Software"),
-# * to deal in the Software without restriction, including without limitation
-# * the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# * and/or sell copies of the Software, and to permit persons to whom the
-# * Software is furnished to do so, subject to the following conditions:
-# *
-# * The above copyright notice and this permission notice shall be included
-# * in all copies or substantial portions of the Software.
-# *
-# * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# * DEALINGS IN THE SOFTWARE.
-# ****************************************************************************/
+#*****************************************************************************
+# $Id$
+#
+# Project:  GDAL Utilities
+# Purpose:  Python port of Commandline application to list info about a file.
+# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+#
+# Port from gdalinfo.c whose author is Frank Warmerdam
+#
+#*****************************************************************************
+# Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 1998, Frank Warmerdam
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+#***************************************************************************/
 
 import sys
-try:
-    from osgeo import gdal
-    from osgeo import osr
-except:
-    import gdal
-    import osr
 
-#/************************************************************************/
-#/*                               Usage()                                */
-#/************************************************************************/
+from osgeo import gdal
+from osgeo import osr
+
+#**********************************************************************
+#                               Usage()
+#**********************************************************************
 
 def Usage():
     print( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n" + \
@@ -52,9 +49,9 @@ def Usage():
 def EQUAL(a, b):
     return a.lower() == b.lower()
 
-#/************************************************************************/
-#/*                                main()                                */
-#/************************************************************************/
+#**********************************************************************
+#                                main()
+#**********************************************************************
 
 def main( argv = None ):
 
@@ -73,9 +70,9 @@ def main( argv = None ):
     hTransform = None
     bShowFileList = True
 
-    #/* Must process GDAL_SKIP before GDALAllRegister(), but we can't call */
-    #/* GDALGeneralCmdLineProcessor before it needs the drivers to be registered */
-    #/* for the --format or --formats options */
+    # Must process GDAL_SKIP before GDALAllRegister(), but we can't call
+    # GDALGeneralCmdLineProcessor before it needs the drivers to be registered
+    # for the --format or --formats options
     #for( i = 1; i < argc; i++ )
     #{
     #    if EQUAL(argv[i],"--config") and i + 2 < argc and EQUAL(argv[i + 1], "GDAL_SKIP"):
@@ -97,9 +94,9 @@ def main( argv = None ):
         return 1
 
     nArgc = len(argv)
-#/* -------------------------------------------------------------------- */
-#/*      Parse arguments.                                                */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Parse arguments.
+# --------------------------------------------------------------------
     i = 1
     while i < nArgc:
 
@@ -144,9 +141,9 @@ def main( argv = None ):
     if pszFilename is None:
         return Usage()
 
-#/* -------------------------------------------------------------------- */
-#/*      Open dataset.                                                   */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Open dataset.
+# --------------------------------------------------------------------
     hDataset = gdal.Open( pszFilename, gdal.GA_ReadOnly )
 
     if hDataset is None:
@@ -154,10 +151,10 @@ def main( argv = None ):
         print("gdalinfo failed - unable to open '%s'." % pszFilename )
 
         return 1
-    
-#/* -------------------------------------------------------------------- */
-#/*      Report general info.                                            */
-#/* -------------------------------------------------------------------- */
+
+# --------------------------------------------------------------------
+#      Report general info.
+# --------------------------------------------------------------------
     hDriver = hDataset.GetDriver();
     print( "Driver: %s/%s" % ( \
             hDriver.ShortName, \
@@ -174,9 +171,9 @@ def main( argv = None ):
 
     print( "Size is %d, %d" % (hDataset.RasterXSize, hDataset.RasterYSize))
 
-#/* -------------------------------------------------------------------- */
-#/*      Report projection.                                              */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report projection.
+# --------------------------------------------------------------------
     pszProjection = hDataset.GetProjectionRef()
     if pszProjection is not None:
 
@@ -188,9 +185,9 @@ def main( argv = None ):
         else:
             print( "Coordinate System is `%s'" % pszProjection )
 
-#/* -------------------------------------------------------------------- */
-#/*      Report Geotransform.                                            */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report Geotransform.
+# --------------------------------------------------------------------
     adfGeoTransform = hDataset.GetGeoTransform(can_return_null = True)
     if adfGeoTransform is not None:
 
@@ -212,9 +209,9 @@ def main( argv = None ):
                     adfGeoTransform[4], \
                     adfGeoTransform[5] ))
 
-#/* -------------------------------------------------------------------- */
-#/*      Report GCPs.                                                    */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report GCPs.
+# --------------------------------------------------------------------
     if bShowGCPs and hDataset.GetGCPCount() > 0:
 
         pszProjection = hDataset.GetGCPProjection()
@@ -240,9 +237,9 @@ def main( argv = None ):
                     gcp.GCPX, gcp.GCPY, gcp.GCPZ ))
             i = i + 1
 
-#/* -------------------------------------------------------------------- */
-#/*      Report metadata.                                                */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report metadata.
+# --------------------------------------------------------------------
     if bShowMetadata:
         papszMetadata = hDataset.GetMetadata_List()
     else:
@@ -260,9 +257,9 @@ def main( argv = None ):
                 for metadata in papszMetadata:
                   print( "  %s" % metadata )
 
-#/* -------------------------------------------------------------------- */
-#/*      Report "IMAGE_STRUCTURE" metadata.                              */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report "IMAGE_STRUCTURE" metadata.
+# --------------------------------------------------------------------
     if bShowMetadata:
         papszMetadata = hDataset.GetMetadata_List("IMAGE_STRUCTURE")
     else:
@@ -272,18 +269,18 @@ def main( argv = None ):
         for metadata in papszMetadata:
             print( "  %s" % metadata )
 
-#/* -------------------------------------------------------------------- */
-#/*      Report subdatasets.                                             */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report subdatasets.
+# --------------------------------------------------------------------
     papszMetadata = hDataset.GetMetadata_List("SUBDATASETS")
     if papszMetadata is not None and len(papszMetadata) > 0 :
         print( "Subdatasets:" )
         for metadata in papszMetadata:
             print( "  %s" % metadata )
 
-#/* -------------------------------------------------------------------- */
-#/*      Report geolocation.                                             */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report geolocation.
+# --------------------------------------------------------------------
     if bShowMetadata:
         papszMetadata = hDataset.GetMetadata_List("GEOLOCATION")
     else:
@@ -293,9 +290,9 @@ def main( argv = None ):
         for metadata in papszMetadata:
             print( "  %s" % metadata )
 
-#/* -------------------------------------------------------------------- */
-#/*      Report RPCs                                                     */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report RPCs
+# --------------------------------------------------------------------
     if bShowMetadata:
         papszMetadata = hDataset.GetMetadata_List("RPC")
     else:
@@ -305,9 +302,9 @@ def main( argv = None ):
         for metadata in papszMetadata:
             print( "  %s" % metadata )
 
-#/* -------------------------------------------------------------------- */
-#/*      Setup projected to lat/long transform if appropriate.           */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Setup projected to lat/long transform if appropriate.
+# --------------------------------------------------------------------
     if pszProjection is not None and len(pszProjection) > 0:
         hProj = osr.SpatialReference( pszProjection )
         if hProj is not None:
@@ -320,9 +317,9 @@ def main( argv = None ):
             if gdal.GetLastErrorMsg().find( 'Unable to load PROJ.4 library' ) != -1:
                 hTransform = None
 
-#/* -------------------------------------------------------------------- */
-#/*      Report corners.                                                 */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report corners.
+# --------------------------------------------------------------------
     print( "Corner Coordinates:" )
     GDALInfoReportCorner( hDataset, hTransform, "Upper Left", \
                           0.0, 0.0 );
@@ -337,9 +334,9 @@ def main( argv = None ):
                           hDataset.RasterXSize/2.0, \
                           hDataset.RasterYSize/2.0 );
 
-#/* ==================================================================== */
-#/*      Loop over bands.                                                */
-#/* ==================================================================== */
+# ====================================================================
+#      Loop over bands.
+# ====================================================================
     for iBand in range(hDataset.RasterCount):
 
         hBand = hDataset.GetRasterBand(iBand+1 )
@@ -556,18 +553,18 @@ def main( argv = None ):
 
     return 0
 
-#/************************************************************************/
-#/*                        GDALInfoReportCorner()                        */
-#/************************************************************************/
+#**********************************************************************
+#                        GDALInfoReportCorner()
+#**********************************************************************
 
 def GDALInfoReportCorner( hDataset, hTransform, corner_name, x, y ):
 
 
     line = "%-11s " % corner_name
 
-#/* -------------------------------------------------------------------- */
-#/*      Transform the point into georeferenced coordinates.             */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Transform the point into georeferenced coordinates.
+# --------------------------------------------------------------------
     adfGeoTransform = hDataset.GetGeoTransform(can_return_null = True)
     if adfGeoTransform is not None:
         dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x \
@@ -580,18 +577,18 @@ def GDALInfoReportCorner( hDataset, hTransform, corner_name, x, y ):
         print(line)
         return False
 
-#/* -------------------------------------------------------------------- */
-#/*      Report the georeferenced coordinates.                           */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Report the georeferenced coordinates.
+# --------------------------------------------------------------------
     if abs(dfGeoX) < 181 and abs(dfGeoY) < 91:
         line = line + ( "(%12.7f,%12.7f) " % (dfGeoX, dfGeoY ))
 
     else:
         line = line + ( "(%12.3f,%12.3f) " % (dfGeoX, dfGeoY ))
 
-#/* -------------------------------------------------------------------- */
-#/*      Transform to latlong and report.                                */
-#/* -------------------------------------------------------------------- */
+# --------------------------------------------------------------------
+#      Transform to latlong and report.
+# --------------------------------------------------------------------
     if hTransform is not None:
         pnt = hTransform.TransformPoint(dfGeoX, dfGeoY, 0)
         if pnt is not None:

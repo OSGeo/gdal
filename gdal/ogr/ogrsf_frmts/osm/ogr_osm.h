@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_OSM_H_INCLUDED
-#define _OGR_OSM_H_INCLUDED
+#ifndef OGR_OSM_H_INCLUDED
+#define OGR_OSM_H_INCLUDED
 
 // replace O(log2(N)) complexity of FindNode() by O(1)
 #define ENABLE_NODE_LOOKUP_BY_HASHING 1
@@ -42,6 +42,7 @@
 
 #include "osm_parser.h"
 
+#define DO_NOT_INCLUDE_SQLITE_CLASSES
 #include "ogr_sqlite.h"
 
 class ConstCharComp
@@ -84,37 +85,37 @@ class OGROSMLayer : public OGRLayer
     OGRSpatialReference *poSRS;
     long                 nFeatureCount;
 
-    std::vector<char*>   apszNames;
+    std::vector<char*>   apszNames; /* Needed to keep a "reference" to the string inserted into oMapFieldNameToIndex */
     std::map<const char*, int, ConstCharComp> oMapFieldNameToIndex;
-    
+
     std::vector<OGROSMComputedAttribute> oComputedAttributes;
 
-    int                  bResetReadingAllowed;
-    
+    bool                 bResetReadingAllowed;
+
     int                  nFeatureArraySize;
     int                  nFeatureArrayMaxSize;
     int                  nFeatureArrayIndex;
     OGRFeature**         papoFeatures;
 
-    int                   bHasOSMId;
+    bool                  bHasOSMId;
     int                   nIndexOSMId;
     int                   nIndexOSMWayId;
-    int                   bHasVersion;
-    int                   bHasTimestamp;
-    int                   bHasUID;
-    int                   bHasUser;
-    int                   bHasChangeset;
-    int                   bHasOtherTags;
+    bool                  bHasVersion;
+    bool                  bHasTimestamp;
+    bool                  bHasUID;
+    bool                  bHasUser;
+    bool                  bHasChangeset;
+    bool                  bHasOtherTags;
     int                   nIndexOtherTags;
-    int                   bHasAllTags;
+    bool                  bHasAllTags;
     int                   nIndexAllTags;
 
-    int                   bHasWarnedTooManyFeatures;
+    bool                  bHasWarnedTooManyFeatures;
 
     char                 *pszAllTags;
-    int                   bHasWarnedAllTagsTruncated;
+    bool                  bHasWarnedAllTagsTruncated;
 
-    int                   bUserInterested;
+    bool                  bUserInterested;
 
     int                  AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold);
 
@@ -138,13 +139,13 @@ class OGROSMLayer : public OGRLayer
     virtual             ~OGROSMLayer();
 
     virtual OGRFeatureDefn *GetLayerDefn() {return poFeatureDefn;}
-    
+
     virtual void        ResetReading();
     virtual int         TestCapability( const char * );
-                                     
+
     virtual OGRFeature *GetNextFeature();
     virtual GIntBig     GetFeatureCount( int bForce );
-        
+
     virtual OGRErr      SetAttributeFilter( const char* pszAttrQuery );
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
@@ -162,29 +163,29 @@ class OGROSMLayer : public OGRLayer
     void                AddField(const char* pszName, OGRFieldType eFieldType);
     int                 GetFieldIndex(const char* pszName);
 
-    int                 HasOSMId() const { return bHasOSMId; }
-    void                SetHasOSMId(int bIn) { bHasOSMId = bIn; }
+    bool                HasOSMId() const { return bHasOSMId; }
+    void                SetHasOSMId(bool bIn) { bHasOSMId = bIn; }
 
-    int                 HasVersion() const { return bHasVersion; }
-    void                SetHasVersion(int bIn) { bHasVersion = bIn; }
+    bool                HasVersion() const { return bHasVersion; }
+    void                SetHasVersion(bool bIn) { bHasVersion = bIn; }
 
-    int                 HasTimestamp() const { return bHasTimestamp; }
-    void                SetHasTimestamp(int bIn) { bHasTimestamp = bIn; }
+    bool                HasTimestamp() const { return bHasTimestamp; }
+    void                SetHasTimestamp(bool bIn) { bHasTimestamp = bIn; }
 
-    int                 HasUID() const { return bHasUID; }
-    void                SetHasUID(int bIn) { bHasUID = bIn; }
+    bool                HasUID() const { return bHasUID; }
+    void                SetHasUID(bool bIn) { bHasUID = bIn; }
 
-    int                 HasUser() const { return bHasUser; }
-    void                SetHasUser(int bIn) { bHasUser = bIn; }
+    bool                HasUser() const { return bHasUser; }
+    void                SetHasUser(bool bIn) { bHasUser = bIn; }
 
-    int                 HasChangeset() const { return bHasChangeset; }
-    void                SetHasChangeset(int bIn) { bHasChangeset = bIn; }
+    bool                HasChangeset() const { return bHasChangeset; }
+    void                SetHasChangeset(bool bIn) { bHasChangeset = bIn; }
 
-    void                SetHasOtherTags(int bIn) { bHasOtherTags = bIn; }
-    int                 HasOtherTags() const { return bHasOtherTags; }
+    bool                HasOtherTags() const { return bHasOtherTags; }
+    void                SetHasOtherTags(bool bIn) { bHasOtherTags = bIn; }
 
-    void                SetHasAllTags(int bIn) { bHasAllTags = bIn; }
-    int                 HasAllTags() const { return bHasAllTags; }
+    bool                HasAllTags() const { return bHasAllTags; }
+    void                SetHasAllTags(bool bIn) { bHasAllTags = bIn; }
 
     void                SetFieldsFromTags(OGRFeature* poFeature,
                                           GIntBig nID,
@@ -192,8 +193,8 @@ class OGROSMLayer : public OGRLayer
                                           unsigned int nTags, OSMTag* pasTags,
                                           OSMInfo* psInfo);
 
-    void                SetDeclareInterest(int bIn) { bUserInterested = bIn; }
-    int                 IsUserInterested() const { return bUserInterested; }
+    void                SetDeclareInterest(bool bIn) { bUserInterested = bIn; }
+    bool                IsUserInterested() const { return bUserInterested; }
 
     int                 HasAttributeFilter() const { return m_poAttrQuery != NULL; }
     int                 EvaluateAttributeFilter(OGRFeature* poFeature);
@@ -218,7 +219,7 @@ typedef struct
 {
     char* pszK;
     int nKeyIndex;
-    int nOccurences;
+    int nOccurrences;
     std::vector<char*> asValues;
     std::map<const char*, int, ConstCharComp> anMapV; /* map that is the reverse of asValues */
 } KeyDesc;
@@ -260,8 +261,8 @@ typedef struct
     IndexedKVP*         pasTags; /*  point to a sub-array of OGROSMDataSource.pasAccumulatedTags */
     OSMInfo             sInfo;
     OGRFeature         *poFeature;
-    int                 bIsArea : 1;
-    int                 bAttrFilterAlreadyEvaluated : 1;
+    EMULATED_BOOL       bIsArea : 1;
+    EMULATED_BOOL       bAttrFilterAlreadyEvaluated : 1;
 } WayFeaturePair;
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
@@ -275,20 +276,21 @@ typedef struct
 class OGROSMDataSource : public OGRDataSource
 {
     friend class OGROSMLayer;
-    
+
     int                 nLayers;
     OGROSMLayer**       papoLayers;
     char*               pszName;
 
     OGREnvelope         sExtent;
-    int                 bExtentValid;
+    bool                bExtentValid;
 
+    // Starts off at -1 to indicate that we do not know.
     int                 bInterleavedReading;
     OGROSMLayer        *poCurrentLayer;
 
     OSMContext         *psParser;
-    int                 bHasParsedFirstChunk;
-    int                 bStopParsing;
+    bool                bHasParsedFirstChunk;
+    bool                bStopParsing;
 
 #ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
@@ -303,13 +305,13 @@ class OGROSMDataSource : public OGRDataSource
     sqlite3_stmt       *hInsertPolygonsStandaloneStmt;
     sqlite3_stmt       *hDeletePolygonsStandaloneStmt;
     sqlite3_stmt       *hSelectPolygonsStandaloneStmt;
-    int                 bHasRowInPolygonsStandalone;
+    bool                bHasRowInPolygonsStandalone;
 
     sqlite3            *hDBForComputedAttributes;
 
     int                 nMaxSizeForInMemoryDBInMB;
-    int                 bInMemoryTmpDB;
-    int                 bMustUnlink;
+    bool                bInMemoryTmpDB;
+    bool                bMustUnlink;
     CPLString           osTmpDBName;
 
     int                 nNodesInTransaction;
@@ -318,36 +320,36 @@ class OGROSMDataSource : public OGRDataSource
 
     LonLat             *pasLonLatCache;
 
-    int                 bReportAllNodes;
-    int                 bReportAllWays;
+    bool                bReportAllNodes;
+    bool                bReportAllWays;
 
-    int                 bFeatureAdded;
+    bool                bFeatureAdded;
 
-    int                 bInTransaction;
+    bool                bInTransaction;
 
-    int                 bIndexPoints;
-    int                 bUsePointsIndex;
-    int                 bIndexWays;
-    int                 bUseWaysIndex;
+    bool                bIndexPoints;
+    bool                bUsePointsIndex;
+    bool                bIndexWays;
+    bool                bUseWaysIndex;
 
-    std::vector<int>      abSavedDeclaredInterest;
-    OGRLayer*             poResultSetLayer;
-    int                   bIndexPointsBackup;
-    int                   bUsePointsIndexBackup;
-    int                   bIndexWaysBackup;
-    int                   bUseWaysIndexBackup;
+    std::vector<bool>   abSavedDeclaredInterest;
+    OGRLayer*           poResultSetLayer;
+    bool                bIndexPointsBackup;
+    bool                bUsePointsIndexBackup;
+    bool                bIndexWaysBackup;
+    bool                bUseWaysIndexBackup;
 
-    int                 bIsFeatureCountEnabled;
+    bool                bIsFeatureCountEnabled;
 
-    int                 bAttributeNameLaundering;
+    bool                bAttributeNameLaundering;
 
     GByte              *pabyWayBuffer;
 
     int                 nWaysProcessed;
     int                 nRelationsProcessed;
 
-    int                 bCustomIndexing;
-    int                 bCompressNodes;
+    bool                bCustomIndexing;
+    bool                bCompressNodes;
 
     unsigned int        nUnsortedReqIds;
     GIntBig            *panUnsortedReqIds;
@@ -356,13 +358,13 @@ class OGROSMDataSource : public OGRDataSource
     GIntBig            *panReqIds;
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
-    int                 bEnableHashedIndex;
+    bool                bEnableHashedIndex;
     /* values >= 0 are indexes of panReqIds. */
     /*        == -1 for unoccupied */
     /*        < -1 are expressed as -nIndexToCollisonBuckets-2 where nIndexToCollisonBuckets point to psCollisionBuckets */
-    int                *panHashedIndexes; 
+    int                *panHashedIndexes;
     CollisionBucket    *psCollisionBuckets;
-    int                 bHashedIndexValid;
+    bool                bHashedIndexValid;
 #endif
 
     LonLat             *pasLonLatArray;
@@ -379,8 +381,8 @@ class OGROSMDataSource : public OGRDataSource
     std::map<const char*, KeyDesc*, ConstCharComp> aoMapIndexedKeys; /* map that is the reverse of asKeys */
 
     CPLString           osNodesFilename;
-    int                 bInMemoryNodesFile;
-    int                 bMustUnlinkNodesFile;
+    bool                bInMemoryNodesFile;
+    bool                bMustUnlinkNodesFile;
     GIntBig             nNodesFileSize;
     VSILFILE           *fpNodes;
 
@@ -391,38 +393,38 @@ class OGROSMDataSource : public OGRDataSource
     Bucket             *papsBuckets;
     int                 nBuckets;
 
-    int                 bNeedsToSaveWayInfo;
+    bool                bNeedsToSaveWayInfo;
 
-    int                 CompressWay (unsigned int nTags, IndexedKVP* pasTags,
+    int                 CompressWay (bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
                                      int nPoints, LonLat* pasLonLatPairs,
                                      OSMInfo* psInfo,
                                      GByte* pabyCompressedWay);
     int                 UncompressWay( int nBytes, GByte* pabyCompressedWay,
-                                       LonLat* pasCoords,
+                                       bool *pbIsArea, LonLat* pasCoords,
                                        unsigned int* pnTags, OSMTag* pasTags,
                                        OSMInfo* psInfo );
 
-    int                 ParseConf(char** papszOpenOptions);
+    bool                ParseConf(char** papszOpenOptions);
     int                 CreateTempDB();
-    int                 SetDBOptions();
-    int                 SetCacheSize();
-    int                 CreatePreparedStatements();
+    bool                SetDBOptions();
+    bool                SetCacheSize();
+    bool                CreatePreparedStatements();
     void                CloseDB();
 
     int                 IndexPoint(OSMNode* psNode);
     int                 IndexPointSQLite(OSMNode* psNode);
-    int                 FlushCurrentSector();
-    int                 FlushCurrentSectorCompressedCase();
-    int                 FlushCurrentSectorNonCompressedCase();
-    int                 IndexPointCustom(OSMNode* psNode);
+    bool                FlushCurrentSector();
+    bool                FlushCurrentSectorCompressedCase();
+    bool                FlushCurrentSectorNonCompressedCase();
+    bool                IndexPointCustom(OSMNode* psNode);
 
-    void                IndexWay(GIntBig nWayID,
+    void                IndexWay(GIntBig nWayID, bool bIsArea,
                                  unsigned int nTags, IndexedKVP* pasTags,
                                  LonLat* pasLonLatPairs, int nPairs,
                                  OSMInfo* psInfo);
 
-    int                 StartTransactionCacheDB();
-    int                 CommitTransactionCacheDB();
+    bool                StartTransactionCacheDB();
+    bool                CommitTransactionCacheDB();
 
     int                 FindNode(GIntBig nID);
     void                ProcessWaysBatch();
@@ -443,13 +445,15 @@ class OGROSMDataSource : public OGRDataSource
                                           OSMTag* pasTags);
     OGRGeometry*        BuildGeometryCollection(OSMRelation* psRelation, int bMultiLineString);
 
-    int                 TransferToDiskIfNecesserary();
+    bool                TransferToDiskIfNecesserary();
 
-    int                 AllocBucket(int iBucket);
-    int                 AllocMoreBuckets(int nNewBucketIdx, int bAllocBucket = FALSE);
+    bool                AllocBucket(int iBucket);
+    bool                AllocMoreBuckets( int nNewBucketIdx,
+                                          bool bAllocBucket = false );
 
     void                AddComputedAttributes(int iCurLayer,
                                              const std::vector<OGROSMComputedAttribute>& oAttributes);
+    bool                IsClosedWayTaggedAsPolygon( unsigned int nTags, const OSMTag* pasTags );
 
   public:
                         OGROSMDataSource();
@@ -470,7 +474,7 @@ class OGROSMDataSource : public OGRDataSource
     int                 Open ( const char* pszFilename, char** papszOpenOptions );
 
     int                 ResetReading();
-    int                 ParseNextChunk(int nIdxLayer);
+    bool                ParseNextChunk(int nIdxLayer);
     OGRErr              GetExtent( OGREnvelope *psExtent );
     int                 IsInterleavedReading();
 
@@ -483,10 +487,9 @@ class OGROSMDataSource : public OGRDataSource
     OGROSMLayer*        GetCurrentLayer() { return poCurrentLayer; }
     void                SetCurrentLayer(OGROSMLayer* poLyr) { poCurrentLayer = poLyr; }
 
-    int                 IsFeatureCountEnabled() const { return bIsFeatureCountEnabled; }
+    bool                IsFeatureCountEnabled() const { return bIsFeatureCountEnabled; }
 
-    int                 DoesAttributeNameLaundering() const { return bAttributeNameLaundering; }
+    bool                DoesAttributeNameLaundering() const { return bAttributeNameLaundering; }
 };
 
-#endif /* ndef _OGR_OSM_H_INCLUDED */
-
+#endif /* ndef OGR_OSM_H_INCLUDED */

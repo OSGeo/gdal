@@ -1,6 +1,6 @@
 
 OBJ	=	ogrcsvdriver.obj ogrcsvdatasource.obj ogrcsvlayer.obj
-EXTRAFLAGS =	-I.. -I..\..
+EXTRAFLAGS =	-I.. -I..\.. -I..\generic
 
 GDAL_ROOT	=	..\..\..
 

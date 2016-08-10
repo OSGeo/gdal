@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  CPLString implementation.
@@ -43,6 +42,7 @@ CPL_CVSID("$Id$");
 /*                               Printf()                               */
 /************************************************************************/
 
+/** Assign the content of the string using sprintf() */
 CPLString &CPLString::Printf( const char *pszFormat, ... )
 
 {
@@ -59,6 +59,7 @@ CPLString &CPLString::Printf( const char *pszFormat, ... )
 /*                              vPrintf()                               */
 /************************************************************************/
 
+/** Assign the content of the string using vsprintf() */
 CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 
 {
@@ -107,11 +108,11 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
         wrk_args = args;
 #endif
         while( (nPR=CPLvsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,wrk_args))
-               >= nWorkBufferSize-1 
+               >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer, 
+            pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer,
                                                 nWorkBufferSize );
 #ifdef va_copy
             va_end( wrk_args );
@@ -143,15 +144,15 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 /**
  * Format double in C locale.
  *
- * The passed value is formatted using the C locale (period as decimal 
- * seperator) and appended to the target CPLString. 
+ * The passed value is formatted using the C locale (period as decimal
+ * separator) and appended to the target CPLString.
  *
- * @param dfValue the value to format. 
+ * @param dfValue the value to format.
  * @param pszFormat the sprintf() style format to use or omit for default.
- * Note that this format string should only include one substitution argument 
- * and it must be for a double (%f or %g). 
+ * Note that this format string should only include one substitution argument
+ * and it must be for a double (%f or %g).
  *
- * @return a reference to the CPLString. 
+ * @return a reference to the CPLString.
  */
 
 CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
@@ -179,9 +180,9 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
  * Trim white space.
  *
  * Trims white space off the let and right of the string.  White space
- * is any of a space, a tab, a newline ('\n') or a carriage control ('\r').
+ * is any of a space, a tab, a newline ('\\n') or a carriage control ('\\r').
  *
- * @return a reference to the CPLString. 
+ * @return a reference to the CPLString.
  */
 
 CPLString &CPLString::Trim()
@@ -207,6 +208,7 @@ CPLString &CPLString::Trim()
 /*                               Recode()                               */
 /************************************************************************/
 
+/** Recode the string */
 CPLString &CPLString::Recode( const char *pszSrcEncoding,
                               const char *pszDstEncoding )
 
@@ -219,7 +221,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
     if( strcmp(pszSrcEncoding,pszDstEncoding) == 0 )
         return *this;
 
-    char *pszRecoded = CPLRecode( c_str(), 
+    char *pszRecoded = CPLRecode( c_str(),
                                   pszSrcEncoding,
                                   pszDstEncoding );
 
@@ -265,7 +267,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 {
     const char *pszHaystack = c_str();
     char chFirst = (char) ::tolower( s[0] );
-    int nTargetLen = strlen(s);
+    size_t nTargetLen = strlen(s);
 
     if( nPos > size() )
         nPos = size();
@@ -319,6 +321,57 @@ CPLString &CPLString::tolower()
         (*this)[i] = (char) ::tolower( (*this)[i] );
 
     return *this;
+}
+
+/************************************************************************/
+/*                             replaceAll()                             */
+/************************************************************************/
+
+/**
+ * Replace all occurrences of osBefore with osAfter.
+ */
+CPLString &CPLString::replaceAll( const std::string &osBefore,
+                                  const std::string &osAfter )
+{
+    const size_t nBeforeSize = osBefore.size();
+    const size_t nAfterSize = osAfter.size();
+    if( nBeforeSize )
+    {
+        size_t nStartPos = 0;
+        while( (nStartPos = find(osBefore, nStartPos)) != std::string::npos )
+        {
+            replace(nStartPos, nBeforeSize, osAfter);
+            nStartPos += nAfterSize;
+        }
+    }
+    return *this;
+}
+
+/**
+ * Replace all occurrences of chBefore with osAfter.
+ */
+CPLString &CPLString::replaceAll( char chBefore,
+                                  const std::string &osAfter )
+{
+    return replaceAll(std::string(&chBefore,1), osAfter);
+}
+
+/**
+ * Replace all occurrences of osBefore with chAfter.
+ */
+CPLString &CPLString::replaceAll( const std::string &osBefore,
+                                  char chAfter )
+{
+    return replaceAll(osBefore, std::string(&chAfter, 1));
+}
+
+/**
+ * Replace all occurrences of chBefore with chAfter.
+ */
+CPLString &CPLString::replaceAll( char chBefore,
+                                  char chAfter )
+{
+    return replaceAll(std::string(&chBefore, 1), std::string(&chAfter, 1));
 }
 
 /************************************************************************/
@@ -415,6 +468,7 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
 /*                            CPLOPrintf()                              */
 /************************************************************************/
 
+/** Return a CPLString with the content of sprintf() */
 CPLString CPLOPrintf( const char *pszFormat, ... )
 
 {
@@ -433,6 +487,7 @@ CPLString CPLOPrintf( const char *pszFormat, ... )
 /*                            CPLOvPrintf()                             */
 /************************************************************************/
 
+/** Return a CPLString with the content of vsprintf() */
 CPLString CPLOvPrintf( const char *pszFormat, va_list args )
 
 {

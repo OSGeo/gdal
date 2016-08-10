@@ -9,6 +9,7 @@
  * ----------------------------------------------------------------------------- */
 
 #define SWIGPYTHON
+#define SED_HACKS
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
 /* -----------------------------------------------------------------------------
@@ -3105,7 +3106,7 @@ SWIG_InitializeModule(void *clientdata) {
     /* This is the first module loaded for this interpreter */
     /* so set the swig module into the interpreter */
     SWIG_SetModule(clientdata, &swig_module);
-    module_head = &swig_module;
+    /*module_head = &swig_module;*/
   } else {
     /* the interpreter has loaded a SWIG module, but has it loaded this one? */
     found=0;
@@ -3554,7 +3555,7 @@ extern "C" {
               char *buff = ndoc;
               strncpy(buff, methods[i].ml_doc, ldoc);
               buff += ldoc;
-              strncpy(buff, "swig_ptr: ", 10);
+              memcpy(buff, "swig_ptr: ", 10);
               buff += 10;
               SWIG_PackVoidPtr(buff, ptr, ty->name, lptr);
               methods[i].ml_doc = ndoc;
@@ -3833,6 +3834,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GMF_PER_DATASET",SWIG_From_int((int)(0x02)));
   SWIG_Python_SetConstant(d, "GMF_ALPHA",SWIG_From_int((int)(0x04)));
   SWIG_Python_SetConstant(d, "GMF_NODATA",SWIG_From_int((int)(0x08)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED",SWIG_From_int((int)(0x01)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_DATA",SWIG_From_int((int)(0x02)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_EMPTY",SWIG_From_int((int)(0x04)));
   SWIG_Python_SetConstant(d, "GARIO_PENDING",SWIG_From_int((int)(GARIO_PENDING)));
   SWIG_Python_SetConstant(d, "GARIO_UPDATE",SWIG_From_int((int)(GARIO_UPDATE)));
   SWIG_Python_SetConstant(d, "GARIO_ERROR",SWIG_From_int((int)(GARIO_ERROR)));

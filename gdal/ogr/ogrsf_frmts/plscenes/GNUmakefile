@@ -2,7 +2,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrplscenesdataset.o ogrplsceneslayer.o
+OBJ	=	ogrplscenesdriver.o ogrplscenesdataset.o ogrplscenesv1dataset.o ogrplsceneslayer.o ogrplscenesv1layer.o
 
 CPPFLAGS	:=	$(JSON_INCLUDE) -I.. -I../.. -I../geojson  $(CPPFLAGS)
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRIDBDriver class.
@@ -62,7 +61,7 @@ OGRDataSource *OGRIDBDriver::Open( const char * pszFilename,
 {
     OGRIDBDataSource     *poDS;
 
-    if( !EQUALN(pszFilename,"IDB:",4) )
+    if( !STARTS_WITH_CI(pszFilename, "IDB:") )
         return NULL;
 
     poDS = new OGRIDBDataSource();
@@ -86,7 +85,7 @@ OGRDataSource *OGRIDBDriver::CreateDataSource( const char * pszName,
 {
     OGRIDBDataSource     *poDS;
 
-    if( !EQUALN(pszName,"IDB:",4) )
+    if( !STARTS_WITH_CI(pszName, "IDB:") )
         return NULL;
 
     poDS = new OGRIDBDataSource();
@@ -94,7 +93,7 @@ OGRDataSource *OGRIDBDriver::CreateDataSource( const char * pszName,
     if( !poDS->Open( pszName, TRUE, TRUE ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
          "IDB driver doesn't currently support database creation.");
         return NULL;
     }
@@ -122,8 +121,7 @@ int OGRIDBDriver::TestCapability( const char * pszCap )
 void RegisterOGRIDB()
 
 {
-    if (! GDAL_CHECK_VERSION("IDB driver"))
+    if( !GDAL_CHECK_VERSION("IDB driver") )
         return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRIDBDriver );
 }
-

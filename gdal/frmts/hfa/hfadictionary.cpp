@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFADictionary class for managing the
@@ -34,33 +33,33 @@
 
 CPL_CVSID("$Id$");
 
-static const char *apszDefDefn[] = {
+static const char * const apszDefDefn[] = {
 
     "Edsc_Table",
     "{1:lnumrows,}Edsc_Table",
 
-    "Edsc_Column", 
-    "{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column", 
-    
+    "Edsc_Column",
+    "{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column",
+
     "Eprj_Size",
     "{1:dwidth,1:dheight,}Eprj_Size",
 
     "Eprj_Coordinate",
     "{1:dx,1:dy,}Eprj_Coordinate",
 
-    "Eprj_MapInfo", 
+    "Eprj_MapInfo",
     "{0:pcproName,1:*oEprj_Coordinate,upperLeftCenter,1:*oEprj_Coordinate,lowerRightCenter,1:*oEprj_Size,pixelSize,0:pcunits,}Eprj_MapInfo",
-    
-    "Eimg_StatisticsParameters830", 
+
+    "Eimg_StatisticsParameters830",
     "{0:poEmif_String,LayerNames,1:*bExcludedValues,1:oEmif_String,AOIname,1:lSkipFactorX,1:lSkipFactorY,1:*oEdsc_BinFunction,BinFunction,}Eimg_StatisticsParameters830",
-    
-    "Esta_Statistics", 
+
+    "Esta_Statistics",
     "{1:dminimum,1:dmaximum,1:dmean,1:dmedian,1:dmode,1:dstddev,}Esta_Statistics",
 
-    "Edsc_BinFunction", 
+    "Edsc_BinFunction",
     "{1:lnumBins,1:e4:direct,linear,logarithmic,explicit,binFunctionType,1:dminLimit,1:dmaxLimit,1:*bbinLimits,}Edsc_BinFunction",
 
-    "Eimg_NonInitializedValue", 
+    "Eimg_NonInitializedValue",
     "{1:*bvalueBD,}Eimg_NonInitializedValue",
 
     "Eprj_MapProjection842",
@@ -71,7 +70,7 @@ static const char *apszDefDefn[] = {
 
     "Eprj_ProParameters",
     "{1:e2:EPRJ_INTERNAL,EPRJ_EXTERNAL,proType,1:lproNumber,0:pcproExeName,0:pcproName,1:lproZone,0:pdproParams,1:*oEprj_Spheroid,proSpheroid,}Eprj_ProParameters",
-    
+
     "Eprj_Datum",
     "{0:pcdatumname,1:e3:EPRJ_DATUM_PARAMETRIC,EPRJ_DATUM_GRID,EPRJ_DATUM_REGRESSION,type,0:pdparams,0:pcgridname,}Eprj_Datum",
 
@@ -80,12 +79,10 @@ static const char *apszDefDefn[] = {
 
     NULL,
     NULL };
-    
-    
 
 /************************************************************************/
 /* ==================================================================== */
-/*	                       HFADictionary                            */
+/*                             HFADictionary                            */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -104,7 +101,7 @@ HFADictionary::HFADictionary( const char * pszString ) :
 /* -------------------------------------------------------------------- */
     while( pszString != NULL && *pszString != '.' )
     {
-        HFAType	*poNewType = new HFAType();
+        HFAType *poNewType = new HFAType();
         pszString = poNewType->Initialize( pszString );
 
         if( pszString != NULL )
@@ -116,8 +113,7 @@ HFADictionary::HFADictionary( const char * pszString ) :
 /* -------------------------------------------------------------------- */
 /*      Complete the definitions.                                       */
 /* -------------------------------------------------------------------- */
-    int i;
-    for( i = 0; i < nTypes; i++ )
+    for( int i = 0; i < nTypes; i++ )
     {
         papoTypes[i]->CompleteDefn( this );
     }
@@ -130,11 +126,9 @@ HFADictionary::HFADictionary( const char * pszString ) :
 HFADictionary::~HFADictionary()
 
 {
-    int		i;
-
-    for( i = 0; i < nTypes; i++ )
+    for( int i = 0; i < nTypes; i++ )
         delete papoTypes[i];
-    
+
     CPLFree( papoTypes );
 }
 
@@ -145,7 +139,12 @@ HFADictionary::~HFADictionary()
 void HFADictionary::AddType( HFAType *poType )
 
 {
-    if( nTypes == nTypesMax )
+    if( nTypes == nTypesMax
+#ifdef DEBUG
+        // To please Coverity.
+        || papoTypes == NULL
+#endif
+        )
     {
         nTypesMax = nTypes * 2 + 10;
         papoTypes = (HFAType **) CPLRealloc( papoTypes,
@@ -162,9 +161,7 @@ void HFADictionary::AddType( HFAType *poType )
 HFAType * HFADictionary::FindType( const char * pszName )
 
 {
-    int		i;
-
-    for( i = 0; i < nTypes; i++ )
+    for( int i = 0; i < nTypes; i++ )
     {
         if( papoTypes[i]->pszTypeName != NULL &&
             strcmp(pszName,papoTypes[i]->pszTypeName) == 0 )
@@ -176,7 +173,7 @@ HFAType * HFADictionary::FindType( const char * pszName )
 /*      it to the dictionary now.  I'm not sure how some files end      */
 /*      up being distributed using types not in the dictionary.         */
 /* -------------------------------------------------------------------- */
-    for( i = 0; apszDefDefn[i] != NULL; i += 2 )
+    for( int i = 0; apszDefDefn[i] != NULL; i += 2 )
     {
         if( strcmp( pszName, apszDefDefn[i] ) == 0 )
         {
@@ -238,13 +235,13 @@ int HFADictionary::GetItemSize( char chType )
 
       case 'b':
         return -1;
-        
+
       case 'o':
       case 'x':
         return 0;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
     return 0;
@@ -257,11 +254,9 @@ int HFADictionary::GetItemSize( char chType )
 void HFADictionary::Dump( FILE * fp )
 
 {
-    int		i;
-    
-    VSIFPrintf( fp, "\nHFADictionary:\n" );
+    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "\nHFADictionary:\n" ));
 
-    for( i = 0; i < nTypes; i++ )
+    for( int i = 0; i < nTypes; i++ )
     {
         papoTypes[i]->Dump( fp );
     }

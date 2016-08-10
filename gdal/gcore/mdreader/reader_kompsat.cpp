@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from Kompsat imagery.
@@ -30,6 +29,8 @@
 
 #include "reader_kompsat.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * GDALMDReaderKompsat()
  */
@@ -40,7 +41,7 @@ GDALMDReaderKompsat::GDALMDReaderKompsat(const char *pszPath,
                                                          papszSiblingFiles, 0 );
     m_osRPBSourceFilename = GDALFindAssociatedFile( pszPath, "RPC",
                                                          papszSiblingFiles, 0 );
-    
+
     if(m_osIMDSourceFilename.size())
         CPLDebug( "MDReaderDigitalGlobe", "IMD Filename: %s",
               m_osIMDSourceFilename.c_str() );
@@ -179,11 +180,11 @@ char** GDALMDReaderKompsat::ReadTxtToList()
         const char *pszLine = papszLines[i];
 
         //check if this is begin block
-        if(EQUALN(pszLine, "BEGIN_", 6))
+        if(STARTS_WITH_CI(pszLine, "BEGIN_"))
         {
             for(j = 6; j < CPLStrnlen(pszLine, 512); j++)
             {
-                if(EQUALN(pszLine + j, "_BLOCK", 6))
+                if(STARTS_WITH_CI(pszLine + j, "_BLOCK"))
                 {
                     szName[j - 6] = 0;
                     break;
@@ -197,7 +198,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
         }
 
         //check if this is end block
-        if(EQUALN(pszLine, "END_", 4))
+        if(STARTS_WITH_CI(pszLine, "END_"))
         {
             soGroupName.clear(); // we don't expect subblocks
             continue;

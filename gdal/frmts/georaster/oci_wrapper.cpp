@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: $
  *
  * Name:     oci_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "oci_wrapper.h"
+
+CPL_CVSID("$Id$");
 
 static const OW_CellDepth ahOW_CellDepth[] = {
     {"8BIT_U",          GDT_Byte},
@@ -522,7 +523,7 @@ OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
     //  Create Statement handler
     //  -----------------------------------------------------------
 
-    OCIStmt* hStatement;
+    OCIStmt* hStatement = NULL;
 
     CheckError( OCIHandleAlloc( (dvoid*) poConnection->hEnv,
         (dvoid**) (dvoid*) &hStatement,
@@ -640,8 +641,8 @@ void OWStatement::Bind( int* pnData )
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
-        (ub4) NULL,
-        (ub4) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
 }
@@ -663,8 +664,8 @@ void OWStatement::Bind( long* pnData )
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
-        (ub4) NULL,
-        (ub4) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
 }
@@ -686,8 +687,8 @@ void OWStatement::Bind( double* pnData )
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
-        (ub4) NULL,
-        (ub4) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
 }
@@ -709,8 +710,8 @@ void OWStatement::Bind( char* pData, long nData )
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
-        (ub4) NULL,
-        (ub4) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
 }
@@ -733,7 +734,7 @@ void OWStatement::Bind( sdo_geometry** pphData )
         (ub2*) NULL,
         (ub2*) NULL,
         (ub4) 0,
-        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
 
@@ -766,8 +767,8 @@ void OWStatement::Bind( OCILobLocator** pphLocator )
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
-        (ub4) NULL,
-        (ub4) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
 }
@@ -789,8 +790,8 @@ void OWStatement::Bind( OCIArray** pphData, OCIType* type )
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
-        (ub4) NULL,
-        (ub4) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
 
@@ -823,8 +824,8 @@ void OWStatement::Bind( char* pszData, int nSize )
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
-        (ub4) NULL,
-        (ub4) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ),
         hError );
 }
@@ -948,7 +949,7 @@ void OWStatement::WriteCLob( OCILobLocator** pphLocator, char* pszData )
         (dvoid **) 0),
         hError );
 
-    CheckError( OCILobCreateTemporary( 
+    CheckError( OCILobCreateTemporary(
         poConnection->hSvcCtx,
         poConnection->hError,
         (OCILobLocator*) *pphLocator,
@@ -1168,7 +1169,7 @@ void OWStatement::Free( OCILobLocator** pphLocator, int nCount )
 int OWStatement::GetElement( OCIArray** ppoData, int nIndex, int* pnResult )
 {
     boolean        exists;
-    OCINumber      *oci_number;
+    OCINumber      *oci_number = NULL;
     ub4            element_type;
 
     *pnResult = 0;
@@ -1204,7 +1205,7 @@ double OWStatement::GetElement( OCIArray** ppoData,
                                int nIndex, double* pdfResult )
 {
     boolean        exists;
-    OCINumber      *oci_number;
+    OCINumber      *oci_number = NULL;
     double         element_type;
 
     *pdfResult = 0.0;
@@ -1483,8 +1484,8 @@ void OWStatement::BindArray( void* pData, long nSize )
         (void*) NULL,
         (ub2*) NULL,
         (ub2*) NULL,
-        (ub4) NULL,
-        (ub4) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
         (ub4) OCI_DEFAULT ), hError );
 
     CheckError( OCIBindArrayOfStruct(
@@ -1523,7 +1524,7 @@ bool OWIsNumeric( const char *pszText )
 /*****************************************************************************/
 /*                     Parse Value after a Hint on a string                  */
 /*****************************************************************************/
-
+static
 const char *OWParseValue( const char* pszText,
                           const char* pszSeparators,
                           const char* pszHint,
@@ -1594,7 +1595,7 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
 
     pszEnd++;
 
-    int nLength = pszEnd - pszStart + 1;
+    int nLength = static_cast<int>(pszEnd - pszStart + 1);
 
     char szBuffer[OWTEXT];
 
@@ -1646,7 +1647,7 @@ int OWParseEPSG( const char* pszText )
 /*                            Convert Data type description                  */
 /*****************************************************************************/
 
-const GDALDataType OWGetDataType( const char* pszCellDepth )
+GDALDataType OWGetDataType( const char* pszCellDepth )
 {
     unsigned int i;
 

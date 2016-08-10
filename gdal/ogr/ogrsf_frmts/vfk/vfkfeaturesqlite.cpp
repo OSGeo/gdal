@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader - Feature definition (SQLite)
  * Purpose:  Implements VFKFeatureSQLite class.
@@ -35,6 +34,8 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+CPL_CVSID("$Id$");
+
 /*!
   \brief VFKFeatureSQLite constructor (from DB)
 
@@ -52,7 +53,7 @@ VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poD
 }
 
 /*!
-  \brief VFKFeatureSQLite constructor 
+  \brief VFKFeatureSQLite constructor
 
   \param poDataBlock pointer to related IVFKDataBlock
   \param iRowId feature DB rowid (starts at 1)
@@ -71,16 +72,16 @@ VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock, int iRowId, GIntB
 OGRErr VFKFeatureSQLite::SetFIDFromDB()
 {
     CPLString   osSQL;
-    
+
     osSQL.Printf("SELECT %s FROM %s WHERE rowid = %d",
                  FID_COLUMN, m_poDataBlock->GetName(), m_iRowId);
     if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
         return OGRERR_FAILURE;
 
     m_nFID = sqlite3_column_int(m_hStmt, 0);
-  
+
     FinalizeSQL();
-    
+
     return OGRERR_NONE;
 }
 
@@ -115,17 +116,17 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
     int rc;
 
     sqlite3  *poDB;
-    
+
     VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
     poDB = poReader->m_poDB;
-    
-    rc = sqlite3_prepare(poDB, pszSQLCommand, strlen(pszSQLCommand),
+
+    rc = sqlite3_prepare(poDB, pszSQLCommand, -1,
                          &m_hStmt, NULL);
     if (rc != SQLITE_OK) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(poDB));
-        
+
         if(m_hStmt != NULL) {
             FinalizeSQL();
         }
@@ -133,14 +134,14 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
     }
     rc = sqlite3_step(m_hStmt);
     if (rc != SQLITE_ROW) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "In ExecuteSQL(): sqlite3_step(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(poDB));
-        
+
         if (m_hStmt) {
             FinalizeSQL();
         }
-        
+
         return OGRERR_FAILURE;
     }
 
@@ -163,7 +164,7 @@ VFKFeatureSQLite::VFKFeatureSQLite(const VFKFeature *poVFKFeature) : IVFKFeature
   \brief Load geometry (point layers)
 
   \todo Implement (really needed?)
-  
+
   \return TRUE on success or FALSE on failure
 */
 bool VFKFeatureSQLite::LoadGeometryPoint()

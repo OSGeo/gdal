@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CouchDB Translator
  * Purpose:  Implements OGRCouchDBDriver.
@@ -59,7 +58,7 @@ const char *OGRCloudantDriver::GetName()
 OGRDataSource *OGRCloudantDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    if (!EQUALN(pszFilename, "cloudant:", 9))
+    if (!STARTS_WITH_CI(pszFilename, "cloudant:"))
         return NULL;
 
     OGRCloudantDataSource   *poDS = new OGRCloudantDataSource();

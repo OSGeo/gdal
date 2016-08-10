@@ -30,6 +30,8 @@
 #ifndef GDALSSE_PRIV_H_INCLUDED
 #define GDALSSE_PRIV_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_port.h"
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
@@ -40,12 +42,18 @@
 #include <emmintrin.h>
 #include <string.h>
 
+#ifdef __SSE4_1__
+#include <smmintrin.h>
+#endif
+
 class XMMReg2Double
 {
   public:
     __m128d xmm;
 
+    /* coverity[uninit_member] */
     XMMReg2Double() {}
+
     XMMReg2Double(double  val)  { xmm = _mm_load_sd (&val); }
     XMMReg2Double(const XMMReg2Double& other) : xmm(other.xmm) {}
 
@@ -104,49 +112,49 @@ class XMMReg2Double
         reg.nsLoad2Val(ptr);
         return reg;
     }
-    
+
     static inline XMMReg2Double Equals(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
         reg.xmm = _mm_cmpeq_pd(expr1.xmm, expr2.xmm);
         return reg;
     }
-    
+
     static inline XMMReg2Double NotEquals(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
         reg.xmm = _mm_cmpneq_pd(expr1.xmm, expr2.xmm);
         return reg;
     }
-    
+
     static inline XMMReg2Double Greater(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
         reg.xmm = _mm_cmpgt_pd(expr1.xmm, expr2.xmm);
         return reg;
     }
-        
+
     static inline XMMReg2Double And(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
         reg.xmm = _mm_and_pd(expr1.xmm, expr2.xmm);
         return reg;
     }
-    
+
     static inline XMMReg2Double Ternary(const XMMReg2Double& cond, const XMMReg2Double& true_expr, const XMMReg2Double& false_expr)
     {
         XMMReg2Double reg;
         reg.xmm = _mm_or_pd(_mm_and_pd (cond.xmm, true_expr.xmm), _mm_andnot_pd(cond.xmm, false_expr.xmm));
         return reg;
     }
-        
+
     static inline XMMReg2Double Min(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
         reg.xmm = _mm_min_pd(expr1.xmm, expr2.xmm);
         return reg;
     }
-    
+
     inline void nsLoad1ValHighAndLow(const double* ptr)
     {
         xmm =  _mm_load1_pd(ptr);
@@ -180,8 +188,12 @@ class XMMReg2Double
 #else
         __m128i xmm_i = _mm_cvtsi32_si128(*(unsigned short*)(ptr));
 #endif
+#ifdef __SSE4_1__
+        xmm_i = _mm_cvtepu8_epi32(xmm_i);
+#else
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
         xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
+#endif
         xmm = _mm_cvtepi32_pd(xmm_i);
     }
 
@@ -190,8 +202,12 @@ class XMMReg2Double
         int i;
         memcpy(&i, ptr, 4);
         __m128i xmm_i = _mm_cvtsi32_si128(i);
+#ifdef __SSE4_1__
+        xmm_i = _mm_cvtepi16_epi32(xmm_i);
+#else
         xmm_i = _mm_unpacklo_epi16(xmm_i,xmm_i); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */
         xmm_i = _mm_srai_epi32(xmm_i, 16);       /* 0|0|0|0|b|b|a|a --> 0|0|0|0|sign(b)|b|sign(a)|a */
+#endif
         xmm = _mm_cvtepi32_pd(xmm_i);
     }
 
@@ -200,11 +216,14 @@ class XMMReg2Double
         int i;
         memcpy(&i, ptr, 4);
         __m128i xmm_i = _mm_cvtsi32_si128(i);
-        xmm_i = _mm_unpacklo_epi16(xmm_i,xmm_i); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */
-        xmm_i = _mm_srli_epi32(xmm_i, 16);       /* 0|0|0|0|b|b|a|a --> 0|0|0|0|0|b|0|a */
+#ifdef __SSE4_1__
+        xmm_i = _mm_cvtepu16_epi32(xmm_i);
+#else
+        xmm_i = _mm_unpacklo_epi16(xmm_i,_mm_setzero_si128()); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|0|b|0|a */
+#endif
         xmm = _mm_cvtepi32_pd(xmm_i);
     }
-    
+
     static inline void Load4Val(const unsigned char* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
 #ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
@@ -214,8 +233,12 @@ class XMMReg2Double
 #else
         __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
 #endif
+#ifdef __SSE4_1__
+        xmm_i = _mm_cvtepu8_epi32(xmm_i);
+#else
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
         xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
+#endif
         low.xmm = _mm_cvtepi32_pd(xmm_i);
         high.xmm =  _mm_cvtepi32_pd(_mm_shuffle_epi32(xmm_i,_MM_SHUFFLE(3,2,3,2)));
     }
@@ -268,7 +291,7 @@ class XMMReg2Double
         xmm = _mm_mul_pd(xmm, other.xmm);
         return *this;
     }
-    
+
     inline XMMReg2Double operator+ (const XMMReg2Double& other) const
     {
         XMMReg2Double ret;
@@ -303,12 +326,12 @@ class XMMReg2Double
         xmm2 = _mm_shuffle_pd(xmm,xmm,_MM_SHUFFLE2(0,1)); /* transfer high word into low word of xmm2 */
         xmm = _mm_add_pd(xmm, xmm2);
     }
-    
+
     inline void Store2Double(double* pval) const
     {
         _mm_storeu_pd(pval, xmm);
     }
-    
+
     inline void Store2DoubleAligned(double* pval) const
     {
         _mm_store_pd(pval, xmm);
@@ -320,7 +343,7 @@ class XMMReg2Double
         ptr[0] = (GUInt16)_mm_extract_epi16(tmp, 0);
         ptr[1] = (GUInt16)_mm_extract_epi16(tmp, 2);
     }
-    
+
     inline operator double () const
     {
         double val;
@@ -349,23 +372,23 @@ class XMMReg2Double
         reg.Zeroize();
         return reg;
     }
-        
+
     static inline XMMReg2Double Load1ValHighAndLow(const double* ptr)
     {
         XMMReg2Double reg;
         reg.nsLoad1ValHighAndLow(ptr);
         return reg;
     }
-    
+
     static inline XMMReg2Double Equals(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
-        
+
         if (expr1.low == expr2.low)
             memset(&(reg.low), 0xFF, sizeof(double));
         else
             reg.low = 0;
-        
+
         if (expr1.high == expr2.high)
             memset(&(reg.high), 0xFF, sizeof(double));
         else
@@ -373,16 +396,16 @@ class XMMReg2Double
 
         return reg;
     }
-    
+
     static inline XMMReg2Double NotEquals(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
-        
+
         if (expr1.low != expr2.low)
             memset(&(reg.low), 0xFF, sizeof(double));
         else
             reg.low = 0;
-        
+
         if (expr1.high != expr2.high)
             memset(&(reg.high), 0xFF, sizeof(double));
         else
@@ -390,16 +413,16 @@ class XMMReg2Double
 
         return reg;
     }
-    
+
     static inline XMMReg2Double Greater(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
-        
+
         if (expr1.low > expr2.low)
             memset(&(reg.low), 0xFF, sizeof(double));
         else
             reg.low = 0;
-        
+
         if (expr1.high > expr2.high)
             memset(&(reg.high), 0xFF, sizeof(double));
         else
@@ -407,7 +430,7 @@ class XMMReg2Double
 
         return reg;
     }
-    
+
     static inline XMMReg2Double And(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
@@ -439,7 +462,7 @@ class XMMReg2Double
             reg.high = false_expr.high;
         return reg;
     }
-    
+
     static inline XMMReg2Double Min(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
@@ -447,7 +470,7 @@ class XMMReg2Double
         reg.high = (expr1.high < expr2.high) ? expr1.high : expr2.low;
         return reg;
     }
-    
+
     static inline XMMReg2Double Load2Val(const double* ptr)
     {
         XMMReg2Double reg;
@@ -461,7 +484,7 @@ class XMMReg2Double
         reg.nsLoad2ValAligned(ptr);
         return reg;
     }
-    
+
     static inline XMMReg2Double Load2Val(const float* ptr)
     {
         XMMReg2Double reg;
@@ -483,12 +506,19 @@ class XMMReg2Double
         return reg;
     }
 
+    static inline XMMReg2Double Load2Val(const unsigned short* ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad2Val(ptr);
+        return reg;
+    }
+
     inline void nsLoad1ValHighAndLow(const double* pval)
     {
         low = pval[0];
         high = pval[0];
     }
-    
+
     inline void nsLoad2Val(const double* pval)
     {
         low = pval[0];
@@ -524,7 +554,7 @@ class XMMReg2Double
         low = ptr[0];
         high = ptr[1];
     }
-    
+
     static inline void Load4Val(const unsigned char* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
         low.low = ptr[0];
@@ -628,7 +658,7 @@ class XMMReg2Double
         pval[0] = low;
         pval[1] = high;
     }
-    
+
     inline void Store2DoubleAligned(double* pval) const
     {
         pval[0] = low;
@@ -640,7 +670,7 @@ class XMMReg2Double
         ptr[0] = (GUInt16)low;
         ptr[1] = (GUInt16)high;
     }
-    
+
     inline operator double () const
     {
         return low;
@@ -718,7 +748,7 @@ class XMMReg4Double
         XMMReg2Double::Load4Val(ptr, reg.low, reg.high);
         return reg;
     }
-    
+
     static inline XMMReg4Double Equals(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
     {
         XMMReg4Double reg;
@@ -726,7 +756,7 @@ class XMMReg4Double
         reg.high = XMMReg2Double::Equals(expr1.high, expr2.high);
         return reg;
     }
-    
+
     static inline XMMReg4Double NotEquals(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
     {
         XMMReg4Double reg;
@@ -734,7 +764,7 @@ class XMMReg4Double
         reg.high = XMMReg2Double::NotEquals(expr1.high, expr2.high);
         return reg;
     }
-    
+
     static inline XMMReg4Double Greater(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
     {
         XMMReg4Double reg;
@@ -742,7 +772,7 @@ class XMMReg4Double
         reg.high = XMMReg2Double::Greater(expr1.high, expr2.high);
         return reg;
     }
-        
+
     static inline XMMReg4Double And(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
     {
         XMMReg4Double reg;
@@ -750,7 +780,7 @@ class XMMReg4Double
         reg.high = XMMReg2Double::And(expr1.high, expr2.high);
         return reg;
     }
-    
+
     static inline XMMReg4Double Ternary(const XMMReg4Double& cond, const XMMReg4Double& true_expr, const XMMReg4Double& false_expr)
     {
         XMMReg4Double reg;
@@ -758,7 +788,7 @@ class XMMReg4Double
         reg.high = XMMReg2Double::Ternary(cond.high, true_expr.high, false_expr.high);
         return reg;
     }
-        
+
     static inline XMMReg4Double Min(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
     {
         XMMReg4Double reg;
@@ -766,7 +796,7 @@ class XMMReg4Double
         reg.high = XMMReg2Double::Min(expr1.high, expr2.high);
         return reg;
     }
-    
+
     inline XMMReg4Double& operator= (const XMMReg4Double& other)
     {
         low = other.low;
@@ -780,14 +810,14 @@ class XMMReg4Double
         high += other.high;
         return *this;
     }
-    
+
     inline XMMReg4Double& operator*= (const XMMReg4Double& other)
     {
         low *= other.low;
         high *= other.high;
         return *this;
     }
-    
+
     inline XMMReg4Double operator+ (const XMMReg4Double& other) const
     {
         XMMReg4Double ret;
@@ -842,5 +872,7 @@ class XMMReg4Double
         high.Store2Val(ptr+2);
     }
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDALSSE_PRIV_H_INCLUDED */

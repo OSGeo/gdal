@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  kearat.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -7,28 +6,30 @@
  *
  *  This file is part of LibKEA.
  *
- *  Permission is hereby granted, free of charge, to any person 
- *  obtaining a copy of this software and associated documentation 
- *  files (the "Software"), to deal in the Software without restriction, 
- *  including without limitation the rights to use, copy, modify, 
- *  merge, publish, distribute, sublicense, and/or sell copies of the 
- *  Software, and to permit persons to whom the Software is furnished 
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without restriction,
+ *  including without limitation the rights to use, copy, modify,
+ *  merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished
  *  to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be 
+ *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
 #include "kearat.h"
+
+CPL_CVSID("$Id$");
 
 KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable)
 {
@@ -39,7 +40,7 @@ KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKE
         {
             sKEAField = poKEATable->getField(nColumnIndex);
         }
-        catch(kealib::KEAATTException &e)
+        catch(const kealib::KEAATTException &)
         {
             // pKEATable->getField raised exception because we have a missing column
             continue;
@@ -103,78 +104,72 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
                 break;
         }
         poRAT->CreateColumn(sName, eGDALType, eGDALUsage);
-        poRAT->SetRowCount(m_poKEATable->getSize());
-        
+        poRAT->SetRowCount(static_cast<int>(m_poKEATable->getSize()));
+
         if( m_poKEATable->getSize() == 0 )
             continue;
 
         if( eGDALType == GFT_Integer )
         {
-            int *panColData = (int*)VSIMalloc2(sizeof(int), m_poKEATable->getSize());
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(sizeof(int), m_poKEATable->getSize());
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
 
             if( (const_cast<KEARasterAttributeTable*>(this))->
-                        ValuesIO(GF_Read, iCol, 0, m_poKEATable->getSize(), panColData ) != CE_None )
+                        ValuesIO(GF_Read, iCol, 0, static_cast<int>(m_poKEATable->getSize()), panColData ) != CE_None )
             {
                 CPLFree(panColData);
                 delete poRAT;
                 return NULL;
-            }           
+            }
 
             for( int iRow = 0; iRow < (int)m_poKEATable->getSize(); iRow++ )
             {
-                poRAT->SetValue(iRow, iCol, panColData[iRow]);            
+                poRAT->SetValue(iRow, iCol, panColData[iRow]);
             }
             CPLFree(panColData);
         }
         if( eGDALType == GFT_Real )
         {
-            double *padfColData = (double*)VSIMalloc2(sizeof(double), m_poKEATable->getSize());
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(sizeof(double), m_poKEATable->getSize());
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
             if( (const_cast<KEARasterAttributeTable*>(this))->
-                        ValuesIO(GF_Read, iCol, 0, m_poKEATable->getSize(), padfColData ) != CE_None )
+                        ValuesIO(GF_Read, iCol, 0, static_cast<int>(m_poKEATable->getSize()), padfColData ) != CE_None )
             {
                 CPLFree(padfColData);
                 delete poRAT;
                 return NULL;
-            }           
+            }
 
             for( int iRow = 0; iRow < (int)m_poKEATable->getSize(); iRow++ )
             {
-                poRAT->SetValue(iRow, iCol, padfColData[iRow]);            
+                poRAT->SetValue(iRow, iCol, padfColData[iRow]);
             }
             CPLFree(padfColData);
         }
         if( eGDALType == GFT_String )
         {
-            char **papszColData = (char**)VSIMalloc2(sizeof(char*), m_poKEATable->getSize());
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(sizeof(char*), m_poKEATable->getSize());
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::Clone");
                 delete poRAT;
                 return NULL;
             }
 
             if( (const_cast<KEARasterAttributeTable*>(this))->
-                    ValuesIO(GF_Read, iCol, 0, m_poKEATable->getSize(), papszColData ) != CE_None )
+                    ValuesIO(GF_Read, iCol, 0, static_cast<int>(m_poKEATable->getSize()), papszColData ) != CE_None )
             {
                 CPLFree(papszColData);
                 delete poRAT;
                 return NULL;
-            }           
+            }
 
             for( int iRow = 0; iRow < (int)m_poKEATable->getSize(); iRow++ )
             {
@@ -208,7 +203,7 @@ GDALRATFieldUsage KEARasterAttributeTable::GetUsageOfCol( int nCol ) const
         return GFU_Generic;
 
     GDALRATFieldUsage eGDALUsage;
-    std::string keausage = m_aoFields[nCol].usage;    
+    std::string keausage = m_aoFields[nCol].usage;
 
     if( keausage == "PixelCount" )
         eGDALUsage = GFU_PixelCount;
@@ -391,11 +386,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_int:
         {
             // allocate space for ints
-            int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -403,7 +396,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy the application supplied doubles to ints
                 for( int i = 0; i < iLength; i++ )
-                    panColData[i] = pdfData[i];
+                    panColData[i] = static_cast<int>(pdfData[i]);
             }
 
             // do the ValuesIO as ints
@@ -443,11 +436,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_string:
         {
             // allocate space for string pointers
-            char **papszColData = (char**)VSIMalloc2(iLength, sizeof(char*));
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(iLength, sizeof(char*));
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -525,11 +516,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_bool:
         {
             // need to convert to/from bools
-            bool *panColData = (bool*)VSIMalloc2(iLength, sizeof(bool) );
+            bool *panColData = (bool*)VSI_MALLOC2_VERBOSE(iLength, sizeof(bool) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -567,11 +556,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_int:
         {
             // need to convert to/from int64_t
-            int64_t *panColData = (int64_t*)VSIMalloc2(iLength, sizeof(int64_t) );
+            int64_t *panColData = (int64_t*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int64_t) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -600,7 +587,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to ints
                 for( int i = 0; i < iLength; i++ )
-                    pnData[i] = panColData[i];
+                    pnData[i] = static_cast<int>(panColData[i]);
             }
             CPLFree(panColData);
         }
@@ -608,11 +595,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_float:
         {
             // allocate space for doubles
-            double *padfColData = (double*)VSIMalloc2(iLength, sizeof(double) );
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(iLength, sizeof(double) );
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -635,7 +620,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to ints
                 for( int i = 0; i < iLength; i++ )
-                    pnData[i] = padfColData[i];
+                    pnData[i] = static_cast<int>(padfColData[i]);
             }
 
             CPLFree(padfColData);
@@ -644,11 +629,9 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_string:
         {
             // allocate space for string pointers
-            char **papszColData = (char**)VSIMalloc2(iLength, sizeof(char*));
+            char **papszColData = (char**)VSI_MALLOC2_VERBOSE(iLength, sizeof(char*));
             if( papszColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
 
@@ -679,7 +662,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             {
                 // copy them back to ints
                 for( int i = 0; i < iLength; i++ )
-                    pnData[i] = atol(papszColData[i]);
+                    pnData[i] = atoi(papszColData[i]);
             }
 
             // either we allocated them for write, or they were allocated
@@ -727,18 +710,16 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_int:
         {
             // allocate space for ints
-            int *panColData = (int*)VSIMalloc2(iLength, sizeof(int) );
+            int *panColData = (int*)VSI_MALLOC2_VERBOSE(iLength, sizeof(int) );
             if( panColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
             if( eRWFlag == GF_Write )
             {
                 // convert user supplied strings to ints
                 for( int i = 0; i < iLength; i++ )
-                    panColData[i] = atol(papszStrList[i]);
+                    panColData[i] = atoi(papszStrList[i]);
             }
 
             // call values IO to read/write ints
@@ -765,14 +746,12 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         case kealib::kea_att_float:
         {
             // allocate space for doubles
-            double *padfColData = (double*)VSIMalloc2(iLength, sizeof(double) );
+            double *padfColData = (double*)VSI_MALLOC2_VERBOSE(iLength, sizeof(double) );
             if( padfColData == NULL )
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                    "Memory Allocation failed in KEARasterAttributeTable::ValuesIO");
                 return CE_Failure;
             }
-            
+
             if( eRWFlag == GF_Write )
             {
                 // convert user supplied strings to doubles
@@ -860,8 +839,8 @@ void KEARasterAttributeTable::SetRowCount( int iCount )
     // can't shrink
 }
 
-CPLErr KEARasterAttributeTable::CreateColumn( const char *pszFieldName, 
-                                GDALRATFieldType eFieldType, 
+CPLErr KEARasterAttributeTable::CreateColumn( const char *pszFieldName,
+                                GDALRATFieldType eFieldType,
                                 GDALRATFieldUsage eFieldUsage )
 {
     /*if( this->eAccess == GA_ReadOnly )

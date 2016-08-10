@@ -45,7 +45,7 @@ clean:
 	rm -f *.o libpng/*.o $(O_OBJ)
 
 ../o/%.$(OBJ_EXT):	libpng/%.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
+	$(CC) -c $(CPPFLAGS) $(CFLAGS_NOFTRAPV) $< -o $@
 
 all:	$(OBJ:.o=.$(OBJ_EXT))
 

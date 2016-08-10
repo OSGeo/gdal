@@ -29,7 +29,7 @@
 *******************************************************************************/
 
 /* NOTE : this is really a quick and very dirty hack to put the javadoc contained */
-/* in a special formated file, javadoc.java, into the SWIG generated java files */
+/* in a special formatted file, javadoc.java, into the SWIG generated java files */
 /* This program leaks memory and would crash easily on unexpected inputs */
 
 #include <stdio.h>
@@ -322,7 +322,7 @@ begin:
     for(j=0;j<nInstances;j++)
     {
         if (!instances[j].bUsed)
-            fprintf(stderr, "WARNING: did not find occurence of %s\n", instances[j].methodName);
+            fprintf(stderr, "WARNING: did not find occurrence of %s\n", instances[j].methodName);
     }
     
     return 0;

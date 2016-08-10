@@ -25,8 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef __INCLUDE_PCIDSK_SHAPE_H
-#define __INCLUDE_PCIDSK_SHAPE_H
+#ifndef INCLUDE_PCIDSK_SHAPE_H
+#define INCLUDE_PCIDSK_SHAPE_H
 
 #include <string>
 #include <vector>
@@ -95,8 +95,8 @@ namespace PCIDSK
      types in a convenient way that avoids memory leaks or ownership confusion.
      The object has a field type (initially FieldTypeNone on construction)
      and a value of the specified type.  Note that the appropriate value
-     accessor (ie. GetValueInteger()) must be used that corresponds to the
-     fields type. No attempt is made to automatically convert (ie. float to
+     accessor (i.e. GetValueInteger()) must be used that corresponds to the
+     fields type. No attempt is made to automatically convert (i.e. float to
      double) if the wrong accessor is used.
 
     */
@@ -210,7 +210,7 @@ namespace PCIDSK
                 type = FieldTypeCountedInt; 
                 v.integer_list_val = (int32*)
                     malloc(sizeof(int32) * (val.size()+1) );
-                v.integer_list_val[0] = val.size();
+                v.integer_list_val[0] = static_cast<int>(val.size());
                 if( val.size() > 0 )
                     memcpy( v.integer_list_val+1, &(val[0]), 
                             sizeof(int32) * val.size() ); 
@@ -269,4 +269,4 @@ namespace PCIDSK
 
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_PCIDSK_SHAPE_H
+#endif // INCLUDE_PCIDSK_SHAPE_H

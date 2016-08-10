@@ -1,18 +1,17 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL DEM Utilities
- * Purpose:  
+ * Purpose:
  * Authors:  Matthew Perry, perrygeo at gmail.com
  *           Even Rouault, even dot rouault at mines dash paris dot org
  *           Howard Butler, hobu.inc at gmail.com
  *           Chris Yesson, chris dot yesson at ioz dot ac dot uk
  *
  ******************************************************************************
- * Copyright (c) 2006, 2009 Matthew Perry 
+ * Copyright (c) 2006, 2009 Matthew Perry
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
- * Portions derived from GRASS 4.1 (public domain) See 
- * http://trac.osgeo.org/gdal/ticket/2975 for more information regarding 
+ * Portions derived from GRASS 4.1 (public domain) See
+ * http://trac.osgeo.org/gdal/ticket/2975 for more information regarding
  * history of this code
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -42,7 +41,7 @@
  *
  * Horn's formula is used to find the first order derivatives in x and y directions
  * for slope and aspect calculations: Horn, B. K. P. (1981).
- * "Hill Shading and the Reflectance Map", Proceedings of the IEEE, 69(1):14-47. 
+ * "Hill Shading and the Reflectance Map", Proceedings of the IEEE, 69(1):14-47.
  *
  * Other reference :
  * Burrough, P.A. and McDonell, R.A., 1998. Principles of Geographical Information
@@ -58,31 +57,35 @@
  * Color table of named colors and lookup code derived from src/libes/gis/named_colr.c
  * of GRASS 4.1
  *
- * TRI - Terrain Ruggedness Index is as descibed in Wilson et al (2007)
- * this is based on the method of Valentine et al. (2004)  
- * 
- * TPI - Topographic Position Index follows the description in Wilson et al (2007), following Weiss (2001)
- * The radius is fixed at 1 cell width/height
- * 
- * Roughness - follows the definition in Wilson et al. (2007), which follows Dartnell (2000)
+ * TRI - Terrain Ruggedness Index is as described in Wilson et al. (2007)
+ * this is based on the method of Valentine et al. (2004)
+ *
+ * TPI - Topographic Position Index follows the description in
+ * Wilson et al. (2007), following Weiss (2001).  The radius is fixed
+ * at 1 cell width/height
+ *
+ * Roughness - follows the definition in Wilson et al. (2007), which follows
+ * Dartnell (2000).
  *
  * References for TRI/TPI/Roughness:
- * Dartnell, P. 2000. Applying Remote Sensing Techniques to map Seafloor 
- *  Geology/Habitat Relationships. Masters Thesis, San Francisco State 
+ * Dartnell, P. 2000. Applying Remote Sensing Techniques to map Seafloor
+ *  Geology/Habitat Relationships. Masters Thesis, San Francisco State
  *  University, pp. 108.
- * Valentine, P. C., S. J. Fuller, L. A. Scully. 2004. Terrain Ruggedness 
+ * Valentine, P. C., S. J. Fuller, L. A. Scully. 2004. Terrain Ruggedness
  *  Analysis and Distribution of Boulder Ridges in the Stellwagen Bank National
- *  Marine Sanctuary Region (poster). Galway, Ireland: 5th International 
- *  Symposium on Marine Geological and Biological Habitat Mapping (GeoHAB), 
+ *  Marine Sanctuary Region (poster). Galway, Ireland: 5th International
+ *  Symposium on Marine Geological and Biological Habitat Mapping (GeoHAB),
  *  May 2004.
- * Weiss, A. D. 2001. Topographic Positions and Landforms Analysis (poster), 
+ * Weiss, A. D. 2001. Topographic Positions and Landforms Analysis (poster),
  *  ESRI International User Conference, July 2001. San Diego, CA: ESRI.
- * Wilson, M. F. J.; O'Connell, B.; Brown, C.; Guinan, J. C. & Grehan, A. J. 
+ * Wilson, M. F. J.; O'Connell, B.; Brown, C.; Guinan, J. C. & Grehan, A. J.
  *  Multiscale terrain analysis of multibeam bathymetry data for habitat mapping
  *  on the continental slope Marine Geodesy, 2007, 30, 3-35
  ****************************************************************************/
 
 #include "cpl_vsi.h"
+#include <algorithm>
+#include <float.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -110,7 +113,7 @@ struct GDALDEMProcessingOptions
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress;
-    
+
     /*! pointer to the progress data variable */
     void *pProgressData;
 
@@ -118,7 +121,7 @@ struct GDALDEMProcessingOptions
     double scale;
     double az;
     double alt;
-    int slopeFormat; 
+    int slopeFormat;
     int bAddAlpha;
     int bZeroForFlat;
     int bAngleAsAzimuth ;
@@ -204,22 +207,28 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         return CE_Failure;
     }
 
-    pafOutputBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
-    pafThreeLineWin  = (float *) CPLMalloc(3*sizeof(float)*(nXSize+1));
+    pafOutputBuf = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nXSize);
+    pafThreeLineWin  = (float *) VSI_MALLOC2_VERBOSE(3*sizeof(float),(nXSize+1));
+    if( pafOutputBuf == NULL || pafThreeLineWin == NULL )
+    {
+        VSIFree(pafOutputBuf);
+        VSIFree(pafThreeLineWin);
+        return CE_Failure;
+    }
 
     fSrcNoDataValue = (float) GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
     fDstNoDataValue = (float) GDALGetRasterNoDataValue(hDstBand, &bDstHasNoData);
     if (!bDstHasNoData)
         fDstNoDataValue = 0.0;
     int bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(fSrcNoDataValue);
-    
+
     int nLine1Off = 0*nXSize;
     int nLine2Off = 1*nXSize;
     int nLine3Off = 2*nXSize;
 
-    // Move a 3x3 pafWindow over each cell 
+    // Move a 3x3 pafWindow over each cell
     // (where the cell in question is #4)
-    // 
+    //
     //      0 1 2
     //      3 4 5
     //      6 7 8
@@ -240,7 +249,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             goto end;
         }
     }
-    
+
     if (bComputeAtEdges && nXSize >= 2 && nYSize >= 2)
     {
         for (j = 0; j < nXSize; j++)
@@ -278,7 +287,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         eErr = GDALRasterIO(hDstBand, GF_Write,
                     0, 0, nXSize, 1,
                     pafOutputBuf, nXSize, 1, GDT_Float32, 0, 0);
-    
+
         if (eErr == CE_None && nYSize > 1)
         {
             eErr = GDALRasterIO(hDstBand, GF_Write,
@@ -381,7 +390,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             eErr = CE_Failure;
             goto end;
         }
-        
+
         int nTemp = nLine1Off;
         nLine1Off = nLine2Off;
         nLine2Off = nLine3Off;
@@ -586,11 +595,11 @@ float GDALHillshadeZevenbergenThorneCombinedAlg (float* afWin, CPL_UNUSED float 
     // combined shading
     cang = 1 - cang * atan(sqrt(slope)) / psData->square_M_PI_2;
 
-    if (cang <= 0.0) 
+    if (cang <= 0.0)
         cang = 1.0;
     else
         cang = 1.0 + (254.0 * cang);
-        
+
     return (float) cang;
 }
 
@@ -604,7 +613,7 @@ void*  GDALCreateHillshadeData(double* adfGeoTransform,
 {
     GDALHillshadeAlgData* pData =
         (GDALHillshadeAlgData*)CPLMalloc(sizeof(GDALHillshadeAlgData));
-        
+
     const double degreesToRadians = M_PI / 180.0;
     pData->nsres = adfGeoTransform[5];
     pData->ewres = adfGeoTransform[1];
@@ -677,7 +686,7 @@ void*  GDALCreateSlopeData(double* adfGeoTransform,
 {
     GDALSlopeAlgData* pData =
         (GDALSlopeAlgData*)CPLMalloc(sizeof(GDALSlopeAlgData));
-        
+
     pData->nsres = adfGeoTransform[5];
     pData->ewres = adfGeoTransform[1];
     pData->scale = scale;
@@ -701,11 +710,11 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
     GDALAspectAlgData* psData = (GDALAspectAlgData*)pData;
     double dx, dy;
     float aspect;
-    
+
     dx = ((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
           (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
 
-    dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) - 
+    dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
           (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
 
     aspect = (float) (atan2(dy,-dx) / degreesToRadians);
@@ -714,10 +723,10 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
     {
         /* Flat area */
         aspect = fDstNoDataValue;
-    } 
+    }
     else if ( psData->bAngleAsAzimuth )
     {
-        if (aspect > 90.0) 
+        if (aspect > 90.0)
             aspect = 450.0f - aspect;
         else
             aspect = 90.0f - aspect;
@@ -728,7 +737,7 @@ float GDALAspectAlg (float* afWin, float fDstNoDataValue, void* pData)
             aspect += 360.0;
     }
 
-    if (aspect == 360.0) 
+    if (aspect == 360.0)
         aspect = 0.0;
 
     return aspect;
@@ -741,7 +750,7 @@ float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void*
     GDALAspectAlgData* psData = (GDALAspectAlgData*)pData;
     double dx, dy;
     float aspect;
-    
+
     dx = (afWin[5] - afWin[3]);
 
     dy = (afWin[7] - afWin[1]);
@@ -752,10 +761,10 @@ float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void*
     {
         /* Flat area */
         aspect = fDstNoDataValue;
-    } 
+    }
     else if ( psData->bAngleAsAzimuth )
     {
-        if (aspect > 90.0) 
+        if (aspect > 90.0)
             aspect = 450.0f - aspect;
         else
             aspect = 90.0f - aspect;
@@ -766,7 +775,7 @@ float GDALAspectZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void*
             aspect += 360.0;
     }
 
-    if (aspect == 360.0) 
+    if (aspect == 360.0)
         aspect = 0.0;
 
     return aspect;
@@ -777,7 +786,7 @@ void*  GDALCreateAspectData(int bAngleAsAzimuth)
 {
     GDALAspectAlgData* pData =
         (GDALAspectAlgData*)CPLMalloc(sizeof(GDALAspectAlgData));
-        
+
     pData->bAngleAsAzimuth = bAngleAsAzimuth;
     return pData;
 }
@@ -795,15 +804,122 @@ typedef struct
     int nA;
 } ColorAssociation;
 
-static int GDALColorReliefSortColors(const void* pA, const void* pB)
+static int GDALColorReliefSortColors(const ColorAssociation &pA,
+                                     const ColorAssociation &pB)
 {
-    ColorAssociation* pC1 = (ColorAssociation*)pA;
-    ColorAssociation* pC2 = (ColorAssociation*)pB;
     /* Sort NaN in first position */
-    if( CPLIsNan(pC1->dfVal) )
-        return -1;
-    return (pC1->dfVal < pC2->dfVal) ? -1 :
-           (pC1->dfVal == pC2->dfVal) ? 0 : 1;
+    return (CPLIsNan(pA.dfVal) && !CPLIsNan(pB.dfVal)) || pA.dfVal < pB.dfVal;
+}
+
+static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation,
+                                         int *pnColorAssociation, int bSrcHasNoData,
+                                         double dfSrcNoDataValue)
+{
+    ColorAssociation *pasColorAssociation = *ppasColorAssociation;
+    int nColorAssociation = *pnColorAssociation;
+
+    std::stable_sort(pasColorAssociation, pasColorAssociation + nColorAssociation,
+                     GDALColorReliefSortColors);
+
+    ColorAssociation *pPrevious =
+            (nColorAssociation > 0) ? &pasColorAssociation[0] : NULL;
+    int nAdded = 0;
+    int nRepeatedEntryIndex = 0;
+    for (int i = 1; i < nColorAssociation; ++i)
+    {
+        ColorAssociation *pCurrent = &pasColorAssociation[i];
+
+        // NaN comparison is always false, so it handles itself
+        if (bSrcHasNoData && pCurrent->dfVal == dfSrcNoDataValue)
+        {
+            // check if there is enough distance between the nodata value and its
+            // predecessor
+            double dfNewValue =
+                    pCurrent->dfVal - ABS(pCurrent->dfVal) * DBL_EPSILON;
+            if (dfNewValue > pPrevious->dfVal)
+            {
+                // add one just below the nodata value
+                ++nAdded;
+                ColorAssociation sPrevious = *pPrevious;
+                pasColorAssociation = (ColorAssociation *)CPLRealloc(pasColorAssociation,
+                        (nColorAssociation + nAdded) * sizeof(ColorAssociation));
+                pCurrent = &pasColorAssociation[i];
+                pPrevious = NULL;
+                pasColorAssociation[nColorAssociation + nAdded - 1] = sPrevious;
+                pasColorAssociation[nColorAssociation + nAdded - 1].dfVal = dfNewValue;
+            }
+        }
+        else if (bSrcHasNoData && pPrevious->dfVal == dfSrcNoDataValue)
+        {
+            // check if there is enough distance between the nodata value and its
+            // successor
+            double dfNewValue = pPrevious->dfVal + ABS(pPrevious->dfVal) * DBL_EPSILON;
+            if (dfNewValue < pCurrent->dfVal)
+            {
+                // add one just above the nodata value
+                ++nAdded;
+                ColorAssociation sCurrent = *pCurrent;
+                pasColorAssociation = (ColorAssociation *)CPLRealloc(pasColorAssociation,
+                        (nColorAssociation + nAdded) * sizeof(ColorAssociation));
+                pCurrent = &pasColorAssociation[i];
+                pPrevious = NULL;
+                pasColorAssociation[nColorAssociation + nAdded - 1] = sCurrent;
+                pasColorAssociation[nColorAssociation + nAdded - 1].dfVal = dfNewValue;
+            }
+        }
+        else if (nRepeatedEntryIndex == 0 && pCurrent->dfVal == pPrevious->dfVal)
+        {
+            // second of a series of equivalent entries
+            nRepeatedEntryIndex = i;
+        }
+        else if (nRepeatedEntryIndex != 0 && pCurrent->dfVal != pPrevious->dfVal)
+        {
+            // get the distance between the predecessor and successor of the equivalent
+            // entries
+            double dfTotalDist, dfLeftDist;
+            if (nRepeatedEntryIndex >= 2)
+            {
+                ColorAssociation *pLower = &pasColorAssociation[nRepeatedEntryIndex - 2];
+                dfTotalDist = pCurrent->dfVal - pLower->dfVal;
+                dfLeftDist = pPrevious->dfVal - pLower->dfVal;
+            }
+            else
+            {
+                dfTotalDist = pCurrent->dfVal - pPrevious->dfVal;
+                dfLeftDist = 0;
+            }
+
+            // check if this distance is enough
+            int nEquivalentCount = i - nRepeatedEntryIndex + 1;
+            if (dfTotalDist > ABS(pPrevious->dfVal) * nEquivalentCount * DBL_EPSILON)
+            {
+                // balance the alterations
+                double dfMultiplier = 0.5 - nEquivalentCount * dfLeftDist / dfTotalDist;
+                for (int j = nRepeatedEntryIndex - 1; j < i; ++j)
+                {
+                    pasColorAssociation[j].dfVal +=
+                            (ABS(pPrevious->dfVal) * dfMultiplier) * DBL_EPSILON;
+                    dfMultiplier += 1.0;
+                }
+            }
+            else
+            {
+                // fallback to the old behaviour: keep equivalent entries as they are
+            }
+
+            nRepeatedEntryIndex = 0;
+        }
+        pPrevious = pCurrent;
+    }
+
+    if (nAdded)
+    {
+        std::stable_sort(pasColorAssociation,
+                         pasColorAssociation + nColorAssociation + nAdded,
+                         GDALColorReliefSortColors);
+        *ppasColorAssociation = pasColorAssociation;
+        *pnColorAssociation = nColorAssociation + nAdded;
+    }
 }
 
 static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
@@ -837,14 +953,14 @@ static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
 
     /* Find the index of the first element in the LUT input array that */
     /* is not smaller than the dfVal value. */
-    while(TRUE)
+    while( true )
     {
         mid = (lower + upper) / 2;
         if (upper - lower <= 1)
         {
-            if (dfVal < pasColorAssociation[lower].dfVal)
+            if (dfVal <= pasColorAssociation[lower].dfVal)
                 i = lower;
-            else if (dfVal < pasColorAssociation[upper].dfVal)
+            else if (dfVal <= pasColorAssociation[upper].dfVal)
                 i = upper;
             else
                 i = upper + 1;
@@ -911,7 +1027,7 @@ static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
             *pnA = 0;
             return FALSE;
         }
-        
+
         if (eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY &&
             pasColorAssociation[i-1].dfVal != dfVal)
         {
@@ -928,7 +1044,16 @@ static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
             *pnA = pasColorAssociation[index].nA;
             return TRUE;
         }
-        
+
+        if (pasColorAssociation[i-1].dfVal == dfVal)
+        {
+            *pnR = pasColorAssociation[i-1].nR;
+            *pnG = pasColorAssociation[i-1].nG;
+            *pnB = pasColorAssociation[i-1].nB;
+            *pnA = pasColorAssociation[i-1].nA;
+            return TRUE;
+        }
+
         double dfRatio = (dfVal - pasColorAssociation[i-1].dfVal) /
             (pasColorAssociation[i].dfVal - pasColorAssociation[i-1].dfVal);
         *pnR = (int)(0.45 + pasColorAssociation[i-1].nR + dfRatio *
@@ -947,7 +1072,7 @@ static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
                 (pasColorAssociation[i].nA - pasColorAssociation[i-1].nA));
         if (*pnA < 0) *pnA = 0;
         else if (*pnA > 255) *pnA = 255;
-        
+
         return TRUE;
     }
 }
@@ -1049,7 +1174,7 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
             bIsGMT_CPT = TRUE;
         }
 
-        char** papszFields = CSLTokenizeStringComplex(pszLine, " ,\t:", 
+        char** papszFields = CSLTokenizeStringComplex(pszLine, " ,\t:",
                                                       FALSE, FALSE );
         /* Skip comment lines */
         int nTokens = CSLCount(papszFields);
@@ -1166,8 +1291,8 @@ ColorAssociation* GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
         return NULL;
     }
 
-    qsort(pasColorAssociation, nColorAssociation,
-          sizeof(ColorAssociation), GDALColorReliefSortColors);
+    GDALColorReliefProcessColors(&pasColorAssociation, &nColorAssociation,
+                                 bSrcHasNoData, dfSrcNoDataValue);
 
     *pnColors = nColorAssociation;
     return pasColorAssociation;
@@ -1190,7 +1315,7 @@ GByte* GDALColorReliefPrecompute(GDALRasterBandH hSrcBand,
         ((eDT == GDT_Int16 || eDT == GDT_UInt16) && nXSize * nYSize > 65536))
     {
         int iMax = (eDT == GDT_Byte) ? 256: 65536;
-        pabyPrecomputed = (GByte*) VSIMalloc(4 * iMax);
+        pabyPrecomputed = (GByte*) VSI_MALLOC2_VERBOSE(4, iMax);
         if (pabyPrecomputed)
         {
             int i;
@@ -1244,6 +1369,8 @@ class GDALColorReliefDataset : public GDALDataset
                                             int bAlpha);
                        ~GDALColorReliefDataset();
 
+    bool                InitOK() const { return pafSourceBuf != NULL || panSourceBuf != NULL; }
+
     CPLErr      GetGeoTransform( double * padfGeoTransform );
     const char *GetProjectionRef();
 };
@@ -1258,35 +1385,35 @@ class GDALColorReliefRasterBand : public GDALRasterBand
 {
     friend class GDALColorReliefDataset;
 
-    
+
   public:
                  GDALColorReliefRasterBand( GDALColorReliefDataset *, int );
-    
+
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
 };
 
 GDALColorReliefDataset::GDALColorReliefDataset(
-                                     GDALDatasetH hSrcDS,
-                                     GDALRasterBandH hSrcBand,
+                                     GDALDatasetH hSrcDSIn,
+                                     GDALRasterBandH hSrcBandIn,
                                      const char* pszColorFilename,
-                                     ColorSelectionMode eColorSelectionMode,
+                                     ColorSelectionMode eColorSelectionModeIn,
                                      int bAlpha)
 {
-    this->hSrcDS = hSrcDS;
-    this->hSrcBand = hSrcBand;
+    hSrcDS = hSrcDSIn;
+    hSrcBand = hSrcBandIn;
     nColorAssociation = 0;
     pasColorAssociation =
             GDALColorReliefParseColorFile(hSrcBand, pszColorFilename,
                                           &nColorAssociation);
-    this->eColorSelectionMode = eColorSelectionMode;
-    
+    eColorSelectionMode = eColorSelectionModeIn;
+
     nRasterXSize = GDALGetRasterXSize(hSrcDS);
     nRasterYSize = GDALGetRasterYSize(hSrcDS);
-    
+
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize( hSrcBand, &nBlockXSize, &nBlockYSize);
-    
+
     nIndexOffset = 0;
     pabyPrecomputed =
         GDALColorReliefPrecompute(hSrcBand,
@@ -1294,19 +1421,19 @@ GDALColorReliefDataset::GDALColorReliefDataset(
                                   nColorAssociation,
                                   eColorSelectionMode,
                                   &nIndexOffset);
-    
+
     int i;
     for(i=0;i<((bAlpha) ? 4 : 3);i++)
     {
         SetBand(i + 1, new GDALColorReliefRasterBand(this, i+1));
     }
-    
+
     pafSourceBuf = NULL;
     panSourceBuf = NULL;
     if (pabyPrecomputed)
-        panSourceBuf = (int *) CPLMalloc(sizeof(int)*nBlockXSize*nBlockYSize);
+        panSourceBuf = (int *) VSI_MALLOC3_VERBOSE(sizeof(int),nBlockXSize,nBlockYSize);
     else
-        pafSourceBuf = (float *) CPLMalloc(sizeof(float)*nBlockXSize*nBlockYSize);
+        pafSourceBuf = (float *) VSI_MALLOC3_VERBOSE(sizeof(float),nBlockXSize,nBlockYSize);
     nCurBlockXOff = -1;
     nCurBlockYOff = -1;
 }
@@ -1330,12 +1457,12 @@ const char *GDALColorReliefDataset::GetProjectionRef()
 }
 
 GDALColorReliefRasterBand::GDALColorReliefRasterBand(
-                                    GDALColorReliefDataset * poDS, int nBand)
+                                    GDALColorReliefDataset * poDSIn, int nBandIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = GDT_Byte;
-    GDALGetBlockSize( poDS->hSrcBand, &nBlockXSize, &nBlockYSize);
+    GDALGetBlockSize( poDSIn->hSrcBand, &nBlockXSize, &nBlockYSize);
 }
 
 CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
@@ -1349,7 +1476,7 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
         nReqXSize = nRasterXSize - nBlockXOff * nBlockXSize;
     else
         nReqXSize = nBlockXSize;
-        
+
     if ((nBlockYOff + 1) * nBlockYSize >= nRasterYSize)
         nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
     else
@@ -1360,7 +1487,7 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
     {
         poGDS->nCurBlockXOff = nBlockXOff;
         poGDS->nCurBlockYOff = nBlockYOff;
-        
+
         CPLErr eErr = GDALRasterIO( poGDS->hSrcBand,
                             GF_Read,
                             nBlockXOff * nBlockXSize,
@@ -1412,7 +1539,7 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
             }
         }
     }
-    
+
     return CE_None;
 }
 
@@ -1422,6 +1549,7 @@ GDALColorInterp GDALColorReliefRasterBand::GetColorInterpretation()
 }
 
 
+static
 CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
                         GDALRasterBandH hDstBand1,
                         GDALRasterBandH hDstBand2,
@@ -1433,7 +1561,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
                         void * pProgressData)
 {
     CPLErr eErr;
-    
+
     if (hSrcBand == NULL || hDstBand1 == NULL || hDstBand2 == NULL ||
         hDstBand3 == NULL)
         return CE_Failure;
@@ -1450,9 +1578,9 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
 
     if (pfnProgress == NULL)
         pfnProgress = GDALDummyProgress;
-        
+
     int nR = 0, nG = 0, nB = 0, nA = 0;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Precompute the map from values to RGBA quadruplets              */
 /*      for GDT_Byte, GDT_Int16 or GDT_UInt16                           */
@@ -1472,14 +1600,22 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
     float* pafSourceBuf = NULL;
     int* panSourceBuf = NULL;
     if (pabyPrecomputed)
-        panSourceBuf = (int *) CPLMalloc(sizeof(int)*nXSize);
+        panSourceBuf = (int *) VSI_MALLOC2_VERBOSE(sizeof(int),nXSize);
     else
-        pafSourceBuf = (float *) CPLMalloc(sizeof(float)*nXSize);
-    GByte* pabyDestBuf1  = (GByte*) CPLMalloc( 4 * nXSize );
+        pafSourceBuf = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nXSize);
+    GByte* pabyDestBuf1  = (GByte*) VSI_MALLOC2_VERBOSE(4, nXSize );
     GByte* pabyDestBuf2  =  pabyDestBuf1 + nXSize;
     GByte* pabyDestBuf3  =  pabyDestBuf2 + nXSize;
     GByte* pabyDestBuf4  =  pabyDestBuf3 + nXSize;
     int i, j;
+
+    if( (pabyPrecomputed != NULL && panSourceBuf == NULL) ||
+        (pabyPrecomputed == NULL && pafSourceBuf == NULL) ||
+        pabyDestBuf1 == NULL )
+    {
+        eErr = CE_Failure;
+        goto end;
+    }
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
@@ -1502,7 +1638,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
         if (eErr != CE_None)
             goto end;
 
-        if (panSourceBuf)
+        if (pabyPrecomputed)
         {
             for ( j = 0; j < nXSize; j++)
             {
@@ -1531,7 +1667,7 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
                 pabyDestBuf4[j] = (GByte) nA;
             }
         }
-        
+
         /* -----------------------------------------
          * Write Line to Raster
          */
@@ -1548,14 +1684,14 @@ CPLErr GDALColorRelief (GDALRasterBandH hSrcBand,
                       1, pabyDestBuf2, nXSize, 1, GDT_Byte, 0, 0);
         if (eErr != CE_None)
             goto end;
-            
+
         eErr = GDALRasterIO(hDstBand3,
                       GF_Write,
                       0, i, nXSize,
                       1, pabyDestBuf3, nXSize, 1, GDT_Byte, 0, 0);
         if (eErr != CE_None)
             goto end;
-            
+
         if (hDstBand4)
         {
             eErr = GDALRasterIO(hDstBand4,
@@ -1590,6 +1726,7 @@ end:
 /*                     GDALGenerateVRTColorRelief()                     */
 /************************************************************************/
 
+static
 CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
                                GDALDatasetH hSrcDataset,
                                GDALRasterBandH hSrcBand,
@@ -1615,54 +1752,54 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
         return CE_Failure;
     }
 
-    VSIFPrintfL(fp, "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n", nXSize, nYSize);
+    bool bOK = VSIFPrintfL(fp, "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n", nXSize, nYSize) > 0;
     const char* pszProjectionRef = GDALGetProjectionRef(hSrcDataset);
     if (pszProjectionRef && pszProjectionRef[0] != '\0')
     {
         char* pszEscapedString = CPLEscapeString(pszProjectionRef, -1, CPLES_XML);
-        VSIFPrintfL(fp, "  <SRS>%s</SRS>\n", pszEscapedString);
+        bOK &= VSIFPrintfL(fp, "  <SRS>%s</SRS>\n", pszEscapedString) > 0;
         VSIFree(pszEscapedString);
     }
     double adfGT[6];
     if (GDALGetGeoTransform(hSrcDataset, adfGT) == CE_None)
     {
-        VSIFPrintfL(fp, "  <GeoTransform> %.16g, %.16g, %.16g, "
+        bOK &= VSIFPrintfL(fp, "  <GeoTransform> %.16g, %.16g, %.16g, "
                         "%.16g, %.16g, %.16g</GeoTransform>\n",
-                        adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4], adfGT[5]);
+                        adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4], adfGT[5]) > 0;
     }
     int nBands = 3 + (bAddAlpha ? 1 : 0);
     int iBand;
 
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(hSrcBand, &nBlockXSize, &nBlockYSize);
-    
+
     int bRelativeToVRT;
     CPLString osPath = CPLGetPath(pszDstFilename);
     char* pszSourceFilename = CPLStrdup(
-        CPLExtractRelativePath( osPath.c_str(), GDALGetDescription(hSrcDataset), 
+        CPLExtractRelativePath( osPath.c_str(), GDALGetDescription(hSrcDataset),
                                 &bRelativeToVRT ));
 
     for(iBand = 0; iBand < nBands; iBand++)
     {
-        VSIFPrintfL(fp, "  <VRTRasterBand dataType=\"Byte\" band=\"%d\">\n", iBand + 1);
-        VSIFPrintfL(fp, "    <ColorInterp>%s</ColorInterp>\n",
-                    GDALGetColorInterpretationName((GDALColorInterp)(GCI_RedBand + iBand)));
-        VSIFPrintfL(fp, "    <ComplexSource>\n");
-        VSIFPrintfL(fp, "      <SourceFilename relativeToVRT=\"%d\">%s</SourceFilename>\n",
-                        bRelativeToVRT, pszSourceFilename);
-        VSIFPrintfL(fp, "      <SourceBand>%d</SourceBand>\n", GDALGetBandNumber(hSrcBand));
-        VSIFPrintfL(fp, "      <SourceProperties RasterXSize=\"%d\" "
+        bOK &= VSIFPrintfL(fp, "  <VRTRasterBand dataType=\"Byte\" band=\"%d\">\n", iBand + 1) > 0;
+        bOK &= VSIFPrintfL(fp, "    <ColorInterp>%s</ColorInterp>\n",
+                    GDALGetColorInterpretationName((GDALColorInterp)(GCI_RedBand + iBand))) > 0;
+        bOK &= VSIFPrintfL(fp, "    <ComplexSource>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "      <SourceFilename relativeToVRT=\"%d\">%s</SourceFilename>\n",
+                        bRelativeToVRT, pszSourceFilename) > 0;
+        bOK &= VSIFPrintfL(fp, "      <SourceBand>%d</SourceBand>\n", GDALGetBandNumber(hSrcBand)) > 0;
+        bOK &= VSIFPrintfL(fp, "      <SourceProperties RasterXSize=\"%d\" "
                         "RasterYSize=\"%d\" DataType=\"%s\" "
                         "BlockXSize=\"%d\" BlockYSize=\"%d\"/>\n",
                         nXSize, nYSize,
                         GDALGetDataTypeName(GDALGetRasterDataType(hSrcBand)),
-                        nBlockXSize, nBlockYSize);
-        VSIFPrintfL(fp, "      <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
-                        nXSize, nYSize);
-        VSIFPrintfL(fp, "      <DstRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
-                        nXSize, nYSize);
+                        nBlockXSize, nBlockYSize) > 0;
+        bOK &= VSIFPrintfL(fp, "      <SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
+                        nXSize, nYSize) > 0;
+        bOK &= VSIFPrintfL(fp, "      <DstRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
+                        nXSize, nYSize) > 0;
 
-        VSIFPrintfL(fp, "      <LUT>");
+        bOK &= VSIFPrintfL(fp, "      <LUT>") > 0;
         int iColor;
 #define EPSILON 1e-8
         for(iColor=0;iColor<nColorAssociation;iColor++)
@@ -1670,68 +1807,68 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
             if (eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY)
             {
                 if (iColor > 1)
-                    VSIFPrintfL(fp, ",");
+                    bOK &= VSIFPrintfL(fp, ",") > 0;
             }
             else if (iColor > 0)
-                VSIFPrintfL(fp, ",");
+                bOK &= VSIFPrintfL(fp, ",") > 0;
 
             double dfVal = pasColorAssociation[iColor].dfVal;
 
             if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
             {
-                VSIFPrintfL(fp, "%.12g:0,", dfVal - EPSILON);
+                bOK &= VSIFPrintfL(fp, "%.18g:0,", dfVal - fabs(dfVal) * DBL_EPSILON) > 0;
             }
             else if (iColor > 0 &&
                      eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY)
             {
                 double dfMidVal = (dfVal + pasColorAssociation[iColor-1].dfVal) / 2;
-                VSIFPrintfL(fp, "%.12g:%d", dfMidVal - EPSILON,
+                bOK &= VSIFPrintfL(fp, "%.18g:%d", dfMidVal - fabs(dfMidVal) * DBL_EPSILON,
                         (iBand == 0) ? pasColorAssociation[iColor-1].nR :
                         (iBand == 1) ? pasColorAssociation[iColor-1].nG :
                         (iBand == 2) ? pasColorAssociation[iColor-1].nB :
-                                       pasColorAssociation[iColor-1].nA);
-                VSIFPrintfL(fp, ",%.12g:%d", dfMidVal ,
+                                       pasColorAssociation[iColor-1].nA) > 0;
+                bOK &= VSIFPrintfL(fp, ",%.18g:%d", dfMidVal ,
                         (iBand == 0) ? pasColorAssociation[iColor].nR :
                         (iBand == 1) ? pasColorAssociation[iColor].nG :
                         (iBand == 2) ? pasColorAssociation[iColor].nB :
-                                       pasColorAssociation[iColor].nA);
+                                       pasColorAssociation[iColor].nA) > 0;
 
             }
 
             if (eColorSelectionMode != COLOR_SELECTION_NEAREST_ENTRY)
             {
                 if (dfVal != (double)(int)dfVal)
-                    VSIFPrintfL(fp, "%.12g", dfVal);
+                    bOK &= VSIFPrintfL(fp, "%.18g", dfVal) > 0;
                 else
-                    VSIFPrintfL(fp, "%d", (int)dfVal);
-                VSIFPrintfL(fp, ":%d",
+                    bOK &= VSIFPrintfL(fp, "%d", (int)dfVal) > 0;
+                bOK &= VSIFPrintfL(fp, ":%d",
                             (iBand == 0) ? pasColorAssociation[iColor].nR :
                             (iBand == 1) ? pasColorAssociation[iColor].nG :
                             (iBand == 2) ? pasColorAssociation[iColor].nB :
-                                           pasColorAssociation[iColor].nA);
+                                           pasColorAssociation[iColor].nA) > 0;
             }
 
             if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
             {
-                VSIFPrintfL(fp, ",%.12g:0", dfVal + EPSILON);
+                bOK &= VSIFPrintfL(fp, ",%.18g:0", dfVal + fabs(dfVal) * DBL_EPSILON) > 0;
             }
 
         }
-        VSIFPrintfL(fp, "</LUT>\n");
+        bOK &= VSIFPrintfL(fp, "</LUT>\n") > 0;
 
-        VSIFPrintfL(fp, "    </ComplexSource>\n");
-        VSIFPrintfL(fp, "  </VRTRasterBand>\n");
+        bOK &= VSIFPrintfL(fp, "    </ComplexSource>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "  </VRTRasterBand>\n") > 0;
     }
 
     CPLFree(pszSourceFilename);
 
-    VSIFPrintfL(fp, "</VRTDataset>\n");
+    bOK &= VSIFPrintfL(fp, "</VRTDataset>\n") > 0;
 
     VSIFCloseL(fp);
 
     CPLFree(pasColorAssociation);
 
-    return CE_None;
+    return (bOK) ? CE_None : CE_Failure;
 }
 
 
@@ -1838,6 +1975,10 @@ class GDALGeneric3x3Dataset : public GDALDataset
                                               int bComputeAtEdges);
                        ~GDALGeneric3x3Dataset();
 
+    bool                InitOK() const { return apafSourceBuf[0] != NULL &&
+                                                apafSourceBuf[1] != NULL &&
+                                                apafSourceBuf[2] != NULL; }
+
     CPLErr      GetGeoTransform( double * padfGeoTransform );
     const char *GetProjectionRef();
 };
@@ -1854,45 +1995,45 @@ class GDALGeneric3x3RasterBand : public GDALRasterBand
     int bSrcHasNoData;
     float fSrcNoDataValue;
     int bIsSrcNoDataNan;
-    
+
     void                    InitWidthNoData(void* pImage);
-    
+
   public:
                  GDALGeneric3x3RasterBand( GDALGeneric3x3Dataset *poDS,
                                            GDALDataType eDstDataType );
-    
+
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual double          GetNoDataValue( int* pbHasNoData );
 };
 
 GDALGeneric3x3Dataset::GDALGeneric3x3Dataset(
-                                     GDALDatasetH hSrcDS,
-                                     GDALRasterBandH hSrcBand,
+                                     GDALDatasetH hSrcDSIn,
+                                     GDALRasterBandH hSrcBandIn,
                                      GDALDataType eDstDataType,
-                                     int bDstHasNoData,
-                                     double dfDstNoDataValue,
-                                     GDALGeneric3x3ProcessingAlg pfnAlg,
-                                     void* pAlgData,
-                                     int bComputeAtEdges)
+                                     int bDstHasNoDataIn,
+                                     double dfDstNoDataValueIn,
+                                     GDALGeneric3x3ProcessingAlg pfnAlgIn,
+                                     void* pAlgDataIn,
+                                     int bComputeAtEdgesIn)
 {
-    this->hSrcDS = hSrcDS;
-    this->hSrcBand = hSrcBand;
-    this->pfnAlg = pfnAlg;
-    this->pAlgData = pAlgData;
-    this->bDstHasNoData = bDstHasNoData;
-    this->dfDstNoDataValue = dfDstNoDataValue;
-    this->bComputeAtEdges = bComputeAtEdges;
-    
+    hSrcDS = hSrcDSIn;
+    hSrcBand = hSrcBandIn;
+    pfnAlg = pfnAlgIn;
+    pAlgData = pAlgDataIn;
+    bDstHasNoData = bDstHasNoDataIn;
+    dfDstNoDataValue = dfDstNoDataValueIn;
+    bComputeAtEdges = bComputeAtEdgesIn;
+
     CPLAssert(eDstDataType == GDT_Byte || eDstDataType == GDT_Float32);
 
     nRasterXSize = GDALGetRasterXSize(hSrcDS);
     nRasterYSize = GDALGetRasterYSize(hSrcDS);
-    
+
     SetBand(1, new GDALGeneric3x3RasterBand(this, eDstDataType));
-    
-    apafSourceBuf[0] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
-    apafSourceBuf[1] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
-    apafSourceBuf[2] = (float *) CPLMalloc(sizeof(float)*nRasterXSize);
+
+    apafSourceBuf[0] = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nRasterXSize);
+    apafSourceBuf[1] = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nRasterXSize);
+    apafSourceBuf[2] = (float *) VSI_MALLOC2_VERBOSE(sizeof(float),nRasterXSize);
 
     nCurLine = -1;
 }
@@ -1914,17 +2055,17 @@ const char *GDALGeneric3x3Dataset::GetProjectionRef()
     return GDALGetProjectionRef(hSrcDS);
 }
 
-GDALGeneric3x3RasterBand::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset *poDS,
+GDALGeneric3x3RasterBand::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset *poDSIn,
                                                    GDALDataType eDstDataType)
 {
-    this->poDS = poDS;
+    poDS = poDSIn;
     this->nBand = 1;
     eDataType = eDstDataType;
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
     bSrcHasNoData = FALSE;
-    fSrcNoDataValue = (float)GDALGetRasterNoDataValue(poDS->hSrcBand,
+    fSrcNoDataValue = (float)GDALGetRasterNoDataValue(poDSIn->hSrcBand,
                                                       &bSrcHasNoData);
     bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(fSrcNoDataValue);
 }
@@ -2286,16 +2427,22 @@ static Algorithm GetAlgorithm(const char* pszProcessing)
  *
  * This is the equivalent of the <a href="gdaldem.html">gdaldem</a> utility.
  *
- * GDALDEMProcessingOptions* must be allocated and freed with GDALDEMProcessingOptionsNew()
- * and GDALDEMProcessingOptionsFree() respectively.
+ * GDALDEMProcessingOptions* must be allocated and freed with
+ * GDALDEMProcessingOptionsNew() and GDALDEMProcessingOptionsFree()
+ * respectively.
  *
  * @param pszDest the destination dataset path.
  * @param hSrcDataset the source dataset handle.
- * @param pszProcessing the processing to apply (one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", "Roughness")
- * @param pszColorFilename color file (mandatory for "color-relief" processing, should be NULL otherwise)
- * @param psOptions the options struct returned by GDALDEMProcessingOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occured or NULL.
- * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
+ * @param pszProcessing the processing to apply (one of "hillshade", "slope",
+ * "aspect", "color-relief", "TRI", "TPI", "Roughness")
+ * @param pszColorFilename color file (mandatory for "color-relief" processing,
+ * should be NULL otherwise)
+ * @param psOptionsIn the options struct returned by
+ * GDALDEMProcessingOptionsNew() or NULL.
+ * @param pbUsageError the pointer to int variable to determine any usage
+ * error has occurred or NULL.
+ * @return the output dataset (new dataset that must be closed using
+ * GDALClose()) or NULL in case of error.
  *
  * @since GDAL 2.1
  */
@@ -2391,20 +2538,20 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
     GDALGetGeoTransform(hSrcDataset, adfGeoTransform);
 
     hDriver = GDALGetDriverByName(psOptions->pszFormat);
-    if( hDriver == NULL 
+    if( hDriver == NULL
         || (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL &&
             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) == NULL))
     {
         int	iDr;
 
-        CPLError(CE_Failure, CPLE_AppDefined, "Output driver `%s' not recognised to have output support.", 
+        CPLError(CE_Failure, CPLE_AppDefined, "Output driver `%s' not recognised to have output support.",
                  psOptions->pszFormat );
         fprintf( stderr, "The following format drivers are configured\n"
                 "and support output:\n" );
 
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
-            GDALDriverH hDriver = GDALGetDriver(iDr);
+            hDriver = GDALGetDriver(iDr);
 
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
                 (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL ||
@@ -2493,7 +2640,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
         bDstHasNoData = TRUE;
         pfnAlg = GDALRoughnessAlg;
     }
-    
+
     GDALDataType eDstDataType = (eUtilityMode == HILL_SHADE ||
                                  eUtilityMode == COLOR_RELIEF) ? GDT_Byte :
                                                                GDT_Float32;
@@ -2523,23 +2670,23 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
             return NULL;
         }
     }
-    
+
     // We might actually want to always go through the intermediate dataset
-    int bForceUseIntermediateDataset = FALSE;
-    
+    bool bForceUseIntermediateDataset = false;
+
     GDALProgressFunc pfnProgress = psOptions->pfnProgress;
     void* pProgressData = psOptions->pProgressData;
-    
+
     if( EQUAL(psOptions->pszFormat, "GTiff") )
     {
         if( !EQUAL(CSLFetchNameValueDef(psOptions->papszCreateOptions, "COMPRESS", "NONE"), "NONE") &&
-            CSLTestBoolean(CSLFetchNameValueDef(psOptions->papszCreateOptions, "TILED", "NO")) )
+            CPLTestBool(CSLFetchNameValueDef(psOptions->papszCreateOptions, "TILED", "NO")) )
         {
-            bForceUseIntermediateDataset = TRUE;
+            bForceUseIntermediateDataset = true;
         }
         else if( strcmp(pszDest, "/vsistdout/") == 0 )
         {
-            bForceUseIntermediateDataset = TRUE;
+            bForceUseIntermediateDataset = true;
             pfnProgress = GDALDummyProgress;
             pProgressData = NULL;
         }
@@ -2550,7 +2697,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
             if( VSIStatExL(pszDest, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
                 S_ISFIFO(sStat.st_mode) )
             {
-                bForceUseIntermediateDataset = TRUE;
+                bForceUseIntermediateDataset = true;
             }
         }
 #endif
@@ -2561,16 +2708,27 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
          GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
     {
         GDALDatasetH hIntermediateDataset;
-        
+
         if (eUtilityMode == COLOR_RELIEF)
-            hIntermediateDataset = (GDALDatasetH)
+        {
+            GDALColorReliefDataset* poDS =
                 new GDALColorReliefDataset (hSrcDataset,
                                             hSrcBand,
                                             pszColorFilename,
                                             psOptions->eColorSelectionMode,
                                             psOptions->bAddAlpha);
+            if( !(poDS->InitOK()) )
+            {
+                delete poDS;
+                CPLFree(pData);
+                GDALDEMProcessingOptionsFree(psOptionsToFree);
+                return NULL;
+            }
+            hIntermediateDataset = (GDALDatasetH)poDS;
+        }
         else
-            hIntermediateDataset = (GDALDatasetH)
+        {
+            GDALGeneric3x3Dataset* poDS =
                 new GDALGeneric3x3Dataset(hSrcDataset, hSrcBand,
                                           eDstDataType,
                                           bDstHasNoData,
@@ -2578,10 +2736,19 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
                                           pfnAlg,
                                           pData,
                                           psOptions->bComputeAtEdges);
+            if( !(poDS->InitOK()) )
+            {
+                delete poDS;
+                CPLFree(pData);
+                GDALDEMProcessingOptionsFree(psOptionsToFree);
+                return NULL;
+            }
+            hIntermediateDataset = (GDALDatasetH)poDS;
+        }
 
         GDALDatasetH hOutDS = GDALCreateCopy(
-                                 hDriver, pszDest, hIntermediateDataset, 
-                                 TRUE, psOptions->papszCreateOptions, 
+                                 hDriver, pszDest, hIntermediateDataset,
+                                 TRUE, psOptions->papszCreateOptions,
                                  pfnProgress, pProgressData );
 
         GDALClose(hIntermediateDataset);
@@ -2609,21 +2776,20 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
     if( hDstDataset == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create dataset %s %d\n%s", pszDest,
-                 CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
+                 "Unable to create dataset %s", pszDest );
         GDALDEMProcessingOptionsFree(psOptionsToFree);
         CPLFree(pData);
         return NULL;
     }
-    
+
     hDstBand = GDALGetRasterBand( hDstDataset, 1 );
 
     GDALSetGeoTransform(hDstDataset, adfGeoTransform);
     GDALSetProjection(hDstDataset, GDALGetProjectionRef(hSrcDataset));
-    
+
     if (eUtilityMode == COLOR_RELIEF)
     {
-        GDALColorRelief (hSrcBand, 
+        GDALColorRelief (hSrcBand,
                          GDALGetRasterBand(hDstDataset, 1),
                          GDALGetRasterBand(hDstDataset, 2),
                          GDALGetRasterBand(hDstDataset, 3),
@@ -2682,7 +2848,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
     psOptions->az = 315.0;
     psOptions->alt = 45.0;
     // 0 = 'percent' or 1 = 'degrees'
-    psOptions->slopeFormat = 1; 
+    psOptions->slopeFormat = 1;
     psOptions->bAddAlpha = FALSE;
     psOptions->bZeroForFlat = FALSE;
     psOptions->bAngleAsAzimuth = TRUE;
@@ -2772,8 +2938,8 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
         {
             psOptions->eColorSelectionMode = COLOR_SELECTION_NEAREST_ENTRY;
         }
-        else if( 
-            (EQUAL(papszArgv[i], "--s") || 
+        else if(
+            (EQUAL(papszArgv[i], "--s") ||
              EQUAL(papszArgv[i], "-s") ||
              EQUAL(papszArgv[i], "--scale") ||
              EQUAL(papszArgv[i], "-scale")) && i+1<argc
@@ -2788,8 +2954,8 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
             }
             psOptions->scale = CPLAtof(papszArgv[i]);
         }
-        else if( 
-            (EQUAL(papszArgv[i], "--az") || 
+        else if(
+            (EQUAL(papszArgv[i], "--az") ||
              EQUAL(papszArgv[i], "-az") ||
              EQUAL(papszArgv[i], "--azimuth") ||
              EQUAL(papszArgv[i], "-azimuth")) && i+1<argc
@@ -2805,7 +2971,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
             psOptions->az = CPLAtof(papszArgv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
-            (EQUAL(papszArgv[i], "--alt") || 
+            (EQUAL(papszArgv[i], "--alt") ||
              EQUAL(papszArgv[i], "-alt") ||
              EQUAL(papszArgv[i], "--alt") ||
              EQUAL(papszArgv[i], "-alt")) && i+1<argc
@@ -2820,25 +2986,25 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
             }
             psOptions->alt = CPLAtof(papszArgv[i]);
         }
-        else if( 
-            (EQUAL(papszArgv[i], "-combined") || 
+        else if(
+            (EQUAL(papszArgv[i], "-combined") ||
              EQUAL(papszArgv[i], "--combined"))
           )
         {
             psOptions->bCombined = TRUE;
         }
-        else if( 
+        else if(
                  EQUAL(papszArgv[i], "-alpha"))
         {
             psOptions->bAddAlpha = TRUE;
         }
-        else if( 
+        else if(
                  EQUAL(papszArgv[i], "-compute_edges"))
         {
             psOptions->bComputeAtEdges = TRUE;
         }
         else if( i + 1 < argc &&
-            (EQUAL(papszArgv[i], "--b") || 
+            (EQUAL(papszArgv[i], "--b") ||
              EQUAL(papszArgv[i], "-b"))
           )
         {

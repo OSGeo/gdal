@@ -170,8 +170,8 @@ MAP *Rcreate(
 	CsfSetVarTypeMV( &(newMap->raster.maxVal), cellRepr);
 	newMap->raster.xUL = xUL;
 	newMap->raster.yUL = yUL;
-	newMap->raster.nrRows = nrRows;
-	newMap->raster.nrCols = nrCols;
+	newMap->raster.nrRows = (UINT4)nrRows;
+	newMap->raster.nrCols = (UINT4)nrCols;
 	newMap->raster.cellSize = cellSize;
 	newMap->raster.cellSizeDupl = cellSize;
 	newMap->raster.angle = angle;

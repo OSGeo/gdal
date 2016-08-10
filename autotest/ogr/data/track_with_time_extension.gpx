@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="EasyGPS 4.45" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.topografix.com/GPX/gpx_overlay/0/3 http://www.topografix.com/GPX/gpx_overlay/0/3/gpx_overlay.xsd http://www.topografix.com/GPX/gpx_modified/0/1 http://www.topografix.com/GPX/gpx_modified/0/1/gpx_modified.xsd">
+    <metadata>
+        <bounds maxlat="31.17016200" maxlon="-7.91258400" minlat="31.05567200" minlon="-8.04354900"/>
+        <extensions>
+            <time xmlns="http://www.topografix.com/GPX/gpx_modified/0/1">2015-10-11T15:16:34.147Z</time>
+        </extensions>
+    </metadata>
+    <trk>
+        <name>Track one</name>
+        <extensions>
+            <time xmlns="http://www.topografix.com/GPX/gpx_modified/0/1">2015-10-11T15:06:33Z</time>
+            <label xmlns="http://www.topografix.com/GPX/gpx_overlay/0/3"/>
+        </extensions>
+        <trkseg>
+            <trkpt lat="31.16503000" lon="-8.02949100">
+                <ele>1162.900</ele>
+                <time>2015-10-11T16:56:58Z</time>
+            </trkpt>
+            <trkpt lat="31.16519100" lon="-8.02948100">
+                <ele>1165.300</ele>
+                <time>2015-10-11T16:57:38Z</time>
+            </trkpt>
+            <trkpt lat="31.16535400" lon="-8.02936200">
+                <ele>1173.900</ele>
+                <time>2015-10-11T16:58:18Z</time>
+            </trkpt>
+        </trkseg>
+    </trk>
+    <extensions/>
+</gpx>

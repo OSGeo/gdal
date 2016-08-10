@@ -1,0 +1,8 @@
+!table
+!version 650
+!charset Neutral
+
+Definition Table
+  Type NATIVE Charset "Neutral"
+  Fields 1
+    NAME Char (1) ;

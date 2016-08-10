@@ -20,7 +20,7 @@ The driver supports read-only services, as well as Transactionnal ones (WFS-T).<
 
 The minimal syntax to open a WFS datasource is : <i>WFS:http://path/to/WFS/service</i> or <i>http://path/to/WFS/service?SERVICE=WFS</i><p>
 
-Additionnal optional parameters can be specified such as <i>TYPENAME</i>, <i>VERSION</i>, <i>MAXFEATURES</i> as specified in WFS specification.<p>
+Additional optional parameters can be specified such as <i>TYPENAME</i>, <i>VERSION</i>, <i>MAXFEATURES</i> as specified in WFS specification.<p>
 
 The name provided to the TYPENAME parameter must be exactly the layer name reported by OGR,
 in particular with its namespace prefix when its exists. Note: starting with GDAL 1.10, several type names can be provided and separated by comma.<p>
@@ -29,7 +29,7 @@ It is also possible to specify the name of an XML file whose content matches the
 (the &lt;OGRWFSDataSource&gt element must be the first bytes of the file):
 <pre>
 &lt;OGRWFSDataSource&gt;
-    &lt;URL&gt;http://path/to/WFS/service[?OPTIONAL_PARAMETER1=VALUE[&amp;amp;OPTIONNAL_PARAMETER2=VALUE]]&lt;/URL&gt;
+    &lt;URL&gt;http://path/to/WFS/service[?OPTIONAL_PARAMETER1=VALUE[&amp;amp;OPTIONAL_PARAMETER2=VALUE]]&lt;/URL&gt;
 &lt;/OGRWFSDataSource&gt;
 </pre><p>
 
@@ -107,7 +107,7 @@ Note that those spatial functions are only supported as server-side filters.<p>
 <p>
 Starting with GDAL 2.0, and for WFS 2.0 servers that support joins, SELECT
 statements that involve joins will be run on server side. Spatial joins can
-also be done by using the above mentionned spatial functions, if the server
+also be done by using the above mentioned spatial functions, if the server
 supports spatial joins.</p>
 
 <p>There might be restrictions set by server on the complexity of the joins.
@@ -129,11 +129,14 @@ SELECT * FROM my_table AS t1 JOIN another_table AS t2 ON ST_Intersects(t1.geom, 
 
 <h2>Write support / WFS-T</h2>
 
-The WFS-T protocol only eanbles the user to operate at feature level. No datasource, layer or field creations are possible.<p>
+The WFS-T protocol only enables the user to operate at feature
+level. No datasource, layer or field creations are possible.<p>
 
-Write support is only enabled when the datasource is opened in update mode.<p>
+Write support is only enabled when the datasource is opened in update
+mode.<p>
 
-The mapping between the operations of the WFS Transaction service and the OGR concepts is the following :
+The mapping between the operations of the WFS Transaction service and
+the OGR concepts is the following:
 <ul>
 <li>OGRFeature::CreateFeature() &lt;==&gt; WFS insert operation</li>
 <li>OGRFeature::SetFeature() &lt;==&gt; WFS update operation</li>
@@ -142,9 +145,11 @@ The mapping between the operations of the WFS Transaction service and the OGR co
 
 Lock operations (LockFeature service) are not available at that time.<p>
 
-There are a few caveouts to keep in mind. OGR feature ID (FID) is an integer based value, whereas WFS/GML
-gml:id attribute is a string. Thus it is not always possible to match both values. The WFS driver exposes
-then the gml:id attribute of a feature as a 'gml_id' field.<p>
+There are a few caveats to keep in mind. OGR feature ID (FID) is an
+integer based value, whereas WFS/GML gml:id attribute is a
+string. Thus it is not always possible to match both values. The WFS
+driver exposes then the gml:id attribute of a feature as a 'gml_id'
+field.<p>
 
 When inserting a new feature with CreateFeature(), and if the command is successful, OGR will fetch the
 returned gml:id and set the 'gml_id' field of the feature accordingly. It will also try to set the OGR FID
@@ -166,7 +171,7 @@ The drawback for CreateFeature() is that the user cannot know which gml:id have 
 features. A special SQL statement has been introduced into the WFS driver to workaround this : by issuing
 the "SELECT _LAST_INSERTED_FIDS_ FROM layer_name" (where layer_name is to be replaced with the actual layer_name)
 command through the OGRDataSource::ExecuteSQL(), a layer will be returned with as many rows
-with a single attribue gml_id as the count of inserted features during the last commited transaction.<p>
+with a single attribute gml_id as the count of inserted features during the last committed transaction.<p>
 
 Note : currently, only CreateFeature() makes use of OGR transaction mechanism. SetFeature() and DeleteFeature()
 will still be issued immediately.

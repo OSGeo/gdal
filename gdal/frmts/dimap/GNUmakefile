@@ -2,9 +2,11 @@ include ../../GDALmake.opt
 
 OBJ	=	dimapdataset.o
 
-
+CPPFLAGS        :=      -I../vrt  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
+
+$(OBJ) $(O_OBJ):	 ../vrt/vrtdataset.h
 
 clean:
 	rm -f *.o $(O_OBJ)

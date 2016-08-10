@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogr_xplane_nav_reader.cpp
  *
  * Project:  X-Plane nav.dat file reader
  * Purpose:  Implements OGRXPlaneNavReader class
@@ -112,8 +111,8 @@ OGRXPlaneReader* OGRXPlaneNavReader::CloneForLayer(OGRXPlaneLayer* poLayer)
 
 int OGRXPlaneNavReader::IsRecognizedVersion( const char* pszVersionString)
 {
-    return EQUALN(pszVersionString, "810 Version", 11) ||
-           EQUALN(pszVersionString, "740 Version", 11);
+    return STARTS_WITH_CI(pszVersionString, "810 Version") ||
+           STARTS_WITH_CI(pszVersionString, "740 Version");
 }
 
 /************************************************************************/

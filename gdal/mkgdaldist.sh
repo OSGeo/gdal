@@ -94,6 +94,7 @@ fi
 
 echo "* Cleaning .svn directories under $PWD..."
 find gdal -name .svn | xargs rm -rf
+rm -f gdal/.gitignore
 
 #
 # Generate man pages
@@ -110,6 +111,11 @@ fi
 if test ! -d "man"; then
     echo " make man failed"
 fi
+
+if test -f "doxygen_sqlite3.db"; then
+    rm -f doxygen_sqlite3.db
+fi
+
 cd ${CWD}
 
 #

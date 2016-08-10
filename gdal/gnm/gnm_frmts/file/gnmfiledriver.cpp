@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM generic driver.
@@ -32,15 +31,17 @@
 #include "gnm_frmts.h"
 #include "gnmfile.h"
 
+CPL_CVSID("$Id$");
+
 static int GNMFileDriverIdentify( GDALOpenInfo* poOpenInfo )
 
-{    
+{
     if( !poOpenInfo->bIsDirectory )
         return FALSE;
     if( (poOpenInfo->nOpenFlags & GDAL_OF_GNM) == 0 )
         return FALSE;
 
-    char **papszFiles = CPLReadDir( poOpenInfo->pszFilename );
+    char **papszFiles = VSIReadDir( poOpenInfo->pszFilename );
     if( CSLCount(papszFiles) == 0 )
     {
         return FALSE;
@@ -113,17 +114,14 @@ static CPLErr GNMFileDriverDelete( const char *pszDataSource )
 
 {
     GDALOpenInfo oOpenInfo(pszDataSource, GA_Update);
-    GNMFileNetwork* poFN = new GNMFileNetwork();
+    GNMFileNetwork oFN;
 
-    if( poFN->Open( &oOpenInfo ) != CE_None)
+    if( oFN.Open( &oOpenInfo ) != CE_None)
     {
-        delete poFN;
-        poFN = NULL;
-
         return CE_Failure;
     }
 
-    return poFN->Delete();
+    return oFN.Delete();
 }
 
 void RegisterGNMFile()
@@ -135,19 +133,21 @@ void RegisterGNMFile()
         poDriver->SetDescription( "GNMFile" );
         poDriver->SetMetadataItem( GDAL_DCAP_GNM, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Geographic Network generic file based model" );
+                                   "Geographic Network generic file based "
+                                   "model" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, CPLSPrintf(
 "<CreationOptionList>"
 "  <Option name='%s' type='string' description='The network name. Also it will be a folder name, so the limits for folder name distribute on network name'/>"
-"  <Option name='%s' type='string' description='The network description. Any text descibes the network'/>"
+"  <Option name='%s' type='string' description='The network description. Any text describes the network'/>"
 "  <Option name='%s' type='string' description='The network Spatial reference. All network features will reproject to this spatial reference. May be a WKT text or EPSG code'/>"
 "  <Option name='FORMAT' type='string' description='The OGR format to store network data.' default='%s'/>"
 "  <Option name='OVERWRITE' type='boolean' description='Overwrite exist network or not' default='NO'/>"
 "</CreationOptionList>", GNM_MD_NAME, GNM_MD_DESCR, GNM_MD_SRS,
                                        GNM_MD_DEFAULT_FILE_FORMAT) );
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                                   "<LayerCreationOptionList/>" );
         poDriver->pfnOpen = GNMFileDriverOpen;
         poDriver->pfnIdentify = GNMFileDriverIdentify;
         poDriver->pfnCreate = GNMFileDriverCreate;
@@ -156,5 +156,3 @@ void RegisterGNMFile()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-

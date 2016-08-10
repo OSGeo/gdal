@@ -124,7 +124,10 @@
 6696,"JGD2000 + JGD2000 (vertical) height",4612,6694,1,0
 6697,"JGD2011 + JGD2011 (vertical) height",6668,6695,1,0
 6700,"Tokyo + JSLD72 height",4301,6693,1,0
-6871,"WGS 84 / Pseudo-Mercator +  EGM2008 geoid height",3857,3855,1,0
+6871,"WGS 84 / Pseudo-Mercator +  EGM2008 geoid height",3857,3855,1,1
+6893,"WGS 84 / World Mercator +  EGM2008 height",3395,3855,1,0
+6917,"SVY21 + SHD height",4757,6916,1,0
+6927,"SVY21 / Singapore TM + SHD height",3414,6916,1,0
 7400,"NTF (Paris) + NGF IGN69 height",4807,5720,1,0
 7401,"NTF (Paris) / France II + NGF Lallemand",27582,5719,1,1
 7402,"NTF (Paris) / France II + NGF IGN69",27582,5720,1,1

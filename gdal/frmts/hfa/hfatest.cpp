@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Testing mainline for HFA services - transitory.
@@ -49,10 +48,10 @@ static void Usage()
 /************************************************************************/
 #ifndef WIN32
 char *
-HFAPCSStructToWKT( const Eprj_Datum *psDatum,
-                   const Eprj_ProParameters *psPro,
-                   const Eprj_MapInfo *psMapInfo,
-                   HFAEntry *poMapInformation )
+HFAPCSStructToWKT( const Eprj_Datum *,
+                   const Eprj_ProParameters *,
+                   const Eprj_MapInfo *,
+                   HFAEntry * )
 {
     return NULL;
 }
@@ -65,27 +64,22 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 int main( int argc, char ** argv )
 
 {
-    const char	*pszFilename = NULL;
-    int		nDumpTree = FALSE;
-    int		nDumpDict = FALSE;
-    int		nRastReport = FALSE;
-    int		i, nXSize, nYSize, nBands;
-    HFAHandle	hHFA;
-    const Eprj_MapInfo *psMapInfo;
-    const Eprj_ProParameters *psProParameters;
-    const Eprj_Datum *psDatum;
-
 /* -------------------------------------------------------------------- */
 /*      Handle arguments.                                               */
 /* -------------------------------------------------------------------- */
-    for( i = 1; i < argc; i++ )
+    const char *pszFilename = NULL;
+    bool bDumpTree = false;
+    bool bDumpDict = false;
+    bool bRastReport = false;
+
+    for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i],"-dd") )
-            nDumpDict = TRUE;
+            bDumpDict = TRUE;
         else if( EQUAL(argv[i],"-dt") )
-            nDumpTree = TRUE;
+            bDumpTree = TRUE;
         else if( EQUAL(argv[i],"-dr") )
-            nRastReport = TRUE;
+            bRastReport = TRUE;
         else if( pszFilename == NULL )
             pszFilename = argv[i];
         else
@@ -104,7 +98,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    hHFA = HFAOpen( pszFilename, "r" );
+    HFAHandle hHFA = HFAOpen( pszFilename, "r" );
 
     if( hHFA == NULL )
     {
@@ -115,7 +109,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Do we want to walk the tree dumping out general information?    */
 /* -------------------------------------------------------------------- */
-    if( nDumpDict )
+    if( bDumpDict )
     {
         HFADumpDictionary( hHFA, stdout );
     }
@@ -123,7 +117,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Do we want to walk the tree dumping out general information?    */
 /* -------------------------------------------------------------------- */
-    if( nDumpTree )
+    if( bDumpTree )
     {
         HFADumpTree( hHFA, stdout );
     }
@@ -131,46 +125,48 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Dump indirectly collected data about bands.                     */
 /* -------------------------------------------------------------------- */
+    int nXSize, nYSize, nBands;
     HFAGetRasterInfo( hHFA, &nXSize, &nYSize, &nBands );
 
-    if( nRastReport )
+    if( bRastReport )
     {
         printf( "Raster Size = %d x %d\n", nXSize, nYSize );
 
-        for( i = 1; i <= nBands; i++ )
+        for( int i = 1; i <= nBands; i++ )
         {
-            int	nDataType, nColors, nOverviews, iOverview;
-            double	*padfRed, *padfGreen, *padfBlue, *padfAlpha, *padfBins;
-            int nBlockXSize, nBlockYSize, nCompressionType;
-        
-            HFAGetBandInfo( hHFA, i, &nDataType, &nBlockXSize, &nBlockYSize, 
+            EPTType eDataType;
+            int nBlockXSize;
+            int nBlockYSize;
+            int nCompressionType;
+
+            HFAGetBandInfo( hHFA, i, &eDataType, &nBlockXSize, &nBlockYSize,
                             &nCompressionType );
-            nOverviews = HFAGetOverviewCount( hHFA, i );
+            int nOverviews = HFAGetOverviewCount( hHFA, i );
 
             printf( "Band %d: %dx%d tiles, type = %d\n",
-                    i, nBlockXSize, nBlockYSize, nDataType );
+                    i, nBlockXSize, nBlockYSize, eDataType );
 
-            for( iOverview=0; iOverview < nOverviews; iOverview++ )
+            for( int iOverview=0; iOverview < nOverviews; iOverview++ )
             {
-                HFAGetOverviewInfo( hHFA, i, iOverview, 
-                                    &nXSize, &nYSize, 
+                HFAGetOverviewInfo( hHFA, i, iOverview,
+                                    &nXSize, &nYSize,
                                     &nBlockXSize, &nBlockYSize, NULL );
-                printf( "  Overview: %dx%d (blocksize %dx%d)\n", 
+                printf( "  Overview: %dx%d (blocksize %dx%d)\n",
                         nXSize, nYSize, nBlockXSize, nBlockYSize );
             }
 
-            if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen, 
-			   &padfBlue, &padfAlpha, &padfBins )
+            int nColors;
+            double *padfRed, *padfGreen, *padfBlue, *padfAlpha, *padfBins;
+            if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen,
+                           &padfBlue, &padfAlpha, &padfBins )
                 == CE_None )
             {
-                int	j;
-
-                for( j = 0; j < nColors; j++ )
+                for( int j = 0; j < nColors; j++ )
                 {
                     printf( "PCT[%d] = %f,%f,%f %f\n",
                             (padfBins != NULL) ? (int) padfBins[j] : j,
-                            padfRed[j], padfGreen[j], 
-			    padfBlue[j], padfAlpha[j]);
+                            padfRed[j], padfGreen[j],
+                            padfBlue[j], padfAlpha[j]);
                 }
             }
 
@@ -198,7 +194,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Dump the map info structure.                                    */
 /* -------------------------------------------------------------------- */
-        psMapInfo = HFAGetMapInfo( hHFA );
+        const Eprj_MapInfo *psMapInfo = HFAGetMapInfo( hHFA );
 
         if( psMapInfo != NULL )
         {
@@ -214,11 +210,16 @@ int main( int argc, char ** argv )
         }
 
     }
-    
-    psProParameters = HFAGetProParameters( hHFA );
 
-    psDatum = HFAGetDatum( hHFA );
-    
+
+    // const Eprj_ProParameters *psProParameters;
+    // psProParameters =
+    HFAGetProParameters( hHFA );
+
+    // const Eprj_Datum *psDatum;
+    // psDatum =
+    HFAGetDatum( hHFA );
+
     HFAClose( hHFA );
 
     VSICleanupFileManager();

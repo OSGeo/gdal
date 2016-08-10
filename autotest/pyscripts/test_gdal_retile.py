@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_retile.py testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -28,7 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+import shutil
 import sys
 import os
 
@@ -130,7 +130,7 @@ def test_gdal_retile_3():
     # image black and the second gray, then the result of tiling these two
     # together should be gray square stacked on top of a black square.
     #
-    # 60 N ---------------  
+    # 60 N ---------------
     #      |             | \
     #      |    50x50    |  \ Image 2
     #      |             |  /
@@ -142,7 +142,7 @@ def test_gdal_retile_3():
     #      |             | /
     #  0 N ---------------
     #      0 E           30 E
-    
+
     ds = drv.Create('tmp/in1.tif', 100, 100, 1)
     px1_x = 30.0 / ds.RasterXSize
     px1_y = 30.0 / ds.RasterYSize
@@ -194,6 +194,100 @@ def test_gdal_retile_3():
 
 
 ###############################################################################
+# Test gdal_retile.py -overlap
+
+def test_gdal_retile_4():
+
+    script_path = test_py_scripts.get_py_script('gdal_retile')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        os.mkdir('tmp/outretile4')
+    except:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -ps 8 7 -overlap 3 -targetDir tmp/outretile4 ../gcore/data/byte.tif' )
+
+    expected_results = [ ['tmp/outretile4/byte_1_1.tif', 8, 7],
+                         ['tmp/outretile4/byte_1_2.tif', 8, 7],
+                         ['tmp/outretile4/byte_1_3.tif', 8, 7],
+                         ['tmp/outretile4/byte_1_4.tif', 5, 7],
+                         ['tmp/outretile4/byte_2_1.tif', 8, 7],
+                         ['tmp/outretile4/byte_2_2.tif', 8, 7],
+                         ['tmp/outretile4/byte_2_3.tif', 8, 7],
+                         ['tmp/outretile4/byte_2_4.tif', 5, 7],
+                         ['tmp/outretile4/byte_3_1.tif', 8, 7],
+                         ['tmp/outretile4/byte_3_2.tif', 8, 7],
+                         ['tmp/outretile4/byte_3_3.tif', 8, 7],
+                         ['tmp/outretile4/byte_3_4.tif', 5, 7],
+                         ['tmp/outretile4/byte_4_1.tif', 8, 7],
+                         ['tmp/outretile4/byte_4_2.tif', 8, 7],
+                         ['tmp/outretile4/byte_4_3.tif', 8, 7],
+                         ['tmp/outretile4/byte_4_4.tif', 5, 7],
+                         ['tmp/outretile4/byte_5_1.tif', 8, 4],
+                         ['tmp/outretile4/byte_5_2.tif', 8, 4],
+                         ['tmp/outretile4/byte_5_3.tif', 8, 4],
+                         ['tmp/outretile4/byte_5_4.tif', 5, 4]]
+
+    for (filename, width, height) in expected_results:
+        ds = gdal.Open(filename)
+        if ds.RasterXSize != width:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(ds.RasterXSize)
+            print(width)
+            return 'fail'
+        if ds.RasterYSize != height:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(ds.RasterYSize)
+            print(height)
+            return 'fail'
+        ds = None
+
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 1 -ps 8 8 -overlap 4 -targetDir tmp/outretile4 ../gcore/data/byte.tif' )
+
+    expected_results = [ ['tmp/outretile4/byte_1_1.tif', 8, 8],
+                         ['tmp/outretile4/byte_1_2.tif', 8, 8],
+                         ['tmp/outretile4/byte_1_3.tif', 8, 8],
+                         ['tmp/outretile4/byte_1_4.tif', 8, 8],
+                         ['tmp/outretile4/byte_2_1.tif', 8, 8],
+                         ['tmp/outretile4/byte_2_2.tif', 8, 8],
+                         ['tmp/outretile4/byte_2_3.tif', 8, 8],
+                         ['tmp/outretile4/byte_2_4.tif', 8, 8],
+                         ['tmp/outretile4/byte_3_1.tif', 8, 8],
+                         ['tmp/outretile4/byte_3_2.tif', 8, 8],
+                         ['tmp/outretile4/byte_3_3.tif', 8, 8],
+                         ['tmp/outretile4/byte_3_4.tif', 8, 8],
+                         ['tmp/outretile4/byte_4_1.tif', 8, 8],
+                         ['tmp/outretile4/byte_4_2.tif', 8, 8],
+                         ['tmp/outretile4/byte_4_3.tif', 8, 8],
+                         ['tmp/outretile4/byte_4_4.tif', 8, 8],
+                         ['tmp/outretile4/1/byte_1_1.tif', 8, 8],
+                         ['tmp/outretile4/1/byte_1_2.tif', 6, 8],
+                         ['tmp/outretile4/1/byte_2_1.tif', 8, 6],
+                         ['tmp/outretile4/1/byte_2_2.tif', 6, 6]]
+
+    for (filename, width, height) in expected_results:
+        ds = gdal.Open(filename)
+        if ds.RasterXSize != width:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(ds.RasterXSize)
+            print(width)
+            return 'fail'
+        if ds.RasterYSize != height:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(ds.RasterYSize)
+            print(height)
+            return 'fail'
+        ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_retile_cleanup():
@@ -227,12 +321,15 @@ def test_gdal_retile_cleanup():
             except:
                 pass
 
+    shutil.rmtree('tmp/outretile4')
+
     return 'success'
 
 gdaltest_list = [
     test_gdal_retile_1,
     test_gdal_retile_2,
     test_gdal_retile_3,
+    test_gdal_retile_4,
     test_gdal_retile_cleanup
     ]
 

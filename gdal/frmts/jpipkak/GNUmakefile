@@ -22,12 +22,18 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 # apps makefiles, so we copy it and build it ourselves.  Perhaps this 
 # won't be needed with newer versions of Kakadu.  Tested with 6.2.
 kdu_cache.cpp:	  $(KAKDIR)/apps/caching_sources/kdu_cache.cpp
-	cp $(KAKDIR)/apps/caching_sources/kdu_cache.cpp .
+	echo "#include \"cpl_port.h\"" > kdu_cache_wrapper.h
+	echo "#ifdef HAVE_GCC_SYSTEM_HEADER" >> kdu_cache_wrapper.h
+	echo "#pragma GCC system_header" >> kdu_cache_wrapper.h
+	echo "#endif" >> kdu_cache_wrapper.h
+	cat $(KAKDIR)/apps/caching_sources/kdu_cache.cpp >> kdu_cache_wrapper.h
+	echo "#include \"kdu_cache_wrapper.h\"" > kdu_cache.cpp
 
 clean:
 	rm -f *.o $(O_OBJ)
 	rm -f $(INSTOBJ)
 	rm -f kdu_cache.cpp
+	rm -f kdu_cache_wrapper.h
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GPB_H_INCLUDED
-#define _GPB_H_INCLUDED
+#ifndef GPB_H_INCLUDED
+#define GPB_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -39,12 +39,12 @@
 
 //#define DEBUG_GPB_ERRORS
 #ifdef DEBUG_GPB_ERRORS
-static void error_occured(int nLine)
+static void error_occurred(int nLine)
 {
-    CPLError(CE_Failure, CPLE_AppDefined, "Parsing error occured at line %d", nLine);
+    CPLError(CE_Failure, CPLE_AppDefined, "Parsing error occurred at line %d", nLine);
 }
 
-#define GOTO_END_ERROR do { error_occured(__LINE__); goto end_error; } while(0)
+#define GOTO_END_ERROR do { error_occurred(__LINE__); goto end_error; } while(0)
 #else
 #define GOTO_END_ERROR goto end_error
 #endif
@@ -80,7 +80,7 @@ static int ReadVarInt32(GByte** ppabyData)
     int nShift = 0;
     GByte* pabyData = *ppabyData;
 
-    while(TRUE)
+    while(true)
     {
         int nByte = *pabyData;
         if (!(nByte & 0x80))
@@ -103,7 +103,7 @@ static int ReadVarInt32(GByte** ppabyData)
 #define READ_VARSINT32(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarInt32(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (((unsigned int)nVal) >> 1) : -(((unsigned int)nVal) >> 1)-1; \
+        nVal = ((nVal & 1) == 0) ? (int)(((unsigned int)nVal) >> 1) : -(int)(((unsigned int)nVal) >> 1)-1; \
         if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
 
@@ -111,13 +111,15 @@ static int ReadVarInt32(GByte** ppabyData)
 /*                          ReadVarUInt32()                             */
 /************************************************************************/
 
+#ifndef DO_NOT_DEFINE_READ_VARUINT32
+
 static unsigned int ReadVarUInt32(GByte** ppabyData)
 {
     unsigned int nVal = 0;
     int nShift = 0;
     GByte* pabyData = *ppabyData;
 
-    while(TRUE)
+    while(true)
     {
         int nByte = *pabyData;
         if (!(nByte & 0x80))
@@ -143,6 +145,8 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
         if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
     }
 
+#endif /* DO_NOT_DEFINE_READ_VARUINT32 */
+
 /************************************************************************/
 /*                           ReadVarInt64()                             */
 /************************************************************************/
@@ -153,7 +157,7 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
     int nShift = 0;
     GByte* pabyData = *ppabyData;
 
-    while(TRUE)
+    while(true)
     {
         int nByte = *pabyData;
         if (!(nByte & 0x80))
@@ -176,24 +180,26 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
 #define READ_VARSINT64(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarInt64(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (((GUIntBig)nVal) >> 1) : -(((GUIntBig)nVal) >> 1)-1; \
+        nVal = ((nVal & 1) == 0) ? (GIntBig)(((GUIntBig)nVal) >> 1) : -(GIntBig)(((GUIntBig)nVal) >> 1)-1; \
         if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
 
 #define READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarInt64(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (((GUIntBig)nVal) >> 1) : -(((GUIntBig)nVal) >> 1)-1; \
+        nVal = ((nVal & 1) == 0) ? (GIntBig)(((GUIntBig)nVal) >> 1) : -(GIntBig)(((GUIntBig)nVal) >> 1)-1; \
     }
 
 /************************************************************************/
 /*                            SkipVarInt()                              */
 /************************************************************************/
 
+#ifndef DO_NOT_DEFINE_SKIP_VARINT
+
 static void SkipVarInt(GByte** ppabyData)
 {
     GByte* pabyData = *ppabyData;
-    while(TRUE)
+    while(true)
     {
         int nByte = *pabyData;
         if (!(nByte & 0x80))
@@ -211,12 +217,14 @@ static void SkipVarInt(GByte** ppabyData)
         if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
 
+#endif /* DO_NOT_DEFINE_SKIP_VARINT */
+
 #define READ_FIELD_KEY(nKey) READ_VARINT32(pabyData, pabyDataLimit, nKey)
 
 #define READ_TEXT(pabyData, pabyDataLimit, pszTxt) \
         unsigned int nDataLength; \
         READ_SIZE(pabyData, pabyDataLimit, nDataLength); \
-        pszTxt = (char*)VSIMalloc(nDataLength + 1); \
+        pszTxt = (char*)VSI_MALLOC_VERBOSE(nDataLength + 1); \
         if( pszTxt == NULL ) GOTO_END_ERROR; \
         memcpy(pszTxt, pabyData, nDataLength); \
         pszTxt[nDataLength] = 0; \
@@ -263,6 +271,8 @@ static void SkipVarInt(GByte** ppabyData)
                 GOTO_END_ERROR; \
         }
 
+#ifndef DO_NOT_DEFINE_SKIP_UNKNOWN_FIELD
+
 static
 int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose) CPL_NO_INLINE;
 
@@ -273,7 +283,7 @@ int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbos
 {
     GByte* pabyDataBefore = pabyData;
     SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, verbose);
-    return pabyData - pabyDataBefore;
+    return static_cast<int>(pabyData - pabyDataBefore);
 end_error:
     return -1;
 }
@@ -286,4 +296,6 @@ end_error:
         pabyData += _nOffset; \
     }
 
-#endif /* _GPB_H_INCLUDED */
+#endif /* DO_NOT_DEFINE_SKIP_UNKNOWN_FIELD */
+
+#endif /* GPB_H_INCLUDED */

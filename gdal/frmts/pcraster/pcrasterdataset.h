@@ -30,19 +30,8 @@
 #ifndef INCLUDED_PCRASTERDATASET
 #define INCLUDED_PCRASTERDATASET
 
-// Library headers.
-#ifndef INCLUDED_GDAL_PAM
 #include "gdal_pam.h"
-#define INCLUDED_GDAL_PAM
-#endif
-
-// PCRaster library headers.
-#ifndef INCLUDED_CSF
 #include "csf.h"
-#define INCLUDED_CSF
-#endif
-
-// Module headers.
 
 // namespace {
   // PCRasterDataset declarations.
@@ -155,27 +144,6 @@ public:
   bool             location_changed    () const;
 
 };
-
-
-
-//------------------------------------------------------------------------------
-// INLINE FUNCTIONS
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-// FREE OPERATORS
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-// FREE FUNCTIONS
-//------------------------------------------------------------------------------
-
-
-
 // } // namespace
 
 #endif

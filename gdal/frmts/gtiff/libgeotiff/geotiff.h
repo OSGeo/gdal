@@ -10,15 +10,15 @@
  *  notice accompanies any products derived therefrom.
  **********************************************************************/
 
-#ifndef __geotiff_h_
-#define __geotiff_h_
+#ifndef LIBGEOTIFF_GEOTIFF_H_
+#define LIBGEOTIFF_GEOTIFF_H_
 
 /**
  * \file geotiff.h
  *
  * Primary libgeotiff include file.
  *
- * This is the defacto registry for valid GEOTIFF GeoKeys
+ * This is the de facto registry for valid GeoTIFF GeoKeys
  * and their associated symbolic values. This is also the only file
  * of the GeoTIFF library which needs to be included in client source
  * code.
@@ -120,4 +120,4 @@ int CPL_DLL    GTIFPCSToImage( GTIF *gtif, double *x, double *y );
 }
 #endif
 
-#endif /* __geotiff_h_ */
+#endif /* LIBGEOTIFF_GEOTIFF_H_ */

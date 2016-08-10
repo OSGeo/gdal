@@ -76,16 +76,18 @@ effect of this option will be less efficient. This option consumes addionnal 60 
 
 <h3>Interleaved reading</h3>
 
-Due to the nature of OSM files and how the driver works internally, the default reading mode might not work
-correctly, because too many features will accumulate in the layers before being consummed by the user application.
-For large files, applications should set the OGR_INTERLEAVED_READING=YES configuration option to turn on a
-special reading mode where the following reading pattern must be used :
+Due to the nature of OSM files and how the driver works internally,
+the default reading mode might not work correctly, because too many
+features will accumulate in the layers before being consumed by the
+user application.  For large files, applications should set the
+OGR_INTERLEAVED_READING=YES configuration option to turn on a special
+reading mode where the following reading pattern must be used:
 
 <pre>
-    int bHasLayersNonEmpty;
+    bool bHasLayersNonEmpty;
     do
     {
-        bHasLayersNonEmpty = FALSE;
+        bHasLayersNonEmpty = false;
 
         for( int iLayer = 0; iLayer &lt; poDS->GetLayerCount(); iLayer++ )
         {
@@ -94,7 +96,7 @@ special reading mode where the following reading pattern must be used :
             OGRFeature* poFeature;
             while( (poFeature = poLayer->GetNextFeature()) != NULL )
             {
-                bHasLayersNonEmpty = TRUE;
+                bHasLayersNonEmpty = true;
                 OGRFeature::DestroyFeature(poFeature);
             }
         }
@@ -106,6 +108,18 @@ special reading mode where the following reading pattern must be used :
 
 Note : the ogr2ogr application has been modified to use that OGR_INTERLEAVED_READING mode without any
 particular user action.<p>
+
+<h3>Spatial filtering</h3>
+
+<p>Due to way .osm or .pbf files are structured and the parsing of the file is done,
+for efficiency reasons, a spatial filter applied on the points layer will also affect other layers.
+This may result in lines or polygons that have missing vertices.</p>
+
+<p>To improve this, a possibility is using a larger spatial filter with some buffer
+for the points layer, and then post-process the output to apply the desired filter.
+This would not work however if a polygon has vertices very far away from the interest
+area. In which case full conversion of the file to another format, and filtering of
+the resulting lines or polygons layers would be needed.</p>
 
 <h3>Reading .osm.bz2 files and/or online files</h3>
 
@@ -142,7 +156,7 @@ Whether to compress nodes in temporary DB. Defaults to NO.</li>
 of in-memory temporary file. If it exceeds that value, it will go to disk.
 Defaults to 100.</li>
 <li> <b>INTERLEAVED_READING=YES/NO</b>: (GDAL &gt;=2.0) Whether to
-enable interleveaved reading. Defaults to NO.</li>
+enable interleaved reading. Defaults to NO.</li>
 </ul>
 
 <h3>See Also</h3>

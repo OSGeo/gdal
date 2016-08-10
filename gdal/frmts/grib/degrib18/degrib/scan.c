@@ -22,7 +22,7 @@
  *   To convert from the index of the GRIB2 message which is defined by the
  * scan parameter, to one that seemed reasonable.  The choice for internal
  * array orientation boiled down to either (scan = 0000) (start from upper
- * left and accross similar to a CRT screen) or (scan = 0100) (start at lower
+ * left and across similar to a CRT screen) or (scan = 0100) (start at lower
  * left and go up ).
  *   It was decided that (scan 0100) was what people expected.  The only catch
  * is that Spatial Analyst requires (scan = 0000), so when writing to that
@@ -30,7 +30,7 @@
  *   For more info on scan flags: see Grib2 "Flag" Table 3.4
  *
  * ARGUMENTS
- *    row = The index in the scaned in data. (Input)
+ *    row = The index in the scanned in data. (Input)
  *   X, Y = The x,y position in a scan == 0100 world. (Output)
  *   scan = The orientation of the GRIB2 grid. (Input)
  * Nx, Ny = The Dimensions of the grid (Input).
@@ -98,7 +98,7 @@ void ScanIndex2XY (sInt4 row, sInt4 * X, sInt4 * Y, uChar scan, sInt4 Nx,
  * testing purposes, and in case it is useful.
  *
  * ARGUMENTS
- *    Row = The index in the scaned in data. (Output)
+ *    Row = The index in the scanned in data. (Output)
  *   x, y = The x,y position in a (scan = 0100) world. (Input)
  *   scan = The orientation of the GRIB2 grid. (Input)
  * Nx, Ny = The Dimensions of the grid (Input).

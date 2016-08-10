@@ -4,7 +4,7 @@
 #include "csfimpl.h"
 
 
-static const char *openModes[3] = {
+static const char * const openModes[3] = {
 	S_READ,
 	S_WRITE,
 	S_READ_WRITE
@@ -98,6 +98,11 @@ MAP  *Mopen(
      fprintf(stderr, "WARNING: Unable to read ORD_OK in CSF.\n");
  }
  if (s != ORD_OK) {
+    if( s != ORD_SWAB )
+    {
+        M_ERROR(NOT_CSF);
+        goto error_open;
+    }
 	m->write = CsfWriteSwapped;
 	m->read  = CsfReadSwapped;
  }

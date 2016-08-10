@@ -208,7 +208,7 @@ def hdf5_7():
         try:
             metadata.pop(key)
         except KeyError:
-            gdaltest.post_reason( 'unable to fing "%s" key' % key )
+            gdaltest.post_reason( 'unable to find "%s" key' % key )
             return 'fail'
     return 'success'
 
@@ -396,7 +396,7 @@ def hdf5_11():
             print(got_gt)
             gdaltest.post_reason('fail')
             return 'fail'
-            
+
     ds = None
 
     if gdaltest.is_file_open('data/CSK_GEC.h5'):
@@ -425,11 +425,14 @@ def hdf5_12():
 
     got_gt = ds.GetGeoTransform()
     expected_gt = (-240890.02470187756, 1001.7181388478905, 0.0, 239638.21326987055, 0.0, -1000.3790932482976)
-    for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
-            print(got_gt)
-            gdaltest.post_reason('fail')
-            return 'fail'
+    # Proj 4.9.3
+    expected_gt2 = (-240889.94573659054, 1001.7178235672992, 0.0, 239638.28570609915, 0.0, -1000.3794089534567)
+
+    if max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) > 1e-5 and \
+       max([abs(got_gt[i] - expected_gt2[i]) for i in range(6)]) > 1e-5:
+        print(got_gt)
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
@@ -454,10 +457,9 @@ class TestHDF5:
 
         if ds.GetRasterBand(1).Checksum() != self.checksum:
             gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
-            return 'failure'
+            return 'fail'
 
         return 'success'
-
 
 
 gdaltest_list = [
@@ -495,4 +497,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRMultiCurve class.
@@ -27,9 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -41,9 +40,7 @@ CPL_CVSID("$Id$");
  * \brief Create an empty multi curve collection.
  */
 
-OGRMultiCurve::OGRMultiCurve()
-{
-}
+OGRMultiCurve::OGRMultiCurve() {}
 
 /************************************************************************/
 /*                OGRMultiCurve( const OGRMultiCurve& )                 */
@@ -51,25 +48,22 @@ OGRMultiCurve::OGRMultiCurve()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
 OGRMultiCurve::OGRMultiCurve( const OGRMultiCurve& other ) :
     OGRGeometryCollection(other)
-{
-}
+{}
 
 /************************************************************************/
 /*                           ~OGRMultiCurve()                           */
 /************************************************************************/
 
-OGRMultiCurve::~OGRMultiCurve()
-{
-}
+OGRMultiCurve::~OGRMultiCurve() {}
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */
@@ -77,16 +71,16 @@ OGRMultiCurve::~OGRMultiCurve()
 
 /**
  * \brief Assignment operator.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the operator
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
 OGRMultiCurve& OGRMultiCurve::operator=( const OGRMultiCurve& other )
 {
-    if( this != &other)
+    if( this != &other )
     {
         OGRGeometryCollection::operator=( other );
     }
@@ -100,7 +94,11 @@ OGRMultiCurve& OGRMultiCurve::operator=( const OGRMultiCurve& other )
 OGRwkbGeometryType OGRMultiCurve::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbMultiCurveZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbMultiCurveM;
+    else if( flags & OGR_G_3D )
         return wkbMultiCurveZ;
     else
         return wkbMultiCurve;
@@ -130,19 +128,28 @@ const char * OGRMultiCurve::getGeometryName() const
 /*                          isCompatibleSubType()                       */
 /************************************************************************/
 
-OGRBoolean OGRMultiCurve::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
+OGRBoolean OGRMultiCurve::isCompatibleSubType(
+    OGRwkbGeometryType eGeomType ) const
 {
     return OGR_GT_IsCurve(eGeomType);
 }
 
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                       addCurveDirectlyFromWkt()                      */
 /************************************************************************/
 
-OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf, OGRCurve* poCurve )
+OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
+                                               OGRCurve* poCurve )
 {
-    return ((OGRMultiCurve*)poSelf)->addGeometryDirectly(poCurve);
+    OGRMultiCurve *poGeometry = dynamic_cast<OGRMultiCurve *>(poSelf);
+    if( poGeometry == NULL )
+    {
+        return OGRERR_FAILURE;
+    }
+    return poGeometry->addGeometryDirectly(poCurve);
 }
+/*! @endcond */
 
 /************************************************************************/
 /*                           importFromWkt()                            */
@@ -153,12 +160,12 @@ OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf, OGRCurve* po
 OGRErr OGRMultiCurve::importFromWkt( char ** ppszInput )
 
 {
-    int bIsMultiCurve = (wkbFlatten(getGeometryType()) == wkbMultiCurve);
+    const bool bIsMultiCurve = wkbFlatten(getGeometryType()) == wkbMultiCurve;
     return importCurveCollectionFromWkt( ppszInput,
-                                         TRUE, /* bAllowEmptyComponent */
-                                         bIsMultiCurve, /* bAllowLineString */
-                                         bIsMultiCurve, /* bAllowCurve */
-                                         bIsMultiCurve, /* bAllowCompoundCurve */
+                                         TRUE,  // bAllowEmptyComponent.
+                                         bIsMultiCurve,  // bAllowLineString.
+                                         bIsMultiCurve,  // bAllowCurve.
+                                         bIsMultiCurve,  // bAllowCompoundCurve.
                                          addCurveDirectlyFromWkt );
 }
 
@@ -167,7 +174,7 @@ OGRErr OGRMultiCurve::importFromWkt( char ** ppszInput )
 /************************************************************************/
 
 OGRErr OGRMultiCurve::exportToWkt( char ** ppszDstText,
-                                   CPL_UNUSED OGRwkbVariant eWkbVariant ) const
+                                   OGRwkbVariant /* eWkbVariant */ ) const
 
 {
     return exportToWktInternal( ppszDstText, wkbVariantIso, "LINESTRING" );
@@ -177,11 +184,11 @@ OGRErr OGRMultiCurve::exportToWkt( char ** ppszDstText,
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRMultiCurve::hasCurveGeometry(int bLookForNonLinear) const
+OGRBoolean OGRMultiCurve::hasCurveGeometry( int bLookForNonLinear ) const
 {
     if( bLookForNonLinear )
         return OGRGeometryCollection::hasCurveGeometry(TRUE);
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -195,24 +202,31 @@ OGRBoolean OGRMultiCurve::hasCurveGeometry(int bLookForNonLinear) const
  * instances of OGRLineString. This can be verified if hasCurveGeometry(TRUE)
  * returns FALSE. It is not intended to approximate circular curves. For that
  * use getLinearGeometry().
- * 
+ *
  * The passed in geometry is consumed and a new one returned (or NULL in case
- * of failure). 
- * 
- * @param poMS the input geometry - ownership is passed to the method.
+ * of failure).
+ *
+ * @param poMC the input geometry - ownership is passed to the method.
  * @return new geometry.
  */
 
-OGRMultiLineString* OGRMultiCurve::CastToMultiLineString(OGRMultiCurve* poMC)
+OGRMultiLineString* OGRMultiCurve::CastToMultiLineString( OGRMultiCurve* poMC )
 {
-    for(int i=0;i<poMC->nGeomCount;i++)
+    for( int i = 0; i < poMC->nGeomCount; ++i )
     {
-        poMC->papoGeoms[i] = OGRCurve::CastToLineString( (OGRCurve*)poMC->papoGeoms[i] );
+        OGRCurve * const poCurve = dynamic_cast<OGRCurve *>(poMC->papoGeoms[i]);
+        if( poCurve == NULL ) {
+            CPLError(
+                  CE_Fatal, CPLE_AssertionFailed, "dynamic_cast failed." );
+            continue;
+        }
+        poMC->papoGeoms[i] = OGRCurve::CastToLineString( poCurve );
         if( poMC->papoGeoms[i] == NULL )
         {
             delete poMC;
             return NULL;
         }
     }
-    return (OGRMultiLineString*) TransferMembersAndDestroy(poMC, new OGRMultiLineString());
+    return dynamic_cast<OGRMultiLineString *>(
+        TransferMembersAndDestroy(poMC, new OGRMultiLineString()) );
 }

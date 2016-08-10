@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_rawbinblock.cpp,v 1.11 2007-06-11 14:40:03 dmorissette Exp $
  *
  * Name:     mitab_rawbinblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -18,16 +17,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -73,6 +72,8 @@
 
 #include "mitab.h"
 
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class TABRawBinBlock
  *====================================================================*/
@@ -95,8 +96,8 @@ TABRawBinBlock::TABRawBinBlock(TABAccess eAccessMode /*= TABRead*/,
 
     m_bModified = FALSE;
 
-    m_eAccess = eAccessMode; 
-
+    m_eAccess = eAccessMode;
+    m_nBlockType = 0;
 }
 
 /**********************************************************************
@@ -116,17 +117,15 @@ TABRawBinBlock::~TABRawBinBlock()
  *
  * Load data from the specified file location and initialize the block.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset, 
-                                     int nSize /*= 512*/)
+int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
+                                     int nSize)
 {
-    GByte *pabyBuf;
-
     if (fpSrc == NULL || nSize == 0)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
                  "TABRawBinBlock::ReadFromFile(): Assertion Failed!");
         return -1;
     }
@@ -139,17 +138,17 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     m_nFileOffset = nOffset;
     m_nCurPos = 0;
     m_bModified = FALSE;
-    
+
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
      *---------------------------------------------------------------*/
-    pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
+    GByte *pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
 
     /*----------------------------------------------------------------
      * Read from the file
      *---------------------------------------------------------------*/
     if (VSIFSeekL(fpSrc, nOffset, SEEK_SET) != 0 ||
-        (m_nSizeUsed = VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc) ) == 0 ||
+        (m_nSizeUsed = static_cast<int>(VSIFReadL(pabyBuf, sizeof(GByte), nSize, fpSrc)) ) == 0 ||
         (m_bHardBlockSize && m_nSizeUsed != nSize ) )
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -162,7 +161,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Init block with the data we just read
      *---------------------------------------------------------------*/
-    return InitBlockFromData(pabyBuf, nSize, m_nSizeUsed, 
+    return InitBlockFromData(pabyBuf, nSize, m_nSizeUsed,
                              FALSE, fpSrc, nOffset);
 }
 
@@ -170,7 +169,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
 /**********************************************************************
  *                   TABRawBinBlock::CommitToFile()
  *
- * Commit the current state of the binary block to the file to which 
+ * Commit the current state of the binary block to the file to which
  * it has been previously attached.
  *
  * Derived classes may want to (optionally) reimplement this method if
@@ -180,7 +179,7 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
  * the specified size is always written, otherwise only the number of
  * used bytes in the block will be written to disk.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABRawBinBlock::CommitToFile()
@@ -190,7 +189,7 @@ int     TABRawBinBlock::CommitToFile()
     if (m_fp == NULL || m_nBlockSize <= 0 || m_pabyBuf == NULL ||
         m_nFileOffset < 0)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
         "TABRawBinBlock::CommitToFile(): Block has not been initialized yet!");
         return -1;
     }
@@ -202,12 +201,12 @@ int     TABRawBinBlock::CommitToFile()
         return 0;
 
     /*----------------------------------------------------------------
-     * Move the output file pointer to the right position... 
+     * Move the output file pointer to the right position...
      *---------------------------------------------------------------*/
     if (VSIFSeekL(m_fp, m_nFileOffset, SEEK_SET) != 0)
     {
         /*------------------------------------------------------------
-         * Moving pointer failed... we may need to pad with zeros if 
+         * Moving pointer failed... we may need to pad with zeros if
          * block destination is beyond current end of file.
          *-----------------------------------------------------------*/
         int nCurPos;
@@ -231,7 +230,7 @@ int     TABRawBinBlock::CommitToFile()
                 nCurPos++;
             }
         }
-            
+
         if (nCurPos != m_nFileOffset)
             nStatus = -1; // Error message will follow below
 
@@ -244,8 +243,8 @@ int     TABRawBinBlock::CommitToFile()
      * we write only the part of the block that was used.
      *---------------------------------------------------------------*/
     int numBytesToWrite = m_bHardBlockSize?m_nBlockSize:m_nSizeUsed;
-    
-    /*CPLDebug("MITAB", "Commiting to offset %d", m_nFileOffset);*/
+
+    /*CPLDebug("MITAB", "Committing to offset %d", m_nFileOffset);*/
 
     if (nStatus != 0 ||
         VSIFWriteL(m_pabyBuf,sizeof(GByte),
@@ -273,7 +272,7 @@ int     TABRawBinBlock::CommitToFile()
  *
  * Commit current block to file using block type 4 (garbage block)
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
@@ -284,7 +283,7 @@ int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
 
     if ( m_pabyBuf == NULL )
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
                  "CommitAsDeleted(): Block has not been initialized yet!");
         return -1;
     }
@@ -305,7 +304,7 @@ int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
     if (nStatus == 0)
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("MITAB", "Commiting GARBAGE block to offset %d", m_nFileOffset);
+        CPLDebug("MITAB", "Committing GARBAGE block to offset %d", m_nFileOffset);
 #endif
         nStatus = TABRawBinBlock::CommitToFile();
         m_nSizeUsed = 0;
@@ -321,29 +320,29 @@ int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
  *
  * Calling ReadFromFile() will automatically call InitBlockFromData() to
  * complete the initialization of the block after the data is read from the
- * file.  Derived classes should implement their own version of 
+ * file.  Derived classes should implement their own version of
  * InitBlockFromData() if they need specific initialization... in this
- * case the derived InitBlockFromData() should call 
+ * case the derived InitBlockFromData() should call
  * TABRawBinBlock::InitBlockFromData() before doing anything else.
  *
  * By default, the buffer will be copied, but if bMakeCopy = FALSE then
  * it won't be copied, and the object will keep a reference to the
  * user's buffer... and this object will eventually free the user's buffer.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf, 
-                                          int nBlockSize, int nSizeUsed, 
+int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf,
+                                          int nBlockSize, int nSizeUsed,
                                           GBool bMakeCopy /* = TRUE */,
-                                          VSILFILE *fpSrc /* = NULL */, 
+                                          VSILFILE *fpSrc /* = NULL */,
                                           int nOffset /* = 0 */)
 {
     m_fp = fpSrc;
     m_nFileOffset = nOffset;
     m_nCurPos = 0;
     m_bModified = FALSE;
-    
+
     /*----------------------------------------------------------------
      * Alloc or realloc the buffer to contain the data if necessary
      *---------------------------------------------------------------*/
@@ -381,17 +380,17 @@ int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf,
 /**********************************************************************
  *                   TABRawBinBlock::InitNewBlock()
  *
- * Initialize the block so that it knows to which file is is attached,
+ * Initialize the block so that it knows to which file is attached,
  * its block size, etc.
  *
  * This is an alternative to calling ReadFromFile() or InitBlockFromData()
  * that puts the block in a stable state without loading any initial
  * data in it.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize, 
+int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                                      int nFileOffset /* = 0*/)
 {
     m_fp = fpSrc;
@@ -404,7 +403,7 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
         m_nFileOffset = nFileOffset;
     else
         m_nFileOffset = 0;
-    
+
     if( m_fp != NULL && m_nFileSize < 0 && m_eAccess == TABReadWrite )
     {
         int nCurPos = (int)VSIFTellL(m_fp);
@@ -428,7 +427,7 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
  *
  * Return the block type for the current object.
  *
- * Returns a block type >= 0 if succesful or -1 if an error happened, in 
+ * Returns a block type >= 0 if successful or -1 if an error happened, in
  * which case  CPLError() will have been called.
  **********************************************************************/
 int     TABRawBinBlock::GetBlockType()
@@ -443,7 +442,7 @@ int     TABRawBinBlock::GetBlockType()
     if (m_nBlockType > TABMAP_LAST_VALID_BLOCK_TYPE)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "GetBlockType(): Unsupported block type %d.", 
+                 "GetBlockType(): Unsupported block type %d.",
                  m_nBlockType);
         return -1;
     }
@@ -454,10 +453,10 @@ int     TABRawBinBlock::GetBlockType()
 /**********************************************************************
  *                   TABRawBinBlock::GotoByteInBlock()
  *
- * Move the block pointer to the specified position relative to the 
+ * Move the block pointer to the specified position relative to the
  * beginning of the block.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABRawBinBlock::GotoByteInBlock(int nOffset)
@@ -478,7 +477,7 @@ int     TABRawBinBlock::GotoByteInBlock(int nOffset)
     }
 
     m_nCurPos = nOffset;
-    
+
     m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
 
     return 0;
@@ -490,7 +489,7 @@ int     TABRawBinBlock::GotoByteInBlock(int nOffset)
  * Move the block pointer by the specified number of bytes relative
  * to its current position.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABRawBinBlock::GotoByteRel(int nOffset)
@@ -501,13 +500,13 @@ int     TABRawBinBlock::GotoByteRel(int nOffset)
 /**********************************************************************
  *                   TABRawBinBlock::GotoByteInFile()
  *
- * Move the block pointer to the specified position relative to the 
- * beginning of the file.  
- * 
+ * Move the block pointer to the specified position relative to the
+ * beginning of the file.
+ *
  * In read access, the current block may be reloaded to contain a right
  * block of binary data if necessary.
  *
- * In write mode, the current block may automagically be committed to 
+ * In write mode, the current block may automagically be committed to
  * disk and a new block initialized if necessary.
  *
  * bForceReadFromFile is used in write mode to read the new block data from
@@ -516,17 +515,17 @@ int     TABRawBinBlock::GotoByteRel(int nOffset)
  *
  * bOffsetIsEndOfData is set to TRUE to indicate that the nOffset
  * to which we are attempting to go is the end of the used data in this
- * block (we are positioninig ourselves to append data), so if the nOffset 
- * corresponds to the beginning of a 512 bytes block then we should really 
- * be positioning ourselves at the end of the block that ends at this 
- * address instead of at the beginning of the blocks that starts at this 
+ * block (we are positioning ourselves to append data), so if the nOffset
+ * corresponds to the beginning of a block then we should really
+ * be positioning ourselves at the end of the block that ends at this
+ * address instead of at the beginning of the blocks that starts at this
  * address. This case can happen when going back and forth to write collection
  * objects to a Coordblock and is documented in bug 1657.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABRawBinBlock::GotoByteInFile(int nOffset, 
+int     TABRawBinBlock::GotoByteInFile(int nOffset,
                                        GBool bForceReadFromFile /*=FALSE*/,
                                        GBool bOffsetIsEndOfData /*=FALSE*/)
 {
@@ -572,8 +571,8 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
         //
         if (bOffsetIsEndOfData &&  nOffset%m_nBlockSize == 0)
         {
-            /* We're trying to go byte 512 of a block that's full of data.
-             * In this case it's okay to place the m_nCurPos at byte 512
+            /* We're trying to go byte m_nBlockSize of a block that's full of data.
+             * In this case it's okay to place the m_nCurPos at byte m_nBlockSize
              * which is past the end of the block.
              */
 
@@ -582,10 +581,10 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
              * yet on disk */
             nNewBlockPtr -= m_nBlockSize;
 
-            if ( (nOffset < m_nFileOffset || 
+            if ( (nOffset < m_nFileOffset ||
                   nOffset > m_nFileOffset+m_nBlockSize) &&
                  (CommitToFile() != 0 ||
-                  (!bForceReadFromFile && 
+                  (!bForceReadFromFile &&
                    InitNewBlock(m_fp, m_nBlockSize, nNewBlockPtr) != 0) ||
                   (bForceReadFromFile &&
                    ReadFromFile(m_fp, nNewBlockPtr, m_nBlockSize) != 0) )  )
@@ -600,7 +599,7 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
                 nOffset < m_nFileSize )
             {
                 bForceReadFromFile = TRUE;
-                if ( !(nOffset < m_nFileOffset || 
+                if ( !(nOffset < m_nFileOffset ||
                        nOffset >= m_nFileOffset+m_nBlockSize) )
                 {
                     if ( (nOffset<m_nFileOffset || nOffset>=m_nFileOffset+m_nSizeUsed) &&
@@ -613,10 +612,10 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
                 }
             }
 
-            if ( (nOffset < m_nFileOffset || 
+            if ( (nOffset < m_nFileOffset ||
                   nOffset >= m_nFileOffset+m_nBlockSize) &&
                  (CommitToFile() != 0 ||
-                  (!bForceReadFromFile && 
+                  (!bForceReadFromFile &&
                    InitNewBlock(m_fp, m_nBlockSize, nNewBlockPtr) != 0) ||
                   (bForceReadFromFile &&
                    ReadFromFile(m_fp, nNewBlockPtr, m_nBlockSize) != 0) )  )
@@ -645,8 +644,8 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
  *                   TABRawBinBlock::SetFirstBlockPtr()
  *
  * Set the position in the file at which the first block starts.
- * This value will usually be the header size and needs to be specified 
- * only if the header size is different from the other blocks size. 
+ * This value will usually be the header size and needs to be specified
+ * only if the header size is different from the other blocks size.
  *
  * This value will be used by GotoByteInFile() to properly align the data
  * blocks that it loads automatically when a requested position is outside
@@ -699,10 +698,10 @@ int     TABRawBinBlock::GetCurAddress()
  * the user's buffer pointed by pabyDstBuf.
  *
  * Passing pabyDstBuf = NULL will only move the read pointer by the
- * specified number of bytes as if the copy had happened... but it 
+ * specified number of bytes as if the copy had happened... but it
  * won't crash.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
 int     TABRawBinBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
@@ -738,23 +737,23 @@ int     TABRawBinBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
 /**********************************************************************
  *                   TABRawBinBlock::Read<datatype>()
  *
- * MapInfo files are binary files with LSB first (Intel) byte 
+ * MapInfo files are binary files with LSB first (Intel) byte
  * ordering.  The following functions will read from the input file
- * and return a value with the bytes ordered properly for the current 
+ * and return a value with the bytes ordered properly for the current
  * platform.
  **********************************************************************/
 GByte  TABRawBinBlock::ReadByte()
 {
-    GByte byValue;
+    GByte byValue = 0;
 
-    ReadBytes(1, (GByte*)(&byValue));
+    ReadBytes(1, &byValue);
 
     return byValue;
 }
 
 GInt16  TABRawBinBlock::ReadInt16()
 {
-    GInt16 n16Value;
+    GInt16 n16Value = 0;
 
     ReadBytes(2, (GByte*)(&n16Value));
 
@@ -767,7 +766,7 @@ GInt16  TABRawBinBlock::ReadInt16()
 
 GInt32  TABRawBinBlock::ReadInt32()
 {
-    GInt32 n32Value;
+    GInt32 n32Value = 0;
 
     ReadBytes(4, (GByte*)(&n32Value));
 
@@ -780,19 +779,19 @@ GInt32  TABRawBinBlock::ReadInt32()
 
 float   TABRawBinBlock::ReadFloat()
 {
-    float fValue;
+    float fValue = 0.0f;
 
     ReadBytes(4, (GByte*)(&fValue));
 
 #ifdef CPL_MSB
-    *(GUInt32*)(&fValue) = CPL_SWAP32(*(GUInt32*)(&fValue));
+    CPL_LSBPTR32(&fValue);
 #endif
     return fValue;
 }
 
 double  TABRawBinBlock::ReadDouble()
 {
-    double dValue;
+    double dValue = 0.0;
 
     ReadBytes(8, (GByte*)(&dValue));
 
@@ -814,13 +813,13 @@ double  TABRawBinBlock::ReadDouble()
  * written to the file until WriteToFile() is called.
  *
  * Passing pabySrcBuf = NULL will only move the write pointer by the
- * specified number of bytes as if the copy had happened... but it 
+ * specified number of bytes as if the copy had happened... but it
  * won't crash.
  *
- * Returns 0 if succesful or -1 if an error happened, in which case 
+ * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int  TABRawBinBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
+int  TABRawBinBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
 {
     /*----------------------------------------------------------------
      * Make sure block is initialized with Write access and that the
@@ -868,13 +867,13 @@ int  TABRawBinBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
 /**********************************************************************
  *                    TABRawBinBlock::Write<datatype>()
  *
- * Arc/Info files are binary files with MSB first (Motorola) byte 
+ * Arc/Info files are binary files with MSB first (Motorola) byte
  * ordering.  The following functions will reorder the byte for the
  * value properly and write that to the output file.
  *
- * If a problem happens, then CPLError() will be called and 
- * CPLGetLastErrNo() can be used to test if a write operation was 
- * succesful.
+ * If a problem happens, then CPLError() will be called and
+ * CPLGetLastErrNo() can be used to test if a write operation was
+ * successful.
  **********************************************************************/
 int  TABRawBinBlock::WriteByte(GByte byValue)
 {
@@ -902,7 +901,7 @@ int  TABRawBinBlock::WriteInt32(GInt32 n32Value)
 int  TABRawBinBlock::WriteFloat(float fValue)
 {
 #ifdef CPL_MSB
-    *(GUInt32*)(&fValue) = CPL_SWAP32(*(GUInt32*)(&fValue));
+    CPL_LSBPTR32(&fValue);
 #endif
 
     return WriteBytes(4, (GByte*)&fValue);
@@ -921,12 +920,12 @@ int  TABRawBinBlock::WriteDouble(double dValue)
 /**********************************************************************
  *                    TABRawBinBlock::WriteZeros()
  *
- * Write a number of zeros (sepcified in bytes) at the current position 
+ * Write a number of zeros (specified in bytes) at the current position
  * in the file.
  *
- * If a problem happens, then CPLError() will be called and 
- * CPLGetLastErrNo() can be used to test if a write operation was 
- * succesful.
+ * If a problem happens, then CPLError() will be called and
+ * CPLGetLastErrNo() can be used to test if a write operation was
+ * successful.
  **********************************************************************/
 int  TABRawBinBlock::WriteZeros(int nBytesToWrite)
 {
@@ -934,7 +933,7 @@ int  TABRawBinBlock::WriteZeros(int nBytesToWrite)
     int i;
     int nStatus = 0;
 
-    /* Write by 8 bytes chunks.  The last chunk may be less than 8 bytes 
+    /* Write by 8 bytes chunks.  The last chunk may be less than 8 bytes
      */
     for(i=0; nStatus == 0 && i< nBytesToWrite; i+=8)
     {
@@ -950,9 +949,9 @@ int  TABRawBinBlock::WriteZeros(int nBytesToWrite)
  * Write a string and pad the end of the field (up to nFieldSize) with
  * spaces number of spaces at the current position in the file.
  *
- * If a problem happens, then CPLError() will be called and 
- * CPLGetLastErrNo() can be used to test if a write operation was 
- * succesful.
+ * If a problem happens, then CPLError() will be called and
+ * CPLGetLastErrNo() can be used to test if a write operation was
+ * successful.
  **********************************************************************/
 int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
 {
@@ -960,7 +959,7 @@ int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
     int i, nLen, numSpaces;
     int nStatus = 0;
 
-    nLen = strlen(pszString);
+    nLen = static_cast<int>(strlen(pszString));
     nLen = MIN(nLen, nFieldSize);
     numSpaces = nFieldSize - nLen;
 
@@ -998,7 +997,7 @@ void TABRawBinBlock::Dump(FILE *fpOut /*=NULL*/)
     {
         if( m_nBlockType == TABMAP_GARB_BLOCK )
         {
-            fprintf(fpOut,"Garbage Block (type %d) at offset %d.\n", 
+            fprintf(fpOut,"Garbage Block (type %d) at offset %d.\n",
                                                     m_nBlockType, m_nFileOffset);
             int nNextGarbageBlock;
             memcpy(&nNextGarbageBlock, m_pabyBuf + 2, 4);
@@ -1030,10 +1029,9 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
     GInt32      anVal[2];
     GInt16      n16Val1, n16Val2;
     float       fValue;
-    char        *pcValue;
     double      dValue;
 
-    pcValue = (char*)&nValue;
+    char *pcValue = (char*)&nValue;
     memcpy(&fValue, &nValue, 4);
 
     memcpy(&n16Val1, pcValue + 2, sizeof(GInt16));
@@ -1041,9 +1039,9 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
 
     anVal[0] = anVal[1] = 0;
 
-    /* For double precision values, we only use the first half 
+    /* For double precision values, we only use the first half
      * of the height bytes... and leave the other 4 bytes as zeros!
-     * It's a bit of a hack, but it seems to be enough for the 
+     * It's a bit of a hack, but it seems to be enough for the
      * precision of the values we print!
      */
 #ifdef CPL_MSB
@@ -1071,23 +1069,20 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
 /**********************************************************************
  *                   TABCreateMAPBlockFromFile()
  *
- * Load data from the specified file location and create and initialize 
+ * Load data from the specified file location and create and initialize
  * a TABMAP*Block of the right type to handle it.
  *
- * Returns the new object if succesful or NULL if an error happened, in 
+ * Returns the new object if successful or NULL if an error happened, in
  * which case CPLError() will have been called.
  **********************************************************************/
-TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset, 
-                                          int nSize /*= 512*/, 
+TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
+                                          int nSize,
                                           GBool bHardBlockSize /*= TRUE */,
                                           TABAccess eAccessMode /*= TABRead*/)
 {
-    TABRawBinBlock *poBlock = NULL;
-    GByte *pabyBuf;
-
     if (fpSrc == NULL || nSize == 0)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed, 
+        CPLError(CE_Failure, CPLE_AssertionFailed,
                  "TABCreateMAPBlockFromFile(): Assertion Failed!");
         return NULL;
     }
@@ -1095,7 +1090,7 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Alloc a buffer to contain the data
      *---------------------------------------------------------------*/
-    pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
+    GByte *pabyBuf = (GByte*)CPLMalloc(nSize*sizeof(GByte));
 
     /*----------------------------------------------------------------
      * Read from the file
@@ -1112,9 +1107,11 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
 
     /*----------------------------------------------------------------
      * Create an object of the right type
-     * Header block is different: it does not start with the object 
+     * Header block is different: it does not start with the object
      * type byte but it is always the first block in a file
      *---------------------------------------------------------------*/
+    TABRawBinBlock *poBlock = NULL;
+
     if (nOffset == 0)
     {
         poBlock = new TABMAPHeaderBlock(eAccessMode);
@@ -1145,7 +1142,7 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
     /*----------------------------------------------------------------
      * Init new object with the data we just read
      *---------------------------------------------------------------*/
-    if (poBlock->InitBlockFromData(pabyBuf, nSize, nSize, 
+    if (poBlock->InitBlockFromData(pabyBuf, nSize, nSize,
                                    FALSE, fpSrc, nOffset) != 0)
     {
         // Some error happened... and CPLError() has been called
@@ -1166,10 +1163,10 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
  *
  * Constructor.
  **********************************************************************/
-TABBinBlockManager::TABBinBlockManager(int nBlockSize /*=512*/)
+TABBinBlockManager::TABBinBlockManager()
 {
 
-    m_nBlockSize=nBlockSize;
+    m_nBlockSize=0;
     m_nLastAllocatedBlock = -1;
     m_psGarbageBlocksFirst = NULL;
     m_psGarbageBlocksLast = NULL;
@@ -1184,6 +1181,14 @@ TABBinBlockManager::TABBinBlockManager(int nBlockSize /*=512*/)
 TABBinBlockManager::~TABBinBlockManager()
 {
     Reset();
+}
+
+/**********************************************************************
+ *                   TABBinBlockManager::SetBlockSize()
+ **********************************************************************/
+void TABBinBlockManager::SetBlockSize(int nBlockSize)
+{
+    m_nBlockSize = nBlockSize;
 }
 
 /**********************************************************************
@@ -1218,7 +1223,10 @@ GInt32  TABBinBlockManager::AllocNewBlock(CPL_UNUSED const char* pszReason)
     if (m_nLastAllocatedBlock==-1)
         m_nLastAllocatedBlock = 0;
     else
+    {
+        CPLAssert(m_nBlockSize);
         m_nLastAllocatedBlock+=m_nBlockSize;
+    }
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("MITAB", "AllocNewBlock(%s, %s) = %d", m_szName, pszReason, m_nLastAllocatedBlock);
@@ -1303,7 +1311,7 @@ GInt32 TABBinBlockManager::GetFirstGarbageBlock()
  *
  * Return address of the block at the head of the list of garbage blocks
  * and remove that block from the list.
- * Retuns 0 if the list is empty.
+ * Returns 0 if the list is empty.
  **********************************************************************/
 GInt32 TABBinBlockManager::PopGarbageBlock()
 {

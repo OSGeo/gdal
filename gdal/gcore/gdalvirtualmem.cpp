@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     gdalvirtualmem.cpp
  * Project:  GDAL
@@ -15,24 +14,25 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
 #include "cpl_conv.h"
 #include "cpl_virtualmem.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
-/* To be changed if we go to 64-bit RasterIO coordinates and spacing */
+// To be changed if we go to 64-bit RasterIO coordinates and spacing.
 typedef int coord_type;
 typedef int spacing_type;
 
@@ -46,8 +46,8 @@ class GDALVirtualMem
     GDALRasterBandH hBand;
     coord_type nXOff;
     coord_type nYOff;
-    /*int nXSize;
-    int nYSize;*/
+    // int nXSize;
+    // int nYSize;
     coord_type nBufXSize;
     coord_type nBufYSize;
     GDALDataType eBufType;
@@ -57,47 +57,52 @@ class GDALVirtualMem
     GIntBig nLineSpace;
     GIntBig nBandSpace;
 
-    int     bIsCompact;
-    int     bIsBandSequential;
+    bool bIsCompact;
+    bool bIsBandSequential;
 
-    int  IsCompact() const { return bIsCompact; }
-    int  IsBandSequential() const { return bIsBandSequential; }
+    bool IsCompact() const { return bIsCompact; }
+    bool IsBandSequential() const { return bIsBandSequential; }
 
-    void GetXYBand( size_t nOffset, coord_type& x, coord_type& y, int& band ) const;
-    size_t GetOffset(coord_type x, coord_type y, int band) const;
-    int  GotoNextPixel(coord_type& x, coord_type& y, int& band) const;
+    void GetXYBand( size_t nOffset, coord_type& x, coord_type& y,
+                    int& band ) const;
+    size_t GetOffset( coord_type x, coord_type y, int band ) const;
+    bool GotoNextPixel( coord_type& x, coord_type& y, int& band ) const;
 
     void DoIOBandSequential( GDALRWFlag eRWFlag, size_t nOffset,
-                              void* pPage, size_t nBytes ) const;
+                             void* pPage, size_t nBytes ) const;
     void DoIOPixelInterleaved( GDALRWFlag eRWFlag, size_t nOffset,
                                void* pPage, size_t nBytes ) const;
 
 public:
              GDALVirtualMem( GDALDatasetH hDS,
                              GDALRasterBandH hBand,
-                          coord_type nXOff, coord_type nYOff,
-                          coord_type nXSize, coord_type nYSize,
-                          coord_type nBufXSize, coord_type nBufYSize,
-                          GDALDataType eBufType,
-                          int nBandCount, const int* panBandMapIn,
-                          int nPixelSpace,
-                          GIntBig nLineSpace,
-                          GIntBig nBandSpace );
+                             coord_type nXOff, coord_type nYOff,
+                             coord_type nXSize, coord_type nYSize,
+                             coord_type nBufXSize, coord_type nBufYSize,
+                             GDALDataType eBufType,
+                             int nBandCount, const int* panBandMapIn,
+                             int nPixelSpace,
+                             GIntBig nLineSpace,
+                             GIntBig nBandSpace );
             ~GDALVirtualMem();
 
-    static void FillCacheBandSequential(CPLVirtualMem* ctxt,  size_t nOffset,
+    static void FillCacheBandSequential( CPLVirtualMem* ctxt,  size_t nOffset,
                                          void* pPageToFill,
-                                         size_t nToFill, void* pUserData);
-    static void SaveFromCacheBandSequential(CPLVirtualMem* ctxt,  size_t nOffset,
+                                         size_t nToFill, void* pUserData );
+    static void SaveFromCacheBandSequential( CPLVirtualMem* ctxt,
+                                             size_t nOffset,
                                              const void* pPageToBeEvicted,
-                                             size_t nToEvicted, void* pUserData);
+                                             size_t nToEvicted,
+                                             void* pUserData );
 
-    static void FillCachePixelInterleaved(CPLVirtualMem* ctxt,  size_t nOffset,
-                                          void* pPageToFill,
-                                          size_t nToFill, void* pUserData);
-    static void SaveFromCachePixelInterleaved(CPLVirtualMem* ctxt,  size_t nOffset,
-                                              const void* pPageToBeEvicted,
-                                              size_t nToEvicted, void* pUserData);
+    static void FillCachePixelInterleaved( CPLVirtualMem* ctxt, size_t nOffset,
+                                           void* pPageToFill,
+                                           size_t nToFill, void* pUserData );
+    static void SaveFromCachePixelInterleaved( CPLVirtualMem* ctxt,
+                                               size_t nOffset,
+                                               const void* pPageToBeEvicted,
+                                               size_t nToEvicted,
+                                               void* pUserData);
 
     static void Destroy(void* pUserData);
 };
@@ -106,33 +111,42 @@ public:
 /*                             GDALVirtualMem()                         */
 /************************************************************************/
 
-GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDS,
-                                GDALRasterBandH hBand,
-                                coord_type nXOff, coord_type nYOff,
-                                CPL_UNUSED coord_type nXSize,
-                                CPL_UNUSED coord_type nYSize,
-                                coord_type nBufXSize, coord_type nBufYSize,
-                                GDALDataType eBufType,
-                                int nBandCount, const int* panBandMapIn,
-                                int nPixelSpace,
-                                GIntBig nLineSpace,
-                                GIntBig nBandSpace ) :
-    hDS(hDS), hBand(hBand), nXOff(nXOff), nYOff(nYOff), /*nXSize(nXSize), nYSize(nYSize),*/
-    nBufXSize(nBufXSize), nBufYSize(nBufYSize), eBufType(eBufType),
-    nBandCount(nBandCount), nPixelSpace(nPixelSpace), nLineSpace(nLineSpace),
-    nBandSpace(nBandSpace)
+GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDSIn,
+                                GDALRasterBandH hBandIn,
+                                coord_type nXOffIn, coord_type nYOffIn,
+                                coord_type /* nXSize */,
+                                coord_type /* nYSize */,
+                                coord_type nBufXSizeIn, coord_type nBufYSizeIn,
+                                GDALDataType eBufTypeIn,
+                                int nBandCountIn, const int* panBandMapIn,
+                                int nPixelSpaceIn,
+                                GIntBig nLineSpaceIn,
+                                GIntBig nBandSpaceIn ) :
+    hDS(hDSIn),
+    hBand(hBandIn),
+    nXOff(nXOffIn),
+    nYOff(nYOffIn),
+    // TODO(schwehr): Why not used or removed?
+    // nXSize(nXSize),
+    // nYSize(nYSize),
+    nBufXSize(nBufXSizeIn),
+    nBufYSize(nBufYSizeIn),
+    eBufType(eBufTypeIn),
+    nBandCount(nBandCountIn),
+    nPixelSpace(nPixelSpaceIn),
+    nLineSpace(nLineSpaceIn),
+    nBandSpace(nBandSpaceIn)
 {
     if( hDS != NULL )
     {
+        panBandMap = static_cast<int *>( CPLMalloc(nBandCount * sizeof(int)) );
         if( panBandMapIn )
         {
-            panBandMap = (int*) CPLMalloc(nBandCount * sizeof(int));
             memcpy(panBandMap, panBandMapIn, nBandCount * sizeof(int));
         }
         else
         {
-            panBandMap = (int*) CPLMalloc(nBandCount * sizeof(int));
-            for(int i=0;i<nBandCount;i++)
+            for( int i = 0; i < nBandCount; i++ )
                 panBandMap[i] = i + 1;
         }
     }
@@ -142,19 +156,19 @@ GDALVirtualMem::GDALVirtualMem( GDALDatasetH hDS,
         nBandCount = 1;
     }
 
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if( nPixelSpace == nDataTypeSize &&
-        nLineSpace == (GIntBig)nBufXSize * nPixelSpace &&
+        nLineSpace == static_cast<GIntBig>(nBufXSize) * nPixelSpace &&
         nBandSpace == nBufYSize * nLineSpace )
-        bIsCompact = TRUE;
+        bIsCompact = true;
     else if( nBandSpace == nDataTypeSize &&
-            nPixelSpace == nBandCount * nBandSpace &&
-            nLineSpace == (GIntBig)nBufXSize * nPixelSpace )
-        bIsCompact = TRUE;
+             nPixelSpace == nBandCount * nBandSpace &&
+             nLineSpace == static_cast<GIntBig>(nBufXSize) * nPixelSpace )
+        bIsCompact = true;
     else
-        bIsCompact = FALSE;
+        bIsCompact = false;
 
-    bIsBandSequential = ( nBandSpace >= nBufYSize * nLineSpace );
+    bIsBandSequential = nBandSpace >= nBufYSize * nLineSpace;
 }
 
 /************************************************************************/
@@ -170,25 +184,28 @@ GDALVirtualMem::~GDALVirtualMem()
 /*                              GetXYBand()                             */
 /************************************************************************/
 
-void GDALVirtualMem::GetXYBand( size_t nOffset, coord_type& x, coord_type& y, int& band ) const
+void GDALVirtualMem::GetXYBand( size_t nOffset, coord_type& x, coord_type& y,
+                                int& band ) const
 {
     if( IsBandSequential() )
     {
         if( nBandCount == 1 )
             band = 0;
         else
-            band = (int)(nOffset / nBandSpace);
-        y = (coord_type)((nOffset - band * nBandSpace) / nLineSpace);
-        x = (coord_type)((nOffset - band * nBandSpace - y * nLineSpace) / nPixelSpace);
+            band = static_cast<int>(nOffset / nBandSpace);
+        y = static_cast<coord_type>((nOffset - band * nBandSpace) / nLineSpace);
+        x = static_cast<coord_type>(
+            (nOffset - band * nBandSpace - y * nLineSpace) / nPixelSpace );
     }
     else
     {
-        y = (coord_type)(nOffset / nLineSpace);
-        x = (coord_type)((nOffset - y * nLineSpace) / nPixelSpace);
+        y = static_cast<coord_type>(nOffset / nLineSpace);
+        x = static_cast<coord_type>((nOffset - y * nLineSpace) / nPixelSpace);
         if( nBandCount == 1 )
             band = 0;
         else
-            band = (int)((nOffset - y * nLineSpace - x * nPixelSpace) / nBandSpace);
+            band = static_cast<int>(
+                (nOffset - y * nLineSpace - x * nPixelSpace) / nBandSpace);
     }
 }
 
@@ -196,7 +213,8 @@ void GDALVirtualMem::GetXYBand( size_t nOffset, coord_type& x, coord_type& y, in
 /*                            GotoNextPixel()                           */
 /************************************************************************/
 
-int GDALVirtualMem::GotoNextPixel(coord_type& x, coord_type& y, int& band) const
+bool GDALVirtualMem::GotoNextPixel( coord_type& x, coord_type& y,
+                                    int& band ) const
 {
     if( IsBandSequential() )
     {
@@ -210,8 +228,8 @@ int GDALVirtualMem::GotoNextPixel(coord_type& x, coord_type& y, int& band) const
         {
             y = 0;
             band ++;
-            if (band == nBandCount)
-                return FALSE;
+            if( band == nBandCount )
+                return false;
         }
     }
     else
@@ -226,11 +244,11 @@ int GDALVirtualMem::GotoNextPixel(coord_type& x, coord_type& y, int& band) const
         {
             x = 0;
             y ++;
-            if(y == nBufYSize)
-                return FALSE;
+            if( y == nBufYSize )
+                return false;
         }
     }
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -239,22 +257,26 @@ int GDALVirtualMem::GotoNextPixel(coord_type& x, coord_type& y, int& band) const
 
 size_t GDALVirtualMem::GetOffset(coord_type x, coord_type y, int band) const
 {
-    return (size_t)(x * nPixelSpace + y * nLineSpace + band * nBandSpace);
+    return static_cast<size_t>(
+        x * nPixelSpace + y * nLineSpace + band * nBandSpace);
 }
 
 /************************************************************************/
 /*                          DoIOPixelInterleaved()                      */
 /************************************************************************/
 
-void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
-                        const size_t nOffset, void* pPage, size_t nBytes ) const
+void GDALVirtualMem::DoIOPixelInterleaved(
+    GDALRWFlag eRWFlag, const size_t nOffset, void* pPage, size_t nBytes ) const
 {
-    coord_type x, y;
-    int band;
+    coord_type x = 0;
+    coord_type y = 0;
+    int band = 0;
 
     GetXYBand(nOffset, x, y, band);
-    /*fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
-            eRWFlag, (int)nOffset, x, y, band);*/
+#ifdef DEBUG_VERBOSE
+    fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
+            eRWFlag, static_cast<int>(nOffset), x, y, band);
+#endif
 
     if( eRWFlag == GF_Read && !IsCompact() )
         memset(pPage, 0, nBytes);
@@ -284,7 +306,7 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
     if( band > 0 )
     {
         size_t nEndOffsetEndOfPixel = GetOffset(x, y, nBandCount);
-        int bandEnd;
+        int bandEnd = nBandCount;
         // Check that we have enough space to load/store until last band
         // Should be always OK unless the number of bands is really huge
         if( nEndOffsetEndOfPixel - nOffset > nBytes )
@@ -295,16 +317,17 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
             CPLAssert(x == xEnd);
             CPLAssert(y == yEnd);
         }
-        else
-            bandEnd = nBandCount;
 
         // Finish reading/writing the remaining bands for that pixel
-        GDALDatasetRasterIO( hDS, eRWFlag,
-                            nXOff + x, nYOff + y, 1, 1,
-                            (char*)pPage + nOffsetShift,
-                            1, 1, eBufType,
-                            bandEnd - band, panBandMap + band,
-                            nPixelSpace, (spacing_type)nLineSpace, (spacing_type)nBandSpace );
+        CPL_IGNORE_RET_VAL(GDALDatasetRasterIO(
+            hDS, eRWFlag,
+            nXOff + x, nYOff + y, 1, 1,
+            static_cast<char *>(pPage) + nOffsetShift,
+            1, 1, eBufType,
+            bandEnd - band, panBandMap + band,
+            nPixelSpace,
+            static_cast<spacing_type>(nLineSpace),
+            static_cast<spacing_type>(nBandSpace) ));
 
         if( bandEnd < nBandCount )
             return;
@@ -330,12 +353,15 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
 
         if( x < xEnd )
         {
-            GDALDatasetRasterIO( hDS, eRWFlag,
-                                nXOff + x, nYOff + y, xEnd - x, 1,
-                                (char*) pPage + nOffsetShift,
-                                xEnd - x, 1, eBufType,
-                                nBandCount, panBandMap,
-                                nPixelSpace, (spacing_type)nLineSpace, (spacing_type)nBandSpace );
+            CPL_IGNORE_RET_VAL(GDALDatasetRasterIO(
+                hDS, eRWFlag,
+                nXOff + x, nYOff + y, xEnd - x, 1,
+                static_cast<char *>(pPage) + nOffsetShift,
+                xEnd - x, 1, eBufType,
+                nBandCount, panBandMap,
+                nPixelSpace,
+                static_cast<spacing_type>(nLineSpace),
+                static_cast<spacing_type>(nBandSpace) ));
         }
 
         // Are there partial bands to read/write for the last pixel ?
@@ -350,26 +376,32 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
             if( bandEnd >= nBandCount )
                 bandEnd = nBandCount;
 
-            GDALDatasetRasterIO( hDS, eRWFlag,
-                                nXOff + x, nYOff + y, 1, 1,
-                                (char*) pPage + nOffsetShift,
-                                1, 1, eBufType,
-                                bandEnd, panBandMap,
-                                nPixelSpace, (spacing_type)nLineSpace, (spacing_type)nBandSpace );
+            CPL_IGNORE_RET_VAL(GDALDatasetRasterIO(
+                hDS, eRWFlag,
+                nXOff + x, nYOff + y, 1, 1,
+                static_cast<char *>(pPage) + nOffsetShift,
+                1, 1, eBufType,
+                bandEnd, panBandMap,
+                nPixelSpace,
+                static_cast<spacing_type>(nLineSpace),
+                static_cast<spacing_type>(nBandSpace) ));
         }
 
         return;
     }
 
     // Yes, enough place to read/write until end of line
-    if( x > 0 || nBytes - nOffsetShift < (size_t)nLineSpace )
+    if( x > 0 || nBytes - nOffsetShift < static_cast<size_t>(nLineSpace) )
     {
-        GDALDatasetRasterIO( hDS, eRWFlag,
-                    nXOff + x, nYOff + y, nBufXSize - x, 1,
-                    (char*)pPage + nOffsetShift,
-                    nBufXSize - x, 1, eBufType,
-                    nBandCount, panBandMap,
-                    nPixelSpace, (spacing_type)nLineSpace, (spacing_type)nBandSpace );
+        CPL_IGNORE_RET_VAL(GDALDatasetRasterIO(
+            hDS, eRWFlag,
+            nXOff + x, nYOff + y, nBufXSize - x, 1,
+            static_cast<char *>(pPage) + nOffsetShift,
+            nBufXSize - x, 1, eBufType,
+            nBandCount, panBandMap,
+            nPixelSpace,
+            static_cast<spacing_type>(nLineSpace),
+            static_cast<spacing_type>(nBandSpace) ) );
 
         // Go to beginning of next line
         x = nBufXSize - 1;
@@ -388,13 +420,16 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
         nLineCount = nBufYSize - y;
     if( nLineCount > 0 )
     {
-        GDALDatasetRasterIO( hDS, eRWFlag,
-                             nXOff + 0, nYOff + y, nBufXSize, nLineCount,
-                             (GByte*) pPage + nOffsetShift,
-                             nBufXSize, nLineCount, eBufType,
-                             nBandCount, panBandMap,
-                             nPixelSpace, (spacing_type)nLineSpace, (spacing_type)nBandSpace );
-        
+        CPL_IGNORE_RET_VAL(GDALDatasetRasterIO(
+            hDS, eRWFlag,
+            nXOff + 0, nYOff + y, nBufXSize, nLineCount,
+            static_cast<GByte *>(pPage) + nOffsetShift,
+            nBufXSize, nLineCount, eBufType,
+            nBandCount, panBandMap,
+            nPixelSpace,
+            static_cast<spacing_type>(nLineSpace),
+            static_cast<spacing_type>(nBandSpace) ) );
+
         y += nLineCount;
         if( y == nBufYSize )
             return;
@@ -404,8 +439,10 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
 
     if( nOffsetShift < nBytes )
     {
-        DoIOPixelInterleaved( eRWFlag, nOffsetRecompute, 
-               (char*) pPage + nOffsetShift, nBytes - nOffsetShift );
+        DoIOPixelInterleaved(
+            eRWFlag, nOffsetRecompute,
+            static_cast<char*>(pPage) + nOffsetShift,
+            nBytes - nOffsetShift );
     }
 }
 
@@ -413,15 +450,18 @@ void GDALVirtualMem::DoIOPixelInterleaved( GDALRWFlag eRWFlag,
 /*                          DoIOPixelInterleaved()                      */
 /************************************************************************/
 
-void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
-                        const size_t nOffset, void* pPage, size_t nBytes ) const
+void GDALVirtualMem::DoIOBandSequential(
+    GDALRWFlag eRWFlag, const size_t nOffset, void* pPage, size_t nBytes ) const
 {
-    coord_type x, y;
-    int band;
+    coord_type x = 0;
+    coord_type y = 0;
 
+    int band = 0;
     GetXYBand(nOffset, x, y, band);
-    /*fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
-            eRWFlag, (int)nOffset, x, y, band);*/
+#if DEBUG_VERBOSE
+    fprintf( stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
+             eRWFlag, static_cast<int>(nOffset), x, y, band );
+#endif
 
     if( eRWFlag == GF_Read && !IsCompact() )
         memset(pPage, 0, nBytes);
@@ -446,7 +486,7 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
     if( nOffsetShift >= nBytes )
         return;
 
-    // Is there enough place to store/load up to the end of current line ?
+    // Is there enough place to store/load up to the end of current line?
     size_t nEndOffsetEndOfLine = GetOffset(nBufXSize, y, band);
     if( nEndOffsetEndOfLine - nOffset > nBytes )
     {
@@ -456,11 +496,13 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
         GetXYBand(nOffset + nBytes, xEnd, yEnd, bandEnd);
         CPLAssert(y == yEnd);
         CPLAssert(band == bandEnd);
-        GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
-                      nXOff + x, nYOff + y, xEnd - x, 1,
-                      (char*)pPage + nOffsetShift,
-                      xEnd - x, 1, eBufType,
-                      nPixelSpace, (spacing_type)nLineSpace );
+        CPL_IGNORE_RET_VAL(GDALRasterIO(
+            hBand ? hBand : GDALGetRasterBand(hDS, panBandMap[band]),
+            eRWFlag,
+            nXOff + x, nYOff + y, xEnd - x, 1,
+            static_cast<char *>(pPage) + nOffsetShift,
+            xEnd - x, 1, eBufType,
+            nPixelSpace, static_cast<spacing_type>(nLineSpace) ));
 
         return;
     }
@@ -468,11 +510,13 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
     // Yes, enough place to read/write until end of line
     if( x > 0 || nBytes - nOffsetShift < (size_t)nLineSpace )
     {
-        GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
+        CPL_IGNORE_RET_VAL(GDALRasterIO(
+            hBand ? hBand : GDALGetRasterBand(hDS, panBandMap[band]),
+            eRWFlag,
                     nXOff + x, nYOff + y, nBufXSize - x, 1,
-                    (char*)pPage + nOffsetShift,
+                    static_cast<char *>(pPage) + nOffsetShift,
                     nBufXSize - x, 1, eBufType,
-                    nPixelSpace, (spacing_type)nLineSpace );
+                    nPixelSpace, static_cast<spacing_type>(nLineSpace) ));
 
         // Go to beginning of next line
         x = nBufXSize - 1;
@@ -490,11 +534,14 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
         nLineCount = nBufYSize - y;
     if( nLineCount > 0 )
     {
-        GDALRasterIO( (hBand) ? hBand : GDALGetRasterBand(hDS, panBandMap[band]), eRWFlag,
-                    nXOff + 0, nYOff + y, nBufXSize, nLineCount,
-                    (GByte*) pPage + nOffsetShift,
-                    nBufXSize, nLineCount, eBufType,
-                    nPixelSpace, (spacing_type)nLineSpace );
+        CPL_IGNORE_RET_VAL(GDALRasterIO(
+            hBand ? hBand : GDALGetRasterBand(hDS, panBandMap[band]),
+            eRWFlag,
+            nXOff + 0, nYOff + y, nBufXSize, nLineCount,
+            static_cast<GByte *>(pPage) + nOffsetShift,
+            nBufXSize, nLineCount, eBufType,
+            nPixelSpace,
+            static_cast<spacing_type>(nLineSpace) ) );
 
         y += nLineCount;
         if( y == nBufYSize )
@@ -510,7 +557,7 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
 
     if( nOffsetShift < nBytes )
     {
-        DoIOBandSequential( eRWFlag, nOffsetRecompute, 
+        DoIOBandSequential( eRWFlag, nOffsetRecompute,
                (char*) pPage + nOffsetShift, nBytes - nOffsetShift );
     }
 }
@@ -519,14 +566,14 @@ void GDALVirtualMem::DoIOBandSequential( GDALRWFlag eRWFlag,
 /*                    FillCacheBandSequential()                        */
 /************************************************************************/
 
-void GDALVirtualMem::FillCacheBandSequential(CPLVirtualMem* ctxt, 
-                  size_t nOffset,
-                  void* pPageToFill,
-                  size_t nToFill,
-                  void* pUserData)
+void GDALVirtualMem::FillCacheBandSequential(
+    CPLVirtualMem*,
+    size_t nOffset,
+    void* pPageToFill,
+    size_t nToFill,
+    void* pUserData )
 {
-    const GDALVirtualMem* psParms = (const GDALVirtualMem* )pUserData;
-    (void)ctxt;
+    const GDALVirtualMem* psParms = static_cast<GDALVirtualMem *>(pUserData);
     psParms->DoIOBandSequential(GF_Read, nOffset, pPageToFill, nToFill);
 }
 
@@ -534,29 +581,30 @@ void GDALVirtualMem::FillCacheBandSequential(CPLVirtualMem* ctxt,
 /*                    SaveFromCacheBandSequential()                    */
 /************************************************************************/
 
-void GDALVirtualMem::SaveFromCacheBandSequential(CPLVirtualMem* ctxt, 
-                  size_t nOffset,
-                  const void* pPageToBeEvicted,
-                  size_t nToEvicted,
-                  void* pUserData)
+void GDALVirtualMem::SaveFromCacheBandSequential(
+    CPLVirtualMem*,
+    size_t nOffset,
+    const void* pPageToBeEvicted,
+    size_t nToEvicted,
+    void* pUserData )
 {
-    const GDALVirtualMem* psParms = (const GDALVirtualMem* )pUserData;
-    (void)ctxt;
-    psParms->DoIOBandSequential(GF_Write, nOffset, (void*)pPageToBeEvicted, nToEvicted);
+    const GDALVirtualMem* psParms = static_cast<GDALVirtualMem *>(pUserData);
+    psParms->DoIOBandSequential(
+        GF_Write, nOffset, const_cast<void *>(pPageToBeEvicted), nToEvicted);
 }
 
 /************************************************************************/
 /*                     FillCachePixelInterleaved()                      */
 /************************************************************************/
 
-void GDALVirtualMem::FillCachePixelInterleaved(CPLVirtualMem* ctxt, 
-                  size_t nOffset,
-                  void* pPageToFill,
-                  size_t nToFill,
-                  void* pUserData)
+void GDALVirtualMem::FillCachePixelInterleaved(
+    CPLVirtualMem*,
+    size_t nOffset,
+    void* pPageToFill,
+    size_t nToFill,
+    void* pUserData )
 {
-    const GDALVirtualMem* psParms = (const GDALVirtualMem* )pUserData;
-    (void)ctxt;
+    const GDALVirtualMem* psParms = static_cast<GDALVirtualMem *>(pUserData);
     psParms->DoIOPixelInterleaved(GF_Read, nOffset, pPageToFill, nToFill);
 }
 
@@ -564,15 +612,16 @@ void GDALVirtualMem::FillCachePixelInterleaved(CPLVirtualMem* ctxt,
 /*                     SaveFromCachePixelInterleaved()                  */
 /************************************************************************/
 
-void GDALVirtualMem::SaveFromCachePixelInterleaved(CPLVirtualMem* ctxt, 
-                  size_t nOffset,
-                  const void* pPageToBeEvicted,
-                  size_t nToEvicted,
-                  void* pUserData)
+void GDALVirtualMem::SaveFromCachePixelInterleaved(
+    CPLVirtualMem*,
+    size_t nOffset,
+    const void* pPageToBeEvicted,
+    size_t nToEvicted,
+    void* pUserData )
 {
-    const GDALVirtualMem* psParms = (const GDALVirtualMem* )pUserData;
-    (void)ctxt;
-    psParms->DoIOPixelInterleaved(GF_Write, nOffset, (void*)pPageToBeEvicted, nToEvicted);
+    const GDALVirtualMem* psParms = static_cast<GDALVirtualMem *>(pUserData);
+    psParms->DoIOPixelInterleaved(
+        GF_Write, nOffset, const_cast<void *>(pPageToBeEvicted), nToEvicted);
 }
 
 /************************************************************************/
@@ -581,7 +630,7 @@ void GDALVirtualMem::SaveFromCachePixelInterleaved(CPLVirtualMem* ctxt,
 
 void GDALVirtualMem::Destroy(void* pUserData)
 {
-    GDALVirtualMem* psParams = (GDALVirtualMem*) pUserData;
+    GDALVirtualMem* psParams = static_cast<GDALVirtualMem *>( pUserData );
     delete psParams;
 }
 
@@ -594,26 +643,26 @@ static bool GDALCheckBandParameters( GDALDatasetH hDS,
 {
     if( nBandCount == 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "nBandCount == 0");
+        CPLError( CE_Failure, CPLE_AppDefined, "nBandCount == 0" );
         return false;
     }
 
     if( panBandMap != NULL )
     {
-        for(int i=0;i<nBandCount;i++)
+        for( int i = 0; i < nBandCount; i++ )
         {
             if( panBandMap[i] < 1 || panBandMap[i] > GDALGetRasterCount(hDS) )
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "panBandMap[%d]=%d",
-                        i, panBandMap[i]);
+                CPLError( CE_Failure, CPLE_AppDefined, "panBandMap[%d]=%d",
+                          i, panBandMap[i] );
                 return false;
             }
         }
     }
     else if( nBandCount > GDALGetRasterCount(hDS) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "nBandCount > GDALGetRasterCount(hDS)");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                 "nBandCount > GDALGetRasterCount(hDS)" );
         return false;
     }
     return true;
@@ -628,7 +677,8 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
                                          GDALRWFlag eRWFlag,
                                          coord_type nXOff, coord_type nYOff,
                                          coord_type nXSize, coord_type nYSize,
-                                         coord_type nBufXSize, coord_type nBufYSize,
+                                         coord_type nBufXSize,
+                                         coord_type nBufYSize,
                                          GDALDataType eBufType,
                                          int nBandCount, int* panBandMap,
                                          int nPixelSpace,
@@ -637,22 +687,23 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
                                          size_t nCacheSize,
                                          size_t nPageSizeHint,
                                          int bSingleThreadUsage,
-                                         char **papszOptions )
+                                         char ** /*papszOptions*/ )
 {
-    CPLVirtualMem* view;
-    GDALVirtualMem* psParams;
-    GUIntBig nReqMem;
-    (void) papszOptions;
+    CPLVirtualMem* view = NULL;
+    GDALVirtualMem* psParams = NULL;
+    GUIntBig nReqMem = 0;
 
     if( nXSize != nBufXSize || nYSize != nBufYSize )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "nXSize != nBufXSize || nYSize != nBufYSize");
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "nXSize != nBufXSize || nYSize != nBufYSize" );
         return NULL;
     }
-    
-    int nRasterXSize = (hDS) ? GDALGetRasterXSize(hDS) : GDALGetRasterBandXSize(hBand);
-    int nRasterYSize = (hDS) ? GDALGetRasterYSize(hDS) : GDALGetRasterBandYSize(hBand);
+
+    int nRasterXSize =
+        hDS ? GDALGetRasterXSize(hDS) : GDALGetRasterBandXSize(hBand);
+    int nRasterYSize =
+        hDS ? GDALGetRasterYSize(hDS) : GDALGetRasterBandYSize(hBand);
 
     if( nXOff < 0 || nYOff < 0 ||
         nXSize == 0 || nYSize == 0 ||
@@ -660,53 +711,58 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
         nXOff + nXSize > nRasterXSize ||
         nYOff + nYSize > nRasterYSize )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid window request");
+        CPLError( CE_Failure, CPLE_AppDefined, "Invalid window request" );
         return NULL;
     }
 
-    if( nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0) 
+    if( nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                "nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0");
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "nPixelSpace < 0 || nLineSpace < 0 || nBandSpace < 0" );
         return NULL;
     }
 
     if( hDS != NULL && !GDALCheckBandParameters(hDS, nBandCount, panBandMap ) )
         return NULL;
 
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if( nPixelSpace == 0 )
         nPixelSpace = nDataTypeSize;
     if( nLineSpace == 0 )
-        nLineSpace = (GIntBig)nBufXSize * nPixelSpace;
+        nLineSpace = static_cast<GIntBig>(nBufXSize) * nPixelSpace;
     if( nBandSpace == 0 )
-        nBandSpace = (GIntBig)nBufYSize * nLineSpace;
+        nBandSpace = static_cast<GIntBig>(nBufYSize) * nLineSpace;
 
-    // OFFSET = offset(x,y,band) = x * nPixelSpace + y * nLineSpace + band * nBandSpace
-    // where 0 <= x < nBufXSize and 0 <= y < nBufYSize and 0 <= band < nBandCount
-    // if nPixelSpace, nLineSpace and nBandSpace can have arbitrary values, there's
-    // no way of finding a unique(x,y,band) solution. We need to restrict the
-    // space of possibilities strongly.
-    // if nBandSpace >= nBufYSize * nLineSpace and nLineSpace >= nBufXSize * nPixelSpace,           INTERLEAVE = BAND
+    // OFFSET = offset(x,y,band) = x * nPixelSpace + y * nLineSpace + band *
+    // nBandSpace where 0 <= x < nBufXSize and 0 <= y < nBufYSize and 0 <= band
+    // < nBandCount if nPixelSpace, nLineSpace and nBandSpace can have arbitrary
+    // values, there is no way of finding a unique(x,y,band) solution. We need
+    // to restrict the space of possibilities strongly.
+    // if nBandSpace >= nBufYSize * nLineSpace and
+    //   nLineSpace >= nBufXSize * nPixelSpace,           INTERLEAVE = BAND
     //      band = OFFSET / nBandSpace
     //      y = (OFFSET - band * nBandSpace) / nLineSpace
     //      x = (OFFSET - band * nBandSpace - y * nLineSpace) / nPixelSpace
-    // else if nPixelSpace >= nBandCount * nBandSpace and nLineSpace >= nBufXSize * nPixelSpace,    INTERLEAVE = PIXEL
+    // else if nPixelSpace >= nBandCount * nBandSpace and
+    //   nLineSpace >= nBufXSize * nPixelSpace,    INTERLEAVE = PIXEL
     //      y = OFFSET / nLineSpace
     //      x = (OFFSET - y * nLineSpace) / nPixelSpace
     //      band = (OFFSET - y * nLineSpace - x * nPixelSpace) / nBandSpace
 
     if( nDataTypeSize == 0 || /* to please Coverity. not needed */
-        nLineSpace < (GIntBig)nBufXSize * nPixelSpace ||
+        nLineSpace < static_cast<GIntBig>(nBufXSize) * nPixelSpace ||
         (nBandCount > 1 &&
         (nBandSpace == nPixelSpace ||
-        (nBandSpace < nPixelSpace && 
-         (nBandSpace < nDataTypeSize || nPixelSpace < nBandCount * nBandSpace)) ||
+        (nBandSpace < nPixelSpace &&
+         (nBandSpace < nDataTypeSize ||
+          nPixelSpace < nBandCount * nBandSpace)) ||
         (nBandSpace > nPixelSpace &&
-         (nPixelSpace < nDataTypeSize || nBandSpace < nBufYSize * nLineSpace)))) )
+         (nPixelSpace < nDataTypeSize ||
+          nBandSpace < nBufYSize * nLineSpace)))) )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Only pixel interleaving or band interleaving are supported");
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "Only pixel interleaving or band interleaving are supported" );
         return NULL;
     }
 
@@ -717,43 +773,45 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
         (nLineSpace % nDataTypeSize) != 0 ||
         (nBandSpace % nDataTypeSize) != 0 )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                    "Unsupported spacing");
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unsupported spacing" );
         return NULL;
     }
 
-    int bIsBandSequential = ( nBandSpace >= nBufYSize * nLineSpace );
+    bool bIsBandSequential = nBandSpace >= nBufYSize * nLineSpace;
     if( bIsBandSequential )
         nReqMem = nBandCount * nBandSpace;
     else
         nReqMem = nBufYSize * nLineSpace;
     if( nReqMem != (GUIntBig)(size_t)nReqMem )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem);
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem );
         return NULL;
     }
 
-    psParams = new GDALVirtualMem(hDS, hBand, nXOff, nYOff,
-                               nXSize, nYSize,
-                               nBufXSize, nBufYSize,
-                               eBufType,
-                               nBandCount, panBandMap,
-                               nPixelSpace,
-                               nLineSpace,
-                               nBandSpace);
+    psParams = new GDALVirtualMem( hDS, hBand, nXOff, nYOff,
+                                   nXSize, nYSize,
+                                   nBufXSize, nBufYSize,
+                                   eBufType,
+                                   nBandCount, panBandMap,
+                                   nPixelSpace,
+                                   nLineSpace,
+                                   nBandSpace );
 
-    view = CPLVirtualMemNew((size_t)nReqMem,
-                         nCacheSize,
-                         nPageSizeHint,
-                         bSingleThreadUsage,
-                         (eRWFlag == GF_Read) ? VIRTUALMEM_READONLY_ENFORCED : VIRTUALMEM_READWRITE,
-                         (bIsBandSequential) ? GDALVirtualMem::FillCacheBandSequential :
-                                                GDALVirtualMem::FillCachePixelInterleaved,
-                         (bIsBandSequential) ? GDALVirtualMem::SaveFromCacheBandSequential :
-                                                GDALVirtualMem::SaveFromCachePixelInterleaved,
-                         GDALVirtualMem::Destroy,
-                         psParams);
+    view = CPLVirtualMemNew(
+        static_cast<size_t>(nReqMem),
+        nCacheSize,
+        nPageSizeHint,
+        bSingleThreadUsage,
+        eRWFlag == GF_Read ?
+        VIRTUALMEM_READONLY_ENFORCED : VIRTUALMEM_READWRITE,
+        bIsBandSequential ? GDALVirtualMem::FillCacheBandSequential :
+                            GDALVirtualMem::FillCachePixelInterleaved,
+        bIsBandSequential ? GDALVirtualMem::SaveFromCacheBandSequential :
+                            GDALVirtualMem::SaveFromCachePixelInterleaved,
+        GDALVirtualMem::Destroy,
+        psParams );
 
     if( view == NULL )
     {
@@ -781,16 +839,17 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
  * CPLVirtualMemGetAddr(). It remains valid until CPLVirtualMemFree() is called.
  * CPLVirtualMemFree() must be called before the dataset object is destroyed.
  *
- * If p is such a pointer and base_type the C type matching eBufType, for default
- * values of spacing parameters, the element of image coordinates (x, y)
+ * If p is such a pointer and base_type the C type matching eBufType, for
+ * default values of spacing parameters, the element of image coordinates (x, y)
  * (relative to xOff, yOff) for band b can be accessed with
  * ((base_type*)p)[x + y * nBufXSize + (b-1)*nBufXSize*nBufYSize].
  *
  * Note that the mechanism used to transparently fill memory pages when they are
  * accessed is the same (but in a controlled way) than what occurs when a memory
- * error occurs in a program. Debugging software will generally interrupt program
- * execution when that happens. If needed, CPLVirtualMemPin() can be used to avoid
- * that by ensuring memory pages are allocated before being accessed.
+ * error occurs in a program. Debugging software will generally interrupt
+ * program execution when that happens. If needed, CPLVirtualMemPin() can be
+ * used to avoid that by ensuring memory pages are allocated before being
+ * accessed.
  *
  * The size of the region that can be mapped as a virtual memory object depends
  * on hardware and operating system limitations.
@@ -806,13 +865,15 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
  * buffer size (nBufXSize x nBufYSize).
  *
  * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
- * writing from various organization of buffers. Arbitrary values for the spacing
- * parameters are not supported. Those values must be multiple of the size of the
- * buffer data type, and must be either band sequential organization (typically
- * nPixelSpace = GDALGetDataTypeSize(eBufType) / 8, nLineSpace = nPixelSpace * nBufXSize,
+ * writing from various organization of buffers. Arbitrary values for the
+ * spacing parameters are not supported. Those values must be multiple of the
+ * size of thebuffer data type, and must be either band sequential
+ * organization (typically nPixelSpace = GDALGetDataTypeSizeBytes(eBufType),
+ * nLineSpace = nPixelSpace * nBufXSize,
  * nBandSpace = nLineSpace * nBufYSize), or pixel-interleaved organization
- * (typically nPixelSpace = nBandSpace * nBandCount, nLineSpace = nPixelSpace * nBufXSize,
- * nBandSpace = GDALGetDataTypeSize(eBufType) / 8)
+ * (typically nPixelSpace = nBandSpace * nBandCount,
+ * nLineSpace = nPixelSpace * nBufXSize,
+ * nBandSpace = GDALGetDataTypeSizeBytes(eBufType))
  *
  * @param hDS Dataset object
  *
@@ -839,22 +900,22 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
  * pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
- * @param nBandCount the number of bands being read or written. 
+ * @param nBandCount the number of bands being read or written.
  *
  * @param panBandMap the list of nBandCount band numbers being read/written.
- * Note band numbers are 1 based. This may be NULL to select the first 
+ * Note band numbers are 1 based. This may be NULL to select the first
  * nBandCount bands.
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
- * the buffer to the start of the next pixel value within a scanline. If defaulted
- * (0) the size of the datatype eBufType is used.
+ * the buffer to the start of the next pixel value within a scanline. If
+ * defaulted (0) the size of the datatype eBufType is used.
  *
  * @param nLineSpace The byte offset from the start of one scanline in
- * the buffer to the start of the next. If defaulted (0) the size of the datatype
- * eBufType * nBufXSize is used.
+ * the buffer to the start of the next. If defaulted (0) the size of the
+ * datatype eBufType * nBufXSize is used.
  *
  * @param nBandSpace the byte offset from the start of one bands data to the
- * start of the next. If defaulted (0) the value will be 
+ * start of the next. If defaulted (0) the value will be
  * nLineSpace * nBufYSize implying band sequential organization
  * of the data buffer.
  *
@@ -867,8 +928,8 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
  *                      let the function determine a default page size.
  *
  * @param bSingleThreadUsage set to TRUE if there will be no concurrent threads
- *                           that will access the virtual memory mapping. This can
- *                           optimize performance a bit. If set to FALSE,
+ *                           that will access the virtual memory mapping. This
+ *                           can optimize performance a bit. If set to FALSE,
  *                           CPLVirtualMemDeclareThread() must be called.
  *
  * @param papszOptions NULL terminated list of options. Unused for now.
@@ -918,18 +979,20 @@ CPLVirtualMem* GDALDatasetGetVirtualMem( GDALDatasetH hDS,
  *
  * The pointer to access the virtual memory object is obtained with
  * CPLVirtualMemGetAddr(). It remains valid until CPLVirtualMemFree() is called.
- * CPLVirtualMemFree() must be called before the raster band object is destroyed.
+ * CPLVirtualMemFree() must be called before the raster band object is
+ * destroyed.
  *
- * If p is such a pointer and base_type the C type matching eBufType, for default
+ * If p is such a pointer and base_type the C type matching eBufType, for
  * values of spacing parameters, the element of image coordinates (x, y)
- * (relative to xOff, yOff) can be accessed with
+ * default (relative to xOff, yOff) can be accessed with
  * ((base_type*)p)[x + y * nBufXSize].
  *
  * Note that the mechanism used to transparently fill memory pages when they are
  * accessed is the same (but in a controlled way) than what occurs when a memory
- * error occurs in a program. Debugging software will generally interrupt program
- * execution when that happens. If needed, CPLVirtualMemPin() can be used to avoid
- * that by ensuring memory pages are allocated before being accessed.
+ * error occurs in a program. Debugging software will generally interrupt
+ * program execution when that happens. If needed, CPLVirtualMemPin() can be
+ * used to avoid that by ensuring memory pages are allocated before being
+ * accessed.
  *
  * The size of the region that can be mapped as a virtual memory object depends
  * on hardware and operating system limitations.
@@ -945,9 +1008,10 @@ CPLVirtualMem* GDALDatasetGetVirtualMem( GDALDatasetH hDS,
  * buffer size (nBufXSize x nBufYSize).
  *
  * The nPixelSpace and nLineSpace parameters allow reading into or
- * writing from various organization of buffers. Arbitrary values for the spacing
- * parameters are not supported. Those values must be multiple of the size of the
- * buffer data type and must be such that nLineSpace >= nPixelSpace * nBufXSize.
+ * writing from various organization of buffers. Arbitrary values for the
+ * spacing parameters are not supported. Those values must be multiple of the
+ * size of the buffer data type and must be such that nLineSpace >=
+ * nPixelSpace * nBufXSize.
  *
  * @param hBand Rasterband object
  *
@@ -974,12 +1038,12 @@ CPLVirtualMem* GDALDatasetGetVirtualMem( GDALDatasetH hDS,
  * pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
- * @param nPixelSpace The byte offset from the start of one pixel value in
- * the buffer to the start of the next pixel value within a scanline. If defaulted
+ * @param nPixelSpace The byte offset from the start of one pixel value in the
+ * buffer to the start of the next pixel value within a scanline. If defaulted
  * (0) the size of the datatype eBufType is used.
  *
- * @param nLineSpace The byte offset from the start of one scanline in
- * the buffer to the start of the next. If defaulted (0) the size of the datatype
+ * @param nLineSpace The byte offset from the start of one scanline in the
+ * buffer to the start of the next. If defaulted (0) the size of the datatype
  * eBufType * nBufXSize is used.
  *
  * @param nCacheSize   size in bytes of the maximum memory that will be really
@@ -991,8 +1055,8 @@ CPLVirtualMem* GDALDatasetGetVirtualMem( GDALDatasetH hDS,
  *                      let the function determine a default page size.
  *
  * @param bSingleThreadUsage set to TRUE if there will be no concurrent threads
- *                           that will access the virtual memory mapping. This can
- *                           optimize performance a bit. If set to FALSE,
+ *                           that will access the virtual memory mapping. This
+ *                           can optimize performance a bit. If set to FALSE,
  *                           CPLVirtualMemDeclareThread() must be called.
  *
  * @param papszOptions NULL terminated list of options. Unused for now.
@@ -1004,19 +1068,20 @@ CPLVirtualMem* GDALDatasetGetVirtualMem( GDALDatasetH hDS,
  */
 
 CPLVirtualMem* GDALRasterBandGetVirtualMem( GDALRasterBandH hBand,
-                                         GDALRWFlag eRWFlag,
-                                         int nXOff, int nYOff,
-                                         int nXSize, int nYSize,
-                                         int nBufXSize, int nBufYSize,
-                                         GDALDataType eBufType,
-                                         int nPixelSpace,
-                                         GIntBig nLineSpace,
-                                         size_t nCacheSize,
-                                         size_t nPageSizeHint,
-                                         int bSingleThreadUsage,
-                                         char **papszOptions )
+                                            GDALRWFlag eRWFlag,
+                                            int nXOff, int nYOff,
+                                            int nXSize, int nYSize,
+                                            int nBufXSize, int nBufYSize,
+                                            GDALDataType eBufType,
+                                            int nPixelSpace,
+                                            GIntBig nLineSpace,
+                                            size_t nCacheSize,
+                                            size_t nPageSizeHint,
+                                            int bSingleThreadUsage,
+                                            char **papszOptions )
 {
-    return GDALGetVirtualMem( NULL, hBand, eRWFlag, nXOff, nYOff, nXSize, nYSize,
+    return GDALGetVirtualMem( NULL, hBand, eRWFlag, nXOff, nYOff,
+                              nXSize, nYSize,
                               nBufXSize, nBufYSize, eBufType,
                               1, NULL,
                               nPixelSpace, nLineSpace, 0,
@@ -1057,43 +1122,51 @@ public:
                                   GDALTileOrganization eTileOrganization );
             ~GDALTiledVirtualMem();
 
-    static void FillCache(CPLVirtualMem* ctxt,  size_t nOffset,
-                                         void* pPageToFill,
-                                         size_t nPageSize, void* pUserData);
-    static void SaveFromCache(CPLVirtualMem* ctxt,  size_t nOffset,
-                                             const void* pPageToBeEvicted,
-                                             size_t nToEvicted, void* pUserData);
+    static void FillCache( CPLVirtualMem* ctxt,  size_t nOffset,
+                           void* pPageToFill,
+                           size_t nPageSize, void* pUserData );
+    static void SaveFromCache( CPLVirtualMem* ctxt,  size_t nOffset,
+                               const void* pPageToBeEvicted,
+                               size_t nToEvicted, void* pUserData );
 
-    static void Destroy(void* pUserData);
+    static void Destroy( void* pUserData );
 };
 
 /************************************************************************/
 /*                        GDALTiledVirtualMem()                         */
 /************************************************************************/
 
-GDALTiledVirtualMem::GDALTiledVirtualMem( GDALDatasetH hDS,
-                                          GDALRasterBandH hBand,
-                                  int nXOff, int nYOff,
-                                  int nXSize, int nYSize,
-                                  int nTileXSize, int nTileYSize,
-                                  GDALDataType eBufType,
-                                  int nBandCount, const int* panBandMapIn,
-                                  GDALTileOrganization eTileOrganization ):
-    hDS(hDS), hBand(hBand), nXOff(nXOff), nYOff(nYOff), nXSize(nXSize), nYSize(nYSize),
-    nTileXSize(nTileXSize), nTileYSize(nTileYSize), eBufType(eBufType),
-    nBandCount(nBandCount), eTileOrganization(eTileOrganization)
+GDALTiledVirtualMem::GDALTiledVirtualMem(
+    GDALDatasetH hDSIn,
+    GDALRasterBandH hBandIn,
+    int nXOffIn, int nYOffIn,
+    int nXSizeIn, int nYSizeIn,
+    int nTileXSizeIn, int nTileYSizeIn,
+    GDALDataType eBufTypeIn,
+    int nBandCountIn, const int* panBandMapIn,
+    GDALTileOrganization eTileOrganizationIn ) :
+    hDS(hDSIn),
+    hBand(hBandIn),
+    nXOff(nXOffIn),
+    nYOff(nYOffIn),
+    nXSize(nXSizeIn),
+    nYSize(nYSizeIn),
+    nTileXSize(nTileXSizeIn),
+    nTileYSize(nTileYSizeIn),
+    eBufType(eBufTypeIn),
+    nBandCount(nBandCountIn),
+    eTileOrganization(eTileOrganizationIn)
 {
     if( hDS != NULL )
     {
+        panBandMap = static_cast<int*>(CPLMalloc(nBandCount * sizeof(int)));
         if( panBandMapIn )
         {
-            panBandMap = (int*) CPLMalloc(nBandCount * sizeof(int));
             memcpy(panBandMap, panBandMapIn, nBandCount * sizeof(int));
         }
         else
         {
-            panBandMap = (int*) CPLMalloc(nBandCount * sizeof(int));
-            for(int i=0;i<nBandCount;i++)
+            for(int i = 0; i < nBandCount; i++ )
                 panBandMap[i] = i + 1;
         }
     }
@@ -1120,7 +1193,7 @@ GDALTiledVirtualMem::~GDALTiledVirtualMem()
 void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
                                 void* pPage, size_t nBytes ) const
 {
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     int nTilesPerRow = (nXSize + nTileXSize - 1) / nTileXSize;
     int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
     size_t nPageSize = nTileXSize * nTileYSize * nDataTypeSize;
@@ -1128,9 +1201,11 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
         nPageSize *= nBandCount;
     CPLAssert((nOffset % nPageSize) == 0);
     CPLAssert(nBytes == nPageSize);
-    size_t nTile;
-    int band;
-    int nPixelSpace, nLineSpace, nBandSpace;
+    size_t nTile = 0;
+    int band = 0;
+    int nPixelSpace = 0;
+    int nLineSpace = 0;
+    int nBandSpace = 0;
     if( eTileOrganization == GTO_TIP )
     {
         nTile = nOffset / nPageSize;
@@ -1149,8 +1224,9 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
     }
     else
     {
-        //offset = nPageSize * (band * nTilesPerRow * nTilesPerCol + nTile)
-        band = nOffset / (nPageSize * nTilesPerRow * nTilesPerCol);
+        // offset = nPageSize * (band * nTilesPerRow * nTilesPerCol + nTile)
+        band = static_cast<int>(
+            nOffset / (nPageSize * nTilesPerRow * nTilesPerCol));
         nTile = nOffset / nPageSize - band * nTilesPerRow * nTilesPerCol;
         nPixelSpace = nDataTypeSize;
         nLineSpace = nPixelSpace * nTileXSize;
@@ -1160,31 +1236,38 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
     size_t nYTile = nTile / nTilesPerRow;
     size_t nXTile = nTile - nYTile * nTilesPerRow;
 
-    int nReqXSize = MIN( nTileXSize, nXSize - (int)(nXTile * nTileXSize) );
-    int nReqYSize = MIN( nTileYSize, nYSize - (int)(nYTile * nTileYSize) );
-    if( eRWFlag == GF_Read && (nReqXSize < nTileXSize || nReqYSize < nTileYSize) )
+    int nReqXSize = MIN( nTileXSize,
+                         nXSize - static_cast<int>(nXTile * nTileXSize) );
+    int nReqYSize = MIN( nTileYSize,
+                         nYSize - static_cast<int>(nYTile * nTileYSize) );
+    if( eRWFlag == GF_Read && (nReqXSize < nTileXSize ||
+                               nReqYSize < nTileYSize) )
         memset(pPage, 0, nBytes);
     if( hDS != NULL )
     {
-        GDALDatasetRasterIO( hDS, eRWFlag,
-                            nXOff + nXTile * nTileXSize, nYOff + nYTile * nTileYSize,
-                            nReqXSize, nReqYSize,
-                            pPage,
-                            nReqXSize, nReqYSize,
-                            eBufType,
-                            ( eTileOrganization != GTO_BSQ ) ? nBandCount : 1,
-                            ( eTileOrganization != GTO_BSQ ) ? panBandMap : &band,
-                            nPixelSpace, nLineSpace, nBandSpace );
+        CPL_IGNORE_RET_VAL(GDALDatasetRasterIO(
+            hDS, eRWFlag,
+            static_cast<int>(nXOff + nXTile * nTileXSize),
+            static_cast<int>(nYOff + nYTile * nTileYSize),
+            nReqXSize, nReqYSize,
+            pPage,
+            nReqXSize, nReqYSize,
+            eBufType,
+            eTileOrganization != GTO_BSQ ? nBandCount : 1,
+            eTileOrganization != GTO_BSQ ? panBandMap : &band,
+            nPixelSpace, nLineSpace, nBandSpace ));
     }
     else
     {
-        GDALRasterIO(hBand, eRWFlag,
-                     nXOff + nXTile * nTileXSize, nYOff + nYTile * nTileYSize,
-                     nReqXSize, nReqYSize,
-                     pPage,
-                     nReqXSize, nReqYSize,
-                     eBufType,
-                     nPixelSpace, nLineSpace );
+        CPL_IGNORE_RET_VAL( GDALRasterIO(
+            hBand, eRWFlag,
+            static_cast<int>(nXOff + nXTile * nTileXSize),
+            static_cast<int>(nYOff + nYTile * nTileYSize),
+            nReqXSize, nReqYSize,
+            pPage,
+            nReqXSize, nReqYSize,
+            eBufType,
+            nPixelSpace, nLineSpace ) );
     }
 }
 
@@ -1192,12 +1275,14 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
 /*                           FillCache()                                */
 /************************************************************************/
 
-void GDALTiledVirtualMem::FillCache(CPLVirtualMem* ctxt,  size_t nOffset,
-                                         void* pPageToFill,
-                                         size_t nToFill, void* pUserData)
+void GDALTiledVirtualMem::FillCache( CPLVirtualMem*,
+                                     size_t nOffset,
+                                     void* pPageToFill,
+                                     size_t nToFill,
+                                     void* pUserData)
 {
-    const GDALTiledVirtualMem* psParms = (const GDALTiledVirtualMem* )pUserData;
-    (void)ctxt;
+    const GDALTiledVirtualMem* psParms =
+        static_cast<GDALTiledVirtualMem *>( pUserData );
     psParms->DoIO(GF_Read, nOffset, pPageToFill, nToFill);
 }
 
@@ -1205,22 +1290,26 @@ void GDALTiledVirtualMem::FillCache(CPLVirtualMem* ctxt,  size_t nOffset,
 /*                          SaveFromCache()                             */
 /************************************************************************/
 
-void GDALTiledVirtualMem::SaveFromCache(CPLVirtualMem* ctxt,  size_t nOffset,
-                                             const void* pPageToBeEvicted,
-                                             size_t nToEvicted, void* pUserData)
+void GDALTiledVirtualMem::SaveFromCache( CPLVirtualMem*,
+                                         size_t nOffset,
+                                         const void* pPageToBeEvicted,
+                                         size_t nToEvicted, void* pUserData)
 {
-    const GDALTiledVirtualMem* psParms = (const GDALTiledVirtualMem* )pUserData;
-    (void)ctxt;
-    psParms->DoIO(GF_Write, nOffset, (void*)pPageToBeEvicted, nToEvicted);
+    const GDALTiledVirtualMem* psParms =
+        static_cast<GDALTiledVirtualMem *>( pUserData );
+    psParms->DoIO( GF_Write, nOffset,
+                   const_cast<void *>(pPageToBeEvicted),
+                   nToEvicted );
 }
 
 /************************************************************************/
 /*                                Destroy()                             */
 /************************************************************************/
 
-void GDALTiledVirtualMem::Destroy(void* pUserData)
+void GDALTiledVirtualMem::Destroy( void* pUserData )
 {
-    GDALTiledVirtualMem* psParams = (GDALTiledVirtualMem*) pUserData;
+    GDALTiledVirtualMem* psParams =
+        static_cast<GDALTiledVirtualMem*>( pUserData );
     delete psParams;
 }
 
@@ -1228,33 +1317,37 @@ void GDALTiledVirtualMem::Destroy(void* pUserData)
 /*                      GDALGetTiledVirtualMem()                        */
 /************************************************************************/
 
-static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
-                                              GDALRasterBandH hBand,
-                                              GDALRWFlag eRWFlag,
-                                              int nXOff, int nYOff,
-                                              int nXSize, int nYSize,
-                                              int nTileXSize, int nTileYSize,
-                                              GDALDataType eBufType,
-                                              int nBandCount, int* panBandMap,
-                                              GDALTileOrganization eTileOrganization,
-                                              size_t nCacheSize,
-                                              int bSingleThreadUsage,
-                                              char **papszOptions )
+static CPLVirtualMem* GDALGetTiledVirtualMem(
+    GDALDatasetH hDS,
+    GDALRasterBandH hBand,
+    GDALRWFlag eRWFlag,
+    int nXOff, int nYOff,
+    int nXSize, int nYSize,
+    int nTileXSize, int nTileYSize,
+    GDALDataType eBufType,
+    int nBandCount, int* panBandMap,
+    GDALTileOrganization eTileOrganization,
+    size_t nCacheSize,
+    int bSingleThreadUsage,
+    char ** /* papszOptions */ )
 {
     CPLVirtualMem* view;
     GDALTiledVirtualMem* psParams;
-    (void) papszOptions;
 
     size_t nPageSize = CPLGetPageSize();
     if( nPageSize == 0 )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-             "GDALGetTiledVirtualMem() unsupported on this operating system / configuration");
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "GDALGetTiledVirtualMem() unsupported on this "
+            "operating system / configuration" );
         return NULL;
     }
 
-    int nRasterXSize = (hDS) ? GDALGetRasterXSize(hDS) : GDALGetRasterBandXSize(hBand);
-    int nRasterYSize = (hDS) ? GDALGetRasterYSize(hDS) : GDALGetRasterBandYSize(hBand);
+    int nRasterXSize =
+        hDS ? GDALGetRasterXSize(hDS) : GDALGetRasterBandXSize(hBand);
+    int nRasterYSize =
+        hDS ? GDALGetRasterYSize(hDS) : GDALGetRasterBandYSize(hBand);
 
     if( nXOff < 0 || nYOff < 0 ||
         nTileXSize <= 0 || nTileYSize <= 0 ||
@@ -1268,15 +1361,15 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
     if( hDS != NULL && !GDALCheckBandParameters(hDS, nBandCount, panBandMap ) )
         return NULL;
 
-    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     int nTilesPerRow = (nXSize + nTileXSize - 1) / nTileXSize;
     int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
     GUIntBig nReqMem = (GUIntBig)nTilesPerRow * nTilesPerCol *
                         nTileXSize * nTileYSize * nBandCount * nDataTypeSize;
     if( nReqMem != (GUIntBig)(size_t)nReqMem )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem);
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem );
         return NULL;
     }
 
@@ -1285,27 +1378,29 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
         nPageSizeHint *= nBandCount;
     if( (nPageSizeHint % nPageSize) != 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Tile dimensions incompatible with page size");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Tile dimensions incompatible with page size");
         return NULL;
     }
 
-    psParams = new GDALTiledVirtualMem(hDS, hBand, nXOff, nYOff,
-                                       nXSize, nYSize,
-                                       nTileXSize, nTileYSize,
-                                       eBufType,
-                                       nBandCount, panBandMap,
-                                       eTileOrganization);
+    psParams = new GDALTiledVirtualMem( hDS, hBand, nXOff, nYOff,
+                                        nXSize, nYSize,
+                                        nTileXSize, nTileYSize,
+                                        eBufType,
+                                        nBandCount, panBandMap,
+                                        eTileOrganization );
 
-    view = CPLVirtualMemNew((size_t)nReqMem,
-                         nCacheSize,
-                         nPageSizeHint,
-                         bSingleThreadUsage,
-                         (eRWFlag == GF_Read) ? VIRTUALMEM_READONLY_ENFORCED : VIRTUALMEM_READWRITE,
-                         GDALTiledVirtualMem::FillCache,
-                         GDALTiledVirtualMem::SaveFromCache,
-                         GDALTiledVirtualMem::Destroy,
-                         psParams);
+    view = CPLVirtualMemNew(
+        static_cast<size_t>(nReqMem),
+        nCacheSize,
+        nPageSizeHint,
+        bSingleThreadUsage,
+        eRWFlag == GF_Read ?
+        VIRTUALMEM_READONLY_ENFORCED : VIRTUALMEM_READWRITE,
+        GDALTiledVirtualMem::FillCache,
+        GDALTiledVirtualMem::SaveFromCache,
+        GDALTiledVirtualMem::Destroy,
+        psParams );
 
     if( view == NULL )
     {
@@ -1313,9 +1408,11 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
     }
     else if( CPLVirtualMemGetPageSize(view) != nPageSizeHint )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Did not get expected page size : %d vs %d",
-                 (int)CPLVirtualMemGetPageSize(view), (int)nPageSizeHint);
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Did not get expected page size : %d vs %d",
+            static_cast<int>(CPLVirtualMemGetPageSize(view)),
+            static_cast<int>(nPageSizeHint) );
         CPLVirtualMemFree(view);
         return NULL;
     }
@@ -1339,24 +1436,30 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
  * "dirty" page) when the cache size limit has been reached.
  *
  * Contrary to GDALDatasetGetVirtualMem(), pixels will be organized by tiles
- * instead of scanlines. Different ways of organizing pixel within/accross tiles
+ * instead of scanlines. Different ways of organizing pixel within/across tiles
  * can be selected with the eTileOrganization parameter.
  *
  * If nXSize is not a multiple of nTileXSize or nYSize is not a multiple of
- * nTileYSize, partial tiles will exists at the right and/or bottom of the region
- * of interest. Those partial tiles will also have nTileXSize * nTileYSize dimension,
- * with padding pixels.
+ * nTileYSize, partial tiles will exists at the right and/or bottom of the
+ * region of interest. Those partial tiles will also have nTileXSize *
+ * nTileYSize dimension, with padding pixels.
  *
  * The pointer to access the virtual memory object is obtained with
  * CPLVirtualMemGetAddr(). It remains valid until CPLVirtualMemFree() is called.
  * CPLVirtualMemFree() must be called before the dataset object is destroyed.
  *
- * If p is such a pointer and base_type the C type matching eBufType, for default
- * values of spacing parameters, the element of image coordinates (x, y)
- * (relative to xOff, yOff) for band b can be accessed with :
- *  - for eTileOrganization = GTO_TIP, ((base_type*)p)[tile_number(x,y)*nBandCount*tile_size + offset_in_tile(x,y)*nBandCount + (b-1)].
- *  - for eTileOrganization = GTO_BIT, ((base_type*)p)[(tile_number(x,y)*nBandCount + (b-1)) * tile_size + offset_in_tile(x,y)].
- *  - for eTileOrganization = GTO_BSQ, ((base_type*)p)[(tile_number(x,y) + (b-1)*nTilesCount) * tile_size + offset_in_tile(x,y)].
+ * If p is such a pointer and base_type the C type matching eBufType, for
+ * default values of spacing parameters, the element of image coordinates (x, y)
+ * (relative to xOff, yOff) for band b can be accessed with:
+ *  - for eTileOrganization = GTO_TIP,
+ *        ((base_type*)p)[tile_number(x,y)*nBandCount*tile_size +
+ *                        offset_in_tile(x,y)*nBandCount + (b-1)].
+ *  - for eTileOrganization = GTO_BIT,
+ *        ((base_type*)p)[(tile_number(x,y)*nBandCount +
+ *                        (b-1)) * tile_size + offset_in_tile(x,y)].
+ *  - for eTileOrganization = GTO_BSQ,
+ *        ((base_type*)p)[(tile_number(x,y) +
+ *                        (b-1)*nTilesCount) * tile_size + offset_in_tile(x,y)].
  *
  * where nTilesPerRow = ceil(nXSize / nTileXSize)
  *       nTilesPerCol = ceil(nYSize / nTileYSize)
@@ -1369,9 +1472,10 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
  *
  * Note that the mechanism used to transparently fill memory pages when they are
  * accessed is the same (but in a controlled way) than what occurs when a memory
- * error occurs in a program. Debugging software will generally interrupt program
- * execution when that happens. If needed, CPLVirtualMemPin() can be used to avoid
- * that by ensuring memory pages are allocated before being accessed.
+ * error occurs in a program. Debugging software will generally interrupt
+ * program execution when that happens. If needed, CPLVirtualMemPin() can be
+ * used to avoid that by ensuring memory pages are allocated before being
+ * accessed.
  *
  * The size of the region that can be mapped as a virtual memory object depends
  * on hardware and operating system limitations.
@@ -1405,10 +1509,10 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
  * pixel values will automatically be translated to/from the GDALRasterBand
  * data type as needed.
  *
- * @param nBandCount the number of bands being read or written. 
+ * @param nBandCount the number of bands being read or written.
  *
  * @param panBandMap the list of nBandCount band numbers being read/written.
- * Note band numbers are 1 based. This may be NULL to select the first 
+ * Note band numbers are 1 based. This may be NULL to select the first
  * nBandCount bands.
  *
  * @param eTileOrganization tile organization.
@@ -1417,8 +1521,8 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
  *                     allocated (must ideally fit into RAM)
  *
  * @param bSingleThreadUsage set to TRUE if there will be no concurrent threads
- *                           that will access the virtual memory mapping. This can
- *                           optimize performance a bit. If set to FALSE,
+ *                           that will access the virtual memory mapping. This
+ *                           can optimize performance a bit. If set to FALSE,
  *                           CPLVirtualMemDeclareThread() must be called.
  *
  * @param papszOptions NULL terminated list of options. Unused for now.
@@ -1429,23 +1533,25 @@ static CPLVirtualMem* GDALGetTiledVirtualMem( GDALDatasetH hDS,
  * @since GDAL 1.11
  */
 
-CPLVirtualMem* GDALDatasetGetTiledVirtualMem( GDALDatasetH hDS,
-                                              GDALRWFlag eRWFlag,
-                                              int nXOff, int nYOff,
-                                              int nXSize, int nYSize,
-                                              int nTileXSize, int nTileYSize,
-                                              GDALDataType eBufType,
-                                              int nBandCount, int* panBandMap,
-                                              GDALTileOrganization eTileOrganization,
-                                              size_t nCacheSize,
-                                              int bSingleThreadUsage,
-                                              char **papszOptions )
+CPLVirtualMem* GDALDatasetGetTiledVirtualMem(
+    GDALDatasetH hDS,
+    GDALRWFlag eRWFlag,
+    int nXOff, int nYOff,
+    int nXSize, int nYSize,
+    int nTileXSize, int nTileYSize,
+    GDALDataType eBufType,
+    int nBandCount, int* panBandMap,
+    GDALTileOrganization eTileOrganization,
+    size_t nCacheSize,
+    int bSingleThreadUsage,
+    char **papszOptions )
 {
     return GDALGetTiledVirtualMem( hDS, NULL, eRWFlag, nXOff, nYOff,
                                    nXSize, nYSize, nTileXSize, nTileYSize,
                                    eBufType, nBandCount, panBandMap,
                                    eTileOrganization,
-                                   nCacheSize, bSingleThreadUsage, papszOptions );
+                                   nCacheSize, bSingleThreadUsage,
+                                   papszOptions );
 }
 
 /************************************************************************/
@@ -1467,17 +1573,18 @@ CPLVirtualMem* GDALDatasetGetTiledVirtualMem( GDALDatasetH hDS,
  * instead of scanlines.
  *
  * If nXSize is not a multiple of nTileXSize or nYSize is not a multiple of
- * nTileYSize, partial tiles will exists at the right and/or bottom of the region
- * of interest. Those partial tiles will also have nTileXSize * nTileYSize dimension,
- * with padding pixels.
+ * nTileYSize, partial tiles will exists at the right and/or bottom of the
+ * region of interest. Those partial tiles will also have nTileXSize *
+ * nTileYSize dimension, with padding pixels.
  *
  * The pointer to access the virtual memory object is obtained with
  * CPLVirtualMemGetAddr(). It remains valid until CPLVirtualMemFree() is called.
- * CPLVirtualMemFree() must be called before the raster band object is destroyed.
+ * CPLVirtualMemFree() must be called before the raster band object is
+ * destroyed.
  *
- * If p is such a pointer and base_type the C type matching eBufType, for default
- * values of spacing parameters, the element of image coordinates (x, y)
- * (relative to xOff, yOff) can be accessed with :
+ * If p is such a pointer and base_type the C type matching eBufType, for
+ * default values of spacing parameters, the element of image coordinates (x, y)
+ * (relative to xOff, yOff) can be accessed with:
  *  ((base_type*)p)[tile_number(x,y)*tile_size + offset_in_tile(x,y)].
  *
  * where nTilesPerRow = ceil(nXSize / nTileXSize)
@@ -1488,9 +1595,10 @@ CPLVirtualMem* GDALDatasetGetTiledVirtualMem( GDALDatasetH hDS,
  *
  * Note that the mechanism used to transparently fill memory pages when they are
  * accessed is the same (but in a controlled way) than what occurs when a memory
- * error occurs in a program. Debugging software will generally interrupt program
- * execution when that happens. If needed, CPLVirtualMemPin() can be used to avoid
- * that by ensuring memory pages are allocated before being accessed.
+ * error occurs in a program. Debugging software will generally interrupt
+ * program execution when that happens. If needed, CPLVirtualMemPin() can be
+ * used to avoid that by ensuring memory pages are allocated before being
+ * accessed.
  *
  * The size of the region that can be mapped as a virtual memory object depends
  * on hardware and operating system limitations.
@@ -1528,8 +1636,8 @@ CPLVirtualMem* GDALDatasetGetTiledVirtualMem( GDALDatasetH hDS,
  *                     allocated (must ideally fit into RAM)
  *
  * @param bSingleThreadUsage set to TRUE if there will be no concurrent threads
- *                           that will access the virtual memory mapping. This can
- *                           optimize performance a bit. If set to FALSE,
+ *                           that will access the virtual memory mapping. This
+ *                           can optimize performance a bit. If set to FALSE,
  *                           CPLVirtualMemDeclareThread() must be called.
  *
  * @param papszOptions NULL terminated list of options. Unused for now.
@@ -1541,18 +1649,19 @@ CPLVirtualMem* GDALDatasetGetTiledVirtualMem( GDALDatasetH hDS,
  */
 
 CPLVirtualMem* GDALRasterBandGetTiledVirtualMem( GDALRasterBandH hBand,
-                                              GDALRWFlag eRWFlag,
-                                              int nXOff, int nYOff,
-                                              int nXSize, int nYSize,
-                                              int nTileXSize, int nTileYSize,
-                                              GDALDataType eBufType,
-                                              size_t nCacheSize,
-                                              int bSingleThreadUsage,
-                                              char **papszOptions )
+                                                 GDALRWFlag eRWFlag,
+                                                 int nXOff, int nYOff,
+                                                 int nXSize, int nYSize,
+                                                 int nTileXSize, int nTileYSize,
+                                                 GDALDataType eBufType,
+                                                 size_t nCacheSize,
+                                                 int bSingleThreadUsage,
+                                                 char **papszOptions )
 {
     return GDALGetTiledVirtualMem( NULL, hBand, eRWFlag, nXOff, nYOff,
                                    nXSize, nYSize, nTileXSize, nTileYSize,
                                    eBufType, 1, NULL,
                                    GTO_BSQ,
-                                   nCacheSize, bSingleThreadUsage, papszOptions );
+                                   nCacheSize, bSingleThreadUsage,
+                                   papszOptions );
 }

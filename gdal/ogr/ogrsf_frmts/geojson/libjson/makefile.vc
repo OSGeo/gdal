@@ -1,6 +1,6 @@
 # $Id$
 #
-# Makefile building jcon-c library (http://oss.metaparadigm.com/json-c/)
+# Makefile building json-c library (http://oss.metaparadigm.com/json-c/)
 # 
 
 OBJ = \
@@ -18,7 +18,8 @@ GDAL_ROOT	=	..\..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS =	-I.. -I..\.. -I..\..\.. $(SOFTWARNFLAGS)
+# disable warning C4306: 'type cast' : conversion from 'int' to 'void *' of greater size
+EXTRAFLAGS =	-I.. -I..\.. -I..\..\.. $(SOFTWARNFLAGS) /wd4306
 
 default:	$(OBJ)
 

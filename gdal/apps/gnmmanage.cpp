@@ -45,17 +45,20 @@ enum operation
     op_create,      /** create a new network */
     op_import,      /** add a OGR layer to the network */
     op_connect,     /** connect features from layers added to the network */
-    op_disconnect,  /** dicsonnect features from layers added to the network */
+    op_disconnect,  /** disconnect features from layers added to the network */
     op_rule,        /** add connect rule */
-    op_autoconnect, /** try to connect features base on their tollerance */
+    op_autoconnect, /** try to connect features base on their tolerance */
     op_delete,      /** delete network */
-    op_change_st    /** change veertext or edge blocking state */
+    op_change_st    /** change vertex or edge blocking state */
 };
 
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
-static void Usage(const char* pszAdditionalMsg, int bShort = TRUE)
+
+static void Usage(const char* pszAdditionalMsg, int bShort = TRUE) CPL_NO_RETURN;
+
+static void Usage(const char* pszAdditionalMsg, int bShort)
 {
     printf("Usage: gnmmanage [--help][-q][-quiet][--long-usage]\n"
            "                 [info]\n"
@@ -90,27 +93,27 @@ static void Usage(const char* pszAdditionalMsg, int bShort = TRUE)
         const char *pszRFlag = "", *pszWFlag, *pszVirtualIO, *pszSubdatasets;
         char** papszMD = GDALGetMetadata( hDriver, NULL );
 
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
             continue;
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
             continue;
 
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_OPEN, false ) )
             pszRFlag = "r";
 
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_CREATE, false ) )
             pszWFlag = "w+";
-        else if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
+        else if( CPLFetchBool( papszMD, GDAL_DCAP_CREATECOPY, false ) )
             pszWFlag = "w";
         else
             pszWFlag = "o";
 
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_VIRTUALIO, false ) )
             pszVirtualIO = "v";
         else
             pszVirtualIO = "";
 
-        if( CSLFetchBoolean( papszMD, GDAL_DMD_SUBDATASETS, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DMD_SUBDATASETS, false ) )
             pszSubdatasets = "s";
         else
             pszSubdatasets = "";
@@ -212,9 +215,10 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                     papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( papszArgv );
             return 0;
-        }        
-    
+        }
+
         else if( EQUAL(papszArgv[iArg],"--help") )
         {
             Usage();
@@ -322,7 +326,7 @@ int main( int nArgc, char ** papszArgv )
         else if ( EQUAL(papszArgv[iArg],"delete") )
         {
             stOper = op_delete;
-        }        
+        }
 
         else if( EQUAL(papszArgv[iArg],"change") )
         {
@@ -355,7 +359,7 @@ int main( int nArgc, char ** papszArgv )
             pszDataSource = papszArgv[iArg];
         else
             papszLayers = CSLAddString( papszLayers, papszArgv[iArg] );
-    }    
+    }
 
 // do the work ////////////////////////////////////////////////////////////////
 
@@ -413,6 +417,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf( "Coordinate System is '%s'\n", pszProjection );
         }
+        OSRDestroySpatialReference(hSRS);
 
         // report layers
         if(poDS->GetLayerCount() > 0)
@@ -471,6 +476,9 @@ int main( int nArgc, char ** papszArgv )
         const char* pszPath;
         const char* pszNetworkName = CSLFetchNameValue(papszDSCO, GNM_MD_NAME);
 
+        if(pszDataSource == NULL)
+            Usage("No network dataset provided");
+
         //the DSCO have priority on input keys
         if(NULL == pszNetworkName)
         {
@@ -495,6 +503,8 @@ int main( int nArgc, char ** papszArgv )
 
         if(NULL == pszFinalSRS)
             Usage("No spatial reference provided");
+        if( pszFormat == NULL )
+            Usage("No output format provided");
 
         GDALDriver *poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
         if( poDriver == NULL )
@@ -504,7 +514,7 @@ int main( int nArgc, char ** papszArgv )
 
         char** papszMD = poDriver->GetMetadata();
 
-        if( !CSLFetchBoolean( papszMD, GDAL_DCAP_GNM, FALSE ) )
+        if( !CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
             Usage("not a GNM driver");
 
         poDS = (GNMNetwork*) poDriver->Create( pszPath, 0, 0, 0, GDT_Unknown,
@@ -586,7 +596,7 @@ int main( int nArgc, char ** papszArgv )
             else
                 fprintf(stderr, "\nFAILURE: Can not copy layer from %s\n",
                 pszInputDataset);
-            GDALClose(poSrcDS);            
+            GDALClose(poSrcDS);
 
             nRet = 1;
             goto exit;
@@ -898,6 +908,7 @@ int main( int nArgc, char ** papszArgv )
     }
 
 exit:
+    CSLDestroy( papszArgv );
     CSLDestroy( papszDSCO );
     CSLDestroy( papszLayers );
 
@@ -908,4 +919,3 @@ exit:
 
     return nRet;
 }
-

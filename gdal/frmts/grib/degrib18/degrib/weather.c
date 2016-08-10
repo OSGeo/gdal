@@ -40,7 +40,7 @@
 #endif
 
 typedef struct {
-   char *abrev, *name;
+   const char *abrev, *name;
    uChar number;
 } WxTable;
 
@@ -60,7 +60,7 @@ enum {
 /* SA -> Snowfall aob freezing */
 /* LC -> Caution Advised on area Lakes */
 /*   {"WG", "Frequent Gusts", WX_WG},*/
-WxTable WxCode[] = {
+static const WxTable WxCode[] = {
    /* 0 */ {"<NoWx>", "No Weather", WX_NOWX},
    /* Dry Obstruction to visibility. */
    /* 14 */ {"K", "Smoke", WX_K},
@@ -109,7 +109,7 @@ enum {
    COV_INTER, COV_BRIEF, COV_UNKNOWN
 };
 
-WxTable WxCover[] = {
+static const WxTable WxCover[] = {
    /* 0 */ {"<NoCov>", "No Coverage/Probability", COV_NOCOV},
    /* 1 */ {"Iso", "Isolated", COV_ISO},
    /* 2 */ {"Sct", "Scattered", COV_SCT},
@@ -133,7 +133,7 @@ WxTable WxCover[] = {
 
 enum { INT_NOINT, INT_DD, INT_D, INT_M, INT_P, INT_UNKNOWN };
 
-WxTable WxIntens[] = {
+static const WxTable WxIntens[] = {
    /* 0 */ {"<NoInten>", "No Intensity", INT_NOINT},
    /* 1 */ {"--", "Very Light", INT_DD},
    /* 2 */ {"-", "Light", INT_D},
@@ -147,7 +147,7 @@ enum {
    VIS_96, VIS_128, VIS_160, VIS_192, VIS_224, VIS_UNKNOWN = 255
 };
 
-WxTable WxVisib[] = {
+static const WxTable WxVisib[] = {
    /* 0 */ {"<NoVis>", "255", VIS_NOVIS},
    /* 1 */ {"0SM", "0", VIS_0},
    /* 2 */ {"1/4SM", "8", VIS_8},
@@ -172,9 +172,9 @@ enum {
    HAZ_PRI2 = 254, HAZ_OR = 255
 };
 
-/* Note: HazCode currently can handle upto (21 + 4) different WxAttrib
+/* Note: HazCode currently can handle up to (21 + 4) different WxAttrib
  * numbers because it is stored in a "sInt4" (2^31 = 21,47,48,36,48) */
-WxTable WxAttrib[] = {
+static const WxTable WxAttrib[] = {
    /* 0 */ {"", "None", HAZ_NOHAZ},
    /* 1 */ {"FL", "Frequent Lightning", HAZ_FL},
    /* 2 */ {"GW", "Gusty Winds", HAZ_GW},
@@ -206,7 +206,7 @@ WxTable WxAttrib[] = {
  *   To use the same weather table scheme used by Marc Saccucci in
  * makeWxImageCodes() in the NDFD source tree.  The purpose of both
  * procedures is to simplify the weather string (aka ugly string) to a single
- * integral code number, which contains the most releavent weather.  The
+ * integral code number, which contains the most relevant weather.  The
  * intent is to create a simpler field which can more readily be viewed as
  * an image.
  *
@@ -1760,7 +1760,7 @@ static int NDFD_CodeIntens4 (int inten1, int inten2)
  *   To use the same weather table scheme used by Mark Armstrong in
  * makeWxImageCodes().  The purpose of both procedures is to simplify the
  * weather string (aka ugly string) to a single integral code number, which
- * contains the most releavent weather.  The intent is to create a simpler
+ * contains the most relevant weather.  The intent is to create a simpler
  * field which can more readily be viewed as an image.
  *
  * ARGUMENTS
@@ -1948,7 +1948,7 @@ static int NDFD_WxTable4 (UglyStringType * ugly)
  */
 void FreeUglyString (UglyStringType * ugly)
 {
-   int j;               /* Used to free all the english words. */
+   int j;               /* Used to free all the English words. */
 
    for (j = 0; j < NUM_UGLY_ATTRIB; j++) {
       free (ugly->english[j]);
@@ -2033,7 +2033,7 @@ static void InitUglyString (UglyStringType * ugly)
  * NOTES
  *****************************************************************************
  */
-static int FindInTable (WxTable * table, int tableLen, char *data, uChar *ans)
+static int FindInTable (const WxTable * table, int tableLen, char *data, uChar *ans)
 {
    int i;               /* Index used to walk through the table. */
 
@@ -2065,8 +2065,8 @@ static int FindInTable (WxTable * table, int tableLen, char *data, uChar *ans)
  *   ugly = The ugly string structure to modify. (Output)
  *   data = The string (or phrase) to look for. (Input)
  *   word = Which word we are currently working on. (Input)
- *  place = What part of the word (ie # of :'s) (Input)
- * attNum = What part of attribute piece (ie # of ,'s) (Input)
+ *  place = What part of the word (i.e. # of :'s) (Input)
+ * attNum = What part of attribute piece (i.e. # of ,'s) (Input)
  *
  * FILES/DATABASES: None
  *
@@ -2231,7 +2231,7 @@ static int UglyLookUp (UglyStringType * ugly, char *data, uChar word,
  *   5/2003 Arthur Taylor (MDL/RSIS): Created.
  *
  * NOTES
- * 1) buffer size is choosen so each of the 8 parts has 50 bytes for the
+ * 1) buffer size is chosen so each of the 8 parts has 50 bytes for the
  *    table entry and the ' ' and ', ' and ' with '.  If NUM_UGLY_ATTRIB
  *    increases (from 5), we may need more.
  * 2) Instead of static buffer, we could use myerror.c :: AllocSprintf.
@@ -2265,7 +2265,7 @@ static void Ugly2English (UglyStringType * ugly)
       f_first = 1;
       for (j = 0; j < NUM_UGLY_ATTRIB; j++) {
          if (ugly->attrib[i][j] != 0) {
-            if (ugly->f_priority == 0) {
+            if (ugly->f_priority[i] == 0) {
                if (f_first) {
                   strcat (buffer, " with ");
                   f_first = 0;
@@ -2331,7 +2331,7 @@ static void Ugly2English (UglyStringType * ugly)
  *
  * RETURNS: int
  *  0 = No problems
- * -1 = Had difficulties parseing the Ugly string.
+ * -1 = Had difficulties parsing the ugly string.
  *
  * HISTORY
  *   5/2003 Arthur Taylor (MDL/RSIS): Created.

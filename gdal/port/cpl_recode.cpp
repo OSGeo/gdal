@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_recode.cpp
  * Project:  CPL - Common Portability Library
@@ -30,7 +29,7 @@ CPL_CVSID("$Id$");
 
 #ifdef CPL_RECODE_ICONV
 extern void CPLClearRecodeIconvWarningFlags();
-extern char *CPLRecodeIconv( const char *, const char *, const char * );
+extern char *CPLRecodeIconv( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
 extern char *CPLRecodeFromWCharIconv( const wchar_t *,
                                       const char *, const char * );
 extern wchar_t *CPLRecodeToWCharIconv( const char *,
@@ -38,7 +37,7 @@ extern wchar_t *CPLRecodeToWCharIconv( const char *,
 #endif /* CPL_RECODE_ICONV */
 
 extern void CPLClearRecodeStubWarningFlags();
-extern char *CPLRecodeStub( const char *, const char *, const char * );
+extern char *CPLRecodeStub( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
 extern char *CPLRecodeFromWCharStub( const wchar_t *,
                                      const char *, const char * );
 extern wchar_t *CPLRecodeToWCharStub( const char *,
@@ -60,7 +59,7 @@ extern int CPLIsUTF8Stub( const char *, int );
  *  <li>CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1</li>
  * </ul>
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pszSource a NULL terminated string.
  * @param pszSrcEncoding the source encoding.
@@ -82,15 +81,15 @@ char CPL_DLL *CPLRecode( const char *pszSource,
     if ( EQUAL(pszSrcEncoding, pszDstEncoding) )
         return CPLStrdup(pszSource);
 
-    if ( EQUAL(pszSrcEncoding, CPL_ENC_ASCII) 
-        && ( EQUAL(pszDstEncoding, CPL_ENC_UTF8) 
+    if ( EQUAL(pszSrcEncoding, CPL_ENC_ASCII)
+        && ( EQUAL(pszDstEncoding, CPL_ENC_UTF8)
              || EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1) ) )
         return CPLStrdup(pszSource);
 
 #ifdef CPL_RECODE_ICONV
 /* -------------------------------------------------------------------- */
 /*      CPL_ENC_ISO8859_1 -> CPL_ENC_UTF8                               */
-/*      and CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1 conversions are hadled    */
+/*      and CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1 conversions are handled   */
 /*      very well by the stub implementation which is faster than the   */
 /*      iconv() route. Use a stub for these two ones and iconv()        */
 /*      everything else.                                                */
@@ -116,25 +115,25 @@ char CPL_DLL *CPLRecode( const char *pszSource,
 /************************************************************************/
 
 /**
- * Convert wchar_t string to UTF-8. 
+ * Convert wchar_t string to UTF-8.
  *
  * Convert a wchar_t string into a multibyte utf-8 string.  The only
  * guaranteed supported source encoding is CPL_ENC_UCS2, and the only
  * guaranteed supported destination encodings are CPL_ENC_UTF8, CPL_ENC_ASCII
- * and CPL_ENC_ISO8859_1.  In some cases (ie. using iconv()) other encodings 
+ * and CPL_ENC_ISO8859_1.  In some cases (i.e. using iconv()) other encodings
  * may also be supported.
  *
  * Note that the wchar_t type varies in size on different systems. On
- * win32 it is normally 2 bytes, and on unix 4 bytes.
+ * win32 it is normally 2 bytes, and on UNIX 4 bytes.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pwszSource the source wchar_t string, terminated with a 0 wchar_t.
  * @param pszSrcEncoding the source encoding, typically CPL_ENC_UCS2.
  * @param pszDstEncoding the destination encoding, typically CPL_ENC_UTF8.
  *
- * @return a zero terminated multi-byte string which should be freed with 
- * CPLFree(), or NULL if an error occurs. 
+ * @return a zero terminated multi-byte string which should be freed with
+ * CPLFree(), or NULL if an error occurs.
  *
  * @since GDAL 1.6.0
  */
@@ -158,11 +157,10 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
         return CPLRecodeFromWCharStub( pwszSource,
                                        pszSrcEncoding, pszDstEncoding );
     }
-    else
-    {
-        return CPLRecodeFromWCharIconv( pwszSource,
-                                        pszSrcEncoding, pszDstEncoding );
-    }
+
+    return CPLRecodeFromWCharIconv( pwszSource,
+                                    pszSrcEncoding, pszDstEncoding );
+
 #else /* CPL_RECODE_STUB */
     return CPLRecodeFromWCharStub( pwszSource,
                                    pszSrcEncoding, pszDstEncoding );
@@ -181,16 +179,16 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
  * are CPL_ENC_UTF8, CPL_ENC_ASCII and CPL_ENC_ISO8869_1 (LATIN1).  The only
  * guaranteed supported destination encoding is CPL_ENC_UCS2.  Other source
  * and destination encodings may be supported depending on the underlying
- * implementation. 
+ * implementation.
  *
  * Note that the wchar_t type varies in size on different systems. On
- * win32 it is normally 2 bytes, and on unix 4 bytes.
+ * win32 it is normally 2 bytes, and on UNIX 4 bytes.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pszSource input multi-byte character string.
  * @param pszSrcEncoding source encoding, typically CPL_ENC_UTF8.
- * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2. 
+ * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2.
  *
  * @return the zero terminated wchar_t string (to be freed with CPLFree()) or
  * NULL on error.
@@ -209,7 +207,8 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
 /*      from CPL_ENC_UTF8, CPL_ENC_ISO8859_1 and CPL_ENC_ASCII are well */
 /*      handled by the stub implementation.                             */
 /* -------------------------------------------------------------------- */
-    if ( (EQUAL(pszDstEncoding, CPL_ENC_UCS2) || EQUAL(pszDstEncoding, "WCHAR_T"))
+    if ( (EQUAL(pszDstEncoding, CPL_ENC_UCS2)
+          || EQUAL(pszDstEncoding, "WCHAR_T"))
          && ( EQUAL(pszSrcEncoding, CPL_ENC_UTF8)
               || EQUAL(pszSrcEncoding, CPL_ENC_ASCII)
               || EQUAL(pszSrcEncoding, CPL_ENC_ISO8859_1) ) )
@@ -217,11 +216,10 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
         return CPLRecodeToWCharStub( pszSource,
                                      pszSrcEncoding, pszDstEncoding );
     }
-    else
-    {
-        return CPLRecodeToWCharIconv( pszSource,
-                                      pszSrcEncoding, pszDstEncoding );
-    }
+
+    return CPLRecodeToWCharIconv( pszSource,
+                                  pszSrcEncoding, pszDstEncoding );
+
 #else /* CPL_RECODE_STUB */
     return CPLRecodeToWCharStub( pszSource, pszSrcEncoding, pszDstEncoding );
 #endif /* CPL_RECODE_ICONV */
@@ -265,20 +263,21 @@ int CPLIsUTF8(const char* pabyData, int nLen)
  *
  * @since GDAL 1.7.0
  */
-char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar)
+char CPL_DLL *CPLForceToASCII( const char* pabyData, int nLen,
+                               char chReplacementChar)
 {
     if (nLen < 0)
-        nLen = strlen(pabyData);
-    char* pszOutputString = (char*)CPLMalloc(nLen + 1);
-    int i;
-    for(i=0;i<nLen;i++)
+        nLen = static_cast<int>(strlen(pabyData));
+    char* pszOutputString = static_cast<char *>( CPLMalloc(nLen + 1) );
+    for( int i=0;i < nLen; i++ )
     {
-        if (((unsigned char*)pabyData)[i] > 127)
+        if( reinterpret_cast<unsigned char *>(
+                const_cast<char *>( pabyData ) ) [i] > 127 )
             pszOutputString[i] = chReplacementChar;
         else
             pszOutputString[i] = pabyData[i];
     }
-    pszOutputString[i] = '\0';
+    pszOutputString[nLen] = '\0';
     return pszOutputString;
 }
 
@@ -293,17 +292,17 @@ char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacement
  * in this encoding.  For fixed width encodings (ASCII, UCS-2, UCS-4) this
  * is straight forward.  For encodings like UTF8 and UTF16 which represent
  * some characters as a sequence of atomic character sizes the function
- * still returns the atomic character size (1 for UTF8, 2 for UTF16). 
+ * still returns the atomic character size (1 for UTF8, 2 for UTF16).
  *
  * This function will return the correct value for well known encodings
  * with corresponding CPL_ENC_ values.  It may not return the correct value
- * for other encodings even if they are supported by the underlying iconv 
+ * for other encodings even if they are supported by the underlying iconv
  * or windows transliteration services.  Hopefully it will improve over time.
  *
  * @param pszEncoding the name of the encoding.
  *
- * @return the size of a minimal character in bytes or -1 if the size is 
- * unknown. 
+ * @return the size of a minimal character in bytes or -1 if the size is
+ * unknown.
  */
 
 int CPLEncodingCharSize( const char *pszEncoding )
@@ -319,10 +318,10 @@ int CPLEncodingCharSize( const char *pszEncoding )
         return 4;
     else if( EQUAL(pszEncoding,CPL_ENC_ASCII) )
         return 1;
-    else if( EQUALN(pszEncoding,"ISO-8859-",9) )
+    else if( STARTS_WITH_CI(pszEncoding, "ISO-8859-") )
         return 1;
-    else
-        return -1;
+
+    return -1;
 }
 
 /************************************************************************/
@@ -349,15 +348,15 @@ void CPLClearRecodeWarningFlags()
  *
  * @param pszUTF8Str a nul-terminated UTF-8 string
  *
- * @return the number of UTF-8 characters. 
+ * @return the number of UTF-8 characters.
  */
 
 int CPLStrlenUTF8(const char *pszUTF8Str) {
-    int i = 0, j = 0;
-    while (pszUTF8Str[i]) {
-        if ((pszUTF8Str[i] & 0xc0) != 0x80) j++;
-        i++;
+    int nCharacterCount = 0;
+    for( int i = 0; pszUTF8Str[i] != '\0'; ++i )
+    {
+        if( (pszUTF8Str[i] & 0xc0) != 0x80 )
+            ++nCharacterCount;
     }
-    return j;
+    return nCharacterCount;
 }
-

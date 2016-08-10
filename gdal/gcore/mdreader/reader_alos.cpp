@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from Alos imagery.
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "reader_alos.h"
+
+CPL_CVSID("$Id$");
 
 /**
  * GDALMDReaderALOS()
@@ -284,7 +285,7 @@ void GDALMDReaderALOS::LoadMetadata()
     }
 }
 
-static const char *apszRPCTXT20ValItems[] =
+static const char * const apszRPCTXT20ValItems[] =
 {
     RPC_LINE_NUM_COEFF,
     RPC_LINE_DEN_COEFF,

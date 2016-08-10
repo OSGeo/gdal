@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for PDS driver.
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -142,17 +142,17 @@ def pds_5():
 
 ###############################################################################
 # Read an image via the PDS label.  This is a distinct mode of the PDS
-# driver mostly intended to support jpeg2000 files with PDS labels. 
+# driver mostly intended to support jpeg2000 files with PDS labels.
 
 def pds_6():
-    
+
     if os.path.exists('data/byte.tif.aux.xml'):
         os.unlink('data/byte.tif.aux.xml')
 
     tst = gdaltest.GDALTest( 'PDS', 'ESP_013951_1955_RED.LBL', 1, 4672 )
 
     gt_expected = (-6139197.5, 0.5, 0.0, 936003.0, 0.0, -0.5)
-    
+
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
     ret = tst.testOpen( check_gt=gt_expected )
@@ -198,7 +198,7 @@ def pds_7():
     PARAMETER["standard_parallel_1",0],
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
-    
+
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
     ret = tst.testOpen( check_prj=prj_expected,
@@ -211,7 +211,7 @@ def pds_7():
     return 'success'
 
 ###############################################################################
-# Test applying adjument offsets via configuration variables for the
+# Test applying adjustment offsets via configuration variables for the
 # geotransform (#3940)
 
 def pds_8():
@@ -221,7 +221,7 @@ def pds_8():
     gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', '1.5' )
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', '1.0' )
     gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', '-1.0' )
-    
+
     tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
 
     expected_gt = (10670237.134337425, 926.11527442932129, 0.0, -3854028.7145376205, 0.0, -926.11527442932129)
@@ -232,7 +232,7 @@ def pds_8():
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Shift', None )
     gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', None )
-    gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
+    gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', None )
 
     return result
 

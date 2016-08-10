@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _json_object_private_h_
-#define _json_object_private_h_
+#ifndef json_object_private_h_
+#define json_object_private_h_
 
 #ifdef __cplusplus
 extern "C" {

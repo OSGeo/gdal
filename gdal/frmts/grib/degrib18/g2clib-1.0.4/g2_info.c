@@ -34,8 +34,8 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
 //     listsec1 - pointer to an array containing information read from GRIB 
 //                Identification Section 1.
 //                Must be allocated with >= 13 elements.
-//                listsec1[0]=Id of orginating centre (Common Code Table C-1)
-//                listsec1[1]=Id of orginating sub-centre (local table)
+//                listsec1[0]=Id of originating centre (Common Code Table C-1)
+//                listsec1[1]=Id of originating sub-centre (local table)
 //                listsec1[2]=GRIB Master Tables Version Number (Code Table 1.0)
 //                listsec1[3]=GRIB Local Tables Version Number 
 //                listsec1[4]=Significance of Reference Time (Code Table 1.1)
@@ -48,7 +48,7 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
 //                listsec1[11]=Production status of data (Code Table 1.2)
 //                listsec1[12]=Type of processed data (Code Table 1.3)
 //     numfields- The number of gridded fields found in the GRIB message.
-//                That is, the number of occurences of Sections 4 - 7.
+//                That is, the number of occurrences of Sections 4 - 7.
 //     numlocal - The number of Local Use Sections ( Section 2 ) found in 
 //                the GRIB message.
 //
@@ -71,12 +71,11 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
 //$$$
 {
  
-      g2int ierr,mapsec1len=13;
+      g2int mapsec1len=13;
       g2int mapsec1[13]={2,2,1,1,1,2,1,1,1,1,1,1,1};
       g2int  i,j,istart,iofst,lengrib,lensec0,lensec1;
       g2int ipos,isecnum,nbits,lensec;
 
-      ierr=0;
       *numlocal=0;
       *numfields=0;
 //
@@ -92,8 +91,7 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
       }
       if (istart == -1) {
         printf("g2_info:  Beginning characters GRIB not found.");
-        ierr=1;
-        return(ierr);
+        return(1);
       }
 //
 //  Unpack Section 0 - Indicator Section 
@@ -114,8 +112,7 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
 //  
       if (listsec0[1] != 2) {
         printf("g2_info: can only decode GRIB edition 2.");
-        ierr=2;
-        return(ierr);
+        return(2);
       }
 //
 //  Unpack Section 1 - Identification Section
@@ -126,8 +123,7 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
       iofst=iofst+8;
       if (isecnum != 1) {
         printf("g2_info: Could not find section 1.");
-        ierr=3;
-        return(ierr);
+        return(3);
       }
       //
       //   Unpack each input value in array listsec1 into the
@@ -151,8 +147,7 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
           ipos=ipos+4;
           if (ipos != (istart+lengrib)) {
             printf("g2_info: '7777' found, but not where expected.\n");
-            ierr=4;
-            return(ierr);
+            return(4);
           }
           break;
         }
@@ -161,12 +156,11 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
         gbit(cgrib,&lensec,iofst,32);        // Get Length of Section
         iofst=iofst+32;
         gbit(cgrib,&isecnum,iofst,8);         // Get Section number
-        iofst=iofst+8;
+        /*iofst=iofst+8;*/
         ipos=ipos+lensec;                 // Update beginning of section pointer
         if (ipos > (istart+lengrib)) {
           printf("g2_info: '7777'  not found at end of GRIB message.\n");
-          ierr=5;
-          return(ierr);
+          return(5);
         }
         if ( isecnum>=2 && isecnum<=7 ) {
            if (isecnum == 2)      // Local Section 2
@@ -179,8 +173,7 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
         }
         else {
            printf("g2_info: Invalid section number found in GRIB message: %d\n"                   ,isecnum);
-           ierr=6;
-           return(ierr);
+           return(6);
         }
         
       }

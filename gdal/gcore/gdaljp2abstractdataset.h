@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  GDALGeorefPamDataset with helper to read georeferencing and other
  *           metadata from JP2Boxes
  * Author:   Even Rouault <even dot rouault at mines-paris dot org>
@@ -31,6 +31,7 @@
 #ifndef GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED
 #define GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED
 
+//! @cond Doxygen_Suppress
 #include "gdalgeorefpamdataset.h"
 
 class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
@@ -39,22 +40,24 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
 
     GDALDataset*        poMemDS;
     char**              papszMetadataFiles;
+    int                 m_nWORLDFILEIndex;
 
   protected:
     virtual int         CloseDependentDatasets();
 
   public:
         GDALJP2AbstractDataset();
-        ~GDALJP2AbstractDataset();
+        virtual ~GDALJP2AbstractDataset();
 
-        void LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
-                             const char* pszOverideFilename = NULL);
-        void            LoadVectorLayers(int bOpenRemoteResources = FALSE);
+        void LoadJP2Metadata( GDALOpenInfo* poOpenInfo,
+                              const char* pszOverrideFilename = NULL );
+        void            LoadVectorLayers( int bOpenRemoteResources = FALSE );
 
-        virtual char      **GetFileList(void);
+        virtual char      **GetFileList( void );
 
         virtual int         GetLayerCount();
-        virtual OGRLayer   *GetLayer(int i);
+        virtual OGRLayer   *GetLayer( int i );
 };
+//! @endcond
 
 #endif /* GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED */

@@ -15,21 +15,27 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_GMLREADERP_H_INCLUDED
-#define _CPL_GMLREADERP_H_INCLUDED
+#ifndef CPL_GMLREADERP_H_INCLUDED
+#define CPL_GMLREADERP_H_INCLUDED
+
+#if defined(HAVE_XERCES)
+
+#include "xercesc_headers.h"
+
+#endif /* HAVE_XERCES */
 
 #include "gmlreader.h"
 #include "ogr_api.h"
@@ -54,7 +60,7 @@ class GFSTemplateItem;
 class GFSTemplateList
 {
 private:
-    int             m_bSequentialLayers;
+    bool            m_bSequentialLayers;
     GFSTemplateItem *pFirst;
     GFSTemplateItem *pLast;
     GFSTemplateItem *Insert( const char *pszName );
@@ -63,13 +69,13 @@ public:
                     ~GFSTemplateList();
     void            Update( const char *pszName, int bHasGeom );
     GFSTemplateItem *GetFirst() { return pFirst; }
-    int             HaveSequentialLayers() { return m_bSequentialLayers; }
+    bool            HaveSequentialLayers() { return m_bSequentialLayers; }
     int             GetClassCount();
 };
 
 void gmlUpdateFeatureClasses ( GFSTemplateList *pCC,
                                GMLReader *pReader,
-                               int *pbSequentialLayers );
+                               int *pnHasSequentialLayers );
 
 /************************************************************************/
 /*                              GMLHandler                              */
@@ -108,18 +114,18 @@ typedef enum
 class GMLHandler
 {
     char      *m_pszCurField;
-    size_t     m_nCurFieldAlloc;
-    size_t     m_nCurFieldLen;
-    int        m_bInCurField;
+    unsigned int m_nCurFieldAlloc;
+    unsigned int m_nCurFieldLen;
+    bool       m_bInCurField;
     int        m_nAttributeIndex;
     int        m_nAttributeDepth;
 
 
     char      *m_pszGeometry;
-    int        m_nGeomAlloc;
-    int        m_nGeomLen;
+    unsigned int m_nGeomAlloc;
+    unsigned int m_nGeomLen;
     int        m_nGeometryDepth;
-    int        m_bAlreadyFoundGeometry;
+    bool       m_bAlreadyFoundGeometry;
     int        m_nGeometryPropertyIndex;
 
     int        m_nDepth;
@@ -130,7 +136,7 @@ class GMLHandler
     char      *m_pszCityGMLGenericAttrName;
     int        m_inCityGMLGenericAttrDepth;
 
-    int        m_bReportHref;
+    bool       m_bReportHref;
     char      *m_pszHref;
     char      *m_pszUom;
     char      *m_pszValue;
@@ -139,6 +145,8 @@ class GMLHandler
     GeometryNamesStruct* pasGeometryNames;
 
     std::vector<NodeLastChild> apsXMLNode;
+
+    int        m_nSRSDimensionIfMissing;
 
     OGRErr     startElementTop(const char *pszName, int nLenName, void* attr);
 
@@ -166,9 +174,9 @@ class GMLHandler
 
     OGRErr     startElementFeatureProperty(const char *pszName, int nLenName, void* attr);
     OGRErr     endElementFeatureProperty();
-    
+
     void       DealWithAttributes(const char *pszName, int nLenName, void* attr );
-    int        IsConditionMatched(const char* pszCondition, void* attr);
+    bool       IsConditionMatched(const char* pszCondition, void* attr);
     int        FindRealPropertyByCheckingConditions(int nIdx, void* attr);
 
 protected:
@@ -187,7 +195,7 @@ protected:
     OGRErr      endElement();
     OGRErr      dataHandler(const char *data, int nLen);
 
-    int         IsGeometryElement( const char *pszElement );
+    bool       IsGeometryElement( const char *pszElement );
 
 public:
     GMLHandler( GMLReader *poReader );
@@ -199,25 +207,6 @@ public:
 
 
 #if defined(HAVE_XERCES)
-
-// This works around problems with math.h on some platforms #defining INFINITY
-#ifdef INFINITY
-#undef  INFINITY
-#define INFINITY INFINITY_XERCES
-#endif
-
-#include <util/PlatformUtils.hpp>
-#include <sax2/DefaultHandler.hpp>
-#include <sax2/ContentHandler.hpp>
-#include <sax2/SAX2XMLReader.hpp>
-#include <sax2/XMLReaderFactory.hpp>
-#include <sax2/Attributes.hpp>
-#include <sax/InputSource.hpp>
-#include <util/BinInputStream.hpp>
-
-#ifdef XERCES_CPP_NAMESPACE_USE
-XERCES_CPP_NAMESPACE_USE
-#endif
 
 /************************************************************************/
 /*                        GMLBinInputStream                             */
@@ -277,7 +266,7 @@ class GMLXercesHandler : public DefaultHandler, public GMLHandler
 
 public:
     GMLXercesHandler( GMLReader *poReader );
-    
+
     void startElement(
         const   XMLCh* const    uri,
         const   XMLCh* const    localname,
@@ -320,13 +309,13 @@ public:
 class GMLExpatHandler : public GMLHandler
 {
     XML_Parser m_oParser;
-    int        m_bStopParsing;
+    bool       m_bStopParsing;
     int        m_nDataHandlerCounter;
 
 public:
     GMLExpatHandler( GMLReader *poReader, XML_Parser oParser );
 
-    int         HasStoppedParsing() { return m_bStopParsing; }
+    bool        HasStoppedParsing() { return m_bStopParsing; }
 
     void        ResetDataHandlerCounter() { m_nDataHandlerCounter = 0; }
 
@@ -389,20 +378,20 @@ typedef enum
     OGRGML_XERCES_INIT_SUCCESSFUL
 } OGRGMLXercesState;
 
-class GMLReader : public IGMLReader 
+class GMLReader : public IGMLReader
 {
 private:
     static OGRGMLXercesState    m_eXercesInitState;
     static int    m_nInstanceCount;
-    int           m_bClassListLocked;
+    bool          m_bClassListLocked;
 
     int         m_nClassCount;
     GMLFeatureClass **m_papoClass;
-    int           m_bLookForClassAtAnyLevel;
+    bool          m_bLookForClassAtAnyLevel;
 
     char          *m_pszFilename;
 
-    int            bUseExpatReader;
+    bool           bUseExpatReader;
 
     GMLHandler    *m_poGMLHandler;
 
@@ -411,8 +400,8 @@ private:
     XMLPScanToken m_oToFill;
     GMLFeature   *m_poCompleteFeature;
     GMLInputSource *m_GMLInputSource;
-    int           m_bEOF;
-    int           SetupParserXerces();
+    bool          m_bEOF;
+    bool          SetupParserXerces();
     GMLFeature   *NextFeatureXerces();
 #endif
 
@@ -422,64 +411,63 @@ private:
     int           nFeatureTabLength;
     int           nFeatureTabIndex;
     int           nFeatureTabAlloc;
-    int           SetupParserExpat();
+    bool          SetupParserExpat();
     GMLFeature   *NextFeatureExpat();
     char         *pabyBuf;
 #endif
 
     VSILFILE*     fpGML;
-    int           m_bReadStarted;
+    bool          m_bReadStarted;
 
     GMLReadState *m_poState;
     GMLReadState *m_poRecycledState;
 
-    int           m_bStopParsing;
+    bool          m_bStopParsing;
 
-    int           SetupParser();
+    bool          SetupParser();
     void          CleanupParser();
 
-    int           m_bFetchAllGeometries;
+    bool          m_bFetchAllGeometries;
 
-    int           m_bInvertAxisOrderIfLatLong;
-    int           m_bConsiderEPSGAsURN;
-    int           m_bGetSecondaryGeometryOption;
+    bool          m_bInvertAxisOrderIfLatLong;
+    bool          m_bConsiderEPSGAsURN;
+    bool          m_bGetSecondaryGeometryOption;
 
     int           ParseFeatureType(CPLXMLNode *psSchemaNode,
                                 const char* pszName,
                                 const char *pszType);
 
     char         *m_pszGlobalSRSName;
-    int           m_bCanUseGlobalSRSName;
+    bool          m_bCanUseGlobalSRSName;
 
     char         *m_pszFilteredClassName;
     int           m_nFilteredClassIndex;
 
-    int           m_bSequentialLayers;
+    int           m_nHasSequentialLayers;
 
     std::string   osElemPath;
 
-    int           m_bFaceHoleNegative;
-    
-    int           m_bSetWidthFlag;
-    
-    int           m_bReportAllAttributes;
-    
-    int           m_bIsWFSJointLayer;
-    
-    int           m_bEmptyAsNull;
+    bool          m_bFaceHoleNegative;
 
-    int           ParseXMLHugeFile( const char *pszOutputFilename, 
-                                    const int bSqliteIsTempFile,
+    bool          m_bSetWidthFlag;
+
+    bool          m_bReportAllAttributes;
+
+    bool          m_bIsWFSJointLayer;
+
+    bool          m_bEmptyAsNull;
+
+    bool          ParseXMLHugeFile( const char *pszOutputFilename,
+                                    const bool bSqliteIsTempFile,
                                     const int iSqliteCacheMB );
-                               
 
 public:
-                GMLReader(int bExpatReader, int bInvertAxisOrderIfLatLong,
-                          int bConsiderEPSGAsURN, int bGetSecondaryGeometryOption);
+                GMLReader(bool bExpatReader, bool bInvertAxisOrderIfLatLong,
+                          bool bConsiderEPSGAsURN, bool bGetSecondaryGeometryOption);
     virtual     ~GMLReader();
 
-    int              IsClassListLocked() const { return m_bClassListLocked; }
-    void             SetClassListLocked( int bFlag )
+    bool             IsClassListLocked() const { return m_bClassListLocked; }
+    void             SetClassListLocked( bool bFlag )
         { m_bClassListLocked = bFlag; }
 
     void             SetSourceFile( const char *pszFilename );
@@ -495,38 +483,38 @@ public:
 
     GMLFeature       *NextFeature();
 
-    int              LoadClasses( const char *pszFile = NULL );
-    int              SaveClasses( const char *pszFile = NULL );
+    bool             LoadClasses( const char *pszFile = NULL );
+    bool             SaveClasses( const char *pszFile = NULL );
 
-    int              ResolveXlinks( const char *pszFile,
-                                    int* pbOutIsTempFile,
+    bool             ResolveXlinks( const char *pszFile,
+                                    bool* pbOutIsTempFile,
                                     char **papszSkip = NULL,
-                                    const int bStrict = FALSE );
- 
-    int              HugeFileResolver( const char *pszFile,
-                                       int pbSqliteIsTempFile,
+                                    const bool bStrict = false );
+
+    bool             HugeFileResolver( const char *pszFile,
+                                       bool bSqliteIsTempFile,
                                        int iSqliteCacheMB );
 
-    int              PrescanForSchema(int bGetExtents = TRUE,
-                                      int bAnalyzeSRSPerFeature = TRUE,
-                                      int bOnlyDetectSRS = FALSE );
-    int              PrescanForTemplate( void );
-    int              ReArrangeTemplateClasses( GFSTemplateList *pCC );
+    bool             PrescanForSchema(bool bGetExtents = true,
+                                      bool bAnalyzeSRSPerFeature = true,
+                                      bool bOnlyDetectSRS = false );
+    bool             PrescanForTemplate( void );
+    bool             ReArrangeTemplateClasses( GFSTemplateList *pCC );
     void             ResetReading();
 
-// --- 
+// ---
 
     GMLReadState     *GetState() const { return m_poState; }
     void             PopState();
     void             PushState( GMLReadState * );
 
-    int              ShouldLookForClassAtAnyLevel() { return m_bLookForClassAtAnyLevel; }
+    bool             ShouldLookForClassAtAnyLevel() { return m_bLookForClassAtAnyLevel; }
 
     int         GetFeatureElementIndex( const char *pszElement, int nLen, GMLAppSchemaType eAppSchemaType );
     int         GetAttributeElementIndex( const char *pszElement, int nLen, const char* pszAttrKey = NULL );
-    int         IsCityGMLGenericAttributeElement( const char *pszElement, void* attr );
+    bool        IsCityGMLGenericAttributeElement( const char *pszElement, void* attr );
 
-    void        PushFeature( const char *pszElement, 
+    void        PushFeature( const char *pszElement,
                              const char *pszFID,
                              int nClassIndex );
 
@@ -535,33 +523,33 @@ public:
                                             int iPropertyIn,
                                             GMLPropertyType eType = GMLPT_Untyped );
 
-    void        SetWidthFlag(int bFlag) { m_bSetWidthFlag = bFlag; }
+    void        SetWidthFlag(bool bFlag) { m_bSetWidthFlag = bFlag; }
 
-    int         HasStoppedParsing() { return m_bStopParsing; }
+    bool        HasStoppedParsing() { return m_bStopParsing; }
 
-    int         FetchAllGeometries() { return m_bFetchAllGeometries; }
+    bool       FetchAllGeometries() { return m_bFetchAllGeometries; }
 
     void        SetGlobalSRSName( const char* pszGlobalSRSName ) ;
     const char* GetGlobalSRSName() { return m_pszGlobalSRSName; }
 
-    int         CanUseGlobalSRSName() { return m_bCanUseGlobalSRSName; }
+    bool        CanUseGlobalSRSName() { return m_bCanUseGlobalSRSName; }
 
-    int         SetFilteredClassName(const char* pszClassName);
+    bool        SetFilteredClassName(const char* pszClassName);
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
     int         GetFilteredClassIndex() { return m_nFilteredClassIndex; }
 
-    int         IsSequentialLayers() const { return m_bSequentialLayers == TRUE; }
-    
-    void        SetReportAllAttributes(int bFlag) { m_bReportAllAttributes = bFlag; }
-    int         ReportAllAttributes() const { return m_bReportAllAttributes; }
-    
-    void             SetIsWFSJointLayer( int bFlag ) { m_bIsWFSJointLayer = bFlag; }
-    int              IsWFSJointLayer() const { return m_bIsWFSJointLayer; }
-    
-    void             SetEmptyAsNull( int bFlag ) { m_bEmptyAsNull = bFlag; }
-    int              IsEmptyAsNull() const { return m_bEmptyAsNull; }
+    bool        IsSequentialLayers() const { return m_nHasSequentialLayers == TRUE; }
+
+    void        SetReportAllAttributes(bool bFlag) { m_bReportAllAttributes = bFlag; }
+    bool        ReportAllAttributes() const { return m_bReportAllAttributes; }
+
+    void             SetIsWFSJointLayer( bool bFlag ) { m_bIsWFSJointLayer = bFlag; }
+    bool             IsWFSJointLayer() const { return m_bIsWFSJointLayer; }
+
+    void             SetEmptyAsNull( bool bFlag ) { m_bEmptyAsNull = bFlag; }
+    bool             IsEmptyAsNull() const { return m_bEmptyAsNull; }
 
     static CPLMutex* hMutex;
 };
 
-#endif /* _CPL_GMLREADERP_H_INCLUDED */
+#endif /* CPL_GMLREADERP_H_INCLUDED */

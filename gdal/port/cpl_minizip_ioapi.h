@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /* Modified version by Even Rouault. :
       - change fill_fopen_filefunc to cpl_fill_fopen_filefunc
       - Add support for ZIP64
@@ -18,14 +20,10 @@
 #ifndef CPL_MINIZIP_IOAPI_H_INCLUDED
 #define CPL_MINIZIP_IOAPI_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_vsi.h"
 #define uLong64 vsi_l_offset
-
-/* Gentoo removed OF from their copy of zconf.h (https://bugs.gentoo.org/show_bug.cgi?id=383179) */
-/* but our copy of minizip needs it. */
-#ifndef OF
-#define OF(args) args
-#endif
 
 #define ZLIB_FILEFUNC_SEEK_CUR (1)
 #define ZLIB_FILEFUNC_SEEK_END (2)
@@ -51,13 +49,13 @@
 extern "C" {
 #endif
 
-typedef voidpf (ZCALLBACK *open_file_func) OF((voidpf opaque, const char* filename, int mode));
-typedef uLong  (ZCALLBACK *read_file_func) OF((voidpf opaque, voidpf stream, void* buf, uLong size));
-typedef uLong  (ZCALLBACK *write_file_func) OF((voidpf opaque, voidpf stream, const void* buf, uLong size));
-typedef uLong64   (ZCALLBACK *tell_file_func) OF((voidpf opaque, voidpf stream));
-typedef long   (ZCALLBACK *seek_file_func) OF((voidpf opaque, voidpf stream, uLong64 offset, int origin));
-typedef int    (ZCALLBACK *close_file_func) OF((voidpf opaque, voidpf stream));
-typedef int    (ZCALLBACK *testerror_file_func) OF((voidpf opaque, voidpf stream));
+typedef voidpf (ZCALLBACK *open_file_func) (voidpf opaque, const char* filename, int mode);
+typedef uLong  (ZCALLBACK *read_file_func) (voidpf opaque, voidpf stream, void* buf, uLong size);
+typedef uLong  (ZCALLBACK *write_file_func) (voidpf opaque, voidpf stream, const void* buf, uLong size);
+typedef uLong64   (ZCALLBACK *tell_file_func) (voidpf opaque, voidpf stream);
+typedef long   (ZCALLBACK *seek_file_func) (voidpf opaque, voidpf stream, uLong64 offset, int origin);
+typedef int    (ZCALLBACK *close_file_func) (voidpf opaque, voidpf stream);
+typedef int    (ZCALLBACK *testerror_file_func) (voidpf opaque, voidpf stream);
 
 typedef struct zlib_filefunc_def_s
 {
@@ -71,9 +69,7 @@ typedef struct zlib_filefunc_def_s
     voidpf              opaque;
 } zlib_filefunc_def;
 
-
-
-void cpl_fill_fopen_filefunc OF((zlib_filefunc_def* pzlib_filefunc_def));
+void cpl_fill_fopen_filefunc (zlib_filefunc_def* pzlib_filefunc_def);
 
 #define ZREAD(filefunc,filestream,buf,size) ((*((filefunc).zread_file))((filefunc).opaque,filestream,buf,size))
 #define ZWRITE(filefunc,filestream,buf,size) ((*((filefunc).zwrite_file))((filefunc).opaque,filestream,buf,size))
@@ -86,5 +82,7 @@ void cpl_fill_fopen_filefunc OF((zlib_filefunc_def* pzlib_filefunc_def));
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* CPL_MINIZIP_IOAPI_H_INCLUDED */

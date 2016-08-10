@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_atomic_ops.cpp
  * Project:  CPL - Common Portability Library
@@ -15,20 +14,24 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
 #include "cpl_atomic_ops.h"
+
+// TODO: If C++11, use #include <atomic>.
+
+CPL_CVSID("$Id:");
 
 #if defined(__MACH__) && defined(__APPLE__)
 
@@ -90,14 +93,14 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 {
     unsigned char ret;
- 
+
     __asm__ __volatile__ (
     " lock; cmpxchgl %2,%1\n"
     " sete %0\n"
     : "=q" (ret), "=m" (*ptr)
     : "r" (newval), "m" (*ptr), "a" (oldval)
     : "memory");
- 
+
     return (int) ret;
 }
 
@@ -111,8 +114,8 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 {
   if (increment > 0)
     return __sync_add_and_fetch(ptr, increment);
-  else
-    return __sync_sub_and_fetch(ptr, -increment);
+
+  return __sync_sub_and_fetch(ptr, -increment);
 }
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
@@ -146,7 +149,7 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 
 static CPLLock *hAtomicOpLock = NULL;
 
-/* Slow, but safe, implemenation using a mutex */
+// Slow, but safe, implementation using a mutex.
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
     CPLLockHolderD(&hAtomicOpLock, LOCK_SPIN);

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster raster band implementation.
@@ -27,47 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef INCLUDED_PCRASTERRASTERBAND
-#include "pcrasterrasterband.h"
-#define INCLUDED_PCRASTERRASTERBAND
-#endif
-
-// PCRaster library headers.
-#ifndef INCLUDED_CSF
 #include "csf.h"
-#define INCLUDED_CSF
-#endif
-
-#ifndef INCLUDED_CSFIMPL
 #include "csfimpl.h"
-#define INCLUDED_CSFIMPL
-#endif
-
-// Module headers.
-#ifndef INCLUDED_PCRASTERDATASET
 #include "pcrasterdataset.h"
-#define INCLUDED_PCRASTERDATASET
-#endif
-
-#ifndef INCLUDED_PCRASTERUTIL
+#include "pcrasterrasterband.h"
 #include "pcrasterutil.h"
-#define INCLUDED_PCRASTERUTIL
-#endif
 
-
+CPL_CVSID("$Id$");
 
 /*!
   \file
   This file contains the implementation of the PCRasterRasterBand class.
 */
-
-
-
-//------------------------------------------------------------------------------
-// DEFINITION OF STATIC PCRRASTERBAND MEMBERS
-//------------------------------------------------------------------------------
-
-
 
 //------------------------------------------------------------------------------
 // DEFINITION OF PCRRASTERBAND MEMBERS
@@ -77,36 +47,26 @@
 /*!
   \param     dataset The dataset we are a part of.
 */
-PCRasterRasterBand::PCRasterRasterBand(
-         PCRasterDataset* dataset)
-
-  : GDALPamRasterBand(),
+PCRasterRasterBand::PCRasterRasterBand( PCRasterDataset* dataset ) :
+    GDALPamRasterBand(),
     d_dataset(dataset),
     d_noDataValue(),
     d_defaultNoDataValueOverridden(false),
     d_create_in(GDT_Unknown)
-
 {
-  this->poDS = dataset;
-  this->nBand = 1;
-  this->eDataType = cellRepresentation2GDALType(dataset->cellRepresentation());
-  this->nBlockXSize = dataset->GetRasterXSize();
-  this->nBlockYSize = 1;
+    poDS = dataset;
+    nBand = 1;
+    eDataType = cellRepresentation2GDALType(dataset->cellRepresentation());
+    nBlockXSize = dataset->GetRasterXSize();
+    nBlockYSize = 1;
 }
-
-
 
 //! Destructor.
 /*!
 */
-PCRasterRasterBand::~PCRasterRasterBand()
-{
-}
+PCRasterRasterBand::~PCRasterRasterBand() {}
 
-
-
-double PCRasterRasterBand::GetNoDataValue(
-         int* success)
+double PCRasterRasterBand::GetNoDataValue( int* success )
 {
   if(success) {
     *success = 1;
@@ -116,68 +76,66 @@ double PCRasterRasterBand::GetNoDataValue(
     ? d_noDataValue : d_dataset->defaultNoDataValue();
 }
 
-
-
 double PCRasterRasterBand::GetMinimum(
          int* success)
 {
   double result;
-  int isValid;
+  bool isValid;
 
   switch(d_dataset->cellRepresentation()) {
     // CSF version 2. ----------------------------------------------------------
     case CR_UINT1: {
       UINT1 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_INT4: {
       INT4 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_REAL4: {
       REAL4 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_REAL8: {
       REAL8 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     // CSF version 1. ----------------------------------------------------------
     case CR_INT1: {
       INT1 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_INT2: {
       INT2 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_UINT2: {
       UINT2 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     case CR_UINT4: {
       UINT4 min;
-      isValid = RgetMinVal(d_dataset->map(), &min);
+      isValid = CPL_TO_BOOL(RgetMinVal(d_dataset->map(), &min));
       result = static_cast<double>(min);
       break;
     }
     default: {
       result = 0.0;
-      isValid = 0;
+      isValid = false;
       break;
     }
   }
@@ -195,55 +153,55 @@ double PCRasterRasterBand::GetMaximum(
          int* success)
 {
   double result;
-  int isValid;
+  bool isValid;
 
   switch(d_dataset->cellRepresentation()) {
     case CR_UINT1: {
       UINT1 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_INT4: {
       INT4 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_REAL4: {
       REAL4 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     // CSF version 1. ----------------------------------------------------------
     case CR_INT1: {
       INT1 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_INT2: {
       INT2 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_UINT2: {
       UINT2 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     case CR_UINT4: {
       UINT4 max;
-      isValid = RgetMaxVal(d_dataset->map(), &max);
+      isValid = CPL_TO_BOOL(RgetMaxVal(d_dataset->map(), &max));
       result = static_cast<double>(max);
       break;
     }
     default: {
       result = 0.0;
-      isValid = 0;
+      isValid = false;
       break;
     }
   }
@@ -341,7 +299,7 @@ CPLErr PCRasterRasterBand::IWriteBlock(
     (void)RputCellSize(d_dataset->map(), cellSize);
   }
 
-  int nr_cols = this->poDS->GetRasterXSize();
+  const int nr_cols = this->poDS->GetRasterXSize();
 
   // new maps from create() set min/max to MV
   // in case of reopening that map the min/max
@@ -409,14 +367,3 @@ CPLErr PCRasterRasterBand::SetNoDataValue(double nodata)
 
   return CE_None;
 }
-
-
-//------------------------------------------------------------------------------
-// DEFINITION OF FREE OPERATORS
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-// DEFINITION OF FREE FUNCTIONS
-//------------------------------------------------------------------------------

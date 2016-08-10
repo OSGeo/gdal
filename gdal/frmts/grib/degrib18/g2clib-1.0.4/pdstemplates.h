@@ -1,12 +1,12 @@
-#ifndef _pdstemplates_H
-#define _pdstemplates_H
+#ifndef pdstemplates_H
+#define pdstemplates_H
 #include "grib2.h"
 
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-26
 //
-// ABSTRACT: This inculde file contains info on all the available 
+// ABSTRACT: This include file contains info on all the available 
 //   GRIB2 Product Definition Templates used in Section 4 (PDS).
-//   The information decribing each template is stored in the
+//   The information describing each template is stored in the
 //   pdstemplate structure defined below.
 //
 //   Each Template has three parts: The number of entries in the template
@@ -44,7 +44,7 @@
           g2int mappds[MAXPDSMAPLEN];
       };
 
-const struct pdstemplate *get_templatespds();
+const struct pdstemplate *get_templatespds(void);
 g2int getpdsindex(g2int number);
 
-#endif  /*  _pdstemplates_H  */
+#endif  /*  pdstemplates_H  */

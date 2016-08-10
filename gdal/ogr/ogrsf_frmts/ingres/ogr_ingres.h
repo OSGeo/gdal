@@ -34,12 +34,12 @@
 #include "ogrsf_frmts.h"
 
 class OGRIngresDataSource;
-    
+
 /************************************************************************/
 /*                          OGRIngresStatement                          */
 /************************************************************************/
 
-class OGRIngresStatement 
+class OGRIngresStatement
 {
 public:
     II_PTR            hConn;
@@ -50,7 +50,7 @@ public:
     IIAPI_GETCOLPARM	getColParm;
     IIAPI_DATAVALUE	*pasDataBuffer;
     IIAPI_GETQINFOPARM  queryInfo;
-    
+
     GByte             *pabyWrkBuffer;
     char              **papszFields;
 
@@ -67,7 +67,7 @@ public:
     void addInputParameter( IIAPI_DT_ID eDType, int nLength, GByte *pabyData );
 
     int ExecuteSQL( const char * );
-    
+
     char **GetRow();
     void   DumpRow( FILE * );
     static void         ReportError( IIAPI_GENPARM *, const char * = NULL );
@@ -94,7 +94,7 @@ class OGRIngresLayer : public OGRLayer
     int                 iNextShapeId;
 
     OGRIngresDataSource    *poDS;
- 
+
     CPLString           osQueryStatement;
 
     int                 nResultOffset;
@@ -118,7 +118,7 @@ class OGRIngresLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRSpatialReference *GetSpatialRef();
@@ -155,7 +155,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
     OGRErr              PrepareOldStyleGeometry( OGRGeometry*, CPLString& );
     OGRErr              PrepareNewStyleGeometry( OGRGeometry*, CPLString& );
-    
+
   public:
                         OGRIngresTableLayer( OGRIngresDataSource *,
                                          const char * pszName,
@@ -163,7 +163,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
                         ~OGRIngresTableLayer();
 
     OGRErr              Initialize(const char* pszTableName);
-    
+
 //    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     virtual void        ResetReading();
 //    virtual GIntBig     GetFeatureCount( int );
@@ -184,7 +184,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
-                                { bPreservePrecision = bFlag; }    
+                                { bPreservePrecision = bFlag; }
 
     virtual int         TestCapability( const char * );
 };
@@ -198,10 +198,10 @@ class OGRIngresResultLayer : public OGRIngresLayer
     void                BuildFullQueryStatement(void);
 
     char                *pszRawStatement;
-    
+
     // Layer srid.
     int                 nSRSId;
-    
+
     int                 nFeatureCount;
 
   public:
@@ -225,7 +225,7 @@ class OGRIngresDataSource : public OGRDataSource
 {
     OGRIngresLayer    **papoLayers;
     int                 nLayers;
-    
+
     char               *pszName;
 
     int                 bDSUpdate;
@@ -235,7 +235,7 @@ class OGRIngresDataSource : public OGRDataSource
     int                 DeleteLayer( int iLayer );
 
     // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes. 
+    // the database to get SRSes.
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
@@ -257,7 +257,7 @@ class OGRIngresDataSource : public OGRDataSource
 
     OGRErr              InitializeMetadataTables();
 
-    int                 Open( const char *pszFullName, 
+    int                 Open( const char *pszFullName,
                               char **papszOptions, int bUpdate );
     int                 OpenTable( const char *, int bUpdate );
 
@@ -265,8 +265,8 @@ class OGRIngresDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *ICreateLayer( const char *, 
-                                      OGRSpatialReference * = NULL,
+    virtual OGRLayer    *ICreateLayer( const char *,
+                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
 
@@ -296,7 +296,7 @@ class OGRIngresDriver : public OGRSFDriver
 
   public:
                 ~OGRIngresDriver();
-                
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
     virtual OGRDataSource *CreateDataSource( const char *pszName,
@@ -306,5 +306,3 @@ class OGRIngresDriver : public OGRSFDriver
 
 
 #endif /* ndef OGR_PG_H_INCLUDED */
-
-

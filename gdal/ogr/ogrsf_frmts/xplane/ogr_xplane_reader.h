@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_xplane.h $
+ * $Id$
  *
  * Project:  X-Plane aeronautical data reader
  * Purpose:  Definition of classes for OGR X-Plane aeronautical data reader.
@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_XPLANE_READER_H_INCLUDED
-#define _OGR_XPLANE_READER_H_INCLUDED
+#ifndef OGR_XPLANE_READER_H_INCLUDED
+#define OGR_XPLANE_READER_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_string.h"

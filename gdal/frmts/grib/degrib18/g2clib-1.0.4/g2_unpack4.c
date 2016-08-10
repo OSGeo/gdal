@@ -30,9 +30,9 @@ g2int g2_unpack4(unsigned char *cgrib,g2int *iofst,g2int *ipdsnum,g2int **ipdstm
 //                the specified Product Definition
 //                Template ( N=ipdsnum ).  Each element of this integer
 //                array contains an entry (in the order specified) of Product
-//                Defintion Template 4.N
+//                Definition Template 4.N
 //     mappdslen- Number of elements in ipdstmpl[].  i.e. number of entries
-//                in Product Defintion Template 4.N  ( N=ipdsnum ).
+//                in Product Definition Template 4.N  ( N=ipdsnum ).
 //     coordlist- Pointer to real array containing floating point values 
 //                intended to document
 //                the vertical discretisation associated to model data

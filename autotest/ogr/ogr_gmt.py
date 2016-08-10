@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR GMT driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -34,6 +34,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
+from osgeo import gdal
 from osgeo import ogr
 
 ###############################################################################
@@ -64,7 +65,7 @@ def ogr_gmt_2():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString) ] )
-    
+
     #######################################################
     # Copy in poly.shp
 
@@ -73,10 +74,10 @@ def ogr_gmt_2():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -98,9 +99,9 @@ def ogr_gmt_3():
 
     gdaltest.gmt_ds = ogr.Open( 'tmp/tpoly.gmt' )
     gdaltest.gmt_lyr = gdaltest.gmt_ds.GetLayer(0)
-    
+
     expect = [168, 169, 166, 158, 165]
-    
+
     gdaltest.gmt_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.gmt_lyr,
                                               'eas_id', expect )
@@ -151,7 +152,7 @@ def ogr_gmt_4():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    
+
     if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((175.1 -45.0,175.2 -45.1),(180.1 -45.3,180.0 -45.2))' ):
         return 'fail'
 
@@ -182,7 +183,7 @@ def ogr_gmt_5():
     # Setup Schema
     ogrtest.quick_create_layer_def( gdaltest.gmt_lyr,
                                     [ ('ID', ogr.OFTInteger) ] )
-    
+
     #######################################################
     # Write a first multipolygon
 
@@ -190,7 +191,9 @@ def ogr_gmt_5():
     dst_feat.SetGeometryDirectly(
         ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))'))
     dst_feat.SetField( 'ID', 15 )
+    gdal.SetConfigOption('GMT_USE_TAB', 'TRUE') # Ticket #6453
     gdaltest.gmt_lyr.CreateFeature( dst_feat )
+    gdal.SetConfigOption('GMT_USE_TAB', None)
 
     dst_feat = ogr.Feature( feature_def = gdaltest.gmt_lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly(
@@ -220,7 +223,7 @@ def ogr_gmt_5():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    
+
     if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON(((30 20,40 20,30 30,30 20)))' ):
         return 'fail'
 
@@ -238,7 +241,7 @@ def ogr_gmt_5():
 
 
 ###############################################################################
-# 
+#
 
 def ogr_gmt_cleanup():
 
@@ -250,7 +253,7 @@ def ogr_gmt_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gmt_1,
     ogr_gmt_2,
     ogr_gmt_3,

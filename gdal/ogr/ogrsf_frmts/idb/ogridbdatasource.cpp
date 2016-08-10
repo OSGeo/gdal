@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRIDBDataSource class
@@ -88,19 +87,19 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 
     char ** papszTokens = CSLTokenizeString2(pszNewName + 4, " ", 0);
     char * pszToken = 0;
-    int i = 0; 
+    int i = 0;
 
     while ( pszToken = papszTokens[i++] )
     {
-        if ( EQUALN( pszToken, "dbname=", 7 ) )
+        if ( STARTS_WITH_CI(pszToken, "dbname=") )
             pszDbName = CPLStrdup( pszToken + 7 );
-        else if ( EQUALN( pszToken, "server=", 7 ) )
+        else if ( STARTS_WITH_CI(pszToken, "server=") )
             pszServer = CPLStrdup( pszToken + 7 );
-        else if ( EQUALN( pszToken, "user=", 5 ) )
+        else if ( STARTS_WITH_CI(pszToken, "user=") )
             pszUser = CPLStrdup( pszToken + 5 );
-        else if ( EQUALN( pszToken, "pass=", 5 ) )
+        else if ( STARTS_WITH_CI(pszToken, "pass=") )
             pszPass = CPLStrdup( pszToken + 5 );
-        else if ( EQUALN( pszToken, "table=", 6 ) )
+        else if ( STARTS_WITH_CI(pszToken, "table=") )
         {
             papszTables = CSLAddString( papszTables, pszToken + 6 );
             papszGeomCol = CSLAddString( papszGeomCol, "" );
@@ -129,7 +128,7 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( !poConn->Open() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to initialize IDB connection to %s",
                   pszNewName+4);
         CSLDestroy( papszTables );
@@ -155,9 +154,9 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
             ITRow * row = 0;
             while( (row = oCurr.NextRow()) )
             {
-                papszTables = 
+                papszTables =
                     CSLAddString( papszTables, row->Column(0)->Printable() );
-                papszGeomCol = 
+                papszGeomCol =
                     CSLAddString( papszGeomCol, row->Column(1)->Printable() );
                 row->Release();
             }
@@ -178,7 +177,7 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
             ITRow * row = 0;
             while( (row = oTableList.NextRow()) )
             {
-                papszTables = 
+                papszTables =
                     CSLAddString( papszTables, row->Column(0)->Printable() );
                 papszGeomCol = CSLAddString(papszGeomCol,"");
                 row->Release();
@@ -194,8 +193,8 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 /*      If we have an explicit list of requested tables, use them       */
 /*      (non-spatial).                                                  */
 /* -------------------------------------------------------------------- */
-    for( int iTable = 0; 
-         papszTables != NULL && papszTables[iTable] != NULL; 
+    for( int iTable = 0;
+         papszTables != NULL && papszTables[iTable] != NULL;
          iTable++ )
     {
         char * pszGeomCol = NULL;
@@ -282,8 +281,8 @@ OGRLayer * OGRIDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -294,7 +293,7 @@ OGRLayer * OGRIDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     poCurr->Prepare( pszSQLCommand );
     if( !poCurr->Open(ITCursor::ReadOnly) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Error execute SQL: %s", pszSQLCommand );
         return NULL;
     }

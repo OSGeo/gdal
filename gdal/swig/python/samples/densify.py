@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 
-try:
-    from osgeo import osr
-    from osgeo import ogr
-    ogr.UseExceptions()
-except ImportError:
-    import osr
-    import ogr
-
-import sys
-import os
 import math
+import os
+import sys
 
-
+from osgeo import osr
+from osgeo import ogr
+ogr.UseExceptions()
 
 
 class Translator(object):
@@ -27,7 +21,7 @@ class Translator(object):
         g.add_option("-o", "--output", dest='output',
                           help="OGR output data source", metavar="OUTPUT")
         g.add_option("-n", "--nooverwrite",
-                          action="store_false", dest="overwrite", 
+                          action="store_false", dest="overwrite",
                           help="Do not overwrite the existing output file")
 
         g.add_option("-f", "--driver", dest='driver',
@@ -39,10 +33,10 @@ class Translator(object):
                           help="""Spatial query extents -- minx miny maxx maxy""",
                           type=float, nargs=4)
         g.add_option('-l', "--layer", dest="layer",
-                          help="""The name of the input layer to translate, if not given, the first layer on the data source is used""",)                          
+                          help="""The name of the input layer to translate, if not given, the first layer on the data source is used""",)
 
         g.add_option('-k', "--select", dest="fields",
-                          help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",)                          
+                          help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",)
         g.add_option('-t', '--target-srs', dest="t_srs",
                           help="""Target SRS -- the spatial reference system to project the data to""")
         g.add_option('-a', '--assign-srs', dest="a_srs",
@@ -61,11 +55,11 @@ class Translator(object):
         parser.set_defaults(verbose=True, driver="ESRI Shapefile", overwrite=True)
 
         self.parser = parser
-        
+
     def __init__(self, arguments, options=None):
         self.input = None
         self.output = None
-        
+
         self.opts = options
         self.construct_parser()
         self.options, self.args = self.parser.parse_args(args=arguments)
@@ -74,7 +68,7 @@ class Translator(object):
         self.open()
         self.make_fields()
         self.translate()
-        
+
     def open(self):
         if self.options.input:
             self.in_ds = ogr.Open(self.options.input)
@@ -95,12 +89,12 @@ class Translator(object):
 
         if self.options.spat:
             self.input.SetSpatialFilterRect(*self.options.spat)
-            
+
         self.out_drv = ogr.GetDriverByName(self.options.driver)
-        
+
         if self.options.where:
             self.input.SetAttributeFilter(self.options.where)
-            
+
         if not self.out_drv:
             raise Exception("The '%s' driver was not found, did you misspell it or is it not available in this GDAL build?", self.options.driver)
         if not self.out_drv.TestCapability( 'CreateDataSource' ):
@@ -126,14 +120,14 @@ class Translator(object):
             dsco = (),
 
         self.out_ds = self.out_drv.CreateDataSource( self.options.output, dsco)
-        
+
         if self.options.t_srs:
             self.out_srs = osr.SpatialReference()
             self.out_srs.SetFromUserInput(self.options.t_srs)
         else:
             self.out_srs = None
         self.output = self.out_ds.CreateLayer(  self.options.output,
-                                                geom_type = self.input.GetLayerDefn().GetGeomType(), 
+                                                geom_type = self.input.GetLayerDefn().GetGeomType(),
                                                 srs= self.out_srs)
 
 
@@ -159,21 +153,19 @@ class Translator(object):
             trans = osr.CoordinateTransformation(self.in_srs, self.out_srs)
         while f:
             geom = f.GetGeometryRef().Clone()
-            
+
             if trans:
                 geom.Transform(trans)
 
             if geometry_callback:
                 geom = geometry_callback(geom)
 
-                
             f.SetGeometry(geom)
             d = ogr.Feature(feature_def=self.output.GetLayerDefn())
             d.SetFrom(f)
             self.output.CreateFeature(d)
             f = self.input.GetNextFeature()
 
-            
     def __del__(self):
         if self.output:
             self.output.SyncToDisk()
@@ -182,24 +174,24 @@ def radians(degrees):
     return math.pi/180.0*degrees
 def degrees(radians):
     return radians*180.0/math.pi
-    
+
 class Densify(Translator):
 
     def calcpoint(self,x0, x1, y0, y1, d):
         a = x1 - x0
         b = y1 - y0
-        
+
         if a == 0:
             xn = x1
-            
+
             if b > 0:
                 yn = y0 + d
             else:
                 yn = y0 - d
             return (xn, yn)
-                      
+
         theta = degrees(math.atan(abs(b)/abs(a)))
-        
+
         if a > 0 and b > 0:
             omega = theta
         if a < 0 and b > 0:
@@ -218,21 +210,21 @@ class Densify(Translator):
         else:
             xn = x0 + d*math.cos(radians(omega))
             yn = y0 + d*math.sin(radians(omega))
-        
+
         return (xn, yn)
-                    
+
     def distance(self, x0, x1, y0, y1):
         deltax = x0 - x1
         deltay = y0 - y1
         d2 = (deltax)**2 + (deltay)**2
         d = math.sqrt(d2)
         return d
-    
+
     def densify(self, geometry):
         gtype = geometry.GetGeometryType()
         if  not (gtype == ogr.wkbLineString or gtype == ogr.wkbMultiLineString):
             raise Exception("The densify function only works on linestring or multilinestring geometries")
-            
+
         g = ogr.Geometry(ogr.wkbLineString)
 
         # add the first point
@@ -267,7 +259,7 @@ class Densify(Translator):
                         x = x + dx
                         y = y + dy
                         g.AddPoint(x, y)
-                        
+
                 elif self.options.remainder.upper() == "END":
                     segcount = int(math.floor(d/threshold))
                     xa = None
@@ -284,10 +276,10 @@ class Densify(Translator):
                         xa = xn
                         ya = yn
                         g.AddPoint(xa,ya)
-                        
+
                 elif self.options.remainder.upper() == "BEGIN":
-                    
-                    # I think this might put an extra point in at the end of the 
+
+                    # I think this might put an extra point in at the end of the
                     # first segment
                     segcount = int(math.floor(d/threshold))
                     xa = None
@@ -298,7 +290,7 @@ class Densify(Translator):
                     for p in range(segcount):
                         if not xa:
                             xn, yn = self.calcpoint(x0,x1,y0,y1,remainder)
- 
+
                             d = self.distance(x0, xn, y0, yn)
                             xa = xn
                             ya = yn
@@ -313,7 +305,6 @@ class Densify(Translator):
             x0 = x1
             y0 = y1
 
-                
         return g
 
     def process(self):
@@ -324,7 +315,7 @@ class Densify(Translator):
 def GetLength(geometry):
 
     def get_distance(x1, y1, x2, y2):
-        """Return the euclidian distance between this point and another"""
+        """Return the euclidean distance between this point and another."""
         import math
         deltax = x1 - x2
         deltay = y1 - y2
@@ -347,7 +338,7 @@ def GetLength(geometry):
 
     cumulative = 0.0
     geom_count = geometry.GetGeometryCount()
-    
+
     if geom_count:
         for gi in range(geom_count):
             g = geometry.GetGeometryRef(gi)
@@ -355,27 +346,29 @@ def GetLength(geometry):
     else:
         cumulative = cumulate(geometry)
     return cumulative
-    
+
+
 def main():
     import optparse
 
     options = []
     o = optparse.make_option("-r", "--remainder", dest="remainder",
-                         type="choice",default='end', 
-                          help="""what to do with the remainder -- place it at the beginning, 
+                         type="choice",default='end',
+                          help="""what to do with the remainder -- place it at the beginning,
 place it at the end, or evenly distribute it across the segment""",
                           choices=['end','begin','uniform'])
     options.append(o)
     o = optparse.make_option("-d", "--distance", dest='distance', type="float",
-                          help="""Threshold distance for point placement.  If the 
-'uniform' remainder is used, points will be evenly placed 
-along the segment in a fashion that makes sure they are 
-no further apart than the threshold.  If 'beg' or 'end' 
-is chosen, the threshold distance will be used as an absolute value.""", 
+                          help="""Threshold distance for point placement.  If the
+'uniform' remainder is used, points will be evenly placed
+along the segment in a fashion that makes sure they are
+no further apart than the threshold.  If 'beg' or 'end'
+is chosen, the threshold distance will be used as an absolute value.""",
                           metavar="DISTANCE")
     options.append(o)
     d = Densify(sys.argv[1:], options=options)
     d.process()
+
 
 if __name__=='__main__':
     main()

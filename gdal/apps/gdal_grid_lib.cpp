@@ -1,5 +1,4 @@
 /* ****************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL scattered data gridding (interpolation) tool
@@ -61,10 +60,10 @@ struct GDALGridOptions
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress;
-    
+
     /*! pointer to the progress data variable */
     void *pProgressData;
-    
+
     char            **papszLayers;
     char            *pszBurnAttribute;
     double          dfIncreaseBurnValue;
@@ -98,7 +97,7 @@ struct GDALGridOptions
 /************************************************************************/
 /*                          GetAlgorithmName()                          */
 /*                                                                      */
-/*      Grids algortihm code into mnemonic name.                   */
+/*      Grids algorithm code into mnemonic name.                        */
 /************************************************************************/
 
 static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
@@ -234,7 +233,7 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
 /*                          ProcessGeometry()                           */
 /*                                                                      */
 /*  Extract point coordinates from the geometry reference and set the   */
-/*  Z value as requested. Test whther we are in the clipped region      */
+/*  Z value as requested. Test whether we are in the clipped region     */
 /*  before processing.                                                  */
 /************************************************************************/
 
@@ -261,7 +260,7 @@ static void ProcessGeometry( OGRPoint *poGeom, OGRGeometry *poClipSrc,
 /************************************************************************/
 /*                       ProcessCommonGeometry()                        */
 /*                                                                      */
-/*  Process recursivelly geometry and extract points                    */
+/*  Process recursively geometry and extract points.                    */
 /************************************************************************/
 
 static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
@@ -307,7 +306,7 @@ static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
             {
                 for (int ir = 0; ir < nRings; ++ir)
                 {
-                    OGRLinearRing* poRing = poPoly->getInteriorRing(ir);
+                    poRing = poPoly->getInteriorRing(ir);
                     ProcessCommonGeometry((OGRGeometry*)poRing, poClipSrc,
                         iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
                 }
@@ -367,7 +366,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         if( iBurnField == -1 )
         {
             printf( "Failed to find field %s on layer %s, skipping.\n",
-                    pszBurnAttribute, 
+                    pszBurnAttribute,
                     OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
             return CE_Failure;
         }
@@ -451,14 +450,14 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 
     if (adfX.size() == 0)
     {
-        // FIXME: Shoulda' set to nodata value instead
+        // FIXME: Should have set to nodata value instead
         GDALFillRaster( hBand, 0.0 , 0.0 );
         return CE_None;
     }
 
     int     nXOffset, nYOffset;
     int     nBlockXSize, nBlockYSize;
-    int     nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eType);
 
     // Try to grow the work buffer up to 16 MB if it is smaller
     GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
@@ -494,7 +493,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         * ((nYSize + nBlockYSize - 1) / nBlockYSize);
 
     GDALGridContext* psContext = GDALGridContextCreate( eAlgorithm, pOptions,
-                                                        adfX.size(),
+                                                        static_cast<int>(adfX.size()),
                                                         &(adfX[0]), &(adfY[0]), &(adfZ[0]),
                                                         TRUE );
     if( psContext == NULL )
@@ -539,7 +538,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
             GDALDestroyScaledProgress( pScaledProgress );
         }
     }
-    
+
     GDALGridContextFree(psContext);
 
     CPLFree( pData );
@@ -562,18 +561,18 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
     OGRLayer            *poLyr;
     OGRFeature          *poFeat;
     OGRGeometryCollection *poGeom = NULL;
-        
+
     poDS = (GDALDataset*) GDALOpen( pszDS, GA_ReadOnly );
     if ( poDS == NULL )
         return NULL;
 
     if ( pszSQL != NULL )
-        poLyr = poDS->ExecuteSQL( pszSQL, NULL, NULL ); 
+        poLyr = poDS->ExecuteSQL( pszSQL, NULL, NULL );
     else if ( pszLyr != NULL )
         poLyr = poDS->GetLayerByName( pszLyr );
     else
         poLyr = poDS->GetLayer(0);
-        
+
     if ( poLyr == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -581,10 +580,10 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
         GDALClose( (GDALDatasetH) poDS );
         return NULL;
     }
-    
+
     if ( pszWhere )
         poLyr->SetAttributeFilter( pszWhere );
-        
+
     while ( (poFeat = poLyr->GetNextFeature()) != NULL )
     {
         OGRGeometry* poSrcGeom = poFeat->GetGeometryRef();
@@ -592,7 +591,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
         {
             OGRwkbGeometryType eType =
                 wkbFlatten( poSrcGeom->getGeometryType() );
-            
+
             if ( poGeom == NULL )
                 poGeom = new OGRMultiPolygon();
 
@@ -621,14 +620,14 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
                 return NULL;
             }
         }
-    
+
         OGRFeature::DestroyFeature( poFeat );
     }
-    
+
     if( pszSQL != NULL )
         poDS->ReleaseResultSet( poLyr );
     GDALClose( (GDALDatasetH) poDS );
-    
+
     return poGeom;
 }
 
@@ -637,7 +636,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
 /************************************************************************/
 
 /**
- * Converts raster data between different formats.
+ * Create raster from the scattered data.
  *
  * This is the equivalent of the <a href="gdal_grid.html">gdal_grid</a> utility.
  *
@@ -646,8 +645,8 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
  *
  * @param pszDest the destination dataset path.
  * @param hSrcDataset the source dataset handle.
- * @param psOptions the options struct returned by GDALGridOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occured or NULL.
+ * @param psOptionsIn the options struct returned by GDALGridOptionsNew() or NULL.
+ * @param pbUsageError the pointer to int variable to determine any usage error has occurred or NULL.
  * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
  *
  * @since GDAL 2.1
@@ -683,7 +682,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         psOptionsToFree = GDALGridOptionsNew(NULL, NULL);
         psOptions = psOptionsToFree;
     }
-    
+
     GDALDataset* poSrcDS = (GDALDataset*) hSrcDataset;
 
     if( psOptions->pszSQL == NULL && psOptions->papszLayers == NULL &&
@@ -703,15 +702,15 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     GDALDriverH hDriver = GDALGetDriverByName( psOptions->pszFormat );
     if( hDriver == NULL )
     {
-        int	iDr;
-        
+        int iDr;
+
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Output driver `%s' not recognised.", psOptions->pszFormat );
         fprintf( stderr,
         "The following format drivers are configured and support output:\n" );
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
-            GDALDriverH hDriver = GDALGetDriver(iDr);
+            hDriver = GDALGetDriver(iDr);
 
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
                 ( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
@@ -754,7 +753,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         GDALGridOptionsFree(psOptionsToFree);
         return NULL;
     }
-    
+
     if( psOptions->bNoDataSet )
     {
         for( int i = 1; i <= nBands; i++ )
@@ -763,7 +762,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
             GDALSetRasterNoDataValue( hBand, psOptions->dfNoDataValue );
         }
     }
-    
+
     double dfXMin = psOptions->dfXMin;
     double dfYMin = psOptions->dfYMin;
     double dfXMax = psOptions->dfXMax;
@@ -779,7 +778,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     if( psOptions->pszSQL != NULL )
     {
         OGRLayer* poLayer = poSrcDS->ExecuteSQL(psOptions->pszSQL,
-                                                psOptions->poSpatialFilter, NULL ); 
+                                                psOptions->poSpatialFilter, NULL );
         if( poLayer != NULL )
         {
             // Custom layer will be rasterized in the first band.
@@ -806,8 +805,8 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
             GDALDatasetGetLayerByName( hSrcDataset, psOptions->papszLayers[i]);
         if( hLayer == NULL )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Unable to find layer \"%s\", skipping.", 
-                     psOptions->papszLayers[i] );
+            CPLError(CE_Failure, CPLE_AppDefined, "Unable to find layer \"%s\", skipping.",
+                     psOptions->papszLayers[i] ? psOptions->papszLayers[i] : "null" );
             continue;
         }
 
@@ -863,6 +862,8 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      End                                                             */
 /* -------------------------------------------------------------------- */
+    GDALGridOptionsFree(psOptionsToFree);
+
     if( eErr == CE_None )
         return hDstDS;
     else
@@ -939,7 +940,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
     psOptions->pszClipSrcWhere = NULL;
     psOptions->bNoDataSet = FALSE;
     psOptions->dfNoDataValue = 0;
-    
+
     ParseAlgorithmAndOptions( szAlgNameInvDist, &psOptions->eAlgorithm, &psOptions->pOptions );
 
     bool bGotSourceFilename = false;
@@ -970,7 +971,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
         else if( EQUAL(papszArgv[i],"-ot") && papszArgv[i+1] )
         {
             int iType;
-            
+
             for( iType = 1; iType < GDT_TypeCount; iType++ )
             {
                 if( GDALGetDataTypeName((GDALDataType)iType) != NULL
@@ -996,25 +997,25 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             psOptions->dfXMin = CPLAtof(papszArgv[++i]);
             psOptions->dfXMax = CPLAtof(papszArgv[++i]);
             psOptions->bIsXExtentSet = TRUE;
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-tye") && i+2 < argc )
         {
             psOptions->dfYMin = CPLAtof(papszArgv[++i]);
             psOptions->dfYMax = CPLAtof(papszArgv[++i]);
             psOptions->bIsYExtentSet = TRUE;
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-outsize") && i+2 < argc )
         {
             psOptions->nXSize = atoi(papszArgv[++i]);
             psOptions->nYSize = atoi(papszArgv[++i]);
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-co") && i+1 < argc )
         {
             psOptions->papszCreateOptions = CSLAddString( psOptions->papszCreateOptions, papszArgv[++i] );
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-zfield") && i+1 < argc )
         {
@@ -1046,7 +1047,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
         else if( EQUAL(papszArgv[i],"-sql") && i+1 < argc )
         {
             CPLFree(psOptions->pszSQL);
-            psOptions->pszSQL = CPLStrdup(papszArgv[++i]);   
+            psOptions->pszSQL = CPLStrdup(papszArgv[++i]);
         }
 
         else if( EQUAL(papszArgv[i],"-spat") && i+4 < argc )
@@ -1077,8 +1078,8 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             VSIStatBufL  sStat;
             psOptions->bClipSrc = TRUE;
             if ( IsNumber(papszArgv[i+1])
-                 && papszArgv[i+2] != NULL 
-                 && papszArgv[i+3] != NULL 
+                 && papszArgv[i+2] != NULL
+                 && papszArgv[i+3] != NULL
                  && papszArgv[i+4] != NULL)
             {
                 OGRLinearRing  oRing;
@@ -1094,8 +1095,8 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
                 ((OGRPolygon *) psOptions->poClipSrc)->addRing( &oRing );
                 i += 4;
             }
-            else if ((EQUALN(papszArgv[i+1], "POLYGON", 7) ||
-                      EQUALN(papszArgv[i+1], "MULTIPOLYGON", 12)) &&
+            else if ((STARTS_WITH_CI(papszArgv[i+1], "POLYGON") ||
+                      STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
                 char* pszTmp = (char*) papszArgv[i+1];
@@ -1147,7 +1148,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             if( oOutputSRS.SetFromUserInput( papszArgv[i+1] ) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to process SRS definition: %s", 
+                         "Failed to process SRS definition: %s",
                          papszArgv[i+1] );
                 GDALGridOptionsFree(psOptions);
                 return NULL;
@@ -1156,7 +1157,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             CPLFree(psOptions->pszOutputSRS);
             oOutputSRS.exportToWkt( &(psOptions->pszOutputSRS) );
             i++;
-        }   
+        }
 
         else if( EQUAL(papszArgv[i],"-a") && i+1 < argc )
         {

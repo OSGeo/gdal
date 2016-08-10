@@ -28,14 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _PARSEXSD_H_INCLUDED
-#define _PARSEXSD_H_INCLUDED
+#ifndef PARSEXSD_H_INCLUDED
+#define PARSEXSD_H_INCLUDED
 
 #include <vector>
 #include "gmlreader.h"
 
-int GMLParseXSD( const char *pszFile,
+bool GMLParseXSD( const char *pszFile,
                  std::vector<GMLFeatureClass*> & aosClasses,
-                 int& bFullyUnderstood );
+                 bool& bFullyUnderstood );
 
-#endif // _PARSEXSD_H_INCLUDED
+#endif // PARSEXSD_H_INCLUDED

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM file based generic driver.
@@ -32,6 +31,8 @@
 #include "gnmfile.h"
 #include "gnm_priv.h"
 
+CPL_CVSID("$Id$");
+
 GNMFileNetwork::GNMFileNetwork() : GNMGenericNetwork()
 {
     m_pMetadataDS = NULL;
@@ -51,7 +52,7 @@ GNMFileNetwork::~GNMFileNetwork()
 CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
 {
     m_soNetworkFullName = poOpenInfo->pszFilename;
-    char **papszFiles = CPLReadDir( m_soNetworkFullName );
+    char **papszFiles = VSIReadDir( m_soNetworkFullName );
     if( CSLCount(papszFiles) == 0 )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Open '%s' file failed",
@@ -134,7 +135,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
     // if path exist check if network already present and OVERWRITE option
     // else create the path
 
-    bool bOverwrite = CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE);
+    const bool bOverwrite = CPLFetchBool(papszOptions, "OVERWRITE", false);
 
     if(m_soName.empty())
     {
@@ -153,7 +154,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
 
     if (CPLCheckForFile((char*)m_soNetworkFullName.c_str(), NULL))
     {
-        char **papszFiles = CPLReadDir( m_soNetworkFullName );
+        char **papszFiles = VSIReadDir( m_soNetworkFullName );
         if( CSLCount(papszFiles) == 0 )
         {
             return FALSE;
@@ -170,7 +171,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
                 EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_FEATURES) ||
                 EQUAL(papszFiles[i], GNM_SRSFILENAME) )
             {
-                if(bOverwrite)
+                if( bOverwrite )
                 {
                     const char* pszDeleteFile = CPLFormFilename(
                                 m_soNetworkFullName, papszFiles[i], NULL);
@@ -206,7 +207,7 @@ CPLErr GNMFileNetwork::Delete()
        return eResult;
 
     // check if folder empty
-    char **papszFiles = CPLReadDir( m_soNetworkFullName );
+    char **papszFiles = VSIReadDir( m_soNetworkFullName );
     bool bIsEmpty = true;
     for(int i = 0; papszFiles[i] != NULL; ++i)
     {
@@ -220,7 +221,7 @@ CPLErr GNMFileNetwork::Delete()
     CSLDestroy( papszFiles );
 
     if( !bIsEmpty )
-    {        
+    {
         return eResult;
     }
     return VSIRmdir(m_soNetworkFullName) == 0 ? CE_None : CE_Failure;
@@ -266,8 +267,8 @@ CPLErr GNMFileNetwork::StoreNetworkSrs()
             VSIFCloseL(fpSrsPrj);
             return CE_Failure;
         }
+        VSIFCloseL(fpSrsPrj);
     }
-    VSIFCloseL(fpSrsPrj);
     return CE_None;
 }
 

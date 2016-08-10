@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline application to build overviews. 
+ * Purpose:  Command line application to build overviews.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -47,7 +46,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "  -ro : open the dataset in read-only mode, in order to generate\n"
             "        external overview (for GeoTIFF datasets especially)\n"
             "  -clean : remove all overviews\n"
-            "  -q : turn off progress display\n" 
+            "  -q : turn off progress display\n"
             "  -b : band to create overview (if not set overviews will be created for all bands)\n"
             "  filename: The file to build overviews for (or whose overviews must be removed).\n"
             "  levels: A list of integral overview levels to build. Ignored with -clean option.\n"
@@ -73,6 +72,30 @@ static void Usage(const char* pszErrorMsg = NULL)
 }
 
 /************************************************************************/
+/*                        GDALAddoErrorHandler()                        */
+/************************************************************************/
+
+class GDALError
+{
+  public:
+      CPLErr            m_eErr;
+      CPLErrorNum       m_errNum;
+      CPLString         m_osMsg;
+
+      GDALError( CPLErr eErr = CE_None, CPLErrorNum errNum= CPLE_None, const char * pszMsg = "") :
+          m_eErr(eErr), m_errNum(errNum), m_osMsg(pszMsg ? pszMsg : "")
+      {
+      }
+};
+
+std::vector<GDALError> aoErrors;
+
+static void CPL_STDCALL GDALAddoErrorHandler( CPLErr eErr, CPLErrorNum errNum, const char * pszMsg )
+{
+    aoErrors.push_back(GDALError(eErr, errNum, pszMsg));
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -91,7 +114,7 @@ int main( int nArgc, char ** papszArgv )
     int              nResultStatus = 0;
     int              bReadOnly = FALSE;
     int              bClean = FALSE;
-    GDALProgressFunc pfnProgress = GDALTermProgress; 
+    GDALProgressFunc pfnProgress = GDALTermProgress;
     int             *panBandList = NULL;
     int              nBandCount = 0;
     char           **papszOpenOptions = NULL;
@@ -112,7 +135,7 @@ int main( int nArgc, char ** papszArgv )
         exit( -nArgc );
 
 /* -------------------------------------------------------------------- */
-/*      Parse commandline.                                              */
+/*      Parse command line.                                              */
 /* -------------------------------------------------------------------- */
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
@@ -120,6 +143,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( papszArgv );
             return 0;
         }
         else if( EQUAL(papszArgv[iArg],"--help") )
@@ -133,8 +157,8 @@ int main( int nArgc, char ** papszArgv )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-clean"))
             bClean = TRUE;
-        else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") ) 
-            pfnProgress = GDALDummyProgress; 
+        else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") )
+            pfnProgress = GDALDummyProgress;
         else if( EQUAL(papszArgv[iArg],"-b"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -144,13 +168,11 @@ int main( int nArgc, char ** papszArgv )
             {
                 printf( "Unrecognizable band number (%s).\n", papszArgv[iArg+1] );
                 Usage();
-                GDALDestroyDriverManager();
-                exit( 2 );
             }
             iArg++;
 
             nBandCount++;
-            panBandList = (int *) 
+            panBandList = (int *)
                 CPLRealloc(panBandList, sizeof(int) * nBandCount);
             panBandList[nBandCount-1] = nBand;
         }
@@ -189,13 +211,22 @@ int main( int nArgc, char ** papszArgv )
         hDataset = NULL;
     else
     {
-        CPLPushErrorHandler( CPLQuietErrorHandler );
+        CPLPushErrorHandler( GDALAddoErrorHandler );
+        CPLSetCurrentErrorHandlerCatchDebug( FALSE );
         hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE, NULL, papszOpenOptions, NULL );
         CPLPopErrorHandler();
+        if( hDataset != NULL )
+        {
+            for(size_t i=0;i<aoErrors.size();i++)
+            {
+                CPLError( aoErrors[i].m_eErr, aoErrors[i].m_errNum, "%s",
+                          aoErrors[i].m_osMsg.c_str() );
+            }
+        }
     }
 
     if( hDataset == NULL )
-        hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER, NULL, papszOpenOptions, NULL );
+        hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL, papszOpenOptions, NULL );
 
     CSLDestroy(papszOpenOptions);
     papszOpenOptions = NULL;
@@ -207,7 +238,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Clean overviews.                                                */
 /* -------------------------------------------------------------------- */
     if ( bClean &&
-        GDALBuildOverviews( hDataset,pszResampling, 0, 0, 
+        GDALBuildOverviews( hDataset,pszResampling, 0, NULL,
                              0, NULL, pfnProgress, NULL ) != CE_None )
     {
         printf( "Cleaning overviews failed.\n" );

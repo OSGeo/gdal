@@ -38,11 +38,13 @@
 #include "core/sysvirtualfile.h"
 #include "segment/sysblockmap.h"
 #include "core/cpcidskfile.h"
+#include "core/pcidsk_utils.h"
 
 #include <cassert>
 #include <vector>
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 
 using namespace PCIDSK;
 
@@ -50,15 +52,17 @@ using namespace PCIDSK;
 /*                            SysBlockMap()                             */
 /************************************************************************/
 
-SysBlockMap::SysBlockMap( PCIDSKFile *file, int segment,
+SysBlockMap::SysBlockMap( PCIDSKFile *fileIn, int segmentIn,
                               const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer )
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer )
 
 {
     partial_loaded = false;
     full_loaded = false;
     dirty = false;
     growing_segment = 0;
+    block_count = 0;
+    first_free_block = 0;
 }
 
 /************************************************************************/
@@ -76,7 +80,15 @@ SysBlockMap::~SysBlockMap()
         virtual_files[i] = NULL;
     }
 
-    Synchronize();
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& e )
+    {
+        fprintf(stderr, "Exception in SysBlockMap::~SysBlockMap(): %s\n",
+                e.what());
+    }
 }
 
 /************************************************************************/
@@ -127,11 +139,11 @@ void SysBlockMap::PartialLoad()
     count_data.SetSize( 512 );
     ReadFromFile( count_data.buffer, 0, 512 );
 
-    if( strncmp(count_data.buffer,"VERSION",7) != 0 )
-        ThrowPCIDSKException( "SysBlockMap::PartialLoad() - block map corrupt." );
+    if( !STARTS_WITH(count_data.buffer, "VERSION") )
+        return ThrowPCIDSKException( "SysBlockMap::PartialLoad() - block map corrupt." );
 
     if( count_data.GetInt( 7, 3 ) != 1 )
-        ThrowPCIDSKException( "SysBlockMap::PartialLoad() - unsupported version." );
+        return ThrowPCIDSKException( "SysBlockMap::PartialLoad() - unsupported version." );
 
 /* -------------------------------------------------------------------- */
 /*      Establish our SysVirtualFile array based on the number of       */
@@ -238,14 +250,14 @@ void SysBlockMap::AllocateBlocks()
 
     if( growing_segment == 0 )
     {
-        PCIDSKSegment *seg;
+        PCIDSKSegment *l_seg;
         int  previous = 0;
 
-        while( (seg=file->GetSegment( SEG_SYS, "SysBData", previous )) != NULL )
+        while( (l_seg=file->GetSegment( SEG_SYS, "SysBData", previous )) != NULL )
         {
-            previous = seg->GetSegmentNumber();
+            previous = l_seg->GetSegmentNumber();
             
-            if( seg->IsAtEOF() )
+            if( l_seg->IsAtEOF() )
             {
                 growing_segment = previous;
                 break;
@@ -381,7 +393,7 @@ SysVirtualFile *SysBlockMap::GetVirtualFile( int image )
     PartialLoad();
 
     if( image < 0 || image >= (int) virtual_files.size() )
-        ThrowPCIDSKException( "GetImageSysFile(%d): invalid image index",
+        return (SysVirtualFile*)ThrowPCIDSKExceptionPtr( "GetImageSysFile(%d): invalid image index",
                               image );
 
     if( virtual_files[image] != NULL )
@@ -425,7 +437,7 @@ int SysBlockMap::CreateVirtualFile()
 /* -------------------------------------------------------------------- */
     if( layer_index == virtual_files.size() )
     {
-        layer_index = virtual_files.size();
+        layer_index = static_cast<int>(virtual_files.size());
         layer_data.SetSize( (layer_index+1) * 24 );
         virtual_files.push_back( NULL );
     }
@@ -508,7 +520,7 @@ int SysBlockMap::CreateVirtualImageFile( int width, int height,
 /************************************************************************/
 
 int SysBlockMap::GetNextBlockMapEntry( int bm_index,
-                                       uint16 &segment,
+                                       uint16 &segmentOut,
                                        int &block_in_segment )
 
 {
@@ -545,7 +557,7 @@ int SysBlockMap::GetNextBlockMapEntry( int bm_index,
     block_in_segment = atoi(bm_entry+4);
 
     bm_entry[4] = '\0';
-    segment = atoi(bm_entry);
+    segmentOut = static_cast<PCIDSK::uint16>(atoi(bm_entry));
     
     return next_block;
 }

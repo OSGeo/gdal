@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  test librarified gdalwarp
 # Author:   Faza Mahamood <fazamhd @ gmail dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
 # Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import struct
 import sys
 import os
 
@@ -37,6 +38,7 @@ sys.path.append( '../pymod' )
 
 from osgeo import gdal, ogr
 import gdaltest
+import ogrtest
 
 ###############################################################################
 # Simple test
@@ -61,7 +63,7 @@ def test_gdalwarp_lib_1():
 def test_gdalwarp_lib_2():
 
     ds1 = gdal.Open('../gcore/data/byte.tif')
-    dstDS = gdal.Warp('tmp/testgdalwarp2.tif',[ds1], format = 'GTiff')
+    dstDS = gdal.Warp('tmp/testgdalwarp2.tif'.encode('ascii').decode('ascii'),[ds1], format = 'GTiff')
 
     if dstDS.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('Bad checksum')
@@ -79,7 +81,7 @@ def test_gdalwarp_lib_3():
 
     ds1 = gdal.Open('../gcore/data/byte.tif')
     dstDS = gdal.Warp('', ds1, format = 'MEM', outputType = gdal.GDT_Int16)
-    
+
     if dstDS.GetRasterBand(1).DataType != gdal.GDT_Int16:
         gdaltest.post_reason('Bad data type')
         return 'fail'
@@ -96,7 +98,7 @@ def test_gdalwarp_lib_3():
 # Test -t_srs option
 
 def test_gdalwarp_lib_4():
-    
+
     ds1 = gdal.Open('../gcore/data/byte.tif')
     dstDS = gdal.Warp('', ds1, format = 'MEM', dstSRS = 'EPSG:32611')
 
@@ -135,7 +137,7 @@ def test_gdalwarp_lib_5():
 # Test warping from GCPs with -tps
 
 def test_gdalwarp_lib_6():
-    
+
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('',ds1, format = 'MEM', tps = True)
 
@@ -156,7 +158,7 @@ def test_gdalwarp_lib_6():
 # Test -tr
 
 def test_gdalwarp_lib_7():
-    
+
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('',[ds1], format = 'MEM',xRes = 120,yRes = 120)
     if dstDS is None:
@@ -175,7 +177,7 @@ def test_gdalwarp_lib_7():
 # Test -ts
 
 def test_gdalwarp_lib_8():
-    
+
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
     dstDS = gdal.Warp('',[ds1], format = 'MEM',width = 10,height = 10)
     if dstDS is None:
@@ -624,7 +626,7 @@ def test_gdalwarp_lib_108():
         print(ds.GetRasterBand(1).Checksum())
         gdaltest.post_reason('Bad checksum')
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -825,8 +827,10 @@ def test_gdalwarp_lib_121():
         gdal.wrapper_GDALWarpDestName('', [], None, gdal.TermProgress)
 
     # Null dest name
-    with gdaltest.error_handler():
+    try:
         gdal.wrapper_GDALWarpDestName(None, [], None)
+    except:
+        pass
 
     # No option
     with gdaltest.error_handler():
@@ -839,6 +843,388 @@ def test_gdalwarp_lib_121():
     return 'success'
 
 ###############################################################################
+# Test unnamed output VRT
+
+def test_gdalwarp_lib_122():
+
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'VRT')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test failure during warping
+
+def test_gdalwarp_lib_123():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/byte_truncated.tif', format = 'MEM')
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test warping to dataset with existing nodata
+
+def test_gdalwarp_lib_124():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.SetGeoTransform([10,1,0,10,0,-1])
+    src_ds.GetRasterBand(1).SetNoDataValue(12)
+    src_ds.GetRasterBand(1).Fill(12)
+
+    out_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    out_ds.SetGeoTransform([10,1,0,10,0,-1])
+    out_ds.GetRasterBand(1).SetNoDataValue(21)
+    out_ds.GetRasterBand(1).Fill(21)
+    expected_cs = out_ds.GetRasterBand(1).Checksum()
+
+    gdal.Warp(out_ds, src_ds, format = 'MEM')
+
+    cs = out_ds.GetRasterBand(1).Checksum()
+    if cs != expected_cs:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that statistics are not propagated
+
+def test_gdalwarp_lib_125():
+
+    for i in range(3):
+
+        src_ds_1 = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds_1.SetGeoTransform([10,1,0,10,0,-1])
+        if i == 1 or i == 3:
+            src_ds_1.GetRasterBand(1).SetMetadataItem('STATISTICS_MINIUM', '5')
+
+        src_ds_2 = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds_2.SetGeoTransform([10,1,0,10,0,-1])
+        if i == 2 or i == 3:
+            src_ds_2.GetRasterBand(1).SetMetadataItem('STATISTICS_MINIUM', '5')
+
+        out_ds = gdal.Warp('', [ src_ds_1, src_ds_2 ], format = 'MEM')
+
+        if out_ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIUM') is not None:
+            print(i)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test cutline with invalid geometry
+
+def test_gdalwarp_lib_126():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
+    lyr = ds.CreateLayer('cutline')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 1,0 1,1 0,0 0))')) # Self intersecting
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = '/vsimem/cutline.shp')
+    if ds is not None:
+        gdaltest.post_reason('Did not expected dataset')
+        return 'fail'
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/cutline.shp')
+
+    return 'success'
+
+###############################################################################
+# Test -srcnodata (#6315)
+
+def test_gdalwarp_lib_127():
+
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', srcNodata = 1)
+    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+        gdaltest.post_reason('bad nodata value')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('bad checksum')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test automatic densification of cutline (#6375)
+
+def test_gdalwarp_lib_128():
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 1177, 4719)
+    rpc =  [ "HEIGHT_OFF=109",
+             "LINE_NUM_COEFF=-0.001245683 -0.09427649 -1.006342 -1.954469e-05 0.001033926 2.020534e-08 -3.845472e-07 -0.002075817 0.0005520694 0 -4.642442e-06 -3.271793e-06 2.705977e-05 -7.634384e-07 -2.132832e-05 -3.248862e-05 -8.17894e-06 -3.678094e-07 2.002032e-06 3.693162e-08",
+             "LONG_OFF=7.1477",
+             "SAMP_DEN_COEFF=1 0.01415176 -0.003715018 -0.001205632 -0.0007738299 4.057763e-05 -1.649126e-05 0.0001453584 0.0001628194 -7.354731e-05 4.821444e-07 -4.927701e-06 -1.942371e-05 -2.817499e-06 1.946396e-06 3.04243e-06 2.362282e-07 -2.5371e-07 -1.36993e-07 1.132432e-07",
+             "LINE_SCALE=2360",
+             "SAMP_NUM_COEFF=0.04337163 1.775948 -0.87108 0.007425391 0.01783631 0.0004057179 -0.000184695 -0.04257537 -0.01127869 -1.531228e-06 1.017961e-05 0.000572344 -0.0002941 -0.0001301705 -0.0003289546 5.394918e-05 6.388447e-05 -4.038289e-06 -7.525785e-06 -5.431241e-07",
+             "LONG_SCALE=0.8383",
+             "SAMP_SCALE=593",
+             "SAMP_OFF=589",
+             "LAT_SCALE=1.4127",
+             "LAT_OFF=33.8992",
+             "LINE_OFF=2359",
+             "LINE_DEN_COEFF=1 0.0007273139 -0.0006006867 -4.272095e-07 2.578717e-05 4.718479e-06 -2.116976e-06 -1.347805e-05 -2.209958e-05 8.131258e-06 -7.290143e-08 5.105109e-08 -7.353388e-07 0 2.131142e-06 9.697701e-08 1.237039e-08 7.153246e-08 6.758015e-08 5.811124e-08",
+             "HEIGHT_SCALE=96.3" ]
+    mem_ds.SetMetadata(rpc, "RPC")
+    mem_ds.GetRasterBand(1).Fill(255)
+
+    cutlineDSName = '/vsimem/test_gdalwarp_lib_128.json'
+    cutline_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(cutlineDSName)
+    cutline_lyr = cutline_ds.CreateLayer('cutline')
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((7.2151 32.51930,7.214316 32.58116,7.216043 32.59476,7.21666 32.5193,7.2151 32.51930))'))
+    cutline_lyr.CreateFeature(f)
+    f = None
+    cutline_lyr = None
+    cutline_ds = None
+
+    # Default is GDALWARP_DENSIFY_CUTLINE=YES
+    ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
+                   dstSRS = 'EPSG:4326',
+                   outputBounds = [7.2, 32.52, 7.217, 32.59],
+                   xRes=0.000226555, yRes=0.000226555,
+                   transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 4248:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    # Below steps depend on GEOS
+    if not ogrtest.have_geos():
+        gdal.Unlink(cutlineDSName)
+        return 'success'
+
+    gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', 'ONLY_IF_INVALID')
+    ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
+                   dstSRS = 'EPSG:4326',
+                   outputBounds = [7.2, 32.52, 7.217, 32.59],
+                   xRes=0.000226555, yRes=0.000226555,
+                   transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
+    gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', None)
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 4248:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', 'NO')
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
+                    dstSRS = 'EPSG:4326',
+                    outputBounds = [7.2, 32.52, 7.217, 32.59],
+                    xRes=0.000226555, yRes=0.000226555,
+                    transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
+    gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', None)
+    if ds is not None:
+        gdaltest.post_reason('expected none return')
+        return 'fail'
+
+    gdal.Unlink(cutlineDSName)
+
+    return 'success'
+
+###############################################################################
+# Test automatic densification of cutline, but with initial guess leading
+# to an invalid geometry (#6375)
+
+def test_gdalwarp_lib_129():
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 1000, 2000)
+    rpc =  [  "HEIGHT_OFF=1767",
+              "LINE_NUM_COEFF=0.0004430579 -0.06200816 -1.007087 1.614683e-05 0.0009263463 -1.003745e-07 -2.346893e-06 -0.001179024 -0.0007413534 0 9.41488e-08 -4.566652e-07 2.895947e-05 -2.925327e-07 -2.308839e-05 -1.502702e-05 -4.775127e-06 0 4.290483e-07 2.850458e-08",
+              "LONG_OFF=-.2282",
+              "SAMP_DEN_COEFF=1 -0.01907542 0.01651069 -0.001340671 -0.0005495095 -1.072863e-05 -1.157626e-05 0.0003737224 0.0002712591 -0.0001363199 3.614417e-08 3.584749e-06 9.175671e-06 2.661593e-06 -1.045511e-05 -1.293648e-06 -2.769964e-06 5.931109e-07 -1.018687e-07 2.366109e-07",
+              "LINE_SCALE=11886",
+              "SAMP_NUM_COEFF=0.007334337 1.737166 -0.7954719 -0.004635387 -0.007478255 0.0006381186 -0.0003313475 0.0002313095 -0.002883101 -1.625925e-06 -6.409095e-06 -0.000403506 -0.0004441055 -0.0002360882 8.940442e-06 -0.0001780485 0.0001081517 -6.592931e-06 2.642496e-06 6.316508e-07",
+              "LONG_SCALE=0.6996",
+              "SAMP_SCALE=2945",
+              "SAMP_OFF=2926",
+              "LAT_SCALE=1.4116",
+              "LAT_OFF=.4344",
+              "LINE_OFF=-115",
+              "LINE_DEN_COEFF=1 0.0008882352 -0.0002437686 -2.380782e-06 2.69128e-05 0 2.144654e-07 -2.093549e-05 -7.055149e-06 4.740057e-06 0 -1.588607e-08 -1.397592e-05 0 -7.717698e-07 6.505002e-06 0 -1.225041e-08 3.608499e-08 -4.463376e-08",
+              "HEIGHT_SCALE=1024" ]
+
+    mem_ds.SetMetadata(rpc, "RPC")
+    mem_ds.GetRasterBand(1).Fill(255)
+
+    cutlineDSName = '/vsimem/test_gdalwarp_lib_129.json'
+    cutline_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(cutlineDSName)
+    cutline_lyr = cutline_ds.CreateLayer('cutline')
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((-0.873086 0.511332,-0.626502 0.507654,-0.630715 0.282053,-0.876863 0.285693,-0.873086 0.511332))'))
+    cutline_lyr.CreateFeature(f)
+    f = None
+    cutline_lyr = None
+    cutline_ds = None
+
+    ds = gdal.Warp('', mem_ds, format = 'MEM', cutlineDSName = cutlineDSName,
+                   dstSRS = 'EPSG:4326',
+                   outputBounds = [-1,0,0,1],
+                   xRes=0.01, yRes=0.01,
+                   transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_129_dem.vrt'])
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 399:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    gdal.Unlink(cutlineDSName)
+
+    return 'success'
+
+###############################################################################
+# Test automatic detection and setting of alpha channel, and setting RGB on
+# GTiff output
+
+def test_gdalwarp_lib_130():
+  
+    src_ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/test_gdalwarp_lib_130.tif', 1, 1, 5, options = ['PHOTOMETRIC=RGB'])
+    src_ds.SetGeoTransform([100,1,0,200,0,-1])
+    src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src_ds.GetRasterBand(1).Fill(1)
+    src_ds.GetRasterBand(2).Fill(2)
+    src_ds.GetRasterBand(3).Fill(3)
+    src_ds.GetRasterBand(4).Fill(4)
+    src_ds.GetRasterBand(5).Fill(255)
+
+    ds = gdal.Warp('/vsimem/test_gdalwarp_lib_130_dst.tif', src_ds)
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('bad color interpretation')
+        return 'fail'
+    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('bad color interpretation')
+        return 'fail'
+    expected_val = [1,2,3,4,255]
+    for i in range(5):
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        if data != expected_val[i]:
+            gdaltest.post_reason('bad checksum')
+            print(i)
+            print(data)
+            return 'fail'
+
+    # Wrap onto existing file
+    for i in range(5):
+        ds.GetRasterBand(i+1).Fill(0)
+    gdal.Warp(ds, src_ds)
+    for i in range(5):
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        if data != expected_val[i]:
+            gdaltest.post_reason('bad checksum')
+            print(i)
+            print(data)
+            return 'fail'
+
+    src_ds = None
+    ds = None
+
+    if gdal.VSIStatL('/vsimem/test_gdalwarp_lib_130_dst.tif.aux.xml') is not None:
+        gdaltest.post_reason('got PAM file')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_130.tif')
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_130_dst.tif')
+
+    return 'success'
+
+###############################################################################
+# Test -nosrcalpha
+
+def test_gdalwarp_lib_131():
+
+    src_ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/test_gdalwarp_lib_131.tif', 1, 1, 2)
+    src_ds.SetGeoTransform([100,1,0,200,0,-1])
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src_ds.GetRasterBand(1).Fill(1)
+    src_ds.GetRasterBand(2).Fill(0)
+
+    ds = gdal.Warp('/vsimem/test_gdalwarp_lib_131_dst.tif', src_ds, options = '-nosrcalpha')
+    expected_val = [1,0]
+    for i in range(2):
+        data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster())[0]
+        if data != expected_val[i]:
+            gdaltest.post_reason('bad checksum')
+            print(i)
+            print(data)
+            return 'fail'
+    src_ds = None
+    ds = None
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_131.tif')
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_131_dst.tif')
+    gdal.Unlink('/vsimem/test_gdalwarp_lib_131_dst.tif.aux.xml')
+
+    return 'success'
+
+###############################################################################
+# Test that alpha blending works by warping onto an existing dataset
+# with alpha > 0 and < 255
+
+def test_gdalwarp_lib_132():
+
+    for dt in [ gdal.GDT_Byte, gdal.GDT_Float32 ]:
+        src_ds = gdal.GetDriverByName('GTiff').Create(
+            '/vsimem/test_gdalwarp_lib_132.tif', 33, 1, 2, dt)
+        src_ds.SetGeoTransform([100,1,0,200,0,-1])
+        src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+
+        ds = gdal.Translate('/vsimem/test_gdalwarp_lib_132_dst.tif', src_ds)
+        dst_grey = 60
+        dst_alpha = 100
+        ds.GetRasterBand(1).Fill(dst_grey)
+        ds.GetRasterBand(2).Fill(dst_alpha)
+
+        src_grey = 170
+        src_alpha = 200
+        src_ds.GetRasterBand(1).Fill(src_grey)
+        src_ds.GetRasterBand(2).Fill(src_alpha)
+        gdal.Warp(ds, src_ds)
+        expected_alpha = int(src_alpha + dst_alpha * (255 - src_alpha) / 255. + 0.5)
+        expected_grey = int((src_grey * src_alpha + dst_grey * dst_alpha * (255 - src_alpha) / 255.) / expected_alpha + 0.5)
+        expected_val = [expected_grey,expected_alpha]
+        for i in range(2):
+            for x in range(33):
+                data = struct.unpack('B' * 1, ds.GetRasterBand(i+1).ReadRaster(i, 0, 1, 1, buf_type = gdal.GDT_Byte))[0]
+                if abs(data - expected_val[i]) > 1:
+                    gdaltest.post_reason('bad checksum')
+                    print(dt)
+                    print(i)
+                    print(x)
+                    print(data)
+                    print(expected_val[i])
+                    return 'fail'
+        ds = None
+
+        src_ds = None
+
+        gdal.Unlink('/vsimem/test_gdalwarp_lib_132.tif')
+        gdal.Unlink('/vsimem/test_gdalwarp_lib_132_dst.tif')
+        gdal.Unlink('/vsimem/test_gdalwarp_lib_132_dst.tif.aux.xml')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -846,7 +1232,7 @@ def test_gdalwarp_lib_cleanup():
     # We don't clean up when run in debug mode.
     if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) == 'ON':
         return 'success'
-    
+
     for i in range(2):
         try:
             os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
@@ -856,8 +1242,9 @@ def test_gdalwarp_lib_cleanup():
         os.remove('tmp/testgdalwarp_gcp.tif')
     except:
         pass
-    
+
     return 'success'
+
 
 gdaltest_list = [
     test_gdalwarp_lib_cleanup,
@@ -907,6 +1294,17 @@ gdaltest_list = [
     test_gdalwarp_lib_119,
     test_gdalwarp_lib_120,
     test_gdalwarp_lib_121,
+    test_gdalwarp_lib_122,
+    test_gdalwarp_lib_123,
+    test_gdalwarp_lib_124,
+    test_gdalwarp_lib_125,
+    test_gdalwarp_lib_126,
+    test_gdalwarp_lib_127,
+    test_gdalwarp_lib_128,
+    test_gdalwarp_lib_129,
+    test_gdalwarp_lib_130,
+    test_gdalwarp_lib_131,
+    test_gdalwarp_lib_132,
     test_gdalwarp_lib_cleanup,
     ]
 

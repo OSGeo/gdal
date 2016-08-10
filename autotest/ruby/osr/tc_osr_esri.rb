@@ -5,7 +5,7 @@ require 'gdal/osr'
 
 class TestOsrEsri < Test::Unit::TestCase
   
-  # This test verifies that morphToESRI() translates ideosyncratic datum names
+  # This test verifies that morphToESRI() translates idiosyncratic datum names
   # from "EPSG" form to ESRI from when the exception list comes from the
   # gdal_datum.csv file. 
   def test_morph_to_esri
@@ -32,7 +32,7 @@ class TestOsrEsri < Test::Unit::TestCase
   end
   
   # Verify that Unnamed is changed to Unknown in morphToESRI().
-  def test_unamed_to_unknown
+  def test_unnamed_to_unknown
     srs = Gdal::Osr::SpatialReference.new()
     srs.set_from_user_input('+proj=mill +datum=WGS84')
     

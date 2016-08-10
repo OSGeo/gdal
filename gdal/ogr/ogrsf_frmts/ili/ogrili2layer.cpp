@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 2 Translator
  * Purpose:  Implements OGRILI2Layer class.
@@ -28,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili2.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_ili2.h"
 
 CPL_CVSID("$Id$");
 
@@ -40,14 +39,13 @@ CPL_CVSID("$Id$");
 
 OGRILI2Layer::OGRILI2Layer( OGRFeatureDefn* poFeatureDefnIn,
                             GeomFieldInfos oGeomFieldInfosIn,
-                            OGRILI2DataSource *poDSIn )
+                            OGRILI2DataSource *poDSIn ) :
+    poFeatureDefn(poFeatureDefnIn),
+    oGeomFieldInfos(oGeomFieldInfosIn),
+    poDS(poDSIn)
 {
-    poFeatureDefn = poFeatureDefnIn;
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    oGeomFieldInfos = oGeomFieldInfosIn;
-
-    poDS = poDSIn;
 
     listFeatureIt = listFeature.begin();
 }
@@ -95,10 +93,9 @@ void OGRILI2Layer::ResetReading()
 
 OGRFeature *OGRILI2Layer::GetNextFeature()
 {
-    OGRFeature *poFeature = NULL;
     while (listFeatureIt != listFeature.end())
     {
-      poFeature = *(listFeatureIt++);
+      OGRFeature *poFeature = *(listFeatureIt++);
       //apply filters
       if( (m_poFilterGeom == NULL
            || FilterGeometry( poFeature->GetGeometryRef() ) )
@@ -125,43 +122,48 @@ GIntBig OGRILI2Layer::GetFeatureCount( int bForce )
     }
 }
 
-static char* d2str(double val)
+static const char* d2str(double val)
 {
-    static char strbuf[255];
     if( val == (int) val )
-        sprintf( strbuf, "%d", (int) val );
-    else if( fabs(val) < 370 )
-        CPLsprintf( strbuf, "%.16g", val );
-    else if( fabs(val) > 100000000.0  )
-        CPLsprintf( strbuf, "%.16g", val );
-    else
-        CPLsprintf( strbuf, "%.3f", val );
-    return strbuf;
+        return CPLSPrintf("%d", (int) val );
+    if( fabs(val) < 370 )
+        return CPLSPrintf("%.16g", val );
+    if( fabs(val) > 100000000.0  )
+        return CPLSPrintf("%.16g", val );
+
+    return CPLSPrintf("%.3f", val );
 }
 
 static void AppendCoordinateList( OGRLineString *poLine, VSILFILE* fp )
 {
-    int         b3D = wkbHasZ(poLine->getGeometryType());
+    const bool b3D = CPL_TO_BOOL(wkbHasZ(poLine->getGeometryType()));
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
         VSIFPrintfL(fp, "<COORD>");
         VSIFPrintfL(fp, "<C1>%s</C1>", d2str(poLine->getX(iPoint)));
         VSIFPrintfL(fp, "<C2>%s</C2>", d2str(poLine->getY(iPoint)));
-        if (b3D) VSIFPrintfL(fp, "<C3>%s</C3>", d2str(poLine->getZ(iPoint)));
+        if (b3D)
+            VSIFPrintfL(fp, "<C3>%s</C3>", d2str(poLine->getZ(iPoint)));
         VSIFPrintfL(fp, "</COORD>\n");
     }
 }
 
-static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const char *attrname, CPLString iliGeomType )
+static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
+                                  const char *attrname, CPLString iliGeomType )
 {
-    //CPLDebug( "OGR_ILI", "OGR2ILIGeometryAppend getGeometryType %s iliGeomType %s", poGeometry->getGeometryName(), iliGeomType.c_str());
+#ifdef DEBUG_VERBOSE
+    CPLDebug( "OGR_ILI",
+              "OGR2ILIGeometryAppend getGeometryType %s iliGeomType %s",
+              poGeometry->getGeometryName(), iliGeomType.c_str());
+#endif
 /* -------------------------------------------------------------------- */
 /*      2D/3D Point                                                     */
 /* -------------------------------------------------------------------- */
-    if( poGeometry->getGeometryType() == wkbPoint || poGeometry->getGeometryType() == wkbPoint25D )
+    if( poGeometry->getGeometryType() == wkbPoint ||
+        poGeometry->getGeometryType() == wkbPoint25D )
     {
-        OGRPoint *poPoint = (OGRPoint *) poGeometry;
+        OGRPoint *poPoint = reinterpret_cast<OGRPoint *>( poGeometry );
 
         VSIFPrintfL(fp, "<%s>\n", attrname);
         VSIFPrintfL(fp, "<COORD>");
@@ -207,7 +209,8 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
 
         if( poPolygon->getExteriorRing() != NULL )
         {
-            if( !OGR2ILIGeometryAppend( poPolygon->getExteriorRing(), fp, NULL, "" ) )
+            if( !OGR2ILIGeometryAppend( poPolygon->getExteriorRing(), fp,
+                                        NULL, "" ) )
                 return FALSE;
         }
 
@@ -236,8 +239,9 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
              || wkbFlatten(poGeometry->getGeometryType()) == wkbGeometryCollection )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
-        int             iMember;
 
+#if 0
+        // TODO: Why were these all blank?
         if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon )
         {
         }
@@ -250,8 +254,8 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
         else
         {
         }
-
-        for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+#endif
+        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
@@ -272,17 +276,19 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp, const c
 /************************************************************************/
 
 OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
-    static char         szTempBuffer[80];
-    const char* tid;
+    char szTempBuffer[80];
+    const char* tid = NULL;
     int iField = 0;
-    if (poFeatureDefn->GetFieldCount() && EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "TID"))
+    if( poFeatureDefn->GetFieldCount() &&
+        EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "TID") )
     {
         tid = poFeature->GetFieldAsString(0);
         ++iField;
     }
     else
     {
-        sprintf( szTempBuffer, CPL_FRMT_GIB, poFeature->GetFID() );
+        snprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB,
+                  poFeature->GetFID() );
         tid = szTempBuffer;
     }
 
@@ -293,21 +299,25 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
     VSIFPrintfL(fp, "<%s TID=\"%s\">\n", poFeatureDefn->GetName(), tid);
 
     // Write out Geometries
-    for( int iGeomField = 0; iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++ )
+    for( int iGeomField = 0;
+         iGeomField < poFeatureDefn->GetGeomFieldCount();
+         iGeomField++ )
     {
-        OGRGeomFieldDefn *poFieldDefn = poFeatureDefn->GetGeomFieldDefn(iGeomField);
+        OGRGeomFieldDefn *poFieldDefn
+            = poFeatureDefn->GetGeomFieldDefn(iGeomField);
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeomField);
         if( poGeom != NULL )
         {
             CPLString iliGeomType = GetIliGeomType(poFieldDefn->GetNameRef());
-            OGR2ILIGeometryAppend(poGeom, fp, poFieldDefn->GetNameRef(), iliGeomType);
+            OGR2ILIGeometryAppend( poGeom, fp, poFieldDefn->GetNameRef(),
+                                   iliGeomType );
         }
     }
 
-    // Write all "set" fields. 
+    // Write all "set" fields.
     for( ; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        
+
         OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
 
         if( poFeature->IsFieldSet( iField ) )
@@ -329,15 +339,15 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
 int OGRILI2Layer::TestCapability( CPL_UNUSED const char * pszCap ) {
     if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRILI2Layer::CreateField( OGRFieldDefn *poField, CPL_UNUSED int bApproxOK ) {
+OGRErr OGRILI2Layer::CreateField( OGRFieldDefn *poField, int /* bApproxOK */ ) {
     poFeatureDefn->AddFieldDefn( poField );
     return OGRERR_NONE;
 }

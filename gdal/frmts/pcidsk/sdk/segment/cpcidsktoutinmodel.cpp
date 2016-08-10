@@ -56,10 +56,10 @@ namespace
 #endif
 }
 
-CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *file, 
-                                                   int segment,
+CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *fileIn, 
+                                                   int segmentIn,
                                                    const char *segment_pointer) :
-    CPCIDSKEphemerisSegment(file, segment, segment_pointer,false)
+    CPCIDSKEphemerisSegment(fileIn, segmentIn, segment_pointer,false)
 {
     loaded_ = false;
     mbModified = false;
@@ -116,15 +116,14 @@ void CPCIDSKToutinModelSegment::Load()
     seg_data.SetSize((int)data_size - 1024);
     
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
-    
+
     SRITInfo_t* poInfo = BinaryToSRITInfo();
 
     mpoInfo = poInfo;
-    
+
     // We've now loaded the structure up with data. Mark it as being loaded 
     // properly.
     loaded_ = true;
-    
 }
 
 /**
@@ -145,7 +144,7 @@ void CPCIDSKToutinModelSegment::Write(void)
 }
 
 /**
- * Synchronize the segement, if it was modified then
+ * Synchronize the segment, if it was modified then
  * write it into disk.
  */
 void CPCIDSKToutinModelSegment::Synchronize()
@@ -177,7 +176,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /* -------------------------------------------------------------------- */    
     // We test the name of the binary segment before starting to read 
     // the buffer.
-    if (std::strncmp(seg_data.buffer, "MODEL   ", 8)) 
+    if (!STARTS_WITH(seg_data.buffer, "MODEL   ")) 
     {
         seg_data.Put("MODEL   ",0,8);
         return NULL;
@@ -199,10 +198,10 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /*      Allocate the SRITModel.                                         */
 /* -------------------------------------------------------------------- */
     SRITModel = new SRITInfo_t();
-    
+
     SRITModel->GCPMeanHtFlag = 0;
     SRITModel->nDownSample = 1;
-    if(std::strncmp(seg_data.Get(22,2) , "DS", 2)==0)
+    if(STARTS_WITH(seg_data.Get(22,2) , "DS"))
     {
 	SRITModel->nDownSample = seg_data.GetInt(24,3); 
     }
@@ -210,7 +209,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /* -------------------------------------------------------------------- */
 /*      Read the Block 1                                                */
 /* -------------------------------------------------------------------- */
-    
+
     SRITModel->N0x2        = seg_data.GetDouble(512,22);
     SRITModel->aa          = seg_data.GetDouble(512+22,22);
     SRITModel->SmALPHA     = seg_data.GetDouble(512+44,22);
@@ -244,9 +243,9 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
         SRITModel->delL   = 0.0;
         SRITModel->delTau = 0.0;
     }
-                                                                  
+
 /* -------------------------------------------------------------------- */
-/*	Read the GCP information in Block 2     			*/
+/*      Read the GCP information in Block 2                             */
 /* -------------------------------------------------------------------- */
 
     SRITModel->nGCPCount       = seg_data.GetInt(2*512,10); 
@@ -313,12 +312,12 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 
     if( SRITModel->nSensor == -999)
     {
-        throw PCIDSKException("Invalid Sensor : %s.",
+        return (SRITInfo_t*)ThrowPCIDSKExceptionPtr("Invalid Sensor : %s.",
                               SRITModel->OrbitPtr->SatelliteSensor.c_str());
     }
     if( SRITModel->nModel == -999)
     {
-	throw PCIDSKException("Invalid Model from sensor number: %d.",
+        return (SRITInfo_t*)ThrowPCIDSKExceptionPtr("Invalid Model from sensor number: %d.",
                               SRITModel->nSensor);
     }
 
@@ -328,14 +327,16 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     if (SRITModel->OrbitPtr->AttitudeSeg != NULL ||
         SRITModel->OrbitPtr->RadarSeg != NULL)
     {
-        if (SRITModel->OrbitPtr->Type == OrbAttitude)
+        AttitudeSeg_t *attitudeSeg
+            = SRITModel->OrbitPtr->AttitudeSeg;
+
+        if (SRITModel->OrbitPtr->Type == OrbAttitude &&
+            attitudeSeg != NULL)
         {
             int  ndata;
-            AttitudeSeg_t *attitudeSeg
-                = SRITModel->OrbitPtr->AttitudeSeg;
 
-	    ndata = SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine;
-       
+            ndata = attitudeSeg->NumberOfLine;
+
             for (i=0; i<ndata; i++)
             {
                 SRITModel->Hdeltat.push_back(
@@ -359,14 +360,14 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /************************************************************************/
 /**
   * Translate a SRITInfo_t into binary data.
-  * Translate a SRITInfo_t into the corresponding block of          
-  * binary data.  This function is expected to be used by           
-  * ranslators such as iisopen.c (VISTA) so that our satellite     
-  * models can be converted into some opaque serialized form.       
-  * Translate a RFInfo_t into the corresponding block of binary data. 
+  * Translate a SRITInfo_t into the corresponding block of
+  * binary data.  This function is expected to be used by
+  * translators such as iisopen.c (VISTA) so that our satellite
+  * models can be converted into some opaque serialized form.
+  * Translate a RFInfo_t into the corresponding block of binary data.
   *
-  * @param  SRITModel	     Satellite Model structure.
-  * @param  pnBinaryLength	Length of binary data.
+  * @param  SRITModel        Satellite Model structure.
+  * @param  pnBinaryLength   Length of binary data.
   * @return Binary data for a  Satellite Model structure.
   */
 void
@@ -384,7 +385,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
 
     //clean the buffer
     memset( seg_data.buffer , ' ', 512 * 21 );
-    
+
 /* -------------------------------------------------------------------- */
 /*	Initialize the header.						*/
 /* -------------------------------------------------------------------- */
@@ -398,7 +399,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
 /*      Write the model results to second segment                       */
 /* -------------------------------------------------------------------- */
     nPos = 512*1;
-    
+
     seg_data.Put(SRITModel->N0x2,nPos,22,"%22.14f");
     seg_data.Put(SRITModel->aa,nPos+22,22,"%22.14f");
     seg_data.Put(SRITModel->SmALPHA,nPos+22*2,22,"%22.14f");
@@ -424,7 +425,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     seg_data.Put(SRITModel->delTau,nPos+22*22,22,"%22.14f");
 
 /* -------------------------------------------------------------------- */
-/*      Find the min and max height					*/
+/*      Find the min and max height                                     */
 /* -------------------------------------------------------------------- */
     nPos = 2*512;
 
@@ -456,7 +457,8 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
         SRITModel->OrbitPtr->RadarSeg != NULL ||
         SRITModel->OrbitPtr->AvhrrSeg != NULL )
     {
-        if (SRITModel->OrbitPtr->Type == OrbAttitude) 
+        if (SRITModel->OrbitPtr->Type == OrbAttitude &&
+            SRITModel->OrbitPtr->AttitudeSeg != NULL) 
 	{
 	    if (SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine != 0)
                 seg_data.Put("3",nPos+20,1);
@@ -531,219 +533,219 @@ int  CPCIDSKToutinModelSegment::GetSensor( EphemerisSeg_t *OrbitPtr)
 
     nSensor = -999;
 
-    if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"AVHRR",5))
+    if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "AVHRR"))
         nSensor = AVHRR;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"PLA",3))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "PLA"))
         nSensor = PLA_1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"MLA",3))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "MLA"))
         nSensor = MLA_1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"ASTER",5))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "ASTER"))
         nSensor = ASTER;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"SAR",3))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "SAR"))
     {
         nSensor = SAR;
         if (OrbitPtr->PixelRes == 6.25)
             nSensor = RSAT_FIN;
     }
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-1",6))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-1"))
         nSensor = LISS_1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-2",6))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-2"))
         nSensor = LISS_2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-3",6))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-3"))
         nSensor = LISS_3;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-L3-L2",10))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-L3-L2"))
         nSensor = LISS_L3_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-L3",7))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-L3"))
         nSensor = LISS_L3;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-L4-L2",10))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-L4-L2"))
         nSensor = LISS_L4_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-L4",7))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-L4"))
         nSensor = LISS_L4;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-P3-L2",10))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-P3-L2"))
         nSensor = LISS_P3_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-P3",7))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-P3"))
         nSensor = LISS_P3;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-W3-L2",10))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-W3-L2"))
         nSensor = LISS_W3_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-W3",7))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-W3"))
         nSensor = LISS_W3;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-M3",7))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-M3"))
         nSensor = LISS_M3;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-AWF-L2",11))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-AWF-L2"))
         nSensor = LISS_AWF_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"LISS-AWF",8))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "LISS-AWF"))
         nSensor = LISS_AWF;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"EOC",3))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "EOC"))
         nSensor = EOC;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"IRS",3))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "IRS"))
         nSensor = IRS_1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"TM",2))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "TM"))
     {
         nSensor = TM;
         if (OrbitPtr->PixelRes == 15)
             nSensor = ETM;
     }
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"ETM",3))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "ETM"))
         nSensor = ETM;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"IKO",3))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "IKO"))
     {
         nSensor = IKO_PAN;
         if (OrbitPtr->PixelRes == 4)
             nSensor = IKO_MULTI;
     }
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"ORBVIEW",7))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "ORBVIEW"))
     {
         nSensor = ORBVIEW_PAN;
         if (OrbitPtr->PixelRes == 4)
             nSensor = ORBVIEW_MULTI;
     }
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV",2))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV"))
     {
-        if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV3_PAN_BASIC",13))
+        if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV3_PAN_BASIC"))
             nSensor = OV3_PAN_BASIC;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV3_PAN_GEO",11))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV3_PAN_GEO"))
             nSensor = OV3_PAN_GEO;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV3_MULTI_BASIC",15))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV3_MULTI_BASIC"))
             nSensor = OV3_MULTI_BASIC;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV3_MULTI_GEO",13))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV3_MULTI_GEO"))
             nSensor = OV3_MULTI_GEO;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV5_PAN_BASIC",13))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV5_PAN_BASIC"))
             nSensor = OV5_PAN_BASIC;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV5_PAN_GEO",11))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV5_PAN_GEO"))
             nSensor = OV5_PAN_GEO;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV5_MULTI_BASIC",15))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV5_MULTI_BASIC"))
             nSensor = OV5_MULTI_BASIC;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"OV5_MULTI_GEO",13))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "OV5_MULTI_GEO"))
             nSensor = OV5_MULTI_GEO;
     }
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"QBIRD_PAN_STD",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_PAN_STD"))
         nSensor = QBIRD_PAN_STD; 	// this checking must go first
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"QBIRD_PAN_STH",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_PAN_STH"))
         nSensor = QBIRD_PAN_STH;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"QBIRD_PAN",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_PAN"))
         nSensor = QBIRD_PAN;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"QBIRD_MULTI_STD",15))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_MULTI_STD"))
         nSensor = QBIRD_MULTI_STD;	// this checking must go first
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"QBIRD_MULTI_STH",15))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_MULTI_STH"))
         nSensor = QBIRD_MULTI_STH;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"QBIRD_MULTI",11))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_MULTI"))
         nSensor = QBIRD_MULTI;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"WVIEW1_PAN_STD",14) ||
-        EQUALN(OrbitPtr->SatelliteSensor.c_str(),"WVIEW_PAN_STD",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW1_PAN_STD") ||
+        STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW_PAN_STD"))
         nSensor = WVIEW_PAN_STD; 	// this checking must go first
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"WVIEW1_PAN",10) ||
-        EQUALN(OrbitPtr->SatelliteSensor.c_str(),"WVIEW_PAN",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW1_PAN") ||
+        STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW_PAN"))
         nSensor = WVIEW_PAN;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"WVIEW_MULTI_STD",15))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW_MULTI_STD"))
         nSensor = WVIEW_MULTI_STD;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"WVIEW_MULTI",11))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW_MULTI"))
         nSensor = WVIEW_MULTI;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"FORMOSAT",8))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "FORMOSAT"))
     {
-        if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"FORMOSAT_PAN_L2",15))
+        if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "FORMOSAT_PAN_L2"))
             nSensor = FORMOSAT_PAN_L2;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"FORMOSAT_MULTIL2",16))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "FORMOSAT_MULTIL2"))
             nSensor = FORMOSAT_MULTIL2;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"FORMOSAT_PAN",12))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "FORMOSAT_PAN"))
             nSensor = FORMOSAT_PAN;
-        else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"FORMOSAT_MULTI",14))
+        else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "FORMOSAT_MULTI"))
             nSensor = FORMOSAT_MULTI;
     }
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"SPOT5_PAN_2_5",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "SPOT5_PAN_2_5"))
         nSensor = SPOT5_PAN_2_5;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"SPOT5_PAN_5",11))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "SPOT5_PAN_5"))
         nSensor = SPOT5_PAN_5;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"SPOT5_HRS",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "SPOT5_HRS"))
         nSensor = SPOT5_HRS;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"SPOT5_MULTI",11))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "SPOT5_MULTI"))
         nSensor = SPOT5_MULTI;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"MERIS_FR",8))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "MERIS_FR"))
         nSensor = MERIS_FR;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"MERIS_RR",8))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "MERIS_RR"))
         nSensor = MERIS_RR;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"MERIS_LR",8))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "MERIS_LR"))
         nSensor = MERIS_LR;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"ASAR",4))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "ASAR"))
         nSensor = ASAR;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"EROS",4))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "EROS"))
         nSensor = EROS;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"MODIS_1000",10))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "MODIS_1000"))
         nSensor = MODIS_1000;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"MODIS_500",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "MODIS_500"))
         nSensor = MODIS_500;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"MODIS_250",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "MODIS_250"))
         nSensor = MODIS_250;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_HRC_L2",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_HRC_L2"))
         nSensor = CBERS_HRC_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_HRC",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_HRC"))
         nSensor = CBERS_HRC;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_CCD_L2",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_CCD_L2"))
         nSensor = CBERS_CCD_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_CCD",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_CCD"))
         nSensor = CBERS_CCD;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_IRM_80_L2",15))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_IRM_80_L2"))
         nSensor = CBERS_IRM_80_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_IRM_80",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_IRM_80"))
         nSensor = CBERS_IRM_80;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_IRM_160_L2",16))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_IRM_160_L2"))
         nSensor = CBERS_IRM_160_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_IRM_160",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_IRM_160"))
         nSensor = CBERS_IRM_160;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_WFI_L2",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_WFI_L2"))
         nSensor = CBERS_WFI_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CBERS_WFI",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CBERS_WFI"))
         nSensor = CBERS_WFI;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CARTOSAT1_L1",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CARTOSAT1_L1"))
         nSensor = CARTOSAT1_L1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"CARTOSAT1_L2",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "CARTOSAT1_L2"))
         nSensor = CARTOSAT1_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"DMC_1R",6))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "DMC_1R"))
         nSensor = DMC_1R;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"DMC_1T",6))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "DMC_1T"))
         nSensor = DMC_1T;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"ALOS_PRISM_L1",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "ALOS_PRISM_L1"))
         nSensor = ALOS_PRISM_L1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"ALOS_PRISM_L2",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "ALOS_PRISM_L2"))
         nSensor = ALOS_PRISM_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"ALOS_AVNIR_L1",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "ALOS_AVNIR_L1"))
         nSensor = ALOS_AVNIR_L1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"ALOS_AVNIR_L2",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "ALOS_AVNIR_L2"))
         nSensor = ALOS_AVNIR_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"PALSAR",6))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "PALSAR"))
         nSensor = PALSAR;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"KOMPSAT2_PAN",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "KOMPSAT2_PAN"))
         nSensor = KOMPSAT2_PAN;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"KOMPSAT2_MULTI",14))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "KOMPSAT2_MULTI"))
         nSensor = KOMPSAT2_MULTI;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"TERRASAR",8))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "TERRASAR"))
         nSensor = TERRASAR;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"RAPIDEYE",8))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "RAPIDEYE"))
         nSensor = RAPIDEYE_L1B;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"THEOS_PAN_L1",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "THEOS_PAN_L1"))
         nSensor = THEOS_PAN_L1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"THEOS_PAN_L2",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "THEOS_PAN_L2"))
         nSensor = THEOS_PAN_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"THEOS_MS_L1",11))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "THEOS_MS_L1"))
         nSensor = THEOS_MS_L1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"THEOS_MS_L2",11))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "THEOS_MS_L2"))
         nSensor = THEOS_MS_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"GOSAT_500_L1",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "GOSAT_500_L1"))
         nSensor = GOSAT_500_L1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"GOSAT_500_L2",12))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "GOSAT_500_L2"))
         nSensor = GOSAT_500_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"GOSAT_1500_L1",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "GOSAT_1500_L1"))
         nSensor = GOSAT_1500_L1;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"GOSAT_1500_L2",13))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "GOSAT_1500_L2"))
         nSensor = GOSAT_1500_L2;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"HJ_CCD_1A",9))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "HJ_CCD_1A"))
         nSensor = HJ_CCD_1A;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"HJ_CCD_1B",5))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "HJ_CCD_1B"))
         nSensor = HJ_CCD_1B;
-    else if (EQUALN(OrbitPtr->SatelliteSensor.c_str(),"NEW",3))
+    else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "NEW"))
         nSensor = NEW;
     else
     {
-        throw PCIDSKException("Invalid Sensor %s",
+        return ThrowPCIDSKException(0, "Invalid Sensor %s",
             OrbitPtr->SatelliteSensor.c_str());
     }
 
@@ -757,8 +759,6 @@ int  CPCIDSKToutinModelSegment::GetSensor( EphemerisSeg_t *OrbitPtr)
 int CPCIDSKToutinModelSegment::GetModel( int nSensor )
 {
     int  nModel;
-
-    nModel = -999;
 
     switch (nSensor)
     {
@@ -885,7 +885,7 @@ int CPCIDSKToutinModelSegment::GetModel( int nSensor )
         break;
 
     default:
-        throw PCIDSKException("Invalid sensor type.");
+        return ThrowPCIDSKException(0, "Invalid sensor type.");
         break;
     }
 

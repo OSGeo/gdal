@@ -84,6 +84,10 @@ wkbCompoundCurve = _ogr.wkbCompoundCurve
 wkbCurvePolygon = _ogr.wkbCurvePolygon
 wkbMultiCurve = _ogr.wkbMultiCurve
 wkbMultiSurface = _ogr.wkbMultiSurface
+wkbCurve = _ogr.wkbCurve
+wkbSurface = _ogr.wkbSurface
+wkbPolyhedralSurface = _ogr.wkbPolyhedralSurface
+wkbTIN = _ogr.wkbTIN
 wkbNone = _ogr.wkbNone
 wkbLinearRing = _ogr.wkbLinearRing
 wkbCircularStringZ = _ogr.wkbCircularStringZ
@@ -91,6 +95,42 @@ wkbCompoundCurveZ = _ogr.wkbCompoundCurveZ
 wkbCurvePolygonZ = _ogr.wkbCurvePolygonZ
 wkbMultiCurveZ = _ogr.wkbMultiCurveZ
 wkbMultiSurfaceZ = _ogr.wkbMultiSurfaceZ
+wkbCurveZ = _ogr.wkbCurveZ
+wkbSurfaceZ = _ogr.wkbSurfaceZ
+wkbPolyhedralSurfaceZ = _ogr.wkbPolyhedralSurfaceZ
+wkbTINZ = _ogr.wkbTINZ
+wkbPointM = _ogr.wkbPointM
+wkbLineStringM = _ogr.wkbLineStringM
+wkbPolygonM = _ogr.wkbPolygonM
+wkbMultiPointM = _ogr.wkbMultiPointM
+wkbMultiLineStringM = _ogr.wkbMultiLineStringM
+wkbMultiPolygonM = _ogr.wkbMultiPolygonM
+wkbGeometryCollectionM = _ogr.wkbGeometryCollectionM
+wkbCircularStringM = _ogr.wkbCircularStringM
+wkbCompoundCurveM = _ogr.wkbCompoundCurveM
+wkbCurvePolygonM = _ogr.wkbCurvePolygonM
+wkbMultiCurveM = _ogr.wkbMultiCurveM
+wkbMultiSurfaceM = _ogr.wkbMultiSurfaceM
+wkbCurveM = _ogr.wkbCurveM
+wkbSurfaceM = _ogr.wkbSurfaceM
+wkbPolyhedralSurfaceM = _ogr.wkbPolyhedralSurfaceM
+wkbTINM = _ogr.wkbTINM
+wkbPointZM = _ogr.wkbPointZM
+wkbLineStringZM = _ogr.wkbLineStringZM
+wkbPolygonZM = _ogr.wkbPolygonZM
+wkbMultiPointZM = _ogr.wkbMultiPointZM
+wkbMultiLineStringZM = _ogr.wkbMultiLineStringZM
+wkbMultiPolygonZM = _ogr.wkbMultiPolygonZM
+wkbGeometryCollectionZM = _ogr.wkbGeometryCollectionZM
+wkbCircularStringZM = _ogr.wkbCircularStringZM
+wkbCompoundCurveZM = _ogr.wkbCompoundCurveZM
+wkbCurvePolygonZM = _ogr.wkbCurvePolygonZM
+wkbMultiCurveZM = _ogr.wkbMultiCurveZM
+wkbMultiSurfaceZM = _ogr.wkbMultiSurfaceZM
+wkbCurveZM = _ogr.wkbCurveZM
+wkbSurfaceZM = _ogr.wkbSurfaceZM
+wkbPolyhedralSurfaceZM = _ogr.wkbPolyhedralSurfaceZM
+wkbTINZM = _ogr.wkbTINZM
 wkbPoint25D = _ogr.wkbPoint25D
 wkbLineString25D = _ogr.wkbLineString25D
 wkbPolygon25D = _ogr.wkbPolygon25D
@@ -150,12 +190,14 @@ OLCStringsAsUTF8 = _ogr.OLCStringsAsUTF8
 OLCIgnoreFields = _ogr.OLCIgnoreFields
 OLCCreateGeomField = _ogr.OLCCreateGeomField
 OLCCurveGeometries = _ogr.OLCCurveGeometries
+OLCMeasuredGeometries = _ogr.OLCMeasuredGeometries
 ODsCCreateLayer = _ogr.ODsCCreateLayer
 ODsCDeleteLayer = _ogr.ODsCDeleteLayer
 ODsCCreateGeomFieldAfterCreateLayer = _ogr.ODsCCreateGeomFieldAfterCreateLayer
 ODsCCurveGeometries = _ogr.ODsCCurveGeometries
 ODsCTransactions = _ogr.ODsCTransactions
 ODsCEmulatedTransactions = _ogr.ODsCEmulatedTransactions
+ODsCMeasuredGeometries = _ogr.ODsCMeasuredGeometries
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 ODrCDeleteDataSource = _ogr.ODrCDeleteDataSource
 OLMD_FID64 = _ogr.OLMD_FID64
@@ -181,81 +223,6 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _ogr.DontUseExceptions(*args)
-# Backup original dictionnary before doing anything else
-_initial_dict = globals().copy()
-
-@property
-def wkb25Bit(module):
-    import warnings
-    warnings.warn("ogr.wkb25DBit deprecated: use ogr.GT_Flatten(), ogr.GT_HasZ() or ogr.GT_SetZ() instead", DeprecationWarning)
-    return module._initial_dict['wkb25DBit']
-
-@property
-def wkb25DBit(module):
-    import warnings
-    warnings.warn("ogr.wkb25DBit deprecated: use ogr.GT_Flatten(), ogr.GT_HasZ() or ogr.GT_SetZ() instead", DeprecationWarning)
-    return module._initial_dict['wkb25DBit']
-
-# Inspired from http://www.dr-josiah.com/2013/12/properties-on-python-modules.html
-class _Module(object):
-    def __init__(self):
-        self.__dict__ = globals()
-        self._initial_dict = _initial_dict
-
-        # Transfer properties from the object to the Class
-        for k, v in list(self.__dict__.items()):
-            if isinstance(v, property):
-                setattr(self.__class__, k, v)
-                #del self.__dict__[k]
-
-        # Replace original module by our object
-        import sys
-        self._original_module = sys.modules[self.__name__]
-        sys.modules[self.__name__] = self
-
-# Custom help() replacement to display the help of the original module
-# instead of the one of our instance object
-class _MyHelper(object):
-
-    def __init__(self, module):
-        self.module = module
-        self.original_help = help
-
-        # Replace builtin help by ours
-        try:
-            import __builtin__ as builtins # Python 2
-        except ImportError:
-            import builtins # Python 3
-        builtins.help = self
-
-    def __repr__(self):
-        return self.original_help.__repr__()
-
-    def __call__(self, *args, **kwds):
-
-        if args == (self.module,):
-            import sys
-
-            # Restore original module before calling help() otherwise
-            # we don't get methods or classes mentionned
-            sys.modules[self.module.__name__] = self.module._original_module
-
-            ret = self.original_help(self.module._original_module, **kwds)
-
-            # Reinstall our module
-            sys.modules[self.module.__name__] = self.module
-
-            return ret
-        elif args == (self,):
-            return self.original_help(self.original_help, **kwds)
-        else:
-            return self.original_help(*args, **kwds)
-
-_MyHelper(_Module())
-del _MyHelper
-del _Module
-
-
 import osr
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class"""
@@ -383,8 +350,7 @@ class Driver(MajorObject):
         It is important to call OGR_DS_Destroy() when the datasource is no
         longer used to ensure that all data has been properly flushed to disk.
 
-        This function is the same as the C++ method
-        OGRSFDriver::CreateDataSource().
+        Deprecated Use GDALCreate() in GDAL 2.0
 
         Parameters:
         -----------
@@ -395,7 +361,7 @@ class Driver(MajorObject):
 
         papszOptions:  a StringList of name=value options. Options are driver
         specific, and driver information can be found at the following
-        url:http://www.gdal.org/ogr/ogr_formats.html
+        url:http://www.gdal.org/ogr_formats.html
 
         NULL is returned on failure, or a new OGRDataSource handle on success.
 
@@ -416,8 +382,7 @@ class Driver(MajorObject):
         It is important to call OGR_DS_Destroy() when the datasource is no
         longer used to ensure that all data has been properly flushed to disk.
 
-        This function is the same as the C++ method
-        OGRSFDriver::CopyDataSource().
+        Deprecated Use GDALCreateCopy() in GDAL 2.0
 
         Parameters:
         -----------
@@ -430,7 +395,7 @@ class Driver(MajorObject):
 
         papszOptions:  a StringList of name=value options. Options are driver
         specific, and driver information can be found at the following
-        url:http://www.gdal.org/ogr/ogr_formats.html
+        url:http://www.gdal.org/ogr_formats.html
 
         NULL is returned on failure, or a new OGRDataSource handle on success.
 
@@ -446,7 +411,12 @@ class Driver(MajorObject):
 
         Attempt to open file with this driver.
 
-        This function is the same as the C++ method OGRSFDriver::Open().
+        NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned
+        handle to OGRDataSource*. If a C++ object is needed, the handle should
+        be cast to GDALDataset*. Similarly, the returned OGRSFDriverH handle
+        should be cast to GDALDriver*, and NOT* OGRSFDriver*.
+
+        Deprecated Use GDALOpenEx() in GDAL 2.0
 
         Parameters:
         -----------
@@ -459,7 +429,7 @@ class Driver(MajorObject):
         default).
 
         NULL on error or if the pass name is not supported by this driver,
-        otherwise an handle to an OGRDataSource. This OGRDataSource should be
+        otherwise an handle to a GDALDataset. This GDALDataset should be
         closed by deleting the object when it is no longer needed. 
         """
         return _ogr.Driver_Open(self, *args, **kwargs)
@@ -481,8 +451,7 @@ class Driver(MajorObject):
         Whether this is a supported operation on this driver case be tested
         using TestCapability() on ODrCDeleteDataSource.
 
-        This method is the same as the C++ method
-        OGRSFDriver::DeleteDataSource().
+        Deprecated Use GDALDeleteDataset() in GDAL 2
 
         Parameters:
         -----------
@@ -516,10 +485,10 @@ class Driver(MajorObject):
         sources.
 
         The #define macro forms of the capability names should be used in
-        preference to the strings themselves to avoid mispelling.
+        preference to the strings themselves to avoid misspelling.
 
-        This function is the same as the C++ method
-        OGRSFDriver::TestCapability().
+        Deprecated Use GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE) in GDAL
+        2.0
 
         Parameters:
         -----------
@@ -539,16 +508,17 @@ class Driver(MajorObject):
         const char*
         OGR_Dr_GetName(OGRSFDriverH hDriver)
 
-        Fetch name of driver (file format). This name should be relatively
-        short (10-40 characters), and should reflect the underlying file
-        format. For instance "ESRI Shapefile".
+        Fetch name of driver (file format).
+
+        This name should be relatively short (10-40 characters), and should
+        reflect the underlying file format. For instance "ESRI Shapefile".
 
         This function is the same as the C++ method OGRSFDriver::GetName().
 
         Parameters:
         -----------
 
-        hDriver:  handle to the the driver to get the name from.
+        hDriver:  handle to the driver to get the name from.
 
         driver name. This is an internal string and should not be modified or
         freed. 
@@ -607,8 +577,7 @@ class DataSource(MajorObject):
 
         Get the number of layers in this data source.
 
-        This function is the same as the C++ method
-        OGRDataSource::GetLayerCount().
+        Deprecated Use GDALDatasetGetLayerCount() in GDAL 2.0
 
         Parameters:
         -----------
@@ -629,7 +598,11 @@ class DataSource(MajorObject):
 
         Returns the driver that the dataset was opened with.
 
-        This method is the same as the C++ method OGRDataSource::GetDriver()
+        NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned
+        handle to OGRSFDriver*. If a C++ object is needed, the handle should
+        be cast to GDALDriver*.
+
+        Deprecated Use GDALGetDatasetDriver() in GDAL 2.0
 
         Parameters:
         -----------
@@ -655,7 +628,7 @@ class DataSource(MajorObject):
         need not be exactly the same string that was used to open the data
         source. Normally this is a filename.
 
-        This function is the same as the C++ method OGRDataSource::GetName().
+        Deprecated Use GDALGetDescription() in GDAL 2.0
 
         Parameters:
         -----------
@@ -679,8 +652,7 @@ class DataSource(MajorObject):
         If this method is supported the ODsCDeleteLayer capability will test
         TRUE on the OGRDataSource.
 
-        This method is the same as the C++ method
-        OGRDataSource::DeleteLayer().
+        Deprecated Use GDALDatasetDeleteLayer() in GDAL 2.0
 
         Parameters:
         -----------
@@ -699,35 +671,7 @@ class DataSource(MajorObject):
         SyncToDisk(DataSource self) -> OGRErr
 
         OGRErr
-        OGR_DS_SyncToDisk(OGRDataSourceH hDS)
-
-        Flush pending changes to disk.
-
-        This call is intended to force the datasource to flush any pending
-        writes to disk, and leave the disk file in a consistent state. It
-        would not normally have any effect on read-only datasources.
-
-        Some data sources do not implement this method, and will still return
-        OGRERR_NONE. An error is only returned if an error occurs while
-        attempting to flush to disk.
-
-        The default implementation of this method just calls the SyncToDisk()
-        method on each of the layers. Conceptionally, calling SyncToDisk() on
-        a datasource should include any work that might be accomplished by
-        calling SyncToDisk() on layers in that data source.
-
-        In any event, you should always close any opened datasource with
-        OGR_DS_Destroy() that will ensure all data is correctly flushed.
-
-        This method is the same as the C++ method OGRDataSource::SyncToDisk()
-
-        Parameters:
-        -----------
-
-        hDS:  handle to the data source
-
-        OGRERR_NONE if no error occurs (even if nothing is done) or an error
-        code. 
+        OGR_DS_SyncToDisk(OGRDataSourceH hDS) 
         """
         return _ogr.DataSource_SyncToDisk(self, *args)
 
@@ -752,8 +696,7 @@ class DataSource(MajorObject):
         creation options. These options are normally documented in the format
         specific documentation.
 
-        This function is the same as the C++ method
-        OGRDataSource::CreateLayer().
+        Deprecated Use GDALDatasetCreateLayer() in GDAL 2.0
 
         Parameters:
         -----------
@@ -771,7 +714,7 @@ class DataSource(MajorObject):
 
         papszOptions:  a StringList of name=value options. Options are driver
         specific, and driver information can be found at the following
-        url:http://www.gdal.org/ogr/ogr_formats.html
+        url:http://www.gdal.org/ogr_formats.html
 
         NULL is returned on failure, or a new OGRLayer handle on success.
         Example: 
@@ -795,7 +738,7 @@ class DataSource(MajorObject):
         specific documentation. The source layer may come from another
         dataset.
 
-        This function is the same as the C++ method OGRDataSource::CopyLayer
+        Deprecated Use GDALDatasetCopyLayer() in GDAL 2.0
 
         Parameters:
         -----------
@@ -829,8 +772,7 @@ class DataSource(MajorObject):
         The returned layer remains owned by the OGRDataSource and should not
         be deleted by the application.
 
-        This function is the same as the C++ method
-        OGRDataSource::GetLayerByName().
+        Deprecated Use GDALDatasetGetLayerByName() in GDAL 2.0
 
         Parameters:
         -----------
@@ -859,11 +801,19 @@ class DataSource(MajorObject):
 
         ODsCCreateLayer: True if this datasource can create new layers.
 
-        The #define macro forms of the capability names should be used in
-        preference to the strings themselves to avoid mispelling.
+        ODsCDeleteLayer: True if this datasource can delete existing layers.
 
-        This function is the same as the C++ method
-        OGRDataSource::TestCapability().
+        ODsCCreateGeomFieldAfterCreateLayer: True if the layers of this
+        datasource support CreateGeomField() just after layer creation.
+
+        ODsCCurveGeometries: True if this datasource supports writing curve
+        geometries. (GDAL 2.0). In that case, OLCCurveGeometries must also be
+        declared in layers of that dataset.
+
+        The #define macro forms of the capability names should be used in
+        preference to the strings themselves to avoid misspelling.
+
+        Deprecated Use GDALDatasetTestCapability() in GDAL 2.0
 
         Parameters:
         -----------
@@ -894,11 +844,12 @@ class DataSource(MajorObject):
         (destroyed).
 
         For more information on the SQL dialect supported internally by OGR
-        review theOGR SQL document. Some drivers (ie. Oracle and PostGIS) pass
-        the SQL directly through to the underlying RDBMS.
+        review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS)
+        pass the SQL directly through to the underlying RDBMS.
 
-        This function is the same as the C++ method
-        OGRDataSource::ExecuteSQL();
+        Starting with OGR 1.10, theSQLITE dialect can also be used.
+
+        Deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
 
         Parameters:
         -----------
@@ -913,7 +864,8 @@ class DataSource(MajorObject):
         pszDialect:  allows control of the statement dialect. If set to NULL,
         the OGR SQL engine will be used, except for RDBMS drivers that will
         use their dedicated SQL engine, unless OGRSQL is explicitly passed as
-        the dialect.
+        the dialect. Starting with OGR 1.10, the SQLITE dialect can also be
+        used.
 
         an handle to a OGRLayer containing the results of the query.
         Deallocate with OGR_DS_ReleaseResultSet(). 
@@ -934,8 +886,7 @@ class DataSource(MajorObject):
         deallocate a results set before destroying the OGRDataSource may cause
         errors.
 
-        This function is the same as the C++ method
-        OGRDataSource::ReleaseResultSet().
+        Deprecated Use GDALDatasetReleaseResultSet() in GDAL 2.0
 
         Parameters:
         -----------
@@ -1277,6 +1228,12 @@ class Layer(MajorObject):
         calling OGR_L_GetGeomType() directly can avoid lengthy layer
         definition initialization.
 
+        For layers with multiple geometry fields, this method only returns the
+        geometry type of the first geometry column. For other columns, use
+        OGR_GFld_GetType(OGR_FD_GetGeomFieldDefn(OGR_L_GetLayerDefn(hLayer),
+        i)). For layers without any geometry field, this method returns
+        wkbNone.
+
         This function is the same as the C++ method OGRLayer::GetGeomType().
 
         Parameters:
@@ -1299,6 +1256,11 @@ class Layer(MajorObject):
 
         This method returns the name of the underlying database column being
         used as the geometry column, or "" if not supported.
+
+        For layers with multiple geometry fields, this method only returns the
+        geometry type of the first geometry column. For other columns, use OGR
+        _GFld_GetNameRef(OGR_FD_GetGeomFieldDefn(OGR_L_GetLayerDefn(hLayer),
+        i)).
 
         This method is the same as the C++ method
         OGRLayer::GetGeometryColumn()
@@ -1338,13 +1300,15 @@ class Layer(MajorObject):
         GetFeature(Layer self, GIntBig fid) -> Feature
 
         OGRFeatureH
-        OGR_L_GetFeature(OGRLayerH hLayer, long nFeatureId)
+        OGR_L_GetFeature(OGRLayerH hLayer, GIntBig nFeatureId)
 
         Fetch a feature by its identifier.
 
         This function will attempt to read the identified feature. The nFID
         value cannot be OGRNullFID. Success or failure of this operation is
-        unaffected by the spatial or attribute filters.
+        unaffected by the spatial or attribute filters (and specialized
+        implementations in drivers should make sure that they do not take into
+        account spatial or attribute filters).
 
         If this function returns a non-NULL feature, it is guaranteed that its
         feature id ( OGR_F_GetFID()) will be the same as nFID.
@@ -1355,8 +1319,8 @@ class Layer(MajorObject):
         fallback implementation just scans all the features in the layer
         looking for the desired feature.
 
-        Sequential reads are generally considered interrupted by a
-        OGR_L_GetFeature() call.
+        Sequential reads (with OGR_L_GetNextFeature()) are generally
+        considered interrupted by a OGR_L_GetFeature() call.
 
         The returned feature should be free with OGR_F_Destroy().
 
@@ -1382,10 +1346,10 @@ class Layer(MajorObject):
 
         Fetch the next available feature from this layer.
 
-        The returned feature becomes the responsiblity of the caller to delete
-        with OGR_F_Destroy(). It is critical that all features associated with
-        an OGRLayer (more specifically an OGRFeatureDefn) be deleted before
-        that layer/datasource is deleted.
+        The returned feature becomes the responsibility of the caller to
+        delete with OGR_F_Destroy(). It is critical that all features
+        associated with an OGRLayer (more specifically an OGRFeatureDefn) be
+        deleted before that layer/datasource is deleted.
 
         Only features matching the current spatial filter (set with
         SetSpatialFilter()) will be returned.
@@ -1393,6 +1357,16 @@ class Layer(MajorObject):
         This function implements sequential access to the features of a layer.
         The OGR_L_ResetReading() function can be used to start at the
         beginning again.
+
+        Features returned by OGR_GetNextFeature() may or may not be affected
+        by concurrent modifications depending on drivers. A guaranteed way of
+        seeing modifications in effect is to call OGR_L_ResetReading() on
+        layers where OGR_GetNextFeature() has been called, before reading
+        again. Structural changes in layers (field addition, deletion, ...)
+        when a read is in progress may or may not be possible depending on
+        drivers. If a transaction is committed/aborted, the current sequential
+        reading may or may not be valid after that operation and a call to
+        OGR_L_ResetReading() might be needed.
 
         This function is the same as the C++ method
         OGRLayer::GetNextFeature().
@@ -1411,7 +1385,7 @@ class Layer(MajorObject):
         SetNextByIndex(Layer self, GIntBig new_index) -> OGRErr
 
         OGRErr
-        OGR_L_SetNextByIndex(OGRLayerH hLayer, long nIndex)
+        OGR_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)
 
         Move read cursor to the nIndex'th feature in the current resultset.
 
@@ -1468,7 +1442,8 @@ class Layer(MajorObject):
         hFeat:  the feature to write.
 
         OGRERR_NONE if the operation works, otherwise an appropriate error
-        code. 
+        code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
         """
         return _ogr.Layer_SetFeature(self, *args)
 
@@ -1506,7 +1481,7 @@ class Layer(MajorObject):
         DeleteFeature(Layer self, GIntBig fid) -> OGRErr
 
         OGRErr
-        OGR_L_DeleteFeature(OGRLayerH hDS, long nFID)
+        OGR_L_DeleteFeature(OGRLayerH hLayer, GIntBig nFID)
 
         Delete feature from layer.
 
@@ -1525,7 +1500,9 @@ class Layer(MajorObject):
 
         nFID:  the feature id to be deleted from the layer
 
-        OGRERR_NONE on success. 
+        OGRERR_NONE if the operation works, otherwise an appropriate error
+        code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+
         """
         return _ogr.Layer_DeleteFeature(self, *args)
 
@@ -1534,7 +1511,7 @@ class Layer(MajorObject):
         SyncToDisk(Layer self) -> OGRErr
 
         OGRErr OGR_L_SyncToDisk(OGRLayerH
-        hDS)
+        hLayer)
 
         Flush pending changes to disk.
 
@@ -1590,7 +1567,7 @@ class Layer(MajorObject):
         """
         GetFeatureCount(Layer self, int force=1) -> GIntBig
 
-        int
+        GIntBig
         OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
 
         Fetch the feature count in this layer.
@@ -1608,6 +1585,8 @@ class Layer(MajorObject):
         cursor of the layer.
 
         This function is the same as the CPP OGRLayer::GetFeatureCount().
+
+        Note: since GDAL 2.0, this method returns a GIntBig (previously a int)
 
         Parameters:
         -----------
@@ -1699,12 +1678,12 @@ class Layer(MajorObject):
         features in this layer.
 
         OLCFastFeatureCount / "FastFeatureCount": TRUE if this layer can
-        return a feature count (via OGR_L_GetFeatureCount()) efficiently ...
-        ie. without counting the features. In some cases this will return TRUE
+        return a feature count (via OGR_L_GetFeatureCount()) efficiently, i.e.
+        without counting the features. In some cases this will return TRUE
         until a spatial filter is installed after which it will return FALSE.
 
         OLCFastGetExtent / "FastGetExtent": TRUE if this layer can return
-        its data extent (via OGR_L_GetExtent()) efficiently ... ie. without
+        its data extent (via OGR_L_GetExtent()) efficiently, i.e. without
         scanning all the features. In some cases this will return TRUE until a
         spatial filter is installed after which it will return FALSE.
 
@@ -1713,6 +1692,10 @@ class Layer(MajorObject):
 
         OLCCreateField / "CreateField": TRUE if this layer can create new
         fields on the current layer using CreateField(), otherwise FALSE.
+
+        OLCCreateGeomField / "CreateGeomField": (GDAL >= 1.11) TRUE if this
+        layer can create new geometry fields on the current layer using
+        CreateGeomField(), otherwise FALSE.
 
         OLCDeleteField / "DeleteField": TRUE if this layer can delete
         existing fields on the current layer using DeleteField(), otherwise
@@ -1737,6 +1720,9 @@ class Layer(MajorObject):
         CommitTransaction() and RollbackTransaction() methods work in a
         meaningful way, otherwise FALSE.
 
+        OLCCurveGeometries / "CurveGeometries": TRUE if this layer supports
+        writing curve geometries or may return such geometries. (GDAL 2.0).
+
         This function is the same as the C++ method
         OGRLayer::TestCapability().
 
@@ -1748,7 +1734,7 @@ class Layer(MajorObject):
         pszCap:  the name of the capability to test.
 
         TRUE if the layer has the requested capability, or FALSE otherwise.
-        OGRLayers will return FALSE for any unrecognised capabilities. 
+        OGRLayers will return FALSE for any unrecognized capabilities. 
         """
         return _ogr.Layer_TestCapability(self, *args)
 
@@ -1768,14 +1754,18 @@ class Layer(MajorObject):
         directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCCreateField capability. Some drivers may
         only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly.
+
+        Drivers may or may not support not-null constraints. If they support
+        creating fields with not-null constraints, this is generally before
+        creating any feature to the layer.
 
         This function is the same as the C++ method OGRLayer::CreateField().
 
@@ -1808,13 +1798,13 @@ class Layer(MajorObject):
         used by a layer directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCDeleteField capability. Some drivers may
         only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly.
 
         This function is the same as the C++ method OGRLayer::DeleteField().
@@ -1842,7 +1832,7 @@ class Layer(MajorObject):
 
         Reorder an existing field on a layer.
 
-        This function is a conveniency wrapper of OGR_L_ReorderFields()
+        This function is a convenience wrapper of OGR_L_ReorderFields()
         dedicated to move a single field.
 
         You must use this to reorder existing fields on a real layer.
@@ -1851,7 +1841,7 @@ class Layer(MajorObject):
         OGRFeatureDefn used by a layer directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         The field definition that was at initial position iOldFieldPos will be
@@ -1865,7 +1855,7 @@ class Layer(MajorObject):
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCReorderFields capability. Some drivers
         may only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly.
 
         This function is the same as the C++ method OGRLayer::ReorderField().
@@ -1902,7 +1892,7 @@ class Layer(MajorObject):
         OGRFeatureDefn used by a layer directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         panMap is such that,for each field definition at position i after
@@ -1915,7 +1905,7 @@ class Layer(MajorObject):
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCReorderFields capability. Some drivers
         may only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly.
 
         This function is the same as the C++ method OGRLayer::ReorderFields().
@@ -1925,8 +1915,9 @@ class Layer(MajorObject):
 
         hLayer:  handle to the layer.
 
-        panMap:  an array of GetLayerDefn()->GetFieldCount() elements which is
-        a permutation of [0, GetLayerDefn()->GetFieldCount()-1].
+        panMap:  an array of GetLayerDefn()-> OGRFeatureDefn::GetFieldCount()
+        elements which is a permutation of [0, GetLayerDefn()->
+        OGRFeatureDefn::GetFieldCount()-1].
 
         OGRERR_NONE on success.
 
@@ -1950,13 +1941,13 @@ class Layer(MajorObject):
         the OGRFeatureDefn used by a layer directly.
 
         This function should not be called while there are feature objects in
-        existance that were obtained or created with the previous layer
+        existence that were obtained or created with the previous layer
         definition.
 
         Not all drivers support this function. You can query a layer to check
         if it supports it with the OLCAlterFieldDefn capability. Some drivers
         may only support this method while there are still no features in the
-        layer. When it is supported, the existings features of the backing
+        layer. When it is supported, the existing features of the backing
         file/database should be updated accordingly. Some drivers might also
         not support all update flags.
 
@@ -1972,10 +1963,11 @@ class Layer(MajorObject):
 
         hNewFieldDefn:  new field definition
 
-        nFlags:  combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG and
-        ALTER_WIDTH_PRECISION_FLAG to indicate which of the name and/or type
-        and/or width and precision fields from the new field definition must
-        be taken into account.
+        nFlags:  combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG,
+        ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
+        to indicate which of the name and/or type and/or width and precision
+        fields and/or nullability from the new field definition must be taken
+        into account.
 
         OGRERR_NONE on success.
 
@@ -1984,7 +1976,50 @@ class Layer(MajorObject):
         return _ogr.Layer_AlterFieldDefn(self, *args)
 
     def CreateGeomField(self, *args, **kwargs):
-        """CreateGeomField(Layer self, GeomFieldDefn field_def, int approx_ok=1) -> OGRErr"""
+        """
+        CreateGeomField(Layer self, GeomFieldDefn field_def, int approx_ok=1) -> OGRErr
+
+        OGRErr
+        OGR_L_CreateGeomField(OGRLayerH hLayer, OGRGeomFieldDefnH hField, int
+        bApproxOK)
+
+        Create a new geometry field on a layer.
+
+        You must use this to create new geometry fields on a real layer.
+        Internally the OGRFeatureDefn for the layer will be updated to reflect
+        the new field. Applications should never modify the OGRFeatureDefn
+        used by a layer directly.
+
+        This function should not be called while there are feature objects in
+        existence that were obtained or created with the previous layer
+        definition.
+
+        Not all drivers support this function. You can query a layer to check
+        if it supports it with the OLCCreateField capability. Some drivers may
+        only support this method while there are still no features in the
+        layer. When it is supported, the existing features of the backing
+        file/database should be updated accordingly.
+
+        Drivers may or may not support not-null constraints. If they support
+        creating fields with not-null constraints, this is generally before
+        creating any feature to the layer.
+
+        This function is the same as the C++ method OGRLayer::CreateField().
+
+        Parameters:
+        -----------
+
+        hLayer:  handle to the layer to write the field definition.
+
+        hField:  handle of the geometry field definition to write to disk.
+
+        bApproxOK:  If TRUE, the field may be created in a slightly different
+        form depending on the limitations of the format driver.
+
+        OGRERR_NONE on success.
+
+        OGR 1.11 
+        """
         return _ogr.Layer_CreateGeomField(self, *args, **kwargs)
 
     def StartTransaction(self, *args):
@@ -2000,6 +2035,12 @@ class Layer(MajorObject):
         If starting the transaction fails, will return OGRERR_FAILURE.
         Datasources which do not support transactions will always return
         OGRERR_NONE.
+
+        Note: as of GDAL 2.0, use of this API is discouraged when the dataset
+        offers dataset level transaction with GDALDataset::StartTransaction().
+        The reason is that most drivers can only offer transactions at dataset
+        level, and not layer level. Very few drivers really support
+        transactions at layer scope.
 
         This function is the same as the C++ method
         OGRLayer::StartTransaction().
@@ -2048,9 +2089,11 @@ class Layer(MajorObject):
 
         For datasources which support transactions, RollbackTransaction will
         roll back a datasource to its state before the start of the current
-        transaction. If no transaction is active, or the rollback fails, will
-        return OGRERR_FAILURE. Datasources which do not support transactions
-        will always return OGRERR_NONE.
+        transaction.
+
+        If no transaction is active, or the rollback fails, will return
+        OGRERR_FAILURE. Datasources which do not support transactions will
+        always return OGRERR_NONE.
 
         This function is the same as the C++ method
         OGRLayer::RollbackTransaction().
@@ -2065,7 +2108,27 @@ class Layer(MajorObject):
         return _ogr.Layer_RollbackTransaction(self, *args)
 
     def FindFieldIndex(self, *args):
-        """FindFieldIndex(Layer self, char const * pszFieldName, int bExactMatch) -> int"""
+        """
+        FindFieldIndex(Layer self, char const * pszFieldName, int bExactMatch) -> int
+
+        int
+        OGR_L_FindFieldIndex(OGRLayerH hLayer, const char *pszFieldName, int
+        bExactMatch)
+
+        Find the index of field in a layer.
+
+        The returned number is the index of the field in the layers, or -1 if
+        the field doesn't exist.
+
+        If bExactMatch is set to FALSE and the field doesn't exists in the
+        given form the driver might apply some changes to make it match, like
+        those it might do if the layer was created (eg. like LAUNDER in the
+        OCI driver).
+
+        This method is the same as the C++ method OGRLayer::FindFieldIndex().
+
+        field index, or -1 if the field doesn't exist 
+        """
         return _ogr.Layer_FindFieldIndex(self, *args)
 
     def GetSpatialRef(self, *args):
@@ -2138,6 +2201,78 @@ class Layer(MajorObject):
         """
         Intersection(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
             void * callback_data=None) -> OGRErr
+
+        OGRErr
+        OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
+        OGRLayerH pLayerResult, char **papszOptions, GDALProgressFunc
+        pfnProgress, void *pProgressArg)
+
+        Intersection of two layers.
+
+        The result layer contains features whose geometries represent areas
+        that are common between features in the input layer and in the method
+        layer. The features in the result layer have attributes from both
+        input and method layers. The schema of the result layer can be set by
+        the user or, if it is empty, is initialized to contain all fields in
+        the input and method layers.
+
+        If the schema of the result is set by user and contains fields that
+        have the same name as a field in input and in method layer, then the
+        attribute in the result feature will get the value from the feature of
+        the method layer.
+
+        For best performance use the minimum amount of features in the method
+        layer and copy it into a memory layer.
+
+        This method relies on GEOS support. Do not use unless the GEOS support
+        is compiled in.  The recognized list of options is :
+        SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
+        could not be inserted.
+
+        PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
+        MultiPolygons, or LineStrings to MultiLineStrings.
+
+        INPUT_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the input layer.
+
+        METHOD_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the method layer.
+
+        USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
+        geometries to pretest intersection of features of method layer with
+        features of this layer.
+
+        PRETEST_CONTAINMENT=YES/NO. Set to YES to pretest the containment of
+        features of method layer within the features of this layer. This will
+        speed up the method significantly in some cases. Requires that the
+        prepared geometries are in effect.
+
+        This function is the same as the C++ method OGRLayer::Intersection().
+
+        Parameters:
+        -----------
+
+        pLayerInput:  the input layer. Should not be NULL.
+
+        pLayerMethod:  the method layer. Should not be NULL.
+
+        pLayerResult:  the layer where the features resulting from the
+        operation are inserted. Should not be NULL. See above the note about
+        the schema.
+
+        papszOptions:  NULL terminated list of options (may be NULL).
+
+        pfnProgress:  a GDALProgressFunc() compatible callback function for
+        reporting progress or NULL.
+
+        pProgressArg:  argument to be passed to pfnProgress. May be NULL.
+
+        an error code if there was an error or the execution was interrupted,
+        OGRERR_NONE otherwise.
+
+        The first geometry field is always used.
+
+        OGR 1.10 
         """
         return _ogr.Layer_Intersection(self, *args, **kwargs)
 
@@ -2145,6 +2280,74 @@ class Layer(MajorObject):
         """
         Union(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
             void * callback_data=None) -> OGRErr
+
+        OGRErr OGR_L_Union(OGRLayerH
+        pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
+        **papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+
+        Union of two layers.
+
+        The result layer contains features whose geometries represent areas
+        that are in either in the input layer or in the method layer. The
+        features in the result layer have attributes from both input and
+        method layers. For features which represent areas that are only in the
+        input or in the method layer the respective attributes have undefined
+        values. The schema of the result layer can be set by the user or, if
+        it is empty, is initialized to contain all fields in the input and
+        method layers.
+
+        If the schema of the result is set by user and contains fields that
+        have the same name as a field in input and in method layer, then the
+        attribute in the result feature will get the value from the feature of
+        the method layer (even if it is undefined).
+
+        For best performance use the minimum amount of features in the method
+        layer and copy it into a memory layer.
+
+        This method relies on GEOS support. Do not use unless the GEOS support
+        is compiled in.  The recognized list of options is :
+        SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
+        could not be inserted.
+
+        PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
+        MultiPolygons, or LineStrings to MultiLineStrings.
+
+        INPUT_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the input layer.
+
+        METHOD_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the method layer.
+
+        USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
+        geometries to pretest intersection of features of method layer with
+        features of this layer.
+
+        This function is the same as the C++ method OGRLayer::Union().
+
+        Parameters:
+        -----------
+
+        pLayerInput:  the input layer. Should not be NULL.
+
+        pLayerMethod:  the method layer. Should not be NULL.
+
+        pLayerResult:  the layer where the features resulting from the
+        operation are inserted. Should not be NULL. See above the note about
+        the schema.
+
+        papszOptions:  NULL terminated list of options (may be NULL).
+
+        pfnProgress:  a GDALProgressFunc() compatible callback function for
+        reporting progress or NULL.
+
+        pProgressArg:  argument to be passed to pfnProgress. May be NULL.
+
+        an error code if there was an error or the execution was interrupted,
+        OGRERR_NONE otherwise.
+
+        The first geometry field is always used.
+
+        OGR 1.10 
         """
         return _ogr.Layer_Union(self, *args, **kwargs)
 
@@ -2152,6 +2355,71 @@ class Layer(MajorObject):
         """
         SymDifference(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
             void * callback_data=None) -> OGRErr
+
+        OGRErr
+        OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
+        OGRLayerH pLayerResult, char **papszOptions, GDALProgressFunc
+        pfnProgress, void *pProgressArg)
+
+        Symmetrical difference of two layers.
+
+        The result layer contains features whose geometries represent areas
+        that are in either in the input layer or in the method layer but not
+        in both. The features in the result layer have attributes from both
+        input and method layers. For features which represent areas that are
+        only in the input or in the method layer the respective attributes
+        have undefined values. The schema of the result layer can be set by
+        the user or, if it is empty, is initialized to contain all fields in
+        the input and method layers.
+
+        If the schema of the result is set by user and contains fields that
+        have the same name as a field in input and in method layer, then the
+        attribute in the result feature will get the value from the feature of
+        the method layer (even if it is undefined).
+
+        For best performance use the minimum amount of features in the method
+        layer and copy it into a memory layer.
+
+        This method relies on GEOS support. Do not use unless the GEOS support
+        is compiled in.  The recognized list of options is :
+        SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
+        could not be inserted.
+
+        PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
+        MultiPolygons, or LineStrings to MultiLineStrings.
+
+        INPUT_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the input layer.
+
+        METHOD_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the method layer.
+
+        This function is the same as the C++ method OGRLayer::SymDifference().
+
+        Parameters:
+        -----------
+
+        pLayerInput:  the input layer. Should not be NULL.
+
+        pLayerMethod:  the method layer. Should not be NULL.
+
+        pLayerResult:  the layer where the features resulting from the
+        operation are inserted. Should not be NULL. See above the note about
+        the schema.
+
+        papszOptions:  NULL terminated list of options (may be NULL).
+
+        pfnProgress:  a GDALProgressFunc() compatible callback function for
+        reporting progress or NULL.
+
+        pProgressArg:  argument to be passed to pfnProgress. May be NULL.
+
+        an error code if there was an error or the execution was interrupted,
+        OGRERR_NONE otherwise.
+
+        The first geometry field is always used.
+
+        OGR 1.10 
         """
         return _ogr.Layer_SymDifference(self, *args, **kwargs)
 
@@ -2159,6 +2427,72 @@ class Layer(MajorObject):
         """
         Identity(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
             void * callback_data=None) -> OGRErr
+
+        OGRErr OGR_L_Identity(OGRLayerH
+        pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
+        **papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+
+        Identify the features of this layer with the ones from the identity
+        layer.
+
+        The result layer contains features whose geometries represent areas
+        that are in the input layer. The features in the result layer have
+        attributes from both input and method layers. The schema of the result
+        layer can be set by the user or, if it is empty, is initialized to
+        contain all fields in input and method layers.
+
+        If the schema of the result is set by user and contains fields that
+        have the same name as a field in input and in method layer, then the
+        attribute in the result feature will get the value from the feature of
+        the method layer (even if it is undefined).
+
+        For best performance use the minimum amount of features in the method
+        layer and copy it into a memory layer.
+
+        This method relies on GEOS support. Do not use unless the GEOS support
+        is compiled in.  The recognized list of options is :
+        SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
+        could not be inserted.
+
+        PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
+        MultiPolygons, or LineStrings to MultiLineStrings.
+
+        INPUT_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the input layer.
+
+        METHOD_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the method layer.
+
+        USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
+        geometries to pretest intersection of features of method layer with
+        features of this layer.
+
+        This function is the same as the C++ method OGRLayer::Identity().
+
+        Parameters:
+        -----------
+
+        pLayerInput:  the input layer. Should not be NULL.
+
+        pLayerMethod:  the method layer. Should not be NULL.
+
+        pLayerResult:  the layer where the features resulting from the
+        operation are inserted. Should not be NULL. See above the note about
+        the schema.
+
+        papszOptions:  NULL terminated list of options (may be NULL).
+
+        pfnProgress:  a GDALProgressFunc() compatible callback function for
+        reporting progress or NULL.
+
+        pProgressArg:  argument to be passed to pfnProgress. May be NULL.
+
+        an error code if there was an error or the execution was interrupted,
+        OGRERR_NONE otherwise.
+
+        The first geometry field is always used.
+
+        OGR 1.10 
         """
         return _ogr.Layer_Identity(self, *args, **kwargs)
 
@@ -2166,6 +2500,70 @@ class Layer(MajorObject):
         """
         Update(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
             void * callback_data=None) -> OGRErr
+
+        OGRErr OGR_L_Update(OGRLayerH
+        pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
+        **papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+
+        Update this layer with features from the update layer.
+
+        The result layer contains features whose geometries represent areas
+        that are either in the input layer or in the method layer. The
+        features in the result layer have areas of the features of the method
+        layer or those ares of the features of the input layer that are not
+        covered by the method layer. The features of the result layer get
+        their attributes from the input layer. The schema of the result layer
+        can be set by the user or, if it is empty, is initialized to contain
+        all fields in the input layer.
+
+        If the schema of the result is set by user and contains fields that
+        have the same name as a field in the method layer, then the attribute
+        in the result feature the originates from the method layer will get
+        the value from the feature of the method layer.
+
+        For best performance use the minimum amount of features in the method
+        layer and copy it into a memory layer.
+
+        This method relies on GEOS support. Do not use unless the GEOS support
+        is compiled in.  The recognized list of options is :
+        SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
+        could not be inserted.
+
+        PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
+        MultiPolygons, or LineStrings to MultiLineStrings.
+
+        INPUT_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the input layer.
+
+        METHOD_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the method layer.
+
+        This function is the same as the C++ method OGRLayer::Update().
+
+        Parameters:
+        -----------
+
+        pLayerInput:  the input layer. Should not be NULL.
+
+        pLayerMethod:  the method layer. Should not be NULL.
+
+        pLayerResult:  the layer where the features resulting from the
+        operation are inserted. Should not be NULL. See above the note about
+        the schema.
+
+        papszOptions:  NULL terminated list of options (may be NULL).
+
+        pfnProgress:  a GDALProgressFunc() compatible callback function for
+        reporting progress or NULL.
+
+        pProgressArg:  argument to be passed to pfnProgress. May be NULL.
+
+        an error code if there was an error or the execution was interrupted,
+        OGRERR_NONE otherwise.
+
+        The first geometry field is always used.
+
+        OGR 1.10 
         """
         return _ogr.Layer_Update(self, *args, **kwargs)
 
@@ -2173,6 +2571,63 @@ class Layer(MajorObject):
         """
         Clip(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
             void * callback_data=None) -> OGRErr
+
+        OGRErr OGR_L_Clip(OGRLayerH pLayerInput,
+        OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char **papszOptions,
+        GDALProgressFunc pfnProgress, void *pProgressArg)
+
+        Clip off areas that are not covered by the method layer.
+
+        The result layer contains features whose geometries represent areas
+        that are in the input layer and in the method layer. The features in
+        the result layer have the (possibly clipped) areas of features in the
+        input layer and the attributes from the same features. The schema of
+        the result layer can be set by the user or, if it is empty, is
+        initialized to contain all fields in the input layer.
+
+        For best performance use the minimum amount of features in the method
+        layer and copy it into a memory layer.
+
+        This method relies on GEOS support. Do not use unless the GEOS support
+        is compiled in.  The recognized list of options is :
+        SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
+        could not be inserted.
+
+        PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
+        MultiPolygons, or LineStrings to MultiLineStrings.
+
+        INPUT_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the input layer.
+
+        METHOD_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the method layer.
+
+        This function is the same as the C++ method OGRLayer::Clip().
+
+        Parameters:
+        -----------
+
+        pLayerInput:  the input layer. Should not be NULL.
+
+        pLayerMethod:  the method layer. Should not be NULL.
+
+        pLayerResult:  the layer where the features resulting from the
+        operation are inserted. Should not be NULL. See above the note about
+        the schema.
+
+        papszOptions:  NULL terminated list of options (may be NULL).
+
+        pfnProgress:  a GDALProgressFunc() compatible callback function for
+        reporting progress or NULL.
+
+        pProgressArg:  argument to be passed to pfnProgress. May be NULL.
+
+        an error code if there was an error or the execution was interrupted,
+        OGRERR_NONE otherwise.
+
+        The first geometry field is always used.
+
+        OGR 1.10 
         """
         return _ogr.Layer_Clip(self, *args, **kwargs)
 
@@ -2180,6 +2635,62 @@ class Layer(MajorObject):
         """
         Erase(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, 
             void * callback_data=None) -> OGRErr
+
+        OGRErr OGR_L_Erase(OGRLayerH
+        pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
+        **papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+
+        Remove areas that are covered by the method layer.
+
+        The result layer contains features whose geometries represent areas
+        that are in the input layer but not in the method layer. The features
+        in the result layer have attributes from the input layer. The schema
+        of the result layer can be set by the user or, if it is empty, is
+        initialized to contain all fields in the input layer.
+
+        For best performance use the minimum amount of features in the method
+        layer and copy it into a memory layer.
+
+        This method relies on GEOS support. Do not use unless the GEOS support
+        is compiled in.  The recognized list of options is :
+        SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
+        could not be inserted.
+
+        PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
+        MultiPolygons, or LineStrings to MultiLineStrings.
+
+        INPUT_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the input layer.
+
+        METHOD_PREFIX=string. Set a prefix for the field names that will be
+        created from the fields of the method layer.
+
+        This function is the same as the C++ method OGRLayer::Erase().
+
+        Parameters:
+        -----------
+
+        pLayerInput:  the input layer. Should not be NULL.
+
+        pLayerMethod:  the method layer. Should not be NULL.
+
+        pLayerResult:  the layer where the features resulting from the
+        operation are inserted. Should not be NULL. See above the note about
+        the schema.
+
+        papszOptions:  NULL terminated list of options (may be NULL).
+
+        pfnProgress:  a GDALProgressFunc() compatible callback function for
+        reporting progress or NULL.
+
+        pProgressArg:  argument to be passed to pfnProgress. May be NULL.
+
+        an error code if there was an error or the execution was interrupted,
+        OGRERR_NONE otherwise.
+
+        The first geometry field is always used.
+
+        OGR 1.10 
         """
         return _ogr.Layer_Erase(self, *args, **kwargs)
 
@@ -2350,7 +2861,7 @@ class Feature(_object):
 
         This function updates the features geometry, and operate exactly as
         SetGeometry(), except that this function assumes ownership of the
-        passed geometry.
+        passed geometry (even in case of failure of that function).
 
         This function is the same as the C++ method
         OGRFeature::SetGeometryDirectly.
@@ -2394,6 +2905,30 @@ class Feature(_object):
         """
         SetGeomField(Feature self, int iField, Geometry geom) -> OGRErr
         SetGeomField(Feature self, char const * name, Geometry geom) -> OGRErr
+
+        OGRErr
+        OGR_F_SetGeomField(OGRFeatureH hFeat, int iField, OGRGeometryH hGeom)
+
+        Set feature geometry of a specified geometry field.
+
+        This function updates the features geometry, and operate exactly as
+        SetGeometryDirectly(), except that this function does not assume
+        ownership of the passed geometry, but instead makes a copy of it.
+
+        This function is the same as the C++ OGRFeature::SetGeomField().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature on which new geometry is applied to.
+
+        iField:  geometry field to set.
+
+        hGeom:  handle to the new geometry to apply to feature.
+
+        OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the
+        geometry type is illegal for the OGRFeatureDefn (checking not yet
+        implemented). 
         """
         return _ogr.Feature_SetGeomField(self, *args)
 
@@ -2401,6 +2936,34 @@ class Feature(_object):
         """
         SetGeomFieldDirectly(Feature self, int iField, Geometry geom) -> OGRErr
         SetGeomFieldDirectly(Feature self, char const * name, Geometry geom) -> OGRErr
+
+        OGRErr
+        OGR_F_SetGeomFieldDirectly(OGRFeatureH hFeat, int iField, OGRGeometryH
+        hGeom)
+
+        Set feature geometry of a specified geometry field.
+
+        This function updates the features geometry, and operate exactly as
+        SetGeomField(), except that this function assumes ownership of the
+        passed geometry (even in case of failure of that function).
+
+        This function is the same as the C++ method
+        OGRFeature::SetGeomFieldDirectly.
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature on which to apply the geometry.
+
+        iField:  geometry field to set.
+
+        hGeom:  handle to the new geometry to apply to feature.
+
+        OGRERR_NONE if successful, or OGRERR_FAILURE if the index is invalid,
+        or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for
+        the OGRFeatureDefn (checking not yet implemented).
+
+        GDAL 1.11 
         """
         return _ogr.Feature_SetGeomFieldDirectly(self, *args)
 
@@ -2408,6 +2971,26 @@ class Feature(_object):
         """
         GetGeomFieldRef(Feature self, int iField) -> Geometry
         GetGeomFieldRef(Feature self, char const * name) -> Geometry
+
+        OGRGeometryH
+        OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
+
+        Fetch an handle to feature geometry.
+
+        This function is the same as the C++ method
+        OGRFeature::GetGeomFieldRef().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature to get geometry from.
+
+        iField:  geometry field to get.
+
+        an handle to internal feature geometry. This object should not be
+        modified.
+
+        GDAL 1.11 
         """
         return _ogr.Feature_GetGeomFieldRef(self, *args)
 
@@ -2508,13 +3091,53 @@ class Feature(_object):
         return _ogr.Feature_GetFieldDefnRef(self, *args)
 
     def GetGeomFieldCount(self, *args):
-        """GetGeomFieldCount(Feature self) -> int"""
+        """
+        GetGeomFieldCount(Feature self) -> int
+
+        int
+        OGR_F_GetGeomFieldCount(OGRFeatureH hFeat)
+
+        Fetch number of geometry fields on this feature This will always be
+        the same as the geometry field count for the OGRFeatureDefn.
+
+        This function is the same as the C++ method
+        OGRFeature::GetGeomFieldCount().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature to get the geometry fields count from.
+
+        count of geometry fields.
+
+        GDAL 1.11 
+        """
         return _ogr.Feature_GetGeomFieldCount(self, *args)
 
     def GetGeomFieldDefnRef(self, *args):
         """
         GetGeomFieldDefnRef(Feature self, int id) -> GeomFieldDefn
         GetGeomFieldDefnRef(Feature self, char const * name) -> GeomFieldDefn
+
+        OGRGeomFieldDefnH
+        OGR_F_GetGeomFieldDefnRef(OGRFeatureH hFeat, int i)
+
+        Fetch definition for this geometry field.
+
+        This function is the same as the C++ method
+        OGRFeature::GetGeomFieldDefnRef().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature on which the field is found.
+
+        i:  the field to fetch, from 0 to GetGeomFieldCount()-1.
+
+        an handle to the field definition (from the OGRFeatureDefn). This is
+        an internal reference, and should not be deleted or modified.
+
+        GDAL 1.11 
         """
         return _ogr.Feature_GetGeomFieldDefnRef(self, *args)
 
@@ -2579,6 +3202,30 @@ class Feature(_object):
         """
         GetFieldAsInteger64(Feature self, int id) -> GIntBig
         GetFieldAsInteger64(Feature self, char const * name) -> GIntBig
+
+        GIntBig
+        OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)
+
+        Fetch field value as integer 64 bit.
+
+        OFTInteger are promoted to 64 bit. OFTString features will be
+        translated using CPLAtoGIntBig(). OFTReal fields will be cast to
+        integer. Other field types, or errors will result in a return value of
+        zero.
+
+        This function is the same as the C++ method
+        OGRFeature::GetFieldAsInteger64().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        the field value.
+
+        GDAL 2.0 
         """
         return _ogr.Feature_GetFieldAsInteger64(self, *args)
 
@@ -2592,9 +3239,9 @@ class Feature(_object):
 
         Fetch field value as a double.
 
-        OFTString features will be translated using atof(). OFTInteger fields
-        will be cast to double. Other field types, or errors will result in a
-        return value of zero.
+        OFTString features will be translated using CPLAtof(). OFTInteger
+        fields will be cast to double. Other field types, or errors will
+        result in a return value of zero.
 
         This function is the same as the C++ method
         OGRFeature::GetFieldAsDouble().
@@ -2613,6 +3260,7 @@ class Feature(_object):
     def GetFieldAsDateTime(self, *args):
         """
         GetFieldAsDateTime(Feature self, int id)
+        GetFieldAsDateTime(Feature self, char const * name)
 
         int
         OGR_F_GetFieldAsDateTime(OGRFeatureH hFeat, int iField, int *pnYear,
@@ -2649,13 +3297,17 @@ class Feature(_object):
         pnTZFlag:  (0=unknown, 1=localtime, 100=GMT, see data model for
         details)
 
-        TRUE on success or FALSE on failure. 
+        TRUE on success or FALSE on failure.
+
+        See:  Use OGR_F_GetFieldAsDateTimeEx() for second with millisecond
+        accuracy. 
         """
         return _ogr.Feature_GetFieldAsDateTime(self, *args)
 
     def GetFieldAsIntegerList(self, *args):
         """
         GetFieldAsIntegerList(Feature self, int id)
+        GetFieldAsIntegerList(Feature self, char const * name)
 
         const int*
         OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField, int
@@ -2684,12 +3336,41 @@ class Feature(_object):
         return _ogr.Feature_GetFieldAsIntegerList(self, *args)
 
     def GetFieldAsInteger64List(self, *args):
-        """GetFieldAsInteger64List(Feature self, int id)"""
+        """
+        GetFieldAsInteger64List(Feature self, int id)
+
+        const GIntBig*
+        OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField, int
+        *pnCount)
+
+        Fetch field value as a list of 64 bit integers.
+
+        Currently this function only works for OFTInteger64List fields.
+
+        This function is the same as the C++ method
+        OGRFeature::GetFieldAsInteger64List().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        pnCount:  an integer to put the list count (number of integers) into.
+
+        the field value. This list is internal, and should not be modified, or
+        freed. Its lifetime may be very brief. If *pnCount is zero on return
+        the returned pointer may be NULL or non-NULL.
+
+        GDAL 2.0 
+        """
         return _ogr.Feature_GetFieldAsInteger64List(self, *args)
 
     def GetFieldAsDoubleList(self, *args):
         """
         GetFieldAsDoubleList(Feature self, int id)
+        GetFieldAsDoubleList(Feature self, char const * name)
 
         const double*
         OGR_F_GetFieldAsDoubleList(OGRFeatureH hFeat, int iField, int
@@ -2756,7 +3437,7 @@ class Feature(_object):
 
         Fetch field value as binary.
 
-        Currently this method only works for OFTBinary fields.
+        This method only works for OFTBinary and OFTString fields.
 
         This function is the same as the C++ method
         OGRFeature::GetFieldAsBinary().
@@ -2824,18 +3505,45 @@ class Feature(_object):
         return _ogr.Feature_GetFieldIndex(self, *args)
 
     def GetGeomFieldIndex(self, *args):
-        """GetGeomFieldIndex(Feature self, char const * name) -> int"""
+        """
+        GetGeomFieldIndex(Feature self, char const * name) -> int
+
+        int
+        OGR_F_GetGeomFieldIndex(OGRFeatureH hFeat, const char *pszName)
+
+        Fetch the geometry field index given geometry field name.
+
+        This is a cover for the OGRFeatureDefn::GetGeomFieldIndex() method.
+
+        This function is the same as the C++ method
+        OGRFeature::GetGeomFieldIndex().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature on which the geometry field is found.
+
+        pszName:  the name of the geometry field to search for.
+
+        the geometry field index, or -1 if no matching geometry field is
+        found.
+
+        GDAL 1.11 
+        """
         return _ogr.Feature_GetGeomFieldIndex(self, *args)
 
     def GetFID(self, *args):
         """
         GetFID(Feature self) -> GIntBig
 
-        long OGR_F_GetFID(OGRFeatureH hFeat)
+        GIntBig OGR_F_GetFID(OGRFeatureH
+        hFeat)
 
         Get feature identifier.
 
         This function is the same as the C++ method OGRFeature::GetFID().
+        Note: since GDAL 2.0, this method returns a GIntBig (previously a
+        long)
 
         Parameters:
         -----------
@@ -2852,7 +3560,7 @@ class Feature(_object):
         SetFID(Feature self, GIntBig fid) -> OGRErr
 
         OGRErr OGR_F_SetFID(OGRFeatureH hFeat,
-        long nFID)
+        GIntBig nFID)
 
         Set the feature identifier.
 
@@ -2921,7 +3629,32 @@ class Feature(_object):
         return _ogr.Feature_UnsetField(self, *args)
 
     def SetFieldInteger64(self, *args):
-        """SetFieldInteger64(Feature self, int id, GIntBig value)"""
+        """
+        SetFieldInteger64(Feature self, int id, GIntBig value)
+
+        void
+        OGR_F_SetFieldInteger64(OGRFeatureH hFeat, int iField, GIntBig nValue)
+
+        Set field to 64 bit integer value.
+
+        OFTInteger, OFTInteger64 and OFTReal fields will be set directly.
+        OFTString fields will be assigned a string representation of the
+        value, but not necessarily taking into account formatting constraints
+        on this field. Other field types may be unaffected.
+
+        This function is the same as the C++ method OGRFeature::SetField().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        nValue:  the value to assign.
+
+        GDAL 2.0 
+        """
         return _ogr.Feature_SetFieldInteger64(self, *args)
 
     def SetField(self, *args):
@@ -2946,7 +3679,8 @@ class Feature(_object):
 
         Set field to list of integers value.
 
-        This function currently on has an effect of OFTIntegerList fields.
+        This function currently on has an effect of OFTIntegerList,
+        OFTInteger64List and OFTRealList fields.
 
         This function is the same as the C++ method OGRFeature::SetField().
 
@@ -2964,7 +3698,33 @@ class Feature(_object):
         return _ogr.Feature_SetFieldIntegerList(self, *args)
 
     def SetFieldInteger64List(self, *args):
-        """SetFieldInteger64List(Feature self, int id, int nList)"""
+        """
+        SetFieldInteger64List(Feature self, int id, int nList)
+
+        void
+        OGR_F_SetFieldInteger64List(OGRFeatureH hFeat, int iField, int nCount,
+        const GIntBig *panValues)
+
+        Set field to list of 64 bit integers value.
+
+        This function currently on has an effect of OFTIntegerList,
+        OFTInteger64List and OFTRealList fields.
+
+        This function is the same as the C++ method OGRFeature::SetField().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to set, from 0 to GetFieldCount()-1.
+
+        nCount:  the number of values in the list being assigned.
+
+        panValues:  the values to assign.
+
+        GDAL 2.0 
+        """
         return _ogr.Feature_SetFieldInteger64List(self, *args)
 
     def SetFieldDoubleList(self, *args):
@@ -2977,7 +3737,8 @@ class Feature(_object):
 
         Set field to list of doubles value.
 
-        This function currently on has an effect of OFTRealList fields.
+        This function currently on has an effect of OFTIntegerList,
+        OFTInteger64List, OFTRealList fields.
 
         This function is the same as the C++ method OGRFeature::SetField().
 
@@ -3135,9 +3896,11 @@ class Feature(_object):
         void
         OGR_F_SetStyleString(OGRFeatureH hFeat, const char *pszStyle)
 
-        Set feature style string. This method operate exactly as
-        OGR_F_SetStyleStringDirectly() except that it does not assume
-        ownership of the passed string, but instead makes a copy of it.
+        Set feature style string.
+
+        This method operate exactly as OGR_F_SetStyleStringDirectly() except
+        that it does not assume ownership of the passed string, but instead
+        makes a copy of it.
 
         This function is the same as the C++ method
         OGRFeature::SetStyleString().
@@ -3160,12 +3923,208 @@ class Feature(_object):
         return _ogr.Feature_GetFieldType(self, *args)
 
     def Validate(self, *args):
-        """Validate(Feature self, int flags=OGR_F_VAL_ALL, int bEmitError=True) -> int"""
+        """
+        Validate(Feature self, int flags=OGR_F_VAL_ALL, int bEmitError=True) -> int
+
+        int OGR_F_Validate(OGRFeatureH
+        hFeat, int nValidateFlags, int bEmitError)
+
+        Validate that a feature meets constraints of its schema.
+
+        The scope of test is specified with the nValidateFlags parameter.
+
+        Regarding OGR_F_VAL_WIDTH, the test is done assuming the string width
+        must be interpreted as the number of UTF-8 characters. Some drivers
+        might interpret the width as the number of bytes instead. So this test
+        is rather conservative (if it fails, then it will fail for all
+        interpretations).
+
+        This function is the same as the C++ method OGRFeature::Validate().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature to validate.
+
+        nValidateFlags:  OGR_F_VAL_ALL or combination of OGR_F_VAL_NULL,
+        OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and
+        OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT with '|' operator
+
+        bEmitError:  TRUE if a CPLError() must be emitted when a check fails
+
+        TRUE if all enabled validation tests pass.
+
+        GDAL 2.0 
+        """
         return _ogr.Feature_Validate(self, *args)
 
     def FillUnsetWithDefault(self, *args):
-        """FillUnsetWithDefault(Feature self, int bNotNullableOnly=False, char ** options=None)"""
+        """
+        FillUnsetWithDefault(Feature self, int bNotNullableOnly=False, char ** options=None)
+
+        void
+        OGR_F_FillUnsetWithDefault(OGRFeatureH hFeat, int bNotNullableOnly,
+        char **papszOptions)
+
+        Fill unset fields with default values that might be defined.
+
+        This function is the same as the C++ method
+        OGRFeature::FillUnsetWithDefault().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature.
+
+        bNotNullableOnly:  if we should fill only unset fields with a not-null
+        constraint.
+
+        papszOptions:  unused currently. Must be set to NULL.
+
+        GDAL 2.0 
+        """
         return _ogr.Feature_FillUnsetWithDefault(self, *args)
+
+    def GetNativeData(self, *args):
+        """
+        GetNativeData(Feature self) -> char const *
+
+        const char*
+        OGR_F_GetNativeData(OGRFeatureH hFeat)
+
+        Returns the native data for the feature.
+
+        The native data is the representation in a "natural" form that comes
+        from the driver that created this feature, or that is aimed at an
+        output driver. The native data may be in different format, which is
+        indicated by OGR_F_GetNativeMediaType().
+
+        Note that most drivers do not support storing the native data in the
+        feature object, and if they do, generally the NATIVE_DATA open option
+        must be passed at dataset opening.
+
+        The "native data" does not imply it is something more performant or
+        powerful than what can be obtained with the rest of the API, but it
+        may be useful in round-tripping scenarios where some characteristics
+        of the underlying format are not captured otherwise by the OGR
+        abstraction.
+
+        This function is the same as the C++ method
+        OGRFeature::GetNativeData().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature.
+
+        a string with the native data, or NULL if there is none.
+
+        GDAL 2.1
+
+        See:
+        https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+
+        """
+        return _ogr.Feature_GetNativeData(self, *args)
+
+    def GetNativeMediaType(self, *args):
+        """
+        GetNativeMediaType(Feature self) -> char const *
+
+        const char*
+        OGR_F_GetNativeMediaType(OGRFeatureH hFeat)
+
+        Returns the native media type for the feature.
+
+        The native media type is the identifier for the format of the native
+        data. It follows the IANA RFC 2045
+        (seehttps://en.wikipedia.org/wiki/Media_type), e.g.
+        "application/vnd.geo+json" for JSon.
+
+        This function is the same as the C function
+        OGR_F_GetNativeMediaType().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature.
+
+        a string with the native media type, or NULL if there is none.
+
+        GDAL 2.1
+
+        See:
+        https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+
+        """
+        return _ogr.Feature_GetNativeMediaType(self, *args)
+
+    def SetNativeData(self, *args):
+        """
+        SetNativeData(Feature self, char const * nativeData)
+
+        void
+        OGR_F_SetNativeData(OGRFeatureH hFeat, const char *pszNativeData)
+
+        Sets the native data for the feature.
+
+        The native data is the representation in a "natural" form that comes
+        from the driver that created this feature, or that is aimed at an
+        output driver. The native data may be in different format, which is
+        indicated by OGR_F_GetNativeMediaType().
+
+        This function is the same as the C++ method
+        OGRFeature::SetNativeData().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature.
+
+        pszNativeData:  a string with the native data, or NULL if there is
+        none.
+
+        GDAL 2.1
+
+        See:
+        https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+
+        """
+        return _ogr.Feature_SetNativeData(self, *args)
+
+    def SetNativeMediaType(self, *args):
+        """
+        SetNativeMediaType(Feature self, char const * nativeMediaType)
+
+        void
+        OGR_F_SetNativeMediaType(OGRFeatureH hFeat, const char
+        *pszNativeMediaType)
+
+        Sets the native media type for the feature.
+
+        The native media type is the identifier for the format of the native
+        data. It follows the IANA RFC 2045
+        (seehttps://en.wikipedia.org/wiki/Media_type), e.g.
+        "application/vnd.geo+json" for JSon.
+
+        This function is the same as the C++ method
+        OGRFeature::SetNativeMediaType().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature.
+
+        pszNativeMediaType:  a string with the native media type, or NULL if
+        there is none.
+
+        GDAL 2.1
+
+        See:
+        https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+
+        """
+        return _ogr.Feature_SetNativeMediaType(self, *args)
 
     def SetFieldString(self, *args):
         """
@@ -3178,8 +4137,10 @@ class Feature(_object):
         Set field to string value.
 
         OFTInteger fields will be set based on an atoi() conversion of the
-        string. OFTReal fields will be set based on an atof() conversion of
-        the string. Other field types may be unaffected.
+        string. OFTInteger64 fields will be set based on an CPLAtoGIntBig()
+        conversion of the string. OFTReal fields will be set based on an
+        CPLAtof() conversion of the string. Other field types may be
+        unaffected.
 
         This function is the same as the C++ method OGRFeature::SetField().
 
@@ -3212,7 +4173,7 @@ class Feature(_object):
     def __copy__(self):
         return self.Clone()
 
-    # This makes it possible to fetch fields in the form "feature.area". 
+    # This makes it possible to fetch fields in the form "feature.area".
     # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
@@ -3229,7 +4190,7 @@ class Feature(_object):
         else:
             return self.GetField(idx)
 
-    # This makes it possible to set fields in the form "feature.area". 
+    # This makes it possible to set fields in the form "feature.area".
     # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
@@ -3246,7 +4207,7 @@ class Feature(_object):
                 else:
                     self.__dict__[key] = value
 
-    # This makes it possible to fetch fields in the form "feature['area']". 
+    # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, str):
@@ -3261,7 +4222,7 @@ class Feature(_object):
         else:
             return self.GetField(fld_index)
 
-    # This makes it possible to set fields in the form "feature['area'] = 123". 
+    # This makes it possible to set fields in the form "feature['area'] = 123".
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
         if isinstance(key, str):
@@ -3317,9 +4278,9 @@ class Feature(_object):
         SetField(self, char name, int value)
         SetField(self, int id, double value)
         SetField(self, char name, double value)
-        SetField(self, int id, int year, int month, int day, int hour, int minute, 
+        SetField(self, int id, int year, int month, int day, int hour, int minute,
             int second, int tzflag)
-        SetField(self, char name, int year, int month, int day, int hour, 
+        SetField(self, char name, int year, int month, int day, int hour,
             int minute, int second, int tzflag)
         """
 
@@ -3388,7 +4349,7 @@ class Feature(_object):
 
     def ExportToJson(self, as_object = False, options = None):
         """Exports a GeoJSON object which represents the Feature. The
-           as_object parameter determines whether the returned value 
+           as_object parameter determines whether the returned value
            should be a Python object instead of a string. Defaults to False.
            The options parameter is passed to Geometry.ExportToJson()"""
 
@@ -3412,12 +4373,12 @@ class Feature(_object):
         output = {'type':'Feature',
                    'geometry': geom_json_object,
                    'properties': {}
-                  } 
-        
+                  }
+
         fid = self.GetFID()
         if fid != NullFID:
             output['id'] = fid
-            
+
         for key in self.keys():
             fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
             if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
@@ -3427,7 +4388,7 @@ class Feature(_object):
                     output['properties'][key] = False
             else:
                 output['properties'][key] = self.GetField(key)
-        
+
         if not as_object:
             output = simplejson.dumps(output)
 
@@ -3561,7 +4522,7 @@ class FeatureDefn(_object):
         function directly, but use OGR_L_CreateField() instead.
 
         This function should only be called while there are no OGRFeature
-        objects in existance based on this OGRFeatureDefn. The OGRFieldDefn
+        objects in existence based on this OGRFeatureDefn. The OGRFieldDefn
         passed in is copied, and remains the responsibility of the caller.
 
         This function is the same as the C++ method
@@ -3578,23 +4539,146 @@ class FeatureDefn(_object):
         return _ogr.FeatureDefn_AddFieldDefn(self, *args)
 
     def GetGeomFieldCount(self, *args):
-        """GetGeomFieldCount(FeatureDefn self) -> int"""
+        """
+        GetGeomFieldCount(FeatureDefn self) -> int
+
+        int
+        OGR_FD_GetGeomFieldCount(OGRFeatureDefnH hDefn)
+
+        Fetch number of geometry fields on the passed feature definition.
+
+        This function is the same as the C++
+        OGRFeatureDefn::GetGeomFieldCount().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the feature definition to get the fields count from.
+
+        count of geometry fields.
+
+        GDAL 1.11 
+        """
         return _ogr.FeatureDefn_GetGeomFieldCount(self, *args)
 
     def GetGeomFieldDefn(self, *args):
-        """GetGeomFieldDefn(FeatureDefn self, int i) -> GeomFieldDefn"""
+        """
+        GetGeomFieldDefn(FeatureDefn self, int i) -> GeomFieldDefn
+
+        OGRGeomFieldDefnH
+        OGR_FD_GetGeomFieldDefn(OGRFeatureDefnH hDefn, int iGeomField)
+
+        Fetch geometry field definition of the passed feature definition.
+
+        This function is the same as the C++ method
+        OGRFeatureDefn::GetGeomFieldDefn().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the feature definition to get the field definition
+        from.
+
+        iGeomField:  the geometry field to fetch, between 0 and
+        GetGeomFieldCount()-1.
+
+        an handle to an internal field definition object or NULL if invalid
+        index. This object should not be modified or freed by the application.
+
+        GDAL 1.11 
+        """
         return _ogr.FeatureDefn_GetGeomFieldDefn(self, *args)
 
     def GetGeomFieldIndex(self, *args):
-        """GetGeomFieldIndex(FeatureDefn self, char const * name) -> int"""
+        """
+        GetGeomFieldIndex(FeatureDefn self, char const * name) -> int
+
+        int
+        OGR_FD_GetGeomFieldIndex(OGRFeatureDefnH hDefn, const char
+        *pszGeomFieldName)
+
+        Find geometry field by name.
+
+        The geometry field index of the first geometry field matching the
+        passed field name (case insensitively) is returned.
+
+        This function is the same as the C++ method
+        OGRFeatureDefn::GetGeomFieldIndex.
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the feature definition to get field index from.
+
+        pszGeomFieldName:  the geometry field name to search for.
+
+        the geometry field index, or -1 if no match found. 
+        """
         return _ogr.FeatureDefn_GetGeomFieldIndex(self, *args)
 
     def AddGeomFieldDefn(self, *args):
-        """AddGeomFieldDefn(FeatureDefn self, GeomFieldDefn defn)"""
+        """
+        AddGeomFieldDefn(FeatureDefn self, GeomFieldDefn defn)
+
+        void
+        OGR_FD_AddGeomFieldDefn(OGRFeatureDefnH hDefn, OGRGeomFieldDefnH
+        hNewGeomField)
+
+        Add a new field definition to the passed feature definition.
+
+        To add a new field definition to a layer definition, do not use this
+        function directly, but use OGR_L_CreateGeomField() instead.
+
+        This function should only be called while there are no OGRFeature
+        objects in existence based on this OGRFeatureDefn. The
+        OGRGeomFieldDefn passed in is copied, and remains the responsibility
+        of the caller.
+
+        This function is the same as the C++ method
+        OGRFeatureDefn::AddGeomFieldDefn().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the feature definition to add the geometry field
+        definition to.
+
+        hNewGeomField:  handle to the new field definition.
+
+        GDAL 1.11 
+        """
         return _ogr.FeatureDefn_AddGeomFieldDefn(self, *args)
 
     def DeleteGeomFieldDefn(self, *args):
-        """DeleteGeomFieldDefn(FeatureDefn self, int idx) -> OGRErr"""
+        """
+        DeleteGeomFieldDefn(FeatureDefn self, int idx) -> OGRErr
+
+        OGRErr
+        OGR_FD_DeleteGeomFieldDefn(OGRFeatureDefnH hDefn, int iGeomField)
+
+        Delete an existing geometry field definition.
+
+        To delete an existing geometry field definition from a layer
+        definition, do not use this function directly, but use
+        OGR_L_DeleteGeomField() instead (*not implemented yet*).
+
+        This method should only be called while there are no OGRFeature
+        objects in existence based on this OGRFeatureDefn.
+
+        This method is the same as the C++ method
+        OGRFeatureDefn::DeleteGeomFieldDefn().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the feature definition.
+
+        iGeomField:  the index of the geometry field definition.
+
+        OGRERR_NONE in case of success.
+
+        GDAL 1.11 
+        """
         return _ogr.FeatureDefn_DeleteGeomFieldDefn(self, *args)
 
     def GetGeomType(self, *args):
@@ -3608,6 +4692,9 @@ class FeatureDefn(_object):
 
         This function is the same as the C++ method
         OGRFeatureDefn::GetGeomType().
+
+        Starting with GDAL 1.11, this method returns
+        GetGeomFieldDefn(0)->GetType().
 
         Parameters:
         -----------
@@ -3637,6 +4724,9 @@ class FeatureDefn(_object):
         This function is the same as the C++ method
         OGRFeatureDefn::SetGeomType().
 
+        Starting with GDAL 1.11, this method calls
+        GetGeomFieldDefn(0)->SetType().
+
         Parameters:
         -----------
 
@@ -3662,7 +4752,7 @@ class FeatureDefn(_object):
         Parameters:
         -----------
 
-        hDefn:  hanlde to the feature definition on witch OGRFeature are based
+        hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
         the current reference count. 
@@ -3681,10 +4771,13 @@ class FeatureDefn(_object):
         This function is the same as the C++ method
         OGRFeatureDefn::IsGeometryIgnored().
 
+        Starting with GDAL 1.11, this method returns
+        GetGeomFieldDefn(0)->IsIgnored().
+
         Parameters:
         -----------
 
-        hDefn:  hanlde to the feature definition on witch OGRFeature are based
+        hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
         ignore state 
@@ -3703,10 +4796,13 @@ class FeatureDefn(_object):
         This function is the same as the C++ method
         OGRFeatureDefn::SetGeometryIgnored().
 
+        Starting with GDAL 1.11, this method calls
+        GetGeomFieldDefn(0)->SetIgnored().
+
         Parameters:
         -----------
 
-        hDefn:  hanlde to the feature definition on witch OGRFeature are based
+        hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
         bIgnore:  ignore state 
@@ -3750,7 +4846,7 @@ class FeatureDefn(_object):
         Parameters:
         -----------
 
-        hDefn:  hanlde to the feature definition on witch OGRFeature are based
+        hDefn:  handle to the feature definition on witch OGRFeature are based
         on.
 
         bIgnore:  ignore state 
@@ -3758,7 +4854,26 @@ class FeatureDefn(_object):
         return _ogr.FeatureDefn_SetStyleIgnored(self, *args)
 
     def IsSame(self, *args):
-        """IsSame(FeatureDefn self, FeatureDefn other_defn) -> int"""
+        """
+        IsSame(FeatureDefn self, FeatureDefn other_defn) -> int
+
+        int OGR_FD_IsSame(OGRFeatureDefnH
+        hFDefn, OGRFeatureDefnH hOtherFDefn)
+
+        Test if the feature definition is identical to the other one.
+
+        Parameters:
+        -----------
+
+        hFDefn:  handle to the feature definition on witch OGRFeature are
+        based on.
+
+        hOtherFDefn:  handle to the other feature definition to compare to.
+
+        TRUE if the feature definition is identical to the other one.
+
+        OGR 1.11 
+        """
         return _ogr.FeatureDefn_IsSame(self, *args)
 
     def Destroy(self):
@@ -3856,8 +4971,10 @@ class FieldDefn(_object):
         void OGR_Fld_SetType(OGRFieldDefnH
         hDefn, OGRFieldType eType)
 
-        Set the type of this field. This should never be done to an
-        OGRFieldDefn that is already part of an OGRFeatureDefn.
+        Set the type of this field.
+
+        This should never be done to an OGRFieldDefn that is already part of
+        an OGRFeatureDefn.
 
         This function is the same as the CPP method OGRFieldDefn::SetType().
 
@@ -3871,11 +4988,52 @@ class FieldDefn(_object):
         return _ogr.FieldDefn_SetType(self, *args)
 
     def GetSubType(self, *args):
-        """GetSubType(FieldDefn self) -> OGRFieldSubType"""
+        """
+        GetSubType(FieldDefn self) -> OGRFieldSubType
+
+        OGRFieldSubType
+        OGR_Fld_GetSubType(OGRFieldDefnH hDefn)
+
+        Fetch subtype of this field.
+
+        This function is the same as the CPP method
+        OGRFieldDefn::GetSubType().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition to get subtype from.
+
+        field subtype.
+
+        GDAL 2.0 
+        """
         return _ogr.FieldDefn_GetSubType(self, *args)
 
     def SetSubType(self, *args):
-        """SetSubType(FieldDefn self, OGRFieldSubType type)"""
+        """
+        SetSubType(FieldDefn self, OGRFieldSubType type)
+
+        void
+        OGR_Fld_SetSubType(OGRFieldDefnH hDefn, OGRFieldSubType eSubType)
+
+        Set the subtype of this field.
+
+        This should never be done to an OGRFieldDefn that is already part of
+        an OGRFeatureDefn.
+
+        This function is the same as the CPP method
+        OGRFieldDefn::SetSubType().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition to set type to.
+
+        eSubType:  the new field subtype.
+
+        GDAL 2.0 
+        """
         return _ogr.FieldDefn_SetSubType(self, *args)
 
     def GetJustify(self, *args):
@@ -3889,6 +5047,8 @@ class FieldDefn(_object):
 
         This function is the same as the CPP method
         OGRFieldDefn::GetJustify().
+
+        Note: no driver is know to use the concept of field justification.
 
         Parameters:
         -----------
@@ -3907,6 +5067,8 @@ class FieldDefn(_object):
         OGR_Fld_SetJustify(OGRFieldDefnH hDefn, OGRJustification eJustify)
 
         Set the justification for this field.
+
+        Note: no driver is know to use the concept of field justification.
 
         This function is the same as the CPP method
         OGRFieldDefn::SetJustify().
@@ -3967,8 +5129,9 @@ class FieldDefn(_object):
         int
         OGR_Fld_GetPrecision(OGRFieldDefnH hDefn)
 
-        Get the formatting precision for this field. This should normally be
-        zero for fields of types other than OFTReal.
+        Get the formatting precision for this field.
+
+        This should normally be zero for fields of types other than OFTReal.
 
         This function is the same as the CPP method
         OGRFieldDefn::GetPrecision().
@@ -4042,7 +5205,7 @@ class FieldDefn(_object):
 
         Set whether this field should be omitted when fetching features.
 
-        This method is the same as the C function OGRFieldDefn::SetIgnored().
+        This method is the same as the C++ method OGRFieldDefn::SetIgnored().
 
         Parameters:
         -----------
@@ -4054,23 +5217,152 @@ class FieldDefn(_object):
         return _ogr.FieldDefn_SetIgnored(self, *args)
 
     def IsNullable(self, *args):
-        """IsNullable(FieldDefn self) -> int"""
+        """
+        IsNullable(FieldDefn self) -> int
+
+        int
+        OGR_Fld_IsNullable(OGRFieldDefnH hDefn)
+
+        Return whether this field can receive null values.
+
+        By default, fields are nullable.
+
+        Even if this method returns FALSE (i.e not-nullable field), it doesn't
+        mean that OGRFeature::IsFieldSet() will necessary return TRUE, as
+        fields can be temporary unset and null/not-null validation is usually
+        done when OGRLayer::CreateFeature()/SetFeature() is called.
+
+        This method is the same as the C++ method OGRFieldDefn::IsNullable().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        TRUE if the field is authorized to be null.
+
+        GDAL 2.0 
+        """
         return _ogr.FieldDefn_IsNullable(self, *args)
 
     def SetNullable(self, *args):
-        """SetNullable(FieldDefn self, int bNullable)"""
+        """
+        SetNullable(FieldDefn self, int bNullable)
+
+        void
+        OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int bNullableIn)
+
+        Set whether this field can receive null values.
+
+        By default, fields are nullable, so this method is generally called
+        with FALSE to set a not-null constraint.
+
+        Drivers that support writing not-null constraint will advertize the
+        GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
+
+        This method is the same as the C++ method OGRFieldDefn::SetNullable().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        bNullableIn:  FALSE if the field must have a not-null constraint.
+
+        GDAL 2.0 
+        """
         return _ogr.FieldDefn_SetNullable(self, *args)
 
     def GetDefault(self, *args):
-        """GetDefault(FieldDefn self) -> char const *"""
+        """
+        GetDefault(FieldDefn self) -> char const *
+
+        const char*
+        OGR_Fld_GetDefault(OGRFieldDefnH hDefn)
+
+        Get default field value.
+
+        This function is the same as the C++ method
+        OGRFieldDefn::GetDefault().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition.
+
+        default field value or NULL.
+
+        GDAL 2.0 
+        """
         return _ogr.FieldDefn_GetDefault(self, *args)
 
     def SetDefault(self, *args):
-        """SetDefault(FieldDefn self, char const * pszValue)"""
+        """
+        SetDefault(FieldDefn self, char const * pszValue)
+
+        void
+        OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char *pszDefault)
+
+        Set default field value.
+
+        The default field value is taken into account by drivers (generally
+        those with a SQL interface) that support it at field creation time.
+        OGR will generally not automatically set the default field value to
+        null fields by itself when calling OGRFeature::CreateFeature() /
+        OGRFeature::SetFeature(), but will let the low-level layers to do the
+        job. So retrieving the feature from the layer is recommended.
+
+        The accepted values are NULL, a numeric value, a literal value
+        enclosed between single quote characters (and inner single quote
+        characters escaped by repetition of the single quote character),
+        CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or a driver specific
+        expression (that might be ignored by other drivers). For a datetime
+        literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
+        (considered as UTC time).
+
+        Drivers that support writing DEFAULT clauses will advertize the
+        GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
+
+        This function is the same as the C++ method
+        OGRFieldDefn::SetDefault().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition.
+
+        pszDefault:  new default field value or NULL pointer.
+
+        GDAL 2.0 
+        """
         return _ogr.FieldDefn_SetDefault(self, *args)
 
     def IsDefaultDriverSpecific(self, *args):
-        """IsDefaultDriverSpecific(FieldDefn self) -> int"""
+        """
+        IsDefaultDriverSpecific(FieldDefn self) -> int
+
+        int
+        OGR_Fld_IsDefaultDriverSpecific(OGRFieldDefnH hDefn)
+
+        Returns whether the default value is driver specific.
+
+        Driver specific default values are those that are *not* NULL, a
+        numeric value, a literal value enclosed between single quote
+        characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or datetime
+        literal value.
+
+        This function is the same as the C++ method
+        OGRFieldDefn::IsDefaultDriverSpecific().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        TRUE if the default value is driver specific.
+
+        GDAL 2.0 
+        """
         return _ogr.FieldDefn_IsDefaultDriverSpecific(self, *args)
 
     width = property(GetWidth, SetWidth)
@@ -4228,6 +5520,11 @@ class Geometry(_object):
 
         This function relates to the SFCOM IWks::ExportToWKT() method.
 
+        For backward compatibility purposes, it exports the Old-style 99-402
+        extended dimension (Z) WKB types for types Point, LineString, Polygon,
+        MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
+        other geometry types, it is equivalent to OGR_G_ExportToIsoWkt().
+
         This function is the same as the CPP method
         OGRGeometry::exportToWkt().
 
@@ -4237,14 +5534,43 @@ class Geometry(_object):
         hGeom:  handle on the geometry to convert to a text format from.
 
         ppszSrcText:  a text buffer is allocated by the program, and assigned
-        to the passed pointer.
+        to the passed pointer. After use, *ppszDstText should be freed with
+        OGRFree().
 
         Currently OGRERR_NONE is always returned. 
         """
         return _ogr.Geometry_ExportToWkt(self, *args)
 
     def ExportToIsoWkt(self, *args):
-        """ExportToIsoWkt(Geometry self) -> OGRErr"""
+        """
+        ExportToIsoWkt(Geometry self) -> OGRErr
+
+        OGRErr
+        OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char **ppszSrcText)
+
+        Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known text
+        format.
+
+        This function relates to the SFCOM IWks::ExportToWKT() method. It
+        exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)
+        WKB types
+
+        This function is the same as the CPP method
+        OGRGeometry::exportToWkt(,wkbVariantIso).
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to convert to a text format from.
+
+        ppszSrcText:  a text buffer is allocated by the program, and assigned
+        to the passed pointer. After use, *ppszDstText should be freed with
+        OGRFree().
+
+        Currently OGRERR_NONE is always returned.
+
+        GDAL 2.0 
+        """
         return _ogr.Geometry_ExportToIsoWkt(self, *args)
 
     def ExportToWkb(self, *args, **kwargs):
@@ -4255,12 +5581,18 @@ class Geometry(_object):
         OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
         char *pabyDstBuffer)
 
-        Convert a geometry into well known binary format.
+        Convert a geometry well known binary format.
 
         This function relates to the SFCOM IWks::ExportToWKB() method.
 
+        For backward compatibility purposes, it exports the Old-style 99-402
+        extended dimension (Z) WKB types for types Point, LineString, Polygon,
+        MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
+        other geometry types, it is equivalent to OGR_G_ExportToIsoWkb().
+
         This function is the same as the CPP method
-        OGRGeometry::exportToWkb().
+        OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char *,
+        OGRwkbVariant) with eWkbVariant = wkbVariantOldOgc.
 
         Parameters:
         -----------
@@ -4279,7 +5611,40 @@ class Geometry(_object):
         return _ogr.Geometry_ExportToWkb(self, *args, **kwargs)
 
     def ExportToIsoWkb(self, *args, **kwargs):
-        """ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr"""
+        """
+        ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbXDR) -> OGRErr
+
+        OGRErr
+        OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
+        unsigned char *pabyDstBuffer)
+
+        Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known
+        binary format.
+
+        This function relates to the SFCOM IWks::ExportToWKB() method. It
+        exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)
+        WKB types
+
+        This function is the same as the CPP method
+        OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char *,
+        OGRwkbVariant) with eWkbVariant = wkbVariantIso.
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to convert to a well know binary data
+        from.
+
+        eOrder:  One of wkbXDR or wkbNDR indicating MSB or LSB byte order
+        respectively.
+
+        pabyDstBuffer:  a buffer into which the binary representation is
+        written. This buffer must be at least OGR_G_WkbSize() byte in size.
+
+        Currently OGRERR_NONE is always returned.
+
+        GDAL 2.0 
+        """
         return _ogr.Geometry_ExportToIsoWkb(self, *args, **kwargs)
 
     def ExportToGML(self, *args, **kwargs):
@@ -4297,6 +5662,14 @@ class Geometry(_object):
     def AddPoint(self, *args, **kwargs):
         """AddPoint(Geometry self, double x, double y, double z=0)"""
         return _ogr.Geometry_AddPoint(self, *args, **kwargs)
+
+    def AddPointM(self, *args, **kwargs):
+        """AddPointM(Geometry self, double x, double y, double m)"""
+        return _ogr.Geometry_AddPointM(self, *args, **kwargs)
+
+    def AddPointZM(self, *args, **kwargs):
+        """AddPointZM(Geometry self, double x, double y, double z, double m)"""
+        return _ogr.Geometry_AddPointZM(self, *args, **kwargs)
 
     def AddPoint_2D(self, *args):
         """AddPoint_2D(Geometry self, double x, double y)"""
@@ -4413,9 +5786,17 @@ class Geometry(_object):
         """GetZ(Geometry self, int point=0) -> double"""
         return _ogr.Geometry_GetZ(self, *args, **kwargs)
 
+    def GetM(self, *args, **kwargs):
+        """GetM(Geometry self, int point=0) -> double"""
+        return _ogr.Geometry_GetM(self, *args, **kwargs)
+
     def GetPoint(self, *args):
         """GetPoint(Geometry self, int iPoint=0)"""
         return _ogr.Geometry_GetPoint(self, *args)
+
+    def GetPointZM(self, *args):
+        """GetPointZM(Geometry self, int iPoint=0)"""
+        return _ogr.Geometry_GetPointZM(self, *args)
 
     def GetPoint_2D(self, *args):
         """GetPoint_2D(Geometry self, int iPoint=0)"""
@@ -4428,6 +5809,14 @@ class Geometry(_object):
     def SetPoint(self, *args, **kwargs):
         """SetPoint(Geometry self, int point, double x, double y, double z=0)"""
         return _ogr.Geometry_SetPoint(self, *args, **kwargs)
+
+    def SetPointM(self, *args, **kwargs):
+        """SetPointM(Geometry self, int point, double x, double y, double m)"""
+        return _ogr.Geometry_SetPointM(self, *args, **kwargs)
+
+    def SetPointZM(self, *args, **kwargs):
+        """SetPointZM(Geometry self, int point, double x, double y, double z, double m)"""
+        return _ogr.Geometry_SetPointZM(self, *args, **kwargs)
 
     def SetPoint_2D(self, *args, **kwargs):
         """SetPoint_2D(Geometry self, int point, double x, double y)"""
@@ -4473,7 +5862,7 @@ class Geometry(_object):
         OGRGeometryH
         OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis, double dTolerance)
 
-        Compute a simplified geometry.
+        Simplify the geometry while preserving topology.
 
         This function is the same as the C++ method
         OGRGeometry::SimplifyPreserveTopology().
@@ -4497,7 +5886,38 @@ class Geometry(_object):
         return _ogr.Geometry_SimplifyPreserveTopology(self, *args)
 
     def DelaunayTriangulation(self, *args, **kwargs):
-        """DelaunayTriangulation(Geometry self, double dfTolerance=0.0, int bOnlyEdges=False) -> Geometry"""
+        """
+        DelaunayTriangulation(Geometry self, double dfTolerance=0.0, int bOnlyEdges=False) -> Geometry
+
+        OGRGeometryH
+        OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
+        int bOnlyEdges)
+
+        Return a Delaunay triangulation of the vertices of the geometry.
+
+        This function is the same as the C++ method
+        OGRGeometry::DelaunayTriangulation().
+
+        This function is built on the GEOS library, v3.4 or above. If OGR is
+        built without the GEOS library, this function will always fail,
+        issuing a CPLE_NotSupported error.
+
+        Parameters:
+        -----------
+
+        hThis:  the geometry.
+
+        dfTolerance:  optional snapping tolerance to use for improved
+        robustness
+
+        bOnlyEdges:  if TRUE, will return a MULTILINESTRING, otherwise it will
+        return a GEOMETRYCOLLECTION containing triangular POLYGONs.
+
+        the geometry resulting from the Delaunay triangulation or NULL if an
+        error occurs.
+
+        OGR 2.1 
+        """
         return _ogr.Geometry_DelaunayTriangulation(self, *args, **kwargs)
 
     def Boundary(self, *args):
@@ -4588,7 +6008,7 @@ class Geometry(_object):
 
         Some buffer sections are properly described as curves, but are
         converted to approximate polygons. The nQuadSegs parameter can be used
-        to control how many segements should be used to define a 90 degree
+        to control how many segments should be used to define a 90 degree
         curve - a quadrant of a circle. A value of 30 is a reasonable default.
         Large values result in large numbers of vertices in the resulting
         buffer geometry while small numbers reduce the accuracy of the result.
@@ -4605,7 +6025,8 @@ class Geometry(_object):
 
         hTarget:  the geometry.
 
-        dfDist:  the buffer distance to be applied.
+        dfDist:  the buffer distance to be applied. Should be expressed into
+        the same unit as the coordinates of the geometry.
 
         nQuadSegs:  the number of segments used to approximate a 90 degree
         (quadrant) of curvature.
@@ -4790,7 +6211,8 @@ class Geometry(_object):
 
         Compute distance between two geometries.
 
-        Returns the shortest distance between the two geometries.
+        Returns the shortest distance between the two geometries. The distance
+        is expressed into the same unit as the coordinates of the geometries.
 
         This function is the same as the C++ method OGRGeometry::Distance().
 
@@ -4816,8 +6238,10 @@ class Geometry(_object):
 
         void OGR_G_Empty(OGRGeometryH hGeom)
 
-        Clear geometry information. This restores the geometry to it's initial
-        state after construction, and before assignment of actual geometry.
+        Clear geometry information.
+
+        This restores the geometry to it's initial state after construction,
+        and before assignment of actual geometry.
 
         This function relates to the SFCOM IGeometry::Empty() method.
 
@@ -4933,9 +6357,9 @@ class Geometry(_object):
 
         Do these features intersect?
 
-        Currently this is not implemented in a rigerous fashion, and generally
-        just tests whether the envelopes of the two features intersect.
-        Eventually this will be made rigerous.
+        Determines whether two geometries intersect. If GEOS is enabled, then
+        this is done in rigorous fashion otherwise TRUE is returned if the
+        envelopes (bounding boxes) of the two geometries overlap.
 
         This function is the same as the CPP method OGRGeometry::Intersects.
 
@@ -5321,8 +6745,9 @@ class Geometry(_object):
         void
         OGR_G_FlattenTo2D(OGRGeometryH hGeom)
 
-        Convert geometry to strictly 2D. In a sense this converts all Z
-        coordinates to 0.0.
+        Convert geometry to strictly 2D.
+
+        In a sense this converts all Z coordinates to 0.0.
 
         This function is the same as the CPP method
         OGRGeometry::flattenTo2D().
@@ -5436,7 +6861,32 @@ class Geometry(_object):
         return _ogr.Geometry_Centroid(self, *args)
 
     def PointOnSurface(self, *args):
-        """PointOnSurface(Geometry self) -> Geometry"""
+        """
+        PointOnSurface(Geometry self) -> Geometry
+
+        OGRGeometryH
+        OGR_G_PointOnSurface(OGRGeometryH hGeom)
+
+        Returns a point guaranteed to lie on the surface.
+
+        This method relates to the SFCOM ISurface::get_PointOnSurface() method
+        however the current implementation based on GEOS can operate on other
+        geometry types than the types that are supported by SQL/MM-Part 3 :
+        surfaces (polygons) and multisurfaces (multipolygons).
+
+        This method is built on the GEOS library, check it for the definition
+        of the geometry operation. If OGR is built without the GEOS library,
+        this method will always fail, issuing a CPLE_NotSupported error.
+
+        Parameters:
+        -----------
+
+        hGeom:  the geometry to operate on.
+
+        a point guaranteed to lie on the surface or NULL if an error occurred.
+
+        OGR 1.10 
+        """
         return _ogr.Geometry_PointOnSurface(self, *args)
 
     def WkbSize(self, *args):
@@ -5473,9 +6923,6 @@ class Geometry(_object):
 
         Get the dimension of the coordinates in this geometry.
 
-        This function corresponds to the SFCOM IGeometry::GetDimension()
-        method.
-
         This function is the same as the CPP method
         OGRGeometry::getCoordinateDimension().
 
@@ -5485,10 +6932,77 @@ class Geometry(_object):
         hGeom:  handle on the geometry to get the dimension of the coordinates
         from.
 
-        in practice this will return 2 or 3. It can also return 0 in the case
-        of an empty point. 
+        Deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or
+        OGR_G_IsMeasured().
+
+        this will return 2 or 3. 
         """
         return _ogr.Geometry_GetCoordinateDimension(self, *args)
+
+    def CoordinateDimension(self, *args):
+        """
+        CoordinateDimension(Geometry self) -> int
+
+        int
+        OGR_G_CoordinateDimension(OGRGeometryH hGeom)
+
+        Get the dimension of the coordinates in this geometry.
+
+        This function is the same as the CPP method
+        OGRGeometry::CoordinateDimension().
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to get the dimension of the coordinates
+        from.
+
+        this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data. 
+        """
+        return _ogr.Geometry_CoordinateDimension(self, *args)
+
+    def Is3D(self, *args):
+        """
+        Is3D(Geometry self) -> int
+
+        int OGR_G_Is3D(OGRGeometryH hGeom)
+
+        See whether this geometry has Z coordinates.
+
+        This function is the same as the CPP method OGRGeometry::Is3D().
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to check whether it has Z coordinates.
+
+        TRUE if the geometry has Z coordinates.
+
+        GDAL 2.1 
+        """
+        return _ogr.Geometry_Is3D(self, *args)
+
+    def IsMeasured(self, *args):
+        """
+        IsMeasured(Geometry self) -> int
+
+        int OGR_G_IsMeasured(OGRGeometryH
+        hGeom)
+
+        See whether this geometry is measured.
+
+        This function is the same as the CPP method OGRGeometry::IsMeasured().
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to check whether it is measured.
+
+        TRUE if the geometry has M coordinates.
+
+        GDAL 2.1 
+        """
+        return _ogr.Geometry_IsMeasured(self, *args)
 
     def SetCoordinateDimension(self, *args):
         """
@@ -5501,8 +7015,11 @@ class Geometry(_object):
 
         This method sets the explicit coordinate dimension. Setting the
         coordinate dimension of a geometry to 2 should zero out any existing Z
-        values. Setting the dimension of a geometry collection will not
-        necessarily affect the children geometries.
+        values. Setting the dimension of a geometry collection, a compound
+        curve, a polygon, etc. will affect the children geometries. This will
+        also remove the M dimension if present before this call.
+
+        Deprecated use OGR_G_Set3D() or OGR_G_SetMeasured().
 
         Parameters:
         -----------
@@ -5513,6 +7030,58 @@ class Geometry(_object):
         nNewDimension:  New coordinate dimension value, either 2 or 3. 
         """
         return _ogr.Geometry_SetCoordinateDimension(self, *args)
+
+    def Set3D(self, *args):
+        """
+        Set3D(Geometry self, int b3D)
+
+        void OGR_G_Set3D(OGRGeometryH hGeom,
+        int bIs3D)
+
+        Add or remove the Z coordinate dimension.
+
+        This method adds or removes the explicit Z coordinate dimension.
+        Removing the Z coordinate dimension of a geometry will remove any
+        existing Z values. Adding the Z dimension to a geometry collection, a
+        compound curve, a polygon, etc. will affect the children geometries.
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to set or unset the Z dimension.
+
+        bIs3D:  Should the geometry have a Z dimension, either TRUE or FALSE.
+
+        GDAL 2.1 
+        """
+        return _ogr.Geometry_Set3D(self, *args)
+
+    def SetMeasured(self, *args):
+        """
+        SetMeasured(Geometry self, int bMeasured)
+
+        void
+        OGR_G_SetMeasured(OGRGeometryH hGeom, int bIsMeasured)
+
+        Set the coordinate dimension.
+
+        Add or remove the M coordinate dimension. This method adds or removes
+        the explicit M coordinate dimension. Removing the M coordinate
+        dimension of a geometry will remove any existing M values. Adding the
+        M dimension to a geometry collection, a compound curve, a polygon,
+        etc. will affect the children geometries.
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to set or unset the M dimension.
+
+        bIsMeasured:  Should the geometry have a M dimension, either TRUE or
+        FALSE.
+
+        GDAL 2.1 
+        """
+        return _ogr.Geometry_SetMeasured(self, *args)
 
     def GetDimension(self, *args):
         """
@@ -5557,13 +7126,13 @@ class Geometry(_object):
         return _ogr.Geometry_Value(self, *args)
 
     def Destroy(self):
-      self.__swig_destroy__(self) 
+      self.__swig_destroy__(self)
       self.__del__()
       self.thisown = 0
 
     def __str__(self):
       return self.ExportToWkt()
-      
+
 
     def __reduce__(self):
       return (self.__class__, (), self.ExportToWkb())
@@ -5571,11 +7140,11 @@ class Geometry(_object):
     def __setstate__(self, state):
         result = CreateGeometryFromWkb(state)
         self.this = result.this
-          
+
     def __iter__(self):
         self.iter_subgeom = 0
         return self
-        
+
     def next(self):
         if self.iter_subgeom < self.GetGeometryCount():
             subgeom = self.GetGeometryRef(self.iter_subgeom)
@@ -5624,6 +7193,10 @@ def GT_SetZ(*args):
   """GT_SetZ(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
   return _ogr.GT_SetZ(*args)
 
+def GT_SetM(*args):
+  """GT_SetM(OGRwkbGeometryType eType) -> OGRwkbGeometryType"""
+  return _ogr.GT_SetM(*args)
+
 def GT_SetModifier(*args):
   """GT_SetModifier(OGRwkbGeometryType eType, int bSetZ, int bSetM=False) -> OGRwkbGeometryType"""
   return _ogr.GT_SetModifier(*args)
@@ -5631,6 +7204,10 @@ def GT_SetModifier(*args):
 def GT_HasZ(*args):
   """GT_HasZ(OGRwkbGeometryType eType) -> int"""
   return _ogr.GT_HasZ(*args)
+
+def GT_HasM(*args):
+  """GT_HasM(OGRwkbGeometryType eType) -> int"""
+  return _ogr.GT_HasM(*args)
 
 def GT_IsSubClassOf(*args):
   """GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType eSuperType) -> int"""

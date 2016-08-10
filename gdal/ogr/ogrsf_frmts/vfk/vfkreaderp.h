@@ -45,18 +45,20 @@ class VFKReader;
 /************************************************************************/
 /*                              VFKReader                               */
 /************************************************************************/
-class VFKReader : public IVFKReader 
+class VFKReader : public IVFKReader
 {
 private:
     bool           m_bLatin2;
 
     FILE          *m_poFD;
     char          *ReadLine(bool = FALSE);
-    
+
     void          AddInfo(const char *);
 
 protected:
     char           *m_pszFilename;
+    VSIStatBuf     *m_poFStat;
+    bool            m_bAmendment;
     int             m_nDataBlockCount;
     IVFKDataBlock **m_papoDataBlock;
 
@@ -66,7 +68,7 @@ protected:
 
     /* metadata */
     std::map<CPLString, CPLString> poInfo;
-    
+
 public:
     VFKReader(const char *);
     virtual ~VFKReader();
@@ -74,10 +76,11 @@ public:
     bool           IsLatin2() const { return m_bLatin2; }
     bool           IsSpatial() const { return FALSE; }
     bool           IsPreProcessed() const { return FALSE; }
+    bool           IsValid() const { return TRUE; }
     int            ReadDataBlocks();
     int            ReadDataRecords(IVFKDataBlock * = NULL);
     int            LoadGeometry();
-    
+
     int            GetDataBlockCount() const { return m_nDataBlockCount; }
     IVFKDataBlock *GetDataBlock(int) const;
     IVFKDataBlock *GetDataBlock(const char *) const;
@@ -89,13 +92,14 @@ public:
 /*                              VFKReaderSQLite                         */
 /************************************************************************/
 
-class VFKReaderSQLite : public VFKReader 
+class VFKReaderSQLite : public VFKReader
 {
 private:
     char          *m_pszDBname;
     sqlite3       *m_poDB;
     bool           m_bSpatial;
     bool           m_bNewDb;
+    bool           m_bDbSource;
 
     IVFKDataBlock *CreateDataBlock(const char *);
     void           AddDataBlock(IVFKDataBlock *, const char *);
@@ -104,7 +108,7 @@ private:
     void           StoreInfo2DB();
 
     void           CreateIndex(const char *, const char *, const char *, bool = TRUE);
-    
+
     friend class   VFKFeatureSQLite;
 public:
     VFKReaderSQLite(const char *);
@@ -112,6 +116,7 @@ public:
 
     bool          IsSpatial() const { return m_bSpatial; }
     bool          IsPreProcessed() const { return !m_bNewDb; }
+    bool          IsValid() const { return m_poDB != NULL; }
     int           ReadDataBlocks();
     int           ReadDataRecords(IVFKDataBlock * = NULL);
 

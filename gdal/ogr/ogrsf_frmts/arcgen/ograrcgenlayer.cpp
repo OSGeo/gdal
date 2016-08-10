@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc/Info Generate Translator
  * Purpose:  Implements OGRARCGENLayer class.
@@ -40,18 +39,17 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRARCGENLayer::OGRARCGENLayer( const char* pszFilename,
-                          VSILFILE* fp, OGRwkbGeometryType eType )
-
+                                VSILFILE* fpIn, OGRwkbGeometryType eType ) :
+    poFeatureDefn(NULL),
+    fp(fpIn),
+    bEOF(FALSE),
+    nNextFID(0)
 {
-    this->fp = fp;
-    nNextFID = 0;
-    bEOF = FALSE;
-
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eType );
 
-    OGRFieldDefn    oField1( "ID", OFTInteger);
+    OGRFieldDefn oField1( "ID", OFTInteger);
     poFeatureDefn->AddFieldDefn( &oField1 );
     SetDescription( poFeatureDefn->GetName() );
 }
@@ -88,11 +86,9 @@ void OGRARCGENLayer::ResetReading()
 
 OGRFeature *OGRARCGENLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
-    while(TRUE)
+    while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -103,8 +99,8 @@ OGRFeature *OGRARCGENLayer::GetNextFeature()
         {
             return poFeature;
         }
-        else
-            delete poFeature;
+
+        delete poFeature;
     }
 }
 
@@ -117,14 +113,13 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
     if (bEOF)
         return NULL;
 
-    const char* pszLine;
     OGRwkbGeometryType eType = poFeatureDefn->GetGeomType();
 
     if (wkbFlatten(eType) == wkbPoint)
     {
-        while(TRUE)
+        while( true )
         {
-            pszLine = CPLReadLine2L(fp,256,NULL);
+            const char* pszLine = CPLReadLine2L(fp,256,NULL);
             if (pszLine == NULL || EQUAL(pszLine, "END"))
             {
                 bEOF = TRUE;
@@ -149,19 +144,18 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
                 CSLDestroy(papszTokens);
                 return poFeature;
             }
-            else
-                CSLDestroy(papszTokens);
+
+            CSLDestroy(papszTokens);
         }
     }
 
     CPLString osID;
-    OGRLinearRing* poLR =
-        (wkbFlatten(eType) == wkbPolygon) ? new OGRLinearRing() : NULL;
-    OGRLineString* poLS =
-        (wkbFlatten(eType) == wkbLineString) ? new OGRLineString() : poLR;
-    while(TRUE)
+    const bool bIsPoly = (wkbFlatten(eType) == wkbPolygon);
+    OGRLineString* poLS = static_cast<OGRLineString*>(
+        OGRGeometryFactory::createGeometry( (bIsPoly) ? wkbLinearRing : wkbLineString ));
+    while( true )
     {
-        pszLine = CPLReadLine2L(fp,256,NULL);
+        const char* pszLine = CPLReadLine2L(fp,256,NULL);
         if (pszLine == NULL)
             break;
 
@@ -173,10 +167,10 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
             OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
             poFeature->SetFID(nNextFID ++);
             poFeature->SetField(0, osID.c_str());
-            if (wkbFlatten(eType) == wkbPolygon)
+            if( bIsPoly )
             {
                 OGRPolygon* poPoly = new OGRPolygon();
-                poPoly->addRingDirectly(poLR);
+                poPoly->addRingDirectly((OGRLinearRing*)poLS);
                 poFeature->SetGeometryDirectly(poPoly);
             }
             else
@@ -226,7 +220,7 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRARCGENLayer::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRARCGENLayer::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }

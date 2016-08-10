@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GDAL_UTILS_H_INCLUDED
-#define _GDAL_UTILS_H_INCLUDED
+#ifndef GDAL_UTILS_H_INCLUDED
+#define GDAL_UTILS_H_INCLUDED
 
 /**
  * \file gdal_utils.h
@@ -48,6 +48,7 @@ CPL_C_START
 /*! Options for GDALInfo(). Opaque type */
 typedef struct GDALInfoOptions GDALInfoOptions;
 
+/** Opaque type */
 typedef struct GDALInfoOptionsForBinary GDALInfoOptionsForBinary;
 
 GDALInfoOptions CPL_DLL *GDALInfoOptionsNew(char** papszArgv, GDALInfoOptionsForBinary* psOptionsForBinary);
@@ -60,6 +61,7 @@ char CPL_DLL *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions 
 /*! Options for GDALTranslate(). Opaque type */
 typedef struct GDALTranslateOptions GDALTranslateOptions;
 
+/** Opaque type */
 typedef struct GDALTranslateOptionsForBinary GDALTranslateOptionsForBinary;
 
 GDALTranslateOptions CPL_DLL *GDALTranslateOptionsNew(char** papszArgv,
@@ -79,6 +81,7 @@ GDALDatasetH CPL_DLL GDALTranslate(const char *pszDestFilename,
 /*! Options for GDALWarp(). Opaque type */
 typedef struct GDALWarpAppOptions GDALWarpAppOptions;
 
+/** Opaque type */
 typedef struct GDALWarpAppOptionsForBinary GDALWarpAppOptionsForBinary;
 
 GDALWarpAppOptions CPL_DLL *GDALWarpAppOptionsNew(char** papszArgv,
@@ -93,13 +96,14 @@ void CPL_DLL GDALWarpAppOptionsSetWarpOption( GDALWarpAppOptions *psOptions,
                                               const char* pszKey,
                                               const char* pszValue );
 
-GDALDatasetH CPL_DLL GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
-                               GDALDatasetH *pahSrcDS,
+GDALDatasetH CPL_DLL GDALWarp( const char *pszDest, GDALDatasetH hDstDS,
+                               int nSrcCount, GDALDatasetH *pahSrcDS,
                                const GDALWarpAppOptions *psOptions, int *pbUsageError );
 
 /*! Options for GDALVectorTranslate(). Opaque type */
 typedef struct GDALVectorTranslateOptions GDALVectorTranslateOptions;
 
+/** Opaque type */
 typedef struct GDALVectorTranslateOptionsForBinary GDALVectorTranslateOptionsForBinary;
 
 GDALVectorTranslateOptions CPL_DLL *GDALVectorTranslateOptionsNew(char** papszArgv,
@@ -119,6 +123,7 @@ GDALDatasetH CPL_DLL GDALVectorTranslate( const char *pszDest, GDALDatasetH hDst
 /*! Options for GDALDEMProcessing(). Opaque type */
 typedef struct GDALDEMProcessingOptions GDALDEMProcessingOptions;
 
+/** Opaque type */
 typedef struct GDALDEMProcessingOptionsForBinary GDALDEMProcessingOptionsForBinary;
 
 GDALDEMProcessingOptions CPL_DLL *GDALDEMProcessingOptionsNew(char** papszArgv,
@@ -140,6 +145,7 @@ GDALDatasetH CPL_DLL GDALDEMProcessing(const char *pszDestFilename,
 /*! Options for GDALNearblack(). Opaque type */
 typedef struct GDALNearblackOptions GDALNearblackOptions;
 
+/** Opaque type */
 typedef struct GDALNearblackOptionsForBinary GDALNearblackOptionsForBinary;
 
 GDALNearblackOptions CPL_DLL *GDALNearblackOptionsNew(char** papszArgv,
@@ -158,6 +164,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 /*! Options for GDALGrid(). Opaque type */
 typedef struct GDALGridOptions GDALGridOptions;
 
+/** Opaque type */
 typedef struct GDALGridOptionsForBinary GDALGridOptionsForBinary;
 
 GDALGridOptions CPL_DLL *GDALGridOptionsNew(char** papszArgv,
@@ -173,6 +180,44 @@ GDALDatasetH CPL_DLL GDALGrid( const char *pszDest,
                                GDALDatasetH hSrcDS,
                                const GDALGridOptions *psOptions, int *pbUsageError );
 
+/*! Options for GDALRasterize(). Opaque type */
+typedef struct GDALRasterizeOptions GDALRasterizeOptions;
+
+/** Opaque type */
+typedef struct GDALRasterizeOptionsForBinary GDALRasterizeOptionsForBinary;
+
+GDALRasterizeOptions CPL_DLL *GDALRasterizeOptionsNew(char** papszArgv,
+                                                      GDALRasterizeOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALRasterizeOptionsFree( GDALRasterizeOptions *psOptions );
+
+void CPL_DLL GDALRasterizeOptionsSetProgress( GDALRasterizeOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
+                                    GDALDatasetH hSrcDS,
+                                    const GDALRasterizeOptions *psOptions, int *pbUsageError );
+
+/*! Options for GDALBuildVRT(). Opaque type */
+typedef struct GDALBuildVRTOptions GDALBuildVRTOptions;
+
+/** Opaque type */
+typedef struct GDALBuildVRTOptionsForBinary GDALBuildVRTOptionsForBinary;
+
+GDALBuildVRTOptions CPL_DLL *GDALBuildVRTOptionsNew(char** papszArgv,
+                                                      GDALBuildVRTOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALBuildVRTOptionsFree( GDALBuildVRTOptions *psOptions );
+
+void CPL_DLL GDALBuildVRTOptionsSetProgress( GDALBuildVRTOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALBuildVRT( const char *pszDest,
+                                   int nSrcCount, GDALDatasetH *pahSrcDS, const char* const* papszSrcDSNames,
+                                   const GDALBuildVRTOptions *psOptions, int *pbUsageError );
+
 CPL_C_END
 
-#endif /* _GDAL_UTILS_H_INCLUDED */
+#endif /* GDAL_UTILS_H_INCLUDED */

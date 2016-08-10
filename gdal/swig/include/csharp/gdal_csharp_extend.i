@@ -27,57 +27,57 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
- 
- 
+
+
 /******************************************************************************
  * GDAL raster R/W support                                                    *
  *****************************************************************************/
 
-%extend GDALRasterBandShadow 
+%extend GDALRasterBandShadow
 {
 	%apply (void *buffer_ptr) {void *buffer};
 	CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
-                          int buf_xSize, int buf_ySize, GDALDataType buf_type, 
+                          int buf_xSize, int buf_ySize, GDALDataType buf_type,
                           int pixelSpace, int lineSpace) {
-       return GDALRasterIO( self, GF_Read, xOff, yOff, xSize, ySize, 
+       return GDALRasterIO( self, GF_Read, xOff, yOff, xSize, ySize,
 		        buffer, buf_xSize, buf_ySize, buf_type, pixelSpace, lineSpace );
     }
     CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
-                          int buf_xSize, int buf_ySize, GDALDataType buf_type, 
+                          int buf_xSize, int buf_ySize, GDALDataType buf_type,
                           int pixelSpace, int lineSpace) {
-       return GDALRasterIO( self, GF_Write, xOff, yOff, xSize, ySize, 
+       return GDALRasterIO( self, GF_Write, xOff, yOff, xSize, ySize,
 		        buffer, buf_xSize, buf_ySize, buf_type, pixelSpace, lineSpace );
     }
     %clear void *buffer;
 }
 
-%extend GDALDatasetShadow 
+%extend GDALDatasetShadow
 {
 	%apply (void *buffer_ptr) {void *buffer};
 	%apply (int argin[ANY]) {int *bandMap};
 	CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
-                          int buf_xSize, int buf_ySize, GDALDataType buf_type, 
+                          int buf_xSize, int buf_ySize, GDALDataType buf_type,
                           int bandCount, int* bandMap, int pixelSpace, int lineSpace, int bandSpace) {
-       return GDALDatasetRasterIO( self, GF_Read, xOff, yOff, xSize, ySize, 
-		        buffer, buf_xSize, buf_ySize, buf_type, bandCount, 
+       return GDALDatasetRasterIO( self, GF_Read, xOff, yOff, xSize, ySize,
+		        buffer, buf_xSize, buf_ySize, buf_type, bandCount,
 		        bandMap, pixelSpace, lineSpace, bandSpace);
     }
     CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
-                          int buf_xSize, int buf_ySize, GDALDataType buf_type, 
+                          int buf_xSize, int buf_ySize, GDALDataType buf_type,
                           int bandCount, int* bandMap, int pixelSpace, int lineSpace, int bandSpace) {
-       return GDALDatasetRasterIO( self, GF_Write, xOff, yOff, xSize, ySize, 
-		        buffer, buf_xSize, buf_ySize, buf_type, bandCount, 
+       return GDALDatasetRasterIO( self, GF_Write, xOff, yOff, xSize, ySize,
+		        buffer, buf_xSize, buf_ySize, buf_type, bandCount,
 		        bandMap, pixelSpace, lineSpace, bandSpace);
     }
     %clear void *buffer;
     %clear int* bandMap;
-    
+
     %apply (void *buffer_ptr) {const GDAL_GCP* __GetGCPs};
     const GDAL_GCP* __GetGCPs( ) {
       return GDALGetGCPs( self );
     }
     %clear const GDAL_GCP* __GetGCPs;
-    
+
     CPLErr __SetGCPs( int nGCPs, GDAL_GCP const *pGCPs, const char *pszGCPProjection ) {
         return GDALSetGCPs( self, nGCPs, pGCPs, pszGCPProjection );
     }

@@ -14,7 +14,7 @@ extern "C" {
 void Clock_Epoch2YearDay (sInt4 totDay, int *Day, sInt4 * Yr);
 int Clock_MonthNum (int day, sInt4 year);
 int Clock_NumDay (int month, int day, sInt4 year, char f_tot);
-sChar Clock_GetTimeZone ();
+sChar Clock_GetTimeZone (void);
 int Clock_IsDaylightSaving2 (double clock, sChar TimeZone);
 void Clock_PrintDate (double clock, sInt4 *year, int *month, int *day,
                       int *hour, int *min, double *sec);

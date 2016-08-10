@@ -50,31 +50,31 @@ public:
     int classify(KML* poKML, int nRecLevel = 0);
     void eliminateEmpty(KML* poKML);
     bool hasOnlyEmpty() const;
-    
+
     void setType(Nodetype type);
     Nodetype getType() const;
-    
+
     void setName(std::string const& name);
     const std::string& getName() const;
-    
+
     void setLevel(std::size_t level);
     std::size_t getLevel() const;
-    
+
     void addAttribute(Attribute* poAttr);
-    
+
     void setParent(KMLNode* poNode);
     KMLNode* getParent() const;
-    
+
     void addChildren(KMLNode* poNode);
-    std::size_t countChildren();
-    
+    std::size_t countChildren() const;
+
     KMLNode* getChild(std::size_t index) const;
 
     void addContent(std::string const& text);
     void appendContent(std::string const& text);
     std::string getContent(std::size_t index) const;
     void deleteContent(std::size_t index);
-    std::size_t numContent();
+    std::size_t numContent() const;
 
     void setLayerNumber(int nNum);
     int getLayerNumber() const;
@@ -84,10 +84,10 @@ public:
 
     std::size_t getNumFeatures();
     Feature* getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount);
-    
+
     OGRGeometry* getGeometry(Nodetype eType = Unknown);
 
-    int is25D() { return b25D_; }
+    bool is25D() const { return b25D_; }
 
 private:
 
@@ -105,11 +105,10 @@ private:
     std::string sName_;
 
     Nodetype eType_;
-    int b25D_;
+    bool b25D_;
 
     int nLayerNumber_;
     int nNumFeatures_;
 };
 
 #endif /* KMLNODE_H_INCLUDED */
-

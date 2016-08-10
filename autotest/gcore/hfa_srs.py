@@ -67,10 +67,6 @@ class TestHFASRS:
 
         gdal.Unlink('/vsimem/TestHFASRS.img')
 
-        # HFA doesn't handle TOWGS84, so we undo it from the reference SRS
-        # before comparing
-        sr.SetTOWGS84(0,0,0,0,0,0,0)
-
         # For EPSG:2065. Those 2 datums are translated into D_S_JTSK in ESRI WKT... So for the purpose of
         # comparison, substitute one for another
         if sr.ExportToWkt().find('"System_Jednotne_Trigonometricke_Site_Katastralni_Ferro"') != -1 and \

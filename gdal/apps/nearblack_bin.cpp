@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Convert nearly black or nearly white border to exact black/white.
@@ -37,7 +36,7 @@ CPL_CVSID("$Id$");
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = NULL)
 {
     printf( "nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]\n"
             "          [-setalpha] [-setmask] [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n" );
@@ -92,13 +91,14 @@ int main(int argc, char** argv)
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         exit( -argc );
-    
+
     for( int i = 0; i < argc; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( argv );
             return 0;
         }
         else if( EQUAL(argv[i],"--help") )
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
     if(bUsageError == TRUE)
         Usage();
     int nRetCode = (hRetDS) ? 0 : 1;
-    
+
     GDALClose(hInDS);
     if( hRetDS != hInDS )
         GDALClose(hOutDS);

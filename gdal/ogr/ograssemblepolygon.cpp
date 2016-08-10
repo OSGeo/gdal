@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  S-57 Reader
  * Purpose:  Implements polygon assembly from a bunch of arcs.
@@ -29,9 +28,9 @@
  ****************************************************************************/
 
 #include <vector>
+#include "cpl_conv.h"
 #include "ogr_geometry.h"
 #include "ogr_api.h"
-#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
@@ -43,8 +42,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 static bool CheckPoints( OGRLineString *poLine1, int iPoint1,
-                        OGRLineString *poLine2, int iPoint2,
-                        double *pdfDistance )
+                         OGRLineString *poLine2, int iPoint2,
+                         double *pdfDistance )
 
 {
     if( pdfDistance == NULL || *pdfDistance == 0 )
@@ -82,8 +81,10 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /* -------------------------------------------------------------------- */
 /*      Establish order and range of traverse.                          */
 /* -------------------------------------------------------------------- */
-    int         iStart=0, iEnd=0, iStep=0;
-    int         nVertToAdd = poLine->getNumPoints();
+    int iStart = 0;
+    int iEnd = 0;
+    int iStep = 0;
+    const int nVertToAdd = poLine->getNumPoints();
 
     if( !bReverse )
     {
@@ -101,8 +102,8 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /* -------------------------------------------------------------------- */
 /*      Should we skip a repeating vertex?                              */
 /* -------------------------------------------------------------------- */
-    if( poRing->getNumPoints() > 0 
-        && CheckPoints( poRing, poRing->getNumPoints()-1, 
+    if( poRing->getNumPoints() > 0
+        && CheckPoints( poRing, poRing->getNumPoints()-1,
                         poLine, iStart, NULL ) )
     {
         iStart += iStep;
@@ -118,7 +119,8 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /**
  * Build a ring from a bunch of arcs.
  *
- * @param hLines handle to an OGRGeometryCollection (or OGRMultiLineString) containing the line string geometries to be built into rings.
+ * @param hLines handle to an OGRGeometryCollection (or OGRMultiLineString)
+ * containing the line string geometries to be built into rings.
  * @param bBestEffort not yet implemented???.
  * @param bAutoClose indicates if the ring should be close when first and
  * last points of the ring are the same.
@@ -130,9 +132,9 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
  */
 
 OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
-                                       int bBestEffort, 
+                                       int bBestEffort,
                                        int bAutoClose,
-                                       double dfTolerance, 
+                                       double dfTolerance,
                                        OGRErr * peErr )
 
 {
@@ -142,7 +144,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             *peErr = OGRERR_NONE;
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Check for the case of a geometrycollection that can be          */
 /*      promoted to MultiLineString.                                    */
@@ -186,8 +188,9 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /*      Setup array of line markers indicating if they have been        */
 /*      added to a ring yet.                                            */
 /* -------------------------------------------------------------------- */
-    int         nEdges = poLines->getNumGeometries();
-    int         *panEdgeConsumed, nRemainingEdges = nEdges;
+    int nEdges = poLines->getNumGeometries();
+    int nRemainingEdges = nEdges;
+    int *panEdgeConsumed = NULL;
 
     panEdgeConsumed = (int *) CPLCalloc(sizeof(int),nEdges);
 
@@ -196,15 +199,14 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /* ==================================================================== */
     while( nRemainingEdges > 0 )
     {
-        int             iEdge;
-        OGRLineString   *poLine;
-        
 /* -------------------------------------------------------------------- */
 /*      Find the first unconsumed edge.                                 */
 /* -------------------------------------------------------------------- */
-        for( iEdge = 0; panEdgeConsumed[iEdge]; iEdge++ ) {}
+        int iEdge = 0;
+        for( ; panEdgeConsumed[iEdge]; iEdge++ ) {}
 
-        poLine = (OGRLineString *) poLines->getGeometryRef(iEdge);
+        OGRLineString *poLine =
+            (OGRLineString *) poLines->getGeometryRef(iEdge);
 
         panEdgeConsumed[iEdge] = TRUE;
         nRemainingEdges--;
@@ -218,22 +220,22 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /*      Start a new ring, copying in the current line directly          */
 /* -------------------------------------------------------------------- */
         OGRLinearRing   *poRing = new OGRLinearRing();
-        
+
         AddEdgeToRing( poRing, poLine, FALSE );
 
 /* ==================================================================== */
 /*      Loop adding edges to this ring until we make a whole pass       */
 /*      within finding anything to add.                                 */
 /* ==================================================================== */
-        bool            bWorkDone = true;
-        double          dfBestDist = dfTolerance;
+        bool bWorkDone = true;
+        double dfBestDist = dfTolerance;
 
         while( !CheckPoints(poRing,0,poRing,poRing->getNumPoints()-1,NULL)
                && nRemainingEdges > 0
                && bWorkDone )
         {
-            int         iBestEdge = -1;
-            int         bReverse = FALSE;
+            int iBestEdge = -1;
+            int bReverse = FALSE;
 
             bWorkDone = false;
             dfBestDist = dfTolerance;
@@ -274,7 +276,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             // We found one within tolerance - add it.
             if( iBestEdge != -1 )
             {
-                poLine = (OGRLineString *) 
+                poLine = (OGRLineString *)
                     poLines->getGeometryRef(iBestEdge);
 
                 AddEdgeToRing( poRing, poLine, bReverse );
@@ -293,12 +295,12 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         if( !CheckPoints(poRing,0,poRing,poRing->getNumPoints()-1,
                          &dfBestDist) )
         {
-            CPLDebug( "OGR", 
+            CPLDebug( "OGR",
                       "Failed to close ring %d.\n"
                       "End Points are: (%.8f,%.7f) and (%.7f,%.7f)\n",
                       (int)aoRings.size(),
-                      poRing->getX(0), poRing->getY(0), 
-                      poRing->getX(poRing->getNumPoints()-1), 
+                      poRing->getX(0), poRing->getY(0),
+                      poRing->getX(poRing->getNumPoints()-1),
                       poRing->getY(poRing->getNumPoints()-1) );
 
             bSuccess = false;
@@ -310,8 +312,8 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         if( bAutoClose
             && !CheckPoints(poRing,0,poRing,poRing->getNumPoints()-1,NULL) )
         {
-            poRing->addPoint( poRing->getX(0), 
-                              poRing->getY(0), 
+            poRing->addPoint( poRing->getX(0),
+                              poRing->getY(0),
                               poRing->getZ(0));
         }
 
@@ -327,10 +329,10 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /*      Identify exterior ring - it will be the largest.  #3610         */
 /* -------------------------------------------------------------------- */
     double maxarea = 0.0;
-    int maxring = -1, rn;
+    int maxring = -1;
     OGREnvelope tenv;
 
-    for (rn = 0; rn < (int)aoRings.size(); ++rn)
+    for( int rn = 0; rn < (int)aoRings.size(); ++rn )
     {
         aoRings[rn]->getEnvelope(&tenv);
         double tarea = (tenv.MaxX - tenv.MinX) * (tenv.MaxY - tenv.MinY);
@@ -341,12 +343,12 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         }
     }
 
-    OGRPolygon  *poPolygon = new OGRPolygon();
+    OGRPolygon *poPolygon = new OGRPolygon();
 
     if (maxring != -1)
     {
         poPolygon->addRingDirectly(aoRings[maxring]);
-        for (rn = 0; rn < (int)aoRings.size(); ++rn)
+        for( int rn = 0; rn < static_cast<int>(aoRings.size()); ++rn )
         {
             if (rn == maxring) continue;
             poPolygon->addRingDirectly(aoRings[rn]);
@@ -360,6 +362,6 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         else
             *peErr = OGRERR_FAILURE;
     }
-    
+
     return (OGRGeometryH) poPolygon;
 }

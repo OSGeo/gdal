@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -28,31 +27,25 @@
 */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include "zlib.h"
 #include "cpl_conv.h"
 #include "cpl_minizip_zip.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
 
-#ifdef STDC
-#  include <stddef.h>
-#  include <string.h>
-#  include <stdlib.h>
-#endif
+#include <cstddef>
+
 #ifdef NO_ERRNO_H
     extern int errno;
 #else
 #   include <errno.h>
 #endif
 
-#ifndef local
-#  define local static
-#endif
-/* compile with -Dlocal if your debugger can't find static symbols */
+CPL_CVSID("$Id:");
 
 #ifndef VERSIONMADEBY
 # define VERSIONMADEBY   (0x0) /* platform dependent */
@@ -60,10 +53,6 @@
 
 #ifndef Z_BUFSIZE
 #define Z_BUFSIZE (16384)
-#endif
-
-#ifndef Z_MAXFILENAMEINZIP
-#define Z_MAXFILENAMEINZIP (256)
 #endif
 
 #ifndef ALLOC
@@ -120,7 +109,7 @@ typedef struct linkedlist_datablock_internal_s
   struct linkedlist_datablock_internal_s* next_datablock;
   uLong  avail_in_this_block;
   uLong  filled_in_this_block;
-  uLong  unused; /* for future use and alignement */
+  uLong  unused;  // For future use and alignment.
   unsigned char data[SIZEDATA_INDATABLOCK];
 } linkedlist_datablock_internal;
 
@@ -138,12 +127,13 @@ typedef struct
     uInt pos_in_buffered_data;  /* last written byte in buffered_data */
 
     uLong pos_local_header;     /* offset of the local header of the file
-                                     currenty writing */
+                                     currently writing */
     char* central_header;       /* central header data for the current file */
     uLong size_centralheader;   /* size of the central header for cur file */
     uLong flag;                 /* flag of the file currently writing */
 
-    int  method;                /* compression method of file currenty wr.*/
+    // TODO: What is "wr"?  "to"?
+    int  method;                /* compression method of file currently wr.*/
     int  raw;                   /* 1 for directly writing raw data */
     Byte buffered_data[Z_BUFSIZE]; /* buffer contain compressed data to be
                                         written. */
@@ -160,10 +150,10 @@ typedef struct
 typedef struct
 {
     zlib_filefunc_def z_filefunc;
-    voidpf filestream;        /* io structore of the zipfile */
+    voidpf filestream;        /* IO structure of the zipfile */
     linkedlist_data central_dir;/* datablock with central dir in construction*/
     int  in_opened_file_inzip;  /* 1 if a file in the zip is currently writ.*/
-    curfile_info ci;            /* info on the file curretly writing */
+    curfile_info ci;            /* info on the file currently writing */
 
     uLong begin_pos;            /* position of the beginning of the zipfile */
     uLong add_position_when_writing_offset;
@@ -180,7 +170,7 @@ typedef struct
 #include "crypt.h"
 #endif
 
-local linkedlist_datablock_internal* allocate_new_datablock()
+static linkedlist_datablock_internal* allocate_new_datablock()
 {
     linkedlist_datablock_internal* ldi;
     ldi = (linkedlist_datablock_internal*)
@@ -194,7 +184,7 @@ local linkedlist_datablock_internal* allocate_new_datablock()
     return ldi;
 }
 
-local void free_datablock(linkedlist_datablock_internal*ldi)
+static void free_datablock(linkedlist_datablock_internal*ldi)
 {
     while (ldi!=NULL)
     {
@@ -204,12 +194,12 @@ local void free_datablock(linkedlist_datablock_internal*ldi)
     }
 }
 
-local void init_linkedlist(linkedlist_data*ll)
+static void init_linkedlist(linkedlist_data*ll)
 {
     ll->first_block = ll->last_block = NULL;
 }
 
-local int add_data_in_datablock(linkedlist_data*ll,
+static int add_data_in_datablock(linkedlist_data*ll,
                                 const void *buf, uLong len)
 {
     linkedlist_datablock_internal* ldi;
@@ -271,11 +261,8 @@ local int add_data_in_datablock(linkedlist_data*ll,
    nbByte == 1, 2 or 4 (byte, short or long)
 */
 
-local int ziplocal_putValue OF((const zlib_filefunc_def* pzlib_filefunc_def,
-                                voidpf filestream, uLong x, int nbByte));
-
-local int ziplocal_putValue (const zlib_filefunc_def*pzlib_filefunc_def, 
-                             voidpf filestream, uLong x, int nbByte)
+static int ziplocal_putValue (const zlib_filefunc_def*pzlib_filefunc_def,
+                              voidpf filestream, uLong x, int nbByte)
 {
     unsigned char buf[4];
     for (int n = 0; n < nbByte; n++)
@@ -297,8 +284,7 @@ local int ziplocal_putValue (const zlib_filefunc_def*pzlib_filefunc_def,
         return ZIP_OK;
 }
 
-local void ziplocal_putValue_inmemory OF((void* dest, uLong x, int nbByte));
-local void ziplocal_putValue_inmemory (void *dest, uLong x, int nbByte)
+static void ziplocal_putValue_inmemory (void *dest, uLong x, int nbByte)
 {
     unsigned char* buf=(unsigned char*)dest;
     for (int n = 0; n < nbByte; n++) {
@@ -318,7 +304,7 @@ local void ziplocal_putValue_inmemory (void *dest, uLong x, int nbByte)
 /****************************************************************************/
 
 
-local uLong ziplocal_TmzDateToDosDate(const tm_zip *ptm,
+static uLong ziplocal_TmzDateToDosDate(const tm_zip *ptm,
                                       CPL_UNUSED uLong dosDate)
 {
     uLong year = (uLong)ptm->tm_year;
@@ -334,15 +320,10 @@ local uLong ziplocal_TmzDateToDosDate(const tm_zip *ptm,
 
 /****************************************************************************/
 
-local int ziplocal_getByte OF((
-    const zlib_filefunc_def* pzlib_filefunc_def,
-    voidpf filestream,
-    int *pi));
-
-local int ziplocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def,
-                           voidpf filestream, int *pi)
+static int ziplocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def,
+                            voidpf filestream, int *pi)
 {
-    unsigned char c;
+    unsigned char c = 0;
     int err = (int)ZREAD(*pzlib_filefunc_def,filestream,&c,1);
     if (err==1)
     {
@@ -362,15 +343,10 @@ local int ziplocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def,
 /* ===========================================================================
    Reads a long in LSB order from the given gz_stream. Sets
 */
-local int ziplocal_getShort OF((
-    const zlib_filefunc_def* pzlib_filefunc_def,
-    voidpf filestream,
-    uLong *pX));
-
-local int ziplocal_getShort (const zlib_filefunc_def* pzlib_filefunc_def,
-                             voidpf filestream, uLong *pX)
+static int ziplocal_getShort (const zlib_filefunc_def* pzlib_filefunc_def,
+                              voidpf filestream, uLong *pX)
 {
-    int i;
+    int i = 0;
     int err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     uLong x = (uLong)i;
 
@@ -385,17 +361,12 @@ local int ziplocal_getShort (const zlib_filefunc_def* pzlib_filefunc_def,
     return err;
 }
 
-local int ziplocal_getLong OF((
-    const zlib_filefunc_def* pzlib_filefunc_def,
-    voidpf filestream,
-    uLong *pX));
-
-local int ziplocal_getLong (
+static int ziplocal_getLong (
     const zlib_filefunc_def* pzlib_filefunc_def,
     voidpf filestream,
     uLong *pX )
 {
-    int i;
+    int i = 0;
     int err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     uLong x = (uLong)i;
 
@@ -425,11 +396,7 @@ local int ziplocal_getLong (
   Locate the Central directory of a zipfile (at the end, just before
     the global comment)
 */
-local uLong ziplocal_SearchCentralDir OF((
-    const zlib_filefunc_def* pzlib_filefunc_def,
-    voidpf filestream));
-
-local uLong ziplocal_SearchCentralDir(
+static uLong ziplocal_SearchCentralDir(
     const zlib_filefunc_def* pzlib_filefunc_def,
     voidpf filestream )
 {
@@ -533,7 +500,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
 
         uLong number_disk;          /* number of the current dist, used for
                                     spaning ZIP, unsupported, always 0*/
-        uLong number_disk_with_CD;  /* number the the disk with central dir, used
+        uLong number_disk_with_CD;  /* number the disk with central dir, used
                                     for spaning ZIP, unsupported, always 0*/
         uLong number_entry;
         uLong number_entry_CD;      /* total number of entries in
@@ -840,9 +807,9 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
 
     if ((err==ZIP_OK) && (zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
     {
-        zi->ci.stream.zalloc = (alloc_func)0;
-        zi->ci.stream.zfree = (free_func)0;
-        zi->ci.stream.opaque = (voidpf)0;
+        zi->ci.stream.zalloc = (alloc_func)NULL;
+        zi->ci.stream.zfree = (free_func)NULL;
+        zi->ci.stream.opaque = (voidpf)NULL;
 
         if (windowBits>0)
             windowBits = -windowBits;
@@ -858,7 +825,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     if ((err==Z_OK) && (password != NULL))
     {
         unsigned char bufHead[RAND_HEAD_LEN];
-        unsigned int sizeHead;
+        unsigned int sizeHead = 0;
         zi->ci.encrypt = 1;
         zi->ci.pcrc_32_tab = get_crc_table();
         /*init_keys(password,zi->ci.keys,zi->ci.pcrc_32_tab);*/
@@ -915,7 +882,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip (
                                  comment, method, level, 0);
 }
 
-local int zipFlushWriteBuffer(
+static int zipFlushWriteBuffer(
     zip_internal* zi )
 {
     int err=ZIP_OK;
@@ -923,7 +890,7 @@ local int zipFlushWriteBuffer(
     if (zi->ci.encrypt != 0)
     {
 #ifndef NOCRYPT
-        int t;
+        int t = 0;
         for (uInt i=0;i<zi->ci.pos_in_buffered_data;i++)
             zi->ci.buffered_data[i] = zencode(zi->ci.keys, zi->ci.pcrc_32_tab,
                                        zi->ci.buffered_data[i],t);
@@ -1212,10 +1179,12 @@ typedef struct
 /*                            CPLCreateZip()                            */
 /************************************************************************/
 
+/** Create ZIP file */
 void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 
 {
-    bool bAppend = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE"));
+    const bool bAppend =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE"));
     char** papszFilenames = NULL;
 
     if( bAppend )
@@ -1257,6 +1226,7 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 /*                         CPLCreateFileInZip()                         */
 /************************************************************************/
 
+/** Create a file in a ZIP file */
 CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
                            char **papszOptions )
 
@@ -1273,7 +1243,8 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
         return CE_Failure;
     }
 
-    int bCompressed = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
+    const int bCompressed =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
 
     int nErr = cpl_zipOpenNewFileInZip( psZip->hZip, pszFilename, NULL,
                                     NULL, 0, NULL, 0, "",
@@ -1290,6 +1261,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
 /*                         CPLWriteFileInZip()                          */
 /************************************************************************/
 
+/** Write in current file inside a ZIP file */
 CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 
 {
@@ -1298,7 +1270,7 @@ CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 
     CPLZip* psZip = (CPLZip*)hZip;
 
-    int nErr = cpl_zipWriteInFileInZip( psZip->hZip, pBuffer, 
+    int nErr = cpl_zipWriteInFileInZip( psZip->hZip, pBuffer,
                                     (unsigned int) nBufferSize );
 
     if( nErr != ZIP_OK )
@@ -1311,6 +1283,7 @@ CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 /*                         CPLCloseFileInZip()                          */
 /************************************************************************/
 
+/** Close current file inside ZIP file */
 CPLErr CPLCloseFileInZip( void *hZip )
 
 {
@@ -1331,6 +1304,7 @@ CPLErr CPLCloseFileInZip( void *hZip )
 /*                            CPLCloseZip()                             */
 /************************************************************************/
 
+/** Close ZIP file */
 CPLErr CPLCloseZip( void *hZip )
 
 {

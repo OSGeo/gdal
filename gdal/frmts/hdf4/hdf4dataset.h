@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _HDF4DATASET_H_INCLUDED_
-#define _HDF4DATASET_H_INCLUDED_
+#ifndef HDF4DATASET_H_INCLUDED_
+#define HDF4DATASET_H_INCLUDED_
 
 #include "cpl_list.h"
 #include "gdal_pam.h"
@@ -65,15 +65,15 @@ class HDF4Dataset : public GDALPamDataset
 
   private:
 
-    int         bIsHDFEOS;
+    bool bIsHDFEOS;
 
     static char **HDF4EOSTokenizeAttrs( const char *pszString );
     static char **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
                                     char **ppszAttrClass, char **ppszAttrValue );
-     
-  protected:
 
-    int32	hGR, hSD;
+  protected:
+    int32	hGR;
+    int32	hSD;
     int32	nImages;
     HDF4SubdatasetType iSubdatasetType;
     const char	*pszSubdatasetType;
@@ -94,8 +94,8 @@ class HDF4Dataset : public GDALPamDataset
 
   public:
                 HDF4Dataset();
-		~HDF4Dataset();
-    
+    virtual ~HDF4Dataset();
+
     virtual char      **GetMetadataDomainList();
     virtual char        **GetMetadata( const char * pszDomain = "" );
     static GDALDataset  *Open( GDALOpenInfo * );
@@ -106,5 +106,4 @@ char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
                    int nValues, const char *pszDelimiter );
 
 
-#endif /* _HDF4DATASET_H_INCLUDED_ */
-
+#endif /* HDF4DATASET_H_INCLUDED_ */

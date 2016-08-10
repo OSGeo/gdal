@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keaband.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -7,23 +6,23 @@
  *
  *  This file is part of LibKEA.
  *
- *  Permission is hereby granted, free of charge, to any person 
- *  obtaining a copy of this software and associated documentation 
- *  files (the "Software"), to deal in the Software without restriction, 
- *  including without limitation the rights to use, copy, modify, 
- *  merge, publish, distribute, sublicense, and/or sell copies of the 
- *  Software, and to permit persons to whom the Software is furnished 
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without restriction,
+ *  including without limitation the rights to use, copy, modify,
+ *  merge, publish, distribute, sublicense, and/or sell copies of the
+ *  Software, and to permit persons to whom the Software is furnished
  *  to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be 
+ *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
- *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ *  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ *  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
@@ -34,15 +33,16 @@
 #include "kearat.h"
 
 #include "gdal_rat.h"
-#include "libkea/KEAAttributeTable.h"
 
 #include <map>
 #include <vector>
 
 #include <limits.h>
 
+CPL_CVSID("$Id$");
+
 // constructor
-KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccess, kealib::KEAImageIO *pImageIO, int *pRefCount )
+KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, int *pRefCount )
 {
     this->poDS = pDataset; // our pointer onto the dataset
     this->nBand = nSrcBand; // this is the band we are
@@ -52,11 +52,12 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
     this->nBlockYSize = pImageIO->getImageBlockSize(nSrcBand);
     this->nRasterXSize = this->poDS->GetRasterXSize();          // ask the dataset for the total image size
     this->nRasterYSize = this->poDS->GetRasterYSize();
-    this->eAccess = eAccess;
+    this->eAccess = eAccessIn;
 
     if( pImageIO->attributeTablePresent(nSrcBand) )
     {
-        this->m_nAttributeChunkSize = pImageIO->getAttributeTableChunkSize(nSrcBand);
+        this->m_nAttributeChunkSize
+            = pImageIO->getAttributeTableChunkSize(nSrcBand);
     }
     else
     {
@@ -69,7 +70,7 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
     // increment the refcount as we now have a reference to imageio
     (*this->m_pnRefCount)++;
 
-    // initialise overview variables
+    // Initialize overview variables
     m_nOverviews = 0;
     m_panOverviewBands = NULL;
 
@@ -83,7 +84,7 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
     this->m_pAttributeTable = NULL;  // no RAT yet
     this->m_pColorTable = NULL;     // no color table yet
 
-    // initialise the metadata as a CPLStringList
+    // Initialize the metadata as a CPLStringList.
     m_papszMetadataList = NULL;
     this->UpdateMetadataList();
 }
@@ -117,7 +118,7 @@ KEARasterBand::~KEARasterBand()
         {
             m_pImageIO->close();
         }
-        catch (kealib::KEAIOException &e)
+        catch (const kealib::KEAIOException &)
         {
         }
         delete m_pImageIO;
@@ -137,7 +138,7 @@ void KEARasterBand::UpdateMetadataList()
         // add to our list
         m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, iterMetaData->first.c_str(), iterMetaData->second.c_str());
     }
-    // we have a pseudo metadata item that tells if we are thematic 
+    // we have a pseudo metadata item that tells if we are thematic
     // or continuous like the HFA driver
     if( this->m_pImageIO->getImageBandLayerType(this->nBand) == kealib::kea_continuous )
     {
@@ -205,11 +206,11 @@ CPLErr KEARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
         }
         this->m_pImageIO->readImageBlock2Band( this->nBand, pImage, this->nBlockXSize * nBlockXOff,
                                             this->nBlockYSize * nBlockYOff,
-                                            nxsize, nysize, this->nBlockXSize, this->nBlockYSize, 
+                                            nxsize, nysize, this->nBlockXSize, this->nBlockYSize,
                                             this->m_eKEADataType );
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                 "Failed to read file: %s", e.what() );
@@ -243,7 +244,7 @@ CPLErr KEARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff, void * pImage
                                             this->m_eKEADataType );
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                 "Failed to write file: %s", e.what() );
@@ -258,7 +259,7 @@ void KEARasterBand::SetDescription(const char *pszDescription)
         this->m_pImageIO->setImageBandDescription(this->nBand, pszDescription);
         GDALPamRasterBand::SetDescription(pszDescription);
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         // ignore?
     }
@@ -272,7 +273,7 @@ CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
         return CE_Failure;
     try
     {
-        // if it is LAYER_TYPE handle it seperately
+        // if it is LAYER_TYPE handle it separately
         if( EQUAL( pszName, "LAYER_TYPE" ) )
         {
             if( EQUAL( pszValue, "athematic" ) )
@@ -293,7 +294,7 @@ CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
         m_papszMetadataList = CSLSetNameValue( m_papszMetadataList, pszName, pszValue );
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         return CE_Failure;
     }
@@ -305,7 +306,7 @@ const char *KEARasterBand::GetMetadataItem (const char *pszName, const char *psz
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return NULL;
-    // get it out of the CSLStringList so we can be sure it is persistant
+    // get it out of the CSLStringList so we can be sure it is persistent
     return CSLFetchNameValue(m_papszMetadataList, pszName);
 }
 
@@ -316,7 +317,7 @@ char **KEARasterBand::GetMetadata(const char *pszDomain)
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return NULL;
     // conveniently we already have it in this format
-    return m_papszMetadataList; 
+    return m_papszMetadataList;
 }
 
 // set the metdata as a CSLStringList
@@ -326,20 +327,19 @@ CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return CE_Failure;
     int nIndex = 0;
-    char *pszName;
-    const char *pszValue;
     try
     {
         // iterate through each one
         while( papszMetadata[nIndex] != NULL )
         {
-            pszName = NULL;
-            pszValue = CPLParseNameValue( papszMetadata[nIndex], &pszName );
+            char *pszName = NULL;
+            const char *pszValue =
+                CPLParseNameValue( papszMetadata[nIndex], &pszName );
             if( pszValue == NULL )
                 pszValue = "";
             if( pszName != NULL )
             {
-                // it is LAYER_TYPE? if so handle seperately
+                // it is LAYER_TYPE? if so handle separately
                 if( EQUAL( pszName, "LAYER_TYPE" ) )
                 {
                     if( EQUAL( pszValue, "athematic" ) )
@@ -361,7 +361,7 @@ CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
             nIndex++;
         }
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         return CE_Failure;
     }
@@ -384,7 +384,7 @@ double KEARasterBand::GetNoDataValue(int *pbSuccess)
 
         return dVal;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         if( pbSuccess != NULL )
             *pbSuccess = 0;
@@ -432,7 +432,7 @@ CPLErr KEARasterBand::SetNoDataValue(double dfNoData)
         }
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         return CE_Failure;
     }
@@ -445,7 +445,7 @@ CPLErr KEARasterBand::DeleteNoDataValue()
         m_pImageIO->undefineNoDataValue(this->nBand);
         return CE_None;
     }
-    catch (kealib::KEAIOException &e)
+    catch (const kealib::KEAIOException &)
     {
         return CE_Failure;
     }
@@ -461,7 +461,7 @@ GDALRasterAttributeTable *KEARasterBand::GetDefaultRAT()
             kealib::KEAAttributeTable *pKEATable = this->m_pImageIO->getAttributeTable(kealib::kea_att_file, this->nBand);
             this->m_pAttributeTable = new KEARasterAttributeTable(pKEATable);
         }
-        catch(kealib::KEAException &e)
+        catch(const kealib::KEAException &e)
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to read attributes: %s", e.what() );
         }
@@ -515,11 +515,9 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
             // ok now copy data
             if( eFieldType == GFT_Integer )
             {
-                int *panIntData = (int*)VSIMalloc2(numRows, sizeof(int));
+                int *panIntData = (int*)VSI_MALLOC2_VERBOSE(numRows, sizeof(int));
                 if( panIntData == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Memory Allocation failed in KEARasterAttributeTable::SetDefaultRAT");
                     return CE_Failure;
                 }
 
@@ -531,11 +529,9 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
             }
             else if( eFieldType == GFT_Real )
             {
-                double *padfFloatData = (double*)VSIMalloc2(numRows, sizeof(double));
+                double *padfFloatData = (double*)VSI_MALLOC2_VERBOSE(numRows, sizeof(double));
                 if( padfFloatData == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Memory Allocation failed in KEARasterAttributeTable::SetDefaultRAT");
                     return CE_Failure;
                 }
 
@@ -547,11 +543,9 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
             }
             else
             {
-                char **papszStringData = (char**)VSIMalloc2(numRows, sizeof(char*));
+                char **papszStringData = (char**)VSI_MALLOC2_VERBOSE(numRows, sizeof(char*));
                 if( papszStringData == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Memory Allocation failed in KEARasterAttributeTable::SetDefaultRAT");
                     return CE_Failure;
                 }
 
@@ -566,7 +560,7 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
             }
         }
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to write attributes: %s", e.what() );
         return CE_Failure;
@@ -612,15 +606,15 @@ GDALColorTable *KEARasterBand::GetColorTable()
                 {
                     // maybe could be more efficient using ValuesIO
                     GDALColorEntry colorEntry;
-                    colorEntry.c1 = pKEATable->GetValueAsInt(nRowIndex, nRedIdx);
-                    colorEntry.c2 = pKEATable->GetValueAsInt(nRowIndex, nGreenIdx);
-                    colorEntry.c3 = pKEATable->GetValueAsInt(nRowIndex, nBlueIdx);
-                    colorEntry.c4 = pKEATable->GetValueAsInt(nRowIndex, nAlphaIdx);
+                    colorEntry.c1 = static_cast<short>(pKEATable->GetValueAsInt(nRowIndex, nRedIdx));
+                    colorEntry.c2 = static_cast<short>(pKEATable->GetValueAsInt(nRowIndex, nGreenIdx));
+                    colorEntry.c3 = static_cast<short>(pKEATable->GetValueAsInt(nRowIndex, nBlueIdx));
+                    colorEntry.c4 = static_cast<short>(pKEATable->GetValueAsInt(nRowIndex, nAlphaIdx));
                     this->m_pColorTable->SetColorEntry(nRowIndex, &colorEntry);
                 }
             }
         }
-        catch(kealib::KEAException &e)
+        catch(const kealib::KEAException &e)
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to read color table: %s", e.what() );
             delete this->m_pColorTable;
@@ -718,7 +712,7 @@ CPLErr KEARasterBand::SetColorTable(GDALColorTable *poCT)
         delete this->m_pColorTable;
         this->m_pColorTable = NULL;
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to write color table: %s", e.what() );
         return CE_Failure;
@@ -733,11 +727,11 @@ GDALColorInterp KEARasterBand::GetColorInterpretation()
     {
         ekeainterp = this->m_pImageIO->getImageBandClrInterp(this->nBand);
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &)
     {
         return GCI_GrayIndex;
     }
-        
+
     GDALColorInterp egdalinterp;
     switch(ekeainterp)
     {
@@ -794,7 +788,7 @@ GDALColorInterp KEARasterBand::GetColorInterpretation()
             egdalinterp = GCI_GrayIndex;
             break;
     }
-        
+
     return egdalinterp;
 }
 
@@ -860,9 +854,9 @@ CPLErr KEARasterBand::SetColorInterpretation(GDALColorInterp egdalinterp)
     {
         this->m_pImageIO->setImageBandClrInterp(this->nBand, ekeainterp);
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &)
     {
-        // do nothing? The docs say CE_Failure only if unsupporte by format
+        // Do nothing? The docs say CE_Failure only if unsupported by format.
     }
     return CE_None;
 }
@@ -890,7 +884,7 @@ void KEARasterBand::readExistingOverviews()
     m_nOverviews = this->m_pImageIO->getNumOfOverviews(this->nBand);
     m_panOverviewBands = (KEAOverview**)CPLMalloc(sizeof(KEAOverview*) * m_nOverviews);
 
-    uint64_t nXSize, nYSize;    
+    uint64_t nXSize, nYSize;
     for( int nCount = 0; nCount < m_nOverviews; nCount++ )
     {
         this->m_pImageIO->getOverviewSize(this->nBand, nCount + 1, &nXSize, &nYSize);
@@ -918,7 +912,7 @@ GDALRasterBand* KEARasterBand::GetOverview(int nOverview)
     }
 }
 
-CPLErr KEARasterBand::CreateMaskBand(CPL_UNUSED int nFlags)
+CPLErr KEARasterBand::CreateMaskBand(int)
 {
     if( m_bMaskBandOwned )
         delete m_pMaskBand;
@@ -927,7 +921,7 @@ CPLErr KEARasterBand::CreateMaskBand(CPL_UNUSED int nFlags)
     {
         this->m_pImageIO->createMask(this->nBand);
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &e)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to create mask band: %s", e.what());
         return CE_Failure;
@@ -953,7 +947,7 @@ GDALRasterBand* KEARasterBand::GetMaskBand()
                 m_pMaskBand = GDALPamRasterBand::GetMaskBand();
             }
         }
-        catch(kealib::KEAException &e)
+        catch(const kealib::KEAException &)
         {
             // do nothing?
         }
@@ -973,7 +967,7 @@ int KEARasterBand::GetMaskFlags()
             return GDALPamRasterBand::GetMaskFlags();
         }
     }
-    catch(kealib::KEAException &e)
+    catch(const kealib::KEAException &)
     {
         // do nothing?
     }
@@ -981,4 +975,3 @@ int KEARasterBand::GetMaskFlags()
     // none of the other flags seem to make sense...
     return 0;
 }
-

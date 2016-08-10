@@ -1,6 +1,7 @@
 /* pngvcrd.c
  *
  * Last changed in libpng 1.2.48 [March 8, 2012]
+ * Copyright (c) 1998-2002,2004,2007,2012 Glenn Randers-Pehrson
  * Copyright (c) 1998-2012 Glenn Randers-Pehrson
  *
  * This code is released under the libpng license.

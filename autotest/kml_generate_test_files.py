@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Generate test files that can be used to exercice the points tested
+# Purpose:  Generate test files that can be used to exercise the points tested
 #           by the OGC KML 2.2 – Abstract Test Suite
 #           (http://portal.opengeospatial.org/files/?artifact_id=27811)
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
@@ -12,7 +12,7 @@
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
 #
-# Permission is hereby granted, free of charge, to any person oxyzaining a
+# Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -120,8 +120,8 @@ def generate_libkml(filename):
         pass
 
 
-    content = """eiffer_tower_normal:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#FF0000FF)
-eiffer_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#0000FFFF)"""
+    content = """eiffel_tower_normal:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#FF0000FF)
+eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#0000FFFF)"""
     gdal.FileFromMemBuffer("/vsimem/style.txt", content)
     style_table = ogr.StyleTable()
     style_table.LoadStyleTable("/vsimem/style.txt")
@@ -141,7 +141,7 @@ eiffer_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
                 'NLC_LINKSNIPPET=linksnippet',
                 'NLC_EXPIRES=2014-12-31T23:59:59Z',
                 'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png',
-                'eiffer_tower_normal_balloonstyle_bgcolor=#FFFF00']
+                'eiffel_tower_normal_balloonstyle_bgcolor=#FFFF00']
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename, options = ds_options)
 
     ds.SetStyleTable(style_table)
@@ -194,7 +194,7 @@ eiffer_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     lyr.CreateField(ogr.FieldDefn("topfov", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("near", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("photooverlay_shape", ogr.OFTString))
-    
+
     lyr.CreateField(ogr.FieldDefn("imagepyramid_tilesize", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("imagepyramid_maxwidth", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("imagepyramid_maxheight", ogr.OFTInteger))
@@ -209,7 +209,7 @@ eiffer_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     feat.SetField('snippet', 'Very cool snippet')
     feat.SetField('begin', '1889/05/06')
     feat.SetField('end', '9999/12/31')
-    feat.SetStyleString('@eiffer_tower')
+    feat.SetStyleString('@eiffel_tower')
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825)'))
     lyr.CreateFeature(feat)
 
@@ -244,7 +244,7 @@ eiffer_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     feat.SetField("scale_y", 3)
     feat.SetField("scale_z", 4)
     feat.SetField("altitudeMode", "relativeToGround")
-    feat.SetField("model", "http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae")
+    feat.SetField("model", "http://even.rouault.free.fr/kml/gdal_2.1/dummy.dae")
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -337,7 +337,7 @@ def generate_libkml_update(filename):
         pass
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename,
-        options = ['UPDATE_TARGETHREF=test_ogrlibkml.kml'])
+        options = ['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
     lyr = ds.CreateLayer('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(100)

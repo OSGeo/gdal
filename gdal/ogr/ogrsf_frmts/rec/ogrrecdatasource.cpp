@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Epiinfo .REC Translator
  * Purpose:  Implements OGRRECDataSource class
@@ -37,13 +36,10 @@ CPL_CVSID("$Id$");
 /*                          OGRRECDataSource()                          */
 /************************************************************************/
 
-OGRRECDataSource::OGRRECDataSource()
-
-{
-    poLayer = NULL;
-
-    pszName = NULL;
-}
+OGRRECDataSource::OGRRECDataSource() :
+    pszName(NULL),
+    poLayer(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRRECDataSource()                          */
@@ -77,8 +73,8 @@ OGRLayer *OGRRECDataSource::GetLayer( int iLayer )
 {
     if( iLayer == 0 )
         return poLayer;
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -89,32 +85,28 @@ int OGRRECDataSource::Open( const char * pszFilename )
 
 {
     pszName = CPLStrdup( pszFilename );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify that the extension is REC.                               */
 /* -------------------------------------------------------------------- */
     if( !(strlen(pszFilename) > 4 &&
           EQUAL(pszFilename+strlen(pszFilename)-4,".rec") ) )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    const char * pszLine;
-    FILE       * fp;
-
-    fp = VSIFOpen( pszFilename, "rb" );
+    FILE *fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read a line, and verify that it consists of at least one        */
 /*      field that is a number greater than zero.                       */
 /* -------------------------------------------------------------------- */
-    int  nFieldCount;
-    pszLine = CPLReadLine( fp );
+    const char * pszLine = CPLReadLine( fp );
 
-    nFieldCount = atoi(pszLine);
+    const int nFieldCount = atoi(pszLine);
     if( nFieldCount < 1 || nFieldCount > 1000 )
     {
         VSIFClose( fp );

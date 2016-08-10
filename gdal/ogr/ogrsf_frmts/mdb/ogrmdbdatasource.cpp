@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMDBDataSource class.
@@ -304,7 +303,7 @@ int OGRMDBDataSource::Open( const char * pszNewName )
 
     /* Is it a ESRI Personal Geodatabase ? */
     OGRMDBTable* poGDB_GeomColumns = poDB->GetTable("GDB_GeomColumns");
-    if (poGDB_GeomColumns && !CSLTestBoolean(CPLGetConfigOption("MDB_RAW", "OFF")))
+    if (poGDB_GeomColumns && !CPLTestBool(CPLGetConfigOption("MDB_RAW", "OFF")))
     {
         int nRet = OpenGDB(poGDB_GeomColumns);
         delete poGDB_GeomColumns;
@@ -314,7 +313,7 @@ int OGRMDBDataSource::Open( const char * pszNewName )
 
     /* Is it a Geomedia warehouse ? */
     OGRMDBTable* poGAliasTable = poDB->GetTable("GAliasTable");
-    if (poGAliasTable && !CSLTestBoolean(CPLGetConfigOption("MDB_RAW", "OFF")))
+    if (poGAliasTable && !CPLTestBool(CPLGetConfigOption("MDB_RAW", "OFF")))
     {
         int nRet = OpenGeomediaWarehouse(poGAliasTable);
         delete poGAliasTable;
@@ -371,12 +370,12 @@ OGRLayer *OGRMDBDataSource::GetLayer( int iLayer )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMDBDataSource::GetLayerByName( const char* pszName )
+OGRLayer *OGRMDBDataSource::GetLayerByName( const char* pszNameIn )
 
 {
-    if (pszName == NULL)
+    if (pszNameIn == NULL)
         return NULL;
-    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszName);
+    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszNameIn);
     if (poLayer)
         return poLayer;
 
@@ -384,11 +383,11 @@ OGRLayer *OGRMDBDataSource::GetLayerByName( const char* pszName )
     {
         poLayer = papoLayersInvisible[i];
 
-        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+        if( strcmp( pszNameIn, poLayer->GetName() ) == 0 )
             return poLayer;
     }
 
-    OGRMDBTable* poTable = poDB->GetTable(pszName);
+    OGRMDBTable* poTable = poDB->GetTable(pszNameIn);
     if (poTable == NULL)
         return NULL;
 
@@ -421,7 +420,7 @@ OGRSpatialReference* OGRMDBDataSource::GetGeomediaSRS(const char* pszGCoordSyste
         return NULL;
 
     poGCoordSystemTable->ResetReading();
-    
+
     OGRFeature* poFeature;
     while((poFeature = poGCoordSystemTable->GetNextFeature()) != NULL)
     {

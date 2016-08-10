@@ -4,9 +4,9 @@ LD	=	@CXX@
 
 CPPFLAGS = -DUSE_CPL -DGRASS_GISBASE=\"@GRASS_GISBASE@\" \
 	  @GDAL_INC@ @GRASS_INCLUDE@ @PQ_INCLUDE@ @CPPFLAGS@
-CXXFLAGS = @CXX_WFLAGS@ @CXX_PIC@ 
-CFLAGS   = @CFLAGS@ 
-LDFLAGS  = @LDFLAGS@ 
+CXXFLAGS = @CXX_WFLAGS@ @CXX_PIC@
+CFLAGS   = @CFLAGS@
+LDFLAGS  = @LDFLAGS@
 
 RANLIB		=	@RANLIB@
 SO_EXT		=	@SO_EXT@
@@ -40,7 +40,7 @@ install:	default
 	cp -r @GRASS_GISBASE@/driver/db/* ${GRASSTABLES_DIR}/driver/db/
 
 clean:
-	rm -f $(OLIBNAME) $(GLIBNAME) *.o 
+	rm -f $(OLIBNAME) $(GLIBNAME) *.o
 
 distclean: clean
 	rm -fr Makefile config.status config.log autom*.cache
@@ -49,7 +49,7 @@ distclean: clean
 $(GLIBNAME):	grass57dataset.o
 	$(LD_SHARED) $(LDFLAGS) grass57dataset.o $(LIBS) -o $(GLIBNAME)
 
-$(OLIBNAME):	ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o 
+$(OLIBNAME):	ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o
 	$(LD_SHARED) $(LDFLAGS) ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o $(LIBS) -o $(OLIBNAME)
 
 %.o:	%.cpp

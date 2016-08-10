@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XLS Translator
  * Purpose:  Implements OGRXLSDriver.
@@ -97,11 +96,10 @@ void RegisterOGRXLS()
 
 {
     OGRSFDriver* poDriver = new OGRXLSDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "MS Excel format" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xls" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_xls.html" );
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
-}
 
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MS Excel format" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xls" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_xls.html" );
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+}

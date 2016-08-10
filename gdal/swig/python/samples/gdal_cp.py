@@ -28,10 +28,12 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-import sys
-import os
 import fnmatch
+import os
+import sys
+
+from osgeo import gdal
+
 
 def needsVSICurl(filename):
     return filename.startswith('http://') or filename.startswith('https://') or filename.startswith('ftp://')

@@ -13,7 +13,7 @@ GEOS_LIB     = c:\release-1500\lib\geos_c.lib
 # The cURL library is used for WCS, WMS, GeoJSON, SRS call importFromUrl(), WFS, GFT, CouchDB, /vsicurl/ etc.
 CURL_DIR=c:\release-1500
 CURL_INC = -I$(CURL_DIR)/include
-# Uncoment following line to use libcurl as dynamic library
+# Uncomment following line to use libcurl as dynamic library
 CURL_LIB = $(CURL_DIR)/lib/libcurl_imp.lib wsock32.lib wldap32.lib winmm.lib
 
 # Uncomment for Expat support (required for KML, GPX and GeoRSS read support).

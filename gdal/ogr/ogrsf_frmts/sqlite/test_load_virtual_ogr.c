@@ -32,8 +32,8 @@
     /*
     / using an AMALGAMATED version of SpatiaLite
     / a private internal copy of SQLite is included:
-    / so we are required including the SpatiaLite's 
-    / own header 
+    / so we are required including the SpatiaLite's
+    / own header
     /
     / IMPORTANT NOTICE: using AMALAGATION is only
     / useful on Windows (to skip DLL hell related oddities)

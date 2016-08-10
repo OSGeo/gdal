@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements reading of FileGDB tables
@@ -28,11 +27,12 @@
  ****************************************************************************/
 
 #include "filegdbtable_priv.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "ogrpgeogeometry.h" /* SHPT_ constants and OGRCreateFromMultiPatchPart() */
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 #define TEST_BIT(ar, bit)                       (ar[(bit) / 8] & (1 << ((bit) % 8)))
 #define BIT_ARRAY_SIZE_IN_BYTES(bitsize)        (((bitsize)+7)/8)
@@ -47,6 +47,15 @@ CPL_CVSID("$Id");
 /*       or for 4 ReadVarUInt64NoCheck */
 #define ZEROES_AFTER_END_OF_BUFFER      4
 
+
+static const int EXT_SHAPE_Z_FLAG     = 0x80000000;
+static const int EXT_SHAPE_M_FLAG     = 0x40000000;
+static const int EXT_SHAPE_CURVE_FLAG = 0x20000000;
+
+static const GUInt32 EXT_SHAPE_SEGMENT_ARC = 1;
+static const GUInt32 EXT_SHAPE_SEGMENT_BEZIER = 4;
+static const GUInt32 EXT_SHAPE_SEGMENT_ELLIPSE = 5;
+
 namespace OpenFileGDB
 {
 
@@ -56,8 +65,8 @@ namespace OpenFileGDB
 
 void FileGDBTablePrintError(const char* pszFile, int nLineNumber)
 {
-    CPLError(CE_Failure, CPLE_AppDefined, "Error occured in %s at line %d",
-             pszFile, nLineNumber);
+    CPLError( CE_Failure, CPLE_AppDefined, "Error occurred in %s at line %d",
+              pszFile, nLineNumber );
 }
 
 /************************************************************************/
@@ -199,7 +208,7 @@ static int ReadVarUInt(GByte*& pabyIter, GByte* pabyEnd, OutType& nOutVal)
     GByte* pabyLocalIter = pabyIter + 1;
     int nShift = 7;
     OutType nVal = ( b & 0x7F );
-    while(TRUE)
+    while( true )
     {
         if( !(ControleType::check_bounds) )
         {
@@ -229,20 +238,20 @@ static int ReadVarUInt(GByte*& pabyIter, GByte* pabyEnd, OutType& nOutVal)
 
 struct ControleTypeVerboseErrorTrue
 {
-    static const bool check_bounds = true;
-    static const bool verbose_error = true;
+    static const EMULATED_BOOL check_bounds = true;
+    static const EMULATED_BOOL verbose_error = true;
 };
 
 struct ControleTypeVerboseErrorFalse
 {
-    static const bool check_bounds = true;
-    static const bool verbose_error = false;
+    static const EMULATED_BOOL check_bounds = true;
+    static const EMULATED_BOOL verbose_error = false;
 };
 
 struct ControleTypeNone
 {
-    static const bool check_bounds = false;
-    static const bool verbose_error = false;
+    static const EMULATED_BOOL check_bounds = false;
+    static const EMULATED_BOOL verbose_error = false;
 };
 
 static int ReadVarUInt32(GByte*& pabyIter, GByte* pabyEnd, GUInt32& nOutVal)
@@ -306,7 +315,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
 
     if( nRowBlobLength > nBufferMaxSize )
     {
-        GByte* pabyNewBuffer = (GByte*) VSIRealloc( pabyBuffer,
+        GByte* pabyNewBuffer = (GByte*) VSI_REALLOC_VERBOSE( pabyBuffer,
                                 nRowBlobLength + ZEROES_AFTER_END_OF_BUFFER );
         if( pabyNewBuffer == NULL )
             return FALSE;
@@ -358,7 +367,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
             case FGFT_UUID_2: nRequiredLength += UUID_SIZE_IN_BYTES; break;
 
             default:
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 break;
         }
     }
@@ -392,7 +401,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                     if( !ReadVarUInt32Silent(pabyIter, pabyBuffer + nRowBlobLength, nLength) ||
                         pabyIter - (pabyBuffer + nRequiredLength) > 5 )
                         return FALSE;
-                    nRequiredLength = pabyIter - pabyBuffer;
+                    nRequiredLength = static_cast<GUInt32>(pabyIter - pabyBuffer);
                     if( nLength > nRowBlobLength - nRequiredLength )
                         return FALSE;
                     for( GUInt32 j=0;j<nLength;j++ )
@@ -414,7 +423,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                     if( !ReadVarUInt32Silent(pabyIter, pabyBuffer + nRowBlobLength, nLength) ||
                         pabyIter - (pabyBuffer + nRequiredLength) > 5 )
                         return FALSE;
-                    nRequiredLength = pabyIter - pabyBuffer;
+                    nRequiredLength = static_cast<GUInt32>(pabyIter - pabyBuffer);
                     if( nLength > nRowBlobLength - nRequiredLength )
                         return FALSE;
                     nRequiredLength += nLength;
@@ -433,7 +442,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                 case FGFT_UUID_2: nRequiredLength += UUID_SIZE_IN_BYTES; break;
 
                 default:
-                    CPLAssert(FALSE);
+                    CPLAssert(false);
                     break;
             }
             if( nRequiredLength > nRowBlobLength )
@@ -449,20 +458,20 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
 /*                      GuessFeatureLocations()                         */
 /************************************************************************/
 
-#define MARK_DELETED(x)  ((x) | (((GIntBig)1) << 63))
-#define IS_DELETED(x)    (((x) & (((GIntBig)1) << 63)) != 0)
-#define GET_OFFSET(x)    ((x) & ~(((GIntBig)1) << 63))
+#define MARK_DELETED(x)  ((x) | (((GUIntBig)1) << 63))
+#define IS_DELETED(x)    (((x) & (((GUIntBig)1) << 63)) != 0)
+#define GET_OFFSET(x)    ((x) & ~(((GUIntBig)1) << 63))
 
 int FileGDBTable::GuessFeatureLocations()
 {
     VSIFSeekL(fpTable, 0, SEEK_END);
     nFileSize = VSIFTellL(fpTable);
-    
+
     int bReportDeletedFeatures =
-        CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_REPORT_DELETED_FEATURES", "NO"));
+        CPLTestBool(CPLGetConfigOption("OPENFILEGDB_REPORT_DELETED_FEATURES", "NO"));
 
     vsi_l_offset nOffset = 40 + nFieldDescLength;
-    
+
     if( nOffsetFieldDesc != 40 )
     {
         /* Check if there is a deleted field description at offset 40 */
@@ -586,7 +595,7 @@ int FileGDBTable::ReadTableXHeader()
 
             // Allocate a bit mask array for blocks of 1024 features.
             int nSizeInBytes = BIT_ARRAY_SIZE_IN_BYTES(nBitsForBlockMap);
-            pabyTablXBlockMap = (GByte*) VSIMalloc( nSizeInBytes );
+            pabyTablXBlockMap = (GByte*) VSI_MALLOC_VERBOSE( nSizeInBytes );
             returnErrorIf(pabyTablXBlockMap == NULL );
             returnErrorIf(VSIFReadL( pabyTablXBlockMap, nSizeInBytes, 1, fpTableX ) != 1 );
             /* returnErrorIf(nMagic2 == 0 ); */
@@ -599,6 +608,21 @@ int FileGDBTable::ReadTableXHeader()
         }
     }
     return TRUE;
+}
+
+/************************************************************************/
+/*                            ReadUTF16String()                         */
+/************************************************************************/
+
+static std::string ReadUTF16String(const GByte* pabyIter, int nCarCount)
+{
+    std::wstring osWideStr;
+    for(int j=0;j<nCarCount;j++)
+        osWideStr += pabyIter[2 * j] | (pabyIter[2 * j + 1] << 8);
+    char* pszStr = CPLRecodeFromWChar(osWideStr.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
+    std::string osRet(pszStr);
+    CPLFree(pszStr);
+    return osRet;
 }
 
 /************************************************************************/
@@ -633,7 +657,7 @@ int FileGDBTable::Open(const char* pszFilename,
 
     CPLString osTableXName;
     if( nValidRecordCount > 0 &&
-        !CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_IGNORE_GDBTABLX", "FALSE")) )
+        !CPLTestBool(CPLGetConfigOption("OPENFILEGDB_IGNORE_GDBTABLX", "FALSE")) )
     {
         osTableXName = CPLFormFilename(CPLGetPath(pszFilename),
                                         CPLGetBasename(pszFilename), "gdbtablx");
@@ -648,7 +672,7 @@ int FileGDBTable::Open(const char* pszFilename,
                         "Trying to guess feature locations, but this might fail or "
                         "return incorrect results", osTableXName.c_str());
             }
-            else if( !CSLTestBoolean(pszIgnoreGDBTablXAbsence) )
+            else if( !CPLTestBool(pszIgnoreGDBTablXAbsence) )
             {
                 returnErrorIf(fpTableX == NULL );
             }
@@ -661,7 +685,7 @@ int FileGDBTable::Open(const char* pszFilename,
     {
         if(nValidRecordCount > nTotalRecordCount )
         {
-            if( CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_USE_GDBTABLE_RECORD_COUNT", "FALSE")) )
+            if( CPLTestBool(CPLGetConfigOption("OPENFILEGDB_USE_GDBTABLE_RECORD_COUNT", "FALSE")) )
             {
                 /* Potentially unsafe. See #5842 */
                 CPLDebug("OpenFileGDB", "%s: nTotalRecordCount (was %d) forced to nValidRecordCount=%d",
@@ -727,7 +751,7 @@ int FileGDBTable::Open(const char* pszFilename,
 
     GUInt32 nRemaining = nFieldDescLength - 10;
     nBufferMaxSize = nRemaining;
-    pabyBuffer = (GByte*)VSIMalloc(nBufferMaxSize + ZEROES_AFTER_END_OF_BUFFER);
+    pabyBuffer = (GByte*)VSI_MALLOC_VERBOSE(nBufferMaxSize + ZEROES_AFTER_END_OF_BUFFER);
     returnErrorIf(pabyBuffer == NULL );
     returnErrorIf(VSIFReadL(pabyBuffer, nRemaining, 1, fpTable) != 1 );
 
@@ -740,9 +764,7 @@ int FileGDBTable::Open(const char* pszFilename,
         pabyIter ++;
         nRemaining --;
         returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
-        std::string osName;
-        for(int j=0;j<nCarCount;j++) //FIXME? UTF16
-            osName += pabyIter[2 * j];
+        std::string osName(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -751,9 +773,7 @@ int FileGDBTable::Open(const char* pszFilename,
         pabyIter ++;
         nRemaining --;
         returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
-        std::string osAlias;
-        for(int j=0;j<nCarCount;j++) //FIXME? UTF16
-            osAlias += pabyIter[2 * j];
+        std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -787,7 +807,7 @@ int FileGDBTable::Open(const char* pszFilename,
                     nRemaining -= 5;
                     GByte* pabyIterBefore = pabyIter;
                     returnErrorIf(!ReadVarUInt32(pabyIter, pabyIter + nRemaining, defaultValueLength));
-                    nRemaining -= (pabyIter - pabyIterBefore);
+                    nRemaining -= static_cast<GUInt32>(pabyIter - pabyIterBefore);
                     break;
                 }
 
@@ -908,9 +928,7 @@ int FileGDBTable::Open(const char* pszFilename,
                 pabyIter ++;
                 nRemaining --;
                 returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
-                std::string osRasterColumn;
-                for(int j=0;j<nCarCount;j++) //FIXME? UTF16
-                    osRasterColumn += pabyIter[2 * j];
+                std::string osRasterColumn(ReadUTF16String(pabyIter, nCarCount));
                 pabyIter += 2 * nCarCount;
                 nRemaining -= 2 * nCarCount;
                 poRasterField->osRasterColumnName = osRasterColumn;
@@ -922,8 +940,7 @@ int FileGDBTable::Open(const char* pszFilename,
             nRemaining -= sizeof(nLengthWKT);
 
             returnErrorIf(nRemaining < (GUInt32)(1 + nLengthWKT) );
-            for(int j=0;j<nLengthWKT/2;j++) //FIXME? UTF16
-                poField->osWKT += pabyIter[2 * j];
+            poField->osWKT = ReadUTF16String(pabyIter, nLengthWKT/2);
             pabyIter += nLengthWKT;
             nRemaining -= nLengthWKT;
 
@@ -964,6 +981,10 @@ int FileGDBTable::Open(const char* pszFilename,
                 if( poField->bHasM )
                 {
                     READ_DOUBLE(poField->dfMTolerance);
+#ifdef DEBUG_VERBOSE
+                    CPLDebug("OpenFileGDB", "MOrigin = %g, MScale = %g, MTolerance = %g",
+                             poField->dfMOrigin, poField->dfMScale, poField->dfMTolerance);
+#endif
                 }
 
                 if( poField->bHasZ )
@@ -991,7 +1012,7 @@ int FileGDBTable::Open(const char* pszFilename,
                 /* here. When there are 3, the first one is zmin and the second */
                 /* one is zmax */
                 int nCountDoubles = 0;
-                while( TRUE )
+                while( true )
                 {
                     returnErrorIf(nRemaining < 5 );
 
@@ -1050,7 +1071,7 @@ static int SkipVarUInt(GByte*& pabyIter, GByte* pabyEnd, int nIter = 1)
     returnErrorIf(pabyLocalIter /*+ nIter - 1*/ >= pabyEnd);
     while( nIter -- > 0 )
     {
-        while(TRUE)
+        while( true )
         {
             GByte b = *pabyLocalIter;
             pabyLocalIter ++;
@@ -1084,12 +1105,12 @@ static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
 
     GByte* pabyLocalIter = pabyIter + 1;
     int nShift = 6;
-    while(TRUE)
+    while( true )
     {
-        GUIntBig b = *pabyLocalIter;
+        GUIntBig b64 = *pabyLocalIter;
         pabyLocalIter ++;
-        nVal |= ( b & 0x7F ) << nShift;
-        if( (b & 0x80) == 0 )
+        nVal |= ( b64 & 0x7F ) << nShift;
+        if( (b64 & 0x80) == 0 )
         {
             pabyIter = pabyLocalIter;
             nOutVal += nVal * nSign;
@@ -1260,7 +1281,7 @@ int FileGDBTable::SelectRow(int iRow)
                     returnErrorAndCleanupIf( nOffsetTable + 4 + nRowBlobLength > nFileSize, nCurRow = -1 );
                 }
 
-                GByte* pabyNewBuffer = (GByte*) VSIRealloc( pabyBuffer,
+                GByte* pabyNewBuffer = (GByte*) VSI_REALLOC_VERBOSE( pabyBuffer,
                                 nRowBlobLength + ZEROES_AFTER_END_OF_BUFFER );
                 returnErrorAndCleanupIf(pabyNewBuffer == NULL, nCurRow = -1 );
 
@@ -1270,7 +1291,7 @@ int FileGDBTable::SelectRow(int iRow)
             returnErrorAndCleanupIf(
                 VSIFReadL(pabyBuffer, nRowBlobLength, 1, fpTable) != 1, nCurRow = -1 );
             /* Protection for 4 ReadVarUInt64NoCheck */
-            CPLAssert(ZEROES_AFTER_END_OF_BUFFER == 4);
+            CPL_STATIC_ASSERT(ZEROES_AFTER_END_OF_BUFFER == 4);
             pabyBuffer[nRowBlobLength] = 0;
             pabyBuffer[nRowBlobLength+1] = 0;
             pabyBuffer[nRowBlobLength+2] = 0;
@@ -1350,7 +1371,8 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
                 continue;
         }
 
-        GUInt32 nLength;
+        GUInt32 nLength = 0;
+        CPL_IGNORE_RET_VAL(nLength);
         switch( apoFields[j]->eType )
         {
             case FGFT_STRING:
@@ -1378,8 +1400,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
             case FGFT_UUID_2: nLength = UUID_SIZE_IN_BYTES; break;
 
             default:
-                nLength = 0;
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 break;
         }
 
@@ -1429,7 +1450,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
             nChSaved = *pabyIterVals;
             *pabyIterVals = '\0';
 
-            /* CPLDebug("OpenFileGDB", "Field %d, row %d: %s", iCol, nCurRow, sCurField.String); */ 
+            /* CPLDebug("OpenFileGDB", "Field %d, row %d: %s", iCol, nCurRow, sCurField.String); */
 
             break;
         }
@@ -1444,7 +1465,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
 
             /* eCurFieldType = OFTInteger; */
             sCurField.Integer = GetInt16(pabyIterVals, 0);
-            
+
             pabyIterVals += sizeof(GInt16);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %d", iCol, nCurRow, sCurField.Integer); */
 
@@ -1461,7 +1482,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
 
             /* eCurFieldType = OFTInteger; */
             sCurField.Integer = GetInt32(pabyIterVals, 0);
-            
+
             pabyIterVals += sizeof(GInt32);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %d", iCol, nCurRow, sCurField.Integer); */
 
@@ -1478,7 +1499,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
 
             /* eCurFieldType = OFTReal; */
             sCurField.Real = GetFloat32(pabyIterVals, 0);
-            
+
             pabyIterVals += sizeof(float);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %f", iCol, nCurRow, sCurField.Real); */
 
@@ -1495,7 +1516,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
 
             /* eCurFieldType = OFTReal; */
             sCurField.Real = GetFloat64(pabyIterVals, 0);
-            
+
             pabyIterVals += sizeof(double);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %f", iCol, nCurRow, sCurField.Real); */
 
@@ -1583,7 +1604,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
             /* eCurFieldType = OFTString; */
             sCurField.String = achGUIDBuffer;
             /*78563412BC9AF0DE1234567890ABCDEF --> {12345678-9ABC-DEF0-1234-567890ABCDEF} */
-            sprintf(achGUIDBuffer,
+            snprintf(achGUIDBuffer, sizeof(achGUIDBuffer),
                     "{%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                     pabyIterVals[3], pabyIterVals[2], pabyIterVals[1], pabyIterVals[0],
                     pabyIterVals[5], pabyIterVals[4],
@@ -1599,7 +1620,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
         }
 
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             break;
     }
 
@@ -1637,19 +1658,19 @@ int FileGDBTable::GetIndexCount()
     }
 
     VSIFSeekL(fpIndexes, 0, SEEK_END);
-    vsi_l_offset nFileSize = VSIFTellL(fpIndexes);
-    returnErrorAndCleanupIf(nFileSize > 1024 * 1024, VSIFCloseL(fpIndexes) );
+    vsi_l_offset l_nFileSize = VSIFTellL(fpIndexes);
+    returnErrorAndCleanupIf(l_nFileSize > 1024 * 1024, VSIFCloseL(fpIndexes) );
 
-    GByte* pabyIdx = (GByte*)VSIMalloc((size_t)nFileSize);
+    GByte* pabyIdx = (GByte*)VSI_MALLOC_VERBOSE((size_t)l_nFileSize);
     returnErrorAndCleanupIf(pabyIdx == NULL, VSIFCloseL(fpIndexes) );
 
     VSIFSeekL(fpIndexes, 0, SEEK_SET);
-    int nRead = (int)VSIFReadL( pabyIdx, (size_t)nFileSize, 1, fpIndexes );
+    int nRead = (int)VSIFReadL( pabyIdx, (size_t)l_nFileSize, 1, fpIndexes );
     VSIFCloseL(fpIndexes);
     returnErrorAndCleanupIf(nRead != 1, VSIFree(pabyIdx) );
 
     GByte* pabyCur = pabyIdx;
-    GByte* pabyEnd = pabyIdx + nFileSize;
+    GByte* pabyEnd = pabyIdx + l_nFileSize;
     returnErrorAndCleanupIf(pabyEnd - pabyCur < 4, VSIFree(pabyIdx) );
     GUInt32 nIndexCount = GetUInt32(pabyCur, 0);
     pabyCur += 4;
@@ -1671,10 +1692,7 @@ int FileGDBTable::GetIndexCount()
         pabyCur += sizeof(GUInt32);
         returnErrorAndCleanupIf(nIdxNameCarCount > 1024, VSIFree(pabyIdx) );
         returnErrorAndCleanupIf((GUInt32)(pabyEnd - pabyCur) < 2 * nIdxNameCarCount, VSIFree(pabyIdx) );
-        std::string osIndexName;
-        GUInt32 j;
-        for(j=0;j<nIdxNameCarCount;j++) //FIXME? UTF16
-            osIndexName += pabyCur[2 * j];
+        std::string osIndexName(ReadUTF16String(pabyCur, nIdxNameCarCount));
         pabyCur += 2 * nIdxNameCarCount;
 
         // Skip magic fields
@@ -1685,9 +1703,7 @@ int FileGDBTable::GetIndexCount()
         pabyCur += sizeof(GUInt32);
         returnErrorAndCleanupIf(nColNameCarCount > 1024, VSIFree(pabyIdx) );
         returnErrorAndCleanupIf((GUInt32)(pabyEnd - pabyCur) < 2 * nColNameCarCount, VSIFree(pabyIdx) );
-        std::string osFieldName;
-        for(j=0;j<nColNameCarCount;j++) //FIXME? UTF16
-            osFieldName += pabyCur[2 * j];
+        std::string osFieldName(ReadUTF16String(pabyCur, nColNameCarCount));
         pabyCur += 2 * nColNameCarCount;
 
         // Skip magic field
@@ -1802,6 +1818,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
         case SHPT_POINTZM:
         case SHPT_POINT:
         case SHPT_POINTM:
+        case SHPT_GENERALPOINT:
         {
             GUIntBig x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
@@ -1838,7 +1855,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
         case SHPT_GENERALPOLYLINE:
         case SHPT_GENERALPOLYGON:
         {
-            nToSkip = 1 + ((nGeomType & 0x20000000) ? 1 : 0);
+            nToSkip = 1 + ((nGeomType & EXT_SHAPE_CURVE_FLAG) ? 1 : 0);
             break;
         }
 
@@ -1859,7 +1876,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
     if( nPoints == 0 )
         return TRUE;
     returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd, nToSkip) );
-    
+
     GUIntBig vxmin, vymin, vdx, vdy;
 
     returnErrorIf(pabyCur >= pabyEnd);
@@ -1867,7 +1884,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
     ReadVarUInt64NoCheck(pabyCur, vymin);
     ReadVarUInt64NoCheck(pabyCur, vdx);
     ReadVarUInt64NoCheck(pabyCur, vdy);
-    
+
     psOutFeatureEnvelope->MinX = vxmin / poGeomField->dfXYScale + poGeomField->dfXOrigin;
     psOutFeatureEnvelope->MinY = vymin / poGeomField->dfXYScale + poGeomField->dfYOrigin;
     psOutFeatureEnvelope->MaxX = (vxmin + vdx) / poGeomField->dfXYScale + poGeomField->dfXOrigin;
@@ -1899,6 +1916,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
         case SHPT_POINTZM:
         case SHPT_POINT:
         case SHPT_POINTM:
+        case SHPT_GENERALPOINT:
         {
             GUIntBig x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
@@ -1934,7 +1952,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
         case SHPT_GENERALPOLYLINE:
         case SHPT_GENERALPOLYGON:
         {
-            nToSkip = 1 + ((nGeomType & 0x20000000) ? 1 : 0);
+            nToSkip = 1 + ((nGeomType & EXT_SHAPE_CURVE_FLAG) ? 1 : 0);
             break;
         }
 
@@ -1955,7 +1973,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
     if( nPoints == 0 )
         return TRUE;
     returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd, nToSkip) );
-    
+
     GUIntBig vxmin, vymin, vdx, vdy;
 
     returnErrorIf(pabyCur >= pabyEnd);
@@ -1976,8 +1994,8 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
 /*                           FileGDBField()                             */
 /************************************************************************/
 
-FileGDBField::FileGDBField(FileGDBTable* poParent) :
-    poParent(poParent), eType(FGFT_UNDEFINED), bNullable(FALSE),
+FileGDBField::FileGDBField(FileGDBTable* poParentIn) :
+    poParent(poParentIn), eType(FGFT_UNDEFINED), bNullable(FALSE),
     nMaxWidth(0), poIndex(NULL)
 {
     sDefault.Set.nMarker1 = OGRUnsetMarker;
@@ -2021,8 +2039,8 @@ FileGDBIndex *FileGDBField::GetIndex()
 /*                           FileGDBGeomField()                         */
 /************************************************************************/
 
-FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParent) :
-    FileGDBField(poParent), bHasZ(FALSE), bHasM(FALSE),
+FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParentIn) :
+    FileGDBField(poParentIn), bHasZ(FALSE), bHasM(FALSE),
     dfXOrigin(0.0), dfYOrigin(0.0), dfXYScale(0.0), dfMOrigin(0.0),
     dfMScale(0.0), dfZOrigin(0.0), dfZScale(0.0), dfXYTolerance(0.0),
     dfMTolerance(0.0), dfZTolerance(0.0), dfXMin(0.0), dfYMin(0.0),
@@ -2034,7 +2052,7 @@ FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParent) :
 /*                      FileGDBOGRGeometryConverterImpl                 */
 /************************************************************************/
 
-class FileGDBOGRGeometryConverterImpl : public FileGDBOGRGeometryConverter
+class FileGDBOGRGeometryConverterImpl CPL_FINAL : public FileGDBOGRGeometryConverter
 {
         const FileGDBGeomField      *poGeomField;
         GUInt32                     *panPointCount;
@@ -2043,12 +2061,13 @@ class FileGDBOGRGeometryConverterImpl : public FileGDBOGRGeometryConverter
         int                          bUseOrganize;
 #endif
 
-        int                         ReadPartDefs( GByte*& pabyCur,
+        bool                        ReadPartDefs( GByte*& pabyCur,
                                                   GByte* pabyEnd,
                                                   GUInt32& nPoints,
                                                   GUInt32& nParts,
-                                                  int bHasCurveDesc,
-                                                  int bIsMultiPatch );
+                                                  GUInt32& nCurves,
+                                                  bool bHasCurveDesc,
+                                                  bool bIsMultiPatch );
         template <class XYSetter> int ReadXYArray(XYSetter& setter,
                                                   GByte*& pabyCur,
                                                   GByte* pabyEnd,
@@ -2060,6 +2079,17 @@ class FileGDBOGRGeometryConverterImpl : public FileGDBOGRGeometryConverter
                                                 GByte* pabyEnd,
                                                 GUInt32 nPoints,
                                                 GIntBig& dz);
+        template <class MSetter> int ReadMArray(MSetter& setter,
+                                                GByte*& pabyCur,
+                                                GByte* pabyEnd,
+                                                GUInt32 nPoints,
+                                                GIntBig& dm);
+
+        OGRGeometry* CreateCurveGeometry(
+                  GUInt32 nBaseShapeType,
+                  GUInt32 nParts, GUInt32 nPoints, GUInt32 nCurves,
+                  bool bHasZ, bool bHasM,
+                  GByte*& pabyCur, GByte* pabyEnd );
 
     public:
                                         FileGDBOGRGeometryConverterImpl(
@@ -2074,8 +2104,8 @@ class FileGDBOGRGeometryConverterImpl : public FileGDBOGRGeometryConverter
 /************************************************************************/
 
 FileGDBOGRGeometryConverterImpl::FileGDBOGRGeometryConverterImpl(
-                                    const FileGDBGeomField* poGeomField) :
-                                                poGeomField(poGeomField)
+                                    const FileGDBGeomField* poGeomFieldIn) :
+                                                poGeomField(poGeomFieldIn)
 {
     panPointCount = NULL;
     nPointCountMax = 0;
@@ -2097,35 +2127,43 @@ FileGDBOGRGeometryConverterImpl::~FileGDBOGRGeometryConverterImpl()
 /*                          ReadPartDefs()                              */
 /************************************************************************/
 
-int FileGDBOGRGeometryConverterImpl::ReadPartDefs( GByte*& pabyCur,
+bool FileGDBOGRGeometryConverterImpl::ReadPartDefs( GByte*& pabyCur,
                                 GByte* pabyEnd,
                                 GUInt32& nPoints,
                                 GUInt32& nParts,
-                                int bHasCurveDesc,
-                                int bIsMultiPatch )
+                                GUInt32& nCurves,
+                                bool bHasCurveDesc,
+                                bool bIsMultiPatch )
 {
-    const int errorRetValue = FALSE;
+    const bool errorRetValue = false;
     returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nPoints));
     if( nPoints == 0 )
     {
         nParts = 0;
-        return TRUE;
+        nCurves = 0;
+        return true;
     }
     returnErrorIf(nPoints > (GUInt32)(pabyEnd - pabyCur) );
     if( bIsMultiPatch )
         returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd) );
     returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nParts));
     returnErrorIf(nParts > (GUInt32)(pabyEnd - pabyCur));
+    returnErrorIf(nParts > static_cast<GUInt32>(INT_MAX) / sizeof(GUInt32));
     if( bHasCurveDesc )
-        returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd) );
+    {
+        returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nCurves) );
+        returnErrorIf(nCurves > (GUInt32)(pabyEnd - pabyCur));
+    }
+    else
+        nCurves = 0;
     if( nParts == 0 )
-        return TRUE;
+        return true;
     GUInt32 i;
     returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd, 4) );
     if( nParts > nPointCountMax )
     {
         GUInt32* panPointCountNew =
-            (GUInt32*) VSIRealloc( panPointCount, nParts * sizeof(GUInt32) );
+            (GUInt32*) VSI_REALLOC_VERBOSE( panPointCount, nParts * sizeof(GUInt32) );
         returnErrorIf(panPointCountNew == NULL );
         panPointCount = panPointCountNew;
         nPointCountMax = nParts;
@@ -2142,7 +2180,7 @@ int FileGDBOGRGeometryConverterImpl::ReadPartDefs( GByte*& pabyCur,
     returnErrorIf(nSumNPartsM1 > nPoints );
     panPointCount[nParts-1] = (GUInt32)(nPoints - nSumNPartsM1);
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -2169,7 +2207,7 @@ class XYLineStringSetter
 {
         OGRRawPoint* paoPoints;
     public:
-        XYLineStringSetter(OGRRawPoint* paoPoints) : paoPoints(paoPoints) {}
+        XYLineStringSetter(OGRRawPoint* paoPointsIn) : paoPoints(paoPointsIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2186,7 +2224,7 @@ class XYMultiPointSetter
 {
         OGRMultiPoint* poMPoint;
     public:
-        XYMultiPointSetter(OGRMultiPoint* poMPoint) : poMPoint(poMPoint) {}
+        XYMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2204,7 +2242,7 @@ class XYArraySetter
         double* padfX;
         double* padfY;
     public:
-        XYArraySetter(double* padfX, double* padfY) : padfX(padfX), padfY(padfY) {}
+        XYArraySetter(double* padfXIn, double* padfYIn) : padfX(padfXIn), padfY(padfYIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2253,7 +2291,7 @@ class ZLineStringSetter
 {
         OGRLineString* poLS;
     public:
-        ZLineStringSetter(OGRLineString* poLS) : poLS(poLS) {}
+        ZLineStringSetter(OGRLineString* poLSIn) : poLS(poLSIn) {}
 
         void set(int i, double dfZ)
         {
@@ -2269,7 +2307,7 @@ class ZMultiPointSetter
 {
         OGRMultiPoint* poMPoint;
     public:
-        ZMultiPointSetter(OGRMultiPoint* poMPoint) : poMPoint(poMPoint) {}
+        ZMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
 
         void set(int i, double dfZ)
         {
@@ -2278,18 +2316,18 @@ class ZMultiPointSetter
 };
 
 /************************************************************************/
-/*                             ZArraySetter                            */
+/*                             FileGDBArraySetter                            */
 /************************************************************************/
 
-class ZArraySetter
+class FileGDBArraySetter
 {
-        double* padfZ;
+        double* padfValues;
     public:
-        ZArraySetter(double* padfZ) : padfZ(padfZ) {}
+        FileGDBArraySetter(double* padfValuesIn) : padfValues(padfValuesIn) {}
 
-        void set(int i, double dfZ)
+        void set(int i, double dfValue)
         {
-            padfZ[i] = dfZ;
+            padfValues[i] = dfValue;
         }
 };
 
@@ -2316,6 +2354,224 @@ template <class ZSetter> int FileGDBOGRGeometryConverterImpl::ReadZArray(ZSetter
 }
 
 /************************************************************************/
+/*                          MLineStringSetter                           */
+/************************************************************************/
+
+class MLineStringSetter
+{
+        OGRLineString* poLS;
+    public:
+        MLineStringSetter(OGRLineString* poLSIn) : poLS(poLSIn) {}
+
+        void set(int i, double dfM)
+        {
+            poLS->setM(i, dfM);
+        }
+};
+
+/************************************************************************/
+/*                         MMultiPointSetter                           */
+/************************************************************************/
+
+class MMultiPointSetter
+{
+        OGRMultiPoint* poMPoint;
+    public:
+        MMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
+
+        void set(int i, double dfM)
+        {
+            ((OGRPoint*)poMPoint->getGeometryRef(i))->setM(dfM);
+        }
+};
+
+/************************************************************************/
+/*                          ReadMArray()                                */
+/************************************************************************/
+
+template <class MSetter> int FileGDBOGRGeometryConverterImpl::ReadMArray(MSetter& setter,
+                                                      GByte*& pabyCur,
+                                                      GByte* pabyEnd,
+                                                      GUInt32 nPoints,
+                                                      GIntBig& dm)
+{
+    const int errorRetValue = FALSE;
+    for(GUInt32 i = 0; i < nPoints; i++ )
+    {
+        returnErrorIf(pabyCur >= pabyEnd);
+        ReadVarIntAndAddNoCheck(pabyCur, dm);
+
+        double dfM = dm / poGeomField->GetMScale() + poGeomField->GetMOrigin();
+        setter.set(i, dfM);
+    }
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          CreateCurveGeometry()                       */
+/************************************************************************/
+
+class XYBufferSetter
+{
+        GByte* pabyBuffer;
+    public:
+        XYBufferSetter(GByte* pabyBufferIn) : pabyBuffer(pabyBufferIn) {}
+
+        void set(int i, double dfX, double dfY)
+        {
+            CPL_LSBPTR64(&dfX);
+            memcpy( pabyBuffer + 16 * i, &dfX, 8 );
+            CPL_LSBPTR64(&dfY);
+            memcpy( pabyBuffer + 16 * i + 8, &dfY, 8 );
+        }
+};
+
+class ZOrMBufferSetter
+{
+        GByte* pabyBuffer;
+    public:
+        ZOrMBufferSetter(GByte* pabyBufferIn) : pabyBuffer(pabyBufferIn) {}
+
+        void set(int i, double dfValue)
+        {
+            CPL_LSBPTR64(&dfValue);
+            memcpy( pabyBuffer + 8 * i, &dfValue, 8 );
+        }
+};
+
+/* We first create an extended shape buffer from the compressed stream */
+/* and finally use OGRCreateFromShapeBin() to make a geometry from it */
+
+OGRGeometry* FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
+                  GUInt32 nBaseShapeType,
+                  GUInt32 nParts, GUInt32 nPoints, GUInt32 nCurves,
+                  bool bHasZ, bool bHasM,
+                  GByte*& pabyCur, GByte* pabyEnd )
+{
+    OGRGeometry* errorRetValue = NULL;
+    GUInt32 i;
+    const int nDims = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
+    GIntBig nMaxSize64 = 44 + 4 * static_cast<GUIntBig>(nParts) +
+                         8 * nDims * static_cast<GUIntBig>(nPoints);
+    nMaxSize64 += 4; // nCurves
+    nMaxSize64 += static_cast<GUIntBig>(nCurves) * (4 + /* start index */
+                            4 + /* curve type */
+                            44 /* size of ellipse struct */ );
+    nMaxSize64 += ((bHasZ ? 1 : 0) + (bHasM ? 1 : 0)) * 16; // space for bounding boxes
+    if( nMaxSize64 >= INT_MAX )
+    {
+        returnError();
+    }
+    const int nMaxSize = static_cast<int>(nMaxSize64);
+    GByte* pabyExtShapeBuffer = (GByte*) VSI_MALLOC_VERBOSE(nMaxSize);
+    if( pabyExtShapeBuffer == NULL )
+    {
+        VSIFree(pabyExtShapeBuffer);
+        returnError();
+    }
+    GUInt32 nShapeType = nBaseShapeType | EXT_SHAPE_CURVE_FLAG;
+    if( bHasZ ) nShapeType |= EXT_SHAPE_Z_FLAG;
+    if( bHasM ) nShapeType |= EXT_SHAPE_M_FLAG;
+    GUInt32 nTmp;
+    nTmp = CPL_LSBWORD32(nShapeType);
+    memcpy( pabyExtShapeBuffer, &nTmp, 4 );
+    memset( pabyExtShapeBuffer + 4, 0, 32 ); /* bbox: unused */
+    nTmp = CPL_LSBWORD32(nParts);
+    memcpy( pabyExtShapeBuffer + 36, &nTmp, 4 );
+    nTmp = CPL_LSBWORD32(nPoints);
+    memcpy( pabyExtShapeBuffer + 40, &nTmp, 4 );
+    GUInt32 nIdx = 0;
+    for( i=0; i<nParts; i++ )
+    {
+        nTmp = CPL_LSBWORD32(nIdx);
+        nIdx += panPointCount[i];
+        memcpy( pabyExtShapeBuffer + 44 + 4 * i, &nTmp, 4 );
+    }
+    int nOffset = 44 + 4 * nParts;
+    GIntBig dx = 0;
+    GIntBig dy = 0;
+    XYBufferSetter arraySetter(pabyExtShapeBuffer + nOffset);
+    if( !ReadXYArray<XYBufferSetter>(arraySetter,
+                    pabyCur, pabyEnd, nPoints, dx, dy) )
+    {
+        VSIFree(pabyExtShapeBuffer);
+        returnError();
+    }
+    nOffset += 16 * nPoints;
+
+    if( bHasZ )
+    {
+        memset( pabyExtShapeBuffer + nOffset, 0, 16 ); /* bbox: unused */
+        nOffset += 16;
+        GIntBig dz = 0;
+        ZOrMBufferSetter arrayzSetter(pabyExtShapeBuffer + nOffset);
+        if( !ReadZArray<ZOrMBufferSetter>(arrayzSetter,
+                        pabyCur, pabyEnd, nPoints, dz) )
+        {
+            VSIFree(pabyExtShapeBuffer);
+            returnError();
+        }
+        nOffset += 8 * nPoints;
+    }
+    if( bHasM )
+    {
+        memset( pabyExtShapeBuffer + nOffset, 0, 16 ); /* bbox: unused */
+        nOffset += 16;
+        ZOrMBufferSetter arraymSetter(pabyExtShapeBuffer + nOffset);
+        GIntBig dm = 0;
+        if( !ReadMArray<ZOrMBufferSetter>(arraymSetter,
+                        pabyCur, pabyEnd, nPoints, dm) )
+        {
+            VSIFree(pabyExtShapeBuffer);
+            returnError();
+        }
+        nOffset += 8 * nPoints;
+    }
+
+    nTmp = CPL_LSBWORD32(nCurves);
+    memcpy( pabyExtShapeBuffer + nOffset, &nTmp, 4 );
+    nOffset += 4;
+    for( i=0; i<nCurves; i++ )
+    {
+        // start index
+        returnErrorAndCleanupIf( !ReadVarUInt32(pabyCur, pabyEnd, nTmp),
+                                 VSIFree(pabyExtShapeBuffer) );
+        nTmp = CPL_LSBWORD32(nTmp);
+        memcpy( pabyExtShapeBuffer + nOffset, &nTmp, 4 );
+        nOffset += 4;
+
+        GUInt32 nCurveType;
+        returnErrorAndCleanupIf( !ReadVarUInt32(pabyCur, pabyEnd, nCurveType),
+                                 VSIFree(pabyExtShapeBuffer) );
+        nTmp = CPL_LSBWORD32(nCurveType);
+        memcpy( pabyExtShapeBuffer + nOffset, &nTmp, 4 );
+        nOffset += 4;
+
+        int nStructureSize = 0;
+        if( nCurveType == EXT_SHAPE_SEGMENT_ARC )
+            nStructureSize = 2 * 8 + 4;
+        else if( nCurveType == EXT_SHAPE_SEGMENT_BEZIER )
+            nStructureSize = 4 * 8;
+        else if( nCurveType == EXT_SHAPE_SEGMENT_ELLIPSE )
+            nStructureSize = 5 * 8 + 4;
+        if( nStructureSize == 0 || pabyCur + nStructureSize > pabyEnd )
+        {
+            VSIFree(pabyExtShapeBuffer);
+            returnError();
+        }
+        memcpy( pabyExtShapeBuffer + nOffset, pabyCur, nStructureSize );
+        pabyCur += nStructureSize;
+        nOffset += nStructureSize;
+    }
+    CPLAssert( nOffset <= nMaxSize );
+
+    OGRGeometry* poRet = NULL;
+    OGRCreateFromShapeBin(pabyExtShapeBuffer, &poRet, nOffset);
+    VSIFree(pabyExtShapeBuffer);
+    return poRet;
+}
+
+/************************************************************************/
 /*                          GetAsGeometry()                             */
 /************************************************************************/
 
@@ -2324,13 +2580,14 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
     OGRGeometry* errorRetValue = NULL;
     GByte* pabyCur = psField->Binary.paData;
     GByte* pabyEnd = pabyCur + psField->Binary.nCount;
-    GUInt32 nGeomType, i, nPoints, nParts;
+    GUInt32 nGeomType, i, nPoints, nParts, nCurves;
     GUIntBig x, y, z;
     GIntBig dx, dy, dz;
 
     ReadVarUInt32NoCheck(pabyCur, nGeomType);
 
-    int bHasZ = (nGeomType & 0x80000000) != 0;
+    bool bHasZ = (nGeomType & EXT_SHAPE_Z_FLAG) != 0;
+    bool bHasM = (nGeomType & EXT_SHAPE_M_FLAG) != 0;
     switch( (nGeomType & 0xff) )
     {
         case SHPT_NULL:
@@ -2338,10 +2595,15 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_POINTZ:
         case SHPT_POINTZM:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
+            // CPL_FALLTHROUGH
         case SHPT_POINT:
         case SHPT_POINTM:
+        case SHPT_GENERALPOINT:
         {
+            if( nGeomType == SHPT_POINTM || nGeomType == SHPT_POINTZM )
+                bHasM = true;
+
             double dfX, dfY, dfZ;
             ReadVarUInt64NoCheck(pabyCur, x);
             ReadVarUInt64NoCheck(pabyCur, y);
@@ -2352,7 +2614,23 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             {
                 ReadVarUInt64NoCheck(pabyCur, z);
                 dfZ = (z - 1) / poGeomField->GetZScale() + poGeomField->GetZOrigin();
+                if( bHasM )
+                {
+                    GUIntBig m;
+                    ReadVarUInt64NoCheck(pabyCur, m);
+                    double dfM = (m - 1) / poGeomField->GetMScale() + poGeomField->GetMOrigin();
+                    return new OGRPoint(dfX, dfY, dfZ, dfM);
+                }
                 return new OGRPoint(dfX, dfY, dfZ);
+            }
+            else if( bHasM )
+            {
+                OGRPoint* poPoint = new OGRPoint(dfX, dfY);
+                GUIntBig m;
+                ReadVarUInt64NoCheck(pabyCur, m);
+                double dfM = (m - 1) / poGeomField->GetMScale() + poGeomField->GetMOrigin();
+                poPoint->setM(dfM);
+                return poPoint;
             }
             else
             {
@@ -2363,16 +2641,22 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_MULTIPOINTZM:
         case SHPT_MULTIPOINTZ:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
+            // CPL_FALLTHROUGH
         case SHPT_MULTIPOINT:
         case SHPT_MULTIPOINTM:
         {
+            if( nGeomType == SHPT_MULTIPOINTM || nGeomType == SHPT_MULTIPOINTZM )
+                bHasM = true;
+
             returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nPoints) );
             if( nPoints == 0 )
             {
                 OGRMultiPoint* poMP = new OGRMultiPoint();
                 if( bHasZ )
-                    poMP->setCoordinateDimension(3);
+                    poMP->set3D(TRUE);
+                if( bHasM )
+                    poMP->setMeasured(TRUE);
                 return poMP;
             }
 
@@ -2401,33 +2685,74 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 }
             }
 
+            // It seems that absence of M is marked with a single byte
+            // with value 66. Be more tolerant and only try to parse the M
+            // array is there are at least as many remaining bytes as
+            // expected points
+            if( bHasM && pabyCur + nPoints <= pabyEnd )
+            {
+                poMP->setMeasured(TRUE);
+                GIntBig dm = 0;
+                MMultiPointSetter mpmSetter(poMP);
+                if( !ReadMArray<MMultiPointSetter>(mpmSetter,
+                                pabyCur, pabyEnd, nPoints, dm) )
+                {
+                    delete poMP;
+                    returnError();
+                }
+            }
+
             return poMP;
             break;
         }
 
         case SHPT_ARCZ:
         case SHPT_ARCZM:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
+            // CPL_FALLTHROUGH
         case SHPT_ARC:
         case SHPT_ARCM:
         case SHPT_GENERALPOLYLINE:
         {
-            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,
-                              (nGeomType & 0x20000000) != 0,
-                              FALSE) );
+            if( nGeomType == SHPT_ARCM || nGeomType == SHPT_ARCZM )
+                bHasM = true;
+
+            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, nCurves,
+                              (nGeomType & EXT_SHAPE_CURVE_FLAG) != 0,
+                              false) );
 
             if( nPoints == 0 || nParts == 0 )
             {
                 OGRLineString* poLS = new OGRLineString();
                 if( bHasZ )
-                    poLS->setCoordinateDimension(3);
+                    poLS->set3D(TRUE);
+                if( bHasM )
+                    poLS->setMeasured(TRUE);
                 return poLS;
+            }
+
+            if( nCurves )
+            {
+                GByte* pabyCurBackup = pabyCur;
+                OGRGeometry* poRet = CreateCurveGeometry(
+                    SHPT_GENERALPOLYLINE,
+                    nParts, nPoints, nCurves,
+                    bHasZ, bHasM,
+                    pabyCur, pabyEnd );
+                if( poRet )
+                    return poRet;
+                // In case something went wrong, go on without curves
+                pabyCur = pabyCurBackup;
             }
 
             OGRMultiLineString* poMLS = NULL;
             FileGDBOGRLineString* poLS = NULL;
             if( nParts > 1 )
+            {
                 poMLS = new OGRMultiLineString();
+                if( bHasZ )
+                    poMLS->setCoordinateDimension(3);
+            }
 
             dx = dy = dz = 0;
             for(i=0;i<nParts;i++)
@@ -2472,6 +2797,39 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 }
             }
 
+            if( bHasM )
+            {
+                GIntBig dm = 0;
+                for(i=0;i<nParts;i++)
+                {
+                    if( nParts > 1 )
+                        poLS = (FileGDBOGRLineString*) poMLS->getGeometryRef(i);
+
+                    // It seems that absence of M is marked with a single byte
+                    // with value 66. Be more tolerant and only try to parse the M
+                    // array is there are at least as many remaining bytes as
+                    // expected points
+                    if( pabyCur + panPointCount[i] > pabyEnd )
+                    {
+                        if( nParts > 1 )
+                            poMLS->setMeasured(FALSE);
+                        break;
+                    }
+
+                    MLineStringSetter lsmSetter(poLS);
+                    if( !ReadMArray<MLineStringSetter>(lsmSetter,
+                                    pabyCur, pabyEnd,
+                                    panPointCount[i], dm) )
+                    {
+                        if( nParts > 1 )
+                            delete poMLS;
+                        else
+                            delete poLS;
+                        returnError();
+                    }
+                }
+            }
+
             if( poMLS )
                 return poMLS;
             else
@@ -2482,21 +2840,41 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_POLYGONZ:
         case SHPT_POLYGONZM:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
+            // CPL_FALLTHROUGH
         case SHPT_POLYGON:
         case SHPT_POLYGONM:
         case SHPT_GENERALPOLYGON:
         {
-            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,
-                              (nGeomType & 0x20000000) != 0,
-                              FALSE) );
+            if( nGeomType == SHPT_POLYGONM || nGeomType == SHPT_POLYGONZM )
+                bHasM = true;
+
+            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, nCurves,
+                              (nGeomType & EXT_SHAPE_CURVE_FLAG) != 0,
+                              false) );
 
             if( nPoints == 0 || nParts == 0 )
             {
                 OGRPolygon* poPoly = new OGRPolygon();
                 if( bHasZ )
-                    poPoly->setCoordinateDimension(3);
+                    poPoly->set3D(TRUE);
+                if( bHasM )
+                    poPoly->setMeasured(TRUE);
                 return poPoly;
+            }
+
+            if( nCurves )
+            {
+                GByte* pabyCurBackup = pabyCur;
+                OGRGeometry* poRet = CreateCurveGeometry(
+                    SHPT_GENERALPOLYGON,
+                    nParts, nPoints, nCurves,
+                    bHasZ, bHasM,
+                    pabyCur, pabyEnd );
+                if( poRet )
+                    return poRet;
+                // In case something went wrong, go on without curves
+                pabyCur = pabyCurBackup;
             }
 
             OGRLinearRing** papoRings = new OGRLinearRing*[nParts];
@@ -2514,8 +2892,13 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                                  panPointCount[i],
                                  dx, dy) )
                 {
-                    while( (int)i >= 0 )
-                        delete papoRings[i--];
+                    while( true )
+                    {
+                        delete papoRings[i];
+                        if( i == 0 )
+                            break;
+                        i--;
+                    }
                     delete[] papoRings;
                     returnError();
                 }
@@ -2532,8 +2915,42 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                                     pabyCur, pabyEnd,
                                     panPointCount[i], dz) )
                     {
-                        while( (int)i >= 0 )
-                            delete papoRings[i--];
+                        for(i=0;i<nParts;i++)
+                            delete papoRings[i];
+                        delete[] papoRings;
+                        returnError();
+                    }
+                }
+            }
+
+            if( bHasM )
+            {
+                GIntBig dm = 0;
+                for(i=0;i<nParts;i++)
+                {
+                    // It seems that absence of M is marked with a single byte
+                    // with value 66. Be more tolerant and only try to parse the M
+                    // array is there are at least as many remaining bytes as
+                    // expected points
+                    if( pabyCur + panPointCount[i] > pabyEnd )
+                    {
+                        while( i != 0 )
+                        {
+                            --i;
+                            papoRings[i]->setMeasured(FALSE);
+                        }
+                        break;
+                    }
+
+                    papoRings[i]->setMeasured(TRUE);
+
+                    MLineStringSetter lsmSetter(papoRings[i]);
+                    if( !ReadMArray<MLineStringSetter>(lsmSetter,
+                                    pabyCur, pabyEnd,
+                                    panPointCount[i], dm) )
+                    {
+                        for(i=0;i<nParts;i++)
+                            delete papoRings[i];
                         delete[] papoRings;
                         returnError();
                     }
@@ -2618,10 +3035,11 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
         case SHPT_MULTIPATCHM:
         case SHPT_MULTIPATCH:
-            bHasZ = TRUE; /* go on */
+            bHasZ = true; /* go on */
+            // CPL_FALLTHROUGH
         case SHPT_GENERALMULTIPATCH:
         {
-            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, FALSE, TRUE ) );
+            returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts, nCurves, false, true ) );
 
             if( nPoints == 0 || nParts == 0 )
             {
@@ -2630,8 +3048,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                     poPoly->setCoordinateDimension(3);
                 return poPoly;
             }
-            int* panPartType = (int*) VSIMalloc(sizeof(int) * nParts);
-            double* padfXYZ =  (double*) VSIMalloc(3 * sizeof(double) * nPoints);
+            int* panPartType = (int*) VSI_MALLOC_VERBOSE(sizeof(int) * nParts);
+            double* padfXYZ =  (double*) VSI_MALLOC_VERBOSE(3 * sizeof(double) * nPoints);
             double* padfX = padfXYZ;
             double* padfY = padfXYZ + nPoints;
             double* padfZ = padfXYZ + 2 * nPoints;
@@ -2665,8 +3083,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
             if( bHasZ )
             {
-                ZArraySetter arrayzSetter(padfZ);
-                if( !ReadZArray<ZArraySetter>(arrayzSetter,
+                FileGDBArraySetter arrayzSetter(padfZ);
+                if( !ReadZArray<FileGDBArraySetter>(arrayzSetter,
                                 pabyCur, pabyEnd, nPoints, dz) )
                 {
                     VSIFree(panPartType);
@@ -2680,6 +3098,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             }
 
             OGRMultiPolygon* poMP = new OGRMultiPolygon();
+            poMP->setCoordinateDimension(3);
             OGRPolygon* poLastPoly = NULL;
             int iAccPoints = 0;
             for(i=0;i<nParts;i++)
@@ -2711,7 +3130,6 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             CPLDebug("OpenFileGDB", "Unhandled geometry type = %d", (int)nGeomType);
             break;
 /*
-#define SHPT_GENERALPOINT       52
 #define SHPT_GENERALMULTIPOINT  53
 */
     }

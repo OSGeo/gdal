@@ -39,10 +39,10 @@
 
 using namespace PCIDSK;
 
-CLinkSegment::CLinkSegment(PCIDSKFile *file, 
-                           int segment,
+CLinkSegment::CLinkSegment(PCIDSKFile *fileIn, 
+                           int segmentIn,
                            const char *segment_pointer) :
-    CPCIDSKSegment(file, segment, segment_pointer), 
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), 
     loaded_(false), modified_(false)
 {
     Load();
@@ -63,11 +63,11 @@ void CLinkSegment::Load()
     
     assert(data_size - 1024 == 1 * 512);
     
-    seg_data.SetSize(data_size - 1024); // should be 1 * 512
+    seg_data.SetSize(static_cast<int>(data_size) - 1024); // should be 1 * 512
     
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
     
-    if (std::strncmp(seg_data.buffer, "SysLinkF", 8)) 
+    if (!STARTS_WITH(seg_data.buffer, "SysLinkF")) 
     {
         seg_data.Put("SysLinkF",0,8);
         return;
@@ -95,7 +95,7 @@ void CLinkSegment::Write(void)
     }
       
     seg_data.Put("SysLinkF",0,8);
-    seg_data.Put(path.c_str(), 8, path.size(), true);
+    seg_data.Put(path.c_str(), 8, static_cast<int>(path.size()), true);
 
     WriteToFile(seg_data.buffer, 0, data_size-1024);
     modified_ = false;
@@ -115,7 +115,7 @@ void CLinkSegment::SetPath(const std::string& oPath)
     }
     else
     {
-        throw PCIDSKException("The size of the path cannot be"
+        return ThrowPCIDSKException("The size of the path cannot be"
                               " bigger than 504 characters.");
     }
 }

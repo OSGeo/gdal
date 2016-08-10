@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRODBCDataSource class.
@@ -62,7 +61,7 @@ OGRODBCDataSource::~OGRODBCDataSource()
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     for( i = 0; i < nKnownSRID; i++ )
@@ -130,7 +129,10 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
         return FALSE;
     }
     char* pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-    sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+    /* coverity[tainted_string] */
+    snprintf( pszDSN,
+              strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+              pszDSNStringTemplate,  pszNewName );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize based on the DSN.                                    */
@@ -146,7 +148,9 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
             CPLFree( pszDSN );
             pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-            sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+            snprintf( pszDSN,
+                      strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
+                      pszDSNStringTemplate,  pszNewName );
             CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
             if( oSession.EstablishSession( pszDSN, NULL, NULL ) )
             {
@@ -155,7 +159,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
         }
         if( bError )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to initialize ODBC connection to DSN for %s,\n"
                     "%s", pszDSN, oSession.GetLastError() );
             CPLFree( pszDSN );
@@ -249,7 +253,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 {
     CPLAssert( nLayers == 0 );
 
-    if( !EQUALN(pszNewName, "ODBC:",5) && EQUAL(CPLGetExtension(pszNewName), "MDB") )
+    if( !STARTS_WITH_CI(pszNewName, "ODBC:") && EQUAL(CPLGetExtension(pszNewName), "MDB") )
         return OpenMDB(pszNewName, bUpdate);
 
 /* -------------------------------------------------------------------- */
@@ -303,7 +307,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Strip off any comma delimeted set of tables names to access     */
+/*      Strip off any comma delimited set of tables names to access     */
 /*      from the end of the string first.  Also allow an optional       */
 /*      bracketed geometry column name after the table name.            */
 /* -------------------------------------------------------------------- */
@@ -318,10 +322,10 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
         else
         {
             char *pszCBracket = strstr(pszOBracket,")");
-            
+
             if( pszCBracket != NULL )
                 *pszCBracket = '\0';
-            
+
             *pszOBracket = '\0';
             papszTables = CSLAddString( papszTables, pszDelimiter + 1 );
             papszGeomCol = CSLAddString( papszGeomCol, pszOBracket+1 );
@@ -374,15 +378,15 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Initialize based on the DSN.                                    */
 /* -------------------------------------------------------------------- */
     CPLDebug( "OGR_ODBC",
-              "EstablishSession(DSN:\"%s\", userid:\"%s\", password:\"%s\")", 
+              "EstablishSession(DSN:\"%s\", userid:\"%s\", password:\"%s\")",
               pszDSN, pszUserid ? pszUserid : "",
               pszPassword ? pszPassword : "" );
 
     if( !oSession.EstablishSession( pszDSN, pszUserid, pszPassword ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to initialize ODBC connection to DSN for %s,\n"
-                  "%s", 
+                  "%s",
                   pszNewName+5, oSession.GetLastError() );
         CSLDestroy( papszTables );
         CSLDestroy( papszGeomCol );
@@ -410,21 +414,21 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     if( papszTables == NULL )
     {
         CPLODBCStatement oStmt( &oSession );
-        
+
         oStmt.Append( "SELECT f_table_name, f_geometry_column, geometry_type"
                       " FROM geometry_columns" );
         if( oStmt.ExecuteSQL() )
         {
             while( oStmt.Fetch() )
             {
-                papszTables = 
+                papszTables =
                     CSLAddString( papszTables, oStmt.GetColData(0) );
-                papszGeomCol = 
+                papszGeomCol =
                     CSLAddString( papszGeomCol, oStmt.GetColData(1) );
             }
         }
     }
-            
+
 /* -------------------------------------------------------------------- */
 /*      Otherwise our final resort is to return all tables as           */
 /*      non-spatial tables.                                             */
@@ -432,7 +436,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     if( papszTables == NULL )
     {
         CPLODBCStatement oTableList( &oSession );
-        
+
         if( oTableList.GetTables() )
         {
             while( oTableList.Fetch() )
@@ -459,8 +463,8 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*      If we have an explicit list of requested tables, use them       */
 /*      (non-spatial).                                                  */
 /* -------------------------------------------------------------------- */
-    for( int iTable = 0; 
-         papszTables != NULL && papszTables[iTable] != NULL; 
+    for( int iTable = 0;
+         papszTables != NULL && papszTables[iTable] != NULL;
          iTable++ )
     {
         if( strlen(papszGeomCol[iTable]) > 0 )
@@ -571,7 +575,7 @@ int OGRODBCDataSource::OpenTable( const char *pszNewName,
     papoLayers = (OGRODBCLayer **)
         CPLRealloc( papoLayers,  sizeof(OGRODBCLayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
-    
+
     return TRUE;
 }
 
@@ -609,8 +613,8 @@ OGRLayer * OGRODBCDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -622,8 +626,9 @@ OGRLayer * OGRODBCDataSource::ExecuteSQL( const char *pszSQLCommand,
     poStmt->Append( pszSQLCommand );
     if( !poStmt->ExecuteSQL() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
+        delete poStmt;
         return NULL;
     }
 
@@ -642,12 +647,12 @@ OGRLayer * OGRODBCDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
     OGRODBCSelectLayer *poLayer = NULL;
-        
+
     poLayer = new OGRODBCSelectLayer( this, poStmt );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
-    
+
     return poLayer;
 }
 

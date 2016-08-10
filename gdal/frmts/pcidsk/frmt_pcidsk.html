@@ -10,9 +10,9 @@
 PCIDSK database file used by PCI EASI/PACE software for image analysis.
 It is supported for reading, and writing by GDAL.  All pixel data types, and
 data organizations (pixel interleaved, band interleaved, file interleaved
-and tiled) should be supported.  
-Currently LUT segments are ignored, but PCT segments should be treated 
-as associated with the bands.  Overall file, 
+and tiled) should be supported.
+Currently LUT segments are ignored, but PCT segments should be treated
+as associated with the bands.  Overall file,
 and band specific metadata should be correctly associated with the image
 or bands.<P>
 
@@ -27,7 +27,7 @@ Starting with GDAL 2.0, vector segments are also supported by the driver.<p>
 
 <h2>Creation Options</h2>
 
-Note that PCIDSK files are always produced pixel interleaved, even though 
+Note that PCIDSK files are always produced pixel interleaved, even though
 other organizations are supported for read.<p>
 
 <ul>
@@ -35,7 +35,7 @@ other organizations are supported for read.<p>
 <li> <b>INTERLEAVING=PIXEL/BAND/FILE/TILED</b>: sets the interleaving for
 the file raster data.  <p>
 
-<li> <b>COMPRESSION=NONE/RLE/JPEG</b>: Sets the compression to use.  Values 
+<li> <b>COMPRESSION=NONE/RLE/JPEG</b>: Sets the compression to use.  Values
 other than NONE (the default) may only be used with TILED interleaving.
 If JPEG is select it may include a quality value between 1 and 100 - eg. COMPRESSION=JPEG40.<p>
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRSFDriverRegistrar class implementation.
@@ -41,15 +40,12 @@ CPL_CVSID("$Id$");
 /**
  * \brief Constructor
  *
- * Normally the driver registrar is constucted by the 
+ * Normally the driver registrar is constructed by the
  * OGRSFDriverRegistrar::GetRegistrar() accessor which ensures singleton
- * status.  
+ * status.
  */
 
-OGRSFDriverRegistrar::OGRSFDriverRegistrar()
-
-{
-}
+OGRSFDriverRegistrar::OGRSFDriverRegistrar() {}
 
 /************************************************************************/
 /*                       ~OGRSFDriverRegistrar()                        */
@@ -60,6 +56,7 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
 {
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                           GetRegistrar()                             */
 /************************************************************************/
@@ -83,7 +80,7 @@ int OGRwillNeverBeTrue = FALSE;
 #endif
 
 /**
- * \brief Cleanup all OGR related resources. 
+ * \brief Cleanup all OGR related resources.
  *
  * FIXME
  */
@@ -304,7 +301,7 @@ void OGRRegisterDriver( OGRSFDriverH hDriver )
 
 {
     VALIDATE_POINTER0( hDriver, "OGRRegisterDriver" );
-    
+
     GetGDALDriverManager()->RegisterDriver( (GDALDriver*)hDriver );
 }
 
@@ -316,7 +313,7 @@ void OGRDeregisterDriver( OGRSFDriverH hDriver )
 
 {
     VALIDATE_POINTER0( hDriver, "OGRDeregisterDriver" );
-    
+
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver*)hDriver );
 }
 
@@ -411,6 +408,7 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
 {
     VALIDATE_POINTER1( pszName, "OGRGetDriverByName", NULL );
 
-    return (OGRSFDriverH) 
+    return (OGRSFDriverH)
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );
 }
+//! @endcond

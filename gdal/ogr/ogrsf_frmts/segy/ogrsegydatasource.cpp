@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SEG-Y Translator
  * Purpose:  Implements OGRSEGYDataSource class.

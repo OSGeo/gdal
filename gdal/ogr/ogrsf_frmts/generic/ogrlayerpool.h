@@ -27,8 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRLAYERPOOL_H_INCLUDED
-#define _OGRLAYERPOOL_H_INCLUDED
+#ifndef OGRLAYERPOOL_H_INCLUDED
+#define OGRLAYERPOOL_H_INCLUDED
+
+#ifndef DOXYGEN_SKIP
 
 #include "ogrsf_frmts.h"
 
@@ -107,7 +109,7 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
                                         FreeUserDataFunc pfnFreeUserData,
                                         void* pUserData);
     virtual            ~OGRProxiedLayer();
-    
+
     OGRLayer           *GetUnderlyingLayer();
 
     virtual OGRGeometry *GetSpatialFilter();
@@ -159,4 +161,6 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 };
 
-#endif // _OGRLAYERPOOL_H_INCLUDED
+#endif /* #ifndef DOXYGEN_SKIP */
+
+#endif // OGRLAYERPOOL_H_INCLUDED

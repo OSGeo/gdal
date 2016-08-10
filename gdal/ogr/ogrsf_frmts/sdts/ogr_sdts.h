@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SDTS_H_INCLUDED
-#define _OGR_SDTS_H_INCLUDED
+#ifndef OGR_SDTS_H_INCLUDED
+#define OGR_SDTS_H_INCLUDED
 
 #include "sdts_al.h"
 #include "ogrsf_frmts.h"
@@ -54,7 +54,7 @@ class OGRSDTSLayer : public OGRLayer
 
     void                BuildPolygons();
     int                 bPolygonsBuilt;
-    
+
   public:
                         OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
                         ~OGRSDTSLayer();
@@ -63,11 +63,11 @@ class OGRSDTSLayer : public OGRLayer
     OGRFeature *        GetNextFeature();
 
 //    OGRFeature         *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
 //    GIntBig             GetFeatureCount( int );
-    
+
     int                 TestCapability( const char * );
 };
 
@@ -84,13 +84,13 @@ class OGRSDTSDataSource : public OGRDataSource
     OGRSDTSLayer        **papoLayers;
 
     OGRSpatialReference *poSRS;
-    
+
   public:
                         OGRSDTSDataSource();
                         ~OGRSDTSDataSource();
 
     int                 Open( const char * pszFilename, int bTestOpen );
-    
+
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
@@ -99,4 +99,4 @@ class OGRSDTSDataSource : public OGRDataSource
     OGRSpatialReference *GetSpatialRef() { return poSRS; }
 };
 
-#endif /* ndef _OGR_SDTS_H_INCLUDED */
+#endif /* ndef OGR_SDTS_H_INCLUDED */

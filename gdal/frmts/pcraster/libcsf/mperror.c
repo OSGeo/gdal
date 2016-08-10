@@ -2,7 +2,7 @@
 #include "csfimpl.h"
 
 
-static const char *errolist[ERRORNO]={
+static const char * const errolist[ERRORNO]={
 "No error",
 "File could not be opened or does not exist",
 "File is not a PCRaster file",
@@ -10,7 +10,7 @@ static const char *errolist[ERRORNO]={
 "Wrong byte order",
 "Not enough memory",
 "Illegal cell representation constant",
-"Acces denied",
+"Access denied",
 "Row number to big",
 "Collumn number to big",
 "Map is not a raster file",

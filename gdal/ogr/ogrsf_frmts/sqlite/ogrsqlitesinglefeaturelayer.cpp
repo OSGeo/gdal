@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRSQLiteSingleFeatureLayer class.
@@ -39,7 +38,7 @@ CPL_CVSID("$Id$");
 
 OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
                                                      const char* pszLayerName,
-                                                     int nVal )
+                                                     int nValIn )
 {
     poFeatureDefn = new OGRFeatureDefn( "SELECT" );
     SetDescription( poFeatureDefn->GetName() );
@@ -48,7 +47,7 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
     poFeatureDefn->AddFieldDefn( &oField );
 
     iNextShapeId = 0;
-    this->nVal = nVal;
+    this->nVal = nValIn;
     pszVal = NULL;
 }
 
@@ -58,7 +57,7 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
 
 OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
                                                      const char* pszLayerName,
-                                                     const char *pszVal )
+                                                     const char *pszValIn )
 {
     poFeatureDefn = new OGRFeatureDefn( "SELECT" );
     poFeatureDefn->Reference();
@@ -67,7 +66,7 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
 
     iNextShapeId = 0;
     nVal = 0;
-    this->pszVal = CPLStrdup(pszVal);
+    this->pszVal = CPLStrdup(pszValIn);
 }
 
 /************************************************************************/

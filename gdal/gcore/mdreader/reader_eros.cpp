@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from EROS imagery.
@@ -30,6 +29,8 @@
 
 #include "reader_eros.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * GDALMDReaderEROS()
  */
@@ -45,7 +46,7 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
         return;
     for(i = 0; i < osBaseName.size(); i++)
     {
-        if(EQUALN(osBaseName + i, ".", 1))
+        if(STARTS_WITH_CI(osBaseName + i, "."))
         {
             pszPassFileName = CPLFormFilename( osDirName, szMetadataName,
                                                "pass" );
@@ -265,7 +266,7 @@ time_t GDALMDReaderEROS::GetAcquisitionTimeFromString(
     int iMin;
     int iSec;
 
-    // exampe: sweep_start_utc     2013-04-22,11:35:02.50724
+    // example: sweep_start_utc     2013-04-22,11:35:02.50724
 
     int r = sscanf ( pszDateTime, "%d-%d-%d,%d:%d:%d.%*d",
                      &iYear, &iMonth, &iDay, &iHours, &iMin, &iSec);

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Raster Matrix Format
  * Purpose:  Implementation of the LZW compression algorithm as used in
@@ -50,6 +49,8 @@
 
 #include "rmfdataset.h"
 
+CPL_CVSID("$Id$");
+
 // Code marks that there is no predecessor in the string
 #define NO_PRED     0xFFFF
 
@@ -92,7 +93,7 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, char bFoll)
         nNext = nLocal;
     else
     {
-        // If collision has occured
+        // If collision has occurred
         while ( (nNext = poCodeTab[nLocal].iNext) != 0 )
             nLocal = nNext;
 
@@ -122,29 +123,30 @@ int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                                GByte* pabyOut, GUInt32 nSizeOut )
 {
     GUInt32         nCount = TABSIZE - 256;
-    GUInt32         iCode, iOldCode, iInCode;
+    GUInt32         iInCode;
     GByte           iFinChar, bLastChar=FALSE;
-    LZWStringTab    *poCodeTab;
     int             bBitsleft;
 
-    if ( pabyIn == 0 ||
-         pabyOut == 0 ||
+    if ( pabyIn == NULL ||
+         pabyOut == NULL ||
          nSizeOut < nSizeIn ||
          nSizeIn < 2 )
         return 0;
 
     // Allocate space for the new table and pre-fill it
-    poCodeTab = (LZWStringTab *)CPLMalloc( TABSIZE * sizeof(LZWStringTab) );
+    LZWStringTab *poCodeTab =
+        (LZWStringTab *)CPLMalloc( TABSIZE * sizeof(LZWStringTab) );
     if ( !poCodeTab )
         return 0;
     memset( poCodeTab, 0, TABSIZE * sizeof(LZWStringTab) );
-    for ( iCode = 0; iCode < 256; iCode++ )
+    GUInt32 iCode = 0;
+    for ( ; iCode < 256; iCode++ )
         LZWUpdateTab( poCodeTab, NO_PRED, (char)iCode );
 
     // The first code is always known
     iCode = (*pabyIn++ << 4) & 0xFF0; nSizeIn--;
     iCode += (*pabyIn >> 4) & 0x00F;
-    iOldCode = iCode;
+    GUInt32 iOldCode = iCode;
     bBitsleft = TRUE;
 
     *pabyOut++ = iFinChar = poCodeTab[iCode].iFollower; nSizeOut--;
@@ -238,4 +240,3 @@ bad:
     CPLFree( poCodeTab );
     return 0;
 }
-

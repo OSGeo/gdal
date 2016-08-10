@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline application to list info about a file.
+ * Purpose:  Command line application to list info about a file.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  * ****************************************************************************
@@ -82,7 +81,7 @@ static void GDALInfoOptionsForBinaryFree( GDALInfoOptionsForBinary* psOptionsFor
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv ) 
+int main( int argc, char ** argv )
 
 {
     EarlySetConfigOptions(argc, argv);
@@ -99,6 +98,7 @@ int main( int argc, char ** argv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( argv );
             return 0;
         }
         else if( EQUAL(argv[i],"--help") )
@@ -106,6 +106,7 @@ int main( int argc, char ** argv )
             Usage();
         }
     }
+    argv = CSLAddString(argv, "-stdout");
 
     GDALInfoOptionsForBinary* psOptionsForBinary = GDALInfoOptionsForBinaryNew();
 
@@ -120,12 +121,21 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open dataset.                                                   */
 /* -------------------------------------------------------------------- */
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    int iIter = 0;
+    while (__AFL_LOOP(1000)) {
+        iIter ++;
+#endif
+
     GDALDatasetH hDataset
-        = GDALOpenEx( psOptionsForBinary->pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER, NULL,
+        = GDALOpenEx( psOptionsForBinary->pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
                       (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );
 
     if( hDataset == NULL )
     {
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+        continue;
+#else
         fprintf( stderr,
                  "gdalinfo failed - unable to open '%s'.\n",
                  psOptionsForBinary->pszFilename );
@@ -133,16 +143,16 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      If argument is a VSIFILE, then print its contents               */
 /* -------------------------------------------------------------------- */
-        if ( strncmp( psOptionsForBinary->pszFilename, "/vsizip/", 8 ) == 0 || 
-             strncmp( psOptionsForBinary->pszFilename, "/vsitar/", 8 ) == 0 ) 
+        if ( STARTS_WITH(psOptionsForBinary->pszFilename, "/vsizip/") ||
+             STARTS_WITH(psOptionsForBinary->pszFilename, "/vsitar/") )
         {
             char** papszFileList = VSIReadDirRecursive( psOptionsForBinary->pszFilename );
             if ( papszFileList )
             {
                 int nCount = CSLCount( papszFileList );
-                fprintf( stdout, 
+                fprintf( stdout,
                          "Unable to open source `%s' directly.\n"
-                         "The archive contains %d files:\n", 
+                         "The archive contains %d files:\n",
                          psOptionsForBinary->pszFilename, nCount );
                 for ( int i = 0; i < nCount; i++ )
                 {
@@ -165,6 +175,7 @@ int main( int argc, char ** argv )
         CPLDumpSharedList( NULL );
 
         exit( 1 );
+#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -199,17 +210,21 @@ int main( int argc, char ** argv )
         }
     }
 
-    GDALInfoOptionsForBinaryFree(psOptionsForBinary);
-
     char* pszGDALInfoOutput = GDALInfo( hDataset, psOptions );
 
-    printf( "%s", pszGDALInfoOutput );
+    if( pszGDALInfoOutput )
+        printf( "%s", pszGDALInfoOutput );
 
     CPLFree( pszGDALInfoOutput );
 
-    GDALInfoOptionsFree( psOptions );
-
     GDALClose( hDataset );
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    }
+#endif
+
+    GDALInfoOptionsForBinaryFree(psOptionsForBinary);
+
+    GDALInfoOptionsFree( psOptions );
 
     CSLDestroy( argv );
 

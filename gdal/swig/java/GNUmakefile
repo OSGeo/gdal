@@ -87,6 +87,7 @@ test:
 	${JAVA_RUN} gdalinfo -checksum tmp_test/byte.tif
 	${JAVA_RUN} ogr2ogr tmp_test/out.shp test_data/poly.shp -progress -overwrite
 	${JAVA_RUN} ogrinfo -ro -al tmp_test/out.shp
+	${JAVA_RUN} ogrinfo -ro -al tmp_test/out.shp -fid 1
 	${JAVA_RUN} ogr2ogr_new tmp_test/out2.shp test_data/poly.shp -progress -overwrite
 	${JAVA_RUN} ogr2ogr_new tmp_test/out2.shp test_data/poly.shp -append
 	${JAVA_RUN} ogrinfo -ro -al tmp_test/out2.shp
@@ -96,6 +97,7 @@ test:
 	${JAVA_RUN} GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
 	${JAVA_RUN} testgetpoints
 	${JAVA_RUN} ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
+	${JAVA_RUN} OSRTest
 
 $(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(LINK) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)

@@ -1,0 +1,4 @@
+<PAMDataset>
+  <SRS>LOCAL_CS["PAM"]</SRS>
+  <GeoTransform>1,2,3,4,5,6</GeoTransform>
+</PAMDataset>

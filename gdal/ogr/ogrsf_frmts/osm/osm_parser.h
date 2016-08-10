@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OSM_PARSER_H_INCLUDED
-#define _OSM_PARSER_H_INCLUDED
+#ifndef OSM_PARSER_H_INCLUDED
+#define OSM_PARSER_H_INCLUDED
 
 #include "cpl_port.h"
 /* typedef long long GIntBig; */
@@ -130,4 +130,4 @@ void OSM_Close( OSMContext* psOSMContext );
 
 CPL_C_END
 
-#endif /*  _OSM_PARSER_H_INCLUDED */
+#endif /*  OSM_PARSER_H_INCLUDED */

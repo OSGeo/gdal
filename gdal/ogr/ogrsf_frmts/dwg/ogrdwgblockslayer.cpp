@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdwglayer.cpp 19643 2010-05-08 21:56:18Z rouault $
  *
  * Project:  DWG Translator
  * Purpose:  Implements OGRDWGBlocksLayer class.
@@ -30,20 +29,18 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrdwglayer.cpp 19643 2010-05-08 21:56:18Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRDWGBlocksLayer()                          */
 /************************************************************************/
 
-OGRDWGBlocksLayer::OGRDWGBlocksLayer( OGRDWGDataSource *poDS )
-
+OGRDWGBlocksLayer::OGRDWGBlocksLayer( OGRDWGDataSource *poDSIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn( "blocks" )),
 {
-    this->poDS = poDS;
-
     ResetReading();
 
-    poFeatureDefn = new OGRFeatureDefn( "blocks" );
     poFeatureDefn->Reference();
 
     poDS->AddStandardFields( poFeatureDefn );
@@ -59,7 +56,7 @@ OGRDWGBlocksLayer::~OGRDWGBlocksLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "DWG", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -114,7 +111,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
 
         psBlock = &(oIt->second);
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Is this a geometry based block?                                 */
 /* -------------------------------------------------------------------- */
@@ -155,7 +152,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
 OGRFeature *OGRDWGBlocksLayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature *poFeature = GetNextUnfilteredFeature();
 
@@ -186,4 +183,3 @@ int OGRDWGBlocksLayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-

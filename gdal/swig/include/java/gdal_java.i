@@ -6,15 +6,6 @@
  * Purpose:  Typemaps for Java bindings
  * Author:   Benjamin Collins, The MITRE Corporation
  *
- *
- * $Log$
- * Revision 1.2  2006/02/16 17:21:12  collinsb
- * Updates to Java bindings to keep the code from halting execution if the native libraries cannot be found.
- *
- * Revision 1.1  2006/02/02 20:56:07  collinsb
- * Added Java specific typemap code
- *
- *
 */
 
 %include java_exceptions.i
@@ -26,19 +17,19 @@
     try {
       System.loadLibrary("gdaljni");
       available = true;
-      
+
       if (gdal.HasThreadSupport() == 0)
       {
         System.err.println("WARNING : GDAL should be compiled with thread support for safe execution in Java.");
       }
-      
+
     } catch (UnsatisfiedLinkError e) {
       available = false;
       System.err.println("Native library load failed.");
       System.err.println(e);
     }
   }
-  
+
   public static boolean isAvailable() {
     return available;
   }
@@ -190,7 +181,7 @@ import org.gdal.gdalconst.gdalconstConstants;
       GetGCPs(gcps);
       return gcps;
   }
-  
+
   public double[] GetGeoTransform() {
       double adfGeoTransform[] = new double[6];
       GetGeoTransform(adfGeoTransform);
@@ -256,7 +247,7 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
               "Java array type is not compatible with GDAL data type");
       return CE_Failure;
   }
-    
+
   if (band_list == 0)
   {
       if (pband_list != NULL)
@@ -344,13 +335,13 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
                               gdal_type, sizeof(ctype));
 }
   %enddef
-  
+
   DEFINE_DS_READ_RASTER(char, GDT_Byte)
   DEFINE_DS_READ_RASTER(short, GDT_Int16)
   DEFINE_DS_READ_RASTER(int, GDT_Int32)
   DEFINE_DS_READ_RASTER(float, GDT_Float32)
   DEFINE_DS_READ_RASTER(double, GDT_Float64)
-  
+
 
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
@@ -387,7 +378,7 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
                               gdal_type, sizeof(ctype));
 }
  %enddef
-    
+
   DEFINE_DS_WRITE_RASTER(char, GDT_Byte)
   DEFINE_DS_WRITE_RASTER(short, GDT_Int16)
   DEFINE_DS_WRITE_RASTER(int, GDT_Int32)
@@ -422,7 +413,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                 "Java array type is not compatible with GDAL data type");
         return CE_Failure;
     }
-  
+
     GIntBig nMinBufferSizeInBytes = ComputeBandRasterIOSize (
                             buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                             nPixelSpace, nLineSpace, sizeof_ctype > 1 );
@@ -479,13 +470,13 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                          gdal_type, sizeof(ctype) );
   }
   %enddef
-  
+
   DEFINE_READ_RASTER(char, GDT_Byte)
   DEFINE_READ_RASTER(short, GDT_Int16)
   DEFINE_READ_RASTER(int, GDT_Int32)
   DEFINE_READ_RASTER(float, GDT_Float32)
   DEFINE_READ_RASTER(double, GDT_Float64)
-  
+
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
@@ -500,7 +491,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                          nPixelSpace, nLineSpace,
                          GDT_Unknown, 0 );
   }
-  
+
   %define DEFINE_WRITE_RASTER(ctype, gdal_type)
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
@@ -517,13 +508,13 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                          gdal_type, sizeof(ctype) );
   }
   %enddef
-  
+
   DEFINE_WRITE_RASTER(char, GDT_Byte)
   DEFINE_WRITE_RASTER(short, GDT_Int16)
   DEFINE_WRITE_RASTER(int, GDT_Int32)
   DEFINE_WRITE_RASTER(float, GDT_Float32)
   DEFINE_WRITE_RASTER(double, GDT_Float64)
-  
+
   CPLErr ReadBlock_Direct( int nXBlockOff, int nYBlockOff, void *nioBuffer, long nioBufferSize )
   {
     if (BandBlockReadWrite_Validate((GDALRasterBandH)self, nioBuffer, nioBufferSize) != CE_None)
@@ -563,7 +554,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                      bool approx_ok,
                      GDALProgressFunc callback,
                      void* callback_data) {
-    CPLErrorReset(); 
+    CPLErrorReset();
     CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
                                          include_out_of_range, approx_ok,
                                          callback, callback_data );
@@ -576,7 +567,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                       int *panHistogram,
                       bool include_out_of_range,
                       bool approx_ok) {
-    CPLErrorReset(); 
+    CPLErrorReset();
     CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
                                          include_out_of_range, approx_ok,
                                          NULL, NULL);
@@ -587,7 +578,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                       double max,
                       int buckets,
                       int *panHistogram) {
-    CPLErrorReset(); 
+    CPLErrorReset();
     CPLErr err = GDALGetRasterHistogram( self, min, max, buckets, panHistogram,
                                          0, 1,
                                          NULL, NULL);
@@ -596,7 +587,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
   CPLErr GetHistogram(int buckets,
                         int *panHistogram) {
-    CPLErrorReset(); 
+    CPLErrorReset();
     CPLErr err = GDALGetRasterHistogram( self, -0.5, 255.5, buckets, panHistogram,
                                          0, 1,
                                          NULL, NULL);
@@ -606,12 +597,12 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
 %apply (int* pnList, int** ppListOut) {(int* buckets_ret, int **ppanHistogram)};
 %apply (double *OUTPUT){double *min_ret, double *max_ret}
-  CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int* buckets_ret, 
-                              int **ppanHistogram, bool force = 1, 
+  CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int* buckets_ret,
+                              int **ppanHistogram, bool force = 1,
                               GDALProgressFunc callback = NULL,
                               void* callback_data=NULL ) {
       return GDALGetDefaultHistogram( self, min_ret, max_ret, buckets_ret,
-                                      ppanHistogram, force, 
+                                      ppanHistogram, force,
                                       callback, callback_data );
   }
 %clear (double *min_ret, double *max_ret);
@@ -657,7 +648,7 @@ import java.awt.Color;
       return Clone();
   }
 
-/* convienance method */
+  // Convenience method.
   public IndexColorModel getIndexColorModel(int bits) {
     int size = GetCount();
     byte[] reds = new byte[size];
@@ -677,7 +668,7 @@ import java.awt.Color;
       byte alpha = (byte)(entry.getAlpha()&0xff);
 
       // The byte type is -128 to 127 so a normal 255 will be -1.
-      if (alpha == -1) 
+      if (alpha == -1)
           noAlphas ++;
       else{
         if (alpha == 0){
@@ -691,7 +682,7 @@ import java.awt.Color;
         return new IndexColorModel(bits, size, reds, greens, blues);
     else if (noAlphas == (size - 1) && zeroAlphas == 1)
         return new IndexColorModel(bits, size, reds, greens, blues, lastAlphaIndex);
-    else 
+    else
         return new IndexColorModel(bits, size, reds, greens, blues, alphas);
  }
 %}
@@ -779,7 +770,7 @@ import org.gdal.gdalconst.gdalconstConstants;
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, byte[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte, array);
    }
-   
+
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, short[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
@@ -787,31 +778,31 @@ import org.gdal.gdalconst.gdalconstConstants;
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, short[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int16, array);
    }
-   
+
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, int[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
-   
+
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int32, array);
    }
-   
+
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
-   
+
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, float[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Float32, array);
    }
-   
+
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, double[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
-   
+
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, double[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Float64, array);
    }
-   
+
    public int WriteRaster_Direct(int xoff, int yoff, int xsize, int ysize,
                                 int buf_xsize, int buf_ysize, java.nio.ByteBuffer nioBuffer) {
        return WriteRaster_Direct(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, gdalconstConstants.GDT_Byte, nioBuffer);
@@ -834,7 +825,7 @@ import org.gdal.gdalconst.gdalconstConstants;
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, byte[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Byte, array);
    }
-   
+
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, short[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
@@ -842,27 +833,27 @@ import org.gdal.gdalconst.gdalconstConstants;
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, short[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int16, array);
    }
-   
+
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, int[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
-   
+
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int32, array);
    }
-   
+
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
-   
+
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, float[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Float32, array);
    }
-   
+
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, double[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
-   
+
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, double[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Float64, array);
    }
@@ -926,7 +917,7 @@ import org.gdal.gdalconst.gdalconstConstants;
     parentReference = reference;
   }
 
-  /* For backward compatibilty */
+  /* For backward compatibility */
   public int SetMetadata(java.util.Hashtable metadata, String domain)
   {
       if (metadata == null)

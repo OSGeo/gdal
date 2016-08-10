@@ -1,4 +1,3 @@
-
 OBJ	=	ogrbnadriver.obj ogrbnadatasource.obj ogrbnalayer.obj \
 		ogrbnaparser.obj
 

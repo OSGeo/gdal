@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader - Data block property definition
  * Purpose:  Implements VFKPropertyDefn class.
@@ -35,6 +34,8 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+CPL_CVSID("$Id$");
+
 /*!
   \brief VFKPropertyDefn constructor
 
@@ -59,13 +60,13 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType,
     pszWidth = (char *) CPLMalloc(nLength+1);
     strncpy(pszWidth, poWidth, nLength);
     pszWidth[nLength] = '\0';
-    
+
     m_nWidth  = atoi(pszWidth);
     CPLFree(pszWidth);
-    
+
     /* precision */
     m_nPrecision = 0;
-    
+
     /* type */
     m_pszEncoding = NULL;
     if (*m_pszType == 'N') {
@@ -111,7 +112,7 @@ VFKPropertyDefn::~VFKPropertyDefn()
 }
 
 /*!
-  \brief Get SQL data type 
+  \brief Get SQL data type
 
   \return string with data type ("text" by default)
 */

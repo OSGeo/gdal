@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL scattered data gridding (interpolation) tool
@@ -40,7 +39,7 @@ CPL_CVSID("$Id$");
 static void Usage(const char* pszErrorMsg = NULL)
 
 {
-    printf( 
+    printf(
         "Usage: gdal_grid [--help-general] [--formats]\n"
         "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
@@ -56,7 +55,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "    [-q]\n"
         "    <src_datasource> <dst_filename>\n"
         "\n"
-        "Available algorithms and parameters with their's defaults:\n"
+        "Available algorithms and parameters with their defaults:\n"
         "    Inverse distance to a power (default)\n"
         "        invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0\n"
         "    Inverse distance to a power with nearest neighbor search\n"
@@ -126,13 +125,14 @@ int main(int argc, char** argv)
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         exit( -argc );
-    
+
     for( int i = 0; i < argc; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( argv );
             return 0;
         }
         else if( EQUAL(argv[i],"--help") )
@@ -142,6 +142,7 @@ int main(int argc, char** argv)
     }
 
     GDALGridOptionsForBinary* psOptionsForBinary = GDALGridOptionsForBinaryNew();
+    /* coverity[tainted_data] */
     GDALGridOptions *psOptions = GDALGridOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
@@ -180,7 +181,7 @@ int main(int argc, char** argv)
     if(bUsageError == TRUE)
         Usage();
     int nRetCode = (hOutDS) ? 0 : 1;
-    
+
     GDALClose(hInDS);
     GDALClose(hOutDS);
     GDALGridOptionsFree(psOptions);

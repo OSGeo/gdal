@@ -31,7 +31,7 @@
 #define DEFAULT_EXTRASAMPLE_AS_ALPHA 1
 
 /* Support strip chopping (whether or not to convert single-strip uncompressed
-   images to mutiple strips of ~8Kb to reduce memory usage) */
+   images to multiple strips of ~8Kb to reduce memory usage) */
 #define STRIPCHOP_DEFAULT TIFF_STRIPCHOP
 
 #define CHUNKY_STRIP_READ_SUPPORT 1

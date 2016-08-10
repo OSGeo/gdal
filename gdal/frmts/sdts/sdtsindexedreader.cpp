@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implmementation of SDTSIndexedReader class.  This base class for
@@ -38,13 +37,11 @@ CPL_CVSID("$Id$");
 /*                         SDTSIndexedReader()                          */
 /************************************************************************/
 
-SDTSIndexedReader::SDTSIndexedReader()
-
-{
-    nIndexSize = 0;
-    papoFeatures = NULL;
-    iCurrentFeature = 0;
-}
+SDTSIndexedReader::SDTSIndexedReader() :
+    nIndexSize(0),
+    papoFeatures(NULL),
+    iCurrentFeature(0)
+{}
 
 /************************************************************************/
 /*                         ~SDTSIndexedReader()                         */
@@ -82,7 +79,7 @@ int SDTSIndexedReader::IsIndexed()
   Free all features in the index (if filled).
 
   After this the reader is considered to not be indexed, and IsIndexed()
-  will return FALSE untill the index is forcably filled again. 
+  will return FALSE until the index is forcibly filled again.
   */
 
 void SDTSIndexedReader::ClearIndex()
@@ -93,7 +90,7 @@ void SDTSIndexedReader::ClearIndex()
         if( papoFeatures[i] != NULL )
             delete papoFeatures[i];
     }
-    
+
     CPLFree( papoFeatures );
 
     papoFeatures = NULL;
@@ -124,18 +121,16 @@ SDTSFeature *SDTSIndexedReader::GetNextFeature()
 {
     if( nIndexSize == 0 )
         return GetNextRawFeature();
-    else
-    {
-        while( iCurrentFeature < nIndexSize )
-        {
-            if( papoFeatures[iCurrentFeature] != NULL )
-                return papoFeatures[iCurrentFeature++];
-            else
-                iCurrentFeature++;
-        }
 
-        return NULL;
+    while( iCurrentFeature < nIndexSize )
+    {
+        if( papoFeatures[iCurrentFeature] != NULL )
+            return papoFeatures[iCurrentFeature++];
+        else
+            iCurrentFeature++;
     }
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -143,15 +138,15 @@ SDTSFeature *SDTSIndexedReader::GetNextFeature()
 /************************************************************************/
 
 /**
- Fetch a feature based on it's record number.
+ Fetch a feature based on its record number.
 
- This method will forceably fill the feature cache, reading all the
+ This method will forcibly fill the feature cache, reading all the
  features in the file into memory, if they haven't already been loaded.
  The ClearIndex() method can be used to flush this cache when no longer
- needed. 
+ needed.
 
  @param iRecordId the record to fetch, normally based on the nRecord
- field of an SDTSModId. 
+ field of an SDTSModId.
 
  @return a pointer to an internal feature (not to be deleted) or NULL
  if there is no matching feature.
@@ -165,8 +160,8 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 
     if( iRecordId < 0 || iRecordId >= nIndexSize )
         return NULL;
-    else
-        return papoFeatures[iRecordId];
+
+    return papoFeatures[iRecordId];
 }
 
 /************************************************************************/
@@ -183,16 +178,15 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 void SDTSIndexedReader::FillIndex()
 
 {
-    SDTSFeature         *poFeature;
-
     if( nIndexSize != 0 )
         return;
 
     Rewind();
-    
+
+    SDTSFeature *poFeature = NULL;
     while( (poFeature = GetNextRawFeature()) != NULL )
     {
-        int     iRecordId = poFeature->oModId.nRecord;
+        const int iRecordId = poFeature->oModId.nRecord;
 
         CPLAssert( iRecordId < 1000000 );
         if( iRecordId >= 1000000 )
@@ -203,10 +197,10 @@ void SDTSIndexedReader::FillIndex()
 
         if( iRecordId >= nIndexSize )
         {
-            int         nNewSize = (int) (iRecordId * 1.25 + 100);
+            const int nNewSize = static_cast<int>(iRecordId * 1.25 + 100);
 
-            papoFeatures = (SDTSFeature **)
-                CPLRealloc( papoFeatures, sizeof(void*) * nNewSize);
+            papoFeatures = reinterpret_cast<SDTSFeature **>(
+                CPLRealloc( papoFeatures, sizeof(void*) * nNewSize ) );
 
             for( int i = nIndexSize; i < nNewSize; i++ )
                 papoFeatures[i] = NULL;
@@ -235,8 +229,8 @@ void SDTSIndexedReader::FillIndex()
 
   This method will have the side effect of rewinding unindexed readers
   because the scanning operation requires reading all records in the module
-  from disk. 
-  
+  from disk.
+
   @param pszFName the field name to search for.  By default "ATID" is
   used.
 

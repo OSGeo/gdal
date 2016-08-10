@@ -45,8 +45,9 @@ void SetMVcellRepr(
 				break;
 		case CR_REAL8 :
 				((UINT4 *)c)[1] = MV_UINT4;
+                                *((UINT4 *)c) = MV_UINT4;
+                                break;
 		default       : POSTCOND(
-					cellRepr == CR_REAL8 ||
 					cellRepr == CR_REAL4 ||
 					cellRepr == CR_UINT4 );
 				*((UINT4 *)c) = MV_UINT4;

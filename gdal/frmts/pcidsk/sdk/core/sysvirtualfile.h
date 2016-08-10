@@ -35,8 +35,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_CORE_SYSVIRTUALFILE_H
-#define __INCLUDE_CORE_SYSVIRTUALFILE_H
+#ifndef INCLUDE_CORE_SYSVIRTUALFILE_H
+#define INCLUDE_CORE_SYSVIRTUALFILE_H
 
 #include "pcidsk_buffer.h"
 #include "pcidsk_mutex.h"
@@ -110,4 +110,4 @@ namespace PCIDSK
     };
 }
 
-#endif // __INCLUDE_CORE_SYSVIRTUALFILE_H
+#endif // INCLUDE_CORE_SYSVIRTUALFILE_H

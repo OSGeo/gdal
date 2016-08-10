@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_JML_H_INCLUDED
-#define _OGR_JML_H_INCLUDED
+#ifndef OGR_JML_H_INCLUDED
+#define OGR_JML_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
@@ -55,7 +55,8 @@ class OGRJMLColumn
         CPLString osElementName;
         CPLString osAttributeName;
         CPLString osAttributeValue;
-        int       bIsBody; /* if false: attribute */
+        bool      bIsBody; /* if false: attribute */
+        OGRJMLColumn() : bIsBody(false) {}
 };
 
 /************************************************************************/
@@ -65,20 +66,19 @@ class OGRJMLColumn
 class OGRJMLLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-    OGRJMLDataset *poDS;
 
     int                nNextFID;
     VSILFILE*          fp;
-    int                bHasReadSchema;
+    bool               bHasReadSchema;
 
     XML_Parser         oParser;
 
     int                currentDepth;
-    int                bStopParsing;
+    bool               bStopParsing;
     int                nWithoutEventCounter;
     int                nDataHandlerCounter;
-    
-    int                bAccumulateElementValue;
+
+    bool               bAccumulateElementValue;
     char              *pszElementValue;
     int                nElementValueLen;
     int                nElementValueAlloc;
@@ -88,7 +88,7 @@ class OGRJMLLayer : public OGRLayer
     int                nFeatureTabLength;
     int                nFeatureTabIndex;
 
-    int                bSchemaFinished;
+    bool               bSchemaFinished;
     int                nJCSGMLInputTemplateDepth;
     int                nCollectionElementDepth;
     CPLString          osCollectionElement;
@@ -123,7 +123,7 @@ class OGRJMLLayer : public OGRLayer
     OGRFeature *        GetNextFeature();
 
     OGRFeatureDefn *    GetLayerDefn();
-    
+
     int                 TestCapability( const char * );
 
     void                startElementCbk(const char *pszName, const char **ppszAttr);
@@ -143,24 +143,23 @@ class OGRJMLLayer : public OGRLayer
 class OGRJMLWriterLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-    OGRJMLDataset *poDS;
     VSILFILE           *fp;
-    int                 bFeaturesWritten;
-    int                 bAddRGBField;
-    int                 bAddOGRStyleField;
-    int                 bClassicGML;
+    bool                bFeaturesWritten;
+    bool                bAddRGBField;
+    bool                bAddOGRStyleField;
+    bool                bClassicGML;
     int                 nNextFID;
 
     void                WriteColumnDeclaration( const char* pszName,
                                                 const char* pszType );
 
   public:
-                        OGRJMLWriterLayer(const char* pszLayerName,
-                                               OGRJMLDataset* poDS,
-                                               VSILFILE* fp,
-                                               int bAddRGBField,
-                                               int bAddOGRStyleField,
-                                               int bClassicGML );
+                        OGRJMLWriterLayer( const char* pszLayerName,
+                                           OGRJMLDataset* poDS,
+                                           VSILFILE* fp,
+                                           bool bAddRGBField,
+                                           bool bAddOGRStyleField,
+                                           bool bClassicGML );
                         ~OGRJMLWriterLayer();
 
     void                ResetReading() {}
@@ -183,7 +182,7 @@ class OGRJMLDataset : public GDALDataset
     OGRLayer           *poLayer;
 
     VSILFILE           *fp; /* Virtual file API */
-    int                 bWriteMode;
+    bool                bWriteMode;
 
   public:
                         OGRJMLDataset();
@@ -191,7 +190,7 @@ class OGRJMLDataset : public GDALDataset
 
     int                 GetLayerCount() { return poLayer != NULL ? 1 : 0; }
     OGRLayer*           GetLayer( int );
-    
+
     OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
@@ -201,7 +200,7 @@ class OGRJMLDataset : public GDALDataset
 
     static int          Identify( GDALOpenInfo* poOpenInfo );
     static GDALDataset* Open( GDALOpenInfo* poOpenInfo );
-    static GDALDataset* Create( const char *pszFilename, 
+    static GDALDataset* Create( const char *pszFilename,
                                  int nBands,
                                  int nXSize,
                                  int nYSize,
@@ -209,4 +208,4 @@ class OGRJMLDataset : public GDALDataset
                                  char **papszOptions );
 };
 
-#endif /* ndef _OGR_JML_H_INCLUDED */
+#endif /* ndef OGR_JML_H_INCLUDED */

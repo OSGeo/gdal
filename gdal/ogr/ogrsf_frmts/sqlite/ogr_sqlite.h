@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SQLITE_H_INCLUDED
-#define _OGR_SQLITE_H_INCLUDED
+#ifndef OGR_SQLITE_H_INCLUDED
+#define OGR_SQLITE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "gdal_pam.h"
@@ -42,8 +42,8 @@
     /*
     / using an AMALGAMATED version of SpatiaLite
     / a private internal copy of SQLite is included:
-    / so we are required including the SpatiaLite's 
-    / own header 
+    / so we are required including the SpatiaLite's
+    / own header
     /
     / IMPORTANT NOTICE: using AMALAGATION is only
     / useful on Windows (to skip DLL hell related oddities)
@@ -64,6 +64,8 @@
 #define HAVE_SQLITE_VFS
 #define HAVE_SQLITE3_PREPARE_V2
 #endif
+
+#ifndef DO_NOT_INCLUDE_SQLITE_CLASSES
 
 #define UNINITIALIZED_SRID  -2
 
@@ -102,7 +104,7 @@ enum OGRSpatialiteGeomType
     OGRSpliteMultiLineStringXYZ          = 1005,
     OGRSpliteMultiPolygonXYZ             = 1006,
     OGRSpliteGeometryCollectionXYZ       = 1007,
-// 2D with Measure [XYM] 
+// 2D with Measure [XYM]
     OGRSplitePointXYM                    = 2001,
     OGRSpliteLineStringXYM               = 2002,
     OGRSplitePolygonXYM                  = 2003,
@@ -152,13 +154,13 @@ enum OGRSpatialiteGeomType
 /*                        OGRSQLiteGeomFieldDefn                        */
 /************************************************************************/
 
-class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
+class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
 {
     public:
-        OGRSQLiteGeomFieldDefn( const char* pszName, int iGeomColIn ) :
-            OGRGeomFieldDefn(pszName, wkbUnknown), nSRSId(-1),
+        OGRSQLiteGeomFieldDefn( const char* pszNameIn, int iGeomColIn ) :
+            OGRGeomFieldDefn(pszNameIn, wkbUnknown), nSRSId(-1),
             iCol(iGeomColIn), bTriedAsSpatiaLite(FALSE), eGeomFormat(OSGF_None),
-            bHasM(FALSE), bCachedExtentIsValid(FALSE), bHasSpatialIndex(FALSE),
+            bCachedExtentIsValid(FALSE), bHasSpatialIndex(FALSE),
             bHasCheckedSpatialIndexTable(FALSE)
             {
             }
@@ -167,7 +169,6 @@ class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
         int iCol; /* ordinal of geometry field in SQL statement */
         int bTriedAsSpatiaLite;
         OGRSQLiteGeomFormat eGeomFormat;
-        int bHasM;
         OGREnvelope         oCachedExtent;
         int                 bCachedExtentIsValid;
         int                 bHasSpatialIndex;
@@ -179,7 +180,7 @@ class OGRSQLiteGeomFieldDefn : public OGRGeomFieldDefn
 /*                        OGRSQLiteFeatureDefn                          */
 /************************************************************************/
 
-class OGRSQLiteFeatureDefn : public OGRFeatureDefn
+class OGRSQLiteFeatureDefn CPL_FINAL : public OGRFeatureDefn
 {
     public:
         OGRSQLiteFeatureDefn( const char * pszName = NULL ) :
@@ -187,7 +188,7 @@ class OGRSQLiteFeatureDefn : public OGRFeatureDefn
         {
             SetGeomType(wkbNone);
         }
-            
+
         OGRSQLiteGeomFieldDefn* myGetGeomFieldDefn(int i)
         {
             return (OGRSQLiteGeomFieldDefn*) GetGeomFieldDefn(i);
@@ -203,6 +204,8 @@ class OGRSQLiteDataSource;
 class IOGRSQLiteGetSpatialWhere
 {
   public:
+    virtual              ~IOGRSQLiteGetSpatialWhere() {}
+
     virtual int           HasFastSpatialFilter(int iGeomCol) = 0;
     virtual CPLString     GetSpatialWhere(int iGeomCol,
                                           OGRGeometry* poFilterGeom) = 0;
@@ -221,17 +224,17 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     static int          CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeometry);
 
     static int          ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
-                                                      int bHasM, int bSpatialite2D,
+                                                      int bSpatialite2D,
                                                       int bUseComprGeom );
 
     static int          GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
-                                                  int bHasM, int bSpatialite2D,
+                                                  int bSpatialite2D,
                                                   int bUseComprGeom,
                                                   int bAcceptMultiGeom);
 
     static int          ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeometry,
                                                         OGRwkbByteOrder eByteOrder,
-                                                        int bHasM, int bSpatialite2D,
+                                                        int bSpatialite2D,
                                                         int bUseComprGeom,
                                                         GByte* pabyData );
 
@@ -249,6 +252,8 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
     int                *panFieldOrdinals;
     int                 iFIDCol;
+    int                 iOGRNativeDataCol;
+    int                 iOGRNativeMediaTypeCol;
 
     int                 bIsVirtualShape;
 
@@ -285,7 +290,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
     virtual OGRSQLiteFeatureDefn *myGetLayerDefn() { return poFeatureDefn; }
 
@@ -313,7 +318,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
                                                   OGRGeometry **, int *pnSRID );
     static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
                                                   GInt32, OGRwkbByteOrder,
-                                                  int, int, int bUseComprGeom, GByte **, int * );
+                                                  int, int bUseComprGeom, GByte **, int * );
 
 };
 
@@ -349,11 +354,12 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     OGRErr              RecomputeOrdinals();
 
     OGRErr              AddColumnAncientMethod( OGRFieldDefn& oField);
-    void                AddColumnDef(char* pszNewFieldList,
+    void                AddColumnDef(char* pszNewFieldList, size_t nBufLen,
                                      OGRFieldDefn* poFldDefn);
 
     void                InitFieldListForRecrerate(char* & pszNewFieldList,
                                                   char* & pszFieldListForSelect,
+                                                  size_t& nBufLenOut,
                                                   int nExtraSpace = 0);
     OGRErr              RecreateTable(const char* pszFieldListForSelect,
                                       const char* pszNewFieldList,
@@ -373,7 +379,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     void                LoadStatisticsSpatialite4DB();
 
     CPLString           FieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn );
-    
+
     int                 bDeferredCreation;
     OGRErr              RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeomField,
                                               int bAddColumnsForNonSpatialite );
@@ -385,7 +391,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     int bIsVirtualShapeIn,
                                     int bDeferredCreation);
     void                SetCreationParameters( const char *pszFIDColumnName,
@@ -428,7 +434,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                          const char * pszDomain = "" );
 
     // follow methods are not base class overrides
-    void                SetLaunderFlag( int bFlag ) 
+    void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
     void                SetUseCompressGeom( int bFlag )
                                 { bUseComprGeom = bFlag; }
@@ -530,6 +536,8 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 class IOGRSQLiteSelectLayer
 {
     public:
+        virtual                     ~IOGRSQLiteSelectLayer() {}
+
         virtual char*&               GetAttrQueryString() = 0;
         virtual OGRFeatureQuery*&    GetFeatureQuery() = 0;
         virtual OGRGeometry*&        GetFilterGeom() = 0;
@@ -593,9 +601,9 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
     OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 
     virtual OGRErr      ResetStatement();
- 
+
   public:
-                        OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
+                        OGRSQLiteSelectLayer( OGRSQLiteDataSource *,
                                               CPLString osSQL,
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,
@@ -638,7 +646,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 /*                   OGRSQLiteSingleFeatureLayer                        */
 /************************************************************************/
 
-class OGRSQLiteSingleFeatureLayer : public OGRLayer
+class OGRSQLiteSingleFeatureLayer CPL_FINAL : public OGRLayer
 {
   private:
     int                 nVal;
@@ -689,13 +697,13 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 
 #ifdef SPATIALITE_412_OR_LATER
     void               *hSpatialiteCtxt;
-    int                 InitNewSpatialite();
+    bool                InitNewSpatialite();
     void                FinishNewSpatialite();
 #endif
 
     int                 bUserTransactionActive;
     int                 nSoftTransactionLevel;
-    
+
     OGRErr              DoTransactionCommand(const char* pszCommand);
 
   public:
@@ -716,8 +724,10 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
     virtual OGRErr      StartTransaction(int bForce = FALSE);
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
-    
+
     virtual int         TestCapability( const char * );
+
+    virtual void *GetInternalHandle( const char * );
 
     OGRErr              SoftStartTransaction();
     OGRErr              SoftCommitTransaction();
@@ -728,13 +738,13 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 /*                         OGRSQLiteDataSource                          */
 /************************************************************************/
 
-class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
+class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
 {
     OGRSQLiteLayer    **papoLayers;
     int                 nLayers;
 
     // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes. 
+    // the database to get SRSes.
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
@@ -771,7 +781,7 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     int                 Open( const char *, int bUpdateIn, char** papszOpenOptions );
     int                 Create( const char *, char **papszOptions );
 
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    int bIsVirtualShapeIn = FALSE );
     int                  OpenView( const char *pszViewName,
                                    const char *pszViewGeometry,
@@ -784,9 +794,9 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     virtual OGRLayer   *GetLayerByName( const char* );
     virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName );
 
-    virtual OGRLayer    *ICreateLayer( const char *pszLayerName, 
-                                      OGRSpatialReference *poSRS, 
-                                      OGRwkbGeometryType eType, 
+    virtual OGRLayer    *ICreateLayer( const char *pszLayerName,
+                                      OGRSpatialReference *poSRS,
+                                      OGRwkbGeometryType eType,
                                       char **papszOptions );
     virtual OGRErr      DeleteLayer(int);
 
@@ -798,7 +808,7 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     virtual void        FlushCache();
-    
+
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
 
@@ -827,6 +837,8 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     void                ReloadLayers();
 };
 
+#endif /* DO_NOT_INCLUDE_SQLITE_CLASSES */
+
 /* To escape literals. The returned string doesn't contain the surrounding single quotes */
 CPLString OGRSQLiteEscape( const char *pszLiteral );
 
@@ -848,4 +860,6 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
 
 void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB);
 
-#endif /* ndef _OGR_SQLITE_H_INCLUDED */
+void OGRSQLiteDriverUnload(GDALDriver*);
+
+#endif /* ndef OGR_SQLITE_H_INCLUDED */

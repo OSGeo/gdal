@@ -143,6 +143,7 @@ GLOBAL(void)
 jpeg_open_backing_store (j_common_ptr cinfo, backing_store_ptr info,
 			 CPL_UNUSED long total_bytes_needed)
 {
+  /* coverity[secure_temp] */
   if ((info->temp_file = tmpfile()) == NULL)
     ERREXITS(cinfo, JERR_TFILE_CREATE, "");
   info->read_backing_store = read_backing_store;

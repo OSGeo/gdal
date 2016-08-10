@@ -32,7 +32,7 @@ GML writing is always supported, even without Xerces or Expat.<p>
 Note: starting with OGR 1.9.0, if both Xerces and Expat are available at build time,
 the GML driver will preferentially select at runtime the Expat parser for cases where it is possible
 (GML file in a compatible encoding), and default back to Xerces parser in other cases.
-However, the choice of the parser can be overriden by specifying the <b>GML_PARSER</b>
+However, the choice of the parser can be overridden by specifying the <b>GML_PARSER</b>
 configuration option to <b>EXPAT</b> or <b>XERCES</b>.<p>
 
 <h2>CRS support</h2>
@@ -101,7 +101,7 @@ environment variables.<p>
 OGR 1.8.0 adds support for detecting feature attributes in nested GML elements
 (non-flat attribute hierarchy) that can be found in some GML profiles
 such as UK Ordnance Survey MasterMap. OGR 1.8.0 also brings support for reading
-IntegerList, RealList and StringList field types when a GML element has several occurences.<p>
+IntegerList, RealList and StringList field types when a GML element has several occurrences.<p>
 
 Since OGR 1.8.0, a specialized GML driver - the <a href="drv_nas.html">NAS</a> driver - is available to read
 German AAA GML Exchange Format (NAS/ALKIS).<p>
@@ -129,14 +129,12 @@ several geometry fields, or the .gfs file declares several geometry fields, mult
 fields will be reported by the GML driver according to
 <a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">RFC 41</a>.<p>
 
-Starting with OGR 1.10, in case of multiple geometry occurences, if a geometry is in a &lt;geometry&gt; element,
+Starting with OGR 1.10, in case of multiple geometry occurrences, if a geometry is in a &lt;geometry&gt; element,
 this will be the one selected. This will make default behaviour consistent with Inspire objects.<p>
-
 
 Starting with OGR 1.8.0, the user can change the .gfs file to select the appropriate
 geometry by specifying its path with the &lt;GeometryElementPath&gt; element. See the
 description of the .gfs syntax below.<p>
-
 
 <!-- Voluntary commented : a bit experimental for now and perhaps a better solution
      will emerge later -->
@@ -181,26 +179,26 @@ doesn't exist already.  This behaviour can be changed using the configuration
 option <b>GML_SAVE_RESOLVED_TO</b>.  Set it to <b>SAME</b> to overwrite the
 original file.  Set it to a <b>filename ending with .gml</b> to save it to that
 location.  Any other values are ignored.  If the resolver cannot write to the
-file for any reason, it will try to save it to a temperary file generated using
+file for any reason, it will try to save it to a temporary file generated using
 CPLGenerateTempFilename("ResolvedGML"); if it cannot, resolution fails.<p>
 
-Note that the resolution algorithm is not optimised for large files.  For files
+Note that the resolution algorithm is not optimized for large files.  For files
 with more than a couple of thousand xlink:href tags, the process can go beyond
 a few minutes.  A rough progress is displayed through CPLDebug() for every
 256 links.  It can be seen by setting the environment variable CPL_DEBUG.
 The resolution time can be reduced if you know any elements that
-won't be needed.  Mention a comma seperated list of names of such elements with
+will not be needed.  Mention a comma separated list of names of such elements with
 the configuration option <b>GML_SKIP_RESOLVE_ELEMS</b>.  Set it to <b>ALL</b>
 to skip resolving altogether (default action).  Set it to <b>NONE</b> to
 resolve all the xlinks.<p>
 
 Starting since OGR 1.9.0 an alternative resolution method is available.
 This alternative method will be activated using the configuration option
-<b>GML_SKIP_RESOLVE_ELEMS HUGE</b>. In this case any gml:xlink will be 
+<b>GML_SKIP_RESOLVE_ELEMS HUGE</b>. In this case any gml:xlink will be
 resolved using a temporary SQLite DB so to identify any corresponding
 gml:id relation. At the end of this SQL-based process, a resolved file
-will be generated exactly as in the <b>NONE</b> case but without their limits. 
-The main advantages in using an external (temporary) DBMS so to resolve 
+will be generated exactly as in the <b>NONE</b> case but without their limits.
+The main advantages in using an external (temporary) DBMS so to resolve
 gml:xlink and gml:id relations are the followings:<ul>
 	<li>no memory size constraints. The <b>NONE</b> method stores the whole
 	   GML node-tree in-memory; and this practically means that no GML
@@ -208,18 +206,18 @@ gml:xlink and gml:id relations are the followings:<ul>
 	   platform, due to memory allocation limits. Using a file-system
 	   based DBMS avoids at all this issue.</li>
 	<li>by far better efficiency, most notably when huge GML files containing
-	   many thousands (or even millions) of xlink:href / gml:id relational 
+	   many thousands (or even millions) of xlink:href / gml:id relational
 	   pairs.</li>
-	<li>using the <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method realistically allows 
-	   to succesfully resolve some really huge GML file (3GB+) containing many 
+	<li>using the <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method realistically allows
+	   to successfully resolve some really huge GML file (3GB+) containing many
 	   millions xlink:href / gml:id in a reasonable time (about an hour or so on).</li>
-	<li>The <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method supports the followind further
+	<li>The <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method supports the following further
 	   configuration option:<ul>
 		<li>you can use <b>GML_GFS_TEMPLATE</b> <b><i>path_to_template.gfs</i></b>
 		   in order to unconditionally use a predefined GFS file. This option is really useful
-		   when you are planning to import many distinct GML files in subsequent steps [<b>-append</b>] 
+		   when you are planning to import many distinct GML files in subsequent steps [<b>-append</b>]
 		   and you absolutely want to preserve a fully consistent data layout for the whole GML set.
-		   Please, pay attention not to use the <b>-lco LAUNDER=yes</b> setting when using <b>GML_GFS_TEMPLATE</b>; 
+		   Please, pay attention not to use the <b>-lco LAUNDER=yes</b> setting when using <b>GML_GFS_TEMPLATE</b>;
 		   this should break the correct recognition of attribute names between subsequent GML import runs.
 </li>
 	</ul></li>
@@ -236,7 +234,7 @@ rules for TopoSurface when a polygon contains any internal hole:
 		<li><i>positive</i> Faces [i.e. declaring <b>orientation="+"</b>] are assumed to
 		    represent the Exterior Ring of some Polygon.</li>
 		<li><i>negative</i> Faces [i.e. declaring <b>orientation="-"</b>] are assumed to
-		    represent an Interior Ring (aka <i>hole</i>) belonging to the latest declared 
+		    represent an Interior Ring (aka <i>hole</i>) belonging to the latest declared
 			Exterior Ring.</li>
 		<li>ordering any Edge used to represent each Ring is important: each Edge is expected
 			to be exactly adjacent to the next one.</li>
@@ -244,12 +242,12 @@ rules for TopoSurface when a polygon contains any internal hole:
 	<li>the new interpretation rule now assumes that:<ul>
 		<li>each TopoSurface may be represented as a collection of many Faces</li>
 		<li>the declared <b>orientation</b> for any Face has nothing to deal with Exterior/Interior Rings</li>
-		<li>each Face is now intended to represent a complete Polygon, eventually including any possible Interior 
+		<li>each Face is now intended to represent a complete Polygon, eventually including any possible Interior
 			Ring (<i>holes</i>)</li>
-		<li>the relative ordering of any Edge composing the same Face is completely not relevant</li> 
+		<li>the relative ordering of any Edge composing the same Face is completely not relevant</li>
 	</li></ul>
 </ul>
-		
+
 The newest interpretation seems to fully match GML 3 standard recommendations; so this latest
 is now assumed to be the default interpretation supported by OGR.</p>
 
@@ -276,11 +274,11 @@ Expat library supports reading the following built-in encodings :
 </ul>
 
 When used with Expat library, OGR 1.8.0 adds supports for Windows-1252 encoding (
-for previous versions, altering the encoding mentionned in the XML header to
+for previous versions, altering the encoding mentioned in the XML header to
 ISO-8859-1 might work in some cases).<p>
 
 The content returned by OGR will be encoded in UTF-8, after the conversion from the
-encoding mentionned in the file header is.<p>
+encoding mentioned in the file header is.<p>
 
 If the GML file is not encoded in one of the previous encodings and the only parser available
 is Expat, it will not be parsed by the GML driver. You may convert it into one of the supported
@@ -304,7 +302,7 @@ write the content of the gml:id attribute of the created feature.<p>
 Starting with OGR 1.9.0, the driver autodetects the presence of a fid (GML2)
 (resp. gml:id (GML3)) attribute at the beginning of the file, and, if found,
 exposes it by default as a <i>fid</i> (resp. <i>gml_id</i>) field. The autodetection
-can be overriden by specifying the <b>GML_EXPOSE_FID</b> or <b>GML_EXPOSE_GML_ID</b> configuration
+can be overridden by specifying the <b>GML_EXPOSE_FID</b> or <b>GML_EXPOSE_GML_ID</b> configuration
 option to <b>YES</b> or <b>NO</b>.<p>
 
 Starting with OGR 1.9.0, when creating a GML2 document, if a field is called
@@ -392,7 +390,7 @@ Filename of the registry with application schemas. Defaults to {GDAL_DATA}/gml_r
 
 On export all layers are written to a single GML file all in a single
 feature collection.  Each layer's name is used as the element name for
-objects from that layer.  Geometries are always written as the 
+objects from that layer.  Geometries are always written as the
 ogr:geometryProperty element on the feature.<p>
 
 The GML writer supports the following dataset creation options:
@@ -400,7 +398,7 @@ The GML writer supports the following dataset creation options:
 <ul>
 <li> <B>XSISCHEMAURI</B>: If provided, this URI will be inserted as the
 schema location.  Note that the schema file isn't actually accessed by OGR, so
-it is up to the user to ensure it will match the schema of the OGR produced 
+it is up to the user to ensure it will match the schema of the OGR produced
 GML data file.<p>
 
 <li> <B>XSISCHEMA</B>: This can be EXTERNAL, INTERNAL or OFF and defaults to
@@ -579,7 +577,7 @@ OGRFeature(LAYER):0
 
 <h2>Advanced .gfs syntax (OGR &gt;= 1.11)</h2>
 
-<h3>Specifying ElementPath to find objets embedded into top level objects</h3>
+<h3>Specifying ElementPath to find objects embedded into top level objects</h3>
 
 Let's consider the following test.gml file :
 <pre>
@@ -894,7 +892,7 @@ Such datasets typically look like:
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     numberMatched="unknown" numberReturned="2" timeStamp="2015-01-01T00:00:00.000Z"
-    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
                         http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd"&gt;
   &lt;wfs:member&gt;
     &lt;wfs:Tuple&gt;

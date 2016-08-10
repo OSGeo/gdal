@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeomediaTableLayer class, access to an existing table.
@@ -65,7 +64,7 @@ OGRGeomediaTableLayer::~OGRGeomediaTableLayer()
 
 CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
                                           const char *pszGeomCol,
-                                          OGRSpatialReference* poSRS )
+                                          OGRSpatialReference* poSRSIn )
 
 
 {
@@ -80,19 +79,19 @@ CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
 
-    this->poSRS = poSRS;
+    this->poSRS = poSRSIn;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
 /* -------------------------------------------------------------------- */
     {
     CPLODBCStatement oGetKey( poSession );
-    
+
     if( oGetKey.GetPrimaryKeys( pszTableName ) && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
-        
-        if( oGetKey.Fetch() ) // more than one field in key! 
+
+        if( oGetKey.Fetch() ) // more than one field in key!
         {
             CPLFree( pszFIDColumn );
             pszFIDColumn = NULL;
@@ -115,7 +114,7 @@ CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
 
     if( !oGetCol.GetColumns( pszTableName ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "GetColumns() failed on %s.\n%s",
                   pszTableName, poSession->GetLastError() );
         return CE_Failure;
@@ -127,8 +126,8 @@ CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
 
     if( poFeatureDefn->GetFieldCount() == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "No column definitions found for table '%s', layer not usable.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "No column definitions found for table '%s', layer not usable.",
                   pszTableName );
         return CE_Failure;
     }
@@ -234,16 +233,16 @@ OGRFeature *OGRGeomediaTableLayer::GetFeature( GIntBig nFeatureId )
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRGeomediaTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRGeomediaTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
-            && EQUAL(pszQuery,this->pszQuery)) )
+    if( (pszQueryIn == NULL && this->pszQuery == NULL)
+        || (pszQueryIn != NULL && this->pszQuery != NULL
+            && EQUAL(pszQueryIn,this->pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = pszQuery ? CPLStrdup( pszQuery ) : NULL; 
+    this->pszQuery = pszQueryIn ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 
@@ -267,7 +266,7 @@ int OGRGeomediaTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
-    else 
+    else
         return OGRGeomediaLayer::TestCapability( pszCap );
 }
 
@@ -295,7 +294,7 @@ GIntBig OGRGeomediaTableLayer::GetFeatureCount( int bForce )
 
     if( !oStmt.ExecuteSQL() || !oStmt.Fetch() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "GetFeatureCount() failed on query %s.\n%s",
                   oStmt.GetCommand(), poDS->GetSession()->GetLastError() );
         return OGRGeomediaLayer::GetFeatureCount(bForce);

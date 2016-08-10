@@ -47,11 +47,10 @@ class OGRKMLDataSource;
 
 class OGRKMLLayer : public OGRLayer
 {
-public:
-
-    OGRKMLLayer( const char* pszName_, 
-                 OGRSpatialReference* poSRS, 
-                 int bWriter,
+  public:
+    OGRKMLLayer( const char* pszName_,
+                 OGRSpatialReference* poSRS,
+                 bool bWriter,
                  OGRwkbGeometryType eType,
                  OGRKMLDataSource* poDS );
     ~OGRKMLLayer();
@@ -72,26 +71,26 @@ public:
     //
     void SetLayerNumber( int nLayer );
 
-    void SetClosedForWriting() { bClosedForWriting = TRUE; }
-    
+    void SetClosedForWriting() { bClosedForWriting = true; }
+
     CPLString WriteSchema();
 
-private:
+  private:
     friend class OGRKMLDataSource;
 
     OGRKMLDataSource* poDS_;
     OGRSpatialReference* poSRS_;
-	OGRCoordinateTransformation *poCT_;
-	
+    OGRCoordinateTransformation *poCT_;
+
     OGRFeatureDefn* poFeatureDefn_;
 
     int iNextKMLId_;
     int nTotalKMLCount_;
-    int bWriter_;
+    bool bWriter_;
     int nLayerNumber_;
     int nWroteFeatureCount_;
-    int bSchemaWritten_;
-    int bClosedForWriting;
+    bool bSchemaWritten_;
+    bool bClosedForWriting;
     char* pszName_;
 
     int nLastAsked;
@@ -104,7 +103,7 @@ private:
 
 class OGRKMLDataSource : public OGRDataSource
 {
-public:
+  public:
     OGRKMLDataSource();
     ~OGRKMLDataSource();
 
@@ -120,11 +119,11 @@ public:
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char** papszOptions = NULL );
     int TestCapability( const char* pszCap );
-    
+
     //
     // OGRKMLDataSource Interface
     //
-    int Create( const char* pszName, char** papszOptions );    
+    int Create( const char* pszName, char** papszOptions );
     const char* GetNameField() const { return pszNameField_; }
     const char* GetDescriptionField() const { return pszDescriptionField_; }
     const char* GetAltitudeMode() { return pszAltitudeMode_; }
@@ -134,11 +133,10 @@ public:
     KML* GetKMLFile() { return poKMLFile_; };
 #endif
 
-	bool IsFirstCTError() { return !bIssuedCTError_; }
-	void IssuedFirstCTError() { bIssuedCTError_ = true; }
+    bool IsFirstCTError() const { return !bIssuedCTError_; }
+    void IssuedFirstCTError() { bIssuedCTError_ = true; }
 
-private:
-
+  private:
 #ifdef HAVE_EXPAT
     KML* poKMLFile_;
 #endif
@@ -148,23 +146,22 @@ private:
     OGRKMLLayer** papoLayers_;
     int nLayers_;
 
-    //The name of the field to use for the KML name element
+    // The name of the field to use for the KML name element.
     char* pszNameField_;
     char* pszDescriptionField_;
 
-    //The KML altitude mode to use 
- 	char* pszAltitudeMode_; 
+    // The KML altitude mode to use.
+    char* pszAltitudeMode_;
 
     char** papszCreateOptions_;
 
-    // output related parameters 
+    // Output related parameters.
     VSILFILE* fpOutput_;
 
     OGREnvelope oEnvelope_;
-	
-	//Have we issued a coordinate transformation already for this datasource
-	bool bIssuedCTError_;		
+
+    // Have we issued a coordinate transformation already for this datasource.
+    bool bIssuedCTError_;
 };
 
 #endif /* OGR_KML_H_INCLUDED */
-

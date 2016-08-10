@@ -95,20 +95,20 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
     UCaseStr( options );
 
-    if(strncmp(options.c_str(),"PIXEL",5) == 0 )
+    if(STARTS_WITH(options.c_str(), "PIXEL") )
         interleaving = "PIXEL";
-    else if( strncmp(options.c_str(),"BAND",4) == 0 )
+    else if( STARTS_WITH(options.c_str(), "BAND") )
         interleaving = "BAND";
-    else if( strncmp(options.c_str(),"TILED",5) == 0 )
+    else if( STARTS_WITH(options.c_str(), "TILED") )
     {
         interleaving = "FILE";
         ParseTileFormat( options, blocksize, compression );
     }
-    else if( strncmp(options.c_str(),"FILE",4) == 0 )
+    else if( STARTS_WITH(options.c_str(), "FILE") )
     {
-        if( strncmp(options.c_str(),"FILENOCREATE",12) == 0 )
+        if( STARTS_WITH(options.c_str(), "FILENOCREATE") )
             nocreate = true;
-        else if( strncmp(options.c_str(),"FILELINK",8) == 0 )
+        else if( STARTS_WITH(options.c_str(), "FILELINK") )
         {
             nocreate = true;
             externallink = true;
@@ -116,7 +116,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         interleaving = "FILE";
     }
     else
-        ThrowPCIDSKException( "PCIDSK::Create() options '%s' not recognised.",
+        return (PCIDSKFile*)ThrowPCIDSKExceptionPtr( "PCIDSK::Create() options '%s' not recognised.",
                               options.c_str() );
 #if 0
     if( strstr(options.c_str(),"NOZERO") != NULL )
@@ -142,7 +142,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     
     if( !regular && strcmp(interleaving,"FILE") != 0 )
     {
-        ThrowPCIDSKException( 
+        return (PCIDSKFile*)ThrowPCIDSKExceptionPtr( 
            "Requested mixture of band types not supported for interleaving=%s.",
            interleaving );
     }
@@ -281,7 +281,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     // FH14 - interleaving.
     fh.Put( interleaving, 360, 8);
 
-    // FH15 - reserved - MIXED is for some ancient backwards compatability.
+    // FH15 - reserved - MIXED is for some ancient backwards compatibility.
     fh.Put( "MIXED", 368, 8);
 
     // FH16 - number of image bands.
@@ -295,7 +295,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
     // FH19 - pixel ground size interpretation.
     fh.Put( "METRE", 400, 8 );
-    
+
     // TODO:
     //PrintDouble( fh->XPixelSize, "%16.9f", 1.0 );
     //PrintDouble( fh->YPixelSize, "%16.9f", 1.0 );
@@ -351,8 +351,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     ih.Put( "Contents Not Specified", 0, 64 );
 
     // IHi.2 - Filename storing image.
-    if( strncmp(interleaving,"FILE",4) == 0 )
-        ih.Put( "<unintialized>", 64, 64 );
+    if( STARTS_WITH(interleaving, "FILE") )
+        ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
     
     if( externallink )
     {
@@ -375,10 +375,10 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     {
         ih.Put(DataTypeName(channel_types[chan_index]).c_str(), 160, 8);    
 
-        if( strncmp("TILED",options.c_str(),5) == 0 )
+        if( STARTS_WITH(options.c_str(), "TILED") )
         {
             char sis_filename[65];
-            sprintf( sis_filename, "/SIS=%d", chan_index );
+            snprintf( sis_filename, sizeof(sis_filename), "/SIS=%d", chan_index );
             ih.Put( sis_filename, 64, 64 );
 
             // IHi.6.7 - IHi.6.10
@@ -399,7 +399,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
          chan_index++ )
     {
         ih.Put( "", 160, 8 );
-        ih.Put( "<unintialized>", 64, 64 );
+        ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
         ih.Put( "", 250, 40 );
 
         interfaces->io->Write( ih.buffer, 1024, 1, io_handle );
@@ -443,7 +443,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
 /*      If the dataset is tiled, create the file band data.             */
 /* -------------------------------------------------------------------- */
-    if( strncmp(options.c_str(),"TILED",5) == 0 )
+    if( STARTS_WITH(options.c_str(), "TILED") )
     {
         file->SetMetadataValue( "_DBLayout", options ); 
 
@@ -463,7 +463,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         sysbmdir_size = (int) (sysbmdir_size * 1.1 + 100);
         int segment = file->CreateSegment( "SysBMDir", 
                                            "System Block Map Directory - Do not modify.",
-                                           SEG_SYS, sysbmdir_size );
+                                           SEG_SYS, static_cast<int>(sysbmdir_size) );
         
         SysBlockMap *bm = 
             dynamic_cast<SysBlockMap *>(file->GetSegment( segment ));
@@ -480,8 +480,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /*      If we have a non-tiled FILE interleaved file, should we         */
 /*      create external band files now?                                 */
 /* -------------------------------------------------------------------- */
-    if( strncmp(interleaving,"FILE",4) == 0 
-        && strncmp(options.c_str(),"TILED",5) != 0 
+    if( STARTS_WITH(interleaving, "FILE") 
+        && !STARTS_WITH(options.c_str(), "TILED") 
         && !nocreate )
     {
         for( chan_index = 0; chan_index < channel_count; chan_index++ )
@@ -493,7 +493,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             // file, and adds ".nnn" based on the band. 
             std::string band_filename = filename;
             char ext[5];
-            sprintf( ext, ".%03d", chan_index+1 );
+            snprintf( ext, sizeof(ext), ".%03d", chan_index+1 );
             
             size_t last_dot = band_filename.find_last_of(".");
             if( last_dot != std::string::npos 

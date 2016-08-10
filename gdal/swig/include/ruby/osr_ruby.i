@@ -6,7 +6,7 @@ py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
     PyObject *py_MList;
     char     **papszMethods;
     int      iMethod;
-    
+
     self = self;
     args = args;
 
@@ -20,7 +20,7 @@ py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
 	PyObject *py_PList;
 	int       iParam;
 
-	papszParameters = OPTGetParameterList( papszMethods[iMethod], 
+	papszParameters = OPTGetParameterList( papszMethods[iMethod],
 					       &pszUserMethodName );
         if( papszParameters == NULL )
             return NULL;
@@ -32,23 +32,23 @@ py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
 	    char    *pszUserParamName;
             double  dfDefault;
 
-	    OPTGetParameterInfo( papszMethods[iMethod], 
-				 papszParameters[iParam], 
-				 &pszUserParamName, 
+	    OPTGetParameterInfo( papszMethods[iMethod],
+				 papszParameters[iParam],
+				 &pszUserParamName,
 				 &pszType, &dfDefault );
-	    PyList_SetItem(py_PList, iParam, 
-			   Py_BuildValue("(sssd)", 
-					 papszParameters[iParam], 
-					 pszUserParamName, 
+	    PyList_SetItem(py_PList, iParam,
+			   Py_BuildValue("(sssd)",
+					 papszParameters[iParam],
+					 pszUserParamName,
                                          pszType, dfDefault ));
 	}
-	
+
 	CSLDestroy( papszParameters );
 
-	PyList_SetItem(py_MList, iMethod, 
-		       Py_BuildValue("(ssO)", 
-		                     papszMethods[iMethod], 
-				     pszUserMethodName, 
+	PyList_SetItem(py_MList, iMethod,
+		       Py_BuildValue("(ssO)",
+		                     papszMethods[iMethod],
+				     pszUserMethodName,
 		                     py_PList));
     }
 

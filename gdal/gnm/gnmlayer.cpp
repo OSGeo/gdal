@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM layer class.
@@ -30,6 +29,8 @@
  ****************************************************************************/
 #include "gnm.h"
 #include "gnm_priv.h"
+
+CPL_CVSID("$Id$");
 
 /**
  * GNMGenericLayer
@@ -133,6 +134,7 @@ int GNMGenericLayer::AttributeFilterEvaluationNeedsGeometry()
     return m_poLayer->AttributeFilterEvaluationNeedsGeometry();
 }
 
+//! @cond Doxygen_Suppress
 OGRErr GNMGenericLayer::InitializeIndexSupport(const char *pszVal)
 {
     return m_poLayer->InitializeIndexSupport(pszVal);
@@ -149,7 +151,7 @@ OGRErr GNMGenericLayer::ISetFeature(OGRFeature *poFeature)
     std::map<GNMGFID, GIntBig>::iterator it = m_mnFIDMap.find(poFeature->GetFID());
     if (it == m_mnFIDMap.end())
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "The FID %lld is invalid",
+        CPLError( CE_Failure, CPLE_IllegalArg, "The FID " CPL_FRMT_GIB " is invalid",
                   poFeature->GetFID() );
         return OGRERR_NON_EXISTING_FEATURE;
     }
@@ -171,6 +173,7 @@ OGRErr GNMGenericLayer::ICreateFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
     return m_poLayer->CreateFeature(poFeature);
 }
+//! @endcond
 
 OGRGeometry *GNMGenericLayer::GetSpatialFilter()
 {
@@ -232,18 +235,19 @@ OGRErr GNMGenericLayer::DeleteFeature(GIntBig nFID)
     if(NULL == poFeature)
         return CE_Failure;
 
-    std::map<GNMGFID, GIntBig>::iterator it = m_mnFIDMap.find(poFeature->GetFID());
+    nFID = poFeature->GetFID();
+    std::map<GNMGFID, GIntBig>::iterator it = m_mnFIDMap.find(nFID);
     if (it == m_mnFIDMap.end())
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "The FID %lld is invalid",
-                  poFeature->GetFID() );
+        CPLError( CE_Failure, CPLE_IllegalArg, "The FID " CPL_FRMT_GIB " is invalid",
+                  nFID );
         return OGRERR_NON_EXISTING_FEATURE;
     }
 
     OGRFeature::DestroyFeature(poFeature);
 
     //delete from graph
-    if(m_poNetwork->DisconnectFeaturesWithId((GNMGFID)poFeature->GetFID()) !=
+    if(m_poNetwork->DisconnectFeaturesWithId((GNMGFID)nFID) !=
             CE_None)
         return CE_Failure;
 
@@ -363,4 +367,3 @@ OGRFeatureDefn *GNMGenericLayer::GetLayerDefn()
     //TODO: hide GNM_SYSFIELD_GFID filed
     return m_poLayer->GetLayerDefn();
 }
-

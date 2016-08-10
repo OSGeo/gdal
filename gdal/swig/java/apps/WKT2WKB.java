@@ -48,9 +48,9 @@ import org.gdal.ogr.Geometry;
 /// </summary> 
 
 public class WKT2WKB {
-        
+
         public static void usage() 
-        { 
+        {
                 System.out.println("usage example: wkt2wkb \"POINT(47.0 19.2)\"");
                 System.exit(-1);
         }

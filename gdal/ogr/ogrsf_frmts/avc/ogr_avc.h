@@ -14,21 +14,21 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_AVC_H_INCLUDED
-#define _OGR_AVC_H_INCLUDED
+#ifndef OGR_AVC_H_INCLUDED
+#define OGR_AVC_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "avc.h"
@@ -45,29 +45,29 @@ class OGRAVCLayer : public OGRLayer
     OGRFeatureDefn      *poFeatureDefn;
 
     OGRAVCDataSource    *poDS;
-    
+
     AVCFileType         eSectionType;
 
-    int                 SetupFeatureDefinition( const char *pszName ); 
+    int                 SetupFeatureDefinition( const char *pszName );
     int                 AppendTableDefinition( AVCTableDef *psTableDef );
 
     int                 MatchesSpatialFilter( void * );
     OGRFeature          *TranslateFeature( void * );
 
-    int                 TranslateTableFields( OGRFeature *poFeature, 
-                                              int nFieldBase, 
+    int                 TranslateTableFields( OGRFeature *poFeature,
+                                              int nFieldBase,
                                               AVCTableDef *psTableDef,
                                               AVCField *pasFields );
 
   public:
-                        OGRAVCLayer( AVCFileType eSectionType, 
+                        OGRAVCLayer( AVCFileType eSectionType,
                                      OGRAVCDataSource *poDS );
     			~OGRAVCLayer();
 
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRSpatialReference *GetSpatialRef();
-    
+
     virtual int         TestCapability( const char * );
 };
 
@@ -102,7 +102,7 @@ class OGRAVCBinDataSource;
 
 class OGRAVCBinLayer : public OGRAVCLayer
 {
-    AVCE00Section       *psSection;
+    AVCE00Section       *m_psSection;
     AVCBinFile          *hFile;
 
     OGRAVCBinLayer      *poArcLayer;
@@ -142,11 +142,11 @@ class OGRAVCBinDataSource : public OGRAVCDataSource
 {
     OGRLayer            **papoLayers;
     int			nLayers;
-    
+
     char		*pszName;
 
     AVCE00ReadPtr       psAVC;
-    
+
   public:
     			OGRAVCBinDataSource();
     			~OGRAVCBinDataSource();
@@ -231,4 +231,4 @@ class OGRAVCE00DataSource : public OGRAVCDataSource
 };
 
 
-#endif /* _OGR_AVC_H_INCLUDED */
+#endif /* OGR_AVC_H_INCLUDED */

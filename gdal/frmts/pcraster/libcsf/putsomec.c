@@ -257,6 +257,7 @@ size_t RputSomeCells(
 
 	writeAt  = ((CSF_FADDR)offset) << LOG_CELLSIZE(cr);
 	writeAt += ADDR_DATA;
-	fseek(map->fp, (long)writeAt, SEEK_SET); 
+	if( fseek(map->fp, (long)writeAt, SEEK_SET) != 0 )
+            return 0;
 	return(map->write(buf, (size_t)CELLSIZE(cr), (size_t)nrCells, map->fp));
 }

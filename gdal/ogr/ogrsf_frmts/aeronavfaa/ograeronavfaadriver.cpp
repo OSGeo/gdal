@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AeronavFAA Translator
  * Purpose:  Implements OGRAeronavFAADriver.
@@ -69,24 +68,18 @@ static GDALDataset *OGRAeronavFAADriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRAeronavFAA()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "AeronavFAA" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "AeronavFAA" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "AeronavFAA" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Aeronav FAA" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_aeronavfaa.html" );
+    poDriver->SetDescription( "AeronavFAA" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Aeronav FAA" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_aeronavfaa.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRAeronavFAADriverOpen;
 
-        poDriver->pfnOpen = OGRAeronavFAADriverOpen;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

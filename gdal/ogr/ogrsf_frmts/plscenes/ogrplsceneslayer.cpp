@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PlanetLabs scene driver
  * Purpose:  Implements OGRPLScenesLayer
@@ -73,7 +72,7 @@ static bool OGRPLScenesLayerFieldNameComparator(const CPLString& osFirst,
 {
     const char* pszUnderscore1 = strrchr(osFirst.c_str(), '_');
     const char* pszUnderscore2 = strrchr(osSecond.c_str(), '_');
-    int val1, val2;
+    int val1 = 0, val2 = 0;
     if( pszUnderscore1 && pszUnderscore2 &&
         (CPLString(osFirst).substr(0, pszUnderscore1-osFirst.c_str()) ==
          CPLString(osSecond).substr(0, pszUnderscore2-osSecond.c_str())) &&
@@ -89,12 +88,12 @@ static bool OGRPLScenesLayerFieldNameComparator(const CPLString& osFirst,
 /*                           OGRPLScenesLayer()                         */
 /************************************************************************/
 
-OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDS,
+OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDSIn,
                                    const char* pszName,
                                    const char* pszBaseURL,
                                    json_object* poObjCount10)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     osBaseURL = pszBaseURL;
     SetDescription(pszName);
     poFeatureDefn = new OGRFeatureDefn(pszName);
@@ -118,7 +117,7 @@ OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDS,
     bAcquiredAscending = -1;
     bFilterMustBeClientSideEvaluated = FALSE;
     ResetReading();
-    
+
     if( poObjCount10 != NULL )
     {
         json_object* poCount = json_object_object_get(poObjCount10, "count");
@@ -172,7 +171,7 @@ CPLString OGRPLScenesLayer::BuildFilter(swq_expr_node* poNode)
     {
         if( poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2 )
         {
-            // For AND, we can deal with a failure in one of the branch 
+            // For AND, we can deal with a failure in one of the branch
             // since client-side will do that extra filtering
             CPLString osFilter1 = BuildFilter(poNode->papoSubExpr[0]);
             CPLString osFilter2 = BuildFilter(poNode->papoSubExpr[1]);
@@ -298,12 +297,12 @@ CPLString OGRPLScenesLayer::BuildURL(int nFeatures)
         osURL += "&order_by=acquired%20asc";
     else if( bAcquiredAscending == 0 )
         osURL += "&order_by=acquired%20desc";
-    
+
     if( m_poFilterGeom != NULL || poMainFilter != NULL )
     {
         OGRGeometry* poIntersection = NULL;
         OGRGeometry* poFilterGeom = m_poFilterGeom;
-        if( poFilterGeom ) 
+        if( poFilterGeom )
         {
             OGREnvelope sEnvelope;
             poFilterGeom->getEnvelope(&sEnvelope);
@@ -315,7 +314,7 @@ CPLString OGRPLScenesLayer::BuildURL(int nFeatures)
         if( poFilterGeom && poMainFilter )
             poIntersection = poFilterGeom->Intersection(poMainFilter);
         else if( poFilterGeom )
-            poIntersection = poFilterGeom; 
+            poIntersection = poFilterGeom;
         else if( poMainFilter )
             poIntersection = poMainFilter;
         if( poIntersection )
@@ -369,7 +368,7 @@ int OGRPLScenesLayer::GetNextPage()
             nFeatureCount = 0;
         return FALSE;
     }
-    // In the case of a "id = 'foo'" filter, a non existing resource 
+    // In the case of a "id = 'foo'" filter, a non existing resource
     // will cause a 404 error, which we want to be silent
     int bQuiet404Error = ( osRequestURL.find('?') == std::string::npos );
     json_object* poObj = poDS->RunRequest(osRequestURL, bQuiet404Error);
@@ -409,7 +408,7 @@ int OGRPLScenesLayer::GetNextPage()
     oReader.SetFlattenNestedAttributes(true, '.');
     oReader.ReadLayer( poGeoJSONDS, "layer", poObj);
     poGeoJSONLayer = poGeoJSONDS->GetLayer(0);
-    
+
     // Get URL of next page
     osNextURL = "";
     if( poGeoJSONLayer )
@@ -505,7 +504,7 @@ OGRErr OGRPLScenesLayer::SetAttributeFilter( const char *pszQuery )
 
     return eErr;
 }
-  
+
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -517,7 +516,7 @@ OGRFeature *OGRPLScenesLayer::GetNextFeature()
 
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
@@ -552,7 +551,7 @@ OGRFeature* OGRPLScenesLayer::GetNextRawFeature()
     }
 
 #ifdef notdef
-    if( CSLTestBoolean(CPLGetConfigOption("OGR_LIMIT_TOO_MANY_FEATURES", "FALSE")) &&
+    if( CPLTestBool(CPLGetConfigOption("OGR_LIMIT_TOO_MANY_FEATURES", "FALSE")) &&
         nFeatureCount > nPageSize )
     {
         bEOF = TRUE;
@@ -594,7 +593,7 @@ OGRFeature* OGRPLScenesLayer::GetNextRawFeature()
         poGeom->assignSpatialReference(poSRS);
         poFeature->SetGeometryDirectly(poGeom);
     }
-    
+
     for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
@@ -678,7 +677,7 @@ OGRErr OGRPLScenesLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     GetFeatureCount();
     if( nFeatureCount > 0 && nFeatureCount < nPageSize )
         return OGRLayer::GetExtentInternal(0, psExtent, bForce);
-    
+
     psExtent->MinX = -180;
     psExtent->MinY = -90;
     psExtent->MaxX = 180;

@@ -14,21 +14,21 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_WORKER_THREAD_POOL_H_INCLUDED_
-#define _CPL_WORKER_THREAD_POOL_H_INCLUDED_
+#ifndef CPL_WORKER_THREAD_POOL_H_INCLUDED_
+#define CPL_WORKER_THREAD_POOL_H_INCLUDED_
 
 #include "cpl_multiproc.h"
 #include "cpl_list.h"
@@ -41,6 +41,7 @@
  * @since GDAL 2.1
  */
 
+#ifndef DOXYGEN_SKIP
 class CPLWorkerThreadPool;
 
 typedef struct
@@ -62,12 +63,21 @@ typedef struct
     CPLCond             *hCond;
 } CPLWorkerThread;
 
+typedef enum
+{
+    CPLWTS_OK,
+    CPLWTS_STOP,
+    CPLWTS_ERROR
+} CPLWorkerThreadState;
+#endif
+
+/** Pool of worker threads */
 class CPL_DLL CPLWorkerThreadPool
 {
         std::vector<CPLWorkerThread> aWT;
         CPLCond* hCond;
         CPLMutex* hMutex;
-        volatile int bStop;
+        volatile CPLWorkerThreadState eState;
         CPLList* psJobQueue;
         volatile int nPendingJobs;
 
@@ -83,14 +93,15 @@ class CPL_DLL CPLWorkerThreadPool
         CPLWorkerThreadPool();
        ~CPLWorkerThreadPool();
 
-        int  Setup(int nThreads,
+        bool Setup(int nThreads,
                    CPLThreadFunc pfnInitFunc,
                    void** pasInitData);
-        void SubmitJob(CPLThreadFunc pfnFunc, void* pData);
-        void SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
+        bool SubmitJob(CPLThreadFunc pfnFunc, void* pData);
+        bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
         void WaitCompletion(int nMaxRemainingJobs = 0);
 
+        /** Return the number of threads setup */
         int GetThreadCount() const { return (int)aWT.size(); }
 };
 
-#endif // _CPL_WORKER_THREAD_POOL_H_INCLUDED_
+#endif // CPL_WORKER_THREAD_POOL_H_INCLUDED_

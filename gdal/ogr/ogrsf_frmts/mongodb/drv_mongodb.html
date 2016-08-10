@@ -10,7 +10,9 @@
 (GDAL/OGR &gt;= 2.1.0)<p>
 
 This driver can connect to the a MongoDB service.<p>
-The driver supports read, creation, update and delete operations.<p>
+The driver supports read, creation, update and delete operations of documents/features
+and collections/layers. The MongoDB database must exist before operating on it
+with OGR.<p>
 
 <h2>MongoDB vs OGR concepts</h2>
 
@@ -18,7 +20,7 @@ A MongoDB collection within a database is considered as a OGR layer. A MongoDB d
 
 <h2>Dataset name syntax</h2>
 
-There are two main possible syntaxes :
+There are two main possible syntaxes:
 <ul>
 <li>One using <a href="http://docs.mongodb.org/v2.6/reference/connection-string/">MongoDB URI</a>,
 such as mongodb://[usr:pwd@]host1[:port1]...[,hostN[:portN]]][/[db][?options]]</a>
@@ -100,7 +102,7 @@ open option.<p>
 It is also possible to set the JSON_FIELD=YES open option so that a _json special
 field is added to the OGR schema. When reading MongoDB documents as OGR features,
 the full JSon version of the document will be stored in the _json field. This might
-be usefull in case of complex documents or with data types that do not translate well
+be useful in case of complex documents or with data types that do not translate well
 in OGR data types. On creation/update of documents, if the _json field is present
 and set, its content will be used directly (other fields will be ignored).<p>
 
@@ -164,7 +166,7 @@ ogrinfo -ro mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest -wh
 <li>
 Creating and populating a collection from a shapefile:
 <pre>
-ogr2ogr -f mongodb mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest shapefile.shp
+ogr2ogr -update mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest shapefile.shp
 </pre>
 <p>
 
@@ -190,10 +192,10 @@ On Windows, uncomment and adapt the following in nmake.opt (or add in nmake.loca
 <pre>
 # Uncomment for MongoDB support
 # This configuration is valid for a libmongoclient built as a DLL with:
-# scons.bat --32 --dynamic-windows --sharedclient --prefix=c:\users\even\dev\mongo-client-install 
+# scons.bat --32 --dynamic-windows --sharedclient --prefix=c:\users\even\dev\mongo-client-install
 #           --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
 
-# Uncomment if plugin is prefered
+# Uncomment if plugin is preferred
 #MONGODB_PLUGIN = YES
 
 MONGODB_INC = c:/users/even/dev/mongo-client-install/include

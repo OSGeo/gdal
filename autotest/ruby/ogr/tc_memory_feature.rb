@@ -17,7 +17,7 @@ class TestMemoryFeature < Test::Unit::TestCase
     return Gdal::Ogr.open(file_name, 1)
   end   
 
-  def test_owns_geoemtry
+  def test_owns_geometry
     ds = open_ds
     layer = ds.get_layer(0)
 

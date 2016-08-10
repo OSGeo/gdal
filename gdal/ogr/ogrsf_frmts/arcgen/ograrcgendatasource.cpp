@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc/Info Generate Translator
  * Purpose:  Implements OGRARCGENDataSource class
@@ -37,14 +36,11 @@ CPL_CVSID("$Id$");
 /*                          OGRARCGENDataSource()                          */
 /************************************************************************/
 
-OGRARCGENDataSource::OGRARCGENDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-}
+OGRARCGENDataSource::OGRARCGENDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                         ~OGRARCGENDataSource()                          */
@@ -64,7 +60,7 @@ OGRARCGENDataSource::~OGRARCGENDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRARCGENDataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRARCGENDataSource::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
@@ -78,8 +74,8 @@ OGRLayer *OGRARCGENDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -91,7 +87,7 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
 {
     pszName = CPLStrdup( pszFilename );
 
-// -------------------------------------------------------------------- 
+// --------------------------------------------------------------------
 //      Does this appear to be a Arc/Info generate file?
 // --------------------------------------------------------------------
 
@@ -116,7 +112,6 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
 
     VSIFSeekL( fp, 0, SEEK_SET );
 
-    OGRwkbGeometryType eType;
     const char* szPtr = szBuffer;
     const char* szEnd = strstr(szPtr, "END");
     if (szEnd == NULL) szEnd = strstr(szPtr, "end");
@@ -128,6 +123,8 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
     szPtr = szEnd + 3;
     szEnd = strstr(szPtr, "END");
     if (szEnd == NULL) szEnd = strstr(szPtr, "end");
+
+    OGRwkbGeometryType eType;
     if (szEnd == NULL)
     {
         const char* pszLine = CPLReadLine2L(fp,256,NULL);
@@ -157,8 +154,8 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
         CPLString osFirstX, osFirstY;
         CPLString osLastX, osLastY;
         int bIs3D = FALSE;
-        const char* pszLine;
-        while((pszLine = CPLReadLine2L(fp,256,NULL)) != NULL)
+        const char* pszLine = NULL;
+        while( (pszLine = CPLReadLine2L(fp,256,NULL)) != NULL )
         {
             nLineNumber ++;
             if (nLineNumber == 2)
@@ -210,7 +207,7 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
     VSIFSeekL( fp, 0, SEEK_SET );
 
     nLayers = 1;
-    papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
+    papoLayers = static_cast<OGRLayer**>( CPLMalloc( sizeof(OGRLayer*) ) );
     papoLayers[0] = new OGRARCGENLayer(pszName, fp, eType);
 
     return TRUE;

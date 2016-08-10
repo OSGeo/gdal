@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  GDALJP2Metadata: metadata generator
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRSDELayer class.
@@ -7,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008, Shawn Gervais <project10@project10.net> 
+ * Copyright (c) 2008, Shawn Gervais <project10@project10.net>
  * Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -43,7 +42,7 @@ OGRSDELayer::OGRSDELayer( OGRSDEDataSource *poDSIn, int bUpdate )
 
 {
     poDS = poDSIn;
-    
+
     bUpdateAccess = bUpdate;
     bPreservePrecision = TRUE;
 
@@ -73,7 +72,7 @@ OGRSDELayer::~OGRSDELayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "OGR_SDE", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -96,7 +95,7 @@ OGRSDELayer::~OGRSDELayer()
         poSRS->Release();
 
     CSLDestroy( papszAllColumns );
-    
+
     CPLFree( pszOwnerName );
     CPLFree( pszDbTableName );
 }
@@ -105,7 +104,7 @@ OGRSDELayer::~OGRSDELayer()
 /*                             Initialize()                             */
 /************************************************************************/
 
-int OGRSDELayer::Initialize( const char *pszTableName, 
+int OGRSDELayer::Initialize( const char *pszTableName,
                              const char *pszFIDColumn,
                              const char *pszShapeColumn )
 
@@ -113,14 +112,14 @@ int OGRSDELayer::Initialize( const char *pszTableName,
     SE_COLUMN_DEF *asColumnDefs;
     SHORT   nColumnCount;
     int nSDEErr, iCol;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Determine DBMS table owner name and the table name part         */
 /*      from pszTableName which is a fully-qualified table name         */
 /* -------------------------------------------------------------------- */
     char               *pszTableNameCopy = CPLStrdup( pszTableName );
     char               *pszPeriodPtr;
-    
+
     if( (pszPeriodPtr = strstr( pszTableNameCopy,"." )) != NULL )
     {
         *pszPeriodPtr  = '\0';
@@ -132,21 +131,21 @@ int OGRSDELayer::Initialize( const char *pszTableName,
         pszOwnerName   = NULL;
         pszDbTableName = CPLStrdup(pszTableName);
     }
-    
+
     CPLFree( pszTableNameCopy );
 
 /* -------------------------------------------------------------------- */
 /*      Determine whether multi-versioning is enabled for this table.   */
 /* -------------------------------------------------------------------- */
     SE_REGINFO          hRegInfo;
-    
+
     nSDEErr = SE_reginfo_create( &hRegInfo );
     if( nSDEErr != SE_SUCCESS )
     {
         poDS->IssueSDEError( nSDEErr, "SE_reginfo_create" );
         return FALSE;
     }
-    
+
     // TODO: This is called from places that have RegInfo already -
     // should we just pass that in?
     nSDEErr = SE_registration_get_info( poDS->GetConnection(),
@@ -157,14 +156,14 @@ int OGRSDELayer::Initialize( const char *pszTableName,
         poDS->IssueSDEError( nSDEErr, "SE_registration_get_info" );
         return FALSE;
     }
-    
+
     bVersioned = SE_reginfo_is_multiversion( hRegInfo );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Describe table                                                  */
 /* -------------------------------------------------------------------- */
-    nSDEErr = 
-        SE_table_describe( poDS->GetConnection(), pszTableName, 
+    nSDEErr =
+        SE_table_describe( poDS->GetConnection(), pszTableName,
                            &nColumnCount, &asColumnDefs );
 
     if( nSDEErr != SE_SUCCESS )
@@ -182,10 +181,10 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 /*  is tested to see if it contains one, and only one, type of geometry */
 /*  then that geometry type is placed into the LayerDefn.               */
 /* -------------------------------------------------------------------- */
-    const char *pszLayerType = CPLGetConfigOption( "OGR_SDE_GETLAYERTYPE", 
+    const char *pszLayerType = CPLGetConfigOption( "OGR_SDE_GETLAYERTYPE",
                                                    "FALSE" );
 
-    if( CSLTestBoolean(pszLayerType) != FALSE )
+    if( CPLTestBool(pszLayerType) )
     {
         poFeatureDefn->SetGeomType(DiscoverLayerType());
     }
@@ -195,7 +194,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
         OGRFieldType eOGRType = OFTIntegerList; // dummy
         int nWidth = -1, nPrecision = -1;
 
-        papszAllColumns = CSLAddString( papszAllColumns, 
+        papszAllColumns = CSLAddString( papszAllColumns,
                                         asColumnDefs[iCol].column_name );
 
         switch( asColumnDefs[iCol].sde_type )
@@ -268,7 +267,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
             oField.SetPrecision( nPrecision );
 
         poFeatureDefn->AddFieldDefn( &oField );
-        
+
         anFieldMap.push_back( iCol );
         anFieldTypeMap.push_back( asColumnDefs[iCol].sde_type );
 
@@ -309,11 +308,11 @@ int OGRSDELayer::NeedLayerInfo()
         return FALSE;
     }
 
-    CPLDebug( "OGR_SDE", "Loading %s layerinfo.", 
+    CPLDebug( "OGR_SDE", "Loading %s layerinfo.",
               poFeatureDefn->GetName() );
 
-    nSDEErr = SE_layer_get_info( poDS->GetConnection(), 
-                                 poFeatureDefn->GetName(), 
+    nSDEErr = SE_layer_get_info( poDS->GetConnection(),
+                                 poFeatureDefn->GetName(),
                                  osShapeColumnName.c_str(),
                                  hLayerInfo );
     if( nSDEErr != SE_SUCCESS )
@@ -328,7 +327,7 @@ int OGRSDELayer::NeedLayerInfo()
 /*      Fetch coordinate reference system.                              */
 /* -------------------------------------------------------------------- */
     SE_coordref_create( &hCoordRef );
-    
+
     nSDEErr = SE_layerinfo_get_coordref( hLayerInfo, hCoordRef );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -349,10 +348,10 @@ int OGRSDELayer::NeedLayerInfo()
             poSRS->morphFromESRI();
         }
 
-	LFLOAT falsex, falsey, xyunits;
-	nSDEErr = SE_coordref_get_xy( hCoordRef, &falsex, &falsey, &xyunits );
-	CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
-		  pszDbTableName, falsex, falsey, xyunits );
+        LFLOAT falsex, falsey, xyunits;
+        nSDEErr = SE_coordref_get_xy( hCoordRef, &falsex, &falsey, &xyunits );
+        CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
+                  pszDbTableName, falsex, falsey, xyunits );
     }
 
     return TRUE;
@@ -369,7 +368,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
 
     int nSDEErr;
     LONG nShapeTypeMask = 0;
-  
+
 /* -------------------------------------------------------------------- */
 /*      Check layerinfo flags to establish what geometry types may      */
 /*      occur.                                                          */
@@ -387,14 +386,14 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
     int bIsMultipart = ( nShapeTypeMask & SE_MULTIPART_TYPE_MASK ? 1 : 0);
     nShapeTypeMask &= ~SE_MULTIPART_TYPE_MASK;
 
-    // Since we assume that all layers can bear a NULL geometry, 
+    // Since we assume that all layers can bear a NULL geometry,
     // throw the flag away.
     nShapeTypeMask &= ~SE_NIL_TYPE_MASK;
 
     int nTypeCount = 0;
     if ( nShapeTypeMask & SE_POINT_TYPE_MASK )
         nTypeCount++;
-    if ( nShapeTypeMask & SE_LINE_TYPE_MASK 
+    if ( nShapeTypeMask & SE_LINE_TYPE_MASK
          || nShapeTypeMask & SE_SIMPLE_LINE_TYPE_MASK )
         nTypeCount++;
 
@@ -422,7 +421,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
         szTableName[0] = '\0';
         szShapeColumn[0] = '\0';
 
-        nSDEErr = SE_layerinfo_get_spatial_column( hLayerInfo, szTableName, 
+        nSDEErr = SE_layerinfo_get_spatial_column( hLayerInfo, szTableName,
                                                    szShapeColumn );
         if ( nSDEErr != SE_SUCCESS )
         {
@@ -430,7 +429,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
             return wkbUnknown;
         }
 
-        nSDEErr = SE_layer_get_statistics( poDS->GetConnection(), szTableName, 
+        nSDEErr = SE_layer_get_statistics( poDS->GetConnection(), szTableName,
                                            szShapeColumn,
                                            &layerstats);
         if( nSDEErr != SE_SUCCESS )
@@ -439,7 +438,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
             return wkbUnknown;
         }
 
-        if ( nShapeTypeMask & SE_POINT_TYPE_MASK && 
+        if ( nShapeTypeMask & SE_POINT_TYPE_MASK &&
              ( layerstats.POINTs + layerstats.MultiPOINTs ) == 0 )
             nShapeTypeMask &= ~SE_POINT_TYPE_MASK;
 
@@ -458,7 +457,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
 
 /* -------------------------------------------------------------------- */
 /*      Select a geometry type based on the remaining flags.  If        */
-/*      there is a mix we will fall through to the default (wkbUknown). */
+/*      there is a mix we will fall through to the default (wkbUnknown). */
 /* -------------------------------------------------------------------- */
     OGRwkbGeometryType eGeoType;
     char *pszTypeName;
@@ -481,7 +480,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
             eGeoType = wkbLineString;
         pszTypeName = "line";
         break;
-      
+
       case SE_AREA_TYPE_MASK:
         if (bIsMultipart)
             eGeoType = wkbMultiPolygon;
@@ -489,14 +488,14 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
             eGeoType = wkbPolygon;
         pszTypeName = "polygon";
         break;
-      
+
       default:
         eGeoType = wkbUnknown;
         pszTypeName = "unknown";
         break;
     }
 
-    CPLDebug( "OGR_SDE", 
+    CPLDebug( "OGR_SDE",
               "DiscoverLayerType is returning type=%d (%s), multipart=%d.",
               eGeoType, pszTypeName, bIsMultipart );
 
@@ -541,27 +540,27 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
     if( nSDEErr != SE_SUCCESS) {
         poDS->IssueSDEError( nSDEErr, "SE_queryinfo_create" );
         return FALSE;
-    }    
-    
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Select table.                                                   */
 /* -------------------------------------------------------------------- */
-    nSDEErr = SE_queryinfo_set_tables( hQueryInfo, 1, 
+    nSDEErr = SE_queryinfo_set_tables( hQueryInfo, 1,
                                        &pszTableName, NULL );
     if( nSDEErr != SE_SUCCESS) {
         poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_tables" );
         return FALSE;
-    }    
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set where clause.                                               */
 /* -------------------------------------------------------------------- */
-    nSDEErr = SE_queryinfo_set_where_clause( hQueryInfo, 
+    nSDEErr = SE_queryinfo_set_where_clause( hQueryInfo,
                                              osAttributeFilter.c_str() );
     if( nSDEErr != SE_SUCCESS) {
         poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_where_clause" );
         return FALSE;
-    }    
+    }
 
 /* -------------------------------------------------------------------- */
 /*      We want to join the spatial and attribute tables.               */
@@ -570,7 +569,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
     if( nSDEErr != SE_SUCCESS) {
         poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_query_type" );
         return FALSE;
-    }    
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Establish the columns to query.  If only counting features,     */
@@ -579,25 +578,25 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
 /* -------------------------------------------------------------------- */
     if( bCountingOnly && iFIDColumn != -1 )
     {
-        const char *pszFIDColName = 
+        const char *pszFIDColName =
             poFeatureDefn->GetFieldDefn( iFIDColumn )->GetNameRef();
-        
-        nSDEErr = SE_queryinfo_set_columns( hQueryInfo, 1, 
+
+        nSDEErr = SE_queryinfo_set_columns( hQueryInfo, 1,
                                             (const char **) &pszFIDColName );
         if( nSDEErr != SE_SUCCESS) {
             poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_columns" );
             return FALSE;
-        }    
+        }
     }
     else
     {
-        nSDEErr = SE_queryinfo_set_columns( hQueryInfo, 
+        nSDEErr = SE_queryinfo_set_columns( hQueryInfo,
                                             CSLCount(papszAllColumns),
                                             (const char **) papszAllColumns );
         if( nSDEErr != SE_SUCCESS) {
             poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_columns" );
             return FALSE;
-        }    
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -607,7 +606,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
     if( nSDEErr != SE_SUCCESS) {
         poDS->IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
         return FALSE;
-    }    
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Free query resources.                                           */
@@ -627,16 +626,16 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
 
         if( osAttributeFilter.size() > 0 )
         {
-            const char *pszOrder = CPLGetConfigOption( "OGR_SDE_SEARCHORDER", 
+            const char *pszOrder = CPLGetConfigOption( "OGR_SDE_SEARCHORDER",
                                                        "ATTRIBUTE_FIRST" );
 
             if( EQUAL(pszOrder, "ATTRIBUTE_FIRST") )
                 nSearchOrder = SE_ATTRIBUTE_FIRST;
-            else 
+            else
             {
                 if( !EQUAL(pszOrder, "SPATIAL_FIRST") )
-                    CPLError( CE_Warning, CPLE_AppDefined, 
-                              "Unrecognised OGR_SDE_SEARCHORDER value of %s.",
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Unrecognized OGR_SDE_SEARCHORDER value of %s.",
                               pszOrder );
                 nSearchOrder = SE_SPATIAL_FIRST;
             }
@@ -645,7 +644,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         NeedLayerInfo(); // need hCoordRef
 
         nSDEErr = SE_shape_create( hCoordRef, &hRectShape );
-        if( nSDEErr != SE_SUCCESS) 
+        if( nSDEErr != SE_SUCCESS)
         {
             poDS->IssueSDEError( nSDEErr, "SE_shape_create");
             return FALSE;
@@ -663,22 +662,22 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         }
         // ensure that the spatial filter overlaps area of the layer
         if (sEnvelope.minx > sLayerEnvelope.maxx || sEnvelope.maxx < sLayerEnvelope.minx ||
-            sEnvelope.miny > sLayerEnvelope.maxy || sEnvelope.maxy < sLayerEnvelope.miny ) 
+            sEnvelope.miny > sLayerEnvelope.maxy || sEnvelope.maxy < sLayerEnvelope.miny )
         {
             // using a small rectangle to filter out all the shapes
             sEnvelope.minx = sLayerEnvelope.minx;
             sEnvelope.miny = sLayerEnvelope.miny;
             sEnvelope.maxx = sLayerEnvelope.minx + 0.00000001;
-            sEnvelope.maxy = sLayerEnvelope.miny + 0.00000001;  
+            sEnvelope.maxy = sLayerEnvelope.miny + 0.00000001;
         }
-        
+
         nSDEErr = SE_shape_generate_rectangle( &sEnvelope, hRectShape );
-        if( nSDEErr != SE_SUCCESS) 
+        if( nSDEErr != SE_SUCCESS)
         {
             poDS->IssueSDEError( nSDEErr, "SE_shape_generate_rectangle");
             return FALSE;
         }
-        
+
         sConstraint.filter.shape = hRectShape;
         strcpy( sConstraint.table, poFeatureDefn->GetName() );
         strcpy( sConstraint.column, osShapeColumnName.c_str() );
@@ -688,11 +687,11 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
 
         nSDEErr = SE_stream_set_spatial_constraints( hStream, nSearchOrder,
                                                      FALSE, 1, &sConstraint );
-        if( nSDEErr != SE_SUCCESS) 
+        if( nSDEErr != SE_SUCCESS)
         {
             poDS->IssueSDEError( nSDEErr, "SE_stream_set_spatial_constraints");
             return FALSE;
-        }    
+        }
 
         SE_shape_free( hRectShape );
     }
@@ -704,7 +703,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
     if( nSDEErr != SE_SUCCESS ) {
         poDS->IssueSDEError( nSDEErr, "SE_stream_execute" );
         return FALSE;
-    }    
+    }
 
     bQueryInstalled = TRUE;
 
@@ -743,7 +742,7 @@ OGRErr OGRSDELayer::SetAttributeFilter( const char *pszQuery )
 /************************************************************************/
 OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
                                         int bIsInsert )
-        
+
 {
     SE_SHAPE            hShape;
     LONG                nSDEErr;
@@ -770,10 +769,10 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
     int                 nAttributeCols = 0;
     int                 nSpecialCols = 0;
     int                 i;
-    
-    paiColToDefMap = (int *) CPLMalloc( sizeof(int) 
+
+    paiColToDefMap = (int *) CPLMalloc( sizeof(int)
                                         * poFeatureDefn->GetFieldCount() );
-    
+
     /*
      * If the row id is managed by USER, and not SDE, then we need to take
      * care to set the FID column ourselves. If the row id column is managed by
@@ -784,15 +783,15 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
     {
         papszInsertCols = CSLAddString( papszInsertCols,
                                         osFIDColumnName.c_str() );
-        
+
         nSpecialCols++;
     }
 
     if( poFeature->GetGeometryRef() != NULL )
     {
-        papszInsertCols = CSLAddString( papszInsertCols, 
+        papszInsertCols = CSLAddString( papszInsertCols,
                                         osShapeColumnName.c_str() );
-        
+
         nSpecialCols++;
     }
 
@@ -801,10 +800,10 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
     for( i=0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         OGRFieldDefn   *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
-        
+
         if( !poFeature->IsFieldSet(i) )
             continue;
-        
+
         // Skip FID and Geometry columns
         if( EQUAL(poFieldDefn->GetNameRef(), osFIDColumnName.c_str()) )
         {
@@ -812,34 +811,33 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
             if( nFIDColumnType == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_SDE )
                 continue;
         }
-        
+
         if( EQUAL(poFieldDefn->GetNameRef(), osShapeColumnName.c_str()) )
             continue;
-        
+
         papszInsertCols = CSLAddString( papszInsertCols,
                                         poFieldDefn->GetNameRef() );
-        
+
         paiColToDefMap[nAttributeCols] = i;
         nAttributeCols++;
     }
-    
-    
+
 /* -------------------------------------------------------------------- */
 /*      Prepare the insert or update stream mode                        */
 /* -------------------------------------------------------------------- */
     const char         *pszMethod;
-    
+
     if( bIsInsert )
     {
         nSDEErr = SE_stream_insert_table( hStream, poFeatureDefn->GetName(),
-                                          nSpecialCols + nAttributeCols, 
+                                          nSpecialCols + nAttributeCols,
                                           (const char **)papszInsertCols );
         pszMethod = "SE_stream_insert_table";
     }
     else // It's an UPDATE
     {
         const char     *pszWhere;
-        
+
         // Check that there is a FID column detected on the table, and that
         // this feature has a non-null FID
         if( iFIDColumn == -1 )
@@ -847,27 +845,27 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Cannot update feature: Layer \"%s\" has no FID column",
                       poFeatureDefn->GetName() );
-            
+
             CSLDestroy( papszInsertCols );
             CPLFree( paiColToDefMap );
-            
+
             return OGRERR_FAILURE;
         }
         else if( poFeature->GetFID() == OGRNullFID )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Cannot update feature: Feature has a NULL Feature ID" );
-            
+
             CSLDestroy( papszInsertCols );
             CPLFree( paiColToDefMap );
-            
+
             return OGRERR_FAILURE;
         }
-        
+
         // Build WHERE clause
         pszWhere = CPLSPrintf( "%s = %ld", osFIDColumnName.c_str(),
                                            poFeature->GetFID() );
-        
+
         nSDEErr = SE_stream_update_table( hStream, poFeatureDefn->GetName(),
                                           nSpecialCols + nAttributeCols,
                                           (const char **)papszInsertCols,
@@ -875,40 +873,40 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
 
         pszMethod = "SE_stream_update_table";
     }
-        
+
     if( nSDEErr != SE_SUCCESS )
     {
         poDS->IssueSDEError( nSDEErr, pszMethod );
         return OGRERR_FAILURE;
     }
 
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set the feature attributes                                      */
 /* -------------------------------------------------------------------- */
     short               iCurColNum = 1;
-    
+
     if( nFIDColumnType == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_USER
         && iFIDColumn != -1 )
     {
         LONG            nFID;
-        
+
         nFID = poFeature->GetFID();
         if( nFID == OGRNullFID )
         {
             nFID = iNextFIDToWrite++;
             poFeature->SetFID( nFID );
         }
-        
+
         nSDEErr = SE_stream_set_integer( hStream, iCurColNum++,
                                          &nFID );
         if( nSDEErr != SE_SUCCESS )
         {
             poDS->IssueSDEError( nSDEErr, "SE_stream_set_integer" );
-            
+
             CSLDestroy( papszInsertCols );
             CPLFree( paiColToDefMap );
-            
+
             return OGRERR_FAILURE;
         }
     }
@@ -917,18 +915,18 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
     if( poFeature->GetGeometryRef() != NULL )
     {
         nSDEErr = SE_stream_set_shape( hStream, iCurColNum++, hShape );
-        
+
         if( nSDEErr != SE_SUCCESS )
         {
             poDS->IssueSDEError( nSDEErr, "SE_stream_set_shape" );
-            
+
             CSLDestroy( papszInsertCols );
             CPLFree( paiColToDefMap );
             SE_shape_free( hShape );
             return OGRERR_FAILURE;
         }
     }
-    
+
     // Set attribute columns
     for( i=0; i < nAttributeCols; i++ )
     {
@@ -938,14 +936,14 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
 
         poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldDefnIdx);
         poField = poFeature->GetRawFieldRef(iFieldDefnIdx);
-        
+
         CPLAssert( poFieldDefn != NULL );
         CPLAssert( poField != NULL );
-        
+
         if( poFieldDefn->GetType() == OFTInteger )
         {
             LONG        nLong = poField->Integer;
-            
+
             nSDEErr = SE_stream_set_integer( hStream, iCurColNum++,
                                              &nLong );
             if( nSDEErr != SE_SUCCESS )
@@ -956,11 +954,11 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
                 return OGRERR_FAILURE;
             }
         }
-        
+
         else if( poFieldDefn->GetType() == OFTReal )
         {
             LFLOAT      nDouble = poField->Real;
-            
+
             nSDEErr = SE_stream_set_double( hStream, iCurColNum++,
                                             &nDouble );
             if( nSDEErr != SE_SUCCESS )
@@ -971,12 +969,12 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
                 return OGRERR_FAILURE;
             }
         }
-        
-        else if( poFieldDefn->GetType() == OFTString 
+
+        else if( poFieldDefn->GetType() == OFTString
                  && anFieldTypeMap[iFieldDefnIdx] == SE_NSTRING_TYPE )
         {
-            SE_WCHAR *pszUTF16 = (SE_WCHAR *) 
-                CPLRecodeToWChar( poField->String, CPL_ENC_UTF8, 
+            SE_WCHAR *pszUTF16 = (SE_WCHAR *)
+                CPLRecodeToWChar( poField->String, CPL_ENC_UTF8,
                                   CPL_ENC_UTF16 );
 
             nSDEErr = SE_stream_set_nstring( hStream, iCurColNum++,
@@ -991,7 +989,7 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
                 return OGRERR_FAILURE;
             }
         }
-        
+
         else if( poFieldDefn->GetType() == OFTString )
         {
             nSDEErr = SE_stream_set_string( hStream, iCurColNum++,
@@ -1004,12 +1002,12 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
                 return OGRERR_FAILURE;
             }
         }
-        
+
         else if( poFieldDefn->GetType() == OFTDate
                  || poFieldDefn->GetType() == OFTDateTime )
         {
             struct tm sDateVal;
-            
+
             // TODO: hobu, please double-check this.
             sDateVal.tm_year  = poField->Date.Year - 1900;
             sDateVal.tm_mon   = poField->Date.Month - 1;
@@ -1018,7 +1016,7 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
             sDateVal.tm_min   = poField->Date.Minute;
             sDateVal.tm_sec   = poField->Date.Second;
             sDateVal.tm_isdst = (poField->Date.TZFlag == 0 ? 0 : 1);
-            
+
             nSDEErr = SE_stream_set_date( hStream, iCurColNum++,
                                           &sDateVal );
             if( nSDEErr != SE_SUCCESS )
@@ -1029,17 +1027,17 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
                 return OGRERR_FAILURE;
             }
         }
-        
+
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Cannot set attribute of type %s in SDE layer: "
                       "attempting to create as STRING",
                       OGRFieldDefn::GetFieldTypeName(poFieldDefn->GetType()) );
-            
+
             CSLDestroy( papszInsertCols );
             CPLFree( paiColToDefMap );
-        
+
             return OGRERR_FAILURE;
         }
     }
@@ -1056,16 +1054,16 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
 OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
                                           SE_SHAPE *phShape,
                                           SE_COORDREF hCoordRef )
-        
+
 {
     LONG                nSDEErr;
-    
+
     CPLAssert( poGeom != NULL );
     CPLAssert( phShape != NULL );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Initialize shape.                                               */
-/* -------------------------------------------------------------------- */    
+/* -------------------------------------------------------------------- */
     nSDEErr = SE_shape_create( hCoordRef, phShape );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -1075,11 +1073,11 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
 
 /* -------------------------------------------------------------------- */
 /*      Determine whether the geometry includes Z coordinates.          */
-/* -------------------------------------------------------------------- */    
+/* -------------------------------------------------------------------- */
     int                 b3D = FALSE;
-    
+
     b3D = wkbHasZ(poGeom->getGeometryType());
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate POINT/MULTIPOINT type.                                */
 /* -------------------------------------------------------------------- */
@@ -1096,16 +1094,16 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
                       "Cannot allocate asPointParts" );
             return OGRERR_FAILURE;
         }
-        
+
         anfZcoords = (LFLOAT*) CPLMalloc(nParts * sizeof(LFLOAT));
         if (!anfZcoords) {
             CPLError( CE_Fatal, CPLE_AppDefined,
                       "Cannot allocate anfZcoords" );
             return OGRERR_FAILURE;
-        }        
+        }
         asPointParts[0].x = poPoint->getX();
         asPointParts[0].y = poPoint->getY();
-        
+
         if( b3D )
         {
             anfZcoords[0] = poPoint->getZ();
@@ -1132,30 +1130,30 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
         SE_POINT       *pasPointParts;
         LFLOAT         *panfZcoords = NULL;
         int             i;
-        
+
         nParts = poMulPoint->getNumGeometries();
-        
+
         pasPointParts = (SE_POINT *) CPLMalloc( sizeof(SE_POINT) * nParts );
-        
+
         if( b3D )
             panfZcoords = (LFLOAT *) CPLMalloc( sizeof(LFLOAT) * nParts );
-        
+
         for( i=0; i < nParts; i++ )
         {
             OGRPoint   *poThisPoint;
-            
+
             poThisPoint = (OGRPoint *) poMulPoint->getGeometryRef(i);
-                    
+
             pasPointParts[i].x = poThisPoint->getX();
             pasPointParts[i].y = poThisPoint->getY();
-            
+
             if( b3D )
                 panfZcoords[i] = poThisPoint->getZ();
         }
-        
+
         nSDEErr = SE_shape_generate_point( nParts, pasPointParts, panfZcoords,
                                            NULL, *phShape );
-        
+
         CPLFree( pasPointParts );
         if( b3D )
             CPLFree( panfZcoords );
@@ -1177,10 +1175,10 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
         SE_POINT       *pasPoints;
         LFLOAT         *panfZcoords = NULL;
         int             i, j;
-        
+
         // Get exterior ring
         OGRLinearRing  *poExtRing = poPoly->getExteriorRing();
-        
+
         if( poExtRing == NULL )
         {
             // The polygon is empty
@@ -1192,67 +1190,67 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
                 return OGRERR_FAILURE;
             }
         }
-        
+
         // Get total number of points in polygon
         nPoints += poExtRing->getNumPoints();
-        
+
         for( i=0; i < poPoly->getNumInteriorRings(); i++ )
             nPoints += poPoly->getInteriorRing(i)->getNumPoints();
-        
+
         pasPoints = (SE_POINT *) CPLMalloc( sizeof(SE_POINT) * nPoints );
-        
+
         if( b3D )
             panfZcoords = (LFLOAT *) CPLMalloc( sizeof(LFLOAT) * nPoints );
-        
+
         for( i=0; i < poExtRing->getNumPoints(); i++ )
         {
             OGRPoint    oLRPnt;
-            
+
             poExtRing->getPoint( i, &oLRPnt );
-            
+
             pasPoints[iCurPoint].x = oLRPnt.getX();
             pasPoints[iCurPoint].y = oLRPnt.getY();
-            
+
             if( b3D )
                 panfZcoords[iCurPoint] = oLRPnt.getZ();
 
             iCurPoint++;
         }
-        
+
         for( i=0; i < poPoly->getNumInteriorRings(); i++ )
         {
             OGRLinearRing   *poIntRing = poPoly->getInteriorRing(i);
-            
+
             for( j=0; j < poIntRing->getNumPoints(); j++ )
             {
                 OGRPoint    oLRPnt;
-                
+
                 poIntRing->getPoint( j, &oLRPnt );
-                
+
                 pasPoints[iCurPoint].x = oLRPnt.getX();
                 pasPoints[iCurPoint].y = oLRPnt.getY();
-                
+
                 if( b3D )
                     panfZcoords[iCurPoint] = oLRPnt.getZ();
-                
+
                 iCurPoint++;
             }
         }
-        
+
         nSDEErr = SE_shape_generate_polygon( nPoints, 1, NULL, pasPoints,
                                              panfZcoords, NULL, *phShape );
-        
+
         CPLFree( pasPoints );
         if( b3D )
             CPLFree( panfZcoords );
-        
+
         if( nSDEErr != SE_SUCCESS )
         {
             poDS->IssueSDEError( nSDEErr, "SE_shape_generate_polygon" );
             return OGRERR_FAILURE;
         }
     }
-    
+
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
     {
         OGRMultiPolygon *poMP = (OGRMultiPolygon *) poGeom;
@@ -1263,9 +1261,9 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
         SE_POINT        *pasPoints;
         LFLOAT          *panfZcoords = NULL;
         int              i, j, k;
-        
+
         nParts = poMP->getNumGeometries();
-        
+
         // Find total number of points
         for( i=0; i < nParts; i++ )
         {
@@ -1277,22 +1275,22 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
             for( j=0; j < poPoly->getNumInteriorRings(); j++ )
                 nPoints += poPoly->getInteriorRing(j)->getNumPoints();
         }
-        
+
         // Allocate points and part offset arrays
         pasPoints = (SE_POINT *) CPLMalloc( sizeof(SE_POINT) * nPoints );
         panPartOffsets = (LONG *) CPLMalloc( sizeof(LONG) * nParts );
         if( b3D )
             panfZcoords = (LFLOAT *) CPLMalloc( sizeof(LFLOAT) * nPoints );
-        
-        
+
+
         // Build arrays of points and part offsets
         for( i=0; i < nParts; i++ )
         {
             OGRPolygon      *poPoly = (OGRPolygon *) poMP->getGeometryRef(i);
             OGRLinearRing   *poExtRing = poPoly->getExteriorRing();
-            
+
             panPartOffsets[i] = iCurPoint;
-            
+
             for( j=0; j < poExtRing->getNumPoints(); j++ )
             {
                 OGRPoint    oLRPnt;
@@ -1301,7 +1299,7 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
 
                 pasPoints[iCurPoint].x = oLRPnt.getX();
                 pasPoints[iCurPoint].y = oLRPnt.getY();
-                
+
                 if( b3D )
                     panfZcoords[iCurPoint] = oLRPnt.getZ();
 
@@ -1320,7 +1318,7 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
 
                     pasPoints[iCurPoint].x = oLRPnt.getX();
                     pasPoints[iCurPoint].y = oLRPnt.getY();
-                    
+
                     if( b3D )
                         panfZcoords[iCurPoint] = oLRPnt.getZ();
 
@@ -1328,16 +1326,16 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
                 }
             }
         }
-        
+
         nSDEErr = SE_shape_generate_polygon( nPoints, nParts, panPartOffsets,
                                              pasPoints, panfZcoords, NULL,
                                              *phShape );
-        
+
         CPLFree( pasPoints );
         CPLFree( panPartOffsets );
         if( b3D )
             CPLFree( panfZcoords );
-        
+
         if( nSDEErr != SE_SUCCESS )
         {
             poDS->IssueSDEError( nSDEErr, "SE_shape_generate_polygon" );
@@ -1345,10 +1343,10 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
         }
     }
 
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate LINESTRING/MULTILINESTRING type.                      */
-/* -------------------------------------------------------------------- */    
+/* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
         OGRLineString  *poLineString = (OGRLineString *) poGeom;
@@ -1357,40 +1355,40 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
         SE_POINT       *pasPoints;
         LFLOAT         *panfZcoords = NULL;
         int             i;
-        
+
         nPoints = poLineString->getNumPoints();
-        
+
         pasPoints = (SE_POINT *) CPLMalloc( sizeof(SE_POINT) * nPoints );
         if( b3D )
             panfZcoords = (LFLOAT *) CPLMalloc( sizeof(LFLOAT) * nPoints );
-        
+
         for( i=0; i < nPoints; i++ )
         {
             OGRPoint   oPoint;
-            
+
             poLineString->getPoint( i, &oPoint );
 
             pasPoints[i].x = oPoint.getX();
             pasPoints[i].y = oPoint.getY();
-            
+
             if( b3D )
                 panfZcoords[i] = oPoint.getZ();
         }
-        
+
         nSDEErr = SE_shape_generate_line( nPoints, nParts, NULL, pasPoints,
                                           panfZcoords, NULL, *phShape );
-        
+
         CPLFree( pasPoints );
         if( b3D )
             CPLFree( panfZcoords );
-        
+
         if( nSDEErr != SE_SUCCESS )
         {
             poDS->IssueSDEError( nSDEErr, "SE_shape_generate_line" );
             return OGRERR_FAILURE;
         }
     }
-    
+
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
     {
         OGRMultiLineString *poMLS = (OGRMultiLineString *) poGeom;
@@ -1401,74 +1399,74 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
         LONG           *panPartOffsets;
         LFLOAT         *panfZcoords = NULL;
         int             i, j;
-        
+
         // Get number of parts and total number of points
         nParts = poMLS->getNumGeometries();
-        
+
         for( i=0; i < nParts; i++ )
         {
             OGRLineString   *poLS = (OGRLineString *) poMLS->getGeometryRef(i);
-            
+
             nPoints += poLS->getNumPoints();
         }
-        
+
         // Allocate arrays for points and part offsets
         pasPoints = (SE_POINT *) CPLMalloc( sizeof(SE_POINT) * nPoints );
         panPartOffsets = (LONG *) CPLMalloc( sizeof(LONG) * nParts );
         if( b3D )
             panfZcoords = (LFLOAT *) CPLMalloc( sizeof(LFLOAT) * nPoints );
-        
+
         for( i=0; i < nParts; i++ )
         {
             OGRLineString   *poLS = (OGRLineString *) poMLS->getGeometryRef(i);
-            
+
             panPartOffsets[i] = iCurPoint;
-            
+
             for( j=0; j < poLS->getNumPoints(); j++ )
             {
                 OGRPoint    oPoint;
-                
+
                 poLS->getPoint( j, &oPoint );
-                
+
                 pasPoints[iCurPoint].x = oPoint.getX();
                 pasPoints[iCurPoint].y = oPoint.getY();
-                
+
                 if( b3D )
                     panfZcoords[iCurPoint] = oPoint.getZ();
-                
+
                 iCurPoint++;
             }
         }
-        
+
         nSDEErr = SE_shape_generate_line( nPoints, nParts, panPartOffsets,
                                           pasPoints, panfZcoords, NULL,
                                           *phShape );
-        
+
         CPLFree( pasPoints );
         CPLFree( panPartOffsets );
         if( b3D )
             CPLFree( panfZcoords );
-        
+
         if( nSDEErr != SE_SUCCESS )
         {
             poDS->IssueSDEError( nSDEErr, "SE_shape_generate_line" );
             return OGRERR_FAILURE;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*       Error on other geometry types.                                 */
-/* -------------------------------------------------------------------- */    
+/* -------------------------------------------------------------------- */
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "OGR_SDE: TranslateOGRGeometry() cannot translate "
                   "geometries of type %s (%d)", poGeom->getGeometryName(),
                   poGeom->getGeometryType() );
-        
+
         return OGRERR_FAILURE;
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -1489,7 +1487,7 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
 
     if( nSDEGeomType == SG_NIL_SHAPE )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Fetch points and parts.                                         */
 /* -------------------------------------------------------------------- */
@@ -1505,12 +1503,12 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
     pasPoints = (SE_POINT *) CPLMalloc(nPointCount * sizeof(SE_POINT));
     panParts = (LONG *) CPLMalloc(nPartCount * sizeof(LONG));
     panSubParts = (LONG *) CPLMalloc(nSubPartCount * sizeof(LONG));
-    
+
     if( SE_shape_is_3D( hShape ) )
         padfZ = (LFLOAT *) CPLMalloc(nPointCount * sizeof(LFLOAT));
 
-    nSDEErr = SE_shape_get_all_points( hShape, SE_DEFAULT_ROTATION, 
-                                       panParts, panSubParts, 
+    nSDEErr = SE_shape_get_all_points( hShape, SE_DEFAULT_ROTATION,
+                                       panParts, panSubParts,
                                        pasPoints, padfZ, NULL );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -1568,7 +1566,7 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
       {
           OGRLineString *poLine = new OGRLineString();
           int i;
-          
+
           CPLAssert( nPartCount == 1 && nSubPartCount == 1 );
 
           poLine->setNumPoints( nPointCount );
@@ -1576,7 +1574,7 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
           for( i = 0; i < nPointCount; i++ )
           {
               if( padfZ )
-                  poLine->setPoint( i, pasPoints[i].x, pasPoints[i].y, 
+                  poLine->setPoint( i, pasPoints[i].x, pasPoints[i].y,
                                     padfZ[i] );
               else
                   poLine->setPoint( i, pasPoints[i].x, pasPoints[i].y );
@@ -1596,33 +1594,33 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
 	  int iPart;
 
           CPLAssert( nPartCount == nSubPartCount );
-              
+
           for( iPart = 0; iPart < nPartCount; iPart++ )
           {
               OGRLineString *poLine = new OGRLineString();
               int i, nLineVertCount;
 
-              CPLAssert( panParts[iPart] == iPart ); // 1:1 correspondance
-          
+              CPLAssert( panParts[iPart] == iPart ); // 1:1 correspondence
+
               if( iPart == nPartCount-1 )
                   nLineVertCount = nPointCount - panSubParts[iPart];
               else
                   nLineVertCount = panSubParts[iPart+1] - panSubParts[iPart];
 
               poLine->setNumPoints( nLineVertCount );
-              
+
               for( i = 0; i < nLineVertCount; i++ )
               {
                   int iVert = i + panSubParts[iPart];
 
                   if( padfZ )
-                      poLine->setPoint( i, 
-                                        pasPoints[iVert].x, 
-                                        pasPoints[iVert].y, 
+                      poLine->setPoint( i,
+                                        pasPoints[iVert].x,
+                                        pasPoints[iVert].y,
                                         padfZ[iVert] );
                   else
-                      poLine->setPoint( i, 
-                                        pasPoints[iVert].x, 
+                      poLine->setPoint( i,
+                                        pasPoints[iVert].x,
                                         pasPoints[iVert].y );
               }
 
@@ -1655,35 +1653,35 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
                   nNextSubPart = nSubPartCount;
               else
                   nNextSubPart = panParts[iPart+1];
-              
+
               for( iSubPart = panParts[iPart]; iSubPart < nNextSubPart; iSubPart++ )
               {
                   OGRLinearRing *poRing = new OGRLinearRing();
-                  int nRingVertCount; 
-                  
+                  int nRingVertCount;
+
                   if( iSubPart == nSubPartCount-1 )
                       nRingVertCount = nPointCount - panSubParts[iSubPart];
                   else
-                      nRingVertCount = 
+                      nRingVertCount =
                           panSubParts[iSubPart+1] - panSubParts[iSubPart];
-                  
+
                   poRing->setNumPoints( nRingVertCount );
-                  
+
                   for( iVert=0; iVert < nRingVertCount; iVert++ )
                   {
                       if( padfZ )
-                          poRing->setPoint( 
-                              iVert, 
+                          poRing->setPoint(
+                              iVert,
                               pasPoints[iVert+panSubParts[iSubPart]].x,
                               pasPoints[iVert+panSubParts[iSubPart]].y,
                               padfZ[iVert+panSubParts[iSubPart]] );
                       else
-                          poRing->setPoint( 
-                              iVert, 
+                          poRing->setPoint(
+                              iVert,
                               pasPoints[iVert+panSubParts[iSubPart]].x,
                               pasPoints[iVert+panSubParts[iSubPart]].y );
                   }
-                  
+
                   poPoly->addRingDirectly( poRing );
               }
 
@@ -1703,8 +1701,8 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
 /* -------------------------------------------------------------------- */
       default:
       {
-          CPLError( CE_Warning, CPLE_NotSupported, 
-                    "Unsupported geometry type: %d", 
+          CPLError( CE_Warning, CPLE_NotSupported,
+                    "Unsupported geometry type: %d",
                     (int) nSDEGeomType );
       }
     }
@@ -1743,7 +1741,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           case SE_SMALLINT_TYPE:
           {
               short   nShort;
-              nSDEErr = SE_stream_get_smallint( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_smallint( hStream, anFieldMap[i]+1,
                                                 &nShort );
               if( nSDEErr == SE_SUCCESS )
                   poFeat->SetField( i, (int) nShort );
@@ -1758,7 +1756,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           case SE_INTEGER_TYPE:
           {
               LONG nValue;
-              nSDEErr = SE_stream_get_integer( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_integer( hStream, anFieldMap[i]+1,
                                                &nValue );
               if( nSDEErr == SE_SUCCESS )
                   poFeat->SetField( i, (int) nValue );
@@ -1774,7 +1772,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           {
               float fValue;
 
-              nSDEErr = SE_stream_get_float( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_float( hStream, anFieldMap[i]+1,
                                              &fValue );
               if( nSDEErr == SE_SUCCESS )
                   poFeat->SetField( i, (double) fValue );
@@ -1790,7 +1788,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           {
               double dfValue;
 
-              nSDEErr = SE_stream_get_double( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_double( hStream, anFieldMap[i]+1,
                                               &dfValue );
               if( nSDEErr == SE_SUCCESS )
                   poFeat->SetField( i, dfValue );
@@ -1807,7 +1805,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
               char *pszTempString = (char *)
                   CPLMalloc(poFieldDef->GetWidth()+1);
 
-              nSDEErr = SE_stream_get_string( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_string( hStream, anFieldMap[i]+1,
                                               pszTempString );
               if( nSDEErr == SE_SUCCESS )
                   poFeat->SetField( i, pszTempString );
@@ -1822,20 +1820,20 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
 
           case SE_NSTRING_TYPE:
           {
-              SE_WCHAR * pszTempStringUTF16 = (SE_WCHAR *) 
+              SE_WCHAR * pszTempStringUTF16 = (SE_WCHAR *)
                   CPLMalloc ((poFieldDef->GetWidth()+1) * sizeof(SE_WCHAR ));
 
-              nSDEErr = SE_stream_get_nstring( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_nstring( hStream, anFieldMap[i]+1,
                                                pszTempStringUTF16 );
 
-              if( nSDEErr == SE_SUCCESS ) 
+              if( nSDEErr == SE_SUCCESS )
               {
                   char* pszUTF8 = CPLRecodeFromWChar((const wchar_t*)pszTempStringUTF16, CPL_ENC_UTF16, CPL_ENC_UTF8);
 
                   poFeat->SetField( i, pszUTF8 );
                   CPLFree( pszUTF8 );
 
-              } 
+              }
               else if( nSDEErr != SE_NULL_VALUE )
               {
                   poDS->IssueSDEError( nSDEErr, "SE_stream_get_nstring" );
@@ -1853,7 +1851,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
               char *pszTempString = (char *)
                   CPLMalloc(poFieldDef->GetWidth()+1);
 
-              nSDEErr = SE_stream_get_uuid( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_uuid( hStream, anFieldMap[i]+1,
                                               pszTempString );
               if( nSDEErr == SE_SUCCESS )
                   poFeat->SetField( i, pszTempString );
@@ -1870,12 +1868,12 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           {
               SE_BLOB_INFO sBlobVal;
 
-              nSDEErr = SE_stream_get_blob( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_blob( hStream, anFieldMap[i]+1,
                                             &sBlobVal );
               if( nSDEErr == SE_SUCCESS )
               {
-                  poFeat->SetField( i, 
-                                    sBlobVal.blob_length, 
+                  poFeat->SetField( i,
+                                    sBlobVal.blob_length,
                                     (GByte *) sBlobVal.blob_buffer );
                   SE_blob_free( &sBlobVal );
               }
@@ -1893,7 +1891,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
               SE_CLOB_INFO sClobVal;
 
               memset(&sClobVal, 0, sizeof(sClobVal)); /* to prevent from the crash in SE_stream_get_clob */
-              nSDEErr = SE_stream_get_clob( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_clob( hStream, anFieldMap[i]+1,
                                             &sClobVal );
               if( nSDEErr == SE_SUCCESS )
               {
@@ -1901,7 +1899,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
                   char* sClobstring = (char*)CPLMalloc(sizeof(char)*(sClobVal.clob_length+1));
                   memcpy(sClobstring, sClobVal.clob_buffer, sClobVal.clob_length);
 				  sClobstring[sClobVal.clob_length] = '\0';
-                  
+
                   poFeat->SetField( i, sClobstring );
                   SE_clob_free( &sClobVal );
                   CPLFree(sClobstring);
@@ -1922,7 +1920,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
               SE_NCLOB_INFO sNclobVal;
 
               memset(&sNclobVal, 0, sizeof(sNclobVal)); /* to prevent from the crash in SE_stream_get_nclob */
-              nSDEErr = SE_stream_get_nclob( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_nclob( hStream, anFieldMap[i]+1,
                                             &sNclobVal );
               if( nSDEErr == SE_SUCCESS )
               {
@@ -1935,7 +1933,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
 
                   poFeat->SetField( i, pszUTF8 );
                   CPLFree( pszUTF8 );
-                  
+
                   SE_nclob_free( &sNclobVal );
                   CPLFree(sNclobstring);
               }
@@ -1953,11 +1951,11 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           {
               struct tm sDateVal;
 
-              nSDEErr = SE_stream_get_date( hStream, anFieldMap[i]+1, 
+              nSDEErr = SE_stream_get_date( hStream, anFieldMap[i]+1,
                                             &sDateVal );
               if( nSDEErr == SE_SUCCESS )
 			  {
-			      poFeat->SetField( i, sDateVal.tm_year + 1900, sDateVal.tm_mon + 1, sDateVal.tm_mday, 
+			      poFeat->SetField( i, sDateVal.tm_year + 1900, sDateVal.tm_mon + 1, sDateVal.tm_mday,
 					  sDateVal.tm_hour, sDateVal.tm_min, sDateVal.tm_sec, (sDateVal.tm_isdst > 0));
               }
               else if( nSDEErr != SE_NULL_VALUE )
@@ -1992,7 +1990,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
             poDS->IssueSDEError( nSDEErr, "SE_shape_create" );
         else
         {
-            nSDEErr = SE_stream_get_shape( hStream, (short) (iShapeColumn+1), 
+            nSDEErr = SE_stream_get_shape( hStream, (short) (iShapeColumn+1),
                                            hShape );
             if( nSDEErr != SE_SUCCESS )
                 poDS->IssueSDEError( nSDEErr, "SE_stream_get_shape" );
@@ -2025,7 +2023,7 @@ OGRFeature *OGRSDELayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Fetch the next record.                                          */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         nSDEErr = SE_stream_fetch( hStream );
         if( nSDEErr == SE_FINISHED )
@@ -2038,7 +2036,7 @@ OGRFeature *OGRSDELayer::GetNextFeature()
             poDS->IssueSDEError( nSDEErr, "SE_stream_fetch" );
             return NULL;
         }
-        
+
         m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
@@ -2057,7 +2055,7 @@ OGRFeature *OGRSDELayer::GetNextFeature()
 
             delete poFeature;
         }
-    }        
+    }
 }
 
 /************************************************************************/
@@ -2068,14 +2066,14 @@ OGRFeature *OGRSDELayer::GetFeature( GIntBig nFeatureId )
 
 {
     int nSDEErr;
-    
+
     if( iFIDColumn == -1 )
         return OGRLayer::GetFeature( nFeatureId );
 
 /* -------------------------------------------------------------------- */
 /*      Our direct row access will terminate any active queries.        */
 /* -------------------------------------------------------------------- */
-    ResetReading(); 
+    ResetReading();
 
 /* -------------------------------------------------------------------- */
 /*      Create stream, or reset it.                                     */
@@ -2087,9 +2085,9 @@ OGRFeature *OGRSDELayer::GetFeature( GIntBig nFeatureId )
 /*      We want to fetch all the columns, just like we normally         */
 /*      would for GetNextFeature().                                     */
 /* -------------------------------------------------------------------- */
-    nSDEErr = SE_stream_fetch_row( hStream, poFeatureDefn->GetName(), 
-                                   nFeatureId, 
-                                   CSLCount( papszAllColumns ), 
+    nSDEErr = SE_stream_fetch_row( hStream, poFeatureDefn->GetName(),
+                                   nFeatureId,
+                                   CSLCount( papszAllColumns ),
                                    (const char **) papszAllColumns );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -2114,7 +2112,7 @@ OGRErr OGRSDELayer::ResetStream()
 
 {
     LONG                nSDEErr;
-    
+
     if( hStream == NULL )
     {
         nSDEErr = SE_stream_create( poDS->GetConnection(), &hStream );
@@ -2123,9 +2121,9 @@ OGRErr OGRSDELayer::ResetStream()
             return OGRERR_FAILURE;
         }
         if (poDS->IsOpenForUpdate() && poDS->UseVersionEdits()) {
-            nSDEErr = SE_stream_set_state(  hStream, 
-                                            poDS->GetNextState(), 
-                                            SE_NULL_STATE_ID, 
+            nSDEErr = SE_stream_set_state(  hStream,
+                                            poDS->GetNextState(),
+                                            SE_NULL_STATE_ID,
                                             SE_STATE_DIFF_NOCHECK );
             if( nSDEErr != SE_SUCCESS) {
                 poDS->IssueSDEError( nSDEErr, "SE_stream_set_state" );
@@ -2133,15 +2131,15 @@ OGRErr OGRSDELayer::ResetStream()
             }
         }
         else {
-            nSDEErr = SE_stream_set_state(  hStream, 
-                                            poDS->GetState(), 
-                                            poDS->GetState(), 
+            nSDEErr = SE_stream_set_state(  hStream,
+                                            poDS->GetState(),
+                                            poDS->GetState(),
                                             SE_STATE_DIFF_NOCHECK );
             if( nSDEErr != SE_SUCCESS) {
                 poDS->IssueSDEError( nSDEErr, "SE_stream_set_state" );
                 return OGRERR_FAILURE;
             }
-        }   
+        }
     }
     else
     {
@@ -2152,9 +2150,9 @@ OGRErr OGRSDELayer::ResetStream()
             return OGRERR_FAILURE;
         }
         if (poDS->IsOpenForUpdate() && poDS->UseVersionEdits()) {
-            nSDEErr = SE_stream_set_state(  hStream, 
-                                            poDS->GetNextState(), 
-                                            SE_NULL_STATE_ID, 
+            nSDEErr = SE_stream_set_state(  hStream,
+                                            poDS->GetNextState(),
+                                            SE_NULL_STATE_ID,
                                             SE_STATE_DIFF_NOCHECK );
             if( nSDEErr != SE_SUCCESS) {
                 poDS->IssueSDEError( nSDEErr, "SE_stream_set_state" );
@@ -2162,18 +2160,17 @@ OGRErr OGRSDELayer::ResetStream()
             }
         }
         else {
-            nSDEErr = SE_stream_set_state(  hStream, 
-                                            poDS->GetState(), 
-                                            poDS->GetState(), 
+            nSDEErr = SE_stream_set_state(  hStream,
+                                            poDS->GetState(),
+                                            poDS->GetState(),
                                             SE_STATE_DIFF_NOCHECK );
             if( nSDEErr != SE_SUCCESS) {
                 poDS->IssueSDEError( nSDEErr, "SE_stream_set_state" );
                 return OGRERR_FAILURE;
             }
-        }        
-
+        }
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -2196,7 +2193,7 @@ GIntBig OGRSDELayer::GetFeatureCount( int bForce )
 /*      features. The performance difference between this and manual    */
 /*      iteration is significant.                                       */
 /* -------------------------------------------------------------------- */
-    if( osAttributeFilter.empty() && m_poFilterGeom == NULL 
+    if( osAttributeFilter.empty() && m_poFilterGeom == NULL
         && NeedLayerInfo() )
     {
         SE_LAYER_STATS layerstats = {0};
@@ -2206,14 +2203,14 @@ GIntBig OGRSDELayer::GetFeatureCount( int bForce )
 
         szTableName[0] = '\0';
         szShapeColumn[0] = '\0';
-      
+
         nSDEErr = SE_layerinfo_get_spatial_column( hLayerInfo, szTableName, szShapeColumn );
         if( nSDEErr != SE_SUCCESS )
         {
             poDS->IssueSDEError( nSDEErr, "SE_layerinfo_get_spatial_column" );
             return -1;
         }
-      
+
         nSDEErr = SE_layer_get_statistics( poDS->GetConnection(), szTableName, szShapeColumn,
                                            &layerstats);
         if( nSDEErr != SE_SUCCESS )
@@ -2235,7 +2232,7 @@ GIntBig OGRSDELayer::GetFeatureCount( int bForce )
     if( !InstallQuery( TRUE ) )
         return -1;
 
-    for( nSDEErr = SE_stream_fetch( hStream ); 
+    for( nSDEErr = SE_stream_fetch( hStream );
          nSDEErr == SE_SUCCESS;
          nSDEErr = SE_stream_fetch( hStream ) )
     {
@@ -2247,7 +2244,7 @@ GIntBig OGRSDELayer::GetFeatureCount( int bForce )
         poDS->IssueSDEError( nSDEErr, "SE_stream_fetch" );
         return -1;
     }
-        
+
     ResetReading();
 
     return nFeatureCount;
@@ -2262,10 +2259,10 @@ OGRErr OGRSDELayer::GetExtent (OGREnvelope *psExtent, int bForce)
 {
     if( !NeedLayerInfo() )
         return OGRERR_FAILURE;
-    
+
     if (bForce) {
         return OGRLayer::GetExtent( psExtent, bForce );
-    }        
+    }
 
     SE_ENVELOPE  sEnvelope;
     int nSDEErr;
@@ -2294,17 +2291,17 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     SE_COLUMN_DEF       sColumnDef;
     OGRFieldDefn        oField( poFieldIn );
     LONG                nSDEErr;
-    
+
     CPLAssert( poFieldIn != NULL );
     CPLAssert( poFeatureDefn != NULL );
-    
+
     /* TODO: Do we need to launder column names in the same way that OCI/PG
      * do? If so, do we also need to launder table names? */
     strncpy( sColumnDef.column_name, oField.GetNameRef(), SE_MAX_COLUMN_LEN );
 
     sColumnDef.nulls_allowed = TRUE;
     sColumnDef.decimal_digits = 0;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set the new column's SDE type. We intentionally use deprecated  */
 /*      SDE field types for backwards compatibility with 8.x servers    */
@@ -2317,10 +2314,10 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     else if( oField.GetType() == OFTString )
     {
-        const char *pszUseNSTRING = 
+        const char *pszUseNSTRING =
             CPLGetConfigOption( "OGR_SDE_USE_NSTRING", "FALSE" );
 
-        if( bUseNSTRING || CSLTestBoolean( pszUseNSTRING ) )
+        if( bUseNSTRING || CPLTestBool( pszUseNSTRING ) )
             sColumnDef.sde_type = SE_NSTRING_TYPE;
         else
             sColumnDef.sde_type = SE_STRING_TYPE;
@@ -2338,7 +2335,7 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                   "as SE_STRING_TYPE.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        
+
         sColumnDef.sde_type = SE_STRING_TYPE;
     }
 
@@ -2348,11 +2345,11 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                   "Can't create field %s with type %s on SDE layers.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        
+
         return OGRERR_FAILURE;
     }
 
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set field width and precision                                   */
 /* -------------------------------------------------------------------- */
@@ -2384,7 +2381,7 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             sColumnDef.size = 0;
         }
     }
-    
+
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field                                            */
@@ -2400,7 +2397,7 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     poFeatureDefn->AddFieldDefn( &oField );
     anFieldTypeMap.push_back( sColumnDef.sde_type );
-    
+
     return OGRERR_NONE;
 }
 
@@ -2412,15 +2409,15 @@ OGRErr OGRSDELayer::ISetFeature( OGRFeature *poFeature )
 
 {
     LONG                nSDEErr;
-    
+
     CPLAssert( poFeature != NULL );
     CPLAssert( poFeatureDefn != NULL );
-    
+
     if( !NeedLayerInfo() ) // Need hCoordRef, layerinfo shape types
         return OGRERR_FAILURE;
-    
+
     ResetReading();
-    
+
     if( ResetStream() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
@@ -2429,7 +2426,7 @@ OGRErr OGRSDELayer::ISetFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( TranslateOGRRecord( poFeature, FALSE ) != OGRERR_NONE )
         return OGRERR_FAILURE; // TranslateOGRRecord() will report the error
-    
+
 /* -------------------------------------------------------------------- */
 /*      Execute the update                                              */
 /* -------------------------------------------------------------------- */
@@ -2439,7 +2436,7 @@ OGRErr OGRSDELayer::ISetFeature( OGRFeature *poFeature )
         poDS->IssueSDEError( nSDEErr, "SE_stream_execute" );
         return OGRERR_FAILURE;
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -2450,15 +2447,15 @@ OGRErr OGRSDELayer::ICreateFeature( OGRFeature *poFeature )
 
 {
     LONG                nSDEErr;
-    
+
     CPLAssert( poFeature != NULL );
     CPLAssert( poFeatureDefn != NULL );
-    
+
     if( !NeedLayerInfo() ) // Need hCoordRef, layerinfo shape types
         return OGRERR_FAILURE;
-    
+
     ResetReading();
-    
+
     if( ResetStream() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
@@ -2467,7 +2464,7 @@ OGRErr OGRSDELayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( TranslateOGRRecord( poFeature, TRUE ) != OGRERR_NONE )
         return OGRERR_FAILURE; // TranslateOGRRecord() will report the error
-    
+
 /* -------------------------------------------------------------------- */
 /*      Execute the insert                                              */
 /* -------------------------------------------------------------------- */
@@ -2494,10 +2491,10 @@ OGRErr OGRSDELayer::ICreateFeature( OGRFeature *poFeature )
             poDS->IssueSDEError( nSDEErr, "SE_stream_last_inserted_row_id" );
             return OGRERR_FAILURE;
         }
-        
+
         poFeature->SetFID( nLastFID );
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -2509,18 +2506,18 @@ OGRErr OGRSDELayer::DeleteFeature( GIntBig nFID )
 {
     LONG                nSDEErr;
     const char         *pszWhere;
-    
+
     ResetReading();
-    
+
     if( ResetStream() != OGRERR_NONE )
         return OGRERR_FAILURE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify that this layer has a FID column                         */
-/* -------------------------------------------------------------------- */    
+/* -------------------------------------------------------------------- */
     if( iFIDColumn == -1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Layer \"%s\": cannot DeleteFeature(%ld): the layer has no "
                   "FID column detected.", poFeatureDefn->GetName(), nFID );
         return OGRERR_FAILURE;
@@ -2530,10 +2527,10 @@ OGRErr OGRSDELayer::DeleteFeature( GIntBig nFID )
 /*      Perform the deletion                                            */
 /* -------------------------------------------------------------------- */
     pszWhere = CPLSPrintf( "%s = %ld", osFIDColumnName.c_str(), nFID );
-    
+
     nSDEErr = SE_stream_delete_from_table( hStream, poFeatureDefn->GetName(),
                                            pszWhere );
-    
+
     if( nSDEErr == SE_NO_ROWS_DELETED )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -2546,7 +2543,7 @@ OGRErr OGRSDELayer::DeleteFeature( GIntBig nFID )
         poDS->IssueSDEError( nSDEErr, "SE_stream_delete_from_table" );
         return OGRERR_FAILURE;
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -2561,7 +2558,7 @@ int OGRSDELayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return iFIDColumn != -1;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) 
+    else if( EQUAL(pszCap,OLCFastFeatureCount)
              && osAttributeFilter.empty()
              && m_poFilterGeom == NULL )
         return TRUE;
@@ -2571,23 +2568,23 @@ int OGRSDELayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
-    
+
     else if( EQUAL(pszCap,OLCCreateField) )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
         return bUpdateAccess;
-    
+
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
     {
         // We always treat NSTRING fields by translating to UTF8, but
         // we don't do anything to regular string fields so this is a
         // bit hard to answer simply.  Also, whether writes support UTF8
-        // depend on whether the field(s) were created as NSTRING fields. 
+        // depend on whether the field(s) were created as NSTRING fields.
         return TRUE;
     }
-    else 
+    else
         return FALSE;
 }
 /************************************************************************/

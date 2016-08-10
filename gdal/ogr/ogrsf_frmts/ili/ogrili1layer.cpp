@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 1 Translator
  * Purpose:  Implements OGRILI1Layer class.
@@ -28,10 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili1.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_geos.h"
+#include "ogr_ili1.h"
 
 CPL_CVSID("$Id$");
 
@@ -41,21 +40,17 @@ CPL_CVSID("$Id$");
 
 OGRILI1Layer::OGRILI1Layer( OGRFeatureDefn* poFeatureDefnIn,
                             GeomFieldInfos oGeomFieldInfosIn,
-                            OGRILI1DataSource *poDSIn )
-
+                            OGRILI1DataSource *poDSIn ) :
+    poFeatureDefn(poFeatureDefnIn),
+    oGeomFieldInfos(oGeomFieldInfosIn),
+    nFeatures(0),
+    papoFeatures(NULL),
+    nFeatureIdx(0),
+    bGeomsJoined(FALSE),
+    poDS(poDSIn)
 {
-    poDS = poDSIn;
-
-    poFeatureDefn = poFeatureDefnIn;
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    oGeomFieldInfos = oGeomFieldInfosIn;
-
-    nFeatures = 0;
-    papoFeatures = NULL;
-    nFeatureIdx = 0;
-
-    bGeomsJoined = FALSE;
 }
 
 /************************************************************************/
@@ -64,9 +59,7 @@ OGRILI1Layer::OGRILI1Layer( OGRFeatureDefn* poFeatureDefnIn,
 
 OGRILI1Layer::~OGRILI1Layer()
 {
-    int i;
-
-    for(i=0;i<nFeatures;i++)
+    for( int i=0; i < nFeatures; i++ )
     {
         delete papoFeatures[i];
     }
@@ -81,8 +74,8 @@ OGRErr OGRILI1Layer::AddFeature (OGRFeature *poFeature)
 {
     nFeatures++;
 
-    papoFeatures = (OGRFeature **)
-        CPLRealloc( papoFeatures, sizeof(void*) * nFeatures );
+    papoFeatures = static_cast<OGRFeature **>(
+        CPLRealloc( papoFeatures, sizeof(void*) * nFeatures ) );
 
     papoFeatures[nFeatures-1] = poFeature;
 
@@ -93,7 +86,8 @@ OGRErr OGRILI1Layer::AddFeature (OGRFeature *poFeature)
 /*                            ResetReading()                            */
 /************************************************************************/
 
-void OGRILI1Layer::ResetReading(){
+void OGRILI1Layer::ResetReading()
+{
     nFeatureIdx = 0;
 }
 
@@ -103,13 +97,11 @@ void OGRILI1Layer::ResetReading(){
 
 OGRFeature *OGRILI1Layer::GetNextFeature()
 {
-    OGRFeature *poFeature;
-
     if (!bGeomsJoined) JoinGeomLayers();
 
     while(nFeatureIdx < nFeatures)
     {
-        poFeature = GetNextFeatureRef();
+        OGRFeature *poFeature = GetNextFeatureRef();
         if (poFeature)
             return poFeature->Clone();
     }
@@ -138,12 +130,27 @@ OGRFeature *OGRILI1Layer::GetNextFeatureRef() {
 OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 
 {
-    OGRFeature *poFeature;
-
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeatureRef()) != NULL )
     {
         if( poFeature->GetFID() == nFID )
+            return poFeature;
+    }
+
+    return NULL;
+}
+
+OGRFeature *OGRILI1Layer::GetFeatureRef( const char *fid )
+
+{
+    ResetReading();
+
+    OGRFeature *poFeature = NULL;
+    while( (poFeature = GetNextFeatureRef()) != NULL )
+    {
+        if( !strcmp( poFeature->GetFieldAsString(0), fid ) )
             return poFeature;
     }
 
@@ -156,8 +163,8 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 
 GIntBig OGRILI1Layer::GetFeatureCount( int bForce )
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
-        1 /*poAreaLineLayer == NULL*/)
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL
+        /* && poAreaLineLayer == NULL*/)
     {
         return nFeatures;
     }
@@ -167,37 +174,41 @@ GIntBig OGRILI1Layer::GetFeatureCount( int bForce )
     }
 }
 
-static char* d2str(double val)
+static const char* d2str(double val)
 {
-    static char strbuf[255];
-    if( val == (int) val )
-        sprintf( strbuf, "%d", (int) val );
-    else if( fabs(val) < 370 )
-        CPLsprintf( strbuf, "%.16g", val );
-    else if( fabs(val) > 100000000.0  )
-        CPLsprintf( strbuf, "%.16g", val );
-    else
-        CPLsprintf( strbuf, "%.3f", val );
-    return strbuf;
+    if( val == static_cast<int>(val) )
+        return CPLSPrintf("%d", static_cast<int>(val) );
+    if( fabs(val) < 370 )
+        return CPLSPrintf("%.16g", val );
+    if( fabs(val) > 100000000.0  )
+        return CPLSPrintf("%.16g", val );
+
+    return CPLSPrintf("%.3f", val );
 }
 
-static void AppendCoordinateList( OGRLineString *poLine, OGRILI1DataSource *poDS)
+static void AppendCoordinateList( OGRLineString *poLine,
+                                  OGRILI1DataSource *poDS )
 {
-    int         b3D = wkbHasZ(poLine->getGeometryType());
+    const bool b3D = CPL_TO_BOOL(wkbHasZ(poLine->getGeometryType()));
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
         if (iPoint == 0) VSIFPrintf( poDS->GetTransferFile(), "STPT" );
         else VSIFPrintf( poDS->GetTransferFile(), "LIPT" );
-        VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getX(iPoint)) );
-        VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getY(iPoint)) );
-        if (b3D) VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getZ(iPoint)) );
+        VSIFPrintf( poDS->GetTransferFile(), " %s",
+                    d2str(poLine->getX(iPoint)) );
+        VSIFPrintf( poDS->GetTransferFile(), " %s",
+                    d2str(poLine->getY(iPoint)) );
+        if( b3D )
+            VSIFPrintf( poDS->GetTransferFile(), " %s",
+                        d2str(poLine->getZ(iPoint)) );
         VSIFPrintf( poDS->GetTransferFile(), "\n" );
     }
     VSIFPrintf( poDS->GetTransferFile(), "ELIN\n" );
 }
 
-static void AppendCoumpoundCurve( OGRCompoundCurve *poCC, OGRILI1DataSource *poDS)
+static void AppendCoumpoundCurve( OGRCompoundCurve *poCC,
+                                  OGRILI1DataSource *poDS )
 {
     for( int iMember = 0; iMember < poCC->getNumCurves(); iMember++)
     {
@@ -225,7 +236,10 @@ static void AppendCoumpoundCurve( OGRCompoundCurve *poCC, OGRILI1DataSource *poD
 
 int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
 {
-    //CPLDebug( "OGR_ILI", "OGRILI1Layer::GeometryAppend OGRGeometryType: %s", OGRGeometryTypeToName(poGeometry->getGeometryType()));
+#ifdef DEBUG_VERBOSE
+    CPLDebug( "OGR_ILI", "OGRILI1Layer::GeometryAppend OGRGeometryType: %s",
+              OGRGeometryTypeToName(poGeometry->getGeometryType()) );
+#endif
 /* -------------------------------------------------------------------- */
 /*      2D Point                                                        */
 /* -------------------------------------------------------------------- */
@@ -247,7 +261,8 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( poGeometry->getGeometryType() == wkbLineString
              || poGeometry->getGeometryType() == wkbLineString25D )
     {
-        AppendCoordinateList( (OGRLineString *) poGeometry, poDS );
+        AppendCoordinateList( reinterpret_cast<OGRLineString *>(poGeometry),
+                              poDS );
     }
 
 /* -------------------------------------------------------------------- */
@@ -256,7 +271,7 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( poGeometry->getGeometryType() == wkbPolygon
              || poGeometry->getGeometryType() == wkbPolygon25D )
     {
-        OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
+        OGRPolygon *poPolygon = reinterpret_cast<OGRPolygon *>(poGeometry);
 
         if( poPolygon->getExteriorRing() != NULL )
         {
@@ -284,8 +299,9 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiCurveZ )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
-        int             iMember;
 
+#if 0
+        // TODO: Why this large NOP block?
         if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon )
         {
         }
@@ -298,8 +314,9 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
         else
         {
         }
+#endif
 
-        for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++ )
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
             if( !GeometryAppend( poMember ) )
@@ -310,9 +327,12 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( poGeometry->getGeometryType() == wkbCompoundCurve
              || poGeometry->getGeometryType() == wkbCompoundCurveZ )
     {
-        AppendCoumpoundCurve( ( OGRCompoundCurve *) poGeometry, poDS );
+        AppendCoumpoundCurve( reinterpret_cast<OGRCompoundCurve *>(poGeometry),
+                              poDS );
     } else {
-        CPLError(CE_Warning, CPLE_AppDefined, "Skipping unknown geometry type '%s'", OGRGeometryTypeToName(poGeometry->getGeometryType()));
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Skipping unknown geometry type '%s'",
+                  OGRGeometryTypeToName(poGeometry->getGeometryType()) );
         return FALSE;
     }
 
@@ -327,7 +347,8 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
     static long tid = -1; //system generated TID (must be unique within table)
     VSIFPrintf( poDS->GetTransferFile(), "OBJE" );
 
-    if ( poFeatureDefn->GetFieldCount() && !EQUAL(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "TID") )
+    if ( poFeatureDefn->GetFieldCount() &&
+         !EQUAL(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "TID") )
     {
         //Input is not generated from an Interlis 1 source
         if (poFeature->GetFID() != OGRNullFID)
@@ -342,32 +363,38 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
             // 2D Point
             if( poGeometry->getGeometryType() == wkbPoint )
             {
-                OGRPoint *poPoint = (OGRPoint *) poGeometry;
+                OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(poGeometry);
 
-                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getX()) );
-                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getY()) );
+                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                            d2str(poPoint->getX()) );
+                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                            d2str(poPoint->getY()) );
             }
             // 3D Point
             else if( poGeometry->getGeometryType() == wkbPoint25D )
             {
-                OGRPoint *poPoint = (OGRPoint *) poGeometry;
+                OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(poGeometry);
 
-                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getX()) );
-                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getY()) );
-                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getZ()) );
+                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                            d2str(poPoint->getX()) );
+                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                            d2str(poPoint->getY()) );
+                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                            d2str(poPoint->getZ()) );
             }
         }
     }
 
     // Write all fields.
-    for(int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         if ( poFeature->IsFieldSet( iField ) )
         {
           const char *pszRaw = poFeature->GetFieldAsString( iField );
           if (poFeatureDefn->GetFieldDefn( iField )->GetType() == OFTString) {
               //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
-              char* pszString  = CPLRecode(pszRaw, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+              char* pszString
+                  = CPLRecode( pszRaw, CPL_ENC_UTF8, CPL_ENC_ISO8859_1 );
               //Replace spaces
               for(size_t i=0; i<strlen(pszString); i++ ) {
                   if (pszString[i] == ' ') pszString[i] = '_';
@@ -401,15 +428,15 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
 int OGRILI1Layer::TestCapability( CPL_UNUSED const char * pszCap ) {
     if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, CPL_UNUSED int bApproxOK ) {
+OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, int /* bApproxOK */ ) {
     poFeatureDefn->AddFieldDefn( poField );
 
     return OGRERR_NONE;
@@ -422,22 +449,27 @@ OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, CPL_UNUSED int bApproxO
 
 void OGRILI1Layer::JoinGeomLayers()
 {
-    bGeomsJoined = TRUE;
-    int bResetConfigOption = FALSE;
+    bGeomsJoined = true;
+    bool bResetConfigOption = false;
     if (EQUAL(CPLGetConfigOption("OGR_ARC_STEPSIZE", ""), ""))
     {
-        bResetConfigOption = TRUE;
+        bResetConfigOption = true;
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", "0.96");
     }
 
-    for (GeomFieldInfos::const_iterator it = oGeomFieldInfos.begin(); it != oGeomFieldInfos.end(); ++it)
+    for( GeomFieldInfos::const_iterator it = oGeomFieldInfos.begin();
+         it != oGeomFieldInfos.end();
+         ++it )
     {
-        OGRFeatureDefn* geomFeatureDefn = it->second.geomTable;
+        OGRFeatureDefn* geomFeatureDefn = it->second.GetGeomTableDefnRef();
         if (geomFeatureDefn)
         {
-            CPLDebug( "OGR_ILI", "Join geometry table %s of field '%s'", geomFeatureDefn->GetName(), it->first.c_str() );
-            OGRILI1Layer* poGeomLayer = poDS->GetLayerByName(geomFeatureDefn->GetName());
-            int nGeomFieldIndex = GetLayerDefn()->GetGeomFieldIndex(it->first.c_str());
+            CPLDebug( "OGR_ILI", "Join geometry table %s of field '%s'",
+                      geomFeatureDefn->GetName(), it->first.c_str() );
+            OGRILI1Layer* poGeomLayer
+                = poDS->GetLayerByName(geomFeatureDefn->GetName());
+            const int nGeomFieldIndex
+                = GetLayerDefn()->GetGeomFieldIndex(it->first.c_str());
             if (it->second.iliGeomType == "Surface")
             {
                 JoinSurfaceLayer(poGeomLayer, nGeomFieldIndex);
@@ -445,8 +477,10 @@ void OGRILI1Layer::JoinGeomLayers()
             else if (it->second.iliGeomType == "Area")
             {
                 CPLString pointField = it->first + "__Point";
-                int nPointFieldIndex = GetLayerDefn()->GetGeomFieldIndex(pointField.c_str());
-                PolygonizeAreaLayer(poGeomLayer, nGeomFieldIndex, nPointFieldIndex);
+                const int nPointFieldIndex
+                    = GetLayerDefn()->GetGeomFieldIndex( pointField.c_str() );
+                PolygonizeAreaLayer( poGeomLayer, nGeomFieldIndex,
+                                     nPointFieldIndex);
             }
         }
     }
@@ -456,43 +490,97 @@ void OGRILI1Layer::JoinGeomLayers()
 }
 
 
-void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurfaceFieldIndex )
+void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
+                                     int nSurfaceFieldIndex )
 {
-    CPLDebug( "OGR_ILI", "Joining surface layer %s with geometries", GetLayerDefn()->GetName());
-    OGRwkbGeometryType geomType = GetLayerDefn()->GetGeomFieldDefn(nSurfaceFieldIndex)->GetType();
+    CPLDebug( "OGR_ILI", "Joining surface layer %s with geometries",
+              GetLayerDefn()->GetName());
+    OGRwkbGeometryType geomType
+        = GetLayerDefn()->GetGeomFieldDefn(nSurfaceFieldIndex)->GetType();
+    OGRCompoundCurve *surface_lines = NULL; // collected lines of SURFACE polygon ring
     poSurfaceLineLayer->ResetReading();
     while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
         //OBJE entries with same _RefTID are polygon rings of same feature
-        //TODO: non-numeric _RefTID/FID is not supported yet!
-        GIntBig reftid = linefeature->GetFieldAsInteger64(1); //_RefTID
-        OGRFeature *feature = GetFeatureRef((int)reftid);
+        OGRFeature *feature = NULL;
+        if (poFeatureDefn->GetFieldDefn(0)->GetType() == OFTString)
+        {
+          feature = GetFeatureRef(linefeature->GetFieldAsString(1));
+        }
+        else
+        {
+          GIntBig reftid = linefeature->GetFieldAsInteger64(1);
+          feature = GetFeatureRef((int)reftid);
+        }
         if (feature) {
-            OGRCurvePolygon *poly;
-            if (feature->GetGeomFieldRef(nSurfaceFieldIndex)) {
-                CPLDebug( "OGR_ILI", "Adding ring to FID " CPL_FRMT_GIB, reftid );
-                poly = (OGRCurvePolygon *)feature->GetGeomFieldRef(nSurfaceFieldIndex);
-            } else {
-                poly = (geomType == wkbPolygon) ? new OGRPolygon() : new OGRCurvePolygon();
-                feature->SetGeomFieldDirectly(nSurfaceFieldIndex, poly);
+            if (!feature->GetGeomFieldRef(nSurfaceFieldIndex)) {
+                OGRCurvePolygon *newpoly = (geomType == wkbPolygon) ?
+                    new OGRPolygon() : new OGRCurvePolygon();
+                feature->SetGeomFieldDirectly(nSurfaceFieldIndex, newpoly);
             }
-            OGRMultiCurve *lines = (OGRMultiCurve*)linefeature->GetGeomFieldRef(0);
+            OGRCurvePolygon *poly = reinterpret_cast<OGRCurvePolygon *>(
+                        feature->GetGeomFieldRef(nSurfaceFieldIndex) );
+            OGRMultiCurve *lines = reinterpret_cast<OGRMultiCurve *>(
+                linefeature->GetGeomFieldRef(0) );
             for( int i = 0; i < lines->getNumGeometries(); i++ ) {
-                OGRCurve *line = (OGRCurve*)lines->getGeometryRef(i);
-                OGRCurve *ring = (geomType == wkbPolygon) ?
-                    OGRCurve::CastToLinearRing((OGRCurve*)line->clone()) :
-                    (OGRCurve*)line->clone();
-                poly->addRingDirectly(ring);
+                OGRCurve *line = reinterpret_cast<OGRCurve*>(lines->getGeometryRef(i));
+                OGRCurve *ring = NULL;
+                if (surface_lines) {
+                    //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
+                    if (line->getGeometryType() == wkbCompoundCurve) {
+                        OGRCompoundCurve* ccurve = reinterpret_cast<OGRCompoundCurve *>(line);
+                        for (int j=0; j<ccurve->getNumCurves(); j++) {
+                            surface_lines->addCurve(ccurve->getCurve(j));
+                        }
+                    } else { // wkbLineString (linearized)
+                        surface_lines->addCurve(line);
+                    }
+                    line = surface_lines;
+                }
+                if (line->get_IsClosed()) {
+                    if (geomType == wkbPolygon) {
+                        ring = OGRCurve::CastToLinearRing(reinterpret_cast<OGRCurve*>(
+                                 line->clone()));
+                    } else { // wkbMultiCurve
+                        ring = reinterpret_cast<OGRCurve*>(line->clone());
+                    }
+                    if( line == surface_lines ) {
+                        delete surface_lines;
+                        surface_lines = NULL;
+                        line = NULL; /* to make CLang Static Analyzer happy */
+                    }
+                }
+                if (ring == NULL && surface_lines == NULL && line != NULL) {
+                    //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
+                    if (line->getGeometryType() == wkbCompoundCurve) {
+                        surface_lines = reinterpret_cast<OGRCompoundCurve *>(line->clone());
+                    } else { // wkbLineString (linearized)
+                        surface_lines = new OGRCompoundCurve();
+                        surface_lines->addCurve(line);
+                    }
+                }
+                if (ring) {
+                    OGRErr error = poly->addRingDirectly(ring);
+                    if (error != OGRERR_NONE) {
+                        CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ring->exportToJson() );
+                    }
+                }
             }
         } else {
-            CPLError(CE_Warning, CPLE_AppDefined, "Couldn't join feature FID " CPL_FRMT_GIB, reftid );
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Couldn't join feature FID " CPL_FRMT_GIB, linefeature->GetFieldAsInteger64(1) );
         }
     }
 
     ResetReading();
-    poSurfaceLineLayer = 0;
+    poSurfaceLineLayer = NULL;
 }
 
-OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines )
+OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines,
+                                           bool
+                                           #if defined(HAVE_GEOS)
+                                            fix_crossing_lines
+                                           #endif
+                                           )
 {
     if (poLines->getNumGeometries() == 0)
     {
@@ -508,15 +596,20 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
     if (fix_crossing_lines && poLines->getNumGeometries() > 0)
     {
         CPLDebug( "OGR_ILI", "Fixing crossing lines");
-        //A union of the geometry collection with one line fixes invalid geometries
+        // A union of the geometry collection with one line fixes
+        // invalid geometries.
         OGRGeometry* poUnion = poLines->Union(poLines->getGeometryRef(0));
         if( poUnion != NULL )
         {
-            if( wkbFlatten(poUnion->getGeometryType()) == wkbGeometryCollection ||
+            if( wkbFlatten(poUnion->getGeometryType()) ==
+                wkbGeometryCollection ||
                 wkbFlatten(poUnion->getGeometryType()) == wkbMultiLineString )
             {
-                poNoncrossingLines = dynamic_cast<OGRGeometryCollection*>(poUnion);
-                CPLDebug( "OGR_ILI", "Fixed lines: %d", poNoncrossingLines->getNumGeometries()-poLines->getNumGeometries());
+                poNoncrossingLines
+                    = dynamic_cast<OGRGeometryCollection*>(poUnion);
+                CPLDebug( "OGR_ILI", "Fixed lines: %d",
+                          poNoncrossingLines->getNumGeometries()-poLines->
+                          getNumGeometries());
             }
             else
             {
@@ -527,18 +620,21 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
 
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
 
-    ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poNoncrossingLines->getNumGeometries());
+    ahInGeoms = static_cast<GEOSGeom *>(
+        CPLCalloc(sizeof(void*),poNoncrossingLines->getNumGeometries()) );
     for( int i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
-          ahInGeoms[i] = poNoncrossingLines->getGeometryRef(i)->exportToGEOS(hGEOSCtxt);
+          ahInGeoms[i] = poNoncrossingLines->getGeometryRef(i)->
+              exportToGEOS(hGEOSCtxt);
 
     hResultGeom = GEOSPolygonize_r( hGEOSCtxt,
                                     ahInGeoms,
-                                   poNoncrossingLines->getNumGeometries() );
+                                    poNoncrossingLines->getNumGeometries() );
 
     for( int i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
         GEOSGeom_destroy_r( hGEOSCtxt, ahInGeoms[i] );
     CPLFree( ahInGeoms );
-    if (poNoncrossingLines != poLines) delete poNoncrossingLines;
+    if (poNoncrossingLines != poLines)
+        delete poNoncrossingLines;
 
     if( hResultGeom == NULL )
     {
@@ -554,18 +650,26 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
     poMP = OGRGeometryFactory::forceToMultiPolygon( poMP );
     if( poMP && wkbFlatten(poMP->getGeometryType()) == wkbMultiPolygon )
         return dynamic_cast<OGRMultiPolygon *>(poMP);
-    else
-    {
-        delete poMP;
-        return new OGRMultiPolygon();
-    }
+
+    delete poMP;
+    return new OGRMultiPolygon();
+
 #else
     return new OGRMultiPolygon();
 #endif
 }
 
 
-void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nAreaFieldIndex, int nPointFieldIndex )
+void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer,
+                                        int
+#if defined(HAVE_GEOS)
+                                            nAreaFieldIndex
+#endif
+                                        , int
+#if defined(HAVE_GEOS)
+                                            nPointFieldIndex
+#endif
+                                        )
 {
     //add all lines from poAreaLineLayer to collection
     OGRGeometryCollection *gc = new OGRGeometryCollection();
@@ -574,30 +678,35 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nArea
         gc->addGeometry(feature->GetGeometryRef());
 
     //polygonize lines
-    CPLDebug( "OGR_ILI", "Polygonizing layer %s with %d multilines", poAreaLineLayer->GetLayerDefn()->GetName(), gc->getNumGeometries());
-    poAreaLineLayer = 0;
+    CPLDebug( "OGR_ILI", "Polygonizing layer %s with %d multilines",
+              poAreaLineLayer->GetLayerDefn()->GetName(),
+              gc->getNumGeometries());
+    poAreaLineLayer = NULL;
     OGRMultiPolygon* polys = Polygonize( gc , false);
     CPLDebug( "OGR_ILI", "Resulting polygons: %d", polys->getNumGeometries());
     if (polys->getNumGeometries() != GetFeatureCount())
     {
-        CPLDebug( "OGR_ILI", "Feature count of layer %s: " CPL_FRMT_GIB, GetLayerDefn()->GetName(), GetFeatureCount());
+        CPLDebug( "OGR_ILI", "Feature count of layer %s: " CPL_FRMT_GIB,
+                  GetLayerDefn()->GetName(), GetFeatureCount());
         CPLDebug( "OGR_ILI", "Polygonizing again with crossing line fix");
         delete polys;
         polys = Polygonize( gc, true ); //try again with crossing line fix
-        CPLDebug( "OGR_ILI", "Resulting polygons: %d", polys->getNumGeometries());
+        CPLDebug( "OGR_ILI", "Resulting polygons: %d",
+                  polys->getNumGeometries());
     }
     delete gc;
 
     //associate polygon feature with data row according to centroid
 #if defined(HAVE_GEOS)
-    int i;
     OGRPolygon emptyPoly;
     GEOSGeom *ahInGeoms = NULL;
 
-    CPLDebug( "OGR_ILI", "Associating layer %s with area polygons", GetLayerDefn()->GetName());
-    ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*), polys->getNumGeometries());
+    CPLDebug( "OGR_ILI", "Associating layer %s with area polygons",
+              GetLayerDefn()->GetName());
+    ahInGeoms = static_cast<GEOSGeom *>(
+        CPLCalloc(sizeof(void*), polys->getNumGeometries() ) );
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
-    for( i = 0; i < polys->getNumGeometries(); i++ )
+    for( int i = 0; i < polys->getNumGeometries(); i++ )
     {
         ahInGeoms[i] = polys->getGeometryRef(i)->exportToGEOS(hGEOSCtxt);
         if (!GEOSisValid_r(hGEOSCtxt, ahInGeoms[i])) ahInGeoms[i] = NULL;
@@ -610,12 +719,16 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nArea
         {
             continue;
         }
-        GEOSGeom point = (GEOSGeom)(geomRef->exportToGEOS(hGEOSCtxt));
-        for (i = 0; i < polys->getNumGeometries(); i++ )
+        GEOSGeom point = reinterpret_cast<GEOSGeom>(
+            geomRef->exportToGEOS(hGEOSCtxt) );
+
+        int i = 0;
+        for ( ; i < polys->getNumGeometries(); i++ )
         {
             if (ahInGeoms[i] && GEOSWithin_r(hGEOSCtxt, point, ahInGeoms[i]))
             {
-                feature->SetGeomField(nAreaFieldIndex, polys->getGeometryRef(i));
+                feature->SetGeomField( nAreaFieldIndex,
+                                       polys->getGeometryRef(i));
                 break;
             }
         }
@@ -626,11 +739,11 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nArea
         }
         GEOSGeom_destroy_r( hGEOSCtxt, point );
     }
-    for( i = 0; i < polys->getNumGeometries(); i++ )
+    for( int i = 0; i < polys->getNumGeometries(); i++ )
         GEOSGeom_destroy_r( hGEOSCtxt, ahInGeoms[i] );
     CPLFree( ahInGeoms );
     OGRGeometry::freeGEOSContext( hGEOSCtxt );
 #endif
-    poAreaLineLayer = 0;
+    poAreaLineLayer = NULL;
     delete polys;
 }

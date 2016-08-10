@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NTF Translator
  * Purpose:  NTFCodeList class implementation.
@@ -45,9 +44,9 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
     const char  *pszText;
 
     CPLAssert( EQUAL(poRecord->GetField(1,2),"42") );
-    
-    strcpy( szValType, poRecord->GetField(13,14) );
-    strcpy( szFInter, poRecord->GetField(15,19) );
+
+    snprintf( szValType, sizeof(szValType), "%s", poRecord->GetField(13,14) );
+    snprintf( szFInter, sizeof(szFInter), "%s", poRecord->GetField(15,19) );
 
     nNumCode = atoi(poRecord->GetField(20,22));
 
@@ -55,8 +54,8 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
     papszCodeDes = (char **) CPLMalloc(sizeof(char*) * nNumCode );
 
     pszText = poRecord->GetData() + 22;
-    for( iThisField=0; 
-         *pszText != '\0' && iThisField < nNumCode; 
+    for( iThisField=0;
+         *pszText != '\0' && iThisField < nNumCode;
          iThisField++ )
     {
         char    szVal[128], szDes[128];
@@ -66,10 +65,10 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
         while( *pszText != '\\' && *pszText != '\0' )
             szVal[iLen++] = *(pszText++);
         szVal[iLen] = '\0';
-        
+
         if( *pszText == '\\' )
             pszText++;
-        
+
         iLen = 0;
         while( *pszText != '\\' && *pszText != '\0' )
             szDes[iLen++] = *(pszText++);
@@ -85,7 +84,7 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
     if( iThisField < nNumCode )
     {
         nNumCode = iThisField;
-        CPLDebug( "NTF", 
+        CPLDebug( "NTF",
                   "Didn't get all the expected fields from a CODELIST." );
     }
 }
@@ -122,5 +121,3 @@ const char *NTFCodeList::Lookup( const char * pszCode )
 
     return NULL;
 }
-
-

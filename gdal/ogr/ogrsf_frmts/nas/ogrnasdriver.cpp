@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  OGRNASDriver implementation
@@ -27,10 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_nas.h"
 #include "cpl_conv.h"
-#include "nasreaderp.h"
 #include "cpl_multiproc.h"
+#include "nasreaderp.h"
+#include "ogr_nas.h"
 
 CPL_CVSID("$Id$");
 
@@ -64,7 +63,8 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     // Used to skip to actual beginning of XML data
-    const char* szPtr = (const char*)poOpenInfo->pabyHeader;
+    // const char* szPtr = (const char*)poOpenInfo->pabyHeader;
+    const char* szPtr = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
 
     if( ( (unsigned char)szPtr[0] == 0xEF )
         && ( (unsigned char)szPtr[1] == 0xBB )
@@ -86,12 +86,17 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( strstr(szPtr,"opengis.net/gml") == NULL )
         return FALSE;
 
-    char **papszIndicators = CSLTokenizeStringComplex( CPLGetConfigOption( "NAS_INDICATOR", "NAS-Operationen.xsd;NAS-Operationen_optional.xsd;AAA-Fachschema.xsd" ), ";", 0, 0 );
+    char **papszIndicators = CSLTokenizeStringComplex(
+        CPLGetConfigOption(
+            "NAS_INDICATOR",
+            "NAS-Operationen.xsd;NAS-Operationen_optional.xsd;"
+            "AAA-Fachschema.xsd" ),
+        ";", 0, 0 );
 
-    bool bFound = FALSE;
+    bool bFound = false;
     for( int i = 0; papszIndicators[i] && !bFound; i++ )
     {
-	bFound = strstr( szPtr, papszIndicators[i] ) != NULL;
+        bFound = strstr( szPtr, papszIndicators[i] ) != NULL;
     }
 
     CSLDestroy( papszIndicators );
@@ -139,11 +144,9 @@ void RegisterOGRNAS()
 
     poDriver->SetDescription( "NAS" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "NAS - ALKIS" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NAS - ALKIS" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drv_nas.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_nas.html" );
 
     poDriver->pfnOpen = OGRNASDriverOpen;
     poDriver->pfnIdentify = OGRNASDriverIdentify;

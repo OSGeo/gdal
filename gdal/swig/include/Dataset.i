@@ -29,19 +29,13 @@
  *****************************************************************************/
 
 %{
-/* Returned size is in bytes or 0 if an error occured */
+/* Returned size is in bytes or 0 if an error occurred. */
 static
 GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                 int nBands, int* bandMap, int nBandMapArrayLength,
                                 GIntBig nPixelSpace, GIntBig nLineSpace, GIntBig nBandSpace,
                                 int bSpacingShouldBeMultipleOfPixelSize )
 {
-#if SIZEOF_VOIDP == 8
-    const GIntBig MAX_INT = (((GIntBig)0x7fffffff) << 32) | 0xffffffff;
-#else
-    const GIntBig MAX_INT = 0x7fffffff;
-#endif
-
     if (buf_xsize <= 0 || buf_ysize <= 0)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Illegal values for buffer size");
@@ -95,11 +89,13 @@ GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize
     }
 
     GIntBig nRet = (GIntBig)(buf_ysize - 1) * nLineSpace + (GIntBig)(buf_xsize - 1) * nPixelSpace + (GIntBig)(nBands - 1) * nBandSpace + nPixelSize;
-    if (nRet > MAX_INT)
+#if SIZEOF_VOIDP == 4
+    if (nRet > INT_MAX)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
         return 0;
     }
+#endif
 
     return nRet;
 }
@@ -108,7 +104,7 @@ GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize
 #if defined(SWIGPERL)
 %{
 static
-CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
+CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
                             int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
@@ -127,7 +123,7 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
       *buf = 0;
       return CE_Failure;
   }
-  
+
   *buf = (char*) malloc( *buf_size );
   if (*buf)
   {
@@ -279,7 +275,7 @@ public:
         }
         return GDALARLockBuffer(hReader,timeout);
     }
-    
+
     void UnlockBuffer()
     {
         GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(self);
@@ -291,7 +287,7 @@ public:
     }
 
     } /* extend */
-}; /* GDALAsyncReaderShadow */ 
+}; /* GDALAsyncReaderShadow */
 
 //************************************************************************/
 //
@@ -385,7 +381,7 @@ public:
 
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
-#ifndef SWIGCSHARP  
+#ifndef SWIGCSHARP
 #ifndef SWIGJAVA
 %feature("kwargs") BuildOverviews;
 #endif
@@ -405,13 +401,13 @@ public:
                       GDALProgressFunc callback = NULL,
                       void* callback_data=NULL ) {
 #endif
-    return GDALBuildOverviews(  self, 
-                                resampling ? resampling : "NEAREST", 
-                                overviewlist, 
-                                pOverviews, 
-                                0, 
-                                0, 
-                                callback, 
+    return GDALBuildOverviews(  self,
+                                resampling ? resampling : "NEAREST",
+                                overviewlist,
+                                pOverviews,
+                                0,
+                                0,
+                                callback,
                                 callback_data);
   }
 #ifndef SWIGCSHARP
@@ -430,7 +426,7 @@ public:
   const char *GetGCPProjection() {
     return GDALGetGCPProjection( self );
   }
-  
+
 #ifndef SWIGCSHARP
   void GetGCPs( int *nGCPs, GDAL_GCP const **pGCPs ) {
     *nGCPs = GDALGetGCPCount( self );
@@ -562,16 +558,16 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
-                            
+
     eErr = DSReadRaster_internal( self, xoff, yoff, xsize, ysize,
                                 nxsize, nysize, ntype,
-                                buf_len, buf, 
+                                buf_len, buf,
                                 band_list, pband_list,
                                 pixel_space, line_space, band_space, &sExtraArg);
 
     return eErr;
 }
-  
+
 %clear (GDALDataType *buf_type);
 %clear (int band_list, int *pband_list );
 %clear (int *buf_len, char **buf );
@@ -586,13 +582,13 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 /* AddBand */
 /* AdviseRead */
 /* ReadRaster */
-  
+
 #if defined(SWIGPYTHON)
 %feature("kwargs") BeginAsyncReader;
 %newobject BeginAsyncReader;
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
 %apply (int nLenKeepObject, char *pBufKeepObject, void* pyObject) { (int buf_len, char *buf_string, void* pyObject) };
-%apply (int *optional_int) { (int*) };  
+%apply (int *optional_int) { (int*) };
   GDALAsyncReaderShadow* BeginAsyncReader(
        int xOff, int yOff, int xSize, int ySize,
        int buf_len, char *buf_string, void* pyObject,
@@ -608,23 +604,30 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
         {
             // round up
             int nLevel = atoi(pszLevel);
-            int nRes = 2 << (nLevel - 1);
-            buf_xsize = ceil(xSize / (1.0 * nRes));
-            buf_ysize = ceil(ySize / (1.0 * nRes));
+            if( nLevel < 0 || nLevel > 30 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid LEVEL: %d", nLevel);
+            }
+            else
+            {
+                int nRes = 1 << nLevel;
+                buf_xsize = ceil(xSize / (1.0 * nRes));
+                buf_ysize = ceil(ySize / (1.0 * nRes));
+            }
         }
     }
-    
+
     int nxsize = (buf_xsize == 0) ? xSize : buf_xsize;
     int nysize = (buf_ysize == 0) ? ySize : buf_ysize;
-    
+
     GDALDataType ntype;
     if (bufType != 0) {
         ntype = (GDALDataType) bufType;
-    } 
+    }
     else {
         ntype = GDT_Byte;
     }
-    
+
     int nBCount = (band_list) != 0 ? band_list : GDALGetRasterCount(self);
     int nMinSize = nxsize * nysize * nBCount * (GDALGetDataTypeSize(ntype) / 8);
     if (buf_string == NULL || buf_len < nMinSize)
@@ -632,14 +635,14 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
         CPLError(CE_Failure, CPLE_AppDefined, "Buffer is too small");
         return NULL;
     }
-    
+
     bool myBandList = false;
     int* pBandList;
-    
+
     if (band_list != 0){
         myBandList = false;
         pBandList = pband_list;
-    }        
+    }
     else
     {
         myBandList = true;
@@ -652,6 +655,11 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     GDALAsyncReaderH hAsyncReader =
             GDALBeginAsyncReader(self, xOff, yOff, xSize, ySize, (void*) buf_string, nxsize, nysize, ntype, nBCount, pBandList, nPixelSpace, nLineSpace,
     nBandSpace, options);
+
+    if ( myBandList ) {
+       CPLFree( pBandList );
+    }
+
     if (hAsyncReader)
     {
         return (GDALAsyncReader*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
@@ -659,10 +667,6 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     else
     {
         return NULL;
-    }
-    
-    if ( myBandList ) {
-       CPLFree( pBandList );
     }
 
   }
@@ -785,13 +789,13 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* PYTHON */
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
 
   /* Note that datasources own their layers */
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CreateLayer;
 #endif
-  OGRLayerShadow *CreateLayer(const char* name, 
+  OGRLayerShadow *CreateLayer(const char* name,
               OSRSpatialReferenceShadow* srs=NULL,
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
@@ -856,13 +860,13 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
                                                       dialect);
     return layer;
   }
-  
+
 %apply SWIGTYPE *DISOWN {OGRLayerShadow *layer};
   void ReleaseResultSet(OGRLayerShadow *layer){
     GDALDatasetReleaseResultSet(self, layer);
   }
 %clear OGRLayerShadow *layer;
-  
+
   OGRStyleTableShadow *GetStyleTable() {
     return (OGRStyleTableShadow*) GDALDatasetGetStyleTable(self);
   }
@@ -872,7 +876,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
         GDALDatasetSetStyleTable(self, (OGRStyleTableH) table);
   }
 
-#endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
+#endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL) */
 
 #ifndef SWIGJAVA
   %feature( "kwargs" ) StartTransaction;

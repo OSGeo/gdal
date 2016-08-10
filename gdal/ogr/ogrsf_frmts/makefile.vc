@@ -8,26 +8,28 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			avc rec mem vrt csv gmt bna kml gpx \
 			geoconcept xplane georss gtm dxf pgdump gpsbabel \
 			sua openair pds htf aeronavfaa edigeo svg idrisi arcgen \
-			segukooa segy sxf openfilegdb wasp selafin jml idf \
+			segukooa segy sxf openfilegdb wasp selafin jml vdv \
 			$(ARCOBJECTS_DIR) \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
 			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
-			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR) $(CARTODBDIR) \
-			$(GMEDIR) $(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR)
+			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
+			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR)
 
 PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_DWG_DIR) \
 			$(PLUGIN_PG_DIR) \
 			$(PLUGIN_SOSI_DIR) \
 			$(PLUGIN_FGDB_DIR) \
+			$(PLUGIN_AMIGOCLOUD_DIR) \
 			$(PLUGIN_OCIDIR) \
 			$(PLUGIN_SDE_DIR) \
 			$(PLUGIN_INGRESDIR) \
 			$(PLUGIN_LIBKMLDIR) \
-            $(PLUGIN_MONGODBDIR)
+			$(PLUGIN_MONGODBDIR) \
+			$(PLUGIN_MSSPATIALDIR)
 
 !IFDEF OGDIDIR
 OGDIDIR	=	ogdi
@@ -35,13 +37,17 @@ OGDIOBJ =	ogdi\*.obj
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
-ODBCDIR	=	odbc pgeo mssqlspatial geomedia walk
-ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj geomedia\*.obj walk\*.obj
+ODBCDIR	=	odbc pgeo mssqlspatial geomedia db2 walk
+ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj geomedia\*.obj db2\*.obj walk\*.obj
+!ENDIF
+
+!IFDEF SQLNCLI_LIB
+PLUGIN_MSSPATIALDIR = mssqlspatial
 !ENDIF
 
 !IFDEF SQLITE_LIB
-SQLITE_DIR	=	sqlite gpkg
-SQLITE_OBJ =	sqlite\*.obj gpkg\*.obj
+SQLITE_DIR	= sqlite gpkg
+SQLITE_OBJ	= sqlite\*.obj gpkg\*.obj
 !ENDIF
 
 !IFDEF OCI_LIB
@@ -56,7 +62,7 @@ PLUGIN_OCIDIR = oci
 !IFDEF INGRES_HOME
 !IF "$(INGRES_PLUGIN)" != "YES"
 INGRESDIR	=	ingres
-INGRESOBJ =	ingres\*.obj
+INGRESOBJ	=	ingres\*.obj
 !ELSE
 PLUGIN_INGRESDIR =	ingres
 !ENDIF
@@ -102,7 +108,6 @@ FGDB_OBJ = filegdb\*.obj
 PLUGIN_FGDB_DIR = filegdb
 !ENDIF
 !ENDIF
-
 
 !IFDEF HAS_ARCOBJECTS
 !IF "$(ARCOBJECTS_PLUGIN)" != "YES"
@@ -204,13 +209,17 @@ VFK_OBJ =	vfk\*.obj
 !ENDIF
 
 !IFDEF CURL_LIB
-CARTODBDIR = cartodb
-CARTODB_OBJ = cartodb\*.obj
+CARTODIR = carto
+CARTO_OBJ = carto\*.obj
 !ENDIF
 
 !IFDEF CURL_LIB
-GMEDIR = gme
-GME_OBJ = gme\*.obj
+!IF "$(AMIGOCLOUD_PLUGIN)" != "YES"
+AMIGOCLOUD_DIR = amigocloud
+AMIGOCLOUD_OBJ = amigocloud\*.obj
+!ELSE
+PLUGIN_AMIGOCLOUD_DIR = amigocloud
+!ENDIF
 !ENDIF
 
 !IFDEF CURL_LIB
@@ -252,13 +261,13 @@ default:
 				 aeronavfaa\*.obj edigeo\*.obj svg\*.obj idrisi\*.obj \
 				 arcgen\*.obj segukooa\*.obj segy\*.obj sxf\*.obj \
 				 openfilegdb\*.obj wasp\*.obj selafin\*.obj jml\*.obj \
-				 idf\*.obj \
+				 vdv\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
 				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(GFT_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ)  \
-				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTODB_OBJ) $(GME_OBJ) $(PLSCENES_OBJ) \
+				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
 				$(CSW_OBJ) $(MONGODBOBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
@@ -285,7 +294,7 @@ plugindirs:
 clean:
 	-del ogrsf_frmts.lib
 	-del ogrsf_frmts_sup.lib
-	for %d in ( $(DIRLIST) ) do \
+	for %d in ( $(DIRLIST) $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc clean \
 		&& cd .. \

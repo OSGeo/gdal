@@ -97,7 +97,7 @@ public:
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) = 0;
 
     int TestCapability( const char* pszCap );
-    
+
     OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK );
 
 protected:
@@ -109,9 +109,9 @@ protected:
     OGRFeatureDefn* poFeatureDefn;
     int nNextFID;
     int nTotalFCount;
-    
-    int bError;
-    
+
+    bool bError;
+
     static OGRErr CheckAndFixCoordinatesValidity( double& pdfLatitude, double& pdfLongitude );
 
 };
@@ -181,9 +181,9 @@ public:
 
     OGRLayer* GetLayer( int );
 
-    OGRLayer* ICreateLayer(const char *pszName, 
-                           OGRSpatialReference *poSpatialRef=NULL, 
-                           OGRwkbGeometryType eGType=wkbUnknown, 
+    OGRLayer* ICreateLayer(const char *pszName,
+                           OGRSpatialReference *poSpatialRef=NULL,
+                           OGRwkbGeometryType eGType=wkbUnknown,
                            char **papszOptions=NULL);
     int TestCapability( const char * );
 
@@ -199,7 +199,7 @@ public:
     bool hasNextWaypoint();
     Waypoint* fetchNextWaypoint();
     void rewindWaypoint();
-  
+
     /* Functions to handle with tracks */
     int getNTracks();
     bool hasNextTrack();
@@ -215,21 +215,21 @@ public:
 
     void checkBounds(float newLat,
                      float newLon);
-    int getNumWaypoints() { return numWaypoints; } 
+    int getNumWaypoints() { return numWaypoints; }
     int getNumTrackpoints() { return numTrackpoints; }
     int getTracks() { return numTracks; };
 
-    int incNumWaypoints() { return ++numWaypoints; } 
+    int incNumWaypoints() { return ++numWaypoints; }
     int incNumTrackpoints() { return ++numTrackpoints; }
     int incNumTracks() { return ++numTracks; };
 private:
     VSILFILE* fpOutput;
-  
+
     /* GTM is not a contiguous file. We need two temporary files because
        trackpoints and tracks are stored separated and we don't know in
        advance how many trackpoints and tracks the new file will
-       have. So, we create temporary file and append the at the end of
-       the gtm file whe everything is done, that is, in the
+       have. So, we create temporary file and append at the end of
+       the gtm file when everything is done, that is, in the
        destructor. */
     VSILFILE* fpTmpTrackpoints;
     char* pszTmpTrackpoints;
@@ -239,10 +239,10 @@ private:
 
     GTM* poGTMFile;
     char* pszName;
-  
+
     OGRGTMLayer **papoLayers;
     int nLayers;
-  
+
     bool bIssuedCTError;
 
     /* Used for creating a new file */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ElasticSearch Translator
  * Purpose:
@@ -122,17 +121,17 @@ OGRErr OGRElasticDataSource::DeleteLayer( int iLayer )
     CPLString osLayerName = m_papoLayers[iLayer]->GetName();
     CPLString osIndex = m_papoLayers[iLayer]->GetIndexName();
     CPLString osMapping = m_papoLayers[iLayer]->GetMappingName();
-    
+
     CPLDebug( "ES", "DeleteLayer(%s)", osLayerName.c_str() );
 
     delete m_papoLayers[iLayer];
     memmove(m_papoLayers + iLayer, m_papoLayers + iLayer + 1,
             (m_nLayers - 1 - iLayer) * sizeof(OGRLayer*));
     m_nLayers --;
-    
+
     Delete(CPLSPrintf("%s/%s/_mapping/%s",
                       GetURL(), osIndex.c_str(), osMapping.c_str()));
-    
+
     return OGRERR_NONE;
 }
 
@@ -190,18 +189,18 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     if( bIndexExists )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s/_mapping/%s",
+        psResult = CPLHTTPFetch(CPLSPrintf("%s/%s/_mapping/%s",
                         GetURL(), osLaunderedName.c_str(), m_pszMappingName), NULL);
         CPLPopErrorHandler();
         bMappingExists = psResult != NULL && psResult->pabyData != NULL &&
-                         !EQUALN((const char*)psResult->pabyData, "{}", 2);
+                         !STARTS_WITH_CI((const char*)psResult->pabyData, "{}");
         CPLHTTPDestroyResult(psResult);
     }
-    
+
     // Restore error state
     CPLErrorSetState( eLastErrorType, nLastErrorNo, osLastErrorMsg );
 
-    if( m_bOverwrite || CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE) )
+    if( m_bOverwrite || CPLFetchBool(papszOptions, "OVERWRITE", false) )
     {
         if( bMappingExists )
         {
@@ -233,7 +232,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
             if( fp )
             {
                 GByte* pabyRet = NULL;
-                VSIIngestFile( fp, pszLayerMapping, &pabyRet, NULL, -1);
+                CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszLayerMapping, &pabyRet, NULL, -1));
                 if( pabyRet )
                 {
                     osLayerMapping = (char*)pabyRet;
@@ -243,7 +242,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                 VSIFCloseL(fp);
             }
         }
-        
+
         if( !UploadFile(CPLSPrintf("%s/%s/%s/_mapping",
                             GetURL(), osLaunderedName.c_str(), m_pszMappingName),
                         pszLayerMapping) )
@@ -251,7 +250,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
             return NULL;
         }
     }
-    
+
     OGRElasticLayer* poLayer = new OGRElasticLayer(osLaunderedName.c_str(),
                                                    osLaunderedName.c_str(),
                                                    m_pszMappingName,
@@ -261,7 +260,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     m_papoLayers[m_nLayers - 1] = poLayer;
 
     poLayer->FinalizeFeatureDefn(FALSE);
-    
+
     if( eGType != wkbNone )
     {
         const char* pszGeometryName = CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "geometry");
@@ -271,9 +270,11 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     }
     if( pszLayerMapping )
         poLayer->SetManualMapping();
-    
-    poLayer->SetIgnoreSourceID(CSLFetchBoolean(papszOptions, "IGNORE_SOURCE_ID", FALSE));
-    poLayer->SetDotAsNestedField(CSLFetchBoolean(papszOptions, "DOT_AS_NESTED_FIELD", TRUE));
+
+    poLayer->SetIgnoreSourceID(
+        CPLFetchBool(papszOptions, "IGNORE_SOURCE_ID", false));
+    poLayer->SetDotAsNestedField(
+        CPLFetchBool(papszOptions, "DOT_AS_NESTED_FIELD", true));
     poLayer->SetFID(CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid"));
     poLayer->SetNextFID(0);
 
@@ -287,7 +288,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
 json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* pszPostContent)
 {
     char** papszOptions = NULL;
-    
+
     if( pszPostContent && pszPostContent[0] )
     {
         papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS",
@@ -313,8 +314,8 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    
-    if( strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0 )
+
+    if( STARTS_WITH((const char*) psResult->pabyData, "{\"error\":") )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
                     (const char*) psResult->pabyData );
@@ -346,7 +347,7 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
         json_object_put(poObj);
         poObj = NULL;
     }
-    
+
     return poObj;
 }
 
@@ -358,7 +359,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
 {
     eAccess = poOpenInfo->eAccess;
     m_pszName = CPLStrdup(poOpenInfo->pszFilename);
-    m_osURL = (EQUALN(m_pszName, "ES:", 3)) ? m_pszName + 3 : m_pszName;
+    m_osURL = (STARTS_WITH_CI(m_pszName, "ES:")) ? m_pszName + 3 : m_pszName;
     if( m_osURL.size() == 0 )
     {
         const char* pszHost =
@@ -371,11 +372,12 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     m_nBatchSize = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "BATCH_SIZE", "100"));
     m_nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
-    m_bJSonField = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "JSON_FIELD", FALSE);
-    m_bFlattenNestedAttributes = CSLFetchBoolean(
-            poOpenInfo->papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", TRUE);
+    m_bJSonField =
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
+    m_bFlattenNestedAttributes = CPLFetchBool(
+            poOpenInfo->papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", true);
     m_osFID = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "FID", "ogc_fid");
-    
+
     CPLHTTPResult* psResult = CPLHTTPFetch((m_osURL + "/_cat/indices?h=i").c_str(), NULL);
     if( psResult == NULL || psResult->pszErrBuf != NULL )
     {
@@ -383,12 +385,12 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
         return FALSE;
     }
 
-    // If no indices, fallback to querying _status
+    // If no indices, fallback to querying _stats
     if( psResult->pabyData == NULL )
     {
         CPLHTTPDestroyResult(psResult);
 
-        json_object* poRes = RunRequest((m_osURL + "/_status").c_str());
+        json_object* poRes = RunRequest((m_osURL + "/_stats").c_str());
         if( poRes == NULL )
             return FALSE;
         json_object_put(poRes);
@@ -400,7 +402,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     while( pszNextEOL && pszNextEOL > pszCur )
     {
         *pszNextEOL = '\0';
-        
+
         char* pszBeforeEOL = pszNextEOL - 1;
         while( *pszBeforeEOL == ' ' )
         {
@@ -455,7 +457,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
                     }
                 }
             }
-            
+
             json_object_put(poRes);
         }
 
@@ -497,7 +499,7 @@ int OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data
     CSLDestroy(papszOptions);
     if (psResult) {
         if( psResult->pszErrBuf != NULL ||
-            (psResult->pabyData && strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0) ||
+            (psResult->pabyData && STARTS_WITH((const char*) psResult->pabyData, "{\"error\":")) ||
             (psResult->pabyData && strstr((const char*) psResult->pabyData, "\"errors\":true,") != NULL) )
         {
             bRet = FALSE;
@@ -519,12 +521,12 @@ int OGRElasticDataSource::Create(const char *pszFilename,
 {
     eAccess = GA_Update;
     this->m_pszName = CPLStrdup(pszFilename);
-    m_osURL = (EQUALN(pszFilename, "ES:", 3)) ? pszFilename + 3 : pszFilename;
+    m_osURL = (STARTS_WITH_CI(pszFilename, "ES:")) ? pszFilename + 3 : pszFilename;
     if( m_osURL.size() == 0 )
         m_osURL = "localhost:9200";
 
     const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
-    this->m_bOverwrite = CSLTestBoolean(CPLGetConfigOption("ES_OVERWRITE", "0"));
+    this->m_bOverwrite = CPLTestBool(CPLGetConfigOption("ES_OVERWRITE", "0"));
     this->m_nBulkUpload = (int) CPLAtof(CPLGetConfigOption("ES_BULK", "0"));
 
     // Read in the meta file from disk
@@ -534,7 +536,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
         if( fp )
         {
             GByte* pabyRet = NULL;
-            VSIIngestFile( fp, pszMetaFile, &pabyRet, NULL, -1);
+            CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszMetaFile, &pabyRet, NULL, -1));
             if( pabyRet )
             {
                 this->m_pszMapping = (char*)pabyRet;
@@ -544,7 +546,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
     }
 
     // Do a status check to ensure that the server is valid
-    CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/_status", m_osURL.c_str()), NULL);
+    CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/_stats", m_osURL.c_str()), NULL);
     int bOK = (psResult != NULL && psResult->pszErrBuf == NULL);
     if (!bOK)
     {
@@ -569,11 +571,11 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         m_papoLayers[i]->SyncToDisk();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -582,7 +584,7 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         for( int iLayer = 0; iLayer < m_nLayers; iLayer++ )
         {
-            if( EQUAL(m_papoLayers[iLayer]->GetName(), 
+            if( EQUAL(m_papoLayers[iLayer]->GetName(),
                       pszLayerName ))
             {
                 DeleteLayer( iLayer );

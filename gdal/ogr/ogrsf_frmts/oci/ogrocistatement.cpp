@@ -1,9 +1,8 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Oracle Spatial Driver
- * Purpose:  Implementation of OGROCIStatement, which encapsulates the 
- *           preparation, executation and fetching from an SQL statement.
+ * Purpose:  Implementation of OGROCIStatement, which encapsulates the
+ *           preparation, execution and fetching from an SQL statement.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -86,7 +85,7 @@ void OGROCIStatement::Clean()
 
     CPLFree( papszCurImage );
     papszCurImage = NULL;
-    
+
     CPLFree( panCurColumnInd );
     panCurColumnInd = NULL;
 
@@ -121,7 +120,7 @@ CPLErr OGROCIStatement::Prepare( const char *pszSQLStatement )
 
     if( hStatement != NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Statement already executed once on this OGROCIStatement." );
         return CE_Failure;
     }
@@ -129,9 +128,9 @@ CPLErr OGROCIStatement::Prepare( const char *pszSQLStatement )
 /* -------------------------------------------------------------------- */
 /*      Allocate a statement handle.                                    */
 /* -------------------------------------------------------------------- */
-    if( poSession->Failed( 
-        OCIHandleAlloc( poSession->hEnv, (dvoid **) &hStatement, 
-                        (ub4)OCI_HTYPE_STMT,(size_t)0, (dvoid **)0 ), 
+    if( poSession->Failed(
+        OCIHandleAlloc( poSession->hEnv, (dvoid **) &hStatement,
+                        (ub4)OCI_HTYPE_STMT,(size_t)0, (dvoid **)0 ),
         "OCIHandleAlloc(Statement)" ) )
         return CE_Failure;
 
@@ -139,8 +138,8 @@ CPLErr OGROCIStatement::Prepare( const char *pszSQLStatement )
 /*      Prepare the statement.                                          */
 /* -------------------------------------------------------------------- */
     if( poSession->Failed(
-        OCIStmtPrepare( hStatement, poSession->hError, 
-                        (text *) pszSQLStatement, strlen(pszSQLStatement),
+        OCIStmtPrepare( hStatement, poSession->hError,
+                        (text *) pszSQLStatement, static_cast<unsigned int>(strlen(pszSQLStatement)),
                         (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT ),
         "OCIStmtPrepare" ) )
         return CE_Failure;
@@ -152,25 +151,25 @@ CPLErr OGROCIStatement::Prepare( const char *pszSQLStatement )
 /*                             BindObject()                             */
 /************************************************************************/
 
-CPLErr OGROCIStatement::BindObject( const char *pszPlaceName, 
+CPLErr OGROCIStatement::BindObject( const char *pszPlaceName,
                                     void *pahObjects, OCIType *hTDO,
                                     void **papIndicators )
 
 {
     OCIBind *hBindOrd = NULL;
 
-    if( poSession->Failed( 
+    if( poSession->Failed(
             OCIBindByName( hStatement, &hBindOrd, poSession->hError,
-                           (text *) pszPlaceName, (sb4) strlen(pszPlaceName), 
-                           (dvoid *) 0, (sb4) 0, SQLT_NTY, (dvoid *)0, 
-                           (ub2 *)0, (ub2 *)0, (ub4)0, (ub4 *)0, 
+                           (text *) pszPlaceName, (sb4) strlen(pszPlaceName),
+                           (dvoid *) 0, (sb4) 0, SQLT_NTY, (dvoid *)0,
+                           (ub2 *)0, (ub2 *)0, (ub4)0, (ub4 *)0,
                            (ub4)OCI_DEFAULT),
             "OCIBindByName()") )
         return CE_Failure;
-    
+
     if( poSession->Failed(
             OCIBindObject( hBindOrd, poSession->hError, hTDO,
-                           (dvoid **) pahObjects, (ub4 *)0, 
+                           (dvoid **) pahObjects, (ub4 *)0,
                            (dvoid **)papIndicators, (ub4 *)0),
             "OCIBindObject()" ) )
         return CE_Failure;
@@ -182,19 +181,19 @@ CPLErr OGROCIStatement::BindObject( const char *pszPlaceName,
 /*                             BindScalar()                             */
 /************************************************************************/
 
-CPLErr OGROCIStatement::BindScalar( const char *pszPlaceName, 
+CPLErr OGROCIStatement::BindScalar( const char *pszPlaceName,
                                     void *pData, int nDataLen,
                                     int nSQLType, sb2 *paeInd )
 
 {
     OCIBind *hBindOrd = NULL;
 
-    if( poSession->Failed( 
+    if( poSession->Failed(
             OCIBindByName( hStatement, &hBindOrd, poSession->hError,
-                           (text *) pszPlaceName, (sb4) strlen(pszPlaceName), 
-                           (dvoid *) pData, (sb4) nDataLen, 
-                           (ub2) nSQLType, (dvoid *)paeInd, (ub2 *)0, 
-                           (ub2 *)0, (ub4)0, (ub4 *)0, 
+                           (text *) pszPlaceName, (sb4) strlen(pszPlaceName),
+                           (dvoid *) pData, (sb4) nDataLen,
+                           (ub2) nSQLType, (dvoid *)paeInd, (ub2 *)0,
+                           (ub2 *)0, (ub4)0, (ub4 *)0,
                            (ub4)OCI_DEFAULT),
             "OCIBindByName()") )
         return CE_Failure;
@@ -222,7 +221,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 
     if( hStatement == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "No prepared statement in call to OGROCIStatement::Execute(NULL)" );
         return CE_Failure;
     }
@@ -232,12 +231,12 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /* -------------------------------------------------------------------- */
     ub2  nStmtType;
 
-    if( poSession->Failed( 
+    if( poSession->Failed(
         OCIAttrGet( hStatement, OCI_HTYPE_STMT,
                     &nStmtType, 0, OCI_ATTR_STMT_TYPE, poSession->hError ),
         "OCIAttrGet(ATTR_STMT_TYPE)") )
         return CE_Failure;
-    
+
     int bSelect = (nStmtType == OCI_STMT_SELECT);
 
 /* -------------------------------------------------------------------- */
@@ -254,9 +253,9 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /* -------------------------------------------------------------------- */
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
-    if( poSession->Failed( 
-        OCIStmtExecute( poSession->hSvcCtx, hStatement, 
-                        poSession->hError, (ub4)bSelect ? 0 : 1, (ub4)0, 
+    if( poSession->Failed(
+        OCIStmtExecute( poSession->hSvcCtx, hStatement,
+                        poSession->hError, (ub4)bSelect ? 0 : 1, (ub4)0,
                         (OCISnapshot *)NULL, (OCISnapshot *)NULL, nMode ),
         pszCommandText ) )
         return CE_Failure;
@@ -264,7 +263,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
     if( !bSelect )
     {
         ub4 row_count;
-        if( poSession->Failed( 
+        if( poSession->Failed(
             OCIAttrGet( hStatement, OCI_HTYPE_STMT,
                         &row_count, 0, OCI_ATTR_ROW_COUNT, poSession->hError ),
                         "OCIAttrGet(OCI_ATTR_ROW_COUNT)") )
@@ -277,21 +276,21 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /* -------------------------------------------------------------------- */
 /*      Count the columns.                                              */
 /* -------------------------------------------------------------------- */
-    for( nRawColumnCount = 0; TRUE; nRawColumnCount++ )
-    {                                                           
+    for( nRawColumnCount = 0; true; nRawColumnCount++ )
+    {
         OCIParam     *hParmDesc;
 
-        if( OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError, 
-                         (dvoid**)&hParmDesc, 
+        if( OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError,
+                         (dvoid**)&hParmDesc,
                          (ub4) nRawColumnCount+1 ) != OCI_SUCCESS )
             break;
     }
-    
+
     panFieldMap = (int *) CPLCalloc(sizeof(int),nRawColumnCount);
-    
+
     papszCurColumn = (char **) CPLCalloc(sizeof(char*),nRawColumnCount+1);
     panCurColumnInd = (sb2 *) CPLCalloc(sizeof(sb2),nRawColumnCount+1);
-        
+
 /* ==================================================================== */
 /*      Establish result column definitions, and setup parameter        */
 /*      defines.                                                        */
@@ -301,7 +300,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
     poDefn->Reference();
 
     for( int iParm = 0; iParm < nRawColumnCount; iParm++ )
-    {                                                           
+    {
         OGRFieldDefn oField( "", OFTString );
         OCIParam     *hParmDesc;
         ub2          nOCIType;
@@ -310,8 +309,8 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /* -------------------------------------------------------------------- */
 /*      Get parameter definition.                                       */
 /* -------------------------------------------------------------------- */
-        if( poSession->Failed( 
-            OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError, 
+        if( poSession->Failed(
+            OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError,
                          (dvoid**)&hParmDesc, (ub4) iParm+1 ),
             "OCIParamGet") )
             return CE_Failure;
@@ -345,7 +344,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
         OCIDefine *hDefn = NULL;
 
         if( oField.GetWidth() > 0 )
-            /* extra space needed for the decimal separator the string 
+            /* extra space needed for the decimal separator the string
             terminator and the negative sign (Tamas Szekeres)*/
             nBufWidth = oField.GetWidth() + 3;
         else if( oField.GetType() == OFTInteger )
@@ -362,9 +361,9 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 
         if( poSession->Failed(
             OCIDefineByPos( hStatement, &hDefn, poSession->hError,
-                            iParm+1, 
+                            iParm+1,
                             (ub1 *) papszCurColumn[nOGRField], nBufWidth,
-                            SQLT_STR, panCurColumnInd + nOGRField, 
+                            SQLT_STR, panCurColumnInd + nOGRField,
                             NULL, NULL, OCI_DEFAULT ),
             "OCIDefineByPos" ) )
             return CE_Failure;
@@ -381,14 +380,14 @@ char **OGROCIStatement::SimpleFetchRow()
 
 {
     int nStatus, i;
-    
+
     if( papszCurImage == NULL )
     {
-        papszCurImage = (char **) 
+        papszCurImage = (char **)
             CPLCalloc(sizeof(char *), nRawColumnCount+1 );
     }
 
-    nStatus = OCIStmtFetch( hStatement, poSession->hError, 1, 
+    nStatus = OCIStmtFetch( hStatement, poSession->hError, 1,
                             OCI_FETCH_NEXT, OCI_DEFAULT );
 
     if( nStatus == OCI_NO_DATA )
@@ -406,4 +405,3 @@ char **OGROCIStatement::SimpleFetchRow()
 
     return papszCurImage;
 }
-

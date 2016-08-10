@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some geometry factory methods, like arc stroking.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -118,7 +118,7 @@ def ogr_factory_3():
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
         print(dst_geom.ExportToWkt())
         return 'fail'
-    
+
     src_wkt = 'GEOMETRYCOLLECTION(POLYGON((0 0,100 0,100 100,0 0)))'
     exp_wkt = 'MULTIPOLYGON (((0 0,100 0,100 100,0 0)))'
 
@@ -175,7 +175,7 @@ def ogr_factory_4():
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
         print(dst_geom.ExportToWkt())
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -192,7 +192,7 @@ def ogr_factory_5():
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
         print(dst_geom.ExportToWkt())
         return 'fail'
-    
+
     src_wkt = 'GEOMETRYCOLLECTION(LINESTRING(2 5,10 20),LINESTRING(0 0,10 10))'
     exp_wkt = 'MULTILINESTRING((2 5,10 20),(0 0,10 10))'
 
@@ -202,7 +202,7 @@ def ogr_factory_5():
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
         print(dst_geom.ExportToWkt())
         return 'fail'
-    
+
     src_wkt = 'POLYGON((2 5,10 20),(0 0,10 10))'
     exp_wkt = 'MULTILINESTRING((2 5,10 20),(0 0,10 10))'
 
@@ -212,7 +212,7 @@ def ogr_factory_5():
     if ogrtest.check_feature_geometry( dst_geom, exp_wkt ):
         print(dst_geom.ExportToWkt())
         return 'fail'
-    
+
     src_wkt = 'MULTIPOLYGON(((2 5,10 20),(0 0,10 10)),((2 5,10 20)))'
     exp_wkt = 'MULTILINESTRING((2 5,10 20),(0 0,10 10),(2 5,10 20))'
 
@@ -422,7 +422,7 @@ def ogr_factory_7():
 # Test forceTo()
 
 def ogr_factory_8():
-    
+
     tests = [ ('POINT(2 5)', 'MULTIPOINT (2 5)', ogr.wkbMultiPoint ),
 
               ('LINESTRING(2 5,10 20)', 'LINESTRING(2 5,10 20)', ogr.wkbLineString ),
@@ -467,6 +467,9 @@ def ogr_factory_8():
               ('CIRCULARSTRING(0 0,1 0,0 0)', 'MULTIPOLYGON (((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0)))', ogr.wkbMultiPolygon),
               ('CIRCULARSTRING(0 0,1 0,0 0)', 'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0)))', ogr.wkbMultiSurface),
               ('CIRCULARSTRING(0 0,1 0,0 0)', 'LINESTRING (0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0)', ogr.wkbLineString),
+
+              # Degenerated case
+              ('CIRCULARSTRING(0 0,0 0,0 0)', 'LINESTRING (0 0,0 0,0 0)', ogr.wkbLineString),
 
               ('CIRCULARSTRING(0 0,1 1,2 2)', 'LINESTRING (0 0,1 1,2 2)', ogr.wkbLineString),
               ('CIRCULARSTRING(0 0,1 1,2 2)', 'MULTILINESTRING ((0 0,1 1,2 2))', ogr.wkbMultiLineString),
@@ -590,7 +593,7 @@ def ogr_factory_8():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_factory_1,
     ogr_factory_2,
     ogr_factory_3,

@@ -107,7 +107,7 @@ class TestOgrPg < Test::Unit::TestCase
   
   def test_release_resultset2()
     # This test just runs test_release_resultset again. The reason
-    # is that running the tests twice reveals segementation faults
+    # is that running the tests twice reveals segmentation faults.
     test_release_resultset
   end
   

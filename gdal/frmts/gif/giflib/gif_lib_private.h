@@ -1,5 +1,5 @@
-#ifndef _GIF_LIB_PRIVATE_H
-#define _GIF_LIB_PRIVATE_H
+#ifndef GIF_LIB_PRIVATE_H
+#define GIF_LIB_PRIVATE_H
 
 #include "gif_lib.h"
 #include "gif_hash.h"
@@ -28,6 +28,7 @@
 #define FILE_STATE_READ     0x08
 
 #define IS_READABLE(Private)    (Private->FileState & FILE_STATE_READ)
+/* TODO: Spelling.  Fix upstream and deprecate. */
 #define IS_WRITEABLE(Private)   (Private->FileState & FILE_STATE_WRITE)
 
 typedef struct GifFilePrivateType {
@@ -56,4 +57,4 @@ typedef struct GifFilePrivateType {
 
 extern int _GifError;
 
-#endif /* _GIF_LIB_PRIVATE_H */
+#endif /* GIF_LIB_PRIVATE_H */

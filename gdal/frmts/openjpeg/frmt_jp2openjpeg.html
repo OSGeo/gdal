@@ -11,7 +11,7 @@
 
 <p>This driver is an implementation of a JPEG2000 reader/writer based on OpenJPEG library <b>v2</b>.</p>
 
-<p>For GDAL 1.10 or later, use openjpeg 2.X.</p>
+<p>For GDAL 1.10, use openjpeg 2.0. For GDAL 1.11 or later, use openjpeg 2.X.</p>
 <p>For GDAL 1.9.x or before, use the v2 branch from its Subversion repository : http://openjpeg.googlecode.com/svn/branches/v2 (before r2230 when it was deleted).</p>
 
 <p>The driver uses the VSI Virtual File API, so it can read JPEG2000 compressed NITF files.</p>
@@ -26,6 +26,30 @@ arbitrary band count, and adding/reading metadata. Update of georeferencing or
 metadata of existing file is also supported. Optional intellectual property
 metdata can be read/written in the xml:IPR box.</p>
 
+<h2><a name="georeferencing">Georeferencing</a></h2>
+
+<p>
+Georeferencing information can come from different sources : internal (GeoJP2
+or GMLJP2 boxes), worldfile .j2w/.wld sidecar files, or PAM (Persitant Auxiliary metadata)
+.aux.xml sidecar files.
+By default, information is fetched in following order (first listed is the most
+prioritary): PAM, GeoJP2, GMLJP2, WORLDFILE.
+</p>
+<p>Starting with GDAL 2.2, the allowed sources
+and their priority order can be changed with the GDAL_GEOREF_SOURCES
+configuration option (or GEOREF_SOURCES open option) whose value is a
+comma-separated list of the following keywords :
+PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for GEOJP2,GMLJP2), WORLDFILE, NONE.
+First mentioned sources are the most prioritary over the next ones. A non mentioned
+source will be ignored.
+</p>
+<p>
+For example setting it to "WORLDFILE,PAM,INTERNAL" will make a geotransformation
+matrix from a potential worldfile prioritary over PAM or internal JP2 boxes.
+Setting it to "PAM,WORLDFILE,GEOJP2" will use the mentioned sources and
+ignore GMLJP2 boxes.
+</p>
+
 <h2>Option Options</h2>
 
 (GDAL &gt;= 2.0 )
@@ -34,6 +58,8 @@ The following open option is available:
 <ul>
 <li><p><b>1BIT_ALPHA_PROMOTION=YES/NO</b>: Whether a 1-bit alpha channel should be promoted to 8-bit.
 Defaults to YES.</li>
+<li><p><b>GEOREF_SOURCES=string</b>: (GDAL &gt; 2.2) Define which georeferencing sources are
+allowed and their priority order. See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.</li>
 </ul>
 
 <h2>Creation Options</h2>
@@ -207,7 +233,7 @@ of the source dataset unmodified. Defaults to NO. Note that enabling that featur
 in inconsistent content of the JP2 boxes w.r.t. to the content of the source codestream.
 Most other creation options will be ignored in that mode. Can be useful in some
 use cases when adding/correcting georeferencing, metadata, ... INSPIRE_TG and
-PROFILE options will be ignored, and the profile of the codestream will be overriden
+PROFILE options will be ignored, and the profile of the codestream will be overridden
 with the one specified/implied by the options (which may be inconsistent with
 the characteristics of the codestream).
 </p></li>
@@ -225,7 +251,7 @@ Lossless compression can be achieved if ALL the following creation options are d
 
 <h3><a name="GMLJP2v2Def">GMLJP2v2 definition file</a></h3>
 
-A GMLJP2v2 box typically contains a GMLJP2RectifiedGridCoverage with the 
+A GMLJP2v2 box typically contains a GMLJP2RectifiedGridCoverage with the
 SRS information and geotransformation matrix. It is also possible to add metadata,
 vector features (GML feature collections), annotations (KML), styles (typically
 SLD, or other XML format) or any XML content as an extension.
@@ -272,7 +298,7 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
                     [ "The metadata file will be generated from a template and a source file.",
                       "The template is a valid GMLJP2 metadata XML tree with placeholders like",
                       "{{{XPATH(some_xpath_expression)}}}",
-                      "that are evalated from the source XML file. Typical use case",
+                      "that are evaluated from the source XML file. Typical use case",
                       "is to generate a gmljp2:eopMetadata from the XML metadata",
                       "provided by the image provider in their own particular format." ],
                 "dynamic_metadata" :
@@ -316,7 +342,7 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
                                   "Ignored for a remote_resource"],
                 "namespace": "http://example.com",
 
-                "#schema_location_doc": ["Value of the substitued schemaLocation. ",
+                "#schema_location_doc": ["Value of the substituted schemaLocation. ",
                                          "Typically a schema box label (link)",
                                          "Ignored for a remote_resource"],
                 "schema_location": "gmljp2://xml/schema_0.xsd",
@@ -380,7 +406,7 @@ against the content of the source file. xpath_expr must be a XPath 1.0 compatibl
 expression, with the addition of the following functions :
 
 <ul>
-<li><b>if(cond_expr,expr_if_true,expr_if_false)</b>: if cond_expr evalutes to
+<li><b>if(cond_expr,expr_if_true,expr_if_false)</b>: if cond_expr evaluates to
 true, returns expr_if_true. Otherwise returns expr_if_false</li>
 <li><b>uuid()</b>: evaluates to a random UUID</b></li>
 </ul>
@@ -399,7 +425,7 @@ the OGR API.
 
 For example:
 <pre>
-ogrinfo -ro my.jp2 
+ogrinfo -ro my.jp2
 
 INFO: Open of my.jp2'
       using driver `JP2OpenJPEG' successful.
@@ -417,7 +443,8 @@ OPEN_REMOTE_GML is set to YES.</p>
 <ul>
 <li><p> Implemented as <tt>gdal/frmts/openjpeg/openjpegdataset.cpp</tt>.</p></li>
 <li><p> <a href="http://www.jpeg.org/jpeg2000/index.html">Official JPEG-2000 page<a></p></li>
-<li><p> <a href="http://code.google.com/p/openjpeg/">The OpenJPEG library home page</a></p></li>
+<li><p> <a href="https://github.com/uclouvain/openjpeg">The OpenJPEG library home page</a></p></li>
+<li><p> <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">OGC GML in JPEG2000, version 2</a></p></li>
 <li><p> <a href="http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf">
 Inspire Data Specification on Orthoimagery - Technical Guidelines</a></p></li>
 </ul>

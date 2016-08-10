@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GEOMEDIAGEOMETRY_H_INCLUDED
-#define _OGR_GEOMEDIAGEOMETRY_H_INCLUDED
+#ifndef OGR_GEOMEDIAGEOMETRY_H_INCLUDED
+#define OGR_GEOMEDIAGEOMETRY_H_INCLUDED
 
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"

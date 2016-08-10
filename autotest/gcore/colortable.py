@@ -4,13 +4,13 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test functioning of the GDALColorTable.  Mostly this tests
-#           the python binding. 
+#           the python binding.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -48,7 +48,7 @@ def colortable_1():
     for i in range(len(gdaltest.test_ct_data)):
         gdaltest.test_ct.SetColorEntry( i, gdaltest.test_ct_data[i] )
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # verify contents.
@@ -64,12 +64,12 @@ def colortable_2():
                 o_v = 255
             else:
                 o_v = o_data[j]
-                
+
             if g_data[j] != o_v:
                 gdaltest.post_reason( 'color table mismatch' )
                 return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test CreateColorRamp()

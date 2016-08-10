@@ -1,12 +1,11 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NITF Read/Write Translator
  * Purpose:  GCP / RPC Georeferencing Model (custom by/for ESRI)
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2010, ESRI 
+ * Copyright (c) 2010, ESRI
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +29,7 @@
 #include "gdal_priv.h"
 #include "nitflib.h"
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /* Unused in normal builds. Caller code in nitfdataset.cpp is protected by #ifdef ESRI_BUILD */
 #ifdef ESRI_BUILD
@@ -41,17 +40,16 @@ CPL_CVSID("$Id");
 static double Apply( double *C, double P, double L, double H )
 {
     // Polynomial equation for RPC00B.
-
-    double H2 = H * H;
-    double L2 = L * L;
-    double P2 = P * P;
+    const double H2 = H * H;
+    const double L2 = L * L;
+    const double P2 = P * P;
 
     return  C[0]
-        + C[1]*L     + C[2]*P     + C[3]*H     + C[4]*L*P   + C[5]*L*H  
+        + C[1]*L     + C[2]*P     + C[3]*H     + C[4]*L*P   + C[5]*L*H
         + C[6]*P*H   + C[7]*L2    + C[8]*P2    + C[9]*H2    + C[10]*P*L*H
         + C[11]*L*L2 + C[12]*L*P2 + C[13]*L*H2 + C[14]*L2*P + C[15]*P*P2
         + C[16]*P*H2 + C[17]*L2*H + C[18]*P2*H + C[19]*H*H2;
-} 
+}
 
 /************************************************************************/
 /*                          NITFDensifyGCPs()                           */
@@ -65,7 +63,8 @@ void NITFDensifyGCPs( GDAL_GCP **psGCPs, int *pnGCPCount )
     if ( (*pnGCPCount != 4) || (psGCPs == NULL) ) return;
 
     const int  nDensifiedGCPs  = 16;
-    GDAL_GCP  *psDensifiedGCPs = (GDAL_GCP*) CPLMalloc(sizeof(GDAL_GCP)*nDensifiedGCPs);
+    GDAL_GCP  *psDensifiedGCPs = reinterpret_cast<GDAL_GCP *>(
+        CPLMalloc( sizeof( GDAL_GCP ) * nDensifiedGCPs) );
 
     GDALInitGCPs( nDensifiedGCPs, psDensifiedGCPs );
 
@@ -134,7 +133,7 @@ void NITFDensifyGCPs( GDAL_GCP **psGCPs, int *pnGCPCount )
 /*                            RPCTransform()                            */
 /************************************************************************/
 
-static bool RPCTransform( NITFRPC00BInfo *psRPCInfo, 
+static bool RPCTransform( NITFRPC00BInfo *psRPCInfo,
                           double         *pGCPXCoord,
                           double         *pGCPYCoord,
                           int             nGCPCount )
@@ -246,4 +245,4 @@ void NITFUpdateGCPsWithRPC( NITFRPC00BInfo *psRPCInfo,
     pGCPYCoord = NULL;
 }
 
-#endif
+#endif  // ESRI_BUILD

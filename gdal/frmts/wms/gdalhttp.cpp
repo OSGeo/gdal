@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -15,7 +14,7 @@
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions: 
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -30,6 +29,8 @@
  ****************************************************************************/
 
 #include "wmsdriver.h"
+
+CPL_CVSID("$Id$");
 
 void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
 
@@ -70,14 +71,14 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
     psRequest->pszURL = CPLStrdup(pszURL);
     psRequest->papszOptions = CSLDuplicate(const_cast<char **>(papszOptions));
     psRequest->nStatus = 0;
-    psRequest->pszContentType = 0;
-    psRequest->pszError = 0;
-    psRequest->pabyData = 0;
+    psRequest->pszContentType = NULL;
+    psRequest->pszError = NULL;
+    psRequest->pabyData = NULL;
     psRequest->nDataLen = 0;
     psRequest->nDataAlloc = 0;
-    psRequest->m_curl_handle = 0;
-    psRequest->m_headers = 0;
-    psRequest->m_curl_error = 0;
+    psRequest->m_curl_handle = NULL;
+    psRequest->m_headers = NULL;
+    psRequest->m_curl_error = NULL;
 
     psRequest->m_curl_handle = curl_easy_init();
     if (psRequest->m_curl_handle == NULL) {
@@ -108,7 +109,7 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
     psRequest->m_curl_error = reinterpret_cast<char *>(CPLMalloc(CURL_ERROR_SIZE + 1));
     psRequest->m_curl_error[0] = '\0';
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, psRequest->m_curl_error);
-    
+
     CPLHTTPSetOptions(psRequest->m_curl_handle, papszOptionsDup);
 
     CSLDestroy(papszOptionsDup);
@@ -117,52 +118,52 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
 void CPLHTTPCleanupRequest(CPLHTTPRequest *psRequest) {
     if (psRequest->m_curl_handle) {
         curl_easy_cleanup(psRequest->m_curl_handle);
-        psRequest->m_curl_handle = 0;
+        psRequest->m_curl_handle = NULL;
     }
     if (psRequest->m_headers) {
         curl_slist_free_all(psRequest->m_headers);
-        psRequest->m_headers = 0;
+        psRequest->m_headers = NULL;
     }
     if (psRequest->m_curl_error) {
         CPLFree(psRequest->m_curl_error);
-        psRequest->m_curl_error = 0;
+        psRequest->m_curl_error = NULL;
     }
 
     if (psRequest->pszContentType) {
         CPLFree(psRequest->pszContentType);
-        psRequest->pszContentType = 0;
+        psRequest->pszContentType = NULL;
     }
     if (psRequest->pszError) {
         CPLFree(psRequest->pszError);
-        psRequest->pszError = 0;
+        psRequest->pszError = NULL;
     }
     if (psRequest->pabyData) {
         CPLFree(psRequest->pabyData);
-        psRequest->pabyData = 0;
+        psRequest->pabyData = NULL;
         psRequest->nDataLen = 0;
         psRequest->nDataAlloc = 0;
     }
     if (psRequest->papszOptions) {
         CSLDestroy(psRequest->papszOptions);
-        psRequest->papszOptions = 0;
+        psRequest->papszOptions = NULL;
     }
     if (psRequest->pszURL) {
         CPLFree(psRequest->pszURL);
-        psRequest->pszURL = 0;
+        psRequest->pszURL = NULL;
     }
 }
 
 CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const char *const *papszOptions) {
     CPLErr ret = CE_None;
-    CURLM *curl_multi = 0;
+    CURLM *curl_multi = NULL;
     int still_running;
     int max_conn;
     int i, conn_i;
-    
+
     if( nRequestCount > 0 &&
-        strncmp(pasRequest[0].pszURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+        STARTS_WITH(pasRequest[0].pszURL, "/vsimem/") &&
         /* Disabled by default for potential security issues */
-        CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+        CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
     {
         for(i = 0; i< nRequestCount;i++)
         {
@@ -234,7 +235,11 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
         {
             timeout.tv_sec = 0;
             timeout.tv_usec = 100000;
-            select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+            if( select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout) < 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "select() failed");
+                break;
+            }
         }
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
@@ -247,9 +252,9 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
 
         long response_code = 0;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_RESPONSE_CODE, &response_code);
-        psRequest->nStatus = response_code;
+        psRequest->nStatus = static_cast<int>(response_code);
 
-        char *content_type = 0;
+        char *content_type = NULL;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_CONTENT_TYPE, &content_type);
         if (content_type) psRequest->pszContentType = CPLStrdup(content_type);
 
@@ -259,7 +264,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
 
         /* In the case of a file:// URL, curl will return a status == 0, so if there's no */
         /* error returned, patch the status code to be 200, as it would be for http:// */
-        if (strncmp(psRequest->pszURL, "file://", 7) == 0 && psRequest->nStatus == 0 &&
+        if (STARTS_WITH(psRequest->pszURL, "file://") && psRequest->nStatus == 0 &&
             psRequest->pszError == NULL)
         {
             psRequest->nStatus = 200;

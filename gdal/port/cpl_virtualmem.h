@@ -15,21 +15,21 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_VIRTUAL_MEM_INCLUDED
-#define _CPL_VIRTUAL_MEM_INCLUDED
+#ifndef CPL_VIRTUAL_MEM_INCLUDED
+#define CPL_VIRTUAL_MEM_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_vsi.h"
@@ -102,7 +102,7 @@ typedef enum
     /*! The mapping is meant at being read-only, but writes will not be prevented.
         Note that any content written will be lost. */
     VIRTUALMEM_READONLY,
-    /*! The mapping is meant at being read-only, and this will be enforced 
+    /*! The mapping is meant at being read-only, and this will be enforced
         through the operating system page protection mechanism. */
     VIRTUALMEM_READONLY_ENFORCED,
     /*! The mapping is meant at being read-write, and modified pages can be saved
@@ -192,7 +192,8 @@ int CPL_DLL CPLIsVirtualMemFileMapAvailable(void);
  * On Linux AMD64 platforms, the maximum value for nLength is 128 TB.
  * On Linux x86 platforms, the maximum value for nLength is 2 GB.
  *
- * Only supported on Linux for now.
+ * Supported on Linux only in GDAL <= 2.0, and all POSIX systems supporting
+ * mmap() in GDAL >= 2.1
  *
  * @param  fp       Virtual file handle.
  * @param  nOffset  Offset in the file to start the mapping from.
@@ -277,10 +278,10 @@ void CPL_DLL *CPLVirtualMemGetAddr(CPLVirtualMem* ctxt);
  */
 size_t CPL_DLL CPLVirtualMemGetSize(CPLVirtualMem* ctxt);
 
-/** Return if the virtal memory mapping is a direct file mapping.
+/** Return if the virtual memory mapping is a direct file mapping.
  *
  * @param ctxt context returned by CPLVirtualMemNew().
- * @return TRUE if the virtal memory mapping is a direct file mapping.
+ * @return TRUE if the virtual memory mapping is a direct file mapping.
  *
  * @since GDAL 1.11
  */
@@ -386,4 +387,4 @@ void CPL_DLL CPLVirtualMemManagerTerminate(void);
 
 CPL_C_END
 
-#endif /* _CPL_VIRTUAL_MEM_INCLUDED */
+#endif /* CPL_VIRTUAL_MEM_INCLUDED */

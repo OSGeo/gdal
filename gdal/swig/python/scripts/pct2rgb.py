@@ -1,26 +1,26 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Name:     pct2rgb
 #  Project:  GDAL Python Interface
-#  Purpose:  Utility to convert palletted images into RGB (or RGBA) images.
+#  Purpose:  Utility to convert paletted images into RGB (or RGBA) images.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2001, Frank Warmerdam
 #  Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -30,10 +30,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
+import sys
+
+from osgeo import gdal
 
 try:
     progress = gdal.TermProgress_nocb
@@ -46,8 +45,6 @@ try:
 except ImportError:
     import Numeric
 
-
-import sys
 
 def Usage():
     print('Usage: pct2rgb.py [-of format] [-b <band>] [-rgba] source_file dest_file')
@@ -182,10 +179,3 @@ if tif_filename != dst_filename:
     tif_ds = None
 
     gtiff_driver.Delete( tif_filename )
-
-
-
-
-
-
-

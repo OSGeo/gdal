@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_PCIDSK_RPC_H
-#define __INCLUDE_PCIDSK_PCIDSK_RPC_H
+#ifndef INCLUDE_PCIDSK_PCIDSK_RPC_H
+#define INCLUDE_PCIDSK_PCIDSK_RPC_H
 
 #include <vector>
 #include <string>
@@ -109,4 +109,4 @@ namespace PCIDSK {
     };
 }
 
-#endif // __INCLUDE_PCIDSK_PCIDSK_RPC_H
+#endif // INCLUDE_PCIDSK_PCIDSK_RPC_H

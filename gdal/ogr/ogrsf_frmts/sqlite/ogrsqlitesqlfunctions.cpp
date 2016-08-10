@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Extension SQL functions
@@ -39,6 +38,8 @@
 #include "ogrsqliteregexp.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
 #include "swq.h"
 
+CPL_CVSID("$Id$");
+
 #ifndef HAVE_SPATIALITE
 #define MINIMAL_SPATIAL_FUNCTIONS
 #endif
@@ -62,7 +63,7 @@ class OGRSQLiteExtensionData
 
     OGRGeocodingSessionH         GetGeocodingSession() { return hGeocodingSession; }
     void                         SetGeocodingSession(OGRGeocodingSessionH hGeocodingSessionIn) { hGeocodingSession = hGeocodingSessionIn; }
-    
+
     void                         SetRegExpCache(void* hRegExpCacheIn) { hRegExpCache = hRegExpCacheIn; }
 };
 
@@ -94,7 +95,7 @@ OGRSQLiteExtensionData::~OGRSQLiteExtensionData()
         delete oIter->second;
 
     OGRSQLiteFreeRegExpCache(hRegExpCache);
-    
+
     OGRGeocodeDestroySession(hGeocodingSession);
 }
 
@@ -196,7 +197,7 @@ void OGR2SQLITE_Transform(sqlite3_context* pContext,
         poGeom->transform(poCT) == OGRERR_NONE &&
         OGRSQLiteLayer::ExportSpatiaLiteGeometry(
                     poGeom, nDstSRSId, wkbNDR, FALSE,
-                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
+                    FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
     }
@@ -248,13 +249,13 @@ void OGR2SQLITE_ogr_deflate(sqlite3_context* pContext,
     }
     if( pOut != NULL )
     {
-        sqlite3_result_blob (pContext, pOut, nOutBytes, VSIFree);
+        sqlite3_result_blob (pContext, pOut, static_cast<int>(nOutBytes), VSIFree);
     }
     else
     {
         sqlite3_result_null (pContext);
     }
- 
+
     return;
 }
 
@@ -266,7 +267,7 @@ static
 void OGR2SQLITE_ogr_inflate(sqlite3_context* pContext,
                             int argc, sqlite3_value** argv)
 {
-    if( argc != 1 || 
+    if( argc != 1 ||
         sqlite3_value_type (argv[0]) != SQLITE_BLOB )
     {
         sqlite3_result_null (pContext);
@@ -282,7 +283,7 @@ void OGR2SQLITE_ogr_inflate(sqlite3_context* pContext,
 
     if( pOut != NULL )
     {
-        sqlite3_result_blob (pContext, pOut, nOutBytes, VSIFree);
+        sqlite3_result_blob (pContext, pOut, static_cast<int>(nOutBytes), VSIFree);
     }
     else
     {
@@ -317,7 +318,7 @@ void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context* pContext,
             GByte* pabyGeomBLOB = NULL;
             int nGeomBLOBLen = 0;
             if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    poFeature->GetGeometryRef(), 4326, wkbNDR, FALSE, FALSE, FALSE,
+                    poFeature->GetGeometryRef(), 4326, wkbNDR, FALSE, FALSE,
                     &pabyGeomBLOB,
                     &nGeomBLOBLen ) != OGRERR_NONE )
             {
@@ -492,7 +493,7 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
     {
         iAfterGeomIdx = 2;
     }
-    else if( argc >= 2 && 
+    else if( argc >= 2 &&
              sqlite3_value_type (argv[0]) == SQLITE_BLOB &&
              sqlite3_value_type (argv[1]) == SQLITE_TEXT )
     {
@@ -654,7 +655,7 @@ void OGR2SQLITE_ogr_GetConfigOption(sqlite3_context* pContext,
         sqlite3_result_null (pContext);
         return;
     }
-    
+
     const char* pszKey = (const char*)sqlite3_value_text(argv[0]);
     const char* pszVal = CPLGetConfigOption(pszKey, NULL);
     if( pszVal == NULL )
@@ -727,7 +728,7 @@ void OGR2SQLITE_ST_AsBinary(sqlite3_context* pContext,
     if( poGeom != NULL )
     {
         int nBLOBLen = poGeom->WkbSize();
-        GByte* pabyGeomBLOB = (GByte*) VSIMalloc(nBLOBLen);
+        GByte* pabyGeomBLOB = (GByte*) VSI_MALLOC_VERBOSE(nBLOBLen);
         if( pabyGeomBLOB != NULL )
         {
             if( poGeom->exportToWkb(wkbNDR, pabyGeomBLOB) == OGRERR_NONE )
@@ -757,7 +758,7 @@ static void OGR2SQLITE_SetGeom_AndDestroy(sqlite3_context* pContext,
     GByte* pabySLBLOB = NULL;
     int nBLOBLen = 0;
     if( poGeom != NULL && OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    poGeom, nSRSId, wkbNDR, FALSE,
+                    poGeom, nSRSId, wkbNDR,
                     FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
@@ -1129,12 +1130,12 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
     /* Check if spatialite is available */
     int rc = sqlite3_exec(hDB, "SELECT spatialite_version()", NULL, NULL, NULL);
-    
+
     /* Reset error flag */
     sqlite3_exec(hDB, "SELECT 1", NULL, NULL, NULL);
-    
+
     if( rc != SQLITE_OK &&
-        CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_SPATIAL_FUNCTIONS", "YES")) )
+        CPLTestBool(CPLGetConfigOption("OGR_SQLITE_SPATIAL_FUNCTIONS", "YES")) )
     {
         CPLDebug("SQLITE",
                  "Spatialite not available. Implementing a few functions");

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements TigerPIP, providing access to .RTP files.
@@ -98,6 +97,6 @@ OGRFeature *TigerPIP::GetFeature( int nRecordId )
 
 OGRErr TigerPIP::CreateFeature( OGRFeature *poFeature )
 {
-  return TigerPoint::CreateFeature( poFeature, 
+  return TigerPoint::CreateFeature( poFeature,
                                     26 );
 }

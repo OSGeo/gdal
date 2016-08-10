@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for stdin
@@ -14,18 +13,20 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+//! @cond Doxygen_Suppress
 
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -69,14 +70,17 @@ static void VSIStdinInit()
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdinFilesystemHandler : public VSIFilesystemHandler
+class VSIStdinFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
                               VSIStdinFilesystemHandler();
     virtual                  ~VSIStdinFilesystemHandler();
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
-                                    const char *pszAccess);
+    using VSIFilesystemHandler::Open;
+
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
+                                    const char *pszAccess,
+                                    bool bSetError );
     virtual int               Stat( const char *pszFilename,
                                     VSIStatBufL *pStatBuf, int nFlags );
 };
@@ -87,7 +91,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdinHandle : public VSIVirtualHandle
+class VSIStdinHandle CPL_FINAL : public VSIVirtualHandle
 {
   private:
     GUIntBig nCurOff;
@@ -131,7 +135,7 @@ int VSIStdinHandle::ReadAndCache( void* pBuffer, int nToRead )
 {
     CPLAssert(nCurOff == nRealPos);
 
-    int nRead = fread(pBuffer, 1, nToRead, stdin);
+    int nRead = static_cast<int>(fread(pBuffer, 1, nToRead, stdin));
 
     if (nRealPos < BUFFER_SIZE)
     {
@@ -160,7 +164,7 @@ int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
     if (nRealPos < BUFFER_SIZE )
     {
         nRealPos += fread(pabyBuffer + nRealPos, 1, BUFFER_SIZE - (int)nRealPos, stdin);
-        nBufferLen = nRealPos;
+        nBufferLen = static_cast<int>(nRealPos);
     }
 
     if (nWhence == SEEK_END)
@@ -330,8 +334,9 @@ VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()
 /************************************************************************/
 
 VSIVirtualHandle *
-VSIStdinFilesystemHandler::Open( const char *pszFilename, 
-                                 const char *pszAccess )
+VSIStdinFilesystemHandler::Open( const char *pszFilename,
+                                 const char *pszAccess,
+                                 bool /* bSetError */ )
 
 {
     if (strcmp(pszFilename, "/vsistdin/") != 0)
@@ -366,7 +371,7 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
     {
         VSIStdinInit();
         if (nBufferLen == 0)
-            nRealPos = nBufferLen = fread(pabyBuffer, 1, BUFFER_SIZE, stdin);
+            nRealPos = nBufferLen = static_cast<int>(fread(pabyBuffer, 1, BUFFER_SIZE, stdin));
 
         pStatBuf->st_size = nBufferLen;
     }
@@ -374,6 +379,8 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
     pStatBuf->st_mode = S_IFREG;
     return 0;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                       VSIInstallStdinHandler()                       */

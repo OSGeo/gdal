@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implement OGRDataSourceWithTransaction class
@@ -43,9 +42,9 @@ class OGRLayerWithTransaction: public OGRLayerDecorator
 
         OGRDataSourceWithTransaction* m_poDS;
         OGRFeatureDefn* m_poFeatureDefn;
-    
+
     public:
-        
+
         OGRLayerWithTransaction(OGRDataSourceWithTransaction* poDS,
                                 OGRLayer* poBaseLayer);
        ~OGRLayerWithTransaction();
@@ -66,7 +65,7 @@ class OGRLayerWithTransaction: public OGRLayerDecorator
     virtual OGRFeature *GetFeature( GIntBig nFID );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-  
+
 };
 
 
@@ -94,7 +93,7 @@ class OGRDataSourceWithTransaction : public OGRDataSource
                                           int bTakeOwnershipTransactionBehaviour);
 
     virtual     ~OGRDataSourceWithTransaction();
-    
+
     int                 IsInTransaction() const { return m_bInTransaction; }
 
     virtual const char  *GetName();
@@ -106,24 +105,24 @@ class OGRDataSourceWithTransaction : public OGRDataSource
 
     virtual int         TestCapability( const char * );
 
-    virtual OGRLayer   *ICreateLayer( const char *pszName, 
+    virtual OGRLayer   *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );
-    virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer, 
-                                   const char *pszNewName, 
+    virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
+                                   const char *pszNewName,
                                    char **papszOptions = NULL );
 
     virtual OGRStyleTable *GetStyleTable();
     virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
-                            
+
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
 
     virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
-    
+
     virtual void        FlushCache();
 
     virtual OGRErr      StartTransaction(int bForce=FALSE);
@@ -204,10 +203,10 @@ OGRLayer* OGRDataSourceWithTransaction::WrapLayer(OGRLayer* poLayer)
             poLayer = poWrappedLayer;
         else
         {
-            OGRLayerWithTransaction* poWrappedLayer = new OGRLayerWithTransaction(this,poLayer);
-            m_oMapLayers[poLayer->GetName()] = poWrappedLayer;
-            m_oSetLayers.insert(poWrappedLayer);
-            poLayer = poWrappedLayer;
+            OGRLayerWithTransaction* poMutexedLayer = new OGRLayerWithTransaction(this,poLayer);
+            m_oMapLayers[poLayer->GetName()] = poMutexedLayer;
+            m_oSetLayers.insert(poMutexedLayer);
+            poLayer = poMutexedLayer;
         }
     }
     return poLayer;
@@ -246,7 +245,7 @@ OGRLayer    *OGRDataSourceWithTransaction::GetLayer(int iIndex)
 {
     if( !m_poBaseDataSource ) return NULL;
     return WrapLayer(m_poBaseDataSource->GetLayer(iIndex));
-    
+
 }
 
 OGRLayer    *OGRDataSourceWithTransaction::GetLayerByName(const char *pszName)
@@ -286,7 +285,7 @@ int         OGRDataSourceWithTransaction::TestCapability( const char * pszCap )
     return m_poBaseDataSource->TestCapability(pszCap);
 }
 
-OGRLayer   *OGRDataSourceWithTransaction::ICreateLayer( const char *pszName, 
+OGRLayer   *OGRDataSourceWithTransaction::ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef,
                                      OGRwkbGeometryType eGType,
                                      char ** papszOptions)
@@ -295,8 +294,8 @@ OGRLayer   *OGRDataSourceWithTransaction::ICreateLayer( const char *pszName,
     return WrapLayer(m_poBaseDataSource->CreateLayer(pszName, poSpatialRef, eGType, papszOptions));
 }
 
-OGRLayer   *OGRDataSourceWithTransaction::CopyLayer( OGRLayer *poSrcLayer, 
-                                   const char *pszNewName, 
+OGRLayer   *OGRDataSourceWithTransaction::CopyLayer( OGRLayer *poSrcLayer,
+                                   const char *pszNewName,
                                    char **papszOptions )
 {
     if( !m_poBaseDataSource ) return NULL;
@@ -541,10 +540,10 @@ OGRErr      OGRLayerWithTransaction::ReorderFields( int* panMap )
 
 OGRErr      OGRLayerWithTransaction::AlterFieldDefn( int iField,
                                                      OGRFieldDefn* poNewFieldDefn,
-                                                     int nFlags )
+                                                     int nFlagsIn )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    OGRErr eErr = m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlags);
+    OGRErr eErr = m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
     if( m_poFeatureDefn && eErr == OGRERR_NONE )
     {
         OGRFieldDefn* poSrcFieldDefn = m_poDecoratedLayer->GetLayerDefn()->GetFieldDefn(iField);
@@ -608,4 +607,3 @@ OGRErr       OGRLayerWithTransaction::ICreateFeature( OGRFeature *poFeature )
     delete poSrcFeature;
     return eErr;
 }
-

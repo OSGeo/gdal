@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDF Translator
  * Purpose:  Implements OGRPDFDataSource class
@@ -37,13 +36,13 @@ CPL_CVSID("$Id$");
 /*                            OGRPDFLayer()                             */
 /************************************************************************/
 
-OGRPDFLayer::OGRPDFLayer( PDFDataset* poDS,
+OGRPDFLayer::OGRPDFLayer( PDFDataset* poDSIn,
                           const char * pszName,
                           OGRSpatialReference *poSRS,
                           OGRwkbGeometryType eGeomType ) :
                                 OGRMemLayer(pszName, poSRS, eGeomType )
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     bGeomTypeSet = FALSE;
     bGeomTypeMixed = FALSE;
 }
@@ -176,13 +175,13 @@ int OGRPDFLayer::TestCapability( const char * pszCap )
 /*                        OGRPDFWritableLayer()                         */
 /************************************************************************/
 
-OGRPDFWritableLayer::OGRPDFWritableLayer( PDFWritableVectorDataset* poDS,
+OGRPDFWritableLayer::OGRPDFWritableLayer( PDFWritableVectorDataset* poDSIn,
                           const char * pszName,
                           OGRSpatialReference *poSRS,
                           OGRwkbGeometryType eGeomType ) :
                                 OGRMemLayer(pszName, poSRS, eGeomType )
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 }
 
 /************************************************************************/

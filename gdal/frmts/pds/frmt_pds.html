@@ -7,7 +7,7 @@
 
 <h1>PDS -- Planetary Data System</h1>
 
-PDS is a format used primarily by NASA to store and distribute 
+PDS is a format used primarily by NASA to store and distribute
 solar, lunar and planetary imagery data.  GDAL provides read-only
 access to PDS formatted imagery data.<p>
 
@@ -24,14 +24,14 @@ Geological Survey.<p>
 
 <hr>
 
-Due to ambiguities in the PDS specification, the georeferencing of 
+Due to ambiguities in the PDS specification, the georeferencing of
 some products is subtly or grossly incorrect.  There are configuration
 variables which may be set for these products to correct the interpretation
-of the georeferencing.  Some details are available in 
+of the georeferencing.  Some details are available in
 <a href="http://trac.osgeo.org/gdal/ticket/3940">ticket #3940</a>.<p>
 
-For example, the MOLA labels currently contain a one pixel offset. Once 
-<a href="http://trac.osgeo.org/gdal/ticket/5941">ticket #5941</a> is applied (should be available post 1.11.3), 
+For example, the MOLA labels currently contain a one pixel offset. Once
+<a href="http://trac.osgeo.org/gdal/ticket/5941">ticket #5941</a> is applied (should be available post 1.11.3),
 which corrects the PDS offset defaults, here is how you can correctly read in
 a MOLA label using the --config options in the PDS reader.
 <p>

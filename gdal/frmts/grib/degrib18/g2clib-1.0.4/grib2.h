@@ -1,5 +1,5 @@
-#ifndef _grib2_H
-#define _grib2_H
+#ifndef grib2_H
+#define grib2_H
 #include<stdio.h>
 
 #define G2_VERSION "g2clib-1.0.4"
@@ -75,11 +75,11 @@
 //        gfld->igdtmpl  = Contains the data values for the specified Grid
 //                         Definition Template ( NN=gfld->igdtnum ).  Each
 //                         element of this integer array contains an entry (in
-//                         the order specified) of Grid Defintion Template 3.NN
+//                         the order specified) of Grid Definition Template 3.NN
 //                         This element is a pointer to an array
 //                         that holds the data.
 //        gfld->igdtlen = Number of elements in gfld->igdtmpl[].  i.e. number of
-//                       entries in Grid Defintion Template 3.NN
+//                       entries in Grid Definition Template 3.NN
 //                       ( NN=gfld->igdtnum ).
 //        gfld->list_opt  = (Used if gfld->numoct_opt .ne. 0)  This array
 //                          contains the number of grid points contained in
@@ -95,11 +95,11 @@
 //        gfld->ipdtmpl  = Contains the data values for the specified Product
 //                         Definition Template ( N=gfdl->ipdtnum ).  Each element
 //                         of this integer array contains an entry (in the
-//                         order specified) of Product Defintion Template 4.N.
+//                         order specified) of Product Definition Template 4.N.
 //                         This element is a pointer to an array
 //                         that holds the data.
 //        gfld->ipdtlen = Number of elements in gfld->ipdtmpl[].  i.e. number of
-//                       entries in Product Defintion Template 4.N
+//                       entries in Product Definition Template 4.N
 //                       ( N=gfdl->ipdtnum ).
 //        gfld->coord_list  = Real array containing floating point values
 //                            intended to document the vertical discretisation
@@ -114,7 +114,7 @@
 //        gfld->idrtmpl  = Contains the data values for the specified Data
 //                         Representation Template ( N=gfld->idrtnum ).  Each
 //                         element of this integer array contains an entry
-//                         (in the order specified) of Product Defintion
+//                         (in the order specified) of Product Definition
 //                         Template 5.N.
 //                         This element is a pointer to an array
 //                         that holds the data.
@@ -152,8 +152,8 @@ typedef unsigned int g2intu;
 typedef float g2float;
 
 typedef struct {
-   g2int type;           /* 3=Grid Defintion Template.                       */
-                         /* 4=Product Defintion Template.                    */
+   g2int type;           /* 3=Grid Definition Template.                       */
+                         /* 4=Product Definition Template.                    */
                          /* 5=Data Representation Template.                  */
    g2int num;            /* template number.                                 */
    g2int maplen;         /* number of entries in the static part             */
@@ -227,9 +227,9 @@ extern void simpack(g2float *,g2int,g2int *,unsigned char *,g2int *);
 extern void compack(g2float *,g2int,g2int,g2int *,unsigned char *,g2int *);
 void misspack(g2float *,g2int ,g2int ,g2int *, unsigned char *, g2int *);
 void gbit(unsigned char *,g2int *,g2int ,g2int );
-void sbit(unsigned char *,g2int *,g2int ,g2int );
+void sbit(unsigned char *,const g2int *,g2int ,g2int );
 void gbits(unsigned char *,g2int *,g2int ,g2int ,g2int ,g2int );
-void sbits(unsigned char *,g2int *,g2int ,g2int ,g2int ,g2int );
+void sbits(unsigned char *,const g2int *,g2int ,g2int ,g2int ,g2int );
 
 int pack_gp(g2int *, g2int *, g2int *,
             g2int *, g2int *, g2int *, g2int *, g2int *,
@@ -237,5 +237,41 @@ int pack_gp(g2int *, g2int *, g2int *,
             g2int *, g2int *, g2int *, g2int *, g2int *,
             g2int *, g2int *, g2int *);
 
-#endif  /*  _grib2_H  */
+g2int g2_unpack1(unsigned char *cgrib,g2int *iofst,g2int **ids,g2int *idslen);
+g2int g2_unpack2(unsigned char *cgrib,g2int *iofst,g2int *lencsec2,unsigned char **csec2);
+g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl,
+                         g2int *mapgridlen,g2int **ideflist,g2int *idefnum);
+g2int g2_unpack4(unsigned char *cgrib,g2int *iofst,g2int *ipdsnum,g2int **ipdstmpl,
+               g2int *mappdslen,g2float **coordlist,g2int *numcoord);
+g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
+               g2int **idrstmpl,g2int *mapdrslen);
+g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
+               g2int **bmap);
+g2int g2_unpack7(unsigned char *cgrib,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
+               g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float **fld);
+g2int simunpack(unsigned char *,g2int *, g2int,g2float *);
+int comunpack(unsigned char *,g2int,g2int,g2int *,g2int,g2float *);
+g2int specunpack(unsigned char *,g2int *,g2int,g2int,g2int, g2int, g2float *);
+g2int jpcunpack(unsigned char *,g2int,g2int *,g2int, g2float *);
+void specpack(g2float *fld,g2int ndpts,g2int JJ,g2int KK,g2int MM,
+              g2int *idrstmpl,unsigned char *cpack,g2int *lcpack);
+
+typedef g2int integer;
+typedef g2float real;
+int reduce(integer *kfildo, integer *jmin, integer *jmax,
+        integer *lbit, integer *nov, integer *lx, integer *ndg, integer *ibit,
+         integer *jbit, integer *kbit, integer *novref, integer *ibxx2,
+        integer *ier);
+void cmplxpack(g2float *fld,g2int ndpts, g2int idrsnum,g2int *idrstmpl,
+               unsigned char *cpack, g2int *lcpack);
+g2int getdim(unsigned char *csec3,g2int *width,g2int *height,g2int *iscan);
+void g2_miss( gribfield *gfld, float *rmiss, int *nmiss );
+g2int getpoly(unsigned char *csec3,g2int *jj,g2int *kk,g2int *mm);
+void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
+             unsigned char *cpack,g2int *lcpack);
+int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
+                 g2int ltype, g2int ratio, g2int retry, char *outjpc, 
+                 g2int jpclen);
+
+#endif  /*  grib2_H  */
 

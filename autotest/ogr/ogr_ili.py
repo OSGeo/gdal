@@ -32,7 +32,8 @@ sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
-from osgeo import ogr, gdal
+from osgeo import gdal
+from osgeo import ogr
 
 def cpl_debug_on():
     gdaltest.cpl_debug = gdal.GetConfigOption('CPL_DEBUG')
@@ -299,7 +300,7 @@ ENDE"""
     return 'success'
 
 ###############################################################################
-# Ili1 character encding test.
+# Ili1 character encoding test.
 
 def ogr_interlis1_7():
 
@@ -578,7 +579,11 @@ def ogr_interlis1_13():
     layers = ['SURFC_TOP__SURFC_TBL',
               'SURFC_TOP__SURFC_TBL_SHAPE',
               'SURFC_TOP__SURFC_TBL_TEXT_ID',
-              'SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE']
+              'SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE',
+              'SURFC_TOP__LineAttrib1',
+              'SURFC_TOP__Flaechenelement',
+              'SURFC_TOP__Flaechenelement_Geometrie'
+              ]
 
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
@@ -616,7 +621,6 @@ def ogr_interlis1_13():
             gdaltest.post_reason( 'field value wrong.' )
             return 'fail'
 
-    #geom_field_values = ['POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))']
     geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174)))']
 
     if feat.GetGeomFieldCount() != len(geom_field_values):
@@ -663,7 +667,6 @@ def ogr_interlis1_13():
             gdaltest.post_reason( 'field value wrong.' )
             return 'fail'
 
-    #geom_field_values = ['POLYGON ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606),(747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326))']
     geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606)),COMPOUNDCURVE ((747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326)))']
 
     if feat.GetGeomFieldCount() != len(geom_field_values):
@@ -678,15 +681,169 @@ def ogr_interlis1_13():
             return 'fail'
 
     # --- same with text IDENT field
-    return 'success'  # TODO: Surface with text IDENT field not supported yet
+    # TODO: Surface with text IDENT field not supported yet
 
-    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE')
+    # lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE')
+
+    # if lyr.GetFeatureCount() != 5:
+    #     gdaltest.post_reason('feature count wrong.')
+    #     return 'fail'
+
+    # lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL_TEXT_ID')
+
+    # if lyr.GetFeatureCount() != 4:
+    #     gdaltest.post_reason('feature count wrong.')
+    #     return 'fail'
+
+    # feat = lyr.GetNextFeature()
+
+    # # Note: original value 'AAA_EZ20156' includes blank-symbol
+    # field_values = ['AAA EZ20156', 1, 3, 1, 23, 25000, 20060111]
+
+    # if feat.GetFieldCount() != len(field_values):
+    #     gdaltest.post_reason( 'field count wrong.' )
+    #     return 'fail'
+
+    # for i in range(feat.GetFieldCount()):
+    #     if feat.GetFieldAsString(i) != str(field_values[i]):
+    #         feat.DumpReadable()
+    #         print(feat.GetFieldAsString(i))
+    #         gdaltest.post_reason( 'field value wrong.' )
+    #         return 'fail'
+
+    # geom_field_values = ['POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))']
+
+    # if feat.GetGeomFieldCount() != len(geom_field_values):
+    #     gdaltest.post_reason( 'geom field count wrong.' )
+    #     print(feat.GetGeomFieldCount())
+    #     return 'fail'
+
+    # for i in range(feat.GetGeomFieldCount()):
+    #     geom = feat.GetGeomFieldRef(i)
+    #     if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+    #         feat.DumpReadable()
+    #         return 'fail'
+
+    # # --- test multi-ring polygon
+
+    # feat = lyr.GetNextFeature()
+    # feat = lyr.GetNextFeature()
+    # feat = lyr.GetNextFeature()
+    # field_values = ['AAA EZ36360', 3, 3, 1, 23, 25000, 20060111]
+
+    # if feat.GetFieldCount() != len(field_values):
+    #     gdaltest.post_reason( 'field count wrong.' )
+    #     return 'fail'
+
+    # for i in range(feat.GetFieldCount()):
+    #     if feat.GetFieldAsString(i) != str(field_values[i]):
+    #         feat.DumpReadable()
+    #         print(feat.GetFieldAsString(i))
+    #         gdaltest.post_reason( 'field value wrong.' )
+    #         return 'fail'
+
+    # geom_field_values = ['POLYGON ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606),(747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326))']
+
+    # if feat.GetGeomFieldCount() != len(geom_field_values):
+    #     gdaltest.post_reason( 'geom field count wrong.' )
+    #     print(feat.GetGeomFieldCount())
+    #     return 'fail'
+
+    # for i in range(feat.GetGeomFieldCount()):
+    #     geom = feat.GetGeomFieldRef(i)
+    #     if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+    #         feat.DumpReadable()
+    #         return 'fail'
+
+    lyr = ds.GetLayerByName('SURFC_TOP__Flaechenelement_Geometrie')
+    if lyr.GetFeatureCount() != 3:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['MULTICURVE (COMPOUNDCURVE ((697064.616 245051.751,697064.773 245052.007,697067.63 245050.258,697067.473 245050.002,697064.616 245051.751)))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['MULTICURVE (COMPOUNDCURVE ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648)))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    lyr = ds.GetLayerByName('SURFC_TOP__Flaechenelement')
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((697064.616 245051.751,697064.773 245052.007,697067.63 245050.258,697067.473 245050.002,697064.616 245051.751))))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648),(698295.243 246757.648,698298.028 246754.897)))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Ili1 Surface test with linear conversion.
+
+def ogr_interlis1_13_linear():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_STROKE_CURVE', 'YES')
+
+    ds = ogr.Open('data/ili/surface.itf,data/ili/surface.imd')
+
+    layers = ['SURFC_TOP__SURFC_TBL',
+              'SURFC_TOP__SURFC_TBL_SHAPE',
+              'SURFC_TOP__SURFC_TBL_TEXT_ID',
+              'SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE',
+              'SURFC_TOP__LineAttrib1',
+              'SURFC_TOP__Flaechenelement',
+              'SURFC_TOP__Flaechenelement_Geometrie'
+              ]
+
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason( 'Did not get right layers' )
+            return 'fail'
+
+    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL_SHAPE')
 
     if lyr.GetFeatureCount() != 5:
         gdaltest.post_reason('feature count wrong.')
         return 'fail'
 
-    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL_TEXT_ID')
+    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL')
 
     if lyr.GetFeatureCount() != 4:
         gdaltest.post_reason('feature count wrong.')
@@ -694,8 +851,7 @@ def ogr_interlis1_13():
 
     feat = lyr.GetNextFeature()
 
-    # Note: original value 'AAA_EZ20156' includes blank-symbol
-    field_values = ['AAA EZ20156', 1, 3, 1, 23, 25000, 20060111]
+    field_values = ['103', 1, 3, 1, 23, 25000, 20060111]
 
     if feat.GetFieldCount() != len(field_values):
         gdaltest.post_reason( 'field count wrong.' )
@@ -721,12 +877,27 @@ def ogr_interlis1_13():
             feat.DumpReadable()
             return 'fail'
 
+    # --- test curved polygon
+
+    geom_field_values = ['POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))']
+
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print(feat.GetGeomFieldCount())
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
     # --- test multi-ring polygon
 
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
-    feat = lyr.GetNextFeature()
-    field_values = ['AAA EZ36360', 3, 3, 1, 23, 25000, 20060111]
+    #field_values = ['106', 3, 3, 1, 23, 25000, 20060111]
+    field_values = ['105', 3, 3, 1, 23, 25000, 20060111]
 
     if feat.GetFieldCount() != len(field_values):
         gdaltest.post_reason( 'field count wrong.' )
@@ -739,7 +910,7 @@ def ogr_interlis1_13():
             gdaltest.post_reason( 'field value wrong.' )
             return 'fail'
 
-    geom_field_values = ['POLYGON ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606),(747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326))']
+    geom_field_values = ['POLYGON ((598330.204 249028.397,598344.756 249057.501,598390.838 249074.479,598422.367 249081.755,598459.96 249093.882,598493.915 249101.158,598523.019 249106.008,598563.038 249084.18,598589.716 249042.949,598603.056 249011.42,598607.907 248966.551,598577.59 248960.487,598493.915 248983.528,598424.793 248996.868,598359.308 249010.207,598330.204 249028.397))']
 
     if feat.GetGeomFieldCount() != len(geom_field_values):
         gdaltest.post_reason( 'geom field count wrong.' )
@@ -751,6 +922,58 @@ def ogr_interlis1_13():
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
             return 'fail'
+
+    lyr = ds.GetLayerByName('SURFC_TOP__Flaechenelement_Geometrie')
+    if lyr.GetFeatureCount() != 3:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['MULTICURVE (COMPOUNDCURVE ((697064.616 245051.751,697064.773 245052.007,697067.63 245050.258,697067.473 245050.002,697064.616 245051.751)))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['MULTICURVE (COMPOUNDCURVE ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648)))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    lyr = ds.GetLayerByName('SURFC_TOP__Flaechenelement')
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['POLYGON ((697064.616 245051.751,697064.773 245052.007,697067.63 245050.258,697067.473 245050.002,697064.616 245051.751))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['POLYGON ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648,698298.028 246754.897))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    gdal.SetConfigOption('OGR_STROKE_CURVE', None)
 
     return 'success'
 
@@ -860,7 +1083,7 @@ def ogr_interlis2_2():
     for i in range(ds.GetLayerCount()):
       if not ds.GetLayer(i).GetName() in layers:
           gdaltest.post_reason( 'Did not get right layers' )
-          #return 'fail'
+          return 'fail'
 
     lyr = ds.GetLayerByName('RoadsExdm2ien.RoadsExtended.RoadSign')
     if lyr.GetFeatureCount() != 4:
@@ -1049,6 +1272,99 @@ def ogr_interlis2_3():
     return 'success'
 
 ###############################################################################
+# Ili2 Oereb model
+
+def ogr_interlis2_4():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.imd')
+    if ds is None:
+        return 'fail'
+
+    layers = ['chGeoId10.BFSNr_',
+              'chGeoId10.Kanton_',
+              'chGeoId10.KantonInklFl_',
+              'CodeISO.CountryCodeISO_',
+              'CodeISO.LanguageCodeISO_',
+              'MultilingualText09.LocalizedMText',
+              'MultilingualText09.LocalizedText',
+              'MultilingualText09.LocalizedURI',
+              'MultilingualText09.MultilingualText',
+              'MultilingualText09.MultilingualURI',
+              'OeREBKRM09.ArtikelNummer_',
+              'OeREBKRM09.Datum_',
+              'OeREBKRM09.Thema_',
+              'OeREBKRM09.WebReferenz_',
+              'OeREBKRM09.ArtikelInhaltMehrsprachig',
+              'OeREBKRM09vs.Vorschriften.Amt',
+              'OeREBKRM09vs.Vorschriften.Artikel',
+              'OeREBKRM09vs.Vorschriften.Rechtsvorschrift',
+              'OeREBKRM09vs.Vorschriften.HinweisWeitereDokumente',
+              'OeREBKRM09trsfr.Transferstruktur.DarstellungsDienst',
+              'OeREBKRM09trsfr.Transferstruktur.Eigentumsbeschraenkung',
+              'OeREBKRM09trsfr.Transferstruktur.Geometrie',
+              'OeREBKRM09trsfr.Transferstruktur.HinweisDefinition',
+              'OeREBKRM09trsfr.Transferstruktur.GrundlageVerfeinerung',
+              'OeREBKRM09trsfr.Transferstruktur.HinweisDefinitionDokument',
+              'OeREBKRM09trsfr.Transferstruktur.HinweisVorschrift',
+              'OeREBKRM09vs.Vorschriften.Dokument']
+
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason('layer count wrong.')
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason('Did not get right layers')
+            return 'fail'
+
+    lyr = ds.GetLayerByName('OeREBKRM09trsfr.Transferstruktur.Geometrie')
+    if lyr.GetFeatureCount() != 36:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    field_values = ['108-G-0002', 'inKraft', '1975-06-27',
+                    'http://www.geocat.ch/geonetwork/srv/ger/metadata.show?fileIdentifier=ff218384-7251-4e68-85e7-c163dd366616',
+                    '108-Z-0002', 'ch.admin.bazl']
+
+    if feat.GetFieldCount() != len(field_values):
+        feat.DumpReadable()
+        gdaltest.post_reason('field count wrong.')
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason('field value wrong.')
+            return 'fail'
+
+    geom_field_values = [None, None, 'CURVEPOLYGON (COMPOUNDCURVE ((658593.928 254957.714,658511.628 254948.614,658418.028 254938.516,658106.426 254913.918,658192.222 254445.914,658771.228 254619.412,659667.232 254699.606,660369.238 254827.202,661016.442 255010.1,661279.644 255090.198,661866.648 255138.094,661784.45 255601.798,661211.146 255432.8,660320.54 255352.806,659523.436 255206.71,658703.528 254966.814,658624.228 254961.014,658593.928 254957.714)))']
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason('geom field count wrong.')
+        print(feat.GetGeomFieldCount())
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        val = geom_field_values[i]
+        if val is None:
+            ok = geom is None
+        else:
+            ok = ogrtest.check_feature_geometry(geom, val) == 0
+        if not ok:
+            gdaltest.post_reason('geom check failed.')
+            print geom
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Check arc segmentation
 
 def ogr_interlis_arc1():
@@ -1061,7 +1377,7 @@ def ogr_interlis_arc1():
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
 
     gdal.SetConfigOption('OGR_STROKE_CURVE', None)
-    
+
     length_0_1_deg = 72.7181992353 # Line length with 0.1 degree segments
 
     #Read Area lines
@@ -1155,7 +1471,7 @@ def ogr_interlis_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_interlis1_1,
     ogr_interlis1_2,
     ogr_interlis1_3,
@@ -1168,10 +1484,12 @@ gdaltest_list = [
     ogr_interlis1_11,
     ogr_interlis1_12,
     ogr_interlis1_13,
+    ogr_interlis1_13_linear,
     ogr_interlis1_14,
     ogr_interlis2_1,
     ogr_interlis2_2,
     ogr_interlis2_3,
+    ogr_interlis2_4,
     ogr_interlis_arc1,
     ogr_interlis_arc2,
     ogr_interlis_cleanup ]

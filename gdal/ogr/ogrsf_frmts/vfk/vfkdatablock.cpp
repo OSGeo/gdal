@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader - Data block definition
  * Purpose:  Implements VFKDataBlock class.
@@ -37,6 +36,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id$");
 
 /*!
   \brief VFK Data Block constructor
@@ -183,11 +184,13 @@ int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
 /*!
   \brief Get number of features for given data block
 
+  \param bForce TRUE to force reading VFK data blocks if needed
+
   \return number of features
 */
-GIntBig IVFKDataBlock::GetFeatureCount()
+GIntBig IVFKDataBlock::GetFeatureCount(bool bForce)
 {
-    if (m_nFeatureCount < 0) {
+    if (bForce && m_nFeatureCount == -1) {
         m_poReader->ReadDataRecords(this); /* read VFK data records */
         if (m_bGeometryPerBlock && !m_bGeometry) {
             LoadGeometry(); /* get real number of features */
@@ -402,14 +405,14 @@ IVFKFeature *IVFKDataBlock::GetFeature(GIntBig nFID)
     if (m_nFeatureCount < 0) {
         m_poReader->ReadDataRecords(this);
     }
-    
+
     if (nFID < 1 || nFID > m_nFeatureCount)
         return NULL;
 
     if (m_bGeometryPerBlock && !m_bGeometry) {
         LoadGeometry();
     }
-    
+
     return GetFeatureByIndex(int (nFID) - 1); /* zero-based index */
 }
 
@@ -465,7 +468,7 @@ int IVFKDataBlock::LoadGeometry()
 #endif
 
     if (nInvalid > 0) {
-        CPLError(CE_Warning, CPLE_AppDefined, 
+        CPLError(CE_Warning, CPLE_AppDefined,
                  "%s: %d features with invalid or empty geometry", m_pszName, nInvalid);
     }
 
@@ -481,7 +484,7 @@ int IVFKDataBlock::LoadGeometry()
   \brief Add linestring to a ring (private)
 
   \param[in,out] papoRing list of rings
-  \param poLine pointer to linestring to be added to a ring 
+  \param poLine pointer to linestring to be added to a ring
   \param bNewRing  create new ring
   \param bBackword allow backward direction
 
@@ -735,11 +738,11 @@ GIntBig VFKDataBlock::GetFeatureCount(const char *pszName, const char *pszValue)
 */
 int VFKDataBlock::LoadGeometryPoint()
 {
-    long nInvalid = 0;
+    int nInvalid = 0;
     int i_idxY = GetPropertyIndex("SOURADNICE_Y");
     int i_idxX = GetPropertyIndex("SOURADNICE_X");
     if (i_idxY < 0 || i_idxX < 0) {
-        CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "Corrupted data (%s).\n", m_pszName);
         return nInvalid;
     }
@@ -794,7 +797,7 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
         if (ipcb == 1) {
             if (!oOGRLine.IsEmpty()) {
                 oOGRLine.setCoordinateDimension(2); /* force 2D */
-                if (!poLine->SetGeometry(&oOGRLine))
+                if (poLine != NULL && !poLine->SetGeometry(&oOGRLine))
                     nInvalid++;
                 oOGRLine.empty(); /* restore line */
             }
@@ -827,7 +830,7 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
 */
 int VFKDataBlock::LoadGeometryLineStringHP()
 {
-    long nInvalid = 0;
+    int nInvalid = 0;
 
     VFKDataBlock  *poDataBlockLines
         = (VFKDataBlock *) m_poReader->GetDataBlock("SBP");
@@ -876,7 +879,7 @@ int VFKDataBlock::LoadGeometryLineStringHP()
 */
 int VFKDataBlock::LoadGeometryPolygon()
 {
-    long nInvalid = 0;
+    int nInvalid = 0;
 
     GUIntBig id;
     int idxBud = 0;
@@ -969,7 +972,7 @@ int VFKDataBlock::LoadGeometryPolygon()
         /* collect rings (points) */
         bool bFound = false;
         int nCount = 0;
-        int nCountMax = poLineList.size() * 2;
+        int nCountMax = static_cast<int>(poLineList.size()) * 2;
         while (poLineList.size() > 0 && nCount < nCountMax) {
             bool bNewRing = !bFound;
             bFound = false;

@@ -10,7 +10,7 @@
 ###############################################################################
 # Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -30,12 +30,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import ogr, gdal
-except ImportError:
-    import  ogr, gdal
-
 import sys
+
+from osgeo import ogr, gdal
 
 #############################################################################
 
@@ -55,10 +52,18 @@ def GeomType2Name( type ):
             ogr.wkbCompoundCurve : ('wkbCompoundCurve', 'Z'),
             ogr.wkbCurvePolygon : ('wkbCurvePolygon', 'Z'),
             ogr.wkbMultiCurve : ('wkbMultiCurve', 'Z'),
-            ogr.wkbMultiSurface : ('wkbMultiSurface', 'Z') }
+            ogr.wkbMultiSurface : ('wkbMultiSurface', 'Z'),
+            ogr.wkbCurve : ('wkbCurve', 'Z'),
+            ogr.wkbSurface : ('wkbSurface', 'Z') }
     ret = dic[flat_type][0]
     if flat_type != type:
-        ret += dic[flat_type][1]
+        if ogr.GT_HasM(type):
+          if ogr.GT_HasZ(type):
+            ret += "ZM"
+          else:
+            ret += "M"
+        else:
+          ret += dic[flat_type][1]
     return ret
 
 #############################################################################
@@ -87,7 +92,7 @@ openoptions = []
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
 if argv is None:
     sys.exit( 0 )
-        
+
 i = 1
 while i < len(argv):
     arg = argv[i]
@@ -132,7 +137,7 @@ if schema and feature_count:
 if schema and extent:
     sys.stderr.write('Ignoring -extent when used with -schema.\n')
     extent = 0
-    
+
 #############################################################################
 # Open the datasource to read.
 
@@ -203,14 +208,14 @@ for name in layer_list:
            % (relative,not schema,Esc(infile))
 
     if len(openoptions) > 0:
-        vrt += '    <OpenOptions>\n' 
+        vrt += '    <OpenOptions>\n'
         for option in openoptions:
             (key, value) = option.split('=')
             vrt += '        <OOI key="%s">%s</OOI>\n'  % (Esc(key), Esc(value))
-        vrt += '    </OpenOptions>\n' 
+        vrt += '    </OpenOptions>\n'
 
     if schema:
-        vrt += '    <SrcLayer>@dummy@</SrcLayer>\n' 
+        vrt += '    <SrcLayer>@dummy@</SrcLayer>\n'
     else:
         vrt += '    <SrcLayer>%s</SrcLayer>\n' % Esc(name)
 
@@ -303,7 +308,7 @@ for name in layer_list:
 
     vrt += '  </OGRVRTLayer>\n'
 
-vrt += '</OGRVRTDataSource>\n' 
+vrt += '</OGRVRTDataSource>\n'
 
 #############################################################################
 # Write vrt

@@ -34,12 +34,12 @@ import org.gdal.gdal.Dataset;
 public class multireadtest implements Runnable
 {
     private String _filename;
-    
+
     public multireadtest(String filename)
     {
         _filename = filename;
     }
-    
+
     public void run()
     {
         for(int i=0;i<100;i++)
@@ -49,11 +49,11 @@ public class multireadtest implements Runnable
             //ds.delete();
         }
     }
-    
+
     public static void main(String[] args) throws InterruptedException
     {
         String filename = args[0];
-        
+
         gdal.AllRegister();
 
         Thread t[] = new Thread[4];

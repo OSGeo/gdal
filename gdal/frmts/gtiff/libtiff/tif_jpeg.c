@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.119 2015-08-15 20:13:07 bfriesen Exp $ */
+/* $Id: tif_jpeg.c,v 1.123 2016-01-23 21:20:34 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -58,7 +58,7 @@ int TIFFReInitJPEG_12( TIFF *tif, int scheme, int is_encode );
   Libjpeg's jmorecfg.h defines INT16 and INT32, but only if XMD_H is
   not defined.  Unfortunately, the MinGW and Borland compilers include
   a typedef for INT32, which causes a conflict.  MSVC does not include
-  a conficting typedef given the headers which are included.
+  a conflicting typedef given the headers which are included.
 */
 #if defined(__BORLANDC__) || defined(__MINGW32__)
 # define XMD_H 1
@@ -937,7 +937,7 @@ JPEGFixupTagsSubsamplingSkip(struct JPEGFixupTagsSubsamplingData* data, uint16 s
 	else
 	{
 		uint16 m;
-		m=skiplength-data->bufferbytesleft;
+		m=(uint16)(skiplength-data->bufferbytesleft);
 		if (m<=data->filebytesleft)
 		{
 			data->bufferbytesleft=0;
@@ -1283,7 +1283,7 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
                        if( line_work_buf != NULL )
                        {
                                /*
-                                * In the MK1 case, we aways read into a 16bit
+                                * In the MK1 case, we always read into a 16bit
                                 * buffer, and then pack down to 12bit or 8bit.
                                 * In 6B case we only read into 16 bit buffer
                                 * for 12bit data, which we need to repack.
@@ -1303,10 +1303,10 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
                                                        ((unsigned char *) buf) + iPair * 3;
                                                JSAMPLE *in_ptr = line_work_buf + iPair * 2;
 
-                                               out_ptr[0] = (in_ptr[0] & 0xff0) >> 4;
-                                               out_ptr[1] = ((in_ptr[0] & 0xf) << 4)
-                                                       | ((in_ptr[1] & 0xf00) >> 8);
-                                               out_ptr[2] = ((in_ptr[1] & 0xff) >> 0);
+                                               out_ptr[0] = (unsigned char)((in_ptr[0] & 0xff0) >> 4);
+                                               out_ptr[1] = (unsigned char)(((in_ptr[0] & 0xf) << 4)
+                                                       | ((in_ptr[1] & 0xf00) >> 8));
+                                               out_ptr[2] = (unsigned char)(((in_ptr[1] & 0xff) >> 0));
                                        }
                                }
                                else if( sp->cinfo.d.data_precision == 8 )
@@ -1367,7 +1367,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 	(void) s;
 
 	/* data is expected to be read in multiples of a scanline */
-	if ( (nrows = sp->cinfo.d.image_height) ) {
+	if ( (nrows = sp->cinfo.d.image_height) != 0 ) {
 
 		/* Cb,Cr both have sampling factors 1, so this is correct */
 		JDIMENSION clumps_per_line = sp->cinfo.d.comp_info[1].downsampled_width;            
@@ -1467,10 +1467,10 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 					{
 						unsigned char *out_ptr = ((unsigned char *) buf) + iPair * 3;
 						JSAMPLE *in_ptr = (JSAMPLE *) (tmpbuf + iPair * 2);
-						out_ptr[0] = (in_ptr[0] & 0xff0) >> 4;
-						out_ptr[1] = ((in_ptr[0] & 0xf) << 4)
-							| ((in_ptr[1] & 0xf00) >> 8);
-						out_ptr[2] = ((in_ptr[1] & 0xff) >> 0);
+						out_ptr[0] = (unsigned char)((in_ptr[0] & 0xff0) >> 4);
+						out_ptr[1] = (unsigned char)(((in_ptr[0] & 0xf) << 4)
+							| ((in_ptr[1] & 0xf00) >> 8));
+						out_ptr[2] = (unsigned char)(((in_ptr[1] & 0xff) >> 0));
 					}
 				}
 			}
@@ -1893,7 +1893,7 @@ JPEGEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 
         if( sp->cinfo.c.data_precision == 12 )
         {
-            line16_count = (sp->bytesperline * 2) / 3;
+            line16_count = (int)((sp->bytesperline * 2) / 3);
             line16 = (short *) _TIFFmalloc(sizeof(short) * line16_count);
             if (!line16)
             {
@@ -2138,8 +2138,7 @@ JPEGVSetField(TIFF* tif, uint32 tag, va_list ap)
 			/* XXX */
 			return (0);
 		}
-		_TIFFsetByteArray(&sp->jpegtables, va_arg(ap, void*),
-		    (long) v32);
+		_TIFFsetByteArray(&sp->jpegtables, va_arg(ap, void*), v32);
 		sp->jpegtables_length = v32;
 		TIFFSetFieldBit(tif, FIELD_JPEGTABLES);
 		break;
@@ -2168,7 +2167,7 @@ JPEGVSetField(TIFF* tif, uint32 tag, va_list ap)
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
 
-	if ((fip = TIFFFieldWithTag(tif, tag))) {
+	if ((fip = TIFFFieldWithTag(tif, tag)) != NULL) {
 		TIFFSetFieldBit(tif, fip->field_bit);
 	} else {
 		return (0);

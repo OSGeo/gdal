@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CALS driver
  * Purpose:  CALS driver
@@ -27,13 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
+
 #include "tiff.h"
 
 CPL_CVSID("$Id$");
-
-extern "C" void GDALRegister_CALS();
 
 /************************************************************************/
 /* ==================================================================== */
@@ -60,11 +59,11 @@ class CALSDataset : public GDALPamDataset
 
     static int          Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *CreateCopy( const char *pszFilename, 
+    static GDALDataset *CreateCopy( const char *pszFilename,
                                            GDALDataset *poSrcDS,
                                            int bStrict,
                                            char **papszOptions,
-                                           GDALProgressFunc pfnProgress, 
+                                           GDALProgressFunc pfnProgress,
                                            void *pProgressData );
 };
 
@@ -79,10 +78,10 @@ class CALSRasterBand: public GDALPamRasterBand
     GDALRasterBand* poUnderlyingBand;
 
   public:
-    CALSRasterBand(CALSDataset* poDS)
+    CALSRasterBand(CALSDataset* poDSIn)
     {
-        this->poDS = poDS;
-        poUnderlyingBand = poDS->poUnderlyingDS->GetRasterBand(1);
+        this->poDS = poDSIn;
+        poUnderlyingBand = poDSIn->poUnderlyingDS->GetRasterBand(1);
         poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
         nBand = 1;
         eDataType = GDT_Byte;
@@ -140,9 +139,9 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
         int bInvertValues;
 
     public:
-        CALSWrapperSrcBand(GDALDataset* poSrcDS)
+        CALSWrapperSrcBand(GDALDataset* poSrcDSIn)
         {
-            this->poSrcDS = poSrcDS;
+            this->poSrcDS = poSrcDSIn;
             SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
             poSrcDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
             eDataType = GDT_Byte;
@@ -318,9 +317,9 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
     int nAngle1, nAngle2;
     if( sscanf(pszOrient+strlen("rorient:"),"%d,%d",&nAngle1,&nAngle2) != 2 )
         return NULL;
-    
-    int nDensity = 0;
+
     const char* pszDensity = strstr((const char*) poOpenInfo->pabyHeader, "rdensty:");
+    int nDensity = 0;
     if( pszDensity )
         sscanf(pszDensity+strlen("rdensty:"), "%d", &nDensity);
 
@@ -344,7 +343,7 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
     WriteLEInt32(fp, 8);  /* Offset of IFD0 */
 
     WriteLEInt16(fp, nTagCount); /* Number of entries */
- 
+
     WriteTIFFTAG(fp, TIFFTAG_IMAGEWIDTH, TIFF_LONG, nXSize);
     WriteTIFFTAG(fp, TIFFTAG_IMAGELENGTH, TIFF_LONG, nYSize);
     WriteTIFFTAG(fp, TIFFTAG_BITSPERSAMPLE, TIFF_SHORT, 1);
@@ -355,11 +354,11 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
     WriteTIFFTAG(fp, TIFFTAG_ROWSPERSTRIP, TIFF_LONG, nYSize);
     WriteTIFFTAG(fp, TIFFTAG_STRIPBYTECOUNTS, TIFF_LONG, nFAX4BlobSize);
     WriteTIFFTAG(fp, TIFFTAG_PLANARCONFIG, TIFF_SHORT, PLANARCONFIG_CONTIG);
- 
+
     WriteLEInt32(fp, 0);  /* Offset of next IFD */
 
     VSIFCloseL(fp);
-    
+
     // Create a /vsisparse/ description file assembling the TIFF header
     // with the FAX4 codestream that starts at offset 2048 of the CALS file
     poDS->osSparseFilename = CPLSPrintf("/vsimem/cals/sparse_%p.xml", poDS);
@@ -388,7 +387,7 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
                 2048,
                 nFAX4BlobSize);
     VSIFCloseL(fp);
-    
+
     poDS->poUnderlyingDS = (GDALDataset*) GDALOpenEx(
         CPLSPrintf("/vsisparse/%s", poDS->osSparseFilename.c_str()),
         GDAL_OF_RASTER | GDAL_OF_INTERNAL, NULL, NULL, NULL);
@@ -403,7 +402,7 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem("PIXEL_PATH", CPLSPrintf("%d", nAngle1));
         poDS->SetMetadataItem("LINE_PROGRESSION", CPLSPrintf("%d", nAngle2));
     }
-    
+
     if( nDensity != 0 )
     {
         poDS->SetMetadataItem("TIFFTAG_XRESOLUTION", CPLSPrintf("%d", nDensity));
@@ -425,7 +424,6 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
                                  poOpenInfo->GetSiblingFiles() );
 
-
     return( poDS );
 }
 
@@ -433,41 +431,41 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             CreateCopy()                             */
 /************************************************************************/
 
-GDALDataset *CALSDataset::CreateCopy( const char *pszFilename, 
+GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
                                       GDALDataset *poSrcDS,
                                       int bStrict,
-                                      CPL_UNUSED char **papszOptionsUnused,
-                                      GDALProgressFunc pfnProgress, 
+                                      char ** /* papszOptionsUnused */,
+                                      GDALProgressFunc pfnProgress,
                                       void *pProgressData )
 {
     if( poSrcDS->GetRasterCount() == 0 ||
         (bStrict && poSrcDS->GetRasterCount() != 1) )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "CALS driver only supports single band raster.");
         return NULL;
     }
     if( poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == NULL ||
         !EQUAL(poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"), "1") )
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "CALS driver only supports 1-bit.");
         if( bStrict )
             return NULL;
     }
-    
+
     if( poSrcDS->GetRasterXSize() > 999999 ||
         poSrcDS->GetRasterYSize() > 999999 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "CALS driver only supports datasets with dimension <= 999999.");
         return NULL;
     }
-    
+
     GDALDriver* poGTiffDrv = (GDALDriver*)GDALGetDriverByName("GTiff");
     if( poGTiffDrv == NULL )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "CALS driver needs GTiff driver.");
         return NULL;
     }
@@ -488,11 +486,11 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
                                            papszOptions);
     if( poDS == NULL )
     {
-        // Shouldn't happen normally (except if CCITTFAX4 not available)
+        // Should not happen normally (except if CCITTFAX4 not available)
         CSLDestroy(papszOptions);
         return NULL;
     }
-#define INITIAL_PADDING "12345"
+    const char INITIAL_PADDING[] = "12345";
     poDS->SetMetadataItem("TIFFTAG_DOCUMENTNAME", INITIAL_PADDING); // to adjust padding
     GDALClose(poDS);
     VSIStatBufL sStat;
@@ -502,7 +500,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
         CSLDestroy(papszOptions);
         return NULL;
     }
-    int nTIFFHeaderSize = sStat.st_size;
+    int nTIFFHeaderSize = static_cast<int>(sStat.st_size);
     VSIUnlink(osTmpFilename);
 
 
@@ -595,25 +593,23 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
 void GDALRegister_CALS()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "CALS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "CALS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "CALS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "CALS (Type 1)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_cals.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, ".cal .ct1");
+    poDriver->SetDescription( "CALS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "CALS (Type 1)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_cals.html" );
 
-        poDriver->pfnIdentify = CALSDataset::Identify;
-        poDriver->pfnOpen = CALSDataset::Open;
-        poDriver->pfnCreateCopy = CALSDataset::CreateCopy;
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, ".cal .ct1");
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnIdentify = CALSDataset::Identify;
+    poDriver->pfnOpen = CALSDataset::Open;
+    poDriver->pfnCreateCopy = CALSDataset::CreateCopy;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

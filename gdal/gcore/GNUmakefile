@@ -8,7 +8,7 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdaljp2metadata.o gdaljp2box.o gdalmultidomainmetadata.o \
 		gdal_rat.o gdalgmlcoverage.o gdalpamproxydb.o \
                 gdalallvalidmaskband.o gdalnodatamaskband.o \
- 		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
+		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
 		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o gdalclientserver.o \
 		gdalgeorefpamdataset.o gdaljp2abstractdataset.o gdalvirtualmem.o \
 		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o \
@@ -49,13 +49,8 @@ docs:
 gdal_misc.$(OBJ_EXT):	gdal_misc.cpp gdal_version.h
 
 gdaldrivermanager.$(OBJ_EXT):	gdaldrivermanager.cpp ../GDALmake.opt
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
 		$< -o $@
 
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
-
-# Small test tool using gdaljp2box.cpp to read jpeg2000 boxes.  Not normally
-# built or installed.
-jp2dump:	jp2dump.o
-	$(CXX) $(CXXFLAGS) jp2dump.o $(CONFIG_LIBS) -o jp2dump

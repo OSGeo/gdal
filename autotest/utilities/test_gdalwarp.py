@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdalwarp testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -144,7 +144,7 @@ def test_gdalwarp_5():
         return 'skip'
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/testgdalwarp_gcp.tif')
-    
+
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/testgdalwarp_gcp.tif tmp/testgdalwarp5.tif')
 
     ds = gdal.Open('tmp/testgdalwarp5.tif')
@@ -598,7 +598,7 @@ def test_gdalwarp_23():
 def test_gdalwarp_24():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
-        
+
     ds = gdal.GetDriverByName('GTiff').Create('tmp/testgdalwarp24src.tif', 100, 100)
     ds.SetGeoTransform([179.5, 0.01, 0, 45, 0, -0.01])
     ds.SetProjection('GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]')
@@ -638,7 +638,7 @@ def test_gdalwarp_25():
         print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
-        
+
     gt = ds.GetGeoTransform()
     expected_gt = [-20037508.342789248, 78245.302611923355, 0.0, 10001965.729313632, 0.0, -77939.656898595524]
     for i in range(6):
@@ -669,7 +669,7 @@ def test_gdalwarp_26():
         print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
-        
+
     gt = ds.GetGeoTransform()
     expected_gt = [-16921202.922943164, 41752.719393322564, 0.0, 8460601.4614715818, 0.0, -41701.109109770863]
     for i in range(6):
@@ -700,7 +700,7 @@ def test_gdalwarp_27():
         print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
-        
+
     gt = ds.GetGeoTransform()
     expected_gt = [-20015109.356056381, 98651.645855415176, 0.0, 20015109.356056374, 0.0, -98651.645855415176]
     for i in range(6):
@@ -726,19 +726,22 @@ def test_gdalwarp_28():
     if ds is None:
         return 'fail'
 
-    # First is GCC; Second is MSVC 6.0. Thid is jpeg8
+    # First is GCC; Second is MSVC 6.0. Third is jpeg8. Fourth is with proj 4.9.2 and internal libjpeg (the correct result actually!)
+    # Fifth is proj 4.9.3 and internal libjpeg
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 47506 and cs != 46728 and cs != 43789:
+    if cs != 47506 and cs != 46728 and cs != 43789 and cs != 26295 and cs != 37441:
         print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
-        
+
     gt = ds.GetGeoTransform()
-    # First is GCC; Second is MSVC 6.0
+    # First is GCC; Second is MSVC 6.0. Third is proj 4.9.2. Fourth is proj 4.9.3
     expected_gt1 = [-10009026.853177125, 43693.733128680084, 0.0, 5024463.6669970695, 0.0, -43693.733128680084]
     expected_gt2 = [-10009026.853177125, 43691.280523668691, 0.0, 5022121.8610583926, 0.0, -43691.280523668691]
+    expected_gt3 = [-19976414.463615071, 95707.390034570519, 0.0, 20003931.458625447, 0.0, -95707.390034570519]
+    expected_gt4 = (-19976414.463615071, 95709.342728086922, 0.0, 19004529.751051534, 0.0, -95474.761005714157)
     for i in range(6):
-        if abs(gt[i] - expected_gt1[i]) > 1 and abs(gt[i] - expected_gt2[i]) > 1:
+        if abs(gt[i] - expected_gt1[i]) > 1 and abs(gt[i] - expected_gt2[i]) > 1 and abs(gt[i] - expected_gt3[i]) > 1 and abs(gt[i] - expected_gt4[i]) > 1:
             print(gt)
             gdaltest.post_reason('Bad gt')
             return 'fail'
@@ -765,7 +768,7 @@ def test_gdalwarp_29():
         print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
-        
+
     gt = ds.GetGeoTransform()
     expected_gt = [ -20037508.342789248, 90054.726863985939, 0.0, 16213801.067583967, 0.0, -90056.750611190684 ]
     for i in range(6):
@@ -1090,7 +1093,7 @@ def test_gdalwarp_38():
         return 'skip'
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' data/withnodata.asc tmp/testgdalwarp38.tif')
-    
+
     ds = gdal.Open('tmp/testgdalwarp38.tif')
     if ds.GetRasterBand(1).Checksum() != 65531:
         gdaltest.post_reason('failure')
@@ -1110,7 +1113,7 @@ def test_gdalwarp_39():
         return 'skip'
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gdrivers/data/float64.asc tmp/test_gdalwarp_39.tif -oo DATATYPE=Float64 -overwrite')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_39.tif')
     if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
         gdaltest.post_reason('failure')
@@ -1138,7 +1141,7 @@ def test_gdalwarp_40():
 
     # Should select main resolution
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != cs_main:
         gdaltest.post_reason('failure')
@@ -1147,7 +1150,7 @@ def test_gdalwarp_40():
 
     # Test -ovr AUTO. Should select main resolution
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ovr AUTO')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != cs_main:
         gdaltest.post_reason('failure')
@@ -1158,10 +1161,10 @@ def test_gdalwarp_40():
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     # Test -ovr NONE. Should select main resolution too
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ovr NONE -ts 5 5')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason('failure')
@@ -1172,10 +1175,10 @@ def test_gdalwarp_40():
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     # Should select main resolution too
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 15 15')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason('failure')
@@ -1184,7 +1187,7 @@ def test_gdalwarp_40():
 
     # Should select overview 0
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 10 10')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != cs_ov0:
         gdaltest.post_reason('failure')
@@ -1193,7 +1196,7 @@ def test_gdalwarp_40():
 
     # Should select overview 0 through VRT
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.vrt -overwrite -ts 10 10 -of VRT')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.vrt')
     if ds.GetRasterBand(1).Checksum() != cs_ov0:
         gdaltest.post_reason('failure')
@@ -1207,7 +1210,7 @@ def test_gdalwarp_40():
 
     # Should select overview 0 too
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 7 7')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason('failure')
@@ -1221,7 +1224,7 @@ def test_gdalwarp_40():
 
     # Test AUTO-n. Should select overview 0 too
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 5 5 -ovr AUTO-1')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason('failure')
@@ -1230,7 +1233,7 @@ def test_gdalwarp_40():
 
     # Should select overview 1
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 5 5')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != cs_ov1:
         gdaltest.post_reason('failure')
@@ -1244,7 +1247,7 @@ def test_gdalwarp_40():
 
     # Should select overview 1 too
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 3 3')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason('failure')
@@ -1258,13 +1261,13 @@ def test_gdalwarp_40():
 
     # Specify a level >= number of overviews. Should select overview 1 too
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ovr 5')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason('failure')
         return 'fail'
     ds = None
-    
+
     return 'success'
 
 ###############################################################################
@@ -1298,7 +1301,7 @@ def test_gdalwarp_41():
 
     # Check when source fill ratio heuristics is ON
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
     if ds.GetRasterBand(1).Checksum() != 25945:
         gdaltest.post_reason('failure')
@@ -1308,7 +1311,7 @@ def test_gdalwarp_41():
 
     # Check when source fill ratio heuristics is OFF
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES -wo SRC_FILL_RATIO_HEURISTICS=NO')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
     if ds.GetRasterBand(1).Checksum() != 65068:
         gdaltest.post_reason('failure')
@@ -1330,11 +1333,11 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world_left.tif -srcwin 0 0 200 200 -a_nodata 255')
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world_right.tif -srcwin 200 0 200 200  -a_nodata 255')
 
-    # NOTE: Current behaviour of gdalwarp is to set a destnodata, but the user specified -dstalpha, so it is a bit suspicous
+    # NOTE: Current behaviour of gdalwarp is to set a destnodata, but the user specified -dstalpha, so it is a bit suspicious
     # Adding "-dstnodata none" would avoid that target nodata setting.
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha')
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_right.tif tmp/test_gdalwarp_42.tif')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
     got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
     expected_cs = [ 30111, 32302, 40026, 64269 ]
@@ -1346,7 +1349,7 @@ def test_gdalwarp_42():
 
     # In one step
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
     got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
     expected_cs = [ 30111, 32302, 40026, 64269 ]
@@ -1358,7 +1361,7 @@ def test_gdalwarp_42():
 
     # In one step with -wo INIT_DEST=255,255,255,0
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=255,255,255,0 -overwrite -te -180 -90 180 90 -dstalpha')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
     got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
     expected_cs = [ 30111, 32302, 40026, 64269 ]
@@ -1371,7 +1374,7 @@ def test_gdalwarp_42():
     # In one step with -wo INIT_DEST=0,0,0,0
     # Different checksum since there are source pixels at 255, so they get remap to 0
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=0,0,0,0 -overwrite -te -180 -90 180 90 -dstalpha')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
     got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
     expected_cs = [ 19168, 26069, 34630, 64269 ]
@@ -1395,7 +1398,7 @@ def test_gdalwarp_43():
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world.tif -mo "FOO=BAR" -mo "NODATA_VALUES=0 0 0"')
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world.tif tmp/test_gdalwarp_43.tif -overwrite -dstalpha')
-    
+
     ds = gdal.Open('tmp/test_gdalwarp_43.tif')
     if ds.GetMetadataItem('NODATA_VALUES') is not None:
         gdaltest.post_reason('failure')
@@ -1423,7 +1426,7 @@ def test_gdalwarp_44():
     ds = gdal.Open('tmp/test_gdalwarp_44.tif')
     cs2 = ds.GetRasterBand(1).Checksum()
     ds = None
-    
+
     if cs1 == cs2:
         print('Unexpected cs1 == cs2')
 
@@ -1524,7 +1527,7 @@ def test_gdalwarp_46():
         return 'fail'
 
     ds = None
-    
+
     return 'success'
 
 
@@ -1536,7 +1539,7 @@ def test_gdalwarp_cleanup():
     # We don't clean up when run in debug mode.
     if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) == 'ON':
         return 'success'
-    
+
     for i in range(37):
         try:
             os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
@@ -1631,7 +1634,7 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/cutline_4326.prj')
     except:
         pass
-    
+
     return 'success'
 
 gdaltest_list = [

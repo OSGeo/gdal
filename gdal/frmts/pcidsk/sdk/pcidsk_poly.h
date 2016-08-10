@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_PCIDSK_POLY_H
-#define __INCLUDE_PCIDSK_PCIDSK_POLY_H
+#ifndef INCLUDE_PCIDSK_PCIDSK_POLY_H
+#define INCLUDE_PCIDSK_PCIDSK_POLY_H
 
 #include <vector>
 #include <string>
@@ -59,9 +59,9 @@ namespace PCIDSK {
         // Set the Geosys string
         virtual void SetGeosysString(const std::string& oGeosys) =0;
 
-        //Get the projection informations
+        //Get the projection information
         virtual std::vector<double> GetProjParmInfo() const=0;
-        //Set the projection informations
+        //Set the projection information
         virtual void SetProjParmInfo(const std::vector<double>& oInfo) =0;
 
         // Virtual destructor
@@ -69,4 +69,4 @@ namespace PCIDSK {
     };
 }
 
-#endif // __INCLUDE_PCIDSK_PCIDSK_POLY_H
+#endif // INCLUDE_PCIDSK_PCIDSK_POLY_H

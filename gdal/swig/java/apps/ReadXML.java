@@ -49,10 +49,10 @@ import org.gdal.gdal.XMLNodeType;
 /// </summary> 
 
 public class ReadXML {
-    
+
     public static void usage() 
 
-    { 
+    {
             System.out.println("usage example: readxml {xml string}");
             System.exit(-1);
     }

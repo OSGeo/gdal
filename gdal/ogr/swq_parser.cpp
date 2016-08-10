@@ -76,7 +76,7 @@
  * Purpose: expression and select parser grammar.
  *          Requires Bison 2.4.0 or newer to process.  Use "make parser" target.
  * Author: Frank Warmerdam <warmerdam@pobox.com>
- * 
+ *
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  *
@@ -101,17 +101,18 @@
 
 
 #include "cpl_conv.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_geometry.h"
 #include "swq.h"
 
 #define YYSTYPE  swq_expr_node*
 
-/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */ 
-/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */ 
-/* increase YYINITDEPTH instead, but this will consume memory. */ 
-/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */ 
-/* it appears to be a non documented feature of Bison */ 
+/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
+/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */
+/* increase YYINITDEPTH instead, but this will consume memory. */
+/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */
+/* it appears to be a non documented feature of Bison */
 #define YYSTYPE_IS_TRIVIAL 1
 
 
@@ -1001,6 +1002,7 @@ yytnamerr (char *yyres, const char *yystr)
             if (*++yyp != '\\')
               goto do_not_strip_quotes;
             /* Fall through.  */
+            // CPL_FALLTHROUGH
           default:
             if (yyres)
               yyres[yyn] = *yyp;
@@ -1329,7 +1331,7 @@ YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
   yyssp++;
 
  yysetstate:
-  *yyssp = yystate;
+  *yyssp = (yytype_int16)yystate;
 
   if (yyss + yystacksize - 1 <= yyssp)
     {
@@ -1729,7 +1731,7 @@ yyreduce:
             in->nOperation = SWQ_IN;
             in->PushSubExpression( (yyvsp[-5]) );
             in->ReverseSubExpressions();
-            
+
             (yyval) = new swq_expr_node( SWQ_NOT );
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( in );
@@ -1954,7 +1956,7 @@ yyreduce:
   case 44:
 #line 449 "swq_parser.y" /* yacc.c:1646  */
     {
-            const swq_operation *poOp = 
+            const swq_operation *poOp =
                     swq_op_registrar::GetOperator( (yyvsp[-3])->string_value );
 
             if( poOp == NULL )
@@ -1970,7 +1972,7 @@ yyreduce:
                 }
                 else
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                                     "Undefined function '%s' used.",
                                     (yyvsp[-3])->string_value );
                     delete (yyvsp[-3]);
@@ -2034,9 +2036,9 @@ yyreduce:
 #line 515 "swq_parser.y" /* yacc.c:1646  */
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType((yyvsp[-1])->string_value);
-        if( !EQUAL((yyvsp[-3])->string_value,"GEOMETRY") || 
+        if( !EQUAL((yyvsp[-3])->string_value,"GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
-            !EQUALN((yyvsp[-1])->string_value, "GEOMETRY", strlen("GEOMETRY"))) )
+            !STARTS_WITH_CI((yyvsp[-1])->string_value, "GEOMETRY")) )
         {
             yyerror (context, "syntax error");
             delete (yyvsp[-3]);
@@ -2054,9 +2056,9 @@ yyreduce:
 #line 533 "swq_parser.y" /* yacc.c:1646  */
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType((yyvsp[-3])->string_value);
-        if( !EQUAL((yyvsp[-5])->string_value,"GEOMETRY") || 
+        if( !EQUAL((yyvsp[-5])->string_value,"GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
-            !EQUALN((yyvsp[-3])->string_value, "GEOMETRY", strlen("GEOMETRY"))) )
+            !STARTS_WITH_CI((yyvsp[-3])->string_value, "GEOMETRY")) )
         {
             yyerror (context, "syntax error");
             delete (yyvsp[-5]);
@@ -2174,7 +2176,7 @@ yyreduce:
             if( !EQUAL((yyvsp[-3])->string_value,"COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Syntax Error with %s(*).", 
+                        "Syntax Error with %s(*).",
                         (yyvsp[-3])->string_value );
                 delete (yyvsp[-3]);
                 YYERROR;
@@ -2182,7 +2184,7 @@ yyreduce:
 
             delete (yyvsp[-3]);
             (yyvsp[-3]) = NULL;
-                    
+
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
@@ -2207,7 +2209,7 @@ yyreduce:
             if( !EQUAL((yyvsp[-4])->string_value,"COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Syntax Error with %s(*).", 
+                        "Syntax Error with %s(*).",
                         (yyvsp[-4])->string_value );
                 delete (yyvsp[-4]);
                 delete (yyvsp[0]);
@@ -2251,10 +2253,10 @@ yyreduce:
             }
 
             delete (yyvsp[-4]);
-            
+
             swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( (yyvsp[-1]) );
-                
+
             if( !context->poCurSelect->PushField( count, NULL, TRUE ) )
             {
                 delete count;
@@ -2315,7 +2317,7 @@ yyreduce:
   case 73:
 #line 772 "swq_parser.y" /* yacc.c:1646  */
     {
-            context->poCurSelect->PushJoin( (yyvsp[-3])->int_value,
+            context->poCurSelect->PushJoin( static_cast<int>((yyvsp[-3])->int_value),
                                             (yyvsp[-1]) );
             delete (yyvsp[-3]);
         }
@@ -2325,7 +2327,7 @@ yyreduce:
   case 74:
 #line 778 "swq_parser.y" /* yacc.c:1646  */
     {
-            context->poCurSelect->PushJoin( (yyvsp[-3])->int_value,
+            context->poCurSelect->PushJoin( static_cast<int>((yyvsp[-3])->int_value),
                                             (yyvsp[-1]) );
             delete (yyvsp[-3]);
 	    }
@@ -2408,7 +2410,7 @@ yyreduce:
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( (yyvsp[-3])->string_value,
-                                                     (yyvsp[-1])->string_value, 
+                                                     (yyvsp[-1])->string_value,
                                                      (yyvsp[0])->string_value );
         delete (yyvsp[-3]);
         delete (yyvsp[-1]);
@@ -2438,7 +2440,7 @@ yyreduce:
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( (yyvsp[-3])->string_value,
-                                                     (yyvsp[-1])->string_value, 
+                                                     (yyvsp[-1])->string_value,
                                                      (yyvsp[0])->string_value );
         delete (yyvsp[-3]);
         delete (yyvsp[-1]);

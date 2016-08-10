@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CouchDB Translator
  * Purpose:  Implements OGRCouchDBTableLayer class.
@@ -40,44 +39,37 @@ CPL_CVSID("$Id$");
 /*                       OGRCouchDBTableLayer()                         */
 /************************************************************************/
 
-OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
-                                           const char* pszName) :
-                                                        OGRCouchDBLayer(poDS)
-
+OGRCouchDBTableLayer::OGRCouchDBTableLayer( OGRCouchDBDataSource* poDSIn,
+                                            const char* pszName) :
+    OGRCouchDBLayer(poDSIn),
+    nNextFIDForCreate(-1),
+    bInTransaction(FALSE),
+    bHasOGRSpatial(-1),
+    bHasGeocouchUtilsMinimalSpatialView(FALSE),
+    bServerSideAttributeFilteringWorks(TRUE),
+    bHasInstalledAttributeFilter(FALSE),
+    nUpdateSeq(-1),
+    bAlwaysValid(FALSE),
+    osName(pszName),
+    bMustWriteMetadata(FALSE),
+    bMustRunSpatialFilter(FALSE),
+    bServerSideSpatialFilteringWorks(TRUE),
+    bHasLoadedMetadata(FALSE),
+    bExtentValid(FALSE),
+    bExtentSet(FALSE),
+    dfMinX(0),
+    dfMinY(0),
+    dfMaxX(0),
+    dfMaxY(0),
+    eGeomType(wkbUnknown)
 {
-    osName = pszName;
     char* pszEscapedName = CPLEscapeString(pszName, -1, CPLES_URL);
     osEscapedName = pszEscapedName;
     CPLFree(pszEscapedName);
 
-    bInTransaction = FALSE;
+    nCoordPrecision = atoi(
+        CPLGetConfigOption( "OGR_COUCHDB_COORDINATE_PRECISION", "-1" ) );
 
-    eGeomType = wkbUnknown;
-
-    nNextFIDForCreate = -1;
-    bHasLoadedMetadata = FALSE;
-    bMustWriteMetadata = FALSE;
-
-    bMustRunSpatialFilter = FALSE;
-    bServerSideSpatialFilteringWorks = TRUE;
-    bHasOGRSpatial = -1;
-    bHasGeocouchUtilsMinimalSpatialView = FALSE;
-
-    bServerSideAttributeFilteringWorks = TRUE;
-    bHasInstalledAttributeFilter = FALSE;
-
-    nUpdateSeq = -1;
-    bAlwaysValid = FALSE;
-
-    bExtentValid = FALSE;
-    bExtentSet = FALSE;
-    dfMinX = 0;
-    dfMinY = 0;
-    dfMaxX = 0;
-    dfMaxY = 0;
-
-    nCoordPrecision = atoi(CPLGetConfigOption("OGR_COUCHDB_COORDINATE_PRECISION", "-1"));
-    
     SetDescription( osName );
 }
 
@@ -433,7 +425,7 @@ int OGRCouchDBTableLayer::HasFilterOnFieldOrCreateIfNecessary(const char* pszFie
         else
             json_object_object_add(poFilter, "reduce", json_object_new_string("_count"));
 
-        json_object* poAnswerObj = poDS->PUT(osURI,
+        poAnswerObj = poDS->PUT(osURI,
                                             json_object_to_json_string(poDoc));
 
         json_object_put(poDoc);
@@ -561,7 +553,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
         const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex)->GetNameRef();
 
         if (pNode->nOperation == SWQ_EQ &&
-            nIndex == _ID_FIELD && eType == SWQ_STRING)
+            nIndex == COUCHDB_ID_FIELD && eType == SWQ_STRING)
         {
             bCanHandleFilter = TRUE;
 
@@ -569,7 +561,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
             osURI += osEscapedName;
             osURI += "/_all_docs?";
         }
-        else if (nIndex >= FIRST_FIELD &&
+        else if (nIndex >= COUCHDB_FIRST_FIELD &&
             (eType == SWQ_STRING || eType == SWQ_INTEGER ||
              eType == SWQ_INTEGER64 || eType == SWQ_FLOAT))
         {
@@ -624,7 +616,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
         const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex0)->GetNameRef();
 
         if (nIndex0 == nIndex1 && eType0 == eType1 &&
-            nIndex0 == _ID_FIELD && eType0 == SWQ_STRING)
+            nIndex0 == COUCHDB_ID_FIELD && eType0 == SWQ_STRING)
         {
             bCanHandleFilter = TRUE;
 
@@ -633,7 +625,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
             osURI += "/_all_docs?";
         }
         else if (nIndex0 == nIndex1 && eType0 == eType1 &&
-            nIndex0 >= FIRST_FIELD &&
+            nIndex0 >= COUCHDB_FIRST_FIELD &&
             (eType0 == SWQ_STRING || eType0 == SWQ_INTEGER ||
              eType0 == SWQ_INTEGER64 || eType0 == SWQ_FLOAT))
         {
@@ -686,7 +678,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
         swq_field_type eType = pNode->papoSubExpr[0]->field_type;
         const char* pszFieldName = poFeatureDefn->GetFieldDefn(nIndex)->GetNameRef();
 
-        if (nIndex == _ID_FIELD && eType == SWQ_STRING)
+        if (nIndex == COUCHDB_ID_FIELD && eType == SWQ_STRING)
         {
             bCanHandleFilter = TRUE;
 
@@ -694,7 +686,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
             osURI += osEscapedName;
             osURI += "/_all_docs?";
         }
-        else if (nIndex >= FIRST_FIELD &&
+        else if (nIndex >= COUCHDB_FIRST_FIELD &&
             (eType == SWQ_STRING || eType == SWQ_INTEGER ||
              eType == SWQ_INTEGER64 || eType == SWQ_FLOAT))
         {
@@ -1076,9 +1068,9 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
     json_object* poObj = json_object_new_object();
     CPLAssert( NULL != poObj );
 
-    if (poFeature->IsFieldSet(_ID_FIELD))
+    if (poFeature->IsFieldSet(COUCHDB_ID_FIELD))
     {
-        const char* pszId = poFeature->GetFieldAsString(_ID_FIELD);
+        const char* pszId = poFeature->GetFieldAsString(COUCHDB_ID_FIELD);
         json_object_object_add( poObj, "_id",
                                 json_object_new_string(pszId) );
 
@@ -1097,9 +1089,9 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
                                 json_object_new_string(CPLSPrintf("%09ld", (long)poFeature->GetFID())) );
     }
 
-    if (poFeature->IsFieldSet(_REV_FIELD))
+    if (poFeature->IsFieldSet(COUCHDB_REV_FIELD))
     {
-        const char* pszRev = poFeature->GetFieldAsString(_REV_FIELD);
+        const char* pszRev = poFeature->GetFieldAsString(COUCHDB_REV_FIELD);
         json_object_object_add( poObj, "_rev",
                                 json_object_new_string(pszRev) );
     }
@@ -1115,7 +1107,7 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
 /* -------------------------------------------------------------------- */
     json_object* poObjProps = NULL;
 
-    poObjProps = OGRGeoJSONWriteAttributes( poFeature );
+    poObjProps = OGRGeoJSONWriteAttributes( poFeature, -1 );
     if (poObjProps)
     {
         json_object_object_del(poObjProps, "_id");
@@ -1150,7 +1142,7 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
         OGRGeometry* poGeometry = poFeature->GetGeometryRef();
         if ( NULL != poGeometry )
         {
-            poObjGeom = OGRGeoJSONWriteGeometry( poGeometry, nCoordPrecision );
+            poObjGeom = OGRGeoJSONWriteGeometry( poGeometry, nCoordPrecision, -1 );
             if ( poObjGeom != NULL &&
                  wkbFlatten(poGeometry->getGeometryType()) != wkbPoint &&
                  !poGeometry->IsEmpty() )
@@ -1215,7 +1207,7 @@ int OGRCouchDBTableLayer::GetMaximumId()
         json_object_put(poAnswerObj);
         return -1;
     }
-    
+
     json_object* poRow = json_object_array_get_idx(poRows, 0);
     if ( poRow == NULL ||
             !json_object_is_type(poRow, json_type_object) )
@@ -1254,7 +1246,7 @@ OGRErr OGRCouchDBTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (poFeature->IsFieldSet(_REV_FIELD))
+    if (poFeature->IsFieldSet(COUCHDB_REV_FIELD))
     {
         static int bOnce = FALSE;
         if (!bOnce)
@@ -1262,7 +1254,7 @@ OGRErr OGRCouchDBTableLayer::ICreateFeature( OGRFeature *poFeature )
             bOnce = TRUE;
             CPLDebug("CouchDB", "CreateFeature() should be called with an unset _rev field. Ignoring it");
         }
-        poFeature->UnsetField(_REV_FIELD);
+        poFeature->UnsetField(COUCHDB_REV_FIELD);
     }
 
     if (nNextFIDForCreate < 0)
@@ -1302,8 +1294,8 @@ OGRErr OGRCouchDBTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     int nFID = nNextFIDForCreate ++;
     CPLString osFID;
-    if (!poFeature->IsFieldSet(_ID_FIELD) ||
-        !CSLTestBoolean(CPLGetConfigOption("COUCHDB_PRESERVE_ID_ON_INSERT", "FALSE")))
+    if (!poFeature->IsFieldSet(COUCHDB_ID_FIELD) ||
+        !CPLTestBool(CPLGetConfigOption("COUCHDB_PRESERVE_ID_ON_INSERT", "FALSE")))
     {
         if (poFeature->GetFID() != OGRNullFID)
         {
@@ -1311,12 +1303,12 @@ OGRErr OGRCouchDBTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         osFID = CPLSPrintf("%09d", nFID);
 
-        poFeature->SetField(_ID_FIELD, osFID);
+        poFeature->SetField(COUCHDB_ID_FIELD, osFID);
         poFeature->SetFID(nFID);
     }
     else
     {
-        const char* pszId = poFeature->GetFieldAsString(_ID_FIELD);
+        const char* pszId = poFeature->GetFieldAsString(COUCHDB_ID_FIELD);
         osFID = pszId;
     }
 
@@ -1356,18 +1348,18 @@ OGRErr OGRCouchDBTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     if (pszId)
     {
-        poFeature->SetField(_ID_FIELD, pszId);
+        poFeature->SetField(COUCHDB_ID_FIELD, pszId);
 
-        int nFID = atoi(pszId);
-        const char* pszFID = CPLSPrintf("%09d", nFID);
+        int l_nFID = atoi(pszId);
+        const char* pszFID = CPLSPrintf("%09d", l_nFID);
         if (strcmp(pszId, pszFID) == 0)
-            poFeature->SetFID(nFID);
+            poFeature->SetFID(l_nFID);
         else
             poFeature->SetFID(-1);
     }
     if (pszRev)
     {
-        poFeature->SetField(_REV_FIELD, pszRev);
+        poFeature->SetField(COUCHDB_REV_FIELD, pszRev);
     }
 
     json_object_put(poAnswerObj);
@@ -1392,7 +1384,7 @@ OGRErr      OGRCouchDBTableLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (!poFeature->IsFieldSet(_ID_FIELD))
+    if (!poFeature->IsFieldSet(COUCHDB_ID_FIELD))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "SetFeature() requires non null _id field");
@@ -1407,7 +1399,7 @@ OGRErr      OGRCouchDBTableLayer::ISetFeature( OGRFeature *poFeature )
     CPLString osURI("/");
     osURI += osEscapedName;
     osURI += "/";
-    osURI += poFeature->GetFieldAsString(_ID_FIELD);
+    osURI += poFeature->GetFieldAsString(COUCHDB_ID_FIELD);
     json_object* poAnswerObj = poDS->PUT(osURI, pszJson);
     json_object_put( poObj );
 
@@ -1422,7 +1414,7 @@ OGRErr      OGRCouchDBTableLayer::ISetFeature( OGRFeature *poFeature )
 
     json_object* poRev = json_object_object_get(poAnswerObj, "rev");
     const char* pszRev = json_object_get_string(poRev);
-    poFeature->SetField(_REV_FIELD, pszRev);
+    poFeature->SetField(COUCHDB_REV_FIELD, pszRev);
 
     json_object_put(poAnswerObj);
 
@@ -1486,15 +1478,15 @@ OGRErr OGRCouchDBTableLayer::DeleteFeature( const char* pszId )
 
 OGRErr OGRCouchDBTableLayer::DeleteFeature( OGRFeature* poFeature )
 {
-    if (!poFeature->IsFieldSet(_ID_FIELD) ||
-        !poFeature->IsFieldSet(_REV_FIELD))
+    if (!poFeature->IsFieldSet(COUCHDB_ID_FIELD) ||
+        !poFeature->IsFieldSet(COUCHDB_REV_FIELD))
     {
         delete poFeature;
         return OGRERR_FAILURE;
     }
 
-    const char* pszId = poFeature->GetFieldAsString(_ID_FIELD);
-    const char* pszRev = poFeature->GetFieldAsString(_REV_FIELD);
+    const char* pszId = poFeature->GetFieldAsString(COUCHDB_ID_FIELD);
+    const char* pszRev = poFeature->GetFieldAsString(COUCHDB_REV_FIELD);
 
     CPLString osURI("/");
     osURI += osEscapedName;
@@ -1885,7 +1877,7 @@ void OGRCouchDBTableLayer::LoadMetadata()
         poFeatureDefn->Reference();
 
         poFeatureDefn->SetGeomType(eGeomType);
-        if( poFeatureDefn->GetGeomFieldCount() != 0 ) 
+        if( poFeatureDefn->GetGeomFieldCount() != 0 )
             poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
         OGRFieldDefn oFieldId("_id", OFTString);
@@ -2007,7 +1999,7 @@ void OGRCouchDBTableLayer::WriteMetadata()
     json_object_object_add(poDoc, "fields", poFields);
 
 
-    for(int i=FIRST_FIELD;i<poFeatureDefn->GetFieldCount();i++)
+    for(int i=COUCHDB_FIRST_FIELD;i<poFeatureDefn->GetFieldCount();i++)
     {
         json_object* poField = json_object_new_object();
         json_object_array_add(poFields, poField);

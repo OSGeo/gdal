@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.42 2011-06-11 00:35:00 fwarmerdam Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -17,16 +16,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -47,7 +46,7 @@
  * Fixed memory leaks in mitab_capi.cpp and mitab_coordsys.cpp
  *
  * Revision 1.37  2010-07-05 17:20:14  aboudreault
- * Added Krovak projection suppoprt (bug 2230)
+ * Added Krovak projection support (bug 2230)
  *
  * Revision 1.36  2007-11-21 21:15:45  dmorissette
  * Fix asDatumInfoList[] and asSpheroidInfoList[] defns/refs (bug 1826)
@@ -118,6 +117,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+CPL_CVSID("$Id$");
+
 extern const MapInfoDatumInfo asDatumInfoList[];
 extern const MapInfoSpheroidInfo asSpheroidInfoList[];
 
@@ -139,7 +140,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /* -------------------------------------------------------------------- */
 /*      Report on translation.                                          */
 /* -------------------------------------------------------------------- */
-    char        *pszWKT;
+    char *pszWKT = NULL;
 
     poSR->exportToWkt( &pszWKT );
     if( pszWKT != NULL )
@@ -168,7 +169,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 {
     if( poSR == NULL )
         return NULL;
-    
+
     TABProjInfo     sTABProj;
     int             nParmCount;
     TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParmCount);
@@ -176,7 +177,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 /* -------------------------------------------------------------------- */
 /*      Do coordsys lookup                                              */
 /* -------------------------------------------------------------------- */
-    double dXMin, dYMin, dXMax, dYMax;
+    double dXMin = 0.0, dYMin = 0.0, dXMax = 0.0, dYMax = 0.0;
     int bHasBounds = FALSE;
     if (sTABProj.nProjId > 1 &&
         MITABLookupCoordSysBounds(&sTABProj, dXMin, dYMin, dXMax, dYMax, TRUE) == TRUE)
@@ -188,7 +189,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
  * Translate the units
  *----------------------------------------------------------------*/
     const char  *pszMIFUnits = TABUnitIdToString(sTABProj.nUnitsId);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build coordinate system definition.                             */
 /* -------------------------------------------------------------------- */
@@ -221,7 +222,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX, sTABProj.dDatumShiftY, sTABProj.dDatumShiftZ );
         }
-        
+
         if( sTABProj.nDatumId == 9999 )
         {
             osCoordSys += CPLSPrintf(
@@ -238,7 +239,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     {
         if( sTABProj.nProjId != 0 )
             osCoordSys += "," ;
-        
+
         osCoordSys += CPLSPrintf(
                  " \"%s\"",
                  pszMIFUnits );
@@ -302,12 +303,11 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
                                   double &dXMax, double &dYMax )
 
 {
-    char        **papszFields;
-
     if( pszCoordSys == NULL )
         return FALSE;
-    
-    papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
+
+    char **papszFields =
+        CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
 
     int iBounds = CSLFindString( papszFields, "Bounds" );
 
@@ -336,27 +336,26 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
 int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
 
 {
-    char        **papszFields;
-
     // Set all fields to zero, equivalent of NonEarth Units "mi"
     memset(psProj, 0, sizeof(TABProjInfo));
 
     if( pszCoordSys == NULL )
         return -1;
-    
+
     /*-----------------------------------------------------------------
      * Parse the passed string into words.
      *----------------------------------------------------------------*/
     while(*pszCoordSys == ' ') pszCoordSys++;  // Eat leading spaces
-    if( EQUALN(pszCoordSys,"CoordSys",8) )
+    if( STARTS_WITH_CI(pszCoordSys, "CoordSys") )
         pszCoordSys += 9;
-    
-    papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
+
+    char **papszFields =
+        CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
 
     /*-----------------------------------------------------------------
      * Clip off Bounds information.
      *----------------------------------------------------------------*/
-    int         iBounds = CSLFindString( papszFields, "Bounds" );
+    int iBounds = CSLFindString( papszFields, "Bounds" );
 
     while( iBounds != -1 && papszFields[iBounds] != NULL )
     {
@@ -368,7 +367,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     /*-----------------------------------------------------------------
      * Fetch the projection.
      *----------------------------------------------------------------*/
-    char        **papszNextField;
+    char **papszNextField = NULL;
 
     if( CSLCount( papszFields ) >= 3
         && EQUAL(papszFields[0],"Earth")
@@ -440,7 +439,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
      *----------------------------------------------------------------*/
         int         iDatum;
         const MapInfoDatumInfo *psDatumInfo = NULL;
-        
+
         for(iDatum=0; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++)
         {
             if( asDatumInfoList[iDatum].nMapInfoDatumID == nDatum )
@@ -470,7 +469,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
             psProj->adDatumParams[3] = psDatumInfo->dfDatumParm3;
             psProj->adDatumParams[4] = psDatumInfo->dfDatumParm4;
         }
-    }    
+    }
 
     /*-----------------------------------------------------------------
      * Fetch the units string.
@@ -487,11 +486,10 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     for(int iParam=0; iParam < 6 && CSLCount(papszNextField) > 0; iParam++)
     {
         psProj->adProjParams[iParam] = CPLAtof(papszNextField[0]);
-        papszNextField++;         
+        papszNextField++;
     }
-    
+
     CSLDestroy(papszFields);
 
     return 0;
 }
-

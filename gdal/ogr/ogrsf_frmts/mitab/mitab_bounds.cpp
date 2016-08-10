@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_bounds.cpp,v 1.8 2008-01-29 20:53:10 dmorissette Exp $
  *
  * Name:     mitab_bounds.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -58,6 +57,8 @@
  **********************************************************************/
 
 #include "mitab.h"
+
+CPL_CVSID("$Id$");
 
 typedef struct
 {
@@ -1074,7 +1075,6 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                                 int bOnlyUserTable)
 {
     GBool bFound = FALSE;
-    const MapInfoBoundsInfo *psList;
 
     /*-----------------------------------------------------------------
     * Try to load the user defined table if not loaded yet .
@@ -1163,7 +1163,7 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
             }
         }
 
-        psList = gasBoundsList;
+        const MapInfoBoundsInfo *psList = gasBoundsList;
         for( ; !bOnlyUserTable && !bFound && psList->sProj.nProjId!=0xff; psList++)
         {
             const TABProjInfo *p = &(psList->sProj);
@@ -1225,32 +1225,37 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
  **********************************************************************/
 int MITABLoadCoordSysTable(const char *pszFname)
 {
-    VSILFILE *fp;
-    int nStatus = 0, iLine = 0;
+    int nStatus = 0;
+    int iLine = 0;
 
     MITABFreeCoordSysTable();
 
-    if ((fp = VSIFOpenL(pszFname, "rt")) != NULL)
+    VSILFILE *fp = VSIFOpenL(pszFname, "rt");
+    if( fp != NULL )
     {
-        const char *pszLine;
-        int         iEntry=0, numEntries=100;
+        int iEntry=0;
+        int numEntries=100;
 
         gpasExtBoundsList = (MapInfoRemapProjInfo *)CPLMalloc(numEntries*
                                                   sizeof(MapInfoRemapProjInfo));
 
+        const char *pszLine = NULL;
         while( (pszLine = CPLReadLineL(fp)) != NULL)
         {
-            double dXMin, dYMin, dXMax, dYMax;
+            double dXMin;
+            double dYMin;
+            double dXMax;
+            double dYMax;
             int bHasProjIn = FALSE;
             TABProjInfo sProjIn;
             TABProjInfo sProj;
 
             iLine++;
 
-            if (strlen(pszLine) < 10 || EQUALN(pszLine, "#", 1))
+            if (strlen(pszLine) < 10 || STARTS_WITH_CI(pszLine, "#"))
                 continue;  // Skip empty lines/comments
 
-            if( EQUALN(pszLine, "Source", strlen("Source")) )
+            if( STARTS_WITH_CI(pszLine, "Source") )
             {
                 const char* pszEqual = strchr(pszLine, '=');
                 if( !pszEqual )
@@ -1273,7 +1278,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
                 iLine++;
                 pszLine = CPLReadLineL(fp);
                 if( pszLine == NULL ||
-                    !EQUALN(pszLine, "Destination", strlen("Destination")) ||
+                    !STARTS_WITH_CI(pszLine, "Destination") ||
                     (pszEqual = strchr(pszLine, '=')) == NULL )
                 {
                     CPLError(CE_Warning, CPLE_IllegalArg, "Invalid format at line %d", iLine);

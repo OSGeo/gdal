@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _HDF5DATASET_H_INCLUDED_
-#define _HDF5DATASET_H_INCLUDED_
+#ifndef HDF5DATASET_H_INCLUDED_
+#define HDF5DATASET_H_INCLUDED_
 
 #include "gdal_pam.h"
 #include "cpl_list.h"
@@ -87,7 +87,7 @@ protected:
 
   /**
    * Reads an array of double attributes from the HDF5 metadata.
-   * It reads the attributes directly on it's binary form directly,
+   * It reads the attributes directly on its binary form directly,
    * thus avoiding string conversions.
    *
    * Important: It allocates the memory for the attributes internally,
@@ -115,4 +115,4 @@ public:
   static int Identify(GDALOpenInfo *);
 };
 
-#endif /* _HDF5DATASET_H_INCLUDED_ */
+#endif /* HDF5DATASET_H_INCLUDED_ */

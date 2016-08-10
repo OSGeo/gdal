@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  test librarified gdalinfo
 # Author:   Faza Mahamood <fazamhd at gmail dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -48,8 +48,8 @@ def test_gdalinfo_lib_1():
         gdaltest.post_reason('did not get expected string.')
         print(ret)
         return 'fail'
-    
-    return 'success' 
+
+    return 'success'
 
 ###############################################################################
 # Test Json format
@@ -75,7 +75,7 @@ def test_gdalinfo_lib_3():
 
     ret = gdal.Info(ds, format = 'json')
     if 'TRE' in ret['metadata']:
-        gdaltest.post_reason( 'unexpectingly got extra MD.' )
+        gdaltest.post_reason( 'got unexpected extra MD.' )
         print(ret)
         return 'fail'
 
@@ -94,7 +94,7 @@ def test_gdalinfo_lib_3():
 def test_gdalinfo_lib_4():
 
     ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
-    
+
     ret = gdal.Info(ds, allMetadata = True, format = 'json')
     if 'xml:XMP' not in ret['metadata']:
         print(ret)
@@ -108,7 +108,7 @@ def test_gdalinfo_lib_4():
 def test_gdalinfo_lib_5():
 
     ds = gdal.Open('../gdrivers/data/byte.tif')
-    
+
     ret = gdal.Info(ds, format = 'json', deserialize = True, computeMinMax = True, \
                     reportHistograms = True, reportProj4 = True, \
                     stats = True, approxStats = True, computeChecksum = True, \
@@ -142,13 +142,27 @@ def test_gdalinfo_lib_6():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test with unicode strings
+
+def test_gdalinfo_lib_7():
+
+    ret = gdal.Info('../gcore/data/byte.tif'.encode('ascii').decode('ascii'), options = '-json'.encode('ascii').decode('ascii'))
+    if ret['driverShortName'] != 'GTiff':
+        gdaltest.post_reason('wrong value for driverShortName.')
+        print(ret)
+        return 'fail'
+
+    return 'success'
 gdaltest_list = [
     test_gdalinfo_lib_1,
     test_gdalinfo_lib_2,
     test_gdalinfo_lib_3,
     test_gdalinfo_lib_4,
     test_gdalinfo_lib_5,
-    test_gdalinfo_lib_6
+    test_gdalinfo_lib_6,
+    test_gdalinfo_lib_7
     ]
 
 if __name__ == '__main__':

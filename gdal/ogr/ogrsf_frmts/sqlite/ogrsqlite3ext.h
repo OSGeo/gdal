@@ -239,11 +239,11 @@ typedef struct sqlite3_backup ogr_sqlite3_backup;
 ** This header file defines the SQLite interface for use by
 ** shared libraries that want to be imported as extensions into
 ** an SQLite instance.  Shared libraries that intend to be loaded
-** as extensions by SQLite should #include this file instead of 
+** as extensions by SQLite should #include this file instead of
 ** sqlite3.h.
 */
-#ifndef _SQLITE3EXT_H_
-#define _SQLITE3EXT_H_
+#ifndef SQLITE3EXT_H_
+#define SQLITE3EXT_H_
 
 // Commented out to avoid reimporting the #define sqlite3_xxx macros
 //#include "sqlite3.h"
@@ -469,7 +469,7 @@ struct sqlite3_api_routines {
 
 /*
 ** The following macros redefine the API routines so that they are
-** redirected throught the global sqlite3_api structure.
+** redirected through the global sqlite3_api structure.
 **
 ** This header file is also used by the loadext.c source file
 ** (part of the main SQLite library - not an extension) so that
@@ -670,7 +670,7 @@ struct sqlite3_api_routines {
 #define sqlite3_vtab_on_conflict       sqlite3_api->vtab_on_conflict
 #endif /* SQLITE_CORE */
 
-#define SQLITE_EXTENSION_INIT1     const sqlite3_api_routines *sqlite3_api = 0;
+#define SQLITE_EXTENSION_INIT1     const sqlite3_api_routines *sqlite3_api = NULL;
 #define SQLITE_EXTENSION_INIT2(v)  sqlite3_api = v;
 
-#endif /* _SQLITE3EXT_H_ */
+#endif /* SQLITE3EXT_H_ */

@@ -10,7 +10,7 @@
  *
  */
 
-#include "cpl_conv.h"
+#include "cpl_string.h"
 
 #include "config.h"
 
@@ -27,6 +27,9 @@
 #include "json_object.h"
 #include "json_object_private.h"
 #include "json_util.h"
+
+#undef snprintf
+#define snprintf CPLsnprintf
 
 #if !defined(HAVE_STRDUP) && defined(_MSC_VER)
   /* MSC has the version as _strdup */
@@ -299,7 +302,8 @@ static int json_object_object_to_json_string(struct json_object* jso,
 	sprintbuf(pb, "{" /*}*/);
 	if (flags & JSON_C_TO_STRING_PRETTY)
 		sprintbuf(pb, "\n");
-	json_object_object_foreachC(jso, iter)
+        /* the if() is to make gcc 6 -Wnull-dereference happy */
+	if( jso->o_type == json_type_object) json_object_object_foreachC(jso, iter)
 	{
 		if (had_children)
 		{
@@ -312,7 +316,7 @@ static int json_object_object_to_json_string(struct json_object* jso,
 			sprintbuf(pb, " ");
 		indent(pb, level+1, flags);
 		sprintbuf(pb, "\"");
-		json_escape_str(pb, iter.key, strlen(iter.key));
+		json_escape_str(pb, iter.key, (int)strlen(iter.key));
 		if (flags & JSON_C_TO_STRING_SPACED)
 			sprintbuf(pb, "\": ");
 		else
@@ -575,7 +579,7 @@ static int json_object_double_to_json_string(struct json_object* jso,
     }
     /* drop trailing zeroes */
     *(++p) = 0;
-    size = p-buf;
+    size = (int)(p-buf);
   }
   printbuf_memappend(pb, buf, size);
   return size;
@@ -634,7 +638,7 @@ struct json_object* json_object_new_string(const char *s)
   jso->_delete = &json_object_string_delete;
   jso->_to_json_string = &json_object_string_to_json_string;
   jso->o.c_string.str = strdup(s);
-  jso->o.c_string.len = strlen(s);
+  jso->o.c_string.len = (int)strlen(s);
   return jso;
 }
 
@@ -735,6 +739,11 @@ struct json_object* json_object_new_array(void)
   jso->_delete = &json_object_array_delete;
   jso->_to_json_string = &json_object_array_to_json_string;
   jso->o.c_array = array_list_new(&json_object_array_entry_free);
+  if( jso->o.c_array == NULL )
+  {
+      free(jso);
+      jso = NULL;
+  }
   return jso;
 }
 

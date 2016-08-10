@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PALSAR JAXA imagery reader
  * Purpose:  Support for PALSAR L1.1/1.5 imagery and appropriate metadata from
@@ -30,13 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_PALSARJaxa(void);
-CPL_C_END
 
 #if defined(WIN32)
 #define SEP_STRING "\\"
@@ -47,15 +43,15 @@ CPL_C_END
 /* read binary fields */
 #ifdef CPL_LSB
 #define READ_WORD(f, x) \
-	do { \
-		VSIFReadL( &(x), 4, 1, (f) ); \
-		(x) = CPL_SWAP32( (x) ); \
-	} while (0);
+        do { \
+                VSIFReadL( &(x), 4, 1, (f) ); \
+                (x) = CPL_SWAP32( (x) ); \
+        } while (0);
 #define READ_SHORT(f, x) \
-	do { \
-		VSIFReadL( &(x), 2, 1, (f) ); \
-		(x) = CPL_SWAP16( (x) ); \
-	} while (0);
+        do { \
+                VSIFReadL( &(x), 2, 1, (f) ); \
+                (x) = CPL_SWAP16( (x) ); \
+        } while (0);
 #else
 #define READ_WORD(f, x) do { VSIFReadL( &(x), 4, 1, (f) ); } while (0);
 #define READ_SHORT(f, x) do { VSIFReadL( &(x), 2, 1, (f) ); } while (0);
@@ -64,30 +60,30 @@ CPL_C_END
 
 /* read floating point value stored as ASCII */
 #define READ_CHAR_FLOAT(n, l, f) \
-	do {\
-		char psBuf[(l+1)]; \
-		psBuf[(l)] = '\0'; \
-		VSIFReadL( &psBuf, (l), 1, (f) );\
-		(n) = CPLAtof( psBuf );\
-	} while (0);
+        do {\
+                char psBuf[(l+1)]; \
+                psBuf[(l)] = '\0'; \
+                VSIFReadL( &psBuf, (l), 1, (f) );\
+                (n) = CPLAtof( psBuf );\
+        } while (0);
 
 /* read numbers stored as ASCII */
 #define READ_CHAR_VAL(x, n, f) \
-	do { \
-		char psBuf[(n+1)]; \
-		psBuf[(n)] = '\0';\
-		VSIFReadL( &psBuf, (n), 1, (f) ); \
-		(x) = atoi(psBuf); \
-	} while (0);
+        do { \
+                char psBuf[(n+1)]; \
+                psBuf[(n)] = '\0';\
+                VSIFReadL( &psBuf, (n), 1, (f) ); \
+                (x) = atoi(psBuf); \
+        } while (0);
 
-/* read string fields 
+/* read string fields
  * note: string must be size of field to be extracted + 1
  */
 #define READ_STRING(s, n, f) \
-	do { \
-		VSIFReadL( &(s), 1, (n), (f) ); \
-		(s)[(n)] = '\0'; \
-	} while (0);
+        do { \
+                VSIFReadL( &(s), 1, (n), (f) ); \
+                (s)[(n)] = '\0'; \
+        } while (0);
 
 /*************************************************************************/
 /* a few key offsets in the volume directory file */
@@ -138,17 +134,17 @@ CPL_C_END
 
 /* a few useful enums */
 enum eFileType {
-	level_11 = 0,
-	level_15,
-        level_10,
-        level_unknown = 999,
+    level_11 = 0,
+    level_15,
+    level_10,
+    level_unknown = 999,
 };
 
 enum ePolarization {
-	hh = 0,
-	hv,
-	vh,
-	vv
+    hh = 0,
+    hv,
+    vh,
+    vv
 };
 
 /************************************************************************/
@@ -219,11 +215,13 @@ public:
 /*                         PALSARJaxaRasterBand()                       */
 /************************************************************************/
 
-PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
-                                            int nBand, VSILFILE *fp ) :
+PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDSIn,
+                                            int nBandIn, VSILFILE *fpIn ) :
     nPolarization(hh)
 {
-    this->fp = fp;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    this->fp = fpIn;
 
     /* Read image options record to determine the type of data */
     VSIFSeekL( fp, BITS_PER_SAMPLE_OFFSET, SEEK_SET );
@@ -245,19 +243,23 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
         nFileType = level_15;
     }
 
-    poDS->nFileType = nFileType;
+    poDSIn->nFileType = nFileType;
 
     /* Read number of range/azimuth lines */
     VSIFSeekL( fp, NUMBER_LINES_OFFSET, SEEK_SET );
     READ_CHAR_VAL( nRasterYSize, NUMBER_LINES_LENGTH, fp );
     VSIFSeekL( fp, SAR_DATA_RECORD_LENGTH_OFFSET, SEEK_SET );
     READ_CHAR_VAL( nRecordSize, SAR_DATA_RECORD_LENGTH_LENGTH, fp );
-    nRasterXSize = (nRecordSize -
+    int nDenom = ((nBitsPerSample / 8) * nSamplesPerGroup);
+    if( nDenom == 0 )
+        nRasterXSize = 0;
+    else
+        nRasterXSize = (nRecordSize -
                     (nFileType != level_15 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
-        / ((nBitsPerSample / 8) * nSamplesPerGroup);
+        / nDenom;
 
-    poDS->nRasterXSize = nRasterXSize;
-    poDS->nRasterYSize = nRasterYSize;
+    poDSIn->nRasterXSize = nRasterXSize;
+    poDSIn->nRasterYSize = nRasterYSize;
 
     /* Polarization */
     switch (nBand) {
@@ -314,7 +316,7 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         nNumBytes = 2;
     }
 
-    int nOffset = IMAGE_OPT_DESC_LENGTH + ((nBlockYOff - 1) * nRecordSize) + 
+    int nOffset = IMAGE_OPT_DESC_LENGTH + ((nBlockYOff - 1) * nRecordSize) +
         (nFileType == level_11 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET);
 
     VSIFSeekL( fp, nOffset, SEEK_SET );
@@ -323,7 +325,7 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 #ifdef CPL_LSB
     if (nFileType == level_11)
         GDALSwapWords( pImage, 4, nBlockXSize * 2, 4 );
-    else 
+    else
         GDALSwapWords( pImage, 2, nBlockXSize, 2 );
 #endif
 
@@ -333,7 +335,7 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 /************************************************************************/
 /* ==================================================================== */
-/* 			PALSARJaxaDataset			     	*/
+/*                      PALSARJaxaDataset                               */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -373,49 +375,49 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
     else {
         poDS->SetMetadataItem( "PRODUCT_LEVEL", "1.5" );
         /* extract equivalent number of looks */
-        VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH + 
+        VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +
                   EFFECTIVE_LOOKS_AZIMUTH_OFFSET, SEEK_SET );
-        char pszENL[17];
+        char szENL[17];
         double dfENL;
         READ_CHAR_FLOAT(dfENL, 16, fp);
-        sprintf( pszENL, "%-16.1f", dfENL );
-        poDS->SetMetadataItem( "AZIMUTH_LOOKS", pszENL );
+        snprintf( szENL, sizeof(szENL), "%-16.1f", dfENL );
+        poDS->SetMetadataItem( "AZIMUTH_LOOKS", szENL );
 
         /* extract pixel spacings */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +
                   DATA_SET_SUMMARY_LENGTH + PIXEL_SPACING_OFFSET, SEEK_SET );
         double dfPixelSpacing;
         double dfLineSpacing;
-        char pszPixelSpacing[33];
-        char pszLineSpacing[33];
+        char szPixelSpacing[33];
+        char szLineSpacing[33];
         READ_CHAR_FLOAT(dfPixelSpacing, 16, fp);
         READ_CHAR_FLOAT(dfLineSpacing, 16, fp);
-        sprintf( pszPixelSpacing, "%-32.1f",dfPixelSpacing );
-        sprintf( pszLineSpacing, "%-32.1f", dfLineSpacing );
-        poDS->SetMetadataItem( "PIXEL_SPACING", pszPixelSpacing );
-        poDS->SetMetadataItem( "LINE_SPACING", pszPixelSpacing );
+        snprintf( szPixelSpacing, sizeof(szPixelSpacing), "%-32.1f",dfPixelSpacing );
+        snprintf( szLineSpacing, sizeof(szLineSpacing), "%-32.1f", dfLineSpacing );
+        poDS->SetMetadataItem( "PIXEL_SPACING", szPixelSpacing );
+        poDS->SetMetadataItem( "LINE_SPACING", szPixelSpacing );
 
         /* Alphanumeric projection name */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +
                   DATA_SET_SUMMARY_LENGTH + ALPHANUMERIC_PROJECTION_NAME_OFFSET,
                   SEEK_SET );
-        char pszProjName[33];
-        READ_STRING(pszProjName, 32, fp);
-        poDS->SetMetadataItem( "PROJECTION_NAME", pszProjName );
-		
+        char szProjName[33];
+        READ_STRING(szProjName, 32, fp);
+        poDS->SetMetadataItem( "PROJECTION_NAME", szProjName );
+
         /* Extract corner GCPs */
         poDS->nGCPCount = 4;
-        poDS->pasGCPList = (GDAL_GCP *)CPLCalloc( sizeof(GDAL_GCP), 
+        poDS->pasGCPList = (GDAL_GCP *)CPLCalloc( sizeof(GDAL_GCP),
                                                   poDS->nGCPCount );
         GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
 
         /* setup the GCPs */
         int i;
         for (i = 0; i < poDS->nGCPCount; i++) {
-            char pszID[2];
-            sprintf( pszID, "%d", i + 1);
+            char szID[30];
+            snprintf( szID, sizeof(szID), "%d", i + 1);
             CPLFree(poDS->pasGCPList[i].pszId);
-            poDS->pasGCPList[i].pszId = CPLStrdup( pszID );
+            poDS->pasGCPList[i].pszId = CPLStrdup( szID );
             poDS->pasGCPList[i].dfGCPZ = 0.0;
         }
 
@@ -423,7 +425,7 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         /* seek to start of GCPs */
         VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH +
                   DATA_SET_SUMMARY_LENGTH + TOP_LEFT_LAT_OFFSET, SEEK_SET );
-		
+
         /* top-left GCP */
         READ_CHAR_FLOAT(dfTemp, 16, fp);
         poDS->pasGCPList[0].dfGCPY = dfTemp;
@@ -478,9 +480,8 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
-    if ( !EQUALN((char *)(poOpenInfo->pabyHeader + 60),"AL", 2) 
-         || !EQUALN(CPLGetBasename((char *)(poOpenInfo->pszFilename)) + 4, 
-                    "ALPSR", 5) )
+    if ( !STARTS_WITH_CI((char *)(poOpenInfo->pabyHeader + 60), "AL")
+         || !STARTS_WITH_CI(CPLGetBasename((char *)(poOpenInfo->pszFilename)) + 4, "ALPSR") )
     {
         return 0;
     }
@@ -525,18 +526,18 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     /* Check that this actually is a JAXA PALSAR product */
     if ( !PALSARJaxaDataset::Identify(poOpenInfo) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The JAXAPALSAR driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
     }
-    
+
     PALSARJaxaDataset *poDS = new PALSARJaxaDataset();
 
     /* Get the suffix of the filename, we'll need this */
@@ -544,47 +545,44 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
                                  (CPLGetFilename( poOpenInfo->pszFilename ) + 3) );
 
     /* Try to read each of the polarizations */
-    char *pszImgFile = (char *)VSIMalloc( 
-        strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) + 
-        strlen( pszSuffix ) + 8 );
+    const size_t nImgFileLen =
+        strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) +
+        strlen( pszSuffix ) + 8;
+    char *pszImgFile = (char *)CPLMalloc( nImgFileLen );
 
     int nBandNum = 1;
 
     /* HH */
-    VSILFILE *fpHH;
-    sprintf( pszImgFile, "%s%sIMG-HH%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HH%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
-    fpHH = VSIFOpenL( pszImgFile, "rb" );
-    if (fpHH != NULL) { 
+    VSILFILE *fpHH = VSIFOpenL( pszImgFile, "rb" );
+    if (fpHH != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 0, fpHH ) );
         nBandNum++;
     }
 
     /* HV */
-    VSILFILE *fpHV;
-    sprintf( pszImgFile, "%s%sIMG-HV%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
-    fpHV = VSIFOpenL( pszImgFile, "rb" );
+    VSILFILE *fpHV = VSIFOpenL( pszImgFile, "rb" );
     if (fpHV != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 1, fpHV ) );
         nBandNum++;
     }
 
     /* VH */
-    VSILFILE *fpVH;
-    sprintf( pszImgFile, "%s%sIMG-VH%s", 
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VH%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
-    fpVH = VSIFOpenL( pszImgFile, "rb" );
+    VSILFILE *fpVH = VSIFOpenL( pszImgFile, "rb" );
     if (fpVH != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 2, fpVH ) );
         nBandNum++;
     }
 
     /* VV */
-    VSILFILE *fpVV;
-    sprintf( pszImgFile, "%s%sIMG-VV%s",
+    snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
-    fpVV = VSIFOpenL( pszImgFile, "rb" );
+    VSILFILE *fpVV = VSIFOpenL( pszImgFile, "rb" );
     if (fpVV != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 3, fpVV ) );
         nBandNum++;
@@ -611,10 +609,10 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     }
 
     /* read metadata from Leader file. */
-    char *pszLeaderFilename = (char *)VSIMalloc( 
-        strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) + 
-        strlen(pszSuffix) + 5 );
-    sprintf( pszLeaderFilename, "%s%sLED%s", 
+    const size_t nLeaderFilenameLen = strlen( CPLGetDirname( poOpenInfo->pszFilename ) ) +
+        strlen(pszSuffix) + 5;
+    char *pszLeaderFilename = (char *)CPLMalloc( nLeaderFilenameLen );
+    snprintf( pszLeaderFilename, nLeaderFilenameLen, "%s%sLED%s",
              CPLGetDirname( poOpenInfo->pszFilename ) , SEP_STRING, pszSuffix );
 
     VSILFILE *fpLeader = VSIFOpenL( pszLeaderFilename, "rb" );
@@ -646,21 +644,23 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 /*                      GDALRegister_PALSARJaxa()                       */
 /************************************************************************/
 
-void GDALRegister_PALSARJaxa() {
-    GDALDriver	*poDriver;
+void GDALRegister_PALSARJaxa()
 
-    if( GDALGetDriverByName( "JAXAPALSAR" ) == NULL ) {
-        poDriver = new GDALDriver();
-        poDriver->SetDescription( "JAXAPALSAR" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "JAXA PALSAR Product Reader (Level 1.1/1.5)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_palsar.html" );
-        poDriver->pfnOpen = PALSARJaxaDataset::Open;
-        poDriver->pfnIdentify = PALSARJaxaDataset::Identify;
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+{
+    if( GDALGetDriverByName( "JAXAPALSAR" ) != NULL )
+        return;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "JAXAPALSAR" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "JAXA PALSAR Product Reader (Level 1.1/1.5)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_palsar.html" );
+
+    poDriver->pfnOpen = PALSARJaxaDataset::Open;
+    poDriver->pfnIdentify = PALSARJaxaDataset::Identify;
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

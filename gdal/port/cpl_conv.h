@@ -48,16 +48,20 @@
 /* -------------------------------------------------------------------- */
 CPL_C_START
 
+/*! @cond Doxygen_Suppress */
 void CPL_DLL CPLVerifyConfiguration(void);
+/*! @endcond */
 
 const char CPL_DLL * CPL_STDCALL
 CPLGetConfigOption( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 const char CPL_DLL * CPL_STDCALL
 CPLGetThreadLocalConfigOption( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL CPLSetConfigOption( const char *, const char * );
-void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption( const char *pszKey, 
+void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption( const char *pszKey,
                                                         const char *pszValue );
+/*! @cond Doxygen_Suppress */
 void CPL_DLL CPL_STDCALL CPLFreeConfig(void);
+/*! @endcond */
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
@@ -66,9 +70,10 @@ void CPL_DLL CPL_STDCALL CPLFreeConfig(void);
 void CPL_DLL *CPLMalloc( size_t ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL *CPLCalloc( size_t, size_t ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL *CPLRealloc( void *, size_t ) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL *CPLStrdup( const char * ) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL *CPLStrdup( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 char CPL_DLL *CPLStrlwr( char *);
 
+/** Alias of VSIFree() */
 #define CPLFree VSIFree
 
 /* -------------------------------------------------------------------- */
@@ -77,10 +82,16 @@ char CPL_DLL *CPLStrlwr( char *);
 char CPL_DLL *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
 const char CPL_DLL *CPLReadLineL( VSILFILE * );
-const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols, char** papszOptions);
+#ifdef __cplusplus
+const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
+                                   const char * const * papszOptions );
+#else
+const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
+                                   char** papszOptions );
+#endif
 
 /* -------------------------------------------------------------------- */
-/*      Convert ASCII string to floationg point number                  */
+/*      Convert ASCII string to floating point number                  */
 /*      (THESE FUNCTIONS ARE NOT LOCALE AWARE!).                        */
 /* -------------------------------------------------------------------- */
 double CPL_DLL CPLAtof(const char *);
@@ -92,7 +103,7 @@ float CPL_DLL CPLStrtofDelim(const char *, char **, char);
 
 /* -------------------------------------------------------------------- */
 /*      Convert number to string.  This function is locale agnostic     */
-/*      (ie. it will support "," or "." regardless of current locale)   */
+/*      (i.e. it will support "," or "." regardless of current locale)  */
 /* -------------------------------------------------------------------- */
 double CPL_DLL CPLAtofM(const char *);
 
@@ -134,39 +145,41 @@ int CPL_DLL CPLGetExecPath( char *pszPathBuf, int nMaxLength );
 /* -------------------------------------------------------------------- */
 /*      Filename handling functions.                                    */
 /* -------------------------------------------------------------------- */
-const char CPL_DLL *CPLGetPath( const char * );
-const char CPL_DLL *CPLGetDirname( const char * );
-const char CPL_DLL *CPLGetFilename( const char * );
-const char CPL_DLL *CPLGetBasename( const char * );
-const char CPL_DLL *CPLGetExtension( const char * );
+const char CPL_DLL *CPLGetPath( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLGetDirname( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLGetFilename( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLGetBasename( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLGetExtension( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 char       CPL_DLL *CPLGetCurrentDir(void);
 const char CPL_DLL *CPLFormFilename( const char *pszPath,
                                      const char *pszBasename,
-                                     const char *pszExtension );
+                                     const char *pszExtension ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLFormCIFilename( const char *pszPath,
                                        const char *pszBasename,
-                                       const char *pszExtension );
-const char CPL_DLL *CPLResetExtension( const char *, const char * );
-const char CPL_DLL *CPLProjectRelativeFilename( const char *pszProjectDir, 
-                                            const char *pszSecondaryFilename );
+                                       const char *pszExtension ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLResetExtension( const char *, const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLProjectRelativeFilename( const char *pszProjectDir,
+                                            const char *pszSecondaryFilename ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 int CPL_DLL CPLIsFilenameRelative( const char *pszFilename );
-const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *);
-const char CPL_DLL *CPLCleanTrailingSlash( const char * );
-char CPL_DLL      **CPLCorrespondingPaths( const char *pszOldFilename, 
-                                           const char *pszNewFilename, 
-                                           char **papszFileList );
+const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLCleanTrailingSlash( const char * ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+char CPL_DLL      **CPLCorrespondingPaths( const char *pszOldFilename,
+                                           const char *pszNewFilename,
+                                           char **papszFileList ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 
-const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem );
+const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
 /* -------------------------------------------------------------------- */
+
+/** Callback for CPLPushFileFinder */
 typedef const char *(*CPLFileFinder)(const char *, const char *);
 
-const char    CPL_DLL *CPLFindFile(const char *pszClass, 
+const char    CPL_DLL *CPLFindFile(const char *pszClass,
                                    const char *pszBasename);
-const char    CPL_DLL *CPLDefaultFindFile(const char *pszClass, 
+const char    CPL_DLL *CPLDefaultFindFile(const char *pszClass,
                                           const char *pszBasename);
 void          CPL_DLL CPLPushFileFinder( CPLFileFinder pfnFinder );
 CPLFileFinder CPL_DLL CPLPopFileFinder(void);
@@ -177,25 +190,29 @@ void          CPL_DLL CPLFinderClean(void);
 /* -------------------------------------------------------------------- */
 /*      Safe version of stat() that works properly on stuff like "C:".  */
 /* -------------------------------------------------------------------- */
-int CPL_DLL     CPLStat( const char *, VSIStatBuf * );
+int CPL_DLL     CPLStat( const char *, VSIStatBuf * ) CPL_WARN_UNUSED_RESULT;
 
 /* -------------------------------------------------------------------- */
 /*      Reference counted file handle manager.  Makes sharing file      */
 /*      handles more practical.                                         */
 /* -------------------------------------------------------------------- */
+
+/** Information on a shared file */
 typedef struct {
-    FILE *fp;
-    int   nRefCount;
-    int   bLarge;
-    char  *pszFilename;
-    char  *pszAccess;
+    FILE *fp;               /**< File pointer */
+    int   nRefCount;        /**< Reference counter */
+    int   bLarge;           /**< Whether fp must be interpreted as VSIFILE* */
+    char  *pszFilename;     /**< Filename */
+    char  *pszAccess;       /**< Access mode */
 } CPLSharedFileInfo;
 
 FILE CPL_DLL    *CPLOpenShared( const char *, const char *, int );
 void CPL_DLL     CPLCloseShared( FILE * );
 CPLSharedFileInfo CPL_DLL *CPLGetSharedList( int * );
 void CPL_DLL     CPLDumpSharedList( FILE * );
+/*! @cond Doxygen_Suppress */
 void CPL_DLL     CPLCleanupSharedFileMutex( void );
+/*! @endcond */
 
 /* -------------------------------------------------------------------- */
 /*      DMS to Dec to DMS conversion.                                   */
@@ -206,7 +223,7 @@ const char CPL_DLL *CPLDecToDMS( double dfAngle, const char * pszAxis,
 double CPL_DLL CPLPackedDMSToDec( double );
 double CPL_DLL CPLDecToPackedDMS( double dfDec );
 
-void CPL_DLL CPLStringToComplex( const char *pszString, 
+void CPL_DLL CPLStringToComplex( const char *pszString,
                                  double *pdfReal, double *pdfImag );
 
 /* -------------------------------------------------------------------- */
@@ -221,9 +238,12 @@ int CPL_DLL CPLSymlink( const char* pszOldPath, const char* pszNewPath, char** p
 /* -------------------------------------------------------------------- */
 /*      ZIP Creation.                                                   */
 /* -------------------------------------------------------------------- */
+
+/*! @cond Doxygen_Suppress */
 #define CPL_ZIP_API_OFFERED
+/*! @endcond */
 void CPL_DLL  *CPLCreateZip( const char *pszZipFilename, char **papszOptions );
-CPLErr CPL_DLL CPLCreateFileInZip( void *hZip, const char *pszFilename, 
+CPLErr CPL_DLL CPLCreateFileInZip( void *hZip, const char *pszFilename,
                                    char **papszOptions );
 CPLErr CPL_DLL CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize );
 CPLErr CPL_DLL CPLCloseFileInZip( void *hZip );
@@ -246,19 +266,22 @@ void CPL_DLL *CPLZLibInflate( const void* ptr, size_t nBytes,
 int CPL_DLL CPLValidateXML(const char* pszXMLFilename,
                            const char* pszXSDFilename,
                            char** papszOptions);
-						   
+
 /* -------------------------------------------------------------------- */
 /*      Locale handling. Prevents parallel executions of setlocale().   */
 /* -------------------------------------------------------------------- */
 char* CPLsetlocale (int category, const char* locale);
+/*! @cond Doxygen_Suppress */
 void CPLCleanupSetlocaleMutex(void);
+/*! @endcond */
 
 CPL_C_END
 
 /* -------------------------------------------------------------------- */
-/*      C++ object for temporariliy forcing a LC_NUMERIC locale to "C". */
+/*      C++ object for temporarily forcing a LC_NUMERIC locale to "C".  */
 /* -------------------------------------------------------------------- */
 
+//! @cond Doxygen_Suppress
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 class CPL_DLL CPLLocaleC
@@ -271,12 +294,12 @@ private:
     char *pszOldLocale;
 
     /* Make it non-copyable */
-    CPLLocaleC(CPLLocaleC&);
-    CPLLocaleC& operator=(CPLLocaleC&);
+    CPLLocaleC(const CPLLocaleC&);
+    CPLLocaleC& operator=(const CPLLocaleC&);
 };
 
 // Does the same as CPLLocaleC except that, when available, it tries to
-// only affect the current thread. But code that would be dependant of
+// only affect the current thread. But code that would be dependent of
 // setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
 // will not work depending on the actual implementation
 class CPL_DLL CPLThreadLocaleC
@@ -297,11 +320,11 @@ private:
 #endif
 
     /* Make it non-copyable */
-    CPLThreadLocaleC(CPLThreadLocaleC&);
-    CPLThreadLocaleC& operator=(CPLThreadLocaleC&);
+    CPLThreadLocaleC(const CPLThreadLocaleC&);
+    CPLThreadLocaleC& operator=(const CPLThreadLocaleC&);
 };
 
 #endif /* def __cplusplus */
-
+//! @endcond
 
 #endif /* ndef CPL_CONV_H_INCLUDED */

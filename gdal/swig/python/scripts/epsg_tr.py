@@ -2,26 +2,26 @@
 # -*- coding: utf-8 -*-
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Project:  CFS OGC MapServer
 #  Purpose:  Script to create WKT and PROJ.4 dictionaries for EPSG GCS/PCS
 #            codes.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2001, Frank Warmerdam
 #  Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -31,15 +31,11 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import osr
-    from osgeo import gdal
-except ImportError:
-    import osr
-    import gdal
-
-import sys
 import string
+import sys
+
+from osgeo import osr
+from osgeo import gdal
 
 # =============================================================================
 def Usage():
@@ -58,7 +54,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
 
     if err != 0 and report_error:
         print('Unable to lookup %d, either not a valid EPSG' % code)
-        print('code, or it the EPSG csv files are not accessable.')
+        print('code, or it the EPSG CSV files are not accessible.')
         sys.exit(2)
     else:
         if output_format == '-pretty_wkt':
@@ -69,13 +65,13 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
 
         if output_format == '-xml':
             print(prj_srs.ExportToXML())
-            
+
         if output_format == '-wkt':
             if gen_dict_line:
                 print('EPSG:%d' % code)
-                    
+
             print(prj_srs.ExportToWkt())
-                
+
         if output_format == '-proj4':
             out_string = prj_srs.ExportToProj4()
 
@@ -89,12 +85,13 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
 
             if name is None:
                 name = 'Unknown'
-            
+
             print('# %s' % name)
             if err == 0 and out_string.find('+proj=') > -1:
                 print('<%s> %s <>' % (str(code), out_string))
             else:
-                print('# Unable to translate coordinate system EPSG:%d into PROJ.4 format.' % code)
+                print('# Unable to translate coordinate system '
+                      'EPSG:%d into PROJ.4 format.' % code)
                 print('#')
 
         if output_format == '-postgis':
@@ -112,7 +109,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             except:
                 err = 1
             wkt = prj_srs.ExportToWkt()
-            
+
             print('---')
             print('--- EPSG %d : %s' % (code, name))
             print('---')
@@ -127,7 +124,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
 
         # INGRES COPY command input.
         if output_format == '-copy':
-            
+
             try:
                 wkt = prj_srs.ExportToWkt()
                 proj4text = prj_srs.ExportToProj4()
@@ -147,13 +144,13 @@ if __name__ == '__main__':
     list_file = None
     output_format = '-pretty_wkt'
     report_error = 1
-    
+
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
     if argv is None:
         sys.exit( 0 )
-        
+
     # Parse command line arguments.
-    
+
     i = 1
     while i < len(argv):
         arg = argv[i]
@@ -164,16 +161,16 @@ if __name__ == '__main__':
 
         elif arg[:5] == '-skip':
             report_error = 0
-            
+
         elif arg == '-list' and i < len(argv)-1:
             i = i + 1
             list_file = argv[i]
-            
+
         elif arg[0] == '-':
             Usage()
 
         elif int(arg) > 0:
-            
+
             if start_code == -1:
                 start_code = int(arg)
                 end_code = int(arg)
@@ -196,7 +193,7 @@ if __name__ == '__main__':
     gen_dict_line = start_code != end_code
 
     # loop over all codes to generate output
-    
+
     prj_srs = osr.SpatialReference()
 
     if start_code != -1:
@@ -214,22 +211,20 @@ if __name__ == '__main__':
                 c_offset = line.find(',')
                 if c_offset > 0:
                     line = line[:c_offset]
-                    
+
                 code = string.atoi(line)
             except:
                 code = -1
 
             if code != -1:
                 trHandleCode(code, gen_dict_line, report_error, output_format)
-                
+
             line = list_fd.readline()
 
     else:
         Usage()
-        
+
     # Output COMMIT transaction for PostGIS
     if output_format == '-postgis':
         print('COMMIT;')
         print('VACUUM ANALYZE spatial_ref_sys;')
-
-

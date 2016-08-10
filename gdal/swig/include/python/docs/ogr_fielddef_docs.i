@@ -1,12 +1,15 @@
 %extend OGRFieldDefnShadow {
 // File: ogrfielddefn_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfielddefn.cpp
-21018 2010-10-30 11:30:51Z rouault $\") ";
+31961 2015-12-03 02:01:09Z goatbar $\") ";
 
 %feature("docstring")  Create "OGRFieldDefnH OGR_Fld_Create(const
 char *pszName, OGRFieldType eType)
 
 Create a new field definition.
+
+By default, fields have no width, precision, are nullable and not
+ignored.
 
 This function is the same as the CPP method
 OGRFieldDefn::OGRFieldDefn().
@@ -76,8 +79,10 @@ field type. ";
 %feature("docstring")  SetType "void OGR_Fld_SetType(OGRFieldDefnH
 hDefn, OGRFieldType eType)
 
-Set the type of this field. This should never be done to an
-OGRFieldDefn that is already part of an OGRFeatureDefn.
+Set the type of this field.
+
+This should never be done to an OGRFieldDefn that is already part of
+an OGRFeatureDefn.
 
 This function is the same as the CPP method OGRFieldDefn::SetType().
 
@@ -87,6 +92,117 @@ Parameters:
 hDefn:  handle to the field definition to set type to.
 
 eType:  the new field type. ";
+
+%feature("docstring")  GetSubType "OGRFieldSubType
+OGR_Fld_GetSubType(OGRFieldDefnH hDefn)
+
+Fetch subtype of this field.
+
+This function is the same as the CPP method
+OGRFieldDefn::GetSubType().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition to get subtype from.
+
+field subtype.
+
+GDAL 2.0 ";
+
+%feature("docstring")  SetSubType "void
+OGR_Fld_SetSubType(OGRFieldDefnH hDefn, OGRFieldSubType eSubType)
+
+Set the subtype of this field.
+
+This should never be done to an OGRFieldDefn that is already part of
+an OGRFeatureDefn.
+
+This function is the same as the CPP method
+OGRFieldDefn::SetSubType().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition to set type to.
+
+eSubType:  the new field subtype.
+
+GDAL 2.0 ";
+
+%feature("docstring")  SetDefault "void
+OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char *pszDefault)
+
+Set default field value.
+
+The default field value is taken into account by drivers (generally
+those with a SQL interface) that support it at field creation time.
+OGR will generally not automatically set the default field value to
+null fields by itself when calling OGRFeature::CreateFeature() /
+OGRFeature::SetFeature(), but will let the low-level layers to do the
+job. So retrieving the feature from the layer is recommended.
+
+The accepted values are NULL, a numeric value, a literal value
+enclosed between single quote characters (and inner single quote
+characters escaped by repetition of the single quote character),
+CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or a driver specific
+expression (that might be ignored by other drivers). For a datetime
+literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
+(considered as UTC time).
+
+Drivers that support writing DEFAULT clauses will advertize the
+GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
+
+This function is the same as the C++ method
+OGRFieldDefn::SetDefault().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition.
+
+pszDefault:  new default field value or NULL pointer.
+
+GDAL 2.0 ";
+
+%feature("docstring")  GetDefault "const char*
+OGR_Fld_GetDefault(OGRFieldDefnH hDefn)
+
+Get default field value.
+
+This function is the same as the C++ method
+OGRFieldDefn::GetDefault().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition.
+
+default field value or NULL.
+
+GDAL 2.0 ";
+
+%feature("docstring")  IsDefaultDriverSpecific "int
+OGR_Fld_IsDefaultDriverSpecific(OGRFieldDefnH hDefn)
+
+Returns whether the default value is driver specific.
+
+Driver specific default values are those that are *not* NULL, a
+numeric value, a literal value enclosed between single quote
+characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or datetime
+literal value.
+
+This function is the same as the C++ method
+OGRFieldDefn::IsDefaultDriverSpecific().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+TRUE if the default value is driver specific.
+
+GDAL 2.0 ";
 
 %feature("docstring")  OGR_GetFieldTypeName "const char*
 OGR_GetFieldTypeName(OGRFieldType eType)
@@ -103,6 +219,40 @@ eType:  the field type to get name for.
 
 the name. ";
 
+%feature("docstring")  OGR_GetFieldSubTypeName "const char*
+OGR_GetFieldSubTypeName(OGRFieldSubType eSubType)
+
+Fetch human readable name for a field subtype.
+
+This function is the same as the CPP method
+OGRFieldDefn::GetFieldSubTypeName().
+
+Parameters:
+-----------
+
+eSubType:  the field subtype to get name for.
+
+the name.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGR_AreTypeSubTypeCompatible "int
+OGR_AreTypeSubTypeCompatible(OGRFieldType eType, OGRFieldSubType
+eSubType)
+
+Return if type and subtype are compatible.
+
+Parameters:
+-----------
+
+eType:  the field type.
+
+eSubType:  the field subtype.
+
+TRUE if type and subtype are compatible
+
+GDAL 2.0 ";
+
 %feature("docstring")  GetJustify "OGRJustification
 OGR_Fld_GetJustify(OGRFieldDefnH hDefn)
 
@@ -110,6 +260,8 @@ Get the justification for this field.
 
 This function is the same as the CPP method
 OGRFieldDefn::GetJustify().
+
+Note: no driver is know to use the concept of field justification.
 
 Parameters:
 -----------
@@ -122,6 +274,8 @@ the justification. ";
 OGR_Fld_SetJustify(OGRFieldDefnH hDefn, OGRJustification eJustify)
 
 Set the justification for this field.
+
+Note: no driver is know to use the concept of field justification.
 
 This function is the same as the CPP method
 OGRFieldDefn::SetJustify().
@@ -164,8 +318,9 @@ nNewWidth:  the new width. ";
 %feature("docstring")  GetPrecision "int
 OGR_Fld_GetPrecision(OGRFieldDefnH hDefn)
 
-Get the formatting precision for this field. This should normally be
-zero for fields of types other than OFTReal.
+Get the formatting precision for this field.
+
+This should normally be zero for fields of types other than OFTReal.
 
 This function is the same as the CPP method
 OGRFieldDefn::GetPrecision().
@@ -239,7 +394,7 @@ OGR_Fld_SetIgnored(OGRFieldDefnH hDefn, int ignore)
 
 Set whether this field should be omitted when fetching features.
 
-This method is the same as the C function OGRFieldDefn::SetIgnored().
+This method is the same as the C++ method OGRFieldDefn::SetIgnored().
 
 Parameters:
 -----------
@@ -247,5 +402,72 @@ Parameters:
 hDefn:  handle to the field definition
 
 ignore:  ignore state ";
+
+%feature("docstring")  IsNullable "int
+OGR_Fld_IsNullable(OGRFieldDefnH hDefn)
+
+Return whether this field can receive null values.
+
+By default, fields are nullable.
+
+Even if this method returns FALSE (i.e not-nullable field), it doesn't
+mean that OGRFeature::IsFieldSet() will necessary return TRUE, as
+fields can be temporary unset and null/not-null validation is usually
+done when OGRLayer::CreateFeature()/SetFeature() is called.
+
+This method is the same as the C++ method OGRFieldDefn::IsNullable().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+TRUE if the field is authorized to be null.
+
+GDAL 2.0 ";
+
+%feature("docstring")  SetNullable "void
+OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int bNullableIn)
+
+Set whether this field can receive null values.
+
+By default, fields are nullable, so this method is generally called
+with FALSE to set a not-null constraint.
+
+Drivers that support writing not-null constraint will advertize the
+GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
+
+This method is the same as the C++ method OGRFieldDefn::SetNullable().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+bNullableIn:  FALSE if the field must have a not-null constraint.
+
+GDAL 2.0 ";
+
+%feature("docstring")  OGRUpdateFieldType "void
+OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,
+OGRFieldSubType eNewSubType)
+
+Update the type of a field definition by \"merging\" its existing type
+with a new type.
+
+The update is done such as broadening the type. For example a
+OFTInteger updated with OFTInteger64 will be promoted to OFTInteger64.
+
+Parameters:
+-----------
+
+poFDefn:  the field definition whose type must be updated.
+
+eNewType:  the new field type to merge into the existing type.
+
+eNewSubType:  the new field subtype to merge into the existing
+subtype.
+
+GDAL 2.1 ";
 
 }

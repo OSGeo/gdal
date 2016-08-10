@@ -29,18 +29,20 @@ CPPFLAGS 	:=	-DHAVE_ARMADILLO $(CPPFLAGS)
 endif
 
 ifeq ($(QHULL_SETTING),external)
-CPPFLAGS 	:=	-DEXTERNAL_QHULL $(CPPFLAGS)
+CPPFLAGS 	:=	-DEXTERNAL_QHULL -DQHULL_INCLUDE_SUBDIR_IS_LIBQHULL=$(QHULL_INCLUDE_SUBDIR_IS_LIBQHULL) $(CPPFLAGS)
 endif
 ifeq ($(QHULL_SETTING),internal)
-CPPFLAGS 	:=	-DINTERNAL_QHULL -Ilibqhull $(CPPFLAGS)
+CPPFLAGS 	:=	-DINTERNAL_QHULL $(CPPFLAGS)
 endif
 
 CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.$(OBJ_EXT) gdalgridsse.$(OBJ_EXT)
 
+# We use CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT to avoid the whole library to be compiled with -mavx
+# if -mavx is not the default
 gdalgridavx.$(OBJ_EXT):   gdalgridavx.cpp
-	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT) $(AVXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 gdalgridsse.$(OBJ_EXT):   gdalgridsse.cpp
 	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS) $(SSEFLAGS) $(CPPFLAGS) -c -o $@ $<

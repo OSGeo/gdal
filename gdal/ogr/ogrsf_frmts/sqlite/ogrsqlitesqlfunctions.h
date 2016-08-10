@@ -27,12 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SQLITE_SQL_FUNCTIONS_INCLUDED
-#define _OGR_SQLITE_SQL_FUNCTIONS_INCLUDED
+#ifndef OGR_SQLITE_SQL_FUNCTIONS_INCLUDED
+#define OGR_SQLITE_SQL_FUNCTIONS_INCLUDED
 
 #include "ogr_sqlite.h"
 
 static void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB);
 static void OGRSQLiteUnregisterSQLFunctions(void* hHandle);
 
-#endif // _OGR_SQLITE_SQL_FUNCTIONS_INCLUDED
+#endif // OGR_SQLITE_SQL_FUNCTIONS_INCLUDED

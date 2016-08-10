@@ -26,8 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_AO_H_INCLUDED
-#define _OGR_AO_H_INCLUDED
+#ifndef OGR_AO_H_INCLUDED
+#define OGR_AO_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -35,7 +35,7 @@
 #include "cpl_string.h"
 
 //COM ATL Includes
-#include <atlbase.h> 
+#include <atlbase.h>
 #include <atlcom.h>
 #include <atlctl.h>
 #include <atlstr.h> //CString
@@ -199,5 +199,3 @@ void CPL_DLL RegisterOGRao();
 CPL_C_END
 
 #endif /* ndef _OGR_PG_H_INCLUDED */
-
-

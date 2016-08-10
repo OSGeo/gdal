@@ -27,8 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRLAYERDECORATOR_H_INCLUDED
-#define _OGRLAYERDECORATOR_H_INCLUDED
+#ifndef OGRLAYERDECORATOR_H_INCLUDED
+#define OGRLAYERDECORATOR_H_INCLUDED
+
+#ifndef DOXYGEN_SKIP
 
 #include "ogrsf_frmts.h"
 
@@ -80,6 +82,9 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
 
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
+                                         int bApproxOK = TRUE );
+
     virtual OGRErr      SyncToDisk();
 
     virtual OGRStyleTable *GetStyleTable();
@@ -108,4 +113,6 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
     OGRLayer* GetBaseLayer()    { return m_poDecoratedLayer; }
 };
 
-#endif // _OGRLAYERDECORATOR_H_INCLUDED
+#endif /* #ifndef DOXYGEN_SKIP */
+
+#endif // OGRLAYERDECORATOR_H_INCLUDED

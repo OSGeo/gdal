@@ -36,7 +36,7 @@
 </ul>
 </p>
 
-<p>Files which match those two criterias are considered to be Selafin files and the driver will report it has opened them successfully.</p>
+<p>Files which match those two criteria are considered to be Selafin files and the driver will report it has opened them successfully.</p>
 
 <h2><a id="format">Format</a></h2>
 
@@ -171,7 +171,7 @@
 <h2>Layer filtering specification</h2>
 <p>As a single Selafin files may hold millions of layers, and the user is generally interested in only a few of them, the driver supports syntactic sugar to filter the layers before they are read.</p>
 
-<p>When the datasource is specified, it may be followed immediatly by a <em>layer filtering specification.</em>, as in <tt>Results[0:10]</tt>. The effects of the layer filtering specification is to indicate which time steps shall be loaded from all Selafin files.</p>
+<p>When the datasource is specified, it may be followed immediately by a <em>layer filtering specification.</em>, as in <tt>Results[0:10]</tt>. The effects of the layer filtering specification is to indicate which time steps shall be loaded from all Selafin files.</p>
 
 <p>The layer filtering specification is a comma-separated sequence of range specifications, delimited by square brackets and maybe preceded by the character 'e' or 'p'. The effect of characters 'e' and 'p' is to select respectively either only elements or only nodes. If no character is added, both nodes and elements are selected.
 Each range specification is:
@@ -207,7 +207,7 @@ Numbers can also be negative. In this case, they are counted from the end of the
 	<dd>Date of the time step relative to the starting date of the simulation (see <a href="#DCO">Datasource creation options</a>). This is a single floating-point value giving the number of seconds since the starting date.</dd>
 </dl>
 
-<p>An example of datasource creation option is: <tt>-lco DATE=24000</tt>. 
+<p>An example of datasource creation option is: <tt>-lco DATE=24000</tt>.
 
 <h2>Notes about the creation and the update of a Selafin datasource</h2>
 <p>The driver supports creating and writing to Selafin datasources, but there are some caveats when doing so.</p>
@@ -250,7 +250,7 @@ Numbers can also be negative. In this case, they are counted from the end of the
 
 <h2>VSI Virtual File System API support</h2>
 
-<p>The driver supports reading and writing to files managed by VSI Virtual File System API, which include "regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-only) , /vsicurl/ (read-only) domains.</p> 
+<p>The driver supports reading and writing to files managed by VSI Virtual File System API, which include "regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-only) , /vsicurl/ (read-only) domains.</p>
 
 <h2>Other notes</h2>
 <p>There is no SRS specification in the Selafin standard. The implementation of SRS is an addition of the driver and stores the SRS in an unused data field in the file. Future software using the Selafin standard may use this field and break the SRS specification. In this case, Selafin files will still be readable by the driver, but their writing will overwrite a value which may have another purpose.</p>

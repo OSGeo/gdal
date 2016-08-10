@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -28,14 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import osr
-    from osgeo import ogr
-except ImportError:
-    import osr
-    import ogr
-
 import sys
+
+from osgeo import ogr
+from osgeo import osr
+
 
 #############################################################################
 def float_range(*args):
@@ -108,14 +105,14 @@ while i < len(sys.argv):
         Usage()
 
     i = i + 1
-    
+
 if outfile is None:
     outfile = "graticule.shp"
 
 
 if substepsize > stepsize:
     substepsize = stepsize
-    
+
 #############################################################################-
 # Do we have an alternate SRS?
 
@@ -132,7 +129,7 @@ if t_srs is not None:
 else:
     t_srs_o = osr.SpatialReference()
     t_srs_o.SetFromUserInput( 'WGS84' )
-    
+
 #############################################################################-
 # Create graticule file.
 
@@ -149,7 +146,7 @@ layer = ds.CreateLayer( 'out', geom_type = ogr.wkbLineString,
 
 #########################################################################
 # Not connected case.  Produce individual segments are these are going to
-# be more resilent in the face of reprojection errors.
+# be more resilient in the face of reprojection errors.
 
 if not connected:
     #########################################################################
@@ -167,7 +164,7 @@ if not connected:
             err = 0
             if ct is not None:
                 err = geom.Transform( ct )
-              
+
             if err is 0:
                 feat.SetGeometry( geom )
                 layer.CreateFeature( feat )
@@ -188,7 +185,7 @@ if not connected:
                 feat.SetGeometry( geom )
                 layer.CreateFeature( feat )
 
-                
+
 #########################################################################
 # Connected case - produce one polyline for each complete line of latitude
 # or longitude.
@@ -202,14 +199,14 @@ if connected:
     for lat in float_range(ymin,ymax+stepsize/2,stepsize):
 
         geom = ogr.Geometry( type = ogr.wkbLineString )
-        
+
         for long_ in float_range(xmin,xmax+substepsize/2,substepsize):
             geom.AddPoint( long_, lat )
 
         err = 0
         if ct is not None:
             err = geom.Transform( ct )
-              
+
         if err is 0:
             feat.SetGeometry( geom )
             layer.CreateFeature( feat )
@@ -218,9 +215,9 @@ if connected:
     # Generate lines of longitude
 
     for long_ in float_range(xmin,xmax+stepsize/2,stepsize):
-        
+
         geom = ogr.Geometry( type = ogr.wkbLineString )
-        
+
         for lat in float_range(ymin,ymax+substepsize/2,substepsize):
             geom.AddPoint( long_, lat )
 
@@ -231,7 +228,7 @@ if connected:
         if err is 0:
             feat.SetGeometry( geom )
             layer.CreateFeature( feat )
-                
+
 #############################################################################
 # Cleanup
 
@@ -240,4 +237,3 @@ geom = None
 
 ds.Destroy()
 ds = None
-

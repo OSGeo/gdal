@@ -47,10 +47,10 @@ struct CPCIDSKADS40ModelSegment::PCIDSKADS40Info
     PCIDSKBuffer seg_data;
 };
 
-CPCIDSKADS40ModelSegment::CPCIDSKADS40ModelSegment(PCIDSKFile *file, 
-                                                   int segment,
+CPCIDSKADS40ModelSegment::CPCIDSKADS40ModelSegment(PCIDSKFile *fileIn, 
+                                                   int segmentIn,
                                                    const char *segment_pointer) :
-    CPCIDSKSegment(file, segment, segment_pointer), 
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), 
     pimpl_(new CPCIDSKADS40ModelSegment::PCIDSKADS40Info), 
     loaded_(false),mbModified(false)
 {
@@ -73,7 +73,7 @@ void CPCIDSKADS40ModelSegment::Load()
     
     assert(data_size - 1024 == 1 * 512);
     
-    pimpl_->seg_data.SetSize(data_size - 1024); // should be 1 * 512
+    pimpl_->seg_data.SetSize(static_cast<int>(data_size) - 1024); // should be 1 * 512
     
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
     
@@ -84,7 +84,7 @@ void CPCIDSKADS40ModelSegment::Load()
     // Bytes   0-7: 'ADS40  '
     // Byte    8-512: the path
     
-    if (std::strncmp(pimpl_->seg_data.buffer, "ADS40   ", 8)) 
+    if (!STARTS_WITH(pimpl_->seg_data.buffer, "ADS40   ")) 
     {
         pimpl_->seg_data.Put("ADS40   ",0,8);
         return;
@@ -110,7 +110,7 @@ void CPCIDSKADS40ModelSegment::Write(void)
     }
       
     pimpl_->seg_data.Put("ADS40   ",0,8);
-    pimpl_->seg_data.Put(pimpl_->path.c_str(),8,pimpl_->path.size());
+    pimpl_->seg_data.Put(pimpl_->path.c_str(),8,static_cast<int>(pimpl_->path.size()));
 
     WriteToFile(pimpl_->seg_data.buffer,0,data_size-1024);
     mbModified = false;
@@ -132,7 +132,7 @@ void CPCIDSKADS40ModelSegment::SetPath(const std::string& oPath)
     }
     else
     {
-        throw PCIDSKException("The size of the path cannot be"
+        return ThrowPCIDSKException("The size of the path cannot be"
                               " bigger than 504 characters.");
     }
 }

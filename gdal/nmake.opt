@@ -37,9 +37,8 @@
 # 1600 = 10.0(2010)
 # 1500 = 9.0 (2008)
 # 1400 = 8.0 (2005) - specific compilation flags, different from older VC++
-# 1310 = 7.1 (2003)
-# 1300 = 7.0 (2002)
-# 1200 = 6.0
+# 1310 = 7.1 (2003) # is it still supported ?
+# 1300 = 7.0 (2002) # is it still supported ?
 #
 !IFNDEF MSVC_VER
 #assume msvc VS2008.
@@ -106,7 +105,7 @@ JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
 
 # Compilation flags
 
-# Enable code analyzis on request
+# Enable code analysis on request
 # http://msdn.microsoft.com/en-us/library/ms173498.aspx
 !IFDEF ANALYZE
 CXX_ANALYZE_FLAGS=/analyze
@@ -128,15 +127,15 @@ CXX_PDB_FLAGS=
 !IFNDEF OPTFLAGS
 !IF $(MSVC_VER) >= 1400
 !IFNDEF DEBUG
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MD /EHsc /Ox /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MD /EHsc /Ox /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MD /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MD /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
 !ENDIF
 !ELSE
 !IFNDEF DEBUG
-OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /Ox /DNDEBUG
+OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /Ox /FC /DNDEBUG
 !ELSE
-OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /DDEBUG
+OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
 !ENDIF
 !ENDIF  #MSVC_VER
 !ENDIF  # OPTFLAGS
@@ -145,7 +144,16 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /DDEBUG
 # Set flags controlling warnings level, and suppression of some warnings.
 # 
 !IFNDEF WARNFLAGS
-WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 /wd4389
+# 4127: conditional expression is constant
+# 4251: 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
+# 4275: non – DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier'
+# 4786: ??????????
+# 4100: 'identifier' : unreferenced formal parameter
+# 4245: 'conversion' : conversion from 'type1' to 'type2', signed/unsigned mismatch
+# 4206: nonstandard extension used : translation unit is empty (only applies to C source code)
+# 4611: interaction between '_setjmp' and C++ object destruction is non-portable
+# 
+WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4611
 !ENDIF
 
 # 
@@ -153,16 +161,18 @@ WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 
 # 
 !IFNDEF SSEFLAGS
 SSEFLAGS = /DHAVE_SSE_AT_COMPILE_TIME
+#SSE_ARCH_FLAGS = /arch:SSE
 !ENDIF
 
 # VS2010 SP1 or later in fact required for runtime detection of AVX instruction set
 !IFNDEF AVXFLAGS
 !IF $(MSVC_VER) >= 1600
 AVXFLAGS = /DHAVE_AVX_AT_COMPILE_TIME
+AVX_ARCH_FLAGS = /arch:AVX
 !ENDIF
 !ENDIF
 
-# The followin are extra disables that can be applied to external source
+# The following are extra disables that can be applied to external source
 # not under our control that we wish to use less stringent warnings with.
 !IFNDEF SOFTWARNFLAGS
 SOFTWARNFLAGS= /wd4244 /wd4702 /wd4701 /wd4013 /wd4706 /wd4057 /wd4210 /wd4305
@@ -227,18 +237,24 @@ BSB_SUPPORTED = 1
 # Comment out the following to disable ODBC support.
 ODBC_SUPPORTED = 1
 
+# Uncomment out the following to enable plugin with SQL Native Client support for MSSQL Bulk Copy.
+#SQLNCLI_VERSION = 11
+#SQLNCLI_DIR = C:\Program Files (x86)\Microsoft SQL Server\$(SQLNCLI_VERSION)0\SDK
+#SQLNCLI_LIB = "$(SQLNCLI_DIR)\Lib\x86\sqlncli$(SQLNCLI_VERSION).lib"
+#SQLNCLI_INCLUDE = "-I$(SQLNCLI_DIR)\Include" -DSQLNCLI_VERSION=$(SQLNCLI_VERSION) -DMSSQL_BCP_SUPPORTED=1
+
 # Comment out the following to disable JPEG support.
 JPEG_SUPPORTED = 1
 
 # This will enable 12bit libjpeg - use only with internal jpeg builds.
 JPEG12_SUPPORTED = 1
 
-#if using an external jpeg library uncomment the follwing lines
+#if using an external jpeg library uncomment the following lines
 #JPEG_EXTERNAL_LIB = 1
 #JPEGDIR = c:/projects/jpeg-6b
 #JPEG_LIB = $(JPEGDIR)/libjpeg.lib
 
-#if using an external png library uncomment the follwing lines
+#if using an external png library uncomment the following lines
 #PNG_EXTERNAL_LIB = 1
 #PNGDIR = c:/projects/libpng-1.0.8
 #PNG_LIB = $(PNGDIR)/libpng.lib
@@ -350,7 +366,7 @@ JPEG12_SUPPORTED = 1
 # of JasPer from ftp://ftp.remotesensing.org/gdal/
 #JASPER_INCLUDE = $(JASPER_INCLUDE) -DHAVE_JASPER_UUID
 
-# Uncommment and adjust paths if you have Kakadu 6.0 or newer
+# Uncomment and adjust paths if you have Kakadu 6.0 or newer
 #KAKFLAGS=-DKDU_MAJOR_VERSION=6 -DKDU_MINOR_VERSION=0 -DKDU_PATCH_VERSION=0
 #KAKDIR = 	\warmerda\pkg\kakadu-6.2.1
 #KAKLIB =	$(KAKDIR)\lib_x86\kdu_v62R.lib
@@ -399,8 +415,6 @@ PCIDSK_SETTING=INTERNAL
 #PCIDSK_SETTING=EXTERNAL
 #PCIDSK_INCLUDE=-I\warmerda\pcidsk\src
 #PCIDSK_LIB=\warmerda\pcidsk\src\pcidsk.lib
-# Use the following alternative to use the old PCIDSK implementation
-#PCIDSK_SETTING=OLD
 
 # PostGIS Libraries
 #PG_INC_DIR = n:\pkg\libpq_win32\include
@@ -503,6 +517,9 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #FGDB_INC = $(FGDB_SDK)\include 
 #FGDB_LIB = $(FGDB_SDK)\lib\FileGDBAPI.lib
 
+#uncomment to build AmigoCloud as a plugin instead
+#AMIGOCLOUD_PLUGIN = YES
+
 
 #uncomment to use ArcObjects
 #ARCOBJECTS_ENABLED = YES
@@ -519,9 +536,9 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # The cURL library is used for WCS, WMS, GeoJSON, SRS call importFromUrl(), WFS, GFT, CouchDB, /vsicurl/ etc.
 #CURL_DIR=C:\curl-7.15.0
 #CURL_INC = -I$(CURL_DIR)/include
-# Uncoment following line to use libcurl as dynamic library
+# Uncomment following line to use libcurl as dynamic library
 #CURL_LIB = $(CURL_DIR)/libcurl_imp.lib wsock32.lib wldap32.lib winmm.lib
-# Uncoment following two lines to use libcurl as static library
+# Uncomment following two lines to use libcurl as static library
 #CURL_LIB = $(CURL_DIR)/libcurl.lib wsock32.lib wldap32.lib winmm.lib
 #CURL_CFLAGS = -DCURL_STATICLIB
 
@@ -572,7 +589,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
 #
 # Pdfium can be built from the win_gdal_build branch at https://github.com/rouault/pdfium that
-# has the following patch to ensure /MD (MultiThreadedDLL) linking consistant with GDAL one.
+# has the following patch to ensure /MD (MultiThreadedDLL) linking consistent with GDAL one.
 # Build script from PDFium is available at https://github.com/rouault/pdfium/tree/build
 #
 #diff --git a/build/standalone.gypi b/build/standalone.gypi
@@ -635,7 +652,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/mongoclient.lib  $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib   $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib   $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib
 
 # For a static build of mongoclient, only building the driver as a plugin succeeded
-# The libmongoclient_s.lib file had to be renamed without the _s prefix to enable successfull linking
+# The libmongoclient_s.lib file had to be renamed without the _s prefix to enable successful linking
 # It was built with: c:\Python27\Scripts\scons.bat --32 --prefix=c:\users\even\dev\mongo-client-install --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
 # MONGODB_PLUGIN = YES
 # MONGODB_INC = c:/users/even/dev/mongo-client-install/include
@@ -667,6 +684,9 @@ QHULL_SETTING = INTERNAL
 # When linking against the static lib:
 # CRYPTOPP_LIB = c:/install-cryptopp-x64/lib/cryptlib.lib
 
+# Comment out to disable MRF support.
+MRF_SETTING=yes
+
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
 
@@ -696,10 +716,6 @@ MSVC_VLD_LIB=/LIBPATH:$(MSVC_VLD_DIR)/lib/Win32
 !ENDIF
 !ENDIF
 
-!IFDEF INCLUDE_OGR_FRMTS
-OGR_FLAG = -DOGR_ENABLED
-!ENDIF
-
 !IFDEF INCLUDE_GNM_FRMTS
 GNM_FLAG = -DGNM_ENABLED
 !ENDIF
@@ -708,7 +724,7 @@ GNM_FLAG = -DGNM_ENABLED
 LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 
-CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(SSEFLAGS) $(INC) $(AVXFLAGS) $(EXTRAFLAGS) $(OGR_FLAG) $(GNM_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
+CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(USER_DEFS) $(SSEFLAGS) $(INC) $(AVXFLAGS) $(EXTRAFLAGS) $(OGR_FLAG) $(GNM_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
 CPPFLAGS = $(CFLAGS) 
 MAKE	=	nmake /nologo
 
@@ -716,7 +732,7 @@ MAKE	=	nmake /nologo
 CC	=	cl
 !ENDIF
 
-INSTALL	=	xcopy /y /r /d /f
+INSTALL	=	xcopy /y /r /d /f /I
 
 CPLLIB	=    $(GDAL_ROOT)/port/cpl.lib
 
@@ -727,7 +743,12 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
+!IF $(MSVC_VER) >= 1900
+# legacy_stdio_definitions.lib : https://connect.microsoft.com/VisualStudio/feedback/details/1134693/vs-2015-ctp-5-c-vsnwprintf-s-and-other-functions-are-not-exported-in-appcrt140-dll-breaking-linkage-of-static-libraries
+ODBCLIB = legacy_stdio_definitions.lib odbc32.lib odbccp32.lib user32.lib
+!ELSE
 ODBCLIB = odbc32.lib odbccp32.lib user32.lib
+!ENDIF
 !ENDIF
 
 !IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)
@@ -848,4 +869,3 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) ws2_32.lib
-		

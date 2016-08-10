@@ -60,7 +60,7 @@ static void JpegError(j_common_ptr cinfo)
     char buf[256];
 
     cinfo->err->format_message(cinfo, buf);
-    ThrowPCIDSKException( "%s", buf );
+    return ThrowPCIDSKException( "%s", buf );
 }
 
 /************************************************************************/
@@ -75,12 +75,12 @@ void PCIDSK::LibJPEG_DecompressBlock(
     struct jpeg_source_mgr	sSrcMgr;
     struct jpeg_error_mgr	sErrMgr;
 
-    int				i;
+    int i;
 
 /* -------------------------------------------------------------------- */
 /*      Setup the buffer we will compress into.  We make it pretty      */
 /*      big to ensure there is space.  The calling function will        */
-/*      free it as soon as it is done so this shouldn't hurt much.      */
+/*      free it as soon as it is done so this should not hurt much.     */
 /* -------------------------------------------------------------------- */
     sSrcMgr.init_source = _DummySrcMgrMethod;
     sSrcMgr.fill_input_buffer = (boolean (*)(j_decompress_ptr))
@@ -109,7 +109,7 @@ void PCIDSK::LibJPEG_DecompressBlock(
     if (sJCompInfo.image_width != (unsigned int)xsize ||
         sJCompInfo.image_height != (unsigned int)ysize)
     {
-        ThrowPCIDSKException("Tile Size wrong in LibJPEG_DecompressTile(), got %dx%d, expected %dx%d.",
+        return ThrowPCIDSKException("Tile Size wrong in LibJPEG_DecompressTile(), got %dx%d, expected %dx%d.",
                              sJCompInfo.image_width,
                              sJCompInfo.image_height,
                              xsize, ysize );
@@ -191,7 +191,7 @@ void PCIDSK::LibJPEG_CompressBlock(
 /* -------------------------------------------------------------------- */
     jpeg_finish_compress( &sJCompInfo );
 
-    dst_bytes = dst_bytes - sDstMgr.free_in_buffer;
+    dst_bytes = static_cast<int>(dst_bytes - sDstMgr.free_in_buffer);
     
     jpeg_destroy_compress( &sJCompInfo );
 }

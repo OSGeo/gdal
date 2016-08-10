@@ -1,5 +1,6 @@
 <html>
 <head>
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
 <title>JPIPKAK - JPIP Streaming</title>
 </head>
 <body bgcolor="#ffffff">
@@ -9,7 +10,7 @@
   </p>
   <h2>JPIPKAK - JPIP Overview</h2>
   <p>
-  A brief overview of the JPIP event sequence is presented in this section, more information can be found at <a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 ñ JPIP)</a> and the specification can (and should) be purchased from <a target="_blank" href="http://www.iso.org">ISO</a>.  
+  A brief overview of the JPIP event sequence is presented in this section, more information can be found at <a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 ‚Äì JPIP)</a> and the specification can (and should) be purchased from <a target="_blank" href="http://www.iso.org">ISO</a>.
   </p>
   <p>
   An earlier version of JPEG 2000 Part 9 is available here <a href="http://www.jpeg.org/public/fcd15444-9v2.pdf">http://www.jpeg.org/public/fcd15444-9v2.pdf</a>, noting the ISO copyright, diagrams are not replicated in this documentation.
@@ -23,8 +24,8 @@
 Server responds with a target identifier that can be used to identify the image on the server and a JPIP-cnew response header which includes the path to the JPIP server which will handle all future requests and a cid session identifier.  A session is required so that that the server can model the state of the client connection, only sending the data that is required.
 </li>
    <li>Client requests particular view windows on the target image with a maximum response length and includes the session identifier established in the previous communication.
-'fsiz' is used to identify the resolution associated with the requested view-window. The values 'fx' and 'fy' specify the dimensions of the desired image resolution. 
-'roff' is used to identify the upper left hand corner off the spatial region associated with the requested view-windw. 
+'fsiz' is used to identify the resolution associated with the requested view-window. The values 'fx' and 'fy' specify the dimensions of the desired image resolution.
+'roff' is used to identify the upper left hand corner off the spatial region associated with the requested view-windw.
 'rsiz' is used to identify the horizontal and vertical extents of the spatial region associated with the requested view-window.</li>
   </ol>
   <h2>JPIPKAK -approach</h2>
@@ -43,7 +44,7 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
   The implementation supports the GDAL C++ and C API, and provides an initial SWIG wrapper for this driver with a Java ImageIO example (<b>TODO</b> - qGIS Example).
   </p>
   <p>
-  The driver uses a simple threading model to support requesting reads of the data and remote fetching.  This threading model supports two separate client windows, with just one connection to the server.  Requests to the server are multiplexed to utilize available bandwidth efficiently. The client identifies these windows by using ì0î (low) or ì1î (high) values to a ìPRIORITYî metadata request option.
+  The driver uses a simple threading model to support requesting reads of the data and remote fetching.  This threading model supports two separate client windows, with just one connection to the server.  Requests to the server are multiplexed to utilize available bandwidth efficiently. The client identifies these windows by using ‚Äú0‚Äù (low) or ‚Äú1‚Äù (high) values to a ‚ÄúPRIORITY‚Äù metadata request option.
   </p>
   <i>
   <p>
@@ -63,19 +64,25 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
     <li>
     GDALGetDatasetDriver
     <p>
-    Fetch the driver to which this dataset relates. 
+    Fetch the driver to which this dataset relates.
     </p>
     </li>
     <li>
     Open
     <p>
-    If the filename contained in the <code>GDALOpenInfo</code> object has a case insensitive URI scheme of jpip or jpips the <code>JPIPKAKDataset</code> is created and initialised</a>, otherwise NULL is returned.
+    If the filename contained in the <code>GDALOpenInfo</code> object
+    has a case insensitive URI scheme of JPIP or JPIPS
+    the <code>JPIPKAKDataset</code> is created and initialized</a>,
+    otherwise NULL is returned.
     </p>
     </li>
     <li>
     Initialize
     <p>
-    Initialisation involves making an initial connection to the JPIP Server to establish a session and to retrieve the initial metadata about the image (ref. <a href="#initJPIP">JPIP Sequence Diagram</a>).
+    Initialization involves making an initial connection to the JPIP
+    Server to establish a session and to retrieve the initial metadata
+    about the image (ref. <a href="#initJPIP">JPIP Sequence
+    Diagram</a>).
     </p>
     <p>
     If the connection fails, the function returns false and the <code>Open</code> function returns NULL indicating that opening the dataset with this driver failed.
@@ -96,7 +103,7 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
     <li>
     GetMetadata
     <p>
-    returns metadata for the "JPIP" domain, keys are "JPIP_NQUALITYLAYERS", "JPIP_NRESOLUTIONLEVELS", "JPIP_NCOMPS" and "JPIP_SPRECISION" 
+    returns metadata for the "JPIP" domain, keys are "JPIP_NQUALITYLAYERS", "JPIP_NRESOLUTIONLEVELS", "JPIP_NCOMPS" and "JPIP_SPRECISION"
     </p>
     </li>
     <li>
@@ -235,7 +242,7 @@ The JPIPKAK driver is written using a HTTP client library with the Kakadu cache 
   <p>Currently only a Windows makefile is provided, however this should compile on Linux as well as there are no Windows dependencies.</p>
   <p>See Also:
     <ul>
-        <li><a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 ñ JPIP)</a></li>
+        <li><a target="_blank" href="http://www.jpeg.org/jpeg2000/j2kpart9.html">JPEG 2000 Interactive Protocol (Part 9 ‚Äì JPIP)</a></li>
         <li><a target="_blank" href="http://www.opengeospatial.org/standards/gmljp2">http://www.opengeospatial.org/standards/gmljp2</a></li>
         <li><a target="_blank" href="http://www.kakadusoftware.com">Kakadu Software </a></li>
         <li><a target="_blank" href="http://iasdemo.ittvis.com/">IAS demo (example JPIP(S) streams)</a></li>

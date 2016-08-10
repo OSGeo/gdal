@@ -21,7 +21,7 @@ static char errorBuf[64];
 /* IMPLEMENTATION */
 /******************/
 
-/* string with cell representation in plain english or acronym
+/* string with cell representation in plain English or acronym
  * The string is in lower case except for INT1,INT2,UINT2 and UINT4
  *, they return an acronym. If cr is not
  * a valid constant, for example 999,  then the string is  
@@ -42,7 +42,7 @@ const char *RstrCellRepr(CSF_CR cr) /* cell representation constant */
 	case CR_UINT4 : return "UINT4";
 	case CR_REAL4 : return "small real";
 	case CR_REAL8 : return "large real";
-	default       : (void)sprintf(errorBuf,"%u is no CR constant", (unsigned)cr);
+	default       : (void)snprintf(errorBuf, sizeof(errorBuf), "%u is no CR constant", (unsigned)cr);
                         return errorBuf;
  }
 }
@@ -68,7 +68,7 @@ const char *RstrValueScale(CSF_VS vs) /* value scale constant */
 	case VS_SCALAR        : return "scalar";
 	case VS_DIRECTION     : return "directional";
 	case VS_LDD           : return "ldd";
-	default       : (void)sprintf(errorBuf,"%u is no VS constant", (unsigned)vs);
+	default       : (void)snprintf(errorBuf, sizeof(errorBuf), "%u is no VS constant", (unsigned)vs);
                         return errorBuf;
  }
 }

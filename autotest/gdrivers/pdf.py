@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -236,7 +236,7 @@ def pdf_1():
         expected_gt = (333274.61654367246, 31.764802242655662, 0.0, 4940391.7593506984, 0.0, -31.794745501708238)
 
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-7:
+        if abs(gt[i] - expected_gt[i]) > 1e-6:
             gdaltest.post_reason('bad geotransform')
             print(gt)
             print(expected_gt)
@@ -325,7 +325,7 @@ def pdf_ogcbp_dpi_300():
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     return ret
-    
+
 def pdf_ogcbp_lcc():
 
     if gdaltest.pdf_drv is None:
@@ -361,7 +361,7 @@ def pdf_ogcbp_lcc():
     src_ds = None
 
     gdal.Unlink('tmp/temp.tif')
-    gdal.Unlink('tmp/pdf_ogcbp_lcc.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_ogcbp_lcc.pdf')
 
     sr1 = osr.SpatialReference(wkt)
     sr2 = osr.SpatialReference(out_wkt)
@@ -494,7 +494,7 @@ def pdf_rgba_default_compression(options_param = []):
     out_ds = None
     #gdal.SetConfigOption('GDAL_PDF_BANDS', None)
 
-    gdal.Unlink('tmp/rgba.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/rgba.pdf')
 
     if cs4 < 0:
         return 'skip'
@@ -559,7 +559,7 @@ def pdf_tiled():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['COMPRES=DEFLATE', 'TILED=YES'] )
+    tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['COMPRESS=DEFLATE', 'TILED=YES'] )
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -599,14 +599,20 @@ def pdf_xmp():
         return 'skip'
 
     src_ds = gdal.Open( 'data/adobe_style_geospatial_with_xmp.pdf')
-    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds, options = ['WRITE_INFO=NO'])
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds, options = ['WRITE_INFO=NO'])
+    out_ds = gdal.Open('tmp/pdf_xmp.pdf')
+    if out_ds is None:
+        # Some Poppler versions cannot re-open the file
+        gdal.GetDriverByName('PDF').Delete('tmp/pdf_xmp.pdf')
+        return 'skip'
+
     ref_md = src_ds.GetMetadata('xml:XMP')
     got_md = out_ds.GetMetadata('xml:XMP')
     base_md = out_ds.GetMetadata()
     out_ds = None
     src_ds = None
 
-    gdal.Unlink('tmp/pdf_xmp.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_xmp.pdf')
 
     if ref_md[0] != got_md[0]:
         gdaltest.post_reason('fail')
@@ -644,14 +650,16 @@ def pdf_info():
 
     src_ds = gdal.Open( 'data/byte.tif')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info.pdf', src_ds, options = options)
+    #print(out_ds.GetMetadata())
     out_ds2 = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info_2.pdf', out_ds)
     md = out_ds2.GetMetadata()
+    #print(md)
     out_ds2 = None
     out_ds = None
     src_ds = None
 
-    gdal.Unlink('tmp/pdf_info.pdf')
-    gdal.Unlink('tmp/pdf_info_2.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_info.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_info_2.pdf')
 
     if md['AUTHOR'] != val or \
        md['CREATOR'] != 'creator' or \
@@ -685,6 +693,10 @@ def pdf_update_gt():
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2,1,0,49,0,-1])
     ds = None
+
+    if os.path.exists('tmp/pdf_update_gt.pdf.aux.xml'):
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Check geotransform
     ds = gdal.Open('tmp/pdf_update_gt.pdf')
@@ -785,6 +797,12 @@ def pdf_update_info():
     ds.SetMetadataItem('AUTHOR', None)
     ds = None
 
+    # Check PAM doesn't exist
+    if os.path.exists('tmp/pdf_update_info.pdf.aux.xml'):
+        gdaltest.post_reason('did not expected .aux.xml')
+        print(author)
+        return 'fail'
+
     # Check
     ds = gdal.Open('tmp/pdf_update_info.pdf')
     author = ds.GetMetadataItem('AUTHOR')
@@ -842,6 +860,11 @@ def pdf_update_xmp():
         print(xmp)
         return 'fail'
 
+    # Check PAM doesn't exist
+    if os.path.exists('tmp/pdf_update_xmp.pdf.aux.xml'):
+        gdaltest.post_reason('did not expected .aux.xml')
+        return 'fail'
+
     # Clear info
     ds = gdal.Open('tmp/pdf_update_xmp.pdf', gdal.GA_Update)
     ds.SetMetadata(None, "xml:XMP")
@@ -868,7 +891,7 @@ def pdf_update_gcps(dpi = 300):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
-        
+
     out_filename = 'tmp/pdf_update_gcps.pdf'
 
     src_ds = gdal.Open('data/byte.tif')
@@ -882,7 +905,7 @@ def pdf_update_gcps(dpi = 300):
             [ 2., 18., 0, 0 ],
             [ 16., 18., 0, 0 ],
             [ 16., 8., 0, 0 ] ]
-             
+
     for i in range(4):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
         gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
@@ -911,7 +934,7 @@ def pdf_update_gcps(dpi = 300):
 
     # Set GCPs()
     ds = gdal.Open(out_filename, gdal.GA_Update)
-    ds.SetGCPs(gcps, src_wkt)           
+    ds.SetGCPs(gcps, src_wkt)
     ds = None
 
     # Check
@@ -929,12 +952,12 @@ def pdf_update_gcps(dpi = 300):
         max_error = 0.0001
 
     ds = None
-    
+
     if got_wkt == '':
         gdaltest.post_reason('did not expect null GetProjectionRef')
         print(got_wkt)
         return 'fail'
-    
+
     if got_gcp_wkt != '':
         gdaltest.post_reason('did not expect non null GetGCPProjection')
         print(got_gcp_wkt)
@@ -945,7 +968,7 @@ def pdf_update_gcps(dpi = 300):
             gdaltest.post_reason('did not get expected gt')
             print(got_gt)
             return 'fail'
-            
+
     if got_gcp_count != 0:
         gdaltest.post_reason('did not expect GCPs')
         print(got_gcp_count)
@@ -973,7 +996,7 @@ def pdf_update_gcps_iso32000():
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
     ret = pdf_update_gcps()
     return ret
-    
+
 def pdf_update_gcps_ogc_bp():
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', 'OGC_BP')
     ret = pdf_update_gcps()
@@ -987,7 +1010,7 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
-        
+
     out_filename = 'tmp/pdf_set_5_gcps_ogc_bp.pdf'
 
     src_ds = gdal.Open('data/byte.tif')
@@ -1000,11 +1023,11 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
             [ 2., 18., 0, 0 ],
             [ 16., 18., 0, 0 ],
             [ 16., 8., 0, 0 ] ]
-             
+
     for i in range(len(gcp)):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
         gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
-        
+
     # That way, GCPs will not resolve to a geotransform
     gcp[1][2] -= 100
 
@@ -1035,7 +1058,7 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
     # Create PDF
     ds = gdaltest.pdf_drv.CreateCopy(out_filename, vrt_ds, options = ['GEO_ENCODING=OGC_BP', 'DPI=%d' % dpi])
     ds = None
-    
+
     vrt_ds = None
 
     # Check
@@ -1047,12 +1070,12 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
     got_gcp_wkt = ds.GetGCPProjection()
     got_neatline = ds.GetMetadataItem('NEATLINE')
     ds = None
-    
+
     if got_wkt  != '':
         gdaltest.post_reason('did not expect non null GetProjectionRef')
         print(got_wkt)
         return 'fail'
-    
+
     if got_gcp_wkt == '':
         gdaltest.post_reason('did not expect null GetGCPProjection')
         print(got_gcp_wkt)
@@ -1064,12 +1087,12 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
             gdaltest.post_reason('did not get expected gt')
             print(got_gt)
             return 'fail'
-            
+
     if got_gcp_count != len(gcp):
         gdaltest.post_reason('did not get expected GCP count')
         print(got_gcp_count)
         return 'fail'
-        
+
     for i in range(got_gcp_count):
         if abs(got_gcps[i].GCPX - vrt_gcps[i].GCPX) > 1e-5 or \
            abs(got_gcps[i].GCPY - vrt_gcps[i].GCPY) > 1e-5 or \
@@ -1347,7 +1370,7 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
         layers = ds.GetMetadata_List('LAYERS')
         ds = None
 
-    gdal.Unlink('tmp/pdf_custom_layout.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_custom_layout.pdf')
 
     if pdf_is_poppler() or pdf_is_pdfium():
         if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage_and_logo']:
@@ -1393,6 +1416,7 @@ def pdf_extra_rasters():
 
     options = [ 'MARGIN=1',
                 'DPI=300',
+                'WRITE_USERUNIT=YES',
                 'CLIPPING_EXTENT=440780,3750180,441860,3751260',
                 'LAYER_NAME=byte_tif',
                 'EXTRA_RASTERS=tmp/subbyte.vrt',
@@ -1411,7 +1435,7 @@ def pdf_extra_rasters():
         layers = ds.GetMetadata_List('LAYERS')
         ds = None
 
-    gdal.Unlink('tmp/pdf_extra_rasters.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_extra_rasters.pdf')
     os.unlink('tmp/subbyte.vrt')
 
     if pdf_is_poppler() or pdf_is_pdfium():
@@ -1484,28 +1508,33 @@ def pdf_write_ogr():
         cs_tab = []
         rendering_options = ['RASTER', 'VECTOR', 'TEXT', 'RASTER,VECTOR', 'RASTER,TEXT', 'VECTOR,TEXT', 'RASTER,VECTOR,TEXT' ]
         for opt in rendering_options:
+            gdal.ErrorReset()
             ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options = ['RENDERING_OPTIONS=%s' % opt])
-            cs_tab.append(ds.GetRasterBand(1).Checksum())
+            cs = ds.GetRasterBand(1).Checksum()
+            # When misconfigured Poppler with fonts, use this to avoid error
+            if opt.find('TEXT') >= 0 and gdal.GetLastErrorMsg().find('font') >= 0:
+                cs = -cs
+            cs_tab.append(cs)
             ds = None
 
         # Test that all combinations give a different result
         for i in range(len(rendering_options)):
             #print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
             for j in range(i+1, len(rendering_options)):
-                if cs_tab[i] == cs_tab[j]:
+                if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
                     gdaltest.post_reason('fail')
                     print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
                     print('Checksum %s: %d' % (rendering_options[j], cs_tab[j]) )
                     return 'fail'
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
-        if cs_tab[len(rendering_options)-1] != cs_ref:
+        if abs(cs_tab[len(rendering_options)-1]) != cs_ref:
             gdaltest.post_reason('fail')
             print(cs_ref)
             print(cs_tab[len(rendering_options)-1])
             return 'fail'
 
-    gdal.Unlink('tmp/pdf_write_ogr.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr.pdf')
 
     gdal.Unlink('tmp/test.csv')
     gdal.Unlink('tmp/test.vrt')
@@ -1576,7 +1605,7 @@ def pdf_write_ogr_with_reprojection():
     feature_count = ogr_lyr.GetFeatureCount()
     ogr_ds = None
 
-    gdal.Unlink('tmp/pdf_write_ogr.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr.pdf')
 
     gdal.Unlink('tmp/test.csv')
     gdal.Unlink('tmp/test.vrt')
@@ -1718,7 +1747,7 @@ def pdf_georef_on_image(src_filename = 'data/byte.tif'):
         got_cs = 0
     ds = None
 
-    gdal.Unlink('tmp/pdf_georef_on_image.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_georef_on_image.pdf')
 
     if got_wkt == '':
         gdaltest.post_reason('did not get projection')
@@ -1889,7 +1918,7 @@ def pdf_password():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    import test_cli_utilities  
+    import test_cli_utilities
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
@@ -1922,7 +1951,7 @@ def pdf_multipage():
 
     if gdaltest.pdf_drv is None:
         return 'skip'
-        
+
     # byte_and_rgbsmall_2pages.pdf was generated with :
     # 1) gdal_translate gcore/data/byte.tif byte.pdf -of PDF
     # 2) gdal_translate gcore/data/rgbsmall.tif rgbsmall.pdf -of PDF
@@ -1949,7 +1978,7 @@ def pdf_multipage():
         gdaltest.post_reason('wrong width')
         print(ds2.RasterXSize)
         return 'fail'
-    
+
     with gdaltest.error_handler():
         ds3 = gdal.Open('PDF:0:data/byte_and_rgbsmall_2pages.pdf')
     if ds3 is not None:
@@ -1967,6 +1996,67 @@ def pdf_multipage():
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test PAM metadata support
+
+def pdf_metadata():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    gdal.Translate('tmp/pdf_metadata.pdf', 'data/byte.tif', format = 'PDF', metadataOptions = [ 'FOO=BAR' ])
+    ds = gdal.Open('tmp/pdf_metadata.pdf')
+    md = ds.GetMetadata()
+    if 'FOO' not in md:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    ds = None
+    ds = gdal.Open('tmp/pdf_metadata.pdf')
+    if ds.GetMetadataItem('FOO') != 'BAR':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_metadata.pdf')
+
+    return 'success'
+
+###############################################################################
+# Test PAM georef support
+
+def pdf_pam_georef():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+
+    # Default behaviour should result in no PAM file
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds )
+    if os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Now disable internal georeferencing, so georef should go to PAM 
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options = ['GEO_ENCODING=NONE'] )
+    if not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('tmp/pdf_pam_georef.pdf')
+    if ds.GetGeoTransform() != src_ds.GetGeoTransform():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetProjectionRef() != src_ds.GetProjectionRef():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_pam_georef.pdf')
 
     return 'success'
 
@@ -2020,7 +2110,9 @@ gdaltest_list_for_full_backend = [
     pdf_write_huge,
     pdf_overviews,
     pdf_password,
-    pdf_multipage ]
+    pdf_multipage,
+    pdf_metadata,
+    pdf_pam_georef ]
 
 gdaltest_list_for_short_backend = [
     pdf_iso32000,
@@ -2067,6 +2159,7 @@ def pdf_run_all():
     return 'success'
 
 gdaltest_list = [ pdf_run_all ]
+#gdaltest_list = [ pdf_init, pdf_metadata ]
 
 if __name__ == '__main__':
 

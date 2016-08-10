@@ -11,7 +11,7 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //   PRGMMR: Gilbert          ORG: W/NP11    DATE: 2002-11-07
 //
 // ABSTRACT: This subroutine packs up a data field using a complex
-//   packing algorithm as defined in the GRIB2 documention.  It
+//   packing algorithm as defined in the GRIB2 documentation.  It
 //   supports GRIB2 complex packing templates with or without
 //   spatial differences (i.e. DRTs 5.2 and 5.3).
 //   It also fills in GRIB2 Data Representation Template 5.2 or 5.3 
@@ -64,7 +64,7 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //$$$
 {
 
-      static g2int zero=0;
+      const g2int zero=0;
       g2int  *ifld,*gref,*glen,*gwidth;
       g2int  *jmin, *jmax, *lbit;
       g2int  i,j,n, /* nbits, */ imin,imax,left;
@@ -76,9 +76,9 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
       g2int  kfildo, minpk, inc, maxgrps, ibit, jbit, kbit, novref, lbitref;
       g2int  missopt, miss1, miss2, ier;
       g2float  bscale,dscale,rmax,rmin,temp;
-      static g2int simple_alg = 0;
-      static g2float alog2=0.69314718;       //  ln(2.0)
-      static g2int one=1;
+      const g2int simple_alg = 0;
+      const g2float alog2=0.69314718;       //  ln(2.0)
+      const g2int one=1;
 
       bscale=int_power(2.0,-idrstmpl[1]);
       dscale=int_power(10.0,idrstmpl[2]);
@@ -121,7 +121,7 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
              ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin)*bscale);
         }
         //
-        //  Calculate Spatial differences, if using DRS Template 5.3
+        //  Calculate spatial differences, if using DRS Template 5.3.
         //
         if (idrsnum == 3) {        // spatial differences
            if (idrstmpl[16]!=1 && idrstmpl[16]!=2) idrstmpl[16]=1;

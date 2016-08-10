@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JML Translator
  * Purpose:  Implements OGRJMLWriterLayer class.
@@ -37,25 +36,22 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
-                                                OGRJMLDataset* poDS,
-                                                VSILFILE* fp,
-                                                int bAddRGBField,
-                                                int bAddOGRStyleField,
-                                                int bClassicGML )
-
+                                      OGRJMLDataset * /* poDSIn */,
+                                      VSILFILE* fpIn,
+                                      bool bAddRGBFieldIn,
+                                      bool bAddOGRStyleFieldIn,
+                                      bool bClassicGMLIn ) :
+    poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
+    fp(fpIn),
+    bFeaturesWritten(false),
+    bAddRGBField(bAddRGBFieldIn),
+    bAddOGRStyleField(bAddOGRStyleFieldIn),
+    bClassicGML(bClassicGMLIn),
+    nNextFID(0)
 {
-    this->poDS = poDS;
-    this->fp = fp;
-    bFeaturesWritten = FALSE;
-    this->bAddRGBField = bAddRGBField;
-    this->bAddOGRStyleField = bAddOGRStyleField;
-    this->bClassicGML = bClassicGML;
-    nNextFID = 0;
-
-    poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    
+
     VSIFPrintfL(fp, "<?xml version='1.0' encoding='UTF-8'?>\n"
                     "<JCSDataFile xmlns:gml=\"http://www.opengis.net/gml\" "
                     "xmlns:xsi=\"http://www.w3.org/2000/10/XMLSchema-instance\" >\n"
@@ -74,7 +70,9 @@ OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
 OGRJMLWriterLayer::~OGRJMLWriterLayer()
 {
     if( !bFeaturesWritten )
-        VSIFPrintfL(fp, "</ColumnDefinitions>\n</JCSGMLInputTemplate>\n<featureCollection>\n");
+        VSIFPrintfL(
+            fp, "</ColumnDefinitions>\n</JCSGMLInputTemplate>\n"
+            "<featureCollection>\n" );
     VSIFPrintfL(fp, "</featureCollection>\n</JCSDataFile>\n");
     poFeatureDefn->Release();
 }
@@ -128,8 +126,9 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
         {
             WriteColumnDeclaration( "R_G_B", "STRING" );
         }
-        VSIFPrintfL(fp, "</ColumnDefinitions>\n</JCSGMLInputTemplate>\n<featureCollection>\n");
-        bFeaturesWritten = TRUE;
+        VSIFPrintfL( fp, "</ColumnDefinitions>\n</JCSGMLInputTemplate>\n"
+                     "<featureCollection>\n" );
+        bFeaturesWritten = true;
     }
 
     if( bClassicGML )
@@ -163,7 +162,7 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             VSIFPrintfL(fp, "          <property name=\"%s\">", pszName);
         if( poFeature->IsFieldSet(i) )
         {
-            OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
+            const OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
             if( eType == OFTString )
             {
                 char* pszValue = OGRGetXML_UTF8_EscapedString(
@@ -173,10 +172,15 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             }
             else if( eType == OFTDateTime )
             {
-                int nYear, nMonth, nDay, nHour, nMinute, nTZFlag;
+                int nYear;
+                int nMonth;
+                int nDay;
+                int nHour;
+                int nMinute;
+                int nTZFlag;
                 float fSecond;
                 poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
-                                            &nHour, &nMinute, &fSecond, &nTZFlag);
+                                              &nHour, &nMinute, &fSecond, &nTZFlag);
                 /* When writing time zone, OpenJUMP expects .XXX seconds */
                 /* to be written */
                 if( nTZFlag > 1 || OGR_GET_MS(fSecond) != 0 )
@@ -234,7 +238,7 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
         else
             VSIFPrintfL(fp, "</property>\n");
     }
-    
+
     /* Derive R_G_B field from feature style string */
     if( bAddRGBField && poFeatureDefn->GetFieldIndex("R_G_B") < 0 )
     {
@@ -244,7 +248,6 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             VSIFPrintfL(fp, "          <property name=\"%s\">", "R_G_B");
         if( poFeature->GetStyleString() != NULL )
         {
-            OGRGeometry* poGeom = poFeature->GetGeometryRef();
             OGRwkbGeometryType eGeomType =
                 poGeom ? wkbFlatten(poGeom->getGeometryType()) : wkbUnknown;
             OGRStyleMgr oMgr;
@@ -302,20 +305,28 @@ OGRErr OGRJMLWriterLayer::CreateField( OGRFieldDefn *poFieldDefn,
 {
     if( bFeaturesWritten )
         return OGRERR_FAILURE;
-    
+
     if( !bAddRGBField && strcmp( poFieldDefn->GetNameRef(), "R_G_B" ) == 0 )
         return OGRERR_FAILURE;
 
-    const char* pszType;
+    const char* pszType = NULL;
     OGRFieldType eType = poFieldDefn->GetType();
     if( eType == OFTInteger )
+    {
         pszType = "INTEGER";
+    }
     else if( eType == OFTInteger64 )
+    {
         pszType = "OBJECT";
+    }
     else if( eType == OFTReal )
+    {
         pszType = "DOUBLE";
+    }
     else if( eType == OFTDate || eType == OFTDateTime )
+    {
         pszType = "DATE";
+    }
     else
     {
         if( eType != OFTString )
@@ -351,10 +362,10 @@ int OGRJMLWriterLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
-    else if( EQUAL(pszCap,OLCSequentialWrite) )
+    if( EQUAL(pszCap,OLCSequentialWrite) )
         return TRUE;
-    else if( EQUAL(pszCap,OLCCreateField) )
+    if( EQUAL(pszCap,OLCCreateField) )
         return !bFeaturesWritten;
-    else 
-        return FALSE;
+
+    return FALSE;
 }

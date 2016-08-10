@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test CALS driver
 # Author:   Even Rouault, <even dot rouault at spatialys dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2015, Even Rouault, <even dot rouault at spatialys dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -90,7 +90,7 @@ def cals_3():
 # Test CreateCopy() error conditions
 
 def cals_4():
-    
+
     # 0 band
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1,0)
     gdal.PushErrorHandler()
@@ -173,7 +173,8 @@ gdaltest_list = [
     cals_4,
     cals_5,
 ]
-  
+
+
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'cals' )

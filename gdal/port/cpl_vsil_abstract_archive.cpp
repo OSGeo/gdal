@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for archive files.
@@ -28,12 +27,12 @@
  ****************************************************************************/
 
 #include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
 #include <map>
 #include <set>
 
-#define ENABLE_DEBUG 0
+//! @cond Doxygen_Suppress
 
 CPL_CVSID("$Id$");
 
@@ -41,17 +40,13 @@ CPL_CVSID("$Id$");
 /*                    ~VSIArchiveEntryFileOffset()                      */
 /************************************************************************/
 
-VSIArchiveEntryFileOffset::~VSIArchiveEntryFileOffset()
-{
-}
+VSIArchiveEntryFileOffset::~VSIArchiveEntryFileOffset() {}
 
 /************************************************************************/
 /*                        ~VSIArchiveReader()                           */
 /************************************************************************/
 
-VSIArchiveReader::~VSIArchiveReader()
-{
-}
+VSIArchiveReader::~VSIArchiveReader() {}
 
 /************************************************************************/
 /*                        ~VSIArchiveContent()                          */
@@ -59,7 +54,7 @@ VSIArchiveReader::~VSIArchiveReader()
 
 VSIArchiveContent::~VSIArchiveContent()
 {
-    for(int i=0;i<nEntries;i++)
+    for( int i = 0; i < nEntries; i++ )
     {
         delete entries[i].file_pos;
         CPLFree(entries[i].fileName);
@@ -99,18 +94,18 @@ VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler()
 /*                       GetContentOfArchive()                          */
 /************************************************************************/
 
-const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
-        (const char* archiveFilename, VSIArchiveReader* poReader)
+const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
+    const char* archiveFilename, VSIArchiveReader* poReader )
 {
     CPLMutexHolder oHolder( &hMutex );
 
     VSIStatBufL sStat;
     if( VSIStatL(archiveFilename, &sStat) != 0 )
         return NULL;
-    if (oFileList.find(archiveFilename) != oFileList.end() )
+    if( oFileList.find(archiveFilename) != oFileList.end() )
     {
         VSIArchiveContent* content = oFileList[archiveFilename];
-        if( sStat.st_mtime > content->mTime ||
+        if( (time_t)sStat.st_mtime > content->mTime ||
             (vsi_l_offset)sStat.st_size != content->nFileSize)
         {
             CPLDebug("VSIArchive", "The content of %s has changed since it was cached",
@@ -124,7 +119,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
         }
     }
 
-    int bMustClose = (poReader == NULL);
+    bool bMustClose = poReader == NULL;
     if (poReader == NULL)
     {
         poReader = CreateReader(archiveFilename);
@@ -134,7 +129,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
 
     if (poReader->GotoFirstFile() == FALSE)
     {
-        if (bMustClose)
+        if( bMustClose )
             delete(poReader);
         return NULL;
     }
@@ -169,9 +164,9 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
                 *pszIter = '/';
         }
 
-        int bIsDir = strlen(fileName) > 0 &&
-                      fileName[strlen(fileName)-1] == '/';
-        if (bIsDir)
+        const bool bIsDir =
+            strlen(fileName) > 0 && fileName[strlen(fileName)-1] == '/';
+        if( bIsDir )
         {
             /* Remove trailing slash */
             pszStrippedFileName[strlen(fileName)-1] = 0;
@@ -199,10 +194,13 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
                         content->entries[content->nEntries].uncompressed_size = 0;
                         content->entries[content->nEntries].bIsDir = TRUE;
                         content->entries[content->nEntries].file_pos = NULL;
-                        if (ENABLE_DEBUG)
-                            CPLDebug("VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes", content->nEntries+1,
-                                content->entries[content->nEntries].fileName,
-                                content->entries[content->nEntries].uncompressed_size);
+#ifdef DEBUG_VERBOSE
+                        CPLDebug(
+                            "VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes",
+                            content->nEntries+1,
+                            content->entries[content->nEntries].fileName,
+                            content->entries[content->nEntries].uncompressed_size);
+#endif
                         content->nEntries++;
                     }
                     else
@@ -219,10 +217,12 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
             content->entries[content->nEntries].uncompressed_size = poReader->GetFileSize();
             content->entries[content->nEntries].bIsDir = bIsDir;
             content->entries[content->nEntries].file_pos = poReader->GetFileOffset();
-            if (ENABLE_DEBUG)
-                CPLDebug("VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes", content->nEntries+1,
-                    content->entries[content->nEntries].fileName,
-                    content->entries[content->nEntries].uncompressed_size);
+#ifdef DEBUG_VERBOSE
+            CPLDebug("VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes",
+                     content->nEntries+1,
+                     content->entries[content->nEntries].fileName,
+                     content->entries[content->nEntries].uncompressed_size);
+#endif
             content->nEntries++;
         }
         else
@@ -231,7 +231,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
         }
     } while(poReader->GotoNextFile());
 
-    if (bMustClose)
+    if( bMustClose )
         delete(poReader);
 
     return content;
@@ -251,8 +251,7 @@ int VSIArchiveFilesystemHandler::FindFileInArchive(const char* archiveFilename,
     const VSIArchiveContent* content = GetContentOfArchive(archiveFilename);
     if (content)
     {
-        int i;
-        for(i=0;i<content->nEntries;i++)
+        for( int i = 0; i < content->nEntries; i++ )
         {
             if (strcmp(fileInArchiveName, content->entries[i].fileName) == 0)
             {
@@ -279,10 +278,10 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
         return NULL;
 
     /* Allow natural chaining of VSI drivers without requiring double slash */
-    
+
     CPLString osDoubleVsi(GetPrefix());
     osDoubleVsi += "/vsi";
-    
+
     if (strncmp(pszFilename, osDoubleVsi.c_str(), osDoubleVsi.size()) == 0)
         pszFilename += strlen(GetPrefix());
     else
@@ -299,10 +298,18 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             const CPLString& osExtension = *iter;
             if (EQUALN(pszFilename + i, osExtension.c_str(), strlen(osExtension.c_str())))
             {
-                nToSkip = strlen(osExtension.c_str());
+                nToSkip = static_cast<int>(strlen(osExtension.c_str()));
                 break;
             }
         }
+
+#ifdef DEBUG
+        /* For AFL, so that .cur_input is detected as the archive filename */
+        if( EQUALN( pszFilename + i, ".cur_input", strlen(".cur_input") ) )
+        {
+            nToSkip = static_cast<int>(strlen(".cur_input"));
+        }
+#endif
 
         if (nToSkip != 0)
         {
@@ -332,7 +339,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
             if (!bArchiveFileExists)
             {
-                VSIFilesystemHandler *poFSHandler = 
+                VSIFilesystemHandler *poFSHandler =
                     VSIFileManager::GetHandler( archiveFilename );
                 if (poFSHandler->Stat(archiveFilename, &statBuf,
                                       VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
@@ -393,7 +400,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 /*                           OpenArchiveFile()                          */
 /************************************************************************/
 
-VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archiveFilename, 
+VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archiveFilename,
                                                                const char* fileInArchiveName)
 {
     VSIArchiveReader* poReader = CreateReader(archiveFilename);
@@ -411,7 +418,7 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
             return NULL;
         }
 
-        /* Skip optionnal leading subdir */
+        /* Skip optional leading subdir */
         CPLString osFileName = poReader->GetFileName();
         const char* fileName = osFileName.c_str();
         if (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\')
@@ -431,9 +438,8 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
             const VSIArchiveContent* content = GetContentOfArchive(archiveFilename, poReader);
             if (content)
             {
-                int i;
                 msg += "\nYou could try one of the following :\n";
-                for(i=0;i<content->nEntries;i++)
+                for( int i=0; i < content->nEntries; i++ )
                 {
                     msg += CPLString().Printf("  %s/%s/%s\n", GetPrefix(), archiveFilename, content->entries[i].fileName);
                 }
@@ -482,8 +488,10 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
 
     if (strlen(osFileInArchive) != 0)
     {
-        if (ENABLE_DEBUG) CPLDebug("VSIArchive", "Looking for %s %s\n",
-                                    archiveFilename, osFileInArchive.c_str());
+#ifdef DEBUG_VERBOSE
+        CPLDebug("VSIArchive", "Looking for %s %s\n",
+                 archiveFilename, osFileInArchive.c_str());
+#endif
 
         const VSIArchiveEntry* archiveEntry = NULL;
         if (FindFileInArchive(archiveFilename, osFileInArchive, &archiveEntry))
@@ -506,12 +514,13 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
 
         if (poReader != NULL && poReader->GotoFirstFile())
         {
-            /* Skip optionnal leading subdir */
+            // Skip optional leading subdir.
             CPLString osFileName = poReader->GetFileName();
             const char* fileName = osFileName.c_str();
-            if (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\')
+            if( fileName[strlen(fileName)-1] == '/' ||
+                fileName[strlen(fileName)-1] == '\\' )
             {
-                if (poReader->GotoNextFile() == FALSE)
+                if( poReader->GotoNextFile() == FALSE )
                 {
                     delete(poReader);
                     return -1;
@@ -581,19 +590,20 @@ int VSIArchiveFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
 }
 
 /************************************************************************/
-/*                             ReadDir()                                */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
-char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
+char** VSIArchiveFilesystemHandler::ReadDirEx( const char *pszDirname,
+                                               int nMaxFiles )
 {
     CPLString osInArchiveSubDir;
     char* archiveFilename = SplitFilename(pszDirname, osInArchiveSubDir, TRUE);
     if (archiveFilename == NULL)
         return NULL;
-    int lenInArchiveSubDir = strlen(osInArchiveSubDir);
+    int lenInArchiveSubDir = static_cast<int>(strlen(osInArchiveSubDir));
 
-    char **papszDir = NULL;
-    
+    CPLStringList oDir;
+
     const VSIArchiveContent* content = GetContentOfArchive(archiveFilename);
     if (!content)
     {
@@ -601,31 +611,34 @@ char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
         return NULL;
     }
 
-    if (ENABLE_DEBUG) CPLDebug("VSIArchive", "Read dir %s", pszDirname);
-    int i;
-    for(i=0;i<content->nEntries;i++)
+#ifdef DEBUG_VERBOSE
+    CPLDebug("VSIArchive", "Read dir %s", pszDirname);
+#endif
+    for( int i = 0; i < content->nEntries; i++ )
     {
         const char* fileName = content->entries[i].fileName;
         /* Only list entries at the same level of inArchiveSubDir */
-        if (lenInArchiveSubDir != 0 &&
+        if( lenInArchiveSubDir != 0 &&
             strncmp(fileName, osInArchiveSubDir, lenInArchiveSubDir) == 0 &&
-            (fileName[lenInArchiveSubDir] == '/' || fileName[lenInArchiveSubDir] == '\\') &&
-            fileName[lenInArchiveSubDir + 1] != 0)
+            (fileName[lenInArchiveSubDir] == '/' ||
+             fileName[lenInArchiveSubDir] == '\\') &&
+            fileName[lenInArchiveSubDir + 1] != 0 )
         {
             const char* slash = strchr(fileName + lenInArchiveSubDir + 1, '/');
-            if (slash == NULL)
+            if( slash == NULL )
                 slash = strchr(fileName + lenInArchiveSubDir + 1, '\\');
-            if (slash == NULL || slash[1] == 0)
+            if( slash == NULL || slash[1] == 0 )
             {
                 char* tmpFileName = CPLStrdup(fileName);
                 if (slash != NULL)
                 {
                     tmpFileName[strlen(tmpFileName)-1] = 0;
                 }
-                if (ENABLE_DEBUG)
-                    CPLDebug("VSIArchive", "Add %s as in directory %s\n",
-                            tmpFileName + lenInArchiveSubDir + 1, pszDirname);
-                papszDir = CSLAddString(papszDir, tmpFileName + lenInArchiveSubDir + 1);
+#ifdef DEBUG_VERBOSE
+                CPLDebug("VSIArchive", "Add %s as in directory %s\n",
+                         tmpFileName + lenInArchiveSubDir + 1, pszDirname);
+#endif
+                oDir.AddString(tmpFileName + lenInArchiveSubDir + 1);
                 CPLFree(tmpFileName);
             }
         }
@@ -633,11 +646,19 @@ char** VSIArchiveFilesystemHandler::ReadDir( const char *pszDirname )
                  strchr(fileName, '/') == NULL && strchr(fileName, '\\') == NULL)
         {
             /* Only list toplevel files and directories */
-            if (ENABLE_DEBUG) CPLDebug("VSIArchive", "Add %s as in directory %s\n", fileName, pszDirname);
-            papszDir = CSLAddString(papszDir, fileName);
+#ifdef DEBUG_VERBOSE
+            CPLDebug("VSIArchive", "Add %s as in directory %s\n",
+                     fileName, pszDirname);
+#endif
+            oDir.AddString(fileName);
         }
+
+        if( nMaxFiles > 0 && oDir.Count() > nMaxFiles )
+            break;
     }
 
     CPLFree(archiveFilename);
-    return papszDir;
+    return oDir.StealList();
 }
+
+//! @endcond

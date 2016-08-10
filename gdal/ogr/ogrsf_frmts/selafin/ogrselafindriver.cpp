@@ -30,6 +30,8 @@
 #include "cpl_string.h"
 #include "io_selafin.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                     OGRSelafinDriverIdentify()                       */
 /************************************************************************/
@@ -63,7 +65,7 @@ static GDALDataset *OGRSelafinDriverOpen( GDALOpenInfo* poOpenInfo ) {
 
     if( OGRSelafinDriverIdentify(poOpenInfo) == 0 )
         return NULL;
-    
+
     OGRSelafinDataSource *poDS = new OGRSelafinDataSource();
     if( !poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE) ) {
         delete poDS;
@@ -92,15 +94,15 @@ static GDALDataset *OGRSelafinDriverCreate( const char * pszName,
     // Parse options
     const char *pszTemp=CSLFetchNameValue(papszOptions,"TITLE");
     char pszTitle[81];
-    long pnDate[6]={-1,0};
-    if (pszTemp!=0) strncpy(pszTitle,pszTemp,72); else memset(pszTitle,' ',72);
+    int pnDate[6]={-1,0};
+    if (pszTemp!=NULL) strncpy(pszTitle,pszTemp,72); else memset(pszTitle,' ',72);
     pszTemp=CSLFetchNameValue(papszOptions,"DATE");
-    if (pszTemp!=0) {
+    if (pszTemp!=NULL) {
         const char* pszErrorMessage="Wrong format for date parameter: must be \"%%Y-%%m-%%d_%%H:%%M:%%S\", ignored";
         const char *pszc=pszTemp;
         pnDate[0]=atoi(pszTemp);
         if (pnDate[0]<=0) CPLError(CE_Warning, CPLE_AppDefined,"%s",pszErrorMessage); else {
-            if (pnDate[0]<100) pnDate[0]+=2000; 
+            if (pnDate[0]<100) pnDate[0]+=2000;
         }
         while (*pszc!=0 && *pszc!='-') ++pszc;
         pnDate[1]=atoi(pszc);
@@ -127,7 +129,7 @@ static GDALDataset *OGRSelafinDriverCreate( const char * pszName,
     strncpy(pszTitle+72,"SERAPHIN",9);
     bool bError=false;
     if (Selafin::write_string(fp,pszTitle,80)==0) bError=true;
-    long pnTemp[10]={0};
+    int pnTemp[10]={0};
     if (Selafin::write_intarray(fp,pnTemp,2)==0) bError=true;
     if (pnDate[0]>=0) pnTemp[9]=1;
     if (Selafin::write_intarray(fp,pnTemp,10)==0) bError=true;
@@ -138,8 +140,8 @@ static GDALDataset *OGRSelafinDriverCreate( const char * pszName,
     if (Selafin::write_intarray(fp,pnTemp,4)==0) bError=true;
     if (Selafin::write_intarray(fp,pnTemp,0)==0) bError=true;
     if (Selafin::write_intarray(fp,pnTemp,0)==0) bError=true;
-    if (Selafin::write_floatarray(fp,0,0)==0) bError=true;
-    if (Selafin::write_floatarray(fp,0,0)==0) bError=true;
+    if (Selafin::write_floatarray(fp,NULL,0)==0) bError=true;
+    if (Selafin::write_floatarray(fp,NULL,0)==0) bError=true;
     VSIFCloseL(fp);
     if (bError) {
         CPLError(CE_Failure, CPLE_AppDefined,"Error writing to file %s.",pszName);
@@ -165,37 +167,35 @@ static CPLErr OGRSelafinDriverDelete( const char *pszFilename ) {
 /************************************************************************/
 /*                           RegisterOGRSelafin()                       */
 /************************************************************************/
+
 void RegisterOGRSelafin() {
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "Selafin" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "Selafin" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "Selafin" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "Selafin" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Selafin" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_selafin.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "Selafin" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "Selafin" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Selafin" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_selafin.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='TITLE' type='string' description='Title of the datasource, stored in the Selafin file. The title must not hold more than 72 characters.'/>"
 "  <Option name='DATE' type='string' description='Starting date of the simulation. Each layer in a Selafin file is characterized by a date, counted in seconds since a reference date. This option allows providing the reference date. The format of this field must be YYYY-MM-DD_hh:mm:ss'/>"
 "</CreationOptionList>");
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='DATE' type='float' description='Date of the time step, in seconds, relative to the starting date of the simulation.'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRSelafinDriverOpen;
-        poDriver->pfnIdentify = OGRSelafinDriverIdentify;
-        poDriver->pfnCreate = OGRSelafinDriverCreate;
-        poDriver->pfnDelete = OGRSelafinDriverDelete;
+    poDriver->pfnOpen = OGRSelafinDriverOpen;
+    poDriver->pfnIdentify = OGRSelafinDriverIdentify;
+    poDriver->pfnCreate = OGRSelafinDriverCreate;
+    poDriver->pfnDelete = OGRSelafinDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

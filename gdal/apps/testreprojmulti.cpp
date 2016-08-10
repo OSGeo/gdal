@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Test multi-threaded reprojection
@@ -55,7 +54,7 @@ void ReprojFunc(void* unused)
     OGRCoordinateTransformation *poCTInThread;
     if (!bCreateCTInThread)
         poCTInThread = poCT;
-    while(TRUE)
+    while( true )
     {
         if (bCreateCTInThread)
             poCTInThread = OGRCreateCoordinateTransformation(&oSrcSRS,&oDstSRS);
@@ -77,7 +76,7 @@ void ReprojFunc(void* unused)
 int main(int argc, char* argv[])
 {
     int nThreads = 2;
-    
+
     int i;
     for(i=0;i<argc;i++)
     {

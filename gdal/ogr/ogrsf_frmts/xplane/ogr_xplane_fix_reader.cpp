@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogr_xplane_fix_reader.cpp
  *
  * Project:  X-Plane fix.dat file reader
  * Purpose:  Implements OGRXPlaneFixReader class
@@ -88,7 +87,7 @@ OGRXPlaneReader* OGRXPlaneFixReader::CloneForLayer(OGRXPlaneLayer* poLayer)
 
 int OGRXPlaneFixReader::IsRecognizedVersion( const char* pszVersionString)
 {
-    return EQUALN(pszVersionString, "600 Version", 11);
+    return STARTS_WITH_CI(pszVersionString, "600 Version");
 }
 
 /************************************************************************/

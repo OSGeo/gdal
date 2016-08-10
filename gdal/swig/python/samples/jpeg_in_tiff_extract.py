@@ -29,8 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
 import sys
+
+from osgeo import gdal
 
 ###############################################################
 # Usage()

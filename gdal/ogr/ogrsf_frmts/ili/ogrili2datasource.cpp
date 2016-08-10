@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 2 Translator
  * Purpose:  Implements OGRILI2DataSource class.
@@ -28,11 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili2.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
 #include "ili2reader.h"
+
+#include "ogr_ili2.h"
 
 using namespace std;
 
@@ -43,16 +43,14 @@ CPL_CVSID("$Id$");
 /*                         OGRILI2DataSource()                         */
 /************************************************************************/
 
-OGRILI2DataSource::OGRILI2DataSource()
-
-{
-    pszName = NULL;
-    poImdReader = new ImdReader(2);
-    poReader = NULL;
-    fpOutput = NULL;
-    nLayers = 0;
-    papoLayers = NULL;
-}
+OGRILI2DataSource::OGRILI2DataSource() :
+    pszName(NULL),
+    poImdReader(new ImdReader(2)),
+    poReader(NULL),
+    fpOutput(NULL),
+    nLayers(0),
+    papoLayers(NULL)
+{}
 
 /************************************************************************/
 /*                        ~OGRILI2DataSource()                         */
@@ -61,9 +59,7 @@ OGRILI2DataSource::OGRILI2DataSource()
 OGRILI2DataSource::~OGRILI2DataSource()
 
 {
-    int i;
-
-    for(i=0;i<nLayers;i++)
+    for( int i=0; i<nLayers; i++ )
     {
         delete papoLayers[i];
     }
@@ -86,18 +82,17 @@ OGRILI2DataSource::~OGRILI2DataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, int bTestOpen )
+int OGRILI2DataSource::Open( const char * pszNewName,
+                             char** papszOpenOptionsIn, int bTestOpen )
 
 {
-    FILE        *fp;
-    char        szHeader[1000];
     CPLString   osBasename;
     CPLString   osModelFilename;
 
-    if( CSLFetchNameValue(papszOpenOptions, "MODEL") != NULL )
+    if( CSLFetchNameValue(papszOpenOptionsIn, "MODEL") != NULL )
     {
         osBasename = pszNewName;
-        osModelFilename = CSLFetchNameValue(papszOpenOptions, "MODEL");
+        osModelFilename = CSLFetchNameValue(papszOpenOptionsIn, "MODEL");
     }
     else
     {
@@ -116,7 +111,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszName, "r" );
+    FILE *fp = VSIFOpen( pszName, "r" );
     if( fp == NULL )
     {
         if( !bTestOpen )
@@ -128,38 +123,41 @@ int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we aren't sure it is ILI2, load a header chunk and check      */
-/*      for signs it is ILI2                                             */
+/*      If we aren't sure it is ILI2, load a header chunk and check     */
+/*      for signs it is ILI2                                            */
 /* -------------------------------------------------------------------- */
+    char szHeader[1000];
     if( bTestOpen )
     {
-        int nLen = (int)VSIFRead( szHeader, 1, sizeof(szHeader), fp );
+        int nLen = static_cast<int>(
+            VSIFRead( szHeader, 1, sizeof(szHeader), fp ) );
         if (nLen == sizeof(szHeader))
             szHeader[sizeof(szHeader)-1] = '\0';
         else
             szHeader[nLen] = '\0';
 
-        if( szHeader[0] != '<' 
+        if( szHeader[0] != '<'
             || strstr(szHeader,"interlis.ch/INTERLIS2") == NULL )
-        { // "www.interlis.ch/INTERLIS2.3"
+        {
+            // "www.interlis.ch/INTERLIS2.3"
             VSIFClose( fp );
             return FALSE;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
-/*      We assume now that it is ILI2.  Close and instantiate a          */
-/*      ILI2Reader on it.                                                */
+/*      We assume now that it is ILI2.  Close and instantiate a         */
+/*      ILI2Reader on it.                                               */
 /* -------------------------------------------------------------------- */
     VSIFClose( fp );
-    
+
     poReader = CreateILI2Reader();
     if( poReader == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "File %s appears to be ILI2 but the ILI2 reader can't\n"
-                  "be instantiated, likely because Xerces support wasn't\n"
-                  "configured in.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "File %s appears to be ILI2 but the ILI2 reader cannot\n"
+                  "be instantiated, likely because Xerces support was not\n"
+                  "configured in.",
                   pszNewName );
         return FALSE;
     }
@@ -207,16 +205,17 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 
     if( strcmp(pszName,"/vsistdout/") == 0 ||
-        strncmp(pszName,"/vsigzip/", 9) == 0 )
+        STARTS_WITH(pszName, "/vsigzip/") )
     {
         fpOutput = VSIFOpenL(pszName, "wb");
     }
-    else if ( strncmp(pszName,"/vsizip/", 8) == 0)
+    else if ( STARTS_WITH(pszName, "/vsizip/"))
     {
         if (EQUAL(CPLGetExtension(pszName), "zip"))
         {
+            char* pszNewName = CPLStrdup(CPLFormFilename(pszName, "out.xtf", NULL));
             CPLFree(pszName);
-            pszName = CPLStrdup(CPLFormFilename(pszName, "out.xtf", NULL));
+            pszName = pszNewName;
         }
 
         fpOutput = VSIFOpenL(pszName, "wb");
@@ -242,13 +241,19 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 /*      Write headers                                                   */
 /* -------------------------------------------------------------------- */
     VSIFPrintfL(fpOutput, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
-    VSIFPrintfL(fpOutput, "<TRANSFER xmlns=\"http://www.interlis.ch/INTERLIS2.3\">\n");
-    VSIFPrintfL(fpOutput, "<HEADERSECTION SENDER=\"OGR/GDAL %s\" VERSION=\"2.3\">\n", GDAL_RELEASE_NAME);
+    VSIFPrintfL( fpOutput,
+                 "<TRANSFER xmlns=\"http://www.interlis.ch/INTERLIS2.3\">\n");
+    VSIFPrintfL( fpOutput,
+                 "<HEADERSECTION SENDER=\"OGR/GDAL %s\" VERSION=\"2.3\">\n",
+                 GDAL_RELEASE_NAME);
     VSIFPrintfL(fpOutput, "<MODELS>\n");
-    for (IliModelInfos::const_iterator it = poImdReader->modelInfos.begin(); it != poImdReader->modelInfos.end(); ++it)
+    for( IliModelInfos::const_iterator it = poImdReader->modelInfos.begin();
+         it != poImdReader->modelInfos.end();
+         ++it)
     {
-        VSIFPrintfL(fpOutput, "<MODEL NAME=\"%s\" URI=\"%s\" VERSION=\"%s\"/>\n",
-            it->name.c_str(), it->uri.c_str(), it->version.c_str());
+        VSIFPrintfL( fpOutput,
+                     "<MODEL NAME=\"%s\" URI=\"%s\" VERSION=\"%s\"/>\n",
+                     it->name.c_str(), it->uri.c_str(), it->version.c_str() );
     }
     VSIFPrintfL(fpOutput, "</MODELS>\n");
     VSIFPrintfL(fpOutput, "</HEADERSECTION>\n");
@@ -266,26 +271,30 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 
 OGRLayer *
 OGRILI2DataSource::ICreateLayer( const char * pszLayerName,
-                                 CPL_UNUSED OGRSpatialReference *poSRS,
+                                 OGRSpatialReference * /* poSRS */,
                                  OGRwkbGeometryType eType,
-                                 CPL_UNUSED char ** papszOptions )
+                                 char ** /* papszOptions */ )
 {
     if (fpOutput == NULL)
         return NULL;
 
-    FeatureDefnInfo featureDefnInfo = poImdReader->GetFeatureDefnInfo(pszLayerName);
-    OGRFeatureDefn* poFeatureDefn = featureDefnInfo.poTableDefn;
+    FeatureDefnInfo featureDefnInfo
+        = poImdReader->GetFeatureDefnInfo(pszLayerName);
+    OGRFeatureDefn* poFeatureDefn = featureDefnInfo.GetTableDefnRef();
     if (poFeatureDefn == NULL)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Layer '%s' not found in model definition. Creating adhoc layer", pszLayerName);
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Layer '%s' not found in model definition. "
+                  "Creating adhoc layer", pszLayerName );
         poFeatureDefn = new OGRFeatureDefn(pszLayerName);
         poFeatureDefn->SetGeomType( eType );
     }
-    OGRILI2Layer *poLayer = new OGRILI2Layer(poFeatureDefn, featureDefnInfo.poGeomFieldInfos, this);
+    OGRILI2Layer *poLayer = new OGRILI2Layer(
+        poFeatureDefn, featureDefnInfo.poGeomFieldInfos, this);
 
     nLayers++;
-    papoLayers = (OGRILI2Layer**)CPLRealloc(papoLayers, sizeof(OGRILI2Layer*) * nLayers);
+    papoLayers = static_cast<OGRILI2Layer **>(
+        CPLRealloc(papoLayers, sizeof(OGRILI2Layer*) * nLayers) );
     papoLayers[nLayers-1] = poLayer;
 
     return poLayer;
@@ -300,10 +309,10 @@ int OGRILI2DataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+    if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -313,16 +322,17 @@ int OGRILI2DataSource::TestCapability( const char * pszCap )
 OGRLayer *OGRILI2DataSource::GetLayer( int iLayer )
 
 {
-  list<OGRLayer *>::const_iterator layerIt = listLayer.begin();
-  int i = 0;
-  while (i < iLayer && layerIt != listLayer.end()) {
-    i++;
-    layerIt++;
-  }
-  
-  if (i == iLayer) {
-    OGRILI2Layer *tmpLayer = (OGRILI2Layer *)*layerIt;
-    return tmpLayer;
-  } else
+    list<OGRLayer *>::const_iterator layerIt = listLayer.begin();
+    int i = 0;
+    while (i < iLayer && layerIt != listLayer.end()) {
+        i++;
+        layerIt++;
+    }
+
+    if (i == iLayer) {
+        OGRILI2Layer *tmpLayer = reinterpret_cast<OGRILI2Layer *>(*layerIt);
+        return tmpLayer;
+    }
+
     return NULL;
 }

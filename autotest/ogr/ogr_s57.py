@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR S-57 driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -51,8 +51,8 @@ def ogr_s57_1():
     # Clear S57 options if set or our results will be messed up.
     if gdal.GetConfigOption( 'OGR_S57_OPTIONS', '' ) != '':
         gdal.SetConfigOption( 'OGR_S57_OPTIONS', '' )
-        
-    gdaltest.s57_ds = ogr.Open( 'data/1B5X02NE.000' )    
+
+    gdaltest.s57_ds = ogr.Open( 'data/1B5X02NE.000' )
     if gdaltest.s57_ds is None:
         gdaltest.post_reason( 'failed to open test file.' )
         return 'fail'
@@ -61,7 +61,7 @@ def ogr_s57_1():
 
 ###############################################################################
 # Verify we have the set of expected layers and that some rough information
-# matches our expectations. 
+# matches our expectations.
 
 def ogr_s57_2():
     if gdaltest.s57_ds is None:
@@ -83,13 +83,13 @@ def ogr_s57_2():
 
 
     if gdaltest.s57_ds.GetLayerCount() != len(layer_list):
-        gdaltest.post_reason( 'Did not get expected number of layers, likely cant find support files.' )
+        gdaltest.post_reason( 'Did not get expected number of layers, likely cannot find support files.' )
         return 'fail'
-    
+
     for i in range(len(layer_list)):
         lyr = gdaltest.s57_ds.GetLayer( i )
         lyr_info = layer_list[i]
-        
+
         if lyr.GetName() != lyr_info[0]:
             gdaltest.post_reason( 'Expected layer %d to be %s but it was %s.'\
                                   % (i+1, lyr_info[0], lyr.GetName()) )
@@ -103,11 +103,11 @@ def ogr_s57_2():
         if lyr.GetLayerDefn().GetGeomType() != lyr_info[1]:
             gdaltest.post_reason( 'Expected %d layer type in layer %s, but got %d.' % (lyr_info[1], lyr_info[0], lyr.GetLayerDefn().GetGeomType()) )
             return 'fail'
-            
+
     return 'success'
 
 ###############################################################################
-# Check the COALNE feature. 
+# Check the COALNE feature.
 
 def ogr_s57_3():
     if gdaltest.s57_ds is None:
@@ -118,7 +118,7 @@ def ogr_s57_3():
     if feat is None:
         gdaltest.post_reason( 'Did not get expected COALNE feature at all.' )
         return 'fail'
-    
+
     if feat.GetField( 'RCID' ) != 1 \
            or feat.GetField( 'LNAM' ) != 'FFFF7F4F0FB002D3' \
            or feat.GetField( 'OBJL' ) != 30 \
@@ -145,7 +145,7 @@ def ogr_s57_4():
     if feat is None:
         gdaltest.post_reason( 'Did not get expected M_QUAL feature at all.' )
         return 'fail'
-    
+
     if feat.GetField( 'RCID' ) != 15 \
            or feat.GetField( 'OBJL' ) != 308 \
            or feat.GetField( 'AGEN' ) != 65535:
@@ -171,7 +171,7 @@ def ogr_s57_5():
     if feat is None:
         gdaltest.post_reason( 'Did not get expected SOUNDG feature at all.' )
         return 'fail'
-    
+
     if feat.GetField( 'RCID' ) != 20 \
            or feat.GetField( 'OBJL' ) != 129 \
            or feat.GetField( 'AGEN' ) != 65535:
@@ -193,13 +193,13 @@ def ogr_s57_5():
 def ogr_s57_6():
 
     ds = ogr.Open( 'data/bug1526.000' )
-    
+
     feat = ds.GetLayerByName('FOGSIG').GetNextFeature()
 
     if feat is None:
         gdaltest.post_reason( 'Did not get expected FOGSIG feature at all.' )
         return 'fail'
-    
+
     if feat.GetField( 'INFORM' ) != 'During South winds nautophone is not always heard in S direction from lighthouse' \
        or len(feat.GetField( 'NINFOM' )) < 1:
         gdaltest.post_reason( 'FOGSIG: did not get expected attributes' )
@@ -213,7 +213,7 @@ def ogr_s57_6():
 def ogr_s57_7():
 
     ds = ogr.Open( 'data/bug2147_3R7D0889.000' )
-    
+
     feat = ds.GetLayerByName('ROADWY').GetNextFeature()
 
     if feat is None:
@@ -290,6 +290,55 @@ def ogr_s57_9():
     except:
         pass
 
+    gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
+    gdal.VectorTranslate('tmp/ogr_s57_9.000', 'data/1B5X02NE.000', options = "-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL")
+    gdal.SetConfigOption('OGR_S57_OPTIONS', None)
+
+    ds = gdal.OpenEx( 'tmp/ogr_s57_9.000', open_options = ['RETURN_PRIMITIVES=ON'] )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetLayerByName('IsolatedNode') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.s57_ds = ds
+    if ogr_s57_4() != 'success':
+        return 'fail'
+
+    gdaltest.s57_ds = None
+
+    try:
+        os.unlink('tmp/ogr_s57_9.000')
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test opening a fake very small S57 file
+
+def ogr_s57_10():
+
+    ds = ogr.Open('data/fake_s57.000')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['DSID_EXPP'] != 2:
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test opening a fake very small S57 file with ISO8211 record with zero length,
+# using variant (C.1.5.1) logic.
+
+def ogr_s57_11():
+
+    ds = ogr.Open('data/fake_s57_variant_C151.000')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['DSID_EXPP'] != 2:
+        return 'fail'
     return 'success'
 
 ###############################################################################
@@ -386,7 +435,8 @@ def ogr_s57_online_3():
     lyr = ds.GetLayerByName('BOYCAR')
     feat = lyr.GetFeature(975)
     if feat is None:
-        gdaltest.post_reason( 'unexpected dit not get feature id 975 after update!' )
+        gdaltest.post_reason( 'unexpected did not get feature id 975 '
+                              'after update!' )
         return 'fail'
 
     feat = None
@@ -437,7 +487,7 @@ def ogr_s57_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_s57_1,
     ogr_s57_2,
     ogr_s57_3,
@@ -447,6 +497,8 @@ gdaltest_list = [
     ogr_s57_7,
     ogr_s57_8,
     ogr_s57_9,
+    ogr_s57_10,
+    ogr_s57_11,
     ogr_s57_online_1,
     ogr_s57_online_2,
     ogr_s57_online_3,

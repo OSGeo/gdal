@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test MEM format driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -47,7 +47,7 @@ def mem_1():
     drv = gdal.GetDriverByName('MEM')
     gdaltest.mem_ds = drv.Create( 'mem_1.mem', 50, 3 )
     ds = gdaltest.mem_ds
-    
+
     if ds.GetProjection() != '':
         gdaltest.post_reason( 'projection wrong' )
         return 'fail'
@@ -123,7 +123,7 @@ def mem_1():
     return 'success'
 
 ###############################################################################
-# Open an in-memory array. 
+# Open an in-memory array.
 
 def mem_2():
 
@@ -279,28 +279,67 @@ def mem_5():
     return 'success'
 
 ###############################################################################
-# Test out-of-memory situations (simulated by multiplication overflows)
+# Test out-of-memory situations
 
 def mem_6():
-    
+
     if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
         return 'skip'
 
     drv = gdal.GetDriverByName('MEM')
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, options = ['INTERLEAVE=PIXEL'] )
-    gdal.PopErrorHandler()
+    # Multiplication overflow
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 1, 1, 0x7FFFFFFF, gdal.GDT_Float64 )
     if ds is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, gdal.GDT_Float64 )
-    gdal.PopErrorHandler()
+    # Multiplication overflow
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16 )
     if ds is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
+
+    # Multiplication overflow
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, gdal.GDT_Float64 )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Out of memory error
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, options = ['INTERLEAVE=PIXEL'] )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Out of memory error
+    with gdaltest.error_handler():
+        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1 )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # 32 bit overflow on 32-bit builds, or possible out of memory error
+    ds = drv.Create( '', 0x7FFFFFFF, 1, 0 )
+    with gdaltest.error_handler():
+        ds.AddBand(gdal.GDT_Float64)
+
+    # Will raise out of memory error in all cases
+    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 0 )
+    with gdaltest.error_handler():
+        ret = ds.AddBand(gdal.GDT_Float64)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
@@ -345,7 +384,7 @@ def mem_9():
     # Test IRasterIO(GF_Read,)
     src_ds = gdal.Open('data/rgbsmall.tif')
     drv = gdal.GetDriverByName('MEM')
-    
+
     for interleave in [ 'BAND', 'PIXEL' ] :
         out_ds = drv.CreateCopy('', src_ds, options = ['INTERLEAVE=%s' % interleave])
         ref_data = src_ds.GetRasterBand(2).ReadRaster(20,8,4,5)

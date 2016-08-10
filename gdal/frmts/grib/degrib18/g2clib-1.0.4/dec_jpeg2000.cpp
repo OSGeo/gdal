@@ -23,7 +23,7 @@
 #endif
 
 CPL_C_START
-// Cripes ... shouldn't this go in an include files!
+// Should this go in an include file?  Otherwise it should be static, correct?
 int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld);
 CPL_C_END
 
@@ -34,7 +34,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 *   PRGMMR: Gilbert          ORG: W/NP11     DATE: 2002-12-02
 *
 * ABSTRACT: This Function decodes a JPEG2000 code stream specified in the
-*   JPEG2000 Part-1 standard (i.e., ISO/IEC 15444-1) using JasPer 
+*   JPEG2000 Part-1 standard (i.e., ISO/IEC 15444-1) using JasPer
 *   Software version 1.500.4 (or 1.700.2) written by the University of British
 *   Columbia and Image Power Inc, and others.
 *   JasPer is available at http://www.ece.uvic.ca/~mdadams/jasper/.
@@ -70,7 +70,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 {
 #ifndef HAVE_JASPER
     // J2K_SUBFILE method
-    
+
     // create "memory file" from buffer
     int fileNumber = 0;
     VSIStatBufL   sStatBuf;
@@ -81,14 +81,14 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
         osFileName.Printf( "/vsimem/work%d.jpc", ++fileNumber );
     }
 
-    VSIFCloseL( VSIFileFromMemBuffer( 
-                    osFileName, (unsigned char*)injpc, bufsize, 
+    VSIFCloseL( VSIFileFromMemBuffer(
+                    osFileName, (unsigned char*)injpc, bufsize,
                     FALSE ) ); // TRUE to let vsi delete the buffer when done
 
-    // Open memory buffer for reading 
+    // Open memory buffer for reading
     GDALDataset* poJ2KDataset = (GDALDataset *)
         GDALOpen( osFileName, GA_ReadOnly );
- 
+
     if( poJ2KDataset == NULL )
     {
         printf("dec_jpeg2000: Unable to open JPEG2000 image within GRIB file.\n"
@@ -103,8 +103,8 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     }
 
     // Fulfill administration: initialize parameters required for RasterIO
-    int nXSize = poJ2KDataset->GetRasterXSize();
-    int nYSize = poJ2KDataset->GetRasterYSize();
+    const int nXSize = poJ2KDataset->GetRasterXSize();
+    const int nYSize = poJ2KDataset->GetRasterYSize();
     int nXOff = 0;
     int nYOff = 0;
     int nBufXSize = nXSize;
@@ -117,48 +117,46 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     int nBandSpace = 0;
 
     //    Decompress the JPEG2000 into the output integer array.
-    poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
+    const CPLErr eErr = poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
                             outfld, nBufXSize, nBufYSize, eBufType,
-                            nBandCount, panBandMap, 
+                            nBandCount, panBandMap,
                             nPixelSpace, nLineSpace, nBandSpace, NULL );
 
     // close source file, and "unlink" it.
     GDALClose( poJ2KDataset );
     VSIUnlink( osFileName );
 
-    return 0;
+    return (eErr == CE_None) ? 0 : -3;
 
-#else 
+#else
 
     // JasPer method
-    
-    int ier;
+
     g2int i,j,k;
-    jas_image_t *image=0;
+    jas_image_t *image=NULL;
     jas_stream_t *jpcstream;
     jas_image_cmpt_t *pcmpt;
-    char *opts=0;
+    char *opts=NULL;
     jas_matrix_t *data;
 
 //    jas_init();
 
-    ier=0;
-//   
+//
 //     Create jas_stream_t containing input JPEG200 codestream in memory.
-//       
+//
 
     jpcstream=jas_stream_memopen(injpc,bufsize);
 
-//   
+//
 //     Decode JPEG200 codestream into jas_image_t structure.
-//       
+//
 
     image=jpc_decode(jpcstream,opts);
-    if ( image == 0 ) {
-       printf(" jpc_decode return = %d \n",ier);
+    if ( image == NULL ) {
+       printf(" jpc_decode failed\n");
        return -3;
     }
-    
+
     pcmpt=image->cmpts_[0];
 
 //   Expecting jpeg2000 image to be grayscale only.
@@ -169,25 +167,25 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
        return (-5);
     }
 
-// 
+//
 //    Create a data matrix of grayscale image values decoded from
 //    the jpeg2000 codestream.
 //
-    data=jas_matrix_create(jas_image_height(image), jas_image_width(image));
+    data=jas_matrix_create(static_cast<int>(jas_image_height(image)), static_cast<int>(jas_image_width(image)));
     jas_image_readcmpt(image,0,0,0,jas_image_width(image),
                        jas_image_height(image),data);
 //
 //    Copy data matrix to output integer array.
 //
     k=0;
-    for (i=0;i<pcmpt->height_;i++) 
-      for (j=0;j<pcmpt->width_;j++) 
-        outfld[k++]=data->rows_[i][j];
+    for (i=0;i<pcmpt->height_;i++)
+      for (j=0;j<pcmpt->width_;j++)
+        outfld[k++]=static_cast<g2int>(data->rows_[i][j]);
 //
 //     Clean up JasPer work structures.
 //
     jas_matrix_destroy(data);
-    ier=jas_stream_close(jpcstream);
+    jas_stream_close(jpcstream);
     jas_image_destroy(image);
 
     return 0;

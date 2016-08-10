@@ -2,8 +2,8 @@
  * $Id$
  *
  * Project:  Mapinfo Image Warper
- * Purpose:  Implemention of the GDALTransformer wrapper around CRS.C functions
- *           to build a polynomial transformation based on ground control 
+ * Purpose:  Implementation of the GDALTransformer wrapper around CRS.C functions
+ *           to build a polynomial transformation based on ground control
  *           points.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -40,13 +40,13 @@ typedef struct
 {
     double adfToGeoX[20];
     double adfToGeoY[20];
-    
+
     double adfFromGeoX[20];
     double adfFromGeoY[20];
 
     int    nOrder;
     int    bReversed;
-    
+
 } GCPTransformInfo;
 
 
@@ -59,16 +59,16 @@ typedef struct
  *
  * Computes least squares fit polynomials from a provided set of GCPs,
  * and stores the coefficients for later transformation of points between
- * pixel/line and georeferenced coordinates. 
+ * pixel/line and georeferenced coordinates.
  *
  * The return value should be used as a TransformArg in combination with
- * the transformation function GDALGCPTransform which fits the 
+ * the transformation function GDALGCPTransform which fits the
  * GDALTransformerFunc signature.  The returned transform argument should
  * be deallocated with GDALDestroyGCPTransformer when no longer needed.
  *
  * This function may fail (returning NULL) if the provided set of GCPs
  * are inadequate for the requested order, the determinate is zero or they
- * are otherwise "ill conditioned".  
+ * are otherwise "ill conditioned".
  *
  * Note that 2nd order requires at least 6 GCPs, and 3rd order requires at
  * least 10 gcps.  If nReqOrder is 0 the highest order possible with the
@@ -78,11 +78,11 @@ typedef struct
  * @param pasGCPList an array of GCPs to be used as input.
  * @param nReqOrder the requested polynomial order.  It should be 1, 2 or 3.
  * @param bReversed set it to TRUE to compute the reversed transformation.
- * 
- * @return the transform argument or NULL if creation fails. 
+ *
+ * @return the transform argument or NULL if creation fails.
  */
 
-void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed )
 
 {
@@ -100,7 +100,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
         else
             nReqOrder = 1;
     }
-    
+
     psInfo = (GCPTransformInfo *) CPLCalloc(sizeof(GCPTransformInfo),1);
     psInfo->bReversed = bReversed;
     psInfo->nOrder = nReqOrder;
@@ -113,7 +113,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     padfRasterX = (double *) CPLCalloc(sizeof(double),nGCPCount);
     padfRasterY = (double *) CPLCalloc(sizeof(double),nGCPCount);
     panStatus = (int *) CPLCalloc(sizeof(int),nGCPCount);
-    
+
     for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
     {
         panStatus[iGCP] = 1;
@@ -127,7 +127,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      Compute the forward and reverse polynomials.                    */
 /* -------------------------------------------------------------------- */
     if ( TwoDPolyFit( &rms_err, psInfo->adfFromGeoX, nReqOrder, nGCPCount,
-		      padfRasterX, padfGeoX, padfGeoY ) < 0 )
+                      padfRasterX, padfGeoX, padfGeoY ) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to compute polynomial equations of desired order\n"
@@ -135,7 +135,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
         goto CleanupAfterError;
     }
     if ( TwoDPolyFit( &rms_err, psInfo->adfFromGeoY, nReqOrder, nGCPCount,
-		      padfRasterY, padfGeoX, padfGeoY ) < 0 )
+                      padfRasterY, padfGeoX, padfGeoY ) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to compute polynomial equations of desired order\n"
@@ -143,7 +143,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
         goto CleanupAfterError;
     }
     if ( TwoDPolyFit( &rms_err, psInfo->adfToGeoX, nReqOrder, nGCPCount,
-		      padfGeoX, padfRasterX, padfRasterY ) < 0 )
+                      padfGeoX, padfRasterX, padfRasterY ) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to compute polynomial equations of desired order\n"
@@ -151,7 +151,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
         goto CleanupAfterError;
     }
     if ( TwoDPolyFit( &rms_err, psInfo->adfToGeoY, nReqOrder, nGCPCount,
-		      padfGeoY, padfRasterX, padfRasterY ) < 0 )
+                      padfGeoY, padfRasterX, padfRasterY ) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to compute polynomial equations of desired order\n"
@@ -163,21 +163,21 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      Dump residuals.                                                 */
 /* -------------------------------------------------------------------- */
     CPLDebug( "GDALCreateGCPTransformer",
-	      "Number of GCPs %d, transformation order %d",
-	      nGCPCount, psInfo->nOrder );
-    
+              "Number of GCPs %d, transformation order %d",
+              nGCPCount, psInfo->nOrder );
+
     for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
     {
-	double x = pasGCPList[iGCP].dfGCPX;
-	double y = pasGCPList[iGCP].dfGCPY;
-	double z = pasGCPList[iGCP].dfGCPZ;
-	int bSuccess;
-	GDALGCPTransform( psInfo, TRUE, 1, &x, &y, &z, &bSuccess );
-	CPLDebug( "GDALCreateGCPTransformer",
-		  "GCP %d. Residuals: X: %f, Y: %f", iGCP,
-		  pasGCPList[iGCP].dfGCPPixel - x, pasGCPList[iGCP].dfGCPLine - y );
+        double x = pasGCPList[iGCP].dfGCPX;
+        double y = pasGCPList[iGCP].dfGCPY;
+        double z = pasGCPList[iGCP].dfGCPZ;
+        int bSuccess;
+        GDALGCPTransform( psInfo, TRUE, 1, &x, &y, &z, &bSuccess );
+        CPLDebug( "GDALCreateGCPTransformer",
+                  "GCP %d. Residuals: X: %f, Y: %f", iGCP,
+                  pasGCPList[iGCP].dfGCPPixel - x, pasGCPList[iGCP].dfGCPLine - y );
     }
-    
+
     return psInfo;
 
   CleanupAfterError:
@@ -186,7 +186,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     CPLFree( padfRasterX );
     CPLFree( padfRasterX );
     CPLFree( panStatus );
-    
+
     CPLFree( psInfo );
     return NULL;
 }
@@ -199,10 +199,10 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
  * Destroy GCP transformer.
  *
  * This function is used to destroy information about a GCP based
- * polynomial transformation created with GDALCreateGCPTransformer(). 
+ * polynomial transformation created with GDALCreateGCPTransformer().
  *
- * @param pTransformArg the transform arg previously returned by 
- * GDALCreateGCPTransformer(). 
+ * @param pTransformArg the transform arg previously returned by
+ * GDALCreateGCPTransformer().
  */
 
 void GDALDestroyGCPTransformer( void *pTransformArg )
@@ -220,10 +220,10 @@ void GDALDestroyGCPTransformer( void *pTransformArg )
  *
  * This function matches the GDALTransformerFunc signature, and can be
  * used to transform one or more points from pixel/line coordinates to
- * georeferenced coordinates (SrcToDst) or vice versa (DstToSrc). 
+ * georeferenced coordinates (SrcToDst) or vice versa (DstToSrc).
  *
- * @param pTransformArg return value from GDALCreateGCPTransformer(). 
- * @param bDstToSrc TRUE if transformation is from the destination 
+ * @param pTransformArg return value from GDALCreateGCPTransformer().
+ * @param bDstToSrc TRUE if transformation is from the destination
  * (georeferenced) coordinates to pixel/line or FALSE when transforming
  * from pixel/line to georeferenced coordinates.
  * @param nPointCount the number of values in the x, y and z arrays.
@@ -236,9 +236,9 @@ void GDALDestroyGCPTransformer( void *pTransformArg )
  * @return TRUE.
  */
 
-int GDALGCPTransform( void *pTransformArg, int bDstToSrc, 
-                      int nPointCount, 
-                      double *x, double *y, double *z, 
+int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
+                      int nPointCount,
+                      double *x, double *y, double *z,
                       int *panSuccess )
 
 {
@@ -248,22 +248,22 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 
     if( psInfo->bReversed )
         bDstToSrc = !bDstToSrc;
-    
+
     for( i = 0; i < nPointCount; i++ )
     {
-	X = x[i];
-	Y = y[i];
+        X = x[i];
+        Y = y[i];
         if( bDstToSrc )
         {
             x[i] = TwoDPolyEval( psInfo->adfFromGeoX, psInfo->nOrder, X, Y );
-	    y[i] = TwoDPolyEval( psInfo->adfFromGeoY, psInfo->nOrder, X, Y );
+            y[i] = TwoDPolyEval( psInfo->adfFromGeoY, psInfo->nOrder, X, Y );
         }
         else
         {
             x[i] = TwoDPolyEval( psInfo->adfToGeoX, psInfo->nOrder, X, Y );
-	    y[i] = TwoDPolyEval( psInfo->adfToGeoY, psInfo->nOrder, X, Y );
+            y[i] = TwoDPolyEval( psInfo->adfToGeoY, psInfo->nOrder, X, Y );
         }
-	z[i] = 0;
+        z[i] = 0;
         panSuccess[i] = TRUE;
     }
 
@@ -273,7 +273,7 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "serialization not supported for this type of gcp transformer.");
     return NULL;
 }
@@ -281,7 +281,7 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
 void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
+    CPLError( CE_Failure, CPLE_AppDefined,
               "deserialization not supported for this type of gcp transformer.");
     return NULL;
 }

@@ -33,6 +33,7 @@ static const int NULL2 = -32768;
 static const double NULL3 = -32768.0;
 
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 #include "vicarkeywordhandler.h"
@@ -41,21 +42,17 @@ static const double NULL3 = -32768.0;
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void GDALRegister_VICAR(void);
-CPL_C_END
-
 /************************************************************************/
 /* ==================================================================== */
-/*			       VICARDataset		                */
+/*                             VICARDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
 class VICARDataset : public RawDataset
 {
-    VSILFILE	*fpImage;
+    VSILFILE    *fpImage;
 
-    GByte	abyHeader[10000];
+    GByte       abyHeader[10000];
     CPLString   osExternalCube;
 
     VICARKeywordHandler  oKeywords;
@@ -167,11 +164,12 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader == NULL )
         return FALSE;
 
-    return strstr((char*)poOpenInfo->pabyHeader,"LBLSIZE") != NULL &&
-           strstr((char*)poOpenInfo->pabyHeader,"FORMAT") != NULL &&
-           strstr((char*)poOpenInfo->pabyHeader,"NL") != NULL &&
-           strstr((char*)poOpenInfo->pabyHeader,"NS") != NULL &&
-           strstr((char*)poOpenInfo->pabyHeader,"NB") != NULL;
+    return
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "LBLSIZE" ) != NULL &&
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "FORMAT" ) != NULL &&
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NL" ) != NULL &&
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NS" ) != NULL &&
+        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NB" ) != NULL;
 }
 
 /************************************************************************/
@@ -210,14 +208,14 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
-        return FALSE;
+        return NULL;
     }
     value = poDS->GetKeyword( "REALFMT" );
     if (!EQUAL(value,"RIEEE") ) {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
-        return FALSE;
+        return NULL;
     }
 
     char chByteOrder = 'M';
@@ -250,7 +248,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
-        return FALSE;
+        return NULL;
     }
 
     strcpy(szLayout,"BSQ");
@@ -259,8 +257,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     const int nBands = atoi(poDS->GetKeyword("NB"));
 
     /***********   Grab record bytes  **********/
-    int nSkipBytes = atoi(poDS->GetKeyword("NBB"));
-
     GDALDataType eDataType = GDT_Byte;
     double dfNoData = 0.0;
     if (EQUAL( poDS->GetKeyword( "FORMAT" ), "BYTE" )) {
@@ -294,7 +290,8 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                   "File %s appears to be a VICAR file, but failed to find some "
                   "required keywords.",
                   poDS->GetDescription() );
-        return FALSE;
+        delete poDS;
+        return NULL;
     }
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -302,40 +299,40 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
 
-    double dfULXMap=0.5;
-    double dfULYMap = 0.5;
     double dfXDim = 1.0;
     double dfYDim = 1.0;
-    double xulcenter = 0.0;
-    double yulcenter = 0.0;
 
     value = poDS->GetKeyword("MAP.MAP_SCALE");
     if (strlen(value) > 0 ) {
-        dfXDim = CPLAtof(value);
-        dfYDim = CPLAtof(value) * -1;
-        dfXDim = dfXDim * 1000.0;
-        dfYDim = dfYDim * 1000.0;
+        dfXDim = CPLAtof(value) * 1000.0;
+        dfYDim = CPLAtof(value) * -1 * 1000.0;
     }
 
-    double dfSampleOffset_Shift =
-        CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "-0.5" ));
+    const double dfSampleOffset_Shift =
+        CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "0.5" ));
 
-    double dfLineOffset_Shift =
-        CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "-0.5" ));
+    const double dfLineOffset_Shift =
+        CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "0.5" ));
 
-    double dfSampleOffset_Mult =
+    const double dfSampleOffset_Mult =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
 
-    double dfLineOffset_Mult =
+    const double dfLineOffset_Mult =
         CPLAtof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
 
     /***********   Grab LINE_PROJECTION_OFFSET ************/
+    double yulcenter = 0.0;
+    double dfULYMap = 0.5;
+
     value = poDS->GetKeyword("MAP.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
         yulcenter = CPLAtof(value);
         dfULYMap = ((yulcenter + dfLineOffset_Shift) * -dfYDim * dfLineOffset_Mult);
     }
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
+    double xulcenter = 0.0;
+    double dfULXMap=0.5;
+
     value = poDS->GetKeyword("MAP.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
         xulcenter = CPLAtof(value);
@@ -448,7 +445,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRS.SetBonne ( first_std_parallel, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "GNOMONIC" )) {
         oSRS.SetGnomonic ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "OBLIQUE_CYLINDRICAL" )) { 
+    } else if (EQUAL( map_proj_name, "OBLIQUE_CYLINDRICAL" )) {
         // hope Swiss Oblique Cylindrical is the same
         oSRS.SetSOC ( center_lat, center_lon, 0, 0 );
     } else {
@@ -460,15 +457,15 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (bProjectionSet) {
         //Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
-        CPLString proj_target_name = map_proj_name + " " + target_name;
+        const CPLString proj_target_name = map_proj_name + " " + target_name;
         oSRS.SetProjCS(proj_target_name); //set ProjCS keyword
 
         //The geographic/geocentric name will be the same basic name as the body name
         //'GCS' = Geographic/Geocentric Coordinate System
-        CPLString geog_name = "GCS_" + target_name;
+        const CPLString geog_name = "GCS_" + target_name;
 
         //The datum and sphere names will be the same basic name aas the planet
-        CPLString datum_name = "D_" + target_name;
+        const CPLString datum_name = "D_" + target_name;
         CPLString sphere_name = target_name; // + "_IAU_IAG");  //Might not be IAU defined so don't add
 
         //calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
@@ -488,31 +485,31 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             if (bIsGeographic) {
                 //Geograpraphic, so set an ellipse
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, iflattening, 
+                                semi_major, iflattening,
                                 "Reference_Meridian", 0.0 );
             } else {
                 //Geocentric, so force a sphere using the semi-minor axis. I hope...
                 sphere_name += "_polarRadius";
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_minor, 0.0, 
+                                semi_minor, 0.0,
                                 "Reference_Meridian", 0.0 );
             }
         }
-        else if ( (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) || 
-                  (EQUAL( map_proj_name, "EQUIDISTANT" )) || 
-                  (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) || 
-                  (EQUAL( map_proj_name, "STEREOGRAPHIC" )) || 
+        else if ( (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ||
+                  (EQUAL( map_proj_name, "EQUIDISTANT" )) ||
+                  (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) ||
+                  (EQUAL( map_proj_name, "STEREOGRAPHIC" )) ||
                   (EQUAL( map_proj_name, "SINUSOIDAL" )) ) {
             //isis uses the spherical equation for these projections so force a sphere
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                            semi_major, 0.0, 
+                            semi_major, 0.0,
                             "Reference_Meridian", 0.0 );
         }
         else if (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) {
             //isis uses local radius as a sphere, which is pre-calculated in the PDS label as the semi-major
             sphere_name += "_localRadius";
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                            semi_major, 0.0, 
+                            semi_major, 0.0,
                             "Reference_Meridian", 0.0 );
         }
         else
@@ -549,7 +546,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = dfYDim;
     }
 
-    CPLString osQubeFile = poOpenInfo->pszFilename;
+    const CPLString osQubeFile = poOpenInfo->pszFilename;
     if( !poDS->bGotTransform )
         poDS->bGotTransform =
             GDALReadWorldFile( osQubeFile, "psw",
@@ -589,16 +586,16 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     const long int nLineOffset = nPixelOffset * nCols + atoi(poDS->GetKeyword("NBB")) ;
     const long int nBandOffset = nLineOffset * nRows;
 
-    nSkipBytes = atoi(poDS->GetKeyword("LBLSIZE"));
+    int nSkipBytes = atoi(poDS->GetKeyword("LBLSIZE"));
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < nBands; i++ )
     {
-        GDALRasterBand	*poBand
+        GDALRasterBand *poBand
             = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i,
-                                 nPixelOffset, nLineOffset, eDataType,
+                                 static_cast<int>(nPixelOffset), static_cast<int>(nLineOffset), eDataType,
 #ifdef CPL_LSB
                                    chByteOrder == 'I' || chByteOrder == 'L',
 #else
@@ -609,8 +606,10 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i+1, poBand );
         poBand->SetNoDataValue( dfNoData );
         if (bIsDTM) {
-            poBand->SetScale( (double) CPLAtof(poDS->GetKeyword( "DTM.DTM_SCALING_FACTOR") ) );
-            poBand->SetOffset( (double) CPLAtof(poDS->GetKeyword( "DTM.DTM_OFFSET") ) );
+            poBand->SetScale( static_cast<double>(
+                CPLAtof(poDS->GetKeyword( "DTM.DTM_SCALING_FACTOR") ) ) );
+            poBand->SetOffset( static_cast<double>(
+                CPLAtof(poDS->GetKeyword( "DTM.DTM_OFFSET") ) ) );
             const char* pszMin = poDS->GetKeyword( "DTM.DTM_MINIMUM_DN", NULL );
             const char* pszMax = poDS->GetKeyword( "DTM.DTM_MAXIMUM_DN", NULL );
             if (pszMin != NULL && pszMax != NULL )
@@ -619,12 +618,12 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             if (pszNoData != NULL )
                 poBand->SetNoDataValue( CPLAtofM(pszNoData) );
         } else if (EQUAL( poDS->GetKeyword( "BLTYPE"), "M94_HRSC" )) {
-            float scale=CPLAtof(poDS->GetKeyword("DLRTO8.REFLECTANCE_SCALING_FACTOR","-1."));
+            double scale=CPLAtof(poDS->GetKeyword("DLRTO8.REFLECTANCE_SCALING_FACTOR","-1."));
             if (scale < 0.) {
                 scale = CPLAtof(poDS->GetKeyword( "HRCAL.REFLECTANCE_SCALING_FACTOR","1."));
             }
             poBand->SetScale( scale );
-            float offset=CPLAtof(poDS->GetKeyword("DLRTO8.REFLECTANCE_OFFSET","-1."));
+            double offset=CPLAtof(poDS->GetKeyword("DLRTO8.REFLECTANCE_OFFSET","-1."));
             if (offset < 0.) {
                 offset = CPLAtof(poDS->GetKeyword( "HRCAL.REFLECTANCE_OFFSET","0."));
             }
@@ -650,11 +649,11 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "PRODUCT_TYPE", poDS->GetKeyword( "TYPE"));
 
         if (EQUAL( poDS->GetKeyword( "M94_INSTRUMENT.DETECTOR_ID"), "MEX_HRSC_SRC" )) {
-            static const char *apszKeywords[] =  {
+            static const char * const apszKeywords[] =  {
                         "M94_ORBIT.IMAGE_TIME",
                         "FILE.EVENT_TYPE",
                         "FILE.PROCESSING_LEVEL_ID",
-                        "M94_INSTRUMENT.DETECTOR_ID", 
+                        "M94_INSTRUMENT.DETECTOR_ID",
                         "M94_CAMERAS.EXPOSURE_DURATION",
                         "HRCONVER.INSTRUMENT_TEMPERATURE", NULL
                     };
@@ -664,7 +663,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
             }
         } else {
-            static const char *apszKeywords[] =  {
+            static const char * const apszKeywords[] =  {
                 "M94_ORBIT.START_TIME", "M94_ORBIT.STOP_TIME",
                 "M94_INSTRUMENT.DETECTOR_ID",
                 "M94_CAMERAS.MACROPIXEL_SIZE",
@@ -690,8 +689,8 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     if (bIsDTM && EQUAL( poDS->GetKeyword( "MAP.TARGET_NAME"), "MARS" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "MARS_EXPRESS" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");
-        static const char *apszKeywords[] = {
-            "DTM.DTM_MISSING_DN", "DTM.DTM_OFFSET", "DTM.DTM_SCALING_FACTOR", "DTM.DTM_A_AXIS_RADIUS", 
+        static const char * const apszKeywords[] = {
+            "DTM.DTM_MISSING_DN", "DTM.DTM_OFFSET", "DTM.DTM_SCALING_FACTOR", "DTM.DTM_A_AXIS_RADIUS",
             "DTM.DTM_B_AXIS_RADIUS", "DTM.DTM_C_AXIS_RADIUS", "DTM.DTM_DESC", "DTM.DTM_MINIMUM_DN",
             "DTM.DTM_MAXIMUM_DN", NULL };
         for( int i = 0; apszKeywords[i] != NULL; i++ ) {
@@ -705,7 +704,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /******************   DAWN   ******************************/
     else if (EQUAL( poDS->GetKeyword( "INSTRUMENT_ID"), "FC2" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
-        static const char *apszKeywords[] =  {"ORBIT_NUMBER","FILTER_NUMBER",
+        static const char * const apszKeywords[] =  {"ORBIT_NUMBER","FILTER_NUMBER",
         "FRONT_DOOR_STATUS",
         "FIRST_LINE",
         "FIRST_LINE_SAMPLE",
@@ -731,8 +730,8 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     else if (bIsDTM && EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");
-        static const char *apszKeywords[] = {
-            "DTM_MISSING_DN", "DTM_OFFSET", "DTM_SCALING_FACTOR", "DTM_A_AXIS_RADIUS", 
+        static const char * const apszKeywords[] = {
+            "DTM_MISSING_DN", "DTM_OFFSET", "DTM_SCALING_FACTOR", "DTM_A_AXIS_RADIUS",
             "DTM_B_AXIS_RADIUS", "DTM_C_AXIS_RADIUS", "DTM_MINIMUM_DN",
             "DTM_MAXIMUM_DN", "MAP_PROJECTION_TYPE", "COORDINATE_SYSTEM_NAME",
             "POSITIVE_LONGITUDE_DIRECTION", "MAP_SCALE",
@@ -753,6 +752,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     if (EQUAL(poDS->GetKeyword( "EOL"), "1" ))
         poDS->SetMetadataItem( "END-OF-DATASET_LABEL", "PRESENT" );
     poDS->SetMetadataItem( "CONVERSION_DETAILS", "http://www.lpi.usra.edu/meetings/lpsc2014/pdf/1088.pdf" );
+    poDS->SetMetadataItem( "PIXEL-SHIFT-BUG", "CORRECTED" );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -771,7 +771,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *VICARDataset::GetKeyword( const char *pszPath, 
+const char *VICARDataset::GetKeyword( const char *pszPath,
                                       const char *pszDefault )
 
 {

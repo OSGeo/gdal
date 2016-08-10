@@ -27,8 +27,8 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-#ifndef _OGR_OPENFILEGDB_H_INCLUDED
-#define _OGR_OPENFILEGDB_H_INCLUDED
+#ifndef OGR_OPENFILEGDB_H_INCLUDED
+#define OGR_OPENFILEGDB_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
@@ -77,7 +77,7 @@ class OGROpenFileGDBLayer : public OGRLayer
     OGRFeature       *GetCurrentFeature();
 
     FileGDBOGRGeometryConverter* m_poGeomConverter;
-    
+
     int               m_iFieldToReadAsBinary;
 
     FileGDBIterator      *m_poIterator;
@@ -103,7 +103,7 @@ public:
                                             const char* pszGeomName = NULL,
                                             OGRwkbGeometryType eGeomType = wkbUnknown);
   virtual              ~OGROpenFileGDBLayer();
-  
+
   const std::string&    GetXMLDefinition() { return m_osDefinition; }
   const std::string&    GetXMLDocumentation() { return m_osDocumentation; }
   int                   GetAttrIndexUse() { return (m_poIterator == NULL) ? 0 : (m_bIteratorSufficientToEvaluateFilter) ? 2 : 1; }
@@ -159,7 +159,7 @@ class OGROpenFileGDBDataSource : public OGRDataSource
   std::map<std::string, int>     m_osMapNameToIdx;
 
   /* For debugging/testing */
-  int                            bLastSQLUsedOptimizedImplementation;
+  bool                           bLastSQLUsedOptimizedImplementation;
 
   int                 OpenFileGDBv10(int iGDBItems,
                                      int nInterestTable);
@@ -195,10 +195,10 @@ public:
   virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
 
   virtual int         TestCapability( const char * );
-  
+
   virtual char      **GetFileList();
 };
 
 int OGROpenFileGDBIsComparisonOp(int op);
 
-#endif /* ndef _OGR_OPENFILEGDB_H_INCLUDED */
+#endif /* ndef OGR_OPENFILEGDB_H_INCLUDED */

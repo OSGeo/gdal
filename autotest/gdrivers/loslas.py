@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -52,7 +52,7 @@ def loslas_online_1():
     stats = (-0.0080000003799796, 0.031125999987125001, 0.0093017323318172005, 0.0075646520354096004)
     return tst.testOpen( check_gt = gt, check_stat = stats, check_prj = 'WGS84' )
 
-    
+
 gdaltest_list = [
     loslas_online_1,
     ]

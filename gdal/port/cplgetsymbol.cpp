@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Common Portability Library
  * Purpose:  Fetch a function pointer from a shared library / DLL.
@@ -68,7 +67,7 @@ CPL_CVSID("$Id$");
  *  <li> Attempt to look for the library in non-standard
  *    locations.
  *  <li> Attempt to try variations on the symbol name, like
- *    pre-prending or post-pending an underscore.
+ *    pre-pending or post-pending an underscore.
  * </ul>
  *
  * Some of these issues may be worked on in the future.
@@ -104,9 +103,8 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
      */
     if( pSymbol == NULL )
     {
-        char withUnder[strlen(pszSymbolName) + 2];
-        withUnder[0] = '_'; withUnder[1] = 0;
-        strcat(withUnder, pszSymbolName);
+        char withUnder[256];
+        snprintf(withUnder, sizeof(withUnder), "_%s", pszSymbolName);
         pSymbol = dlsym( pLibrary, withUnder );
     }
 #endif
@@ -129,7 +127,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 /* ==================================================================== */
 /*                 Windows Implementation                               */
 /* ==================================================================== */
-#if defined(WIN32) && !defined(WIN32CE)
+#if defined(WIN32)
 
 #define GOT_GETSYMBOL
 
@@ -159,15 +157,15 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         /* Restore old error mode */
         SetErrorMode(uOldErrorMode);
 
-        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER 
+        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER
                        | FORMAT_MESSAGE_FROM_SYSTEM
                        | FORMAT_MESSAGE_IGNORE_INSERTS,
                        NULL, nLastError,
-                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                        (LPTSTR) &lpMsgBuf, 0, NULL );
- 
+
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't load requested DLL: %s\n%d: %s", 
+                  "Can't load requested DLL: %s\n%d: %s",
                   pszLibrary, nLastError, (const char *) lpMsgBuf );
         return NULL;
     }
@@ -183,52 +181,11 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
                   "Can't find requested entry point: %s\n", pszSymbolName );
         return NULL;
     }
-    
+
     return( pSymbol );
 }
 
 #endif /* def _WIN32 */
-
-/* ==================================================================== */
-/*                 Windows CE Implementation                               */
-/* ==================================================================== */
-#if defined(WIN32CE)
-
-#define GOT_GETSYMBOL
-
-#include "cpl_win32ce_api.h"
-
-/************************************************************************/
-/*                            CPLGetSymbol()                            */
-/************************************************************************/
-
-void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
-
-{
-    void        *pLibrary;
-    void        *pSymbol;
-
-    pLibrary = CE_LoadLibraryA(pszLibrary);
-    if( pLibrary == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't load requested DLL: %s", pszLibrary );
-        return NULL;
-    }
-
-    pSymbol = (void *) CE_GetProcAddressA( (HINSTANCE) pLibrary, pszSymbolName );
-
-    if( pSymbol == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't find requested entry point: %s\n", pszSymbolName );
-        return NULL;
-    }
-    
-    return( pSymbol );
-}
-
-#endif /* def WIN32CE */
 
 /* ==================================================================== */
 /*      Dummy implementation.                                           */
@@ -245,7 +202,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 void *CPLGetSymbol(const char *pszLibrary, const char *pszEntryPoint)
 
 {
-    CPLDebug( "CPL", 
+    CPLDebug( "CPL",
               "CPLGetSymbol(%s,%s) called.  Failed as this is stub"
               " implementation.", pszLibrary, pszEntryPoint );
     return NULL;

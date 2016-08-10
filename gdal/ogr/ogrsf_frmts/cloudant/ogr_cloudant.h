@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_CLOUDANT_H_INCLUDED
-#define _OGR_CLOUDANT_H_INCLUDED
+#ifndef OGR_CLOUDANT_H_INCLUDED
+#define OGR_CLOUDANT_H_INCLUDED
 
 #include "ogr_couchdb.h"
 
@@ -51,7 +51,7 @@ class OGRCloudantTableLayer : public OGRCouchDBTableLayer
     char*                     pszSpatialDDoc;
 
     protected:
-            virtual int               GetFeaturesToFetch() { 
+            virtual int               GetFeaturesToFetch() {
                return atoi(CPLGetConfigOption("CLOUDANT_PAGE_SIZE", "200"));
             }
 
@@ -59,7 +59,7 @@ class OGRCloudantTableLayer : public OGRCouchDBTableLayer
             virtual void              GetSpatialView();
             virtual void              WriteMetadata();
             virtual void              LoadMetadata();
-            
+
     public:
             OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
                                  const char* pszName);
@@ -77,7 +77,7 @@ class OGRCloudantDataSource : public OGRCouchDBDataSource
   public:
                         OGRCloudantDataSource();
                         ~OGRCloudantDataSource();
-    virtual int Open( const char * pszFilename, int bUpdateIn);                       
+    virtual int Open( const char * pszFilename, int bUpdateIn);
     virtual OGRLayer   *ICreateLayer( const char *pszName,
              OGRSpatialReference *poSpatialRef = NULL,
              OGRwkbGeometryType eGType = wkbUnknown,
@@ -101,4 +101,4 @@ class OGRCloudantDriver : public OGRCouchDBDriver
 
 };
 
-#endif /* ndef _OGR_CLOUDANT_H_INCLUDED */
+#endif /* ndef OGR_CLOUDANT_H_INCLUDED */

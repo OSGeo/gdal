@@ -27,10 +27,16 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
- 
+
 %feature("autodoc");
 
 %module gdal_array
+
+%{
+// Define this unconditionnaly of whether DEBUG_BOOL is defined or not,
+// since we do not pass -DDEBUG_BOOL when building the bindings
+#define DO_NOT_USE_DEBUG_BOOL
+%}
 
 %include constraints.i
 
@@ -53,7 +59,6 @@ typedef int GDALRIOResampleAlg;
 
 %include "python_strings.i"
 
-
 %{
 #include "gdal_priv.h"
 #ifdef _DEBUG
@@ -65,7 +70,7 @@ typedef int GDALRIOResampleAlg;
 #endif
 #include "numpy/arrayobject.h"
 
-#ifdef DEBUG 
+#ifdef DEBUG
 typedef struct GDALRasterBandHS GDALRasterBandShadow;
 typedef struct GDALDatasetHS GDALDatasetShadow;
 typedef struct RasterAttributeTableHS GDALRasterAttributeTableShadow;
@@ -77,8 +82,8 @@ typedef void GDALRasterAttributeTableShadow;
 
 CPL_C_START
 
-GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
-                                             GDALDataType, int, int, int );
+GDALRasterBandH CPL_DLL MEMCreateRasterBandEx( GDALDataset *, int, GByte *,
+                                               GDALDataType, GSpacing, GSpacing, int );
 CPL_C_END
 
 typedef char retStringAndCPLFree;
@@ -110,15 +115,15 @@ class NUMPYDataset : public GDALDataset
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
 
+    static GDALDataset *Open( PyArrayObject *psArray );
     static GDALDataset *Open( GDALOpenInfo * );
 };
-
 
 
 /************************************************************************/
 /*                          GDALRegister_NUMPY()                        */
 /************************************************************************/
-   
+
 static void GDALRegister_NUMPY(void)
 
 {
@@ -128,12 +133,12 @@ static void GDALRegister_NUMPY(void)
     if( GDALGetDriverByName( "NUMPY" ) == NULL )
     {
         poDriver = new GDALDriver();
-        
+
         poDriver->SetDescription( "NUMPY" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Numeric Python Array" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        
+
         poDriver->pfnOpen = NUMPYDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
@@ -148,6 +153,7 @@ static void GDALRegister_NUMPY(void)
 NUMPYDataset::NUMPYDataset()
 
 {
+    psArray = NULL;
     pszProjection = CPLStrdup("");
     bValidGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -293,13 +299,11 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     PyArrayObject *psArray;
-    GDALDataType  eType;
-    int     nBands;
 
 /* -------------------------------------------------------------------- */
 /*      Is this a numpy dataset name?                                   */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(poOpenInfo->pszFilename,"NUMPY:::",8) 
+    if( !EQUALN(poOpenInfo->pszFilename,"NUMPY:::",8)
         || poOpenInfo->fpL != NULL )
         return NULL;
 
@@ -307,19 +311,45 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     sscanf( poOpenInfo->pszFilename+8, "%p", &(psArray) );
     if( psArray == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to parse meaningful pointer value from NUMPY name\n"
-                  "string: %s\n", 
+                  "string: %s\n",
                   poOpenInfo->pszFilename );
         return NULL;
     }
+
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME",
+                                        "FALSE")) )
+    {
+        if( CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", NULL) == NULL )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "Opening a NumPy array through gdal.Open(gdal_array.GetArrayFilename()) "
+                    "is no longer supported by default unless the GDAL_ARRAY_OPEN_BY_FILENAME "
+                    "configuration option is set to TRUE. The recommended way is to use "
+                    "gdal_array.OpenArray() instead.");
+        }
+        return NULL;
+    }
+
+    return Open(psArray);
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
+{
+    GDALDataType  eType;
+    int     nBands;
 
 /* -------------------------------------------------------------------- */
 /*      If we likely have corrupt definitions of the NUMPY stuff,       */
 /*      then warn now.                                                  */
 /* -------------------------------------------------------------------- */
 #ifdef NUMPY_DEFS_WRONG
-    CPLError( CE_Warning, CPLE_AppDefined, 
+    CPLError( CE_Warning, CPLE_AppDefined,
               "It would appear you have built GDAL without having it use\n"
               "the Numeric python include files.  Old definitions have\n"
               "been used instead at build time, and it is quite possible that\n"
@@ -335,8 +365,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( psArray->nd < 2 || psArray->nd > 3 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Illegal numpy array rank %d.\n", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal numpy array rank %d.",
                   psArray->nd );
         return NULL;
     }
@@ -383,8 +413,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         break;
 
       default:
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to access numpy arrays of typecode `%c'.\n", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to access numpy arrays of typecode `%c'.",
                   psArray->descr->type );
         return NULL;
     }
@@ -395,6 +425,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     NUMPYDataset *poDS;
 
     poDS = new NUMPYDataset();
+    poDS->poDriver = static_cast<GDALDriver*>(GDALGetDriverByName("NUMPY"));
 
     poDS->psArray = psArray;
 
@@ -408,9 +439,9 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Workout the data layout.                                        */
 /* -------------------------------------------------------------------- */
-    int    nBandOffset;
-    int    nPixelOffset;
-    int    nLineOffset;
+    npy_intp nBandOffset;
+    npy_intp nPixelOffset;
+    npy_intp nLineOffset;
 
     if( psArray->nd == 3 )
     {
@@ -436,9 +467,9 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        poDS->SetBand( iBand+1, 
-                       (GDALRasterBand *) 
-                       MEMCreateRasterBand( poDS, iBand+1, 
+        poDS->SetBand( iBand+1,
+                       (GDALRasterBand *)
+                       MEMCreateRasterBandEx( poDS, iBand+1,
                                 (GByte *) psArray->data + nBandOffset*iBand,
                                           eType, nPixelOffset, nLineOffset,
                                           FALSE ) );
@@ -486,14 +517,23 @@ int GDALTermProgress( double, const char *, void * );
   }
 }
 
+%newobject OpenNumPyArray;
+%inline %{
+GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray)
+{
+    return NUMPYDataset::Open( psArray );
+}
+%}
+
+/* Deprecated */
 %inline %{
 retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 {
     char      szString[128];
-    
+
     GDALRegister_NUMPY();
-    
-    /* I wish I had a safe way of checking the type */        
+
+    /* I wish I had a safe way of checking the type */
     sprintf( szString, "NUMPY:::%p", psArray );
     return CPLStrdup(szString);
 }
@@ -511,8 +551,8 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     GDALDataType ntype  = (GDALDataType)buf_type;
     if( psArray->nd < 2 || psArray->nd > 3 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Illegal numpy array rank %d.\n", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal numpy array rank %d.\n",
                   psArray->nd );
         return CE_Failure;
     }
@@ -563,8 +603,8 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     GDALDataType ntype  = (GDALDataType)buf_type;
     if( psArray->nd != 3 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Illegal numpy array rank %d.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal numpy array rank %d.",
                   psArray->nd );
         return CE_Failure;
     }
@@ -579,8 +619,8 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     bandsize = psArray->dimensions[0];
     if( bandsize != GDALGetRasterCount(ds) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Illegal numpy array band dimension %d. Expected value: %d", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal numpy array band dimension %d. Expected value: %d",
                   bandsize, GDALGetRasterCount(ds) );
         return CE_Failure;
     }
@@ -774,6 +814,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     /* Keep a reference to the VirtualMem object */
     ar->base = obj0;
     Py_INCREF(obj0);
+    Py_DECREF($result);
     $result = (PyObject*) ar;
 }
 
@@ -789,15 +830,15 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 %feature( "kwargs" ) RATValuesIONumPyWrite;
 %inline %{
   // need different functions for read and write
-  // since reading strings requires us to know the 
+  // since reading strings requires us to know the
   // length of the longest string before creating array
-  CPLErr RATValuesIONumPyWrite( GDALRasterAttributeTableShadow* poRAT, int nField, int nStart, 
+  CPLErr RATValuesIONumPyWrite( GDALRasterAttributeTableShadow* poRAT, int nField, int nStart,
                        PyArrayObject *psArray) {
 
     if( PyArray_NDIM(psArray) != 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Illegal numpy array rank %d.\n", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal numpy array rank %d.\n",
                   PyArray_NDIM(psArray) );
         return CE_Failure;
     }
@@ -808,7 +849,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
     if( nType == NPY_INT32 )
     {
-        retval = GDALRATValuesIOAsInteger(poRAT, GF_Write, nField, nStart, nLength, 
+        retval = GDALRATValuesIOAsInteger(poRAT, GF_Write, nField, nStart, nLength,
                         (int*)PyArray_DATA(psArray) );
     }
     else if( nType == NPY_DOUBLE )
@@ -828,7 +869,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         // as there won't be if this string is the maximum size
         pszBuffer[nMaxLen] = '\0';
 
-        // we can't just use the memory location in the array 
+        // we can't just use the memory location in the array
         // since long strings won't be null terminated
         for( int i = 0; i < nLength; i++ )
         {
@@ -848,8 +889,8 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Illegal numpy array type %d.\n", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal numpy array type %d.\n",
                   nType );
         return CE_Failure;
     }
@@ -860,9 +901,9 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 %feature( "kwargs" ) RATValuesIONumPyRead;
 %inline %{
   // need different functions for read and write
-  // since reading strings requires us to know the 
+  // since reading strings requires us to know the
   // length of the longest string before creating array
-  PyObject *RATValuesIONumPyRead( GDALRasterAttributeTableShadow* poRAT, int nField, int nStart, 
+  PyObject *RATValuesIONumPyRead( GDALRasterAttributeTableShadow* poRAT, int nField, int nStart,
                        int nLength) {
 
     GDALRATFieldType colType = GDALRATGetTypeOfCol(poRAT, nField);
@@ -871,7 +912,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     if( colType == GFT_Integer )
     {
         pOutArray = PyArray_SimpleNew(1, &dims, NPY_INT32);
-        if( GDALRATValuesIOAsInteger(poRAT, GF_Read, nField, nStart, nLength, 
+        if( GDALRATValuesIOAsInteger(poRAT, GF_Read, nField, nStart, nLength,
                         (int*)PyArray_DATA(pOutArray)) != CE_None)
         {
             Py_DECREF(pOutArray);
@@ -943,7 +984,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         }
         else
         {
-            // so there isn't rubbush in the 1 char strings
+            // so there isn't rubbish in the 1 char strings
             PyArray_FILLWBYTE(pOutArray, 0);
         }
 
@@ -981,17 +1022,17 @@ codes = {   gdalconst.GDT_Byte      :   numpy.uint8,
 
 def OpenArray( array, prototype_ds = None ):
 
-    ds = gdal.Open( GetArrayFilename(array) )
+    ds = OpenNumPyArray( array )
 
     if ds is not None and prototype_ds is not None:
         if type(prototype_ds).__name__ == 'str':
             prototype_ds = gdal.Open( prototype_ds )
         if prototype_ds is not None:
             CopyDatasetInfo( prototype_ds, ds )
-            
+
     return ds
-    
-    
+
+
 def flip_code(code):
     if isinstance(code, (numpy.dtype,type)):
         # since several things map to complex64 we must carefully select
@@ -1000,7 +1041,7 @@ def flip_code(code):
             return gdalconst.GDT_Byte
         if code == numpy.complex64:
             return gdalconst.GDT_CFloat32
-        
+
         for key, value in codes.items():
             if value == code:
                 return key
@@ -1018,7 +1059,7 @@ def NumericTypeCodeToGDALTypeCode(numeric_type):
 
 def GDALTypeCodeToNumericTypeCode(gdal_code):
     return flip_code(gdal_code)
-    
+
 def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None,
               buf_xsize=None, buf_ysize=None, buf_type=None,
               resample_alg = gdal.GRIORA_NearestNeighbour,
@@ -1187,7 +1228,7 @@ def BandWriteArray( band, array, xoff=0, yoff=0,
         gdal.Debug( 'gdal_array', 'force array to float64' )
         array = array.astype( numpy.float64 )
         datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
-        
+
     if not datatype:
         raise ValueError("array does not have corresponding GDAL data type")
 
@@ -1238,28 +1279,28 @@ def RATReadArray(rat, field, start=0, length=None):
         length = rat.GetRowCount() - start
 
     return RATValuesIONumPyRead(rat, field, start, length)
-    
+
 def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
     """
     Copy georeferencing information and metadata from one dataset to another.
     src: input dataset
-    dst: output dataset - It can be a ROI - 
-    xoff, yoff:  dst's offset with respect to src in pixel/line.  
-    
+    dst: output dataset - It can be a ROI -
+    xoff, yoff:  dst's offset with respect to src in pixel/line.
+
     Notes: Destination dataset must have update access.  Certain formats
            do not support creation of geotransforms and/or gcps.
 
     """
 
     dst.SetMetadata( src.GetMetadata() )
-                    
+
 
 
     #Check for geo transform
     gt = src.GetGeoTransform()
     if gt != (0,1,0,0,0,1):
         dst.SetProjection( src.GetProjectionRef() )
-        
+
         if (xoff == 0) and (yoff == 0):
             dst.SetGeoTransform( gt  )
         else:
@@ -1267,10 +1308,10 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
             ngt[0] = gt[0] + xoff*gt[1] + yoff*gt[2];
             ngt[3] = gt[3] + xoff*gt[4] + yoff*gt[5];
             dst.SetGeoTransform( ( ngt[0], ngt[1], ngt[2], ngt[3], ngt[4], ngt[5] ) )
-            
+
     #Check for GCPs
     elif src.GetGCPCount() > 0:
-        
+
         if (xoff == 0) and (yoff == 0):
             dst.SetGCPs( src.GetGCPs(), src.GetGCPProjection() )
         else:
@@ -1279,7 +1320,7 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
             new_gcps = []
             for gcp in gcps:
                 ngcp = gdal.GCP()
-                ngcp.GCPX = gcp.GCPX 
+                ngcp.GCPX = gcp.GCPX
                 ngcp.GCPY = gcp.GCPY
                 ngcp.GCPZ = gcp.GCPZ
                 ngcp.GCPPixel = gcp.GCPPixel - xoff

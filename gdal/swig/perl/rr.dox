@@ -10,7 +10,7 @@ use Geo::GDAL;
 
 $file = shift @ARGV;
 
-$dataset = Geo::GDAL::Open($file);
+$dataset = Geo::GDAL::OpenEx($file);
 die "can't open $file as a raster dataset" unless $dataset;
 
 ($minx, $dx, undef, $maxy, undef, $dy) = $dataset->GeoTransform();

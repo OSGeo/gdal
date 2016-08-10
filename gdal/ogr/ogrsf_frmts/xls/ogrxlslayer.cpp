@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XLS Translator
  * Purpose:  Implements OGRXLSLayer class.
@@ -289,7 +288,7 @@ OGRFeature *OGRXLSLayer::GetNextFeature()
 
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
@@ -373,4 +372,3 @@ int OGRXLSLayer::TestCapability( const char * pszCap )
 
     return FALSE;
 }
-

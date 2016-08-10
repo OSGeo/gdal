@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRSQLiteSelectLayer class, layer access to the results
@@ -40,12 +39,12 @@ CPL_CVSID("$Id$");
 /*                   OGRSQLiteSelectLayerCommonBehaviour()              */
 /************************************************************************/
 
-OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(OGRSQLiteBaseDataSource* poDS,
-                                            IOGRSQLiteSelectLayer* poLayer,
-                                            CPLString osSQL,
-                                            int bEmptyLayer) :
-            poDS(poDS), poLayer(poLayer), osSQLBase(osSQL),
-            bEmptyLayer(bEmptyLayer), osSQLCurrent(osSQL)
+OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(OGRSQLiteBaseDataSource* poDSIn,
+                                            IOGRSQLiteSelectLayer* poLayerIn,
+                                            CPLString osSQLIn,
+                                            int bEmptyLayerIn) :
+            poDS(poDSIn), poLayer(poLayerIn), osSQLBase(osSQLIn),
+            bEmptyLayer(bEmptyLayerIn), osSQLCurrent(osSQLIn)
 {
     bAllowResetReadingEvenIfIndexAtZero = FALSE;
     bSpatialFilterInSQL = TRUE;
@@ -60,13 +59,13 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                                             sqlite3_stmt *hStmtIn,
                                             int bUseStatementForGetNextFeature,
                                             int bEmptyLayer,
-                                            int bAllowMultipleGeomFields )
+                                            int bAllowMultipleGeomFieldsIn )
 
 {
     poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn, bEmptyLayer);
     poDS = poDSIn;
 
-    this->bAllowMultipleGeomFields = bAllowMultipleGeomFields;
+    this->bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
 
     std::set<CPLString> aosEmpty;
     BuildFeatureDefn( "SELECT", hStmtIn, aosEmpty, aosEmpty );
@@ -266,7 +265,7 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
         return 0;
 
     if( poLayer->GetFeatureQuery() == NULL &&
-        EQUALN(osSQLCurrent, "SELECT COUNT(*) FROM", strlen("SELECT COUNT(*) FROM")) &&
+        STARTS_WITH_CI(osSQLCurrent, "SELECT COUNT(*) FROM") &&
         osSQLCurrent.ifind(" GROUP BY ") == std::string::npos &&
         osSQLCurrent.ifind(" UNION ") == std::string::npos &&
         osSQLCurrent.ifind(" INTERSECT ") == std::string::npos &&
@@ -290,7 +289,7 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
     int nRowCount, nColCount;
     int nResult = -1;
 
-    if( sqlite3_get_table( poDS->GetDB(), osFeatureCountSQL, &papszResult, 
+    if( sqlite3_get_table( poDS->GetDB(), osFeatureCountSQL, &papszResult,
                            &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
     {
         CPLDebug("SQLITE", "Error: %s", pszErrMsg);
@@ -326,7 +325,8 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     CPLDebug( "OGR_SQLITE", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
-    rc = sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent, poBehaviour->osSQLCurrent.size(),
+    rc = sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent,
+                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
                           &hStmt, NULL );
 
     if( rc == SQLITE_OK )
@@ -335,8 +335,8 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
                   poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
         return OGRERR_FAILURE;
@@ -534,7 +534,7 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
     while (i < osSQLBase.size() && osSQLBase[i] == ' ')
         i ++;
 
-    if (i < osSQLBase.size() && EQUALN(osSQLBase.c_str() + i, "WHERE ", 6))
+    if (i < osSQLBase.size() && STARTS_WITH_CI(osSQLBase.c_str() + i, "WHERE "))
     {
         osSQLCurrent = osSQLBase.substr(0, i + 6);
         osSQLCurrent += osCustomWhere;
@@ -559,9 +559,9 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
         }
     }
     else if (i < osSQLBase.size() &&
-             (EQUALN(osSQLBase.c_str() + i, "GROUP ", 6) ||
-              EQUALN(osSQLBase.c_str() + i, "ORDER ", 6) ||
-              EQUALN(osSQLBase.c_str() + i, "LIMIT ", 6)))
+             (STARTS_WITH_CI(osSQLBase.c_str() + i, "GROUP ") ||
+              STARTS_WITH_CI(osSQLBase.c_str() + i, "ORDER ") ||
+              STARTS_WITH_CI(osSQLBase.c_str() + i, "LIMIT ")))
     {
         osSQLCurrent = osSQLBase.substr(0, i);
         osSQLCurrent += " WHERE ";

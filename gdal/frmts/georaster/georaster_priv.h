@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Name:     georaster_priv.h
  * Project:  Oracle Spatial GeoRaster Driver
@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#ifndef _GEORASTER_PRIV_H_INCLUDED
-#define _GEORASTER_PRIV_H_INCLUDED
+#ifndef GEORASTER_PRIV_H_INCLUDED
+#define GEORASTER_PRIV_H_INCLUDED
 
 #include "gdal.h"
 #include "gdal_priv.h"
@@ -111,7 +111,7 @@ struct hNoDataItem {
 };
 
 //  ---------------------------------------------------------------------------
-//  GeoRaster wrapper classe definitions
+//  GeoRaster wrapper class definitions
 //  ---------------------------------------------------------------------------
 
 #include "oci_wrapper.h"
@@ -159,11 +159,11 @@ public:
                             int nBands,
                             GDALDataType eType,
                             char** papszOptions );
-    static GDALDataset* CreateCopy( const char* pszFilename, 
+    static GDALDataset* CreateCopy( const char* pszFilename,
                             GDALDataset* poSrcDS,
                             int bStrict,
                             char** papszOptions,
-                            GDALProgressFunc pfnProgress, 
+                            GDALProgressFunc pfnProgress,
                             void* pProgressData );
     virtual CPLErr      GetGeoTransform( double* padfTransform );
     virtual CPLErr      SetGeoTransform( double* padfTransform );
@@ -172,11 +172,11 @@ public:
     virtual char      **GetMetadataDomainList();
     virtual char**      GetMetadata( const char* pszDomain );
     virtual void        FlushCache( void );
-    virtual CPLErr      IRasterIO( GDALRWFlag eRWFlag, 
+    virtual CPLErr      IRasterIO( GDALRWFlag eRWFlag,
                             int nXOff, int nYOff, int nXSize, int nYSize,
-                            void *pData, int nBufXSize, int nBufYSize, 
+                            void *pData, int nBufXSize, int nBufYSize,
                             GDALDataType eBufType,
-                            int nBandCount, int *panBandMap, 
+                            int nBandCount, int *panBandMap,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
                             GSpacing nBandSpace,
                             GDALRasterIOExtraArg* psExtraArg );
@@ -197,10 +197,10 @@ public:
                             GDALProgressFunc pfnProgress,
                             void* pProgresoversData );
     virtual CPLErr      CreateMaskBand( int nFlags );
-    virtual OGRErr      StartTransaction(int bForce=FALSE) {return CE_None;};
+    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) {return CE_None;};
     virtual OGRErr      CommitTransaction() {return CE_None;};
     virtual OGRErr      RollbackTransaction() {return CE_None;};
-    
+
     void                AssignGeoRaster( GeoRasterWrapper* poGRW );
 };
 
@@ -213,7 +213,7 @@ class GeoRasterRasterBand : public GDALRasterBand
     friend class GeoRasterDataset;
 
 public:
-                        GeoRasterRasterBand( GeoRasterDataset* poGDS, 
+                        GeoRasterRasterBand( GeoRasterDataset* poGDS,
                             int nBand,
                             int nLevel );
     virtual            ~GeoRasterRasterBand();
@@ -239,7 +239,7 @@ private:
     hNoDataItem*        pahNoDataArray;
     int                 nNoDataArraySz;
     bool                bHasNoDataArray;
-    
+
     void                ApplyNoDataArry( void* pBuffer );
 
 public:
@@ -248,19 +248,19 @@ public:
     virtual CPLErr      SetNoDataValue( double dfNoDataValue );
     virtual double      GetMinimum( int* pbSuccess = NULL );
     virtual double      GetMaximum( int* pbSuccess = NULL );
-    virtual GDALColorTable* 
+    virtual GDALColorTable*
                         GetColorTable();
-    virtual CPLErr      SetColorTable( GDALColorTable *poInColorTable ); 
-    virtual GDALColorInterp   
+    virtual CPLErr      SetColorTable( GDALColorTable *poInColorTable );
+    virtual GDALColorInterp
                         GetColorInterpretation();
-    virtual CPLErr      IReadBlock( int nBlockXOff, int nBlockYOff, 
+    virtual CPLErr      IReadBlock( int nBlockXOff, int nBlockYOff,
                             void *pImage );
-    virtual CPLErr      IWriteBlock( int nBlockXOff, int nBlockYOff, 
+    virtual CPLErr      IWriteBlock( int nBlockXOff, int nBlockYOff,
                             void *pImage );
-    virtual CPLErr      SetStatistics( double dfMin, double dfMax, 
+    virtual CPLErr      SetStatistics( double dfMin, double dfMax,
                             double dfMean, double dfStdDev );
     virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
-                            double* pdfMin, double* pdfMax, 
+                            double* pdfMin, double* pdfMax,
                             double* pdfMean, double* pdfStdDev );
     virtual             GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable *poRAT );
@@ -294,7 +294,6 @@ private:
     GByte*              pabyBlockBuf;
     GByte*              pabyCompressBuf;
     OWStatement*        poBlockStmt;
-    OWStatement*        poStmtWrite;
 
     int                 nCurrentLevel;
     long                nLevelOffset;
@@ -332,11 +331,13 @@ private:
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
 
+    void                GetSpatialReference();
+
 public:
 
     static char**       ParseIdentificator( const char* pszStringID );
     static GeoRasterWrapper*
-                        Open( 
+                        Open(
                             const char* pszStringID,
                             bool bUpdate );
     bool                Create(
@@ -435,7 +436,7 @@ public:
     CPLString           sCompressionType;
     int                 nCompressQuality;
     CPLString           sWKText;
-    CPLString           sAuthority;
+
     CPLList*            psNoDataList;
 
     int                 nRasterColumns;
@@ -467,11 +468,11 @@ public:
 
     bool                bHasBitmapMask;
     bool                bUniqueFound;
-    
+
     int                 eModelCoordLocation;
     unsigned int        anULTCoordinate[3];
 
     GDALRPCInfo*        phRPC;
 };
 
-#endif /* ifndef _GEORASTER_PRIV_H_INCLUDED */
+#endif /* ifndef GEORASTER_PRIV_H_INCLUDED */

@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test EHdr format driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -30,9 +30,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
-from osgeo import gdal
 import array
+import os
+import sys
+
+from osgeo import gdal
 
 sys.path.append( '../pymod' )
 
@@ -84,9 +86,9 @@ def ehdr_4():
     ct.SetColorEntry( 1, (255,255,0,255) )
     ct.SetColorEntry( 2, (255,0,255,255) )
     ct.SetColorEntry( 3, (0,255,255,255) )
-    
+
     ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
-    
+
     ds.GetRasterBand( 1 ).SetNoDataValue( 17 )
 
     ds = None
@@ -115,7 +117,7 @@ def ehdr_5():
     ds = None
 
     gdal.GetDriverByName('EHdr').Delete( 'tmp/test_4.bil' )
-    
+
     return 'success'
 
 ###############################################################################
@@ -161,13 +163,14 @@ def ehdr_8():
     ds = None
 
     drv.Delete( 'tmp/ehdr_8.bil' )
-    
+
     return 'success'
 
 ###############################################################################
-# Test opening worldclim .hdr files that have a few extensions fields in the .hdr
-# file to specify minimum, maximum and projection. Also test that we correctly
-# guess the signedness of the datatype from the sign of the nodata value
+# Test opening worldclim .hdr files that have a few extensions fields in the
+# .hdr file to specify minimum, maximum and projection. Also test that we
+# correctly guess the signedness of the datatype from the sign of the nodata
+# value.
 
 def ehdr_9():
 
@@ -213,7 +216,8 @@ def ehdr_11():
 def ehdr_12():
 
     src_ds = gdal.Open('../gcore/data/1bit.bmp')
-    ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/1bit.bil', src_ds, options = ['NBITS=1'] )
+    ds = gdal.GetDriverByName('EHDR').CreateCopy( '/vsimem/1bit.bil', src_ds,
+                                                  options = ['NBITS=1'] )
     ds = None
 
     ds = gdal.Open('/vsimem/1bit.bil')
@@ -231,6 +235,11 @@ def ehdr_12():
 # Test statistics
 
 def ehdr_13():
+
+    try:
+        os.unlink('data/byte.tif.aux.xml')
+    except:
+        pass
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('EHDR').CreateCopy('/vsimem/byte.bil', src_ds)
@@ -287,13 +296,17 @@ def ehdr_14():
     src_ds = None
 
     for space in [1, 2]:
-        out_ds = gdal.GetDriverByName('EHDR').Create('/vsimem/byte_reduced.bil', 10, 10)
+        out_ds = gdal.GetDriverByName('EHDR').Create('/vsimem/byte_reduced.bil',
+                                                     10, 10)
         gdal.SetConfigOption('GDAL_ONE_BIG_READ', 'YES')
-        data_ori = ds.GetRasterBand(1).ReadRaster(0,0,20,20,20,20,buf_pixel_space=space)
-        data = ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10,buf_pixel_space=space)
-        out_ds.GetRasterBand(1).WriteRaster(0,0,10,10, data,10,10,buf_pixel_space=space)
+        data_ori = ds.GetRasterBand(1).ReadRaster(
+            0, 0, 20, 20, 20, 20, buf_pixel_space=space)
+        data = ds.GetRasterBand(1).ReadRaster(
+            0, 0, 20, 20, 10, 10, buf_pixel_space=space)
+        out_ds.GetRasterBand(1).WriteRaster(
+            0, 0, 10, 10, data, 10, 10, buf_pixel_space=space)
         out_ds.FlushCache()
-        data2 = out_ds.ReadRaster(0,0,10,10,10,10,buf_pixel_space=space)
+        data2 = out_ds.ReadRaster(0, 0, 10, 10, 10, 10, buf_pixel_space=space)
         cs1 = out_ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption('GDAL_ONE_BIG_READ', None)
         out_ds.FlushCache()
@@ -312,7 +325,8 @@ def ehdr_14():
             return 'fail'
 
         gdal.SetConfigOption('GDAL_ONE_BIG_READ', 'YES')
-        out_ds.GetRasterBand(1).WriteRaster(0,0,10,10, data_ori,20,20,buf_pixel_space=space)
+        out_ds.GetRasterBand(1).WriteRaster(
+            0, 0, 10, 10, data_ori, 20, 20, buf_pixel_space=space)
         gdal.SetConfigOption('GDAL_ONE_BIG_READ', None)
         out_ds.FlushCache()
         cs3 = out_ds.GetRasterBand(1).Checksum()
@@ -353,4 +367,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

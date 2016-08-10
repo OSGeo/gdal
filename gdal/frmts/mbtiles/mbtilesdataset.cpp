@@ -1,12 +1,11 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL MBTiles driver
  * Purpose:  Implement GDAL MBTiles support using OGR SQLite driver
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, Even Rouault <even.rouault at spatialys.com>
  *
  **********************************************************************
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2016, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,17 +30,26 @@
 #include "gdal_pam.h"
 #include "ogr_api.h"
 #include "cpl_vsil_curl_priv.h"
+#include "gpkgmbtilescommon.h"
+#include "gdalwarper.h"
 
 #include "zlib.h"
 #include "json.h"
 
 #include <math.h>
 
-extern "C" void GDALRegister_MBTiles();
-
 CPL_CVSID("$Id$");
 
 static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", NULL};
+
+#define SRS_EPSG_3857 "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]"
+
+#define SPHERICAL_RADIUS        6378137.0
+#define MAX_GM                  (SPHERICAL_RADIUS * M_PI)               // 20037508.342789244
+
+// TileMatrixSet origin : caution this is in GeoPackage / WMTS convention ! That is upper-left corner
+#define TMS_ORIGIN_X        -MAX_GM
+#define TMS_ORIGIN_Y         MAX_GM
 
 class MBTilesBand;
 
@@ -49,14 +57,14 @@ class MBTilesBand;
 /*                         MBTILESOpenSQLiteDB()                        */
 /************************************************************************/
 
-OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
-                                      GDALAccess eAccess)
+static OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
+                                          GDALAccess eAccess)
 {
-    const char* apszAllowedDrivers[] = { "SQLITE", NULL };
+    const char* l_apszAllowedDrivers[] = { "SQLITE", NULL };
     return (OGRDataSourceH)GDALOpenEx(pszFilename,
-                                      GDAL_OF_VECTOR |
+                                      GDAL_OF_VECTOR | GDAL_OF_INTERNAL |
                                       ((eAccess == GA_Update) ? GDAL_OF_UPDATE : 0),
-                                      apszAllowedDrivers, NULL, NULL);
+                                      l_apszAllowedDrivers, NULL, NULL);
 }
 
 /************************************************************************/
@@ -65,57 +73,106 @@ OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
 /* ==================================================================== */
 /************************************************************************/
 
-class MBTilesDataset : public GDALPamDataset
+class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDataset
 {
     friend class MBTilesBand;
 
   public:
                  MBTilesDataset();
-                 MBTilesDataset(MBTilesDataset* poMainDS, int nLevel);
 
     virtual     ~MBTilesDataset();
 
     virtual CPLErr GetGeoTransform(double* padfGeoTransform);
+    virtual CPLErr SetGeoTransform( double* padfGeoTransform );
     virtual const char* GetProjectionRef();
-    
+    virtual CPLErr SetProjection( const char* pszProjection );
+
     virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char* pszName, const char * pszDomain = "" );
+
+    virtual CPLErr    IBuildOverviews(
+                        const char * pszResampling,
+                        int nOverviews, int * panOverviewList,
+                        int nBandsIn, CPL_UNUSED int * panBandList,
+                        GDALProgressFunc pfnProgress, void * pProgressData );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset* Create( const char * pszFilename,
+                                   int nXSize,
+                                   int nYSize,
+                                   int nBandsIn,
+                                   GDALDataType eDT,
+                                   char **papszOptions );
+    static GDALDataset* CreateCopy( const char *pszFilename,
+                                                GDALDataset *poSrcDS,
+                                                int bStrict,
+                                                char ** papszOptions,
+                                                GDALProgressFunc pfnProgress,
+                                                void * pProgressData );
 
-    char*               FindKey(int iPixel, int iLine,
-                                int& nTileColumn, int& nTileRow, int& nZoomLevel);
-    void                ComputeTileColTileRowZoomLevel( int nBlockXOff,
-                                                        int nBlockYOff,
-                                                        int &nTileColumn,
-                                                        int &nTileRow,
-                                                        int &nZoomLevel );
-    int                 HasNonEmptyGrids();
+    char*               FindKey(int iPixel, int iLine);
 
-  protected:
-    virtual int         CloseDependentDatasets();
+    bool                HasNonEmptyGrids();
 
   private:
 
-    int bMustFree;
+    bool m_bWriteBounds;
+    bool m_bWriteMinMaxZoom;
     MBTilesDataset* poMainDS;
-    int nLevel;
-    int nMinTileCol, nMinTileRow;
-    int nMinLevel;
+    bool m_bGeoTransformValid;
+    double m_adfGeoTransform[6];
 
-    char** papszMetadata;
-    char** papszImageStructure;
-
-    int nResolutions;
-    MBTilesDataset** papoOverviews;
+    int m_nOverviewCount;
+    MBTilesDataset** m_papoOverviewDS;
 
     OGRDataSourceH hDS;
+    sqlite3* hDB;
 
-    int bFetchedMetadata;
+#ifdef HAVE_SQLITE_VFS
+    sqlite3_vfs*        pMyVFS;
+#endif
+
+    bool bFetchedMetadata;
     CPLStringList aosList;
 
-    int bHasNonEmptyGrids;
+    int nHasNonEmptyGrids;
+
+    bool m_bInFlushCache;
+
+    void ParseCompressionOptions(char** papszOptions);
+    CPLErr FinalizeRasterRegistration();
+    void ComputeTileAndPixelShifts();
+    int InitRaster ( MBTilesDataset* poParentDS,
+                     int nZoomLevel,
+                     int nBandCount,
+                     double dfGDALMinX,
+                     double dfGDALMinY,
+                     double dfGDALMaxX,
+                     double dfGDALMaxY );
+
+    bool CreateInternal( const char * pszFilename,
+                         int nXSize,
+                         int nYSize,
+                         int nBandsIn,
+                         GDALDataType eDT,
+                         char **papszOptions );
+
+    protected:
+        // Coming from GDALGPKGMBTilesLikePseudoDataset
+
+        virtual CPLErr                  IFlushCacheWithErrCode();
+        virtual int                     IGetRasterCount() { return nBands; }
+        virtual GDALRasterBand*         IGetRasterBand(int nBand) { return GetRasterBand(nBand); }
+        virtual sqlite3                *IGetDB() { return hDB; }
+        virtual bool                    IGetUpdate() { return eAccess == GA_Update; }
+        virtual bool                    ICanIWriteBlock();
+        virtual void                    IStartTransaction();
+        virtual void                    ICommitTransaction();
+        virtual const char             *IGetFilename() { return GetDescription(); }
+        virtual int                     GetRowFromIntoTopConvention(int nRow);
+
 };
 
 /************************************************************************/
@@ -124,23 +181,17 @@ class MBTilesDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class MBTilesBand: public GDALPamRasterBand
+class MBTilesBand: public GDALGPKGMBTilesLikeRasterBand
 {
     friend class MBTilesDataset;
 
     CPLString               osLocationInfo;
 
   public:
-                            MBTilesBand( MBTilesDataset* poDS, int nBand,
-                                            GDALDataType eDataType,
-                                            int nBlockXSize, int nBlockYSize);
-
-    virtual GDALColorInterp GetColorInterpretation();
+                            MBTilesBand( MBTilesDataset* poDS );
 
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int nLevel);
-
-    virtual CPLErr          IReadBlock( int, int, void * );
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -148,249 +199,12 @@ class MBTilesBand: public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                            MBTilesBand()                          */
+/*                            MBTilesBand()                             */
 /************************************************************************/
 
-MBTilesBand::MBTilesBand(MBTilesDataset* poDS, int nBand,
-                                GDALDataType eDataType,
-                                int nBlockXSize, int nBlockYSize)
+MBTilesBand::MBTilesBand(MBTilesDataset* poDSIn) :
+      GDALGPKGMBTilesLikeRasterBand(poDSIn, 256, 256)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = eDataType;
-    this->nBlockXSize = nBlockXSize;
-    this->nBlockYSize = nBlockYSize;
-}
-
-/************************************************************************/
-/*                            IReadBlock()                              */
-/************************************************************************/
-
-CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
-{
-    MBTilesDataset* poGDS = (MBTilesDataset*) poDS;
-
-    int bGotTile = FALSE;
-    CPLAssert(eDataType == GDT_Byte);
-
-    int nTileColumn, nTileRow, nZoomLevel;
-    poGDS->ComputeTileColTileRowZoomLevel(nBlockXOff, nBlockYOff,
-                                          nTileColumn, nTileRow, nZoomLevel);
-
-    const char* pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
-                                    "tile_column = %d AND tile_row = %d AND zoom_level=%d",
-                                    nTileColumn, nTileRow, nZoomLevel);
-    CPLDebug("MBTILES", "nBand=%d, nBlockXOff=%d, nBlockYOff=%d, %s",
-             nBand, nBlockXOff, nBlockYOff, pszSQL);
-    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, NULL, NULL);
-
-    OGRFeatureH hFeat = hSQLLyr ? OGR_L_GetNextFeature(hSQLLyr) : NULL;
-    if (hFeat != NULL)
-    {
-        CPLString osMemFileName;
-        osMemFileName.Printf("/vsimem/%p", this);
-
-        int nDataSize = 0;
-        GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
-
-        VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
-                                            nDataSize, FALSE);
-        VSIFCloseL(fp);
-
-        GDALDatasetH hDSTile = GDALOpenEx(osMemFileName.c_str(),
-                                          GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                                          apszAllowedDrivers, NULL, NULL);
-        if (hDSTile != NULL)
-        {
-            int nTileBands = GDALGetRasterCount(hDSTile);
-            if (nTileBands == 4 && poGDS->nBands == 3)
-                nTileBands = 3;
-
-            if (GDALGetRasterXSize(hDSTile) == nBlockXSize &&
-                GDALGetRasterYSize(hDSTile) == nBlockYSize &&
-                (nTileBands == poGDS->nBands ||
-                 (nTileBands == 1 && (poGDS->nBands == 3 || poGDS->nBands == 4)) ||
-                 (nTileBands == 3 && poGDS->nBands == 4)))
-            {
-                int iBand;
-                void* pSrcImage = NULL;
-                GByte abyTranslation[256][4];
-
-                bGotTile = TRUE;
-
-                GDALColorTableH hCT = GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1));
-                if (nTileBands == 1 && (poGDS->nBands == 3 || poGDS->nBands == 4))
-                {
-                    if (hCT != NULL)
-                        pSrcImage = CPLMalloc(nBlockXSize * nBlockYSize);
-                    iBand = 1;
-                }
-                else
-                    iBand = nBand;
-
-                if (nTileBands == 3 && poGDS->nBands == 4 && iBand == 4)
-                    memset(pImage, 255, nBlockXSize * nBlockYSize);
-                else
-                {
-                    GDALRasterIO(GDALGetRasterBand(hDSTile, iBand), GF_Read,
-                                0, 0, nBlockXSize, nBlockYSize,
-                                pImage, nBlockXSize, nBlockYSize, eDataType, 0, 0);
-                }
-
-                if (pSrcImage != NULL && hCT != NULL)
-                {
-                    int i;
-                    memcpy(pSrcImage, pImage, nBlockXSize * nBlockYSize);
-
-                    int nEntryCount = GDALGetColorEntryCount( hCT );
-                    if (nEntryCount > 256)
-                        nEntryCount = 256;
-                    for(i = 0; i < nEntryCount; i++)
-                    {
-                        const GDALColorEntry* psEntry = GDALGetColorEntry( hCT, i );
-                        abyTranslation[i][0] = (GByte) psEntry->c1;
-                        abyTranslation[i][1] = (GByte) psEntry->c2;
-                        abyTranslation[i][2] = (GByte) psEntry->c3;
-                        abyTranslation[i][3] = (GByte) psEntry->c4;
-                    }
-                    for(; i < 256; i++)
-                    {
-                        abyTranslation[i][0] = 0;
-                        abyTranslation[i][1] = 0;
-                        abyTranslation[i][2] = 0;
-                        abyTranslation[i][3] = 0;
-                    }
-
-                    for(i = 0; i < nBlockXSize * nBlockYSize; i++)
-                    {
-                        ((GByte*)pImage)[i] = abyTranslation[((GByte*)pSrcImage)[i]][nBand-1];
-                    }
-                }
-
-                for(int iOtherBand=1;iOtherBand<=poGDS->nBands;iOtherBand++)
-                {
-                    GDALRasterBlock *poBlock;
-
-                    if (iOtherBand == nBand)
-                        continue;
-
-                    poBlock = ((MBTilesBand*)poGDS->GetRasterBand(iOtherBand))->
-                        TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
-
-                    if (poBlock != NULL)
-                    {
-                        poBlock->DropLock();
-                        continue;
-                    }
-
-                    poBlock = poGDS->GetRasterBand(iOtherBand)->
-                        GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
-                    if (poBlock == NULL)
-                        break;
-
-                    GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
-                    if( pabySrcBlock == NULL )
-                    {
-                        poBlock->DropLock();
-                        break;
-                    }
-
-                    if (nTileBands == 3 && poGDS->nBands == 4 && iOtherBand == 4)
-                        memset(pabySrcBlock, 255, nBlockXSize * nBlockYSize);
-                    else if (nTileBands == 1 && (poGDS->nBands == 3 || poGDS->nBands == 4))
-                    {
-                        int i;
-                        if (pSrcImage)
-                        {
-                            for(i = 0; i < nBlockXSize * nBlockYSize; i++)
-                            {
-                                ((GByte*)pabySrcBlock)[i] =
-                                    abyTranslation[((GByte*)pSrcImage)[i]][iOtherBand-1];
-                            }
-                        }
-                        else
-                            memcpy(pabySrcBlock, pImage, nBlockXSize * nBlockYSize);
-                    }
-                    else
-                    {
-                        GDALRasterIO(GDALGetRasterBand(hDSTile, iOtherBand), GF_Read,
-                            0, 0, nBlockXSize, nBlockYSize,
-                            pabySrcBlock, nBlockXSize, nBlockYSize, eDataType, 0, 0);
-                    }
-
-                    poBlock->DropLock();
-                }
-
-                CPLFree(pSrcImage);
-            }
-            else if (GDALGetRasterXSize(hDSTile) == nBlockXSize &&
-                     GDALGetRasterYSize(hDSTile) == nBlockYSize &&
-                     (nTileBands == 3 && poGDS->nBands == 1))
-            {
-                bGotTile = TRUE;
-
-                GByte* pabyRGBImage = (GByte*)CPLMalloc(3 * nBlockXSize * nBlockYSize);
-                GDALDatasetRasterIO(hDSTile, GF_Read,
-                                    0, 0, nBlockXSize, nBlockYSize,
-                                    pabyRGBImage, nBlockXSize, nBlockYSize, eDataType,
-                                    3, NULL, 3, 3 * nBlockXSize, 1);
-                for(int i=0;i<nBlockXSize*nBlockYSize;i++)
-                {
-                    int R = pabyRGBImage[3*i];
-                    int G = pabyRGBImage[3*i+1];
-                    int B = pabyRGBImage[3*i+2];
-                    GByte Y = (GByte)((213 * R + 715 * G + 72 * B) / 1000);
-                    ((GByte*)pImage)[i] = Y;
-                }
-                CPLFree(pabyRGBImage);
-            }
-            else
-            {
-                CPLDebug("MBTILES", "tile size = %d, tile height = %d, tile bands = %d",
-                         GDALGetRasterXSize(hDSTile), GDALGetRasterYSize(hDSTile),
-                         GDALGetRasterCount(hDSTile));
-            }
-            GDALClose(hDSTile);
-        }
-
-        VSIUnlink( osMemFileName.c_str() );
-
-        OGR_F_Destroy(hFeat);
-    }
-
-    OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
-
-    if (!bGotTile)
-    {
-        memset(pImage, (nBand == 4) ? 0 : 255, nBlockXSize * nBlockYSize);
-
-        for(int iOtherBand=1;iOtherBand<=poGDS->nBands;iOtherBand++)
-        {
-            GDALRasterBlock *poBlock;
-
-            if (iOtherBand == nBand)
-                continue;
-
-            poBlock = poGDS->GetRasterBand(iOtherBand)->
-                GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
-            if (poBlock == NULL)
-                break;
-
-            GByte* pabySrcBlock = (GByte *) poBlock->GetDataRef();
-            if( pabySrcBlock == NULL )
-            {
-                poBlock->DropLock();
-                break;
-            }
-
-            memset(pabySrcBlock, (iOtherBand == 4) ? 0 : 255,
-                   nBlockXSize * nBlockYSize);
-
-            poBlock->DropLock();
-        }
-    }
-
-    return CE_None;
 }
 
 /************************************************************************/
@@ -415,8 +229,9 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   } else if (c == 0xe0) {
     if (((unsigned char*)p)[1] < 0xa0) goto FAIL;
     goto UTF8_3;
+  }
 #if STRICT_RFC3629
-  } else if (c == 0xed) {
+  else if (c == 0xed) {
     // RFC 3629 says surrogate chars are illegal.
     if (((unsigned char*)p)[1] >= 0xa0) goto FAIL;
     goto UTF8_3;
@@ -425,8 +240,9 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
     if (((unsigned char*)p)[1]==0xbf &&
     ((unsigned char*)p)[2]>=0xbe) goto FAIL;
     goto UTF8_3;
+  }
 #endif
-  } else if (c < 0xf0) {
+  else if (c < 0xf0) {
   UTF8_3:
     if (p+2 >= end || (p[2]&0xc0) != 0x80) goto FAIL;
     *len = 3;
@@ -462,70 +278,46 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   }
 }
 
-
-/************************************************************************/
-/*                  ComputeTileColTileRowZoomLevel()                    */
-/************************************************************************/
-
-void MBTilesDataset::ComputeTileColTileRowZoomLevel(int nBlockXOff,
-                                                    int nBlockYOff,
-                                                    int &nTileColumn,
-                                                    int &nTileRow,
-                                                    int &nZoomLevel)
-{
-    const int nBlockYSize = 256;
-
-    int _nMinLevel = (poMainDS) ? poMainDS->nMinLevel : nMinLevel;
-    int _nMinTileCol = (poMainDS) ? poMainDS->nMinTileCol : nMinTileCol;
-    int _nMinTileRow = (poMainDS) ? poMainDS->nMinTileRow : nMinTileRow;
-    _nMinTileCol >>= nLevel;
-
-    nTileColumn = nBlockXOff + _nMinTileCol;
-    nTileRow = (((nRasterYSize / nBlockYSize - 1 - nBlockYOff) << nLevel) + _nMinTileRow) >> nLevel;
-    nZoomLevel = ((poMainDS) ? poMainDS->nResolutions : nResolutions) - nLevel + _nMinLevel;
-}
-
 /************************************************************************/
 /*                          HasNonEmptyGrids()                          */
 /************************************************************************/
 
-int MBTilesDataset::HasNonEmptyGrids()
+bool MBTilesDataset::HasNonEmptyGrids()
 {
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
-    const char* pszSQL;
 
     if (poMainDS)
         return poMainDS->HasNonEmptyGrids();
 
-    if (bHasNonEmptyGrids >= 0)
-        return bHasNonEmptyGrids;
+    if (nHasNonEmptyGrids >= 0)
+        return nHasNonEmptyGrids != FALSE;
 
-    bHasNonEmptyGrids = FALSE;
+    nHasNonEmptyGrids = false;
 
     if (OGR_DS_GetLayerByName(hDS, "grids") == NULL)
-        return FALSE;
+        return false;
 
-    pszSQL = "SELECT type FROM sqlite_master WHERE name = 'grids'";
+    const char* pszSQL = "SELECT type FROM sqlite_master WHERE name = 'grids'";
     CPLDebug("MBTILES", "%s", pszSQL);
     hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     if (hSQLLyr == NULL)
-        return FALSE;
+        return false;
 
     hFeat = OGR_L_GetNextFeature(hSQLLyr);
     if (hFeat == NULL || !OGR_F_IsFieldSet(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-        return FALSE;
+        return false;
     }
 
-    int bGridsIsView = strcmp(OGR_F_GetFieldAsString(hFeat, 0), "view") == 0;
+    bool bGridsIsView = strcmp(OGR_F_GetFieldAsString(hFeat, 0), "view") == 0;
 
     OGR_F_Destroy(hFeat);
     OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
 
-    bHasNonEmptyGrids = TRUE;
+    nHasNonEmptyGrids = TRUE;
 
     /* In the case 'grids' is a view (and a join between the 'map' and 'grid_utfgrid' layers */
     /* the cost of evaluating a join is very long, even if grid_utfgrid is empty */
@@ -540,44 +332,48 @@ int MBTilesDataset::HasNonEmptyGrids()
             hFeat = OGR_L_GetNextFeature(hGridUTFGridLyr);
             OGR_F_Destroy(hFeat);
 
-            bHasNonEmptyGrids = hFeat != NULL;
+            nHasNonEmptyGrids = hFeat != NULL;
         }
     }
 
-    return bHasNonEmptyGrids;
+    return nHasNonEmptyGrids != FALSE;
 }
 
 /************************************************************************/
 /*                             FindKey()                                */
 /************************************************************************/
 
-char* MBTilesDataset::FindKey(int iPixel, int iLine,
-                              int& nTileColumn, int& nTileRow, int& nZoomLevel)
+char* MBTilesDataset::FindKey(int iPixel, int iLine)
 {
     const int nBlockXSize = 256, nBlockYSize = 256;
-    int nBlockXOff = iPixel / nBlockXSize;
-    int nBlockYOff = iLine / nBlockYSize;
 
-    int nColInBlock = iPixel % nBlockXSize;
-    int nRowInBlock = iLine % nBlockXSize;
+    // Compute shift between GDAL origin and TileMatrixSet origin
+    // Caution this is in GeoPackage / WMTS convention ! That is upper-left corner
+    const int nShiftXPixels = (int)floor(0.5 + (m_adfGeoTransform[0] - TMS_ORIGIN_X) /  m_adfGeoTransform[1]);
+    const int nShiftYPixelsFromGPKGOrigin = (int)floor(0.5 + (m_adfGeoTransform[3] - TMS_ORIGIN_Y) /  m_adfGeoTransform[5]);
 
-    ComputeTileColTileRowZoomLevel(nBlockXOff, nBlockYOff,
-                                   nTileColumn, nTileRow, nZoomLevel);
+    const int iLineFromGPKGOrigin = iLine + nShiftYPixelsFromGPKGOrigin;
+    const int iLineFromMBTilesOrigin = m_nTileMatrixHeight * nBlockYSize - 1 - iLineFromGPKGOrigin;
+    const int iPixelFromMBTilesOrigin = iPixel + nShiftXPixels;
+
+    const int nTileColumn = iPixelFromMBTilesOrigin / nBlockXSize;
+    const int nTileRow = iLineFromMBTilesOrigin / nBlockYSize;
+    int nColInTile = iPixelFromMBTilesOrigin % nBlockXSize;
+    int nRowInTile = nBlockYSize - 1 - (iLineFromMBTilesOrigin % nBlockYSize);
 
     char* pszKey = NULL;
 
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
-    const char* pszSQL;
     json_object* poGrid = NULL;
     int i;
 
     /* See https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md */
-    /* for the explanation of the following processings */
-
-    pszSQL = CPLSPrintf("SELECT grid FROM grids WHERE "
-                        "zoom_level = %d AND tile_column = %d AND tile_row = %d",
-                        nZoomLevel, nTileColumn, nTileRow);
+    /* for the explanation of the following process */
+    const char* pszSQL =
+        CPLSPrintf("SELECT grid FROM grids WHERE "
+                   "zoom_level = %d AND tile_column = %d AND tile_row = %d",
+                   m_nZoomLevel, nTileColumn, nTileRow);
     CPLDebug("MBTILES", "%s", pszSQL);
     hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     if (hSQLLyr == NULL)
@@ -595,7 +391,13 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
     GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
 
     int nUncompressedSize = 256*256;
-    GByte* pabyUncompressed = (GByte*)CPLMalloc(nUncompressedSize + 1);
+    GByte* pabyUncompressed = (GByte*)VSIMalloc(nUncompressedSize + 1);
+    if( pabyUncompressed == NULL )
+    {
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        return NULL;
+    }
 
     z_stream sStream;
     memset(&sStream, 0, sizeof(sStream));
@@ -659,10 +461,10 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
             goto end;
 
         nFactor = 256 / nLines;
-        nRowInBlock /= nFactor;
-        nColInBlock /= nFactor;
+        nRowInTile /= nFactor;
+        nColInTile /= nFactor;
 
-        poRow = json_object_array_get_idx(poGrid, nRowInBlock);
+        poRow = json_object_array_get_idx(poGrid, nRowInTile);
 
         /* Extract line of interest in grid */
         if (poRow != NULL && json_object_is_type(poRow, json_type_string))
@@ -704,7 +506,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
                 if (res > 127 && len == 1)
                     break;
 
-                if (iCol == nColInBlock)
+                if (iCol == nColInTile)
                 {
                     nKey = (int)res;
                     //CPLDebug("MBTILES", "Key index = %d", nKey);
@@ -734,8 +536,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
 end:
     if (jsobj)
         json_object_put(jsobj);
-    if (pabyUncompressed)
-        CPLFree(pabyUncompressed);
+    VSIFree(pabyUncompressed);
     if (hFeat)
         OGR_F_Destroy(hFeat);
     if (hSQLLyr)
@@ -767,7 +568,7 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
 /* ==================================================================== */
     if( pszDomain != NULL
         && EQUAL(pszDomain,"LocationInfo")
-        && (EQUALN(pszName,"Pixel_",6) || EQUALN(pszName,"GeoPixel_",9)) )
+        && (STARTS_WITH_CI(pszName, "Pixel_") || STARTS_WITH_CI(pszName, "GeoPixel_")) )
     {
         int iPixel, iLine;
 
@@ -777,12 +578,12 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      What pixel are we aiming at?                                    */
 /* -------------------------------------------------------------------- */
-        if( EQUALN(pszName,"Pixel_",6) )
+        if( STARTS_WITH_CI(pszName, "Pixel_") )
         {
             if( sscanf( pszName+6, "%d_%d", &iPixel, &iLine ) != 2 )
                 return NULL;
         }
-        else if( EQUALN(pszName,"GeoPixel_",9) )
+        else if( STARTS_WITH_CI(pszName, "GeoPixel_") )
         {
             double adfGeoTransform[6];
             double adfInvGeoTransform[6];
@@ -820,8 +621,7 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
             || iLine >= GetYSize() )
             return NULL;
 
-        int nTileColumn = -1, nTileRow = -1, nZoomLevel = -1;
-        char* pszKey = poGDS->FindKey(iPixel, iLine, nTileColumn, nTileRow, nZoomLevel);
+        char* pszKey = poGDS->FindKey(iPixel, iLine);
 
         if (pszKey != NULL)
         {
@@ -837,13 +637,13 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
             if (OGR_DS_GetLayerByName(poGDS->hDS, "grid_data") != NULL &&
                 strchr(pszKey, '\'') == NULL)
             {
-                const char* pszSQL;
                 OGRLayerH hSQLLyr;
                 OGRFeatureH hFeat;
 
-                pszSQL = CPLSPrintf("SELECT key_json FROM keymap WHERE "
-                                    "key_name = '%s'",
-                                    pszKey);
+                const char* pszSQL =
+                    CPLSPrintf("SELECT key_json FROM keymap WHERE "
+                               "key_name = '%s'",
+                               pszKey);
                 CPLDebug("MBTILES", "%s", pszSQL);
                 hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, NULL, NULL);
                 if (hSQLLyr)
@@ -890,8 +690,8 @@ int MBTilesBand::GetOverviewCount()
 {
     MBTilesDataset* poGDS = (MBTilesDataset*) poDS;
 
-    if (poGDS->nResolutions >= 1)
-        return poGDS->nResolutions;
+    if (poGDS->m_nOverviewCount >= 1)
+        return poGDS->m_nOverviewCount;
     else
         return GDALPamRasterBand::GetOverviewCount();
 }
@@ -904,43 +704,17 @@ GDALRasterBand* MBTilesBand::GetOverview(int nLevel)
 {
     MBTilesDataset* poGDS = (MBTilesDataset*) poDS;
 
-    if (poGDS->nResolutions == 0)
+    if (poGDS->m_nOverviewCount == 0)
         return GDALPamRasterBand::GetOverview(nLevel);
 
-    if (nLevel < 0 || nLevel >= poGDS->nResolutions)
+    if (nLevel < 0 || nLevel >= poGDS->m_nOverviewCount)
         return NULL;
 
-    GDALDataset* poOvrDS = poGDS->papoOverviews[nLevel];
+    GDALDataset* poOvrDS = poGDS->m_papoOverviewDS[nLevel];
     if (poOvrDS)
         return poOvrDS->GetRasterBand(nBand);
     else
         return NULL;
-}
-
-/************************************************************************/
-/*                   GetColorInterpretation()                           */
-/************************************************************************/
-
-GDALColorInterp MBTilesBand::GetColorInterpretation()
-{
-    MBTilesDataset* poGDS = (MBTilesDataset*) poDS;
-    if (poGDS->nBands == 1)
-    {
-        return GCI_GrayIndex;
-    }
-    else if (poGDS->nBands == 3 || poGDS->nBands == 4)
-    {
-        if (nBand == 1)
-            return GCI_RedBand;
-        else if (nBand == 2)
-            return GCI_GreenBand;
-        else if (nBand == 3)
-            return GCI_BlueBand;
-        else if (nBand == 4)
-            return GCI_AlphaBand;
-    }
-
-    return GCI_Undefined;
 }
 
 /************************************************************************/
@@ -949,42 +723,29 @@ GDALColorInterp MBTilesBand::GetColorInterpretation()
 
 MBTilesDataset::MBTilesDataset()
 {
-    bMustFree = FALSE;
-    nLevel = 0;
+    m_bWriteBounds = true;
+    m_bWriteMinMaxZoom = true;
     poMainDS = NULL;
-    nResolutions = 0;
+    m_nOverviewCount = 0;
     hDS = NULL;
-    papoOverviews = NULL;
-    papszMetadata = NULL;
-    papszImageStructure =
-        CSLAddString(NULL, "INTERLEAVE=PIXEL");
-    nMinTileCol = nMinTileRow = 0;
-    nMinLevel = 0;
-    bFetchedMetadata = FALSE;
-    bHasNonEmptyGrids = -1;
-}
+    m_papoOverviewDS = NULL;
+    bFetchedMetadata = false;
+    nHasNonEmptyGrids = -1;
+    hDB = NULL;
+#ifdef HAVE_SQLITE_VFS
+    pMyVFS = NULL;
+#endif
+    m_bGeoTransformValid = false;
+    m_adfGeoTransform[0] = 0.0;
+    m_adfGeoTransform[1] = 1.0;
+    m_adfGeoTransform[2] = 0.0;
+    m_adfGeoTransform[3] = 0.0;
+    m_adfGeoTransform[4] = 0.0;
+    m_adfGeoTransform[5] = 1.0;
+    m_bInFlushCache = false;
 
-/************************************************************************/
-/*                          MBTilesDataset()                            */
-/************************************************************************/
-
-MBTilesDataset::MBTilesDataset(MBTilesDataset* poMainDS, int nLevel)
-{
-    bMustFree = FALSE;
-    this->nLevel = nLevel;
-    this->poMainDS = poMainDS;
-    nResolutions = poMainDS->nResolutions - nLevel;
-    hDS = poMainDS->hDS;
-    papoOverviews = poMainDS->papoOverviews + nLevel;
-    papszMetadata = poMainDS->papszMetadata;
-    papszImageStructure =  poMainDS->papszImageStructure;
-
-    nRasterXSize = poMainDS->nRasterXSize / (1 << nLevel);
-    nRasterYSize = poMainDS->nRasterYSize / (1 << nLevel);
-    nMinTileCol = nMinTileRow = 0;
-    nMinLevel = 0;
-    bFetchedMetadata = FALSE;
-    bHasNonEmptyGrids = -1;
+    m_osRasterTable = "tiles";
+    m_eTF = GPKG_TF_PNG;
 }
 
 /************************************************************************/
@@ -993,89 +754,352 @@ MBTilesDataset::MBTilesDataset(MBTilesDataset* poMainDS, int nLevel)
 
 MBTilesDataset::~MBTilesDataset()
 {
-    CloseDependentDatasets();
-}
+    FlushCache();
 
-/************************************************************************/
-/*                      CloseDependentDatasets()                        */
-/************************************************************************/
-
-int MBTilesDataset::CloseDependentDatasets()
-{
-    int bRet = GDALPamDataset::CloseDependentDatasets();
-
-    if (poMainDS == NULL && !bMustFree)
+    if (poMainDS == NULL)
     {
-        CSLDestroy(papszMetadata);
-        papszMetadata = NULL;
-        CSLDestroy(papszImageStructure);
-        papszImageStructure = NULL;
-
-        int i;
-
-        if (papoOverviews)
+        if (m_papoOverviewDS)
         {
-            for(i=0;i<nResolutions;i++)
-            {
-                if (papoOverviews[i] != NULL &&
-                    papoOverviews[i]->bMustFree)
-                {
-                    papoOverviews[i]->poMainDS = NULL;
-                }
-                delete papoOverviews[i];
-            }
-            CPLFree(papoOverviews);
-            papoOverviews = NULL;
-            nResolutions = 0;
-            bRet = TRUE;
+            for(int i=0;i<m_nOverviewCount;i++)
+                delete m_papoOverviewDS[i];
+            CPLFree(m_papoOverviewDS);
         }
 
         if (hDS != NULL)
+        {
             OGRReleaseDataSource(hDS);
-        hDS = NULL;
+            hDB = NULL;
+        }
+        if( hDB != NULL )
+        {
+            sqlite3_close(hDB);
+
+#ifdef HAVE_SQLITE_VFS
+            if (pMyVFS)
+            {
+                sqlite3_vfs_unregister(pMyVFS);
+                CPLFree(pMyVFS->pAppData);
+                CPLFree(pMyVFS);
+            }
+#endif
+        }
     }
-    else if (poMainDS != NULL && bMustFree)
+}
+
+/************************************************************************/
+/*                         IStartTransaction()                          */
+/************************************************************************/
+
+void MBTilesDataset::IStartTransaction()
+{
+    sqlite3_exec( hDB, "BEGIN", NULL, NULL, NULL );
+}
+
+/************************************************************************/
+/*                         ICommitTransaction()                         */
+/************************************************************************/
+
+void MBTilesDataset::ICommitTransaction()
+{
+    sqlite3_exec( hDB, "COMMIT", NULL, NULL, NULL );
+}
+
+/************************************************************************/
+/*                         ICanIWriteBlock()                            */
+/************************************************************************/
+
+bool MBTilesDataset::ICanIWriteBlock()
+{
+    if( eAccess != GA_Update )
     {
-        poMainDS->papoOverviews[nLevel-1] = NULL;
-        delete poMainDS;
-        poMainDS = NULL;
-        bRet = TRUE;
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "IWriteBlock() not supported on dataset opened in read-only mode");
+        return false;
     }
 
-    return bRet;
+    if( !m_bGeoTransformValid )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "IWriteBlock() not supported if georeferencing not set");
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                         IFlushCacheWithErrCode()                            */
+/************************************************************************/
+
+CPLErr MBTilesDataset::IFlushCacheWithErrCode()
+
+{
+    if( m_bInFlushCache )
+        return CE_None;
+    m_bInFlushCache = true;
+    // Short circuit GDALPamDataset to avoid serialization to .aux.xml
+    GDALDataset::FlushCache();
+
+    CPLErr eErr = FlushTiles();
+
+    m_bInFlushCache = false;
+    return eErr;
+}
+
+/************************************************************************/
+/*                         ICanIWriteBlock()                            */
+/************************************************************************/
+
+int MBTilesDataset::GetRowFromIntoTopConvention(int nRow)
+{
+    return m_nTileMatrixHeight - 1 - nRow;
 }
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-#define MAX_GM 20037508.34
-
 CPLErr MBTilesDataset::GetGeoTransform(double* padfGeoTransform)
 {
-    int nMaxLevel = nMinLevel + nResolutions;
-    if (nMaxLevel == 0)
+    memcpy(padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
+    return ( m_bGeoTransformValid ) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                     SphericalMercatorToLongLat()                     */
+/************************************************************************/
+
+static void SphericalMercatorToLongLat(double* x, double* y)
+{
+  double lng = *x / SPHERICAL_RADIUS / M_PI * 180;
+  double lat = 2 * (atan(exp(*y / SPHERICAL_RADIUS)) - M_PI / 4) / M_PI * 180;
+  *x = lng;
+  *y = lat;
+}
+
+/************************************************************************/
+/*                     LongLatToSphericalMercator()                     */
+/************************************************************************/
+
+static void LongLatToSphericalMercator(double* x, double* y)
+{
+  double X = SPHERICAL_RADIUS * (*x) / 180 * M_PI;
+  double Y = SPHERICAL_RADIUS * log( tan(M_PI / 4 + 0.5 * (*y) / 180 * M_PI) );
+  *x = X;
+  *y = Y;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr MBTilesDataset::SetGeoTransform( double* padfGeoTransform )
+{
+    if( eAccess != GA_Update )
     {
-        padfGeoTransform[0] = -MAX_GM;
-        padfGeoTransform[1] = 2 * MAX_GM / nRasterXSize;
-        padfGeoTransform[2] = 0;
-        padfGeoTransform[3] = MAX_GM;
-        padfGeoTransform[4] = 0;
-        padfGeoTransform[5] = -2 * MAX_GM / nRasterYSize;
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetGeoTransform() not supported on read-only dataset");
+        return CE_Failure;
     }
-    else
+    if( m_bGeoTransformValid )
     {
-        int nMaxTileCol = nMinTileCol + nRasterXSize / 256;
-        int nMaxTileRow = nMinTileRow + nRasterYSize / 256;
-        int nMiddleTile = (1 << nMaxLevel) / 2;
-        padfGeoTransform[0] = 2 * MAX_GM * (nMinTileCol - nMiddleTile) / (1 << nMaxLevel);
-        padfGeoTransform[1] = 2 * MAX_GM * (nMaxTileCol - nMinTileCol) / (1 << nMaxLevel) / nRasterXSize;
-        padfGeoTransform[2] = 0;
-        padfGeoTransform[3] = 2 * MAX_GM * (nMaxTileRow - nMiddleTile) / (1 << nMaxLevel);
-        padfGeoTransform[4] = 0;
-        padfGeoTransform[5] = -2 * MAX_GM * (nMaxTileRow - nMinTileRow) / (1 << nMaxLevel) / nRasterYSize;
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot modify geotransform once set");
+        return CE_Failure;
     }
+    if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0 ||
+        padfGeoTransform[5] > 0.0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only north-up non rotated geotransform supported");
+        return CE_Failure;
+    }
+
+    if( m_bWriteBounds )
+    {
+        double minx = padfGeoTransform[0];
+        double miny = padfGeoTransform[3] + nRasterYSize * padfGeoTransform[5];
+        double maxx = padfGeoTransform[0] + nRasterXSize * padfGeoTransform[1];
+        double maxy = padfGeoTransform[3];
+
+        SphericalMercatorToLongLat(&minx, &miny);
+        SphericalMercatorToLongLat(&maxx, &maxy);
+        if( fabs(minx + 180) < 1e-7 && fabs(maxx - 180) < 1e-7 )
+        {
+            minx = -180.0;
+            maxx = 180.0;
+        }
+
+        // Clamp latitude so that when transformed back to EPSG:3857, we don't
+        // have too big northings
+        double tmpx = 0, ok_maxy = MAX_GM;
+        SphericalMercatorToLongLat(&tmpx, &ok_maxy);
+        if( maxy > ok_maxy)
+            maxy = ok_maxy;
+        if( miny < -ok_maxy)
+            miny = -ok_maxy;
+
+        char* pszSQL = sqlite3_mprintf(
+            "INSERT INTO metadata (name, value) VALUES ('bounds', '%.18g,%.18g,%.18g,%.18g')",
+            minx, miny, maxx, maxy );
+        sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+        sqlite3_free(pszSQL);
+    }
+
+    const double dfPixelXSizeZoomLevel0 = 2 * MAX_GM / 256;
+    const double dfPixelYSizeZoomLevel0 = 2 * MAX_GM / 256;
+    for( m_nZoomLevel = 0; m_nZoomLevel < 25; m_nZoomLevel++ )
+    {
+        double dfExpectedPixelXSize = dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
+        double dfExpectedPixelYSize = dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
+        if( fabs( padfGeoTransform[1] - dfExpectedPixelXSize ) < 1e-8 * dfExpectedPixelXSize &&
+            fabs( fabs(padfGeoTransform[5]) - dfExpectedPixelYSize ) < 1e-8 * dfExpectedPixelYSize )
+        {
+            break;
+        }
+    }
+    if( m_nZoomLevel == 25 )
+    {
+        m_nZoomLevel = -1;
+        CPLError(CE_Failure, CPLE_NotSupported,
+                  "Could not find an appropriate zoom level that matches raster pixel size");
+        return CE_Failure;
+    }
+
+    memcpy(m_adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
+    m_bGeoTransformValid = true;
+
+    return FinalizeRasterRegistration();
+}
+
+/************************************************************************/
+/*                      ComputeTileAndPixelShifts()                     */
+/************************************************************************/
+
+void MBTilesDataset::ComputeTileAndPixelShifts()
+{
+    int nTileWidth, nTileHeight;
+    GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
+
+    // Compute shift between GDAL origin and TileMatrixSet origin
+    // Caution this is in GeoPackage / WMTS convention ! That is upper-left corner
+    int nShiftXPixels = (int)floor(0.5 + (m_adfGeoTransform[0] - TMS_ORIGIN_X) /  m_adfGeoTransform[1]);
+    m_nShiftXTiles = (int)floor(1.0 * nShiftXPixels / nTileWidth);
+    m_nShiftXPixelsMod = ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
+    int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - TMS_ORIGIN_Y) /  m_adfGeoTransform[5]);
+    m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
+    m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
+
+}
+
+/************************************************************************/
+/*                      FinalizeRasterRegistration()                    */
+/************************************************************************/
+
+CPLErr MBTilesDataset::FinalizeRasterRegistration()
+{
+    m_nTileMatrixWidth = (1 << m_nZoomLevel);
+    m_nTileMatrixHeight = (1 << m_nZoomLevel);
+
+    ComputeTileAndPixelShifts();
+
+    double dfGDALMinX = m_adfGeoTransform[0];
+    double dfGDALMinY = m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5];
+    double dfGDALMaxX = m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1];
+    double dfGDALMaxY = m_adfGeoTransform[3];
+
+    m_nOverviewCount = m_nZoomLevel;
+    m_papoOverviewDS = (MBTilesDataset**) CPLCalloc(sizeof(MBTilesDataset*),
+                                                           m_nOverviewCount);
+
+    if( m_bWriteMinMaxZoom )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "INSERT INTO metadata (name, value) VALUES ('minzoom', '%d')", m_nZoomLevel );
+        sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+        sqlite3_free(pszSQL);
+        pszSQL = sqlite3_mprintf(
+            "INSERT INTO metadata (name, value) VALUES ('maxzoom', '%d')", m_nZoomLevel );
+        sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+        sqlite3_free(pszSQL);
+    }
+
+    for(int i=0; i<m_nOverviewCount; i++)
+    {
+        MBTilesDataset* poOvrDS = new MBTilesDataset();
+        poOvrDS->InitRaster ( this, i, nBands,
+                              dfGDALMinX, dfGDALMinY,
+                              dfGDALMaxX, dfGDALMaxY );
+
+        m_papoOverviewDS[m_nZoomLevel-1-i] = poOvrDS;
+    }
+
     return CE_None;
+}
+
+/************************************************************************/
+/*                         InitRaster()                                 */
+/************************************************************************/
+
+int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
+                                 int nZoomLevel,
+                                 int nBandCount,
+                                 double dfGDALMinX,
+                                 double dfGDALMinY,
+                                 double dfGDALMaxX,
+                                 double dfGDALMaxY )
+{
+    m_nZoomLevel = nZoomLevel;
+    m_nTileMatrixWidth = 1 << nZoomLevel;
+    m_nTileMatrixHeight = 1 << nZoomLevel;
+
+    const int nTileWidth = 256;
+    const int nTileHeight = 256;
+    const double dfPixelXSize = 2 * MAX_GM / 256 / (1 << nZoomLevel);
+    const double dfPixelYSize = dfPixelXSize;
+
+    m_bGeoTransformValid = true;
+    m_adfGeoTransform[0] = dfGDALMinX;
+    m_adfGeoTransform[1] = dfPixelXSize;
+    m_adfGeoTransform[3] = dfGDALMaxY;
+    m_adfGeoTransform[5] = -dfPixelYSize;
+    double dfRasterXSize = 0.5 + (dfGDALMaxX - dfGDALMinX) / dfPixelXSize;
+    double dfRasterYSize = 0.5 + (dfGDALMaxY - dfGDALMinY) / dfPixelYSize;
+    if( dfRasterXSize > INT_MAX || dfRasterYSize > INT_MAX )
+        return FALSE;
+    nRasterXSize = (int)dfRasterXSize;
+    nRasterYSize = (int)dfRasterYSize;
+
+    m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, nTileWidth, nTileHeight);
+    if( m_pabyCachedTiles == NULL )
+    {
+        return FALSE;
+    }
+
+    for(int i = 1; i <= nBandCount; i ++)
+        SetBand( i, new MBTilesBand(this) );
+
+    ComputeTileAndPixelShifts();
+
+    GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    GDALDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
+
+    if( poParentDS )
+    {
+        m_poParentDS = poParentDS;
+        poMainDS = poParentDS;
+        eAccess = poParentDS->eAccess;
+        hDS = poParentDS->hDS;
+        hDB = poParentDS->hDB;
+        m_eTF = poParentDS->m_eTF;
+        m_nQuality = poParentDS->m_nQuality;
+        m_nZLevel = poParentDS->m_nZLevel;
+        m_bDither = poParentDS->m_bDither;
+        m_osWHERE = poParentDS->m_osWHERE;
+        SetDescription(CPLSPrintf("%s - zoom_level=%d",
+                                  poParentDS->GetDescription(), m_nZoomLevel));
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1084,7 +1108,35 @@ CPLErr MBTilesDataset::GetGeoTransform(double* padfGeoTransform)
 
 const char* MBTilesDataset::GetProjectionRef()
 {
-    return "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]";
+    return SRS_EPSG_3857;
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr MBTilesDataset::SetProjection( const char* pszProjection )
+{
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetProjection() not supported on read-only dataset");
+        return CE_Failure;
+    }
+
+    OGRSpatialReference oSRS;
+    if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
+        return CE_Failure;
+    if( oSRS.GetAuthorityName(NULL) == NULL ||
+        !EQUAL(oSRS.GetAuthorityName(NULL), "EPSG") ||
+        oSRS.GetAuthorityCode(NULL) == NULL ||
+        !EQUAL(oSRS.GetAuthorityCode(NULL), "3857") )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only EPSG:3857 supported on MBTiles dataset");
+        return CE_Failure;
+    }
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1110,7 +1162,8 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
     if (bFetchedMetadata)
         return aosList.List();
 
-    bFetchedMetadata = TRUE;
+    bFetchedMetadata = true;
+    aosList = CPLStringList(GDALPamDataset::GetMetadata(), FALSE);
 
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS,
             "SELECT name, value FROM metadata", NULL, NULL);
@@ -1131,7 +1184,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
             const char* pszName = OGR_F_GetFieldAsString(hFeat, 0);
             const char* pszValue = OGR_F_GetFieldAsString(hFeat, 1);
             if (pszValue[0] != '\0' &&
-                strncmp(pszValue, "function(",9) != 0 &&
+                !STARTS_WITH(pszValue, "function(") &&
                 strstr(pszValue, "<img ") == NULL &&
                 strstr(pszValue, "<p>") == NULL &&
                 strstr(pszValue, "</p>") == NULL &&
@@ -1148,14 +1201,31 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
 }
 
 /************************************************************************/
+/*                         GetMetadataItem()                            */
+/************************************************************************/
+
+const char *MBTilesDataset::GetMetadataItem( const char* pszName, const char * pszDomain )
+{
+    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    {
+        const char* pszValue = CSLFetchNameValue( GetMetadata(), pszName );
+        if( pszValue )
+            return pszValue;
+    }
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
 /*                             Identify()                               */
 /************************************************************************/
 
 int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
+    if ( (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") ||
+      // Allow direct Amazon S3 signed URLs that contains .mbtiles in the middle of the URL
+          strstr(poOpenInfo->pszFilename, ".mbtiles") != NULL) &&
         poOpenInfo->nHeaderBytes >= 1024 &&
-        EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
+        STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
         return TRUE;
     }
@@ -1171,13 +1241,13 @@ static
 int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                                 int &nMinLevel, int &nMaxLevel)
 {
-    const char* pszSQL;
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
     int bHasMinMaxLevel = FALSE;
 
-    pszSQL = "SELECT value FROM metadata WHERE name = 'minzoom' UNION ALL "
-             "SELECT value FROM metadata WHERE name = 'maxzoom'";
+    const char* pszSQL =
+        "SELECT value FROM metadata WHERE name = 'minzoom' UNION ALL "
+        "SELECT value FROM metadata WHERE name = 'maxzoom'";
     CPLDebug("MBTILES", "%s", pszSQL);
     hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     if (hSQLLyr)
@@ -1216,7 +1286,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
 #define OPTIMIZED_FOR_VSICURL
 #ifdef  OPTIMIZED_FOR_VSICURL
         int iLevel;
-        for(iLevel = 0; nMinLevel < 0 && iLevel < 16; iLevel ++)
+        for(iLevel = 0; nMinLevel < 0 && iLevel <= 32; iLevel ++)
         {
             pszSQL = CPLSPrintf(
                 "SELECT zoom_level FROM %s WHERE zoom_level = %d LIMIT 1",
@@ -1289,82 +1359,103 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
 }
 
 /************************************************************************/
+/*                   MBTilesTileCoordToWorldCoord()                     */
+/************************************************************************/
+
+static double MBTilesTileCoordToWorldCoord(double dfTileCoord, int nZoomLevel)
+{
+    return -MAX_GM + 2 * MAX_GM * (dfTileCoord / (1 << nZoomLevel));
+}
+
+/************************************************************************/
+/*                   MBTilesWorldCoordToTileCoord()                     */
+/************************************************************************/
+
+static double MBTilesWorldCoordToTileCoord(double dfWorldCoord, int nZoomLevel)
+{
+    return (dfWorldCoord + MAX_GM) / (2 * MAX_GM) * (1 << nZoomLevel);
+}
+
+/************************************************************************/
 /*                           MBTilesGetBounds()                         */
 /************************************************************************/
 
 static
-int MBTilesGetBounds(OGRDataSourceH hDS,
-                     CPL_UNUSED int nMinLevel,
+bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
                      int nMaxLevel,
-                     int& nMinTileRow, int& nMaxTileRow,
-                     int& nMinTileCol, int &nMaxTileCol)
+                     double& minX, double& minY,
+                     double& maxX, double& maxY)
 {
-    const char* pszSQL;
-    int bHasBounds = FALSE;
+    bool bHasBounds = false;
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
 
-    pszSQL = "SELECT value FROM metadata WHERE name = 'bounds'";
-    CPLDebug("MBTILES", "%s", pszSQL);
-    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
-    if (hSQLLyr)
+    if( bUseBounds )
     {
-        hFeat = OGR_L_GetNextFeature(hSQLLyr);
-        if (hFeat != NULL)
+        const char* pszSQL = "SELECT value FROM metadata WHERE name = 'bounds'";
+        CPLDebug("MBTILES", "%s", pszSQL);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+        if (hSQLLyr)
         {
-            const char* pszBounds = OGR_F_GetFieldAsString(hFeat, 0);
-            char** papszTokens = CSLTokenizeString2(pszBounds, ",", 0);
-            if (CSLCount(papszTokens) != 4 ||
-                fabs(CPLAtof(papszTokens[0])) > 180 ||
-                fabs(CPLAtof(papszTokens[1])) > 86 ||
-                fabs(CPLAtof(papszTokens[2])) > 180 ||
-                fabs(CPLAtof(papszTokens[3])) > 86 ||
-                CPLAtof(papszTokens[0]) > CPLAtof(papszTokens[2]) ||
-                CPLAtof(papszTokens[1]) > CPLAtof(papszTokens[3]))
+            hFeat = OGR_L_GetNextFeature(hSQLLyr);
+            if (hFeat != NULL)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for 'bounds' metadata");
+                const char* pszBounds = OGR_F_GetFieldAsString(hFeat, 0);
+                char** papszTokens = CSLTokenizeString2(pszBounds, ",", 0);
+                if (CSLCount(papszTokens) != 4 ||
+                    fabs(CPLAtof(papszTokens[0])) > 180 ||
+                    fabs(CPLAtof(papszTokens[1])) >= 89.99 ||
+                    fabs(CPLAtof(papszTokens[2])) > 180 ||
+                    fabs(CPLAtof(papszTokens[3])) >= 89.99 ||
+                    CPLAtof(papszTokens[0]) > CPLAtof(papszTokens[2]) ||
+                    CPLAtof(papszTokens[1]) > CPLAtof(papszTokens[3]))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "Invalid value for 'bounds' metadata. Ignoring it and fall back to present tile extent");
+                }
+                else
+                {
+                    minX = CPLAtof(papszTokens[0]);
+                    minY = CPLAtof(papszTokens[1]);
+                    maxX = CPLAtof(papszTokens[2]);
+                    maxY = CPLAtof(papszTokens[3]);
+                    LongLatToSphericalMercator(&minX, &minY);
+                    LongLatToSphericalMercator(&maxX, &maxY);
+
+                    // Clamp northings
+                    if( maxY > MAX_GM)
+                        maxY = MAX_GM;
+                    if( minY < -MAX_GM)
+                        minY = -MAX_GM;
+
+                    bHasBounds = true;
+                }
+
                 CSLDestroy(papszTokens);
+
                 OGR_F_Destroy(hFeat);
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-                return FALSE;
             }
-
-            #define FORTPI      0.78539816339744833
-            /* Latitude to Google-mercator northing */
-            #define LAT_TO_NORTHING(lat) \
-                6378137 * log(tan(FORTPI + .5 * (lat) / 180 * (4 * FORTPI)))
-
-            nMinTileCol = (int)(((CPLAtof(papszTokens[0]) + 180) / 360) * (1 << nMaxLevel));
-            nMaxTileCol = (int)(((CPLAtof(papszTokens[2]) + 180) / 360) * (1 << nMaxLevel));
-            nMinTileRow = (int)(0.5 + ((LAT_TO_NORTHING(CPLAtof(papszTokens[1])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
-            nMaxTileRow = (int)(0.5 + ((LAT_TO_NORTHING(CPLAtof(papszTokens[3])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
-
-            bHasBounds = TRUE;
-
-            CSLDestroy(papszTokens);
-
-            OGR_F_Destroy(hFeat);
+            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
         }
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
     }
 
     if (!bHasBounds)
     {
-        pszSQL = CPLSPrintf("SELECT min(tile_column), max(tile_column), "
-                            "min(tile_row), max(tile_row) FROM tiles "
-                            "WHERE zoom_level = %d", nMaxLevel);
+        const char* pszSQL =
+            CPLSPrintf("SELECT min(tile_column), max(tile_column), "
+                       "min(tile_row), max(tile_row) FROM tiles "
+                       "WHERE zoom_level = %d", nMaxLevel);
         CPLDebug("MBTILES", "%s", pszSQL);
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
         if (hSQLLyr == NULL)
         {
-            return FALSE;
+            return false;
         }
 
         hFeat = OGR_L_GetNextFeature(hSQLLyr);
         if (hFeat == NULL)
         {
             OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-            return FALSE;
+            return false;
         }
 
         if (OGR_F_IsFieldSet(hFeat, 0) &&
@@ -1372,11 +1463,15 @@ int MBTilesGetBounds(OGRDataSourceH hDS,
             OGR_F_IsFieldSet(hFeat, 2) &&
             OGR_F_IsFieldSet(hFeat, 3))
         {
-            nMinTileCol = OGR_F_GetFieldAsInteger(hFeat, 0);
-            nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1) + 1;
-            nMinTileRow = OGR_F_GetFieldAsInteger(hFeat, 2);
-            nMaxTileRow = OGR_F_GetFieldAsInteger(hFeat, 3) + 1;
-            bHasBounds = TRUE;
+            int nMinTileCol = OGR_F_GetFieldAsInteger(hFeat, 0);
+            int nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1);
+            int nMinTileRow = OGR_F_GetFieldAsInteger(hFeat, 2);
+            int nMaxTileRow = OGR_F_GetFieldAsInteger(hFeat, 3);
+            minX = MBTilesTileCoordToWorldCoord(nMinTileCol, nMaxLevel);
+            minY = MBTilesTileCoordToWorldCoord(nMinTileRow, nMaxLevel);
+            maxX = MBTilesTileCoordToWorldCoord(nMaxTileCol + 1, nMaxLevel);
+            maxY = MBTilesTileCoordToWorldCoord(nMaxTileRow + 1, nMaxLevel);
+            bHasBounds = true;
         }
 
         OGR_F_Destroy(hFeat);
@@ -1501,14 +1596,12 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
 
 static
 int MBTilesGetBandCount(OGRDataSourceH &hDS,
-                        CPL_UNUSED int nMinLevel,
                         int nMaxLevel,
                         int nMinTileRow, int nMaxTileRow,
                         int nMinTileCol, int nMaxTileCol)
 {
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
-    const char* pszSQL;
     VSILFILE* fpCURLOGR = NULL;
     int bFirstSelect = TRUE;
 
@@ -1517,7 +1610,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
     /* Small trick to get the VSILFILE associated with the OGR SQLite */
     /* DB */
     CPLString osDSName(OGR_DS_GetName(hDS));
-    if (strncmp(osDSName.c_str(), "/vsicurl/", 9) == 0)
+    if (STARTS_WITH(osDSName.c_str(), "/vsicurl/"))
     {
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -1532,7 +1625,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
                 if (OGR_F_IsFieldSet(hFeat, 0))
                 {
                     const char* pszPointer = OGR_F_GetFieldAsString(hFeat, 0);
-                    fpCURLOGR = (VSILFILE* )CPLScanPointer( pszPointer, strlen(pszPointer) );
+                    fpCURLOGR = (VSILFILE* )CPLScanPointer( pszPointer, static_cast<int>(strlen(pszPointer)) );
                 }
                 OGR_F_Destroy(hFeat);
             }
@@ -1540,16 +1633,17 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
         }
     }
 
-    pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
-                            "tile_column = %d AND tile_row = %d AND zoom_level = %d",
-                            (nMinTileCol  + nMaxTileCol) / 2,
-                            (nMinTileRow  + nMaxTileRow) / 2,
-                            nMaxLevel);
+    const char* pszSQL =
+        CPLSPrintf("SELECT tile_data FROM tiles WHERE "
+                   "tile_column = %d AND tile_row = %d AND zoom_level = %d",
+                   (nMinTileCol  + nMaxTileCol) / 2,
+                   (nMinTileRow  + nMaxTileRow) / 2,
+                   nMaxLevel);
     CPLDebug("MBTILES", "%s", pszSQL);
 
     if (fpCURLOGR)
     {
-        /* Install a spy on the file connexion that will intercept */
+        /* Install a spy on the file connection that will intercept */
         /* PNG or JPEG headers, to interrupt their downloading */
         /* once the header is found. Speeds up dataset opening. */
         CPLErrorReset();
@@ -1570,10 +1664,10 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
             OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
             hSQLLyr = NULL;
 
-            /* Re-open OGR SQLite DB, because with our spy we have simulated an I/O error */
-            /* that SQLite will have difficulies to recover within the existing connection */
-            /* No worry ! This will be fast because the /vsicurl/ cache has cached the already */
-            /* read blocks */
+            // Re-open OGR SQLite DB, because with our spy we have simulated an
+            // I/O error that SQLite will have difficulties to recover within
+            // the existing connection.  This will be fast because
+            // the /vsicurl/ cache has cached the already read blocks.
             OGRReleaseDataSource(hDS);
             hDS = MBTILESOpenSQLiteDB(osDSName.c_str(), GA_ReadOnly);
             if (hDS == NULL)
@@ -1595,7 +1689,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     }
 
-    while( TRUE )
+    while( true )
     {
         if (hSQLLyr == NULL && bFirstSelect)
         {
@@ -1641,7 +1735,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
 
     nBands = GDALGetRasterCount(hDSTile);
 
-    if ((nBands != 1 && nBands != 3 && nBands != 4) ||
+    if ((nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4) ||
         GDALGetRasterXSize(hDSTile) != 256 ||
         GDALGetRasterYSize(hDSTile) != 256 ||
         GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)) != GDT_Byte)
@@ -1694,7 +1788,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Open underlying OGR DB                                          */
 /* -------------------------------------------------------------------- */
 
-    OGRDataSourceH hDS = MBTILESOpenSQLiteDB(poOpenInfo->pszFilename, GA_ReadOnly);
+    OGRDataSourceH hDS = MBTILESOpenSQLiteDB(poOpenInfo->pszFilename,
+                                             poOpenInfo->eAccess);
 
     MBTilesDataset* poDS = NULL;
 
@@ -1709,16 +1804,11 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         CPLString osSQL;
         OGRLayerH hMetadataLyr, hRasterLyr;
         OGRFeatureH hFeat;
-        int nResolutions;
-        int iBand, nBands, nBlockXSize, nBlockYSize;
-        GDALDataType eDataType;
+        int nBands;
         OGRLayerH hSQLLyr = NULL;
         int nMinLevel = -1, nMaxLevel = -1;
-        int nMinTileRow = 0, nMaxTileRow = 0, nMinTileCol = 0, nMaxTileCol = 0;
-        int bHasBounds = FALSE;
         int bHasMinMaxLevel = FALSE;
         int bHasMap;
-        const char* pszBandCount;
 
         osMetadataTableName = "metadata";
 
@@ -1765,6 +1855,10 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         bHasMinMaxLevel = MBTilesGetMinMaxZoomLevel(hDS, bHasMap,
                                                     nMinLevel, nMaxLevel);
 
+        const char* pszZoomLevel = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "ZOOM_LEVEL");
+        if( pszZoomLevel != NULL )
+            nMaxLevel = atoi(pszZoomLevel);
+
         if (bHasMinMaxLevel && (nMinLevel < 0 || nMinLevel > nMaxLevel))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1789,30 +1883,53 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Get bounds                                                      */
 /* -------------------------------------------------------------------- */
-
-        bHasBounds = MBTilesGetBounds(hDS, nMinLevel, nMaxLevel,
-                                      nMinTileRow, nMaxTileRow,
-                                      nMinTileCol, nMaxTileCol);
+        double dfMinX = 0.0, dfMinY = 0.0, dfMaxX = 0.0, dfMaxY = 0.0;
+        bool bUseBounds = CPLFetchBool(const_cast<const char**>(poOpenInfo->papszOpenOptions),
+                                      "USE_BOUNDS", true);
+        const char* pszMinX = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MINX");
+        const char* pszMinY = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MINY");
+        const char* pszMaxX = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAXX");
+        const char* pszMaxY = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAXY");
+        bool bHasBounds;
+        if( pszMinX != NULL && pszMinY != NULL && pszMaxX != NULL && pszMaxY != NULL )
+        {
+            bHasBounds = true;
+        }
+        else
+        {
+            bHasBounds = MBTilesGetBounds(hDS, bUseBounds, nMaxLevel,
+                                          dfMinX, dfMinY,
+                                          dfMaxX, dfMaxY);
+        }
         if (!bHasBounds)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find min and max tile numbers");
             goto end;
         }
+        if( pszMinX != NULL ) dfMinX = CPLAtof(pszMinX);
+        if( pszMinY != NULL ) dfMinY = CPLAtof(pszMinY);
+        if( pszMaxX != NULL ) dfMaxX = CPLAtof(pszMaxX);
+        if( pszMaxY != NULL ) dfMaxY = CPLAtof(pszMaxY);
 
 /* -------------------------------------------------------------------- */
 /*      Get number of bands                                             */
 /* -------------------------------------------------------------------- */
-
-        pszBandCount = CPLGetConfigOption("MBTILES_BAND_COUNT", "-1");
+        const char* pszBandCount = CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "BAND_COUNT",
+            CPLGetConfigOption("MBTILES_BAND_COUNT", "-1"));
         nBands = atoi(pszBandCount);
 
-        if( ! (nBands == 1 || nBands == 3 || nBands == 4) )
+        if( ! (nBands == 1 || nBands == 2 || nBands == 3 || nBands == 4) )
         {
-            nBands = MBTilesGetBandCount(hDS, nMinLevel, nMaxLevel,
+            int nMinTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinX, nMaxLevel ));
+            int nMinTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinY, nMaxLevel ));
+            int nMaxTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxX, nMaxLevel ));
+            int nMaxTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxY, nMaxLevel ));
+            nBands = MBTilesGetBandCount(hDS, nMaxLevel,
                                          nMinTileRow, nMaxTileRow,
                                          nMinTileCol, nMaxTileCol);
             if (nBands < 0)
-                goto end;
+                nBands = 4;
         }
 
 /* -------------------------------------------------------------------- */
@@ -1822,74 +1939,68 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS = new MBTilesDataset();
         poDS->eAccess = poOpenInfo->eAccess;
         poDS->hDS = hDS;
+        poDS->hDB = (sqlite3*) GDALGetInternalHandle( (GDALDatasetH)hDS, "SQLITE_HANDLE" );
+        CPLAssert(poDS->hDB != NULL);
 
         /* poDS will release it from now */
         hDS = NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Store resolutions                                               */
-/* -------------------------------------------------------------------- */
-        poDS->nMinLevel = nMinLevel;
-        poDS->nResolutions = nResolutions = nMaxLevel - nMinLevel;
+        poDS->InitRaster ( NULL, nMaxLevel, nBands,
+                           dfMinX, dfMinY, dfMaxX, dfMaxY );
 
-/* -------------------------------------------------------------------- */
-/*      Round bounds to the lowest zoom level                           */
-/* -------------------------------------------------------------------- */
+        if( poDS->eAccess == GA_Update )
+        {
+            // So that we can edit all potential overviews
+            nMinLevel = 0;
 
-        //CPLDebug("MBTILES", "%d %d %d %d", nMinTileCol, nMinTileRow, nMaxTileCol, nMaxTileRow);
-        nMinTileCol = (int)(1.0 * nMinTileCol / (1 << nResolutions)) * (1 << nResolutions);
-        nMinTileRow = (int)(1.0 * nMinTileRow / (1 << nResolutions)) * (1 << nResolutions);
-        nMaxTileCol = (int)ceil(1.0 * nMaxTileCol / (1 << nResolutions)) * (1 << nResolutions);
-        nMaxTileRow = (int)ceil(1.0 * nMaxTileRow / (1 << nResolutions)) * (1 << nResolutions);
+            const char* pszFormat = poDS->GetMetadataItem("format");
+            if( pszFormat != NULL && (EQUAL(pszFormat, "jpg") || EQUAL(pszFormat, "jpeg")) )
+            {
+                poDS->m_eTF = GPKG_TF_JPEG;
+            }
 
-/* -------------------------------------------------------------------- */
-/*      Compute raster size, geotransform and projection                */
-/* -------------------------------------------------------------------- */
-        poDS->nMinTileCol = nMinTileCol;
-        poDS->nMinTileRow = nMinTileRow;
-        poDS->nRasterXSize = (nMaxTileCol-nMinTileCol) * 256;
-        poDS->nRasterYSize = (nMaxTileRow-nMinTileRow) * 256;
+            const char* pszTF = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILE_FORMAT");
+            if( pszTF )
+            {
+                poDS->m_eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
+                if( (pszFormat != NULL && (EQUAL(pszFormat, "jpg") || EQUAL(pszFormat, "jpeg")) &&
+                     poDS->m_eTF != GPKG_TF_JPEG) ||
+                    (pszFormat != NULL && EQUAL(pszFormat, "png") && poDS->m_eTF == GPKG_TF_JPEG) )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Format metadata = '%s', but TILE_FORMAT='%s'",
+                             pszFormat, pszTF);
+                }
+            }
 
-        nBlockXSize = nBlockYSize = 256;
-        eDataType = GDT_Byte;
-
-/* -------------------------------------------------------------------- */
-/*      Add bands                                                       */
-/* -------------------------------------------------------------------- */
-
-        for(iBand=0;iBand<nBands;iBand++)
-            poDS->SetBand(iBand+1, new MBTilesBand(poDS, iBand+1, eDataType,
-                                                  nBlockXSize, nBlockYSize));
+            poDS->ParseCompressionOptions(poOpenInfo->papszOpenOptions);
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Add overview levels as internal datasets                        */
 /* -------------------------------------------------------------------- */
-        if (nResolutions >= 1)
+        for( int iLevel = nMaxLevel - 1; iLevel >= nMinLevel; iLevel-- )
         {
-            poDS->papoOverviews = (MBTilesDataset**)
-                CPLCalloc(nResolutions, sizeof(MBTilesDataset*));
-            int nLev;
-            for(nLev=1;nLev<=nResolutions;nLev++)
-            {
-                poDS->papoOverviews[nLev-1] = new MBTilesDataset(poDS, nLev);
+            MBTilesDataset* poOvrDS = new MBTilesDataset();
+            poOvrDS->InitRaster ( poDS, iLevel, nBands, dfMinX, dfMinY, dfMaxX, dfMaxY );
 
-                for(iBand=0;iBand<nBands;iBand++)
-                {
-                    poDS->papoOverviews[nLev-1]->SetBand(iBand+1,
-                        new MBTilesBand(poDS->papoOverviews[nLev-1], iBand+1, eDataType,
-                                           nBlockXSize, nBlockYSize));
-                }
+            poDS->m_papoOverviewDS = (MBTilesDataset**) CPLRealloc(poDS->m_papoOverviewDS,
+                            sizeof(MBTilesDataset*) * (poDS->m_nOverviewCount+1));
+            poDS->m_papoOverviewDS[poDS->m_nOverviewCount ++] = poOvrDS;
+
+            if( poOvrDS->GetRasterXSize() < 256 &&
+                poOvrDS->GetRasterYSize() < 256 )
+            {
+                break;
             }
         }
-
-        poDS->SetMetadata(poDS->papszImageStructure, "IMAGE_STRUCTURE");
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
         poDS->SetDescription( poOpenInfo->pszFilename );
 
-        if ( !EQUALN(poOpenInfo->pszFilename, "/vsicurl/", 9) )
+        if ( !STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsicurl/") )
             poDS->TryLoadXML();
         else
         {
@@ -1905,34 +2016,707 @@ end:
 }
 
 /************************************************************************/
+/*                                Create()                              */
+/************************************************************************/
+
+GDALDataset* MBTilesDataset::Create( const char * pszFilename,
+                                   int nXSize,
+                                   int nYSize,
+                                   int nBandsIn,
+                                   GDALDataType eDT,
+                                   char **papszOptions )
+{
+    MBTilesDataset* poDS = new MBTilesDataset();
+    if( !poDS->CreateInternal(pszFilename, nXSize, nYSize, nBandsIn, eDT, papszOptions) )
+    {
+        delete poDS;
+        poDS = NULL;
+    }
+    return poDS;
+}
+
+/************************************************************************/
+/*                            CreateInternal()                          */
+/************************************************************************/
+
+bool MBTilesDataset::CreateInternal( const char * pszFilename,
+                                   int nXSize,
+                                   int nYSize,
+                                   int nBandsIn,
+                                   GDALDataType eDT,
+                                   char **papszOptions )
+{
+    if( eDT != GDT_Byte )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Only Byte supported");
+        return false;
+    }
+    if( nBandsIn != 1 && nBandsIn != 2 && nBandsIn != 3 && nBandsIn != 4 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                  "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
+        return false;
+    }
+
+    // for test/debug purposes only. true is the nominal value
+    m_bPNGSupports2Bands = CPLTestBool(CPLGetConfigOption("MBTILES_PNG_SUPPORTS_2BANDS", "TRUE"));
+    m_bPNGSupportsCT = CPLTestBool(CPLGetConfigOption("MBTILES_PNG_SUPPORTS_CT", "TRUE"));
+    m_bWriteBounds = CPLFetchBool(const_cast<const char**>(papszOptions), "WRITE_BOUNDS", true);
+    m_bWriteMinMaxZoom = CPLFetchBool(const_cast<const char**>(papszOptions), "WRITE_MINMAXZOOM", true);
+
+    VSIUnlink( pszFilename );
+    SetDescription( pszFilename );
+
+    int rc;
+#ifdef HAVE_SQLITE_VFS
+    if (STARTS_WITH(pszFilename, "/vsi"))
+    {
+        pMyVFS = OGRSQLiteCreateVFS(NULL, NULL);
+        sqlite3_vfs_register(pMyVFS, 0);
+        rc = sqlite3_open_v2( pszFilename, &hDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, pMyVFS->zName );
+    }
+    else
+#endif
+    {
+        rc = sqlite3_open( pszFilename, &hDB );
+    }
+
+    if( rc != SQLITE_OK )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszFilename);
+        return false;
+    }
+
+    sqlite3_exec( hDB, "PRAGMA synchronous = OFF", NULL, NULL, NULL );
+
+    rc = sqlite3_exec( hDB, "CREATE TABLE tiles ("
+          "zoom_level INTEGER NOT NULL,"
+          "tile_column INTEGER NOT NULL,"
+          "tile_row INTEGER NOT NULL,"
+          "tile_data BLOB NOT NULL,"
+          "UNIQUE (zoom_level, tile_column, tile_row) )", NULL, NULL, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create tiles table");
+        return false;
+    }
+
+    rc = sqlite3_exec( hDB, "CREATE TABLE metadata (name TEXT, value TEXT)", NULL, NULL, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create metadata table");
+        return false;
+    }
+
+    const char* pszName = CSLFetchNameValueDef(papszOptions, "NAME",
+                                               CPLGetBasename(pszFilename));
+    char* pszSQL = sqlite3_mprintf(
+        "INSERT INTO metadata (name, value) VALUES ('name', '%q')", pszName );
+    sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+    sqlite3_free(pszSQL);
+
+    const char* pszType = CSLFetchNameValueDef(papszOptions, "TYPE",
+                                               "overlay");
+    pszSQL = sqlite3_mprintf(
+        "INSERT INTO metadata (name, value) VALUES ('type', '%q')", pszType );
+    sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+    sqlite3_free(pszSQL);
+
+    const char* pszDescription = CSLFetchNameValueDef(papszOptions, "DESCRIPTION",
+                                               CPLGetBasename(pszFilename));
+    pszSQL = sqlite3_mprintf(
+        "INSERT INTO metadata (name, value) VALUES ('description', '%q')", pszDescription );
+    sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+    sqlite3_free(pszSQL);
+
+    const char* pszVersion = CSLFetchNameValueDef(papszOptions, "VERSION", "1.1");
+    pszSQL = sqlite3_mprintf(
+        "INSERT INTO metadata (name, value) VALUES ('version', '%q')", pszVersion );
+    sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+    sqlite3_free(pszSQL);
+
+    const char* pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
+    if( pszTF )
+        m_eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
+
+    const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT",
+                                        (m_eTF == GPKG_TF_JPEG) ? "jpg" : "png" );
+    pszSQL = sqlite3_mprintf(
+        "INSERT INTO metadata (name, value) VALUES ('format', '%q')", pszFormat );
+    sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+    sqlite3_free(pszSQL);
+
+    m_bNew = true;
+    eAccess = GA_Update;
+    nRasterXSize = nXSize;
+    nRasterYSize = nYSize;
+
+    m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, 256, 256);
+    if( m_pabyCachedTiles == NULL )
+    {
+        return false;
+    }
+
+    for(int i = 1; i <= nBandsIn; i ++)
+        SetBand( i, new MBTilesBand(this) );
+
+    ParseCompressionOptions(papszOptions);
+
+    return true;
+}
+
+/************************************************************************/
+/*                            CreateCopy()                              */
+/************************************************************************/
+
+typedef struct
+{
+    const char*         pszName;
+    GDALResampleAlg     eResampleAlg;
+} WarpResamplingAlg;
+
+static const WarpResamplingAlg asResamplingAlg[] =
+{
+    { "NEAREST", GRA_NearestNeighbour },
+    { "BILINEAR", GRA_Bilinear },
+    { "CUBIC", GRA_Cubic },
+    { "CUBICSPLINE", GRA_CubicSpline },
+    { "LANCZOS", GRA_Lanczos },
+    { "MODE", GRA_Mode },
+    { "AVERAGE", GRA_Average },
+};
+
+GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
+                                         GDALDataset *poSrcDS,
+                                         int /*bStrict*/,
+                                         char ** papszOptions,
+                                         GDALProgressFunc pfnProgress,
+                                         void * pProgressData )
+{
+
+    int nBands = poSrcDS->GetRasterCount();
+    if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
+        return NULL;
+    }
+
+    char** papszTO = CSLSetNameValue( NULL, "DST_SRS", SRS_EPSG_3857 );
+    void* hTransformArg =
+            GDALCreateGenImgProjTransformer2( poSrcDS, NULL, papszTO );
+    if( hTransformArg == NULL )
+    {
+        CSLDestroy(papszTO);
+        return NULL;
+    }
+
+    GDALTransformerInfo* psInfo = (GDALTransformerInfo*)hTransformArg;
+    double adfGeoTransform[6];
+    double adfExtent[4];
+    int    nXSize, nYSize;
+
+    if ( GDALSuggestedWarpOutput2( poSrcDS,
+                                  psInfo->pfnTransform, hTransformArg,
+                                  adfGeoTransform,
+                                  &nXSize, &nYSize,
+                                  adfExtent, 0 ) != CE_None )
+    {
+        CSLDestroy(papszTO);
+        GDALDestroyGenImgProjTransformer( hTransformArg );
+        return NULL;
+    }
+
+    GDALDestroyGenImgProjTransformer( hTransformArg );
+    hTransformArg = NULL;
+
+    // Hack to compensate for  GDALSuggestedWarpOutput2() failure when
+    // reprojection latitude = +/- 90 to EPSG:3857
+    double adfSrcGeoTransform[6];
+    if( poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None )
+    {
+        const char* pszSrcWKT = poSrcDS->GetProjectionRef();
+        if( pszSrcWKT != NULL && pszSrcWKT[0] != '\0' )
+        {
+            OGRSpatialReference oSRS;
+            if( oSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
+                oSRS.IsGeographic() )
+            {
+                double minLat = MIN( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                double maxLat = MAX( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                double maxNorthing = adfGeoTransform[3];
+                double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
+                bool bChanged = false;
+                if( maxLat > 89.9999999 )
+                {
+                    bChanged = true;
+                    maxNorthing = MAX_GM;
+                }
+                if( minLat <= -89.9999999 )
+                {
+                    bChanged = true;
+                    minNorthing = -MAX_GM;
+                }
+                if( bChanged )
+                {
+                    adfGeoTransform[3] = maxNorthing;
+                    nYSize = int((maxNorthing - minNorthing) / (-adfGeoTransform[5]) + 0.5);
+                    adfExtent[1] = maxNorthing + nYSize * adfGeoTransform[5];
+                    adfExtent[3] = maxNorthing;
+                }
+            }
+        }
+    }
+
+    int nZoomLevel;
+    double dfComputedRes = adfGeoTransform[1];
+    double dfPrevRes = 0, dfRes = 0;
+    const double dfPixelXSizeZoomLevel0 = 2 * MAX_GM / 256;
+    for(nZoomLevel = 0; nZoomLevel < 25; nZoomLevel++)
+    {
+        dfRes = dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+        if( dfComputedRes > dfRes )
+            break;
+        dfPrevRes = dfRes;
+    }
+    if( nZoomLevel == 25 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not find an appropriate zoom level");
+        CSLDestroy(papszTO);
+        return NULL;
+    }
+
+    const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
+                                                            "ZOOM_LEVEL_STRATEGY",
+                                                            "AUTO");
+    if( fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
+    {
+        if( EQUAL(pszZoomLevelStrategy, "LOWER") )
+        {
+            if( nZoomLevel > 0 )
+                nZoomLevel --;
+        }
+        else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
+        {
+            /* do nothing */
+        }
+        else if( nZoomLevel > 0 )
+        {
+            if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+                nZoomLevel --;
+        }
+    }
+
+    dfRes = dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+
+    double dfMinX = adfExtent[0];
+    double dfMinY = adfExtent[1];
+    double dfMaxX = adfExtent[2];
+    double dfMaxY = adfExtent[3];
+
+    nXSize = (int) ( 0.5 + ( dfMaxX - dfMinX ) / dfRes );
+    nYSize = (int) ( 0.5 + ( dfMaxY - dfMinY ) / dfRes );
+    adfGeoTransform[1] = dfRes;
+    adfGeoTransform[5] = -dfRes;
+
+    int nTargetBands = nBands;
+    /* For grey level or RGB, if there's reprojection involved, add an alpha */
+    /* channel */
+    if( (nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() == NULL) ||
+        nBands == 3 )
+    {
+        OGRSpatialReference oSrcSRS;
+        oSrcSRS.SetFromUserInput(poSrcDS->GetProjectionRef());
+        oSrcSRS.AutoIdentifyEPSG();
+        if( oSrcSRS.GetAuthorityCode(NULL) == NULL ||
+            atoi(oSrcSRS.GetAuthorityCode(NULL)) != 3857 )
+        {
+            nTargetBands ++;
+        }
+    }
+
+    GDALResampleAlg eResampleAlg = GRA_Bilinear;
+    const char* pszResampling = CSLFetchNameValue(papszOptions, "RESAMPLING");
+    if( pszResampling )
+    {
+        for(size_t iAlg = 0; iAlg < sizeof(asResamplingAlg)/sizeof(asResamplingAlg[0]); iAlg ++)
+        {
+            if( EQUAL(pszResampling, asResamplingAlg[iAlg].pszName) )
+            {
+                eResampleAlg = asResamplingAlg[iAlg].eResampleAlg;
+                break;
+            }
+        }
+    }
+
+    if( nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL &&
+        eResampleAlg != GRA_NearestNeighbour && eResampleAlg != GRA_Mode )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Input dataset has a color table, which will likely lead to "
+                 "bad results when using a resampling method other than "
+                 "nearest neighbour or mode. Converting the dataset to 24/32 bit "
+                 "(e.g. with gdal_translate -expand rgb/rgba) is advised.");
+    }
+
+    GDALDataset* poDS = Create( pszFilename, nXSize, nYSize, nTargetBands, GDT_Byte,
+                                   papszOptions );
+    if( poDS == NULL )
+    {
+        CSLDestroy(papszTO);
+        return NULL;
+    }
+    poDS->SetGeoTransform(adfGeoTransform);
+    if( nTargetBands == 1 && nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
+    {
+        poDS->GetRasterBand(1)->SetColorTable( poSrcDS->GetRasterBand(1)->GetColorTable() );
+    }
+
+    hTransformArg =
+        GDALCreateGenImgProjTransformer2( poSrcDS, poDS, papszTO );
+    CSLDestroy(papszTO);
+    if( hTransformArg == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALCreateGenImgProjTransformer2 failed");
+        delete poDS;
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Warp the transformer with a linear approximator                 */
+/* -------------------------------------------------------------------- */
+    hTransformArg =
+        GDALCreateApproxTransformer( GDALGenImgProjTransform,
+                                     hTransformArg, 0.125 );
+    GDALApproxTransformerOwnsSubtransformer(hTransformArg, TRUE);
+
+/* -------------------------------------------------------------------- */
+/*      Setup warp options.                                             */
+/* -------------------------------------------------------------------- */
+    GDALWarpOptions *psWO = GDALCreateWarpOptions();
+
+    psWO->papszWarpOptions = CSLSetNameValue(NULL, "OPTIMIZE_SIZE", "YES");
+    psWO->eWorkingDataType = GDT_Byte;
+
+    psWO->eResampleAlg = eResampleAlg;
+
+    psWO->hSrcDS = poSrcDS;
+    psWO->hDstDS = poDS;
+
+    psWO->pfnTransformer = GDALApproxTransform;
+    psWO->pTransformerArg = hTransformArg;
+
+    psWO->pfnProgress = pfnProgress;
+    psWO->pProgressArg = pProgressData;
+
+/* -------------------------------------------------------------------- */
+/*      Setup band mapping.                                             */
+/* -------------------------------------------------------------------- */
+
+    if( nBands == 2 || nBands == 4 )
+        psWO->nBandCount = nBands - 1;
+    else
+        psWO->nBandCount = nBands;
+
+    psWO->panSrcBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
+    psWO->panDstBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
+
+    for( int i = 0; i < psWO->nBandCount; i++ )
+    {
+        psWO->panSrcBands[i] = i+1;
+        psWO->panDstBands[i] = i+1;
+    }
+
+    if( nBands == 2 || nBands == 4 )
+    {
+        psWO->nSrcAlphaBand = nBands;
+    }
+    if( nTargetBands == 2 || nTargetBands == 4 )
+    {
+        psWO->nDstAlphaBand = nTargetBands;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize and execute the warp.                                */
+/* -------------------------------------------------------------------- */
+    GDALWarpOperation oWO;
+
+    CPLErr eErr = oWO.Initialize( psWO );
+    if( eErr == CE_None )
+    {
+        /*if( bMulti )
+            eErr = oWO.ChunkAndWarpMulti( 0, 0, nXSize, nYSize );
+        else*/
+        eErr = oWO.ChunkAndWarpImage( 0, 0, nXSize, nYSize );
+    }
+    if (eErr != CE_None)
+    {
+        delete poDS;
+        poDS = NULL;
+    }
+
+    GDALDestroyTransformer( hTransformArg );
+    GDALDestroyWarpOptions( psWO );
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                        ParseCompressionOptions()                     */
+/************************************************************************/
+
+void MBTilesDataset::ParseCompressionOptions(char** papszOptions)
+{
+    const char* pszZLevel = CSLFetchNameValue(papszOptions, "ZLEVEL");
+    if( pszZLevel )
+        m_nZLevel = atoi(pszZLevel);
+
+    const char* pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
+    if( pszQuality )
+        m_nQuality = atoi(pszQuality);
+
+    const char* pszDither = CSLFetchNameValue(papszOptions, "DITHER");
+    if( pszDither )
+        m_bDither = CPLTestBool(pszDither);
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+static int GetFloorPowerOfTwo(int n)
+{
+    int p2 = 1;
+    while( (n = n >> 1) > 0 )
+    {
+        p2 <<= 1;
+    }
+    return p2;
+}
+
+CPLErr MBTilesDataset::IBuildOverviews(
+                        const char * pszResampling,
+                        int nOverviews, int * panOverviewList,
+                        int nBandsIn, int * /*panBandList*/,
+                        GDALProgressFunc pfnProgress, void * pProgressData )
+{
+    if( GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Overview building not supported on a database opened in read-only mode");
+        return CE_Failure;
+    }
+    if( m_poParentDS != NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Overview building not supported on overview dataset");
+        return CE_Failure;
+    }
+
+    if( nOverviews == 0 )
+    {
+        for(int i=0;i<m_nOverviewCount;i++)
+            m_papoOverviewDS[i]->FlushCache();
+        char* pszSQL = sqlite3_mprintf("DELETE FROM 'tiles' WHERE zoom_level < %d",
+                                       m_nZoomLevel);
+        char* pszErrMsg = NULL;
+        int ret = sqlite3_exec(hDB, pszSQL, NULL, NULL, &pszErrMsg);
+        sqlite3_free(pszSQL);
+        if( ret != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Failure: %s",
+                     pszErrMsg ? pszErrMsg : "");
+            sqlite3_free(pszErrMsg);
+            return CE_Failure;
+        }
+
+        int nRows = 0, nCols = 0;
+        char** papszResult = NULL;
+        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'", &papszResult, &nRows, &nCols, NULL);
+        sqlite3_free_table(papszResult);
+        if( nRows == 1 )
+        {
+            sqlite3_exec(hDB, "DELETE FROM metadata WHERE name = 'minzoom'", NULL, NULL, NULL);
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO metadata (name, value) VALUES ('minzoom', '%d')", m_nZoomLevel );
+            sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+            sqlite3_free(pszSQL);
+        }
+
+        return CE_None;
+    }
+
+    if( nBandsIn != nBands )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Generation of overviews only"
+                  "supported when operating on all bands." );
+        return CE_Failure;
+    }
+
+    if( m_nOverviewCount == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Image too small to support overviews");
+        return CE_Failure;
+    }
+
+    FlushCache();
+    for(int i=0;i<nOverviews;i++)
+    {
+        if( panOverviewList[i] < 2 )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Overview factor '%d' must be >= 2",
+                     panOverviewList[i]);
+            return CE_Failure;
+        }
+
+        if( GetFloorPowerOfTwo( panOverviewList[i] ) != panOverviewList[i] )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Overview factor '%d' is not a power of 2",
+                     panOverviewList[i]);
+            return CE_Failure;
+        }
+    }
+
+    GDALRasterBand*** papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
+    int iCurOverview = 0;
+    int nMinZoom = m_nZoomLevel;
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
+        iCurOverview = 0;
+        for(int i=0;i<nOverviews;i++)
+        {
+            int nVal = panOverviewList[i];
+            int iOvr = -1;
+            while( nVal > 1 )
+            {
+                nVal >>= 1;
+                iOvr ++;
+            }
+            if( iOvr >= m_nOverviewCount )
+            {
+                continue;
+            }
+            MBTilesDataset* poODS = m_papoOverviewDS[iOvr];
+            if( poODS->m_nZoomLevel < nMinZoom )
+                nMinZoom = poODS->m_nZoomLevel;
+            papapoOverviewBands[iBand][iCurOverview] = poODS->GetRasterBand(iBand+1);
+            iCurOverview++ ;
+        }
+    }
+
+    CPLErr eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBands,
+                                     iCurOverview, papapoOverviewBands,
+                                     pszResampling, pfnProgress, pProgressData );
+
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        CPLFree(papapoOverviewBands[iBand]);
+    }
+    CPLFree(papapoOverviewBands);
+
+    if( eErr == CE_None )
+    {
+        int nRows = 0, nCols = 0;
+        char** papszResult = NULL;
+        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'", &papszResult, &nRows, &nCols, NULL);
+        sqlite3_free_table(papszResult);
+        if( nRows == 1 )
+        {
+            sqlite3_exec(hDB, "DELETE FROM metadata WHERE name = 'minzoom'", NULL, NULL, NULL);
+            char* pszSQL = sqlite3_mprintf(
+                "INSERT INTO metadata (name, value) VALUES ('minzoom', '%d')", nMinZoom );
+            sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL );
+            sqlite3_free(pszSQL);
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                       GDALRegister_MBTiles()                         */
 /************************************************************************/
 
 void GDALRegister_MBTiles()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("MBTiles driver"))
+    if( !GDAL_CHECK_VERSION( "MBTiles driver" ) )
         return;
 
-    if( GDALGetDriverByName( "MBTiles" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "MBTiles" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "MBTiles" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "MBTiles" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_mbtiles.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mbtiles" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "MBTiles" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MBTiles" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mbtiles.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mbtiles" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
-        poDriver->pfnOpen = MBTilesDataset::Open;
-        poDriver->pfnIdentify = MBTilesDataset::Identify;
+#define COMPRESSION_OPTIONS \
+"  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='PNG'>" \
+"    <Value>PNG</Value>" \
+"    <Value>PNG8</Value>" \
+"    <Value>JPEG</Value>" \
+"  </Option>" \
+"  <Option name='QUALITY' type='int' min='1' max='100' description='Quality for JPEG tiles' default='75'/>" \
+"  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>" \
+"  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>" \
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='ZOOM_LEVEL' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
+"  <Option name='BAND_COUNT' type='string-select' description='Number of raster bands' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>1</Value>"
+"    <Value>2</Value>"
+"    <Value>3</Value>"
+"    <Value>4</Value>"
+"  </Option>"
+"  <Option name='MINX' type='float' description='Minimum X of area of interest'/>"
+"  <Option name='MINY' type='float' description='Minimum Y of area of interest'/>"
+"  <Option name='MAXX' type='float' description='Maximum X of area of interest'/>"
+"  <Option name='MAXY' type='float' description='Maximum Y of area of interest'/>"
+"  <Option name='USE_BOUNDS' type='boolean' description='Whether to use the bounds metadata, when available, to determine the AOI' default='YES'/>"
+COMPRESSION_OPTIONS
+"</OpenOptionList>");
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"
+"  <Option name='NAME' type='string' description='Tileset name'/>"
+"  <Option name='DESCRIPTION' type='string' description='A description of the layer'/>"
+"  <Option name='TYPE' type='string-select' description='Layer type' default='overlay'>"
+"    <Value>overlay</Value>"
+"    <Value>baselayer</Value>"
+"  </Option>"
+"  <Option name='VERSION' type='string' description='The version of the tileset, as a plain number' default='1.1'/>"
+COMPRESSION_OPTIONS
+"  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' description='Strategy to determine zoom level.' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>LOWER</Value>"
+"    <Value>UPPER</Value>"
+"  </Option>"
+"  <Option name='RESAMPLING' type='string-select' description='Resampling algorithm.' default='BILINEAR'>"
+"    <Value>NEAREST</Value>"
+"    <Value>BILINEAR</Value>"
+"    <Value>CUBIC</Value>"
+"    <Value>CUBICSPLINE</Value>"
+"    <Value>LANCZOS</Value>"
+"    <Value>MODE</Value>"
+"    <Value>AVERAGE</Value>"
+"  </Option>"
+"  <Option name='WRITE_BOUNDS' type='boolean' description='Whether to write the bounds metadata' default='YES'/>"
+"  <Option name='WRITE_MINMAXZOOM' type='boolean' description='Whether to write the minzoom and maxzoom metadata' default='YES'/>"
+"</CreationOptionList>");
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->pfnOpen = MBTilesDataset::Open;
+    poDriver->pfnIdentify = MBTilesDataset::Identify;
+    poDriver->pfnCreateCopy = MBTilesDataset::CreateCopy;
+    poDriver->pfnCreate = MBTilesDataset::Create;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

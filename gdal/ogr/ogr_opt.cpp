@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features
  * Purpose:  Functions for getting list of projection types, and their parms.
@@ -33,7 +32,7 @@
 
 CPL_CVSID("$Id$");
 
-static const char *papszParameterDefinitions[] = {
+static const char * const papszParameterDefinitions[] = {
     SRS_PP_CENTRAL_MERIDIAN,    "Central Meridian",     "Long",  "0.0",
     SRS_PP_SCALE_FACTOR,        "Scale Factor",         "Ratio", "1.0",
     SRS_PP_STANDARD_PARALLEL_1, "Standard Parallel 1",  "Lat",   "0.0",
@@ -51,163 +50,166 @@ static const char *papszParameterDefinitions[] = {
     SRS_PP_LATITUDE_OF_POINT_2, "Latitude of Point 2",  "Lat",   "0.0",
     SRS_PP_LONGITUDE_OF_POINT_3,"Longitude of Point 3", "Long",  "0.0",
     SRS_PP_LATITUDE_OF_POINT_3, "Latitude of Point 3",  "Lat",   "0.0",
-    SRS_PP_RECTIFIED_GRID_ANGLE,"Rectified Grid Angle", "Angle", "0.0", 
-    SRS_PP_SATELLITE_HEIGHT,    "Satellite Height",     "m",   "35785831.0", 
+    SRS_PP_RECTIFIED_GRID_ANGLE,"Rectified Grid Angle", "Angle", "0.0",
+    SRS_PP_SATELLITE_HEIGHT,    "Satellite Height",     "m",   "35785831.0",
+    SRS_PP_PEG_POINT_LATITUDE,  "Peg Point Latitude",   "Lat",   "0.0",
+    SRS_PP_PEG_POINT_LONGITUDE, "Peg Point Longitude",  "Long",  "0.0",
+    SRS_PP_PEG_POINT_HEADING,   "Peg Point Heading",    "Angle", "0.0",
+    SRS_PP_PEG_POINT_HEIGHT,    "Peg Point Height",     "m",     "0.0",
     NULL
 };
 
-static const char *papszProjectionDefinitions[] = {
-
-    "*", 
+static const char * const papszProjectionDefinitions[] = {
+    "*",
     SRS_PT_TRANSVERSE_MERCATOR,
     "Transverse Mercator",
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_SCALE_FACTOR, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*", 
+    "*",
     SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED,
     "Transverse Mercator (South Oriented)",
-    SRS_PP_LATITUDE_OF_ORIGIN, 
+    SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
-    SRS_PP_SCALE_FACTOR, 
+    SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_TUNISIA_MINING_GRID,
     "Tunisia Mining Grid",
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
-    SRS_PP_FALSE_NORTHING, 
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Albers Conic Equal Area",
     SRS_PP_STANDARD_PARALLEL_1,
     SRS_PP_STANDARD_PARALLEL_2,
-    SRS_PP_LATITUDE_OF_CENTER, 
+    SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*", 
+    "*",
     SRS_PT_AZIMUTHAL_EQUIDISTANT,
     "Azimuthal Equidistant",
-    SRS_PP_LATITUDE_OF_CENTER, 
+    SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_CYLINDRICAL_EQUAL_AREA,
     "Cylindrical Equal Area",
-    SRS_PP_STANDARD_PARALLEL_1, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_STANDARD_PARALLEL_1,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
-    "*", 
-    SRS_PT_CASSINI_SOLDNER, 
-    "Cassini/Soldner", 
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    "*",
+    SRS_PT_CASSINI_SOLDNER,
+    "Cassini/Soldner",
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_EQUIDISTANT_CONIC,
-    "Equidistant Conic", 
+    "Equidistant Conic",
     SRS_PP_STANDARD_PARALLEL_1,
     SRS_PP_STANDARD_PARALLEL_2,
-    SRS_PP_LATITUDE_OF_CENTER, 
+    SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_BONNE,
     "Bonne",
     SRS_PP_STANDARD_PARALLEL_1,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_ECKERT_I,
     "Eckert I",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_II,
     "Eckert II",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_III,
     "Eckert III",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_IV,
     "Eckert IV",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_V,
     "Eckert V",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_ECKERT_VI,
     "Eckert VI",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_EQUIRECTANGULAR,
     "Equirectangular",
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_STANDARD_PARALLEL_1, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_STANDARD_PARALLEL_1,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_GAUSSSCHREIBERTMERCATOR,
     "Gauss-Schreiber Transverse Mercator",
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_SCALE_FACTOR, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_GALL_STEREOGRAPHIC,
     "Gall Stereographic",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_GOODE_HOMOLOSINE,
     "Goode Homolosine",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
@@ -217,28 +219,28 @@ static const char *papszProjectionDefinitions[] = {
     "*",
     SRS_PT_GEOSTATIONARY_SATELLITE,
     "Geostationary Satellite",
-    SRS_PP_CENTRAL_MERIDIAN, 
+    SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_SATELLITE_HEIGHT,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_GNOMONIC,
     "Gnomonic",
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_HOTINE_OBLIQUE_MERCATOR,
     "Hotine Oblique Mercator",
-    SRS_PP_LATITUDE_OF_CENTER, 
+    SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
-    SRS_PP_AZIMUTH, 
+    SRS_PP_AZIMUTH,
     SRS_PP_RECTIFIED_GRID_ANGLE,
-    SRS_PP_SCALE_FACTOR, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_SCALE_FACTOR,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
@@ -249,61 +251,61 @@ static const char *papszProjectionDefinitions[] = {
     SRS_PP_LONGITUDE_OF_POINT_1,
     SRS_PP_LATITUDE_OF_POINT_2,
     SRS_PP_LONGITUDE_OF_POINT_2,
-    SRS_PP_SCALE_FACTOR, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_SCALE_FACTOR,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA,
     "Lambert Azimuthal Equal Area",
-    SRS_PP_LATITUDE_OF_CENTER, 
+    SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP,
     "Lambert Conformal Conic (2SP)",
-    SRS_PP_STANDARD_PARALLEL_1, 
-    SRS_PP_STANDARD_PARALLEL_2, 
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_STANDARD_PARALLEL_1,
+    SRS_PP_STANDARD_PARALLEL_2,
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP,
     "Lambert Conformal Conic (1SP)",
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_SCALE_FACTOR, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM,
     "Lambert Conformal Conic (2SP - Belgium)",
-    SRS_PP_STANDARD_PARALLEL_1, 
-    SRS_PP_STANDARD_PARALLEL_2, 
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_STANDARD_PARALLEL_1,
+    SRS_PP_STANDARD_PARALLEL_2,
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_MILLER_CYLINDRICAL,
     "Miller Cylindrical",
-    SRS_PP_LATITUDE_OF_CENTER, 
+    SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_MERCATOR_1SP,
     "Mercator (1SP)",
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_SCALE_FACTOR, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
@@ -312,56 +314,56 @@ static const char *papszProjectionDefinitions[] = {
     "Mercator (2SP)",
     SRS_PP_STANDARD_PARALLEL_1,
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_CENTRAL_MERIDIAN, 
+    SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_MOLLWEIDE,
     "Mollweide",
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_NEW_ZEALAND_MAP_GRID,
     "New Zealand Map Grid",
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_OBLIQUE_STEREOGRAPHIC,
     "Oblique Stereographic",
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_SCALE_FACTOR, 
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_ORTHOGRAPHIC,
     "Orthographic",
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_POLYCONIC,
     "Polyconic",
-    SRS_PP_LATITUDE_OF_ORIGIN, 
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    
+
     "*",
     SRS_PT_POLAR_STEREOGRAPHIC,
     "Polar Stereographic",
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_SCALE_FACTOR, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
@@ -369,51 +371,51 @@ static const char *papszProjectionDefinitions[] = {
     SRS_PT_ROBINSON,
     "Robinson",
     SRS_PP_LONGITUDE_OF_CENTER,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_SINUSOIDAL,
     "Sinusoidal",
     SRS_PP_LONGITUDE_OF_CENTER,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*"
     SRS_PT_STEREOGRAPHIC,
     "Stereographic",
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_SCALE_FACTOR, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*"
     SRS_PT_TWO_POINT_EQUIDISTANT,
     "Two Point Equidistant",
     SRS_PP_LATITUDE_OF_1ST_POINT,
-    SRS_PP_LONGITUDE_OF_1ST_POINT, 
+    SRS_PP_LONGITUDE_OF_1ST_POINT,
     SRS_PP_LATITUDE_OF_2ND_POINT,
     SRS_PP_LONGITUDE_OF_2ND_POINT,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_VANDERGRINTEN,
     "Van Der Grinten",
     SRS_PP_CENTRAL_MERIDIAN,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*"
     SRS_PT_KROVAK,
     "Krovak",
     SRS_PP_LATITUDE_OF_CENTER,
-    SRS_PP_LONGITUDE_OF_CENTER, 
+    SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_AZIMUTH,
     SRS_PP_PSEUDO_STD_PARALLEL_1,
     SRS_PP_SCALE_FACTOR,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
@@ -421,51 +423,51 @@ static const char *papszProjectionDefinitions[] = {
     "International Map of the World Polyconic",
     SRS_PP_LATITUDE_OF_1ST_POINT,
     SRS_PP_LATITUDE_OF_2ND_POINT,
-    SRS_PP_CENTRAL_MERIDIAN, 
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_WAGNER_I,
     "Wagner I (Kavraisky VI)",
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_WAGNER_II,
     "Wagner II",
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_WAGNER_III,
     "Wagner III",
     SRS_PP_LATITUDE_OF_ORIGIN,
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_WAGNER_IV,
     "Wagner IV",
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_WAGNER_V,
     "Wagner V",
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_WAGNER_VI,
     "Wagner VI",
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
     SRS_PT_WAGNER_VII,
     "Wagner VII",
-    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
 
     "*",
@@ -474,17 +476,23 @@ static const char *papszProjectionDefinitions[] = {
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
 
+    "*",
+    SRS_PT_SCH,
+    "Spherical Crosstrack Height",
+    SRS_PP_PEG_POINT_LATITUDE,
+    SRS_PP_PEG_POINT_LONGITUDE,
+    SRS_PP_PEG_POINT_HEADING,
+    SRS_PP_PEG_POINT_HEIGHT,
+
     NULL
 };
-
-
 
 
 /************************************************************************/
 /*                      OPTGetProjectionMethods()                       */
 /************************************************************************/
 
-/** 
+/**
  * Fetch list of possible projection methods.
  *
  * @return Returns NULL terminated list of projection methods.  This should
@@ -494,10 +502,9 @@ static const char *papszProjectionDefinitions[] = {
 char **OPTGetProjectionMethods()
 
 {
-    int         i;
-    char        **papszList = NULL;
+    char **papszList = NULL;
 
-    for( i = 1; papszProjectionDefinitions[i] != NULL; i++ )
+    for( int i = 1; papszProjectionDefinitions[i] != NULL; ++i )
     {
         if( EQUAL(papszProjectionDefinitions[i-1],"*") )
             papszList = CSLAddString(papszList,papszProjectionDefinitions[i]);
@@ -511,10 +518,10 @@ char **OPTGetProjectionMethods()
 /************************************************************************/
 
 /**
- * Fetch the parameters for a given projection method. 
+ * Fetch the parameters for a given projection method.
  *
  * @param pszProjectionMethod internal name of projection methods to fetch
- * the parameters for, such as "Transverse_Mercator" 
+ * the parameters for, such as "Transverse_Mercator"
  * (SRS_PT_TRANSVERSE_MERCATOR).
  *
  * @param ppszUserName pointer in which to return a user visible name for
@@ -522,41 +529,41 @@ char **OPTGetProjectionMethods()
  * freed by the caller.  Legal to pass in NULL if user name not required.
  *
  * @return returns a NULL terminated list of internal parameter names that
- * should be freed by the caller when no longer needed.  Returns NULL if 
+ * should be freed by the caller when no longer needed.  Returns NULL if
  * projection method is unknown.
  */
 
-char **OPTGetParameterList( const char *pszProjectionMethod, 
+char **OPTGetParameterList( const char *pszProjectionMethod,
                             char ** ppszUserName )
 
 {
     char **papszList = NULL;
-    int  i;
 
-    for( i = 1; papszProjectionDefinitions[i] != NULL; i++ )
+    for( int i = 1; papszProjectionDefinitions[i] != NULL; ++i )
     {
-        if( papszProjectionDefinitions[i-1][0] == '*' 
+        if( papszProjectionDefinitions[i-1][0] == '*'
             && EQUAL(papszProjectionDefinitions[i],pszProjectionMethod) )
         {
-            i++;
+            ++i;
 
             if( ppszUserName != NULL )
                 *ppszUserName = (char *)papszProjectionDefinitions[i];
 
-            i++;
-            while( papszProjectionDefinitions[i] != NULL 
+            ++i;
+            while( papszProjectionDefinitions[i] != NULL
                    && papszProjectionDefinitions[i][0] != '*' )
             {
-                papszList = CSLAddString( papszList, 
+                papszList = CSLAddString( papszList,
                                           papszProjectionDefinitions[i] );
-                i++;
+                ++i;
             }
-            if( papszList == NULL) /* IGH has no parameter, so return an empty list instead of NULL */
-                papszList = (char**) CPLCalloc(1, sizeof(char*));
+            // IGH has no parameter, so return an empty list instead of NULL.
+            if( papszList == NULL)
+                papszList = static_cast<char**>( CPLCalloc(1, sizeof(char*)) );
             return papszList;
         }
     }
-    
+
     return NULL;
 }
 
@@ -565,22 +572,22 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
 /************************************************************************/
 
 /**
- * Fetch information about a single parameter of a projection method. 
+ * Fetch information about a single parameter of a projection method.
  *
  * @param pszProjectionMethod name of projection method for which the parameter
  * applies.  Not currently used, but in the future this could affect defaults.
  * This is the internal projection method name, such as "Tranverse_Mercator".
  *
  * @param pszParameterName name of the parameter to fetch information about.
- * This is the internal name such as "central_meridian" 
- * (SRS_PP_CENTRAL_MERIDIAN). 
- * 
+ * This is the internal name such as "central_meridian"
+ * (SRS_PP_CENTRAL_MERIDIAN).
+ *
  * @param ppszUserName location at which to return the user visible name for
- * the parameter.  This pointer may be NULL to skip the user name.  The 
+ * the parameter.  This pointer may be NULL to skip the user name.  The
  * returned name should not be modified or freed.
  *
  * @param ppszType location at which to return the parameter type for
- * the parameter.  This pointer may be NULL to skip.  The  returned type 
+ * the parameter.  This pointer may be NULL to skip.  The  returned type
  * should not be modified or freed.  The type values are described above.
  *
  * @param pdfDefaultValue location at which to put the default value for
@@ -589,18 +596,14 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
  * @return TRUE if parameter found, or FALSE otherwise.
  */
 
-int OPTGetParameterInfo( const char * pszProjectionMethod,
+int OPTGetParameterInfo( CPL_UNUSED const char * pszProjectionMethod,
                          const char * pszParameterName,
                          char ** ppszUserName,
                          char ** ppszType,
                          double *pdfDefaultValue )
 
 {
-    int         i;
-
-    (void) pszProjectionMethod;
-
-    for( i = 0; papszParameterDefinitions[i] != NULL; i += 4 )
+    for( int i = 0; papszParameterDefinitions[i] != NULL; i += 4 )
     {
         if( EQUAL(papszParameterDefinitions[i],pszParameterName) )
         {
@@ -617,4 +620,3 @@ int OPTGetParameterInfo( const char * pszProjectionMethod,
 
     return FALSE;
 }
-

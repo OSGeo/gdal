@@ -27,8 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRUNIONLAYER_H_INCLUDED
-#define _OGRUNIONLAYER_H_INCLUDED
+#ifndef OGRUNIONLAYER_H_INCLUDED
+#define OGRUNIONLAYER_H_INCLUDED
+
+#ifndef DOXYGEN_SKIP
 
 #include "ogrsf_frmts.h"
 
@@ -150,4 +152,6 @@ class OGRUnionLayer : public OGRLayer
     virtual OGRErr      SyncToDisk();
 };
 
-#endif // _OGRUNIONLAYER_H_INCLUDED
+#endif /* #ifndef DOXYGEN_SKIP */
+
+#endif // OGRUNIONLAYER_H_INCLUDED

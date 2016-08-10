@@ -21,7 +21,7 @@
  *****************************************************************************
  */
 /* *INDENT-OFF* */
-GRIB1SurfTable GRIB1Surface[256] = {
+const GRIB1SurfTable GRIB1Surface[256] = {
    /* 0 */ {"var0", "reserved", "-", 0},
    /* 1 */ {"SFC", "Ground or water surface", "-", 0},
    /* 2 */ {"CBL", "Cloud base level", "-", 0},
@@ -228,7 +228,7 @@ GRIB1SurfTable GRIB1Surface[256] = {
    /* 197 */ {"var197", "reserved", "-", 0},
    /* 198 */ {"var198", "reserved", "-", 0},
    /* 199 */ {"var199", "reserved", "-", 0},
-   /* 200 */ {"EATM", "entire atmosphere (considerd as a single layer)", "-",
+   /* 200 */ {"EATM", "entire atmosphere (considered as a single layer)", "-",
               0},
    /* 201 */ {"EOCN", "entire ocean (considered as a single layer)", "-", 0},
    /* 202 */ {"var202", "reserved", "-", 0},
@@ -305,7 +305,7 @@ GRIB1SurfTable GRIB1Surface[256] = {
 /* http://www.nco.ncep.noaa.gov/pmb/docs/on388/table2.html */
 /* Updated last on 5/24/2003 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_ncep_opn[256] = {
+const GRIB1ParmTable parm_table_ncep_opn[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -596,7 +596,7 @@ GRIB1ParmTable parm_table_ncep_opn[256] = {
 
 /* http://www.nco.ncep.noaa.gov/pmb/docs/on388/table2.html */
 /* Updated last on 5/24/2003 */
-GRIB1ParmTable parm_table_nceptab_129[256] = {
+const GRIB1ParmTable parm_table_nceptab_129[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -870,7 +870,7 @@ GRIB1ParmTable parm_table_nceptab_129[256] = {
 
 /* http://www.nco.ncep.noaa.gov/pmb/docs/on388/table2.html */
 /* Updated last on 5/24/2003 */
-GRIB1ParmTable parm_table_nceptab_130[256] = {
+const GRIB1ParmTable parm_table_nceptab_130[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -1162,7 +1162,7 @@ GRIB1ParmTable parm_table_nceptab_130[256] = {
 };
 
 /* Updated last on 9/8/2005 */
-GRIB1ParmTable parm_table_nceptab_131[256] = {
+const GRIB1ParmTable parm_table_nceptab_131[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -1371,8 +1371,8 @@ GRIB1ParmTable parm_table_nceptab_131[256] = {
    /* 188 */ {"DRIP", "Rate of water dropping from canopy to gnd", "kg/m^2", UC_NONE},
    /* 189 */ {"LANDN", "Land-sea coverage (nearest neighbor)", "land=1,sea=0", UC_NONE},
    /* 190 */ {"HLCY", "Storm relative helicity", "m^2/s^2", UC_NONE},
-   /* 191 */ {"NLATN", "Latitude (nearest neigbhbor) (-90 to +90)", "deg", UC_NONE},
-   /* 192 */ {"ELONN", "East longitude (nearest neigbhbor) (0-360)", "deg", UC_NONE},
+   /* 191 */ {"NLATN", "Latitude (nearest neighbor) (-90 to +90)", "deg", UC_NONE},
+   /* 192 */ {"ELONN", "East longitude (nearest neighbor) (0-360)", "deg", UC_NONE},
    /* 193 */ {"var193", "undefined", "-", UC_NONE},
    /* 194 */ {"CPOFP", "Probability of frozen precipitation", "%", UC_NONE},
    /* 195 */ {"var195", "undefined", "-", UC_NONE},
@@ -1413,7 +1413,7 @@ GRIB1ParmTable parm_table_nceptab_131[256] = {
    /* 230 */ {"SMREF", "Transpiration stress-onset (soil moisture)", "fraction", UC_NONE},
    /* 231 */ {"SMDRY", "Direct evaporation cease (soil moisture)", "fraction", UC_NONE},
    /* 232 */ {"WVINC", "water vapor added by precip assimilation", "kg/m^2", UC_NONE},
-   /* 233 */ {"WCINC", "water condensate added by precip assimilaition", "kg/m^2", UC_NONE},
+   /* 233 */ {"WCINC", "water condensate added by precip assimilation", "kg/m^2", UC_NONE},
    /* 234 */ {"BGRUN", "Baseflow-groundwater runoff", "kg/m^2", UC_NONE},
    /* 235 */ {"SSRUN", "Storm surface runoff", "kg/m^2", UC_NONE},
    /* 236 */ {"var236", "undefined", "-", UC_NONE},
@@ -1443,7 +1443,7 @@ GRIB1ParmTable parm_table_nceptab_131[256] = {
 /* See: http://www.nohrsc.noaa.gov/technology/pdf/nohrsc_product_identifier.pdf */
 /* Updated last on 10/17/2005 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_nohrsc[256] = {
+const GRIB1ParmTable parm_table_nohrsc[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -1730,7 +1730,7 @@ GRIB1ParmTable parm_table_nohrsc[256] = {
  * Original subcenter=0 Reanalysis files had
  * 2.5x2.5 (144x73) lat-long grid or 192x94 Gaussian grid (PDS grid=255?)
  */
-GRIB1ParmTable parm_table_ncep_reanal[256] = {
+const GRIB1ParmTable parm_table_ncep_reanal[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -1994,7 +1994,7 @@ GRIB1ParmTable parm_table_ncep_reanal[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ncep_tdl[256] = {
+const GRIB1ParmTable parm_table_ncep_tdl[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -2262,7 +2262,7 @@ GRIB1ParmTable parm_table_ncep_tdl[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE}
 };
 
-GRIB1ParmTable parm_table_ncep_mdl[256] = {
+const GRIB1ParmTable parm_table_ncep_mdl[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -2533,7 +2533,7 @@ GRIB1ParmTable parm_table_ncep_mdl[256] = {
  * 12/31/2001 added REV
  */
 
-GRIB1ParmTable parm_table_omb[256] = {
+const GRIB1ParmTable parm_table_omb[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"GHz6", "6.6 GHz", "K", UC_NONE},
@@ -2804,7 +2804,7 @@ GRIB1ParmTable parm_table_omb[256] = {
  *****************************************************************************
  */
 
-GRIB1ParmTable parm_table_ecmwf_128[256] = {
+const GRIB1ParmTable parm_table_ecmwf_128[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"STRM", "Stream function", "m^2/s", UC_NONE},
    /* 2 */ {"VPOT", "Velocity potential", "m^2/s", UC_NONE},
@@ -3099,7 +3099,7 @@ GRIB1ParmTable parm_table_ecmwf_128[256] = {
    /* 255 */ {"-", "Indicates a missing value", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ecmwf_129[256] = {
+const GRIB1ParmTable parm_table_ecmwf_129[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"var2", "undefined", "-", UC_NONE},
@@ -3377,7 +3377,7 @@ GRIB1ParmTable parm_table_ecmwf_129[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ecmwf_130[256] = {
+const GRIB1ParmTable parm_table_ecmwf_130[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"var2", "undefined", "-", UC_NONE},
@@ -3648,7 +3648,7 @@ GRIB1ParmTable parm_table_ecmwf_130[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ecmwf_131[256] = {
+const GRIB1ParmTable parm_table_ecmwf_131[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"var2", "undefined", "-", UC_NONE},
@@ -3907,7 +3907,7 @@ GRIB1ParmTable parm_table_ecmwf_131[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ecmwf_140[256] = {
+const GRIB1ParmTable parm_table_ecmwf_140[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"var2", "undefined", "-", UC_NONE},
@@ -4167,7 +4167,7 @@ GRIB1ParmTable parm_table_ecmwf_140[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ecmwf_150[256] = {
+const GRIB1ParmTable parm_table_ecmwf_150[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"var2", "undefined", "-", UC_NONE},
@@ -4351,7 +4351,7 @@ GRIB1ParmTable parm_table_ecmwf_150[256] = {
    /* 177 */ {"var177", "undefined", "-", UC_NONE},
    /* 178 */ {"var178", "undefined", "-", UC_NONE},
    /* 179 */ {"var179", "undefined", "-", UC_NONE},
-   /* 180 */ {"var180", "Diagnosed SST eror", "C", UC_NONE},
+   /* 180 */ {"var180", "Diagnosed SST error", "C", UC_NONE},
    /* 181 */ {"var181", "Heat flux correction", "W/m^2", UC_NONE},
    /* 182 */ {"var182", "Observed SST", "C", UC_NONE},
    /* 183 */ {"var183", "Observed heat flux", "W/m^2", UC_NONE},
@@ -4429,7 +4429,7 @@ GRIB1ParmTable parm_table_ecmwf_150[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ecmwf_160[256] = {
+const GRIB1ParmTable parm_table_ecmwf_160[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"var2", "undefined", "-", UC_NONE},
@@ -4697,7 +4697,7 @@ GRIB1ParmTable parm_table_ecmwf_160[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ecmwf_170[256] = {
+const GRIB1ParmTable parm_table_ecmwf_170[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"var2", "undefined", "-", UC_NONE},
@@ -4958,7 +4958,7 @@ GRIB1ParmTable parm_table_ecmwf_170[256] = {
    /* 255 */ {"var255", "undefined", "-", UC_NONE},
 };
 
-GRIB1ParmTable parm_table_ecmwf_180[256] = {
+const GRIB1ParmTable parm_table_ecmwf_180[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"var1", "undefined", "-", UC_NONE},
    /* 2 */ {"var2", "undefined", "-", UC_NONE},
@@ -5229,7 +5229,7 @@ GRIB1ParmTable parm_table_ecmwf_180[256] = {
  * Helmut P. Frank, 30.08.2001
  */
 
-GRIB1ParmTable parm_table_dwd_002[256] = {
+const GRIB1ParmTable parm_table_dwd_002[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PS", "pressure", "Pa", UC_NONE},
    /* 2 */ {"PS_msl", "pressure reduced to MSL", "Pa", UC_NONE},
@@ -5266,7 +5266,7 @@ GRIB1ParmTable parm_table_dwd_002[256] = {
    /* 31 */ {"WDIR", "Wind direction", "degree true", UC_NONE},
    /* 32 */ {"WIND", "Wind speed", "m/s", UC_NONE},
    /* 33 */ {"U", "u-component (zonal) of wind", "m/s", UC_NONE},
-   /* 34 */ {"V", "v-component (merdional) of wind", "m/s", UC_NONE},
+   /* 34 */ {"V", "v-component (meridional) of wind", "m/s", UC_NONE},
    /* 35 */ {"STRM", "Stream function", "m^2/s", UC_NONE},
    /* 36 */ {"VPOT", "Velocity potential", "m^2/s", UC_NONE},
    /* 37 */ {"MNTSF", "Montgomery stream function", "m^2/s^2", UC_NONE},
@@ -5505,7 +5505,7 @@ GRIB1ParmTable parm_table_dwd_002[256] = {
  * Helmut P. Frank, 30.08.2001
  */
 
-GRIB1ParmTable parm_table_dwd_201[256] = {
+const GRIB1ParmTable parm_table_dwd_201[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"DSWRF", "Downward shortwave radiation flux", "W/m^2", UC_NONE},
    /* 2 */ {"USWRF", "Upward short wave radiation flux", "W/m^2", UC_NONE},
@@ -5867,13 +5867,13 @@ GRIB1ParmTable parm_table_dwd_201[256] = {
  * Helmut P. Frank, 30.08.2001
  */
 
-GRIB1ParmTable parm_table_dwd_202[256] = {
+const GRIB1ParmTable parm_table_dwd_202[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"Seeg_peak", "jonswap parameter fm", "1/s", UC_NONE},
    /* 2 */ {"Seeg_alpha", "jonswap parameter alpha", "1", UC_NONE},
    /* 3 */ {"Seeg_gamma", "jonswap parameter gamma", "1", UC_NONE},
    /* 4 */ {"Seeg_dir", "Seegang direction", "degree true", UC_NONE},
-   /* 5 */ {"Seeg_energ", "Seegang energy densitiy", "(m^2)(s^2)", UC_NONE},
+   /* 5 */ {"Seeg_energ", "Seegang energy density", "(m^2)(s^2)", UC_NONE},
    /* 6 */ {"Seeg_icemk", "Seegang ice mask", "1", UC_NONE},
    /* 7 */ {"peak_p_sw", "peak period of swell", "s", UC_NONE},
    /* 8 */ {"peak_p_ww", "peak period of wind waves", "s", UC_NONE},
@@ -6173,7 +6173,7 @@ GRIB1ParmTable parm_table_dwd_202[256] = {
  * Helmut P. Frank, 30.08.2001
  */
 
-GRIB1ParmTable parm_table_dwd_203[256] = {
+const GRIB1ParmTable parm_table_dwd_203[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"pressure", "pressure", "hPa", UC_NONE},
    /* 2 */ {"geopot_h", "geopotential height", "10 * gpm", UC_NONE},
@@ -6240,7 +6240,7 @@ GRIB1ParmTable parm_table_dwd_203[256] = {
    /* 56 */ {"min_temp", "minimum temperature", "C", UC_NONE},
    /* 57 */ {"var57", "undefined", "-", UC_NONE},
    /* 58 */ {"clo", "value of isolation of clothes", "1", UC_NONE},
-   /* 59 */ {"pmva", "predected mean vote (angepasst)", "1", UC_NONE},
+   /* 59 */ {"pmva", "predicted mean vote (angepasst)", "1", UC_NONE},
    /* 60 */ {"feeled_t", "feeled temperature", "C", UC_NONE},
    /* 61 */ {"sea_temper", "sea temperature", "C", UC_NONE},
    /* 62 */ {"var62", "undefined", "-", UC_NONE},
@@ -6499,7 +6499,7 @@ GRIB1ParmTable parm_table_dwd_203[256] = {
  *****************************************************************************
  */
 
-GRIB1ParmTable parm_table_cptec_254[256] = {
+const GRIB1ParmTable parm_table_cptec_254[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "hPa", UC_NONE},
    /* 2 */ {"psnm", "Pressure reduced to MSL", "hPa", UC_NONE},
@@ -6776,7 +6776,7 @@ GRIB1ParmTable parm_table_cptec_254[256] = {
 /* AFWA center = 57, subcenter = 0 */
 /* Updated last on 7/22/2004 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_afwa_000[256] = {
+const GRIB1ParmTable parm_table_afwa_000[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -7075,7 +7075,7 @@ GRIB1ParmTable parm_table_afwa_000[256] = {
 /* AFWA center = 57, subcenter = 1 */
 /* Updated last on 7/22/2004 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_afwa_001[256] = {
+const GRIB1ParmTable parm_table_afwa_001[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -7369,7 +7369,7 @@ GRIB1ParmTable parm_table_afwa_001[256] = {
 /* AFWA center = 57, subcenter = 2 */
 /* Updated last on 7/22/2004 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_afwa_002[256] = {
+const GRIB1ParmTable parm_table_afwa_002[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -7677,7 +7677,7 @@ GRIB1ParmTable parm_table_afwa_002[256] = {
 /* AFWA center = 57, subcenter = 3 */
 /* Updated last on 7/22/2004 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_afwa_003[256] = {
+const GRIB1ParmTable parm_table_afwa_003[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -7952,7 +7952,7 @@ GRIB1ParmTable parm_table_afwa_003[256] = {
 /* AFWA center = 57, subcenter = 10 */
 /* Updated last on 7/30/2004 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_afwa_010[256] = {
+const GRIB1ParmTable parm_table_afwa_010[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -8114,14 +8114,15 @@ GRIB1ParmTable parm_table_afwa_010[256] = {
    /* 147 */ {"MXABH", "Max Absolute Humidity", "g/m^3", UC_NONE},
    /* 148 */ {"MNABH", "Min Absolute Humidity", "g/m^3", UC_NONE},
    /* 149 */ {"MNPREC", "Min Precipitation", "mm", UC_NONE},
-   /* 150 */ {"NEWND", "NE Wind Direction Occurance", "%", UC_NONE},
-   /* 151 */ {"EWND", "E Wind Direction Occurance", "%", UC_NONE},
-   /* 152 */ {"SEWND", "SE Wind Direction Occurance", "%", UC_NONE},
-   /* 153 */ {"SWND", "S Wind Direction Occurance", "%", UC_NONE},
-   /* 154 */ {"SWWND", "SW Wind Direction Occurance", "%", UC_NONE},
-   /* 155 */ {"WWND", "W Wind Direction Occurance", "%", UC_NONE},
-   /* 156 */ {"NWWND", "NW Wind Direction Occurance", "%", UC_NONE},
-   /* 157 */ {"NWND", "N Wind Direction Occurance", "%", UC_NONE},
+   /* TODO: Spelling. */
+   /* 150 */ {"NEWND", "NE Wind Direction Occurrence", "%", UC_NONE},
+   /* 151 */ {"EWND", "E Wind Direction Occurrence", "%", UC_NONE},
+   /* 152 */ {"SEWND", "SE Wind Direction Occurrence", "%", UC_NONE},
+   /* 153 */ {"SWND", "S Wind Direction Occurrence", "%", UC_NONE},
+   /* 154 */ {"SWWND", "SW Wind Direction Occurrence", "%", UC_NONE},
+   /* 155 */ {"WWND", "W Wind Direction Occurrence", "%", UC_NONE},
+   /* 156 */ {"NWWND", "NW Wind Direction Occurrence", "%", UC_NONE},
+   /* 157 */ {"NWND", "N Wind Direction Occurrence", "%", UC_NONE},
    /* 158 */ {"NEWSP", "NE Wind Speed", "m/s", UC_NONE},
    /* 159 */ {"EWSP", "E Wind Speed", "m/s", UC_NONE},
    /* 160 */ {"SEWSP", "SE Wind Speed", "m/s", UC_NONE},
@@ -8236,7 +8237,7 @@ GRIB1ParmTable parm_table_afwa_010[256] = {
 /* AFWA center = 57, subcenter = 11 */
 /* Updated last on 7/30/2004 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_afwa_011[256] = {
+const GRIB1ParmTable parm_table_afwa_011[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -8513,7 +8514,7 @@ GRIB1ParmTable parm_table_afwa_011[256] = {
 /* athens grid */
 /* Updated last on 3/13/2006 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_athens[256] = {
+const GRIB1ParmTable parm_table_athens[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -8790,7 +8791,7 @@ GRIB1ParmTable parm_table_athens[256] = {
  */
 /* Updated last on 11/13/2006 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_cmc[256] = {
+const GRIB1ParmTable parm_table_cmc[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},
@@ -9064,7 +9065,7 @@ GRIB1ParmTable parm_table_cmc[256] = {
 /* UNDEFINED GRID */
 /* Updated last on 7/30/2004 */
 /* *INDENT-OFF* */
-GRIB1ParmTable parm_table_undefined[256] = {
+const GRIB1ParmTable parm_table_undefined[256] = {
    /* 0 */ {"var0", "undefined", "-", UC_NONE},
    /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
    /* 2 */ {"PRMSL", "Pressure reduced to MSL", "Pa", UC_NONE},

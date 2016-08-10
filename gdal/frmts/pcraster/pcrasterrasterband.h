@@ -30,28 +30,14 @@
 #ifndef INCLUDED_PCRASTERRASTERBAND
 #define INCLUDED_PCRASTERRASTERBAND
 
-// Library headers.
-#ifndef INCLUDED_GDAL_PAM
 #include "gdal_pam.h"
-#define INCLUDED_GDAL_PAM
-#endif
-
-// PCRaster library headers.
-
-// Module headers.
-
-
 
 // namespace {
   // PCRasterRasterBand declarations.
 // }
 class PCRasterDataset;
 
-
-
 // namespace {
-
-
 
 //! This class specialises the GDALRasterBand class for PCRaster rasters.
 /*!
@@ -65,9 +51,7 @@ private:
   PCRasterDataset const* d_dataset;
 
   double           d_noDataValue;
-
   bool             d_defaultNoDataValueOverridden;
-
   GDALDataType     d_create_in;
 
   virtual CPLErr   IRasterIO           (GDALRWFlag, int, int, int, int,
@@ -83,21 +67,12 @@ private:
                    PCRasterRasterBand  (const PCRasterRasterBand&);
 
 protected:
-
   double           GetNoDataValue      (int* success=NULL);
-
   double           GetMinimum          (int* success);
-
   double           GetMaximum          (int* success);
 
 public:
-
-  //----------------------------------------------------------------------------
-  // CREATORS
-  //----------------------------------------------------------------------------
-
                    PCRasterRasterBand  (PCRasterDataset* dataset);
-
   /* virtual */    ~PCRasterRasterBand ();
 
   //----------------------------------------------------------------------------
@@ -117,29 +92,7 @@ public:
   CPLErr           IReadBlock          (int nBlockXoff,
                                         int nBlockYoff,
                                         void* buffer);
-
 };
-
-
-
-//------------------------------------------------------------------------------
-// INLINE FUNCTIONS
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-// FREE OPERATORS
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-// FREE FUNCTIONS
-//------------------------------------------------------------------------------
-
-
-
 // } // namespace
 
 #endif

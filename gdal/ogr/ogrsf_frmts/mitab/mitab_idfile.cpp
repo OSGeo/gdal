@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_idfile.cpp,v 1.8 2006-11-28 18:49:08 dmorissette Exp $
  *
  * Name:     mitab_idfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -27,7 +26,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -49,7 +48,7 @@
  * Implemented write support
  *
  * Revision 1.3  1999/09/20 18:43:01  daniel
- * Use binary acces to open file.
+ * Use binary access to open file.
  *
  * Revision 1.2  1999/09/16 02:39:16  daniel
  * Completed read support for most feature types
@@ -61,6 +60,8 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
+
+CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABIDFile
@@ -101,9 +102,9 @@ TABIDFile::~TABIDFile()
 
 int TABIDFile::Open(const char *pszFname, const char* pszAccess)
 {
-    if( EQUALN(pszAccess, "r", 1) )
+    if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead);
-    else if( EQUALN(pszAccess, "w", 1) )
+    else if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite);
     else
     {
@@ -166,7 +167,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
 
-    int nLen = strlen(m_pszFname);
+    int nLen = static_cast<int>(strlen(m_pszFname));
     if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".MAP")==0)
         strcpy(m_pszFname+nLen-4, ".ID");
     else if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".map")==0)
@@ -202,13 +203,16 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
         VSIStatBufL  sStatBuf;
         if ( VSIStatL(m_pszFname, &sStatBuf) == -1 )
         {
-            CPLError(CE_Failure, CPLE_FileIO, 
+            CPLError(CE_Failure, CPLE_FileIO,
                      "stat() failed for %s\n", m_pszFname);
             Close();
             return -1;
         }
 
-        m_nMaxId = (int)(sStatBuf.st_size/4);
+        if( static_cast<vsi_l_offset>(sStatBuf.st_size) > static_cast<vsi_l_offset>(INT_MAX / 4) )
+            m_nMaxId = INT_MAX / 4;
+        else
+            m_nMaxId = (int)(sStatBuf.st_size/4);
         m_nBlockSize = MIN(1024, m_nMaxId*4);
 
         /*-------------------------------------------------------------
@@ -263,7 +267,7 @@ int TABIDFile::Close()
     if (m_eAccessMode != TABRead)
         SyncToDisk();
 
-    // Delete all structures 
+    // Delete all structures
     delete m_poIDBlock;
     m_poIDBlock = NULL;
 

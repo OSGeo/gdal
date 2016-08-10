@@ -64,6 +64,7 @@ MakeMapObject(int ColorCount,
 
     Object->Colors = (GifColorType *)calloc(ColorCount, sizeof(GifColorType));
     if (Object->Colors == (GifColorType *) NULL) {
+        free(Object);
         return ((ColorMapObject *) NULL);
     }
 
@@ -97,6 +98,10 @@ FreeMapObject(ColorMapObject * Object) {
 }
 
 #ifdef DEBUG
+void
+DumpColorMap(ColorMapObject * Object,
+             FILE * fp);
+
 void
 DumpColorMap(ColorMapObject * Object,
              FILE * fp) {
@@ -189,7 +194,7 @@ UnionColorMap(const ColorMapObject * ColorIn1,
     NewBitSize = BitSize(CrntSlot);
     RoundUpTo = (1 << NewBitSize);
 
-    if (RoundUpTo != ColorUnion->ColorCount) {
+    if (RoundUpTo > 0 && RoundUpTo != ColorUnion->ColorCount) {
         register GifColorType *Map = ColorUnion->Colors;
 
         /* 
@@ -201,9 +206,15 @@ UnionColorMap(const ColorMapObject * ColorIn1,
             Map[j].Red = Map[j].Green = Map[j].Blue = 0;
 
         /* perhaps we can shrink the map? */
-        if (RoundUpTo < ColorUnion->ColorCount)
-            ColorUnion->Colors = (GifColorType *)realloc(Map,
-                                 sizeof(GifColorType) * RoundUpTo);
+        if (RoundUpTo < ColorUnion->ColorCount) {
+            GifColorType *new_map = (GifColorType *)realloc(Map,
+                                 RoundUpTo * sizeof(GifColorType));
+            if( new_map == NULL ) {
+                FreeMapObject(ColorUnion);
+                return ((ColorMapObject *) NULL);
+            }
+            ColorUnion->Colors = new_map;
+        }
     }
 
     ColorUnion->ColorCount = RoundUpTo;
@@ -256,10 +267,14 @@ AddExtensionBlock(SavedImage * New,
 
     if (New->ExtensionBlocks == NULL)
         New->ExtensionBlocks=(ExtensionBlock *)malloc(sizeof(ExtensionBlock));
-    else
-        New->ExtensionBlocks = (ExtensionBlock *)realloc(New->ExtensionBlocks,
+    else {
+        ExtensionBlock* ep_new = (ExtensionBlock *)realloc(New->ExtensionBlocks,
                                       sizeof(ExtensionBlock) *
                                       (New->ExtensionBlockCount + 1));
+        if( ep_new == NULL )
+            return (GIF_ERROR);
+        New->ExtensionBlocks = ep_new;
+    }
 
     if (New->ExtensionBlocks == NULL)
         return (GIF_ERROR);
@@ -301,7 +316,7 @@ FreeExtension(SavedImage * Image)
 /* Private Function:
  * Frees the last image in the GifFile->SavedImages array
  */
-void
+static void
 FreeLastSavedImage(GifFileType *GifFile) {
 
     SavedImage *sp;
@@ -366,7 +381,7 @@ MakeSavedImage(GifFileType * GifFile,
              */
 
             /* first, the local color map */
-            if (sp->ImageDesc.ColorMap) {
+            if (CopyFrom->ImageDesc.ColorMap) {
                 sp->ImageDesc.ColorMap = MakeMapObject(
                                          CopyFrom->ImageDesc.ColorMap->ColorCount,
                                          CopyFrom->ImageDesc.ColorMap->Colors);
@@ -389,7 +404,7 @@ MakeSavedImage(GifFileType * GifFile,
                    CopyFrom->ImageDesc.Width);
 
             /* finally, the extension blocks */
-            if (sp->ExtensionBlocks) {
+            if (CopyFrom->ExtensionBlocks) {
                 sp->ExtensionBlocks = (ExtensionBlock *)malloc(
                                       sizeof(ExtensionBlock) *
                                       CopyFrom->ExtensionBlockCount);

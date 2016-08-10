@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Read metadata from Spot imagery.
@@ -30,6 +29,8 @@
 
 #include "reader_spot.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * GDALMDReaderSpot()
  */
@@ -40,7 +41,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
     const char* pszDirName = CPLGetDirname(pszPath);
 
     if(m_osIMDSourceFilename.empty())
-    {        
+    {
         pszIMDSourceFilename = CPLFormFilename( pszDirName, "METADATA.DIM", NULL );
 
         if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))

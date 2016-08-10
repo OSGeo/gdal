@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
- * Purpose:  Mini driver for Internel Imaging Protocol (IIP)
+ * Purpose:  Mini driver for Internet Imaging Protocol (IIP)
  * Author:   Even Rouault <even.rouault at spatialys.com>
  *
  ******************************************************************************
@@ -30,6 +29,7 @@
 #include "wmsdriver.h"
 #include "minidriver_iip.h"
 
+CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(IIP)
 
@@ -65,11 +65,17 @@ void GDALWMSMiniDriver_IIP::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_has_geotransform = false;
 }
 
-void GDALWMSMiniDriver_IIP::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri)
+void GDALWMSMiniDriver_IIP::TiledImageRequest(
+    CPLString *url,
+    const GDALWMSImageRequestInfo & /* iri */,
+    const GDALWMSTiledImageRequestInfo &tiri)
 {
-    int nTileXCount = ((m_parent_dataset->GetRasterXSize()>> (m_parent_dataset->GetRasterBand(1)->GetOverviewCount()-tiri.m_level)) + 255) / 256;
+    int nTileXCount = (
+        (m_parent_dataset->GetRasterXSize()
+         >> (m_parent_dataset->GetRasterBand(1)->GetOverviewCount()
+          - tiri.m_level)) + 255) / 256;
     int numTile = tiri.m_x + tiri.m_y * nTileXCount;
-    
+
     *url = m_base_url;
     *url += CPLSPrintf("&jtl=%d,%d", tiri.m_level, numTile);
 }

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -30,10 +29,10 @@
  ****************************************************************************
  *
  * dataset.cpp:
- * Initialization of the GDALWMSdriver, parsing the XML configuration file, 
- * instantiation of the minidrivers and accessors used by minidrivers
+ * Initialization of the GDALWMSdriver, parsing the XML configuration file,
+ * instantiation of the minidrivers and accessors used by minidrivers.
  *
- ***************************************************************************/ 
+ ***************************************************************************/
 
 
 #include "wmsdriver.h"
@@ -44,6 +43,8 @@
 #include "minidriver_tms.h"
 #include "minidriver_tiled_wms.h"
 #include "minidriver_virtualearth.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           GDALWMSDataset()                           */
@@ -57,8 +58,8 @@ GDALWMSDataset::GDALWMSDataset() :
     m_http_max_conn(0),
     m_http_timeout(0)
 {
-    m_mini_driver = 0;
-    m_cache = 0;
+    m_mini_driver = NULL;
+    m_cache = NULL;
     m_hint.m_valid = false;
     m_data_type = GDT_Byte;
     m_clamp_requests = true;
@@ -372,8 +373,8 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             }
         }
     }
-    
-    // UserPwd 
+
+    // UserPwd
     const char *pszUserPwd = CPLGetXMLValue(config, "UserPwd", "");
     if (pszUserPwd[0] != '\0')
         m_osUserPwd = pszUserPwd;
@@ -381,11 +382,11 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     const char *pszUserAgent = CPLGetXMLValue(config, "UserAgent", "");
     if (pszUserAgent[0] != '\0')
         m_osUserAgent = pszUserAgent;
-    
+
     const char *pszReferer = CPLGetXMLValue(config, "Referer", "");
     if (pszReferer[0] != '\0')
         m_osReferer = pszReferer;
-    
+
     if (ret == CE_None) {
         const char *pszHttpZeroBlockCodes = CPLGetXMLValue(config, "ZeroBlockHttpCodes", "");
         if(pszHttpZeroBlockCodes[0] == '\0') {
@@ -500,7 +501,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     if (ret == CE_None) {
         // Data values are attributes, they include NoData Min and Max
         // TODO: document those options
-        if (0!=CPLGetXMLNode(config,"DataValues")) {
+        if (NULL!=CPLGetXMLNode(config,"DataValues")) {
             const char *nodata=CPLGetXMLValue(config,"DataValues.NoData",NULL);
             if (nodata!=NULL) WMSSetNoDataValue(nodata);
             const char *min=CPLGetXMLValue(config,"DataValues.min",NULL);
@@ -522,19 +523,19 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             }
         }
     }
-    
+
     if (ret == CE_None) {
-    	const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
-    	if (v == -1) {
-	    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
-	    ret = CE_Failure;
-	} else {
-	    m_unsafeSsl = v;
-	}
+        const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
+        if (v == -1) {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
+            ret = CE_Failure;
+        } else {
+            m_unsafeSsl = v;
+        }
     }
 
     if (ret == CE_None) {
-        /* If we dont have projection already set ask mini-driver. */
+        /* If we do not have projection already set ask mini-driver. */
         if (!m_projection.size()) {
             const char *proj = m_mini_driver->GetProjectionInWKT();
             if (proj != NULL) {
@@ -567,7 +568,7 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
     m_hint.m_sy = sy;
     m_hint.m_overview = -1;
     m_hint.m_valid = true;
-    //	printf("[%p] GDALWMSDataset::IRasterIO(x0: %d, y0: %d, sx: %d, sy: %d, bsx: %d, bsy: %d, band_count: %d, band_map: %p)\n", this, x0, y0, sx, sy, bsx, bsy, band_count, band_map);
+    // printf("[%p] GDALWMSDataset::IRasterIO(x0: %d, y0: %d, sx: %d, sy: %d, bsx: %d, bsy: %d, band_count: %d, band_map: %p)\n", this, x0, y0, sx, sy, bsx, bsy, band_count, band_map);
     ret = GDALDataset::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsy, bdt, band_count, band_map,
                                  nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
     m_hint.m_valid = false;

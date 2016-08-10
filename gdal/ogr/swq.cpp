@@ -27,6 +27,8 @@
 #include "swq_parser.hpp"
 #include "cpl_time.h"
 
+CPL_CVSID("$Id$");
+
 #define YYSTYPE  swq_expr_node*
 
 /************************************************************************/
@@ -36,9 +38,10 @@
 void swqerror( swq_parse_context *context, const char *msg )
 {
     CPLString osMsg;
-    osMsg.Printf( "SQL Expression Parsing Error: %s. Occured around :\n", msg );
+    osMsg.Printf( "SQL Expression Parsing Error: %s. Occurred around :\n",
+                  msg );
 
-    int n = context->pszLastValid - context->pszInput;
+    int n = static_cast<int>(context->pszLastValid - context->pszInput);
 
     for( int i = MAX(0,n-40); i < n + 40 && context->pszInput[i] != '\0'; i ++ )
         osMsg += context->pszInput[i];
@@ -85,7 +88,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
     if( *pszInput == '\0' )
     {
         context->pszNext = pszInput;
-        return EOF; 
+        return EOF;
     }
 
 /* -------------------------------------------------------------------- */
@@ -174,8 +177,8 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         context->pszNext = pszNext;
 
-        if( strstr(osToken,".") 
-            || strstr(osToken,"e") 
+        if( strstr(osToken,".")
+            || strstr(osToken,"e")
             || strstr(osToken,"E") )
         {
             *ppNode = new swq_expr_node( CPLAtof(osToken) );
@@ -204,7 +207,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         osToken += *pszInput;
 
         // collect text characters
-        while( isalnum( *pszNext ) || *pszNext == '_' 
+        while( isalnum( *pszNext ) || *pszNext == '_'
                || ((unsigned char) *pszNext) > 127 )
             osToken += *(pszNext++);
 
@@ -291,7 +294,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 /************************************************************************/
 
 const char *
-swq_select_summarize( swq_select *select_info, 
+swq_select_summarize( swq_select *select_info,
                       int dest_column, const char *value )
 
 {
@@ -316,9 +319,9 @@ swq_select_summarize( swq_select *select_info,
 /* -------------------------------------------------------------------- */
     if( select_info->column_summary == NULL )
     {
-        select_info->column_summary = (swq_summary *) 
+        select_info->column_summary = (swq_summary *)
             CPLMalloc(sizeof(swq_summary) * select_info->result_columns);
-        memset( select_info->column_summary, 0, 
+        memset( select_info->column_summary, 0,
                 sizeof(swq_summary) * select_info->result_columns );
 
         for( int i = 0; i < select_info->result_columns; i++ )
@@ -357,14 +360,14 @@ swq_select_summarize( swq_select *select_info,
         {
             char  **old_list = summary->distinct_list;
 
-            summary->distinct_list = (char **) 
+            summary->distinct_list = (char **)
                 CPLMalloc(sizeof(char *) * (size_t)(summary->count+1));
             if( summary->count )
             {
-                memcpy( summary->distinct_list, old_list, 
+                memcpy( summary->distinct_list, old_list,
                         sizeof(char *) * (size_t)summary->count );
             }
-            summary->distinct_list[(summary->count)++] = 
+            summary->distinct_list[(summary->count)++] =
                 (value != NULL) ? CPLStrdup( value ) : NULL;
 
             CPLFree(old_list);
@@ -543,14 +546,14 @@ const char *swq_select_finish_summarize( swq_select *select_info )
     GIntBig count = 0;
     char **distinct_list = NULL;
 
-    if( select_info->query_mode != SWQM_DISTINCT_LIST 
+    if( select_info->query_mode != SWQM_DISTINCT_LIST
         || select_info->order_specs == 0 )
         return NULL;
 
     if( select_info->order_specs > 1 )
         return "Can't ORDER BY a DISTINCT list by more than one key.";
 
-    if( select_info->order_defs[0].field_index != 
+    if( select_info->order_defs[0].field_index !=
         select_info->column_defs[0].field_index )
         return "Only selected DISTINCT field can be used for ORDER BY.";
 
@@ -587,24 +590,14 @@ const char *swq_select_finish_summarize( swq_select *select_info )
 }
 
 /************************************************************************/
-/*                          swq_select_free()                           */
-/************************************************************************/
-
-void swq_select_free( swq_select *select_info )
-
-{
-    delete select_info;
-}
-
-/************************************************************************/
 /*                         swq_identify_field()                         */
 /************************************************************************/
-int swq_identify_field_internal( const char* table_name, const char *field_token, 
+int swq_identify_field_internal( const char* table_name, const char *field_token,
                                  swq_field_list *field_list,
                                  swq_field_type *this_type, int *table_id,
                                  int bOneMoreTimeOK );
 
-int swq_identify_field( const char* table_name, const char *field_token, 
+int swq_identify_field( const char* table_name, const char *field_token,
                                  swq_field_list *field_list,
                                  swq_field_type *this_type, int *table_id )
 
@@ -613,7 +606,7 @@ int swq_identify_field( const char* table_name, const char *field_token,
                                        this_type, table_id, TRUE);
 }
 
-int swq_identify_field_internal( const char* table_name, const char *field_token, 
+int swq_identify_field_internal( const char* table_name, const char *field_token,
                                  swq_field_list *field_list,
                                  swq_field_type *this_type, int *table_id,
                                  int bOneMoreTimeOK )
@@ -643,7 +636,7 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
         if( tables_enabled )
         {
             t_id = field_list->table_ids[i];
-            if( table_name[0] != '\0' 
+            if( table_name[0] != '\0'
                 && !EQUAL(table_name,field_list->table_defs[t_id].table_alias))
                 continue;
 
@@ -674,7 +667,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
 /* -------------------------------------------------------------------- */
 /*      When there is no ambiguity, try to accept quoting errors...     */
 /* -------------------------------------------------------------------- */
-    if( bOneMoreTimeOK && !CSLTestBoolean(CPLGetConfigOption("OGR_SQL_STRICT", "FALSE")) )
+    if( bOneMoreTimeOK &&
+        !CPLTestBool(CPLGetConfigOption("OGR_SQL_STRICT", "FALSE")) )
     {
         if( table_name[0] )
         {
@@ -695,7 +689,7 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
             if( i == field_list->count )
             {
                 int ret = swq_identify_field_internal( NULL,
-                                            osAggregatedName, 
+                                            osAggregatedName,
                                             field_list,
                                             this_type, table_id, FALSE );
                 if( ret >= 0 )
@@ -710,7 +704,7 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
         }
         else
         {
-            // If the fieldname is a.b (and there's no . in b), then 
+            // If the fieldname is a.b (and there's no . in b), then
             // it might be an error in providing it as being quoted where it should
             // not have been quoted.
             const char* pszDot = strchr(field_token, '.');
@@ -721,7 +715,7 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
                 CPLString osFieldName(pszDot + 1);
 
                 int ret = swq_identify_field_internal( osTableName,
-                                            osFieldName, 
+                                            osFieldName,
                                             field_list,
                                             this_type, table_id, FALSE );
                 if( ret >= 0 )
@@ -754,8 +748,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
 
 CPLErr swq_expr_compile( const char *where_clause,
                          int field_count,
-                         char **field_names, 
-                         swq_field_type *field_types, 
+                         char **field_names,
+                         swq_field_type *field_types,
                          int bCheck,
                          swq_custom_func_registrar* poCustomFuncRegistrar,
                          swq_expr_node **expr_out )
@@ -781,7 +775,7 @@ CPLErr swq_expr_compile( const char *where_clause,
 /*                         swq_expr_compile2()                          */
 /************************************************************************/
 
-CPLErr swq_expr_compile2( const char *where_clause, 
+CPLErr swq_expr_compile2( const char *where_clause,
                           swq_field_list *field_list,
                           int bCheck,
                           swq_custom_func_registrar* poCustomFuncRegistrar,
@@ -796,7 +790,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
     context.nStartToken = SWQT_VALUE_START;
     context.bAcceptCustomFuncs = poCustomFuncRegistrar != NULL;
 
-    if( swqparse( &context ) == 0 
+    if( swqparse( &context ) == 0
         && bCheck && context.poRoot->Check( field_list, FALSE, FALSE, poCustomFuncRegistrar ) != SWQ_ERROR )
     {
         *expr_out = context.poRoot;
@@ -815,7 +809,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
 /*                        swq_is_reserved_keyword()                     */
 /************************************************************************/
 
-static const char* apszSQLReservedKeywords[] = {
+static const char* const apszSQLReservedKeywords[] = {
     "OR",
     "AND",
     "NOT",

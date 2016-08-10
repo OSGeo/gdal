@@ -53,7 +53,7 @@ def Usage():
     print(' -src name: name of the source dataset.')
     print(' -dst name: name of the destination dataset (existing or to be created).')
     print(' -field field: name of a field to use to dispatch features. May also')
-    print('                        be \'OGR_GEOMETRY\'. At least, one occurence needed.')
+    print('                        be \'OGR_GEOMETRY\'. At least, one occurrence needed.')
     print(' -25D_as_2D: for dispatching, consider 2.5D geometries as 2D.')
     print(' -multi_as_single: for dispatching, consider MULTIPOLYGON as POLYGON and')
     print('                   MULTILINESTRING as LINESTRING.')
