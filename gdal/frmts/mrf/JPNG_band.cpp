@@ -36,7 +36,7 @@ CPL_C_END
 NAMESPACE_MRF_START
 
 // Test that all alpha values are equal to N
-template<int N> bool AllAlpha(const buf_mgr &src, const ILImage &img) {
+template<int N> static bool AllAlpha(const buf_mgr &src, const ILImage &img) {
     int stride = img.pagesize.c;
     char *s = src.buffer + img.pagesize.c - 1;
     char *stop = src.buffer + img.pageSizeBytes;
