@@ -412,6 +412,16 @@ public:
 class CADImage : public CADGeometry
 {
 public:
+    /**
+     * @brief enum which describes in which units Image resolutions is present 
+     */
+    enum ResolutionUnit
+    {
+        NONE = 0,
+        CENTIMETER = 2,
+        INCH = 5
+    };
+
     CADImage();
 
     CADVector           getVertInsertionPoint() const;
@@ -430,8 +440,8 @@ public:
     short               getClippingBoundaryType() const;
     void                setClippingBoundaryType(short value);
 
-    unsigned char       getResolutionUnits() const;
-    void                setResolutionUnits(unsigned char value);
+    enum ResolutionUnit getResolutionUnits() const;
+    void                setResolutionUnits(enum ResolutionUnit value);
 
     string              getFilePath() const;
     void                setFilePath(const string &value);
@@ -460,7 +470,8 @@ protected:
     CADVector           imageSizeInPx;
     string              filePath;
     //bool bIsLoaded;
-    unsigned char       resolutionUnits; // 0 == none, 2 == centimeters, 5 == inches;
+    enum ResolutionUnit resolutionUnits;
+    //unsigned char       resolutionUnit; // 0 == none, 2 == centimeters, 5 == inches;
     CADVector           pixelSizeInACADUnits;
 
     short               clippingBoundaryType; // 1 == rect, 2 == polygon

@@ -1380,7 +1380,7 @@ CADGeometry *DWGFileR2000::getGeometry(long geomhandle, long blockrefhandle)
         CADVector pixelSizeInACADUnits (cadImageDef->dfXPixelSize,
                                         cadImageDef->dfYPixelSize);
         image->setPixelSizeInACADUnits(pixelSizeInACADUnits);
-        image->setResolutionUnits(cadImageDef->dResUnits);
+        image->setResolutionUnits((CADImage::ResolutionUnit)cadImageDef->dResUnits);
         image->setOptions(cadImage->dDisplayProps & 0x08,
                           cadImage->bClipping,
                           cadImage->dBrightness,
@@ -1409,7 +1409,7 @@ CADGeometry *DWGFileR2000::getGeometry(long geomhandle, long blockrefhandle)
         poGeometry = mline;
         break;
     }
-    
+
     case CADObject::MTEXT:
     {
         CADMText * mtext = new CADMText();

@@ -879,14 +879,14 @@ void CADImage::setClippingBoundaryType(short value)
     clippingBoundaryType = value;
 }
 
-unsigned char CADImage::getResolutionUnits() const
+enum CADImage::ResolutionUnit CADImage::getResolutionUnits() const
 {
     return resolutionUnits;
 }
 
-void CADImage::setResolutionUnits(unsigned char value)
+void CADImage::setResolutionUnits(enum CADImage::ResolutionUnit res_unit)
 {
-    resolutionUnits = value;
+    resolutionUnits = res_unit;
 }
 
 string CADImage::getFilePath() const

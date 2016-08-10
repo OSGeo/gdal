@@ -162,10 +162,11 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
     if( poCADGeometry->getEED().size() != 0 )
     {
+        std::vector<std::string> asGeometryEED = poCADGeometry->getEED();
         std::string sEEDAsOneString = "";
         for ( std::vector<std::string>::const_iterator
-              iter = poCADGeometry->getEED().cbegin();
-              iter != poCADGeometry->getEED().cend(); ++iter )
+              iter = asGeometryEED.cbegin();
+              iter != asGeometryEED.cend(); ++iter )
         {
             sEEDAsOneString += *iter;
             sEEDAsOneString += ' ';
@@ -633,8 +634,9 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             CPLError( CE_Warning, CPLE_NotSupported,
                      "Unhandled feature. Skipping it." );
 
-            poFeature->SetField( "cadgeom_type", "Unhandled" );
-            break;
+            poFeature->SetField( "cadgeom_type", "CADUnknown" );
+            delete( poCADGeometry );
+            return poFeature;
         }
     }
 

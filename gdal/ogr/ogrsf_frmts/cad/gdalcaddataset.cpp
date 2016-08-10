@@ -44,11 +44,11 @@ class CADWrapperRasterBand : public GDALProxyRasterBand
 
   public:
     explicit CADWrapperRasterBand( GDALRasterBand* poBaseBandIn )
-{
+    {
         this->poBaseBand = poBaseBandIn;
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-}
+    }
     ~CADWrapperRasterBand() {}
 };
 
@@ -80,18 +80,18 @@ GDALCADDataset::~GDALCADDataset()
 
 void GDALCADDataset::FillTransform(CADImage* pImage, double dfUnits)
 {
-    unsigned char nResUnits = pImage->getResolutionUnits();
+    CADImage::ResolutionUnit eResUnits = pImage->getResolutionUnits();
     double dfMultiply(1);
 
-    switch(nResUnits)// 0 == none, 2 == centimeters, 5 == inches;
+    switch(eResUnits)// 0 == none, 2 == centimeters, 5 == inches;
     {
-        case 2:
+        case CADImage::ResolutionUnit::CENTIMETER:
             dfMultiply = 100 / dfUnits; // meters to linear units
             break;
-        case 5: 
+        case CADImage::ResolutionUnit::INCH: 
             dfMultiply = 0.0254 / dfUnits;   
             break;
-        case 0:
+        case CADImage::ResolutionUnit::NONE:
         default:
             dfMultiply = 1;
     }
