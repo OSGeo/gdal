@@ -6706,7 +6706,7 @@ int  GDALRasterBand::GetDataCoverageStatus( int nXOff,
 
 int  GDALRasterBand::IGetDataCoverageStatus( int /*nXOff*/,
                                              int /*nYOff*/,
-                                             int /*nXSize/*/,
+                                             int /*nXSize*/,
                                              int /*nYSize*/,
                                              int /*nMaskFlagStop*/,
                                              double* pdfDataPct)
