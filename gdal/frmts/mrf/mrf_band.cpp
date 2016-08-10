@@ -63,7 +63,7 @@ NAMESPACE_MRF_START
 // Count is the number of items that need to be copied
 // These are separate to allow for optimization
 
-template <typename T> void cpy_stride_in(
+template <typename T> static void cpy_stride_in(
     void *dst, const void *src, int c, int stride )
 {
     T *s=(T *)src;
@@ -75,7 +75,7 @@ template <typename T> void cpy_stride_in(
     }
 }
 
-template <typename T> void cpy_stride_out(
+template <typename T> static void cpy_stride_out(
     void *dst, const void *src, int c, int stride )
 {
     T *s=(T *)src;
@@ -315,7 +315,7 @@ double GDALMRFRasterBand::GetMaximum(int *pbSuccess)
 }
 
 // Fill, with ndv
-template<typename T> CPLErr buff_fill(void *b, size_t count, const T ndv)
+template<typename T> static CPLErr buff_fill(void *b, size_t count, const T ndv)
 {
     T *buffer = static_cast<T*>(b);
     count /= sizeof(T);

@@ -35,7 +35,7 @@ using std::vector;
 NAMESPACE_MRF_START
 
 // Count the values in a buffer that match a specific value
-template<typename T> int MatchCount(T *buff, int sz, T val) {
+template<typename T> static int MatchCount(T *buff, int sz, T val) {
     int ncount=0;
     for (int i=0; i < sz; i++)
         if (buff[i] == val)
@@ -47,7 +47,7 @@ template<typename T> int MatchCount(T *buff, int sz, T val) {
 // Scales by 2x2 a buffer in place, using Nearest resampling
 // Always pick the top-left corner
 //
-template<typename T> void NearByFour(T *buff, int xsz, int ysz) {
+template<typename T> static void NearByFour(T *buff, int xsz, int ysz) {
     T *obuff = buff;
     for (int line = 0; line < ysz; line++) {
                 // Copy every other pixel
@@ -62,7 +62,7 @@ template<typename T> void NearByFour(T *buff, int xsz, int ysz) {
 //
 // If the NoData value exists, pick a valid pixel if possible
 //
-template<typename T> void NearByFour(T *buff, int xsz, int ysz, T ndv) {
+template<typename T> static void NearByFour(T *buff, int xsz, int ysz, T ndv) {
     T *obuff = buff;
     T *evenline = buff;
 
@@ -93,7 +93,7 @@ template<typename T> void NearByFour(T *buff, int xsz, int ysz, T ndv) {
 //
 
 // Integer data types shorter than 32 bit use integer math safely
-template<typename T> void AverageByFour(T *buff, int xsz, int ysz) {
+template<typename T> static void AverageByFour(T *buff, int xsz, int ysz) {
     T *obuff=buff;
     T *evenline=buff;
 
@@ -172,7 +172,7 @@ template<> void AverageByFour<double>(double *buff, int xsz, int ysz) {
 // Speedup by specialization for smaller byte count int types is probably not worth much
 // since there are so many conditions here
 //
-template<typename T> void AverageByFour(T *buff, int xsz, int ysz, T ndv) {
+template<typename T> static void AverageByFour(T *buff, int xsz, int ysz, T ndv) {
     T *obuff=buff;
     T *evenline=buff;
 
