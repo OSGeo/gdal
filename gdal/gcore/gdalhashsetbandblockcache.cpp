@@ -78,7 +78,7 @@ GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(
 static unsigned long GDALRasterBlockHashFunc( const void * const elt )
 {
     const GDALRasterBlock * const poBlock =
-        static_cast<const GDALRasterBlock * const>(elt);
+        static_cast<const GDALRasterBlock *>(elt);
 #if SIZEOF_UNSIGNED_LONG == 8
     return static_cast<unsigned long>(
         poBlock->GetXOff() |
@@ -100,9 +100,9 @@ static int GDALRasterBlockEqualFunc( const void * const elt1,
                                      const void * const elt2 )
 {
     const GDALRasterBlock * const poBlock1 =
-        static_cast<const GDALRasterBlock * const>(elt1);
+        static_cast<const GDALRasterBlock *>(elt1);
     const GDALRasterBlock * const poBlock2 =
-        static_cast<const GDALRasterBlock * const >(elt2);
+        static_cast<const GDALRasterBlock *>(elt2);
     return poBlock1->GetXOff() == poBlock2->GetXOff() &&
            poBlock1->GetYOff() == poBlock2->GetYOff();
 }
