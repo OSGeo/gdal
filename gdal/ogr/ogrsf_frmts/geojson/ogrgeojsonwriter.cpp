@@ -958,7 +958,7 @@ static int OGR_json_double_with_precision_to_string(struct json_object *jso,
                                                     CPL_UNUSED int flags)
 {
     char szBuffer[75];
-    const int nPrecision = (int) (size_t) jso->_userdata;
+    const int nPrecision = (int) (GUIntptr_t) jso->_userdata;
     OGRFormatDouble( szBuffer, sizeof(szBuffer), jso->o.c_double, '.',
                      (nPrecision < 0) ? 15 : nPrecision );
     if( szBuffer[0] == 't' /*oobig */ )
@@ -1004,7 +1004,7 @@ static int OGR_json_double_with_significant_figures_to_string(struct json_object
     else
     {
         char szFormatting[32];
-        const int nSignificantFigures = (int) (size_t) jso->_userdata;
+        const int nSignificantFigures = (int) (GUIntptr_t) jso->_userdata;
         const int nInitialSignificantFigures = nSignificantFigures >= 0 ? nSignificantFigures : 17;
         CPLsnprintf(szFormatting, sizeof(szFormatting), "%%.%dg", nInitialSignificantFigures);
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), szFormatting, jso->o.c_double);

@@ -1576,8 +1576,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
     // Make sure we are aligned on 16 bits.
     double *padfWeights = padfWeightsAlloc;
 
-    // TODO(schwehr): Create and use an alignment macro.
-    if( reinterpret_cast<size_t>(padfWeights) % 16 != 0 )
+    if( !CPL_IS_ALIGNED(padfWeights, 16) )
         ++padfWeights;
 
 /* ==================================================================== */

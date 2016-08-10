@@ -257,6 +257,20 @@ typedef GIntBig          GPtrDiff_t;
 typedef int              GPtrDiff_t;
 #endif
 
+#ifdef GDAL_COMPILATION
+#if HAVE_UINTPTR_T
+#include <stdint.h>
+typedef uintptr_t GUIntptr_t;
+#elif SIZEOF_VOIDP == 8
+typedef GUIntBig GUIntptr_t;
+#else
+typedef unsigned int  GUIntptr_t;
+#endif
+
+#define CPL_IS_ALIGNED(ptr, quant) (((GUIntptr_t)(ptr) % (quant)) == 0)
+
+#endif
+
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
   #define CPL_FRMT_GB_WITHOUT_PREFIX     "I64"
 #elif HAVE_LONG_LONG

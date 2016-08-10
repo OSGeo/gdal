@@ -1719,7 +1719,7 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
 
       case 4:
         CPLAssert( nWordSkip >= 4 || nWordCount == 1 );
-        if( (((size_t)pabyData) % 4) == 0 && (nWordSkip % 4) == 0 )
+        if( CPL_IS_ALIGNED(pabyData, 4) && (nWordSkip % 4) == 0 )
         {
             for( int i = 0; i < nWordCount; i++ )
             {
@@ -1740,7 +1740,7 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
       case 8:
         CPLAssert( nWordSkip >= 8 || nWordCount == 1 );
 #ifdef CPL_SWAP64
-        if( (((size_t)pabyData) % 8) == 0 && (nWordSkip % 8) == 0 )
+        if( CPL_IS_ALIGNED(pabyData, 8) && (nWordSkip % 8) == 0 )
         {
             for( int i = 0; i < nWordCount; i++ )
             {

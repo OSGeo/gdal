@@ -59,7 +59,7 @@
 
 #include <emmintrin.h>
 #define CAST_PCT(x) ((GByte*)x)
-#define ALIGN_INT_ARRAY_ON_16_BYTE(x) ( (((GPtrDiff_t)(x) % 16) != 0 ) ? (int*)((GByte*)(x) + 16 - ((GPtrDiff_t)(x) % 16)) : (x) )
+#define ALIGN_INT_ARRAY_ON_16_BYTE(x) ( (((GUIntptr_t)(x) % 16) != 0 ) ? (int*)((GByte*)(x) + 16 - ((GUIntptr_t)(x) % 16)) : (x) )
 
 #else
 
