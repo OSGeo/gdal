@@ -4130,15 +4130,17 @@ int WritePeStringIfNeeded( OGRSpatialReference* poSRS, HFAHandle hHFA )
     if( pszDatum == NULL )
         pszDatum = "";
 
+    // The strlen() checks are just there to make Coverity happy because it
+    // doesn't seem to realize that STARTS_WITH() success implies them
     const size_t gcsNameOffset =
-        STARTS_WITH(pszGEOGCS, "GCS_") ? strlen("GCS_") : 0;
+         (strlen(pszGEOGCS) > strlen("GCS_") &&
+          STARTS_WITH(pszGEOGCS, "GCS_")) ? strlen("GCS_") : 0;
 
     const size_t datumNameOffset =
-        STARTS_WITH(pszDatum, "D_") ? strlen("D_") : 0;
+        (strlen(pszDatum) > strlen("D_") &&
+         STARTS_WITH(pszDatum, "D_")) ? strlen("D_") : 0;
 
     OGRBoolean ret = FALSE;
-    // TODO(schwehr): Address CID 164976 - overrun-local.
-    // Need to check pszGEOGCS and pszDatum are one longer than the STARTS_WITH.
     if( !EQUAL(pszGEOGCS + gcsNameOffset, pszDatum + datumNameOffset) )
     {
         ret = TRUE;
