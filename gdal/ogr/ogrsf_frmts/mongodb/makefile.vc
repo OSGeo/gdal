@@ -1,5 +1,6 @@
 OBJ     =       ogrmongodbdriver.obj
-EXTRAFLAGS =	-I.. -I..\generic -I..\.. -I$(MONGODB_INC) -I$(BOOST_INC) $(MONGODB_CFLAGS)
+MSSDK_DIR =     "C:\Program Files\Microsoft SDKs\Windows\v6.0A"
+EXTRAFLAGS =	-I$(MSSDK_DIR)\Include -I.. -I..\generic -I..\.. -I$(MONGODB_INC) -I$(BOOST_INC) $(MONGODB_CFLAGS)
 
 GDAL_ROOT	=	..\..\..
 
@@ -23,7 +24,7 @@ clean:
 plugin: $(PLUGIN_DLL)
 
 $(PLUGIN_DLL):	$(OBJ)
-	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDAL_ROOT)/gdal_i.lib $(MONGODB_LIBS) wsock32.lib
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(HDF5_LIB) $(MONGODB_LIBS) $(MSSDK_DIR)\Lib\wsock32.lib $(MSSDK_DIR)\Lib\Uuid.lib $(MSSDK_DIR)\Lib\kernel32.lib
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 

@@ -35,6 +35,8 @@
 
 #if defined(DEBUG_OPENCL) && DEBUG_OPENCL == 1
 #define CL_USE_DEPRECATED_OPENCL_1_0_APIS
+#else
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #endif
 
 #ifdef __APPLE__

@@ -42,11 +42,12 @@
 #pragma warning( disable : 4244 )
 #endif
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <winsock2.h>
 #undef min
 #undef max
 #endif
+
 #include "mongo/client/dbclient.h" // for the driver
 
 #ifdef _MSC_VER

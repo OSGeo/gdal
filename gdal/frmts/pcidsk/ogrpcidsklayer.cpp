@@ -724,6 +724,56 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
             }
         }
 
+        else if( wkbFlatten(poGeometry->getGeometryType()) == wkbPolygon )
+        {
+            OGRPolygon *poPoly = (OGRPolygon *) poGeometry;
+            OGRLinearRing *poRing = NULL;
+            poRing = poPoly->getExteriorRing();
+            
+            aoVertices.resize(poRing->getNumPoints());
+            for(int i = 0; i < aoVertices.size(); i++ )
+            {
+                aoVertices[i].x = poRing->getX(i);
+                aoVertices[i].y = poRing->getY(i);
+                aoVertices[i].z = poRing->getZ(i);
+            }
+
+            int nRingSize = poPoly->getNumInteriorRings();
+            if(nRingSize > 0 )
+            {
+                std::vector<PCIDSK::int32> anRingStart;
+                anRingStart.resize(nRingSize+1);
+                anRingStart[0] = poRing->getNumPoints();
+
+                for (int iRing=0; iRing < nRingSize; iRing++)
+                {
+                    int nCurrentStart = aoVertices.size();
+                    poRing = poPoly->getInteriorRing(iRing);
+                    anRingStart[iRing+1] = nCurrentStart + poRing->getNumPoints();
+                    aoVertices.resize(nCurrentStart + poRing->getNumPoints());
+
+                    for(int i = nCurrentStart; i < aoVertices.size(); i++ )
+                    {
+                        aoVertices[i].x = poRing->getX(i-nCurrentStart);
+                        aoVertices[i].y = poRing->getY(i-nCurrentStart);
+                        aoVertices[i].z = poRing->getZ(i-nCurrentStart);
+                    }
+                }
+                
+                if(iRingStartField == -1)
+                {
+                    iRingStartField = poVecSeg->GetFieldCount();
+                    OGRFieldDefn oField( "RingStart", OFTIntegerList );
+                    CreateField( &oField );
+                }
+
+                std::vector<PCIDSK::ShapeField> aoShapeFields;
+                poVecSeg->GetFields(id, aoShapeFields);
+                aoShapeFields[iRingStartField].SetValue(anRingStart);
+                poVecSeg->SetFields( id, aoShapeFields );
+            }
+        }
+
         else
         {
             CPLDebug( "PCIDSK", "Unsupported geometry type in SetFeature(): %s",

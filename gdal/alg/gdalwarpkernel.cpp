@@ -1086,7 +1086,8 @@ CPLErr GDALWarpKernel::PerformWarp()
         || eResample == GRA_Cubic
         || eResample == GRA_CubicSpline
         || eResample == GRA_Lanczos) &&
-        CPLFetchBool( papszWarpOptions, "USE_OPENCL", true ))
+       (CPLFetchBool( papszWarpOptions, "USE_OPENCL", true )
+		|| CSLTestBoolean( CPLGetConfigOption("USE_OPENCL", "TRUE"))))
     {
         CPLErr eResult = GWKOpenCLCase( this );
 

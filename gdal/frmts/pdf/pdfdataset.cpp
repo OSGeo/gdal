@@ -50,6 +50,10 @@
 #include "pdfcreatecopy.h"
 #include <set>
 
+#ifdef GetObject
+#undef GetObject
+#endif
+
 #define GDAL_DEFAULT_DPI 150.0
 
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */

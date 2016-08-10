@@ -1355,18 +1355,29 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
     void *pDstBuffer;
     const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
-    int  nBandSize = nWordSize * nDstXSize * nDstYSize;
+    GIntBig  nBandSize = nWordSize * static_cast<GIntBig>(nDstXSize) * nDstYSize;
+	GIntBig  nBytes = nBandSize * psOptions->nBandCount;
 
-    if (nDstXSize > INT_MAX / nDstYSize ||
-        nDstXSize * nDstYSize > INT_MAX / (nWordSize * psOptions->nBandCount))
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Integer overflow : nDstXSize=%d, nDstYSize=%d",
-                  nDstXSize, nDstYSize);
-        return CE_Failure;
-    }
+    //if (nDstXSize > INT_MAX / nDstYSize ||
+    //    nDstXSize * nDstYSize > INT_MAX / (nWordSize * psOptions->nBandCount))
+    //{
+    //    CPLError( CE_Failure, CPLE_AppDefined,
+    //              "Integer overflow : nDstXSize=%d, nDstYSize=%d",
+    //              nDstXSize, nDstYSize);
+    //    return CE_Failure;
+    //}
 
-    pDstBuffer = VSI_MALLOC_VERBOSE( nBandSize * psOptions->nBandCount );
+	const size_t nByteSize_t = static_cast<size_t>(nBytes);
+#if SIZEOF_VOIDP != 8
+	if( static_cast<GIntBig>(nByteSize_t) != nBytes )
+	{
+		CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GIB " bytes",
+			nBytes );
+		return CE_Failure;
+	}
+#endif
+
+    pDstBuffer = VSI_MALLOC_VERBOSE( nByteSize_t );
     if( pDstBuffer == NULL )
     {
         return CE_Failure;

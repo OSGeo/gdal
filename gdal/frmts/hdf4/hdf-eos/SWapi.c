@@ -3900,7 +3900,7 @@ SWinqfields(int32 swathID, char *fieldtype, char *fieldlist, int32 rank[],
 
 	    /* Begin loop through mapping entries in metadata */
 	    /* ---------------------------------------------- */
-	    while (1)
+	    while (1 && metaptrs[0]!=NULL && metaptrs[1]!=NULL)
 	    {
 		/* Search for OBJECT string */
 		metaptrs[0] = strstr(metaptrs[0], "\t\tOBJECT=");
@@ -4265,7 +4265,7 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
 
             /* Begin loop through entries in metadata */
             /* -------------------------------------- */
-            while (1)
+	    	while (1 && metaptrs[0]!= NULL && metaptrs[1]!=NULL)
             {
                 /* Search for first string */
                 strcpy(utlstr, &valName[0][0]);

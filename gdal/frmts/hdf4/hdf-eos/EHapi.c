@@ -2607,20 +2607,41 @@ EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
     }
     /* Do string search */
     /* ---------------- */
-    metaptr = strstr(metaptr, utlstr);
-
+	if(metaptr != NULL)
+    	metaptr = strstr(metaptr, utlstr);
 
     /*
      * If not found then return to previous position in metadata and look for
      * "new-style" (ODL) metadata string
      */
-    if (metaptr == NULL)
+	if (metaptr == NULL && prevmetaptr != NULL)
     {
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "GROUP=\"", structname);
 	metaptr = strstr(prevmetaptr, utlstr);
     }
     /* Find group within structure */
     /* --------------------------- */
+
+	if(metaptr != NULL)
+	{
+	    if (groupname != NULL)
+	    {
+		sprintf(utlstr, "%s%s", "GROUP=", groupname);
+		metaptr = strstr(metaptr, utlstr);
+	
+		sprintf(utlstr, "%s%s", "\t\tEND_GROUP=", groupname);
+		endptr = strstr(metaptr, utlstr);
+	    } else
+	    {
+		/* If groupname == NULL then find end of structure in metadata */
+		/* ----------------------------------------------------------- */
+		sprintf(utlstr, "%s", "\n\tEND_GROUP=");
+		endptr = strstr(metaptr, utlstr);
+	    }
+	}
+	 else
+		endptr = NULL;
+
     if (groupname != NULL)
     {
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "GROUP=", groupname);

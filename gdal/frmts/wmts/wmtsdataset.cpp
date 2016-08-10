@@ -43,6 +43,7 @@ extern "C" void GDALRegister_WMTS();
 
 /* Set in stone by WMTS spec. In pixel/meter */
 #define WMTS_PITCH                      0.00028
+#define WMTS_PITCH_TDT                  0.000264583333333
 
 #define WMTS_METERS_FOR_ONE_DEG         (6378137 * 2 * M_PI / 360)
 
@@ -134,7 +135,8 @@ class WMTSDataset : public GDALPamDataset
                                            const char* pszOperation);
     static int          ReadTMS(CPLXMLNode* psContents,
                                 const CPLString& osIdentifier,
-                                WMTSTileMatrixSet& oTMS);
+                                WMTSTileMatrixSet& oTMS,
+								int bIsTianditu = TRUE);
     static int          ReadTMLimits(CPLXMLNode* psTMSLimits,
                                      std::map<CPLString, WMTSTileMatrixLimits>& aoMapTileMatrixLimits);
 
@@ -609,7 +611,8 @@ CPLString WMTSDataset::FixCRSName(const char* pszCRS)
 
 int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
                          const CPLString& osIdentifier,
-                         WMTSTileMatrixSet& oTMS)
+						 WMTSTileMatrixSet& oTMS,
+						 int bIsTianditu)
 {
     for(CPLXMLNode* psIter = psContents->psChild; psIter != NULL; psIter = psIter->psNext )
     {
@@ -697,7 +700,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             WMTSTileMatrix oTM;
             oTM.osIdentifier = l_pszIdentifier;
             oTM.dfScaleDenominator = CPLAtof(pszScaleDenominator);
-            oTM.dfPixelSize = oTM.dfScaleDenominator * WMTS_PITCH;
+			oTM.dfPixelSize = oTM.dfScaleDenominator * ((bIsTianditu == FALSE) ? WMTS_PITCH : WMTS_PITCH_TDT);
             if( oTMS.oSRS.IsGeographic() )
                 oTM.dfPixelSize /= WMTS_METERS_FOR_ONE_DEG;
             double dfVal1 = CPLAtof(pszTopLeftCorner);
@@ -943,6 +946,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                      "<ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>"
                      "<ZeroBlockOnServerException>true</ZeroBlockOnServerException>";
 
+	int  bIsTiandituWMTS = FALSE;
+
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WMTS:") )
     {
         char** papszTokens = CSLTokenizeString2( poOpenInfo->pszFilename + 5,
@@ -1072,6 +1077,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         CPLDestroyXMLNode(psXML);
         return NULL;
     }
+
+	CPLString osURL = GetOperationKVPURL(psXML, "GetCapabilities");
+	if(strstr(osURL.c_str(), "tianditu") != NULL)
+		bIsTiandituWMTS = TRUE;
 
     if( STARTS_WITH(osGetCapabilitiesURL, "/vsimem/") )
     {
@@ -1254,7 +1263,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                         {
                             // For 13-082_WMTS_Simple_Profile/schemas/wmts/1.0/profiles/WMTSSimple/examples/wmtsGetCapabilities_response_OSM.xml
                             WMTSTileMatrixSet oTMS;
-                            if( ReadTMS(psContents, osSingleTileMatrixSet, oTMS) )
+                            if( ReadTMS(psContents, osSingleTileMatrixSet, oTMS, bIsTiandituWMTS) )
                             {
                                 osCRS = oTMS.osSRS;
                             }
@@ -1269,6 +1278,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 {
                     int bSwap = oSRS.EPSGTreatsAsLatLong() ||
                                 oSRS.EPSGTreatsAsNorthingEasting();
+
+					if(bIsTiandituWMTS && bSwap)
+						bSwap = FALSE;
+
                     char** papszLC = CSLTokenizeString(osLowerCorner);
                     char** papszUC = CSLTokenizeString(osUpperCorner);
                     if( CSLCount(papszLC) == 2 && CSLCount(papszUC) == 2 )
@@ -1376,7 +1389,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->osTMS = osSelectTMS;
 
         WMTSTileMatrixSet oTMS;
-        if( !ReadTMS(psContents, osSelectTMS, oTMS) )
+        if( !ReadTMS(psContents, osSelectTMS, oTMS, bIsTiandituWMTS) )
         {
             CPLDestroyXMLNode(psXML);
             delete poDS;

@@ -299,6 +299,10 @@ VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname,
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
+				CPLSPrintf( "%s_%d.ges", pszPrefix, iFASTBand ), NULL );
+			if ( OpenChannel( pszChannelFilename, iBand ) )
+				break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
                 CPLSPrintf( "IMAGERY%d", iFASTBand ), pszSuffix );
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
@@ -698,10 +702,11 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (strstr( pszHeader, FILENAME ) == NULL)
     {
-        if (strstr(pszHeader, "GENERATING AGENCY =EUROMAP"))
+		if ((strstr(pszHeader, "GENERATING AGENCY =EUROMAP")!= NULL) ||
+			(strstr(pszHeader, "GENERATING AGENCY =RSGS")!= NULL))
         {
-            // If we don't find the FILENAME field, let's try with the Euromap
-            // PAN / LISS3 / WIFS IRS filename convention.
+            /* If we don't find the FILENAME field, let's try with the Euromap or RSGS */
+            /* PAN / LISS3 / WIFS IRS filename convention */
             if ((EQUAL(poDS->GetMetadataItem("SATELLITE"), "IRS 1C") ||
                  EQUAL(poDS->GetMetadataItem("SATELLITE"), "IRS 1D")) &&
                 (EQUAL(poDS->GetMetadataItem("SENSOR"), "PAN") ||
@@ -1041,7 +1046,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         pszTemp = GetValue( pszHeader, DATUM_NAME, DATUM_NAME_SIZE, FALSE );
         if ( pszTemp )
         {
-            if ( EQUAL( pszTemp, "WGS84" ) )
+            if ( EQUAL( pszTemp, "WGS84" ) || EQUAL( pszTemp, "WGS_84" ) )
                 oSRS.SetWellKnownGeogCS( "WGS84" );
             else if ( EQUAL( pszTemp, "NAD27" ) )
                 oSRS.SetWellKnownGeogCS( "NAD27" );

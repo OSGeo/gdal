@@ -62,6 +62,7 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
 void CPL_STDCALL GDALAllRegister()
 
 {
+	CPLSetConfigOption( "GDAL_FILENAME_IS_UTF8", "NO" );	//add by lml 2012-02-17
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     GetGDALDriverManager()->AutoLoadDrivers();
 
@@ -375,6 +376,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_mbtiles
     GDALRegister_MBTiles();
+	GDALRegister_TFATMBTiles();
 #endif
 
 #ifdef FRMT_plmosaic
@@ -543,6 +545,14 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_iris
     GDALRegister_IRIS();
+#endif
+
+#ifdef FRMT_cnsdtf
+    GDALRegister_CNSDTF();
+#endif
+
+#ifdef FRMT_landsat
+	GDALRegister_LANDSAT();
 #endif
 
 #ifdef GNM_ENABLED

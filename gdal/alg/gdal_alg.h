@@ -278,6 +278,38 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
                            void *pProgressArg,
                            char **papszOptions );
 
+typedef struct { 
+	//elements of interior orientation(Unit mm)
+	double      dfFocalLength;	// focal length
+	double      dfX0;			// principal point x0
+	double      dfY0;			// principal point y0
+	double		dfXPS;			// x pixel size
+	double		dfYPS;			// y pixel size
+
+	//elements of exterior orientation(Unit m & rad)
+	double      dfXS;
+	double      dfYS;
+	double      dfZS;
+
+	double      adfOmega[3];
+	double      adfPhi[3];
+	double      adfKappa[3];
+
+	int			nAngleType;
+	int			nOrder;
+} GDALCEMInfo;
+
+/* CEM based transformer ... src is pixel/line/elev, dst is long/lat/elev */
+
+void CPL_DLL *
+GDALCreateCEMTransformer( GDALCEMInfo *psRPC, int bReversed, 
+						 double dfPixErrThreshold,
+						 char **papszOptions );
+void CPL_DLL GDALDestroyCEMTransformer( void *pTransformArg );
+int CPL_DLL GDALCEMTransform( 
+							 void *pTransformArg, int bDstToSrc, int nPointCount,
+							 double *x, double *y, double *z, int *panSuccess );
+
 /* -------------------------------------------------------------------- */
 /*      Contour Line Generation                                         */
 /* -------------------------------------------------------------------- */

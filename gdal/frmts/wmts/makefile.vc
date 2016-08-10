@@ -1,6 +1,8 @@
 
 OBJ	= wmtsdataset.obj
 
+EXTRAFLAGS = -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
+
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt

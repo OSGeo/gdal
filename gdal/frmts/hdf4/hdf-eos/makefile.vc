@@ -15,6 +15,9 @@ EXTRAFLAGS = $(EXTRAFLAGS) -DHDF4_HAS_MAXOPENFILES
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\..\o
 
+plugin:	$(OBJ)
+	xcopy /D  /Y *.obj ..\
+
 clean:
 	-del *.obj
 

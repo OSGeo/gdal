@@ -121,7 +121,11 @@ uint16 SysVirtualFile::GetBlockSegment( int requested_block )
     if( regular_blocks )
         // regular blocks are all in one segment.
         return xblock_segment[0];
-    else
+    else if (requested_block >= xblock_segment.size())
+    {
+		return xblock_segment[xblock_segment.size()-1];
+    }
+	else
         return xblock_segment[requested_block];
 }
 
@@ -142,6 +146,10 @@ int SysVirtualFile::GetBlockIndexInSegment( int requested_block )
     if( regular_blocks )
         // regular blocks all follow the first block in order.
         return xblock_index[0] + requested_block;
+	else if (requested_block >= xblock_segment.size())
+	{
+		return xblock_segment[xblock_segment.size()-1];
+	}
     else
         return xblock_index[requested_block];
 }

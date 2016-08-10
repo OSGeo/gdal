@@ -35,6 +35,7 @@
 #include <math.h>
 #include <vector>
 #include <list>
+#include <map>
 #include <algorithm>
 #include <curl/curl.h>
 
@@ -428,8 +429,12 @@ class GDALWMSRasterBand : public GDALPamRasterBand {
                                 GDALWMSTiledImageRequestInfo &tiri,
                                 int x, int y);
 
+	void InitTiandituMap();
+
     CPLString osMetadataItem;
     CPLString osMetadataItemURL;
+
+	std::map<CPLString, CPLString> omTianditu;
 
 public:
     GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);

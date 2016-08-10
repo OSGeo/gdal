@@ -2044,7 +2044,9 @@ CPLString WFS_DecodeURL(const CPLString &osSrc)
             ret+=osSrc[i];
         }
     }
-    return (ret);
+
+	CPLString oRecode = CPLRecode(ret.c_str(), CPL_ENC_LOCALE, CPL_ENC_UTF8);
+    return (oRecode);
 }
 
 /************************************************************************/

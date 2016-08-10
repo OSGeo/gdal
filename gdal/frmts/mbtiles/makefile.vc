@@ -1,5 +1,5 @@
 
-OBJ	=	mbtilesdataset.obj
+OBJ	=	mbtilesdataset.obj tfatmbtilesdataset.obj
 
 EXTRAFLAGS = -I../../ogr -I../../ogr/ogrsf_frmts/gpkg  -I../../ogr/ogrsf_frmts/sqlite $(SQLITE_INC) -I../../ogr/ogrsf_frmts/geojson -I../../ogr/ogrsf_frmts/geojson/libjson -I../zlib
 

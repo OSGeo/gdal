@@ -270,11 +270,11 @@ cl_device_id get_device(OCLVendor *peVendor)
 
     // Find the GPU CL device, this is what we really want
     // If there is no GPU device is CL capable, fall back to CPU
-    err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    err = clGetDeviceIDs(platforms[num_platforms-1], CL_DEVICE_TYPE_GPU, 1, &device, NULL);
     if (err != CL_SUCCESS)
     {
         // Find the CPU CL device, as a fallback
-        err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+        err = clGetDeviceIDs(platforms[num_platforms-1], CL_DEVICE_TYPE_CPU, 1, &device, NULL);
         if( err != CL_SUCCESS || device == 0 )
             return NULL;
     }

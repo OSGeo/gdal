@@ -238,6 +238,9 @@ typedef struct {
     double      adfDEMGeoTransform[6];
     double      adfDEMReverseGeoTransform[6];
 
+	double		adfRefineTransform[6];			//RPC adjustment refine delta transform 
+	double		adfReverseRefineTransform[6];	//RPC adjustment reverse refine delta transform
+    
 #ifdef USE_SSE2_OPTIM
     double      adfDoubles[20 * 4 + 1];
     double     *padfCoeffs; // LINE_NUM_COEFF, LINE_DEN_COEFF, SAMP_NUM_COEFF and then SAMP_DEN_COEFF
@@ -794,6 +797,27 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         psTransform->bHasDEMMissingValue = TRUE;
         psTransform->dfDEMMissingValue = CPLAtof(pszDEMMissingValue);
     }
+
+/* -------------------------------------------------------------------- */
+/*                     The Refine transform parameters                  */
+/* -------------------------------------------------------------------- */
+	const char *pszRpcRefine = CSLFetchNameValueDef( papszOptions, "RPC_REFINE", "0 0 0 0 0 0" );
+	if(pszRpcRefine != NULL)	//解析RPC像方改正仿射变换参数
+	{
+		char** papszTokens = CSLTokenizeString2( pszRpcRefine, " ", 0 );
+		int nTokens = CSLCount(papszTokens);
+		if(nTokens == 6)	//must be 6
+		{
+			for (int i=0; i<6; i++)
+				psTransform->adfRefineTransform[i] = atof(papszTokens[i]);
+		}
+
+		psTransform->adfRefineTransform[1] += 1;
+		psTransform->adfRefineTransform[5] += 1;
+
+		GDALInvGeoTransform( psTransform->adfRefineTransform, psTransform->adfReverseRefineTransform );
+		CSLDestroy(papszTokens);
+	}
 
 /* -------------------------------------------------------------------- */
 /*      Whether to apply vdatum shift                                   */
@@ -1875,6 +1899,9 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
             RPCTransformPoint( psTransform, padfX[i], padfY[i],
                                 padfZ[i] + dfHeight,
                                 padfX + i, padfY + i );
+
+			//通过经纬度高程计算得到影像行列号，再使用改正模型改正
+			GDALApplyGeoTransform(psTransform->adfReverseRefineTransform, padfX[i], padfY[i], padfX + i, padfY + i );
             panSuccess[i] = TRUE;
         }
 
@@ -1888,6 +1915,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nPointCount; i++ )
     {
+		//先将影像行列号用改正模型修改，再使用RPC模型计算经纬度
+		GDALApplyGeoTransform(psTransform->adfRefineTransform, padfX[i], padfY[i], padfX + i, padfY + i );
         double dfResultX, dfResultY;
 
         if( !RPCInverseTransformPoint( psTransform, padfX[i], padfY[i],
