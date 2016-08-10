@@ -17961,6 +17961,16 @@ _ACEOF
 
 fi
 
+ac_fn_c_check_type "$LINENO" "uintptr_t" "ac_cv_type_uintptr_t" "$ac_includes_default"
+if test "x$ac_cv_type_uintptr_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UINTPTR_T 1
+_ACEOF
+
+
+fi
+
 
 HAVE_IEEEFP=1
 
@@ -24861,9 +24871,6 @@ fi
 
 OPT_GDAL_FORMATS=$OPT_GDAL_FORMATS
 
-
-
-OGR_ENABLED=yes
 
 
 GNM_ENABLED=no

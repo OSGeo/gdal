@@ -102,6 +102,9 @@
 /* Define to 1, if your compiler supports long long data type */
 #undef HAVE_LONG_LONG
 
+/* Define to 1, if your compiler supports uintptr_t data type */
+#undef HAVE_UINTPTR_T
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 

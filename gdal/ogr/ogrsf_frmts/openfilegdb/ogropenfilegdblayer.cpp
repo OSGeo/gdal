@@ -1435,7 +1435,7 @@ OGRFeature* OGROpenFileGDBLayer::GetNextFeature()
                 {
                     return NULL;
                 }
-                int iRow = (int)(size_t)m_pahFilteredFeatures[m_iCurFeat++];
+                int iRow = (int)(GUIntptr_t)m_pahFilteredFeatures[m_iCurFeat++];
                 if( m_poLyrTable->SelectRow(iRow) )
                 {
                     poFeature = GetCurrentFeature();

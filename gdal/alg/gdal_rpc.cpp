@@ -318,7 +318,7 @@ static void RPCTransformPoint( const GDALRPCTransformInfo *psRPCTransformInfo,
     double adfTermsWithMargin[20+1];
     // Make padfTerms aligned on 16-byte boundary for SSE2 aligned loads.
     double* padfTerms =
-        adfTermsWithMargin + (((size_t)adfTermsWithMargin) % 16) / 8;
+        adfTermsWithMargin + (((GUIntptr_t)adfTermsWithMargin) % 16) / 8;
 
     // Avoid dateline issues
     double diffLong = dfLong - psRPCTransformInfo->sRPC.dfLONG_OFF;
@@ -740,7 +740,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 
 #ifdef USE_SSE2_OPTIM
     // Make sure padfCoeffs is aligned on a 16-byte boundary for SSE2 aligned loads
-    psTransform->padfCoeffs = psTransform->adfDoubles + (((size_t)psTransform->adfDoubles) % 16) / 8;
+    psTransform->padfCoeffs = psTransform->adfDoubles + (((GUIntptr_t)psTransform->adfDoubles) % 16) / 8;
     memcpy(psTransform->padfCoeffs, psRPCInfo->adfLINE_NUM_COEFF, 20 * sizeof(double));
     memcpy(psTransform->padfCoeffs+20, psRPCInfo->adfLINE_DEN_COEFF, 20 * sizeof(double));
     memcpy(psTransform->padfCoeffs+40, psRPCInfo->adfSAMP_NUM_COEFF, 20 * sizeof(double));

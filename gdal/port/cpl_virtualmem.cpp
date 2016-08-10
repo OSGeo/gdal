@@ -129,8 +129,8 @@ struct CPLVirtualMem
 */
 
 
-#define ALIGN_DOWN(p,pagesize)  (void*)(((size_t)(p)) / (pagesize) * (pagesize))
-#define ALIGN_UP(p,pagesize)    (void*)(((size_t)(p) + (pagesize) - 1) / (pagesize) * (pagesize))
+#define ALIGN_DOWN(p,pagesize)  (void*)(((GUIntptr_t)(p)) / (pagesize) * (pagesize))
+#define ALIGN_UP(p,pagesize)    (void*)(((GUIntptr_t)(p) + (pagesize) - 1) / (pagesize) * (pagesize))
 
 #define DEFAULT_PAGE_SIZE       (256*256)
 #define MAXIMUM_PAGE_SIZE       (32*1024*1024)
@@ -1978,7 +1978,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
     }
 #endif
 
-    int fd = (int) (size_t) VSIFGetNativeFileDescriptorL(fp);
+    int fd = (int) (GUIntptr_t) VSIFGetNativeFileDescriptorL(fp);
     if( fd == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,

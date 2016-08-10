@@ -510,7 +510,7 @@ int CPLHashSetRemoveDeferRehash( CPLHashSet* set, const void* elt )
 unsigned long CPLHashSetHashPointer( const void* elt )
 {
     return static_cast<unsigned long>(
-        reinterpret_cast<GUIntBig>(elt));
+        (GUIntptr_t)(elt));
 }
 
 /************************************************************************/
