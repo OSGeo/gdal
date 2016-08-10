@@ -34,6 +34,8 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 // TODO(schwehr): Explain why 128 and not 127.
@@ -749,6 +751,11 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      Loop writing overview data.                                     */
 /* -------------------------------------------------------------------- */
 
+    int * panOverviewListSorted = static_cast<int*>(
+                                        CPLMalloc(sizeof(int) * nOverviews));
+    memcpy( panOverviewListSorted, panOverviewList, sizeof(int) * nOverviews);
+    std::sort(panOverviewListSorted, panOverviewListSorted + nOverviews);
+
     GTIFFSetInExternalOvr(true);
 
     if( nCompression != COMPRESSION_NONE &&
@@ -772,31 +779,49 @@ GTIFFBuildOverviews( const char * pszFilename,
                 CPLCalloc(sizeof(void *), nBands) );
         for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
-            GDALRasterBand *hSrcBand = papoBandList[iBand];
-            GDALRasterBand *hDstBand = hODS->GetRasterBand( iBand+1 );
+            GDALRasterBand *poSrcBand = papoBandList[iBand];
+            GDALRasterBand *poDstBand = hODS->GetRasterBand( iBand+1 );
             papapoOverviewBands[iBand] =
                 static_cast<GDALRasterBand **>(
                     CPLCalloc(sizeof(void *), nOverviews) );
-            papapoOverviewBands[iBand][0] = hDstBand;
 
             int bHasNoData = FALSE;
-            const double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
+            const double noDataValue = poSrcBand->GetNoDataValue(&bHasNoData);
             if( bHasNoData )
-                hDstBand->SetNoDataValue(noDataValue);
+                poDstBand->SetNoDataValue(noDataValue);
 
-            for( int i = 0; i < nOverviews-1 && eErr == CE_None; i++ )
+            for( int i = 0; i < nOverviews && eErr == CE_None; i++ )
             {
-                papapoOverviewBands[iBand][i+1] = hDstBand->GetOverview(i);
-                if( papapoOverviewBands[iBand][i+1] == NULL )
+                for( int j = -1; j < poDstBand->GetOverviewCount() &&
+                                 eErr == CE_None; j++ )
                 {
-                    eErr = CE_Failure;
+                    int    nOvFactor;
+                    GDALRasterBand * poOverview =
+                            (j < 0 ) ? poDstBand : poDstBand->GetOverview( j );
+                    if( poOverview == NULL )
+                    {
+                        eErr = CE_Failure;
+                        continue;
+                    }
+
+                    nOvFactor = GDALComputeOvFactor(poOverview->GetXSize(),
+                                                    poSrcBand->GetXSize(),
+                                                    poOverview->GetYSize(),
+                                                    poSrcBand->GetYSize());
+
+                    if( nOvFactor == panOverviewListSorted[i]
+                        || nOvFactor == GDALOvLevelAdjust2(
+                                            panOverviewListSorted[i],
+                                            poSrcBand->GetXSize(),
+                                            poSrcBand->GetYSize() ) )
+                    {
+                        papapoOverviewBands[iBand][i] = poOverview;
+                        if( bHasNoData )
+                            poOverview->SetNoDataValue(noDataValue);
+                        break;
+                    }
                 }
-                else
-                {
-                    if( bHasNoData )
-                        papapoOverviewBands[iBand][i+1]->
-                            SetNoDataValue(noDataValue);
-                }
+                CPLAssert( papapoOverviewBands[iBand][i] != NULL );
             }
         }
 
@@ -828,6 +853,9 @@ GTIFFBuildOverviews( const char * pszFilename,
             const double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
             if( bHasNoData )
                 hDstBand->SetNoDataValue(noDataValue);
+
+            // FIXME: this logic regenerates all overview bands, not only the
+            // ones requested
 
             papoOverviews[0] = hDstBand;
             int nDstOverviews = hDstBand->GetOverviewCount() + 1;
@@ -879,6 +907,8 @@ GTIFFBuildOverviews( const char * pszFilename,
     delete hODS;
 
     GTIFFSetInExternalOvr(false);
+
+    CPLFree(panOverviewListSorted);
 
     pfnProgress( 1.0, NULL, pProgressData );
 
