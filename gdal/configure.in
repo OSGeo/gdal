@@ -118,7 +118,7 @@ CXX11_SUPPORT=no
 
 AC_LANG_PUSH([C++])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-  [[#if __cplusplus > 199711L
+  [[#if __cplusplus >= 201103L
     #error "-std=c++11 extension is not supported"
     #endif]])],
   [CXX11_SUPPORT=yes],,
@@ -3478,12 +3478,6 @@ fi
 dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(DWG_PLT)
 AC_SUBST(DWGDIRECT)
-
-dnl ---------------------------------------------------------------------------
-dnl Check for CAD Support
-dnl ---------------------------------------------------------------------------
-
-AC_SUBST(CAD_ENABLED)
 
 dnl ---------------------------------------------------------------------------
 dnl Select Informix DataBlade support
