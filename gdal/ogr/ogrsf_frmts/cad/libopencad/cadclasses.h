@@ -40,6 +40,18 @@ using namespace std;
 
 typedef struct _class
 {
+    _class() :      sCppClassName(""),
+                    sApplicationName(""),
+                    sDXFRecordName(""),
+                    dProxyCapFlag(0),
+                    dInstanceCount(0),
+                    bWasZombie(false),
+                    bIsEntity(false),
+                    dClassNum(0),
+                    dClassVersion(0)
+    {
+    }
+
     string          sCppClassName;       /**< TV, C++ class name */
     string          sApplicationName;    /**< TV, Application name */
     string          sDXFRecordName;      /**< TV, Class DXF record name */

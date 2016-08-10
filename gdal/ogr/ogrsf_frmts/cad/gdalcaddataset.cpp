@@ -119,9 +119,9 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
 
     const char * papszOpenOptions = CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, "MODE", 
                                                                            "READ_FAST");
-    const char * papszReadUnsupportedGeoms = CSLFetchNameValueDef( 
+    /* const char * papszReadUnsupportedGeoms = CSLFetchNameValueDef( 
                 poOpenInfo->papszOpenOptions, "ADD_UNSUPPORTED_GEOMETRIES_DATA",
-                "NO");
+                "NO"); */
 
     enum CADFile::OpenOptions openOpts = CADFile::READ_FAST;
     if( !strcmp( papszOpenOptions, "READ_ALL" ) )

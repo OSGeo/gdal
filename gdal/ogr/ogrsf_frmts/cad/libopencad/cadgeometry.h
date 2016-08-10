@@ -117,6 +117,18 @@ protected:
 };
 
 /**
+ * @brief Geometry class which represents Unhandled geometry (means that library cant read it yet)
+ */
+class CADUnknown : public CADGeometry
+{
+public:
+    CADUnknown();
+
+    virtual void        print () const override;
+    void                transform(const Matrix& matrix) override;
+};
+
+/**
  * @brief Geometry class which a single Point
  */
 class CADPoint3D : public CADGeometry

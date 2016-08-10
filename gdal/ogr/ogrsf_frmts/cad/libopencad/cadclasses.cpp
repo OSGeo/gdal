@@ -37,7 +37,6 @@ using namespace std;
 
 CADClasses::CADClasses()
 {
-
 }
 
 void CADClasses::addClass(CADClass stClass)
@@ -63,11 +62,12 @@ void CADClasses::addClass(CADClass stClass)
 
 CADClass CADClasses::getClassByNum(short num) const
 {
-    for(CADClass cadClass : classes){
+    for(CADClass cadClass : classes)
+    {
         if(cadClass.dClassNum == num)
             return cadClass;
     }
-    return {};
+    return CADClass();
 }
 
 void CADClasses::print() const

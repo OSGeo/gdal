@@ -77,6 +77,7 @@ static int CheckCADFile(CADFileIO* pCADFileIO)
  * @brief Open CAD file
  * @param pCADFileIO CAD file reader pointer ownd by function
  * @param eOptions Open options
+ * @param bReadUnsupportedGeometries Unsupported geoms will be returned as CADUnknown
  * @return CADFile pointer or NULL if failed. The pointer have to be freed by user
  */
 CADFile* OpenCADFile( CADFileIO* pCADFileIO, enum CADFile::OpenOptions eOptions )
@@ -84,14 +85,15 @@ CADFile* OpenCADFile( CADFileIO* pCADFileIO, enum CADFile::OpenOptions eOptions 
     int nCADFileVersion = CheckCADFile(pCADFileIO);
     CADFile * poCAD = nullptr;
 
-    switch (nCADFileVersion) {
-    case CADVersions::DWG_R2000:
-        poCAD = new DWGFileR2000 (pCADFileIO);
-        break;
-    default:
-        gLastError = CADErrorCodes::UNSUPPORTED_VERSION;
-        delete pCADFileIO;
-        return nullptr;
+    switch (nCADFileVersion)
+    {
+        case CADVersions::DWG_R2000:
+            poCAD = new DWGFileR2000 (pCADFileIO);
+            break;
+        default:
+            gLastError = CADErrorCodes::UNSUPPORTED_VERSION;
+            delete pCADFileIO;
+            return nullptr;
     }
 
     gLastError = poCAD->parseFile(eOptions);
