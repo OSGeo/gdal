@@ -629,6 +629,7 @@ GDALDefaultOverviews::BuildOverviews(
     int nNewOverviews = 0;
     int *panNewOverviewList = static_cast<int *>(
         CPLCalloc(sizeof(int), nOverviews) );
+    int nMinNewOverviewFactor = 0;
     for( int i = 0; i < nOverviews && poBand != NULL; i++ )
     {
         for( int j = 0; j < poBand->GetOverviewCount(); j++ )
@@ -651,16 +652,12 @@ GDALDefaultOverviews::BuildOverviews(
         }
 
         if( panOverviewList[i] > 0 )
+        {
+            if( nNewOverviews == 0 || panOverviewList[i] < nMinNewOverviewFactor )
+                nMinNewOverviewFactor = panOverviewList[i];
             panNewOverviewList[nNewOverviews++] = panOverviewList[i];
+        }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Build band list.                                                */
-/* -------------------------------------------------------------------- */
-    GDALRasterBand **pahBands = static_cast<GDALRasterBand **>(
-        CPLCalloc(sizeof(GDALRasterBand *), nBands) );
-    for( int i = 0; i < nBands; i++ )
-        pahBands[i] = poDS->GetRasterBand( panBandList[i] );
 
 /* -------------------------------------------------------------------- */
 /*      Build new overviews - Imagine.  Keep existing file open if      */
@@ -696,15 +693,53 @@ GDALDefaultOverviews::BuildOverviews(
     }
 
 /* -------------------------------------------------------------------- */
-/*      Build new overviews - TIFF.  Close TIFF files while we          */
-/*      operate on it.                                                  */
+/*      Build new overviews - TIFF.                                     */
 /* -------------------------------------------------------------------- */
     else
     {
-        if( poODS != NULL )
+/* -------------------------------------------------------------------- */
+/*      Build band list.                                                */
+/* -------------------------------------------------------------------- */
+        GDALRasterBand **pahBands = static_cast<GDALRasterBand **>(
+            CPLCalloc(sizeof(GDALRasterBand *), nBands) );
+        for( int i = 0; i < nBands; i++ )
+            pahBands[i] = poDS->GetRasterBand( panBandList[i] );
+
+        // Find if there's an overview level just before the minimal one
+        // we must compute
+        int nBestOvFactor = 0;
+        int nBestOvIdx = -1;
+        for( int j = 0; poBand != NULL && j < poBand->GetOverviewCount(); j++ )
         {
-            delete poODS;
-            poODS = NULL;
+            GDALRasterBand * poOverview = poBand->GetOverview( j );
+            if( poOverview == NULL )
+                continue;
+
+            int nOvFactor =
+                GDALComputeOvFactor(poOverview->GetXSize(),
+                                    poBand->GetXSize(),
+                                    poOverview->GetYSize(),
+                                    poBand->GetYSize());
+            if( nOvFactor < nMinNewOverviewFactor &&
+                (nBestOvFactor == 0 || nOvFactor > nBestOvFactor) )
+            {
+                nBestOvFactor = nOvFactor;
+                nBestOvIdx = j;
+            }
+        }
+        if( nBestOvIdx >= 0 )
+        {
+            for( int i = 0; i < nBands; i++ )
+            {
+                pahBands[i] = poDS->GetRasterBand( panBandList[i] )->GetOverview( nBestOvIdx );
+                if( pahBands[i] == NULL  )
+                {
+                    // Revert to fullres band
+                    for( i = 0; i < nBands; i++ )
+                        pahBands[i] = poDS->GetRasterBand( panBandList[i] );
+                    break;
+                }
+            }
         }
 
         eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands,
@@ -727,6 +762,14 @@ GDALDefaultOverviews::BuildOverviews(
             }
         }
 
+        CPLFree( pahBands );
+
+        // Re-open TIFF file
+        if( poODS != NULL )
+        {
+            delete poODS;
+            poODS = NULL;
+        }
         if( eErr == CE_None )
         {
             poODS = static_cast<GDALDataset *>(
@@ -794,7 +837,6 @@ GDALDefaultOverviews::BuildOverviews(
 /* -------------------------------------------------------------------- */
     CPLFree( papoOverviewBands );
     CPLFree( panNewOverviewList );
-    CPLFree( pahBands );
 
 /* -------------------------------------------------------------------- */
 /*      If we have a mask file, we need to build its overviews too.     */

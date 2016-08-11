@@ -2080,6 +2080,65 @@ def tiff_ovr_52():
     return 'success'
 
 ###############################################################################
+# Test that external overview building in several times can re-use existing overviews
+
+def tiff_ovr_53():
+
+    src_ds = gdal.Open('data/byte.tif')
+    if src_ds is None:
+        return 'skip'
+
+    if False:
+        gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_53.tif', src_ds)
+        ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
+        ds.BuildOverviews('NEAR', [2])
+        ds = None
+        ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
+        ds.BuildOverviews('NEAR', [4])
+        ds = None
+
+        ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        if cs != 1087:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+        cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+        if cs != 328:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+        ds = None
+
+        gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_53.tif')
+
+
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_53.tif', src_ds)
+    ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
+    ds.BuildOverviews('NONE', [2])
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
+    ds.BuildOverviews('NEAR', [4])
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 0:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != 0:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_53.tif')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -2195,7 +2254,8 @@ for item in gdaltest_list_internal:
 gdaltest_list.append(tiff_ovr_restore_endianness)
 
 gdaltest_list += [ tiff_ovr_51,
-                   tiff_ovr_52 ]
+                   tiff_ovr_52,
+                   tiff_ovr_53 ]
 
 if __name__ == '__main__':
 
