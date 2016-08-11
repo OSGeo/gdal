@@ -47,50 +47,64 @@ AC_CANONICAL_HOST
 dnl Enable as much warnings as possible
 AX_CFLAGS_WARN_ALL(C_WFLAGS)
 AX_CXXFLAGS_WARN_ALL(CXX_WFLAGS)
-AX_CHECK_COMPILE_FLAG([-Werror -Wextra],[C_WFLAGS="$C_WFLAGS -Wextra" CXX_WFLAGS="$CXX_WFLAGS -Wextra"])
-AX_CHECK_COMPILE_FLAG([-Werror -Winit-self],[C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS="$CXX_WFLAGS -Winit-self"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wunused-parameter], [C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [C_WFLAGS="$C_WFLAGS -Wmissing-declarations"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wformat], [C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFLAGS="$CXX_WFLAGS -Wformat"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wformat -Werror=format-security -Wno-format-nonliteral], [C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"])
+
+dnl For ICC: it needs -we10006 instead of -Werror to turn unknown options to errors
+AX_CHECK_COMPILE_FLAG([-Werror -we10006],[ERROR_ON_UNKNOWN_OPTIONS="-we10006"],[ERROR_ON_UNKNOWN_OPTIONS="-Werror"])
+
+dnl A few ICC warnings to turn off
+dnl warning #188: enumerated type mixed with another type  (needed on libcsf)
+dnl warning #1684: conversion from pointer to same-sized integral type (potential portability problem)  (needed on frmts/mrf)
+dnl warning #2259: non-pointer conversion from "size_t={unsigned long}" to "int" may lose significant bits
+dnl warning #2304: non-explicit constructor with single argument may cause implicit type conversion
+dnl warning #3280: declaration hides member
+dnl remark #11074: Inlining inhibited by limit max-size 
+dnl remark #11076: To get full report use -qopt-report=4 -qopt-report-phase ipo
+AX_CHECK_COMPILE_FLAG([-diag-disable 188,1684,2259,2304,3280,11074,11076],[C_WFLAGS="$C_WFLAGS -diag-disable 188,1684,2259,2304,3280,11074,11076" CXX_WFLAGS="$CXX_WFLAGS -diag-disable 188,1684,2259,2304,3280,11074,11076"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+
+AX_CHECK_COMPILE_FLAG([-Wextra],[C_WFLAGS="$C_WFLAGS -Wextra" CXX_WFLAGS="$CXX_WFLAGS -Wextra"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Winit-self],[C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS="$CXX_WFLAGS -Winit-self"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wunused-parameter], [C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-prototypes], [C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-declarations], [C_WFLAGS="$C_WFLAGS -Wmissing-declarations"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wformat], [C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFLAGS="$CXX_WFLAGS -Wformat"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wformat -Werror=format-security -Wno-format-nonliteral], [C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Error out on things that will fail with MSVC
-AX_CHECK_COMPILE_FLAG([-Werror -Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"])
-AX_CHECK_COMPILE_FLAG([-Werror -Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"])
+AX_CHECK_COMPILE_FLAG([-Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl -Wclobbered is not reliable on most gcc versions
-dnl AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
+dnl AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl GCC 6 warnings
-AX_CHECK_COMPILE_FLAG([-Werror -Wnull-dereference], [C_WFLAGS="$C_WFLAGS -Wnull-dereference" CXX_WFLAGS="$CXX_WFLAGS -Wnull-dereference"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wduplicated-cond], [C_WFLAGS="$C_WFLAGS -Wduplicated-cond" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-cond"])
+AX_CHECK_COMPILE_FLAG([-Wnull-dereference], [C_WFLAGS="$C_WFLAGS -Wnull-dereference" CXX_WFLAGS="$CXX_WFLAGS -Wnull-dereference"],,[$ERROR_ON_UNKNOWN_OPTIONS],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wduplicated-cond], [C_WFLAGS="$C_WFLAGS -Wduplicated-cond" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-cond"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
-AX_CHECK_COMPILE_FLAG([-Werror -Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"])
+AX_CHECK_COMPILE_FLAG([-Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl C++ specific stuff
 
 AC_LANG_PUSH([C++])
-AX_CHECK_COMPILE_FLAG([-Werror -Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"])
+AX_CHECK_COMPILE_FLAG([-Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Clang enables -Woverloaded-virtual if -Wall is defined, but not GCC
-AX_CHECK_COMPILE_FLAG([-Werror -Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"])
+AX_CHECK_COMPILE_FLAG([-Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Forbid use of 'or', 'and', ... alias operators
-AX_CHECK_COMPILE_FLAG([-Werror -fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"])
+AX_CHECK_COMPILE_FLAG([-fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 AC_LANG_POP([C++])
 
 dnl Enable -Wimplicit-fallthrough (clang specific) only if C++11 is enabled since CPL_FALLTHROUGH is only active then
 AC_LANG_PUSH([C++])
 SAVED_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS -Werror -Wimplicit-fallthrough"
+CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wimplicit-fallthrough"
 AC_MSG_CHECKING([if -Wimplicit-fallthrough can be enabled])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
   [[#if __cplusplus < 201103L || !(defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)))
