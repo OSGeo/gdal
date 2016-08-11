@@ -228,7 +228,7 @@ class SGIDataset : public GDALPamDataset
 
 public:
     SGIDataset();
-    ~SGIDataset();
+    virtual ~SGIDataset();
 
     virtual CPLErr GetGeoTransform(double*);
     static GDALDataset* Open(GDALOpenInfo*);

@@ -59,7 +59,7 @@ class BIGGIFDataset : public GIFAbstractDataset
 
   public:
                  BIGGIFDataset();
-                 ~BIGGIFDataset();
+    virtual ~BIGGIFDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

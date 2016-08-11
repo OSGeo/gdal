@@ -81,7 +81,7 @@ class RS2Dataset : public GDALPamDataset
 
   public:
             RS2Dataset();
-           ~RS2Dataset();
+    virtual ~RS2Dataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();

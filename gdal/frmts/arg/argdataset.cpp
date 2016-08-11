@@ -52,7 +52,7 @@ class ARGDataset : public RawDataset
 
     public:
         ARGDataset();
-        ~ARGDataset();
+        virtual ~ARGDataset();
 
         CPLErr GetGeoTransform( double * padfTransform );
 

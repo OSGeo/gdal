@@ -63,7 +63,7 @@ class BSBDataset : public GDALPamDataset
 
   public:
                 BSBDataset();
-                ~BSBDataset();
+    virtual ~BSBDataset();
 
     BSBInfo     *psInfo;
 

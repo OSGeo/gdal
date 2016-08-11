@@ -245,7 +245,7 @@ class HDF5ImageRasterBand : public GDALPamRasterBand
 public:
 
     HDF5ImageRasterBand( HDF5ImageDataset *, int, GDALDataType );
-    ~HDF5ImageRasterBand();
+    virtual ~HDF5ImageRasterBand();
 
     virtual CPLErr      IReadBlock( int, int, void * );
     virtual double      GetNoDataValue( int * );

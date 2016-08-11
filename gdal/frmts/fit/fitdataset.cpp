@@ -92,7 +92,7 @@ class FITRasterBand : public GDALPamRasterBand
 public:
 
     FITRasterBand( FITDataset *, int nBandIn, int nBandsIn );
-    ~FITRasterBand();
+    virtual ~FITRasterBand();
 
     // should override RasterIO eventually.
 

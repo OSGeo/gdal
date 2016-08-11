@@ -67,7 +67,7 @@ class VICARDataset : public RawDataset
 
 public:
     VICARDataset();
-    ~VICARDataset();
+    virtual ~VICARDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);

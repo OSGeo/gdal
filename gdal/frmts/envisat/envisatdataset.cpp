@@ -175,7 +175,7 @@ class EnvisatDataset : public RawDataset
 
   public:
                 EnvisatDataset();
-                ~EnvisatDataset();
+    virtual ~EnvisatDataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();

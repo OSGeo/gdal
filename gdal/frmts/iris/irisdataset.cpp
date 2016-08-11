@@ -76,7 +76,7 @@ class IRISDataset : public GDALPamDataset
 
 public:
     IRISDataset();
-    ~IRISDataset();
+    virtual ~IRISDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );

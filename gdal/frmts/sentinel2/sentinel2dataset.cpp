@@ -168,7 +168,7 @@ class SENTINEL2Dataset : public VRTDataset
 
     public:
                     SENTINEL2Dataset(int nXSize, int nYSize);
-                    ~SENTINEL2Dataset();
+        virtual ~SENTINEL2Dataset();
 
         virtual char** GetFileList();
 

@@ -56,7 +56,7 @@ class WEBPDataset : public GDALPamDataset
 
   public:
                  WEBPDataset();
-                 ~WEBPDataset();
+    virtual ~WEBPDataset();
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,

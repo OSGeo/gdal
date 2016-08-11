@@ -83,7 +83,7 @@ class FITSRasterBand : public GDALPamRasterBand {
 public:
 
   FITSRasterBand(FITSDataset*, int);
-  ~FITSRasterBand();
+  virtual ~FITSRasterBand();
 
   virtual CPLErr IReadBlock( int, int, void * );
   virtual CPLErr IWriteBlock( int, int, void * );

@@ -454,7 +454,7 @@ protected:
 
 public:
     IdrisiDataset();
-    ~IdrisiDataset();
+    virtual ~IdrisiDataset();
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static GDALDataset *Create( const char *pszFilename,
@@ -494,7 +494,7 @@ public:
     IdrisiRasterBand( IdrisiDataset *poDS,
         int nBand,
         GDALDataType eDataType );
-    ~IdrisiRasterBand();
+    virtual ~IdrisiRasterBand();
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual double GetMinimum( int *pbSuccess = NULL );
