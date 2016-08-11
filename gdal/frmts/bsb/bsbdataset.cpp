@@ -413,14 +413,12 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
     {
         const char *pszPR = strstr(pszKNP,"PR=");
         const char *pszGD = strstr(pszKNP,"GD=");
-        const char *pszValue, *pszEnd = NULL;
         const char *pszGEOGCS = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]";
         CPLString osPP;
 
         // Capture the PP string.
-        pszValue = strstr(pszKNP,"PP=");
-        if( pszValue )
-            pszEnd = strstr(pszValue,",");
+        const char *pszValue = strstr(pszKNP,"PP=");
+        const char *pszEnd = pszValue ? strstr(pszValue,",") : NULL;
         if( pszValue && pszEnd )
             osPP.assign(pszValue+3,pszEnd-pszValue-3);
 
