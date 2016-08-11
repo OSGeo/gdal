@@ -282,7 +282,7 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
 /*      parent.  When working from an .aux file we really want the      */
 /*      .rrd to point back to the original file, not the .aux file.     */
 /* -------------------------------------------------------------------- */
-    HFAEntry  *poEntry = psBase->poRoot->GetNamedChild("DependentFile");
+    HFAEntry *poEntry = psBase->poRoot->GetNamedChild("DependentFile");
     const char *pszDependentFile = NULL;
     if( poEntry != NULL )
         pszDependentFile = poEntry->GetStringField( "dependent.string" );
@@ -822,10 +822,10 @@ const char * HFAGetBandName( HFAHandle hHFA, int nBand )
 
 void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName )
 {
-  if( nBand < 1 || nBand > hHFA->nBands )
-    return;
+    if( nBand < 1 || nBand > hHFA->nBands )
+      return;
 
-  hHFA->papoBand[nBand-1]->SetBandName( pszName );
+    hHFA->papoBand[nBand-1]->SetBandName( pszName );
 }
 
 /************************************************************************/
@@ -2171,11 +2171,10 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         /* Set each blockinfo */
         for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
         {
-            GInt16  nValue16;
             int nOffset = 22 + 14 * iBlock;
 
             /* fileCode */
-            nValue16 = 0;
+            GInt16 nValue16 = 0;
             HFAStandard( 2, &nValue16 );
             memcpy( pabyData + nOffset, &nValue16, 2 );
 
@@ -2269,8 +2268,9 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 /*      Create the Ehfa_Layer.                                          */
 /* -------------------------------------------------------------------- */
     HFAEntry *poEhfa_Layer;
-    GUInt32  nLDict;
-    char     szLDict[128], chBandType;
+    GUInt32 nLDict;
+    char szLDict[128] = {};
+    char chBandType = '\0';
 
     if( eDataType == EPT_u1 )
         chBandType = '1';
@@ -2287,8 +2287,8 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     else if( eDataType == EPT_s16 )
         chBandType = 'S';
     else if( eDataType == EPT_u32 )
-        // for some reason erdas imagine expects an L for unsigned 32 bit ints
-        // otherwise it gives strange "out of memory errors"
+        // For some reason erdas imagine expects an L for unsigned 32 bit ints
+        // otherwise it gives strange "out of memory errors".
         chBandType = 'L';
     else if( eDataType == EPT_s32 )
         chBandType = 'L';
@@ -2615,7 +2615,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     if( papszMD == NULL )
         return CE_None;
 
-    HFAEntry  *poNode;
+    HFAEntry *poNode = NULL;
 
     if( nBand > 0 && nBand <= hHFA->nBands )
         poNode = hHFA->papoBand[nBand - 1]->poNode;
@@ -2714,7 +2714,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     if( CSLCount(papszMD) == 0 )
         return CE_None;
 
-    HFAEntry  *poNode;
+    HFAEntry *poNode = NULL;
 
     if( nBand > 0 && nBand <= hHFA->nBands )
         poNode = hHFA->papoBand[nBand - 1]->poNode;
@@ -3725,7 +3725,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
     /* -------------------------------------------------------------------- */
         char *pszProjection;
 
-    //    poProjInfo->DumpFieldValues( stdout, "" );
+        // poProjInfo->DumpFieldValues( stdout, "" );
 
         pszProjection = HFAPCSStructToWKT( &sDatum, &sPro, NULL, NULL );
 
@@ -3819,8 +3819,7 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
 /*      Write XForm.                                                    */
 /* -------------------------------------------------------------------- */
-    Efga_Polynomial sForward, sReverse;
-    double          adfAdjTransform[6], adfRevTransform[6];
+    double adfAdjTransform[6] = {};
 
     // Offset by half pixel.
 
@@ -3831,11 +3830,13 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     adfAdjTransform[3] += adfAdjTransform[5] * 0.5;
 
     // Invert
+    double adfRevTransform[6] = {};
     if( !HFAInvGeoTransform( adfAdjTransform, adfRevTransform ) )
         memset(adfRevTransform, 0, sizeof(adfRevTransform));
 
     // Assign to polynomial object.
 
+    Efga_Polynomial sForward;
     sForward.order = 1;
     sForward.polycoefvector[0] = adfRevTransform[0];
     sForward.polycoefmtx[0]    = adfRevTransform[1];
@@ -3844,6 +3845,7 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     sForward.polycoefmtx[2]    = adfRevTransform[2];
     sForward.polycoefmtx[3]    = adfRevTransform[5];
 
+    Efga_Polynomial sReverse;
     sReverse = sForward;
     Efga_Polynomial *psForward=&sForward, *psReverse=&sReverse;
 

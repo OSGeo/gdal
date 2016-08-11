@@ -349,7 +349,7 @@ CPLErr HFABand::LoadBlockInfo()
 
     for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
     {
-        CPLErr  eErr = CE_None;
+        CPLErr eErr = CE_None;
 
         char szVarName[64];
         snprintf( szVarName, sizeof(szVarName),
@@ -989,11 +989,11 @@ void HFABand::NullBlock( void *pData )
 #ifdef ESRI_BUILD
         // We want special defaulting for 1 bit data in ArcGIS.
         if( eDataType >= EPT_u2 )
-            memset( pData,   0, nChunkSize*nWords );
+            memset( pData, 0, nChunkSize*nWords );
         else
             memset( pData, 255, nChunkSize*nWords );
 #else
-        memset( pData,   0, nChunkSize*nWords );
+        memset( pData, 0, nChunkSize*nWords );
 #endif
     }
     else
@@ -1416,7 +1416,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
             /* Compensate for the header info */
             GUInt32 nDataOffset = nSizeCount + 13;
-            int nTotalSize  = nSizeCount + nSizeValues + 13;
+            int nTotalSize = nSizeCount + nSizeValues + 13;
 
             // Allocate space for the compressed block and seek to it.
             ReAllocBlock( iBlock, nTotalSize );
@@ -1835,7 +1835,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
 
             if( poColumnEntry == NULL )
             {
-                double  *pdCol = apadfPCT[iColumn];
+                double *pdCol = apadfPCT[iColumn];
                 for( int i = 0; i < nPCTColors; i++ )
                     pdCol[i] = 1.0;
             }
@@ -1963,7 +1963,7 @@ CPLErr HFABand::SetPCT( int nColors,
     for( int iColumn = 0; iColumn < 4; iColumn++ )
     {
         double *padfValues=NULL;
-        const char      *pszName = apszColNames[iColumn];
+        const char *pszName = apszColNames[iColumn];
 
         if( iColumn == 0 )
             padfValues = padfRed;

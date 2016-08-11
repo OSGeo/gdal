@@ -1116,7 +1116,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_s16 )
           {
-              GInt16  nValue;
+              GInt16 nValue;
               if (nIndexValue*2 + 2 > nDataSize)
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
@@ -1130,7 +1130,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_u16 )
           {
-              GUInt16  nValue;
+              GUInt16 nValue;
               if (nIndexValue*2 + 2 > nDataSize)
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
@@ -1144,7 +1144,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_s32 )
           {
-              GInt32  nValue;
+              GInt32 nValue;
               if (nIndexValue*4 + 4 > nDataSize)
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
@@ -1158,7 +1158,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_u32 )
           {
-              GUInt32  nValue;
+              GUInt32 nValue;
               if (nIndexValue*4 + 4 > nDataSize)
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
@@ -1528,7 +1528,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
           case 'f':
           case 'd':
           {
-              double  dfValue;
+              double dfValue;
               if( ExtractInstValue( NULL, iEntry,
                                     pabyData, nDataOffset, nDataSize,
                                     'd', &dfValue ) )

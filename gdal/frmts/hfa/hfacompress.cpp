@@ -43,24 +43,26 @@ HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType ) :
     m_nNumRuns(0),
     m_nNumBits(0)
 {
-  m_nDataTypeNumBits    = HFAGetDataTypeBits( m_eDataType );
+  m_nDataTypeNumBits = HFAGetDataTypeBits( m_eDataType );
   m_nBlockCount = (nBlockSize * 8) / m_nDataTypeNumBits;
 
-  /* Allocate some memory for the count and values - probably too big */
-  /* About right for worst case scenario tho */
-  m_pCounts     = (GByte*)VSI_MALLOC_VERBOSE( m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32) );
+  // Allocate some memory for the count and values - probably too big.
+  // About right for worst case scenario.
+  m_pCounts = static_cast<GByte *>(
+      VSI_MALLOC_VERBOSE( m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32) ));
 
-  m_pValues     = (GByte*)VSI_MALLOC_VERBOSE( m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32) );
+  m_pValues = static_cast<GByte *>(
+      VSI_MALLOC_VERBOSE( m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32) ));
 }
 
 HFACompress::~HFACompress()
 {
-  /* free the compressed data */
+  // Free the compressed data.
   CPLFree( m_pCounts );
   CPLFree( m_pValues );
 }
 
-/* returns the number of bits needed to encode a count */
+// Returns the number of bits needed to encode a count.
 static GByte _FindNumBits( GUInt32 range )
 {
   if( range < 0xff )
@@ -248,7 +250,7 @@ bool HFACompress::compressBlock()
   }
 
   /* reset our pointers */
-  m_pCurrCount  = m_pCounts;
+  m_pCurrCount = m_pCounts;
   m_pCurrValues = m_pValues;
 
   /* Get the minimum value.  this can be subtracted from each value in
@@ -285,8 +287,9 @@ bool HFACompress::compressBlock()
   m_nSizeCounts = static_cast<GUInt32>(m_pCurrCount - m_pCounts);
   m_nSizeValues = static_cast<GUInt32>(m_pCurrValues - m_pValues);
 
-  // The 13 is for the header size - maybe this should live with some constants somewhere?
-  return ( m_nSizeCounts +  m_nSizeValues + 13 ) < m_nBlockSize;
+  // The 13 is for the header size - maybe this should live with some constants
+  // somewhere?
+  return ( m_nSizeCounts + m_nSizeValues + 13 ) < m_nBlockSize;
 }
 
 bool HFACompress::QueryDataTypeSupported( EPTType eHFADataType )
