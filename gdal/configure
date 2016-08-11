@@ -4302,7 +4302,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags___Werror__we10006" >&5
 $as_echo "$ax_cv_check_cflags___Werror__we10006" >&6; }
 if test "x$ax_cv_check_cflags___Werror__we10006" = xyes; then :
-  ERROR_ON_UNKNOWN_OPTIONS="-we10006"
+  ERROR_ON_UNKNOWN_OPTIONS="-Werror -we10006"
 else
   ERROR_ON_UNKNOWN_OPTIONS="-Werror"
 fi
