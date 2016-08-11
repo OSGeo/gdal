@@ -509,6 +509,11 @@ in priority, and if not possible, the later is tried.
 <li>GDAL_GEOREF_SOURCES=comma-separated list with one or several of
 PAM, INTERNAL, TABFILE or WORLDFILE. (GDAL &gt;= 2.2).
 See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.
+<li>GDAL_NUM_THREADS=number_of_threads/ALL_CPUS: (GDAL &gt;= 2.1)
+Enable multi-threaded compression by specifying the number of worker threads.
+Worth it for slow compression algorithms such as DEFLATE or LZMA. Will be
+ignored for JPEG.  Default is compression in the main thread. Note: this
+configuration option also apply to other parts to GDAL (warping, gridding, ...).</li>
 </ul>
 </p>
 
