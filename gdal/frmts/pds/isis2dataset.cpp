@@ -81,7 +81,7 @@ class ISIS2Dataset : public RawDataset
 
 public:
     ISIS2Dataset();
-    ~ISIS2Dataset();
+    virtual ~ISIS2Dataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);

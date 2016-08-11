@@ -147,7 +147,7 @@ class SAR_CEOSDataset : public GDALPamDataset
 
   public:
                 SAR_CEOSDataset();
-                ~SAR_CEOSDataset();
+    virtual ~SAR_CEOSDataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();

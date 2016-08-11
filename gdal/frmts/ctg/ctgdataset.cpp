@@ -151,7 +151,7 @@ class CTGRasterBand : public GDALPamRasterBand
   public:
 
                 CTGRasterBand( CTGDataset *, int );
-               ~CTGRasterBand();
+    virtual ~CTGRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual double GetNoDataValue( int *pbSuccess = NULL );

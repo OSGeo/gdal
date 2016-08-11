@@ -60,7 +60,7 @@ class SRTMHGTDataset : public GDALPamDataset
 
   public:
     SRTMHGTDataset();
-    ~SRTMHGTDataset();
+    virtual ~SRTMHGTDataset();
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform(double*);

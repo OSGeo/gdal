@@ -66,7 +66,7 @@ class CPL_DLL OGDIDataset : public GDALDataset
 
   public:
     OGDIDataset();
-    ~OGDIDataset();
+    virtual ~OGDIDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -112,7 +112,7 @@ class OGDIRasterBand : public GDALRasterBand
 
                    OGDIRasterBand( OGDIDataset *, int, const char *,
                                    ecs_Family, int );
-                   ~OGDIRasterBand();
+    virtual ~OGDIRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual int    HasArbitraryOverviews();

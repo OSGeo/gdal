@@ -315,7 +315,7 @@ class L1BDataset : public GDALPamDataset
 
   public:
                 L1BDataset( L1BFileFormat );
-                ~L1BDataset();
+    virtual ~L1BDataset();
 
     virtual int GetGCPCount();
     virtual const char *GetGCPProjection();

@@ -112,7 +112,7 @@ class JDEMRasterBand : public GDALPamRasterBand
   public:
 
                 JDEMRasterBand( JDEMDataset *, int );
-                ~JDEMRasterBand();
+    virtual ~JDEMRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
 };

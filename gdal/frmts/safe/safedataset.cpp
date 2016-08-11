@@ -68,7 +68,7 @@ class SAFEDataset : public GDALPamDataset
 
   public:
             SAFEDataset();
-           ~SAFEDataset();
+    virtual ~SAFEDataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();

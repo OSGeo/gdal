@@ -104,7 +104,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
 
   public:
                 WCSDataset();
-                ~WCSDataset();
+    virtual ~WCSDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -143,7 +143,7 @@ class WCSRasterBand : public GDALPamRasterBand
   public:
 
                    WCSRasterBand( WCSDataset *, int nBand, int iOverview );
-                  ~WCSRasterBand();
+    virtual ~WCSRasterBand();
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 

@@ -233,7 +233,7 @@ class BMPDataset : public GDALPamDataset
 
   public:
                 BMPDataset();
-                ~BMPDataset();
+    virtual ~BMPDataset();
 
     static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );

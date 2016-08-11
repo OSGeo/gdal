@@ -70,7 +70,7 @@ class CPL_DLL AIGDataset : public GDALPamDataset
 
   public:
                 AIGDataset();
-                ~AIGDataset();
+    virtual ~AIGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 

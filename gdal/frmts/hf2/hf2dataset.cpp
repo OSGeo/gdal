@@ -86,7 +86,7 @@ class HF2RasterBand : public GDALPamRasterBand
   public:
 
                 HF2RasterBand( HF2Dataset *, int, GDALDataType );
-               ~HF2RasterBand();
+    virtual ~HF2RasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
 };

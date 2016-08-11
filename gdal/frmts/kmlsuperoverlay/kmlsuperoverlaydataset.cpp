@@ -1756,7 +1756,7 @@ class KmlSingleDocRasterDataset: public GDALDataset
 
     public:
                 KmlSingleDocRasterDataset();
-                ~KmlSingleDocRasterDataset();
+        virtual ~KmlSingleDocRasterDataset();
 
         virtual CPLErr GetGeoTransform( double * padfGeoTransform )
         {

@@ -129,7 +129,7 @@ class ELASDataset : public GDALPamDataset
 
   public:
                  ELASDataset();
-                 ~ELASDataset();
+    virtual ~ELASDataset();
 
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );

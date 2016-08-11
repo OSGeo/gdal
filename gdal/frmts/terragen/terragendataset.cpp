@@ -171,7 +171,7 @@ class TerragenDataset : public GDALPamDataset
 
   public:
     TerragenDataset();
-    ~TerragenDataset();
+    virtual ~TerragenDataset();
 
     static GDALDataset* Open( GDALOpenInfo* );
     static GDALDataset* Create( const char* pszFilename,

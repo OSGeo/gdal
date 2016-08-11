@@ -97,7 +97,7 @@ class PDSDataset : public RawDataset
 
 public:
     PDSDataset();
-    ~PDSDataset();
+    virtual ~PDSDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);

@@ -57,7 +57,7 @@ class CPL_DLL TILDataset : public GDALPamDataset
 
   public:
     TILDataset();
-    ~TILDataset();
+    virtual ~TILDataset();
 
     virtual char **GetFileList(void);
 

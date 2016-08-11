@@ -290,7 +290,7 @@ class HFADataset CPL_FINAL : public GDALPamDataset
 
   public:
                 HFADataset();
-                ~HFADataset();
+    virtual ~HFADataset();
 
     static int          Identify( GDALOpenInfo * );
     static CPLErr       Rename( const char *pszNewName, const char *pszOldName);
@@ -457,7 +457,7 @@ private:
 
 public:
     HFARasterAttributeTable(HFARasterBand *poBand, const char *pszName);
-    ~HFARasterAttributeTable();
+    virtual ~HFARasterAttributeTable();
 
     GDALDefaultRasterAttributeTable *Clone() const;
 

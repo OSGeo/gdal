@@ -81,7 +81,7 @@ class JPEGLSRasterBand : public GDALPamRasterBand
   public:
 
                 JPEGLSRasterBand( JPEGLSDataset * poDS, int nBand);
-                ~JPEGLSRasterBand();
+    virtual ~JPEGLSRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();

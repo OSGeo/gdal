@@ -1396,7 +1396,7 @@ public:
                                                         bEnableText(TRUE),
                                                         bEnableBitmap(TRUE),
                                                         bTemporaryEnableVectorForTextStroking(FALSE) {}
-    ~GDALPDFiumRenderDeviceDriver() { delete m_poParent; }
+    virtual ~GDALPDFiumRenderDeviceDriver() { delete m_poParent; }
 
     void SetEnableVector(int bFlag) { bEnableVector = bFlag; }
     void SetEnableText(int bFlag) { bEnableText = bFlag; }

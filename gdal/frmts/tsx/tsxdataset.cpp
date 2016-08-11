@@ -91,7 +91,7 @@ class TSXDataset : public GDALPamDataset {
     eProductType nProduct;
 public:
     TSXDataset();
-    ~TSXDataset();
+    virtual ~TSXDataset();
 
     virtual int GetGCPCount();
     virtual const char *GetGCPProjection();

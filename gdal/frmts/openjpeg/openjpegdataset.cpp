@@ -202,7 +202,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
 
   public:
                 JP2OpenJPEGDataset();
-                ~JP2OpenJPEGDataset();
+    virtual ~JP2OpenJPEGDataset();
 
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
@@ -270,7 +270,7 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
                                        GDALDataType eDataType, int nBits,
                                        int bPromoteTo8Bit,
                                        int nBlockXSize, int nBlockYSize );
-                ~JP2OpenJPEGRasterBand();
+    virtual ~JP2OpenJPEGRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
