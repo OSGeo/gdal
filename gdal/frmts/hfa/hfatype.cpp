@@ -125,7 +125,7 @@ const char *HFAType::Initialize( const char * pszInput )
 
     pszInput += i+1;
 
-    return( pszInput );
+    return pszInput;
 }
 
 /************************************************************************/
@@ -142,7 +142,6 @@ void HFAType::CompleteDefn( HFADictionary * poDict )
 /* -------------------------------------------------------------------- */
     if( nBytes != 0 )
         return;
-
 
     if( bInCompleteDefn )
     {
@@ -264,11 +263,11 @@ HFAType::SetInstValue( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
 /*      Extract this field value, and return.                           */
 /* -------------------------------------------------------------------- */
-    return( papoFields[iField]->SetInstValue( pszRemainder, nArrayIndex,
-                                              pabyData + nByteOffset,
-                                              nDataOffset + nByteOffset,
-                                              nDataSize - nByteOffset,
-                                              chReqType, pValue ) );
+    return papoFields[iField]->SetInstValue( pszRemainder, nArrayIndex,
+                                             pabyData + nByteOffset,
+                                             nDataOffset + nByteOffset,
+                                             nDataSize - nByteOffset,
+                                             chReqType, pValue );
 }
 
 /************************************************************************/
@@ -278,7 +277,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
 int
 HFAType::GetInstCount( const char * pszFieldPath,
                        GByte *pabyData,
-                       CPL_UNUSED GUInt32 nDataOffset,
+                       GUInt32 /* nDataOffset */,
                        int nDataSize )
 {
     /* int nArrayIndex = 0; */
@@ -347,8 +346,8 @@ HFAType::GetInstCount( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
 /*      Extract this field value, and return.                           */
 /* -------------------------------------------------------------------- */
-    return( papoFields[iField]->GetInstCount( pabyData + nByteOffset,
-                                              nDataSize - nByteOffset ) );
+    return papoFields[iField]->GetInstCount( pabyData + nByteOffset,
+                                             nDataSize - nByteOffset );
 }
 
 /************************************************************************/
@@ -446,13 +445,13 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
 /*      Extract this field value, and return.                           */
 /* -------------------------------------------------------------------- */
-    return( papoFields[iField]->
-            ExtractInstValue( pszRemainder, nArrayIndex,
-                              pabyData + nByteOffset,
-                              nDataOffset + nByteOffset,
-                              nDataSize - nByteOffset,
-                              chReqType, pReqReturn,
-                              pnRemainingDataSize) );
+    return papoFields[iField]->
+        ExtractInstValue( pszRemainder, nArrayIndex,
+                          pabyData + nByteOffset,
+                          nDataOffset + nByteOffset,
+                          nDataSize - nByteOffset,
+                          chReqType, pReqReturn,
+                          pnRemainingDataSize);
 }
 
 
@@ -495,7 +494,7 @@ int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
 
 {
     if( nBytes >= 0 )
-        return( nBytes );
+        return nBytes;
 
     int nTotal = 0;
 
@@ -515,5 +514,5 @@ int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
         nTotal += nInstBytes;
     }
 
-    return( nTotal );
+    return nTotal;
 }
