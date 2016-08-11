@@ -58,7 +58,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
                                    GDALRasterIOExtraArg* psExtraArg );
   public:
                  RawDataset();
-                 ~RawDataset() = 0;
+         virtual ~RawDataset() = 0;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawDataset);
@@ -133,7 +133,7 @@ public:
                                 GDALDataType eDataType, int bNativeOrder,
                                 int nXSize, int nYSize, int bIsVSIL = FALSE, int bOwnsFP = FALSE );
 
-                 ~RawRasterBand() /* = 0 */ ;
+    virtual ~RawRasterBand() /* = 0 */ ;
 
     // should override RasterIO eventually.
 

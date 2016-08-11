@@ -232,7 +232,7 @@ public:
 
     JPIPKAKRasterBand( int, int, kdu_codestream *, int,
                        JPIPKAKDataset * );
-    ~JPIPKAKRasterBand();
+    virtual ~JPIPKAKRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,

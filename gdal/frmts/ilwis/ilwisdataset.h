@@ -119,7 +119,7 @@ public:
     int nSizePerPixel;
 
     ILWISRasterBand( ILWISDataset *, int );
-    ~ILWISRasterBand();
+    virtual ~ILWISRasterBand();
     CPLErr GetILWISInfo(std::string pszFileName);
     void ILWISOpen( std::string pszFilename);
 
@@ -154,7 +154,7 @@ class ILWISDataset : public GDALPamDataset
 
 public:
     ILWISDataset();
-    ~ILWISDataset();
+    virtual ~ILWISDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 

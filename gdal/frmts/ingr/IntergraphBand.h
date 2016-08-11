@@ -66,7 +66,7 @@ public:
         int nBand,
         int nBandOffset,
         GDALDataType eType = GDT_Unknown);
-    ~IntergraphRasterBand();
+    virtual ~IntergraphRasterBand();
 
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum( int *pbSuccess = NULL );
@@ -119,7 +119,7 @@ public:
         int nBand,
         int nBandOffset,
         int nRGorB = 1 );
-    ~IntergraphBitmapBand();
+    virtual ~IntergraphBitmapBand();
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
     virtual GDALColorInterp GetColorInterpretation();
@@ -144,7 +144,7 @@ public:
         int nBand,
         int nBandOffset,
         int nRGorB = 0);
-    ~IntergraphRLEBand();
+    virtual ~IntergraphRLEBand();
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };
