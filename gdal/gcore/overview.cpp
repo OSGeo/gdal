@@ -1550,11 +1550,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize * sizeof(double) * nBands) );
 
     // To store convolution coefficients.
-    double* padfWeightsAlloc = static_cast<double *>(
-        VSI_MALLOC_VERBOSE(
+    double* padfWeights = static_cast<double *>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
             static_cast<int>(
                 2 + 2 * MAX(dfXScaledRadius, dfYScaledRadius) +
-                0.5 + 1 /* for alignment*/) * sizeof(double) ) );
+                0.5) * sizeof(double) ) );
 
     GByte* pabyChunkNodataMaskHorizontalFiltered = NULL;
     if( pabyChunkNodataMask )
@@ -1562,22 +1562,16 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize) );
     if( pafDstScanline == NULL ||
         padfHorizontalFiltered == NULL ||
-        padfWeightsAlloc == NULL ||
+        padfWeights == NULL ||
         (pabyChunkNodataMask != NULL &&
          pabyChunkNodataMaskHorizontalFiltered == NULL) )
     {
         VSIFree(pafDstScanline);
         VSIFree(padfHorizontalFiltered);
-        VSIFree(padfWeightsAlloc);
+        VSIFreeAligned(padfWeights);
         VSIFree(pabyChunkNodataMaskHorizontalFiltered);
         return CE_Failure;
     }
-
-    // Make sure we are aligned on 16 bits.
-    double *padfWeights = padfWeightsAlloc;
-
-    if( !CPL_IS_ALIGNED(padfWeights, 16) )
-        ++padfWeights;
 
 /* ==================================================================== */
 /*      First pass: horizontal filter                                   */
@@ -1871,7 +1865,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
     }
   }
 
-    VSIFree( padfWeightsAlloc );
+    VSIFreeAligned( padfWeights );
     VSIFree( padfHorizontalFiltered );
     VSIFree( pafDstScanline );
     VSIFree( pabyChunkNodataMaskHorizontalFiltered );
