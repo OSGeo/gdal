@@ -67,7 +67,7 @@ class GIFAbstractDataset : public GDALPamDataset
 
   public:
                  GIFAbstractDataset();
-                 ~GIFAbstractDataset();
+    virtual      ~GIFAbstractDataset();
 
     virtual const char *GetProjectionRef();
     virtual CPLErr GetGeoTransform( double * );

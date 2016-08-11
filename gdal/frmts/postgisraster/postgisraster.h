@@ -392,7 +392,7 @@ public:
         PostGISRasterTileDataset * poRTDS, int nBand,
         GDALDataType eDataType,
         GBool bIsOffline = false);
-	~PostGISRasterTileRasterBand();
+	virtual ~PostGISRasterTileRasterBand();
 	virtual CPLErr IReadBlock(int, int, void *);
 };
 

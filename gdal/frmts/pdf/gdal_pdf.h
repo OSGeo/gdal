@@ -414,7 +414,7 @@ class PDFRasterBand : public GDALPamRasterBand
   public:
 
                 PDFRasterBand( PDFDataset *, int, int );
-                ~PDFRasterBand();
+    virtual ~PDFRasterBand();
 
 #ifdef HAVE_PDFIUM
     virtual int    GetOverviewCount();
@@ -449,7 +449,7 @@ class PDFWritableVectorDataset : public GDALDataset
 
     public:
                             PDFWritableVectorDataset();
-                           ~PDFWritableVectorDataset();
+        virtual ~PDFWritableVectorDataset();
 
         virtual OGRLayer*           ICreateLayer( const char * pszLayerName,
                                                 OGRSpatialReference *poSRS,

@@ -160,7 +160,7 @@ class RMFDataset : public GDALDataset
 
   public:
                 RMFDataset();
-                ~RMFDataset();
+        virtual ~RMFDataset();
 
     static int          Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
@@ -197,7 +197,7 @@ class RMFRasterBand : public GDALRasterBand
   public:
 
                 RMFRasterBand( RMFDataset *, int, GDALDataType );
-                ~RMFRasterBand();
+        virtual ~RMFRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual CPLErr          IWriteBlock( int, int, void * );

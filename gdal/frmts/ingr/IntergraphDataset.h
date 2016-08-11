@@ -52,7 +52,7 @@ private:
 
 public:
     IntergraphDataset();
-    ~IntergraphDataset();
+    virtual ~IntergraphDataset();
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static GDALDataset *Create( const char *pszFilename,
