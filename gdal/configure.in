@@ -49,7 +49,8 @@ AX_CFLAGS_WARN_ALL(C_WFLAGS)
 AX_CXXFLAGS_WARN_ALL(CXX_WFLAGS)
 
 dnl For ICC: it needs -we10006 instead of -Werror to turn unknown options to errors
-AX_CHECK_COMPILE_FLAG([-Werror -we10006],[ERROR_ON_UNKNOWN_OPTIONS="-we10006"],[ERROR_ON_UNKNOWN_OPTIONS="-Werror"])
+dnl Some gcc/clang versions might succeed on this test, so also include -Werror in ERROR_ON_UNKNOWN_OPTIONS
+AX_CHECK_COMPILE_FLAG([-Werror -we10006],[ERROR_ON_UNKNOWN_OPTIONS="-Werror -we10006"],[ERROR_ON_UNKNOWN_OPTIONS="-Werror"])
 
 dnl A few ICC warnings to turn off
 dnl warning #188: enumerated type mixed with another type  (needed on libcsf)
