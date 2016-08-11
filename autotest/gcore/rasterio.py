@@ -885,6 +885,36 @@ def rasterio_12():
 
     return 'success'
 
+###############################################################################
+# Test cubic resampling with masking
+
+def rasterio_13():
+
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    for dt in [ gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32 ]:
+
+        mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 1, dt)
+        mem_ds.GetRasterBand(1).SetNoDataValue(0)
+        mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
+
+        ar_ds = mem_ds.ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic)
+
+        expected_ar = numpy.array([[0,0,0,0,0,0,0,0],[0,255,255,255,255,0,0,0],[0,0,0,0,0,0,0,0]])
+        if not numpy.array_equal(ar_ds, expected_ar):
+            gdaltest.post_reason('failure')
+            print(dt)
+            print(ar_ds)
+            print(expected_ar)
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
@@ -897,7 +927,8 @@ gdaltest_list = [
     rasterio_9,
     rasterio_10,
     rasterio_11,
-    rasterio_12
+    rasterio_12,
+    rasterio_13
     ]
 
 if __name__ == '__main__':
