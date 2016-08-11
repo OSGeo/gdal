@@ -159,7 +159,7 @@ HFAHandle CPL_DLL HFACreateLL( const char *pszFilename );
 HFAHandle CPL_DLL HFACreate( const char *pszFilename, int nXSize, int nYSize,
                              int nBands, EPTType eDataType, char ** papszOptions );
 const char CPL_DLL *HFAGetIGEFilename( HFAHandle );
-CPLErr  CPL_DLL HFAFlush( HFAHandle );
+CPLErr CPL_DLL HFAFlush( HFAHandle );
 int CPL_DLL HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel,
                                const char *pszResampling );
 
