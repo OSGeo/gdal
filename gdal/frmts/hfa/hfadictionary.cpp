@@ -165,7 +165,7 @@ HFAType * HFADictionary::FindType( const char * pszName )
     {
         if( papoTypes[i]->pszTypeName != NULL &&
             strcmp(pszName,papoTypes[i]->pszTypeName) == 0 )
-            return( papoTypes[i] );
+            return papoTypes[i];
     }
 
 /* -------------------------------------------------------------------- */

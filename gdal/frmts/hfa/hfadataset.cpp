@@ -28,30 +28,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "hfa_p.h"
+
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_rat.h"
-#include "hfa_p.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
-#ifndef R2D
-#  define R2D (180/M_PI)
-#endif
-#ifndef D2R
-#  define D2R (M_PI/180)
-#endif
+static const double R2D = 180.0 / M_PI;
+static const double D2R = M_PI / 180.0;
 
-#define ARCSEC2RAD (M_PI/648000)
-#define RAD2ARCSEC (648000/M_PI)
+static const double ARCSEC2RAD  = M_PI / 648000.0;
+static const double RAD2ARCSEC = 648000.0 / M_PI;
 
-int WritePeStringIfNeeded(OGRSpatialReference* poSRS, HFAHandle hHFA);
-void ClearSR(HFAHandle hHFA);
+int WritePeStringIfNeeded( OGRSpatialReference* poSRS, HFAHandle hHFA );
+void ClearSR( HFAHandle hHFA );
 
 static const char * const apszDatumMap[] = {
-    /* Imagine name, WKT name */
+    // Imagine name, WKT name.
     "NAD27", "North_American_Datum_1927",
     "NAD83", "North_American_Datum_1983",
     "WGS 84", "WGS_1984",
@@ -261,17 +258,17 @@ class HFADataset CPL_FINAL : public GDALPamDataset
 
     HFAHandle   hHFA;
 
-    int         bMetadataDirty;
+    bool        bMetadataDirty;
 
-    int         bGeoDirty;
+    bool        bGeoDirty;
     double      adfGeoTransform[6];
     char        *pszProjection;
 
-    int         bIgnoreUTM;
+    bool        bIgnoreUTM;
 
     CPLErr      ReadProjection();
     CPLErr      WriteProjection();
-    int         bForceToPEString;
+    bool        bForceToPEString;
 
     int         nGCPCount;
     GDAL_GCP    asGCPList[36];
@@ -306,7 +303,7 @@ class HFADataset CPL_FINAL : public GDALPamDataset
                                     void * pProgressData );
     static CPLErr       Delete( const char *pszFilename );
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList();
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
@@ -319,7 +316,8 @@ class HFADataset CPL_FINAL : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs();
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
-    virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
+    virtual CPLErr SetMetadataItem( const char *, const char *,
+                                    const char * = "" );
 
     virtual void   FlushCache( void );
     virtual CPLErr IBuildOverviews( const char *pszResampling,
@@ -352,18 +350,17 @@ class HFARasterBand CPL_FINAL : public GDALPamRasterBand
 
     HFAHandle   hHFA;
 
-    int         bMetadataDirty;
+    bool        bMetadataDirty;
 
     GDALRasterAttributeTable *poDefaultRAT;
 
     void        ReadAuxMetadata();
     void        ReadHistogramMetadata();
     void        EstablishOverviews();
-    CPLErr      WriteNamedRAT( const char *pszName, const GDALRasterAttributeTable *poRAT );
-
+    CPLErr      WriteNamedRAT( const char *pszName,
+                               const GDALRasterAttributeTable *poRAT );
 
   public:
-
                    HFARasterBand( HFADataset *, int, int );
     virtual        ~HFARasterBand();
 
@@ -400,7 +397,7 @@ class HFARasterBand CPL_FINAL : public GDALPamRasterBand
 
 class HFAAttributeField
 {
-public:
+  public:
     CPLString         sName;
     GDALRATFieldType  eType;
     GDALRATFieldUsage eUsage;
@@ -413,8 +410,7 @@ public:
 
 class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
 {
-private:
-
+  private:
     HFAHandle   hHFA;
     HFAEntry   *poDT;
     CPLString   osName;
@@ -1924,24 +1920,23 @@ CPLXMLNode *HFARasterAttributeTable::Serialize() const
 /*                           HFARasterBand()                            */
 /************************************************************************/
 
-HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
-
+HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
+    poCT(NULL),
+    nOverviews(-1),
+    nThisOverview(iOverview),
+    papoOverviewBands(NULL),
+    hHFA(poDSIn->hHFA),
+    bMetadataDirty(false),
+    poDefaultRAT(NULL)
 {
     if( iOverview == -1 )
         poDS = poDSIn;
     else
         poDS = NULL;
 
-    this->hHFA = poDSIn->hHFA;
     nBand = nBandIn;
-    this->poCT = NULL;
-    this->nThisOverview = iOverview;
-    this->papoOverviewBands = NULL;
-    this->bMetadataDirty = FALSE;
-    this->poDefaultRAT = NULL;
-    this->nOverviews = -1;
 
-    int nCompression;
+    int nCompression = 0;
     HFAGetBandInfo( hHFA, nBand, &eHFADataType,
                     &nBlockXSize, &nBlockYSize, &nCompression );
 
@@ -1954,9 +1949,10 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
         EPTType eHFADataTypeO;
 
         nOverviews = 0;
-        if (HFAGetOverviewInfo( hHFA, nBand, iOverview,
-                                &nRasterXSize, &nRasterYSize,
-                                &nBlockXSize, &nBlockYSize, &eHFADataTypeO ) != CE_None)
+        if( HFAGetOverviewInfo(
+               hHFA, nBand, iOverview,
+               &nRasterXSize, &nRasterYSize,
+               &nBlockXSize, &nBlockYSize, &eHFADataTypeO ) != CE_None )
         {
             nRasterXSize = nRasterYSize = 0;
             return;
@@ -2026,8 +2022,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
 
       default:
         eDataType = GDT_Byte;
-        /* notdef: this should really report an error, but this isn't
-           so easy from within constructors. */
+        // This should really report an error, but this isn't
+        // so easy from within constructors.
         CPLDebug( "GDAL", "Unsupported pixel type in HFARasterBand: %d.",
                   eHFADataType );
         break;
@@ -2037,7 +2033,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
     {
         GDALMajorObject::SetMetadataItem(
             "NBITS",
-            CPLString().Printf( "%d", HFAGetDataTypeBits( eHFADataType ) ), "IMAGE_STRUCTURE" );
+            CPLString().Printf( "%d", HFAGetDataTypeBits( eHFADataType ) ),
+            "IMAGE_STRUCTURE" );
     }
 
     if( eHFADataType == EPT_s8 )
@@ -2049,8 +2046,12 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
 /* -------------------------------------------------------------------- */
 /*      Collect color table if present.                                 */
 /* -------------------------------------------------------------------- */
-    double    *padfRed, *padfGreen, *padfBlue, *padfAlpha, *padfBins;
-    int       nColors;
+    double *padfRed = NULL;
+    double *padfGreen = NULL;
+    double *padfBlue = NULL;
+    double *padfAlpha = NULL;
+    double *padfBins = NULL;
+    int nColors = 0;
 
     if( iOverview == -1
         && HFAGetPCT( hHFA, nBand, &nColors,
@@ -2061,19 +2062,21 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview )
         poCT = new GDALColorTable();
         for( int iColor = 0; iColor < nColors; iColor++ )
         {
-            GDALColorEntry   sEntry;
-
             // The following mapping assigns "equal sized" section of
             // the [0...1] range to each possible output value and avoid
             // rounding issues for the "normal" values generated using n/255.
             // See bug #1732 for some discussion.
-            sEntry.c1 = MIN(255,(short) (padfRed[iColor]   * 256));
-            sEntry.c2 = MIN(255,(short) (padfGreen[iColor] * 256));
-            sEntry.c3 = MIN(255,(short) (padfBlue[iColor]  * 256));
-            sEntry.c4 = MIN(255,(short) (padfAlpha[iColor] * 256));
+            static short nMax = 255;
+            GDALColorEntry sEntry = {
+                MIN(nMax, static_cast<short>(padfRed[iColor] * 256)),
+                MIN(nMax, static_cast<short>(padfGreen[iColor] * 256)),
+                MIN(nMax, static_cast<short>(padfBlue[iColor] * 256)),
+                MIN(nMax, static_cast<short>(padfAlpha[iColor] * 256))
+            };
 
             if( padfBins != NULL )
-                poCT->SetColorEntry( (int) padfBins[iColor], &sEntry );
+                poCT->SetColorEntry( static_cast<int>(padfBins[iColor]),
+                                     &sEntry );
             else
                 poCT->SetColorEntry( iColor, &sEntry );
         }
@@ -2110,7 +2113,7 @@ HFARasterBand::~HFARasterBand()
 void HFARasterBand::ReadAuxMetadata()
 
 {
-    // only load metadata for full resolution layer.
+    // Only load metadata for full resolution layer.
     if( nThisOverview != -1 )
         return;
 
@@ -2119,18 +2122,14 @@ void HFARasterBand::ReadAuxMetadata()
     const char * const * pszAuxMetaData = GetHFAAuxMetaDataList();
     for( int i = 0; pszAuxMetaData[i] != NULL; i += 4 )
     {
-        HFAEntry *poEntry;
-
-        if( strlen(pszAuxMetaData[i]) > 0 )
-            poEntry = poBand->poNode->GetNamedChild( pszAuxMetaData[i] );
-        else
-            poEntry = poBand->poNode;
-
-        const char *pszFieldName = pszAuxMetaData[i+1] + 1;
-        CPLErr eErr = CE_None;
+        HFAEntry *poEntry = (strlen(pszAuxMetaData[i]) > 0)
+            ? poBand->poNode->GetNamedChild( pszAuxMetaData[i] )
+            : poBand->poNode;
 
         if( poEntry == NULL )
             continue;
+
+        const char *pszFieldName = pszAuxMetaData[i+1] + 1;
 
         switch( pszAuxMetaData[i+1][0] )
         {
@@ -2138,18 +2137,22 @@ void HFARasterBand::ReadAuxMetadata()
           {
               CPLString osValueList;
 
-              int nCount = poEntry->GetFieldCount( pszFieldName, &eErr );
-              for( int iValue = 0; eErr == CE_None && iValue < nCount; iValue++ )
+              CPLErr eErr = CE_None;
+              const int nCount = poEntry->GetFieldCount( pszFieldName, &eErr );
+              for( int iValue = 0;
+                   eErr == CE_None && iValue < nCount;
+                   iValue++ )
               {
                   CPLString osSubFieldName;
                   osSubFieldName.Printf( "%s[%d]", pszFieldName, iValue );
-                  double dfValue
+                  const double dfValue
                       = poEntry->GetDoubleField( osSubFieldName, &eErr );
                   if( eErr != CE_None )
                       break;
 
-                  char szValueAsString[100];
-                  CPLsnprintf( szValueAsString, sizeof(szValueAsString), "%.14g", dfValue );
+                  char szValueAsString[100] = {};
+                  CPLsnprintf( szValueAsString, sizeof(szValueAsString),
+                               "%.14g", dfValue );
 
                   if( iValue > 0 )
                       osValueList += ",";
@@ -2164,8 +2167,11 @@ void HFARasterBand::ReadAuxMetadata()
           {
               CPLString osValueList;
 
-              int nCount = poEntry->GetFieldCount( pszFieldName, &eErr );
-              for( int iValue = 0; eErr == CE_None && iValue < nCount; iValue++ )
+              CPLErr eErr = CE_None;
+              const int nCount = poEntry->GetFieldCount( pszFieldName, &eErr );
+              for( int iValue = 0;
+                   eErr == CE_None && iValue < nCount;
+                   iValue++ )
               {
                   CPLString osSubFieldName;
                   osSubFieldName.Printf( "%s[%d]", pszFieldName, iValue );
@@ -2173,8 +2179,9 @@ void HFARasterBand::ReadAuxMetadata()
                   if( eErr != CE_None )
                       break;
 
-                  char szValueAsString[100];
-                  snprintf( szValueAsString, sizeof(szValueAsString), "%d", nValue );
+                  char szValueAsString[100] = {};
+                  snprintf( szValueAsString, sizeof(szValueAsString),
+                            "%d", nValue );
 
                   if( iValue > 0 )
                       osValueList += ",";
@@ -2187,6 +2194,7 @@ void HFARasterBand::ReadAuxMetadata()
           case 's':
           case 'e':
           {
+              CPLErr eErr = CE_None;
               const char *pszValue
                   = poEntry->GetStringField( pszFieldName, &eErr );
               if( eErr == CE_None )
@@ -2206,7 +2214,7 @@ void HFARasterBand::ReadAuxMetadata()
 void HFARasterBand::ReadHistogramMetadata()
 
 {
-    // only load metadata for full resolution layer.
+    // Only load metadata for full resolution layer.
     if( nThisOverview != -1 )
         return;
 
@@ -2214,28 +2222,29 @@ void HFARasterBand::ReadHistogramMetadata()
 
     HFAEntry *poEntry =
         poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
-    if ( poEntry == NULL )
+    if( poEntry == NULL )
         return;
 
     int nNumBins = poEntry->GetIntField( "numRows" );
-    if (nNumBins < 0)
+    if(nNumBins < 0)
         return;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the histogram values.                                     */
 /* -------------------------------------------------------------------- */
-
-    int nOffset =  poEntry->GetIntField( "columnDataPtr" );
-    const char *pszType =  poEntry->GetStringField( "dataType" );
+    const int nOffset = poEntry->GetIntField( "columnDataPtr" );
+    const char *pszType = poEntry->GetStringField( "dataType" );
     int nBinSize = 4;
 
     if( pszType != NULL && STARTS_WITH_CI(pszType, "real") )
         nBinSize = 8;
 
-    GUIntBig *panHistValues = (GUIntBig *) VSI_MALLOC2_VERBOSE(sizeof(GUIntBig), nNumBins);
-    GByte  *pabyWorkBuf = (GByte *) VSI_MALLOC2_VERBOSE(nBinSize, nNumBins);
+    GUIntBig *panHistValues = static_cast<GUIntBig *>(
+        VSI_MALLOC2_VERBOSE(sizeof(GUIntBig), nNumBins));
+    GByte *pabyWorkBuf = static_cast<GByte *>(
+        VSI_MALLOC2_VERBOSE(nBinSize, nNumBins));
 
-    if (panHistValues == NULL || pabyWorkBuf == NULL)
+    if( panHistValues == NULL || pabyWorkBuf == NULL )
     {
         VSIFree(panHistValues);
         VSIFree(pabyWorkBuf);
@@ -2243,7 +2252,8 @@ void HFARasterBand::ReadHistogramMetadata()
     }
 
     if( VSIFSeekL( hHFA->fp, nOffset, SEEK_SET ) != 0 ||
-        (int)VSIFReadL( pabyWorkBuf, nBinSize, nNumBins, hHFA->fp ) != nNumBins)
+        static_cast<int>(VSIFReadL( pabyWorkBuf, nBinSize, nNumBins,
+                                    hHFA->fp )) != nNumBins)
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Cannot read histogram values." );
@@ -2259,12 +2269,14 @@ void HFARasterBand::ReadHistogramMetadata()
     if( nBinSize == 8 ) // source is doubles
     {
         for( int i = 0; i < nNumBins; i++ )
-            panHistValues[i] = (GUIntBig) ((double *) pabyWorkBuf)[i];
+            panHistValues[i] = static_cast<GUIntBig>(
+                ((double *) pabyWorkBuf)[i]);
     }
     else // source is 32bit integers
     {
         for( int i = 0; i < nNumBins; i++ )
-            panHistValues[i] = (GUIntBig) ((int *) pabyWorkBuf)[i];
+            panHistValues[i] = static_cast<GUIntBig>(
+                ((int *) pabyWorkBuf)[i]);
     }
 
     CPLFree( pabyWorkBuf );
@@ -2274,12 +2286,14 @@ void HFARasterBand::ReadHistogramMetadata()
 /*      Do we have unique values for the bins?                          */
 /* -------------------------------------------------------------------- */
     double *padfBinValues = NULL;
-    HFAEntry *poBinEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.#Bin_Function840#" );
+    HFAEntry *poBinEntry =
+        poBand->poNode->GetNamedChild( "Descriptor_Table.#Bin_Function840#" );
 
     if( poBinEntry != NULL
         && EQUAL(poBinEntry->GetType(),"Edsc_BinFunction840")  )
     {
-        const char* pszValue = poBinEntry->GetStringField( "binFunction.type.string" );
+        const char* pszValue =
+            poBinEntry->GetStringField( "binFunction.type.string" );
         if( pszValue && EQUAL(pszValue,"BFUnique") )
             padfBinValues = HFAReadBFUniqueBins( poBinEntry, nNumBins );
     }
@@ -2295,23 +2309,26 @@ void HFARasterBand::ReadHistogramMetadata()
             if( padfBinValues[i] != floor(padfBinValues[i]) )
                 bAllInteger = FALSE;
 
-            nMaxValue = MAX(nMaxValue,(int)padfBinValues[i]);
-            nMinValue = MIN(nMinValue,(int)padfBinValues[i]);
+            nMaxValue = MAX(nMaxValue,static_cast<int>(padfBinValues[i]));
+            nMinValue = MIN(nMinValue,static_cast<int>(padfBinValues[i]));
         }
 
         if( nMinValue < 0 || nMaxValue > 1000 || !bAllInteger )
         {
             CPLFree( padfBinValues );
             CPLFree( panHistValues );
-            CPLDebug( "HFA", "Unable to offer histogram because unique values list is not convenient to reform as HISTOBINVALUES." );
+            CPLDebug( "HFA", "Unable to offer histogram because unique values "
+                      "list is not convenient to reform as HISTOBINVALUES." );
             return;
         }
 
         const int nNewBins = nMaxValue + 1;
-        GUIntBig *panNewHistValues = (GUIntBig *) CPLCalloc(sizeof(GUIntBig),nNewBins);
+        GUIntBig *panNewHistValues = static_cast<GUIntBig *>(
+            CPLCalloc(sizeof(GUIntBig),nNewBins));
 
         for( int i = 0; i < nNumBins; i++ )
-            panNewHistValues[(int) padfBinValues[i]] = panHistValues[i];
+            panNewHistValues[static_cast<int>(padfBinValues[i])] =
+                panHistValues[i];
 
         CPLFree( panHistValues );
         panHistValues = panNewHistValues;
@@ -2331,18 +2348,19 @@ void HFARasterBand::ReadHistogramMetadata()
 /*      Format into HISTOBINVALUES text format.                         */
 /* -------------------------------------------------------------------- */
     unsigned int nBufSize = 1024;
-    char * pszBinValues = (char *)CPLMalloc( nBufSize );
-    int    nBinValuesLen = 0;
+    char *pszBinValues = static_cast<char *>(CPLMalloc( nBufSize ));
     pszBinValues[0] = 0;
+    int nBinValuesLen = 0;
 
-    for ( int nBin = 0; nBin < nNumBins; ++nBin )
+    for( int nBin = 0; nBin < nNumBins; ++nBin )
     {
-        char szBuf[32];
+        char szBuf[32] = {};
         snprintf( szBuf, 31, CPL_FRMT_GUIB, panHistValues[nBin] );
         if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
         {
             nBufSize *= 2;
-            char* pszNewBinValues = (char *)VSI_REALLOC_VERBOSE( pszBinValues, nBufSize );
+            char* pszNewBinValues = static_cast<char *>(
+                VSI_REALLOC_VERBOSE( pszBinValues, nBufSize ));
             if (pszNewBinValues == NULL)
             {
                 break;
@@ -2366,7 +2384,7 @@ void HFARasterBand::ReadHistogramMetadata()
 double HFARasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    double dfNoData;
+    double dfNoData = 0.0;
 
     if( HFAGetBandNoData( hHFA, nBand, &dfNoData ) )
     {
@@ -2440,8 +2458,8 @@ void HFARasterBand::EstablishOverviews()
     nOverviews = HFAGetOverviewCount( hHFA, nBand );
     if( nOverviews > 0 )
     {
-        papoOverviewBands = (HFARasterBand **)
-            CPLMalloc(sizeof(void*)*nOverviews);
+        papoOverviewBands = static_cast<HFARasterBand **>(
+            CPLMalloc(sizeof(void*)*nOverviews));
 
         for( int iOvIndex = 0; iOvIndex < nOverviews; iOvIndex++ )
         {
@@ -2496,38 +2514,38 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    CPLErr eErr;
+    CPLErr eErr = CE_None;
 
     if( nThisOverview == -1 )
-        eErr = HFAGetRasterBlockEx( hHFA, nBand, nBlockXOff, nBlockYOff,
-                                    pImage,
-                                    nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8) );
+        eErr = HFAGetRasterBlockEx(
+            hHFA, nBand, nBlockXOff, nBlockYOff,
+            pImage,
+            nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType) );
     else
-    {
-        eErr =  HFAGetOverviewRasterBlockEx( hHFA, nBand, nThisOverview,
-                                           nBlockXOff, nBlockYOff,
-                                           pImage,
-                                           nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8));
-    }
+        eErr = HFAGetOverviewRasterBlockEx(
+            hHFA, nBand, nThisOverview,
+            nBlockXOff, nBlockYOff,
+            pImage,
+            nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType) );
 
     if( eErr == CE_None && eHFADataType == EPT_u4 )
     {
-        GByte *pabyData = (GByte *) pImage;
+        GByte *pabyData = static_cast<GByte *>(pImage);
 
         for( int ii = nBlockXSize * nBlockYSize - 2; ii >= 0; ii -= 2 )
         {
-            int k = ii>>1;
+            int k = ii >> 1;
             pabyData[ii+1] = (pabyData[k]>>4) & 0xf;
             pabyData[ii]   = (pabyData[k]) & 0xf;
         }
     }
     if( eErr == CE_None && eHFADataType == EPT_u2 )
     {
-        GByte *pabyData = (GByte *) pImage;
+        GByte *pabyData = static_cast<GByte *>(pImage);
 
         for( int ii = nBlockXSize * nBlockYSize - 4; ii >= 0; ii -= 4 )
         {
-            int k = ii>>2;
+            int k = ii >> 2;
             pabyData[ii+3] = (pabyData[k]>>6) & 0x3;
             pabyData[ii+2] = (pabyData[k]>>4) & 0x3;
             pabyData[ii+1] = (pabyData[k]>>2) & 0x3;
@@ -2536,7 +2554,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     if( eErr == CE_None && eHFADataType == EPT_u1)
     {
-        GByte *pabyData = (GByte *) pImage;
+        GByte *pabyData = static_cast<GByte *>(pImage);
 
         for( int ii = nBlockXSize * nBlockYSize - 1; ii >= 0; ii-- )
         {
@@ -2558,7 +2576,7 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
-    GByte *pabyOutBuf = (GByte *) pImage;
+    GByte *pabyOutBuf = static_cast<GByte *>(pImage);
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to pack 1/2/4 bit data?                              */
@@ -2568,8 +2586,8 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         || eHFADataType == EPT_u4 )
     {
         const int nPixCount =  nBlockXSize * nBlockYSize;
-        pabyOutBuf = (GByte *) VSIMalloc2(nBlockXSize, nBlockYSize);
-        if (pabyOutBuf == NULL)
+        pabyOutBuf = static_cast<GByte *>(VSIMalloc2(nBlockXSize, nBlockYSize));
+        if( pabyOutBuf == NULL )
             return CE_Failure;
 
         if( eHFADataType == EPT_u1 )
@@ -2751,7 +2769,7 @@ CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
 CPLErr HFARasterBand::SetMetadata( char **papszMDIn, const char *pszDomain )
 
 {
-    bMetadataDirty = TRUE;
+    bMetadataDirty = true;
 
     return GDALPamRasterBand::SetMetadata( papszMDIn, pszDomain );
 }
@@ -2764,7 +2782,7 @@ CPLErr HFARasterBand::SetMetadataItem( const char *pszTag, const char *pszValue,
                                        const char *pszDomain )
 
 {
-    bMetadataDirty = TRUE;
+    bMetadataDirty = true;
 
     return GDALPamRasterBand::SetMetadataItem( pszTag, pszValue, pszDomain );
 }
@@ -3153,20 +3171,22 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         }
         else if( poRAT->GetTypeOfCol(col) == GFT_String )
         {
-            unsigned int nMaxNumChars = 0, nNumChars;
+            unsigned int nMaxNumChars = 0;
             /* find the length of the longest string */
             for( int i = 0; i < nRowCount; i++)
             {
-                /* Include terminating byte */
-                nNumChars = static_cast<int>(strlen(poRAT->GetValueAsString(i,col)) + 1);
-                if(nMaxNumChars < nNumChars)
+                // Include terminating byte.
+                const unsigned int nNumChars = static_cast<unsigned int>(
+                    strlen(poRAT->GetValueAsString(i,col)) + 1);
+                if( nMaxNumChars < nNumChars )
                 {
                     nMaxNumChars = nNumChars;
                 }
             }
 
-            int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
-                                            (nRowCount+1) * nMaxNumChars );
+            const int nOffset =
+                HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
+                                  (nRowCount+1) * nMaxNumChars );
             poColumn->SetIntField( "columnDataPtr", nOffset );
             poColumn->SetStringField( "dataType", "string" );
             poColumn->SetIntField( "maxNumChars", nMaxNumChars );
@@ -3231,17 +3251,15 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
 /*                            HFADataset()                            */
 /************************************************************************/
 
-HFADataset::HFADataset()
-
+HFADataset::HFADataset() :
+    hHFA(NULL),
+    bMetadataDirty(false),
+    bGeoDirty(false),
+    pszProjection(CPLStrdup("")),
+    bIgnoreUTM(false),
+    bForceToPEString(false),
+    nGCPCount(0)
 {
-    hHFA = NULL;
-    bGeoDirty = FALSE;
-    pszProjection = CPLStrdup("");
-    bMetadataDirty = FALSE;
-    bIgnoreUTM = FALSE;
-    bForceToPEString = FALSE;
-
-    nGCPCount = 0;
     memset(asGCPList, 0, sizeof(asGCPList));
 }
 
@@ -3306,7 +3324,7 @@ void HFADataset::FlushCache()
     if( bMetadataDirty && GetMetadata() != NULL )
     {
         HFASetMetadata( hHFA, 0, GetMetadata() );
-        bMetadataDirty = FALSE;
+        bMetadataDirty = false;
     }
 
     for( int iBand = 0; iBand < nBands; iBand++ )
@@ -3315,7 +3333,7 @@ void HFADataset::FlushCache()
         if( poBand->bMetadataDirty && poBand->GetMetadata() != NULL )
         {
             HFASetMetadata( hHFA, iBand+1, poBand->GetMetadata() );
-            poBand->bMetadataDirty = FALSE;
+            poBand->bMetadataDirty = false;
         }
     }
 
@@ -3336,7 +3354,7 @@ CPLErr HFADataset::WriteProjection()
     char *pszP = pszProjection;
     bool bPEStringStored = false;
 
-    bGeoDirty = FALSE;
+    bGeoDirty = false;
 
     bool bHaveSRS;
     if( pszProjection != NULL && strlen(pszProjection) > 0
@@ -4359,7 +4377,6 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 /*      units from meters.  Erdas linear projection values are          */
 /*      always in meters.                                               */
 /* -------------------------------------------------------------------- */
-    int iUnitIndex = 0;
 
     if( oSRS.IsProjected() || oSRS.IsLocal() )
     {
@@ -4372,7 +4389,8 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
         if( pszUnits != NULL )
         {
-            for( iUnitIndex = 0;
+            int iUnitIndex = 0;  // Used after for.
+            for( ;
                  apszUnitMap[iUnitIndex] != NULL;
                  iUnitIndex += 2 )
             {
@@ -5341,11 +5359,11 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     for( int i = 0; i < poDS->nBands; i++ )
     {
         HFARasterBand *poBand = (HFARasterBand *) poDS->GetRasterBand( i+1 );
-        poBand->bMetadataDirty = FALSE;
+        poBand->bMetadataDirty = false;
     }
-    poDS->bMetadataDirty = FALSE;
+    poDS->bMetadataDirty = false;
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -5367,7 +5385,7 @@ CPLErr HFADataset::SetProjection( const char * pszNewProjection )
 {
     CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
-    bGeoDirty = TRUE;
+    bGeoDirty = true;
 
     return CE_None;
 }
@@ -5379,7 +5397,7 @@ CPLErr HFADataset::SetProjection( const char * pszNewProjection )
 CPLErr HFADataset::SetMetadata( char **papszMDIn, const char *pszDomain )
 
 {
-    bMetadataDirty = TRUE;
+    bMetadataDirty = true;
 
     return GDALPamDataset::SetMetadata( papszMDIn, pszDomain );
 }
@@ -5392,7 +5410,7 @@ CPLErr HFADataset::SetMetadataItem( const char *pszTag, const char *pszValue,
                                     const char *pszDomain )
 
 {
-    bMetadataDirty = TRUE;
+    bMetadataDirty = true;
 
     return GDALPamDataset::SetMetadataItem( pszTag, pszValue, pszDomain );
 }
@@ -5426,7 +5444,7 @@ CPLErr HFADataset::SetGeoTransform( double * padfTransform )
 
 {
     memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
-    bGeoDirty = TRUE;
+    bGeoDirty = true;
 
     return CE_None;
 }
@@ -5871,14 +5889,14 @@ CPLErr HFADataset::CopyFiles( const char *pszNewName, const char *pszOldName )
 
 GDALDataset *
 HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-                        CPL_UNUSED int bStrict,
+                        int /* bStrict */,
                         char ** papszOptions,
                         GDALProgressFunc pfnProgress, void * pProgressData )
 {
 /* -------------------------------------------------------------------- */
 /*      Do we really just want to create an .aux file?                  */
 /* -------------------------------------------------------------------- */
-    bool bCreateAux = CPLFetchBool( papszOptions, "AUX", false );
+    const bool bCreateAux = CPLFetchBool( papszOptions, "AUX", false );
 
 /* -------------------------------------------------------------------- */
 /*      Establish a representative data type to use.                    */

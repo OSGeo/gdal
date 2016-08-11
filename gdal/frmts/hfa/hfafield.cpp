@@ -219,7 +219,7 @@ const char *HFAField::Initialize( const char * pszInput )
 
     pszInput += i+1;
 
-    return( pszInput );
+    return pszInput;
 }
 
 /************************************************************************/
@@ -788,11 +788,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
             if( pszField != NULL && strlen(pszField) > 0 )
             {
-                return( poItemObjectType->
-                            SetInstValue( pszField, pabyData + nExtraOffset,
-                                          nDataOffset + nExtraOffset,
-                                          nDataSize - nExtraOffset,
-                                          chReqType, pValue ) );
+                return poItemObjectType->
+                    SetInstValue( pszField, pabyData + nExtraOffset,
+                                  nDataOffset + nExtraOffset,
+                                  nDataSize - nExtraOffset,
+                                  chReqType, pValue );
             }
             else
             {
@@ -890,7 +890,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
         *((GByte **)pReqReturn) = pabyData;
         if (pnRemainingDataSize)
             *pnRemainingDataSize = nDataSize;
-        return( pabyData != NULL );
+        return pabyData != NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1248,11 +1248,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
             if( pszField != NULL && strlen(pszField) > 0 )
             {
-                return( poItemObjectType->
-                        ExtractInstValue( pszField, pabyRawData,
-                                          nDataOffset + nExtraOffset,
-                                          nDataSize - nExtraOffset,
-                                          chReqType, pReqReturn, pnRemainingDataSize ) );
+                return poItemObjectType->
+                    ExtractInstValue( pszField, pabyRawData,
+                                      nDataOffset + nExtraOffset,
+                                      nDataSize - nExtraOffset,
+                                      chReqType, pReqReturn,
+                                      pnRemainingDataSize );
             }
         }
         break;
@@ -1279,22 +1280,22 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
         }
 
         *((char **) pReqReturn) = pszStringRet;
-        return( TRUE );
+        return TRUE;
     }
     else if( chReqType == 'd' )
     {
         *((double *)pReqReturn) = dfDoubleRet;
-        return( TRUE );
+        return TRUE;
     }
     else if( chReqType == 'i' )
     {
         *((int *) pReqReturn) = nIntRet;
-        return( TRUE );
+        return TRUE;
     }
     else if( chReqType == 'p' )
     {
         *((GByte **) pReqReturn) = pabyRawData;
-        return( TRUE );
+        return TRUE;
     }
     else
     {
@@ -1315,11 +1316,11 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
 
 {
-    int nCount;
-    int nInstBytes = 0;
-
     if( nBytes > -1 )
         return nBytes;
+
+    int nCount = 1;
+    int nInstBytes = 0;
 
     if( chPointer != '\0' )
     {
@@ -1335,8 +1336,6 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
         pabyData += 8;
         nInstBytes += 8;
     }
-    else
-        nCount = 1;
 
     if( chItemType == 'b' && nCount != 0 ) // BASEDATA
     {
@@ -1385,15 +1384,11 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
     }
     else
     {
-        int i;
-
-        for( i = 0; i < nCount &&
-                    nInstBytes < nDataSize &&
-                    nInstBytes >= 0; i++ )
+        for( int i = 0;
+             i < nCount && nInstBytes < nDataSize && nInstBytes >= 0;
+             i++ )
         {
-            int nThisBytes;
-
-            nThisBytes =
+            const int nThisBytes =
                 poItemObjectType->GetInstBytes( pabyData,
                                                 nDataSize - nInstBytes );
             if (nThisBytes < 0 || nInstBytes > INT_MAX - nThisBytes)
@@ -1407,7 +1402,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
         }
     }
 
-    return( nInstBytes );
+    return nInstBytes;
 }
 
 /************************************************************************/

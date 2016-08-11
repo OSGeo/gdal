@@ -420,7 +420,7 @@ HFAEntry *HFAEntry::GetChild()
             nChildPos = 0;
     }
 
-    return( poChild );
+    return poChild;
 }
 
 /************************************************************************/
@@ -457,7 +457,7 @@ HFAEntry *HFAEntry::GetNext()
             nNextPos = 0;
     }
 
-    return( poNext );
+    return poNext;
 }
 
 /************************************************************************/
@@ -733,18 +733,17 @@ int HFAEntry::GetFieldValue( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
 /*      Extract the instance information.                               */
 /* -------------------------------------------------------------------- */
-
-
-    return( poType->ExtractInstValue( pszFieldPath,
-                                      pabyData, nDataPos, nDataSize,
-                                      chReqType, pReqReturn, pnRemainingDataSize ) );
+    return
+        poType->ExtractInstValue( pszFieldPath,
+                                  pabyData, nDataPos, nDataSize,
+                                  chReqType, pReqReturn, pnRemainingDataSize );
 }
 
 /************************************************************************/
 /*                           GetFieldCount()                            */
 /************************************************************************/
 
-int HFAEntry::GetFieldCount( const char * pszFieldPath, CPL_UNUSED CPLErr *peErr )
+int HFAEntry::GetFieldCount( const char * pszFieldPath, CPLErr * /* peErr */ )
 {
 /* -------------------------------------------------------------------- */
 /*      Is there a node path in this string?                            */
@@ -773,8 +772,8 @@ int HFAEntry::GetFieldCount( const char * pszFieldPath, CPL_UNUSED CPLErr *peErr
 /*      Extract the instance information.                               */
 /* -------------------------------------------------------------------- */
 
-    return( poType->GetInstCount( pszFieldPath,
-                                  pabyData, nDataPos, nDataSize ) );
+    return poType->GetInstCount( pszFieldPath,
+                                 pabyData, nDataPos, nDataSize );
 }
 
 /************************************************************************/
@@ -911,9 +910,9 @@ CPLErr HFAEntry::SetFieldValue( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
     MarkDirty();
 
-    return( poType->SetInstValue( pszFieldPath,
-                                  pabyData, nDataPos, nDataSize,
-                                  chReqType, pValue ) );
+    return poType->SetInstValue( pszFieldPath,
+                                 pabyData, nDataPos, nDataSize,
+                                 chReqType, pValue );
 }
 
 /************************************************************************/
