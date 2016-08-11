@@ -5,6 +5,6 @@ completion:
 
 install:
 	if test "x`pkg-config --version 2>/dev/null`" != "x" -a "x`pkg-config --variable=compatdir bash-completion`" != "x"; then \
-		$(INSTALL_DIR) $(DESTDIR)${prefix}`pkg-config --variable=compatdir bash-completion` ; \
-		cp gdal-bash-completion.sh $(DESTDIR)${prefix}`pkg-config --variable=compatdir bash-completion`; \
+		$(INSTALL_DIR) $(DESTDIR)`pkg-config --variable=compatdir bash-completion` ; \
+		cp gdal-bash-completion.sh $(DESTDIR)`pkg-config --variable=compatdir bash-completion`; \
 	fi
