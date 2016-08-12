@@ -404,8 +404,8 @@ class HFAAttributeField
     int               nDataOffset;
     int               nElementSize;
     HFAEntry         *poColumn;
-    int               bIsBinValues;  // Handled differently.
-    int               bConvertColors;  // Map 0-1 floats to 0-255 ints.
+    bool              bIsBinValues;  // Handled differently.
+    bool              bConvertColors;  // Map 0-1 floats to 0-255 ints.
 };
 
 class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
@@ -417,18 +417,20 @@ class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
     int         nBand;
     GDALAccess  eAccess;
 
-    std::vector<HFAAttributeField>  aoFields;
+    std::vector<HFAAttributeField> aoFields;
     int         nRows;
 
-    int bLinearBinning;
+    bool bLinearBinning;
     double dfRow0Min;
     double dfBinSize;
 
     CPLString osWorkingResult;
 
-    void AddColumn(const char *pszName, GDALRATFieldType eType, GDALRATFieldUsage eUsage,
-                int nDataOffset, int nElementSize, HFAEntry *poColumn, int bIsBinValues=FALSE,
-                int bConvertColors=FALSE)
+    void AddColumn( const char *pszName, GDALRATFieldType eType,
+                    GDALRATFieldUsage eUsage,
+                    int nDataOffset, int nElementSize, HFAEntry *poColumn,
+                    bool bIsBinValues=FALSE,
+                    bool bConvertColors=false )
     {
         HFAAttributeField aField;
         aField.sName = pszName;
@@ -440,7 +442,7 @@ class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
         aField.bIsBinValues = bIsBinValues;
         aField.bConvertColors = bConvertColors;
 
-        this->aoFields.push_back(aField);
+        aoFields.push_back(aField);
     }
 
     void CreateDT()
@@ -501,17 +503,18 @@ protected:
 /*                     HFARasterAttributeTable()                        */
 /************************************************************************/
 
-HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const char *pszName) :
+HFARasterAttributeTable::HFARasterAttributeTable(
+    HFARasterBand *poBand, const char *pszName) :
     dfRow0Min(0.0),
     dfBinSize(0.0)
 {
-    this->hHFA = poBand->hHFA;
-    this->poDT = poBand->hHFA->papoBand[poBand->nBand-1]->poNode->GetNamedChild(pszName);
-    this->nBand = poBand->nBand;
-    this->eAccess = poBand->GetAccess();
-    this->osName = pszName;
-    this->nRows = 0;
-    this->bLinearBinning = FALSE;
+    hHFA = poBand->hHFA;
+    poDT = poBand->hHFA->papoBand[poBand->nBand-1]->poNode->GetNamedChild(pszName);
+    nBand = poBand->nBand;
+    eAccess = poBand->GetAccess();
+    osName = pszName;
+    nRows = 0;
+    bLinearBinning = false;
 
     if( this->poDT != NULL )
     {
@@ -533,11 +536,11 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
                 if( nBinCount == this->nRows
                     && dfMax != dfMin && nBinCount != 0 )
                 {
-                    // can't call SetLinearBinning since it will re-write
-                    // which we might not have permission to do
-                    this->bLinearBinning = TRUE;
-                    this->dfRow0Min = dfMin;
-                    this->dfBinSize = (dfMax-dfMin) / (nBinCount-1);
+                    // Can't call SetLinearBinning since it will re-write
+                    // which we might not have permission to do.
+                    bLinearBinning = true;
+                    dfRow0Min = dfMin;
+                    dfBinSize = (dfMax-dfMin) / (nBinCount-1);
                 }
             }
 
@@ -557,7 +560,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
             const int nOffset = poDTChild->GetIntField( "columnDataPtr" );
             const char *pszType = poDTChild->GetStringField( "dataType" );
             GDALRATFieldUsage eUsage = GFU_Generic;
-            int bConvertColors = FALSE;
+            bool bConvertColors = false;
 
             if( pszType == NULL || nOffset == 0 )
                 continue;
@@ -577,27 +580,27 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
             else if( EQUAL(poDTChild->GetName(),"Red") )
             {
                 eUsage = GFU_Red;
-                // treat color columns as ints regardless
-                // of how they are stored
-                bConvertColors = (eType == GFT_Real);
+                // Treat color columns as ints regardless
+                // of how they are stored.
+                bConvertColors = eType == GFT_Real;
                 eType = GFT_Integer;
             }
             else if( EQUAL(poDTChild->GetName(),"Green") )
             {
                 eUsage = GFU_Green;
-                bConvertColors = (eType == GFT_Real);
+                bConvertColors = eType == GFT_Real;
                 eType = GFT_Integer;
             }
             else if( EQUAL(poDTChild->GetName(),"Blue") )
             {
                 eUsage = GFU_Blue;
-                bConvertColors = (eType == GFT_Real);
+                bConvertColors = eType == GFT_Real;
                 eType = GFT_Integer;
             }
             else if( EQUAL(poDTChild->GetName(),"Opacity") )
             {
                 eUsage = GFU_Alpha;
-                bConvertColors = (eType == GFT_Real);
+                bConvertColors = eType == GFT_Real;
                 eType = GFT_Integer;
             }
             else if( EQUAL(poDTChild->GetName(),"Class_Names") )
@@ -624,8 +627,9 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const ch
                 int nSize = sizeof(GInt32);
                 if( bConvertColors )
                     nSize = sizeof(double);
-                AddColumn(poDTChild->GetName(), GFT_Integer, eUsage, nOffset, nSize, poDTChild,
-                                        FALSE, bConvertColors);
+                AddColumn(poDTChild->GetName(), GFT_Integer,
+                          eUsage, nOffset, nSize, poDTChild,
+                          FALSE, bConvertColors);
             }
         }
     }
@@ -1676,7 +1680,7 @@ int HFARasterAttributeTable::GetRowOfValue( double dfValue ) const
 /* -------------------------------------------------------------------- */
     if( bLinearBinning )
     {
-        int iBin = (int) floor((dfValue - dfRow0Min) / dfBinSize);
+        const int iBin = (int) floor((dfValue - dfRow0Min) / dfBinSize);
         if( iBin < 0 || iBin >= this->nRows )
             return -1;
 
@@ -1754,7 +1758,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
     if( poDT == NULL || !EQUAL(poDT->GetType(),"Edsc_Table") )
         CreateDT();
 
-    int bConvertColors = FALSE;
+    bool bConvertColors = false;
 
     // Imagine doesn't have a concept of usage - works of the names instead.
     // must make sure name matches use
@@ -1763,25 +1767,25 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
         pszFieldName = "Red";
         // create a real column in the file, but make it
         // available as int to GDAL
-        bConvertColors = TRUE;
+        bConvertColors = true;
         eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_Green )
     {
         pszFieldName = "Green";
-        bConvertColors = TRUE;
+        bConvertColors = true;
         eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_Blue )
     {
         pszFieldName = "Blue";
-        bConvertColors = TRUE;
+        bConvertColors = true;
         eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_Alpha )
     {
         pszFieldName = "Opacity";
-        bConvertColors = TRUE;
+        bConvertColors = true;
         eFieldType = GFT_Real;
     }
     else if( eFieldUsage == GFU_PixelCount )
@@ -1844,7 +1848,8 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
         // GDAL Int column
         eFieldType = GFT_Integer;
 
-    AddColumn(pszFieldName, eFieldType, eFieldUsage, nOffset, nElementSize, poColumn, FALSE, bConvertColors);
+    AddColumn(pszFieldName, eFieldType, eFieldUsage,
+              nOffset, nElementSize, poColumn, FALSE, bConvertColors);
 
     return CE_None;
 }
@@ -1853,18 +1858,19 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
 /*                          SetLinearBinning()                          */
 /************************************************************************/
 
-CPLErr HFARasterAttributeTable::SetLinearBinning( double dfRow0MinIn, double dfBinSizeIn )
+CPLErr HFARasterAttributeTable::SetLinearBinning(
+    double dfRow0MinIn, double dfBinSizeIn )
 {
-    if( this->eAccess == GA_ReadOnly )
+    if( eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
             "Dataset not open in update mode");
         return CE_Failure;
     }
 
-    this->bLinearBinning = TRUE;
-    this->dfRow0Min = dfRow0MinIn;
-    this->dfBinSize = dfBinSizeIn;
+    bLinearBinning = true;
+    dfRow0Min = dfRow0MinIn;
+    dfBinSize = dfBinSizeIn;
 
     // do we have a descriptor table already?
     if( this->poDT == NULL || !EQUAL(this->poDT->GetType(),"Edsc_Table") )
@@ -2302,15 +2308,15 @@ void HFARasterBand::ReadHistogramMetadata()
     {
         int nMaxValue = 0;
         int nMinValue = 1000000;
-        int bAllInteger = TRUE;
+        bool bAllInteger = true;
 
         for( int i = 0; i < nNumBins; i++ )
         {
             if( padfBinValues[i] != floor(padfBinValues[i]) )
-                bAllInteger = FALSE;
+                bAllInteger = false;
 
-            nMaxValue = MAX(nMaxValue,static_cast<int>(padfBinValues[i]));
-            nMinValue = MIN(nMinValue,static_cast<int>(padfBinValues[i]));
+            nMaxValue = MAX(nMaxValue, static_cast<int>(padfBinValues[i]));
+            nMinValue = MIN(nMinValue, static_cast<int>(padfBinValues[i]));
         }
 
         if( nMinValue < 0 || nMaxValue > 1000 || !bAllInteger )
@@ -2878,11 +2884,11 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     GDALRasterBand **papoOvBands
         = (GDALRasterBand **) CPLCalloc(sizeof(void*),nReqOverviews);
 
-    int bNoRegen = FALSE;
+    bool bNoRegen = false;
     if( STARTS_WITH_CI(pszResampling, "NO_REGEN:") )
     {
         pszResampling += 9;
-        bNoRegen = TRUE;
+        bNoRegen = true;
     }
 
 /* -------------------------------------------------------------------- */
@@ -5023,7 +5029,6 @@ CPLErr HFADataset::ReadProjection()
 {
     OGRSpatialReference oSRS;
     char *pszPE_COORDSYS = NULL;
-    int bTryReadingPEString = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      General case for Erdas style projections.                       */
@@ -5059,6 +5064,8 @@ CPLErr HFADataset::ReadProjection()
 
     // If we got a valid projection and managed to identify a EPSG code,
     // then do not use the ESRI PE String.
+    bool bTryReadingPEString = true;
+
     if( pszProjection != NULL )
     {
         OGRSpatialReference oSRS2(pszProjection);

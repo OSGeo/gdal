@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 HFAEntry::HFAEntry() :
-    bDirty(FALSE),
+    bDirty(false),
     nFilePos(0),
     psHFA(NULL),
     poParent(NULL),
@@ -57,7 +57,7 @@ HFAEntry::HFAEntry() :
     nDataPos(0),
     nDataSize(0),
     pabyData(NULL),
-    bIsMIFObject(FALSE)
+    bIsMIFObject(false)
 {
     szName[0] = '\0';
     szType[0] = '\0';
@@ -144,7 +144,7 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
     nDataPos(0),
     nDataSize(0),
     pabyData(NULL),
-    bIsMIFObject(FALSE)
+    bIsMIFObject(false)
 {
 /* -------------------------------------------------------------------- */
 /*      Initialize Entry                                                */
@@ -277,7 +277,7 @@ HFAEntry::HFAEntry( const char * pszDictionary,
                     const char * pszTypeName,
                     int nDataSizeIn,
                     GByte* pabyDataIn ) :
-    bDirty(FALSE),
+    bDirty(false),
     nFilePos(0),
     poParent(NULL),
     poPrev(NULL),
@@ -287,7 +287,7 @@ HFAEntry::HFAEntry( const char * pszDictionary,
     poChild(NULL),
     nDataPos(0),
     nDataSize(0),
-    bIsMIFObject(TRUE)
+    bIsMIFObject(true)
 {
 /* -------------------------------------------------------------------- */
 /*      Initialize Entry                                                */
@@ -300,7 +300,7 @@ HFAEntry::HFAEntry( const char * pszDictionary,
     psHFA = (HFAInfo_t *) CPLCalloc(sizeof(HFAInfo_t),1);
 
     psHFA->eAccess = HFA_ReadOnly;
-    psHFA->bTreeDirty = FALSE;
+    psHFA->bTreeDirty = false;
     psHFA->poRoot = this;
 
     psHFA->poDictionary = new HFADictionary( pszDictionary );
@@ -1101,7 +1101,7 @@ CPLErr HFAEntry::FlushToDisk()
             return eErr;
     }
 
-    bDirty = FALSE;
+    bDirty = false;
 
     return CE_None;
 }
@@ -1116,6 +1116,6 @@ CPLErr HFAEntry::FlushToDisk()
 void HFAEntry::MarkDirty()
 
 {
-    bDirty = TRUE;
-    psHFA->bTreeDirty = TRUE;
+    bDirty = true;
+    psHFA->bTreeDirty = true;
 }

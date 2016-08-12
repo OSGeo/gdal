@@ -1490,20 +1490,25 @@ void HFAField::DumpInstValue( FILE *fpOut,
 /* -------------------------------------------------------------------- */
     if( chItemType == 'b' )
     {
-        int nDataType, nRows, nColumns;
-        int bSuccess = ExtractInstValue( NULL, -3, pabyData, nDataOffset,
-                          nDataSize, 'i', &nDataType );
+        int nDataType = 0;
+        const bool bSuccess = CPL_TO_BOOL(
+            ExtractInstValue( NULL, -3, pabyData, nDataOffset,
+                              nDataSize, 'i', &nDataType ));
         if (bSuccess)
         {
+            int nColumns = 0;
             ExtractInstValue( NULL, -2, pabyData, nDataOffset,
                             nDataSize, 'i', &nColumns );
+            int nRows = 0;
             ExtractInstValue( NULL, -1, pabyData, nDataOffset,
                             nDataSize, 'i', &nRows );
-            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%sBASEDATA(%s): %dx%d of %s\n",
-                        pszPrefix, pszFieldName,
-                        nColumns, nRows,
-                        (nDataType >= EPT_MIN && nDataType <= EPT_MAX) ?
-                            HFAGetDataTypeName( static_cast<EPTType>(nDataType) ): "invalid type" ));
+            CPL_IGNORE_RET_VAL(VSIFPrintf(
+                fpOut, "%sBASEDATA(%s): %dx%d of %s\n",
+                pszPrefix, pszFieldName,
+                nColumns, nRows,
+                (nDataType >= EPT_MIN && nDataType <= EPT_MAX)
+                ? HFAGetDataTypeName( static_cast<EPTType>(nDataType) )
+                : "invalid type" ));
         }
         else
         {

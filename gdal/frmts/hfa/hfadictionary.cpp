@@ -92,8 +92,11 @@ static const char * const apszDefDefn[] = {
 /************************************************************************/
 
 HFADictionary::HFADictionary( const char * pszString ) :
-    nTypes(0), nTypesMax(0), papoTypes(NULL), osDictionaryText(pszString),
-    bDictionaryTextDirty(FALSE)
+    nTypes(0),
+    nTypesMax(0),
+    papoTypes(NULL),
+    osDictionaryText(pszString),
+    bDictionaryTextDirty(false)
 {
 
 /* -------------------------------------------------------------------- */
@@ -188,7 +191,7 @@ HFAType * HFADictionary::FindType( const char * pszName )
             osDictionaryText += apszDefDefn[i+1];
             osDictionaryText += ",.";
 
-            bDictionaryTextDirty = TRUE;
+            bDictionaryTextDirty = true;
 
             return poNewType;
         }

@@ -173,7 +173,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
         psInfo->eAccess = HFA_ReadOnly;
     else
         psInfo->eAccess = HFA_Update;
-    psInfo->bTreeDirty = FALSE;
+    psInfo->bTreeDirty = false;
 
 /* -------------------------------------------------------------------- */
 /*      Where is the header?                                            */
@@ -400,10 +400,10 @@ int HFAClose( HFAHandle hHFA )
 
 {
     int nRet = 0;
-    int i;
 
     if( hHFA->eAccess == HFA_Update && (hHFA->bTreeDirty ||
-        (hHFA->poDictionary != NULL && hHFA->poDictionary->bDictionaryTextDirty)) )
+        (hHFA->poDictionary != NULL &&
+         hHFA->poDictionary->bDictionaryTextDirty)) )
         HFAFlush( hHFA );
 
     if( hHFA->psDependent != NULL )
@@ -425,7 +425,7 @@ int HFAClose( HFAHandle hHFA )
     CPLFree( hHFA->pszIGEFilename );
     CPLFree( hHFA->pszPath );
 
-    for( i = 0; i < hHFA->nBands; i++ )
+    for( int i = 0; i < hHFA->nBands; i++ )
     {
         delete hHFA->papoBand[i];
     }
@@ -1391,10 +1391,6 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
 
 {
-    HFAEntry *poMIEntry;
-    Eprj_ProParameters *psProParms;
-    int i;
-
     if( hHFA->nBands < 1 )
         return NULL;
 
@@ -1407,14 +1403,16 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
 /* -------------------------------------------------------------------- */
 /*      Get the HFA node.                                               */
 /* -------------------------------------------------------------------- */
-    poMIEntry = hHFA->papoBand[0]->poNode->GetNamedChild( "Projection" );
+    HFAEntry *poMIEntry =
+        hHFA->papoBand[0]->poNode->GetNamedChild( "Projection" );
     if( poMIEntry == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Allocate the structure.                                         */
 /* -------------------------------------------------------------------- */
-    psProParms = (Eprj_ProParameters *)CPLCalloc(sizeof(Eprj_ProParameters),1);
+    Eprj_ProParameters *psProParms =
+        (Eprj_ProParameters *)CPLCalloc(sizeof(Eprj_ProParameters),1);
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the fields.                                               */
@@ -1425,9 +1423,9 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
     psProParms->proName = CPLStrdup(poMIEntry->GetStringField("proName"));
     psProParms->proZone = poMIEntry->GetIntField("proZone");
 
-    for( i = 0; i < 15; i++ )
+    for( int i = 0; i < 15; i++ )
     {
-        char szFieldName[40];
+        char szFieldName[40] = {};
 
         snprintf( szFieldName, sizeof(szFieldName), "proParams[%d]", i );
         psProParms->proParams[i] = poMIEntry->GetDoubleField(szFieldName);
@@ -1459,16 +1457,15 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {
-        HFAEntry *poMIEntry;
-
 /* -------------------------------------------------------------------- */
 /*      Create a new Projection if there isn't one present already.     */
 /* -------------------------------------------------------------------- */
-        poMIEntry = hHFA->papoBand[iBand]->poNode->GetNamedChild("Projection");
+        HFAEntry *poMIEntry =
+            hHFA->papoBand[iBand]->poNode->GetNamedChild("Projection");
         if( poMIEntry == NULL )
         {
             poMIEntry = HFAEntry::New( hHFA, "Projection","Eprj_ProParameters",
-                                      hHFA->papoBand[iBand]->poNode );
+                                       hHFA->papoBand[iBand]->poNode );
         }
 
         poMIEntry->MarkDirty();
@@ -1476,17 +1473,15 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
-        int nSize;
-        GByte *pabyData;
-
-        nSize = static_cast<int>(34 + 15 * 8
+        int nSize =
+            static_cast<int>(34 + 15 * 8
             + 8 + strlen(poPro->proName) + 1
             + 32 + 8 + strlen(poPro->proSpheroid.sphereName) + 1);
 
         if( poPro->proExeName != NULL )
             nSize += static_cast<int>(strlen(poPro->proExeName) + 1);
 
-        pabyData = poMIEntry->MakeData( nSize );
+        GByte *pabyData = poMIEntry->MakeData( nSize );
         if(!pabyData)
             return CE_Failure;
 
@@ -1800,14 +1795,11 @@ void HFADumpDictionary( HFAHandle hHFA, FILE * fpOut )
 void HFAStandard( int nBytes, void * pData )
 
 {
-    int i;
-    GByte *pabyData = (GByte *) pData;
+    GByte *pabyData = static_cast<GByte *>(pData);
 
-    for( i = nBytes/2-1; i >= 0; i-- )
+    for( int i = nBytes/2-1; i >= 0; i-- )
     {
-        GByte byTemp;
-
-        byTemp = pabyData[i];
+        GByte byTemp = pabyData[i];
         pabyData[i] = pabyData[nBytes-i-1];
         pabyData[nBytes-i-1] = byTemp;
     }
@@ -1874,7 +1866,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
     psInfo->pMapInfo = NULL;
     psInfo->pDatum = NULL;
     psInfo->pProParameters = NULL;
-    psInfo->bTreeDirty = FALSE;
+    psInfo->bTreeDirty = false;
     psInfo->pszFilename = CPLStrdup(CPLGetFilename(pszFilename));
     psInfo->pszPath = CPLStrdup(CPLGetPath(pszFilename));
 
@@ -2003,8 +1995,6 @@ GUInt32 HFAAllocateSpace( HFAInfo_t *psInfo, GUInt32 nBytes )
 CPLErr HFAFlush( HFAHandle hHFA )
 
 {
-    CPLErr eErr;
-
     if( !hHFA->bTreeDirty && !hHFA->poDictionary->bDictionaryTextDirty )
         return CE_None;
 
@@ -2013,13 +2003,15 @@ CPLErr HFAFlush( HFAHandle hHFA )
 /* -------------------------------------------------------------------- */
 /*      Flush HFAEntry tree to disk.                                    */
 /* -------------------------------------------------------------------- */
+    CPLErr eErr;
+
     if( hHFA->bTreeDirty )
     {
         eErr = hHFA->poRoot->FlushToDisk();
         if( eErr != CE_None )
             return eErr;
 
-        hHFA->bTreeDirty = FALSE;
+        hHFA->bTreeDirty = false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2034,7 +2026,7 @@ CPLErr HFAFlush( HFAHandle hHFA )
         bRet &= VSIFWriteL( hHFA->poDictionary->osDictionaryText.c_str(),
                     strlen(hHFA->poDictionary->osDictionaryText.c_str()) + 1,
                     1, hHFA->fp ) > 0;
-        hHFA->poDictionary->bDictionaryTextDirty = FALSE;
+        hHFA->poDictionary->bDictionaryTextDirty = false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2734,31 +2726,29 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 /*      Check if the Metadata is an "known" entity which should be      */
 /*      stored in a better place.                                       */
 /* -------------------------------------------------------------------- */
-    char * pszBinValues = NULL;
-    int bCreatedHistogramParameters = FALSE;
-    int bCreatedStatistics = FALSE;
+    char *pszBinValues = NULL;
+    bool bCreatedHistogramParameters = false;
+    bool bCreatedStatistics = false;
     const char * const * pszAuxMetaData = GetHFAAuxMetaDataList();
-    // check each metadata item
+    // check each metadata item.
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
     {
-        char            *pszKey = NULL;
-        const char      *pszValue;
-
-        pszValue = CPLParseNameValue( papszMD[iColumn], &pszKey );
+        char *pszKey = NULL;
+        const char *pszValue = CPLParseNameValue( papszMD[iColumn], &pszKey );
         if( pszValue == NULL )
             continue;
 
-        // know look if its known
-        int i;
-        for( i = 0; pszAuxMetaData[i] != NULL; i += 4 )
+        // Know look if its known.
+        int i = 0;  // Used after for.
+        for( ; pszAuxMetaData[i] != NULL; i += 4 )
         {
             if ( EQUALN( pszAuxMetaData[i + 2], pszKey, strlen(pszKey) ) )
                 break;
         }
-        if ( pszAuxMetaData[i] != NULL )
+        if( pszAuxMetaData[i] != NULL )
         {
             // found one, get the right entry
-            HFAEntry *poEntry;
+            HFAEntry *poEntry = NULL;
 
             if( strlen(pszAuxMetaData[i]) > 0 )
                 poEntry = poNode->GetNamedChild( pszAuxMetaData[i] );
@@ -2772,7 +2762,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                                         poNode );
 
                 if ( STARTS_WITH_CI(pszAuxMetaData[i], "Statistics") )
-                    bCreatedStatistics = TRUE;
+                    bCreatedStatistics = true;
 
                 if( STARTS_WITH_CI(pszAuxMetaData[i], "HistogramParameters") )
                 {
@@ -2782,7 +2772,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                     poEntry->MakeData( 70 );
                     poEntry->SetStringField( "BinFunction.binFunctionType", "direct" );
 
-                    bCreatedHistogramParameters = TRUE;
+                    bCreatedHistogramParameters = true;
                 }
             }
             if ( poEntry == NULL )
@@ -3285,15 +3275,13 @@ static int HFAReadAndValidatePoly( HFAEntry *poTarget,
 /* -------------------------------------------------------------------- */
 /*      Get coefficients.                                               */
 /* -------------------------------------------------------------------- */
-    int i;
-
-    for( i = 0; i < termcount*2 - 2; i++ )
+    for( int i = 0; i < termcount*2 - 2; i++ )
     {
         osFldName.Printf( "%spolycoefmtx[%d]", pszName, i );
         psRetPoly->polycoefmtx[i] = poTarget->GetDoubleField(osFldName);
     }
 
-    for( i = 0; i < 2; i++ )
+    for( int i = 0; i < 2; i++ )
     {
         osFldName.Printf( "%spolycoefvector[%d]", pszName, i );
         psRetPoly->polycoefvector[i] = poTarget->GetDoubleField(osFldName);
@@ -3336,19 +3324,19 @@ int HFAReadXFormStack( HFAHandle hHFA,
          poXForm != NULL;
          poXForm = poXForm->GetNext() )
     {
-        int bSuccess = FALSE;
+        bool bSuccess = false;
         Efga_Polynomial sForward, sReverse;
         memset( &sForward, 0, sizeof(sForward) );
         memset( &sReverse, 0, sizeof(sReverse) );
 
         if( EQUAL(poXForm->GetType(),"Efga_Polynomial") )
         {
-            bSuccess =
-                HFAReadAndValidatePoly( poXForm, "", &sForward );
+            bSuccess = CPL_TO_BOOL(
+                HFAReadAndValidatePoly( poXForm, "", &sForward ));
 
             if( bSuccess )
             {
-                double adfGT[6], adfInvGT[6];
+                double adfGT[6];
 
                 adfGT[0] = sForward.polycoefvector[0];
                 adfGT[1] = sForward.polycoefmtx[0];
@@ -3357,7 +3345,8 @@ int HFAReadXFormStack( HFAHandle hHFA,
                 adfGT[4] = sForward.polycoefmtx[1];
                 adfGT[5] = sForward.polycoefmtx[3];
 
-                bSuccess = HFAInvGeoTransform( adfGT, adfInvGT );
+                double adfInvGT[6];
+                bSuccess = CPL_TO_BOOL(HFAInvGeoTransform( adfGT, adfInvGT ));
                 if( !bSuccess )
                     memset( adfInvGT, 0, sizeof(adfInvGT) );
 
@@ -3372,8 +3361,8 @@ int HFAReadXFormStack( HFAHandle hHFA,
         }
         else if( EQUAL(poXForm->GetType(),"GM_PolyPair") )
         {
-            bSuccess =
-                HFAReadAndValidatePoly( poXForm, "forward.", &sForward );
+            bSuccess = CPL_TO_BOOL(
+                HFAReadAndValidatePoly( poXForm, "forward.", &sForward ));
             bSuccess = bSuccess &&
                 HFAReadAndValidatePoly( poXForm, "reverse.", &sReverse );
         }
@@ -3407,9 +3396,7 @@ int HFAEvaluateXFormStack( int nStepCount, int bForward,
                            double *pdfX, double *pdfY )
 
 {
-    int iStep;
-
-    for( iStep = 0; iStep < nStepCount; iStep++ )
+    for( int iStep = 0; iStep < nStepCount; iStep++ )
     {
         double dfXOut, dfYOut;
         Efga_Polynomial *psStep;
@@ -3607,9 +3594,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 /* -------------------------------------------------------------------- */
 /*      Get the camera model node, and confirm its type.                */
 /* -------------------------------------------------------------------- */
-    HFAEntry *poXForm;
-
-    poXForm =
+    HFAEntry *poXForm =
         hHFA->papoBand[0]->poNode->GetNamedChild( "MapToPixelXForm.XForm0" );
     if( poXForm == NULL )
         return NULL;
@@ -3620,8 +3605,6 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 /* -------------------------------------------------------------------- */
 /*      Convert the values to metadata.                                 */
 /* -------------------------------------------------------------------- */
-    const char *pszValue;
-    int i;
     char **papszMD = NULL;
     static const char * const apszFields[] = {
         "direction", "refType", "demsource", "PhotoDirection", "RotationSystem",
@@ -3641,7 +3624,8 @@ char **HFAReadCameraModel( HFAHandle hHFA )
         "LensDistortion[0]", "LensDistortion[1]", "LensDistortion[2]",
         NULL };
 
-    for( i = 0; apszFields[i] != NULL; i++ )
+    const char *pszValue = NULL;
+    for( int i = 0; apszFields[i] != NULL; i++ )
     {
         pszValue = poXForm->GetStringField( apszFields[i] );
         if( pszValue == NULL )
@@ -3654,8 +3638,9 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 /*      Create a pseudo-entry for the MIFObject with the                */
 /*      outputProjection.                                               */
 /* -------------------------------------------------------------------- */
-    HFAEntry *poProjInfo = HFAEntry::BuildEntryFromMIFObject( poXForm, "outputProjection" );
-    if (poProjInfo)
+    HFAEntry *poProjInfo =
+        HFAEntry::BuildEntryFromMIFObject( poXForm, "outputProjection" );
+    if( poProjInfo )
     {
     /* -------------------------------------------------------------------- */
     /*      Fetch the datum.                                                */
@@ -3674,13 +3659,16 @@ char **HFAReadCameraModel( HFAHandle hHFA )
             sDatum.type = EPRJ_DATUM_NONE;
         }
         else
-            sDatum.type = static_cast<Eprj_DatumType>(nDatumType);
-
-        for( i = 0; i < 7; i++ )
         {
-            char szFieldName[60];
+            sDatum.type = static_cast<Eprj_DatumType>(nDatumType);
+        }
 
-            snprintf( szFieldName, sizeof(szFieldName), "earthModel.datum.params[%d]", i );
+        for( int i = 0; i < 7; i++ )
+        {
+            char szFieldName[60] = {};
+
+            snprintf( szFieldName, sizeof(szFieldName),
+                      "earthModel.datum.params[%d]", i );
             sDatum.params[i] = poProjInfo->GetDoubleField(szFieldName);
         }
 
@@ -3700,7 +3688,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
         sPro.proName = (char *) poProjInfo->GetStringField("projectionObject.proName");
         sPro.proZone = poProjInfo->GetIntField("projectionObject.proZone");
 
-        for( i = 0; i < 15; i++ )
+        for( int i = 0; i < 15; i++ )
         {
             char szFieldName[40];
 
@@ -3723,11 +3711,9 @@ char **HFAReadCameraModel( HFAHandle hHFA )
     /* -------------------------------------------------------------------- */
     /*      Fetch the projection info.                                      */
     /* -------------------------------------------------------------------- */
-        char *pszProjection;
-
         // poProjInfo->DumpFieldValues( stdout, "" );
 
-        pszProjection = HFAPCSStructToWKT( &sDatum, &sPro, NULL, NULL );
+        char *pszProjection = HFAPCSStructToWKT( &sDatum, &sPro, NULL, NULL );
 
         if( pszProjection )
         {
@@ -3751,7 +3737,8 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 /* -------------------------------------------------------------------- */
 /*      Fetch the elevationinfo.                                        */
 /* -------------------------------------------------------------------- */
-    HFAEntry *poElevInfo = HFAEntry::BuildEntryFromMIFObject( poXForm, "outputElevationInfo" );
+    HFAEntry *poElevInfo =
+        HFAEntry::BuildEntryFromMIFObject( poXForm, "outputElevationInfo" );
     if ( poElevInfo )
     {
         //poElevInfo->DumpFieldValues( stdout, "" );
@@ -3765,7 +3752,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
                 "elevationType",
                 NULL };
 
-            for( i = 0; apszEFields[i] != NULL; i++ )
+            for( int i = 0; apszEFields[i] != NULL; i++ )
             {
                 pszValue = poElevInfo->GetStringField( apszEFields[i] );
                 if( pszValue == NULL )
