@@ -76,9 +76,9 @@ public:
     CPLString     osFilename;
     int           nRefCount;
 
-    int           bIsDirectory;
+    bool          bIsDirectory;
 
-    int           bOwnData;
+    bool          bOwnData;
     GByte        *pabyData;
     vsi_l_offset  nLength;
     vsi_l_offset  nAllocLength;
@@ -102,12 +102,16 @@ class VSIMemHandle CPL_FINAL : public VSIVirtualHandle
   public:
     VSIMemFile    *poFile;
     vsi_l_offset  m_nOffset;
-    int           bUpdate;
-    int           bEOF;
-    int           bExtendFileAtNextWrite;
+    bool          bUpdate;
+    bool          bEOF;
+    bool          bExtendFileAtNextWrite;
 
-                      VSIMemHandle() : poFile(NULL), m_nOffset(0), bUpdate(0),
-                                       bEOF(0), bExtendFileAtNextWrite(0) {}
+                      VSIMemHandle() :
+                          poFile(NULL),
+                          m_nOffset(0),
+                          bUpdate(false),
+                          bEOF(false),
+                          bExtendFileAtNextWrite(false) {}
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -163,8 +167,8 @@ public:
 
 VSIMemFile::VSIMemFile() :
     nRefCount(0),
-    bIsDirectory(FALSE),
-    bOwnData(TRUE),
+    bIsDirectory(false),
+    bOwnData(true),
     pabyData(NULL),
     nLength(0),
     nAllocLength(0)
@@ -267,7 +271,7 @@ int VSIMemHandle::Close()
 int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
-    bExtendFileAtNextWrite = FALSE;
+    bExtendFileAtNextWrite = false;
     if( nWhence == SEEK_CUR )
         m_nOffset += nOffset;
     else if( nWhence == SEEK_SET )
@@ -280,7 +284,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
         return -1;
     }
 
-    bEOF = FALSE;
+    bEOF = false;
 
     if( m_nOffset > poFile->nLength )
     {
@@ -297,7 +301,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
         }
         else // Writable files are zero-extended by seek past end.
         {
-            bExtendFileAtNextWrite = TRUE;
+            bExtendFileAtNextWrite = true;
         }
     }
 
@@ -328,13 +332,13 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     {
         if (poFile->nLength < m_nOffset)
         {
-            bEOF = TRUE;
+            bEOF = true;
             return 0;
         }
 
         nBytesToRead = (size_t)(poFile->nLength - m_nOffset);
         nCount = nBytesToRead / nSize;
-        bEOF = TRUE;
+        bEOF = true;
     }
 
     if( nBytesToRead )
@@ -358,7 +362,7 @@ size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
     }
     if( bExtendFileAtNextWrite )
     {
-        bExtendFileAtNextWrite = FALSE;
+        bExtendFileAtNextWrite = false;
         if( !poFile->SetLength( m_nOffset ) )
             return 0;
     }
@@ -403,7 +407,7 @@ int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
         return -1;
     }
 
-    bExtendFileAtNextWrite = FALSE;
+    bExtendFileAtNextWrite = false;
     if (poFile->SetLength( nNewSize ))
         return 0;
     else
@@ -504,16 +508,16 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 
     poHandle->poFile = poFile;
     poHandle->m_nOffset = 0;
-    poHandle->bEOF = FALSE;
+    poHandle->bEOF = false;
     if( strstr(pszAccess,"w") || strstr(pszAccess,"+")
         || strstr(pszAccess,"a") )
-        poHandle->bUpdate = TRUE;
+        poHandle->bUpdate = true;
     else
-        poHandle->bUpdate = FALSE;
+        poHandle->bUpdate = false;
 
     poFile->nRefCount++;
 
-    if( strstr(pszAccess,"a") )
+    if( strstr(pszAccess, "a") )
         poHandle->m_nOffset = poFile->nLength;
 
     return poHandle;
@@ -628,7 +632,7 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
     VSIMemFile *poFile = new VSIMemFile;
 
     poFile->osFilename = osPathname;
-    poFile->bIsDirectory = TRUE;
+    poFile->bIsDirectory = true;
     oFileList[osPathname] = poFile;
     poFile->nRefCount++; /* referenced by file list */
 
@@ -864,9 +868,9 @@ void VSIInstallMemFileHandler()
  */
 
 VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
-                          GByte *pabyData,
-                          vsi_l_offset nDataLength,
-                          int bTakeOwnership )
+                                GByte *pabyData,
+                                vsi_l_offset nDataLength,
+                                int bTakeOwnership )
 
 {
     if( VSIFileManager::GetHandler("")
@@ -885,7 +889,7 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
     VSIMemFile *poFile = new VSIMemFile;
 
     poFile->osFilename = osFilename;
-    poFile->bOwnData = bTakeOwnership;
+    poFile->bOwnData = CPL_TO_BOOL(bTakeOwnership);
     poFile->pabyData = pabyData;
     poFile->nLength = nDataLength;
     poFile->nAllocLength = nDataLength;
@@ -927,7 +931,7 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
     VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *)
         VSIFileManager::GetHandler("/vsimem/");
 
-    if (pszFilename == NULL)
+    if( pszFilename == NULL )
         return NULL;
 
     CPLString osFilename = pszFilename;
@@ -949,7 +953,7 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
             CPLDebug( "VSIMemFile",
                       "File doesn't own data in VSIGetMemFileBuffer!" );
         else
-            poFile->bOwnData = FALSE;
+            poFile->bOwnData = false;
 
         poHandler->oFileList.erase( poHandler->oFileList.find(osFilename) );
         --(poFile->nRefCount);

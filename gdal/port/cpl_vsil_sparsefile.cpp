@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 class SFRegion {
 public:
     SFRegion() : fp(NULL), nDstOffset(0), nSrcOffset(0), nLength(0),
-                 byValue(0), bTriedOpen(FALSE) {}
+                 byValue(0), bTriedOpen(false) {}
 
     CPLString     osFilename;
     VSILFILE     *fp;
@@ -46,7 +46,7 @@ public:
     GUIntBig      nSrcOffset;
     GUIntBig      nLength;
     GByte         byValue;
-    int           bTriedOpen;
+    bool          bTriedOpen;
 };
 
 /************************************************************************/
@@ -254,7 +254,7 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
                     CPLDebug( "/vsisparse/", "Failed to open '%s'.",
                               aoRegions[iRegion].osFilename.c_str() );
                 }
-                aoRegions[iRegion].bTriedOpen = TRUE;
+                aoRegions[iRegion].bTriedOpen = true;
             }
             if( aoRegions[iRegion].fp == NULL )
             {

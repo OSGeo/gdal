@@ -46,9 +46,10 @@ class VSISubFileHandle : public VSIVirtualHandle
     VSILFILE     *fp;
     vsi_l_offset  nSubregionOffset;
     vsi_l_offset  nSubregionSize;
-    int           bAtEOF;
+    bool          bAtEOF;
 
-                      VSISubFileHandle() : fp(NULL), nSubregionOffset(0), nSubregionSize(0), bAtEOF(FALSE) {}
+                      VSISubFileHandle() : fp(NULL), nSubregionOffset(0),
+                                           nSubregionSize(0), bAtEOF(false) {}
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -113,7 +114,7 @@ int VSISubFileHandle::Close()
 int VSISubFileHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
-    bAtEOF = FALSE;
+    bAtEOF = false;
 
     if( nWhence == SEEK_SET )
         nOffset += nSubregionOffset;
@@ -166,7 +167,7 @@ size_t VSISubFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
         vsi_l_offset nCurOffset = VSIFTellL(fp);
         if (nCurOffset >= nSubregionOffset + nSubregionSize)
         {
-            bAtEOF = TRUE;
+            bAtEOF = true;
             return 0;
         }
 
@@ -180,7 +181,7 @@ size_t VSISubFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
             nRet = VSIFReadL( pBuffer, nSize, nCount, fp );
     }
     if( nRet < nCount )
-        bAtEOF = TRUE;
+        bAtEOF = true;
     return nRet;
 }
 
@@ -191,7 +192,7 @@ size_t VSISubFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 size_t VSISubFileHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    bAtEOF = FALSE;
+    bAtEOF = false;
 
     if (nSubregionSize == 0)
         return VSIFWriteL( pBuffer, nSize, nCount, fp );

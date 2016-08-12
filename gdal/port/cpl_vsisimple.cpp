@@ -957,7 +957,7 @@ char *VSIStrdup( const char * pszString )
 /*                          VSICheckMul2()                              */
 /************************************************************************/
 
-static size_t VSICheckMul2( size_t mul1, size_t mul2, int *pbOverflowFlag,
+static size_t VSICheckMul2( size_t mul1, size_t mul2, bool *pbOverflowFlag,
                             const char* pszFile, int nLine )
 {
     const size_t res = mul1 * mul2;
@@ -992,7 +992,8 @@ static size_t VSICheckMul2( size_t mul1, size_t mul2, int *pbOverflowFlag,
 /*                          VSICheckMul3()                              */
 /************************************************************************/
 
-static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3, int *pbOverflowFlag,
+static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3,
+                            bool *pbOverflowFlag,
                             const char* pszFile, int nLine )
 {
     if (mul1 != 0)
@@ -1005,42 +1006,48 @@ static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3, int *pbOverfl
             {
                 if (res2 / mul3 == res)
                 {
-                    if (pbOverflowFlag)
-                        *pbOverflowFlag = FALSE;
+                    if( pbOverflowFlag )
+                        *pbOverflowFlag = false;
                     return res2;
                 }
                 else
                 {
-                    if (pbOverflowFlag)
-                        *pbOverflowFlag = TRUE;
+                    if( pbOverflowFlag )
+                        *pbOverflowFlag = true;
                     CPLError(CE_Failure, CPLE_OutOfMemory,
-                            "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
-                            pszFile ? pszFile : "(unknown file)",
-                            nLine,
-                            (GUIntBig)mul1, (GUIntBig)mul2, (GUIntBig)mul3);
+                             "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB
+                             " * " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
+                             pszFile ? pszFile : "(unknown file)",
+                             nLine,
+                             static_cast<GUIntBig>(mul1),
+                             static_cast<GUIntBig>(mul2),
+                             static_cast<GUIntBig>(mul3));
                 }
             }
             else
             {
-                if (pbOverflowFlag)
-                    *pbOverflowFlag = FALSE;
+                if( pbOverflowFlag )
+                    *pbOverflowFlag = false;
             }
         }
         else
         {
-            if (pbOverflowFlag)
-                *pbOverflowFlag = TRUE;
+            if( pbOverflowFlag )
+                *pbOverflowFlag = true;
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                    "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
-                    pszFile ? pszFile : "(unknown file)",
-                    nLine,
-                    (GUIntBig)mul1, (GUIntBig)mul2, (GUIntBig)mul3);
+                     "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB " * "
+                     CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
+                     pszFile ? pszFile : "(unknown file)",
+                     nLine,
+                     static_cast<GUIntBig>(mul1),
+                     static_cast<GUIntBig>(mul2),
+                     static_cast<GUIntBig>(mul3));
         }
     }
     else
     {
-        if (pbOverflowFlag)
-             *pbOverflowFlag = FALSE;
+        if( pbOverflowFlag )
+             *pbOverflowFlag = false;
     }
     return 0;
 }
@@ -1094,7 +1101,7 @@ void *VSIMallocVerbose( size_t nSize, const char* pszFile, int nLine )
 
 void *VSIMalloc2Verbose( size_t nSize1, size_t nSize2, const char* pszFile, int nLine )
 {
-    int bOverflowFlag = FALSE;
+    bool bOverflowFlag = false;
     size_t nSizeToAllocate = VSICheckMul2( nSize1, nSize2, &bOverflowFlag, pszFile, nLine );
     if (bOverflowFlag || nSizeToAllocate == 0)
         return NULL;
@@ -1117,7 +1124,7 @@ void *VSIMalloc2Verbose( size_t nSize1, size_t nSize2, const char* pszFile, int 
 void *VSIMalloc3Verbose( size_t nSize1, size_t nSize2, size_t nSize3,
                          const char* pszFile, int nLine )
 {
-    int bOverflowFlag = FALSE;
+    bool bOverflowFlag = false;
     size_t nSizeToAllocate = VSICheckMul3( nSize1, nSize2, nSize3,
                                            &bOverflowFlag, pszFile, nLine );
     if (bOverflowFlag || nSizeToAllocate == 0)

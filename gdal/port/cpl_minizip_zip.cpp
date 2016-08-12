@@ -1243,12 +1243,15 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
         return CE_Failure;
     }
 
-    const int bCompressed =
+    const bool bCompressed =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
 
-    int nErr = cpl_zipOpenNewFileInZip( psZip->hZip, pszFilename, NULL,
-                                    NULL, 0, NULL, 0, "",
-                                    bCompressed ? Z_DEFLATED : 0, bCompressed ? Z_DEFAULT_COMPRESSION : 0 );
+    const int nErr =
+        cpl_zipOpenNewFileInZip(
+            psZip->hZip, pszFilename, NULL,
+            NULL, 0, NULL, 0, "",
+            bCompressed ? Z_DEFLATED : 0,
+            bCompressed ? Z_DEFAULT_COMPRESSION : 0 );
 
     if( nErr != ZIP_OK )
         return CE_Failure;
