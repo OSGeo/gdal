@@ -53,12 +53,15 @@ class CPL_DLL VSIVirtualHandle {
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) = 0;
     virtual vsi_l_offset Tell() = 0;
     virtual size_t    Read( void *pBuffer, size_t nSize, size_t nCount ) = 0;
-    virtual int       ReadMultiRange( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes );
+    virtual int       ReadMultiRange( int nRanges, void ** ppData,
+                                      const vsi_l_offset* panOffsets,
+                                      const size_t* panSizes );
     virtual size_t    Write( const void *pBuffer, size_t nSize,size_t nCount)=0;
     virtual int       Eof() = 0;
     virtual int       Flush() {return 0;}
     virtual int       Close() = 0;
-    virtual int       Truncate( vsi_l_offset nNewSize ); // base implementation that only supports file extension
+    // Base implementation that only supports file extension.
+    virtual int       Truncate( vsi_l_offset nNewSize );
     virtual void     *GetNativeFileDescriptor() { return NULL; }
     virtual VSIRangeStatus GetRangeStatus( CPL_UNUSED vsi_l_offset nOffset,
                                            CPL_UNUSED vsi_l_offset nLength )

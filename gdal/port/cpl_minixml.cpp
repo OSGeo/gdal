@@ -69,7 +69,7 @@ typedef struct {
     const char *pszInput;
     int        nInputOffset;
     int        nInputLine;
-    int        bInElement;
+    bool       bInElement;
     XMLTokenType  eTokenType;
     char       *pszToken;
     size_t     nTokenMaxSize;
@@ -316,12 +316,12 @@ static XMLTokenType ReadToken( ParseContext *psContext )
     else if( chNext == '<' && !psContext->bInElement )
     {
         psContext->eTokenType = TOpen;
-        psContext->bInElement = TRUE;
+        psContext->bInElement = true;
     }
     else if( chNext == '>' && psContext->bInElement )
     {
         psContext->eTokenType = TClose;
-        psContext->bInElement = FALSE;
+        psContext->bInElement = false;
     }
     else if( chNext == '=' && psContext->bInElement )
     {
@@ -341,7 +341,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         CPLAssert( chNext == '>' );
 
         psContext->eTokenType = TSlashClose;
-        psContext->bInElement = FALSE;
+        psContext->bInElement = false;
     }
 /* -------------------------------------------------------------------- */
 /*      Handle the ?> token terminator.                                 */
@@ -354,7 +354,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         CPLAssert( chNext == '>' );
 
         psContext->eTokenType = TQuestionClose;
-        psContext->bInElement = FALSE;
+        psContext->bInElement = false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -617,7 +617,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     sContext.pszInput = pszString;
     sContext.nInputOffset = 0;
     sContext.nInputLine = 0;
-    sContext.bInElement = FALSE;
+    sContext.bInElement = false;
     sContext.nTokenMaxSize = 10;
     sContext.pszToken = (char *) VSIMalloc(sContext.nTokenMaxSize);
     if (sContext.pszToken == NULL)
@@ -2095,7 +2095,7 @@ int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    int bRet = VSIFCloseL( fp ) == 0;
+    const bool bRet = VSIFCloseL( fp ) == 0;
     if( !bRet )
     {
         CPLError( CE_Failure, CPLE_FileIO,

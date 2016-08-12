@@ -153,10 +153,10 @@ typedef void (CPL_STDCALL *CPLErrorHandler)(CPLErr, CPLErrorNum, const char*);
 void CPL_DLL CPL_STDCALL CPLLoggingErrorHandler( CPLErr, CPLErrorNum, const char * );
 void CPL_DLL CPL_STDCALL CPLDefaultErrorHandler( CPLErr, CPLErrorNum, const char * );
 void CPL_DLL CPL_STDCALL CPLQuietErrorHandler( CPLErr, CPLErrorNum, const char * );
-void CPLTurnFailureIntoWarning(int bOn );
+void CPLTurnFailureIntoWarning( int bOn );
 
-CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler(CPLErrorHandler);
-CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandlerEx(CPLErrorHandler, void*);
+CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler( CPLErrorHandler );
+CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandlerEx( CPLErrorHandler, void* );
 void CPL_DLL CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler );
 void CPL_DLL CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler, void* );
 void CPL_DLL CPL_STDCALL CPLSetCurrentErrorHandlerCatchDebug( int bCatchDebug );
