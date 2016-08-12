@@ -287,20 +287,30 @@ bool  VSIGZipHandle::CloseBaseHandle()
 /*                       VSIGZipHandle()                                */
 /************************************************************************/
 
-VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
-                             const char* pszBaseFileName,
-                             vsi_l_offset offset,
-                             vsi_l_offset compressed_size,
-                             vsi_l_offset uncompressed_size,
-                             uLong expected_crc,
-                             int transparent) :
+VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
+                              const char* pszBaseFileName,
+                              vsi_l_offset offset,
+                              vsi_l_offset compressed_size,
+                              vsi_l_offset uncompressed_size,
+                              uLong expected_crc,
+                              int transparent ) :
+    m_poBaseHandle(poBaseHandle),
+    m_offset(offset),
+    m_expected_crc(expected_crc),
+    m_pszBaseFileName(pszBaseFileName ? CPLStrdup(pszBaseFileName) : NULL),
     m_bCanSaveInfo(true),
+    z_err(Z_OK),
+    z_eof(0),
+    outbuf(NULL),
+    crc(crc32(0L, NULL, 0)),
+    m_transparent(transparent),
+    startOff(0),
+    in(0),
+    out(0),
+    m_nLastReadOffset(0),
+    snapshots(NULL),
     snapshot_byte_interval(0)
 {
-    m_poBaseHandle = poBaseHandle;
-    m_expected_crc = expected_crc;
-    m_pszBaseFileName = (pszBaseFileName) ? CPLStrdup(pszBaseFileName) : NULL;
-    m_offset = offset;
     if( compressed_size || transparent )
     {
         m_compressed_size = compressed_size;
@@ -318,21 +328,12 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
     if( VSIFSeekL((VSILFILE*)poBaseHandle, offset, SEEK_SET) != 0 )
         CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
 
-    m_nLastReadOffset = 0;
     stream.zalloc = (alloc_func)NULL;
     stream.zfree = (free_func)NULL;
     stream.opaque = (voidpf)NULL;
     stream.next_in = inbuf = NULL;
     stream.next_out = outbuf = NULL;
     stream.avail_in = stream.avail_out = 0;
-    z_err = Z_OK;
-    z_eof = 0;
-    in = 0;
-    out = 0;
-    crc = crc32(0L, NULL, 0);
-    m_transparent = transparent;
-    startOff = 0;
-    snapshots = NULL;
 
     stream.next_in  = inbuf = static_cast<Byte *>(ALLOC(Z_BUFSIZE));
 
@@ -1069,17 +1070,17 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
 
 uLong VSIGZipHandle::getLong ()
 {
-    uLong x = (uLong)get_byte();
+    uLong x = static_cast<uLong>(get_byte());
 
-    x += ((uLong)get_byte())<<8;
-    x += ((uLong)get_byte())<<16;
+    x += static_cast<uLong>(get_byte()) << 8;
+    x += static_cast<uLong>(get_byte()) << 16;
     const int c = get_byte();
     if( c == EOF )
     {
         z_err = Z_DATA_ERROR;
         return 0;
     }
-    x += ((uLong)c)<<24;
+    x += static_cast<uLong>(c) << 24;
     // coverity[overflow_sink]
     return x;
 }
@@ -1173,6 +1174,7 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
     m_poBaseHandle(poBaseHandle),
     pabyInBuf(static_cast<Byte *>(CPLMalloc( Z_BUFSIZE ))),
     pabyOutBuf(static_cast<Byte *>(CPLMalloc( Z_BUFSIZE ))),
+    bCompressActive(false),
     nCurOffset(0),
     nCRC(crc32(0L, NULL, 0)),
     bRegularZLib(bRegularZLibIn),
@@ -2280,8 +2282,6 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
         oFileList.erase(iter);
     }
 
-    VSIZipWriteHandle* poZIPHandle;
-
     if( oMapZipWriteHandles.find(osZipFilename) != oMapZipWriteHandles.end() )
     {
         if( strchr(pszAccess, '+') != NULL )
@@ -2291,7 +2291,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
             return NULL;
         }
 
-        poZIPHandle = oMapZipWriteHandles[osZipFilename];
+        VSIZipWriteHandle* poZIPHandle = oMapZipWriteHandles[osZipFilename];
 
         if( poZIPHandle->GetChildInWriting() != NULL )
         {
