@@ -47,9 +47,9 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
     psInfo(psInfoIn),
     fpExternal(NULL),
     poNode(poNodeIn),
-    bNoDataSet(FALSE),
+    bNoDataSet(false),
     dfNoData(0.0),
-    bOverviewsPending(TRUE),
+    bOverviewsPending(true),
     nOverviews(0),
     papoOverviews(NULL)
 {
@@ -104,7 +104,7 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
 
     if( poNDNode != NULL )
     {
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
         dfNoData = poNDNode->GetDoubleField( "valueBD" );
     }
 }
@@ -146,7 +146,7 @@ CPLErr HFABand::LoadOverviews()
     if( !bOverviewsPending )
         return CE_None;
 
-    bOverviewsPending = FALSE;
+    bOverviewsPending = false;
 
 /* -------------------------------------------------------------------- */
 /*      Does this band have overviews?  Try to find them.               */
@@ -1704,7 +1704,7 @@ CPLErr HFABand::SetNoDataValue( double dfValue )
     if( poNDNode->SetDoubleField( "valueBD[0]", dfValue) == CE_Failure )
         return CE_Failure;
 
-    bNoDataSet = TRUE;
+    bNoDataSet = true;
     dfNoData = dfValue;
     return CE_None;
 }
@@ -2065,14 +2065,14 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /*      will drive our .img file size near 4GB.  For now, just base     */
 /*      it on the config options.                                       */
 /* -------------------------------------------------------------------- */
-    int bCreateLargeRaster = CPLTestBool(
+    bool bCreateLargeRaster = CPLTestBool(
         CPLGetConfigOption("USE_SPILL","NO") );
     GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
 
     if( (psRRDInfo->nEndOfFile
          + (nOXSize * (double) nOYSize)
          * (HFAGetDataTypeBits(eOverviewDataType) / 8)) > 2000000000.0 )
-        bCreateLargeRaster = TRUE;
+        bCreateLargeRaster = true;
 
     if( bCreateLargeRaster )
     {
@@ -2089,10 +2089,12 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /*      HFA_COMPRESS_OVR is defined).                                   */
 /*      Check RasterDMS like HFAGetBandInfo                             */
 /* -------------------------------------------------------------------- */
-    int bCompressionType = FALSE;
+    bool bCompressionType = FALSE;
     const char* pszCompressOvr = CPLGetConfigOption("HFA_COMPRESS_OVR", NULL);
     if( pszCompressOvr != NULL )
+    {
         bCompressionType = CPLTestBool(pszCompressOvr);
+    }
     else
     {
         HFAEntry *poDMS = poNode->GetNamedChild( "RasterDMS" );

@@ -43,7 +43,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 HFAType::HFAType() :
-    bInCompleteDefn(FALSE),
+    bInCompleteDefn(false),
     nBytes(0),
     nFields(0),
     papoFields(NULL),
@@ -149,7 +149,7 @@ void HFAType::CompleteDefn( HFADictionary * poDict )
                  "Recursion detected in HFAType::CompleteDefn()");
         return;
     }
-    bInCompleteDefn = TRUE;
+    bInCompleteDefn = true;
 
 /* -------------------------------------------------------------------- */
 /*      Complete each of the fields, totaling up the sizes.  This       */
@@ -167,7 +167,7 @@ void HFAType::CompleteDefn( HFADictionary * poDict )
             nBytes = -1;
     }
 
-    bInCompleteDefn = FALSE;
+    bInCompleteDefn = false;
 }
 
 /************************************************************************/

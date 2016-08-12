@@ -81,7 +81,7 @@ struct hfainfo {
     GInt16	nEntryHeaderLength;
     GInt32	nVersion;
 
-    int         bTreeDirty;
+    bool        bTreeDirty;
     HFAEntry	*poRoot;
 
     HFADictionary *poDictionary;
@@ -189,10 +189,10 @@ class HFABand
     int		nBlocksPerRow;
     int		nBlocksPerColumn;
 
-    int         bNoDataSet;
+    bool        bNoDataSet;
     double      dfNoData;
 
-    int         bOverviewsPending;
+    bool        bOverviewsPending;
     int		nOverviews;
     HFABand     **papoOverviews;
 
@@ -224,7 +224,7 @@ class HFABand
 /************************************************************************/
 class HFAEntry
 {
-    int         bDirty;
+    bool        bDirty;
     GUInt32	nFilePos;
 
     HFAInfo_t	*psHFA;
@@ -252,7 +252,7 @@ class HFAEntry
                                int *pnRemainingDataSize );
     CPLErr      SetFieldValue( const char *, char, void * );
 
-    int         bIsMIFObject;
+    bool        bIsMIFObject;
 
                 HFAEntry();
                 HFAEntry( const char * pszDictionary,
@@ -379,7 +379,7 @@ class HFAField
 
 class HFAType
 {
-    int     bInCompleteDefn;
+    bool bInCompleteDefn;
 
   public:
     int		nBytes;
@@ -424,7 +424,7 @@ class HFADictionary
     HFAType	**papoTypes;
 
     CPLString   osDictionaryText;
-    int         bDictionaryTextDirty;
+    bool        bDictionaryTextDirty;
 
                 HFADictionary( const char *pszDict );
                 ~HFADictionary();
