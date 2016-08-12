@@ -357,8 +357,12 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
 
     if( transparent == 0 )
     {
-        snapshot_byte_interval = MAX(Z_BUFSIZE, compressed_size / 100);
-        snapshots = (GZipSnapshot*)CPLCalloc(sizeof(GZipSnapshot), (size_t) (compressed_size / snapshot_byte_interval + 1));
+        snapshot_byte_interval = MAX(
+            static_cast<vsi_l_offset>(Z_BUFSIZE), compressed_size / 100);
+        snapshots = static_cast<GZipSnapshot *>(
+            CPLCalloc(sizeof(GZipSnapshot),
+                      static_cast<size_t>(
+                          compressed_size / snapshot_byte_interval + 1)));
     }
 }
 
@@ -432,7 +436,7 @@ void VSIGZipHandle::check_header()
         if( len ) inbuf[0] = stream.next_in[0];
         errno = 0;
         len = static_cast<uInt>(
-            VSIFReadL(inbuf + len, 1, Z_BUFSIZE >> len,
+            VSIFReadL(inbuf + len, 1, static_cast<size_t>(Z_BUFSIZE) >> len,
                       (VSILFILE*)m_poBaseHandle));
 #ifdef ENABLE_DEBUG
         CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
@@ -520,7 +524,8 @@ int VSIGZipHandle::get_byte()
     {
         errno = 0;
         stream.avail_in = static_cast<uInt>(
-            VSIFReadL(inbuf, 1, Z_BUFSIZE, (VSILFILE*)m_poBaseHandle));
+            VSIFReadL(inbuf, 1, static_cast<size_t>(Z_BUFSIZE),
+                      (VSILFILE*)m_poBaseHandle));
 #ifdef ENABLE_DEBUG
         CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
                  VSIFTellL((VSILFILE*)m_poBaseHandle),
@@ -746,7 +751,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 
     if( offset != 0 && outbuf == NULL )
     {
-        outbuf = (Byte*)ALLOC(Z_BUFSIZE);
+        outbuf = static_cast<Byte*>(ALLOC(Z_BUFSIZE));
         if( outbuf == NULL )
         {
             CPL_VSIL_GZ_RETURN(-1);
