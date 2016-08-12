@@ -1,3 +1,4 @@
+
 /******************************************************************************
  *
  * Project:  CPL - Common Portability Library
@@ -334,7 +335,7 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
     startOff = 0;
     snapshots = NULL;
 
-    stream.next_in  = inbuf = (Byte*)ALLOC(Z_BUFSIZE);
+    stream.next_in  = inbuf = static_cast<Byte *>(ALLOC(Z_BUFSIZE));
 
     int err = inflateInit2(&(stream), -MAX_WBITS);
     // windowBits is passed < 0 to tell that there is no zlib header.
@@ -349,7 +350,7 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
         inbuf = NULL;
         return;
     }
-    stream.avail_out = Z_BUFSIZE;
+    stream.avail_out = static_cast<uInt>(Z_BUFSIZE);
 
     if( offset == 0 ) check_header();  // Skip the .gz header.
     startOff = VSIFTellL((VSILFILE*)poBaseHandle) - stream.avail_in;
@@ -764,7 +765,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
     while( offset > 0 )
     {
         int size = Z_BUFSIZE;
-        if( offset < Z_BUFSIZE )
+        if( offset < static_cast<vsi_l_offset>(Z_BUFSIZE) )
             size = static_cast<int>(offset);
 
         int read_size = static_cast<int>(Read(outbuf, 1, (uInt)size));
@@ -946,7 +947,8 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
             }
 
             errno = 0;
-            stream.avail_in = (uInt)VSIFReadL(inbuf, 1, Z_BUFSIZE, (VSILFILE*)m_poBaseHandle);
+            stream.avail_in = static_cast<uInt>(
+                VSIFReadL(inbuf, 1, Z_BUFSIZE, (VSILFILE*)m_poBaseHandle));
 #ifdef ENABLE_DEBUG
             CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
                      VSIFTellL((VSILFILE*)m_poBaseHandle), offsetEndCompressedData);
@@ -1179,10 +1181,10 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
     sStream.next_out = NULL;
     sStream.avail_in = sStream.avail_out = 0;
 
-    pabyInBuf = (Byte *) CPLMalloc( Z_BUFSIZE );
+    pabyInBuf = static_cast<Byte *>(CPLMalloc( Z_BUFSIZE ));
     sStream.next_in  = pabyInBuf;
 
-    pabyOutBuf = (Byte *) CPLMalloc( Z_BUFSIZE );
+    pabyOutBuf = static_cast<Byte *>(CPLMalloc( Z_BUFSIZE ));
 
     if( deflateInit2( &sStream, Z_DEFAULT_COMPRESSION,
                       Z_DEFLATED, bRegularZLib ? MAX_WBITS : -MAX_WBITS, 8,
@@ -1244,11 +1246,11 @@ int VSIGZipWriteHandle::Close()
     if( bCompressActive )
     {
         sStream.next_out = pabyOutBuf;
-        sStream.avail_out = Z_BUFSIZE;
+        sStream.avail_out = static_cast<uInt>(Z_BUFSIZE);
 
         deflate( &sStream, Z_FINISH );
 
-        size_t nOutBytes = Z_BUFSIZE - sStream.avail_out;
+        size_t nOutBytes = static_cast<uInt>(Z_BUFSIZE) - sStream.avail_out;
 
         if( m_poBaseHandle->Write( pabyOutBuf, 1, nOutBytes ) < nOutBytes )
             return EOF;
@@ -1310,13 +1312,14 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
     while( nNextByte < nBytesToWrite )
     {
         sStream.next_out = pabyOutBuf;
-        sStream.avail_out = Z_BUFSIZE;
+        sStream.avail_out = static_cast<uInt>(Z_BUFSIZE);
 
         if( sStream.avail_in > 0 )
             memmove( pabyInBuf, sStream.next_in, sStream.avail_in );
 
-        int nNewBytesToWrite = MIN((int) (Z_BUFSIZE-sStream.avail_in),
-                                   nBytesToWrite - nNextByte);
+        const int nNewBytesToWrite = MIN(
+            static_cast<int>(Z_BUFSIZE-sStream.avail_in),
+            nBytesToWrite - nNextByte);
         memcpy( pabyInBuf + sStream.avail_in,
                 ((Byte *) pBuffer) + nNextByte,
                 nNewBytesToWrite );
@@ -1326,7 +1329,8 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
 
         deflate( &sStream, Z_NO_FLUSH );
 
-        const size_t nOutBytes = Z_BUFSIZE - sStream.avail_out;
+        const size_t nOutBytes =
+            static_cast<uInt>(Z_BUFSIZE) - sStream.avail_out;
 
         if( nOutBytes > 0 )
         {
