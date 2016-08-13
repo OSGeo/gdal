@@ -2576,7 +2576,7 @@ void VSIInstallZipFileHandler()
  *
  * @param ptr input buffer.
  * @param nBytes size of input buffer in bytes.
- * @param nLevel ZLib compression level (-1 for default).
+ * @param nLevel ZLib compression level (-1 for default). Currently unused
  * @param outptr output buffer, or NULL to let the function allocate it.
  * @param nOutAvailableBytes size of output buffer if provided, or ignored.
  * @param pnOutBytes pointer to a size_t, where to store the size of the
@@ -2590,7 +2590,7 @@ void VSIInstallZipFileHandler()
 
 void* CPLZLibDeflate( const void* ptr,
                       size_t nBytes,
-                      int /* nLevel */,
+                      CPL_UNUSED int nLevel,
                       void* outptr,
                       size_t nOutAvailableBytes,
                       size_t* pnOutBytes )
