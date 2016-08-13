@@ -277,7 +277,7 @@ protected:
 
 public:
     VSICurlFilesystemHandler();
-    ~VSICurlFilesystemHandler();
+    virtual ~VSICurlFilesystemHandler();
 
     using VSIFilesystemHandler::Open;
 
@@ -360,7 +360,7 @@ class VSICurlHandle : public VSIVirtualHandle
   public:
 
     VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL);
-    ~VSICurlHandle();
+    virtual ~VSICurlHandle();
 
     virtual int          Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -3335,7 +3335,7 @@ class VSIS3Handle CPL_FINAL : public VSICurlHandle
     public:
         VSIS3Handle(VSIS3FSHandler* poFS,
                     VSIS3HandleHelper* poS3HandleHelper);
-        ~VSIS3Handle();
+        virtual ~VSIS3Handle();
 };
 
 /************************************************************************/
@@ -3374,7 +3374,7 @@ class VSIS3WriteHandle CPL_FINAL : public VSIVirtualHandle
         VSIS3WriteHandle(VSIS3FSHandler* poFS,
                          const char* pszFilename,
                          VSIS3HandleHelper* poS3HandleHelper);
-        ~VSIS3WriteHandle();
+        virtual ~VSIS3WriteHandle();
 
         virtual int       Seek( vsi_l_offset nOffset, int nWhence );
         virtual vsi_l_offset Tell();
