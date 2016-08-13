@@ -2314,10 +2314,8 @@ template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
         xmm0 = _mm_packus_epi16(xmm0, xmm0);
         xmm1 = _mm_packus_epi16(xmm1, xmm1);
         // Extract lower 64 bit word
-        GIntBig n64_0 = _mm_cvtsi128_si64 (xmm0);
-        GIntBig n64_1 = _mm_cvtsi128_si64 (xmm1);
-        memcpy(pDest + i + 0, &n64_0, sizeof(n64_0));
-        memcpy(pDest + i + 8, &n64_1, sizeof(n64_1));
+        GDALCopyXMMToInt64(xmm0, pDest + i + 0);
+        GDALCopyXMMToInt64(xmm1, pDest + i + 8);
         pSrc += 2 * 16;
     }
     for( ; i < nIters; i++ )
@@ -2373,14 +2371,10 @@ template<> void GDALUnrolledCopy<GByte,4,1>( GByte* CPL_RESTRICT pDest,
         xmm2 = _mm_packus_epi16(xmm2, xmm2);
         xmm3 = _mm_packus_epi16(xmm3, xmm3);
         // Extract lower 32 bit word
-        int n32_0 = _mm_cvtsi128_si32 (xmm0);
-        int n32_1 = _mm_cvtsi128_si32 (xmm1);
-        int n32_2 = _mm_cvtsi128_si32 (xmm2);
-        int n32_3 = _mm_cvtsi128_si32 (xmm3);
-        memcpy(pDest + i + 0, &n32_0, sizeof(n32_0));
-        memcpy(pDest + i + 4, &n32_1, sizeof(n32_1));
-        memcpy(pDest + i + 8, &n32_2, sizeof(n32_2));
-        memcpy(pDest + i + 12, &n32_3, sizeof(n32_3));
+        GDALCopyXMMToInt32(xmm0, pDest + i + 0);
+        GDALCopyXMMToInt32(xmm1, pDest + i + 4);
+        GDALCopyXMMToInt32(xmm2, pDest + i + 8);
+        GDALCopyXMMToInt32(xmm3, pDest + i + 12);
         pSrc += 4 * 16;
     }
     for( ; i < nIters; i++ )

@@ -258,6 +258,27 @@ inline void GDALCopy4Words(const Tin* pValueIn, Tout* const &pValueOut)
 // Needs SSE2
 #if defined(__x86_64) || defined(_M_X64)
 
+static inline void GDALCopyXMMToInt32(const __m128i xmm, void* pDest)
+{
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+    int n32 = _mm_cvtsi128_si32 (xmm);     // Extract lower 32 bit word
+    memcpy(pDest, &n32, sizeof(n32));
+#else
+    *(int*)pDest = _mm_cvtsi128_si32 (xmm);
+#endif
+}
+
+static inline void GDALCopyXMMToInt64(const __m128i xmm, void* pDest)
+{
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+    GIntBig n64 = _mm_cvtsi128_si64 (xmm);   // Extract lower 64 bit word
+    memcpy(pDest, &n64, sizeof(n64));
+#else
+    *(GIntBig*)pDest = _mm_cvtsi128_si64 (xmm);
+#endif
+}
+
+
 #include <emmintrin.h>
 
 #if __SSE4_1__
@@ -281,8 +302,7 @@ inline void GDALCopy4Words(const float* pValueIn, GByte* const &pValueOut)
 
     xmm_i = _mm_packs_epi32(xmm_i, xmm_i);   // Pack int32 to int16
     xmm_i = _mm_packus_epi16(xmm_i, xmm_i);  // Pack int16 to uint8
-    int n32 = _mm_cvtsi128_si32 (xmm_i);     // Extract lower 32 bit word
-    memcpy(pValueOut, &n32, sizeof(n32));
+    GDALCopyXMMToInt32(xmm_i, pValueOut);
 }
 
 inline void GDALCopy4Words(const float* pValueIn, GInt16* const &pValueOut)
@@ -303,8 +323,7 @@ inline void GDALCopy4Words(const float* pValueIn, GInt16* const &pValueOut)
     __m128i xmm_i = _mm_cvttps_epi32 (xmm);
 
     xmm_i = _mm_packs_epi32(xmm_i, xmm_i);   // Pack int32 to int16
-    GIntBig n64 = _mm_cvtsi128_si64 (xmm_i);   // Extract lower 64 bit word
-    memcpy(pValueOut, &n64, sizeof(n64));
+    GDALCopyXMMToInt64(xmm_i, pValueOut);
 }
 
 inline void GDALCopy4Words(const float* pValueIn, GUInt16* const &pValueOut)
@@ -328,8 +347,7 @@ inline void GDALCopy4Words(const float* pValueIn, GUInt16* const &pValueOut)
     // Translate back to uint16 range (actually -32768==32768 in int16)
     xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
 #endif
-    GIntBig n64 = _mm_cvtsi128_si64 (xmm_i);       // Extract lower 64 bit word
-    memcpy(pValueOut, &n64, sizeof(n64));
+    GDALCopyXMMToInt64(xmm_i, pValueOut);
 }
 #endif //  defined(__x86_64) || defined(_M_X64)
 
