@@ -1129,7 +1129,6 @@ def ogr_dxf_23():
         print(style)
         return 'fail'
     if ogrtest.check_feature_geometry( feat, wkt ):
-        geom = feat.GetGeometryRef()
         gdaltest.post_reason('bad geometry')
         return 'fail'
 
