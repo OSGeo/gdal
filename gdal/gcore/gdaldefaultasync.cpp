@@ -285,7 +285,7 @@ class GDALDefaultAsyncReader : public GDALAsyncReader
                              int nBandCount, int* panBandMap,
                              int nPixelSpace, int nLineSpace,
                              int nBandSpace, char **papszOptions);
-    ~GDALDefaultAsyncReader();
+    virtual ~GDALDefaultAsyncReader();
 
     virtual GDALAsyncStatusType GetNextUpdatedRegion(double dfTimeout,
                                                      int* pnBufXOff,

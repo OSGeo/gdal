@@ -322,7 +322,7 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
  public:
     GDALDefaultRasterAttributeTable();
     GDALDefaultRasterAttributeTable( const GDALDefaultRasterAttributeTable& );
-    ~GDALDefaultRasterAttributeTable();
+    virtual ~GDALDefaultRasterAttributeTable();
 
     GDALDefaultRasterAttributeTable *Clone() const;
 

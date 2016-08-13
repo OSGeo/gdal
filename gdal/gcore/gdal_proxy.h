@@ -236,7 +236,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
                             int bShared = FALSE,
                             const char * pszProjectionRef = NULL,
                             double * padfGeoTransform = NULL);
-        ~GDALProxyPoolDataset();
+        virtual ~GDALProxyPoolDataset();
 
         void         SetOpenOptions(char** papszOpenOptions);
         void         AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
@@ -297,7 +297,7 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
                                 int nBlockXSize, int nBlockYSize);
         GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS,
                                 GDALRasterBand* poUnderlyingRasterBand);
-        ~GDALProxyPoolRasterBand();
+        virtual ~GDALProxyPoolRasterBand();
 
         void AddSrcMaskBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
 
@@ -339,7 +339,7 @@ class GDALProxyPoolOverviewRasterBand : public GDALProxyPoolRasterBand
                                         GDALRasterBand* poUnderlyingOverviewBand,
                                         GDALProxyPoolRasterBand* poMainBand,
                                         int nOverviewBand);
-        ~GDALProxyPoolOverviewRasterBand();
+        virtual ~GDALProxyPoolOverviewRasterBand();
 };
 
 /* ******************************************************************** */
@@ -366,7 +366,7 @@ class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
                               GDALProxyPoolRasterBand* poMainBand,
                               GDALDataType eDataType,
                               int nBlockXSize, int nBlockYSize);
-        ~GDALProxyPoolMaskBand();
+        virtual ~GDALProxyPoolMaskBand();
 };
 
 #endif

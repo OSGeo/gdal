@@ -55,8 +55,8 @@ class GDALArrayBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
     } u;
 
     public:
-            explicit GDALArrayBandBlockCache(GDALRasterBand* poBand);
-           ~GDALArrayBandBlockCache();
+           explicit GDALArrayBandBlockCache( GDALRasterBand* poBand );
+           virtual ~GDALArrayBandBlockCache();
 
            virtual bool             Init();
            virtual bool             IsInitOK();
