@@ -469,7 +469,7 @@ class GDALClientDataset: public GDALPamDataset
                                GDALRasterIOExtraArg* psExtraArg);
     public:
                             GDALClientDataset(GDALPipe* p);
-                            ~GDALClientDataset();
+                   virtual ~GDALClientDataset();
 
         int                 Init(const char* pszFilename, GDALAccess eAccess,
                                  char** papszOpenOptions);
@@ -589,7 +589,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
                              int nRasterXSize, int nRasterYSize,
                              GDALDataType eDataType, int nBlockXSize, int nBlockYSize,
                              GByte abyCaps[16]);
-        ~GDALClientRasterBand();
+        virtual ~GDALClientRasterBand();
 
         int GetSrvBand() const { return iSrvBand; }
         int SupportsInstr(InstrEnum instr) const { return abyCaps[instr / 8] & (1 << (instr % 8)); }
