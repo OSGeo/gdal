@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_cpu_features.h"
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal_vrt.h"
@@ -2250,7 +2251,7 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
 /************************************************************************/
 
 template<class T, int srcStride, int dstStride>
-static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
+static inline void GDALUnrolledCopyGeneric( T* CPL_RESTRICT pDest,
                                      const T* CPL_RESTRICT pSrc,
                                      int nIters )
 {
@@ -2285,6 +2286,110 @@ static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
         pSrc += srcStride;
     }
 }
+
+template<class T, int srcStride, int dstStride>
+static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
+                                     const T* CPL_RESTRICT pSrc,
+                                     int nIters )
+{
+    GDALUnrolledCopyGeneric<T,srcStride,dstStride>(pDest, pSrc, nIters);
+}
+
+#if defined(__x86_64) || defined(_M_X64)
+
+template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters )
+{
+    int i;
+    const __m128i xmm_mask = _mm_set1_epi16(0xff);
+    for ( i = 0; i < nIters - 15; i += 16 )
+    {
+        __m128i xmm0 = _mm_loadu_si128( (__m128i const*) (pSrc + 0) );
+        __m128i xmm1 = _mm_loadu_si128( (__m128i const*) (pSrc + 16) );
+        // Set higher 8bit of each int16 packed word to 0
+        xmm0 = _mm_and_si128(xmm0, xmm_mask);
+        xmm1 = _mm_and_si128(xmm1, xmm_mask);
+        // Pack int16 to uint8
+        xmm0 = _mm_packus_epi16(xmm0, xmm0);
+        xmm1 = _mm_packus_epi16(xmm1, xmm1);
+        // Extract lower 64 bit word
+        GIntBig n64_0 = _mm_cvtsi128_si64 (xmm0);
+        GIntBig n64_1 = _mm_cvtsi128_si64 (xmm1);
+        memcpy(pDest + i + 0, &n64_0, sizeof(n64_0));
+        memcpy(pDest + i + 8, &n64_1, sizeof(n64_1));
+        pSrc += 2 * 16;
+    }
+    for( ; i < nIters; i++ )
+    {
+        pDest[i] = *pSrc;
+        pSrc += 2;
+    }
+}
+
+#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+
+void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters );
+
+template<> void GDALUnrolledCopy<GByte,3,1>( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters )
+{
+    if( CPLHaveRuntimeSSSE3() )
+        GDALUnrolledCopy_GByte_3_1_SSSE3(pDest, pSrc, nIters);
+    else
+        GDALUnrolledCopyGeneric<GByte,3,1>(pDest, pSrc, nIters);
+}
+
+#endif
+
+template<> void GDALUnrolledCopy<GByte,4,1>( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters )
+{
+    int i;
+    const __m128i xmm_mask = _mm_set1_epi32(0xff);
+    for ( i = 0; i < nIters - 15; i += 16 )
+    {
+        __m128i xmm0 = _mm_loadu_si128( (__m128i const*) (pSrc + 0) );
+        __m128i xmm1 = _mm_loadu_si128( (__m128i const*) (pSrc + 16) );
+        __m128i xmm2 = _mm_loadu_si128( (__m128i const*) (pSrc + 32) );
+        __m128i xmm3 = _mm_loadu_si128( (__m128i const*) (pSrc + 48) );
+        // Set higher 24bit of each int32 packed word to 0
+        xmm0 = _mm_and_si128(xmm0, xmm_mask);
+        xmm1 = _mm_and_si128(xmm1, xmm_mask);
+        xmm2 = _mm_and_si128(xmm2, xmm_mask);
+        xmm3 = _mm_and_si128(xmm3, xmm_mask);
+        // Pack int32 to int16
+        xmm0 = _mm_packs_epi32(xmm0, xmm0);
+        xmm1 = _mm_packs_epi32(xmm1, xmm1);
+        xmm2 = _mm_packs_epi32(xmm2, xmm2);
+        xmm3 = _mm_packs_epi32(xmm3, xmm3);
+        // Pack int16 to uint8
+        xmm0 = _mm_packus_epi16(xmm0, xmm0);
+        xmm1 = _mm_packus_epi16(xmm1, xmm1);
+        xmm2 = _mm_packus_epi16(xmm2, xmm2);
+        xmm3 = _mm_packus_epi16(xmm3, xmm3);
+        // Extract lower 32 bit word
+        int n32_0 = _mm_cvtsi128_si32 (xmm0);
+        int n32_1 = _mm_cvtsi128_si32 (xmm1);
+        int n32_2 = _mm_cvtsi128_si32 (xmm2);
+        int n32_3 = _mm_cvtsi128_si32 (xmm3);
+        memcpy(pDest + i + 0, &n32_0, sizeof(n32_0));
+        memcpy(pDest + i + 4, &n32_1, sizeof(n32_1));
+        memcpy(pDest + i + 8, &n32_2, sizeof(n32_2));
+        memcpy(pDest + i + 12, &n32_3, sizeof(n32_3));
+        pSrc += 4 * 16;
+    }
+    for( ; i < nIters; i++ )
+    {
+        pDest[i] = *pSrc;
+        pSrc += 4;
+    }
+}
+#endif // defined(__x86_64) || defined(_M_X64)
 
 /************************************************************************/
 /*                         GDALFastCopy()                               */

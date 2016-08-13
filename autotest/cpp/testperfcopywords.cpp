@@ -43,7 +43,7 @@ int main(int /* argc */, char* /* argv */ [])
 
     clock_t start, end;
 
-    for(intype=GDT_Byte;intype<=GDT_CFloat64;intype++)
+    for(intype=GDT_Byte; intype<=GDT_CFloat64;intype++)
     {
         for(outtype=GDT_Byte;outtype<=GDT_CFloat64;outtype++)
         {
@@ -78,6 +78,30 @@ int main(int /* argc */, char* /* argv */ [])
                    (end - start) * 1.0 / CLOCKS_PER_SEC);
         }
     }
+
+    // 2 byte stride --> packed byte
+    start = clock();
+    for(i=0;i<100000;i++)
+        GDALCopyWords(in, GDT_Byte, 2, out, GDT_Byte, 1, 256 * 256);
+    end = clock();
+    printf("2-byte stride Byte ->packed Byte : %.2f\n",
+            (end - start) * 1.0 / CLOCKS_PER_SEC);
+
+    // 3 byte stride --> packed byte
+    start = clock();
+    for(i=0;i<100000;i++)
+        GDALCopyWords(in, GDT_Byte, 3, out, GDT_Byte, 1, 256 * 256);
+    end = clock();
+    printf("3-byte stride Byte ->packed Byte : %.2f\n",
+            (end - start) * 1.0 / CLOCKS_PER_SEC);
+
+    // 4 byte stride --> packed byte
+    start = clock();
+    for(i=0;i<100000;i++)
+        GDALCopyWords(in, GDT_Byte, 4, out, GDT_Byte, 1, 256 * 256);
+    end = clock();
+    printf("4-byte stride Byte ->packed Byte : %.2f\n",
+            (end - start) * 1.0 / CLOCKS_PER_SEC);
 
     return 0;
 }
