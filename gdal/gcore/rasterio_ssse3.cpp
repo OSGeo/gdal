@@ -55,7 +55,9 @@ void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                               1   ,-1  ,-1  ,-1,
                                               -1  ,-1  ,-1  ,-1,
                                               -1  ,-1  ,-1  ,-1);
-    for ( i = 0; i < nIters - 15; i += 16 )
+    // If we were sure that there would always be 2 trailing bytes, we could
+    // check against nIters - 15
+    for ( i = 0; i < nIters - 16; i += 16 )
     {
         __m128i xmm0 = _mm_loadu_si128( (__m128i const*) (pSrc + 0) );
         __m128i xmm1 = _mm_loadu_si128( (__m128i const*) (pSrc + 16) );
