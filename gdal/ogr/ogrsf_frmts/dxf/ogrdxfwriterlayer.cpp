@@ -610,22 +610,9 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 
     OGRGeometryCollection *poGC;
     if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon
-        || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString
-        || wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface
-        || wkbFlatten(poGeom->getGeometryType()) == wkbTIN)
+        || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString)
     {
-        if (wkbFlatten(poGeom->getGeometryType()) == wkbTIN)
-        {
-            OGRMultiPolygon *poMP = ((OGRTriangulatedSurface *)poGeom)->CastToMultiPolygon();
-            poGC = (OGRGeometryCollection *)poMP;
-        }
-        else if (wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface)
-        {
-            OGRMultiPolygon *poMP = ((OGRPolyhedralSurface *)poGeom)->CastToMultiPolygon();
-            poGC = (OGRGeometryCollection *)poMP;
-        }
-        else
-            poGC = (OGRGeometryCollection *) poGeom;
+        poGC = (OGRGeometryCollection *) poGeom;
         int iGeom;
         OGRErr eErr = OGRERR_NONE;
 
@@ -907,22 +894,9 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
     }
 
     OGRGeometryCollection *poGC;
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon ||
-        wkbFlatten(poGeom->getGeometryType()) == wkbTIN ||
-        wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface)
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
     {
-        if (wkbFlatten(poGeom->getGeometryType()) == wkbTIN)
-        {
-            OGRMultiPolygon *poMP = ((OGRTriangulatedSurface *)poGeom)->CastToMultiPolygon();
-            poGC = (OGRGeometryCollection *)poMP;
-        }
-        else if (wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface)
-        {
-            OGRMultiPolygon *poMP = ((OGRPolyhedralSurface *)poGeom)->CastToMultiPolygon();
-            poGC = (OGRGeometryCollection *)poMP;
-        }
-        else
-            poGC = (OGRGeometryCollection *) poGeom;
+        poGC = (OGRGeometryCollection *) poGeom;
 
         int iGeom;
         OGRErr eErr = OGRERR_NONE;
@@ -1096,8 +1070,6 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
         {
             WriteValue( 10, poLR->getX(iVert) );
             WriteValue( 20, poLR->getY(iVert) );
-            if(poLR->Is3D())
-                WriteValue( 30, poLR->getZ(iVert));
         }
 
         WriteValue( 97, 0 ); // 0 source boundary objects
@@ -1208,9 +1180,7 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
 
     else if( eGType == wkbPolygon
              || eGType == wkbTriangle
-             || eGType == wkbMultiPolygon
-             || eGType == wkbTIN
-             || eGType == wkbPolyhedralSurface)
+             || eGType == wkbMultiPolygon)
     {
         if( bWriteHatch )
             return WriteHATCH( poFeature );
