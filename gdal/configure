@@ -818,11 +818,10 @@ LIBZ_SETTING
 RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
 RENAME_INTERNAL_LIBTIFF_SYMBOLS
 HAVE_HIDE_INTERNAL_SYMBOLS
+CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT
 CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT
-CFLAGS_NO_LTO_IF_AVX_NONDEFAULT
-HAVE_AVX_AT_COMPILE_TIME
 AVXFLAGS
-HAVE_SSE_AT_COMPILE_TIME
+SSSE3FLAGS
 SSEFLAGS
 HAVE_GCC_BSWAP
 HAVE_GCC_ATOMIC_BUILTINS
@@ -934,6 +933,7 @@ with_ld_shared
 with_unix_stdio_64
 enable_debug
 with_sse
+with_ssse3
 with_avx
 enable_lto
 with_hide_internal_symbols
@@ -1689,6 +1689,7 @@ Optional Packages:
   --without-ld-shared   Disable shared library support
   --with-unix-stdio-64=ARG Utilize 64 stdio api (yes/no)
   --with-sse=ARG        Detect SSE availability for some optimized routines (ARG=yes(default), no)
+  --with-ssse3=ARG        Detect SSSE3 availability for some optimized routines (ARG=yes(default), no)
   --with-avx=ARG        Detect AVX availability for some optimized routines (ARG=yes(default), no)
   --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
   --with-rename-internal-libtiff-symbols=ARG Prefix internal libtiff symbols with gdal_ (ARG=yes/no)
@@ -18634,6 +18635,11 @@ $as_echo "no" >&6; }
         fi
     fi
 
+    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
                     if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
        case $host_os in
          solaris*)
@@ -18665,7 +18671,82 @@ fi
 
 SSEFLAGS=$SSEFLAGS
 
-HAVE_SSE_AT_COMPILE_TIME=$HAVE_SSE_AT_COMPILE_TIME
+
+
+
+# Check whether --with-ssse3 was given.
+if test "${with_ssse3+set}" = set; then :
+  withval=$with_ssse3;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether SSSE3 is available at compile time" >&5
+$as_echo_n "checking whether SSSE3 is available at compile time... " >&6; }
+
+if test "$with_ssse3" = "yes" -o "$with_ssse3" = ""; then
+
+    rm -f detectssse3.cpp
+    echo '#ifdef __SSSE3__' > detectssse3.cpp
+    echo '#include <tmmintrin.h>' >> detectssse3.cpp
+    echo 'void foo() { __m128i xmm_i = _mm_set1_epi16(0); xmm_i = _mm_shuffle_epi8(xmm_i, xmm_i); }  int main() { return 0; }' >> detectssse3.cpp
+    echo '#else' >> detectssse3.cpp
+    echo 'some_error' >> detectssse3.cpp
+    echo '#endif' >> detectssse3.cpp
+    if test -z "`${CXX} ${CXXFLAGS} -o detectssse3 detectssse3.cpp 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        SSSE3FLAGS=""
+        HAVE_SSSE3_AT_COMPILE_TIME=yes
+    else
+        if test -z "`${CXX} ${CXXFLAGS} -mssse3 -o detectssse3 detectssse3.cpp 2>&1`" ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            SSSE3FLAGS="-mssse3"
+            HAVE_SSSE3_AT_COMPILE_TIME=yes
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            if test "$with_ssse3" = "yes"; then
+                as_fn_error $? "--with-ssse3 was requested, but SSSE3 is not available" "$LINENO" 5
+            fi
+        fi
+    fi
+
+    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
+                    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+       case $host_os in
+         solaris*)
+           { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether SSSE3 is available and needed at runtime" >&5
+$as_echo_n "checking whether SSSE3 is available and needed at runtime... " >&6; }
+           if ./detectssse3; then
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+           else
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+             if test "$with_ssse3" = "yes"; then
+               echo "Caution: the generated binaries will not run on this system."
+             else
+               echo "Disabling SSSE3 as it is not explicitly required"
+               HAVE_SSSE3_AT_COMPILE_TIME=""
+               SSSE3FLAGS=""
+             fi
+           fi
+           ;;
+       esac
+    fi
+
+    rm -f detectssse3*
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+SSSE3FLAGS=$SSSE3FLAGS
 
 
 
@@ -18713,6 +18794,11 @@ $as_echo "no" >&6; }
         fi
     fi
 
+    if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
                     if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
        case $host_os in
          solaris*)
@@ -18744,8 +18830,6 @@ fi
 
 AVXFLAGS=$AVXFLAGS
 
-HAVE_AVX_AT_COMPILE_TIME=$HAVE_AVX_AT_COMPILE_TIME
-
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking to enable LTO (link time optimization) build" >&5
@@ -18757,8 +18841,8 @@ if test "${enable_lto+set}" = set; then :
 fi
 
 
-CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
 CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT="$CXXFLAGS"
 
 if test "x$enable_lto" = "xyes" ; then
 
@@ -18773,8 +18857,12 @@ if test "x$enable_lto" = "xyes" ; then
 
       if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
     if test "$AVXFLAGS" = ""; then
-        CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
         CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+    fi
+  fi
+  if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+    if test "$SSSE3FLAGS" = ""; then
+        CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT="$CXXFLAGS"
     fi
   fi
 
@@ -18785,9 +18873,9 @@ else
 $as_echo "no" >&6; }
 fi
 
-CFLAGS_NO_LTO_IF_AVX_NONDEFAULT=$CFLAGS_NO_LTO_IF_AVX_NONDEFAULT
-
 CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT=$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT
+
+CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT=$CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT
 
 
 

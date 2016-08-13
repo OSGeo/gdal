@@ -12,14 +12,6 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o \
 		gdalpansharpen.o
 
-ifeq ($(HAVE_AVX_AT_COMPILE_TIME),yes)
-CPPFLAGS 	:=	-DHAVE_AVX_AT_COMPILE_TIME $(CPPFLAGS)
-endif
-
-ifeq ($(HAVE_SSE_AT_COMPILE_TIME),yes)
-CPPFLAGS 	:=	-DHAVE_SSE_AT_COMPILE_TIME $(CPPFLAGS)
-endif
-
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
