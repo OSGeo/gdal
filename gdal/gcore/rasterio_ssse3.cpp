@@ -43,18 +43,18 @@ void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              int nIters )
 {
     int i;
-    const __m128i xmm_shuffle0 = _mm_set_epi8(0xff,0xff,0xff,0xff,
-                                              0xff,0xff,0xff,0xff,
-                                              0xff,0xff,15  ,12,
+    const __m128i xmm_shuffle0 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,15  ,12,
                                               9   ,6   ,3   ,0);
-    const __m128i xmm_shuffle1 = _mm_set_epi8(0xff,0xff,0xff,0xff,
-                                              0xff,14  ,11  ,8,
-                                              5   ,2   ,0xff,0xff,
-                                              0xff,0xff,0xff,0xff);
+    const __m128i xmm_shuffle1 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
+                                              -1  ,14  ,11  ,8,
+                                              5   ,2   ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1);
     const __m128i xmm_shuffle2 = _mm_set_epi8(13  ,10  ,7   ,4,
-                                              1   ,0xff,0xff,0xff,
-                                              0xff,0xff,0xff,0xff,
-                                              0xff,0xff,0xff,0xff);
+                                              1   ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1);
     for ( i = 0; i < nIters - 15; i += 16 )
     {
         __m128i xmm0 = _mm_loadu_si128( (__m128i const*) (pSrc + 0) );
