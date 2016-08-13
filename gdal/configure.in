@@ -431,6 +431,11 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
         fi
     fi
 
+    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
     dnl On Solaris, the presence of SSE instructions is flagged in the binary
     dnl and prevent it to run on non SSE hardware even if the instructions are
     dnl not executed. So if the user did not explicitly requires SSE, test that
@@ -461,7 +466,77 @@ else
 fi
 
 AC_SUBST(SSEFLAGS,$SSEFLAGS)
-AC_SUBST(HAVE_SSE_AT_COMPILE_TIME,$HAVE_SSE_AT_COMPILE_TIME)
+
+dnl ---------------------------------------------------------------------------
+dnl Check SSSE3 availability
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(ssse3,
+[  --with-ssse3[=ARG]        Detect SSSE3 availability for some optimized routines (ARG=yes(default), no)],,)
+
+AC_MSG_CHECKING([whether SSSE3 is available at compile time])
+
+if test "$with_ssse3" = "yes" -o "$with_ssse3" = ""; then
+
+    rm -f detectssse3.cpp
+    echo '#ifdef __SSSE3__' > detectssse3.cpp
+    echo '#include <tmmintrin.h>' >> detectssse3.cpp
+    echo 'void foo() { __m128i xmm_i = _mm_set1_epi16(0); xmm_i = _mm_shuffle_epi8(xmm_i, xmm_i); }  int main() { return 0; }' >> detectssse3.cpp
+    echo '#else' >> detectssse3.cpp
+    echo 'some_error' >> detectssse3.cpp
+    echo '#endif' >> detectssse3.cpp
+    if test -z "`${CXX} ${CXXFLAGS} -o detectssse3 detectssse3.cpp 2>&1`" ; then
+        AC_MSG_RESULT([yes])
+        SSSE3FLAGS=""
+        HAVE_SSSE3_AT_COMPILE_TIME=yes
+    else
+        if test -z "`${CXX} ${CXXFLAGS} -mssse3 -o detectssse3 detectssse3.cpp 2>&1`" ; then
+            AC_MSG_RESULT([yes])
+            SSSE3FLAGS="-mssse3"
+            HAVE_SSSE3_AT_COMPILE_TIME=yes
+        else
+            AC_MSG_RESULT([no])
+            if test "$with_ssse3" = "yes"; then
+                AC_MSG_ERROR([--with-ssse3 was requested, but SSSE3 is not available])
+            fi
+        fi
+    fi
+
+    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
+    dnl On Solaris, the presence of SSSE3 instructions is flagged in the binary
+    dnl and prevent it to run on non SSSE3 hardware even if the instructions are
+    dnl not executed. So if the user did not explicitly requires SSSE3, test that
+    dnl we can run SSSE3 binaries
+    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+       case $host_os in
+         solaris*)
+           AC_MSG_CHECKING([whether SSSE3 is available and needed at runtime])
+           if ./detectssse3; then
+             AC_MSG_RESULT([yes])
+           else
+             AC_MSG_RESULT([no])
+             if test "$with_ssse3" = "yes"; then
+               echo "Caution: the generated binaries will not run on this system."
+             else
+               echo "Disabling SSSE3 as it is not explicitly required"
+               HAVE_SSSE3_AT_COMPILE_TIME=""
+               SSSE3FLAGS=""
+             fi
+           fi
+           ;;
+       esac
+    fi
+
+    rm -f detectssse3*
+else
+    AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(SSSE3FLAGS,$SSSE3FLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Check AVX availability
@@ -503,6 +578,11 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
         fi
     fi
 
+    if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
     dnl On Solaris, the presence of AVX instructions is flagged in the binary
     dnl and prevent it to run on non AVX hardware even if the instructions are
     dnl not executed. So if the user did not explicitly requires AVX, test that
@@ -533,7 +613,6 @@ else
 fi
 
 AC_SUBST(AVXFLAGS,$AVXFLAGS)
-AC_SUBST(HAVE_AVX_AT_COMPILE_TIME,$HAVE_AVX_AT_COMPILE_TIME)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for --enable-lto
@@ -545,8 +624,8 @@ AC_ARG_ENABLE(lto,
               AS_HELP_STRING([--enable-lto],
                              [enable LTO(link time optimization) (disabled by default)]))
 
-CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
 CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT="$CXXFLAGS"
 
 if test "x$enable_lto" = "xyes" ; then
 
@@ -565,8 +644,12 @@ if test "x$enable_lto" = "xyes" ; then
   dnl with -flto
   if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
     if test "$AVXFLAGS" = ""; then
-        CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
         CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+    fi
+  fi
+  if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+    if test "$SSSE3FLAGS" = ""; then
+        CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT="$CXXFLAGS"
     fi
   fi
 
@@ -575,8 +658,8 @@ else
   AC_MSG_RESULT([no])
 fi
 
-AC_SUBST(CFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
 AC_SUBST(CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
+AC_SUBST(CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT,$CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if we need -lws2_32
