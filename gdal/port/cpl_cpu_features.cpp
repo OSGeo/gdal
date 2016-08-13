@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_string.h"
 #include "cpl_cpu_features.h"
 
 //! @cond Doxygen_Suppress
@@ -120,6 +121,10 @@ bool CPLHaveRuntimeSSE()
 
 bool CPLHaveRuntimeSSSE3()
 {
+#ifdef DEBUG
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_USE_SSSE3", "YES")) )
+        return false;
+#endif
     int cpuinfo[4] = { 0, 0, 0, 0 };
     CPL_CPUID(1, cpuinfo);
     return (cpuinfo[REG_ECX] & (1 << CPUID_SSSE3_ECX_BIT)) != 0;
