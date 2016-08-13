@@ -486,7 +486,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 
     CPLString osStyle;
     char szBuffer[64];
-    char* pszComma;
+    char* pszComma = NULL;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 
@@ -618,7 +618,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 
     CPLString osStyle;
     char szBuffer[64];
-    char* pszComma;
+    char* pszComma = NULL;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 

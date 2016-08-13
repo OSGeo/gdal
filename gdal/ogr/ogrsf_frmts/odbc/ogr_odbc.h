@@ -105,7 +105,7 @@ class OGRODBCTableLayer : public OGRODBCLayer
 
   public:
                         OGRODBCTableLayer( OGRODBCDataSource * );
-                        ~OGRODBCTableLayer();
+                        virtual ~OGRODBCTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol );
@@ -152,7 +152,7 @@ class OGRODBCSelectLayer : public OGRODBCLayer
   public:
                         OGRODBCSelectLayer( OGRODBCDataSource *,
                                            CPLODBCStatement * );
-                        ~OGRODBCSelectLayer();
+                        virtual ~OGRODBCSelectLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -190,7 +190,7 @@ class OGRODBCDataSource : public OGRDataSource
 
   public:
                         OGRODBCDataSource();
-                        ~OGRODBCDataSource();
+                        virtual ~OGRODBCDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,
@@ -220,7 +220,7 @@ class OGRODBCDataSource : public OGRDataSource
 class OGRODBCDriver : public OGRSFDriver
 {
   public:
-                ~OGRODBCDriver();
+                virtual ~OGRODBCDriver();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

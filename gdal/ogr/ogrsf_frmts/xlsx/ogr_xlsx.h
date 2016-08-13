@@ -212,7 +212,7 @@ class OGRXLSXDataSource : public OGRDataSource
 
   public:
                         OGRXLSXDataSource();
-                        ~OGRXLSXDataSource();
+                        virtual ~OGRXLSXDataSource();
 
     int                 Open( const char * pszFilename,
                               VSILFILE* fpWorkbook,
@@ -264,7 +264,7 @@ class OGRXLSXDataSource : public OGRDataSource
 class OGRXLSXDriver : public OGRSFDriver
 {
   public:
-                ~OGRXLSXDriver();
+                virtual ~OGRXLSXDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );

@@ -308,7 +308,7 @@ the approach is as above in all these cases.
 
     CPLString osStyle;
     char szBuffer[64];
-    char* pszComma;
+    char* pszComma = NULL;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\",p:5",osText.c_str());
 

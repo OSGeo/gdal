@@ -50,7 +50,7 @@ class OGRARCGENLayer : public OGRLayer
   public:
                         OGRARCGENLayer(const char* pszFilename,
                                     VSILFILE* fp, OGRwkbGeometryType eType);
-                        ~OGRARCGENLayer();
+                        virtual ~OGRARCGENLayer();
 
 
     virtual void                ResetReading();
@@ -74,7 +74,7 @@ class OGRARCGENDataSource : public OGRDataSource
 
   public:
                         OGRARCGENDataSource();
-                        ~OGRARCGENDataSource();
+               virtual ~OGRARCGENDataSource();
 
     int                 Open( const char * pszFilename );
 

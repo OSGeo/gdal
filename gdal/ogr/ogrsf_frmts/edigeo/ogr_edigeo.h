@@ -61,7 +61,7 @@ class OGREDIGEOLayer : public OGRLayer
                         OGREDIGEOLayer(OGREDIGEODataSource* poDS,
                                        const char* pszName, OGRwkbGeometryType eType,
                                        OGRSpatialReference* poSRS);
-                        ~OGREDIGEOLayer();
+                        virtual ~OGREDIGEOLayer();
 
 
     virtual void                ResetReading();
@@ -228,7 +228,7 @@ class OGREDIGEODataSource : public OGRDataSource
 
   public:
                         OGREDIGEODataSource();
-                        ~OGREDIGEODataSource();
+                        virtual ~OGREDIGEODataSource();
 
     int                 Open( const char * pszFilename );
 

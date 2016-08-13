@@ -143,7 +143,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
                         OGRMySQLTableLayer( OGRMySQLDataSource *,
                                          const char * pszName,
                                          int bUpdate, int nSRSId = -2 );
-                        ~OGRMySQLTableLayer();
+                        virtual ~OGRMySQLTableLayer();
 
     OGRErr              Initialize(const char* pszTableName);
 
@@ -229,7 +229,7 @@ class OGRMySQLDataSource : public OGRDataSource
 
   public:
                         OGRMySQLDataSource();
-                        ~OGRMySQLDataSource();
+                        virtual ~OGRMySQLDataSource();
 
     MYSQL              *GetConn() { return hConn; }
 

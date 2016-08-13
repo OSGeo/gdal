@@ -540,7 +540,7 @@ class OGRFGdbSingleFeatureLayer : public OGRLayer
   public:
                         OGRFGdbSingleFeatureLayer( const char* pszLayerName,
                                                    const char *pszVal );
-                        ~OGRFGdbSingleFeatureLayer();
+               virtual ~OGRFGdbSingleFeatureLayer();
 
     virtual void        ResetReading() { iNextShapeId = 0; }
     virtual OGRFeature *GetNextFeature();

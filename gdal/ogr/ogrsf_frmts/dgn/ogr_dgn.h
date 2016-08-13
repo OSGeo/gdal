@@ -65,7 +65,7 @@ class OGRDGNLayer : public OGRLayer
   public:
                         OGRDGNLayer( const char * pszName, DGNHandle hDGN,
                                      int bUpdate );
-                        ~OGRDGNLayer();
+                        virtual ~OGRDGNLayer();
 
     void                SetSpatialFilter( OGRGeometry * );
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )

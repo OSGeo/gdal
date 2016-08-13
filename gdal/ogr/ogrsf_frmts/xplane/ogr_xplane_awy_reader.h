@@ -67,7 +67,7 @@ class OGRXPlaneAirwayIntersectionLayer : public OGRXPlaneLayer
 
   public:
                         OGRXPlaneAirwayIntersectionLayer();
-                        ~OGRXPlaneAirwayIntersectionLayer();
+                        virtual ~OGRXPlaneAirwayIntersectionLayer();
 
     OGRFeature*         AddFeature(const char* pszIntersectionName,
                                    double dfLat,

@@ -471,7 +471,7 @@ class OGRNTFRasterLayer : public OGRLayer
   public:
                         OGRNTFRasterLayer( OGRNTFDataSource * poDS,
                                            NTFFileReader * poReaderIn );
-                        ~OGRNTFRasterLayer();
+                        virtual ~OGRNTFRasterLayer();
 
     OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
     void                SetSpatialFilter( OGRGeometry * );

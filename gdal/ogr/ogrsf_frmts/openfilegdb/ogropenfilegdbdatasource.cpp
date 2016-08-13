@@ -588,7 +588,7 @@ class OGROpenFileGDBSingleFeatureLayer : public OGRLayer
   public:
                         OGROpenFileGDBSingleFeatureLayer( const char* pszLayerName,
                                                           const char *pszVal );
-                        ~OGROpenFileGDBSingleFeatureLayer();
+               virtual ~OGROpenFileGDBSingleFeatureLayer();
 
     virtual void        ResetReading() { iNextShapeId = 0; }
     virtual OGRFeature *GetNextFeature();
@@ -656,7 +656,7 @@ class OGROpenFileGDBSimpleSQLLayer: public OGRLayer
                                      FileGDBIterator* poIter,
                                      int nColumns,
                                      swq_col_def* pasColDefs);
-       ~OGROpenFileGDBSimpleSQLLayer();
+       virtual ~OGROpenFileGDBSimpleSQLLayer();
 
        virtual void        ResetReading();
        virtual OGRFeature* GetNextFeature();

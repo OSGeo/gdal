@@ -95,7 +95,7 @@ class OGRSVGLayer : public OGRLayer
                                     const char* layerName,
                                     SVGGeometryType svgGeomType,
                                     OGRSVGDataSource* poDS);
-                        ~OGRSVGLayer();
+                        virtual ~OGRSVGLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -147,7 +147,7 @@ class OGRSVGDataSource : public OGRDataSource
 
   public:
                         OGRSVGDataSource();
-                        ~OGRSVGDataSource();
+                        virtual ~OGRSVGDataSource();
 
     int                 Open( const char * pszFilename );
 

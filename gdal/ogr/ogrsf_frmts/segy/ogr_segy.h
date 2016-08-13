@@ -90,7 +90,7 @@ class OGRSEGYLayer: public OGRLayer
                         OGRSEGYLayer(const char* pszFilename,
                                      VSILFILE* fp,
                                      SEGYBinaryFileHeader* psBFH);
-                        ~OGRSEGYLayer();
+                        virtual ~OGRSEGYLayer();
 
     virtual OGRFeature *        GetNextFeature();
 
@@ -119,7 +119,7 @@ class OGRSEGYHeaderLayer: public OGRLayer
                         OGRSEGYHeaderLayer(const char* pszLayerName,
                                            SEGYBinaryFileHeader* psBFH,
                                            const char* pszHeaderText);
-                        ~OGRSEGYHeaderLayer();
+                        virtual ~OGRSEGYHeaderLayer();
 
     virtual OGRFeature *        GetNextFeature();
 
@@ -143,7 +143,7 @@ class OGRSEGYDataSource : public OGRDataSource
 
   public:
                         OGRSEGYDataSource();
-                        ~OGRSEGYDataSource();
+                        virtual ~OGRSEGYDataSource();
 
     int                 Open( const char * pszFilename, const char* pszHeaderText );
 

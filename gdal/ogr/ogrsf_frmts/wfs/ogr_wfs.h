@@ -151,7 +151,7 @@ class OGRWFSLayer : public OGRLayer
                                     const char* pszNS,
                                     const char* pszNSVal);
 
-                        ~OGRWFSLayer();
+                        virtual ~OGRWFSLayer();
 
     OGRWFSLayer*                Clone();
 
@@ -252,7 +252,7 @@ class OGRWFSJoinLayer : public OGRLayer
 
     static OGRWFSJoinLayer* Build(OGRWFSDataSource* poDS,
                                   const swq_select* psSelectInfo);
-                       ~OGRWFSJoinLayer();
+                       virtual ~OGRWFSJoinLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature*         GetNextFeature();
@@ -346,7 +346,7 @@ class OGRWFSDataSource : public OGRDataSource
 
   public:
                         OGRWFSDataSource();
-                        ~OGRWFSDataSource();
+                        virtual ~OGRWFSDataSource();
 
     int                 Open( const char * pszFilename,
                               int bUpdate,

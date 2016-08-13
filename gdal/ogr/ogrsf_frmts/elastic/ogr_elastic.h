@@ -136,7 +136,7 @@ public:
                                          OGRElasticDataSource* poDS,
                                          char** papszOptions,
                                          const char* pszESSearch = NULL);
-                        ~OGRElasticLayer();
+                        virtual ~OGRElasticLayer();
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
@@ -192,7 +192,7 @@ class OGRElasticDataSource : public GDALDataset {
 
 public:
                             OGRElasticDataSource();
-                            ~OGRElasticDataSource();
+                            virtual ~OGRElasticDataSource();
 
     int                 m_bOverwrite;
     int                 m_nBulkUpload;

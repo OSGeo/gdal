@@ -117,7 +117,7 @@ class OGRSelafinDataSource : public OGRDataSource {
         void ReleaseLock();
     public:
         OGRSelafinDataSource();
-        ~OGRSelafinDataSource();
+        virtual ~OGRSelafinDataSource();
         int Open(const char * pszFilename, int bUpdate, int bCreate);
         int OpenTable(const char * pszFilename);
         const char *GetName() { return pszName; }

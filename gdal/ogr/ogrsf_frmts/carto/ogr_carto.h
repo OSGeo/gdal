@@ -85,7 +85,7 @@ protected:
 
   public:
                          OGRCARTOLayer(OGRCARTODataSource* poDS);
-                        ~OGRCARTOLayer();
+    virtual ~OGRCARTOLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -138,7 +138,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
 
   public:
                          OGRCARTOTableLayer(OGRCARTODataSource* poDS, const char* pszName);
-                        ~OGRCARTOTableLayer();
+    virtual ~OGRCARTOTableLayer();
 
     virtual const char*         GetName() { return osName.c_str(); }
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn);
@@ -232,7 +232,7 @@ class OGRCARTODataSource : public OGRDataSource
 
   public:
                         OGRCARTODataSource();
-                        ~OGRCARTODataSource();
+    virtual ~OGRCARTODataSource();
 
     int                 Open( const char * pszFilename,
                               char** papszOpenOptions,

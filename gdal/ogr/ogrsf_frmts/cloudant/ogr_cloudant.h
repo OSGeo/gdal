@@ -63,7 +63,7 @@ class OGRCloudantTableLayer : public OGRCouchDBTableLayer
     public:
             OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
                                  const char* pszName);
-            ~OGRCloudantTableLayer();
+            virtual ~OGRCloudantTableLayer();
 };
 
 /************************************************************************/
@@ -76,7 +76,7 @@ class OGRCloudantDataSource : public OGRCouchDBDataSource
             OGRLayer*    OpenDatabase(const char* pszLayerName = NULL);
   public:
                         OGRCloudantDataSource();
-                        ~OGRCloudantDataSource();
+    virtual ~OGRCloudantDataSource();
     virtual int Open( const char * pszFilename, int bUpdateIn);
     virtual OGRLayer   *ICreateLayer( const char *pszName,
              OGRSpatialReference *poSpatialRef = NULL,
@@ -91,7 +91,7 @@ class OGRCloudantDataSource : public OGRCouchDBDataSource
 class OGRCloudantDriver : public OGRCouchDBDriver
 {
   public:
-                ~OGRCloudantDriver();
+    virtual ~OGRCloudantDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );

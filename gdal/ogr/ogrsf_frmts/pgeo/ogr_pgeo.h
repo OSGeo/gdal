@@ -105,7 +105,7 @@ class OGRPGeoTableLayer : public OGRPGeoLayer
 
   public:
                         OGRPGeoTableLayer( OGRPGeoDataSource * );
-                        ~OGRPGeoTableLayer();
+                        virtual ~OGRPGeoTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
@@ -146,7 +146,7 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
   public:
                         OGRPGeoSelectLayer( OGRPGeoDataSource *,
                                            CPLODBCStatement * );
-                        ~OGRPGeoSelectLayer();
+                        virtual ~OGRPGeoSelectLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -172,7 +172,7 @@ class OGRPGeoDataSource : public OGRDataSource
 
   public:
                         OGRPGeoDataSource();
-                        ~OGRPGeoDataSource();
+                        virtual ~OGRPGeoDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,

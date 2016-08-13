@@ -51,7 +51,7 @@ class OGRGRASSLayer : public OGRLayer
 {
   public:
                         OGRGRASSLayer(	int layer, struct Map_info * map );
-                        ~OGRGRASSLayer();
+                        virtual ~OGRGRASSLayer();
 
     // Layer info
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
@@ -134,7 +134,7 @@ class OGRGRASSDataSource : public OGRDataSource
 {
   public:
                         OGRGRASSDataSource();
-                        ~OGRGRASSDataSource();
+                        virtual ~OGRGRASSDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen,
                               int bSingleNewFile = FALSE );
@@ -174,7 +174,7 @@ class OGRGRASSDataSource : public OGRDataSource
 class OGRGRASSDriver : public OGRSFDriver
 {
   public:
-			~OGRGRASSDriver();
+			virtual ~OGRGRASSDriver();
 
     const char 		*GetName();
     OGRDataSource 	*Open( const char *, int );

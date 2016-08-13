@@ -59,7 +59,7 @@ protected:
 
   public:
                         OGRHTFLayer(const char* pszFilename, int nZone, int bIsNorth);
-                        ~OGRHTFLayer();
+                        virtual ~OGRHTFLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -108,7 +108,7 @@ protected:
 
   public:
                         OGRHTFSoundingLayer(const char* pszFilename, int nZone, int bIsNorth, int nTotalSoundings);
-                       ~OGRHTFSoundingLayer();
+                       virtual ~OGRHTFSoundingLayer();
 
     virtual void                ResetReading();
 
@@ -132,7 +132,7 @@ protected:
 
   public:
                         OGRHTFMetadataLayer(std::vector<CPLString> aosMD);
-                        ~OGRHTFMetadataLayer();
+                        virtual ~OGRHTFMetadataLayer();
 
     virtual void                ResetReading() { nNextFID = 0; }
     virtual OGRFeature *        GetNextFeature();
@@ -156,7 +156,7 @@ class OGRHTFDataSource : public OGRDataSource
 
   public:
                         OGRHTFDataSource();
-                        ~OGRHTFDataSource();
+                        virtual ~OGRHTFDataSource();
 
     int                 Open( const char * pszFilename );
 

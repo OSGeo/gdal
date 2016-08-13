@@ -160,7 +160,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
                         OGRIngresTableLayer( OGRIngresDataSource *,
                                          const char * pszName,
                                          int bUpdate, int nSRSId = -2 );
-                        ~OGRIngresTableLayer();
+                        virtual ~OGRIngresTableLayer();
 
     OGRErr              Initialize(const char* pszTableName);
 
@@ -246,7 +246,7 @@ class OGRIngresDataSource : public OGRDataSource
 
   public:
                         OGRIngresDataSource();
-                        ~OGRIngresDataSource();
+                        virtual ~OGRIngresDataSource();
 
     II_PTR              GetConn() { return hConn; }
 
@@ -295,7 +295,7 @@ class OGRIngresDriver : public OGRSFDriver
     char         **ParseWrappedName( const char * );
 
   public:
-                ~OGRIngresDriver();
+    virtual ~OGRIngresDriver();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

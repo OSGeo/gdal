@@ -193,7 +193,7 @@ class OGRPGDumpDataSource : public OGRDataSource
   public:
                         OGRPGDumpDataSource(const char* pszName,
                                             char** papszOptions);
-                        ~OGRPGDumpDataSource();
+                        virtual ~OGRPGDumpDataSource();
 
     int                 Log(const char* pszStr, int bAddSemiColumn = TRUE);
 
@@ -216,4 +216,3 @@ class OGRPGDumpDataSource : public OGRDataSource
 };
 
 #endif /* ndef OGR_PGDUMP_H_INCLUDED */
-

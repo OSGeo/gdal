@@ -72,7 +72,7 @@ protected:
 
   public:
                          OGRGFTLayer(OGRGFTDataSource* poDS);
-                        ~OGRGFTLayer();
+                         virtual ~OGRGFTLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -130,7 +130,7 @@ class OGRGFTTableLayer : public OGRGFTLayer
                              const char* pszTableName,
                              const char* pszTableId = "",
                              const char* pszGeomColumnName = "");
-            ~OGRGFTTableLayer();
+            virtual ~OGRGFTTableLayer();
 
     virtual void                ResetReading();
 
@@ -178,7 +178,7 @@ class OGRGFTResultLayer : public OGRGFTLayer
     public:
             OGRGFTResultLayer(OGRGFTDataSource* poDS,
                               const char* pszSQL);
-            ~OGRGFTResultLayer();
+            virtual ~OGRGFTResultLayer();
 
     virtual void                ResetReading();
 
@@ -213,7 +213,7 @@ class OGRGFTDataSource : public OGRDataSource
 
   public:
                         OGRGFTDataSource();
-                        ~OGRGFTDataSource();
+                        virtual ~OGRGFTDataSource();
 
     int                 Open( const char * pszFilename,
                               int bUpdate );
@@ -251,7 +251,7 @@ class OGRGFTDataSource : public OGRDataSource
 class OGRGFTDriver : public OGRSFDriver
 {
   public:
-                ~OGRGFTDriver();
+                virtual ~OGRGFTDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );

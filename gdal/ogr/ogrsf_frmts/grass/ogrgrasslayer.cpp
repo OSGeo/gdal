@@ -629,10 +629,9 @@ bool OGRGRASSLayer::SetSpatialMatch()
     }
     memset ( paSpatialMatch, 0x0, nTotalCount );
 
-    OGRGeometry *geom;
     OGRLineString *lstring = new OGRLineString();
     lstring->setNumPoints ( 5 );
-    geom = lstring;
+    OGRGeometry *geom = lstring;
 
     for ( int i = 0; i < nTotalCount; i++ ) {
 	int cidx = paFeatureIndex[i];

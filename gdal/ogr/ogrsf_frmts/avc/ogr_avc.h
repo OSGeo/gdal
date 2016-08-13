@@ -62,7 +62,7 @@ class OGRAVCLayer : public OGRLayer
   public:
                         OGRAVCLayer( AVCFileType eSectionType,
                                      OGRAVCDataSource *poDS );
-    			~OGRAVCLayer();
+    virtual ~OGRAVCLayer();
 
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
@@ -83,7 +83,7 @@ class OGRAVCDataSource : public OGRDataSource
 
   public:
 		        OGRAVCDataSource();
-    			~OGRAVCDataSource();
+    virtual ~OGRAVCDataSource();
 
     virtual OGRSpatialReference *GetSpatialRef();
 
@@ -217,7 +217,7 @@ class OGRAVCE00DataSource : public OGRAVCDataSource
 
   public:
     OGRAVCE00DataSource();
-    ~OGRAVCE00DataSource();
+    virtual ~OGRAVCE00DataSource();
 
     int Open(const char *, int bTestOpen);
 

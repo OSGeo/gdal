@@ -80,7 +80,7 @@ class OGRNULLDataSource : public OGRDataSource
 
   public:
                         OGRNULLDataSource(const char* pszNameIn);
-                        ~OGRNULLDataSource();
+                       virtual ~OGRNULLDataSource();
 
     virtual const char *GetName() { return pszName; }
     virtual int         GetLayerCount() { return nLayers; }
@@ -102,7 +102,7 @@ class OGRNULLDataSource : public OGRDataSource
 class OGRNULLDriver : public OGRSFDriver
 {
   public:
-                ~OGRNULLDriver() {};
+    virtual ~OGRNULLDriver() {};
 
     virtual const char    *GetName() { return "NULL"; }
     virtual OGRDataSource *Open( const char *, int ) { return NULL; }

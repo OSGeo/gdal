@@ -368,8 +368,7 @@ public:
                      double *adfX, double *adfY, double *adfZ,
                      int *pabSuccess = NULL )
         {
-            int i;
-            for( i = 0; i < nCount; i++ )
+            for( int i = 0; i < nCount; i++ )
             {
                 double x = adfX[i], y = adfY[i], z = adfZ[i];
 
@@ -1392,12 +1391,13 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 
         if( (adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == 1.0) == false )
         {
-            double *x, *y, *z;
             OCSTransformer oTransformer( adfN, true );
 
             bApplyOCSTransform = true;
 
-            x = &dfX1; y = &dfY1, z = &dfZ1;
+            double *x = &dfX1;
+            double *y = &dfY1;
+            double *z = &dfZ1;
             oTransformer.InverseTransform( 1, x, y, z );
 
             x = &dfAxisX; y = &dfAxisY, z = &dfAxisZ;
@@ -1409,16 +1409,13 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 /*      Compute primary and secondary axis lengths, and the angle of    */
 /*      rotation for the ellipse.                                       */
 /* -------------------------------------------------------------------- */
-    double dfPrimaryRadius, dfSecondaryRadius;
-    double dfRotation;
-
-    dfPrimaryRadius = sqrt( dfAxisX * dfAxisX
+    double dfPrimaryRadius = sqrt( dfAxisX * dfAxisX
                             + dfAxisY * dfAxisY
                             + dfAxisZ * dfAxisZ );
 
-    dfSecondaryRadius = dfRatio * dfPrimaryRadius;
+    double dfSecondaryRadius = dfRatio * dfPrimaryRadius;
 
-    dfRotation = -1 * atan2( dfAxisY, dfAxisX ) * 180 / M_PI;
+    double dfRotation = -1 * atan2( dfAxisY, dfAxisX ) * 180 / M_PI;
 
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */

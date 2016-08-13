@@ -49,7 +49,7 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
 
     public:
         OGRESRIFeatureServiceLayer(OGRESRIFeatureServiceDataset* poDS);
-       ~OGRESRIFeatureServiceLayer();
+        virtual ~OGRESRIFeatureServiceLayer();
 
         void ResetReading();
         OGRFeature* GetNextFeature();

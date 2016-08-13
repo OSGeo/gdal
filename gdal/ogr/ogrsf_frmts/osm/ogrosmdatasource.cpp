@@ -4039,10 +4039,10 @@ class OGROSMSingleFeatureLayer : public OGRLayer
 
   public:
                         OGROSMSingleFeatureLayer( const char* pszLayerName,
-                                                     int nVal );
+                                                  int nVal );
                         OGROSMSingleFeatureLayer( const char* pszLayerName,
-                                                     const char *pszVal );
-                        ~OGROSMSingleFeatureLayer();
+                                                  const char *pszVal );
+                        virtual ~OGROSMSingleFeatureLayer();
 
     virtual void        ResetReading() { iNextShapeId = 0; }
     virtual OGRFeature *GetNextFeature();

@@ -75,7 +75,7 @@ class OGRGMLLayer : public OGRLayer
                                      bool bWriter,
                                      OGRGMLDataSource *poDS );
 
-                        ~OGRGMLLayer();
+                        virtual ~OGRGMLLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
@@ -165,7 +165,7 @@ class OGRGMLDataSource : public OGRDataSource
 
   public:
                         OGRGMLDataSource();
-                        ~OGRGMLDataSource();
+                        virtual ~OGRGMLDataSource();
 
     bool                Open( GDALOpenInfo* poOpenInfo );
     bool                Create( const char *pszFile, char **papszOptions );

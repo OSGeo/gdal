@@ -457,7 +457,7 @@ class OGROSMDataSource : public OGRDataSource
 
   public:
                         OGROSMDataSource();
-                        ~OGROSMDataSource();
+                        virtual ~OGROSMDataSource();
 
     virtual const char *GetName() { return pszName; }
     virtual int         GetLayerCount() { return nLayers; }

@@ -318,7 +318,7 @@ public:
                                          const char * pszDescriptionIn,
                                          const char * pszGeomColForced,
                                          int bUpdate );
-                        ~OGRPGTableLayer();
+                        virtual ~OGRPGTableLayer();
 
     void                SetGeometryInformation(PGGeomColumnDesc* pasDesc,
                                                int nGeomFieldCount);
@@ -506,7 +506,7 @@ class OGRPGDataSource : public OGRDataSource
 
   public:
                         OGRPGDataSource();
-                        ~OGRPGDataSource();
+                        virtual ~OGRPGDataSource();
 
     PGconn              *GetPGConn() { return hPGConn; }
 

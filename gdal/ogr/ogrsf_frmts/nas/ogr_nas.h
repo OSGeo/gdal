@@ -59,7 +59,7 @@ class OGRNASLayer : public OGRLayer
                                      OGRwkbGeometryType eType,
                                      OGRNASDataSource *poDS );
 
-                        ~OGRNASLayer();
+                        virtual ~OGRNASLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

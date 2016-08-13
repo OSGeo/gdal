@@ -364,7 +364,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
                                            const char *pszGeomCol,
                                            int nSRID,
                                            const char *pszLoaderFile );
-                        ~OGROCILoaderLayer();
+                        virtual ~OGROCILoaderLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -450,7 +450,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
                         OGROCITableLayer( OGROCIDataSource *,
                                           const char * pszName, OGRwkbGeometryType eGType,
                                           int nSRID, int bUpdate, int bNew );
-                        ~OGROCITableLayer();
+                        virtual ~OGROCITableLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -522,7 +522,7 @@ class OGROCIDataSource : public OGRDataSource
 
   public:
                         OGROCIDataSource();
-                        ~OGROCIDataSource();
+                        virtual ~OGROCIDataSource();
 
     OGROCISession      *GetSession() { return poSession; }
 

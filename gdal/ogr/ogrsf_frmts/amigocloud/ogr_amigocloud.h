@@ -118,7 +118,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 
     public:
          OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS);
-        ~OGRAmigoCloudLayer();
+        virtual ~OGRAmigoCloudLayer();
 
         virtual void                ResetReading();
         virtual OGRFeature *        GetNextFeature();
@@ -159,7 +159,7 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
 
     public:
          OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource* poDS, const char* pszName);
-        ~OGRAmigoCloudTableLayer();
+        virtual ~OGRAmigoCloudTableLayer();
 
         virtual const char        *GetName() { return osTableName.c_str(); }
                 const char        *GetDatasetId() { return osDatasetId.c_str(); }
@@ -247,7 +247,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
 
     public:
         OGRAmigoCloudDataSource();
-        ~OGRAmigoCloudDataSource();
+        virtual ~OGRAmigoCloudDataSource();
 
         int                 Open( const char * pszFilename,
                                   char** papszOpenOptions,

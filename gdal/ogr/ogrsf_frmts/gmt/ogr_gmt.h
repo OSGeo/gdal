@@ -70,7 +70,7 @@ class OGRGmtLayer : public OGRLayer
     int                 bValidFile;
 
                         OGRGmtLayer( const char *pszFilename, int bUpdate );
-                        ~OGRGmtLayer();
+                        virtual ~OGRGmtLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
@@ -104,7 +104,7 @@ class OGRGmtDataSource : public OGRDataSource
 
   public:
                         OGRGmtDataSource();
-                        ~OGRGmtDataSource();
+                        virtual ~OGRGmtDataSource();
 
     int                 Open( const char *pszFilename, int bUpdate );
     int                 Create( const char *pszFilename, char **papszOptions );
@@ -127,7 +127,7 @@ class OGRGmtDataSource : public OGRDataSource
 class OGRGmtDriver : public OGRSFDriver
 {
   public:
-                ~OGRGmtDriver();
+                virtual ~OGRGmtDriver();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

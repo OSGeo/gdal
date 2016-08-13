@@ -1313,7 +1313,6 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform( double* padfGeoTransform )
 CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 {
     OGRErr eErr;
-    char* pszSQL;
 
     m_dfTMSMinX = m_adfGeoTransform[0];
     m_dfTMSMaxY = m_adfGeoTransform[3];
@@ -1370,7 +1369,8 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
             "('%q','tiles','%q','%q',%.18g,%.18g,%.18g,%.18g,");
     osInsertGpkgContentsFormatting += ( pszCurrentDate ) ? "'%q'" : "%s";
     osInsertGpkgContentsFormatting += ",%d)";
-    pszSQL = sqlite3_mprintf(osInsertGpkgContentsFormatting.c_str(),
+    char* pszSQL =
+        sqlite3_mprintf(osInsertGpkgContentsFormatting.c_str(),
         m_osRasterTable.c_str(),
         m_osIdentifier.c_str(),
         m_osDescription.c_str(),
