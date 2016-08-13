@@ -187,7 +187,7 @@ protected:
 
 public:
     VSICurlStreamingFSHandler();
-    ~VSICurlStreamingFSHandler();
+    virtual ~VSICurlStreamingFSHandler();
 
     using VSIFilesystemHandler::Open;
 
@@ -271,7 +271,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
   public:
 
     VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, const char* pszURL);
-    ~VSICurlStreamingHandle();
+    virtual ~VSICurlStreamingHandle();
 
     virtual int          Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -1661,7 +1661,7 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
     public:
         VSIS3StreamingHandle(VSIS3StreamingFSHandler* poFS,
                              VSIS3HandleHelper* poS3HandleHelper);
-        ~VSIS3StreamingHandle();
+        virtual ~VSIS3StreamingHandle();
 };
 
 /************************************************************************/

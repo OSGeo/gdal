@@ -257,7 +257,7 @@ class VSIStdoutRedirectHandle CPL_FINAL : public VSIVirtualHandle
     VSIVirtualHandle* m_poHandle;
   public:
                       VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle);
-                     ~VSIStdoutRedirectHandle();
+              virtual ~VSIStdoutRedirectHandle();
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();

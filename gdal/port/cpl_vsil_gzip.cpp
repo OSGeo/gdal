@@ -196,7 +196,7 @@ class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 
 public:
     VSIGZipFilesystemHandler();
-    ~VSIGZipFilesystemHandler();
+    virtual ~VSIGZipFilesystemHandler();
 
     using VSIFilesystemHandler::Open;
 
