@@ -334,12 +334,20 @@ void check_GDT_Float32and64()
                 }
             }
         }
+        FROM_R(intype, -CST_3000000000, GDT_Byte, 0);
+        FROM_R(intype, -32768, GDT_Byte, 0);
         FROM_R(intype, -1, GDT_Byte, 0);
         FROM_R(intype, 256, GDT_Byte, 255);
+        FROM_R(intype, 65536, GDT_Byte, 255);
+        FROM_R(intype, CST_3000000000, GDT_Byte, 255);
+        FROM_R(intype, -CST_3000000000, GDT_Int16, -32768);
         FROM_R(intype, -33000, GDT_Int16, -32768);
         FROM_R(intype, 33000, GDT_Int16, 32767);
+        FROM_R(intype, CST_3000000000, GDT_Int16, 32767);
+        FROM_R(intype, -CST_3000000000, GDT_UInt16, 0);
         FROM_R(intype, -1, GDT_UInt16, 0);
         FROM_R(intype, 66000, GDT_UInt16, 65535);
+        FROM_R(intype, CST_3000000000, GDT_UInt16, 65535);
         FROM_R(intype, -CST_3000000000, GDT_Int32, INT_MIN);
         FROM_R(intype, CST_3000000000, GDT_Int32, 2147483647);
         FROM_R(intype, -1, GDT_UInt32, 0);
