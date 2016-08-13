@@ -1053,7 +1053,7 @@ void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
 
 int CPLValidateXML( const char* pszXMLFilename,
                     const char* pszXSDFilename,
-                    char** /* papszOptions */ )
+                    CPL_UNUSED char** papszOptions )
 {
     char szHeader[2048];  // TODO(schwehr): Get this off of the stack.
     CPLString osTmpXSDFilename;
