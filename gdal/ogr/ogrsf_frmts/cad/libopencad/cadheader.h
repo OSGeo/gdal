@@ -83,13 +83,13 @@ public:
     long                getDecimal() const;
     double              getReal() const;
     const std::string&  getString() const;
-    enum DataType       getType() const;
+    DataType       getType() const;
     double              getX() const;
     double              getY() const;
     double              getZ() const;
     const CADHandle&    getHandle() const;
 protected:
-    enum DataType       type;
+    DataType       type;
     long                decimalVal;
     double              xVal;
     double              yVal;

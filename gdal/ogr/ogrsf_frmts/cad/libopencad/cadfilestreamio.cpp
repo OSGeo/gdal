@@ -53,12 +53,12 @@ bool CADFileStreamIO::Eof()
 
 bool CADFileStreamIO::Open(int mode)
 {
-    auto io_mode = std::ios_base::in; // as we use ifstream
+    auto io_mode = std::ifstream::in; // as we use ifstream
     if(mode & OpenMode::binary)
-        io_mode |= std::ios_base::binary;
+        io_mode = std::ifstream::binary;
 
     if(mode & OpenMode::write)
-        //io_mode |= std::ios_base::out;
+        //io_mode |= std::ifstream::out;
         return false;
 
     m_oFileStream.open( m_soFilePath, io_mode );

@@ -256,7 +256,9 @@ default:
 				 gmt\*.obj bna\*.obj geoconcept\*.obj \
 				 geojson\*.obj geojson\libjson\*.obj \
 				 gpx\*.obj xplane\*.obj georss\*.obj gtm\*.obj \
-				 dxf\*.obj cad\*.obj pgdump\*.obj gpsbabel\*.obj \
+				 dxf\*.obj \
+                 cad\*.obj cad\libopencad\*.obj cad\libopencad\dwg\*.obj \
+                 pgdump\*.obj gpsbabel\*.obj \
 				 sua\*.obj openair\*.obj pds\*.obj htf\*.obj \
 				 aeronavfaa\*.obj edigeo\*.obj svg\*.obj idrisi\*.obj \
 				 arcgen\*.obj segukooa\*.obj segy\*.obj sxf\*.obj \
