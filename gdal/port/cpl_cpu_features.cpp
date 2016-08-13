@@ -86,12 +86,12 @@ static void inline __cpuid( int cpuinfo[4], int level )
     }
 }
 
-#define CPL_CPUID(eax_in, array) __cpuid(array, level)
+#define CPL_CPUID(level, array) __cpuid(array, level)
 
 #elif defined(_MSC_VER)
 
 #include <intrin.h>
-#define CPL_CPUID(eax_in, array) __cpuid(array, level)
+#define CPL_CPUID(level, array) __cpuid(array, level)
 
 #endif
 
