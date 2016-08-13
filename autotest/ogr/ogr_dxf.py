@@ -1130,7 +1130,6 @@ def ogr_dxf_23():
         return 'fail'
     if ogrtest.check_feature_geometry( feat, wkt ):
         geom = feat.GetGeometryRef()
-        print geom
         gdaltest.post_reason('bad geometry')
         return 'fail'
 
@@ -2310,7 +2309,7 @@ def ogr_dxf_33():
     return 'success'
 
 ###############################################################################
-# Writing Triangle, TIN and PolyhedralSurface and checking if they are written properly
+# Writing Triangle geometry and checking if it is written properly
 
 def ogr_dxf_34():
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/triangle_test.dxf' )
@@ -2333,82 +2332,6 @@ def ogr_dxf_34():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     expected_wkt = 'POLYGON ((0 0,0 1,1 0,0 0))'
-    received_wkt = geom.ExportToWkt()
-
-    if expected_wkt != received_wkt:
-        gdaltest.post_reason( 'did not get expected geometry back')
-        return 'fail'
-
-    return 'success'
-
-def ogr_dxf_35():
-    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/tin_test.dxf' )
-    lyr = ds.CreateLayer( 'entities' )
-    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
-    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'TIN (((0 0 0,0 1 0,1 0 1,0 0 0)),((0 0 0,1 0 0,1 1 1,0 0 0)))' ) )
-
-    lyr.CreateFeature( dst_feat )
-    dst_feat = None
-
-    lyr = None
-    ds = None
-
-    # Read back.
-    ds = ogr.Open('tmp/tin_test.dxf')
-    lyr = ds.GetLayer(0)
-
-    # Check first feature
-    feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    expected_wkt = 'POLYGON ((0 0 0,0 1 0,1 0 1,0 0 0))'
-    received_wkt = geom.ExportToWkt()
-
-    if expected_wkt != received_wkt:
-        gdaltest.post_reason( 'did not get expected geometry back')
-        return 'fail'
-
-    # Check second feature
-    feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    expected_wkt = 'POLYGON ((0 0 0,1 0 0,1 1 1,0 0 0))'
-    received_wkt = geom.ExportToWkt()
-
-    if expected_wkt != received_wkt:
-        gdaltest.post_reason( 'did not get expected geometry back')
-        return 'fail'
-
-    return 'success'
-
-def ogr_dxf_36():
-    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/ps_test.dxf' )
-    lyr = ds.CreateLayer( 'entities' )
-    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
-    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POLYHEDRALSURFACE (((0 0 0,0 1 0,1 0 1,0 0 0)),((0 0 0,1 0 0,1 1 1,0 0 0)))' ) )
-
-    lyr.CreateFeature( dst_feat )
-    dst_feat = None
-
-    lyr = None
-    ds = None
-
-    # Read back.
-    ds = ogr.Open('tmp/ps_test.dxf')
-    lyr = ds.GetLayer(0)
-
-    # Check first feature
-    feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    expected_wkt = 'POLYGON ((0 0 0,0 1 0,1 0 1,0 0 0))'
-    received_wkt = geom.ExportToWkt()
-
-    if expected_wkt != received_wkt:
-        gdaltest.post_reason( 'did not get expected geometry back')
-        return 'fail'
-
-    # Check second feature
-    feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    expected_wkt = 'POLYGON ((0 0 0,1 0 0,1 1 1,0 0 0))'
     received_wkt = geom.ExportToWkt()
 
     if expected_wkt != received_wkt:
@@ -2464,8 +2387,6 @@ gdaltest_list = [
     ogr_dxf_32,
     ogr_dxf_33,
     ogr_dxf_34,
-    ogr_dxf_35,
-    ogr_dxf_36,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
