@@ -1144,10 +1144,10 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
     double              dfBulge = 0.0;
     DXFSmoothPolyline   smoothPolyline;
     int                 nVertexFlag = 0;
-    int                 vertexIndex71 = -1;
-    int                 vertexIndex72 = -1;
-    int                 vertexIndex73 = -1;
-    int                 vertexIndex74 = -1;
+    int                 vertexIndex71 = 0;
+    int                 vertexIndex72 = 0;
+    int                 vertexIndex73 = 0;
+    int                 vertexIndex74 = 0;
     OGRPoint **papoPoints = NULL;
     int nPoints = 0;
     OGRPolyhedralSurface *poPS = new OGRPolyhedralSurface();
@@ -1213,7 +1213,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             }
         }
 
-        if (nVertexFlag == 64)
+        if (((nVertexFlag & 64) != 0) && ((nVertexFlag & 128) != 0))
         {
             // add the point to the list of points
             OGRPoint *poPoint = new OGRPoint(dfX, dfY, dfZ);
@@ -1225,19 +1225,23 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             nPoints++;
         }
 
+        // Note - If any index out of vertexIndex71, vertexIndex72, vertexIndex73 or vertexIndex74
+        // is negative, it means that the line starting from that vertex is invisible
+
         if (nVertexFlag == 128)
         {
             // create a polygon and add it to the Polyhedral Surface
             OGRLinearRing *poLR = new OGRLinearRing();
             int iPoint = 0;
             int startPoint = -1;
+            poLR->set3D(TRUE);
             if (vertexIndex71 > 0 && vertexIndex71 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex71-1;
                 poLR->setPoint(iPoint,papoPoints[vertexIndex71-1]);
                 iPoint++;
-                vertexIndex71 = -1;
+                vertexIndex71 = 0;
             }
             if (vertexIndex72 > 0 && vertexIndex72 <= nPoints)
             {
@@ -1245,7 +1249,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                     startPoint = vertexIndex72-1;
                 poLR->setPoint(iPoint,papoPoints[vertexIndex72-1]);
                 iPoint++;
-                vertexIndex72 = -1;
+                vertexIndex72 = 0;
             }
             if (vertexIndex73 > 0 && vertexIndex73 <= nPoints)
             {
@@ -1253,7 +1257,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                     startPoint = vertexIndex73-1;
                 poLR->setPoint(iPoint,papoPoints[vertexIndex73-1]);
                 iPoint++;
-                vertexIndex73 = -1;
+                vertexIndex73 = 0;
             }
             if (vertexIndex74 > 0 && vertexIndex74 <= nPoints)
             {
@@ -1261,7 +1265,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                     startPoint = vertexIndex74-1;
                 poLR->setPoint(iPoint,papoPoints[vertexIndex74-1]);
                 iPoint++;
-                vertexIndex74 = -1;
+                vertexIndex74 = 0;
             }
 
             // complete the ring
@@ -1269,6 +1273,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
 
             OGRPolygon *poPolygon = new OGRPolygon();
             poPolygon->addRing((OGRCurve *)poLR);
+
             poPS->addGeometryDirectly((OGRGeometry *)poPolygon);
 
             // delete the ring to prevent leakage
