@@ -98,7 +98,7 @@ class OGRXPlaneDataSource : public OGRDataSource
 
   public:
                         OGRXPlaneDataSource();
-                        ~OGRXPlaneDataSource();
+                        virtual ~OGRXPlaneDataSource();
 
     int                 Open( const char * pszFilename, int bReadWholeFile = TRUE );
 

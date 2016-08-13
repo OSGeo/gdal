@@ -136,7 +136,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
     public:
                             GDALGeoPackageDataset();
-                            ~GDALGeoPackageDataset();
+                            virtual ~GDALGeoPackageDataset();
 
         virtual char **     GetMetadata( const char *pszDomain = NULL );
         virtual const char *GetMetadataItem( const char * pszName,
@@ -270,7 +270,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
   public:
 
                         OGRGeoPackageLayer(GDALGeoPackageDataset* poDS);
-                        ~OGRGeoPackageLayer();
+                        virtual ~OGRGeoPackageLayer();
     /************************************************************************/
     /* OGR API methods */
 
@@ -326,7 +326,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
                                             const char * pszTableName );
-                        ~OGRGeoPackageTableLayer();
+                        virtual ~OGRGeoPackageTableLayer();
 
     /************************************************************************/
     /* OGR API methods */
@@ -431,7 +431,7 @@ class OGRGeoPackageSelectLayer CPL_FINAL : public OGRGeoPackageLayer, public IOG
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,
                                               int bEmptyLayer );
-                       ~OGRGeoPackageSelectLayer();
+                       virtual ~OGRGeoPackageSelectLayer();
 
     virtual void        ResetReading();
 

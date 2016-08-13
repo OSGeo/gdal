@@ -389,7 +389,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
-                        ~OGRSQLiteTableLayer();
+                        virtual ~OGRSQLiteTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     int bIsVirtualShapeIn,
@@ -498,7 +498,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 
   public:
                         OGRSQLiteViewLayer( OGRSQLiteDataSource * );
-                        ~OGRSQLiteViewLayer();
+                        virtual ~OGRSQLiteViewLayer();
 
     virtual const char* GetName() { return pszViewName; }
     virtual OGRwkbGeometryType GetGeomType();
@@ -609,7 +609,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
                                               int bUseStatementForGetNextFeature,
                                               int bEmptyLayer,
                                               int bAllowMultipleGeomFields );
-                       ~OGRSQLiteSelectLayer();
+                       virtual ~OGRSQLiteSelectLayer();
 
     virtual void        ResetReading();
 
@@ -659,7 +659,7 @@ class OGRSQLiteSingleFeatureLayer CPL_FINAL : public OGRLayer
                                                      int nVal );
                         OGRSQLiteSingleFeatureLayer( const char* pszLayerName,
                                                      const char *pszVal );
-                        ~OGRSQLiteSingleFeatureLayer();
+                        virtual ~OGRSQLiteSingleFeatureLayer();
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
@@ -708,7 +708,7 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 
   public:
                         OGRSQLiteBaseDataSource();
-                        ~OGRSQLiteBaseDataSource();
+                        virtual ~OGRSQLiteBaseDataSource();
 
     sqlite3            *GetDB() { return hDB; }
     int                 GetUpdate() const { return bUpdate; }
@@ -776,7 +776,7 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
 
   public:
                         OGRSQLiteDataSource();
-                        ~OGRSQLiteDataSource();
+                        virtual ~OGRSQLiteDataSource();
 
     int                 Open( const char *, int bUpdateIn, char** papszOpenOptions );
     int                 Create( const char *, char **papszOptions );

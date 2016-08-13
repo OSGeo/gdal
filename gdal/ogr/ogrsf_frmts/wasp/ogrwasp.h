@@ -149,7 +149,7 @@ class OGRWAsPLayer : public OGRLayer
                                       VSILFILE * hFile,
                                       OGRSpatialReference * poSpatialRef );
 
-                        ~OGRWAsPLayer();
+                        virtual ~OGRWAsPLayer();
 
     virtual OGRFeatureDefn *    GetLayerDefn() { return poLayerDefn; }
 
@@ -188,7 +188,7 @@ class OGRWAsPDataSource : public OGRDataSource
                         /** @note takes ownership of hFile (i.e. responsibility for closing) */
                         OGRWAsPDataSource( const char * pszName,
                                            VSILFILE * hFile );
-                        ~OGRWAsPDataSource();
+                        virtual ~OGRWAsPDataSource();
 
     virtual const char *GetName() { return sFilename.c_str(); }
     virtual int         GetLayerCount() { return oLayer.get() ? 1 : 0; }

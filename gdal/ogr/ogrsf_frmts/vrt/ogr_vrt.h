@@ -244,7 +244,7 @@ class OGRVRTDataSource : public OGRDataSource
 
   public:
                         OGRVRTDataSource( GDALDriver *poDriver );
-                        ~OGRVRTDataSource();
+                        virtual ~OGRVRTDataSource();
 
     virtual int         CloseDependentDatasets();
 

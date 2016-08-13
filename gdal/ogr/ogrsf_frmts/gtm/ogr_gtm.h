@@ -86,7 +86,7 @@ class OGRGTMLayer : public OGRLayer
 {
 public:
     OGRGTMLayer();
-    ~OGRGTMLayer();
+    virtual ~OGRGTMLayer();
     //
     // OGRLayer Interface
     //

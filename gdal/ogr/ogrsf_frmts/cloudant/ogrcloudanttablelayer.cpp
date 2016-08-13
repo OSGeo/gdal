@@ -191,8 +191,6 @@ void OGRCloudantTableLayer::GetSpatialView()
 {
     if (pszSpatialView == NULL)
     {
-        char **papszTokens;
-
         if (bHasStandardSpatial < 0 || bHasStandardSpatial == FALSE)
         {
             pszSpatialView = CPLGetConfigOption("CLOUDANT_SPATIAL_FILTER" , NULL);
@@ -217,7 +215,7 @@ void OGRCloudantTableLayer::GetSpatialView()
         if (bHasStandardSpatial)
             pszSpatialView = "_design/SpatialView/_geo/spatial";
 
-        papszTokens =
+        char **papszTokens =
             CSLTokenizeString2( pszSpatialView, "/", 0);
 
         if ((papszTokens[0] == NULL) || (papszTokens[1] == NULL))

@@ -1144,7 +1144,7 @@ static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
 
 static char* OGRGPX_GetUTF8String(const char* pszString)
 {
-    char *pszEscaped;
+    char *pszEscaped = NULL;
     if (!CPLIsUTF8(pszString, -1) &&
          CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
     {
@@ -1166,7 +1166,9 @@ static char* OGRGPX_GetUTF8String(const char* pszString)
         pszEscaped = CPLForceToASCII(pszString, -1, '?');
     }
     else
+    {
         pszEscaped = CPLStrdup(pszString);
+    }
 
     return pszEscaped;
 }
@@ -1181,14 +1183,13 @@ int OGRGPXLayer::OGRGPX_WriteXMLExtension(const char* pszTagName,
     CPLXMLNode* poXML = CPLParseXMLString(pszContent);
     if (poXML)
     {
-        char* pszTagNameWithNS;
-        const char* pszXMLNS = NULL;
         const char* pszUnderscore = strchr(pszTagName, '_');
-        pszTagNameWithNS = CPLStrdup(pszTagName);
+        char* pszTagNameWithNS = CPLStrdup(pszTagName);
         if (pszUnderscore)
             pszTagNameWithNS[pszUnderscore - pszTagName] = ':';
 
         /* If we detect a Garmin GPX extension, add its xmlns */
+        const char* pszXMLNS = NULL;
         if (strcmp(pszTagName, "gpxx_WaypointExtension") == 0)
             pszXMLNS = " xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\"";
 

@@ -49,7 +49,7 @@ class OGRGPSBabelDataSource : public OGRDataSource
 
   public:
                         OGRGPSBabelDataSource();
-                        ~OGRGPSBabelDataSource();
+                        virtual ~OGRGPSBabelDataSource();
 
     virtual int         CloseDependentDatasets();
 
@@ -84,7 +84,7 @@ class OGRGPSBabelWriteDataSource : public OGRDataSource
 
   public:
                         OGRGPSBabelWriteDataSource();
-                        ~OGRGPSBabelWriteDataSource();
+                        virtual ~OGRGPSBabelWriteDataSource();
 
     virtual const char  *GetName() { return pszName; }
     virtual int         GetLayerCount();

@@ -76,7 +76,7 @@ protected:
     OGRFeature *TranslateVetorAngle(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
 public:
     OGRSXFLayer(VSILFILE* fp, CPLMutex** hIOMutex, GByte nID, const char* pszLayerName, int nVer, const SXFMapDescription&  sxfMapDesc);
-    ~OGRSXFLayer();
+    virtual ~OGRSXFLayer();
 
 	virtual void                ResetReading();
     virtual OGRFeature         *GetNextFeature();
@@ -124,7 +124,7 @@ class OGRSXFDataSource : public OGRDataSource
     OGRSXFLayer*       GetLayerById(GByte);
 public:
                         OGRSXFDataSource();
-                        ~OGRSXFDataSource();
+                        virtual ~OGRSXFDataSource();
 
     int                 Open( const char * pszFilename,
                               int bUpdate );

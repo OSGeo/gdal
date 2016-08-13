@@ -78,7 +78,7 @@ protected:
 
 public:
                         OGRWalkLayer();
-                        ~OGRWalkLayer();
+                        virtual ~OGRWalkLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
@@ -109,7 +109,7 @@ class OGRWalkTableLayer : public OGRWalkLayer
 
 public:
                         OGRWalkTableLayer( OGRWalkDataSource * );
-                        ~OGRWalkTableLayer();
+                        virtual ~OGRWalkTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
@@ -148,7 +148,7 @@ class OGRWalkSelectLayer : public OGRWalkLayer
   public:
                         OGRWalkSelectLayer( OGRWalkDataSource *,
                                            CPLODBCStatement * );
-                        ~OGRWalkSelectLayer();
+                        virtual ~OGRWalkSelectLayer();
 
     virtual void        ResetReading();
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
@@ -171,7 +171,7 @@ class OGRWalkDataSource : public OGRDataSource
 
 public:
                         OGRWalkDataSource();
-                        ~OGRWalkDataSource();
+                        virtual ~OGRWalkDataSource();
 
     int                 Open( const char * , int );
 

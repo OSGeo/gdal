@@ -856,7 +856,7 @@ retry:
             for(int iBand=1;iBand<=poDS->GetRasterCount();iBand++)
             {
                 GDALRasterBlock* poBlock = NULL;
-                GByte* pabyDest;
+                GByte* pabyDest = NULL;
                 if( iBand == nBand )
                 {
                     pabyDest = (GByte*)pData;
@@ -2305,7 +2305,7 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
             for(int iBand=1;iBand<=poDS->GetRasterCount();iBand++)
             {
                 GDALRasterBlock* poBlock = NULL;
-                GByte* pabySrc;
+                GByte* pabySrc = NULL;
                 if( iBand == nBand )
                 {
                     pabySrc = (GByte*)pData;

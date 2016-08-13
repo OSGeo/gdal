@@ -2788,7 +2788,7 @@ class OGRPGMemLayerWrapper : public OGRLayer
                             poMemLayer = poMemDS->GetLayer(0);
                         }
 
-                        ~OGRPGMemLayerWrapper() { delete poMemDS; }
+                        virtual ~OGRPGMemLayerWrapper() { delete poMemDS; }
 
     virtual void        ResetReading() { poMemLayer->ResetReading(); }
     virtual OGRFeature *GetNextFeature() { return poMemLayer->GetNextFeature(); }

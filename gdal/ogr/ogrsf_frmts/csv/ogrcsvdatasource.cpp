@@ -52,7 +52,7 @@ class OGRCSVEditableLayerSynchronizer: public IOGREditableLayerSynchronizer
                                                             char** papszOpenOptions) :
                                                 m_poCSVLayer(poCSVLayer),
                                                 m_papszOpenOptions(CSLDuplicate(papszOpenOptions)) {}
-                           ~OGRCSVEditableLayerSynchronizer();
+                   virtual ~OGRCSVEditableLayerSynchronizer();
 
             virtual OGRErr EditableSyncToDisk(OGRLayer* poEditableLayer,
                                               OGRLayer** ppoDecoratedLayer);

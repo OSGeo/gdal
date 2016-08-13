@@ -121,17 +121,15 @@ OGRDataSource *AODriver::Open( const char* pszFilename,
   if (ipWorkspace == NULL)
     return NULL;
 
-  AODataSource* pDS;
-
-  pDS = new AODataSource();
+  AODataSource* pDS = new AODataSource();
 
   if(!pDS->Open( ipWorkspace, pszFilename, bUpdate ) )
   {
     delete pDS;
     return NULL;
   }
-  else
-    return pDS;
+
+  return pDS;
 }
 
 /************************************************************************

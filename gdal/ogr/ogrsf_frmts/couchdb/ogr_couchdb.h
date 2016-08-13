@@ -85,7 +85,7 @@ protected:
 
   public:
                          OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
-                        ~OGRCouchDBLayer();
+    virtual ~OGRCouchDBLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -163,7 +163,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     public:
             OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
                                  const char* pszName);
-            ~OGRCouchDBTableLayer();
+    virtual ~OGRCouchDBTableLayer();
 
     virtual void                ResetReading();
 
@@ -223,7 +223,7 @@ class OGRCouchDBRowsLayer : public OGRCouchDBLayer
 
     public:
             OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDS);
-            ~OGRCouchDBRowsLayer();
+            virtual ~OGRCouchDBRowsLayer();
 
     virtual void                ResetReading();
 
@@ -263,7 +263,7 @@ class OGRCouchDBDataSource : public OGRDataSource
 
   public:
                         OGRCouchDBDataSource();
-                        ~OGRCouchDBDataSource();
+                        virtual ~OGRCouchDBDataSource();
 
     int                 Open( const char * pszFilename,
                               int bUpdate );
@@ -310,7 +310,7 @@ class OGRCouchDBDataSource : public OGRDataSource
 class OGRCouchDBDriver : public OGRSFDriver
 {
   public:
-                ~OGRCouchDBDriver();
+    virtual ~OGRCouchDBDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );

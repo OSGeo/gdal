@@ -53,9 +53,7 @@ const char *OGRGRASSDriver::GetName()
 OGRDataSource *OGRGRASSDriver::Open( const char * pszFilename,
                                      int bUpdate )
 {
-    OGRGRASSDataSource  *poDS;
-
-    poDS = new OGRGRASSDataSource();
+    OGRGRASSDataSource  *poDS = new OGRGRASSDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {

@@ -134,7 +134,7 @@ public:
             OGRMongoDBLayer(OGRMongoDBDataSource* m_poDS,
                             const char* pszDatabase,
                             const char* pszCollection);
-           ~OGRMongoDBLayer();
+          virtual ~OGRMongoDBLayer();
 
             virtual OGRFeatureDefn* GetLayerDefn();
             virtual const char* GetName() { return m_poFeatureDefn->GetName(); }
@@ -184,7 +184,7 @@ class OGRMongoDBDataSource: public GDALDataset
 
 public:
             OGRMongoDBDataSource();
-            ~OGRMongoDBDataSource();
+            virtual ~OGRMongoDBDataSource();
 
             int Open(const char* pszFilename, GDALAccess eAccess, char** papszOpenOptions);
             virtual int GetLayerCount() { return (int)m_apoLayers.size(); }

@@ -52,7 +52,7 @@ class OGRSUALayer : public OGRLayer
 
   public:
                         OGRSUALayer(VSILFILE* fp);
-                        ~OGRSUALayer();
+                        virtual ~OGRSUALayer();
 
 
     virtual void                ResetReading();
@@ -76,7 +76,7 @@ class OGRSUADataSource : public OGRDataSource
 
   public:
                         OGRSUADataSource();
-                        ~OGRSUADataSource();
+                        virtual ~OGRSUADataSource();
 
     int                 Open( const char * pszFilename );
 

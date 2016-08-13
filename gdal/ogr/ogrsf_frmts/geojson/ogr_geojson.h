@@ -58,7 +58,7 @@ public:
                      OGRSpatialReference* poSRS,
                      OGRwkbGeometryType eGType,
                      OGRGeoJSONDataSource* poDS );
-    ~OGRGeoJSONLayer();
+    virtual ~OGRGeoJSONLayer();
 
     //
     // OGRLayer Interface
@@ -132,7 +132,7 @@ class OGRGeoJSONDataSource : public OGRDataSource
 public:
 
     OGRGeoJSONDataSource();
-    ~OGRGeoJSONDataSource();
+    virtual ~OGRGeoJSONDataSource();
 
     //
     // OGRDataSource Interface

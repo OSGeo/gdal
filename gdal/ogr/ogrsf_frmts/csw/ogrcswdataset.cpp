@@ -63,7 +63,7 @@ class OGRCSWLayer : public OGRLayer
 
   public:
                         OGRCSWLayer(OGRCSWDataSource* poDS);
-                        ~OGRCSWLayer();
+               virtual ~OGRCSWLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature*         GetNextFeature();
@@ -99,7 +99,7 @@ class OGRCSWDataSource : public OGRDataSource
 
   public:
                         OGRCSWDataSource();
-                        ~OGRCSWDataSource();
+               virtual ~OGRCSWDataSource();
 
     int                 Open( const char * pszFilename,
                               char** papszOpenOptions );

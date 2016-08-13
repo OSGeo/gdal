@@ -184,7 +184,7 @@ class OGRODSDataSource : public OGRDataSource
 
   public:
                         OGRODSDataSource();
-                        ~OGRODSDataSource();
+                        virtual ~OGRODSDataSource();
 
     int                 Open( const char * pszFilename,
                               VSILFILE* fpContentIn,
@@ -228,7 +228,7 @@ class OGRODSDataSource : public OGRDataSource
 class OGRODSDriver : public OGRSFDriver
 {
   public:
-                ~OGRODSDriver();
+                virtual ~OGRODSDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );

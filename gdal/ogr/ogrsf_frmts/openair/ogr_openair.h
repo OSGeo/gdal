@@ -65,7 +65,7 @@ class OGROpenAirLayer : public OGRLayer
 
   public:
                         OGROpenAirLayer(VSILFILE* fp);
-                        ~OGROpenAirLayer();
+                        virtual ~OGROpenAirLayer();
 
 
     virtual void                ResetReading();
@@ -99,7 +99,7 @@ class OGROpenAirLabelLayer : public OGRLayer
 
   public:
                         OGROpenAirLabelLayer(VSILFILE* fp);
-                        ~OGROpenAirLabelLayer();
+                        virtual ~OGROpenAirLabelLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -122,7 +122,7 @@ class OGROpenAirDataSource : public OGRDataSource
 
   public:
                         OGROpenAirDataSource();
-                        ~OGROpenAirDataSource();
+                        virtual ~OGROpenAirDataSource();
 
     int                 Open( const char * pszFilename );
 

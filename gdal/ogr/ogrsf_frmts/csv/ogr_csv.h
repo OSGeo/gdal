@@ -125,7 +125,7 @@ class OGRCSVLayer : public OGRLayer
   public:
     OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
                  int bNew, int bInWriteMode, char chDelimiter );
-   ~OGRCSVLayer();
+    virtual ~OGRCSVLayer();
 
     const char*         GetFilename() const { return pszFilename; }
     char                GetDelimiter() const { return chDelimiter; }
@@ -193,7 +193,7 @@ class OGRCSVDataSource : public OGRDataSource
 
   public:
                         OGRCSVDataSource();
-                        ~OGRCSVDataSource();
+                        virtual ~OGRCSVDataSource();
 
     int                 Open( const char * pszFilename,
                               int bUpdate, int bForceAccept,

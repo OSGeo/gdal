@@ -2492,7 +2492,7 @@ class OGRGMLSingleFeatureLayer : public OGRLayer
 
   public:
                         OGRGMLSingleFeatureLayer(int nVal );
-                        ~OGRGMLSingleFeatureLayer() { poFeatureDefn->Release(); }
+    virtual ~OGRGMLSingleFeatureLayer() { poFeatureDefn->Release(); }
 
     virtual void        ResetReading() { iNextShapeId = 0; }
     virtual OGRFeature *GetNextFeature();

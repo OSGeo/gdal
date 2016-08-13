@@ -85,7 +85,7 @@ class OGRPDSLayer : public OGRLayer
                                          int nRecords,
                                          int nStartBytes, int nRecordSize,
                                          GByte* pabyRecord, bool bIsASCII);
-                        ~OGRPDSLayer();
+                        virtual ~OGRPDSLayer();
 
 
     virtual void                ResetReading();
@@ -128,7 +128,7 @@ class OGRPDSDataSource : public OGRDataSource
 
   public:
                         OGRPDSDataSource();
-                        ~OGRPDSDataSource();
+                        virtual ~OGRPDSDataSource();
 
     int                 Open( const char * pszFilename );
 

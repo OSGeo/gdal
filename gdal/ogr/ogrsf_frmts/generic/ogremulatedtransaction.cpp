@@ -47,7 +47,7 @@ class OGRLayerWithTransaction: public OGRLayerDecorator
 
         OGRLayerWithTransaction(OGRDataSourceWithTransaction* poDS,
                                 OGRLayer* poBaseLayer);
-       ~OGRLayerWithTransaction();
+    virtual ~OGRLayerWithTransaction();
 
     virtual const char *GetName() { return GetDescription(); }
     virtual OGRFeatureDefn *GetLayerDefn();
