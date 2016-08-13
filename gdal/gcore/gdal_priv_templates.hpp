@@ -161,58 +161,6 @@ inline void GDALCopyWord(const float fValueIn, Tout &tValueOut)
         GDALClampValue(fValueIn + 0.5f, fMaxVal, fMinVal));
 }
 
-// Just need SSE, but don't bother being too specific
-#if (defined(__x86_64) || defined(_M_X64)) && defined(this_is_disabled)
-
-#include <xmmintrin.h>
-
-template <class Tout>
-inline void GDALCopyWordSSE(const float fValueIn, Tout &tValueOut)
-{
-    float fMaxVal, fMinVal;
-    GDALGetDataLimits<float, Tout>(fMaxVal, fMinVal);
-    __m128 xmm = _mm_set_ss(fValueIn);
-    __m128 xmm_min = _mm_set_ss(fMinVal);
-    __m128 xmm_max = _mm_set_ss(fMaxVal);
-    xmm = _mm_min_ss(_mm_max_ss(xmm, xmm_min), xmm_max);
-#ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
-    __m128 p0d5 = _mm_set_ss(0.5f);
-    if (std::numeric_limits<Tout>::is_signed)
-    {
-        __m128 mask = _mm_cmpge_ss(xmm, _mm_set_ss(0.f));
-        __m128 m0d5 = _mm_set_ss(-0.5f);
-        xmm = _mm_add_ss(xmm, _mm_or_ps(_mm_and_ps(mask, p0d5), _mm_andnot_ps(mask, m0d5)));
-    }
-    else
-    {
-        xmm = _mm_add_ss(xmm, p0d5);
-    }
-#endif
-
-#ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
-    tValueOut = (Tout)_mm_cvttss_si32(xmm);
-#else
-    tValueOut = (Tout)_mm_cvtss_si32(xmm);
-#endif
-}
-
-inline void GDALCopyWord(const float fValueIn, GByte &tValueOut)
-{
-    GDALCopyWordSSE(fValueIn, tValueOut);
-}
-
-inline void GDALCopyWord(const float fValueIn, GInt16 &tValueOut)
-{
-    GDALCopyWordSSE(fValueIn, tValueOut);
-}
-
-inline void GDALCopyWord(const float fValueIn, GUInt16 &tValueOut)
-{
-    GDALCopyWordSSE(fValueIn, tValueOut);
-}
-
-#else
-
 inline void GDALCopyWord(const float fValueIn, short &nValueOut)
 {
     float fMaxVal, fMinVal;
@@ -222,8 +170,6 @@ inline void GDALCopyWord(const float fValueIn, short &nValueOut)
     nValueOut = static_cast<short>(
         GDALClampValue(fValue, fMaxVal, fMinVal));
 }
-
-#endif //  defined(__x86_64) || defined(_M_X64)
 
 template <class Tout>
 inline void GDALCopyWord(const double dfValueIn, Tout &tValueOut)
@@ -290,61 +236,6 @@ inline void GDALCopyWord(const float fValueIn, unsigned int &nValueOut)
         nValueOut = static_cast<unsigned int>(fValueIn + 0.5f);
     }
 }
-
-#ifdef notdef
-/************************************************************************/
-/*                         GDALCopy2Words()                             */
-/************************************************************************/
-/**
- * Copy 2 words, optionally rounding if appropriate (i.e. going
- * from the float to the integer case).
- *
- * @param pValueIn pointer to 2 input values of type Tin.
- * @param pValueOut pointer to 2 output values of type Tout.
- */
-
-template <class Tin, class Tout>
-inline void GDALCopy2Words(const Tin* pValueIn, Tout* const &pValueOut)
-{
-    GDALCopyWord(pValueIn[0], pValueOut[0]);
-    GDALCopyWord(pValueIn[1], pValueOut[1]);
-}
-
-// Just need SSE, but don't bother being too specific
-#if defined(__x86_64) || defined(_M_X64)
-
-#include <xmmintrin.h>
-
-template <class Tout>
-inline void GDALCopy2WordsSSE(const float* pValueIn, Tout* const &pValueOut)
-{
-    float fMaxVal, fMinVal;
-    GDALGetDataLimits<float, Tout>(fMaxVal, fMinVal);
-    __m128 xmm = _mm_set_ps(0, 0, pValueIn[1], pValueIn[0]);
-    __m128 xmm_min = _mm_set_ps(0, 0, fMinVal, fMinVal);
-    __m128 xmm_max = _mm_set_ps(0, 0, fMaxVal, fMaxVal);
-    xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
-    pValueOut[0] = _mm_cvtss_si32(xmm);
-    pValueOut[1] = _mm_cvtss_si32(_mm_shuffle_ps(xmm, xmm, _MM_SHUFFLE(0, 0, 0, 1)));
-}
-
-inline void GDALCopy2Words(const float* pValueIn, GByte* const &pValueOut)
-{
-    GDALCopy2WordsSSE(pValueIn, pValueOut);
-}
-
-inline void GDALCopy2Words(const float* pValueIn, GInt16* const &pValueOut)
-{
-    GDALCopy2WordsSSE(pValueIn, pValueOut);
-}
-
-inline void GDALCopy2Words(const float* pValueIn, GUInt16* const &pValueOut)
-{
-    GDALCopy2WordsSSE(pValueIn, pValueOut);
-}
-#endif //  defined(__x86_64) || defined(_M_X64)
-
-#endif
 
 /************************************************************************/
 /*                         GDALCopy4Words()                             */
