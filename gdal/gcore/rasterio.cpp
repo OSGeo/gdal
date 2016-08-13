@@ -2333,14 +2333,22 @@ void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
                                              int nIters );
 
+void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters );
+
 template<> void GDALUnrolledCopy<GByte,3,1>( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
                                              int nIters )
 {
     if( CPLHaveRuntimeSSSE3() )
+    {
         GDALUnrolledCopy_GByte_3_1_SSSE3(pDest, pSrc, nIters);
+    }
     else
+    {
         GDALUnrolledCopyGeneric<GByte,3,1>(pDest, pSrc, nIters);
+    }
 }
 
 #endif
@@ -2349,6 +2357,14 @@ template<> void GDALUnrolledCopy<GByte,4,1>( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
                                              int nIters )
 {
+#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+    if( CPLHaveRuntimeSSSE3() )
+    {
+        GDALUnrolledCopy_GByte_4_1_SSSE3(pDest, pSrc, nIters);
+        return;
+    }
+#endif
+
     int i;
     const __m128i xmm_mask = _mm_set1_epi32(0xff);
     // If we were sure that there would always be 3 trailing bytes, we could

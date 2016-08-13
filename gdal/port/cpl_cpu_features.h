@@ -31,6 +31,7 @@
 #define CPL_CPU_FEATURES_H
 
 #include "cpl_port.h"
+#include "cpl_string.h"
 
 //! @cond Doxygen_Suppress
 
@@ -46,7 +47,14 @@ bool CPLHaveRuntimeSSE();
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 #if __SSSE3__
 #define HAVE_INLINE_SSSE3
-static bool inline CPLHaveRuntimeSSSE3() { return true; }
+static bool inline CPLHaveRuntimeSSSE3()
+{
+#ifdef DEBUG
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_USE_SSSE3", "YES")) )
+        return false;
+#endif
+    return true;
+}
 #else
 bool CPLHaveRuntimeSSSE3();
 #endif

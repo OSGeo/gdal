@@ -28,10 +28,11 @@
  ****************************************************************************/
 
 #include <iostream>
+#include "cpl_conv.h"
 #include <gdal.h>
 
-char* pIn;
-char* pOut;
+GByte* pIn;
+GByte* pOut;
 int bErr = FALSE;
 
 template <class OutType, class ConstantType>
@@ -479,8 +480,8 @@ void check_GDT_CFloat32and64()
 
 int main(int /* argc */, char* /* argv */ [])
 {
-    pIn = (char*)malloc(256);
-    pOut = (char*)malloc(256);
+    pIn = (GByte*)malloc(256);
+    pOut = (GByte*)malloc(256);
 
     check_GDT_Byte();
     check_GDT_Int16();
@@ -491,6 +492,48 @@ int main(int /* argc */, char* /* argv */ [])
     check_GDT_CInt16();
     check_GDT_CInt32();
     check_GDT_CFloat32and64();
+
+    for(int k=0;k<2;k++)
+    {
+        if( k == 1 )
+            CPLSetConfigOption("GDAL_USE_SSSE3", "NO");
+
+        for(int spacing=2; spacing<=4; spacing++)
+        {
+            memset(pIn, 0xff, 256);
+            for(int i=0;i<17;i++)
+            {
+                pIn[spacing*i] = i;
+            }
+            memset(pOut, 0xff, 256);
+            GDALCopyWords(pIn, GDT_Byte, spacing,
+                        pOut, GDT_Byte, 1,
+                        17);
+            for(int i=0;i<17;i++)
+            {
+                AssertRes(GDT_Byte, i, GDT_Byte, i, pOut[i], __LINE__);
+            }
+
+            memset(pIn, 0xff, 256);
+            memset(pOut, 0xff, 256);
+            for(int i=0;i<17;i++)
+            {
+                pIn[i] = i;
+            }
+            GDALCopyWords(pIn, GDT_Byte, 1,
+                        pOut, GDT_Byte, spacing,
+                        17);
+            for(int i=0;i<17;i++)
+            {
+                AssertRes(GDT_Byte, i, GDT_Byte, i, pOut[i*spacing], __LINE__);
+                for(int j=1;j<spacing;j++)
+                {
+                    AssertRes(GDT_Byte, 0xff, GDT_Byte, 0xff, pOut[i*spacing+j], __LINE__);
+                }
+            }
+        }
+    }
+    CPLSetConfigOption("GDAL_USE_SSSE3", NULL);
 
     memset(pIn, 0xff, 256);
     GInt16* pInShort = (GInt16*)pIn;
