@@ -2303,8 +2303,8 @@ template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
 {
     int i;
     const __m128i xmm_mask = _mm_set1_epi16(0xff);
-    // If we were sure that there would always be 1 trailing bytee, we could
-    // check against nIters - 16
+    // If we were sure that there would always be 1 trailing byte, we could
+    // check against nIters - 15
     for ( i = 0; i < nIters - 16; i += 16 )
     {
         __m128i xmm0 = _mm_loadu_si128( (__m128i const*) (pSrc + 0) );
