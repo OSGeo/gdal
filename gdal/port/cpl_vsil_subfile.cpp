@@ -387,7 +387,7 @@ int VSISubFileFilesystemHandler::Stat( const char * pszFilename,
 /*                               Unlink()                               */
 /************************************************************************/
 
-int VSISubFileFilesystemHandler::Unlink( CPL_UNUSED const char * pszFilename )
+int VSISubFileFilesystemHandler::Unlink( const char * /* pszFilename */ )
 {
     errno = EACCES;
     return -1;
@@ -397,8 +397,8 @@ int VSISubFileFilesystemHandler::Unlink( CPL_UNUSED const char * pszFilename )
 /*                               Mkdir()                                */
 /************************************************************************/
 
-int VSISubFileFilesystemHandler::Mkdir( CPL_UNUSED const char * pszPathname,
-                                        CPL_UNUSED long nMode )
+int VSISubFileFilesystemHandler::Mkdir( const char * /* pszPathname */,
+                                        long /* nMode */ )
 {
     errno = EACCES;
     return -1;
@@ -408,7 +408,7 @@ int VSISubFileFilesystemHandler::Mkdir( CPL_UNUSED const char * pszPathname,
 /*                               Rmdir()                                */
 /************************************************************************/
 
-int VSISubFileFilesystemHandler::Rmdir( CPL_UNUSED const char * pszPathname )
+int VSISubFileFilesystemHandler::Rmdir( const char * /* pszPathname */ )
 
 {
     errno = EACCES;
@@ -419,7 +419,7 @@ int VSISubFileFilesystemHandler::Rmdir( CPL_UNUSED const char * pszPathname )
 /*                              ReadDir()                               */
 /************************************************************************/
 
-char **VSISubFileFilesystemHandler::ReadDir( CPL_UNUSED const char *pszPath )
+char **VSISubFileFilesystemHandler::ReadDir( const char * /* pszPath */ )
 {
     errno = EACCES;
     return NULL;

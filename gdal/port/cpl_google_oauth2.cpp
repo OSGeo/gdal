@@ -270,7 +270,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
  */
 
 char *GOA2GetAccessToken( const char *pszRefreshToken,
-                          CPL_UNUSED const char *pszScope )
+                          const char * /* pszScope */ )
 {
 /* -------------------------------------------------------------------- */
 /*      Prepare request.                                                */

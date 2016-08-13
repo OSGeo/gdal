@@ -475,7 +475,7 @@ VSIArchiveReader* VSIArchiveFilesystemHandler::OpenArchiveFile(const char* archi
 
 int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
                                        VSIStatBufL *pStatBuf,
-                                       CPL_UNUSED int nFlags )
+                                       int /* nFlags */ )
 {
     int ret = -1;
     CPLString osFileInArchive;
@@ -555,7 +555,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
 /*                              Unlink()                                */
 /************************************************************************/
 
-int VSIArchiveFilesystemHandler::Unlink( CPL_UNUSED const char *pszFilename )
+int VSIArchiveFilesystemHandler::Unlink( const char * /* pszFilename */ )
 {
     return -1;
 }
@@ -564,8 +564,8 @@ int VSIArchiveFilesystemHandler::Unlink( CPL_UNUSED const char *pszFilename )
 /*                             Rename()                                 */
 /************************************************************************/
 
-int VSIArchiveFilesystemHandler::Rename( CPL_UNUSED const char *oldpath,
-                                         CPL_UNUSED const char *newpath )
+int VSIArchiveFilesystemHandler::Rename( const char * /* oldpath */,
+                                         const char * /* newpath */ )
 {
     return -1;
 }
@@ -574,8 +574,8 @@ int VSIArchiveFilesystemHandler::Rename( CPL_UNUSED const char *oldpath,
 /*                             Mkdir()                                  */
 /************************************************************************/
 
-int VSIArchiveFilesystemHandler::Mkdir( CPL_UNUSED const char *pszDirname,
-                                        CPL_UNUSED long nMode )
+int VSIArchiveFilesystemHandler::Mkdir( const char * /* pszDirname */,
+                                        long /* nMode */ )
 {
     return -1;
 }
@@ -584,7 +584,7 @@ int VSIArchiveFilesystemHandler::Mkdir( CPL_UNUSED const char *pszDirname,
 /*                             Rmdir()                                  */
 /************************************************************************/
 
-int VSIArchiveFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
+int VSIArchiveFilesystemHandler::Rmdir( const char * /* pszDirname */ )
 {
     return -1;
 }
