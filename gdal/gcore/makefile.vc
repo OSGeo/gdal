@@ -16,6 +16,10 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdalabstractbandblockcache.obj \
 		gdalarraybandblockcache.obj gdalhashsetbandblockcache.obj
 
+!IF "$(SSSE3FLAGS)" == "/DHAVE_SSSE3_AT_COMPILE_TIME"
+SSSE3_OBJ = rasterio_ssse3.obj
+!ENDIF
+
 RES	=	Version.res
 
 GDAL_ROOT	=	..
@@ -32,7 +36,7 @@ SQLITEDEF	=	-DSQLITE_ENABLED
 EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_LIBXML2 $(LIBXML2_INC)
 !ENDIF
 
-default:	$(OBJ) $(RES) mdreader_dir
+default:	$(OBJ) $(RES) mdreader_dir $(SSSE3_OBJ)
 
 clean:
 	-del *.obj *.res

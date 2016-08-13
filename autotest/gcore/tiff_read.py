@@ -2706,6 +2706,22 @@ def tiff_read_aux():
 
     return 'success'
 
+
+def tiff_read_one_band_from_two_bands():
+
+    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands.tif', 'data/byte.tif', options = '-b 1 -b 1')
+    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands_dst.tif', '/vsimem/tiff_read_one_band_from_two_bands.tif', options = '-b 1')
+
+    ds = gdal.Open('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands.tif')
+    gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
+
+    return 'success'
+
 ###############################################################################
 
 for item in init_list:
@@ -2789,6 +2805,8 @@ gdaltest_list.append( (tiff_read_inconsistent_georef) )
 gdaltest_list.append( (tiff_read_gcp_internal_and_auxxml) )
 
 gdaltest_list.append( (tiff_read_aux) )
+
+gdaltest_list.append( (tiff_read_one_band_from_two_bands) )
 
 #gdaltest_list = [ tiff_read_aux ]
 
