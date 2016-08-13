@@ -517,7 +517,7 @@ class OGRSplitListFieldLayer : public OGRLayer
   public:
                                  OGRSplitListFieldLayer(OGRLayer* poSrcLayer,
                                                         int nMaxSplitListSubFields);
-                                ~OGRSplitListFieldLayer();
+                        virtual ~OGRSplitListFieldLayer();
 
     bool                        BuildLayerDefn(GDALProgressFunc pfnProgress,
                                                 void *pProgressArg);
