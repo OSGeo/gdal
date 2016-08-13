@@ -53,10 +53,10 @@ void VSIInstallS3FileHandler(void)
 /*                      VSICurlInstallReadCbk()                         */
 /************************************************************************/
 
-int VSICurlInstallReadCbk (CPL_UNUSED VSILFILE* fp,
-                           CPL_UNUSED VSICurlReadCbkFunc pfnReadCbk,
-                           CPL_UNUSED void* pfnUserData,
-                           CPL_UNUSED int bStopOnInterrruptUntilUninstall)
+int VSICurlInstallReadCbk ( VSILFILE* /* fp */,
+                            VSICurlReadCbkFunc /* pfnReadCbk */,
+                            void* /* pfnUserData */,
+                            int /* bStopOnInterrruptUntilUninstall */)
 {
     return FALSE;
 }
@@ -66,7 +66,7 @@ int VSICurlInstallReadCbk (CPL_UNUSED VSILFILE* fp,
 /*                    VSICurlUninstallReadCbk()                         */
 /************************************************************************/
 
-int VSICurlUninstallReadCbk(CPL_UNUSED VSILFILE* fp)
+int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 {
     return FALSE;
 }
@@ -1751,9 +1751,9 @@ end:
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSICurlHandle::Write( CPL_UNUSED const void *pBuffer,
-                             CPL_UNUSED size_t nSize,
-                             CPL_UNUSED size_t nMemb )
+size_t VSICurlHandle::Write( const void * /* pBuffer */,
+                             size_t /* nSize */,
+                             size_t /* nMemb */ )
 {
     return 0;
 }
@@ -3096,7 +3096,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
 /*                               Unlink()                               */
 /************************************************************************/
 
-int VSICurlFilesystemHandler::Unlink( CPL_UNUSED const char *pszFilename )
+int VSICurlFilesystemHandler::Unlink( const char * /* pszFilename */ )
 {
     return -1;
 }
@@ -3105,8 +3105,8 @@ int VSICurlFilesystemHandler::Unlink( CPL_UNUSED const char *pszFilename )
 /*                               Rename()                               */
 /************************************************************************/
 
-int VSICurlFilesystemHandler::Rename( CPL_UNUSED const char *oldpath,
-                                      CPL_UNUSED const char *newpath )
+int VSICurlFilesystemHandler::Rename( const char * /* oldpath */,
+                                      const char * /* newpath */ )
 {
     return -1;
 }
@@ -3115,8 +3115,8 @@ int VSICurlFilesystemHandler::Rename( CPL_UNUSED const char *oldpath,
 /*                               Mkdir()                                */
 /************************************************************************/
 
-int VSICurlFilesystemHandler::Mkdir( CPL_UNUSED const char *pszDirname,
-                                     CPL_UNUSED long nMode )
+int VSICurlFilesystemHandler::Mkdir( const char * /* pszDirname */,
+                                     long /* nMode */ )
 {
     return -1;
 }
@@ -3124,7 +3124,7 @@ int VSICurlFilesystemHandler::Mkdir( CPL_UNUSED const char *pszDirname,
 /*                               Rmdir()                                */
 /************************************************************************/
 
-int VSICurlFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
+int VSICurlFilesystemHandler::Rmdir( const char * /* pszDirname */ )
 {
     return -1;
 }
@@ -3134,8 +3134,8 @@ int VSICurlFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
 /************************************************************************/
 
 char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
-                                          int nMaxFiles,
-                                          bool* pbGotFileList )
+                                                  int nMaxFiles,
+                                                  bool* pbGotFileList )
 {
     CPLString osDirname(pszDirname);
     while (osDirname[strlen(osDirname) - 1] == '/')

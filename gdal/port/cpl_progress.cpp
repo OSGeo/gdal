@@ -211,8 +211,8 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  * @return Always returns TRUE indicating the process should continue.
  */
 
-int CPL_STDCALL GDALTermProgress( CPL_UNUSED double dfComplete,
-                                  CPL_UNUSED const char *pszMessage,
+int CPL_STDCALL GDALTermProgress( double dfComplete,
+                                  const char * /* pszMessage */,
                                   void * /* pProgressArg */ )
 {
     int nThisTick = std::min(40, std::max(0,

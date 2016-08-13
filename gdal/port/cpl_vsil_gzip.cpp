@@ -1685,7 +1685,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
 /*                               Unlink()                               */
 /************************************************************************/
 
-int VSIGZipFilesystemHandler::Unlink( CPL_UNUSED const char *pszFilename )
+int VSIGZipFilesystemHandler::Unlink( const char * /* pszFilename */ )
 {
     return -1;
 }
@@ -1694,8 +1694,8 @@ int VSIGZipFilesystemHandler::Unlink( CPL_UNUSED const char *pszFilename )
 /*                               Rename()                               */
 /************************************************************************/
 
-int VSIGZipFilesystemHandler::Rename( CPL_UNUSED const char *oldpath,
-                                      CPL_UNUSED const char *newpath )
+int VSIGZipFilesystemHandler::Rename( const char * /* oldpath */,
+                                      const char * /* newpath */ )
 {
     return -1;
 }
@@ -1704,8 +1704,8 @@ int VSIGZipFilesystemHandler::Rename( CPL_UNUSED const char *oldpath,
 /*                               Mkdir()                                */
 /************************************************************************/
 
-int VSIGZipFilesystemHandler::Mkdir( CPL_UNUSED const char *pszDirname,
-                                     CPL_UNUSED long nMode )
+int VSIGZipFilesystemHandler::Mkdir( const char * /* pszDirname */,
+                                     long /* nMode */ )
 {
     return -1;
 }
@@ -1713,7 +1713,7 @@ int VSIGZipFilesystemHandler::Mkdir( CPL_UNUSED const char *pszDirname,
 /*                               Rmdir()                                */
 /************************************************************************/
 
-int VSIGZipFilesystemHandler::Rmdir( CPL_UNUSED const char *pszDirname )
+int VSIGZipFilesystemHandler::Rmdir( const char * /* pszDirname */ )
 {
     return -1;
 }
@@ -2414,9 +2414,9 @@ vsi_l_offset VSIZipWriteHandle::Tell()
 /*                               Read()                                 */
 /************************************************************************/
 
-size_t VSIZipWriteHandle::Read( CPL_UNUSED void *pBuffer,
-                                CPL_UNUSED size_t nSize,
-                                CPL_UNUSED size_t nMemb )
+size_t VSIZipWriteHandle::Read( void * /* pBuffer */,
+                                size_t /* nSize */,
+                                size_t /* nMemb */ )
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "VSIFReadL() is not supported on writable Zip files");
@@ -2427,7 +2427,7 @@ size_t VSIZipWriteHandle::Read( CPL_UNUSED void *pBuffer,
 /*                               Write()                                 */
 /************************************************************************/
 
-size_t    VSIZipWriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
+size_t VSIZipWriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 {
     if( m_poParent == NULL )
     {
@@ -2590,7 +2590,7 @@ void VSIInstallZipFileHandler()
 
 void* CPLZLibDeflate( const void* ptr,
                       size_t nBytes,
-                      CPL_UNUSED int nLevel,
+                      int /* nLevel */,
                       void* outptr,
                       size_t nOutAvailableBytes,
                       size_t* pnOutBytes )

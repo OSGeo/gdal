@@ -414,7 +414,7 @@ CPLMutex *CPLCreateMutex()
 #endif
 }
 
-CPLMutex *CPLCreateMutexEx(CPL_UNUSED int nOptions)
+CPLMutex *CPLCreateMutexEx( int nOptions )
 
 {
     return CPLCreateMutex();
@@ -424,11 +424,15 @@ CPLMutex *CPLCreateMutexEx(CPL_UNUSED int nOptions)
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( CPLMutex *hMutex,
-                     CPL_UNUSED double dfWaitInSeconds )
+#ifdef MUTEX_NONE
+int CPLAcquireMutex( CPLMutex *hMutex, double /* dfWaitInSeconds */ )
 {
-#ifndef MUTEX_NONE
-    unsigned char *pabyMutex = (unsigned char *) hMutex;
+    return TRUE;
+}
+#else
+int CPLAcquireMutex( CPLMutex *hMutex, double dfWaitInSeconds )
+{
+    unsigned char *pabyMutex = reinterpret_cast<unsigned char *>(hMutex);
 
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e'
                && pabyMutex[3] == 'd' );
@@ -436,20 +440,19 @@ int CPLAcquireMutex( CPLMutex *hMutex,
     pabyMutex[0] += 1;
 
     return TRUE;
-#else
-    return TRUE;
-#endif
 }
+#endif  // ! MUTEX_NONE
 
 /************************************************************************/
 /*                          CPLReleaseMutex()                           */
 /************************************************************************/
 
+#ifdef MUTEX_NONE
+void CPLReleaseMutex( CPLMutex * /* hMutex */ ) {}
+#else
 void CPLReleaseMutex( CPLMutex *hMutex )
-
 {
-#ifndef MUTEX_NONE
-    unsigned char *pabyMutex = (unsigned char *) hMutex;
+    unsigned char *pabyMutex = retinterpret_cast<unsigned char *>(hMutex);
 
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e'
                && pabyMutex[3] == 'd' );
@@ -460,25 +463,26 @@ void CPLReleaseMutex( CPLMutex *hMutex )
                   pabyMutex[0] );
 
     pabyMutex[0] -= 1;
-#endif
 }
+#endif
 
 /************************************************************************/
 /*                          CPLDestroyMutex()                           */
 /************************************************************************/
 
+#ifdef MUTEX_NONE
+void CPLDestroyMutex( CPLMutex * /* hMutex */ ) {}
+#else
 void CPLDestroyMutex( CPLMutex *hMutex )
-
 {
-#ifndef MUTEX_NONE
-    unsigned char *pabyMutex = (unsigned char *) hMutex;
+    unsigned char *pabyMutex = reinterpret_cast<unsigned char *>(hMutex);
 
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e'
                && pabyMutex[3] == 'd' );
 
     free( pabyMutex );
-#endif
 }
+#endif
 
 /************************************************************************/
 /*                            CPLCreateCond()                           */
@@ -493,33 +497,25 @@ CPLCond  *CPLCreateCond()
 /*                            CPLCondWait()                             */
 /************************************************************************/
 
-void  CPLCondWait( CPL_UNUSED CPLCond *hCond, CPL_UNUSED CPLMutex* hMutex )
-{
-}
+void  CPLCondWait( CPLCond * /* hCond */ , CPLMutex* /* hMutex */ ) {}
 
 /************************************************************************/
 /*                            CPLCondSignal()                           */
 /************************************************************************/
 
-void  CPLCondSignal( CPL_UNUSED CPLCond *hCond )
-{
-}
+void  CPLCondSignal( CPLCond * /* hCond */ ) {}
 
 /************************************************************************/
 /*                           CPLCondBroadcast()                         */
 /************************************************************************/
 
-void  CPLCondBroadcast( CPL_UNUSED CPLCond *hCond )
-{
-}
+void  CPLCondBroadcast( CPLCond * /* hCond */ ) {}
 
 /************************************************************************/
 /*                            CPLDestroyCond()                          */
 /************************************************************************/
 
-void  CPLDestroyCond( CPL_UNUSED CPLCond *hCond )
-{
-}
+void  CPLDestroyCond( CPLCond * /* hCond */ ) {}
 
 /************************************************************************/
 /*                            CPLLockFile()                             */
@@ -612,7 +608,7 @@ GIntBig CPLGetPID()
 /*                          CPLCreateThread();                          */
 /************************************************************************/
 
-int CPLCreateThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void *pArg )
+int CPLCreateThread( CPLThreadFunc /* pfnMain */, void * /* pArg */)
 {
     CPLDebug( "CPLCreateThread", "Fails to dummy implementation" );
 
@@ -623,7 +619,8 @@ int CPLCreateThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void *pArg )
 /*                      CPLCreateJoinableThread()                       */
 /************************************************************************/
 
-CPLJoinableThread* CPLCreateJoinableThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void *pThreadArg )
+CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc /* pfnMain */,
+                                            void * /* pThreadArg */ )
 {
     CPLDebug( "CPLCreateJoinableThread", "Fails to dummy implementation" );
 
@@ -634,9 +631,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPL_UNUSED CPLThreadFunc pfnMain, CP
 /*                          CPLJoinThread()                             */
 /************************************************************************/
 
-void CPLJoinThread(CPL_UNUSED CPLJoinableThread* hJoinableThread)
-{
-}
+void CPLJoinThread( CPLJoinableThread* /* hJoinableThread */ ) {}
 
 /************************************************************************/
 /*                              CPLSleep()                              */
@@ -777,7 +772,7 @@ CPLMutex *CPLCreateMutex()
 #endif
 }
 
-CPLMutex *CPLCreateMutexEx(CPL_UNUSED int nOptions)
+CPLMutex *CPLCreateMutexEx( int /* nOptions */ )
 
 {
     return CPLCreateMutex();
@@ -1467,7 +1462,7 @@ CPLMutex *CPLCreateMutexEx(int nOptions)
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( CPLMutex *hMutexIn, CPL_UNUSED double dfWaitInSeconds )
+int CPLAcquireMutex( CPLMutex *hMutexIn, double /* dfWaitInSeconds */ )
 {
 
     /* we need to add timeout support */

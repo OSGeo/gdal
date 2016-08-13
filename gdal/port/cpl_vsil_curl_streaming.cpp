@@ -1347,9 +1347,9 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
 /*                          AddRegion()                                 */
 /************************************************************************/
 
-void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
-                                         size_t          nSize,
-                                         GByte          *pData )
+void VSICurlStreamingHandle::AddRegion( vsi_l_offset nFileOffsetStart,
+                                        size_t nSize,
+                                        GByte *pData )
 {
     if (nFileOffsetStart >= BKGND_BUFFER_SIZE)
         return;
@@ -1372,9 +1372,9 @@ void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSICurlStreamingHandle::Write( CPL_UNUSED const void *pBuffer,
-                                      CPL_UNUSED size_t nSize,
-                                      CPL_UNUSED size_t nMemb )
+size_t VSICurlStreamingHandle::Write( const void * /* pBuffer */,
+                                      size_t /* nSize */,
+                                      size_t /* nMemb */ )
 {
     return 0;
 }
@@ -1384,7 +1384,7 @@ size_t VSICurlStreamingHandle::Write( CPL_UNUSED const void *pBuffer,
 /************************************************************************/
 
 
-int       VSICurlStreamingHandle::Eof()
+int VSICurlStreamingHandle::Eof()
 {
     return bEOF;
 }
@@ -1393,7 +1393,7 @@ int       VSICurlStreamingHandle::Eof()
 /*                                 Flush()                              */
 /************************************************************************/
 
-int       VSICurlStreamingHandle::Flush()
+int VSICurlStreamingHandle::Flush()
 {
     return 0;
 }

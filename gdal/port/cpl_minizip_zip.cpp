@@ -89,9 +89,8 @@ CPL_CVSID("$Id:");
 #endif
 #endif
 
-CPL_UNUSED const char zip_copyright[] =
-   " zip 1.01 Copyright 1998-2004 Gilles Vollant - http://www.winimage.com/zLibDll";
-
+CPL_UNUSED static const char zip_copyright[] =
+    " zip 1.01 Copyright 1998-2004 Gilles Vollant - http://www.winimage.com/zLibDll";
 
 #define SIZEDATA_INDATABLOCK (4096-(4*4))
 
@@ -304,8 +303,8 @@ static void ziplocal_putValue_inmemory (void *dest, uLong x, int nbByte)
 /****************************************************************************/
 
 
-static uLong ziplocal_TmzDateToDosDate(const tm_zip *ptm,
-                                      CPL_UNUSED uLong dosDate)
+static uLong ziplocal_TmzDateToDosDate( const tm_zip *ptm,
+                                        uLong /* dosDate */ )
 {
     uLong year = (uLong)ptm->tm_year;
     if (year>1980)
@@ -653,7 +652,12 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     int memLevel,
     int strategy,
     const char* password,
-    CPL_UNUSED uLong crcForCrypting )
+#ifdef NOCRYPT
+    uLong /* crcForCrypting */
+#else
+    uLong crcForCrypting
+#endif
+ )
 {
     zip_internal* zi;
     uInt size_filename;
@@ -820,7 +824,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
         if (err==Z_OK)
             zi->ci.stream_initialised = 1;
     }
-#    ifndef NOCRYPT
+#ifndef NOCRYPT
     zi->ci.crypt_header_size = 0;
     if ((err==Z_OK) && (password != NULL))
     {
@@ -836,7 +840,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
         if (ZWRITE(zi->z_filefunc,zi->filestream,bufHead,sizeHead) != sizeHead)
                 err = ZIP_ERRNO;
     }
-#    endif
+#endif
 
     if (err==Z_OK)
         zi->in_opened_file_inzip = 1;

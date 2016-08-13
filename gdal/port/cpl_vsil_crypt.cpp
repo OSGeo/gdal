@@ -1898,17 +1898,17 @@ class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler
 public:
     VSIDummyCryptFilesystemHandler() {}
 
-    virtual VSIVirtualHandle *Open( CPL_UNUSED const char *pszFilename,
-                                    CPL_UNUSED const char *pszAccess,
-                                    bool)
+    virtual VSIVirtualHandle *Open( const char * /* pszFilename */,
+                                    const char * /* pszAccess */,
+                                    bool /* bSetError */ )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);
         return NULL;
     }
 
-    virtual int Stat( CPL_UNUSED const char *pszFilename,
-                      CPL_UNUSED VSIStatBufL *pStatBuf, CPL_UNUSED int nFlags )
+    virtual int Stat( const char * /* pszFilename */,
+                      VSIStatBufL * /*pStatBuf */, int /* nFlags */ )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);
@@ -1921,9 +1921,9 @@ void VSIInstallCryptFileHandler(void)
     VSIFileManager::InstallHandler( VSICRYPT_PREFIX, new VSIDummyCryptFilesystemHandler );
 }
 
-void VSISetCryptKey(CPL_UNUSED const GByte* pabyKey, CPL_UNUSED int nKeySize)
+void VSISetCryptKey( const GByte* /* pabyKey */, int /* nKeySize */ )
 {
-    /* not supported */
+    // Not supported.
 }
 
 #endif /* HAVE_CRYPTOPP */
