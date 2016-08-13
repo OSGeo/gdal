@@ -104,6 +104,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
     OGRGeometry* poFinalGeom = (OGRGeometry *)
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oGC,
                                   TRUE, TRUE, 0.0000001, &eErr );
+
     if( eErr != OGRERR_NONE )
     {
         delete poFinalGeom;
@@ -450,8 +451,8 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
     char szLineBuf[257];
     DXFSmoothPolyline oSmoothPolyline;
     double dfBulge = 0.0;
-    double dfX = 0.0, dfY = 0.0;
-    int bHaveX = FALSE, bHaveY = FALSE;
+    double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    int bHaveX = FALSE, bHaveY = FALSE, bHaveZ = FALSE;
     int bIsClosed = FALSE;
     int nVertexCount = -1;
     int bHaveBulges = FALSE;
@@ -481,39 +482,40 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
           case 10:
             if( bHaveX && bHaveY )
             {
-                oSmoothPolyline.AddPoint(dfX, dfY, 0.0, dfBulge);
+                oSmoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
                 dfBulge = 0.0;
                 bHaveY = FALSE;
+                dfZ = 0.0;
+                bHaveZ = FALSE;
             }
             dfX = CPLAtof(szLineBuf);
             bHaveX = TRUE;
             break;
 
           case 20:
-            if( bHaveX && bHaveY )
-            {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
-                dfBulge = 0.0;
-                bHaveX = bHaveY = FALSE;
-            }
             dfY = CPLAtof(szLineBuf);
             bHaveY = TRUE;
-            if( bHaveX && bHaveY && !bHaveBulges )
-            {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
-                dfBulge = 0.0;
-                bHaveX = bHaveY = FALSE;
-            }
+            break;
+
+          case 30:
+            if (bHaveZ == FALSE) {}
+            dfZ = CPLAtof(szLineBuf);
+            bHaveZ = TRUE;
             break;
 
           case 42:
             dfBulge = CPLAtof(szLineBuf);
+            bHaveBulges = TRUE;
             if( bHaveX && bHaveY )
             {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
+                if (bHaveBulges) {} 
+                oSmoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
                 dfBulge = 0.0;
                 bHaveX = bHaveY = FALSE;
+                dfZ = 0.0;
+                bHaveZ = FALSE;
             }
+            bHaveBulges = FALSE;
             break;
 
           default:
@@ -526,11 +528,11 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
         return OGRERR_FAILURE;
     }
 
-    if( nCode != 10 && nCode != 20 && nCode != 42 )
+    if( nCode != 10 && nCode != 20 && nCode != 30 && nCode != 42 )
         poDS->UnreadValue();
 
     if( bHaveX && bHaveY )
-        oSmoothPolyline.AddPoint(dfX, dfY, 0.0, dfBulge);
+        oSmoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
 
     if( bIsClosed )
         oSmoothPolyline.Close();
