@@ -280,7 +280,8 @@ public:
 
     virtual     ~HFAEntry();
 
-    static HFAEntry*  BuildEntryFromMIFObject( HFAEntry *poContainer, const char *pszMIFObjectPath ) CPL_WARN_UNUSED_RESULT;
+    static HFAEntry*  BuildEntryFromMIFObject( HFAEntry *poContainer,
+                                               const char *pszMIFObjectPath ) CPL_WARN_UNUSED_RESULT;
 
     CPLErr      RemoveAndDestroy();
 
