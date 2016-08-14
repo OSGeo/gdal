@@ -75,13 +75,21 @@ int main( int argc, char ** argv )
     for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i],"-dd") )
-            bDumpDict = TRUE;
+        {
+            bDumpDict = true;
+        }
         else if( EQUAL(argv[i],"-dt") )
-            bDumpTree = TRUE;
+        {
+            bDumpTree = true;
+        }
         else if( EQUAL(argv[i],"-dr") )
-            bRastReport = TRUE;
+        {
+            bRastReport = true;
+        }
         else if( pszFilename == NULL )
+        {
             pszFilename = argv[i];
+        }
         else
         {
             Usage();
@@ -125,7 +133,9 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Dump indirectly collected data about bands.                     */
 /* -------------------------------------------------------------------- */
-    int nXSize, nYSize, nBands;
+    int nXSize = 0;
+    int nYSize = 0;
+    int nBands = 0;
     HFAGetRasterInfo( hHFA, &nXSize, &nYSize, &nBands );
 
     if( bRastReport )
@@ -135,13 +145,13 @@ int main( int argc, char ** argv )
         for( int i = 1; i <= nBands; i++ )
         {
             EPTType eDataType;
-            int nBlockXSize;
-            int nBlockYSize;
-            int nCompressionType;
+            int nBlockXSize = 0;
+            int nBlockYSize = 0;
+            int nCompressionType = 0;
 
             HFAGetBandInfo( hHFA, i, &eDataType, &nBlockXSize, &nBlockYSize,
                             &nCompressionType );
-            int nOverviews = HFAGetOverviewCount( hHFA, i );
+            const int nOverviews = HFAGetOverviewCount( hHFA, i );
 
             printf( "Band %d: %dx%d tiles, type = %d\n",
                     i, nBlockXSize, nBlockYSize, eDataType );
@@ -155,8 +165,12 @@ int main( int argc, char ** argv )
                         nXSize, nYSize, nBlockXSize, nBlockYSize );
             }
 
-            int nColors;
-            double *padfRed, *padfGreen, *padfBlue, *padfAlpha, *padfBins;
+            int nColors = 0;
+            double *padfRed = NULL;
+            double *padfGreen = NULL;
+            double *padfBlue = NULL;
+            double *padfAlpha = NULL;
+            double *padfBins = NULL;
             if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen,
                            &padfBlue, &padfAlpha, &padfBins )
                 == CE_None )
@@ -164,7 +178,9 @@ int main( int argc, char ** argv )
                 for( int j = 0; j < nColors; j++ )
                 {
                     printf( "PCT[%d] = %f,%f,%f %f\n",
-                            (padfBins != NULL) ? (int) padfBins[j] : j,
+                            (padfBins != NULL)
+                            ? static_cast<int>(padfBins[j])
+                            : j,
                             padfRed[j], padfGreen[j],
                             padfBlue[j], padfAlpha[j]);
                 }
@@ -188,7 +204,9 @@ int main( int argc, char ** argv )
                         poStats->GetDoubleField( "stddev" ) );
             }
             else
+            {
                 printf( "   No Statistics found.\n" );
+            }
         }
 
 /* -------------------------------------------------------------------- */

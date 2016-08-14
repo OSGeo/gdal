@@ -1003,22 +1003,25 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           memcpy( &dfNumber, pabyData + nIndexValue*8, 8 );
           HFAStandard( 8, &dfNumber );
           dfDoubleRet = dfNumber;
-          nIntRet = (int) dfNumber;
+          nIntRet = static_cast<int>(dfNumber);
       }
       break;
 
       case 'b':
       {
-          GInt32 nRows, nColumns;
-          GInt16 nBaseItemType;
 
           if( nDataSize < 12 )
               return FALSE;
 
+          GInt32 nRows = 0;
           memcpy( &nRows, pabyData, 4 );
           HFAStandard( 4, &nRows );
+
+          GInt32 nColumns = 0;
           memcpy( &nColumns, pabyData+4, 4 );
           HFAStandard( 4, &nColumns );
+
+          GInt16 nBaseItemType = 0;
           memcpy( &nBaseItemType, pabyData+8, 2 );
           HFAStandard( 2, &nBaseItemType );
           // We ignore the 2 byte objecttype value.
@@ -1047,7 +1050,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_u1 )
           {
-              if (nIndexValue*8 >= nDataSize)
+              if( nIndexValue*8 >= nDataSize )
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                   return FALSE;
@@ -1066,9 +1069,8 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_u2 )
           {
-              int nBitOffset = nIndexValue & 0x3;
-              int nByteOffset = nIndexValue >> 2;
-              int nMask = 0x3;
+              const int nBitOffset = nIndexValue & 0x3;
+              const int nByteOffset = nIndexValue >> 2;
 
               if (nByteOffset >= nDataSize)
               {
@@ -1076,14 +1078,14 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                   return FALSE;
               }
 
+              const int nMask = 0x3;
               nIntRet = (pabyData[nByteOffset] >> nBitOffset) & nMask;
               dfDoubleRet = nIntRet;
           }
           else if( nBaseItemType == EPT_u4 )
           {
-              int nBitOffset = nIndexValue & 0x7;
-              int nByteOffset = nIndexValue >> 3;
-              int nMask = 0x7;
+              const int nBitOffset = nIndexValue & 0x7;
+              const int nByteOffset = nIndexValue >> 3;
 
               if (nByteOffset >= nDataSize)
               {
@@ -1091,6 +1093,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                   return FALSE;
               }
 
+              const int nMask = 0x7;
               nIntRet = (pabyData[nByteOffset] >> nBitOffset) & nMask;
               dfDoubleRet = nIntRet;
           }
@@ -1116,12 +1119,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_s16 )
           {
-              GInt16 nValue;
               if (nIndexValue*2 + 2 > nDataSize)
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                   return FALSE;
               }
+              GInt16 nValue = 0;
               memcpy( &nValue, pabyData + 2*nIndexValue, 2 );
               HFAStandard( 2, &nValue );
 
@@ -1130,12 +1133,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_u16 )
           {
-              GUInt16 nValue;
               if (nIndexValue*2 + 2 > nDataSize)
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                   return FALSE;
               }
+              GUInt16 nValue = 0;
               memcpy( &nValue, pabyData + 2*nIndexValue, 2 );
               HFAStandard( 2, &nValue );
 
@@ -1144,12 +1147,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_s32 )
           {
-              GInt32 nValue;
               if (nIndexValue*4 + 4 > nDataSize)
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                   return FALSE;
               }
+              GInt32 nValue = 0;
               memcpy( &nValue, pabyData + 4*nIndexValue, 4 );
               HFAStandard( 4, &nValue );
 
@@ -1158,12 +1161,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_u32 )
           {
-              GUInt32 nValue;
               if (nIndexValue*4 + 4 > nDataSize)
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                   return FALSE;
               }
+              GUInt32 nValue = 0;
               memcpy( &nValue, pabyData + 4*nIndexValue, 4 );
               HFAStandard( 4, &nValue );
 
@@ -1172,12 +1175,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_f32 )
           {
-              float fValue;
-              if (nIndexValue*4 + 4 > nDataSize)
+              if( nIndexValue*4 + 4 > nDataSize )
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                   return FALSE;
               }
+              float fValue = 0.0f;
               memcpy( &fValue, pabyData + 4*nIndexValue, 4 );
               HFAStandard( 4, &fValue );
 
@@ -1186,12 +1189,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_f64 )
           {
-              double dfValue;
-              if (nIndexValue*8 + 8 > nDataSize)
+              if( nIndexValue*8 + 8 > nDataSize )
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                   return FALSE;
               }
+              double dfValue = 0.0;
               memcpy( &dfValue, pabyData+8*nIndexValue, 8 );
               HFAStandard( 8, &dfValue );
 
@@ -1201,11 +1204,12 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
               else if( dfDoubleRet < INT_MIN )
                   nIntRet = INT_MIN;
               else
-                  nIntRet = (int) dfDoubleRet;
+                  nIntRet = static_cast<int>(dfDoubleRet);
           }
           else
           {
-              CPLError(CE_Failure, CPLE_AppDefined, "Unknown base item type : %d", nBaseItemType);
+              CPLError(CE_Failure, CPLE_AppDefined,
+                       "Unknown base item type : %d", nBaseItemType);
               return FALSE;
           }
       }
@@ -1219,7 +1223,8 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
             if( poItemObjectType->nBytes > 0 )
             {
-                if (nIndexValue != 0 && poItemObjectType->nBytes > INT_MAX / nIndexValue)
+                if( nIndexValue != 0 &&
+                    poItemObjectType->nBytes > INT_MAX / nIndexValue )
                     return CE_Failure;
                 nExtraOffset = poItemObjectType->nBytes * nIndexValue;
             }
@@ -1229,11 +1234,14 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                      iIndexCounter < nIndexValue && nExtraOffset < nDataSize;
                      iIndexCounter++ )
                 {
-                    int nInc = poItemObjectType->GetInstBytes(pabyData + nExtraOffset,
-                                                              nDataSize - nExtraOffset);
+                    const int nInc =
+                        poItemObjectType->GetInstBytes(
+                            pabyData + nExtraOffset,
+                            nDataSize - nExtraOffset);
                     if (nInc < 0 || nExtraOffset > INT_MAX - nInc)
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Invalid return value");
                         return CE_Failure;
                     }
 
@@ -1270,12 +1278,13 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
     {
         if( pszStringRet == NULL )
         {
-            /* HFAEntry:: BuildEntryFromMIFObject() expects to have always */
-            /* 8 bytes before the data. In normal situations, it should */
-            /* not go here, but that can happen if the file is corrupted */
-            /* so reserve the first 8 bytes before the string to contain null bytes */
+            // HFAEntry:: BuildEntryFromMIFObject() expects to have always 8
+            // bytes before the data. In normal situations, it should not go
+            // here, but that can happen if the file is corrupted so reserve the
+            // first 8 bytes before the string to contain null bytes.
             memset(szNumberString, 0, 8);
-            CPLsnprintf( szNumberString + 8, sizeof(szNumberString) - 8, "%.14g", dfDoubleRet );
+            CPLsnprintf( szNumberString + 8, sizeof(szNumberString) - 8,
+                         "%.14g", dfDoubleRet );
             pszStringRet = szNumberString + 8;
         }
 
@@ -1324,7 +1333,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
 
     if( chPointer != '\0' )
     {
-        if (nDataSize < 4)
+        if( nDataSize < 4 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
             return -1;
@@ -1337,38 +1346,43 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
         nInstBytes += 8;
     }
 
-    if( chItemType == 'b' && nCount != 0 ) // BASEDATA
+    if( chItemType == 'b' && nCount != 0 )  // BASEDATA
     {
-        if (nDataSize - nInstBytes < 4+4+2)
+        if( nDataSize - nInstBytes < 4+4+2 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
             return -1;
         }
 
-        GInt32 nRows, nColumns;
-        GInt16 nBaseItemType;
-
+        GInt32 nRows = 0;
         memcpy( &nRows, pabyData, 4 );
         HFAStandard( 4, &nRows );
+        GInt32 nColumns = 0;
         memcpy( &nColumns, pabyData+4, 4 );
         HFAStandard( 4, &nColumns );
+        GInt16 nBaseItemType = 0;
         memcpy( &nBaseItemType, pabyData+8, 2 );
         HFAStandard( 2, &nBaseItemType );
         if( nBaseItemType < EPT_MIN || nBaseItemType > EPT_MAX )
             return -1;
+
         EPTType eBaseItemType = static_cast<EPTType>(nBaseItemType);
 
         nInstBytes += 12;
 
-        if (nRows < 0 || nColumns < 0)
+        if( nRows < 0 || nColumns < 0 )
             return -1;
-        if (nColumns != 0 && nRows > INT_MAX / nColumns)
+        if( nColumns != 0 && nRows > INT_MAX / nColumns )
             return -1;
-        if( nRows != 0 && ((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) > INT_MAX / nRows )
+        if( nRows != 0 &&
+            ((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) > INT_MAX / nRows )
             return -1;
-        if (nColumns != 0 && ((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) * nRows > INT_MAX / nColumns)
+        if( nColumns != 0 &&
+            ((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) * nRows >
+            INT_MAX / nColumns )
             return -1;
-        if (((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) * nRows * nColumns > INT_MAX - nInstBytes)
+        if( ((HFAGetDataTypeBits(eBaseItemType) + 7) / 8) * nRows * nColumns >
+            INT_MAX - nInstBytes )
             return -1;
 
         nInstBytes +=
@@ -1376,9 +1390,11 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
     }
     else if( poItemObjectType == NULL )
     {
-        if (nCount != 0 && HFADictionary::GetItemSize(chItemType) > INT_MAX / nCount)
+        if( nCount != 0 &&
+            HFADictionary::GetItemSize(chItemType) > INT_MAX / nCount )
             return -1;
-        if( nCount * HFADictionary::GetItemSize(chItemType) > INT_MAX - nInstBytes )
+        if( nCount * HFADictionary::GetItemSize(chItemType) >
+            INT_MAX - nInstBytes )
             return -1;
         nInstBytes += nCount * HFADictionary::GetItemSize(chItemType);
     }
@@ -1418,15 +1434,16 @@ int HFAField::GetInstCount( GByte * pabyData, int nDataSize )
 {
     if( chPointer == '\0' )
         return nItemCount;
-    else if( chItemType == 'b' )
-    {
-        GInt32 nRows, nColumns;
 
+    if( chItemType == 'b' )
+    {
         if( nDataSize < 20 )
             return 0;
 
+        GInt32 nRows = 0;
         memcpy( &nRows, pabyData+8, 4 );
         HFAStandard( 4, &nRows );
+        GInt32 nColumns = 0;
         memcpy( &nColumns, pabyData+12, 4 );
         HFAStandard( 4, &nColumns );
 
@@ -1437,17 +1454,14 @@ int HFAField::GetInstCount( GByte * pabyData, int nDataSize )
 
         return nRows * nColumns;
     }
-    else
-    {
-        GInt32 nCount;
 
-        if( nDataSize < 4 )
-            return 0;
+    if( nDataSize < 4 )
+        return 0;
 
-        memcpy( &nCount, pabyData, 4 );
-        HFAStandard( 4, &nCount );
-        return nCount;
-    }
+    GInt32 nCount = 0;
+    memcpy( &nCount, pabyData, 4 );
+    HFAStandard( 4, &nCount );
+    return nCount;
 }
 
 /************************************************************************/
@@ -1459,11 +1473,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
                            const char *pszPrefix )
 
 {
-    int iEntry, nEntries;
-    void *pReturn;
-    char szLongFieldName[256];
-
-    nEntries = GetInstCount( pabyData, nDataSize );
+    const int nEntries = GetInstCount( pabyData, nDataSize );
 
 /* -------------------------------------------------------------------- */
 /*      Special case for arrays of chars or uchars which are printed    */
@@ -1471,12 +1481,14 @@ void HFAField::DumpInstValue( FILE *fpOut,
 /* -------------------------------------------------------------------- */
     if( (chItemType == 'c' || chItemType == 'C') && nEntries > 0 )
     {
+        void *pReturn = NULL;
         if( ExtractInstValue( NULL, 0,
                               pabyData, nDataOffset, nDataSize,
                               's', &pReturn ) )
-            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = `%s'\n",
-                        pszPrefix, pszFieldName,
-                        (char *) pReturn ));
+            CPL_IGNORE_RET_VAL(
+                VSIFPrintf( fpOut, "%s%s = `%s'\n",
+                            pszPrefix, pszFieldName,
+                            static_cast<char *>(pReturn) ));
         else
             CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = (access failed)\n",
                         pszPrefix, pszFieldName ));
@@ -1494,7 +1506,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
         const bool bSuccess = CPL_TO_BOOL(
             ExtractInstValue( NULL, -3, pabyData, nDataOffset,
                               nDataSize, 'i', &nDataType ));
-        if (bSuccess)
+        if( bSuccess )
         {
             int nColumns = 0;
             ExtractInstValue( NULL, -2, pabyData, nDataOffset,
@@ -1520,13 +1532,17 @@ void HFAField::DumpInstValue( FILE *fpOut,
 /* -------------------------------------------------------------------- */
 /*      Dump each entry in the field array.                             */
 /* -------------------------------------------------------------------- */
-    for( iEntry = 0; iEntry < MIN(MAX_ENTRY_REPORT,nEntries); iEntry++ )
+    void *pReturn = NULL;
+
+    for( int iEntry = 0; iEntry < MIN(MAX_ENTRY_REPORT,nEntries); iEntry++ )
     {
         if( nEntries == 1 )
-            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = ", pszPrefix, pszFieldName ));
+            CPL_IGNORE_RET_VAL(
+                VSIFPrintf( fpOut, "%s%s = ", pszPrefix, pszFieldName ));
         else
-            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s[%d] = ",
-                        pszPrefix, pszFieldName, iEntry ));
+            CPL_IGNORE_RET_VAL(
+                VSIFPrintf( fpOut, "%s%s[%d] = ",
+                            pszPrefix, pszFieldName, iEntry ));
 
         switch( chItemType )
         {
@@ -1550,9 +1566,11 @@ void HFAField::DumpInstValue( FILE *fpOut,
               if( ExtractInstValue( NULL, iEntry,
                                     pabyData, nDataOffset, nDataSize,
                                     'd', &dfValue ) )
-                  CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%.15g\n", pszPrefix, dfValue ));
+                  CPL_IGNORE_RET_VAL(
+                      VSIFPrintf( fpOut, "%s%.15g\n", pszPrefix, dfValue ));
               else
-                  CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s(access failed)\n", pszPrefix ));
+                  CPL_IGNORE_RET_VAL(
+                      VSIFPrintf( fpOut, "%s(access failed)\n", pszPrefix ));
           }
           break;
 
@@ -1560,7 +1578,8 @@ void HFAField::DumpInstValue( FILE *fpOut,
             if( ExtractInstValue( NULL, iEntry,
                                   pabyData, nDataOffset, nDataSize,
                                   's', &pReturn ) )
-                CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s\n", (char *) pReturn ));
+                CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s\n",
+                                               (char *) pReturn ));
             else
                 CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "(access failed)\n" ));
             break;
@@ -1574,13 +1593,14 @@ void HFAField::DumpInstValue( FILE *fpOut,
             }
             else
             {
-                int nByteOffset;
-
                 CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "\n" ));
 
-                nByteOffset = static_cast<int>(((GByte *) pReturn) - pabyData);
+                const int nByteOffset =
+                    static_cast<int>(((GByte *) pReturn) - pabyData);
 
-                snprintf( szLongFieldName, sizeof(szLongFieldName), "%s    ", pszPrefix );
+                char szLongFieldName[256] = {};
+                snprintf( szLongFieldName, sizeof(szLongFieldName),
+                          "%s    ", pszPrefix );
 
                 if( poItemObjectType )
                     poItemObjectType->DumpInstValue( fpOut,
@@ -1593,7 +1613,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
 
           default:
           {
-              GInt32 nIntValue;
+              GInt32 nIntValue = 0;
 
               if( ExtractInstValue( NULL, iEntry,
                                     pabyData, nDataOffset, nDataSize,

@@ -998,15 +998,25 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             }
             else
             {
-                if(VSIFSeekL( hHFA->fp, aoFields[iField].nDataOffset + (static_cast<vsi_l_offset>(iStartRow)*aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+                if( VSIFSeekL(
+                       hHFA->fp,
+                       aoFields[iField].nDataOffset +
+                       (static_cast<vsi_l_offset>(iStartRow) *
+                        aoFields[iField].nElementSize), SEEK_SET ) != 0 )
+                {
                     return CE_Failure;
+                }
 
                 if( eRWFlag == GF_Read )
                 {
-                    if ((int)VSIFReadL(pdfData, sizeof(double), iLength, hHFA->fp ) != iLength)
+                    if( static_cast<int>(
+                           VSIFReadL(pdfData, sizeof(double),
+                                     iLength, hHFA->fp )) != iLength )
                     {
-                        CPLError( CE_Failure, CPLE_AppDefined,
-                            "HFARasterAttributeTable::ValuesIO : Cannot read values");
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "HFARasterAttributeTable::ValuesIO: "
+                            "Cannot read values");
                         return CE_Failure;
                     }
 #ifdef CPL_MSB
@@ -1018,7 +1028,8 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 #ifdef CPL_MSB
                     GDALSwapWords( pdfData, 8, iLength, 8 );
 #endif
-                    // Note: HFAAllocateSpace now called by CreateColumn so space should exist
+                    // Note: HFAAllocateSpace now called by CreateColumn so
+                    // space should exist.
                     if((int)VSIFWriteL(pdfData, sizeof(double), iLength, hHFA->fp) != iLength)
                     {
                         CPLError( CE_Failure, CPLE_AppDefined,
