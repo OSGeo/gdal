@@ -258,6 +258,8 @@ inline void GDALCopy4Words(const Tin* pValueIn, Tout* const &pValueOut)
 // Needs SSE2
 #if defined(__x86_64) || defined(_M_X64)
 
+#include <emmintrin.h>
+
 static inline void GDALCopyXMMToInt32(const __m128i xmm, void* pDest)
 {
 #ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
@@ -277,9 +279,6 @@ static inline void GDALCopyXMMToInt64(const __m128i xmm, void* pDest)
     *(GIntBig*)pDest = _mm_cvtsi128_si64 (xmm);
 #endif
 }
-
-
-#include <emmintrin.h>
 
 #if __SSE4_1__
 #include <smmintrin.h>
