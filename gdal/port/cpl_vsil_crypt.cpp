@@ -186,7 +186,7 @@ typedef enum
  *
  * @see VSIInstallCryptFileHandler() for documentation on /vsicrypt/
  */
-void VSISetCryptKey(const GByte* pabyKey, int nKeySize)
+void VSISetCryptKey( const GByte* pabyKey, int nKeySize )
 {
     CPLAssert( (pabyKey != NULL && nKeySize != 0) ||
                (pabyKey == NULL && nKeySize == 0) );
@@ -216,7 +216,7 @@ void VSISetCryptKey(const GByte* pabyKey, int nKeySize)
 #undef CASE_ALG
 #define CASE_ALG(alg)   if( EQUAL(pszName, #alg) ) return ALG_##alg;
 
-static VSICryptAlg GetAlg(const char* pszName)
+static VSICryptAlg GetAlg( const char* pszName )
 {
     CASE_ALG(AES)
     CASE_ALG(Blowfish)
@@ -244,7 +244,7 @@ static VSICryptAlg GetAlg(const char* pszName)
     CASE_ALG(XTEA)
 
     CPLError(CE_Warning, CPLE_NotSupported,
-                "Unsupported cipher algorithm: %s. Using AES instead", pszName);
+             "Unsupported cipher algorithm: %s. Using AES instead", pszName);
     return ALG_AES;
 }
 
@@ -255,7 +255,7 @@ static VSICryptAlg GetAlg(const char* pszName)
 #undef CASE_ALG
 #define CASE_ALG(alg)   case ALG_##alg: return new CryptoPP::alg::Encryption();
 
-static CryptoPP::BlockCipher* GetEncBlockCipher(VSICryptAlg eAlg)
+static CryptoPP::BlockCipher* GetEncBlockCipher( VSICryptAlg eAlg )
 {
     switch( eAlg )
     {
@@ -300,7 +300,7 @@ static CryptoPP::BlockCipher* GetEncBlockCipher(VSICryptAlg eAlg)
 #undef CASE_ALG
 #define CASE_ALG(alg)   case ALG_##alg: return new CryptoPP::alg::Decryption();
 
-static CryptoPP::BlockCipher* GetDecBlockCipher(VSICryptAlg eAlg)
+static CryptoPP::BlockCipher* GetDecBlockCipher( VSICryptAlg eAlg )
 {
     switch( eAlg )
     {
@@ -342,7 +342,7 @@ static CryptoPP::BlockCipher* GetDecBlockCipher(VSICryptAlg eAlg)
 /*                             GetMode()                                */
 /************************************************************************/
 
-static VSICryptMode GetMode(const char* pszName)
+static VSICryptMode GetMode( const char* pszName )
 {
     if( EQUAL(pszName, "CBC") )
         return MODE_CBC;
@@ -356,7 +356,7 @@ static VSICryptMode GetMode(const char* pszName)
         return MODE_CBC_CTS;
 
     CPLError(CE_Warning, CPLE_NotSupported,
-                "Unsupported cipher block mode: %s. Using CBC instead", pszName);
+             "Unsupported cipher block mode: %s. Using CBC instead", pszName);
     return MODE_CBC;
 }
 
@@ -378,8 +378,9 @@ class VSICryptFileHeader
                                bAddKeyCheck(false),
                                nPayloadFileSize(0)  {}
 
-        int ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKey);
-        int WriteToFile(VSIVirtualHandle* fp, CryptoPP::BlockCipher* poEncCipher);
+        int ReadFromFile( VSIVirtualHandle* fp, const CPLString& osKey );
+        int WriteToFile( VSIVirtualHandle* fp,
+                         CryptoPP::BlockCipher* poEncCipher );
 
         GUInt16 nHeaderSize;
         GByte nMajorVersion;
@@ -721,13 +722,14 @@ class VSICryptFileHandle CPL_FINAL : public VSIVirtualHandle
         bool             FlushDirty();
 
   public:
-    VSICryptFileHandle(CPLString osBaseFilename,
-                       VSIVirtualHandle* poBaseHandle,
-                       VSICryptFileHeader* poHeader,
-                       int nPerms);
+    VSICryptFileHandle( CPLString osBaseFilename,
+                        VSIVirtualHandle* poBaseHandle,
+                        VSICryptFileHeader* poHeader,
+                        int nPerms );
     virtual ~VSICryptFileHandle();
 
-    int                  Init(const CPLString& osKey, int bWriteHeader = FALSE);
+    int                  Init( const CPLString& osKey,
+                               bool bWriteHeader = false );
 
     virtual int          Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -743,10 +745,10 @@ class VSICryptFileHandle CPL_FINAL : public VSIVirtualHandle
 /*                          VSICryptFileHandle()                        */
 /************************************************************************/
 
-VSICryptFileHandle::VSICryptFileHandle(CPLString osBaseFilenameIn,
-                                       VSIVirtualHandle* poBaseHandleIn,
-                                       VSICryptFileHeader* poHeaderIn,
-                                       int nPermsIn) :
+VSICryptFileHandle::VSICryptFileHandle( CPLString osBaseFilenameIn,
+                                        VSIVirtualHandle* poBaseHandleIn,
+                                        VSICryptFileHeader* poHeaderIn,
+                                        int nPermsIn ) :
     osBaseFilename(osBaseFilenameIn),
     nPerms(nPermsIn),
     poBaseHandle(poBaseHandleIn),
@@ -781,7 +783,7 @@ VSICryptFileHandle::~VSICryptFileHandle()
 /*                               Init()                                 */
 /************************************************************************/
 
-int VSICryptFileHandle::Init(const CPLString& osKey, int bWriteHeader)
+int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
 {
     poEncCipher = GetEncBlockCipher(poHeader->eAlg);
     if( poEncCipher == NULL )
@@ -1456,7 +1458,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
 
         VSICryptFileHandle* poHandle = new VSICryptFileHandle( osFilename, fpBase, poHeader,
                     strchr(pszAccess, '+') ? VSICRYPT_READ | VSICRYPT_WRITE : VSICRYPT_READ);
-        if( !poHandle->Init(osKey, FALSE) )
+        if( !poHandle->Init(osKey, false) )
         {
             memset((void*)osKey.c_str(), 0, osKey.size());
             delete poHandle;
@@ -1574,7 +1576,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
 
         VSICryptFileHandle* poHandle = new VSICryptFileHandle( osFilename, fpBase, poHeader,
                     strchr(pszAccess, '+') ? VSICRYPT_READ | VSICRYPT_WRITE : VSICRYPT_WRITE);
-        if( !poHandle->Init(osKey, TRUE) )
+        if( !poHandle->Init(osKey, true) )
         {
             memset((void*)osKey.c_str(), 0, osKey.size());
             delete poHandle;
