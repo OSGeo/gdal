@@ -95,7 +95,7 @@ vsipreload.so: ../../gdal/port/vsipreload.cpp
 
 clean:
 	$(RM) $(PROGS)
-	$(RM) *.o
+	$(RM) $(OBJ)
 	$(RM) *.a
 	$(RM) *.out
 	$(RM) *~
