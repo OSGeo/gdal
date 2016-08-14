@@ -1,7 +1,6 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  GDAL Gridding API.
+ * Project:  CPL - Common Portability Library
  * Purpose:  Prototypes, and definitions for of CPU features detection
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *

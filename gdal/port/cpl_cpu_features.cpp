@@ -1,7 +1,6 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  GDAL Gridding API.
+ * Project:  CPL - Common Portability Library
  * Purpose:  CPU features detection
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
@@ -30,6 +29,8 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_cpu_features.h"
+
+CPL_CVSID("$Id$");
 
 //! @cond Doxygen_Suppress
 
