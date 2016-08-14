@@ -431,11 +431,6 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
         fi
     fi
 
-    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
-        CFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CFLAGS"
-        CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
-    fi
-
     dnl On Solaris, the presence of SSE instructions is flagged in the binary
     dnl and prevent it to run on non SSE hardware even if the instructions are
     dnl not executed. So if the user did not explicitly requires SSE, test that
@@ -458,6 +453,11 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
            fi
            ;;
        esac
+    fi
+
+    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
     rm -f detectsse*
@@ -502,11 +502,6 @@ if test "$with_ssse3" = "yes" -o "$with_ssse3" = ""; then
         fi
     fi
 
-    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
-        CFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CFLAGS"
-        CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
-    fi
-
     dnl On Solaris, the presence of SSSE3 instructions is flagged in the binary
     dnl and prevent it to run on non SSSE3 hardware even if the instructions are
     dnl not executed. So if the user did not explicitly requires SSSE3, test that
@@ -529,6 +524,11 @@ if test "$with_ssse3" = "yes" -o "$with_ssse3" = ""; then
            fi
            ;;
        esac
+    fi
+
+    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
     rm -f detectssse3*
@@ -578,11 +578,6 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
         fi
     fi
 
-    if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
-        CFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CFLAGS"
-        CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
-    fi
-
     dnl On Solaris, the presence of AVX instructions is flagged in the binary
     dnl and prevent it to run on non AVX hardware even if the instructions are
     dnl not executed. So if the user did not explicitly requires AVX, test that
@@ -605,6 +600,11 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
            fi
            ;;
        esac
+    fi
+
+    if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
     rm -f detectavx*
