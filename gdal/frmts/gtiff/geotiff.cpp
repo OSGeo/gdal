@@ -7316,6 +7316,38 @@ bool GTiffDataset::HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
                                   int nLineStride, int nComponents )
 {
     const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+
+    // In the case where the nodata is 0, we can compare several bytes at
+    // once. Select the largest natural integer type for the architecture
+#if SIZEOF_VOIDP == 8 || defined(__x86_64__)
+    // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
+    typedef GUIntBig WordType;
+#else
+    typedef unsigned int WordType;
+#endif
+    if( (!bNoDataSet || dfNoDataValue == 0.0) && nWidth == nLineStride
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        && CPL_IS_ALIGNED(pBuffer, sizeof(WordType))
+#endif
+        )
+    {
+        const GByte* pabyBuffer = reinterpret_cast<const GByte*>(pBuffer);
+        const size_t nSize = static_cast<size_t>(nWidth) * nHeight *
+                             nComponents * GDALGetDataTypeSizeBytes(eDT);
+        size_t i = 0;
+        for( ; i + sizeof(WordType) - 1 < nSize; i += sizeof(WordType) )
+        {
+            if( *(reinterpret_cast<const WordType*>(pabyBuffer + i)) )
+                return false;
+        }
+        for( ; i < nSize; i++ )
+        {
+            if( pabyBuffer[i] )
+                return false;
+        }
+        return true;
+    }
+
     if( nBitsPerSample == 8 )
     {
         if( nSampleFormat == SAMPLEFORMAT_INT )
