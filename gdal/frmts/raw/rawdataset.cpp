@@ -306,7 +306,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ " CPL_FRMT_GUIB ".",
-                  iLine, nImgOffset + (vsi_l_offset)iLine * nLineOffset );
+                  iLine, nReadStart );
             return CE_Failure;
         }
         else
