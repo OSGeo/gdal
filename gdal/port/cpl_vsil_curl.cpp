@@ -247,7 +247,7 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
     std::map<CPLString, CachedFileProp*>   cacheFileSize;
     std::map<CPLString, CachedDirList*>        cacheDirList;
 
-    int             bUseCacheDisk;
+    bool            bUseCacheDisk;
 
     /* Per-thread Curl connection cache */
     std::map<GIntBig, CachedConnection*> mapConnections;
@@ -2027,7 +2027,7 @@ const CachedRegion* VSICurlFilesystemHandler::GetRegion(const char* pszURL,
             return psRegion;
         }
     }
-    if (bUseCacheDisk)
+    if( bUseCacheDisk )
         return GetRegionFromCacheDisk(pszURL, nFileOffsetStart);
     return NULL;
 }
@@ -2069,7 +2069,7 @@ void  VSICurlFilesystemHandler::AddRegion(const char* pszURL,
     if (nSize)
         memcpy(psRegion->pData, pData, nSize);
 
-    if (bUseCacheDisk)
+    if( bUseCacheDisk )
         AddRegionToCacheDisk(psRegion);
 }
 
