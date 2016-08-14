@@ -626,7 +626,7 @@ const char *CPLReadLineL( VSILFILE * fp )
  */
 
 const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
-                           CPL_UNUSED const char * const * papszOptions )
+                           const char * const * /* papszOptions */ )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1373,7 +1373,7 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
  */
 
 int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
-                    double dfValue, CPL_UNUSED const char * pszLocale )
+                    double dfValue, const char * /* pszLocale */ )
 {
     if ( !pszBuffer )
         return 0;
