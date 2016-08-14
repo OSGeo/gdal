@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id: tut_gdal.cpp,v 1.3 2006/12/06 15:39:13 mloskot Exp $
+// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  TUT: C++ Unit Test Framework extensions for GDAL Test Suite
