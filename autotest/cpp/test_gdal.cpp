@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id: test_gdal.cpp,v 1.4 2006/12/06 15:39:13 mloskot Exp $
+// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general GDAL features.

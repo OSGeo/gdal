@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id: test_gdal_aaigrid.cpp,v 1.3 2006/12/06 15:39:13 mloskot Exp $
+// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test Arc/Info ASCII Grid support. Ported from gdrivers/aaigrid.py.
