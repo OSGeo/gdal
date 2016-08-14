@@ -16,12 +16,12 @@ EXTRAFLAGS = $(EXTRAFLAGS) $(EXPAT_INCLUDE) -DHAVE_EXPAT
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogrsurface.obj ogr_api.obj \
-		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
+		ogrlinestring.obj ogrtriangle.obj ogrpolygon.obj ogrlinearring.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj ogr_opt.obj \
 		ogrmultipoint.obj ogrcircularstring.obj ogrcompoundcurve.obj \
-		ogrcurvepolygon.obj ogrcurvecollection.obj ogrmultisurface.obj \
-		ogrmulticurve.obj ogrfeature.obj ogrfeaturedefn.obj \
+		ogrcurvepolygon.obj ogrtriangulatedsurface.obj ogrcurvecollection.obj ogrmultisurface.obj \
+		ogrmulticurve.obj ogrpolyhedralsurface.obj ogrfeature.obj ogrfeaturedefn.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
 		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj \
 		ogrfeaturestyle.obj ogr_srs_esri.obj ogrfeaturequery.obj \
@@ -34,7 +34,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogrsurface.obj ogr_ap
 		ogrgeomediageometry.obj ogr_geocoding.obj osr_cs_wkt.obj \
 		osr_cs_wkt_parser.obj ogrgeomfielddefn.obj ograpispy.obj
 
-default:        ogr.lib 
+default:        ogr.lib
 
 ogrsf_frmts\ogrsf_frmts.lib:
 
