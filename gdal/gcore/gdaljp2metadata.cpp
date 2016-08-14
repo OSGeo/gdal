@@ -1981,10 +1981,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             }
                         }
 
-                        int bGDALMetadata = FALSE;
+                        bool bGDALMetadata = false;
                         json_object* poGDALMetadata = json_object_object_get(poMetadata, "gdal_metadata");
                         if( poGDALMetadata && json_object_get_type(poGDALMetadata) == json_type_boolean )
-                            bGDALMetadata = json_object_get_boolean(poGDALMetadata);
+                            bGDALMetadata = CPL_TO_BOOL(
+                                json_object_get_boolean(poGDALMetadata));
 
                         if( pszFile != NULL || pszContent != NULL ||
                             (pszTemplate != NULL && pszSource != NULL) ||
