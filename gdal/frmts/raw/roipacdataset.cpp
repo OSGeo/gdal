@@ -376,6 +376,11 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
             }
         }
     }
+#ifdef CPL_LSB
+    const bool bNativeOrder = true;
+#else
+    const bool bNativeOrder = false;
+#endif
     poDS->nBands = nBands;
     for( int b = 0; b < nBands; b++ )
     {
@@ -383,7 +388,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
                        new ROIPACRasterBand( poDS, b + 1, poDS->fpImage,
                                              nBandOffset * b,
                                              nPixelOffset, nLineOffset,
-                                             eDataType, TRUE,
+                                             eDataType, bNativeOrder,
                                              TRUE, FALSE ) );
     }
 
