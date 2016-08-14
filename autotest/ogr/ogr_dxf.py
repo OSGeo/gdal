@@ -2316,7 +2316,6 @@ def ogr_dxf_34():
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,0 1,1 0,0 0))' ) )
 
-    # dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POLYGON ((0 0 0,0 1 0,1 1 0,0 0 1))' ) )
     lyr.CreateFeature( dst_feat )
     dst_feat = None
 
