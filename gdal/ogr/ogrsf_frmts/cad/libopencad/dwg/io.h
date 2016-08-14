@@ -96,13 +96,14 @@ inline void SwapEndianness ( T &&object, S &&size )
 // from here: http://stackoverflow.com/a/2611850
 template<unsigned long N>
 struct bin {
-    enum { value = (N%10)+2*bin<N/10>::value };
+    enum { value = (N % 8) + (bin<N / 8>::value << 1) };
 };
 
 template<>
 struct bin<0> {
     enum { value = 0 };
 };
+#define binary( n ) bin<0##n>::value
 
 static const int DWGCRC8Table[256] =
 {
