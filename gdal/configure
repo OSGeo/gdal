@@ -18635,11 +18635,6 @@ $as_echo "no" >&6; }
         fi
     fi
 
-    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
-        CFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CFLAGS"
-        CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
-    fi
-
                     if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
        case $host_os in
          solaris*)
@@ -18661,6 +18656,11 @@ $as_echo "no" >&6; }
            fi
            ;;
        esac
+    fi
+
+    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
     rm -f detectsse*
@@ -18712,11 +18712,6 @@ $as_echo "no" >&6; }
         fi
     fi
 
-    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
-        CFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CFLAGS"
-        CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
-    fi
-
                     if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
        case $host_os in
          solaris*)
@@ -18738,6 +18733,11 @@ $as_echo "no" >&6; }
            fi
            ;;
        esac
+    fi
+
+    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
     rm -f detectssse3*
@@ -18794,11 +18794,6 @@ $as_echo "no" >&6; }
         fi
     fi
 
-    if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
-        CFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CFLAGS"
-        CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
-    fi
-
                     if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
        case $host_os in
          solaris*)
@@ -18820,6 +18815,11 @@ $as_echo "no" >&6; }
            fi
            ;;
        esac
+    fi
+
+    if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
     rm -f detectavx*
