@@ -75,7 +75,7 @@ static bool CheckPoints( OGRLineString *poLine1, int iPoint1,
 /************************************************************************/
 
 static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
-                           int bReverse )
+                           bool bReverse )
 
 {
 /* -------------------------------------------------------------------- */
@@ -235,7 +235,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                && bWorkDone )
         {
             int iBestEdge = -1;
-            int bReverse = FALSE;
+            bool bReverse = false;
 
             bWorkDone = false;
             dfBestDist = dfTolerance;
@@ -259,14 +259,14 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                                 &dfBestDist) )
                 {
                     iBestEdge = iEdge;
-                    bReverse = FALSE;
+                    bReverse = false;
                 }
                 if( CheckPoints(poLine,poLine->getNumPoints()-1,
                                 poRing,poRing->getNumPoints()-1,
                                 &dfBestDist) )
                 {
                     iBestEdge = iEdge;
-                    bReverse = TRUE;
+                    bReverse = true;
                 }
 
                 // if we use exact comparison, jump now
