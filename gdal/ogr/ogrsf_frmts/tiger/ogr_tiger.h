@@ -559,7 +559,7 @@ class OGRTigerDataSource : public OGRDataSource
 
   public:
                         OGRTigerDataSource();
-                        ~OGRTigerDataSource();
+                        virtual ~OGRTigerDataSource();
 
     int                 GetWriteMode() { return bWriteMode; }
 
