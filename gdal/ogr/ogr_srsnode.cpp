@@ -502,7 +502,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
  *
  * @param ppszResult the resulting string is returned in this pointer.
- * 
+ *
  * @param nDepth depth of the node
  *
  * @return currently OGRERR_NONE is always returned, but the future it

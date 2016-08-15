@@ -147,7 +147,7 @@ static const int aoEllips[] =
 /************************************************************************/
 
 /** Import coordinate system from "Panorama" GIS projection definition.
- * 
+ *
  * See OGRSpatialReference::importFromPanorama()
  */
 
@@ -497,7 +497,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
 
 /** Export coordinate system in "Panorama" GIS projection definition.
- * 
+ *
  * See OGRSpatialReference::exportToPanorama()
  */
 

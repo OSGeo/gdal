@@ -1219,7 +1219,7 @@ void OGRGeometryCollection::swapXY()
 
 /** Returns whether a geometry of the specified geometry type can be a
  * member of this collection.
- * 
+ *
  * @param eSubType type of the potential member
  * @return TRUE or FALSE
  */

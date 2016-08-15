@@ -2134,7 +2134,7 @@ int OGR_G_IsRing( OGRGeometryH hGeom )
 /*                     OGRFromOGCGeomType()                             */
 /************************************************************************/
 
-/** Map OGCgeometry format type to corresponding OGR constants.   
+/** Map OGCgeometry format type to corresponding OGR constants.
  * @param pszGeomType POINT[ ][Z][M], LINESTRING[ ][Z][M], etc...
  * @return OGR constant.
  */
@@ -2728,7 +2728,7 @@ void OGRGeometry::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtx
 /************************************************************************/
 
 /** Returns a GEOSGeom object corresponding to the geometry.
- * 
+ *
  * @param hGEOSCtxt GEOS context
  * @return a GEOSGeom object corresponding to the geometry.
  */
@@ -4445,7 +4445,7 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
 
     if( hThisGeosGeom != NULL )
     {
-    	hOtherGeosGeom = GEOSGetCentroid_r( hGEOSCtxt, hThisGeosGeom );
+        hOtherGeosGeom = GEOSGetCentroid_r( hGEOSCtxt, hThisGeosGeom );
         GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
 
         if( hOtherGeosGeom == NULL )
@@ -4488,12 +4488,12 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
         delete poCentroidGeom;
 
         freeGEOSContext( hGEOSCtxt );
-    	return OGRERR_NONE;
+        return OGRERR_NONE;
     }
     else
     {
         freeGEOSContext( hGEOSCtxt );
-    	return OGRERR_FAILURE;
+        return OGRERR_FAILURE;
     }
 
 #endif /* HAVE_GEOS */
@@ -5109,9 +5109,9 @@ int OGRHasPreparedGeometrySupport()
 /************************************************************************/
 
 /** Creates a prepared geometry.
- * 
+ *
  * To free with OGRDestroyPreparedGeometry()
- * 
+ *
  * @param poGeom input geometry to prepare.
  * @return handle to a prepared geometry.
  */
