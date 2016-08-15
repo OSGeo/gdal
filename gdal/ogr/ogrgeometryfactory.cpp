@@ -1231,7 +1231,6 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                                    int *pbIsValidGeometry,
                                                    const char** papszOptions )
 {
-    int bUseFastVersion;
     int i, j;
     OGRGeometry* geom = NULL;
     OrganizePolygonMethod method = METHOD_NORMAL;
@@ -1251,6 +1250,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         return geom;
     }
 
+    bool bUseFastVersion = TRUE;
     if( CPLTestBool(CPLGetConfigOption("OGR_DEBUG_ORGANIZE_POLYGONS",
                                        "NO")) )
     {
@@ -1260,16 +1260,15 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         static int firstTime = 1;
         if (!haveGEOS() && firstTime)
         {
-            CPLDebug("OGR",
-                    "In OGR_DEBUG_ORGANIZE_POLYGONS mode, GDAL should be built with GEOS support enabled in order "
-                    "OGRGeometryFactory::organizePolygons to provide reliable results on complex polygons.");
+            CPLDebug(
+                "OGR",
+                "In OGR_DEBUG_ORGANIZE_POLYGONS mode, GDAL should be built "
+                "with GEOS support enabled in order "
+                "OGRGeometryFactory::organizePolygons to provide reliable "
+                "results on complex polygons.");
             firstTime = 0;
         }
         bUseFastVersion = !haveGEOS();
-    }
-    else
-    {
-        bUseFastVersion = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2267,7 +2266,7 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
     double dfDiffSpace = 360 - dfDateLineOffset;
 
     int i;
-    int bIs3D = poLS->getCoordinateDimension() == 3;
+    const bool bIs3D = poLS->getCoordinateDimension() == 3;
     OGRLineString* poNewLS = new OGRLineString();
     poMulti->addGeometryDirectly(poNewLS);
     for(i=0;i<poLS->getNumPoints();i++)
@@ -2372,7 +2371,7 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly, double dfDateLin
         OGRLineString* poLS = (iPart == 0) ? poPoly->getExteriorRing() :
                                              poPoly->getInteriorRing(iPart-1);
         bool bGoEast = false;
-        int bIs3D = poLS->getCoordinateDimension() == 3;
+        const bool bIs3D = poLS->getCoordinateDimension() == 3;
         for(i=1;i<poLS->getNumPoints();i++)
         {
             double dfX = poLS->getX(i);
@@ -3103,7 +3102,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         return poRet;
     }
 
-    int bIsCurve = OGR_GT_IsCurve(eType);
+    const bool bIsCurve = CPL_TO_BOOL(OGR_GT_IsCurve(eType));
     if( bIsCurve && eTargetType == wkbCompoundCurve )
     {
         return OGRCurve::CastToCompoundCurve((OGRCurve*)poGeom);
@@ -3598,7 +3597,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
         poLine->addPoint(x0, y0);
 
     bool bAddIntermediatePoint = false;
-    int bStealth = TRUE;
+    bool bStealth = true;
     for(const char* const* papszIter = papszOptions; papszIter && *papszIter; papszIter++)
     {
         char* pszKey = NULL;
@@ -3608,12 +3607,12 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
             if( EQUAL(pszValue, "YES") || EQUAL(pszValue, "TRUE") || EQUAL(pszValue, "ON") )
             {
                 bAddIntermediatePoint = true;
-                bStealth = FALSE;
+                bStealth = false;
             }
             else if( EQUAL(pszValue, "NO") || EQUAL(pszValue, "FALSE") || EQUAL(pszValue, "OFF") )
             {
                 bAddIntermediatePoint = false;
-                bStealth = FALSE;
+                bStealth = false;
             }
             else if( EQUAL(pszValue, "STEALTH") )
             {
@@ -3762,7 +3761,7 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
         (OGRGF_GetHiddenValue(p2.getX(), p2.getY()) << HIDDEN_ALPHA_HALF_WIDTH);
     bool bFoundFFFFFFFFPattern = false;
     bool bFoundReversedAlphaRatioRef = false;
-    int bValidAlphaRatio = (nAlphaRatioRef > 0 && nAlphaRatioRef < 0xFFFFFFFF);
+    bool bValidAlphaRatio = nAlphaRatioRef > 0 && nAlphaRatioRef < 0xFFFFFFFF;
     int nCountValidAlphaRatio = 1;
 
     double dfScale = MAX(1, R_1);
@@ -3943,7 +3942,7 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
                         "values across arc. Don't use it\n",
                         j, nAlphaRatioReversed);
 #endif
-                bValidAlphaRatio = FALSE;
+                bValidAlphaRatio = false;
             }
         }
 
@@ -3983,11 +3982,13 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
     if( j < i + 3 )
         return -1;
 
-    bValidAlphaRatio &= (bFoundFFFFFFFFPattern && bFoundReversedAlphaRatioRef );
+    bValidAlphaRatio &= bFoundFFFFFFFFPattern && bFoundReversedAlphaRatioRef;
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-    printf("bValidAlphaRatio=%d bFoundFFFFFFFFPattern=%d, bFoundReversedAlphaRatioRef=%d\n",
-            bValidAlphaRatio, bFoundFFFFFFFFPattern, bFoundReversedAlphaRatioRef);
+    printf("bValidAlphaRatio=%d bFoundFFFFFFFFPattern=%d, "
+           "bFoundReversedAlphaRatioRef=%d\n",
+           static_cast<int>(bValidAlphaRatio),
+           bFoundFFFFFFFFPattern, bFoundReversedAlphaRatioRef);
     printf("alpha0_1=%f dfLastValidAlpha=%f\n",
             alpha0_1, dfLastValidAlpha);
 #endif
@@ -4079,10 +4080,11 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
         /* A few rounding strategies in case the mid point was at "exact" coordinates */
         if( R_1 > 1e-5 )
         {
-            int bStartEndInteger = ( IS_ALMOST_INTEGER(p0.getX()) &&
-                                     IS_ALMOST_INTEGER(p0.getY()) &&
-                                     IS_ALMOST_INTEGER(poFinalPoint->getX()) &&
-                                     IS_ALMOST_INTEGER(poFinalPoint->getY()) );
+            const bool bStartEndInteger =
+                IS_ALMOST_INTEGER(p0.getX()) &&
+                IS_ALMOST_INTEGER(p0.getY()) &&
+                IS_ALMOST_INTEGER(poFinalPoint->getX()) &&
+                IS_ALMOST_INTEGER(poFinalPoint->getY());
             if( bStartEndInteger &&
                 fabs(dfXMid - floor(dfXMid+0.5)) / dfScale < 1e-4 &&
                 fabs(dfYMid - floor(dfYMid+0.5)) / dfScale < 1e-4 )

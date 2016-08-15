@@ -406,7 +406,7 @@ OGRErr OGRCurveCollection::exportToWkb( const OGRGeometry* poGeom,
     GUInt32 nGType = poGeom->getIsoGeometryType();
     if( eWkbVariant == wkbVariantPostGIS1 )
     {
-        int bIs3D = wkbHasZ((OGRwkbGeometryType)nGType);
+        const bool bIs3D = wkbHasZ(static_cast<OGRwkbGeometryType>(nGType));
         nGType = wkbFlatten(nGType);
         if( nGType == wkbCurvePolygon )
             nGType = POSTGIS15_CURVEPOLYGON;

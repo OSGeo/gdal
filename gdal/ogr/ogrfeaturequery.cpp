@@ -255,11 +255,11 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
     if( poResult == NULL )
         return FALSE;
 
-    int bLogicalResult = FALSE;
+    bool bLogicalResult = false;
     if( poResult->field_type == SWQ_INTEGER ||
         poResult->field_type == SWQ_INTEGER64 ||
         poResult->field_type == SWQ_BOOLEAN )
-        bLogicalResult = (int)poResult->int_value;
+        bLogicalResult = CPL_TO_BOOL(poResult->int_value);
 
     delete poResult;
 
