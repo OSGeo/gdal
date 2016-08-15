@@ -259,7 +259,7 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
     if( poResult->field_type == SWQ_INTEGER ||
         poResult->field_type == SWQ_INTEGER64 ||
         poResult->field_type == SWQ_BOOLEAN )
-        bLogicalResult = CPL_TO_BOOL(poResult->int_value);
+        bLogicalResult = CPL_TO_BOOL(static_cast<int>(poResult->int_value));
 
     delete poResult;
 
