@@ -2938,15 +2938,14 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 
     if( hThis != NULL && hOther != NULL )
     {
-        bIsErr = CPL_TO_BOOL(
-            GEOSDistance_r( hGEOSCtxt, hThis, hOther, &dfDistance ));
+        bIsErr = 0 == GEOSDistance_r( hGEOSCtxt, hThis, hOther, &dfDistance );
     }
 
     GEOSGeom_destroy_r( hGEOSCtxt, hThis );
     GEOSGeom_destroy_r( hGEOSCtxt, hOther );
     freeGEOSContext( hGEOSCtxt );
 
-    if ( bIsErr > 0 )
+    if( !bIsErr )
     {
         return dfDistance;
     }
