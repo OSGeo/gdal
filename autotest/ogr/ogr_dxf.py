@@ -33,6 +33,7 @@
 import os
 import sys
 from sys import version_info
+
 sys.path.append( '../pymod' )
 
 import ogrtest

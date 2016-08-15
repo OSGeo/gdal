@@ -110,7 +110,7 @@ class Network(ogr.MajorObject):
     __swig_destroy__ = _gnm.delete_Network
     __del__ = lambda self : None;
     def ReleaseResultSet(self, *args):
-        """ReleaseResultSet(Network self, Layer layer)"""
+        """ReleaseResultSet(self, Layer layer)"""
         return _gnm.Network_ReleaseResultSet(self, *args)
 
     def GetVersion(self, *args):
@@ -122,11 +122,14 @@ class Network(ogr.MajorObject):
         return _gnm.Network_GetName(self, *args)
 
     def GetFeatureByGlobalFID(self, *args):
-        """GetFeatureByGlobalFID(Network self, GIntBig GFID) -> Feature"""
+        """GetFeatureByGlobalFID(self, GIntBig GFID) -> Feature"""
         return _gnm.Network_GetFeatureByGlobalFID(self, *args)
 
     def GetPath(self, *args, **kwargs):
-        """GetPath(Network self, GIntBig nStartFID, GIntBig nEndFID, GNMGraphAlgorithmType eAlgorithm, char ** options=None) -> Layer"""
+        """
+        GetPath(self, GIntBig nStartFID, GIntBig nEndFID, GraphAlgorithm eAlgorithm, 
+            char options = None) -> Layer
+        """
         return _gnm.Network_GetPath(self, *args, **kwargs)
 
     def DisconnectAll(self, *args):
@@ -147,13 +150,13 @@ class Network(ogr.MajorObject):
 
     def CreateLayer(self, *args, **kwargs):
         """
-        CreateLayer(Network self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown,
-            char ** options=None) -> Layer
+        CreateLayer(self, char name, SpatialReference srs = None, OGRwkbGeometryType geom_type = wkbUnknown, 
+            char options = None) -> Layer
         """
         return _gnm.Network_CreateLayer(self, *args, **kwargs)
 
     def CopyLayer(self, *args, **kwargs):
-        """CopyLayer(Network self, Layer src_layer, char const * new_name, char ** options=None) -> Layer"""
+        """CopyLayer(self, Layer src_layer, char new_name, char options = None) -> Layer"""
         return _gnm.Network_CopyLayer(self, *args, **kwargs)
 
     def DeleteLayer(self, *args):
@@ -165,11 +168,11 @@ class Network(ogr.MajorObject):
         return _gnm.Network_GetLayerCount(self, *args)
 
     def GetLayerByIndex(self, *args):
-        """GetLayerByIndex(Network self, int index=0) -> Layer"""
+        """GetLayerByIndex(self, int index = 0) -> Layer"""
         return _gnm.Network_GetLayerByIndex(self, *args)
 
     def GetLayerByName(self, *args):
-        """GetLayerByName(Network self, char const * layer_name) -> Layer"""
+        """GetLayerByName(self, char layer_name) -> Layer"""
         return _gnm.Network_GetLayerByName(self, *args)
 
     def TestCapability(self, *args):
@@ -205,7 +208,7 @@ class GenericNetwork(Network):
     __del__ = lambda self : None;
     def ConnectFeatures(self, *args):
         """
-        ConnectFeatures(self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID,
+        ConnectFeatures(self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID, 
             double dfCost, double dfInvCost, GNMDirection eDir) -> CPLErr
         """
         return _gnm.GenericNetwork_ConnectFeatures(self, *args)
@@ -220,7 +223,7 @@ class GenericNetwork(Network):
 
     def ReconnectFeatures(self, *args):
         """
-        ReconnectFeatures(self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID,
+        ReconnectFeatures(self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID, 
             double dfCost, double dfInvCost, GNMDirection eDir) -> CPLErr
         """
         return _gnm.GenericNetwork_ReconnectFeatures(self, *args)
@@ -243,7 +246,7 @@ class GenericNetwork(Network):
 
     def ConnectPointsByLines(self, *args, **kwargs):
         """
-        ConnectPointsByLines(self, char papszLayerList, double dfTolerance, double dfCost,
+        ConnectPointsByLines(self, char papszLayerList, double dfTolerance, double dfCost, 
             double dfInvCost, GNMDirection eDir) -> CPLErr
         """
         return _gnm.GenericNetwork_ConnectPointsByLines(self, *args, **kwargs)
@@ -260,3 +263,5 @@ GenericNetwork_swigregister = _gnm.GenericNetwork_swigregister
 GenericNetwork_swigregister(GenericNetwork)
 
 # This file is compatible with both classic and new-style classes.
+
+

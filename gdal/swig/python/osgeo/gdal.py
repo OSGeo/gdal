@@ -1353,14 +1353,14 @@ def VSIFTruncateL(*args):
   return _gdal.VSIFTruncateL(*args)
 
 def VSISupportsSparseFiles(*args):
-  """VSISupportsSparseFiles(char const * utf8_path) -> int"""
+  """VSISupportsSparseFiles(char utf8_path) -> int"""
   return _gdal.VSISupportsSparseFiles(*args)
 VSI_RANGE_STATUS_UNKNOWN = _gdal.VSI_RANGE_STATUS_UNKNOWN
 VSI_RANGE_STATUS_DATA = _gdal.VSI_RANGE_STATUS_DATA
 VSI_RANGE_STATUS_HOLE = _gdal.VSI_RANGE_STATUS_HOLE
 
 def VSIFGetRangeStatusL(*args):
-  """VSIFGetRangeStatusL(VSILFILE * fp, GIntBig offset, GIntBig length) -> int"""
+  """VSIFGetRangeStatusL(VSILFILE fp, GIntBig offset, GIntBig length) -> int"""
   return _gdal.VSIFGetRangeStatusL(*args)
 
 def VSIFWriteL(*args):
@@ -2301,7 +2301,7 @@ class Band(MajorObject):
         return _gdal.Band_GetTiledVirtualMem(self, *args, **kwargs)
 
     def GetDataCoverageStatus(self, *args):
-        """GetDataCoverageStatus(Band self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop=0) -> int"""
+        """GetDataCoverageStatus(self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop = 0) -> int"""
         return _gdal.Band_GetDataCoverageStatus(self, *args)
 
     def ReadRaster1(self, *args, **kwargs):
