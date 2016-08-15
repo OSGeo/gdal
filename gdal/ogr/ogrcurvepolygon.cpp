@@ -550,14 +550,14 @@ OGRPolygon* OGRCurvePolygon::CurvePolyToPoly(double dfMaxAngleStepSizeDegrees,
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::hasCurveGeometry(int bLookForNonLinear) const
+OGRBoolean OGRCurvePolygon::hasCurveGeometry( int bLookForNonLinear ) const
 {
     if( bLookForNonLinear )
     {
         return oCC.hasCurveGeometry(bLookForNonLinear);
     }
-    else
-        return TRUE;
+
+    return TRUE;
 }
 
 /************************************************************************/

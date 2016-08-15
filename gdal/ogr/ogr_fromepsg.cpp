@@ -2468,14 +2468,14 @@ int OGRSpatialReference::GetEPSGGeogCS()
 /* -------------------------------------------------------------------- */
 /*      Is this a "well known" geographic coordinate system?            */
 /* -------------------------------------------------------------------- */
-    const int bWGS = strstr(pszGEOGCS,"WGS") != NULL
+    const bool bWGS = strstr(pszGEOGCS,"WGS") != NULL
         || strstr(pszDatum, "WGS")
         || strstr(pszGEOGCS,"World Geodetic System")
         || strstr(pszGEOGCS,"World_Geodetic_System")
         || strstr(pszDatum, "World Geodetic System")
         || strstr(pszDatum, "World_Geodetic_System");
 
-    const int bNAD = strstr(pszGEOGCS,"NAD") != NULL
+    const bool bNAD = strstr(pszGEOGCS,"NAD") != NULL
         || strstr(pszDatum, "NAD")
         || strstr(pszGEOGCS,"North American")
         || strstr(pszGEOGCS,"North_American")

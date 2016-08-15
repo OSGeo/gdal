@@ -1100,7 +1100,7 @@ void OGR_G_Set3D( OGRGeometryH hGeom, int bIs3D)
  * @since GDAL 2.1
  */
 
-void OGR_G_SetMeasured( OGRGeometryH hGeom, int bIsMeasured)
+void OGR_G_SetMeasured( OGRGeometryH hGeom, int bIsMeasured )
 
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetMeasured" );
@@ -1492,7 +1492,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
                                             int* pbHasZ, int* pbHasM,
                                             bool* pbIsEmpty )
 {
-    char        szToken[OGR_WKT_TOKEN_MAX];
+    char szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
 
 /* -------------------------------------------------------------------- */
@@ -1501,13 +1501,14 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
     empty();
     *pbIsEmpty = false;
 
-    int bHasZ = FALSE, bHasM = FALSE;
-    bool bIsoWKT = true;
-
 /* -------------------------------------------------------------------- */
 /*      Read and verify the type keyword, and ensure it matches the     */
 /*      actual type of this container.                                  */
 /* -------------------------------------------------------------------- */
+    bool bHasM = false;
+    bool bHasZ = false;
+    bool bIsoWKT = true;
+
     pszInput = OGRWktReadToken( pszInput, szToken );
     if( szToken[0] != '\0' )
     {
@@ -1516,7 +1517,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
         if( szToken[nTokenLen-1] == 'M' )
         {
             szToken[nTokenLen-1] = '\0';
-            bHasM = TRUE;
+            bHasM = true;
             bIsoWKT = false;
         }
     }
@@ -1527,9 +1528,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
 /* -------------------------------------------------------------------- */
 /*      Check for EMPTY ...                                             */
 /* -------------------------------------------------------------------- */
-    const char *pszPreScan;
-
-    pszPreScan = OGRWktReadToken( pszInput, szToken );
+    const char *pszPreScan = OGRWktReadToken( pszInput, szToken );
     if( !bIsoWKT )
     {
         /* go on */
@@ -1548,21 +1547,21 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
 /* -------------------------------------------------------------------- */
     else if( EQUAL(szToken,"Z") )
     {
-        bHasZ = TRUE;
+        bHasZ = true;
     }
     else if( EQUAL(szToken,"M") )
     {
-        bHasM = TRUE;
+        bHasM = true;
     }
     else if( EQUAL(szToken,"ZM") )
     {
-        bHasZ = TRUE;
-        bHasM = TRUE;
+        bHasZ = true;
+        bHasM = true;
     }
     *pbHasZ = bHasZ;
     *pbHasM = bHasM;
 
-    if ( bIsoWKT && (bHasZ || bHasM) )
+    if( bIsoWKT && (bHasZ || bHasM) )
     {
         pszInput = pszPreScan;
         pszPreScan = OGRWktReadToken( pszInput, szToken );
@@ -2817,7 +2816,8 @@ GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
  * @since GDAL 2.0
  */
 
-OGRBoolean OGRGeometry::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
+OGRBoolean OGRGeometry::hasCurveGeometry(
+    CPL_UNUSED int bLookForNonLinear ) const
 {
     return FALSE;
 }
@@ -2933,12 +2933,13 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
     hOther = poOtherGeom->exportToGEOS(hGEOSCtxt);
     hThis = exportToGEOS(hGEOSCtxt);
 
-    int bIsErr = 0;
+    bool bIsErr = false;
     double dfDistance = 0.0;
 
     if( hThis != NULL && hOther != NULL )
     {
-        bIsErr = GEOSDistance_r( hGEOSCtxt, hThis, hOther, &dfDistance );
+        bIsErr = CPL_TO_BOOL(
+            GEOSDistance_r( hGEOSCtxt, hThis, hOther, &dfDistance ));
     }
 
     GEOSGeom_destroy_r( hGEOSCtxt, hThis );
@@ -4866,7 +4867,8 @@ OGRGeometry *OGRGeometry::DelaunayTriangulation(double /*dfTolerance*/, int /*bO
     return NULL;
 }
 #else
-OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const
+OGRGeometry *OGRGeometry::DelaunayTriangulation( double dfTolerance,
+                                                 int bOnlyEdges ) const
 {
     GEOSGeom hThisGeosGeom = NULL;
     GEOSGeom hGeosProduct = NULL;
@@ -4914,7 +4916,8 @@ OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance, int bOnlyEdg
  * @since OGR 2.1
  */
 
-OGRGeometryH OGR_G_DelaunayTriangulation( OGRGeometryH hThis, double dfTolerance, int bOnlyEdges )
+OGRGeometryH OGR_G_DelaunayTriangulation( OGRGeometryH hThis, double dfTolerance,
+                                          int bOnlyEdges )
 
 {
     VALIDATE_POINTER1( hThis, "OGR_G_DelaunayTriangulation", NULL );
@@ -5184,9 +5187,10 @@ int OGRPreparedGeometryIntersects( UNUSED_IF_NO_GEOS const OGRPreparedGeometry* 
     if( hGEOSOtherGeom == NULL )
         return FALSE;
 
-    int bRet = GEOSPreparedIntersects_r(poPreparedGeom->hGEOSCtxt,
-                                        poPreparedGeom->poPreparedGEOSGeom,
-                                        hGEOSOtherGeom);
+    const bool bRet = CPL_TO_BOOL(
+        GEOSPreparedIntersects_r(poPreparedGeom->hGEOSCtxt,
+                                 poPreparedGeom->poPreparedGEOSGeom,
+                                 hGEOSOtherGeom));
     GEOSGeom_destroy_r( poPreparedGeom->hGEOSCtxt, hGEOSOtherGeom );
 
     return bRet;
@@ -5211,9 +5215,10 @@ int OGRPreparedGeometryContains( UNUSED_IF_NO_GEOS const OGRPreparedGeometry* po
     if( hGEOSOtherGeom == NULL )
         return FALSE;
 
-    int bRet = GEOSPreparedContains_r(poPreparedGeom->hGEOSCtxt,
-                                      poPreparedGeom->poPreparedGEOSGeom,
-                                      hGEOSOtherGeom);
+    const bool bRet = CPL_TO_BOOL(
+        GEOSPreparedContains_r(poPreparedGeom->hGEOSCtxt,
+                               poPreparedGeom->poPreparedGEOSGeom,
+                               hGEOSOtherGeom));
     GEOSGeom_destroy_r( poPreparedGeom->hGEOSCtxt, hGEOSOtherGeom );
 
     return bRet;
@@ -5521,7 +5526,8 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
                                                   OGRErr (*pfnAddCurveDirectly)(OGRGeometry* poSelf, OGRCurve* poCurve) )
 
 {
-    int bHasZ = FALSE, bHasM = FALSE;
+    int bHasZ = FALSE;
+    int bHasM = FALSE;
     bool bIsEmpty = false;
     OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;

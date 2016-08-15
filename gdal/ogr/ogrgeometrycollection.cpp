@@ -617,7 +617,7 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
         nGType = getIsoGeometryType();
     else if( eWkbVariant == wkbVariantPostGIS1 )
     {
-        int bIs3D = wkbHasZ((OGRwkbGeometryType)nGType);
+        const bool bIs3D = wkbHasZ(static_cast<OGRwkbGeometryType>(nGType));
         nGType = wkbFlatten(nGType);
         if( nGType == wkbMultiCurve )
             nGType = POSTGIS15_MULTICURVE;
@@ -688,9 +688,10 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
         return OGRERR_CORRUPT_DATA;
     }
 
-    int bHasZ = FALSE, bHasM = FALSE;
+    int bHasZ = FALSE;
+    int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     if( eErr != OGRERR_NONE )
         return eErr;
     if( bHasZ ) flags |= OGR_G_3D;
@@ -1235,7 +1236,8 @@ OGRBoolean OGRGeometryCollection::isCompatibleSubType(
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::hasCurveGeometry(int bLookForNonLinear) const
+OGRBoolean OGRGeometryCollection::hasCurveGeometry(
+    int bLookForNonLinear ) const
 {
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {

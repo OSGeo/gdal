@@ -2695,10 +2695,11 @@ int OGRFeature::GetFieldAsDateTime( int iField,
                                     int *pnHour, int *pnMinute, int *pnSecond,
                                     int *pnTZFlag )
 {
-    float fSecond;
-    int bRet = GetFieldAsDateTime( iField, pnYear, pnMonth, pnDay, pnHour, pnMinute,
-                                   &fSecond, pnTZFlag);
-    if( bRet && pnSecond ) *pnSecond = (int)fSecond;
+    float fSecond = 0.0f;
+    const bool bRet =
+        GetFieldAsDateTime( iField, pnYear, pnMonth, pnDay, pnHour, pnMinute,
+                            &fSecond, pnTZFlag);
+    if( bRet && pnSecond ) *pnSecond = static_cast<int>(fSecond);
     return bRet;
 }
 
@@ -2737,12 +2738,13 @@ int OGR_F_GetFieldAsDateTime( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTime", 0 );
 
-    float fSecond;
-    int bRet =((OGRFeature *)hFeat)->GetFieldAsDateTime( iField,
-                                                      pnYear, pnMonth, pnDay,
-                                                      pnHour, pnMinute,&fSecond,
-                                                      pnTZFlag );
-    if( bRet && pnSecond ) *pnSecond = (int)fSecond;
+    float fSecond = 0.0f;
+    const bool bRet =reinterpret_cast<OGRFeature *>(hFeat)->
+        GetFieldAsDateTime( iField,
+                            pnYear, pnMonth, pnDay,
+                            pnHour, pnMinute,&fSecond,
+                            pnTZFlag );
+    if( bRet && pnSecond ) *pnSecond = static_cast<int>(fSecond);
     return bRet;
 }
 
@@ -3252,15 +3254,15 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 
 {
     static int bWarn = -1;
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
-    char *pszLast = NULL;
-
     if( bWarn < 0 )
         bWarn = CPLTestBool( CPLGetConfigOption( "OGR_SETFIELD_NUMERIC_WARNING",
                                                  "YES" ) );
 
+    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
     if( poFDefn == NULL )
         return;
+
+    char *pszLast = NULL;
 
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTString )
@@ -5602,8 +5604,8 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
  * @since GDAL 2.0
  */
 
-void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
-                                      CPL_UNUSED char** papszOptions)
+void OGRFeature::FillUnsetWithDefault( int bNotNullableOnly,
+                                       CPL_UNUSED char** papszOptions)
 {
     int nFieldCount = poDefn->GetFieldCount();
     for(int i = 0; i < nFieldCount; i ++ )
@@ -5678,7 +5680,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
 
 void OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
                                  int bNotNullableOnly,
-                                 char** papszOptions)
+                                 char** papszOptions )
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_FillUnsetWithDefault" );
@@ -5714,7 +5716,7 @@ void OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
 int OGRFeature::Validate( int nValidateFlags, int bEmitError )
 
 {
-    int bRet = TRUE;
+    bool bRet = true;
 
     int nGeomFieldCount = poDefn->GetGeomFieldCount();
     for( int i = 0; i < nGeomFieldCount; i++ )
@@ -5723,7 +5725,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             !poDefn->GetGeomFieldDefn(i)->IsNullable() &&
             GetGeomFieldRef(i) == NULL )
         {
-            bRet = FALSE;
+            bRet = false;
             if( bEmitError )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -5748,7 +5750,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
                 else if( (eType == wkbSetZ(wkbUnknown) && !wkbHasZ(eFType)) ||
                          (eType != wkbSetZ(wkbUnknown) && eFType != eType) )
                 {
-                    bRet = FALSE;
+                    bRet = false;
                     if( bEmitError )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5770,7 +5772,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             (!(nValidateFlags & OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT) ||
                poDefn->GetFieldDefn(i)->GetDefault() == NULL))
         {
-            bRet = FALSE;
+            bRet = false;
             if( bEmitError )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -5785,7 +5787,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             CPLIsUTF8(GetFieldAsString(i), -1) &&
             CPLStrlenUTF8(GetFieldAsString(i)) > poDefn->GetFieldDefn(i)->GetWidth())
         {
-            bRet = FALSE;
+            bRet = false;
             if( bEmitError )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
