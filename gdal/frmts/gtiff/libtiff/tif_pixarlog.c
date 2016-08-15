@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.45 2016-06-28 15:37:33 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.46 2016-08-15 20:49:48 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -1141,6 +1141,13 @@ PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	}
 
 	llen = sp->stride * td->td_imagewidth;
+    /* Check against the number of elements (of size uint16) of sp->tbuf */
+    if( n > td->td_rowsperstrip * llen )
+    {
+        TIFFErrorExt(tif->tif_clientdata, module,
+                     "Too many input bytes provided");
+        return 0;
+    }
 
 	for (i = 0, up = sp->tbuf; i < n; i += llen, up += llen) {
 		switch (sp->user_datafmt)  {
