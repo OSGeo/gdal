@@ -202,7 +202,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
         return FALSE;
     }
 
-    if( EQUAL(pszWorkspace, "") == FALSE )
+    if( ! EQUAL(pszWorkspace, "") )
     {
         OGROCIStringBuf oValidateCmd;
         OGROCIStatement oValidateStmt( GetSession() );
