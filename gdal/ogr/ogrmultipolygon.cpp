@@ -182,6 +182,7 @@ OGRMultiSurface* OGRMultiPolygon::CastToMultiSurface(OGRMultiPolygon* poMP)
 /*                        DO NOT USE IT ELSEWHERE.                      */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRMultiPolygon::_addGeometry( const OGRGeometry * poNewGeom )
 
 {
@@ -196,6 +197,7 @@ OGRErr OGRMultiPolygon::_addGeometry( const OGRGeometry * poNewGeom )
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                         _addGeometryDirectly()                       */
@@ -203,6 +205,7 @@ OGRErr OGRMultiPolygon::_addGeometry( const OGRGeometry * poNewGeom )
 /*                        DO NOT USE IT ELSEWHERE.                      */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRMultiPolygon::_addGeometryDirectly( OGRGeometry * poNewGeom )
 {
     if ( wkbFlatten(poNewGeom->getGeometryType()) != wkbTriangle)
@@ -231,3 +234,4 @@ OGRErr OGRMultiPolygon::_addGeometryDirectly( OGRGeometry * poNewGeom )
 
     return OGRERR_NONE;
 }
+//! @endcond

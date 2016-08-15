@@ -40,6 +40,11 @@ CPL_CVSID("$Id$");
 /*                        OGRTriangulatedSurface()                      */
 /************************************************************************/
 
+/**
+ * \brief Constructor.
+ *
+ */
+
 OGRTriangulatedSurface::OGRTriangulatedSurface()
 
 { }
@@ -47,6 +52,11 @@ OGRTriangulatedSurface::OGRTriangulatedSurface()
 /************************************************************************/
 /*        OGRTriangulatedSurface( const OGRTriangulatedSurface& )       */
 /************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ *
+ */
 
 OGRTriangulatedSurface::OGRTriangulatedSurface( const OGRTriangulatedSurface& other ) :
     OGRPolyhedralSurface(other)
@@ -56,6 +66,11 @@ OGRTriangulatedSurface::OGRTriangulatedSurface( const OGRTriangulatedSurface& ot
 /*                        ~OGRTriangulatedSurface()                     */
 /************************************************************************/
 
+/**
+ * \brief Destructor
+ *
+ */
+
 OGRTriangulatedSurface::~OGRTriangulatedSurface()
 
 { }
@@ -63,6 +78,11 @@ OGRTriangulatedSurface::~OGRTriangulatedSurface()
 /************************************************************************/
 /*                 operator=( const OGRTriangulatedSurface&)            */
 /************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ *
+ */
 
 OGRTriangulatedSurface& OGRTriangulatedSurface::operator=( const OGRTriangulatedSurface& other )
 {
@@ -78,6 +98,13 @@ OGRTriangulatedSurface& OGRTriangulatedSurface::operator=( const OGRTriangulated
 /*                          getGeometryName()                           */
 /************************************************************************/
 
+/**
+ * \brief Returns the geometry name of the TriangulatedSurface
+ *
+ * @return "TIN"
+ *
+ */
+
 const char* OGRTriangulatedSurface::getGeometryName() const
 {
     return "TIN" ;
@@ -86,6 +113,11 @@ const char* OGRTriangulatedSurface::getGeometryName() const
 /************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
+
+/**
+ * \brief Returns the WKB Type of TriangulatedSurface
+ *
+ */
 
 OGRwkbGeometryType OGRTriangulatedSurface::getGeometryType() const
 {
@@ -101,9 +133,20 @@ OGRwkbGeometryType OGRTriangulatedSurface::getGeometryType() const
 
 /************************************************************************/
 /*                              WkbSize()                               */
-/*      Return the size of this object in well known binary             */
-/*      representation including the byte order, and type information.  */
 /************************************************************************/
+
+/**
+ * \brief Returns size of related binary representation.
+ *
+ * This method returns the exact number of bytes required to hold the
+ * well known binary representation of this geometry object.
+ *
+ * This method relates to the SFCOM IWks::WkbSize() method.
+ *
+ * This method is the same as the C function OGR_G_WkbSize().
+ *
+ * @return size of binary representation in bytes.
+ */
 
 int OGRTriangulatedSurface::WkbSize() const
 {
@@ -116,6 +159,17 @@ int OGRTriangulatedSurface::WkbSize() const
 /************************************************************************/
 /*                               clone()                                */
 /************************************************************************/
+
+/**
+ * \brief Make a copy of this object.
+ *
+ * This method relates to the SFCOM IGeometry::clone() method.
+ *
+ * This method is the same as the C function OGR_G_Clone().
+ *
+ * @return a new object instance with the same geometry, and spatial
+ * reference system as the original.
+ */
 
 OGRGeometry* OGRTriangulatedSurface::clone() const
 {
@@ -140,9 +194,28 @@ OGRGeometry* OGRTriangulatedSurface::clone() const
 
 /************************************************************************/
 /*                           importFromWkb()                            */
-/*      Initialize from serialized stream in well known binary          */
-/*      format.                                                         */
 /************************************************************************/
+
+/**
+ * \brief Assign geometry from well known binary data.
+ *
+ * The object must have already been instantiated as the correct derived
+ * type of geometry object to match the binaries type.  This method is used
+ * by the OGRGeometryFactory class, but not normally called by application
+ * code.
+ *
+ * This method relates to the SFCOM IWks::ImportFromWKB() method.
+ *
+ * This method is the same as the C function OGR_G_ImportFromWkb().
+ *
+ * @param pabyData the binary input data.
+ * @param nSize the size of pabyData in bytes, or zero if not known.
+ * @param eWkbVariant if wkbVariantPostGIS1, special interpretation is done for curve geometries code
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
 
 OGRErr OGRTriangulatedSurface::importFromWkb ( unsigned char * pabyData,
                                                int nSize,
@@ -214,6 +287,28 @@ OGRErr OGRTriangulatedSurface::importFromWkb ( unsigned char * pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
+/**
+ * \brief Convert a geometry into well known binary format.
+ *
+ * This method relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This method is the same as the C function OGR_G_ExportToWkb() or OGR_G_ExportToIsoWkb(),
+ * depending on the value of eWkbVariant.
+ *
+ * @param eByteOrder One of wkbXDR or wkbNDR indicating MSB or LSB byte order
+ *               respectively.
+ * @param pabyData a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGRGeometry::WkbSize() byte in size.
+ * @param eWkbVariant What standard to use when exporting geometries with
+ *                      three dimensions (or more). The default wkbVariantOldOgc is
+ *                      the historical OGR variant. wkbVariantIso is the
+ *                      variant defined in ISO SQL/MM and adopted by OGC
+ *                      for SFSQL 1.2.
+ *
+ * @return Currently OGRERR_NONE is always returned.
+ */
+
 OGRErr  OGRTriangulatedSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
                                               unsigned char * pabyData,
                                               OGRwkbVariant eWkbVariant ) const
@@ -265,6 +360,26 @@ OGRErr  OGRTriangulatedSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
 /*                           importFromWkt()                            */
 /*              Instantiate from well known text format.                */
 /************************************************************************/
+
+/**
+ * \brief Assign geometry from well known text data.
+ *
+ * The object must have already been instantiated as the correct derived
+ * type of geometry object to match the text type.  This method is used
+ * by the OGRGeometryFactory class, but not normally called by application
+ * code.
+ *
+ * This method relates to the SFCOM IWks::ImportFromWKT() method.
+ *
+ * This method is the same as the C function OGR_G_ImportFromWkt().
+ *
+ * @param ppszInput pointer to a pointer to the source text.  The pointer is
+ *                    updated to pointer after the consumed text.
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
 
 OGRErr OGRTriangulatedSurface::importFromWkt( char ** ppszInput )
 
@@ -361,9 +476,24 @@ OGRErr OGRTriangulatedSurface::importFromWkt( char ** ppszInput )
 
 /************************************************************************/
 /*                            exportToWkt()                             */
-/*      Translate this structure into it's well known text format       */
-/*      equivalent.                                                     */
 /************************************************************************/
+
+/**
+ * \brief Convert a geometry into well known text format.
+ *
+ * This method relates to the SFCOM IWks::ExportToWKT() method.
+ *
+ * This method is the same as the C function OGR_G_ExportToWkt().
+ *
+ * @param ppszDstText a text buffer is allocated by the program, and assigned
+ *                    to the passed pointer. After use, *ppszDstText should be
+ *                    freed with OGRFree().
+ * @param eWkbVariant the specification that must be conformed too :
+ *                    - wbkVariantOgc for old-style 99-402 extended dimension (Z) WKB types
+ *                    - wbkVariantIso for SFSQL 1.2 and ISO SQL/MM Part 3
+ *
+ * @return Currently OGRERR_NONE is always returned.
+ */
 
 OGRErr OGRTriangulatedSurface::exportToWkt ( char ** ppszDstText,
                                            CPL_UNUSED OGRwkbVariant eWkbVariant ) const
@@ -373,9 +503,17 @@ OGRErr OGRTriangulatedSurface::exportToWkt ( char ** ppszDstText,
 
 /************************************************************************/
 /*                            addGeometry()                             */
-/*      Add a new geometry to a TIN.  Only a TRIANGLE can be added      */
-/*      to a TRIANGULATEDSURFACE.                                       */
 /************************************************************************/
+
+/**
+ * \brief Add a new geometry to the TriangulatedSurface.
+ *
+ * Only a TRIANGLE can be added to a TRIANGULATEDSURFACE.
+ *
+ * If a polygon is passed as parameter, OGR tries to cast it as a triangle and then add it.
+ *
+ * @return OGRErr OGRERR_NONE if the polygon is successfully added
+ */
 
 OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
 {
@@ -422,6 +560,19 @@ OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
 /*                        addGeometryDirectly()                         */
 /************************************************************************/
 
+/**
+ * \brief Add a geometry directly to the container.
+ *
+ * This method is the same as the C function OGR_G_AddGeometryDirectly().
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param poNewGeom geometry to add to the container.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the type of geometry container.
+ */
+
 OGRErr OGRTriangulatedSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
 {
     if (!EQUAL(poNewGeom->getGeometryName(), "TRIANGLE"))
@@ -456,6 +607,12 @@ OGRErr OGRTriangulatedSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
 /************************************************************************/
 /*                         CastToMultiPolygon()                         */
 /************************************************************************/
+
+/**
+ * \brief Casts the OGRPolyhedralSurface to an OGRMultiPolygon
+ *
+ * @return OGRMultiPolygon* pointer to the computed OGRMultiPolygon
+ */
 
 OGRMultiPolygon* OGRTriangulatedSurface::CastToMultiPolygon()
 {

@@ -40,6 +40,10 @@ CPL_CVSID("$Id$");
 /*                         OGRPolyhedralSurface()                       */
 /************************************************************************/
 
+/**
+ * \brief Create an empty PolyhedralSurface
+ */
+
 OGRPolyhedralSurface::OGRPolyhedralSurface()
 
 { }
@@ -47,6 +51,11 @@ OGRPolyhedralSurface::OGRPolyhedralSurface()
 /************************************************************************/
 /*         OGRPolyhedralSurface( const OGRPolyhedralSurface& )          */
 /************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ *
+ */
 
 OGRPolyhedralSurface::OGRPolyhedralSurface( const OGRPolyhedralSurface& other ) :
     OGRSurface(other),
@@ -57,6 +66,11 @@ OGRPolyhedralSurface::OGRPolyhedralSurface( const OGRPolyhedralSurface& other ) 
 /*                        ~OGRPolyhedralSurface()                       */
 /************************************************************************/
 
+/**
+ * \brief Destructor
+ *
+ */
+
 OGRPolyhedralSurface::~OGRPolyhedralSurface()
 
 { }
@@ -64,6 +78,11 @@ OGRPolyhedralSurface::~OGRPolyhedralSurface()
 /************************************************************************/
 /*                 operator=( const OGRPolyhedralSurface&)              */
 /************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ *
+ */
 
 OGRPolyhedralSurface& OGRPolyhedralSurface::operator=( const OGRPolyhedralSurface& other )
 {
@@ -79,6 +98,13 @@ OGRPolyhedralSurface& OGRPolyhedralSurface::operator=( const OGRPolyhedralSurfac
 /*                          getGeometryName()                           */
 /************************************************************************/
 
+/**
+ * \brief Returns the geometry name of the PolyhedralSurface
+ *
+ * @return "POLYHEDRALSURFACE"
+ *
+ */
+
 const char* OGRPolyhedralSurface::getGeometryName() const
 {
     return "POLYHEDRALSURFACE" ;
@@ -87,6 +113,11 @@ const char* OGRPolyhedralSurface::getGeometryName() const
 /************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
+
+/**
+ * \brief Returns the WKB Type of PolyhedralSurface
+ *
+ */
 
 OGRwkbGeometryType OGRPolyhedralSurface::getGeometryType() const
 {
@@ -102,9 +133,20 @@ OGRwkbGeometryType OGRPolyhedralSurface::getGeometryType() const
 
 /************************************************************************/
 /*                              WkbSize()                               */
-/*      Return the size of this object in well known binary             */
-/*      representation including the byte order, and type information.  */
 /************************************************************************/
+
+/**
+ * \brief Returns size of related binary representation.
+ *
+ * This method returns the exact number of bytes required to hold the
+ * well known binary representation of this geometry object.
+ *
+ * This method relates to the SFCOM IWks::WkbSize() method.
+ *
+ * This method is the same as the C function OGR_G_WkbSize().
+ *
+ * @return size of binary representation in bytes.
+ */
 
 int OGRPolyhedralSurface::WkbSize() const
 {
@@ -118,6 +160,12 @@ int OGRPolyhedralSurface::WkbSize() const
 /*                            getDimension()                            */
 /************************************************************************/
 
+/**
+ * \brief Returns the dimension of OGRPolyhedralSurface
+ *
+ * @return int Returns 2
+ */
+
 int OGRPolyhedralSurface::getDimension() const
 {
     return 2;
@@ -126,6 +174,11 @@ int OGRPolyhedralSurface::getDimension() const
 /************************************************************************/
 /*                               empty()                                */
 /************************************************************************/
+
+/**
+ * \brief Deletes all geometries contained within the PolyhedralSurface
+ *
+ */
 
 void OGRPolyhedralSurface::empty()
 {
@@ -142,6 +195,17 @@ void OGRPolyhedralSurface::empty()
 /************************************************************************/
 /*                               clone()                                */
 /************************************************************************/
+
+/**
+ * \brief Make a copy of this object.
+ *
+ * This method relates to the SFCOM IGeometry::clone() method.
+ *
+ * This method is the same as the C function OGR_G_Clone().
+ *
+ * @return a new object instance with the same geometry, and spatial
+ * reference system as the original.
+ */
 
 OGRGeometry* OGRPolyhedralSurface::clone() const
 {
@@ -169,6 +233,14 @@ OGRGeometry* OGRPolyhedralSurface::clone() const
 /*                            getEnvelope()                             */
 /************************************************************************/
 
+/**
+ * \brief Computes and returns the bounding envelope for this geometry in the passed psEnvelope structure.
+ *
+ * This method is the same as the C function OGR_G_GetEnvelope().
+ *
+ * @param psEnvelope the structure in which to place the results.
+ */
+
 void OGRPolyhedralSurface::getEnvelope( OGREnvelope * psEnvelope ) const
 {
     oMP.getEnvelope(psEnvelope);
@@ -178,6 +250,14 @@ void OGRPolyhedralSurface::getEnvelope( OGREnvelope * psEnvelope ) const
 /*                            getEnvelope()                             */
 /************************************************************************/
 
+/**
+ * \brief Computes and returns the bounding envelope for this geometry in the passed psEnvelope structure.
+ *
+ * This method is the same as the C function OGR_G_GetEnvelope().
+ *
+ * @param psEnvelope the structure in which to place the results.
+ */
+
 void OGRPolyhedralSurface::getEnvelope( OGREnvelope3D * psEnvelope ) const
 {
     oMP.getEnvelope(psEnvelope);
@@ -185,9 +265,28 @@ void OGRPolyhedralSurface::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 /************************************************************************/
 /*                           importFromWkb()                            */
-/*      Initialize from serialized stream in well known binary          */
-/*      format.                                                         */
 /************************************************************************/
+
+/**
+ * \brief Assign geometry from well known binary data.
+ *
+ * The object must have already been instantiated as the correct derived
+ * type of geometry object to match the binaries type.  This method is used
+ * by the OGRGeometryFactory class, but not normally called by application
+ * code.
+ *
+ * This method relates to the SFCOM IWks::ImportFromWKB() method.
+ *
+ * This method is the same as the C function OGR_G_ImportFromWkb().
+ *
+ * @param pabyData the binary input data.
+ * @param nSize the size of pabyData in bytes, or zero if not known.
+ * @param eWkbVariant if wkbVariantPostGIS1, special interpretation is done for curve geometries code
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
 
 OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
                                              int nSize,
@@ -259,8 +358,29 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
 
 /************************************************************************/
 /*                            exportToWkb()                             */
-/*      Build a well known binary representation of this object.        */
 /************************************************************************/
+
+/**
+ * \brief Convert a geometry into well known binary format.
+ *
+ * This method relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This method is the same as the C function OGR_G_ExportToWkb() or OGR_G_ExportToIsoWkb(),
+ * depending on the value of eWkbVariant.
+ *
+ * @param eByteOrder One of wkbXDR or wkbNDR indicating MSB or LSB byte order
+ *               respectively.
+ * @param pabyData a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGRGeometry::WkbSize() byte in size.
+ * @param eWkbVariant What standard to use when exporting geometries with
+ *                      three dimensions (or more). The default wkbVariantOldOgc is
+ *                      the historical OGR variant. wkbVariantIso is the
+ *                      variant defined in ISO SQL/MM and adopted by OGC
+ *                      for SFSQL 1.2.
+ *
+ * @return Currently OGRERR_NONE is always returned.
+ */
 
 OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
                                             unsigned char * pabyData,
@@ -325,8 +445,27 @@ OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
 /*              Instantiate from well known text format.                */
 /************************************************************************/
 
-OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
+/**
+ * \brief Assign geometry from well known text data.
+ *
+ * The object must have already been instantiated as the correct derived
+ * type of geometry object to match the text type.  This method is used
+ * by the OGRGeometryFactory class, but not normally called by application
+ * code.
+ *
+ * This method relates to the SFCOM IWks::ImportFromWKT() method.
+ *
+ * This method is the same as the C function OGR_G_ImportFromWkt().
+ *
+ * @param ppszInput pointer to a pointer to the source text.  The pointer is
+ *                    updated to pointer after the consumed text.
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
 
+OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
 {
     int bHasZ = FALSE, bHasM = FALSE;
     bool bIsEmpty = false;
@@ -428,9 +567,24 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
 
 /************************************************************************/
 /*                            exportToWkt()                             */
-/*      Translate this structure into it's well known text format       */
-/*      equivalent.                                                     */
 /************************************************************************/
+
+/**
+ * \brief Convert a geometry into well known text format.
+ *
+ * This method relates to the SFCOM IWks::ExportToWKT() method.
+ *
+ * This method is the same as the C function OGR_G_ExportToWkt().
+ *
+ * @param ppszDstText a text buffer is allocated by the program, and assigned
+ *                    to the passed pointer. After use, *ppszDstText should be
+ *                    freed with OGRFree().
+ * @param eWkbVariant the specification that must be conformed too :
+ *                    - wbkVariantOgc for old-style 99-402 extended dimension (Z) WKB types
+ *                    - wbkVariantIso for SFSQL 1.2 and ISO SQL/MM Part 3
+ *
+ * @return Currently OGRERR_NONE is always returned.
+ */
 
 OGRErr OGRPolyhedralSurface::exportToWkt ( char ** ppszDstText,
                                            CPL_UNUSED OGRwkbVariant eWkbVariant ) const
@@ -438,6 +592,7 @@ OGRErr OGRPolyhedralSurface::exportToWkt ( char ** ppszDstText,
     return exportToWktInternal(ppszDstText, wkbVariantIso, "POLYGON");
 }
 
+//! @cond Doxygen_Suppress
 OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
                                                    OGRwkbVariant eWkbVariant,
                                                    const char* pszSkipPrefix ) const
@@ -584,10 +739,19 @@ error:
     CPLFree( papszGeoms );
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            flattenTo2D()                             */
 /************************************************************************/
+
+/**
+ * \brief Convert geometry to strictly 2D.
+ * In a sense this converts all Z coordinates
+ * to 0.0.
+ *
+ * This method is the same as the C function OGR_G_FlattenTo2D().
+ */
 
 void OGRPolyhedralSurface::flattenTo2D()
 {
@@ -598,6 +762,28 @@ void OGRPolyhedralSurface::flattenTo2D()
 /*                             transform()                              */
 /************************************************************************/
 
+/**
+ * \brief Apply arbitrary coordinate transformation to geometry.
+ *
+ * This method will transform the coordinates of a geometry from
+ * their current spatial reference system to a new target spatial
+ * reference system.  Normally this means reprojecting the vectors,
+ * but it could include datum shifts, and changes of units.
+ *
+ * Note that this method does not require that the geometry already
+ * have a spatial reference system.  It will be assumed that they can
+ * be treated as having the source spatial reference system of the
+ * OGRCoordinateTransformation object, and the actual SRS of the geometry
+ * will be ignored.  On successful completion the output OGRSpatialReference
+ * of the OGRCoordinateTransformation will be assigned to the geometry.
+ *
+ * This method is the same as the C function OGR_G_Transform().
+ *
+ * @param poCT the transformation to apply.
+ *
+ * @return OGRERR_NONE on success or an error code.
+ */
+
 OGRErr OGRPolyhedralSurface::transform( OGRCoordinateTransformation *poCT )
 {
     return oMP.transform(poCT);
@@ -607,23 +793,35 @@ OGRErr OGRPolyhedralSurface::transform( OGRCoordinateTransformation *poCT )
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRSurfaceCasterToPolygon OGRPolyhedralSurface::GetCasterToPolygon() const
 {
     return (OGRSurfaceCasterToPolygon) NULL;
 }
+//! @endcond
 
 /************************************************************************/
 /*                      OGRSurfaceCasterToCurvePolygon()                */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRSurfaceCasterToCurvePolygon OGRPolyhedralSurface::GetCasterToCurvePolygon() const
 {
     return (OGRSurfaceCasterToCurvePolygon) NULL;
 }
+//! @endcond
 
 /************************************************************************/
 /*                               Equals()                               */
 /************************************************************************/
+
+/**
+ * \brief Returns TRUE if two geometries are equivalent.
+ *
+ * This method is the same as the C function OGR_G_Equals().
+ *
+ * @return TRUE if equivalent or FALSE otherwise.
+ */
 
 OGRBoolean OGRPolyhedralSurface::Equals(OGRGeometry * poOther) const
 {
@@ -654,6 +852,17 @@ OGRBoolean OGRPolyhedralSurface::Equals(OGRGeometry * poOther) const
 /*                              get_Area()                              */
 /************************************************************************/
 
+/**
+ * \brief Returns the area enclosed
+ *
+ * This method is built on the SFCGAL library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the SFCGAL library, this method will always return
+ * -1.0
+ *
+ * @return area enclosed by the PolyhedralSurface
+ */
+
 double OGRPolyhedralSurface::get_Area() const
 {
 #ifndef HAVE_SFCGAL
@@ -681,6 +890,11 @@ double OGRPolyhedralSurface::get_Area() const
 /*                           PointOnSurface()                           */
 /************************************************************************/
 
+/**
+ * \brief Checks if the point is on a surface
+ *
+ */
+
 OGRErr OGRPolyhedralSurface::PointOnSurface(OGRPoint *poPoint) const
 {
     return PointOnSurfaceInternal(poPoint);
@@ -690,6 +904,12 @@ OGRErr OGRPolyhedralSurface::PointOnSurface(OGRPoint *poPoint) const
 /*                         CastToMultiPolygon()                         */
 /************************************************************************/
 
+/**
+ * \brief Casts the OGRPolyhedralSurface to an OGRMultiPolygon
+ *
+ * @return OGRMultiPolygon* pointer to the computed OGRMultiPolygon
+ */
+
 OGRMultiPolygon* OGRPolyhedralSurface::CastToMultiPolygon()
 {
     OGRMultiPolygon *poMultiPolygon = new OGRMultiPolygon(this->oMP);
@@ -698,9 +918,15 @@ OGRMultiPolygon* OGRPolyhedralSurface::CastToMultiPolygon()
 
 /************************************************************************/
 /*                            addGeometry()                             */
-/*      Add a new geometry to a collection.  Only a POLYGON can be      */
-/*      added to a POLYHEDRALSURFACE.                                   */
 /************************************************************************/
+
+/**
+ * \brief Add a new geometry to a collection.
+ *
+ * Only a POLYGON can be added to a POLYHEDRALSURFACE.
+ *
+ * @return OGRErr OGRERR_NONE if the polygon is successfully added
+ */
 
 OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
 {
@@ -724,6 +950,19 @@ OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
 /************************************************************************/
 /*                        addGeometryDirectly()                         */
 /************************************************************************/
+
+/**
+ * \brief Add a geometry directly to the container.
+ *
+ * This method is the same as the C function OGR_G_AddGeometryDirectly().
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param poNewGeom geometry to add to the container.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the type of geometry container.
+ */
 
 OGRErr OGRPolyhedralSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
 {
@@ -760,6 +999,12 @@ OGRErr OGRPolyhedralSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
 /*                          getNumGeometries()                          */
 /************************************************************************/
 
+/**
+ * \brief Fetch number of geometries in PolyhedralSurface
+ *
+ * @return count of children geometries.  May be zero.
+ */
+
 int OGRPolyhedralSurface::getNumGeometries()
 {
     return oMP.nGeomCount;
@@ -768,6 +1013,19 @@ int OGRPolyhedralSurface::getNumGeometries()
 /************************************************************************/
 /*                            getGeometry()                             */
 /************************************************************************/
+
+/**
+ * \brief Fetch geometry from container.
+ *
+ * This method returns a pointer to an geometry within the container.  The
+ * returned geometry remains owned by the container, and should not be
+ * modified.  The pointer is only valid until the next change to the
+ * geometry container.  Use IGeometry::clone() to make a copy.
+ *
+ * @param i the index of the geometry to fetch, between 0 and
+ *          getNumGeometries() - 1.
+ * @return pointer to requested geometry.
+ */
 
 OGRGeometry* OGRPolyhedralSurface::getGeometry(int i)
 {
@@ -778,6 +1036,12 @@ OGRGeometry* OGRPolyhedralSurface::getGeometry(int i)
 /*                               IsEmpty()                              */
 /************************************************************************/
 
+/**
+ * \brief Checks if the PolyhedralSurface is empty
+ *
+ * @return TRUE if the PolyhedralSurface is empty, FALSE otherwise
+ */
+
 OGRBoolean  OGRPolyhedralSurface::IsEmpty() const
 {
     return oMP.IsEmpty();
@@ -786,6 +1050,10 @@ OGRBoolean  OGRPolyhedralSurface::IsEmpty() const
 /************************************************************************/
 /*                                 set3D()                              */
 /************************************************************************/
+
+/**
+ * \brief Set the type as 3D geometry
+ */
 
 void OGRPolyhedralSurface::set3D (OGRBoolean bIs3D)
 {
@@ -798,6 +1066,10 @@ void OGRPolyhedralSurface::set3D (OGRBoolean bIs3D)
 /*                             setMeasured()                            */
 /************************************************************************/
 
+/**
+ * \brief Set the type as Measured
+ */
+
 void OGRPolyhedralSurface::setMeasured (OGRBoolean bIsMeasured)
 {
     oMP.setMeasured(bIsMeasured);
@@ -808,6 +1080,16 @@ void OGRPolyhedralSurface::setMeasured (OGRBoolean bIsMeasured)
 /************************************************************************/
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
+
+/**
+ * \brief Set the coordinate dimension.
+ *
+ * This method sets the explicit coordinate dimension.  Setting the coordinate
+ * dimension of a geometry to 2 should zero out any existing Z values.
+ * This will also remove the M dimension if present before this call.
+ *
+ * @param nNewDimension New coordinate dimension value, either 2 or 3.
+ */
 
 void OGRPolyhedralSurface::setCoordinateDimension (int nNewDimension)
 {
@@ -820,6 +1102,10 @@ void OGRPolyhedralSurface::setCoordinateDimension (int nNewDimension)
 /*                               swapXY()                               */
 /************************************************************************/
 
+/**
+ * \brief Swap x and y coordinates.
+ */
+
 void OGRPolyhedralSurface::swapXY()
 {
     oMP.swapXY();
@@ -827,10 +1113,20 @@ void OGRPolyhedralSurface::swapXY()
 
 /************************************************************************/
 /*                             Distance3D()                             */
-/*    Returns the 3D distance between the two geometries. The distance  */
-/*    is expressed into the same unit as the coordinates of the         */
-/*    geometries.                                                       */
 /************************************************************************/
+
+/**
+ * \brief Returns the 3D distance between
+ *
+ * The distance is expressed into the same unit as the coordinates of the geometries.
+ *
+ * This method is built on the SFCGAL library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the SFCGAL library, this method will always return
+ * -1.0
+ *
+ * @return distance between the two geometries
+ */
 
 double OGRPolyhedralSurface::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
 {
@@ -876,6 +1172,20 @@ double OGRPolyhedralSurface::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *p
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
+/**
+ * \brief Returns if this geometry is or has curve geometry.
+ *
+ * This method is the same as the C function OGR_G_HasCurveGeometry().
+ *
+ * @param bLookForNonLinear set it to TRUE to check if the geometry is or contains
+ * a CIRCULARSTRING.
+ *
+ * @return TRUE if this geometry is or has curve geometry.
+ *
+ * @since GDAL 2.0
+ */
+
+
 OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
 {
     return FALSE;
@@ -884,6 +1194,23 @@ OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(CPL_UNUSED int bLookForNonLine
 /************************************************************************/
 /*                          removeGeometry()                            */
 /************************************************************************/
+
+/**
+ * \brief Remove a geometry from the container.
+ *
+ * Removing a geometry will cause the geometry count to drop by one, and all
+ * "higher" geometries will shuffle down one in index.
+ *
+ * @param iGeom the index of the geometry to delete.  A value of -1 is a
+ * special flag meaning that all geometries should be removed.
+ *
+ * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
+ * not.  The default is TRUE as the container is considered to own the
+ * geometries in it.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
+ * out of range.
+ */
 
 OGRErr OGRPolyhedralSurface::removeGeometry(int iGeom, int bDelete)
 {

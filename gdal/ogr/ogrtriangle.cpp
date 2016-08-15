@@ -40,12 +40,22 @@ CPL_CVSID("$Id$");
 /*                             OGRTriangle()                            */
 /************************************************************************/
 
+/**
+ * \brief Constructor.
+ *
+ */
+
 OGRTriangle::OGRTriangle()
 { }
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
 /************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ *
+ */
 
 OGRTriangle::OGRTriangle(const OGRTriangle& other) :
     OGRPolygon(other)
@@ -54,6 +64,13 @@ OGRTriangle::OGRTriangle(const OGRTriangle& other) :
 /************************************************************************/
 /*                             OGRTriangle()                            */
 /************************************************************************/
+
+/**
+ * \brief Constructs an OGRTriangle from a valid OGRPolygon. In case of error, NULL is returned.
+ *
+ * @param other the Polygon we wish to construct a triangle from
+ * @param eErr encapsulates an error code; contains OGRERR_NONE if the triangle is constructed successfully
+ */
 
 OGRTriangle::OGRTriangle(const OGRPolygon& other, OGRErr &eErr)
 {
@@ -95,6 +112,14 @@ OGRTriangle::OGRTriangle(const OGRPolygon& other, OGRErr &eErr)
 /*                             OGRTriangle()                            */
 /************************************************************************/
 
+/**
+ * \brief Construct a triangle from points
+ *
+ * @param p Point 1
+ * @param q Point 2
+ * @param r Point 3
+ */
+
 OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r)
 {
     OGRLinearRing *poCurve = new OGRLinearRing();
@@ -116,6 +141,11 @@ OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r
 /*                             ~OGRTriangle()                            */
 /************************************************************************/
 
+/**
+ * \brief Destructor
+ *
+ */
+
 OGRTriangle::~OGRTriangle()
 {
     if (!oCC.IsEmpty())
@@ -126,8 +156,16 @@ OGRTriangle::~OGRTriangle()
 
 /************************************************************************/
 /*                    operator=( const OGRGeometry&)                    */
-/*                         Assignment operator                          */
 /************************************************************************/
+
+/**
+ * \brief Assignment operator
+ *
+ * @param other A triangle passed as a parameter
+ *
+ * @return OGRTriangle A copy of other
+ *
+ */
 
 OGRTriangle& OGRTriangle::operator=( const OGRTriangle& other )
 {
@@ -143,6 +181,13 @@ OGRTriangle& OGRTriangle::operator=( const OGRTriangle& other )
 /*                          getGeometryName()                           */
 /************************************************************************/
 
+/**
+ * \brief Returns the geometry name of the triangle
+ *
+ * @return "TRIANGLE"
+ *
+ */
+
 const char* OGRTriangle::getGeometryName() const
 {
     return "TRIANGLE";
@@ -151,6 +196,11 @@ const char* OGRTriangle::getGeometryName() const
 /************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
+
+/**
+ * \brief Returns the WKB Type of Triangle
+ *
+ */
 
 OGRwkbGeometryType OGRTriangle::getGeometryType() const
 {
@@ -166,9 +216,28 @@ OGRwkbGeometryType OGRTriangle::getGeometryType() const
 
 /************************************************************************/
 /*                           importFromWkb()                            */
-/*      Initialize from serialized stream in well known binary          */
-/*      format.                                                         */
 /************************************************************************/
+
+/**
+ * \brief Assign geometry from well known binary data.
+ *
+ * The object must have already been instantiated as the correct derived
+ * type of geometry object to match the binaries type.  This method is used
+ * by the OGRGeometryFactory class, but not normally called by application
+ * code.
+ *
+ * This method relates to the SFCOM IWks::ImportFromWKB() method.
+ *
+ * This method is the same as the C function OGR_G_ImportFromWkb().
+ *
+ * @param pabyData the binary input data.
+ * @param nSize the size of pabyData in bytes, or zero if not known.
+ * @param eWkbVariant if wkbVariantPostGIS1, special interpretation is done for curve geometries code
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
 
 OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
                                   int nSize,
@@ -329,8 +398,29 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
 
 /************************************************************************/
 /*                            exportToWkb()                             */
-/*      Build a well known binary representation of this object.        */
 /************************************************************************/
+
+/**
+ * \brief Convert a geometry into well known binary format.
+ *
+ * This method relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This method is the same as the C function OGR_G_ExportToWkb() or OGR_G_ExportToIsoWkb(),
+ * depending on the value of eWkbVariant.
+ *
+ * @param eByteOrder One of wkbXDR or wkbNDR indicating MSB or LSB byte order
+ *               respectively.
+ * @param pabyData a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGRGeometry::WkbSize() byte in size.
+ * @param eWkbVariant What standard to use when exporting geometries with
+ *                      three dimensions (or more). The default wkbVariantOldOgc is
+ *                      the historical OGR variant. wkbVariantIso is the
+ *                      variant defined in ISO SQL/MM and adopted by OGC
+ *                      for SFSQL 1.2.
+ *
+ * @return Currently OGRERR_NONE is always returned.
+ */
 
 OGRErr  OGRTriangle::exportToWkb( OGRwkbByteOrder eByteOrder,
                                  unsigned char * pabyData,
@@ -392,10 +482,27 @@ OGRErr  OGRTriangle::exportToWkb( OGRwkbByteOrder eByteOrder,
 
 /************************************************************************/
 /*                           importFromWkt()                            */
-/*      Instantiate from well known text format. Currently this is      */
-/*      of the form 'TRIANGLE ((x y, x y, x y, x y))' or other          */
-/*      varieties of the same (including Z and/or M)                    */
 /************************************************************************/
+
+/**
+ * \brief Assign geometry from well known text data.
+ *
+ * The object must have already been instantiated as the correct derived
+ * type of geometry object to match the text type.  This method is used
+ * by the OGRGeometryFactory class, but not normally called by application
+ * code.
+ *
+ * This method relates to the SFCOM IWks::ImportFromWKT() method.
+ *
+ * This method is the same as the C function OGR_G_ImportFromWkt().
+ *
+ * @param ppszInput pointer to a pointer to the source text.  The pointer is
+ *                    updated to pointer after the consumed text.
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
 
 OGRErr OGRTriangle::importFromWkt( char ** ppszInput )
 
@@ -430,8 +537,24 @@ OGRErr OGRTriangle::importFromWkt( char ** ppszInput )
 
 /************************************************************************/
 /*                            exportToWkt()                             */
-/*            Translate this structure into it's WKT format             */
 /************************************************************************/
+
+/**
+ * \brief Convert a geometry into well known text format.
+ *
+ * This method relates to the SFCOM IWks::ExportToWKT() method.
+ *
+ * This method is the same as the C function OGR_G_ExportToWkt().
+ *
+ * @param ppszDstText a text buffer is allocated by the program, and assigned
+ *                    to the passed pointer. After use, *ppszDstText should be
+ *                    freed with OGRFree().
+ * @param eWkbVariant the specification that must be conformed too :
+ *                    - wbkVariantOgc for old-style 99-402 extended dimension (Z) WKB types
+ *                    - wbkVariantIso for SFSQL 1.2 and ISO SQL/MM Part 3
+ *
+ * @return Currently OGRERR_NONE is always returned.
+ */
 
 OGRErr OGRTriangle::exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant eWkbVariant ) const
@@ -559,9 +682,20 @@ error:
 
 /************************************************************************/
 /*                              WkbSize()                               */
-/*      Return the size of this object in well known binary             */
-/*      representation including the byte order, and type information.  */
 /************************************************************************/
+
+/**
+ * \brief Returns size of related binary representation.
+ *
+ * This method returns the exact number of bytes required to hold the
+ * well known binary representation of this geometry object.
+ *
+ * This method relates to the SFCOM IWks::WkbSize() method.
+ *
+ * This method is the same as the C function OGR_G_WkbSize().
+ *
+ * @return size of binary representation in bytes.
+ */
 
 int OGRTriangle::WkbSize() const
 {
@@ -570,10 +704,20 @@ int OGRTriangle::WkbSize() const
 
 /************************************************************************/
 /*                             Distance3D()                             */
-/*       Returns the 3D distance between the two geometries. The        */
-/*    distance is expressed into the same unit as the coordinates of    */
-/*    the geometries.                                                   */
 /************************************************************************/
+
+/**
+ * \brief Returns the 3D distance between
+ *
+ * The distance is expressed into the same unit as the coordinates of the geometries.
+ *
+ * This method is built on the SFCGAL library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the SFCGAL library, this method will always return
+ * -1.0
+ *
+ * @return distance between the two geometries
+ */
 
 double OGRTriangle::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeom) const
 {
@@ -617,10 +761,17 @@ double OGRTriangle::Distance3D(UNUSED_IF_NO_SFCGAL const OGRGeometry *poOtherGeo
 
 /************************************************************************/
 /*                               addRing()                              */
-/*    Checks if it is a valid ring (same start and end point; number    */
-/*    of points should be four). If there is already a ring, then it    */
-/*    doesn't add the new ring. The old ring must be deleted first.     */
 /************************************************************************/
+
+/**
+ * \brief adds an exterior ring to the Triangle
+ *
+ * Checks if it is a valid ring (same start and end point; number of points should be four).
+ *
+ * If there is already a ring, then it doesn't add the new ring. The old ring must be deleted first.
+ *
+ * @return OGRErr The error code retuned. If the addition is successful, then OGRERR_NONE is returned.
+ */
 
 OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
 {
@@ -653,9 +804,17 @@ OGRErr OGRTriangle::addRing(OGRCurve *poNewRing)
 
 /************************************************************************/
 /*                             SymDifference()                          */
-/*  Generates a new geometry which is the symmetric difference of this  */
-/*  geometry and the second geometry passed into the method.            */
 /************************************************************************/
+
+/**
+ * \brief Generates a new geometry which is the symmetric difference of this geometry and the second geometry passed into the method.
+ *
+ * If there is already a ring, then it doesn't add the new ring. The old ring must be deleted first.
+ *
+ * @param poOtherGeom the other geometry to compute the symmetric difference against
+ *
+ * @return OGRGeometry* The computed geometry
+ */
 
 OGRGeometry *OGRTriangle::SymDifference( const OGRGeometry *poOtherGeom) const
 {
@@ -672,9 +831,17 @@ OGRGeometry *OGRTriangle::SymDifference( const OGRGeometry *poOtherGeom) const
 
 /************************************************************************/
 /*                              IsSimple()                              */
-/*      The only self intersection points are the boundary points.      */
-/*      Hence it is a simple geometry.                                  */
 /************************************************************************/
+
+/**
+ * \brief Checks if it is a simple geometry
+ *
+ * The only self intersection points are the boundary points.
+ *
+ * Hence it is a simple geometry.
+ *
+ * @return TRUE
+ */
 
 OGRBoolean  OGRTriangle::IsSimple() const
 {
@@ -685,6 +852,12 @@ OGRBoolean  OGRTriangle::IsSimple() const
 /*                             Boundary()                               */
 /************************************************************************/
 
+/**
+ * \brief Returns the boundary of the geometry
+ *
+ * @return OGRGeometry* pointer to the boundary geometry
+ */
+
 OGRGeometry *OGRTriangle::Boundary() const
 {
     return oCC.papoCurves[0];
@@ -693,6 +866,12 @@ OGRGeometry *OGRTriangle::Boundary() const
 /************************************************************************/
 /*                             CastToPolygon()                          */
 /************************************************************************/
+
+/**
+ * \brief Casts the OGRTriangle to an OGRPolygon
+ *
+ * @return OGRPolygon* pointer to the computed OGRPolygon
+ */
 
 OGRPolygon* OGRTriangle::CastToPolygon()
 {

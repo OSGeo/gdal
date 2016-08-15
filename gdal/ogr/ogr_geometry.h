@@ -67,6 +67,7 @@ class OGRRawPoint
 typedef struct GEOSGeom_t *GEOSGeom;
 /** GEOS context handle type */
 typedef struct GEOSContextHandle_HS *GEOSContextHandle_t;
+/** SFCGAL geometry type */
 typedef void sfcgal_geometry_t;
 
 class OGRPoint;
@@ -215,9 +216,10 @@ class CPL_DLL OGRGeometry
                                              const char* const* papszOptions = NULL) const CPL_WARN_UNUSED_RESULT;
 
     // SFCGAL interfacing methods
+//! @cond Doxygen_Suppress
     static sfcgal_geometry_t* OGRexportToSFCGAL(OGRGeometry *poGeom);
     static OGRGeometry* SFCGALexportToOGR(sfcgal_geometry_t* _geometry);
-
+//! @endcond
     virtual void closeRings();
 
     virtual void setCoordinateDimension( int nDimension );
@@ -235,9 +237,9 @@ class CPL_DLL OGRGeometry
     // ISpatialRelation
     virtual OGRBoolean  Intersects( const OGRGeometry * ) const;
     virtual OGRBoolean  Equals( OGRGeometry * ) const = 0;
-    virtual OGRBoolean  Disjoint( const OGRGeometry * ) const;
+    virtual OGRBoolean  Disjoint( const OGRGeometry * poOtherGeom) const;
     virtual OGRBoolean  Touches( const OGRGeometry * ) const;
-    virtual OGRBoolean  Crosses( const OGRGeometry * ) const;
+    virtual OGRBoolean  Crosses( const OGRGeometry * poOtherGeom) const;
     virtual OGRBoolean  Within( const OGRGeometry * ) const;
     virtual OGRBoolean  Contains( const OGRGeometry * ) const;
     virtual OGRBoolean  Overlaps( const OGRGeometry * ) const;
@@ -249,10 +251,10 @@ class CPL_DLL OGRGeometry
     virtual double  Distance( const OGRGeometry * ) const ;
     virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 ) const CPL_WARN_UNUSED_RESULT;
-    virtual OGRGeometry *Intersection( const OGRGeometry *) const CPL_WARN_UNUSED_RESULT;
-    virtual OGRGeometry *Union( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *Intersection( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *Union( const OGRGeometry *poOtherGeom) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *UnionCascaded() const CPL_WARN_UNUSED_RESULT;
-    virtual OGRGeometry *Difference( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *Difference( const OGRGeometry * poOtherGeom) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *SymDifference( const OGRGeometry * ) const CPL_WARN_UNUSED_RESULT;
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
     virtual OGRGeometry *Simplify(double dTolerance) const CPL_WARN_UNUSED_RESULT;
@@ -1126,10 +1128,17 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 /*                              OGRTriangle                             */
 /************************************************************************/
 
+/**
+ * Triangle class.
+ *
+ */
+
 class CPL_DLL OGRTriangle : public OGRPolygon
 {
   protected:
+//! @cond Doxygen_Suppress
     friend class OGRTriangulatedSurface;
+//! @endcond
 
   public:
     OGRTriangle();
@@ -1300,8 +1309,10 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     friend class OGRTriangulatedSurface;
 
   private:
+//! @cond Doxygen_Suppress
             OGRErr _addGeometry(const OGRGeometry * poNewGeom );
             OGRErr _addGeometryDirectly( OGRGeometry * poNewGeom );
+//! @endcond
   public:
             OGRMultiPolygon();
             OGRMultiPolygon(const OGRMultiPolygon& other);
@@ -1327,13 +1338,20 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
 /*                         OGRPolyhedralSurface                         */
 /************************************************************************/
 
+/**
+ * PolyhedralSurface class.
+ *
+ */
+
 class CPL_DLL OGRPolyhedralSurface : public OGRSurface
 {
   protected:
+//! @cond Doxygen_Suppress
     OGRMultiPolygon oMP;
     virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const;
     virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const;
     OGRErr exportToWktInternal (char ** ppszDstText, OGRwkbVariant eWkbVariant, const char* pszSkipPrefix ) const;
+//! @endcond
 
   public:
     OGRPolyhedralSurface();
@@ -1384,6 +1402,11 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
 /************************************************************************/
 /*                        OGRTriangulatedSurface                        */
 /************************************************************************/
+
+/**
+ * TriangulatedSurface class.
+ *
+ */
 
 class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
 {

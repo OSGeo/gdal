@@ -6375,6 +6375,7 @@ OGRGeometry* OGRGeometry::CastToError(OGRGeometry* poGeom)
 /*                          OGRexportToSFCGAL()                         */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometry *poGeom)
 {
 #ifdef HAVE_SFCGAL
@@ -6463,11 +6464,13 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     return NULL;
 #endif
 }
+//! @endcond
 
 /************************************************************************/
 /*                          SFCGALexportToOGR()                         */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_t* geometry)
 {
 #ifdef HAVE_SFCGAL
@@ -6598,10 +6601,13 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(UNUSED_IF_NO_SFCGAL sfcgal_geometry_
     return NULL;
 #endif
 }
+//! @endcond
 
+//! @cond Doxygen_Suppress
 OGRBoolean OGRGeometry::IsSFCGALCompatible() const
 {
     return (wkbFlatten(this->getGeometryType()) == wkbTriangle ||
             wkbFlatten(this->getGeometryType()) == wkbPolyhedralSurface ||
             wkbFlatten(this->getGeometryType()) == wkbTIN);
 }
+//! @endcond
