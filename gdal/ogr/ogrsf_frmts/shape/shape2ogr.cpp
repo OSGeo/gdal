@@ -353,7 +353,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
         int iPart;
 
-        for( int iPart = 0; iPart < psShape->nParts; iPart++ )
+        for(iPart = 0; iPart < psShape->nParts; iPart++ )
         {
             int nPartPoints = 0;
             int nPartStart = 0;
@@ -936,7 +936,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 poGC = (OGRGeometryCollection *) poGeom;
 
             int         iGeom;
-            for( int iGeom=0; iGeom < poGC->getNumGeometries(); iGeom++ )
+            for(iGeom=0; iGeom < poGC->getNumGeometries(); iGeom++ )
             {
                 OGRGeometry* poSubGeom = poGC->getGeometryRef( iGeom );
 
