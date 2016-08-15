@@ -2330,7 +2330,7 @@ yyreduce:
             context->poCurSelect->PushJoin( static_cast<int>((yyvsp[-3])->int_value),
                                             (yyvsp[-1]) );
             delete (yyvsp[-3]);
-	    }
+    }
 #line 2335 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 

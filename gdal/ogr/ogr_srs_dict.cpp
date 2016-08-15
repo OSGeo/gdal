@@ -134,7 +134,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
  * This method is the same as the C++ method OGRSpatialReference::importFromDict().
  *
  * @param hSRS spatial reference system handle.
- * 
+ *
  * @param pszDictFile the name of the dictionary file to load.
  *
  * @param pszCode the code to lookup in the dictionary.

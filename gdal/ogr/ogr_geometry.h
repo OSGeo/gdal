@@ -55,8 +55,7 @@ class OGRRawPoint
 
           /** Constructor */
           OGRRawPoint(double xIn, double yIn) : x(xIn), y(yIn) {}
-          
-          
+
     /** x */
     double      x;
     /** y */
@@ -923,7 +922,7 @@ class CPL_DLL OGRSurface : public OGRGeometry
     virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const = 0;
     virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const = 0;
 //! @endcond
-    
+
   public:
     virtual double      get_Area() const = 0;
     virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const = 0;

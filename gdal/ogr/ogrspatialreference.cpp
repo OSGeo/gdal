@@ -6852,7 +6852,7 @@ OGRErr OSRGetTOWGS84( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 
 /** Is the passed projection parameter an angular one?
- * 
+ *
  * @return TRUE or FALSE
  */
 
@@ -6875,8 +6875,8 @@ int OGRSpatialReference::IsAngularParameter( const char *pszParameterName )
 /************************************************************************/
 
 /** Is the passed projection parameter an angular longitude
- * (relative to a prime meridian)?    
- * 
+ * (relative to a prime meridian)?
+ *
  * @return TRUE or FALSE
  */
 
@@ -6896,7 +6896,7 @@ int OGRSpatialReference::IsLongitudeParameter( const char *pszParameterName )
 
 /** Is the passed projection parameter an linear one measured in meters or
  * some similar linear measure.
- * 
+ *
  * @return TRUE or FALSE
  */
 int OGRSpatialReference::IsLinearParameter( const char *pszParameterName )

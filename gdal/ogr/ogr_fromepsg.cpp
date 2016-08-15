@@ -2436,9 +2436,9 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
 /*                           GetEPSGGeogCS()                            */
 /************************************************************************/
 
-/** Try to establish what the EPSG code for this coordinate systems 
+/** Try to establish what the EPSG code for this coordinate systems
  * GEOGCS might be.  Returns -1 if no reasonable guess can be made.
- * 
+ *
  * @return EPSG code
  */
 

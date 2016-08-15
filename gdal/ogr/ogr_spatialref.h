@@ -189,7 +189,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromESRI( char ** );
     OGRErr      importFromPCI( const char *, const char * = NULL,
                                double * = NULL );
-      
+
 #define USGS_ANGLE_DECIMALDEGREES 0     /**< Angle is in decimal degrees. */
 #define USGS_ANGLE_PACKEDDMS      TRUE  /**< Angle is in packed degree minute second. */
 #define USGS_ANGLE_RADIANS        2     /**< Angle is in radians. */
@@ -228,7 +228,7 @@ class CPL_DLL OGRSpatialReference
                          OGRAxisOrientation eYAxisOrientation );
 
     // Machinery for accessing parse nodes
-    
+
     //! Return root node
     OGR_SRSNode *GetRoot() { return poRoot; }
     //! Return root node
@@ -563,7 +563,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      ImportFromESRIStatePlaneWKT(
         int nCode, const char* pszDatumName, const char* pszUnitsName,
         int nPCSCode, const char* pszCSName = NULL );
-    
+
     /** ImportFromESRIWisconsinWKT */
     OGRErr      ImportFromESRIWisconsinWKT(
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin,

@@ -614,7 +614,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
         }
     }
 
-	// For every point p in ring,
+    // For every point p in ring,
     // test if ray starting from given point crosses segment (p - 1, p)
     int iNumCrossings = 0;
 

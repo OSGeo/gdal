@@ -451,7 +451,7 @@ class CPL_DLL OGRFeature
     virtual const char *GetStyleString();
     virtual void        SetStyleString( const char * );
     virtual void        SetStyleStringDirectly( char * );
-    
+
     /** Return style table.
      * @return style table.
      */

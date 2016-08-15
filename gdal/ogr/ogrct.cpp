@@ -946,7 +946,7 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 /************************************************************************/
 
 /** Transform an array of points
- * 
+ *
  * @param hTransform Transformation object
  * @param nCount Number of points
  * @param x Array of nCount x values.
@@ -1239,7 +1239,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 
 
 /** Transform an array of points
- * 
+ *
  * @param hTransform Transformation object
  * @param nCount Number of points
  * @param x Array of nCount x values.
