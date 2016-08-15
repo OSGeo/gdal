@@ -608,10 +608,11 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         return OGRERR_NONE;
     }
 
+    OGRGeometryCollection *poGC;
     if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon
-        || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
+        || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString)
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+        poGC = (OGRGeometryCollection *) poGeom;
         int iGeom;
         OGRErr eErr = OGRERR_NONE;
 
@@ -628,9 +629,17 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Polygons are written with on entity per ring.                   */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon
+        || wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
     {
-        OGRPolygon *poPoly = (OGRPolygon *) poGeom;
+        OGRPolygon *poPoly;
+        if (wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
+        {
+            poPoly = ((OGRTriangle *)poGeom)->CastToPolygon();
+        }
+        else
+            poPoly = (OGRPolygon *) poGeom;
+
         int iGeom;
         OGRErr eErr;
 
@@ -648,7 +657,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Do we now have a geometry we can work with?                     */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     OGRLineString *poLS = (OGRLineString *) poGeom;
@@ -874,6 +883,8 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 /*      For now we handle multipolygons by writing a series of          */
 /*      entities.                                                       */
 /* -------------------------------------------------------------------- */
+    int TriangleToPolygonFlag = 0;
+    OGRPolygon *poPolygon = NULL;
     if( poGeom == NULL )
         poGeom = poFeature->GetGeometryRef();
 
@@ -882,9 +893,11 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
         return OGRERR_NONE;
     }
 
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+    OGRGeometryCollection *poGC;
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+        poGC = (OGRGeometryCollection *) poGeom;
+
         int iGeom;
         OGRErr eErr = OGRERR_NONE;
 
@@ -902,7 +915,15 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 /*      Do we now have a geometry we can work with?                     */
 /* -------------------------------------------------------------------- */
     if( wkbFlatten(poGeom->getGeometryType()) != wkbPolygon )
-        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    {
+        if (wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
+        {
+            poPolygon = ((OGRTriangle *)poGeom)->CastToPolygon();
+            TriangleToPolygonFlag++;
+        }
+        else
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write as a hatch.                                               */
@@ -1023,7 +1044,11 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Process the loops (rings).                                      */
 /* -------------------------------------------------------------------- */
-    OGRPolygon *poPoly = (OGRPolygon *) poGeom;
+    OGRPolygon *poPoly;
+    if (TriangleToPolygonFlag)
+        poPoly = (OGRPolygon *) poPolygon;
+    else
+        poPoly = (OGRPolygon *) poGeom;
 
     WriteValue( 91, poPoly->getNumInteriorRings() + 1 );
 
@@ -1053,6 +1078,9 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
     WriteValue( 75, 0 ); // hatch style = Hatch "odd parity" area (Normal style)
     WriteValue( 76, 1 ); // hatch pattern type = predefined
     WriteValue( 98, 0 ); // 0 seed points
+
+    if (TriangleToPolygonFlag)
+        delete poPolygon;
 
     return OGRERR_NONE;
 
@@ -1089,6 +1117,9 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 
     WriteValue( 0, "SEQEND" );
     WriteValue( 8, "0" );
+
+    if (TriangleToPolygonFlag)
+        delete poPolygon;
 
     return OGRERR_NONE;
 #endif
@@ -1148,7 +1179,8 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
         return WritePOLYLINE( poFeature );
 
     else if( eGType == wkbPolygon
-             || eGType == wkbMultiPolygon )
+             || eGType == wkbTriangle
+             || eGType == wkbMultiPolygon)
     {
         if( bWriteHatch )
             return WriteHATCH( poFeature );

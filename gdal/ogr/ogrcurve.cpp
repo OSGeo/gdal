@@ -101,9 +101,66 @@ int OGRCurve::get_IsClosed() const
     OGRPoint oEndPoint;
     EndPoint( &oEndPoint );
 
-    return
-        oStartPoint.getX() == oEndPoint.getX() &&
-        oStartPoint.getY() == oEndPoint.getY();
+    if (oStartPoint.IsMeasured() && oEndPoint.IsMeasured())
+    {
+        // XYZM type
+        if (oStartPoint.Is3D() && oEndPoint.Is3D())
+        {
+            if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
+                && oStartPoint.getZ() == oEndPoint.getZ() && oStartPoint.getM() == oEndPoint.getM())
+            {
+                return TRUE;
+            }
+            else
+                return FALSE;
+        }
+        // XYM type
+        else
+        {
+            if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
+                && oStartPoint.getM() == oEndPoint.getM())
+            {
+                return TRUE;
+            }
+            else
+                return FALSE;
+        }
+    }
+
+    else if (oStartPoint.Is3D() && oEndPoint.Is3D())
+    {
+        // XYZ type
+        if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
+            && oStartPoint.getZ() == oEndPoint.getZ())
+        {
+            return TRUE;
+        }
+        else
+            return FALSE;
+    }
+
+    // one of the points is 3D
+    else if (((oStartPoint.Is3D() & oEndPoint.Is3D()) == 0) &&
+             ((oStartPoint.Is3D() | oEndPoint.Is3D()) == 1))
+    {
+        return FALSE;
+    }
+
+    // one of the points is Measured
+    else if (((oStartPoint.IsMeasured() & oEndPoint.IsMeasured()) == 0) &&
+             ((oStartPoint.IsMeasured() | oEndPoint.IsMeasured()) == 1))
+    {
+        return FALSE;
+    }
+
+    else
+    {
+        // XY type
+        if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY() )
+            return TRUE;
+        else
+            return FALSE;
+    }
 }
 
 /**

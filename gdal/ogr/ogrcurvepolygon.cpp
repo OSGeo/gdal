@@ -29,6 +29,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogr_geos.h"
+#include "ogr_sfcgal.h"
 #include "ogr_api.h"
 
 CPL_CVSID("$Id$");
@@ -397,7 +398,15 @@ int OGRCurvePolygon::checkRing( OGRCurve * poNewRing ) const
 
 OGRErr OGRCurvePolygon::addRingDirectly( OGRCurve * poNewRing )
 {
-    return addRingDirectlyInternal( poNewRing, TRUE );
+    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    {
+        if (oCC.nCurveCount == 0)
+            return addRingDirectlyInternal( poNewRing, TRUE );
+        else
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+    else
+        return addRingDirectlyInternal( poNewRing, TRUE );
 }
 
 OGRErr OGRCurvePolygon::addRingDirectlyInternal( OGRCurve* poNewRing,
@@ -601,7 +610,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 }
 
 /************************************************************************/
-/*                               Equal()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
@@ -689,6 +698,11 @@ OGRBoolean OGRCurvePolygon::IsEmpty(  ) const
 
 void OGRCurvePolygon::segmentize( double dfMaxLength )
 {
+    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "segmentize() is not valid for Triangle");
+        return;
+    }
     oCC.segmentize(dfMaxLength);
 }
 

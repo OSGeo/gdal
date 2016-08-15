@@ -6769,8 +6769,6 @@ def tiff_write_153():
 
 def tiff_write_154():
 
-    import struct
-
     src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500)
 
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['BLOCKYSIZE=256'])
@@ -6854,49 +6852,16 @@ def tiff_write_154():
         # SPARSE_OK in CreateCopy(): blocks are not written
         if dt == 'signedbyte':
             src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500, 1, gdal.GDT_Byte)
-            options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256', 'PIXELTYPE=SIGNEDBYTE']
+            ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256', 'PIXELTYPE=SIGNEDBYTE'])
         else:
             src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500, 1, dt)
-            options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256' ]
-        gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = options)
+            ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256'])
+        ds = None
         if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 162:
             gdaltest.post_reason('fail')
             print(dt)
             print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
             return 'fail'
-
-    # Test detection of nodata blocks with nodata != 0 for all data types
-    for dt in [ 'signedbyte', gdal.GDT_Int16, gdal.GDT_UInt16,
-                gdal.GDT_Int32, gdal.GDT_UInt32,
-                gdal.GDT_Float32, gdal.GDT_Float64 ]:
-        # SPARSE_OK in CreateCopy(): blocks are not written
-        if dt == 'signedbyte':
-            src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500, 1, gdal.GDT_Byte)
-            options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256', 'PIXELTYPE=SIGNEDBYTE']
-        else:
-            src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500, 1, dt)
-            options = ['SPARSE_OK=YES', 'BLOCKYSIZE=256' ]
-        src_ds.GetRasterBand(1).Fill(1)
-        src_ds.GetRasterBand(1).SetNoDataValue(1)
-        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = options)
-        ds = None
-        if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 174:
-            gdaltest.post_reason('fail')
-            print(dt)
-            print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
-            return 'fail'
-
-    # Test optimized detection when nodata==0, and with the last pixel != 0
-    src_ds = gdal.GetDriverByName('MEM').Create('', 100, 1, 1 )
-    src_ds.GetRasterBand(1).Fill(0)
-    src_ds.GetRasterBand(1).WriteRaster(99,0,1,1,struct.pack('B' * 1, 1))
-    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options = ['SPARSE_OK=YES' ])
-    if gdal.VSIStatL('/vsimem/tiff_write_154.tif').size != 246:
-        gdaltest.post_reason('fail')
-        print(gdal.VSIStatL('/vsimem/tiff_write_154.tif').size)
-        return 'fail'
-
-    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
 
     return 'success'
 

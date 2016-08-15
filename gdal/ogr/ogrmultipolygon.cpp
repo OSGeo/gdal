@@ -175,3 +175,63 @@ OGRMultiSurface* OGRMultiPolygon::CastToMultiSurface(OGRMultiPolygon* poMP)
 {
     return (OGRMultiSurface*) TransferMembersAndDestroy(poMP, new OGRMultiSurface());
 }
+
+/************************************************************************/
+/*                           _addGeometry()                             */
+/*      Only to be used in conjunction with OGRTriangulatedSurface.     */
+/*                        DO NOT USE IT ELSEWHERE.                      */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+OGRErr OGRMultiPolygon::_addGeometry( const OGRGeometry * poNewGeom )
+
+{
+    OGRGeometry *poClone = poNewGeom->clone();
+    OGRErr      eErr;
+
+    if( poClone == NULL )
+        return OGRERR_FAILURE;
+    eErr = _addGeometryDirectly( poClone );
+    if( eErr != OGRERR_NONE )
+        delete poClone;
+
+    return eErr;
+}
+//! @endcond
+
+/************************************************************************/
+/*                         _addGeometryDirectly()                       */
+/*      Only to be used in conjunction with OGRTriangulatedSurface.     */
+/*                        DO NOT USE IT ELSEWHERE.                      */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+OGRErr OGRMultiPolygon::_addGeometryDirectly( OGRGeometry * poNewGeom )
+{
+    if ( wkbFlatten(poNewGeom->getGeometryType()) != wkbTriangle)
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+    if( poNewGeom->Is3D() && !Is3D() )
+        set3D(TRUE);
+
+    if( poNewGeom->IsMeasured() && !IsMeasured() )
+        setMeasured(TRUE);
+
+    if( !poNewGeom->Is3D() && Is3D() )
+        poNewGeom->set3D(TRUE);
+
+    if( !poNewGeom->IsMeasured() && IsMeasured() )
+        poNewGeom->setMeasured(TRUE);
+
+    OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE( papoGeoms,
+                                             sizeof(void*) * (nGeomCount+1) );
+    if( papoNewGeoms == NULL )
+        return OGRERR_FAILURE;
+
+    papoGeoms = papoNewGeoms;
+    papoGeoms[nGeomCount] = poNewGeom;
+    nGeomCount++;
+
+    return OGRERR_NONE;
+}
+//! @endcond

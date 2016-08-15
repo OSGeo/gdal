@@ -104,6 +104,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
     OGRGeometry* poFinalGeom = (OGRGeometry *)
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oGC,
                                   TRUE, TRUE, 0.0000001, &eErr );
+
     if( eErr != OGRERR_NONE )
     {
         delete poFinalGeom;

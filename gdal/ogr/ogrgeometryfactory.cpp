@@ -31,6 +31,7 @@
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ogr_sfcgal.h"
 #include "ogr_geos.h"
 #include <new>
 
@@ -282,6 +283,11 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
         poGeom = new OGRPolygon();
     }
 
+    else if( STARTS_WITH_CI(szToken,"TRIANGLE") )
+    {
+        poGeom = new OGRTriangle();
+    }
+
     else if( STARTS_WITH_CI(szToken,"GEOMETRYCOLLECTION") )
     {
         poGeom = new OGRGeometryCollection();
@@ -325,6 +331,16 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     else if( STARTS_WITH_CI(szToken,"MULTISURFACE") )
     {
         poGeom = new OGRMultiSurface();
+    }
+
+    else if( STARTS_WITH_CI(szToken,"POLYHEDRALSURFACE") )
+    {
+        poGeom = new OGRPolyhedralSurface();
+    }
+
+    else if( STARTS_WITH_CI(szToken,"TIN") )
+    {
+        poGeom = new OGRTriangulatedSurface();
     }
 
     else
@@ -458,6 +474,15 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
 
       case wkbMultiSurface:
           return new (std::nothrow) OGRMultiSurface();
+
+      case wkbTriangle:
+          return new (std::nothrow) OGRTriangle();
+
+      case wkbPolyhedralSurface:
+          return new (std::nothrow) OGRPolyhedralSurface();
+
+      case wkbTIN:
+          return new (std::nothrow) OGRTriangulatedSurface();
 
       default:
           return NULL;

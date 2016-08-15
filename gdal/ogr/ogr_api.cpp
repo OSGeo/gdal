@@ -1191,6 +1191,8 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
         return ((OGRCompoundCurve *)hGeom)->getNumCurves();
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
         return ((OGRGeometryCollection *)hGeom)->getNumGeometries();
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+        return ((OGRPolyhedralSurface *)hGeom)->getNumGeometries();
     else
     {
         // autotest/pymod/ogrtest.py calls this method on any geometry. So keep silent
@@ -1246,6 +1248,8 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
         return (OGRGeometryH) ((OGRCompoundCurve *)hGeom)->getCurve(iSubGeom);
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
         return (OGRGeometryH) ((OGRGeometryCollection *)hGeom)->getGeometryRef( iSubGeom );
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+        return (OGRGeometryH) ((OGRPolyhedralSurface *)hGeom)->getGeometry(iSubGeom );
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
@@ -1302,6 +1306,11 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
         eErr = ((OGRGeometryCollection *)hGeom)->addGeometry(
+                                                (OGRGeometry *) hNewSubGeom );
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        eErr = ((OGRPolyhedralSurface *)hGeom)->addGeometry(
                                                 (OGRGeometry *) hNewSubGeom );
     }
 
@@ -1409,6 +1418,10 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
         return ((OGRGeometryCollection *)hGeom)->removeGeometry( iGeom,bDelete);
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        return ((OGRPolyhedralSurface *)hGeom)->removeGeometry( iGeom,bDelete);
     }
     else
     {
