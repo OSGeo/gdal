@@ -73,7 +73,7 @@ class OGRUKOOAP190Layer : public OGRSEGUKOOABaseLayer
   public:
                         OGRUKOOAP190Layer(const char* pszFilename,
                                          VSILFILE* fp);
-                        ~OGRUKOOAP190Layer();
+                        virtual ~OGRUKOOAP190Layer();
 
     virtual void                ResetReading();
 };
