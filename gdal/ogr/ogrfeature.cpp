@@ -2696,9 +2696,9 @@ int OGRFeature::GetFieldAsDateTime( int iField,
                                     int *pnTZFlag )
 {
     float fSecond = 0.0f;
-    const bool bRet =
+    const bool bRet = CPL_TO_BOOL(
         GetFieldAsDateTime( iField, pnYear, pnMonth, pnDay, pnHour, pnMinute,
-                            &fSecond, pnTZFlag);
+                            &fSecond, pnTZFlag));
     if( bRet && pnSecond ) *pnSecond = static_cast<int>(fSecond);
     return bRet;
 }
@@ -2739,11 +2739,11 @@ int OGR_F_GetFieldAsDateTime( OGRFeatureH hFeat, int iField,
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTime", 0 );
 
     float fSecond = 0.0f;
-    const bool bRet =reinterpret_cast<OGRFeature *>(hFeat)->
+    const bool bRet = CPL_TO_BOOL(reinterpret_cast<OGRFeature *>(hFeat)->
         GetFieldAsDateTime( iField,
                             pnYear, pnMonth, pnDay,
                             pnHour, pnMinute,&fSecond,
-                            pnTZFlag );
+                            pnTZFlag ));
     if( bRet && pnSecond ) *pnSecond = static_cast<int>(fSecond);
     return bRet;
 }
