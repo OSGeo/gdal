@@ -546,13 +546,13 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
 /*                          CurveToLine()                               */
 /************************************************************************/
 
-OGRLineString* OGRCircularString::CurveToLine(double dfMaxAngleStepSizeDegrees,
-                                              const char* const* papszOptions) const
+OGRLineString* OGRCircularString::CurveToLine(
+    double dfMaxAngleStepSizeDegrees, const char* const* papszOptions ) const
 {
     OGRLineString* poLine = new OGRLineString();
     poLine->assignSpatialReference(getSpatialReference());
 
-    int bHasZ = (getCoordinateDimension() == 3);
+    const bool bHasZ = getCoordinateDimension() == 3;
     for( int i = 0; i < nPointCount - 2; i += 2 )
     {
         OGRLineString* poArc = OGRGeometryFactory::curveToLineString(

@@ -418,10 +418,11 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
                     OGRPoint oPoint;
                     if( ParseGMLCoordinates( psPointPropertyIter, &oPoint, nSRSDimension ) )
                     {
-                        int bSuccess = AddPoint( poGeometry, oPoint.getX(),
-                                                 oPoint.getY(), oPoint.getZ(),
-                                                 oPoint.getCoordinateDimension() );
-                        if (bSuccess)
+                        const bool bSuccess =
+                            AddPoint( poGeometry, oPoint.getX(),
+                                      oPoint.getY(), oPoint.getZ(),
+                                      oPoint.getCoordinateDimension() );
+                        if( bSuccess )
                             bHasFoundPosElement = true;
                         else
                             return false;
@@ -466,18 +467,19 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
             return false;
         }
 
-        double dfX = OGRFastAtof(pszX);
-        double dfY = OGRFastAtof(pszY);
-        double dfZ = (pszZ != NULL) ? OGRFastAtof(pszZ) : 0.0;
-        int bSuccess = AddPoint( poGeometry, dfX, dfY, dfZ, (pszZ != NULL) ? 3 : 2 );
+        const double dfX = OGRFastAtof(pszX);
+        const double dfY = OGRFastAtof(pszY);
+        const double dfZ = (pszZ != NULL) ? OGRFastAtof(pszZ) : 0.0;
+        const bool bSuccess =
+            AddPoint( poGeometry, dfX, dfY, dfZ, (pszZ != NULL) ? 3 : 2 );
 
-        if (bSuccess)
+        if( bSuccess )
             bHasFoundPosElement = true;
         else
             return false;
     }
 
-    if (bHasFoundPosElement)
+    if( bHasFoundPosElement )
         return true;
 
 /* -------------------------------------------------------------------- */

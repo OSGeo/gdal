@@ -122,25 +122,25 @@ class OGRProj4CT : public OGRCoordinateTransformation
 {
     OGRSpatialReference *poSRSSource;
     void        *psPJSource;
-    int         bSourceLatLong;
+    bool        bSourceLatLong;
     double      dfSourceToRadians;
-    int         bSourceWrap;
+    bool        bSourceWrap;
     double      dfSourceWrapLong;
 
     OGRSpatialReference *poSRSTarget;
     void        *psPJTarget;
-    int         bTargetLatLong;
+    bool        bTargetLatLong;
     double      dfTargetFromRadians;
-    int         bTargetWrap;
+    bool        bTargetWrap;
     double      dfTargetWrapLong;
 
-    int         bIdentityTransform;
-    //int         bWGS84ToWebMercator;
-    int         bWebMercatorToWGS84;
+    bool        bIdentityTransform;
+    // bool         bWGS84ToWebMercator;
+    bool        bWebMercatorToWGS84;
 
     int         nErrorCount;
 
-    int         bCheckWithInvertProj;
+    bool        bCheckWithInvertProj;
     double      dfThreshold;
 
     projCtx     pjctx;
@@ -485,12 +485,25 @@ OCTNewCoordinateTransformation(
 /************************************************************************/
 
 OGRProj4CT::OGRProj4CT() :
-    poSRSSource(NULL), psPJSource(NULL), bSourceLatLong(FALSE),
-    dfSourceToRadians(0.0), bSourceWrap(FALSE), dfSourceWrapLong(0.0),
-    poSRSTarget(NULL), psPJTarget(NULL), bTargetLatLong(FALSE),
-    dfTargetFromRadians(0.0), bTargetWrap(FALSE), dfTargetWrapLong(0.0),
-    bIdentityTransform(FALSE), bWebMercatorToWGS84(FALSE), nErrorCount(0),
-    bCheckWithInvertProj(FALSE), dfThreshold(0.0), pjctx(NULL), nMaxCount(0),
+    poSRSSource(NULL),
+    psPJSource(NULL),
+    bSourceLatLong(false),
+    dfSourceToRadians(0.0),
+    bSourceWrap(false),
+    dfSourceWrapLong(0.0),
+    poSRSTarget(NULL),
+    psPJTarget(NULL),
+    bTargetLatLong(false),
+    dfTargetFromRadians(0.0),
+    bTargetWrap(false),
+    dfTargetWrapLong(0.0),
+    bIdentityTransform(false),
+    bWebMercatorToWGS84(false),
+    nErrorCount(0),
+    bCheckWithInvertProj(false),
+    dfThreshold(0.0),
+    pjctx(NULL),
+    nMaxCount(0),
     padfOriX(NULL), padfOriY(NULL), padfOriZ(NULL), padfTargetX(NULL),
     padfTargetY(NULL), padfTargetZ(NULL)
 {
@@ -583,15 +596,15 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     poSRSSource = poSourceIn->Clone();
     poSRSTarget = poTargetIn->Clone();
 
-    bSourceLatLong = poSRSSource->IsGeographic();
-    bTargetLatLong = poSRSTarget->IsGeographic();
+    bSourceLatLong = CPL_TO_BOOL(poSRSSource->IsGeographic());
+    bTargetLatLong = CPL_TO_BOOL(poSRSTarget->IsGeographic());
 
 /* -------------------------------------------------------------------- */
 /*      Setup source and target translations to radians for lat/long    */
 /*      systems.                                                        */
 /* -------------------------------------------------------------------- */
     dfSourceToRadians = DEG_TO_RAD;
-    bSourceWrap = FALSE;
+    bSourceWrap = false;
     dfSourceWrapLong = 0.0;
 
     if( bSourceLatLong )
@@ -606,7 +619,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     }
 
     dfTargetFromRadians = RAD_TO_DEG;
-    bTargetWrap = FALSE;
+    bTargetWrap = false;
     dfTargetWrapLong = 0.0;
 
     if( bTargetLatLong )
@@ -627,7 +640,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 
     if( CPLGetConfigOption( "CENTER_LONG", NULL ) != NULL )
     {
-        bSourceWrap = bTargetWrap = TRUE;
+        bSourceWrap = true;
+        bTargetWrap = true;
         dfSourceWrapLong = dfTargetWrapLong =
             CPLAtof(CPLGetConfigOption( "CENTER_LONG", "" ));
         CPLDebug( "OGRCT", "Wrap at %g.", dfSourceWrapLong );
@@ -637,7 +651,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     if( pszCENTER_LONG != NULL )
     {
         dfSourceWrapLong = CPLAtof(pszCENTER_LONG);
-        bSourceWrap = TRUE;
+        bSourceWrap = true;
         CPLDebug( "OGRCT", "Wrap source at %g.", dfSourceWrapLong );
     }
 
@@ -645,19 +659,19 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     if( pszCENTER_LONG != NULL )
     {
         dfTargetWrapLong = CPLAtof(pszCENTER_LONG);
-        bTargetWrap = TRUE;
+        bTargetWrap = true;
         CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
     }
 
     bCheckWithInvertProj =
         CPLTestBool(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" ));
 
-    /* The threshold is rather experimental... Works well with the cases of ticket #2305 */
-    if (bSourceLatLong)
+    // The threshold is experimental. Works well with the cases of ticket #2305.
+    if( bSourceLatLong )
         dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", ".1" ));
     else
-        /* 1 works well for most projections, except for +proj=aeqd that requires */
-        /* a tolerance of 10000 */
+        // 1 works well for most projections, except for +proj=aeqd that
+        // requires a tolerance of 10000.
         dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
 
     // OGRThreadSafety: The following variable is not a thread safety issue
@@ -773,8 +787,11 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
             memmove(pszDst, pszSrc, strlen(pszSrc)+1);
         }
         bWebMercatorToWGS84 =
-            strcmp(pszDstProj4Defn, "+proj=longlat +ellps=WGS84 +no_defs") == 0 &&
-            strcmp(pszSrcProj4Defn, "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +no_defs") == 0;
+            strcmp(pszDstProj4Defn,
+                   "+proj=longlat +ellps=WGS84 +no_defs") == 0 &&
+            strcmp(pszSrcProj4Defn,
+                   "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 "
+                   "+x_0=0.0 +y_0=0 +k=1.0 +units=m +no_defs") == 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -856,7 +873,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     }
 
     /* Determine if we really have a transformation to do */
-    bIdentityTransform = (strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0);
+    bIdentityTransform = strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0;
 
 #if 0
     /* In case of identity transform, under the following conditions, */
@@ -865,8 +882,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         bTargetLatLong && !bTargetWrap &&
         fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < 1e-10 )
     {
-        /*bSourceLatLong = FALSE;
-        bTargetLatLong = FALSE;*/
+        // bSourceLatLong = false;
+        // bTargetLatLong = false;
     }
 #endif
 
@@ -906,15 +923,15 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 
 {
     int *pabSuccess = (int *) CPLMalloc(sizeof(int) * nCount );
-    int bOverallSuccess, i;
 
-    bOverallSuccess = TransformEx( nCount, x, y, z, pabSuccess );
+    bool bOverallSuccess =
+        CPL_TO_BOOL(TransformEx( nCount, x, y, z, pabSuccess ));
 
-    for( i = 0; i < nCount; i++ )
+    for( int i = 0; i < nCount; i++ )
     {
         if( !pabSuccess[i] )
         {
-            bOverallSuccess = FALSE;
+            bOverallSuccess = false;
             break;
         }
     }
@@ -952,7 +969,7 @@ int CPL_STDCALL OCTTransform( OGRCoordinateTransformationH hTransform,
 /************************************************************************/
 
 /** Transform an array of points
- * 
+ *
  * @param nCount Number of points
  * @param x Array of nCount x values.
  * @param y Array of nCount y values.
@@ -964,7 +981,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                              int *pabSuccess )
 
 {
-    int   err, i;
+    int   err;
 
 /* -------------------------------------------------------------------- */
 /*      Potentially transform to radians.                               */
@@ -973,7 +990,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
     {
         if( bSourceWrap )
         {
-            for( i = 0; i < nCount; i++ )
+            for( int i = 0; i < nCount; i++ )
             {
                 if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
                 {
@@ -985,7 +1002,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
             }
         }
 
-        for( i = 0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
         {
             if( x[i] != HUGE_VAL )
             {
@@ -1004,7 +1021,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 #define REVERSE_SPHERE_RADIUS  (1. / 6378137.)
 
         double y0 = y[0];
-        for( i = 0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
         {
             if( x[i] != HUGE_VAL )
             {
@@ -1013,7 +1030,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                 {
                     if( x[i] < M_PI+1e-14 )
                         x[i] = M_PI;
-                    else if (bCheckWithInvertProj)
+                    else if( bCheckWithInvertProj )
                     {
                         x[i] = y[i] = HUGE_VAL;
                         y0 = HUGE_VAL;
@@ -1030,7 +1047,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                 {
                     if( x[i] > -M_PI-1e-14 )
                         x[i] = -M_PI;
-                    else if (bCheckWithInvertProj)
+                    else if( bCheckWithInvertProj )
                     {
                         x[i] = y[i] = HUGE_VAL;
                         y0 = HUGE_VAL;
@@ -1054,7 +1071,9 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         bTransformDone = true;
     }
     else if( bIdentityTransform )
+    {
         bTransformDone = true;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do the transformation (or not...) using PROJ.4.                 */
@@ -1068,11 +1087,11 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 
     if( bTransformDone )
         err = 0;
-    else if (bCheckWithInvertProj)
+    else if( bCheckWithInvertProj )
     {
-        /* For some projections, we cannot detect if we are trying to reproject */
-        /* coordinates outside the validity area of the projection. So let's do */
-        /* the reverse reprojection and compare with the source coordinates */
+        // For some projections, we cannot detect if we are trying to reproject
+        // coordinates outside the validity area of the projection. So let's do
+        // the reverse reprojection and compare with the source coordinates.
         if (nCount > nMaxCount)
         {
             nMaxCount = nCount;
@@ -1103,7 +1122,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                                     padfTargetX, padfTargetY, (z) ? padfTargetZ : NULL);
             if (err == 0)
             {
-                for( i = 0; i < nCount; i++ )
+                for( int i = 0; i < nCount; i++ )
                 {
                     if ( x[i] != HUGE_VAL && y[i] != HUGE_VAL &&
                         (fabs(padfTargetX[i] - padfOriX[i]) > dfThreshold ||
@@ -1173,7 +1192,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
     if( bTargetLatLong )
     {
-        for( i = 0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
         {
             if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
             {
@@ -1184,7 +1203,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 
         if( bTargetWrap )
         {
-            for( i = 0; i < nCount; i++ )
+            for( int i = 0; i < nCount; i++ )
             {
                 if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
                 {
@@ -1202,7 +1221,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
     if( pabSuccess )
     {
-        for( i = 0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
         {
             if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
                 pabSuccess[i] = FALSE;
