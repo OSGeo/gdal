@@ -190,6 +190,30 @@ void check_GDT_Byte()
         FROM_R(GDT_Byte, 127, outtype, 127);
         FROM_R(GDT_Byte, 255, outtype, 255);
     }
+
+    for(int i=0;i<17;i++)
+    {
+        pIn[i] = i;
+    }
+
+    memset(pOut, 0xff, 128);
+    GDALCopyWords(pIn, GDT_Byte, 1,
+                  pOut, GDT_Int32, 4,
+                  17);
+    for(int i=0;i<17;i++)
+    {
+        AssertRes(GDT_Byte, i, GDT_Int32, i, ((int*)pOut)[i], __LINE__);
+    }
+
+    memset(pOut, 0xff, 128);
+    GDALCopyWords(pIn, GDT_Byte, 1,
+                  pOut, GDT_Float32, 4,
+                  17);
+    for(int i=0;i<17;i++)
+    {
+        AssertRes(GDT_Byte, i, GDT_Float32, i, ((float*)pOut)[i], __LINE__);
+    }
+
 }
 
 void check_GDT_Int16()

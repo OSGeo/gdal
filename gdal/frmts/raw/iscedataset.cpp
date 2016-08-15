@@ -502,8 +502,8 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                        new ISCERasterBand( poDS, b + 1, poDS->fpImage,
                                            nBandOffset * b,
                                            nPixelOffset, nLineOffset,
-                                           eDataType, TRUE,
-                                           bNativeOrder, FALSE ) );
+                                           eDataType, bNativeOrder,
+                                           TRUE, FALSE ) );
     }
 
 /* -------------------------------------------------------------------- */

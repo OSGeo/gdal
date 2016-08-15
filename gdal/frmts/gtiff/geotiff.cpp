@@ -6067,6 +6067,23 @@ static void ExpandPacked8ToByte1( const GByte * const CPL_RESTRICT pabySrc,
     }
 }
 
+#if defined(__GNUC__) || defined(_MSC_VER)
+// Signedness of char implementation dependent, so be explicit.
+// Assumes 2-complement integer types and sign extension of right shifting
+// GCC garantees such:
+// https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html#Integers-implementation
+static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
+{
+    return static_cast<GByte>(static_cast<signed char>(byVal << (7-nBit)) >> 7);
+}
+#else
+// Portable way
+static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
+{
+    return (byVal & (1 << nBit)) ? 255 : 0;
+}
+#endif
+
 static void ExpandPacked8ToByte255( const GByte * const CPL_RESTRICT pabySrc,
                                     GByte* const CPL_RESTRICT pabyDest,
                                     int nBytes )
@@ -6074,15 +6091,14 @@ static void ExpandPacked8ToByte255( const GByte * const CPL_RESTRICT pabySrc,
     for( int i = 0, j = 0; i < nBytes; i++, j += 8 )
     {
         const GByte byVal = pabySrc[i];
-        // Signedness of char implementation dependent, so be explicit.
-        pabyDest[j+0] = static_cast<signed char>(byVal << 0) >> 7;
-        pabyDest[j+1] = static_cast<signed char>(byVal << 1) >> 7;
-        pabyDest[j+2] = static_cast<signed char>(byVal << 2) >> 7;
-        pabyDest[j+3] = static_cast<signed char>(byVal << 3) >> 7;
-        pabyDest[j+4] = static_cast<signed char>(byVal << 4) >> 7;
-        pabyDest[j+5] = static_cast<signed char>(byVal << 5) >> 7;
-        pabyDest[j+6] = static_cast<signed char>(byVal << 6) >> 7;
-        pabyDest[j+7] = static_cast<signed char>(byVal << 7) >> 7;
+        pabyDest[j+0] = ExtractBitAndConvertTo255(byVal, 7);
+        pabyDest[j+1] = ExtractBitAndConvertTo255(byVal, 6);
+        pabyDest[j+2] = ExtractBitAndConvertTo255(byVal, 5);
+        pabyDest[j+3] = ExtractBitAndConvertTo255(byVal, 4);
+        pabyDest[j+4] = ExtractBitAndConvertTo255(byVal, 3);
+        pabyDest[j+5] = ExtractBitAndConvertTo255(byVal, 2);
+        pabyDest[j+6] = ExtractBitAndConvertTo255(byVal, 1);
+        pabyDest[j+7] = ExtractBitAndConvertTo255(byVal, 0);
     }
 }
 
@@ -7300,6 +7316,38 @@ bool GTiffDataset::HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
                                   int nLineStride, int nComponents )
 {
     const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+
+    // In the case where the nodata is 0, we can compare several bytes at
+    // once. Select the largest natural integer type for the architecture
+#if SIZEOF_VOIDP == 8 || defined(__x86_64__)
+    // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
+    typedef GUIntBig WordType;
+#else
+    typedef unsigned int WordType;
+#endif
+    if( (!bNoDataSet || dfNoDataValue == 0.0) && nWidth == nLineStride
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        && CPL_IS_ALIGNED(pBuffer, sizeof(WordType))
+#endif
+        )
+    {
+        const GByte* pabyBuffer = reinterpret_cast<const GByte*>(pBuffer);
+        const size_t nSize = static_cast<size_t>(nWidth) * nHeight *
+                             nComponents * GDALGetDataTypeSizeBytes(eDT);
+        size_t i = 0;
+        for( ; i + sizeof(WordType) - 1 < nSize; i += sizeof(WordType) )
+        {
+            if( *(reinterpret_cast<const WordType*>(pabyBuffer + i)) )
+                return false;
+        }
+        for( ; i < nSize; i++ )
+        {
+            if( pabyBuffer[i] )
+                return false;
+        }
+        return true;
+    }
+
     if( nBitsPerSample == 8 )
     {
         if( nSampleFormat == SAMPLEFORMAT_INT )
