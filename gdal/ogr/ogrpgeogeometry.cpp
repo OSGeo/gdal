@@ -1293,11 +1293,10 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
     memcpy( pabyPtr+8+8, &(envelope.MaxX), 8 );
     memcpy( pabyPtr+8+8+8, &(envelope.MaxY), 8 );
 
-    int i;
     /* Swap box if needed. Shape doubles are always LSB */
     if( OGR_SWAP( wkbNDR ) )
     {
-        for ( i = 0; i < 4; i++ )
+        for ( int i = 0; i < 4; i++ )
             CPL_SWAPDOUBLE( pabyPtr + 8*i );
     }
     pabyPtr += 32;
@@ -1312,13 +1311,13 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
     memcpy( pabyPtr, &nPointsLsb, 4 );
     pabyPtr += 4;
 
-    for( i = 0; i < nParts; i ++ )
+    for( int i = 0; i < nParts; i ++ )
     {
         int nPartStart = CPL_LSBWORD32(panPartStart[i]);
         memcpy( pabyPtr, &nPartStart, 4 );
         pabyPtr += 4;
     }
-    for( i = 0; i < nParts; i ++ )
+    for( int i = 0; i < nParts; i ++ )
     {
         int nPartType = CPL_LSBWORD32(panPartType[i]);
         memcpy( pabyPtr, &nPartType, 4 );
@@ -1331,7 +1330,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
     /* Swap box if needed. Shape doubles are always LSB */
     if( OGR_SWAP( wkbNDR ) )
     {
-        for ( i = 0; i < 2 * nPoints; i++ )
+        for( int i = 0; i < 2 * nPoints; i++ )
             CPL_SWAPDOUBLE( pabyPtr + 8*i );
     }
     pabyPtr += 2 * 8 * nPoints;
@@ -1340,7 +1339,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
     memcpy( pabyPtr+8, &(envelope.MaxZ), 8 );
     if( OGR_SWAP( wkbNDR ) )
     {
-        for ( i = 0; i < 2; i++ )
+        for( int i = 0; i < 2; i++ )
             CPL_SWAPDOUBLE( pabyPtr + 8*i );
     }
     pabyPtr += 16;
@@ -1350,7 +1349,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
     /* Swap box if needed. Shape doubles are always LSB */
     if( OGR_SWAP( wkbNDR ) )
     {
-        for ( i = 0; i < nPoints; i++ )
+        for( int i = 0; i < nPoints; i++ )
             CPL_SWAPDOUBLE( pabyPtr + 8*i );
     }
     //pabyPtr +=  8 * nPoints;
@@ -1414,8 +1413,8 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
     OGRCompoundCurve* poCC = new OGRCompoundCurve();
     int nLastPointIdx = nPartStartIdx;
     bool bHasCircularArcs = false;
-    int i;
-    for( i = nFirstCurveIdx; i < nCurves; i ++ )
+    int i = nFirstCurveIdx;  // Used after for.
+    for( ; i < nCurves; i ++ )
     {
         const int nStartPointIdx = pasCurves[i].nStartPointIdx;
 
@@ -1845,7 +1844,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         || nSHPType == SHPT_MULTIPATCHM)
     {
         GInt32         nPoints, nParts;
-        int            i, nOffset;
+        int            nOffset;
         GInt32         *panPartStart;
         GInt32         *panPartType = NULL;
 
@@ -1910,7 +1909,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /*      Copy out the part array from the record.                        */
 /* -------------------------------------------------------------------- */
         memcpy( panPartStart, pabyShape + 44, 4 * nParts );
-        for( i = 0; i < nParts; i++ )
+        for( int i = 0; i < nParts; i++ )
         {
             CPL_LSBPTR32( panPartStart + i );
 
@@ -1949,7 +1948,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
             }
 
             memcpy( panPartType, pabyShape + nOffset, 4*nParts );
-            for( i = 0; i < nParts; i++ )
+            for( int i = 0; i < nParts; i++ )
             {
                 CPL_LSBPTR32( panPartType + i );
             }
@@ -1974,7 +1973,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
             return OGRERR_FAILURE;
         }
 
-        for( i = 0; i < nPoints; i++ )
+        for( int i = 0; i < nPoints; i++ )
         {
             memcpy(padfX + i, pabyShape + nOffset + i * 16, 8 );
             memcpy(padfY + i, pabyShape + nOffset + i * 16 + 8, 8 );
@@ -1989,7 +1988,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
         if( bHasZ )
         {
-            for( i = 0; i < nPoints; i++ )
+            for( int i = 0; i < nPoints; i++ )
             {
                 memcpy( padfZ + i, pabyShape + nOffset + 16 + i*8, 8 );
                 CPL_LSBPTR64( padfZ + i );
@@ -2003,7 +2002,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
 /* -------------------------------------------------------------------- */
         if( bHasM )
         {
-            for( i = 0; i < nPoints; i++ )
+            for( int i = 0; i < nPoints; i++ )
             {
                 memcpy( padfM + i, pabyShape + nOffset + 16 + i*8, 8 );
                 CPL_LSBPTR64( padfM + i );
@@ -2036,7 +2035,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                 nCurves = 0;
             }
             int iCurve = 0;
-            for( i = 0; i < nCurves; i++ )
+            for( int i = 0; i < nCurves; i++ )
             {
                 if( nOffset + 8 > nBytes )
                 {
@@ -2265,7 +2264,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     *ppoGeom = poMulti;
 
                     int iCurveIdx = 0;
-                    for( i = 0; i < nParts; i++ )
+                    for( int i = 0; i < nParts; i++ )
                     {
                         int nVerticesInThisPart;
 
@@ -2286,7 +2285,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     OGRMultiLineString *poMulti = new OGRMultiLineString;
                     *ppoGeom = poMulti;
 
-                    for( i = 0; i < nParts; i++ )
+                    for( int i = 0; i < nParts; i++ )
                     {
                         OGRLineString *poLine = new OGRLineString;
                         int nVerticesInThisPart;
@@ -2341,7 +2340,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     OGRCurvePolygon** tabPolygons = new OGRCurvePolygon*[nParts];
 
                     int iCurveIdx = 0;
-                    for( i = 0; i < nParts; i++ )
+                    for( int i = 0; i < nParts; i++ )
                     {
                         tabPolygons[i] = new OGRCurvePolygon();
                         int nVerticesInThisPart;
@@ -2415,7 +2414,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     OGRGeometry *poOGR = NULL;
                     OGRPolygon** tabPolygons = new OGRPolygon*[nParts];
 
-                    for( i = 0; i < nParts; i++ )
+                    for( int i = 0; i < nParts; i++ )
                     {
                         tabPolygons[i] = new OGRPolygon();
                         OGRLinearRing *poRing = new OGRLinearRing;
@@ -2507,7 +2506,6 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
       GInt32 nPoints;
       GInt32 nOffsetZ;
       GInt32 nOffsetM = 0;
-      int i;
 
       memcpy( &nPoints, pabyShape + 36, 4 );
       CPL_LSBPTR32( &nPoints );
@@ -2526,7 +2524,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
       OGRMultiPoint *poMultiPt = new OGRMultiPoint;
       *ppoGeom = poMultiPt;
 
-      for( i = 0; i < nPoints; i++ )
+      for( int i = 0; i < nPoints; i++ )
       {
           double x, y;
           OGRPoint *poPt = new OGRPoint;

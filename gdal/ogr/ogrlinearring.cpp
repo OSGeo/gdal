@@ -441,16 +441,14 @@ static inline bool epsilonEqual(double a, double b, double eps)
 int OGRLinearRing::isClockwise() const
 
 {
-    int    i, v, next;
-    double  dx0, dy0, dx1, dy1, crossproduct;
-    bool bUseFallback = false;
-
     if( nPointCount < 2 )
         return TRUE;
 
-    /* Find the lowest rightmost vertex */
-    v = 0;
-    for ( i = 1; i < nPointCount - 1; i++ )
+    bool bUseFallback = false;
+
+    // Find the lowest rightmost vertex.
+    int v = 0;  // Used after for.
+    for ( int i = 1; i < nPointCount - 1; i++ )
     {
         /* => v < end */
         if ( paoPoints[i].y< paoPoints[v].y ||
@@ -469,8 +467,8 @@ int OGRLinearRing::isClockwise() const
         }
     }
 
-    /* previous */
-    next = v - 1;
+    // Previous.
+    int next = v - 1;
     if ( next < 0 )
     {
         next = nPointCount - 1 - 1;
@@ -484,10 +482,10 @@ int OGRLinearRing::isClockwise() const
         bUseFallback = true;
     }
 
-    dx0 = paoPoints[next].x - paoPoints[v].x;
-    dy0 = paoPoints[next].y - paoPoints[v].y;
+    const double dx0 = paoPoints[next].x - paoPoints[v].x;
+    const double dy0 = paoPoints[next].y - paoPoints[v].y;
 
-    /* following */
+    // Following.
     next = v + 1;
     if ( next >= nPointCount - 1 )
     {
@@ -502,10 +500,10 @@ int OGRLinearRing::isClockwise() const
         bUseFallback = true;
     }
 
-    dx1 = paoPoints[next].x - paoPoints[v].x;
-    dy1 = paoPoints[next].y - paoPoints[v].y;
+    const double dx1 = paoPoints[next].x - paoPoints[v].x;
+    const double dy1 = paoPoints[next].y - paoPoints[v].y;
 
-    crossproduct = dx1 * dy0 - dx0 * dy1;
+    const double crossproduct = dx1 * dy0 - dx0 * dy1;
 
     if (!bUseFallback)
     {
@@ -515,18 +513,22 @@ int OGRLinearRing::isClockwise() const
             return TRUE;
     }
 
-    /* ok, this is a degenerate case : the extent of the polygon is less than EPSILON */
-    /* or 2 nearly identical points were found */
-    /* Try with Green Formula as a fallback, but this is not a guarantee */
-    /* as we'll probably be affected by numerical instabilities */
+    // This is a degenerate case: the extent of the polygon is less than EPSILON
+    // or 2 nearly identical points were found.
+    // Try with Green Formula as a fallback, but this is not a guarantee
+    // as we'll probably be affected by numerical instabilities.
 
-    double dfSum = paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
+    double dfSum =
+        paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
 
-    for (i=1; i<nPointCount-1; i++) {
+    for( int i = 1; i < nPointCount-1; i++ )
+    {
         dfSum += paoPoints[i].x * (paoPoints[i+1].y - paoPoints[i-1].y);
     }
 
-    dfSum += paoPoints[nPointCount-1].x * (paoPoints[0].y - paoPoints[nPointCount-2].y);
+    dfSum +=
+        paoPoints[nPointCount-1].x *
+        (paoPoints[0].y - paoPoints[nPointCount-2].y);
 
     return dfSum < 0;
 }

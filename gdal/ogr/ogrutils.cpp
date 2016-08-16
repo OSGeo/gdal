@@ -1324,21 +1324,23 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
   * @return day of the week : 0 for Monday, ... 6 for Sunday
   */
 
-int OGRGetDayOfWeek(int day, int month, int year)
+int OGRGetDayOfWeek( int day, int month, int year )
 {
     // Reference: Zeller's congruence.
-    int q = day;
-    int m;
+    const int q = day;
+    int m = month;
     if( month >=3 )
-        m = month;
+    {
+        // m = month;
+    }
     else
     {
         m = month + 12;
         year --;
     }
-    int K = year % 100;
-    int J = year / 100;
-    int h = ( q + (((m+1)*26)/10) + K + K/4 + J/4 + 5 * J) % 7;
+    const int K = year % 100;
+    const int J = year / 100;
+    const int h = ( q + (((m+1)*26)/10) + K + K/4 + J/4 + 5 * J) % 7;
     return ( h + 5 ) % 7;
 }
 
@@ -1347,10 +1349,11 @@ int OGRGetDayOfWeek(int day, int month, int year)
 /*                         OGRGetRFC822DateTime()                       */
 /************************************************************************/
 
-char* OGRGetRFC822DateTime(const OGRField* psField)
+char* OGRGetRFC822DateTime( const OGRField* psField )
 {
     char* pszTZ = NULL;
-    const char* aszDayOfWeek[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+    const char* aszDayOfWeek[] =
+        { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
     int dayofweek = OGRGetDayOfWeek(psField->Date.Day, psField->Date.Month,
                                     psField->Date.Year);

@@ -830,9 +830,9 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
     OGR_SRSNode *poNode = GetRoot();
     for( int i = 1; papszPathTokens[i] != NULL; i++ )
     {
-        int j;
+        int j = 0;  // Used after for.
 
-        for( j = 0; j < poNode->GetChildCount(); j++ )
+        for( ; j < poNode->GetChildCount(); j++ )
         {
             if( EQUAL(poNode->GetChild( j )->GetValue(),papszPathTokens[i]) )
             {

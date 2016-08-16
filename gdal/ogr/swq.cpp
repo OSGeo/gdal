@@ -340,11 +340,10 @@ swq_select_summarize( swq_select *select_info,
 
     if( def->distinct_flag )
     {
-        GIntBig  i;
-
-        /* This should be implemented with a much more complicated
-           data structure to achieve any sort of efficiency. */
-        for( i = 0; i < summary->count; i++ )
+        // This should be implemented with a much more complicated
+        // data structure to achieve any sort of efficiency.
+        GIntBig i = 0;  // Used after for.
+        for( ; i < summary->count; i++ )
         {
             if( value == NULL )
             {
@@ -676,8 +675,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
 
             // Check there's no table called table_name, or a field called with
             // the aggregated name
-            int i;
-            for( i = 0; i < field_list->count; i++ )
+            int i = 0;  // Used after for.
+            for( ; i < field_list->count; i++ )
             {
                 if( tables_enabled )
                 {

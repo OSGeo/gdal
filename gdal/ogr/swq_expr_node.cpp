@@ -302,10 +302,10 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 void swq_expr_node::Dump( FILE * fp, int depth )
 
 {
-    char        spaces[60];
-    int         i;
+    char spaces[60] = {};
 
-    for( i = 0; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
+    int i = 0;  // Used after for.
+    for( ; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
         spaces[i] = ' ';
     spaces[i] = '\0';
 
