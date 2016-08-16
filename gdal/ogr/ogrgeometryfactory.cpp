@@ -1231,7 +1231,6 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                                    int *pbIsValidGeometry,
                                                    const char** papszOptions )
 {
-    int i, j;
     OGRGeometry* geom = NULL;
     OrganizePolygonMethod method = METHOD_NORMAL;
     bool bHasCurves = false;
@@ -1311,7 +1310,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     int nCountCWPolygon = 0;
     int indexOfCWPolygon = -1;
 
-    for(i=0;i<nPolygonCount;i++)
+    for( int i = 0; i < nPolygonCount; i++ )
     {
         asPolyEx[i].nInitialIndex = i;
         asPolyEx[i].poGeometry = papoPolygons[i];
@@ -1374,9 +1373,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         nCountCWPolygon == 1 && bUseFastVersion && !bNonPolygon )
     {
         OGRCurvePolygon* poCP = asPolyEx[indexOfCWPolygon].poPolygon;
-        for(i=0; i<nPolygonCount; i++)
+        for( int i = 0; i < nPolygonCount; i++ )
         {
-            if (i != indexOfCWPolygon)
+            if( i != indexOfCWPolygon )
             {
                 poCP->addRingDirectly(
                               asPolyEx[i].poPolygon->stealExteriorRingCurve());
@@ -1384,7 +1383,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             }
         }
         delete [] asPolyEx;
-        if (pbIsValidGeometry)
+        if( pbIsValidGeometry )
             *pbIsValidGeometry = TRUE;
         return poCP;
     }
@@ -1398,7 +1397,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         OGRGeometry* poRet = poCur;
         /* We have already checked that the first ring is CW */
         OGREnvelope* psEnvelope = &(asPolyEx[0].sEnvelope);
-        for(i=1;i<nPolygonCount;i++)
+        for( int i = 1; i < nPolygonCount; i++ )
         {
             if( asPolyEx[i].bIsCW )
             {
@@ -1437,7 +1436,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     else if( method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER && !bNonPolygon )
     {
         method = METHOD_ONLY_CCW;
-        for(i=0;i<nPolygonCount;i++)
+        for( int i = 0; i < nPolygonCount; i++ )
             asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
     }
 
@@ -1520,7 +1519,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     int nCountTopLevel = 1;
 
     /* STEP 2 */
-    for(i=1; !bMixedUpGeometries && bValidTopology && i<nPolygonCount; i++)
+    for( int i = 1;
+         !bMixedUpGeometries && bValidTopology && i<nPolygonCount;
+         i++ )
     {
         if (method == METHOD_ONLY_CCW && asPolyEx[i].bIsCW)
         {
@@ -1530,7 +1531,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             continue;
         }
 
-        for(j=i-1; bValidTopology && j>=0;j--)
+        int j = i - 1;  // Used after for.
+        for( ; bValidTopology && j >= 0; j-- )
         {
             bool b_i_inside_j = false;
 
@@ -1559,8 +1561,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                         OGRLinearRing* poLR_i = reinterpret_cast<OGRLinearRing*>(asPolyEx[i].poExteriorRing);
                         OGRLinearRing* poLR_j = reinterpret_cast<OGRLinearRing*>(asPolyEx[j].poExteriorRing);
                         /* If the point of i is on the boundary of j, we will iterate over the other points of i */
-                        int k, nPoints = poLR_i->getNumPoints();
-                        for(k=1;k<nPoints;k++)
+                        const int nPoints = poLR_i->getNumPoints();
+                        int k = 1;  // Used after for.
+                        for( ; k < nPoints; k++ )
                         {
                             OGRPoint point;
                             poLR_i->getPoint(k, &point);
@@ -1700,7 +1703,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             poGC = new OGRMultiPolygon();
         geom = poGC;
 
-        for( i=0; i < nPolygonCount; i++ )
+        for( int i = 0; i < nPolygonCount; i++ )
         {
             poGC->addGeometryDirectly( asPolyEx[i].poGeometry );
         }
@@ -1716,9 +1719,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended), OGRGeometryFactoryCompareByIndex);
 
         /* STEP 4: Add holes as rings of their enclosing polygon */
-        for(i=0;i<nPolygonCount;i++)
+        for( int i = 0; i < nPolygonCount; i++ )
         {
-            if (asPolyEx[i].bIsTopLevel == false)
+            if( asPolyEx[i].bIsTopLevel == false )
             {
                 asPolyEx[i].poEnclosingPolygon->addRingDirectly(
                     asPolyEx[i].poPolygon->stealExteriorRingCurve());
@@ -1734,9 +1737,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         if (nCountTopLevel > 1)
         {
             OGRGeometryCollection* poGC = NULL;
-            for(i=0;i<nPolygonCount;i++)
+            for( int i = 0; i < nPolygonCount; i++ )
             {
-                if (asPolyEx[i].bIsTopLevel)
+                if( asPolyEx[i].bIsTopLevel )
                 {
                     if (poGC == NULL)
                     {
@@ -2265,13 +2268,12 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
     double dfRightBorderX = -180 + dfDateLineOffset;
     double dfDiffSpace = 360 - dfDateLineOffset;
 
-    int i;
     const bool bIs3D = poLS->getCoordinateDimension() == 3;
     OGRLineString* poNewLS = new OGRLineString();
     poMulti->addGeometryDirectly(poNewLS);
-    for(i=0;i<poLS->getNumPoints();i++)
+    for( int i = 0; i < poLS->getNumPoints(); i++ )
     {
-        double dfX = poLS->getX(i);
+        const double dfX = poLS->getX(i);
         if (i > 0 && fabs(dfX - poLS->getX(i-1)) > dfDiffSpace)
         {
             double dfX1 = poLS->getX(i-1);
@@ -2365,14 +2367,13 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly, double dfDateLin
     double dfRightBorderX = -180 + dfDateLineOffset;
     double dfDiffSpace = 360 - dfDateLineOffset;
 
-    int i, iPart;
-    for(iPart = 0; iPart < 1 + poPoly->getNumInteriorRings(); iPart++)
+    for( int iPart = 0; iPart < 1 + poPoly->getNumInteriorRings(); iPart++)
     {
         OGRLineString* poLS = (iPart == 0) ? poPoly->getExteriorRing() :
                                              poPoly->getInteriorRing(iPart-1);
         bool bGoEast = false;
         const bool bIs3D = poLS->getCoordinateDimension() == 3;
-        for(i=1;i<poLS->getNumPoints();i++)
+        for( int i = 1; i < poLS->getNumPoints(); i++ )
         {
             double dfX = poLS->getX(i);
             double dfPrevX = poLS->getX(i-1);
@@ -2390,8 +2391,7 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly, double dfDateLin
                 }
                 else if (dfPrevX < dfRightBorderX && dfX > dfLeftBorderX)
                 {
-                    int j;
-                    for(j=i-1;j>=0;j--)
+                    for( int j = i - 1; j >= 0; j-- )
                     {
                         dfX = poLS->getX(j);
                         if (dfX < 0)
@@ -2539,11 +2539,10 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                     poLS = (OGRLineString*)poGeom;
                 if (poLS)
                 {
-                    int i;
                     double dfMaxSmallDiffLong = 0;
                     bool bHasBigDiff = false;
-                    /* Detect big gaps in longitude */
-                    for(i=1;i<poLS->getNumPoints();i++)
+                    // Detect big gaps in longitude.
+                    for( int i = 1; i < poLS->getNumPoints(); i++ )
                     {
                         double dfPrevX = poLS->getX(i-1);
                         double dfX = poLS->getX(i);
@@ -3751,7 +3750,6 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
         return -1;
     }
 
-    int j;
     double dfDeltaAlpha10 = alpha1_1 - alpha0_1;
     double dfDeltaAlpha21 = alpha2_1 - alpha1_1;
     double dfMaxDeltaAlpha = MAX(fabs(dfDeltaAlpha10),
@@ -3794,7 +3792,8 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
 
     double dfLastLogRelDiff = 0;
 
-    for(j = i + 1; j + 2 < poLS->getNumPoints(); j++ )
+    int j = i + 1;  // Used after for.
+    for( ; j + 2 < poLS->getNumPoints(); j++ )
     {
         poLS->getPoint(j, &p1);
         poLS->getPoint(j+1, &p2);
@@ -4054,8 +4053,8 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
         {
             double dfLastAlpha = 0.0;
             double dfLastZ = 0.0;
-            int k;
-            for( k = i; k < j+2; k++ )
+            int k = i;  // Used after for.
+            for( ; k < j+2; k++ )
             {
                 OGRPoint p;
                 poLS->getPoint(k, &p);

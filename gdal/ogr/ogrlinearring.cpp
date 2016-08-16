@@ -301,7 +301,6 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
                                      unsigned char * pabyData ) const
 
 {
-    int   i, nWords;
 
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
@@ -311,10 +310,11 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
+    int nWords;
     if( (_flags & OGR_G_3D) && (_flags & OGR_G_MEASURED) )
     {
         nWords = 4 * nPointCount;
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( pabyData+4+i*32, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*32+8, &(paoPoints[i].y), 8 );
@@ -331,7 +331,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
     else if( _flags & OGR_G_MEASURED )
     {
         nWords = 3 * nPointCount;
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
@@ -344,7 +344,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
     else if( _flags & OGR_G_3D )
     {
         nWords = 3 * nPointCount;
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
@@ -365,12 +365,10 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int     nCount;
-
-        nCount = CPL_SWAP32( nPointCount );
+        int nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData, &nCount, 4 );
 
-        for( i = 0; i < nWords; i++ )
+        for( int i = 0; i < nWords; i++ )
         {
             CPL_SWAPDOUBLE( pabyData + 4 + 8 * i );
         }

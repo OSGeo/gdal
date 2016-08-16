@@ -192,19 +192,18 @@ void OGR_FD_Release( OGRFeatureDefnH hDefn )
 OGRFeatureDefn *OGRFeatureDefn::Clone()
 
 {
-    int i;
     OGRFeatureDefn *poCopy;
 
     poCopy = new OGRFeatureDefn( GetName() );
 
     GetFieldCount();
-    for( i = 0; i < nFieldCount; i++ )
+    for( int i = 0; i < nFieldCount; i++ )
         poCopy->AddFieldDefn( GetFieldDefn( i ) );
 
     // There is a default geometry field created at OGRFeatureDefn instantiation
     poCopy->DeleteGeomFieldDefn(0);
     GetGeomFieldCount();
-    for( i = 0; i < nGeomFieldCount; i++ )
+    for( int i = 0; i < nGeomFieldCount; i++ )
         poCopy->AddGeomFieldDefn( GetGeomFieldDefn( i ) );
 
     return poCopy;
@@ -1374,17 +1373,17 @@ int OGRFeatureDefn::IsSame( OGRFeatureDefn * poOtherFeatureDefn )
         GetFieldCount() == poOtherFeatureDefn->GetFieldCount() &&
         GetGeomFieldCount() == poOtherFeatureDefn->GetGeomFieldCount())
     {
-        int i;
-        for(i=0;i<nFieldCount;i++)
+        for( int i = 0; i < nFieldCount; i++ )
         {
             const OGRFieldDefn* poFldDefn = GetFieldDefn(i);
-            const OGRFieldDefn* poOtherFldDefn = poOtherFeatureDefn->GetFieldDefn(i);
+            const OGRFieldDefn* poOtherFldDefn =
+                poOtherFeatureDefn->GetFieldDefn(i);
             if (!poFldDefn->IsSame(poOtherFldDefn))
             {
                 return FALSE;
             }
         }
-        for(i=0;i<nGeomFieldCount;i++)
+        for( int i = 0; i < nGeomFieldCount; i++ )
         {
             OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(i);
             OGRGeomFieldDefn* poOtherGFldDefn =
