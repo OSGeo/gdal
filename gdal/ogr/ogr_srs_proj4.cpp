@@ -172,8 +172,9 @@ static const OGRProj4PM* OGRGetProj4PMFromCode(int nPMCode)
 
 static const OGRProj4PM* OGRGetProj4PMFromVal(double dfVal)
 {
-    unsigned int i;
-    for(i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
+    for( unsigned int i = 0;
+         i < sizeof(ogr_pj_pms) / sizeof(ogr_pj_pms[0]);
+         i++ )
     {
         if (fabs(dfVal - CPLDMSToDec(ogr_pj_pms[i].pszFromGreenwich)) < 1e-10)
         {

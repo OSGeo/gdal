@@ -206,12 +206,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     if( padfPrjParams == NULL )
     {
-        int     i;
-
         padfPrjParams = (double *)CPLMalloc( 17 * sizeof(double) );
         if ( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
-        for ( i = 0; i < 17; i++ )
+        for( int i = 0; i < 17; i++ )
             padfPrjParams[i] = 0.0;
         bProjAllocated = true;
     }
@@ -795,10 +793,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
 /*      Fill all projection parameters with zero.                       */
 /* -------------------------------------------------------------------- */
-    int         i;
-
     *ppadfPrjParams = (double *)CPLMalloc( 17 * sizeof(double) );
-    for ( i = 0; i < 17; i++ )
+    for ( int i = 0; i < 17; i++ )
         (*ppadfPrjParams)[i] = 0.0;
 
 /* -------------------------------------------------------------------- */
@@ -1133,7 +1129,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         {
             int nGCS_EPSG = atoi(GetAuthorityCode("GEOGCS"));
 
-            for( i = 0; asDatums[i].nEPSGCode != 0; i++ )
+            for( int i = 0; asDatums[i].nEPSGCode != 0; i++ )
             {
                 if( asDatums[i].nEPSGCode == nGCS_EPSG )
                 {

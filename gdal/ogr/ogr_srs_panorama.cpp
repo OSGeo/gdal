@@ -256,12 +256,10 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
     if( padfPrjParams == NULL )
     {
-        int     i;
-
         padfPrjParams = (double *)CPLMalloc( 8 * sizeof(double) );
         if ( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
-        for ( i = 0; i < 7; i++ )
+        for ( int i = 0; i < 7; i++ )
             padfPrjParams[i] = 0.0;
         bProjAllocated = true;
     }
@@ -558,12 +556,10 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /* -------------------------------------------------------------------- */
 /*      Fill all projection parameters with zero.                       */
 /* -------------------------------------------------------------------- */
-    int     i;
-
     *piDatum = 0L;
     *piEllips = 0L;
     *piZone = 0L;
-    for ( i = 0; i < 7; i++ )
+    for ( int i = 0; i < 7; i++ )
         padfPrjParams[i] = 0.0;
 
 /* ==================================================================== */
@@ -812,12 +808,13 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                   "Trying to translate an ellipsoid definition.", pszDatum );
 #endif
 
-        for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
+        int i = 0;  // Used after for.
+        for ( ; i < NUMBER_OF_ELLIPSOIDS; i++ )
         {
             if ( aoEllips[i] )
             {
-                double  dfSM = 0.0;
-                double  dfIF = 1.0;
+                double dfSM = 0.0;
+                double dfIF = 1.0;
 
                 if ( OSRGetEllipsoidInfo( aoEllips[i], NULL,
                                           &dfSM, &dfIF ) == OGRERR_NONE
