@@ -976,7 +976,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
             }
 
             CPLString osDisplayName;
-            for( int i=1; ; ++i)
+            for( int i = 1; ; ++i )
             {
                 const int nIdx =
                     poFDefn->GetFieldIndex(CPLSPrintf("line%d", i));

@@ -286,7 +286,6 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
 
 {
     char        **papszGeoms;
-    int         iGeom;
     size_t      nCumulativeLength = 0;
     OGRErr      eErr;
 
@@ -310,7 +309,7 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
 /* -------------------------------------------------------------------- */
     papszGeoms = (char **) CPLCalloc(sizeof(char *),nCurveCount);
 
-    for( iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {
         eErr = papoCurves[iGeom]->exportToWkt( &(papszGeoms[iGeom]), wkbVariantIso );
         if( eErr != OGRERR_NONE )
@@ -344,7 +343,7 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
     strcat( *ppszDstText, " (" );
     nCumulativeLength = strlen(*ppszDstText);
 
-    for( iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {
         if( iGeom > 0 )
             (*ppszDstText)[nCumulativeLength++] = ',';
@@ -377,7 +376,7 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
     return OGRERR_NONE;
 
 error:
-    for( iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
         CPLFree( papszGeoms[iGeom] );
     CPLFree( papszGeoms );
     return eErr;

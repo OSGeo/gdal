@@ -97,21 +97,24 @@ static std::map<OGRFieldDefnH, CPLString> oGlobalMapFieldDefn;
 void FeatureDefnDescription::Free()
 {
     {
-        std::map<OGRGeomFieldDefnH, int>::iterator oIter = oMapGeomFieldDefn.begin();
-        for(; oIter != oMapGeomFieldDefn.end(); ++oIter)
+        std::map<OGRGeomFieldDefnH, int>::iterator oIter =
+            oMapGeomFieldDefn.begin();
+        for( ; oIter != oMapGeomFieldDefn.end(); ++oIter )
             oGlobalMapGeomFieldDefn.erase(oIter->first);
     }
     {
-        std::map<OGRFieldDefnH, int>::iterator oIter = oMapFieldDefn.begin();
-        for(; oIter != oMapFieldDefn.end(); ++oIter)
+        std::map<OGRFieldDefnH, int>::iterator oIter =
+            oMapFieldDefn.begin();
+        for( ; oIter != oMapFieldDefn.end(); ++oIter )
             oGlobalMapFieldDefn.erase(oIter->first);
     }
 }
 
 DatasetDescription::~DatasetDescription()
 {
-    std::map<OGRLayerH, LayerDescription>::iterator oIter = oMapLayer.begin();
-    for(; oIter != oMapLayer.end(); ++oIter)
+    std::map<OGRLayerH, LayerDescription>::iterator oIter =
+        oMapLayer.begin();
+    for( ; oIter != oMapLayer.end(); ++oIter )
         oGlobalMapLayer.erase(oIter->first);
 }
 
@@ -186,7 +189,7 @@ static CPLString OGRAPISpyGetOptions(char** papszOptions)
     else
     {
         options = "[";
-        for(char** papszIter = papszOptions; *papszIter != NULL; papszIter++)
+        for( char** papszIter = papszOptions; *papszIter != NULL; papszIter++ )
         {
             if( papszIter != papszOptions )
                 options += ", ";
@@ -472,7 +475,7 @@ int OGRAPISpyOpenTakeSnapshot(const char* pszName, int bUpdate)
                 fprintf(fpSpyFile, "except:\n");
                 fprintf(fpSpyFile, "    pass\n");
                 fprintf(fpSpyFile, "os.mkdir('%s')\n", osWorkingDir.c_str());
-                for(char** papszIter = papszFileList; *papszIter; papszIter++)
+                for( char** papszIter = papszFileList; *papszIter; papszIter++ )
                 {
                     CPLString osSnapshotSrcFile = CPLFormFilename(
                             osSrcDir, CPLGetFilename(*papszIter), NULL);
@@ -533,9 +536,9 @@ void OGRAPISpyPostClose()
     if( !GDALIsInGlobalDestructor() )
     {
         std::map<OGRFeatureDefnH, FeatureDefnDescription>::iterator oIter =
-                                                                oMapFDefn.begin();
+            oMapFDefn.begin();
         std::vector<OGRFeatureDefnH> oArray;
-        for(; oIter != oMapFDefn.end(); ++oIter)
+        for( ; oIter != oMapFDefn.end(); ++oIter )
         {
             FeatureDefnDescription& featureDefnDescription = oIter->second;
             if( ((OGRFeatureDefn*)featureDefnDescription.hFDefn)->GetReferenceCount() == 1 )
@@ -543,7 +546,7 @@ void OGRAPISpyPostClose()
                 oArray.push_back(featureDefnDescription.hFDefn);
             }
         }
-        for(size_t i = 0; i < oArray.size(); i++)
+        for( size_t i = 0; i < oArray.size(); i++ )
         {
             FeatureDefnDescription& featureDefnDescription = oMapFDefn[oArray[i]];
             ((OGRFeatureDefn*)featureDefnDescription.hFDefn)->Release();

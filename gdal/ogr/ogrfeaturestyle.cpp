@@ -862,7 +862,7 @@ void OGR_STBL_Destroy( OGRStyleTableH hSTBL )
 
 const char *OGRStyleTable::GetStyleName( const char *pszStyleString )
 {
-    for ( int i = 0; i < CSLCount(m_papszStyleTable); i++ )
+    for( int i = 0; i < CSLCount(m_papszStyleTable); i++ )
     {
         const char *pszStyleStringBegin =
             strstr(m_papszStyleTable[i],":");
@@ -2697,7 +2697,7 @@ OGRStylePen::OGRStylePen() : OGRStyleTool(OGRSTCPen)
 /****************************************************************************/
 OGRStylePen::~OGRStylePen()
 {
-    for (int i = 0; i < OGRSTPenLast; i++)
+    for( int i = 0; i < OGRSTPenLast; i++ )
     {
         if (m_pasStyleValue[i].pszValue != NULL)
         {
@@ -2799,7 +2799,7 @@ OGRStyleBrush::OGRStyleBrush() : OGRStyleTool(OGRSTCBrush)
 /****************************************************************************/
 OGRStyleBrush::~OGRStyleBrush()
 {
-    for (int i = 0; i < OGRSTBrushLast; i++)
+    for( int i = 0; i < OGRSTBrushLast; i++ )
     {
         if (m_pasStyleValue[i].pszValue != NULL)
         {
@@ -2899,7 +2899,7 @@ OGRStyleSymbol::OGRStyleSymbol() : OGRStyleTool(OGRSTCSymbol)
 /****************************************************************************/
 OGRStyleSymbol::~OGRStyleSymbol()
 {
-    for (int i = 0; i < OGRSTSymbolLast; i++)
+    for( int i = 0; i < OGRSTSymbolLast; i++ )
     {
         if (m_pasStyleValue[i].pszValue != NULL)
         {
@@ -2992,7 +2992,7 @@ OGRStyleLabel::OGRStyleLabel() : OGRStyleTool(OGRSTCLabel)
 /****************************************************************************/
 OGRStyleLabel::~OGRStyleLabel()
 {
-    for (int i = 0; i < OGRSTLabelLast; i++)
+    for( int i = 0; i < OGRSTLabelLast; i++ )
     {
         if (m_pasStyleValue[i].pszValue != NULL)
         {

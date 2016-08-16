@@ -641,11 +641,9 @@ double OGRCurvePolygon::get_Area() const
 
     if( getExteriorRingCurve() != NULL )
     {
-        int iRing;
-
         dfArea = getExteriorRingCurve()->get_Area();
 
-        for( iRing = 0; iRing < getNumInteriorRings(); iRing++ )
+        for( int iRing = 0; iRing < getNumInteriorRings(); iRing++ )
         {
             dfArea -= getInteriorRingCurve(iRing)->get_Area();
         }
@@ -770,7 +768,7 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
 
 OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
 {
-    for(int i=0;i<poCP->oCC.nCurveCount;i++)
+    for( int i = 0; i < poCP->oCC.nCurveCount; i++ )
     {
         poCP->oCC.papoCurves[i] = OGRCurve::CastToLinearRing(poCP->oCC.papoCurves[i]);
         if( poCP->oCC.papoCurves[i] == NULL )

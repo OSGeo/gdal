@@ -603,23 +603,21 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
     }
 
     poPolygon->assignSpatialReference(poGeom->getSpatialReference());
-    int iGeom;
 
-    for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+    for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
     {
         if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
             != wkbPolygon )
             continue;
 
         OGRPolygon *poOldPoly = (OGRPolygon *) poGC->getGeometryRef(iGeom);
-        int   iRing;
 
         if( poOldPoly->getExteriorRing() == NULL )
             continue;
 
         poPolygon->addRingDirectly( poOldPoly->stealExteriorRing() );
 
-        for( iRing = 0; iRing < poOldPoly->getNumInteriorRings(); iRing++ )
+        for( int iRing = 0; iRing < poOldPoly->getNumInteriorRings(); iRing++ )
             poPolygon->addRingDirectly( poOldPoly->stealInteriorRing( iRing ) );
     }
 
@@ -698,7 +696,6 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
     if( eGeomType == wkbGeometryCollection ||
         eGeomType == wkbMultiSurface )
     {
-        int iGeom;
         bool bAllPoly = true;
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
         if( poGeom->hasCurveGeometry() )
@@ -708,7 +705,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
             poGeom = poGC = poNewGC;
         }
 
-        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             OGRwkbGeometryType eSubGeomType = wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if( eSubGeomType != wkbPolygon )
@@ -816,11 +813,10 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbGeometryCollection )
     {
-        int iGeom;
         bool bAllPoint = true;
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
 
-        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
                 != wkbPoint )
@@ -922,7 +918,6 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbGeometryCollection )
     {
-        int iGeom;
         bool bAllLines = true;
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
         if( poGeom->hasCurveGeometry() )
@@ -932,7 +927,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             poGeom = poGC = poNewGC;
         }
 
-        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             if( poGC->getGeometryRef(iGeom)->getGeometryType() != wkbLineString )
                 bAllLines = false;
@@ -981,11 +976,10 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             delete poGeom;
             poGeom = poPoly;
         }
-        int iRing;
 
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
-        for( iRing = 0; iRing < poPoly->getNumInteriorRings()+1; iRing++ )
+        for( int iRing = 0; iRing < poPoly->getNumInteriorRings()+1; iRing++ )
         {
             OGRLineString *poNewLS, *poLR;
 
@@ -1026,16 +1020,16 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             delete poGeom;
             poGeom = poMPoly;
         }
-        int iPoly;
 
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
-        for( iPoly = 0; iPoly < poMPoly->getNumGeometries(); iPoly++ )
+        for( int iPoly = 0; iPoly < poMPoly->getNumGeometries(); iPoly++ )
         {
             OGRPolygon *poPoly = (OGRPolygon*) poMPoly->getGeometryRef(iPoly);
-            int iRing;
 
-            for( iRing = 0; iRing < poPoly->getNumInteriorRings()+1; iRing++ )
+            for( int iRing = 0;
+                 iRing < poPoly->getNumInteriorRings()+1;
+                 iRing++ )
             {
                 OGRLineString *poNewLS, *poLR;
 
@@ -1588,7 +1582,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                             /* all points of i are on the boundary of j ... */
                             /* take a point in the middle of a segment of i and */
                             /* test it against j */
-                            for(k=0;k<nPoints-1;k++)
+                            for( k = 0; k < nPoints - 1; k++ )
                             {
                                 OGRPoint point1, point2, pointMiddle;
                                 poLR_i->getPoint(k, &point1);
@@ -2746,7 +2740,6 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
 
 {
     double             dfSlice;
-    int                iPoint, nVertexCount;
     OGRLineString     *poLine = new OGRLineString();
     double             dfRotationRadians = dfRotation * M_PI / 180.0;
 
@@ -2761,7 +2754,7 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
     dfEndAngle *= -1;
 
     // Figure out the number of slices to make this into.
-    nVertexCount = (int)
+    int nVertexCount = (int)
         ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1;
     nVertexCount = MAX(2,nVertexCount);
     dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
@@ -2769,7 +2762,7 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
 /* -------------------------------------------------------------------- */
 /*      Compute the interpolated points.                                */
 /* -------------------------------------------------------------------- */
-    for( iPoint=0; iPoint < nVertexCount; iPoint++ )
+    for( int iPoint = 0; iPoint < nVertexCount; iPoint++ )
     {
         double      dfAngleOnEllipse;
         double      dfArcX, dfArcY;
@@ -2955,8 +2948,8 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom, bool bO
         poLineString0->StartPoint( &pointStart0 );
         poLineString0->EndPoint( &pointEnd0 );
 
-        int iGeom1;
-        for( iGeom1 = iGeom0 + 1; iGeom1 < poGC->getNumGeometries(); iGeom1++ )
+        int iGeom1 = iGeom0 + 1;  // Used after for.
+        for( ; iGeom1 < poGC->getNumGeometries(); iGeom1++ )
         {
             if( wkbFlatten(poGC->getGeometryRef(iGeom1)->getGeometryType())
                 != wkbLineString )
@@ -3420,7 +3413,7 @@ static void OGRGeometryFactoryStrokeArc(OGRLineString* poLine,
     alpha = alpha0 + dfStep;
 #endif
 
-    for(; (alpha - alpha1) * nSign < -1e-8; alpha += dfStep)
+    for( ; (alpha - alpha1) * nSign < -1e-8; alpha += dfStep )
     {
         double dfX = cx + R * cos(alpha), dfY = cy + R * sin(alpha);
         if( bHasZ )
@@ -3597,7 +3590,9 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
 
     bool bAddIntermediatePoint = false;
     bool bStealth = true;
-    for(const char* const* papszIter = papszOptions; papszIter && *papszIter; papszIter++)
+    for( const char* const* papszIter = papszOptions;
+         papszIter && *papszIter;
+         papszIter++ )
     {
         char* pszKey = NULL;
         const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);

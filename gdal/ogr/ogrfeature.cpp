@@ -3481,7 +3481,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
         if( poFDefn->GetSubType() == OFSTBoolean || poFDefn->GetSubType() == OFSTInt16 )
         {
-            for( int i=0;i<nCount;i++)
+            for( int i = 0; i < nCount; i++ )
             {
                 int nVal = OGRFeatureGetIntegerValue(poFDefn, panValues[i]);
                 if( panValues[i] != nVal )
@@ -3510,7 +3510,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
     {
         std::vector<GIntBig> anValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             anValues.push_back( panValues[i] );
 
         SetField( iField, nCount, &anValues[0] );
@@ -3519,7 +3519,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
     {
         std::vector<double> adfValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             adfValues.push_back( (double) panValues[i] );
 
         SetField( iField, nCount, &adfValues[0] );
@@ -3537,7 +3537,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf("%d", panValues[i]));
         papszValues[nCount] = NULL;
         SetField( iField, papszValues);
@@ -3615,7 +3615,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
     {
         std::vector<int> anValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
         {
             GIntBig nValue = panValues[i];
             int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
@@ -3645,7 +3645,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
     {
         std::vector<double> adfValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             adfValues.push_back( (double) panValues[i] );
 
         SetField( iField, nCount, &adfValues[0] );
@@ -3663,7 +3663,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf(CPL_FRMT_GIB, panValues[i]));
         papszValues[nCount] = NULL;
         SetField( iField, papszValues);
@@ -3751,7 +3751,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
     {
         std::vector<int> anValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             anValues.push_back( (int) padfValues[i] );
 
         SetField( iField, nCount, &anValues[0] );
@@ -3760,7 +3760,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
     {
         std::vector<GIntBig> anValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             anValues.push_back( (GIntBig) padfValues[i] );
 
         SetField( iField, nCount, &anValues[0] );
@@ -3778,7 +3778,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf("%.16g", padfValues[i]));
         papszValues[nCount] = NULL;
         SetField( iField, papszValues);
@@ -3864,7 +3864,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
             VSI_MALLOC_VERBOSE(nValues * sizeof(int)) );
         if( panValues == NULL )
             return;
-        for(int i=0;i<nValues;i++)
+        for( int i = 0; i < nValues; i++ )
         {
             errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
             int nVal = atoi(papszValues[i]);
@@ -3890,7 +3890,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
             VSI_MALLOC_VERBOSE(nValues * sizeof(GIntBig)) );
         if( panValues == NULL )
             return;
-        for(int i=0;i<nValues;i++)
+        for( int i = 0; i < nValues; i++ )
         {
             panValues[i] = CPLAtoGIntBigEx(papszValues[i], TRUE, NULL);
         }
@@ -3904,7 +3904,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
             VSI_MALLOC_VERBOSE(nValues * sizeof(double)) );
         if( padfValues == NULL )
             return;
-        for(int i=0;i<nValues;i++)
+        for( int i = 0; i < nValues; i++ )
         {
             padfValues[i] = CPLAtof(papszValues[i]);
         }
@@ -4352,8 +4352,9 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         else
         {
             char** papszNewList = NULL;
-            char** papszIter = puValue->StringList.paList;
-            for(; papszIter != NULL && *papszIter != NULL; ++papszIter )
+            for( char** papszIter = puValue->StringList.paList;
+                 papszIter != NULL && *papszIter != NULL;
+                 ++papszIter )
             {
                 char** papszNewList2 = CSLAddStringMayFail(papszNewList, *papszIter);
                 if( papszNewList2 == NULL )

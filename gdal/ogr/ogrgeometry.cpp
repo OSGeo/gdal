@@ -225,7 +225,6 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             case wkbCurvePolygonM:
             case wkbCurvePolygonZM:
             {
-                int ir;
                 int nRings;
                 poPoly = (OGRCurvePolygon*)this;
                 poRing = poPoly->getExteriorRingCurve();
@@ -244,7 +243,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
                     if (nRings)
                     {
                         fprintf( fp, ", %d inner rings (", nRings);
-                        for( ir = 0; ir < nRings; ir++)
+                        for( int ir = 0; ir < nRings; ir++ )
                         {
                             poRing = poPoly->getInteriorRingCurve(ir);
                             if (ir)
@@ -273,9 +272,9 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
                     fprintf( fp, "empty");
                 else
                 {
-                    for(int i=0;i<poCC->getNumCurves();i++)
+                    for( int i = 0; i < poCC->getNumCurves(); i++ )
                     {
-                        if (i)
+                        if( i )
                             fprintf( fp, ", ");
                         fprintf( fp, "%s (%d points)",
                                  poCC->getCurve(i)->getGeometryName(),
@@ -310,10 +309,9 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             case wkbMultiSurfaceZM:
             case wkbGeometryCollectionZM:
             {
-                int ig;
                 poColl = (OGRGeometryCollection*)this;
                 fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
-                for ( ig = 0; ig < poColl->getNumGeometries(); ig++)
+                for ( int ig = 0; ig < poColl->getNumGeometries(); ig++ )
                 {
                     OGRGeometry * poChild = (OGRGeometry*)poColl->getGeometryRef(ig);
                     fprintf( fp, "%s", pszPrefix);
@@ -4980,7 +4978,7 @@ OGRGeometry *OGRGeometry::Polygonize() const
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
 
     hGeosGeomList = new GEOSGeom [iCount];
-    for ( int ig = 0; ig < iCount; ig++)
+    for( int ig = 0; ig < iCount; ig++ )
     {
         GEOSGeom hGeosGeom = NULL;
         OGRGeometry * poChild = (OGRGeometry*)poColl->getGeometryRef(ig);
@@ -5009,7 +5007,7 @@ OGRGeometry *OGRGeometry::Polygonize() const
         }
     }
 
-    for ( int ig = 0; ig < iCount; ig++)
+    for( int ig = 0; ig < iCount; ig++ )
     {
         GEOSGeom hGeosGeom = *(hGeosGeomList + ig);
         if( hGeosGeom != NULL)
