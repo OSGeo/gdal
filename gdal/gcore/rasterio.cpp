@@ -80,6 +80,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     int iBufYOff = 0;
     int iBufXOff = 0;
     int iSrcY = 0;
+    const bool bUseIntegerRequestCoords =
+           (!psExtraArg->bFloatingPointWindowValidity ||
+            (nXOff == psExtraArg->dfXOff &&
+             nYOff == psExtraArg->dfYOff &&
+             nXSize == psExtraArg->dfXSize &&
+             nYSize == psExtraArg->dfYSize));
 
 /* ==================================================================== */
 /*      A common case is the data requested with the destination        */
@@ -89,7 +95,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         && nLineSpace == nPixelSpace * nXSize
         && nBlockXSize == GetXSize()
         && nBufXSize == nXSize
-        && nBufYSize == nYSize )
+        && nBufYSize == nYSize
+        && bUseIntegerRequestCoords )
     {
         CPLErr eErr = CE_None;
 
@@ -254,7 +261,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     if ( // nPixelSpace == nBufDataSize &&
          nXSize == nBufXSize
-         && nYSize == nBufYSize )
+         && nYSize == nBufYSize
+         && bUseIntegerRequestCoords )
     {
 #if DEBUG_VERBOSE
         printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n",
