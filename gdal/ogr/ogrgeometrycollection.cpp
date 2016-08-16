@@ -793,7 +793,6 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 
 {
     char        **papszGeoms;
-    int         iGeom;
     size_t      nCumulativeLength = 0;
     OGRErr      eErr;
     bool bMustWriteComma = false;
@@ -803,7 +802,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
     papszGeoms = (nGeomCount) ? (char **) CPLCalloc(sizeof(char *),nGeomCount) : NULL;
 
-    for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         eErr = papoGeoms[iGeom]->exportToWkt( &(papszGeoms[iGeom]), eWkbVariant );
         if( eErr != OGRERR_NONE )
@@ -893,7 +892,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
     strcat( *ppszDstText, " (" );
     nCumulativeLength = strlen(*ppszDstText);
 
-    for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         if( papszGeoms[iGeom] == NULL )
             continue;
@@ -930,7 +929,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
     return OGRERR_NONE;
 
 error:
-    for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
         CPLFree( papszGeoms[iGeom] );
     CPLFree( papszGeoms );
     return eErr;

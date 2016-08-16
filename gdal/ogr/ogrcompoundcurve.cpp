@@ -768,7 +768,7 @@ OGRLineString* OGRCompoundCurve::CastToLineString(OGRCompoundCurve* poCC)
 
 OGRLinearRing* OGRCompoundCurve::CastToLinearRing(OGRCompoundCurve* poCC)
 {
-    for(int i=0;i<poCC->oCC.nCurveCount;i++)
+    for( int i = 0; i < poCC->oCC.nCurveCount; i++ )
     {
         poCC->oCC.papoCurves[i] = OGRCurve::CastToLineString(poCC->oCC.papoCurves[i]);
         if( poCC->oCC.papoCurves[i] == NULL )
@@ -829,7 +829,7 @@ double OGRCompoundCurve::get_Area() const
         OGRLineString oLS;
         oLS.setNumPoints( getNumPoints() );
         OGRPoint p;
-        for(int i = 0; poIter->getNextPoint(&p); i++ )
+        for( int i = 0; poIter->getNextPoint(&p); i++ )
         {
             oLS.setPoint( i, p.getX(), p.getY() );
         }

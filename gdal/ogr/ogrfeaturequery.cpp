@@ -92,7 +92,6 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /* -------------------------------------------------------------------- */
     char        **papszFieldNames;
     swq_field_type *paeFieldTypes;
-    int         iField;
     int         nFieldCount = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
                               poDefn->GetGeomFieldCount();
 
@@ -101,7 +100,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     paeFieldTypes = (swq_field_type *)
         CPLMalloc(sizeof(swq_field_type) * nFieldCount );
 
-    for( iField = 0; iField < poDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn    *poField = poDefn->GetFieldDefn( iField );
 
@@ -147,11 +146,13 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
         }
     }
 
-    iField = 0;
-    while (iField < SPECIAL_FIELD_COUNT)
+    int iField = 0;
+    while( iField < SPECIAL_FIELD_COUNT )
     {
-        papszFieldNames[poDefn->GetFieldCount() + iField] = (char *) SpecialFieldNames[iField];
-        paeFieldTypes[poDefn->GetFieldCount() + iField] = (iField == SPF_FID) ? SWQ_INTEGER64 : SpecialFieldTypes[iField];
+        papszFieldNames[poDefn->GetFieldCount() + iField] =
+            (char *) SpecialFieldNames[iField];
+        paeFieldTypes[poDefn->GetFieldCount() + iField] =
+            (iField == SPF_FID) ? SWQ_INTEGER64 : SpecialFieldTypes[iField];
         ++iField;
     }
 
@@ -378,8 +379,7 @@ GIntBig* OGRORGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
     GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
 
-    GIntBig i1 = 0, i2 =0;
-    for(;i1<nFIDCount1 || i2<nFIDCount2;)
+    for( GIntBig i1 = 0, i2 = 0; i1<nFIDCount1 || i2<nFIDCount2; )
     {
         if (i1 < nFIDCount1 && i2 < nFIDCount2)
         {
@@ -451,8 +451,8 @@ GIntBig* OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
     GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
 
-    GIntBig i1 = 0, i2 =0;
-    for(;i1<nFIDCount1 && i2<nFIDCount2;)
+
+    for( GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 && i2 < nFIDCount2; )
     {
         GIntBig nVal1 = panFIDList1[i1];
         GIntBig nVal2 = panFIDList2[i2];
@@ -559,9 +559,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
     {
         int nLength;
         GIntBig *panFIDs = NULL;
-        int iIN;
 
-        for( iIN = 1; iIN < psExpr->nSubExprCount; iIN++ )
+        for( int iIN = 1; iIN < psExpr->nSubExprCount; iIN++ )
         {
             switch( poFieldDefn->GetType() )
             {

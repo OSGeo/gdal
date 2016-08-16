@@ -513,7 +513,7 @@ OGRErr OGRFeatureDefn::ReorderFieldDefns( int* panMap )
     OGRFieldDefn** papoFieldDefnNew = (OGRFieldDefn**)
         CPLMalloc(sizeof(OGRFieldDefn*) * nFieldCount);
 
-    for(int i=0;i<nFieldCount;i++)
+    for( int i = 0; i < nFieldCount; i++ )
     {
         papoFieldDefnNew[i] = papoFieldDefn[panMap[i]];
     }

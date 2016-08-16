@@ -452,7 +452,7 @@ int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform )
         return FALSE;
 
     asTransform.resize(0);
-    for(int  iField = 0; iField < 7; iField++ )
+    for( int iField = 0; iField < 7; iField++ )
     {
         const char* pszValue = papszLine[iDXField+iField];
         if( pszValue[0] )

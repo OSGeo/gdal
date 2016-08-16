@@ -152,10 +152,9 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
     OGRGeometry* poGeom = (OGRGeometry*) hLines;
     if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
     {
-        int iGeom;
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
 
-        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
                 != wkbLineString )
@@ -202,7 +201,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /* -------------------------------------------------------------------- */
 /*      Find the first unconsumed edge.                                 */
 /* -------------------------------------------------------------------- */
-        int iEdge = 0;
+        int iEdge = 0;  // Used after for.
         for( ; panEdgeConsumed[iEdge]; iEdge++ ) {}
 
         OGRLineString *poLine =
@@ -234,7 +233,6 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                && nRemainingEdges > 0
                && bWorkDone )
         {
-            int iBestEdge = -1;
             bool bReverse = false;
 
             bWorkDone = false;
@@ -243,9 +241,11 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             // We consider linking the end to the beginning.  If this is
             // closer than any other option we will just close the loop.
 
-            //CheckPoints(poRing,0,poRing,poRing->getNumPoints()-1,&dfBestDist);
+            // CheckPoints(poRing, 0, poRing, poRing->getNumPoints()-1,
+            //             &dfBestDist);
 
             // Find unused edge with end point closest to our loose end.
+            int iBestEdge = -1;
             for( iEdge = 0; iEdge < nEdges; iEdge++ )
             {
                 if( panEdgeConsumed[iEdge] )
