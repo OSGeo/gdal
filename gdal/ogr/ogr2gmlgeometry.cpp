@@ -384,7 +384,6 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
              || eFType == wkbGeometryCollection )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
-        int             iMember;
         const char *pszElemClose = NULL;
         const char *pszMemberElem = NULL;
 
@@ -431,7 +430,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
 
-        for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
@@ -866,7 +865,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength,">");
 
         OGRCompoundCurve* poCC = (OGRCompoundCurve*)poGeometry;
-        for(int i=0;i<poCC->getNumCurves();i++)
+        for( int i = 0; i < poCC->getNumCurves(); i++ )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:curveMember>" );
@@ -955,7 +954,6 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
              || eFType == wkbGeometryCollection )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
-        int             iMember;
         const char *pszElemClose = NULL;
         const char *pszMemberElem = NULL;
 
@@ -1002,7 +1000,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
 
-        for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++ )
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
@@ -1157,7 +1155,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         const char* pszSRSDimensionLoc = CSLFetchNameValueDef(papszOptions,"SRSDIMENSION_LOC","POSLIST");
         char** papszSRSDimensionLoc = CSLTokenizeString2(pszSRSDimensionLoc, ",", 0);
         int nSRSDimensionLocFlags = 0;
-        for(int i=0; papszSRSDimensionLoc[i] != NULL; i++)
+        for( int i = 0; papszSRSDimensionLoc[i] != NULL; i++ )
         {
             if( EQUAL(papszSRSDimensionLoc[i], "POSLIST") )
                 nSRSDimensionLocFlags |= SRSDIM_LOC_POSLIST;
