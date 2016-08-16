@@ -265,6 +265,36 @@ int VSIArchiveFilesystemHandler::FindFileInArchive(const char* archiveFilename,
 }
 
 /************************************************************************/
+/*                           CompactFilename()                          */
+/************************************************************************/
+
+static CPLString CompactFilename(const char* pszArchiveInFileNameIn)
+{
+    char* pszArchiveInFileName = CPLStrdup(pszArchiveInFileNameIn);
+
+    /* Replace a/../b by b and foo/a/../b by foo/b */
+    while(true)
+    {
+        char* pszPrevDir = strstr(pszArchiveInFileName, "/../");
+        if (pszPrevDir == NULL || pszPrevDir == pszArchiveInFileName)
+            break;
+
+        char* pszPrevSlash = pszPrevDir - 1;
+        while(pszPrevSlash != pszArchiveInFileName &&
+                *pszPrevSlash != '/')
+            pszPrevSlash --;
+        if (pszPrevSlash == pszArchiveInFileName)
+            memmove(pszArchiveInFileName, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
+        else
+            memmove(pszPrevSlash + 1, pszPrevDir + 4, strlen(pszPrevDir + 4) + 1);
+    }
+
+    CPLString osFileInArchive = pszArchiveInFileName;
+    CPLFree(pszArchiveInFileName);
+    return osFileInArchive;
+}
+
+/************************************************************************/
 /*                           SplitFilename()                            */
 /************************************************************************/
 
@@ -276,6 +306,86 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
     if (strcmp(pszFilename, GetPrefix()) == 0)
         return NULL;
+
+    // Detect extended syntax: /vsiXXX/{archive_filename}/file_in_archive
+    if( pszFilename[strlen(GetPrefix())+ 1] == '{' )
+    {
+        pszFilename += strlen(GetPrefix()) + 1;
+        int nCountCurles = 0;
+        while(pszFilename[i])
+        {
+            if( pszFilename[i] == '{' )
+                nCountCurles ++;
+            else if( pszFilename[i] == '}' )
+            {
+                nCountCurles --;
+                if( nCountCurles == 0 )
+                    break;
+            }
+            i ++;
+        }
+        if( nCountCurles > 0 )
+            return NULL;
+        char* archiveFilename = CPLStrdup(pszFilename + 1);
+        archiveFilename[i - 1] = 0;
+
+        bool bArchiveFileExists = false;
+        if (!bCheckMainFileExists)
+        {
+            bArchiveFileExists = true;
+        }
+        else
+        {
+            CPLMutexHolder oHolder( &hMutex );
+
+            if (oFileList.find(archiveFilename) != oFileList.end() )
+            {
+                bArchiveFileExists = true;
+            }
+        }
+
+        if (!bArchiveFileExists)
+        {
+            VSIStatBufL statBuf;
+            VSIFilesystemHandler *poFSHandler =
+                VSIFileManager::GetHandler( archiveFilename );
+            if (poFSHandler->Stat(archiveFilename, &statBuf,
+                                    VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
+                !VSI_ISDIR(statBuf.st_mode))
+            {
+                bArchiveFileExists = true;
+            }
+        }
+
+        if (bArchiveFileExists)
+        {
+            if (pszFilename[i + 1] == '/' ||
+                pszFilename[i + 1] == '\\')
+            {
+                osFileInArchive = CompactFilename(pszFilename + i + 2);
+            }
+            else if( pszFilename[i+1] == '\0' )
+                osFileInArchive = "";
+            else
+            {
+                CPLFree(archiveFilename);
+                return NULL;
+            }
+
+            /* Remove trailing slash */
+            if (osFileInArchive.size())
+            {
+                char lastC = osFileInArchive[strlen(osFileInArchive) - 1];
+                if (lastC == '\\' || lastC == '/')
+                    osFileInArchive.resize(strlen(osFileInArchive) - 1);
+            }
+
+            return archiveFilename;
+        }
+
+        CPLFree(archiveFilename);
+        return NULL;
+    }
 
     /* Allow natural chaining of VSI drivers without requiring double slash */
 
@@ -354,27 +464,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                 if (pszFilename[i + nToSkip] == '/' ||
                     pszFilename[i + nToSkip] == '\\')
                 {
-                    char* pszArchiveInFileName = CPLStrdup(pszFilename + i + nToSkip + 1);
-
-                    /* Replace a/../b by b and foo/a/../b by foo/b */
-                    while(true)
-                    {
-                        char* pszPrevDir = strstr(pszArchiveInFileName, "/../");
-                        if (pszPrevDir == NULL || pszPrevDir == pszArchiveInFileName)
-                            break;
-
-                        char* pszPrevSlash = pszPrevDir - 1;
-                        while(pszPrevSlash != pszArchiveInFileName &&
-                                *pszPrevSlash != '/')
-                            pszPrevSlash --;
-                        if (pszPrevSlash == pszArchiveInFileName)
-                            memmove(pszArchiveInFileName, pszPrevDir + nToSkip, strlen(pszPrevDir + nToSkip) + 1);
-                        else
-                            memmove(pszPrevSlash + 1, pszPrevDir + nToSkip, strlen(pszPrevDir + nToSkip) + 1);
-                    }
-
-                    osFileInArchive = pszArchiveInFileName;
-                    CPLFree(pszArchiveInFileName);
+                    osFileInArchive = CompactFilename(pszFilename + i + nToSkip + 1);
                 }
                 else
                     osFileInArchive = "";
