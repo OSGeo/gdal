@@ -216,15 +216,23 @@ double OGRCircularString::get_Length() const
 
 {
     double dfLength = 0.0;
-    double R, cx, cy, alpha0, alpha1, alpha2;
-    int i;
-    for( i = 0; i < nPointCount-2; i += 2 )
+    for( int i = 0; i < nPointCount-2; i += 2 )
     {
-        double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
-               x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
-               x2 = paoPoints[i+2].x, y2 = paoPoints[i+2].y;
+        const double x0 = paoPoints[i].x;
+        const double y0 = paoPoints[i].y;
+        const double x1 = paoPoints[i+1].x;
+        const double y1 = paoPoints[i+1].y;
+        const double x2 = paoPoints[i+2].x;
+        const double y2 = paoPoints[i+2].y;
+        double R = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        double alpha0 = 0.0;
+        double alpha1 = 0.0;
+        double alpha2 = 0.0;
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
-                                            R, cx, cy, alpha0, alpha1, alpha2) )
+                                                  R, cx, cy,
+                                                  alpha0, alpha1, alpha2) )
         {
             dfLength += fabs(alpha2 - alpha0) * R;
         }
@@ -240,7 +248,8 @@ double OGRCircularString::get_Length() const
 /*                       ExtendEnvelopeWithCircular()                   */
 /************************************************************************/
 
-void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) const
+void OGRCircularString::ExtendEnvelopeWithCircular(
+    OGREnvelope * psEnvelope ) const
 {
     if( !IsValidFast() || nPointCount == 0 )
         return;
@@ -249,18 +258,27 @@ void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) c
     // extremities of the circle.
     for( int i = 0; i < nPointCount - 2; i += 2 )
     {
-        double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
-               x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
-               x2 = paoPoints[i+2].x, y2 = paoPoints[i+2].y;
-        double R, cx, cy, alpha0, alpha1, alpha2;
+        double x0 = paoPoints[i].x;
+        const double y0 = paoPoints[i].y;
+        const double x1 = paoPoints[i+1].x;
+        const double y1 = paoPoints[i+1].y;
+        const double x2 = paoPoints[i+2].x;
+        const double y2 = paoPoints[i+2].y;
+        double R = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        double alpha0 = 0.0;
+        double alpha1 = 0.0;
+        double alpha2 = 0.0;
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
-                                            R, cx, cy, alpha0, alpha1, alpha2))
+                                                  R, cx, cy,
+                                                  alpha0, alpha1, alpha2))
         {
-            int quadrantStart = (int)floor(alpha0 / (M_PI / 2));
-            int quadrantEnd  = (int)floor(alpha2 / (M_PI / 2));
+            int quadrantStart = static_cast<int>(floor(alpha0 / (M_PI / 2)));
+            int quadrantEnd  = static_cast<int>(floor(alpha2 / (M_PI / 2)));
             if( quadrantStart > quadrantEnd )
             {
-                int tmp = quadrantStart;
+                const int tmp = quadrantStart;
                 quadrantStart = quadrantEnd;
                 quadrantEnd = tmp;
             }

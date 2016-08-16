@@ -745,8 +745,7 @@ bool GML2OGRGeometry_AddToMultiSurface(OGRMultiSurface* poMS,
     else if (eType == wkbMultiPolygon || eType == wkbMultiSurface)
     {
         OGRMultiSurface* poMS2 = (OGRMultiSurface*) poGeom;
-        int i;
-        for(i=0;i<poMS2->getNumGeometries();i++)
+        for( int i = 0; i < poMS2->getNumGeometries(); i++ )
         {
             if( wkbFlatten(poMS2->getGeometryRef(i)->getGeometryType()) != wkbPolygon )
                 bChildrenAreAllPolygons = false;

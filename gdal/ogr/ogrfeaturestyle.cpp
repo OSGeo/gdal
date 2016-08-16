@@ -860,22 +860,18 @@ void OGR_STBL_Destroy( OGRStyleTableH hSTBL )
  * @return the Name of the matching style string or NULL on error.
  */
 
-const char *OGRStyleTable::GetStyleName(const char *pszStyleString)
+const char *OGRStyleTable::GetStyleName( const char *pszStyleString )
 {
-    int i;
-    const char *pszStyleStringBegin;
-
-    for (i=0;i<CSLCount(m_papszStyleTable);i++)
+    for ( int i = 0; i < CSLCount(m_papszStyleTable); i++ )
     {
-        pszStyleStringBegin = strstr(m_papszStyleTable[i],":");
+        const char *pszStyleStringBegin =
+            strstr(m_papszStyleTable[i],":");
 
         if (pszStyleStringBegin && EQUAL(&pszStyleStringBegin[1],
                                          pszStyleString))
         {
-            size_t nColon;
-
             osLastRequestedStyleName = m_papszStyleTable[i];
-            nColon = osLastRequestedStyleName.find( ':' );
+            const size_t nColon = osLastRequestedStyleName.find( ':' );
             if( nColon != std::string::npos )
                 osLastRequestedStyleName =
                     osLastRequestedStyleName.substr(0,nColon);
@@ -1202,17 +1198,13 @@ void OGRStyleTable::Print(FILE *fpOut)
 
 int OGRStyleTable::IsExist(const char *pszName)
 {
-    int i;
-    int nCount;
-    const char *pszNewString;
-
     if (pszName == NULL)
       return -1;
 
-    nCount = CSLCount(m_papszStyleTable);
-    pszNewString = CPLSPrintf("%s:",pszName);
+    const int nCount = CSLCount(m_papszStyleTable);
+    const char *pszNewString = CPLSPrintf("%s:",pszName);
 
-    for (i=0;i<nCount;i++)
+    for( int i = 0; i < nCount; i++ )
     {
         if (strstr(m_papszStyleTable[i],pszNewString) != NULL)
         {
@@ -1481,13 +1473,10 @@ const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
 {
     if (IsStyleModified())
     {
-        int i;
-        GBool bFound;
-        const char *pszClass;
-        CPLString osCurrent;
 
         CPLFree(m_pszStyleString);
 
+        const char *pszClass = NULL;
         switch (GetType())
         {
           case OGRSTCPen:
@@ -1506,15 +1495,15 @@ const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
             pszClass = "UNKNOWN(";
         }
 
-        osCurrent = pszClass;
+        CPLString osCurrent = pszClass;
 
-        bFound = FALSE;
-        for (i=0;i< nSize;i++)
+        GBool bFound = FALSE;
+        for( int i = 0; i < nSize; i++ )
         {
             if (pasStyleValue[i].bValid == FALSE)
               continue;
 
-            if (bFound)
+            if( bFound )
               osCurrent += ",";
             bFound = TRUE;
 
@@ -1870,19 +1859,19 @@ GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
     // Save Scale and output Units because the parsing code will alter
     // the values
     eLastUnit = m_eUnit;
-    double  dSavedScale = m_dfScale;
-    int     i, nElements = CSLCount(papszToken2);
+    double dSavedScale = m_dfScale;
+    const int nElements = CSLCount(papszToken2);
 
-    for ( i = 0; i < nElements; i++ )
+    for( int i = 0; i < nElements; i++ )
     {
-        char    **papszStylePair =
+        char **papszStylePair =
             CSLTokenizeString2( papszToken2[i], ":",
                                 CSLT_HONOURSTRINGS
                                 | CSLT_STRIPLEADSPACES
                                 | CSLT_STRIPENDSPACES
                                 | CSLT_ALLOWEMPTYTOKENS );
 
-        int     j, nTokens = CSLCount(papszStylePair);
+        const int nTokens = CSLCount(papszStylePair);
 
         if ( nTokens < 1 || nTokens > 2 )
         {
@@ -1895,7 +1884,7 @@ GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
             continue;
         }
 
-        for ( j = 0; j < nCount; j++ )
+        for( int j = 0; j < nCount; j++ )
         {
             if ( EQUAL(pasStyle[j].pszToken, papszStylePair[0]) )
             {

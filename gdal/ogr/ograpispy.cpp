@@ -379,15 +379,19 @@ static CPLString OGRAPISpyGetFieldType(OGRFieldType eType)
 static CPLString OGRAPISpyGetFeatureDefnVar(OGRFeatureDefnH hFDefn)
 {
     std::map<OGRFeatureDefnH, FeatureDefnDescription>::iterator oIter = oMapFDefn.find(hFDefn);
-    int i;
+    int i = 0;
     if( oIter == oMapFDefn.end() )
     {
-        i = (int)oMapFDefn.size() + 1;
+        i = static_cast<int>(oMapFDefn.size()) + 1;
         oMapFDefn[hFDefn] = FeatureDefnDescription(hFDefn, i);
-        ((OGRFeatureDefn*)hFDefn)->Reference(); // so that we can check when they are no longer used
+
+        // So that we can check when they are no longer used.
+        ((OGRFeatureDefn*)hFDefn)->Reference();
     }
     else
+    {
         i = oIter->second.iUniqueNumber;
+    }
     return CPLSPrintf("fdefn%d", i);
 }
 
@@ -763,8 +767,7 @@ static void OGRAPISpyDumpFeature( OGRFeatureH hFeat )
             OGRAPISpyGetFeatureDefnVar((OGRFeatureDefnH)(poFeature->GetDefnRef())).c_str());
     if( poFeature->GetFID() != -1 )
         fprintf(fpSpyFile, "f.SetFID(" CPL_FRMT_GIB ")\n", poFeature->GetFID());
-    int i;
-    for(i = 0; i < poFeature->GetFieldCount(); i++)
+    for( int i = 0; i < poFeature->GetFieldCount(); i++ )
     {
         if( poFeature->IsFieldSet(i) )
         {
@@ -781,7 +784,7 @@ static void OGRAPISpyDumpFeature( OGRFeatureH hFeat )
             }
         }
     }
-    for(i = 0; i < poFeature->GetGeomFieldCount(); i++)
+    for( int i = 0; i < poFeature->GetGeomFieldCount(); i++ )
     {
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
         if( poGeom != NULL )
