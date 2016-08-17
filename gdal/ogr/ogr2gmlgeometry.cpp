@@ -472,10 +472,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 
 {
-    CPLXMLNode *psBox, *psCoord;
     OGREnvelope sEnvelope;
-    char        szCoordinate[256];
-    char       *pszY;
 
     memset( &sEnvelope, 0, sizeof(sEnvelope) );
     ((OGRGeometry *) hGeometry)->getEnvelope( &sEnvelope );
@@ -489,16 +486,17 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
         return NULL;
     }
 
-    psBox = CPLCreateXMLNode( NULL, CXT_Element, "gml:Box" );
+    CPLXMLNode *psBox = CPLCreateXMLNode( NULL, CXT_Element, "gml:Box" );
 
 /* -------------------------------------------------------------------- */
 /*      Add minxy coordinate.                                           */
 /* -------------------------------------------------------------------- */
-    psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
+    CPLXMLNode *psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
 
+    char szCoordinate[256] = {};
     MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0,
                        false );
-    pszY = strstr(szCoordinate,",") + 1;
+    char *pszY = strstr(szCoordinate,",") + 1;
     pszY[-1] = '\0';
 
     CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
@@ -1050,14 +1048,11 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
 
 {
-    char        *pszText;
-    CPLXMLNode  *psTree;
-
-    pszText = OGR_G_ExportToGML( hGeometry );
+    char *pszText = OGR_G_ExportToGML( hGeometry );
     if( pszText == NULL )
         return NULL;
 
-    psTree = CPLParseXMLString( pszText );
+    CPLXMLNode  *psTree = CPLParseXMLString( pszText );
 
     CPLFree( pszText );
 
@@ -1133,13 +1128,13 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
 char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
 
 {
-    char        *pszText;
-    size_t       nLength = 0, nMaxLength = 1;
-
     if( hGeometry == NULL )
         return CPLStrdup( "" );
 
-    pszText = (char *) CPLMalloc(nMaxLength);
+    size_t nLength = 0;
+    size_t nMaxLength = 1;
+
+    char *pszText = (char *) CPLMalloc(nMaxLength);
     pszText[0] = '\0';
 
     const char* pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
