@@ -1229,12 +1229,11 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 /* -------------------------------------------------------------------- */
 /*      Find the matching group in the proj and parms table.            */
 /* -------------------------------------------------------------------- */
-    const char *pszProjection;
-    int        iOffset;
+    const char *pszProjection =
+        poPROJCS->GetNode("PROJECTION")->GetChild(0)->GetValue();
 
-    pszProjection = poPROJCS->GetNode("PROJECTION")->GetChild(0)->GetValue();
-
-    for( iOffset = 0;
+    int iOffset = 0;  // Used after for.
+    for( ;
          papszProjWithParms[iOffset] != NULL
              && !EQUAL(papszProjWithParms[iOffset],pszProjection); )
     {

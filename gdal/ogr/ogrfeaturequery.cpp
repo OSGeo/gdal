@@ -90,14 +90,12 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /* -------------------------------------------------------------------- */
 /*      Build list of fields.                                           */
 /* -------------------------------------------------------------------- */
-    char        **papszFieldNames;
-    swq_field_type *paeFieldTypes;
     int         nFieldCount = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
                               poDefn->GetGeomFieldCount();
 
-    papszFieldNames = (char **)
+    char **papszFieldNames = (char **)
         CPLMalloc(sizeof(char *) * nFieldCount );
-    paeFieldTypes = (swq_field_type *)
+    swq_field_type *paeFieldTypes = (swq_field_type *)
         CPLMalloc(sizeof(swq_field_type) * nFieldCount );
 
     for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
@@ -248,10 +246,9 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
     if( pSWQExpr == NULL )
         return FALSE;
 
-    swq_expr_node *poResult;
-
-    poResult = ((swq_expr_node *) pSWQExpr)->Evaluate( OGRFeatureFetcher,
-                                                       (void *) poFeature );
+    swq_expr_node *poResult =
+        ((swq_expr_node *) pSWQExpr)->Evaluate( OGRFeatureFetcher,
+                                                (void *) poFeature );
 
     if( poResult == NULL )
         return FALSE;
@@ -287,8 +284,6 @@ int OGRFeatureQuery::CanUseIndex( OGRLayer *poLayer )
 int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
                                   OGRLayer *poLayer )
 {
-    OGRAttrIndex *poIndex;
-
 /* -------------------------------------------------------------------- */
 /*      Does the expression meet our requirements?                      */
 /* -------------------------------------------------------------------- */
@@ -314,7 +309,8 @@ int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
         || poValue->eNodeType != SNT_CONSTANT )
         return FALSE;
 
-    poIndex = poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
+    OGRAttrIndex *poIndex =
+        poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
     if( poIndex == NULL )
         return FALSE;
 
@@ -497,8 +493,6 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
                                                   OGRLayer *poLayer,
                                                   GIntBig& nFIDCount )
 {
-    OGRAttrIndex *poIndex;
-
 /* -------------------------------------------------------------------- */
 /*      Does the expression meet our requirements?                      */
 /* -------------------------------------------------------------------- */
@@ -540,7 +534,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
         || poValue->eNodeType != SNT_CONSTANT )
         return NULL;
 
-    poIndex = poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
+    OGRAttrIndex *poIndex =
+        poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
     if( poIndex == NULL )
         return NULL;
 
@@ -548,9 +543,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
 /*      OK, we have an index, now we need to query it.                  */
 /* -------------------------------------------------------------------- */
     OGRField sValue;
-    OGRFieldDefn *poFieldDefn;
-
-    poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(poColumn->field_index);
+    OGRFieldDefn *poFieldDefn =
+        poLayer->GetLayerDefn()->GetFieldDefn(poColumn->field_index);
 
 /* -------------------------------------------------------------------- */
 /*      Handle the case of an IN operation.                             */
@@ -676,7 +670,7 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
 /* -------------------------------------------------------------------- */
 /*      Add the field name into our list if it is not already there.    */
 /* -------------------------------------------------------------------- */
-        const char *pszFieldName;
+        const char *pszFieldName = NULL;
 
         if( op->field_index >= poTargetDefn->GetFieldCount()
             && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT)

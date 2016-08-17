@@ -219,11 +219,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /*      D-02 or D109.                                                   */
 /* -------------------------------------------------------------------- */
     char szEarthModel[5];
-    const char *pszEM;
     int bIsNAD27 = FALSE;
 
     strcpy( szEarthModel, "" );
-    pszEM = pszProj + strlen(pszProj) - 1;
+    const char *pszEM = pszProj + strlen(pszProj) - 1;
     while( pszEM != pszProj )
     {
         if( *pszEM == 'e' || *pszEM == 'E' || *pszEM == 'd' || *pszEM == 'D' )
@@ -1304,12 +1303,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
 /*      Translate the linear units.                                     */
 /* -------------------------------------------------------------------- */
-    const char  *pszUnits;
-
-    if( STARTS_WITH_CI(szProj, "LONG/LAT") )
-        pszUnits = "DEGREE";
-    else
-        pszUnits = "METRE";
+    const char *pszUnits =
+        STARTS_WITH_CI(szProj, "LONG/LAT") ? "DEGREE" : "METRE";
 
 /* -------------------------------------------------------------------- */
 /*      Report results.                                                 */

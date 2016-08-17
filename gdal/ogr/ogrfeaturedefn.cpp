@@ -192,9 +192,7 @@ void OGR_FD_Release( OGRFeatureDefnH hDefn )
 OGRFeatureDefn *OGRFeatureDefn::Clone()
 
 {
-    OGRFeatureDefn *poCopy;
-
-    poCopy = new OGRFeatureDefn( GetName() );
+    OGRFeatureDefn *poCopy = new OGRFeatureDefn( GetName() );
 
     GetFieldCount();
     for( int i = 0; i < nFieldCount; i++ )

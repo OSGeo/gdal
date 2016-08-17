@@ -1310,7 +1310,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
                 {
                     if( poSrcNode->geometry_value != NULL )
                     {
-                        char* pszWKT;
+                        char* pszWKT = NULL;
                         poSrcNode->geometry_value->exportToWkt(&pszWKT);
                         osRet = pszWKT;
                         CPLFree(pszWKT);

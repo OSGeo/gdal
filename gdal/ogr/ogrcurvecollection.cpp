@@ -285,10 +285,6 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
                                         char ** ppszDstText ) const
 
 {
-    char        **papszGeoms;
-    size_t      nCumulativeLength = 0;
-    OGRErr      eErr;
-
     if( nCurveCount == 0 )
     {
         CPLString osEmpty;
@@ -307,7 +303,9 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each Geom.     */
 /* -------------------------------------------------------------------- */
-    papszGeoms = (char **) CPLCalloc(sizeof(char *),nCurveCount);
+    char **papszGeoms = (char **) CPLCalloc(sizeof(char *),nCurveCount);
+    OGRErr eErr = OGRERR_NONE;
+    size_t nCumulativeLength = 0;
 
     for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {

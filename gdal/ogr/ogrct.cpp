@@ -192,14 +192,13 @@ static bool LoadProjLibrary_unlocked()
 
 {
     static bool bTriedToLoad = false;
-    const char *pszLibName;
 
     if( bTriedToLoad )
-        return( pfn_pj_transform != NULL );
+        return pfn_pj_transform != NULL;
 
     bTriedToLoad = true;
 
-    pszLibName = GetProjLibraryName();
+    const char *pszLibName = GetProjLibraryName();
 
 #ifdef PROJ_STATIC
     pfn_pj_init = pj_init;
@@ -423,8 +422,6 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
                                    OGRSpatialReference *poTarget )
 
 {
-    OGRProj4CT  *poCT;
-
     if( pfn_pj_init == NULL && !LoadProjLibrary() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -434,7 +431,7 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
         return NULL;
     }
 
-    poCT = new OGRProj4CT();
+    OGRProj4CT *poCT = new OGRProj4CT();
 
     if( !poCT->Initialize( poSource, poTarget ) )
     {
@@ -636,8 +633,6 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
 /*      Preliminary logic to setup wrapping.                            */
 /* -------------------------------------------------------------------- */
-    const char *pszCENTER_LONG;
-
     if( CPLGetConfigOption( "CENTER_LONG", NULL ) != NULL )
     {
         bSourceWrap = true;
@@ -647,7 +642,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         CPLDebug( "OGRCT", "Wrap at %g.", dfSourceWrapLong );
     }
 
-    pszCENTER_LONG = poSRSSource->GetExtension( "GEOGCS", "CENTER_LONG" );
+    const char *pszCENTER_LONG =
+        poSRSSource->GetExtension( "GEOGCS", "CENTER_LONG" );
     if( pszCENTER_LONG != NULL )
     {
         dfSourceWrapLong = CPLAtof(pszCENTER_LONG);
@@ -736,17 +732,18 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         strstr(pszDstProj4Defn, "+towgs84") == NULL )
     {
         char* pszDst = strstr(pszSrcProj4Defn, "+towgs84=0,0,0,0,0,0,0 ");
-        char* pszSrc;
         if( pszDst != NULL )
         {
-            pszSrc = pszDst + strlen("+towgs84=0,0,0,0,0,0,0 ");
+            char *pszSrc = pszDst + strlen("+towgs84=0,0,0,0,0,0,0 ");
             memmove(pszDst, pszSrc, strlen(pszSrc)+1);
         }
         else
+        {
             memcpy(strstr(pszSrcProj4Defn, "+datum=WGS84"), "+ellps", 6);
+        }
 
         pszDst = strstr(pszDstProj4Defn, "+nadgrids=@null ");
-        pszSrc = pszDst + strlen("+nadgrids=@null ");
+        char *pszSrc = pszDst + strlen("+nadgrids=@null ");
         memmove(pszDst, pszSrc, strlen(pszSrc)+1);
 
         pszDst = strstr(pszDstProj4Defn, "+wktext ");
@@ -767,17 +764,16 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         strstr(pszSrcProj4Defn, "+towgs84") == NULL )
     {
         char* pszDst = strstr(pszDstProj4Defn, "+towgs84=0,0,0,0,0,0,0 ");
-        char* pszSrc;
         if( pszDst != NULL)
         {
-            pszSrc = pszDst + strlen("+towgs84=0,0,0,0,0,0,0 ");
+            char* pszSrc = pszDst + strlen("+towgs84=0,0,0,0,0,0,0 ");
             memmove(pszDst, pszSrc, strlen(pszSrc)+1);
         }
         else
             memcpy(strstr(pszDstProj4Defn, "+datum=WGS84"), "+ellps", 6);
 
         pszDst = strstr(pszSrcProj4Defn, "+nadgrids=@null ");
-        pszSrc = pszDst + strlen("+nadgrids=@null ");
+        char* pszSrc = pszDst + strlen("+nadgrids=@null ");
         memmove(pszDst, pszSrc, strlen(pszSrc)+1);
 
         pszDst = strstr(pszSrcProj4Defn, "+wktext ");

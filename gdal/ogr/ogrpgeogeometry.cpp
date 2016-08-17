@@ -392,11 +392,9 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
         nParts = poPoly->getNumInteriorRings() + 1;
         for ( GUInt32 i = 0; i < nParts; i++ )
         {
-            OGRLinearRing *poRing;
-            if ( i == 0 )
-                poRing = poPoly->getExteriorRing();
-            else
-                poRing = poPoly->getInteriorRing(i-1);
+            OGRLinearRing *poRing = i == 0
+                ? poPoly->getExteriorRing()
+                : poPoly->getInteriorRing(i-1);
             nPoints += poRing->getNumPoints();
         }
         nShpSize += 16 * nCoordDims; /* xy(z)(m) box */
@@ -456,11 +454,9 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
             nParts += nRings;
             for ( int i = 0; i < nRings; i++ )
             {
-                OGRLinearRing *poRing;
-                if ( i == 0 )
-                    poRing = poPoly->getExteriorRing();
-                else
-                    poRing = poPoly->getInteriorRing(i-1);
+                OGRLinearRing *poRing = i == 0
+                    ? poPoly->getExteriorRing()
+                    : poPoly->getInteriorRing(i-1);
                 nPoints += poRing->getNumPoints();
             }
         }
@@ -798,7 +794,7 @@ id,WKT
         for( GUInt32 i = 0; i < nParts; i++ )
         {
             /* Check our Ring and condition it */
-            OGRLinearRing *poRing;
+            OGRLinearRing *poRing = NULL;
             if ( i == 0 )
             {
                 poRing = poPoly->getExteriorRing();
@@ -1046,7 +1042,7 @@ id,WKT
             for( int j = 0; j < nRings; j++ )
             {
                 /* Check our Ring and condition it */
-                OGRLinearRing *poRing;
+                OGRLinearRing *poRing = NULL;
                 if ( j == 0 )
                 {
                     poRing = poPoly->getExteriorRing();

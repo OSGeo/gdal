@@ -405,9 +405,7 @@ int OGRLinearRing::_WkbSize( int _flags ) const
 OGRGeometry *OGRLinearRing::clone() const
 
 {
-    OGRLinearRing       *poNewLinearRing;
-
-    poNewLinearRing = new OGRLinearRing();
+    OGRLinearRing *poNewLinearRing = new OGRLinearRing();
     poNewLinearRing->assignSpatialReference( getSpatialReference() );
 
     poNewLinearRing->setPoints( nPointCount, paoPoints, padfZ, padfM );

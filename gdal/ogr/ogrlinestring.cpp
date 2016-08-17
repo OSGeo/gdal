@@ -123,9 +123,7 @@ void OGRSimpleCurve::flattenTo2D()
 OGRGeometry *OGRSimpleCurve::clone() const
 
 {
-    OGRSimpleCurve       *poCurve;
-
-    poCurve = (OGRSimpleCurve*)
+    OGRSimpleCurve *poCurve = (OGRSimpleCurve*)
             OGRGeometryFactory::createGeometry(getGeometryType());
     if( poCurve == NULL )
         return NULL;
@@ -2329,8 +2327,6 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
 #ifdef DISABLE_OGRGEOM_TRANSFORM
     return OGRERR_FAILURE;
 #else
-    double      *xyz;
-    int         *pabSuccess;
 
 /* -------------------------------------------------------------------- */
 /*   Make a copy of the points to operate on, so as to be able to       */
@@ -2338,8 +2334,9 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
 /*   or keeping intact the original geometry if only full reprojection  */
 /*   allowed.                                                           */
 /* -------------------------------------------------------------------- */
-    xyz = (double *) VSI_MALLOC_VERBOSE(sizeof(double) * nPointCount * 3);
-    pabSuccess = (int *) VSI_CALLOC_VERBOSE(sizeof(int), nPointCount);
+    double *xyz =
+        (double *) VSI_MALLOC_VERBOSE(sizeof(double) * nPointCount * 3);
+    int *pabSuccess = (int *) VSI_CALLOC_VERBOSE(sizeof(int), nPointCount);
     if( xyz == NULL || pabSuccess == NULL )
     {
         VSIFree(xyz);

@@ -176,14 +176,13 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 
     do
     {
-
     /* -------------------------------------------------------------------- */
     /*      Get the first token, which should be the geometry type.         */
     /* -------------------------------------------------------------------- */
         const char* pszInputBefore = pszInput;
         pszInput = OGRWktReadToken( pszInput, szToken );
 
-        OGRSurface* poSurface;
+        OGRSurface* poSurface = NULL;
 
     /* -------------------------------------------------------------------- */
     /*      Do the import.                                                  */
