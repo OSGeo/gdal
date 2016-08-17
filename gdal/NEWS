@@ -1,3 +1,410 @@
+= GDAL/OGR 2.2.0 *preliminary* Release Notes (up to r35134) =
+
+== In a nutshell... ==
+
+ * New GDAL/raster drivers:
+   - DERIVED driver: read-support. Expose subdatasets in a a new metadata domain, called DERIVED_SUBDATASETS
+   - RRASTER driver: read-support .grd/.gri files handled by the R 'raster' package (#6249)
+ * New OGR/vector drivers:
+ * Significantly improved drivers:
+  - NWT_GRD: write support (#6533)
+  - FileGDB/OpenFileGDB: add support to read curve geometries (#5890)
+ * RFC 63: Add GDALRasterBand::GetDataCoverageStatus() and implement it in GTiff and VRT drivers
+        https://trac.osgeo.org/gdal/wiki/rfc63_sparse_datasets_improvements
+ * Upgrade to EPSG database v8.9 (#6625)
+
+== New installed files ==
+
+== Backward compatibility issues ==
+
+See MIGRATION_GUIDE.TXT
+
+== GDAL/OGR 2.2.0 - General Changes ==
+
+Build(Unix):
+ * improve detection of packaged libfyba (SOSI) --with-sosi, as in Ubuntu 16.04 (#6488)
+ * Sort files in static library to make the build reproducible (#6520)
+ * fix libqhull include path when it is /usr/local/include/libqhull (#6522)
+ * FileGDB: compilation fix on Linux in C++11 mode
+
+Build(Windows):
+ * Try to avoid confusiong between libqhull io.h and mingw own io.h (#6590)
+
+Build(all):
+
+== GDAL 2.2.0 - Overview of Changes ==
+
+Port:
+ * Export VSICreateCachedFile() as CPL_DLL so as to enable building JP2KAK as a plugin
+ * Added possibility to find GDAL_DATA path using INST_DATA definition without execution GDALAllRegister if GDAL_DATA placed in version named directory on Linux (#6543)
+ * Unix filesystem: make error message about failed open to report the filename (#6545)
+ * File finder: Remove hardcoded find location (/usr/local/share/gdal) (#6543)
+ * Win32 filesystem handler: make Truncate() turn on sparse files when doing file extension
+ * Add VSIFGetRangeStatusL() and VSISupportsSparseFiles()
+ * GDAL_NO_HARDCODED_FIND compilation option (#6543,#6531) to block file open calls (for sandboxed systems)
+ * Add VSIMallocAligned(), VSIMallocAlignedAuto() and VSIFreeAligned() APIs
+ * /vsizip / /vsitar: support alternate syntax /vsitar/{/path/to/the/archive}/path/inside/the/tar/file so as not to be dependant on file extension and enable chaining
+
+Core:
+ * RPC transformer: speed-up DEM extraction by requesting and caching a larger buffer, instead of doing many queries of just a few pixels that can be costly with VRT for example
+ * Proxy dataset: add consistency checks in (the unlikely) case the proxy and underlying dataset/bands would not share compatible characteristics
+ * GDALPamDataset::TryLoadXML(): do not reset error context when parsing .aux.xml
+ * PAM/VRT: only take into account <Entry> elements when deserializing a <ColorTable>
+ * GDALCopyWords(): add fast copy path when src data type == dst data type == Int16 or UInt16
+ * GetVirtualMemAuto(): allow USE_DEFAULT_IMPLEMENTATION=NO to prevent the default implementation from being used
+ * Nodata comparison: fix test when nodata is FLT_MIN or DBL_MIN (#6578)
+ * Fast implementation of GDALRasterBand::ComputeStatistics() for GDT_Byte and GDT_UInt16 (including use of SSE2/AVX2)
+ * Driver manage: If INST_DATA is not requested, do not check the GDAL_DATA variable.
+ * Make sure that GDALSetCacheMax() initialize the raster block mutex (#6611)
+ * External overview: fix incorrect overview building when generating from greater overview factors to lower ones, in compressed and single-band case (#6617)
+ * Speed-up SSE2 implementation of GDALCopy4Words from float to byte/uint16/int16
+ * Add SSE2 and SSSE3 implementations of GDALCopyWords from Byte with 2,3 or 4 byte stride to packed byte
+ * GDALCopyWords(): SSE2-accelerated Byte->Int32 and Byte->Float32 packed conversions
+ * Fix GDALRasterBand::IRasterIO() on a VRT dataset that has resampled sources, on requests such as nXSize == nBufXSize but nXSize != dfXSize
+
+Algorithms:
+ * Fix GDAL_CG_Create() to call GDALContourGenerator::Init() (#6491)
+ * GDALContourGenerate(): handle the case where the nodata value is NaN (#6519)
+ * GDALGridCreate(): fix hang in multi-threaded case when pfnProgress is NULL or GDALDummyProgress (#6552)
+ * GDAL contour: fix incorrect oriented contour lines in some rare cases (#6563)
+ * Warper: multiple performance improvements for cubic interpolation and uint16 data type
+ * Warper: add SRC_ALPHA_MAX and DST_ALPHA_MAX warp options to control the maximum value of the alpha channel. Set now to 65535 for UInt16 (and 32767 for Int16), or to 2^NBITS-1. 255 used for other cases as before
+
+Utilities:
+ * gdalwarp: do not densify cutlines by default when CUTLINE_BLEND_DIST is used (#6507)
+ * gdalwarp: when -to RPC_DEM is specified, make -et default to 0 as documented (#6608)
+ * gdalwarp: improve detection of source alpha band and auto-setting of target alpha band. Automatically set PHOTOMETRIC=RGB on target GeoTIFF when input colors are RGB
+ * gdalwarp: add a -nosrcalpha option to wrap the alpha band as a regular band and not as the alpha band
+ * gdal_translate: when using -projwin with default nearest neighbour resampling, align on integer source pixels (#6610)
+ * gdal_translate & gdalwarp: lower the default value of GDAL_MAX_DATASET_POOL_SIZE to 100 on MacOSX (#6604)
+ * gdal_polygonize.py: explicitly set output layer geometry type to be polygon (#6530)
+ * gdal_retile.py: add a -overlap switch
+
+Python samples:
+
+Multi-driver:
+ * Add GEOREF_SOURCES open option / GDAL_GEOREF_SOURCES config. option to all JPEG2000 drivers and GTiff to control which sources of georeferencing can be used and their respective priority
+
+AAIGRID driver:
+ * autodetect Float64 when the nodata value is not representable in the Float32 range
+
+ASRP driver:
+ * fix georeferencing of polar arc zone images (#6560)
+
+BMP driver:
+
+BLX driver:
+
+DIMAP driver:
+ * DIMAP: for DIMAP 2, read RPC from RPC_xxxxx.XML file (#6539)
+ * DIMAP/Pleiades metadata reader: take into tiling to properly shift RPC (#6293)
+ * add support for tiled DIMAP 2 datasets (#6293)
+
+ECRG driver:
+
+ECW driver:
+ * Add option ECW_ALWAYS_UPWARD=TRUE/FALSE  to work around issues with "Downward" oriented images (#6516).
+
+GeoRaster driver:
+ * fix report of rotation (#6593)
+
+GIF driver:
+
+GMT driver:
+
+GPKG driver:
+
+GTiff driver:
+ * support SPARSE_OK=YES in CreateCopy() mode (and in update mode with the SPARSE_OK=YES open option), by actively detecting blocks filled with 0/nodata about to be written
+ * When writing missing blocks (ie non SPARSE case), use the nodata value when defined. Otherwise fallback to 0 as before.
+ * in FillEmptyTiles() (ie in the TIFF non-sparse mode), avoid writing zeroes to file so as to speed up file creation when filesystem supports ... sparse files
+ * Fix RasterIO() reported when downsampling a RGBA JPEG compressed TIFF file (#6943)
+ * Internal libtiff: fix 1.11 regression that prevents from reading one-strip files that have no StripByteCounts tag (#6490)
+ * Switch search order in GTIFGetOGISDefn() - Look for gdal_datum.csv before datum.csv (#6531)
+ * optimize IWriteBlock() to avoid reloading tile/strip from disk in multiband contig/pixel-interleave layouts when all blocks are dirty
+ * fix race between empty block filling logic and background compression threads when using Create() interface and NUM_THREADS creation option (#6582)
+ * use VSIFTruncateL() to do file extension
+ * optimize reading and writing of 1-bit rasters
+ * fix detection of blocks larger than 2GB on opening on 32-bit builds
+ * fix saving and loading band description (fixes #6592)
+ * avoid reading external metadata file that could be related to the target filename when using Create() or CreateCopy() (#6594)
+ * Internal libtiff. Resync with CVS
+
+HDF4 driver:
+ * Fixed erroneous type casting in HDF4Dataset::AnyTypeToDouble() that breaks reading georeferencing and other metadata
+
+HDF5 driver:
+
+HF2 driver:
+
+HFA driver:
+ * fix reading and writing of TOWGS84 parameters (github #132)
+ * export overview type from HFA files to GDAL metadata as OVERVIEWS_ALGORITHM (github #135)
+ * make .ige initialization use VSIFTruncateL() to be faster on Windows
+ * add support for TMSO and HOM Variant A projections (#6615)
+
+INGR driver:
+
+ISCE driver:
+ * fix computation of line offset for multi-band BIP files, and warn if detecting a wrong file produced by GDAL 2.1.0 (#6556)
+ * fix misbehaviour on big endian hosts
+
+JPEGLS driver:
+
+JP2ECW driver:
+
+JP2KAK driver:
+ * add support for Kakadu v7.8
+
+JP2OpenJPEG driver:
+
+JPEG driver:
+
+KMLSuperOverlay driver:
+
+LAN driver:
+ * remove wrong byte-swapping for big-endian hosts
+
+LCP driver:
+
+Leveller driver:
+
+MBTiles driver:
+
+MEM driver:
+
+MRF driver:
+ * bug fix in PNG and JPEG codecs
+ * Fixing a problem with setting NoData for MRFs generated with Create
+ * fix plugin building (#6498)
+ * rename CS variable so as to avoid build failure on Solaris 11 (#6559)
+
+MSG driver:
+ * fix incorrect georeference calculation for msg datasets (github #129)
+
+NetCDF driver:
+ * add support for reading SRS from srid attribute when it exists and has content like urn:ogc:def:crs:EPSG::XXXX (#6613)
+
+NGSGEOID driver:
+
+NITF driver:
+ * nitf_spec.xml: Add support for MTIRPB TRE in NITF image segment. Also makes minor change to BLOCKA to include default values (github #127)
+
+Northwoord driver:
+
+NTv2 driver:
+
+OpenJPEG driver:
+
+PCIDSK driver:
+
+PDF driver:
+ * implement loading/saving of metadata from/into PAM (#6600)
+ * implement reading from/writing to PAM for geotransform and projection (#6603)
+
+PDS driver:
+
+PGChip driver:
+
+PLScenes driver:
+
+PNG driver:
+
+PostgisRaster driver:
+ * fix potential crash when one tile has a lower number of bands than the max of the table (#6267)
+
+Raw drivers:
+
+RIK driver:
+
+RMF driver:
+
+ROIPAC driver:
+ * add support for reading/writing .flg files (#6504)
+ * fix computation of line offset for multi-band BIP files, and warn if detecting a wrong file produced by GDAL >= 2.0.0 (#6591)
+ * fix for big endian hosts
+
+RS2 driver:
+ * add support for reading RPC from product.xml
+
+SAFE driver:
+ * fix handling of SLC Products by providing access to measurements as subdatasets (#6514)
+
+SRTMHGT driver:
+ * open directly .hgt.zip files
+ * accept filenames like NXXEYYY.SRTMGL1.hgt (#6614)
+
+VICAR driver:
+
+VRT driver:
+ * VRT: add default pixel functions: real, imag, complex, mod, phase, conj, etc... for complex data types (github #141)
+ * avoid useless floating point values in SrcRect / DstRect (#6568)
+ * avoid buffer intialization in RasterIO() when possible (replace ancient and likely broken concept of bEqualAreas)
+ * make CheckCompatibleForDatasetIO() return FALSE on VRTDerivedRasterBands (fixes #6599)
+ * VRT warp: fix issue with partial blocks at the right/bottom and dest nodata values that are different per band (#6581)
+
+WMS driver:
+
+XYZ driver:
+
+== OGR 2.2.0 - Overview of Changes ==
+
+Core:
+ * Layer algebra: Add KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO option to Intersection, Union and Identity.
+Default is yes, but it is set to no unless result layer is of geom type unknown.
+If set to no, result features which would have lower dim geoms are skipped 
+if operating on two layers with same geom dim.
+ * Fix crash/corrupted values when running importFromWkb() on POLYGON M/POLYGON ZM geometries (#6562)
+
+OGRSpatialReference:
+ * Upgrade to EPSG database v8.9
+ * OGRCT: upgrade LIBNAME of mingw and cygwin to libproj-9.dll and cygproj-9.dll to be uptodate with proj 4.9.X (recommended method is using ./configure --with-static-proj4 instead) (#6501)
+ * importFromESRI(): fix import of multi line MERCATOR SRS (#6523)
+ * morphToESRI(): correctly compute standard_parallel_1 of Mercator(2SP) projection from scale factor of Mercator(1SP) (#6456, #4861)
+ * exportToProj4(): recognize explicit OSR_USE_ETMERC=NO to avoid using etmerc with proj >= 4.9.3
+
+Utilities:
+ * ogr2ogr: do not return error on ogr2ogr --utility_version
+ * ogr2ogr: keep -append and -overwrite when -update follows
+ * ogr2ogr: fix heuristics to detect likely absence of '-f' (#6561)
+ * ogr2ogr: do not emit a warning when updating/overwriting a destination dataset that is not a Shapefile and if -f is not specified (#6561)
+ * GDALVectorTranslate(): imply update mode if access mode not explicitly specified and hDstDS != NULL (#6612)
+ * ogrlineref: Fix crash if no new layer name provided
+
+Multidriver:
+ * PGeo/FileGDB/OpenFileGDB: OGRCreateFromShapeBin(): do not error out on empty lines/polygons
+
+Carto:
+ * renamed from CartoDB
+ * fix CartoDB'fication() by removing manual creation of the_geom_webmercator mercator, and also attach created sequence to table.cartodb_id (#6565)
+
+CSV driver:
+
+DGN driver:
+
+DXF driver:
+ * sanitize layer name on export to avoid forbidden characters
+
+ElasticSearch driver:
+
+FileGDB driver:
+ * add support to read curve geometries (#5890)
+
+GeoJSON driver:
+ * fix field type detection when first value of a field is null (#6517)
+ * fix wrong behaviour when there's a 'id' at Feature level and 'id' or 'ID' field in properties (#6538)
+ * in case top level id is a negative integer, put the value in a 'id' attribute (#6538)
+ * ESRI Json reader: support multilinestring from esriGeometryPolyline
+ * ESRI Json reader: do not set field width of 2147483647 (#6529)
+
+GML driver:
+ * remove hack for CityGML regarding forcing srsDimension to 3 if not specified. Instead add a GML_SRS_DIMENSION_IF_MISSING config option that can be set to 3 if needed (#6597)
+
+GPKG driver:
+ * list all tables/views by default (useful for non spatial tables not registered as aspatial). Add REGISTER_AS_ASPATIAL=YES/NO layer creation option to opt-out from registering a non-spatial table as aspatial
+ * use OGR_CURRENT_DATE config option if defined as the value of the 'last_change' of column of 'gpkg_contents' so as to be able to have binary identical output
+ * update last_change column when content of raster or vector tables has changed
+
+GPX driver:
+
+ILI driver:
+
+JML driver:
+
+KML driver:
+
+LIBKML driver:
+ * fix crash when reading <gx:TimeStamp> or <gx:TimeSpan> elements (#6518)
+
+Memory driver:
+
+MITAB driver:
+ * limit (width, precision) of numeric fields on creation to (20,16) for compatibility with MapInfo (#6392)
+ * add support for oblique stereographic (#6598)
+
+MSSQLSpatial driver:
+ * Fix bulk insert with table names containing spaces (#6527)
+ * Build optional mssql plugin with SQL Native Client support for MSSQL Bulk Copy
+
+NAS driver:
+ * support multiple 'anlass' in updates
+
+NTF driver:
+
+NWT_GRD:
+ * add write support (#6533)
+
+OCI driver:
+ * Add options for faster feature loading (#6606)
+ * add WORKSPACE open option
+
+ODBC driver:
+
+ODS driver:
+
+OGDI driver:
+ * make GetNextRawFeature() report an error when it is not end of layer
+ * better error reporting when the layer list cannot be established
+ * catch non-fatal OGDI errors emitted by OGDI 3.2.0 if OGDI_STOP_ON_ERROR environment variable is set to NO, and emit them as CPLError()s
+ * display OGDI error message if opening fails
+
+OpenFileGDB driver:
+ * do not error out on geometries that have a declared M array but that is missing (#6528)
+ * add support to read curve geometries (#5890)
+ * transcode UTF-16 strings found in column names, alias, etc... to UTF-8 (instead of using only their ASCII byte) (#6544)
+ * do not emit an error on a empty table whose declaration has M settings (#6564)
+
+OSM driver:
+
+PG driver:
+ * fix insertion of binary/bytea content in non-copy mode (#6566)
+
+PGDump driver:
+
+S57 driver:
+ * Fix ogr2ogr -f S57 (#6549)
+
+Shapefile driver:
+ * writing: use strerrno() for better error messages (QGIS #13468)
+
+SOSI driver:
+ * make registration of driver work again (2.1.0 regression) (#6500)
+ * update to latest version of https://github.com/kartverket/gdal. Make SOSI driver support more geometry types (including curved geometries) plus provides some improvements on attribute-type mapping. Fix some memory errors/leaks. Disable by default non working creation code (#6503)
+
+SQLite/Spatialite driver:
+
+SXF driver:
+
+VFK driver:
+ * allow reading multiple VFK files into single DB support amendment VFK files
+ * recreate DB in the case that it's outdated (VFK DB created by previous versions of GDAL)
+ * allow reading DB as valid datasource (#6509)
+
+VRT driver:
+ * add support for 'm' attribute in PointFromColumns mode (#6505)
+
+WFS driver:
+ * invalidate underlying layer when SetIgnoredFields() is called (QGIS #15112)
+ * don't crash on empty <Keyword/> declaration (#6586)
+
+XLSX driver:
+
+XPlane driver:
+
+== SWIG Language Bindings ==
+
+All bindings:
+
+Java bindings:
+ * Fix SWIG Java bindings for GNM (#6434)
+
+Perl bindings:
+ * return value always from GetGeomFieldIndex (#6506)
+ * the Warp method requires a list of datasets (#6521)
+ * when 'use bigint' is in effect, int var is a ref.
+
+Python bindings:
+
 = GDAL/OGR 2.1.0 Release Notes =
 
 == In a nutshell... ==
