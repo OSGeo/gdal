@@ -37,8 +37,12 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_XERCES
 
-/* Must be a multiple of 4 */
-#define MAX_TOKEN_SIZE  1000
+static const size_t MAX_TOKEN_SIZE = 1000;
+
+#ifdef HAVE_CXX11
+#include <assert.h>
+static_assert(MAX_TOKEN_SIZE % 4 == 0);  // Must be a multiple of 4.
+#endif
 
 /************************************************************************/
 /*                        GMLXercesHandler()                            */
@@ -53,20 +57,21 @@ GMLXercesHandler::GMLXercesHandler( GMLReader *poReader ) : GMLHandler(poReader)
 /*                            startElement()                            */
 /************************************************************************/
 
-void GMLXercesHandler::startElement(CPL_UNUSED const XMLCh* const uri,
-                                    const XMLCh* const localname,
-                                    CPL_UNUSED const XMLCh* const qname,
-                                    const Attributes& attrs )
+void GMLXercesHandler::startElement( CPL_UNUSED const XMLCh* const uri,
+                                     const XMLCh* const localname,
+                                     CPL_UNUSED const XMLCh* const qname,
+                                     const Attributes& attrs )
 {
-    char        szElementName[MAX_TOKEN_SIZE];
+    char szElementName[MAX_TOKEN_SIZE];
 
     m_nEntityCounter = 0;
 
     /* A XMLCh character can expand to 4 bytes in UTF-8 */
-    if (4 * tr_strlen( localname ) >= MAX_TOKEN_SIZE)
+    if (4 * tr_strlen( localname ) >= static_cast<int>(MAX_TOKEN_SIZE))
     {
         static bool bWarnOnce = false;
-        XMLCh* tempBuffer = (XMLCh*) CPLMalloc(sizeof(XMLCh) * (MAX_TOKEN_SIZE / 4 + 1));
+        XMLCh* tempBuffer = static_cast<XMLCh *>(
+            CPLMalloc(sizeof(XMLCh) * (MAX_TOKEN_SIZE / 4 + 1)));
         memcpy(tempBuffer, localname, sizeof(XMLCh) * (MAX_TOKEN_SIZE / 4));
         tempBuffer[MAX_TOKEN_SIZE / 4] = 0;
         tr_strcpy( szElementName, tempBuffer );
@@ -74,13 +79,17 @@ void GMLXercesHandler::startElement(CPL_UNUSED const XMLCh* const uri,
         if (!bWarnOnce)
         {
             bWarnOnce = true;
-            CPLError(CE_Warning, CPLE_AppDefined, "A too big element name has been truncated");
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "A too big element name has been truncated");
         }
     }
     else
+    {
         tr_strcpy( szElementName, localname );
+    }
 
-    if (GMLHandler::startElement(szElementName, (int)strlen(szElementName), (void*) &attrs) == OGRERR_NOT_ENOUGH_MEMORY)
+    if( GMLHandler::startElement(szElementName, (int)strlen(szElementName),
+                                 (void*) &attrs) == OGRERR_NOT_ENOUGH_MEMORY )
     {
         throw SAXNotSupportedException("Out of memory");
     }
@@ -116,7 +125,7 @@ void GMLXercesHandler::characters(const XMLCh* const chars_in,
 
 {
     char* utf8String = tr_strdup(chars_in);
-    int nLen = (int)strlen(utf8String);
+    int nLen = static_cast<int>(strlen(utf8String));
     OGRErr eErr = GMLHandler::dataHandler(utf8String, nLen);
     CPLFree(utf8String);
     if (eErr == OGRERR_NOT_ENOUGH_MEMORY)
@@ -135,7 +144,9 @@ void GMLXercesHandler::fatalError( const SAXParseException &exception)
     char *pszErrorMessage = tr_strdup( exception.getMessage() );
     CPLError( CE_Failure, CPLE_AppDefined,
               "XML Parsing Error: %s at line %d, column %d\n",
-              pszErrorMessage, (int)exception.getLineNumber(), (int)exception.getColumnNumber() );
+              pszErrorMessage,
+              static_cast<int>(exception.getLineNumber()),
+              static_cast<int>(exception.getColumnNumber()) );
 
     CPLFree( pszErrorMessage );
 }
@@ -144,12 +155,13 @@ void GMLXercesHandler::fatalError( const SAXParseException &exception)
 /*                             startEntity()                            */
 /************************************************************************/
 
-void GMLXercesHandler::startEntity (CPL_UNUSED const XMLCh *const name)
+void GMLXercesHandler::startEntity( const XMLCh *const /* name */ )
 {
     m_nEntityCounter ++;
     if (m_nEntityCounter > 1000 && !m_poReader->HasStoppedParsing())
     {
-        throw SAXNotSupportedException("File probably corrupted (million laugh pattern)");
+        throw SAXNotSupportedException(
+            "File probably corrupted (million laugh pattern)");
     }
 }
 
@@ -159,12 +171,11 @@ void GMLXercesHandler::startEntity (CPL_UNUSED const XMLCh *const name)
 
 const char* GMLXercesHandler::GetFID(void* attr)
 {
-    const Attributes* attrs = (const Attributes*) attr;
-    int nFIDIndex;
-    XMLCh   anFID[100];
+    const Attributes* attrs = static_cast<const Attributes*>(attr);
+    XMLCh anFID[100];
 
     tr_strcpy( anFID, "fid" );
-    nFIDIndex = attrs->getIndex( anFID );
+    int nFIDIndex = attrs->getIndex( anFID );
     if( nFIDIndex != -1 )
     {
         char* pszValue = tr_strdup( attrs->getValue( nFIDIndex ) );
@@ -195,7 +206,7 @@ const char* GMLXercesHandler::GetFID(void* attr)
 
 CPLXMLNode* GMLXercesHandler::AddAttributes(CPLXMLNode* psNode, void* attr)
 {
-    const Attributes* attrs = (const Attributes*) attr;
+    const Attributes* attrs = static_cast<const Attributes *>(attr);
 
     CPLXMLNode* psLastChild = NULL;
 
@@ -224,10 +235,11 @@ CPLXMLNode* GMLXercesHandler::AddAttributes(CPLXMLNode* psNode, void* attr)
 /*                    GetAttributeValue()                               */
 /************************************************************************/
 
-char* GMLXercesHandler::GetAttributeValue(void* attr, const char* pszAttributeName)
+char* GMLXercesHandler::GetAttributeValue( void* attr,
+                                           const char* pszAttributeName )
 {
-    const Attributes* attrs = (const Attributes*) attr;
-    for(unsigned int i=0; i < attrs->getLength(); i++)
+    const Attributes* attrs = static_cast<const Attributes *>(attr);
+    for( unsigned int i=0; i < attrs->getLength(); i++ )
     {
         char* pszString = tr_strdup(attrs->getQName(i));
         if (strcmp(pszString, pszAttributeName) == 0)
@@ -244,9 +256,10 @@ char* GMLXercesHandler::GetAttributeValue(void* attr, const char* pszAttributeNa
 /*                    GetAttributeByIdx()                               */
 /************************************************************************/
 
-char* GMLXercesHandler::GetAttributeByIdx(void* attr, unsigned int idx, char** ppszKey)
+char* GMLXercesHandler::GetAttributeByIdx( void* attr, unsigned int idx,
+                                           char** ppszKey )
 {
-    const Attributes* attrs = (const Attributes*) attr;
+    const Attributes* attrs = static_cast<const Attributes *>(attr);
     if( idx >= attrs->getLength() )
     {
         *ppszKey = NULL;
@@ -264,36 +277,37 @@ char* GMLXercesHandler::GetAttributeByIdx(void* attr, unsigned int idx, char** p
 /*                            GMLExpatHandler()                         */
 /************************************************************************/
 
-GMLExpatHandler::GMLExpatHandler( GMLReader *poReader, XML_Parser oParser ) : GMLHandler(poReader)
-
-{
-    m_oParser = oParser;
-    m_bStopParsing = false;
-    m_nDataHandlerCounter = 0;
-}
+GMLExpatHandler::GMLExpatHandler( GMLReader *poReader, XML_Parser oParser ) :
+    GMLHandler(poReader),
+    m_oParser(oParser),
+    m_bStopParsing(false),
+    m_nDataHandlerCounter(0)
+{}
 
 /************************************************************************/
 /*                           startElementCbk()                          */
 /************************************************************************/
 
-void XMLCALL GMLExpatHandler::startElementCbk(void *pUserData, const char *pszName,
-                                              const char **ppszAttr)
+void XMLCALL GMLExpatHandler::startElementCbk( void *pUserData, const char *pszName,
+                                               const char **ppszAttr )
 
 {
-    GMLExpatHandler* pThis = ((GMLExpatHandler*)pUserData);
+    GMLExpatHandler* pThis = static_cast<GMLExpatHandler *>(pUserData);
     if (pThis->m_bStopParsing)
         return;
 
     const char* pszIter = pszName;
     char ch;
-    while((ch = *pszIter) != '\0')
+    while( (ch = *pszIter) != '\0' )
     {
-        if (ch == ':')
+        if( ch == ':' )
             pszName = pszIter + 1;
         pszIter ++;
     }
 
-    if (pThis->GMLHandler::startElement(pszName, (int)(pszIter - pszName), ppszAttr) == OGRERR_NOT_ENOUGH_MEMORY)
+    if( pThis->GMLHandler::startElement(pszName,
+                                        static_cast<int>(pszIter - pszName),
+                                        ppszAttr) == OGRERR_NOT_ENOUGH_MEMORY )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         pThis->m_bStopParsing = true;
@@ -305,14 +319,14 @@ void XMLCALL GMLExpatHandler::startElementCbk(void *pUserData, const char *pszNa
 /************************************************************************/
 /*                            endElementCbk()                           */
 /************************************************************************/
-void XMLCALL GMLExpatHandler::endElementCbk(void *pUserData,
-                                            CPL_UNUSED const char* pszName )
+void XMLCALL GMLExpatHandler::endElementCbk( void *pUserData,
+                                             const char* /* pszName */ )
 {
-    GMLExpatHandler* pThis = ((GMLExpatHandler*)pUserData);
-    if (pThis->m_bStopParsing)
+    GMLExpatHandler* pThis = static_cast<GMLExpatHandler *>(pUserData);
+    if( pThis->m_bStopParsing )
         return;
 
-    if (pThis->GMLHandler::endElement() == OGRERR_NOT_ENOUGH_MEMORY)
+    if( pThis->GMLHandler::endElement() == OGRERR_NOT_ENOUGH_MEMORY )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         pThis->m_bStopParsing = true;
@@ -328,31 +342,31 @@ void XMLCALL GMLExpatHandler::dataHandlerCbk(void *pUserData, const char *data, 
 
 {
     GMLExpatHandler* pThis = ((GMLExpatHandler*)pUserData);
-    if (pThis->m_bStopParsing)
+    if( pThis->m_bStopParsing )
         return;
 
-    pThis->m_nDataHandlerCounter ++;
-    /* The size of the buffer that is fetched and that Expat parses is */
-    /* PARSER_BUF_SIZE bytes. If the dataHandlerCbk() callback is called */
-    /* more than PARSER_BUF_SIZE times, this means that one byte in the */
-    /* file expands to more XML text fragments, which is the sign of a */
-    /* likely abuse of <!ENTITY> */
-    /* Note: the counter is zeroed by ResetDataHandlerCounter() before each */
-    /* new XML parsing. */
-    if (pThis->m_nDataHandlerCounter >= PARSER_BUF_SIZE)
+    pThis->m_nDataHandlerCounter++;
+    // The size of the buffer that is fetched and that Expat parses is
+    // PARSER_BUF_SIZE bytes. If the dataHandlerCbk() callback is called
+    // more than PARSER_BUF_SIZE times, this means that one byte in the
+    // file expands to more XML text fragments, which is the sign of a
+    // likely abuse of <!ENTITY>
+    // Note: the counter is zeroed by ResetDataHandlerCounter() before each
+    // new XML parsing.
+    if( pThis->m_nDataHandlerCounter >= PARSER_BUF_SIZE )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "File probably corrupted (million laugh pattern)");
         pThis->m_bStopParsing = true;
         XML_StopParser(pThis->m_oParser, XML_FALSE);
         return;
     }
 
-    if (pThis->GMLHandler::dataHandler(data, nLen) == OGRERR_NOT_ENOUGH_MEMORY)
+    if( pThis->GMLHandler::dataHandler(data, nLen) == OGRERR_NOT_ENOUGH_MEMORY )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
         pThis->m_bStopParsing = true;
         XML_StopParser(pThis->m_oParser, XML_FALSE);
-        return;
     }
 }
 
@@ -1415,15 +1429,14 @@ CPLXMLNode* GMLHandler::ParseAIXMElevationPoint(CPLXMLNode *psGML)
             CPLGetXMLValue( psGML, "geoidUndulation.uom", NULL );
         if (pszGeoidUndulationUnit)
         {
-            m_poReader->SetFeaturePropertyDirectly( "geoidUndulation_uom",
-                                            CPLStrdup(pszGeoidUndulationUnit), -1 );
+            m_poReader->SetFeaturePropertyDirectly(
+                "geoidUndulation_uom",
+                CPLStrdup(pszGeoidUndulationUnit), -1 );
         }
     }
 
-    const char* pszPos =
-                    CPLGetXMLValue( psGML, "pos", NULL );
-    const char* pszCoordinates =
-                CPLGetXMLValue( psGML, "coordinates", NULL );
+    const char* pszPos = CPLGetXMLValue( psGML, "pos", NULL );
+    const char* pszCoordinates = CPLGetXMLValue( psGML, "coordinates", NULL );
     if (pszPos != NULL)
     {
         char* pszGeometry = CPLStrdup(CPLSPrintf(
