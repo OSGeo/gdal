@@ -365,10 +365,9 @@ int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
     for( iLink = 0; true; iLink++ )
     {
         int nLinkType, nLinkSize;
-        unsigned char *pabyData;
-
-        pabyData = DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
-                                  NULL, NULL, &nLinkSize );
+        unsigned char *pabyData =
+            DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
+                           NULL, NULL, &nLinkSize );
         if( pabyData == NULL )
             return FALSE;
 
@@ -405,10 +404,9 @@ int DGNGetAssocID( DGNHandle hDGN, DGNElemCore *psElem )
     for( iLink = 0; true; iLink++ )
     {
         int nLinkType, nLinkSize;
-        unsigned char *pabyData;
-
-        pabyData = DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
-                                  NULL, NULL, &nLinkSize );
+        unsigned char *pabyData =
+            DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
+                           NULL, NULL, &nLinkSize );
         if( pabyData == NULL )
             return -1;
 
@@ -1033,10 +1031,9 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
         {
             int nLinkType, nEntityNum=0, nMSLink=0, nLinkSize, i;
-            unsigned char *pabyData;
-
-            pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
-                                      &nEntityNum, &nMSLink, &nLinkSize );
+            unsigned char *pabyData =
+                DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
+                               &nEntityNum, &nMSLink, &nLinkSize );
             if( pabyData == NULL )
                 break;
 

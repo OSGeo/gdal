@@ -1190,11 +1190,12 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
                         if ( ! poFeatureIn->IsFieldSet( j ) )
                             continue;
 
-                        char* pszElementName2;
-                        char* pszNumber2;
-                        char* pszAttributeName2;
-                        OGRGeoRSSLayerSplitComposedField(poFieldDefn->GetNameRef(),
-                                &pszElementName2, &pszNumber2, &pszAttributeName2);
+                        char* pszElementName2 = NULL;
+                        char* pszNumber2 = NULL;
+                        char* pszAttributeName2 = NULL;
+                        OGRGeoRSSLayerSplitComposedField(
+                            poFieldDefn->GetNameRef(),
+                            &pszElementName2, &pszNumber2, &pszAttributeName2);
 
                         if (strcmp(pszElementName2, pszElementName) == 0 &&
                             strcmp(pszNumber, pszNumber2) == 0 && pszAttributeName2 != NULL)

@@ -59,8 +59,6 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
                                     int bUpdate )
 
 {
-    OGRGeomediaDataSource     *poDS;
-
     if( STARTS_WITH_CI(pszFilename, "WALK:") )
         return NULL;
 
@@ -125,7 +123,7 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
 #endif /* ndef WIN32 */
 
     // Open data source
-    poDS = new OGRGeomediaDataSource();
+    OGRGeomediaDataSource *poDS = new OGRGeomediaDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {

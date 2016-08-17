@@ -258,11 +258,9 @@ OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
 
 OGRFeature *OGRAmigoCloudLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -295,7 +293,7 @@ int OGRAmigoCloudLayer::TestCapability( const char * pszCap )
 /************************************************************************/
 
 void OGRAmigoCloudLayer::EstablishLayerDefn(const char* pszLayerName,
-                                         json_object* poObjIn)
+                                            json_object* poObjIn)
 {
     poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     poFeatureDefn->Reference();
@@ -316,10 +314,8 @@ void OGRAmigoCloudLayer::EstablishLayerDefn(const char* pszLayerName,
     }
     else
         osSQL.Printf("%s LIMIT 0", osBaseSQL.c_str());
-    json_object* poObj;
-    if( poObjIn != NULL )
-        poObj = poObjIn;
-    else
+    json_object* poObj = poObjIn;
+    if( poObj == NULL )
     {
         poObj = poDS->RunSQL(osSQL);
         if( poObj == NULL )

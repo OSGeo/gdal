@@ -221,15 +221,13 @@ const char* OGRAmigoCloudDataSource::GetAPIURL() const
 int OGRAmigoCloudDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    const char*         pszAuthorityName;
-
     if( poSRS == NULL )
         return 0;
 
     OGRSpatialReference oSRS(*poSRS);
     poSRS = NULL;
 
-    pszAuthorityName = oSRS.GetAuthorityName(NULL);
+    const char* pszAuthorityName = oSRS.GetAuthorityName(NULL);
 
     if( pszAuthorityName == NULL || strlen(pszAuthorityName) == 0 )
     {

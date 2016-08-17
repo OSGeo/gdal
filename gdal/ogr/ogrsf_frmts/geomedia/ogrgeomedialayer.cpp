@@ -202,9 +202,7 @@ OGRFeature *OGRGeomediaLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 

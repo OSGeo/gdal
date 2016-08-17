@@ -734,10 +734,9 @@ static int gmlHugeFileSQLiteInsert( struct huge_helper *helper )
 {
 /* inserting any appropriate row into the SQLite DB */
     int rc;
-    struct huge_tag *pItem;
 
     /* looping on GML tags */
-    pItem = helper->pFirst;
+    struct huge_tag *pItem = helper->pFirst;
     while ( pItem != NULL )
     {
         if( pItem->bHasCoords )
@@ -860,13 +859,12 @@ static int gmlHugeFileSQLiteInsert( struct huge_helper *helper )
 static void gmlHugeFileReset( struct huge_helper *helper )
 {
 /* resetting an empty helper struct */
-    struct huge_tag *pNext;
     struct huge_tag *p = helper->pFirst;
 
     /* cleaning any previous item */
     while( p != NULL )
     {
-        pNext = p->pNext;
+        struct huge_tag *pNext = p->pNext;
         if( p->gmlTagValue != NULL )
             delete p->gmlTagValue;
         if( p->gmlId != NULL )
@@ -885,13 +883,12 @@ static void gmlHugeFileReset( struct huge_helper *helper )
 static void gmlHugeFileHrefReset( struct huge_helper *helper )
 {
 /* resetting an empty helper struct */
-    struct huge_href *pNext;
     struct huge_href *p = helper->pFirstHref;
 
     /* cleaning any previous item */
     while( p != NULL )
     {
-        pNext = p->pNext;
+        struct huge_href *pNext = p->pNext;
         if( p->gmlId != NULL )
             delete p->gmlId;
         if( p->gmlText != NULL )
@@ -926,18 +923,16 @@ static int gmlHugeFileHrefCheck( struct huge_helper *helper )
 static void gmlHugeFileRewiterReset( struct huge_helper *helper )
 {
 /* resetting an empty helper struct */
-    struct huge_parent *pNext;
     struct huge_parent *p = helper->pFirstParent;
 
     /* cleaning any previous item */
     while( p != NULL )
     {
-        pNext = p->pNext;
-        struct huge_child *pChildNext;
+        struct huge_parent *pNext = p->pNext;
         struct huge_child *pChild = p->pFirst;
         while( pChild != NULL )
         {
-            pChildNext = pChild->pNext;
+            struct huge_child *pChildNext = pChild->pNext;
             delete pChild;
             pChild = pChildNext;
         }
@@ -952,11 +947,10 @@ static struct huge_tag *gmlHugeAddToHelper( struct huge_helper *helper,
                                             CPLString *gmlId,
                                             CPLString *gmlFragment )
 {
-/* adding an item  into the linked list */
-    struct huge_tag *pItem;
+    /* adding an item into the linked list */
 
     /* checking against duplicates */
-    pItem = helper->pFirst;
+    struct huge_tag *pItem = helper->pFirst;
     while( pItem != NULL )
     {
         if( EQUAL( pItem->gmlId->c_str(), gmlId->c_str() ) )
@@ -991,11 +985,10 @@ static void gmlHugeAddPendingToHelper( struct huge_helper *helper,
                                        bool bIsDirectedEdge,
                                        char cOrientation )
 {
-/* inserting an item into the linked list */
-    struct huge_href *pItem;
+    /* inserting an item into the linked list */
 
     /* checking against duplicates */
-    pItem = helper->pFirstHref;
+    struct huge_href *pItem = helper->pFirstHref;
     while( pItem != NULL )
     {
         if( EQUAL( pItem->gmlId->c_str(), gmlId->c_str() ) &&
@@ -1425,8 +1418,7 @@ static struct huge_parent *gmlHugeFindParent( struct huge_helper *helper,
     CPLXMLNode *psChild = psParent->psChild;
     while( psChild != NULL )
     {
-        struct huge_child *pChildItem;
-        pChildItem = new struct huge_child;
+        struct huge_child *pChildItem = new struct huge_child;
         pChildItem->psChild = psChild;
         pChildItem->pItem = NULL;
         pChildItem->pNext = NULL;
@@ -1463,18 +1455,15 @@ static int gmlHugeResolveEdges( CPL_UNUSED struct huge_helper *helper,
 {
 /* resolving GML <Edge> xlink:href */
     CPLString      osCommand;
-    sqlite3_stmt   *hStmtEdges;
     int            rc;
     bool           bIsComma = false;
     bool           bError = false;
-    struct huge_href *pItem;
-    struct huge_parent *pParent;
 
     /* query cursor [Edges] */
     osCommand = "SELECT gml_id, gml_resolved "
                 "FROM gml_edges "
                 "WHERE gml_id IN (";
-    pItem = helper->pFirstHref;
+    struct huge_href *pItem = helper->pFirstHref;
     while( pItem != NULL )
     {
         if( bIsComma )
@@ -1487,6 +1476,7 @@ static int gmlHugeResolveEdges( CPL_UNUSED struct huge_helper *helper,
         pItem = pItem->pNext;
     }
     osCommand += ")";
+    sqlite3_stmt *hStmtEdges = NULL;
     rc = sqlite3_prepare_v2( hDB, osCommand.c_str(), -1, &hStmtEdges, NULL );
     if( rc != SQLITE_OK )
     {
@@ -1525,6 +1515,7 @@ static int gmlHugeResolveEdges( CPL_UNUSED struct huge_helper *helper,
 
     /* Identifying any GML node to be rewritten. */
     pItem = helper->pFirstHref;
+    struct huge_parent *pParent = NULL;
     while( pItem != NULL )
     {
         if( pItem->gmlText == NULL || pItem->psParent == NULL ||
@@ -1548,10 +1539,9 @@ static int gmlHugeResolveEdges( CPL_UNUSED struct huge_helper *helper,
         pParent = helper->pFirstParent;
         while( pParent != NULL )
         {
-            struct huge_child *pChild;
 
             /* removing any Child node from the Parent */
-            pChild = pParent->pFirst;
+            struct huge_child *pChild = pParent->pFirst;
             while( pChild != NULL )
             {
                 CPLRemoveXMLChild( pParent->psParent, pChild->psChild );

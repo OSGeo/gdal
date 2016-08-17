@@ -159,9 +159,7 @@ OGRDODSSequenceLayer::~OGRDODSSequenceLayer()
 Sequence *OGRDODSSequenceLayer::FindSuperSequence( BaseType *poChild )
 
 {
-    BaseType *poParent;
-
-    for( poParent = poChild->get_parent();
+    for( BaseType *poParent = poChild->get_parent();
          poParent != NULL;
          poParent = poParent->get_parent() )
     {
@@ -413,9 +411,7 @@ double OGRDODSSequenceLayer::GetFieldValueAsDouble( OGRDODSFieldDefn *poFDefn,
                                                     int nFeatureId )
 
 {
-    BaseType *poBT;
-
-    poBT = GetFieldValue( poFDefn, nFeatureId, NULL );
+    BaseType *poBT = GetFieldValue( poFDefn, nFeatureId, NULL );
     if( poBT == NULL )
         return 0.0;
 
@@ -483,9 +479,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Create the feature being read.                                  */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
-
-    poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetFID( nFeatureId );
     m_nFeaturesRead++;
 
@@ -588,13 +582,14 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRDODSFieldDefn *poFD = papoFields[iField];
-        const char *pszPathFromSubSeq;
 
         if( poFD->pszPathToSequence == NULL )
             continue;
 
         CPLAssert( strlen(poFD->pszPathToSequence)
                    < strlen(poFD->pszFieldName)-1 );
+
+        const char *pszPathFromSubSeq = NULL;
 
         if( strstr(poFD->pszFieldName,poFD->pszPathToSequence) != NULL )
             pszPathFromSubSeq =
@@ -608,13 +603,12 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
         BaseType *poFieldVar = seq->var_value( iSubSeq,
                                                poFD->pszPathToSequence );
-        Sequence *poSubSeq;
         int nSubSeqCount;
 
         if( poFieldVar == NULL )
             continue;
 
-        poSubSeq = dynamic_cast<Sequence *>( poFieldVar );
+        Sequence *poSubSeq = dynamic_cast<Sequence *>( poFieldVar );
         if( poSubSeq == NULL )
             continue;
 
