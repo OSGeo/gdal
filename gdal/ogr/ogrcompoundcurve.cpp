@@ -215,9 +215,7 @@ OGRErr OGRCompoundCurve::exportToWkt( char ** ppszDstText,
 
 OGRGeometry *OGRCompoundCurve::clone() const
 {
-    OGRCompoundCurve       *poNewCC;
-
-    poNewCC = new OGRCompoundCurve;
+    OGRCompoundCurve *poNewCC = new OGRCompoundCurve;
     poNewCC->assignSpatialReference( getSpatialReference() );
     poNewCC->flags = flags;
 
@@ -341,11 +339,9 @@ OGRLineString* OGRCompoundCurve::CurveToLineInternal(double dfMaxAngleStepSizeDe
                                                      const char* const* papszOptions,
                                                      int bIsLinearRing) const
 {
-    OGRLineString* poLine;
-    if( bIsLinearRing )
-        poLine = new OGRLinearRing();
-    else
-        poLine = new OGRLineString();
+    OGRLineString* const poLine = bIsLinearRing
+        ? new OGRLinearRing()
+        : new OGRLineString();
     poLine->assignSpatialReference(getSpatialReference());
     for( int iGeom = 0; iGeom < oCC.nCurveCount; iGeom++ )
     {
@@ -682,8 +678,8 @@ class OGRCompoundCurvePointIterator: public OGRPointIterator
 
     public:
         OGRCompoundCurvePointIterator(const OGRCompoundCurve* poCCIn) :
-                            poCC(poCCIn), iCurCurve(0), poCurveIter(NULL) {}
-       ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
+            poCC(poCCIn), iCurCurve(0), poCurveIter(NULL) {}
+        virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
 
         virtual OGRBoolean getNextPoint(OGRPoint* p);
 };

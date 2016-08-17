@@ -138,9 +138,7 @@ void OGRGeometryCollection::empty()
 OGRGeometry *OGRGeometryCollection::clone() const
 
 {
-    OGRGeometryCollection       *poNewGC;
-
-    poNewGC = (OGRGeometryCollection*)
+    OGRGeometryCollection *poNewGC = (OGRGeometryCollection*)
             OGRGeometryFactory::createGeometry(getGeometryType());
     if( poNewGC == NULL )
         return NULL;
@@ -792,7 +790,6 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
                                            const char* pszSkipPrefix ) const
 
 {
-    char        **papszGeoms;
     size_t      nCumulativeLength = 0;
     OGRErr      eErr;
     bool bMustWriteComma = false;
@@ -800,7 +797,8 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each Geom.     */
 /* -------------------------------------------------------------------- */
-    papszGeoms = (nGeomCount) ? (char **) CPLCalloc(sizeof(char *),nGeomCount) : NULL;
+    char **papszGeoms =
+        nGeomCount ? (char **) CPLCalloc(sizeof(char *),nGeomCount) : NULL;
 
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
@@ -833,7 +831,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
         }
         else if( eWkbVariant != wkbVariantIso )
         {
-            char *substr;
+            char *substr = NULL;
             if( (substr = strstr(papszGeoms[iGeom], " Z")) != NULL )
                 memmove(substr, substr+strlen(" Z"), 1+strlen(substr+strlen(" Z")));
         }

@@ -178,10 +178,6 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
                 CSLFetchNameValue(papszOptions, "DISPLAY_GEOMETRY");
     if (pszDisplayGeometry != NULL && EQUAL(pszDisplayGeometry, "SUMMARY"))
     {
-        OGRLineString *poLine;
-        OGRCurvePolygon *poPoly;
-        OGRCurve *poRing;
-        OGRGeometryCollection *poColl;
         fprintf( fp, "%s%s : ", pszPrefix, getGeometryName() );
         switch( getGeometryType() )
         {
@@ -213,9 +209,11 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             case wkbCircularStringZ:
             case wkbCircularStringM:
             case wkbCircularStringZM:
-                poLine = (OGRLineString*)this;
+            {
+                OGRLineString *poLine = (OGRLineString*)this;
                 fprintf( fp, "%d points\n", poLine->getNumPoints() );
                 break;
+            }
             case wkbPolygon:
             case wkbPolygon25D:
             case wkbPolygonM:
@@ -225,10 +223,9 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             case wkbCurvePolygonM:
             case wkbCurvePolygonZM:
             {
-                int nRings;
-                poPoly = (OGRCurvePolygon*)this;
-                poRing = poPoly->getExteriorRingCurve();
-                nRings = poPoly->getNumInteriorRings();
+                OGRCurvePolygon *poPoly = (OGRCurvePolygon*)this;
+                OGRCurve *poRing = poPoly->getExteriorRingCurve();
+                int nRings = poPoly->getNumInteriorRings();
                 if (poRing == NULL)
                     fprintf( fp, "empty");
                 else
@@ -309,7 +306,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             case wkbMultiSurfaceZM:
             case wkbGeometryCollectionZM:
             {
-                poColl = (OGRGeometryCollection*)this;
+                OGRGeometryCollection *poColl = (OGRGeometryCollection*)this;
                 fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
                 for ( int ig = 0; ig < poColl->getNumGeometries(); ig++ )
                 {
@@ -590,17 +587,15 @@ OGRErr OGRGeometry::transformTo( OGRSpatialReference *poSR )
 #ifdef DISABLE_OGRGEOM_TRANSFORM
     return OGRERR_FAILURE;
 #else
-    OGRCoordinateTransformation *poCT;
-    OGRErr eErr;
-
     if( getSpatialReference() == NULL || poSR == NULL )
         return OGRERR_FAILURE;
 
-    poCT = OGRCreateCoordinateTransformation( getSpatialReference(), poSR );
+    OGRCoordinateTransformation *poCT =
+        OGRCreateCoordinateTransformation( getSpatialReference(), poSR );
     if( poCT == NULL )
         return OGRERR_FAILURE;
 
-    eErr = transform( poCT );
+    OGRErr eErr = transform( poCT );
 
     delete poCT;
 
@@ -5292,16 +5287,14 @@ OGRGeometry *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
                                      int bIsPostGIS1_EWKB  )
 
 {
-    GByte   *pabyWKB;
-    int     nWKBLength=0;
-    OGRGeometry *poGeometry;
-
     if( pszBytea == NULL )
         return NULL;
 
-    pabyWKB = CPLHexToBinary(pszBytea, &nWKBLength);
+    int nWKBLength = 0;
+    GByte *pabyWKB = CPLHexToBinary(pszBytea, &nWKBLength);
 
-    poGeometry = OGRGeometryFromEWKB(pabyWKB, nWKBLength, pnSRID, bIsPostGIS1_EWKB);
+    OGRGeometry *poGeometry =
+        OGRGeometryFromEWKB(pabyWKB, nWKBLength, pnSRID, bIsPostGIS1_EWKB);
 
     CPLFree(pabyWKB);
 
@@ -5315,13 +5308,8 @@ OGRGeometry *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
 char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
                             int nPostGISMajor, int nPostGISMinor )
 {
-    GByte       *pabyWKB;
-    char        *pszTextBuf;
-    char        *pszTextBufCurrent;
-    char        *pszHex;
-
     int nWkbSize = poGeometry->WkbSize();
-    pabyWKB = (GByte *) CPLMalloc(nWkbSize);
+    GByte *pabyWKB = (GByte *) CPLMalloc(nWkbSize);
 
     if( (nPostGISMajor > 2 || (nPostGISMajor == 2 && nPostGISMinor >= 2)) &&
         wkbFlatten(poGeometry->getGeometryType()) == wkbPoint &&
@@ -5345,11 +5333,11 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
        one for a null terminator */
 
     int pszSize = nWkbSize*2 + 8 + 1;
-    pszTextBuf = (char *) CPLMalloc(pszSize);
-    pszTextBufCurrent = pszTextBuf;
+    char *pszTextBuf = (char *) CPLMalloc(pszSize);
+    char *pszTextBufCurrent = pszTextBuf;
 
     /* Convert the 1st byte, which is the endianness flag, to hex. */
-    pszHex = CPLBinaryToHex( 1, pabyWKB );
+    char *pszHex = CPLBinaryToHex( 1, pabyWKB );
     strcpy(pszTextBufCurrent, pszHex );
     CPLFree ( pszHex );
     pszTextBufCurrent += 2;

@@ -2135,12 +2135,12 @@ const char *OGRFeature::GetFieldAsString( int iField )
     else if( eType == OFTBinary )
     {
         int     nCount = pauFields[iField].Binary.nCount;
-        char    *pszHex;
 
         if( nCount > (int) sizeof(szTempBuffer) / 2 - 4 )
             nCount = sizeof(szTempBuffer) / 2 - 4;
 
-        pszHex = CPLBinaryToHex( nCount, pauFields[iField].Binary.paData );
+        char *pszHex =
+            CPLBinaryToHex( nCount, pauFields[iField].Binary.paData );
 
         memcpy( szTempBuffer, pszHex, 2 * nCount );
         szTempBuffer[nCount*2] = '\0';
@@ -4899,10 +4899,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 /* -------------------------------------------------------------------- */
 /*      Retrieve the field ids by name.                                 */
 /* -------------------------------------------------------------------- */
-    int *panMap;
-    OGRErr      eErr;
-
-    panMap = static_cast<int *>(
+    int *panMap = static_cast<int *>(
         VSI_MALLOC_VERBOSE( sizeof(int) * poSrcFeature->GetFieldCount() ) );
     if( panMap == NULL )
         return OGRERR_FAILURE;
@@ -4923,7 +4920,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
         }
     }
 
-    eErr = SetFrom( poSrcFeature, panMap, bForgiving );
+    const OGRErr eErr = SetFrom( poSrcFeature, panMap, bForgiving );
 
     VSIFree(panMap);
 
@@ -5459,12 +5456,10 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
                                 int *panRemapSource )
 
 {
-    OGRField *pauNewFields;
-
     if( poNewDefn == NULL )
         poNewDefn = poDefn;
 
-    pauNewFields = static_cast<OGRField *>(
+    OGRField *pauNewFields = static_cast<OGRField *>(
         CPLCalloc( poNewDefn->GetFieldCount(), sizeof(OGRField) ) );
 
     for( int iDstField = 0; iDstField < poDefn->GetFieldCount(); iDstField++ )
@@ -5510,12 +5505,10 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                     int *panRemapSource )
 
 {
-    OGRGeometry** papoNewGeomFields;
-
     if( poNewDefn == NULL )
         poNewDefn = poDefn;
 
-    papoNewGeomFields = static_cast<OGRGeometry **>(
+    OGRGeometry** papoNewGeomFields = static_cast<OGRGeometry **>(
         CPLCalloc( poNewDefn->GetGeomFieldCount(), sizeof(OGRGeometry*) ) );
 
     for( int iDstField = 0;

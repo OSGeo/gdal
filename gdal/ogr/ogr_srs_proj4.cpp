@@ -1376,7 +1376,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Preserve authority (for example IGNF)                           */
 /* -------------------------------------------------------------------- */
     const char *pszINIT = CSLFetchNameValue(papszNV,"init");
-    const char *pszColumn;
+    const char *pszColumn = NULL;
     if( pszINIT != NULL && (pszColumn = strchr(pszINIT, ':')) != NULL &&
         GetRoot()->FindChild( "AUTHORITY" ) < 0 )
     {

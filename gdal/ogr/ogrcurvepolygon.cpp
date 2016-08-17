@@ -105,9 +105,7 @@ OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
 OGRGeometry *OGRCurvePolygon::clone() const
 
 {
-    OGRCurvePolygon  *poNewPolygon;
-
-    poNewPolygon = (OGRCurvePolygon*)
+    OGRCurvePolygon  *poNewPolygon = (OGRCurvePolygon*)
             OGRGeometryFactory::createGeometry(getGeometryType());
     if( poNewPolygon == NULL )
         return NULL;

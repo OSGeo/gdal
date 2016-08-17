@@ -2570,7 +2570,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
             const char* pszUrlEnd = strstr(pszCur, searchStr);
 
             // figure out the next component URL
-            char* pszComponentUrl;
+            char* pszComponentUrl = NULL;
 
             if( pszUrlEnd )
             {
@@ -5813,12 +5813,11 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
 /* -------------------------------------------------------------------- */
 /*      Create a new authority node.                                    */
 /* -------------------------------------------------------------------- */
-    char   szCode[32];
-    OGR_SRSNode *poAuthNode;
+    char szCode[32];
 
     snprintf( szCode, sizeof(szCode), "%d", nCode );
 
-    poAuthNode = new OGR_SRSNode( "AUTHORITY" );
+    OGR_SRSNode *poAuthNode = new OGR_SRSNode( "AUTHORITY" );
     poAuthNode->AddChild( new OGR_SRSNode( pszAuthority ) );
     poAuthNode->AddChild( new OGR_SRSNode( szCode ) );
 
@@ -5879,12 +5878,9 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    const OGR_SRSNode  *poNode;
-
-    if( pszTargetKey == NULL )
-        poNode = poRoot;
-    else
-        poNode= ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+    const OGR_SRSNode  *poNode = pszTargetKey == NULL
+        ? poRoot
+        : ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;
@@ -7078,12 +7074,9 @@ const char *OGRSpatialReference::GetExtension( const char *pszTargetKey,
 /* -------------------------------------------------------------------- */
 /*      Find the target node.                                           */
 /* -------------------------------------------------------------------- */
-    const OGR_SRSNode  *poNode;
-
-    if( pszTargetKey == NULL )
-        poNode = poRoot;
-    else
-        poNode = const_cast<OGRSpatialReference *>(this)->GetAttrNode( pszTargetKey );
+    const OGR_SRSNode *poNode = pszTargetKey == NULL
+        ? poRoot
+        : const_cast<OGRSpatialReference *>(this)->GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;

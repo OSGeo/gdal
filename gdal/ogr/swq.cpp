@@ -96,8 +96,6 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 /* -------------------------------------------------------------------- */
     if( *pszInput == '"' || *pszInput == '\'' )
     {
-        char *token;
-        int i_token;
         char chQuote = *pszInput;
         bool bFoundEndQuote = false;
 
@@ -105,8 +103,8 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         pszInput++;
 
-        token = (char *) CPLMalloc(strlen(pszInput)+1);
-        i_token = 0;
+        char *token = (char *) CPLMalloc(strlen(pszInput)+1);
+        int i_token = 0;
 
         while( *pszInput != '\0' )
         {
@@ -299,7 +297,6 @@ swq_select_summarize( swq_select *select_info,
 
 {
     swq_col_def *def = select_info->column_defs + dest_column;
-    swq_summary *summary;
 
 /* -------------------------------------------------------------------- */
 /*      Do various checking.                                            */
@@ -336,7 +333,7 @@ swq_select_summarize( swq_select *select_info,
 /* -------------------------------------------------------------------- */
 /*      If distinct processing is on, process that now.                 */
 /* -------------------------------------------------------------------- */
-    summary = select_info->column_summary + dest_column;
+    swq_summary *summary = select_info->column_summary + dest_column;
 
     if( def->distinct_flag )
     {

@@ -85,9 +85,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 
 {
     OGRwkbGeometryType eGeometryType;
-    int             nByteOrder;
     OGRErr      eErr;
-    OGRGeometry *poGeom;
 
     *ppoReturn = NULL;
 
@@ -98,7 +96,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      Get the byte order byte.  The extra tests are to work around    */
 /*      bug sin the WKB of DB2 v7.2 as identified by Safe Software.     */
 /* -------------------------------------------------------------------- */
-    nByteOrder = DB2_V72_FIX_BYTE_ORDER(*pabyData);
+    int nByteOrder = DB2_V72_FIX_BYTE_ORDER(*pabyData);
     if( nByteOrder != wkbXDR && nByteOrder != wkbNDR )
     {
         CPLDebug( "OGR",
@@ -132,7 +130,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      Instantiate a geometry of the appropriate type, and             */
 /*      initialize from the input stream.                               */
 /* -------------------------------------------------------------------- */
-    poGeom = createGeometry( eGeometryType );
+    OGRGeometry *poGeom = createGeometry( eGeometryType );
 
     if( poGeom == NULL )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
@@ -254,7 +252,6 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     OGRErr      eErr;
     char        szToken[OGR_WKT_TOKEN_MAX];
     char        *pszInput = *ppszData;
-    OGRGeometry *poGeom;
 
     *ppoReturn = NULL;
 
@@ -267,11 +264,11 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 /* -------------------------------------------------------------------- */
 /*      Instantiate a geometry of the appropriate type.                 */
 /* -------------------------------------------------------------------- */
+    OGRGeometry *poGeom = NULL;
     if( STARTS_WITH_CI(szToken,"POINT") )
     {
         poGeom = new OGRPoint();
     }
-
     else if( STARTS_WITH_CI(szToken,"LINESTRING") )
     {
         poGeom = new OGRLineString();
@@ -967,7 +964,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( eGeomType == wkbPolygon || eGeomType == wkbCurvePolygon )
     {
         OGRMultiLineString *poMP = new OGRMultiLineString();
-        OGRPolygon *poPoly;
+        OGRPolygon *poPoly = NULL;
         if( eGeomType == wkbPolygon )
             poPoly = (OGRPolygon *) poGeom;
         else
@@ -1011,7 +1008,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( eGeomType == wkbMultiPolygon || eGeomType == wkbMultiSurface )
     {
         OGRMultiLineString *poMP = new OGRMultiLineString();
-        OGRMultiPolygon *poMPoly;
+        OGRMultiPolygon *poMPoly = NULL;
         if( eGeomType == wkbMultiPolygon )
             poMPoly = (OGRMultiPolygon *) poGeom;
         else
@@ -1655,8 +1652,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                    polygons */
                 bValidTopology = false;
 #ifdef DEBUG
-                char* wkt1;
-                char* wkt2;
+                char* wkt1 = NULL;
+                char* wkt2 = NULL;
                 asPolyEx[i].poPolygon->exportToWkt(&wkt1);
                 asPolyEx[j].poPolygon->exportToWkt(&wkt2);
                 CPLDebug( "OGR",
@@ -1688,7 +1685,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
     if ( !bValidTopology || bMixedUpGeometries )
     {
-        OGRGeometryCollection* poGC;
+        OGRGeometryCollection* poGC = NULL;
         if( bNonPolygon )
             poGC = new OGRGeometryCollection();
         else if( bHasCurves )
@@ -2526,11 +2523,9 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
             }
             else
             {
-                OGRLineString* poLS;
-                if (eGeomType == wkbPolygon)
-                    poLS = ((OGRPolygon*)poGeom)->getExteriorRing();
-                else
-                    poLS = (OGRLineString*)poGeom;
+                OGRLineString* poLS = eGeomType == wkbPolygon
+                    ? ((OGRPolygon*)poGeom)->getExteriorRing()
+                    : (OGRLineString*)poGeom;
                 if (poLS)
                 {
                     double dfMaxSmallDiffLong = 0;
@@ -4291,7 +4286,7 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(const OGRLineString* poLS,
         i++ ;
     }
 
-    OGRCurve* poRet;
+    OGRCurve* poRet = NULL;
 
     if( poLSNew != NULL && poLSNew->getNumPoints() < 2 )
     {

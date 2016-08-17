@@ -1284,8 +1284,6 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
         pszCachedResult = OGRGeocodeGetFromCache(hSession, osURL);
     if( pszCachedResult == NULL )
     {
-        CPLHTTPResult* psResult;
-
         double* pdfLastQueryTime = NULL;
         if( EQUAL(hSession->pszGeocodingService, "OSM_NOMINATIM") )
             pdfLastQueryTime = &dfLastQueryTimeStampOSMNominatim;
@@ -1302,6 +1300,7 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
         char** papszHTTPOptions = CSLAddNameValue(NULL, "HEADERS",
                                                   osHeaders.c_str());
 
+        CPLHTTPResult* psResult = NULL;
         if( pdfLastQueryTime != NULL )
         {
             CPLMutexHolderD(&hMutex);

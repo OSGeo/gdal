@@ -193,9 +193,7 @@ void swq_expr_node::ReverseSubExpressions()
 {
     for( int i = 0; i < nSubExprCount / 2; i++ )
     {
-        swq_expr_node *temp;
-
-        temp = papoSubExpr[i];
+        swq_expr_node *temp = papoSubExpr[i];
         papoSubExpr[i] = papoSubExpr[nSubExprCount - i - 1];
         papoSubExpr[nSubExprCount - i - 1] = temp;
     }
