@@ -41,7 +41,7 @@ static const size_t MAX_TOKEN_SIZE = 1000;
 
 #ifdef HAVE_CXX11
 #include <assert.h>
-static_assert(MAX_TOKEN_SIZE % 4 == 0);  // Must be a multiple of 4.
+static_assert(MAX_TOKEN_SIZE % 4 == 0, "Must be a multiple of 4");
 #endif
 
 /************************************************************************/
