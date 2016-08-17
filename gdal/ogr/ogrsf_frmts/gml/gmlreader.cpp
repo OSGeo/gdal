@@ -1238,24 +1238,24 @@ bool GMLReader::LoadClasses( const char *pszFile )
 /* -------------------------------------------------------------------- */
 /*      Convert to XML parse tree.                                      */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRoot = CPLParseXMLString( pszWholeText );
+    CPLXMLTreeCloser psRoot(CPLParseXMLString( pszWholeText ));
     VSIFree( pszWholeText );
 
     // We assume parser will report errors via CPL.
-    if( psRoot == NULL )
+    if( psRoot.get() == NULL )
         return false;
 
     if( psRoot->eType != CXT_Element
         || !EQUAL(psRoot->pszValue,"GMLFeatureClassList") )
     {
-        CPLDestroyXMLNode(psRoot);
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s is not a GMLFeatureClassList document.",
                   pszFile );
         return false;
     }
 
-    const char* pszSequentialLayers = CPLGetXMLValue(psRoot, "SequentialLayers", NULL);
+    const char* pszSequentialLayers =
+        CPLGetXMLValue(psRoot.get(), "SequentialLayers", NULL);
     if (pszSequentialLayers)
         m_nHasSequentialLayers = CPLTestBool(pszSequentialLayers);
 
@@ -1274,7 +1274,6 @@ bool GMLReader::LoadClasses( const char *pszFile )
             if( !poClass->InitializeFromXML( psThis ) )
             {
                 delete poClass;
-                CPLDestroyXMLNode( psRoot );
                 return false;
             }
 
@@ -1283,8 +1282,6 @@ bool GMLReader::LoadClasses( const char *pszFile )
             AddClass( poClass );
         }
     }
-
-    CPLDestroyXMLNode( psRoot );
 
     SetClassListLocked( true );
 
