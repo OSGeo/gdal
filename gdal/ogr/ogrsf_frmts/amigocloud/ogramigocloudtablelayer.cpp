@@ -436,7 +436,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
         int nSRID = poGeomFieldDefn->nSRID;
         if( nSRID == 0 )
             nSRID = 4326;
-        char* pszEWKB;
+        char* pszEWKB = NULL;
         if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon &&
             wkbFlatten(GetGeomType()) == wkbMultiPolygon )
         {
@@ -729,7 +729,7 @@ void OGRAmigoCloudTableLayer::BuildWhere()
 
         char szBox3D_1[128];
         char szBox3D_2[128];
-        char* pszComma;
+        char* pszComma = NULL;
 
         CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX, sEnvelope.MinY);
         while((pszComma = strchr(szBox3D_1, ',')) != NULL)
