@@ -122,7 +122,7 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 /************************************************************************/
 
 char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
-                          int nValues, const char *pszDelimiter )
+                   int nValues, const char *pszDelimiter )
 {
     const int iFieldSize = 32 + static_cast<int>(strlen( pszDelimiter ) );
     char *pszField = static_cast<char *>( CPLMalloc( iFieldSize + 1 ) );
@@ -378,12 +378,12 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
             }
             else if ( *pszString == '(' )
             {
-                bInBracket = TRUE;
+                bInBracket = true;
                 continue;
             }
             else if ( *pszString == ')' )
             {
-                bInBracket = FALSE;
+                bInBracket = false;
                 continue;
             }
 
@@ -469,8 +469,8 @@ char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList,
 /*         Translate HDF4-EOS attributes in GDAL metadata items         */
 /************************************************************************/
 
-char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
-    int32 iAttribute, int32 nValues, char **papszMetadata )
+char** HDF4Dataset::TranslateHDF4EOSAttributes(
+    int32 iHandle, int32 iAttribute, int32 nValues, char **papszMetadata )
 {
     char *pszData = static_cast<char *>(
         CPLMalloc( (nValues + 1) * sizeof(char) ) );
@@ -546,7 +546,9 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
             // ADDITIONALATTRIBUTENAME = <name>
             // PARAMETERVALUE = <value>
             if ( EQUAL( pszAttrName, "ADDITIONALATTRIBUTENAME" ) )
+            {
                 pszAddAttrName = pszAttrValue;
+            }
             else if ( pszAddAttrName && EQUAL( pszAttrName, "PARAMETERVALUE" ) )
             {
                 papszMetadata =
@@ -556,7 +558,7 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
             }
             else
             {
-                // Add class suffix to the key name if applicable
+                // Add class suffix to the key name if applicable.
                 papszMetadata = CSLAddNameValue(
                     papszMetadata,
                     pszAttrClass
@@ -624,11 +626,12 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 /* -------------------------------------------------------------------- */
 /*     Obtain number of SDSs and global attributes in input file.       */
 /* -------------------------------------------------------------------- */
-    int32 nDatasets, nAttributes;
+    int32 nDatasets = 0;
+    int32 nAttributes = 0;
     if ( SDfileinfo( iHandler, &nDatasets, &nAttributes ) != 0 )
         return CE_Failure;
 
-    char szAttrName[H4_MAX_NC_NAME];  // TODO: Get this off the stack.
+    char szAttrName[H4_MAX_NC_NAME] = {};  // TODO: Get this off the stack.
 
     // Loop through the all attributes
     for( int32 iAttribute = 0; iAttribute < nAttributes; iAttribute++ )
@@ -831,7 +834,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  If we have HDF-EOS dataset, process it here.                        */
 /* -------------------------------------------------------------------- */
-    int32 aiDimSizes[H4_MAX_VAR_DIMS];  // TODO: Get this off of the stack.
+    int32 aiDimSizes[H4_MAX_VAR_DIMS] = {};  // TODO: Get this off of the stack.
     int32 iRank = 0;
     int32 iNumType = 0;
     int32 nAttrs = 0;
@@ -859,9 +862,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                       poOpenInfo->pszFilename );
             return NULL;
         }
-        int32 nStrBufSize;
-        int32 nSubDatasets
-            = SWinqswath(poOpenInfo->pszFilename, NULL, &nStrBufSize);
+        int32 nStrBufSize = 0;
+        int32 nSubDatasets =
+            SWinqswath(poOpenInfo->pszFilename, NULL, &nStrBufSize);
 
 #ifdef DEBUG
         CPLDebug( "HDF4", "Number of HDF-EOS swaths: %d",
@@ -870,8 +873,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         if ( nSubDatasets > 0 && nStrBufSize > 0 )
         {
-            char *pszSwathList
-                = static_cast<char *>( CPLMalloc( nStrBufSize + 1 ) );
+            char *pszSwathList =
+                static_cast<char *>( CPLMalloc( nStrBufSize + 1 ) );
             SWinqswath( poOpenInfo->pszFilename, pszSwathList, &nStrBufSize );
             pszSwathList[nStrBufSize] = '\0';
 
@@ -1187,7 +1190,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
             // iRank in GR interface has another meaning. It represents number
             // of samples per pixel. aiDimSizes has only two dimensions.
-            int32 iInterlaceMode;
+            int32 iInterlaceMode = 0;
             if ( GRgetiminfo( iGR, szName, &iRank, &iNumType, &iInterlaceMode,
                               aiDimSizes, &nAttrs ) != 0 )
             {
