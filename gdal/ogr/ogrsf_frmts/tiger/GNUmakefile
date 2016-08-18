@@ -1,5 +1,3 @@
-
-
 include ../../../GDALmake.opt
 
 OBJ     =  ogrtigerdriver.o           \
@@ -27,12 +25,9 @@ OBJ     =  ogrtigerdriver.o           \
 	   tigerzipplus4.o	      \
 	   tigerpoint.o
 
-
-
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 
 LIBS	:=	$(GDAL_LIB) $(LIBS)
-
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
@@ -40,6 +35,3 @@ $(O_OBJ): ogr_tiger.h
 
 clean:
 	rm -f *.o $(O_OBJ)
-
-tigerinfo$(EXE):	tigerinfo.$(OBJ_EXT)
-	$(LD) $(LDFLAGS) tigerinfo.$(OBJ_EXT) $(CONFIG_LIBS) -o tigerinfo$(EXE)
