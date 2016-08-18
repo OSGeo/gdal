@@ -193,8 +193,8 @@ CPLString OGRPLScenesLayer::BuildFilter(swq_expr_node* poNode)
                   poNode->papoSubExpr[0]->field_index != poFeatureDefn->GetFieldIndex("id") &&
                   poNode->papoSubExpr[0]->field_index < poFeatureDefn->GetFieldCount() )
         {
-            OGRFieldDefn *poFieldDefn;
-            poFieldDefn = poFeatureDefn->GetFieldDefn(poNode->papoSubExpr[0]->field_index);
+            OGRFieldDefn *poFieldDefn =
+                poFeatureDefn->GetFieldDefn(poNode->papoSubExpr[0]->field_index);
 
             CPLString osFilter(poFieldDefn->GetNameRef());
 
@@ -514,10 +514,9 @@ OGRFeature *OGRPLScenesLayer::GetNextFeature()
     if( !bFilterMustBeClientSideEvaluated )
         return GetNextRawFeature();
 
-    OGRFeature  *poFeature;
-
     while( true )
     {
+        OGRFeature *poFeature = NULL;
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
@@ -556,8 +555,8 @@ OGRFeature* OGRPLScenesLayer::GetNextRawFeature()
     {
         bEOF = TRUE;
         OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
-        OGRGeometry* poGeom;
         const char* pszWKT = "MULTIPOLYGON(((-180 90,180 90,180 -90,-180 -90,-180 90)))";
+        OGRGeometry* poGeom = NULL;
         OGRGeometryFactory::createFromWkt((char**)&pszWKT, poSRS, &poGeom);
         poFeature->SetGeometryDirectly(poGeom);
         return poFeature;

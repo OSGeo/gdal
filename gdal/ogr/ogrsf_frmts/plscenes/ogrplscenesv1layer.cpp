@@ -791,7 +791,7 @@ void OGRPLScenesV1Layer::ParseAssetProperties(json_object* poSpec,
                     continue;
                 }
 
-                const char* pszOGRFieldName;
+                const char* pszOGRFieldName = NULL;
                 CPLString osSrcField(CPLString("/assets.") + m_aoAssetCategories[i] + CPLString("."));
                 json_object* poLinksRef = NULL;
                 if( EQUAL(pszJSonFieldName, "_links") &&
@@ -915,7 +915,7 @@ void OGRPLScenesV1Layer::ProcessAssetFileProperties( json_object* poPropertiesAs
             if( strcmp(pszJSonFieldName, "type") == 0 )
                 continue; // "http" not really interesting
 
-            const char* pszOGRFieldName;
+            const char* pszOGRFieldName = NULL;
             CPLString osSrcField(CPLString("/assets.") + osAssetCategory + CPLString(".files."));
             if( EQUAL(pszJSonFieldName, "_links") )
             {
@@ -979,11 +979,11 @@ bool OGRPLScenesV1Layer::GetNextPage()
         return false;
     }
 
-    json_object* poObj;
-    if( m_osRequestURL == m_poDS->GetBaseURL() + GetName() + "/quick-search" )
-        poObj = m_poDS->RunRequest(m_osRequestURL, FALSE, "POST", true, m_poDS->GetFilter());
-    else
-        poObj = m_poDS->RunRequest(m_osRequestURL);
+    json_object* poObj =
+        m_osRequestURL == m_poDS->GetBaseURL() + GetName() + "/quick-search"
+        ? m_poDS->RunRequest(m_osRequestURL, FALSE, "POST", true,
+                             m_poDS->GetFilter())
+        : m_poDS->RunRequest(m_osRequestURL);
     if( poObj == NULL )
     {
         m_bEOF = true;
