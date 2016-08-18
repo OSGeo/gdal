@@ -277,9 +277,7 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
 
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -396,11 +394,8 @@ void OGRPGResultLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
         {
             CPLString osGetSRID;
 
-            const char* psGetSRIDFct;
-            if (poDS->sPostGISVersion.nMajor >= 2)
-                psGetSRIDFct = "ST_SRID";
-            else
-                psGetSRIDFct = "getsrid";
+            const char* psGetSRIDFct =
+                poDS->sPostGISVersion.nMajor >= 2 ? "ST_SRID" : "getsrid";
 
             osGetSRID += "SELECT ";
             osGetSRID += psGetSRIDFct;

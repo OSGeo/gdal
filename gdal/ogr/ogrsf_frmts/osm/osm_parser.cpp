@@ -288,7 +288,9 @@ static
 int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
                   OSMContext* psCtxt)
 {
-    char* pszTxt;
+    char* pszTxt = NULL;
+
+    // TODO(schwehr): Remove goto macros.
 
     while(pabyData < pabyDataLimit)
     {
@@ -313,7 +315,7 @@ int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
             {
                 fprintf(stderr, "Error: unsupported required feature : %s\n", pszTxt);
                 VSIFree(pszTxt);
-                GOTO_END_ERROR;
+                GOTO_END_ERROR;  // TODO(schwehr): Get rid of goto.
             }
             VSIFree(pszTxt);
         }
@@ -380,10 +382,9 @@ int ReadStringTable(GByte* pabyData, GByte* pabyDataLimit,
 
     if ((unsigned int)(pabyDataLimit - pabyData) > psCtxt->nStrAllocated)
     {
-        int* panStrOffNew;
         psCtxt->nStrAllocated = MAX(psCtxt->nStrAllocated * 2,
                                           (unsigned int)(pabyDataLimit - pabyData));
-        panStrOffNew = (int*) VSI_REALLOC_VERBOSE(
+        int* panStrOffNew = (int*) VSI_REALLOC_VERBOSE(
             panStrOff, psCtxt->nStrAllocated * sizeof(int));
         if( panStrOffNew == NULL )
             GOTO_END_ERROR;
@@ -392,17 +393,16 @@ int ReadStringTable(GByte* pabyData, GByte* pabyDataLimit,
 
     while(pabyData < pabyDataLimit)
     {
-        int nKey;
+        int nKey = 0;
         READ_FIELD_KEY(nKey);
 
         while (nKey == MAKE_KEY(READSTRINGTABLE_IDX_STRING, WT_DATA))
         {
-            GByte* pbSaved;
-            unsigned int nDataLength;
+            unsigned int nDataLength = 0;
             READ_SIZE(pabyData, pabyDataLimit, nDataLength);
 
             panStrOff[nStrCount ++] = static_cast<int>(pabyData - (GByte*)pszStrBuf);
-            pbSaved = &pabyData[nDataLength];
+            GByte* pbSaved = &pabyData[nDataLength];
 
             pabyData += nDataLength;
 
@@ -483,10 +483,9 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
 
             if (nSize > psCtxt->nNodesAllocated)
             {
-                OSMNode* pasNodesNew;
                 psCtxt->nNodesAllocated = MAX(psCtxt->nNodesAllocated * 2,
                                                  nSize);
-                pasNodesNew = (OSMNode*) VSI_REALLOC_VERBOSE(
+                OSMNode* pasNodesNew = (OSMNode*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasNodes, psCtxt->nNodesAllocated * sizeof(OSMNode));
                 if( pasNodesNew == NULL )
                     GOTO_END_ERROR;
@@ -499,14 +498,13 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if( nKey == MAKE_KEY(DENSENODES_IDX_DENSEINFO, WT_DATA) )
         {
-            unsigned int nSize;
-            GByte* pabyDataNewLimit;
+            unsigned int nSize = 0;
 
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             /* Inline reading of DenseInfo structure */
 
-            pabyDataNewLimit = pabyData + nSize;
+            GByte* pabyDataNewLimit = pabyData + nSize;
             while(pabyData < pabyDataNewLimit)
             {
                 int nFieldNumber;
@@ -560,11 +558,10 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
 
             if (nSize > psCtxt->nTagsAllocated)
             {
-                OSMTag* pasTagsNew;
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -842,19 +839,17 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(NODE_IDX_KEYS, WT_DATA))
         {
-            unsigned int nSize;
-            GByte* pabyDataNewLimit;
+            unsigned int nSize = 0;
+            GByte* pabyDataNewLimit = NULL;
             if (sNode.nTags != 0)
                 GOTO_END_ERROR;
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             if (nSize > psCtxt->nTagsAllocated)
             {
-                OSMTag* pasTagsNew;
-
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -972,19 +967,17 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(WAY_IDX_KEYS, WT_DATA))
         {
-            unsigned int nSize;
-            GByte* pabyDataNewLimit;
+            unsigned int nSize = 0;
+            GByte* pabyDataNewLimit = NULL;
             if (sWay.nTags != 0)
                 GOTO_END_ERROR;
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             if (nSize > psCtxt->nTagsAllocated)
             {
-                OSMTag* pasTagsNew;
-
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -1043,18 +1036,17 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
         else if (nKey == MAKE_KEY(WAY_IDX_REFS, WT_DATA))
         {
             GIntBig nRefVal = 0;
-            unsigned int nSize;
-            GByte* pabyDataNewLimit;
+            unsigned int nSize = 0;
+            GByte* pabyDataNewLimit = NULL;
             if (sWay.nRefs != 0)
                 GOTO_END_ERROR;
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             if (nSize > psCtxt->nNodeRefsAllocated)
             {
-                GIntBig* panNodeRefsNew;
                 psCtxt->nNodeRefsAllocated =
                     MAX(psCtxt->nNodeRefsAllocated * 2, nSize);
-                panNodeRefsNew = (GIntBig*) VSI_REALLOC_VERBOSE(
+                GIntBig* panNodeRefsNew = (GIntBig*) VSI_REALLOC_VERBOSE(
                         psCtxt->panNodeRefs,
                         psCtxt->nNodeRefsAllocated * sizeof(GIntBig));
                 if( panNodeRefsNew == NULL )
@@ -1136,19 +1128,17 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(RELATION_IDX_KEYS, WT_DATA))
         {
-            unsigned int nSize;
-            GByte* pabyDataNewLimit;
+            unsigned int nSize = 0;
+            GByte* pabyDataNewLimit = NULL;
             if (sRelation.nTags != 0)
                 GOTO_END_ERROR;
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             if (nSize > psCtxt->nTagsAllocated)
             {
-                OSMTag* pasTagsNew;
-
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -1206,18 +1196,17 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(RELATION_IDX_ROLES_SID, WT_DATA))
         {
-            unsigned int nSize;
-            GByte* pabyDataNewLimit;
+            unsigned int nSize = 0;
+            GByte* pabyDataNewLimit = NULL;
             if (sRelation.nMembers != 0)
                 GOTO_END_ERROR;
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             if (nSize > psCtxt->nMembersAllocated)
             {
-                OSMMember* pasMembersNew;
                 psCtxt->nMembersAllocated =
                     MAX(psCtxt->nMembersAllocated * 2, nSize);
-                pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
+                OSMMember* pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                         psCtxt->pasMembers,
                         psCtxt->nMembersAllocated * sizeof(OSMMember));
                 if( pasMembersNew == NULL )
@@ -1433,8 +1422,8 @@ int ReadPrimitiveBlock(GByte* pabyData, GByte* pabyDataLimit,
 
         if (nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_STRINGTABLE, WT_DATA))
         {
-            GByte bSaveAfterByte;
-            GByte* pbSaveAfterByte;
+            GByte bSaveAfterByte = 0;
+            GByte* pbSaveAfterByte = NULL;
             unsigned int nSize;
             if (psCtxt->nStrCount != 0)
                 GOTO_END_ERROR;
@@ -1550,11 +1539,9 @@ int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
 
             if (nUncompressedSize != 0)
             {
-                void* pOut;
-
                 if (nUncompressedSize > psCtxt->nUncompressedAllocated)
                 {
-                    GByte* pabyUncompressedNew;
+                    GByte* pabyUncompressedNew = NULL;
                     if( psCtxt->nUncompressedAllocated <= INT_MAX )
                         psCtxt->nUncompressedAllocated =
                             MAX(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
@@ -1572,9 +1559,10 @@ int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
 
                 /* printf("inflate %d -> %d\n", nZlibCompressedSize, nUncompressedSize); */
 
-                pOut = CPLZLibInflate( pabyData, nZlibCompressedSize,
-                                       psCtxt->pabyUncompressed, nUncompressedSize,
-                                       NULL );
+                void* pOut =
+                    CPLZLibInflate( pabyData, nZlibCompressedSize,
+                                    psCtxt->pabyUncompressed, nUncompressedSize,
+                                    NULL );
                 if( pOut == NULL )
                     GOTO_END_ERROR;
 
@@ -1655,14 +1643,13 @@ static void EmptyNotifyBoundsFunc( double /* dfXMin */,
 
 static const char* OSM_AddString(OSMContext* psCtxt, const char* pszStr)
 {
-    char* pszRet;
     int nLen = (int)strlen(pszStr);
     if( psCtxt->nStrLength + nLen + 1 > psCtxt->nStrAllocated )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "String buffer too small");
         return "";
     }
-    pszRet = psCtxt->pszStrBuf + psCtxt->nStrLength;
+    char* pszRet = psCtxt->pszStrBuf + psCtxt->nStrLength;
     memcpy(pszRet, pszStr, nLen);
     pszRet[nLen] = '\0';
     psCtxt->nStrLength += nLen + 1;
@@ -1938,10 +1925,9 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
         /* to realloc over that value */
         if (psCtxt->sRelation.nMembers >= psCtxt->nMembersAllocated)
         {
-            OSMMember* pasMembersNew;
             int nMembersAllocated =
                 MAX(psCtxt->nMembersAllocated * 2, psCtxt->sRelation.nMembers + 1);
-            pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
+            OSMMember* pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasMembers,
                     nMembersAllocated * sizeof(OSMMember));
             if( pasMembersNew == NULL )
@@ -2417,10 +2403,10 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
         GOTO_END_ERROR;
     if (nBlobSize > psCtxt->nBlobSizeAllocated)
     {
-        GByte* pabyBlobNew;
         psCtxt->nBlobSizeAllocated = MAX(psCtxt->nBlobSizeAllocated * 2, nBlobSize);
-        pabyBlobNew = (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyBlob,
-                                        psCtxt->nBlobSizeAllocated + EXTRA_BYTES);
+        GByte* pabyBlobNew = (GByte*)
+            VSI_REALLOC_VERBOSE(psCtxt->pabyBlob,
+                                psCtxt->nBlobSizeAllocated + EXTRA_BYTES);
         if( pabyBlobNew == NULL )
             GOTO_END_ERROR;
         psCtxt->pabyBlob = pabyBlobNew;

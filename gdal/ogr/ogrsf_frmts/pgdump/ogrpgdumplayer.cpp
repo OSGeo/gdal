@@ -1124,14 +1124,13 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
 
 char* OGRPGDumpLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 {
-    char* pszTextBuf;
-
     const size_t nTextBufLen = nLen * 5 + 1;
+    char* pszTextBuf;
     pszTextBuf = (char *) CPLMalloc(nTextBufLen);
 
-    int  iSrc, iDst=0;
+    int iDst = 0;
 
-    for( iSrc = 0; iSrc < nLen; iSrc++ )
+    for( int iSrc = 0; iSrc < nLen; iSrc++ )
     {
         if( pabyData[iSrc] < 40 || pabyData[iSrc] > 126
             || pabyData[iSrc] == '\\' )

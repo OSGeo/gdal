@@ -2957,7 +2957,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 }
             }
 
-            OGRGeometry* poRet;
+            OGRGeometry* poRet = NULL;
             if( nParts == 1 )
             {
                 OGRPolygon* poPoly = new OGRPolygon();

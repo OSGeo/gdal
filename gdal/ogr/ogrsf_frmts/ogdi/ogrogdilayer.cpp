@@ -146,13 +146,12 @@ OGRErr OGROGDILayer::SetAttributeFilter( const char *pszQuery )
 void OGROGDILayer::ResetReading()
 
 {
-    ecs_Result *psResult;
     ecs_LayerSelection sSelectionLayer;
 
     sSelectionLayer.Select = m_pszOGDILayerName;
     sSelectionLayer.F = m_eFamily;
 
-    psResult = cln_SelectLayer(m_nClientID, &sSelectionLayer);
+    ecs_Result *psResult = cln_SelectLayer(m_nClientID, &sSelectionLayer);
     if( ECSERROR( psResult ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -165,7 +164,7 @@ void OGROGDILayer::ResetReading()
     /* Reset spatial filter */
     if( m_poFilterGeom != NULL )
     {
-        OGREnvelope     oEnv;
+        OGREnvelope oEnv;
 
         m_poFilterGeom->getEnvelope(&oEnv);
 
@@ -207,7 +206,6 @@ void OGROGDILayer::ResetReading()
 OGRFeature *OGROGDILayer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature;
 
     /* Reset reading if we are not the current layer */
     /* WARNING : this does not allow interleaved reading of layers */
@@ -219,7 +217,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
 
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -245,15 +243,10 @@ OGRFeature *OGROGDILayer::GetNextFeature()
 
 OGRFeature *OGROGDILayer::GetNextRawFeature()
 {
-    ecs_Result  *psResult;
-    int         i;
-    OGRFeature  *poFeature;
-
 /* -------------------------------------------------------------------- */
 /*      Retrieve object from OGDI server and create new feature         */
 /* -------------------------------------------------------------------- */
-
-    psResult = cln_GetNextObject(m_nClientID);
+    ecs_Result *psResult = cln_GetNextObject(m_nClientID);
     if (! ECSSUCCESS(psResult))
     {
         if( ECSERROR( psResult ) &&
@@ -270,7 +263,7 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
         return NULL;
     }
 
-    poFeature = new OGRFeature(m_poFeatureDefn);
+    OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
 
     poFeature->SetFID( m_iNextShapeId++ );
     m_nFeaturesRead++;
@@ -280,8 +273,8 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     if (m_eFamily == Point)
     {
-        ecs_Point       *psPoint = &(ECSGEOM(psResult).point);
-        OGRPoint        *poOGRPoint = new OGRPoint(psPoint->c.x, psPoint->c.y);
+        ecs_Point *psPoint = &(ECSGEOM(psResult).point);
+        OGRPoint *poOGRPoint = new OGRPoint(psPoint->c.x, psPoint->c.y);
 
         poOGRPoint->assignSpatialReference(m_poSpatialRef);
         poFeature->SetGeometryDirectly(poOGRPoint);
@@ -293,7 +286,7 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
 
         poOGRLine->setNumPoints( psLine->c.c_len );
 
-        for( i=0; i < (int) psLine->c.c_len; i++ )
+        for( int i = 0; i < (int) psLine->c.c_len; i++ )
         {
             poOGRLine->setPoint(i, psLine->c.c_val[i].x, psLine->c.c_val[i].y);
         }
@@ -306,14 +299,14 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
         ecs_Area        *psArea = &(ECSGEOM(psResult).area);
         OGRPolygon      *poOGRPolygon = new OGRPolygon();
 
-        for(int iRing=0; iRing < (int) psArea->ring.ring_len; iRing++)
+        for( int iRing = 0; iRing < (int) psArea->ring.ring_len; iRing++ )
         {
             ecs_FeatureRing     *psRing = &(psArea->ring.ring_val[iRing]);
             OGRLinearRing       *poOGRRing = new OGRLinearRing();
 
             poOGRRing->setNumPoints( psRing->c.c_len );
 
-            for( i=0; i < (int) psRing->c.c_len; i++ )
+            for( int i = 0; i < (int) psRing->c.c_len; i++ )
             {
                 poOGRRing->setPoint(i, psRing->c.c_val[i].x,
                                     psRing->c.c_val[i].y);
@@ -350,9 +343,8 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
 
     for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
     {
-        char        *pszFieldStart;
-        int         nNameLen;
-        char        chSavedChar;
+        char *pszFieldStart = NULL;
+        int nNameLen = 0;
 
         /* parse out the next attribute value */
         if( !ecs_FindElement( pszAttrList, &pszFieldStart, &pszAttrList,
@@ -377,7 +369,7 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
         /* zero terminate the single field value, but save the          */
         /* character we overwrote, so we can restore it when done.      */
 
-        chSavedChar = pszFieldStart[nNameLen];
+        char chSavedChar = pszFieldStart[nNameLen];
         pszFieldStart[nNameLen] = '\0';
 
         /* OGR takes care of all field type conversions for us! */
@@ -405,7 +397,6 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
 OGRFeature *OGROGDILayer::GetFeature( GIntBig nFeatureId )
 
 {
-    ecs_Result  *psResult;
 
     if (m_nTotalShapeCount != -1 && nFeatureId > m_nTotalShapeCount)
         return NULL;
@@ -427,7 +418,7 @@ OGRFeature *OGROGDILayer::GetFeature( GIntBig nFeatureId )
 
     while(m_iNextShapeId != nFeatureId)
     {
-        psResult = cln_GetNextObject(m_nClientID);
+        ecs_Result  *psResult = cln_GetNextObject(m_nClientID);
         if (ECSSUCCESS(psResult))
             m_iNextShapeId++;
         else
@@ -513,17 +504,14 @@ int OGROGDILayer::TestCapability( const char * pszCap )
 
 void OGROGDILayer::BuildFeatureDefn()
 {
-    ecs_Result  *psResult;
-    ecs_ObjAttributeFormat *oaf;
-    int         i, numFields;
-    const char  *pszGeomName;
-    OGRwkbGeometryType eLayerGeomType;
+    const char  *pszGeomName = NULL;
+    OGRwkbGeometryType eLayerGeomType = wkbUnknown;
 
 /* -------------------------------------------------------------------- */
 /*      Feature Defn name will be "<OGDILyrName>_<FeatureFamily>"       */
 /* -------------------------------------------------------------------- */
 
-    switch(m_eFamily)
+    switch( m_eFamily )
     {
       case Point:
         pszGeomName = "point";
@@ -547,7 +535,7 @@ void OGROGDILayer::BuildFeatureDefn()
         break;
     }
 
-    char* pszFeatureDefnName;
+    char* pszFeatureDefnName = NULL;
     if (m_poODS->LaunderLayerNames())
     {
         pszFeatureDefnName = CPLStrdup(m_pszOGDILayerName);
@@ -575,7 +563,7 @@ void OGROGDILayer::BuildFeatureDefn()
 /* -------------------------------------------------------------------- */
 /*      Fetch schema from OGDI server and map to OGR types              */
 /* -------------------------------------------------------------------- */
-    psResult = cln_GetAttributesFormat( m_nClientID );
+    ecs_Result  *psResult = cln_GetAttributesFormat( m_nClientID );
     if( ECSERROR( psResult ) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -584,11 +572,11 @@ void OGROGDILayer::BuildFeatureDefn()
         return;
     }
 
-    oaf = &(ECSRESULT(psResult).oaf);
-    numFields = oaf->oa.oa_len;
-    for( i = 0; i < numFields; i++ )
+    ecs_ObjAttributeFormat *oaf = &(ECSRESULT(psResult).oaf);
+    const int numFields = oaf->oa.oa_len;
+    for( int i = 0; i < numFields; i++ )
     {
-        OGRFieldDefn    oField("", OFTInteger);
+        OGRFieldDefn oField("", OFTInteger);
 
         oField.SetName( oaf->oa.oa_val[i].name );
         oField.SetPrecision( 0 );

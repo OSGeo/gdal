@@ -387,18 +387,17 @@ OGRSpatialReference *OGRODBCTableLayer::GetSpatialRef()
     if( nSRSId == -2 )
     {
         PGconn          *hPGConn = poDS->GetPGConn();
-        PGresult        *hResult;
-        char            szCommand[1024];
 
         nSRSId = -1;
 
         poDS->SoftStartTransaction();
 
+        char szCommand[1024] = {};
         sprintf( szCommand,
                  "SELECT srid FROM geometry_columns "
                  "WHERE f_table_name = '%s'",
                  poFeatureDefn->GetName() );
-        hResult = PQexec(hPGConn, szCommand );
+        PGresult *hResult = PQexec(hPGConn, szCommand );
 
         if( hResult
             && PQresultStatus(hResult) == PGRES_TUPLES_OK
