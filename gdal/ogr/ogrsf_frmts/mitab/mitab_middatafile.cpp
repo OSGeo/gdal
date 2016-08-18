@@ -291,11 +291,7 @@ double MIDDATAFile::GetYTrans(double dfY)
 
 GBool MIDDATAFile::IsValidFeature(const char *pszString)
 {
-    char **papszToken ;
-
-    papszToken = CSLTokenizeString(pszString);
-
-    //   printf("%s\n",pszString);
+    char **papszToken = CSLTokenizeString(pszString);
 
     if (CSLCount(papszToken) == 0)
     {

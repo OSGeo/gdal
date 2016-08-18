@@ -542,7 +542,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     {
         char* pszGeometry = NULL;
         OGREnvelope sGeomBounds;
-        OGRGeometry* poWGS84Geom;
+        OGRGeometry *poWGS84Geom = NULL;
 
         if (NULL != poCT_)
         {

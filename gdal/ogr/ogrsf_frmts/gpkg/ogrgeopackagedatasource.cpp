@@ -1478,7 +1478,7 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode()
     if( m_bHasModifiedTiles )
     {
         const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
-        char *pszSQL;
+        char *pszSQL = NULL ;
 
         if( pszCurrentDate )
         {
@@ -1875,7 +1875,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
     if ( !HasMetadataTables() )
         return GDALPamDataset::GetMetadata( pszDomain );
 
-    char* pszSQL;
+    char* pszSQL = NULL;
     if( m_osRasterTable.size() )
     {
         pszSQL = sqlite3_mprintf(
@@ -2010,7 +2010,7 @@ void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be dest
     }
     psXMLNode = NULL;
 
-    char* pszSQL;
+    char* pszSQL = NULL;
     if( pszTableName && pszTableName[0] != '\0' )
     {
         pszSQL = sqlite3_mprintf(
@@ -2331,7 +2331,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
     }
 
-    CPLXMLNode* psXMLNode;
+    CPLXMLNode* psXMLNode = NULL;
     {
         GDALMultiDomainMetadata oLocalMDMD;
         char** papszDomainList = oMDMD.GetDomainList();
@@ -2478,7 +2478,6 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
                                    char **papszOptions )
 {
     CPLString osCommand;
-    const char *pszSpatialRefSysRecord;
 
     /* First, ensure there isn't any such file yet. */
     VSIStatBufL sStatBuf;
@@ -2565,7 +2564,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
         /* contain a record for EPSG:4326, the geodetic WGS84 SRS */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
-        pszSpatialRefSysRecord =
+        const char *pszSpatialRefSysRecord =
             "INSERT INTO gpkg_spatial_ref_sys ("
             "srs_name, srs_id, organization, organization_coordsys_id, definition, description"
             ") VALUES ("
@@ -3521,8 +3520,6 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
 
 OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 {
-    char *pszSQL;
-
     if( !bUpdate || iLayer < 0 || iLayer >= m_nLayers )
         return OGRERR_FAILURE;
 
@@ -3542,9 +3539,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
     if (osLayerName.size() == 0)
         return OGRERR_NONE;
 
-    pszSQL = sqlite3_mprintf(
-            "DROP TABLE \"%s\"",
-             osLayerName.c_str());
+    char *pszSQL = sqlite3_mprintf("DROP TABLE \"%s\"", osLayerName.c_str());
 
     SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
@@ -3816,7 +3811,7 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
     if( !HasExtensionsTable() )
         return;
 
-    char* pszSQL;
+    char* pszSQL = NULL;
     if( !bCheckRasterTable)
         pszSQL = sqlite3_mprintf(
             "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE (table_name IS NULL AND extension_name != 'gdal_aspatial')"
@@ -4277,7 +4272,7 @@ void GPKG_GDAL_GetMimeType(sqlite3_context* pContext,
     GDALDriver* poDriver = (GDALDriver*)GDALIdentifyDriver(osMemFileName, NULL);
     if( poDriver != NULL )
     {
-        const char* pszRes;
+        const char* pszRes = NULL;
         if( EQUAL(poDriver->GetDescription(), "PNG") )
             pszRes = "image/png";
         else if( EQUAL(poDriver->GetDescription(), "JPEG") )

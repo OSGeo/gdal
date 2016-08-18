@@ -214,9 +214,7 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 
     for ( int i = 0; i < ncidx; i++ ) {
 	// Create the layer object
-	OGRGRASSLayer       *poLayer;
-
-        poLayer = new OGRGRASSLayer( i, &map );
+	OGRGRASSLayer *poLayer = new OGRGRASSLayer( i, &map );
 
         // Add layer to data source layer list
 	papoLayers = (OGRGRASSLayer **)

@@ -83,7 +83,7 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
     if ( ! poDb ) return OGRERR_FAILURE;
 
     const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
-    char *pszSQL;
+    char *pszSQL = NULL;
 
     if( pszCurrentDate )
     {
@@ -560,7 +560,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
 {
     OGRErr err;
     SQLResult oResultTable;
-    char* pszSQL;
     bool bReadExtent = false;
     sqlite3* poDb = m_poDS->GetDB();
     OGREnvelope oExtent;
@@ -572,15 +571,15 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     if( bIsGpkgTable )
     {
         /* Check that the table name is registered in gpkg_contents */
-        pszSQL = sqlite3_mprintf(
-                    "SELECT table_name, data_type, identifier, "
-                    "description, min_x, min_y, max_x, max_y, srs_id "
-                    "FROM gpkg_contents "
-                    "WHERE table_name = '%q'"
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT table_name, data_type, identifier, "
+            "description, min_x, min_y, max_x, max_y, srs_id "
+            "FROM gpkg_contents "
+            "WHERE table_name = '%q'"
 #ifdef WORKAROUND_SQLITE3_BUGS
-                    " OR 0"
+            " OR 0"
 #endif
-                    ,m_pszTableName);
+            , m_pszTableName);
 
         SQLResult oResultContents;
         err = SQLQuery(poDb, pszSQL, &oResultContents);
@@ -674,7 +673,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     /*  #|name|type|notnull|default|pk */
     /*  0|id|integer|0||1 */
     /*  1|name|varchar|0||0 */
-    pszSQL = sqlite3_mprintf("pragma table_info('%q')", m_pszTableName);
+    char* pszSQL = sqlite3_mprintf("pragma table_info('%q')", m_pszTableName);
     err = SQLQuery(poDb, pszSQL, &oResultTable);
     sqlite3_free(pszSQL);
 
@@ -933,8 +932,8 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
     {
         const char* pszT = m_pszTableName;
         const char* pszC =m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
-        char* pszSQL;
-        pszSQL = sqlite3_mprintf("DROP TABLE \"rtree_%s_%s\"", pszT, pszC);
+        char* pszSQL =
+            sqlite3_mprintf("DROP TABLE \"rtree_%s_%s\"", pszT, pszC);
         SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
     }
@@ -1090,12 +1089,11 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
 /* -------------------------------------------------------------------- */
     if( !m_bDeferredCreation )
     {
-        char *pszSQL;
-
-        pszSQL = sqlite3_mprintf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s%s",
-                                 m_pszTableName, oGeomField.GetNameRef(),
-                                 m_poDS->GetGeometryTypeString(oGeomField.GetType()),
-                                 !oGeomField.IsNullable() ? " NOT NULL DEFAULT ''" : "");
+        char *pszSQL = sqlite3_mprintf(
+            "ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s%s",
+            m_pszTableName, oGeomField.GetNameRef(),
+            m_poDS->GetGeometryTypeString(oGeomField.GetType()),
+            !oGeomField.IsNullable() ? " NOT NULL DEFAULT ''" : "");
 
         OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
@@ -1791,7 +1789,6 @@ void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 
 bool OGRGeoPackageTableLayer::CreateSpatialIndex()
 {
-    char* pszSQL;
     OGRErr err;
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -1823,11 +1820,12 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
     m_poDS->SoftStartTransaction();
 
     /* Register the table in gpkg_extensions */
-    pszSQL = sqlite3_mprintf(
-                 "INSERT INTO gpkg_extensions "
-                 "(table_name,column_name,extension_name,definition,scope) "
-                 "VALUES ('%q', '%q', 'gpkg_rtree_index', 'GeoPackage 1.0 Specification Annex L', 'write-only')",
-                 pszT, pszC );
+    char* pszSQL = sqlite3_mprintf(
+        "INSERT INTO gpkg_extensions "
+        "(table_name,column_name,extension_name,definition,scope) "
+        "VALUES ('%q', '%q', 'gpkg_rtree_index', "
+        "'GeoPackage 1.0 Specification Annex L', 'write-only')",
+        pszT, pszC );
     err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
@@ -2039,7 +2037,7 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
 
     /* We have only the SQL functions needed by the 3 following extensions */
     /* anything else will likely cause troubles */
-    char* pszSQL;
+    char* pszSQL = NULL;
 
     if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
     {
@@ -2202,11 +2200,10 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 
     const char* pszT = m_pszTableName;
     const char* pszC =m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
-    char* pszSQL;
-
-    pszSQL = sqlite3_mprintf("DELETE FROM gpkg_extensions WHERE table_name='%q' "
-                 "AND column_name='%q' AND extension_name='gpkg_rtree_index'",
-                 pszT, pszC );
+    char* pszSQL = sqlite3_mprintf(
+        "DELETE FROM gpkg_extensions WHERE table_name='%q' "
+        "AND column_name='%q' AND extension_name='gpkg_rtree_index'",
+        pszT, pszC );
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
@@ -2267,10 +2264,9 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
     }
 
     /* We also need to update GeoPackage metadata tables */
-    char* pszSQL;
-    pszSQL = sqlite3_mprintf(
-            "UPDATE gpkg_geometry_columns SET table_name = '%s' WHERE table_name = '%s'",
-            pszDstTableName, m_pszTableName);
+    char* pszSQL = sqlite3_mprintf(
+        "UPDATE gpkg_geometry_columns SET table_name = '%s' WHERE table_name = '%s'",
+        pszDstTableName, m_pszTableName);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
@@ -2629,14 +2625,12 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
     if ( !m_poDS->HasMetadataTables() )
         return OGRLayer::GetMetadata( pszDomain );
 
-    char* pszSQL;
-
-    pszSQL = sqlite3_mprintf(
-        "SELECT md.metadata, md.md_standard_uri, md.mime_type, mdr.reference_scope FROM gpkg_metadata md "
+    char* pszSQL = sqlite3_mprintf(
+        "SELECT md.metadata, md.md_standard_uri, md.mime_type, "
+        "mdr.reference_scope FROM gpkg_metadata md "
         "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
         "WHERE mdr.table_name = '%q' ORDER BY md.id",
         m_pszTableName);
-
 
     SQLResult oResult;
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResult);

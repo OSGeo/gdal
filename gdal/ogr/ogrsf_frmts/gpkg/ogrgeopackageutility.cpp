@@ -156,12 +156,10 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 {
     CPLAssert( poDb != NULL );
 
-    sqlite3_stmt *poStmt;
-    int rc;
-    GIntBig i;
+    sqlite3_stmt *poStmt = NULL;
 
     /* Prepare the SQL */
-    rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
+    int rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare_v2(%s) failed: %s",
@@ -180,7 +178,7 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
     }
 
     /* Read the integer from the row */
-    i = sqlite3_column_int64(poStmt, 0);
+    GIntBig i = sqlite3_column_int64(poStmt, 0);
     sqlite3_finalize(poStmt);
 
     if ( err ) *err = OGRERR_NONE;
@@ -391,7 +389,6 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
 {
     CPLAssert( poGeometry != NULL );
 
-    GByte *pabyPtr;
     GByte byFlags = 0;
     GByte byEnv = 1;
     OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder)CPL_IS_LSB;
@@ -484,7 +481,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
         }
     }
 
-    pabyPtr = pabyWkb + szHeader;
+    GByte *pabyPtr = pabyWkb + szHeader;
 
     /* Use the wkbVariantIso for ISO SQL/MM output (differs for 3d geometry) */
     err = poGeometry->exportToWkb(eByteOrder, pabyPtr, wkbVariantIso);
@@ -621,7 +618,6 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
     CPLAssert( pabyGpkg != NULL );
 
     GPkgHeader oHeader;
-    OGRGeometry *poGeom;
 
     /* Read header */
     OGRErr err = GPkgHeaderFromWKB(pabyGpkg, szGpkg, &oHeader);
@@ -633,6 +629,7 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
     size_t szWkb = szGpkg - oHeader.szHeader;
 
     /* Parse WKB */
+    OGRGeometry *poGeom = NULL;
     err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom,
                                             static_cast<int>(szWkb));
     if ( err != OGRERR_NONE )

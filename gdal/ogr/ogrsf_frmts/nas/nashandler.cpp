@@ -621,9 +621,9 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
                      * </gml:Point>
                      *
                      */
-                    const char *pszPos;
-                    if( (pszPos = CPLGetXMLValue( psNode, "=Point.pos", NULL ) ) != NULL
-                        && strstr(pszPos, " ") == NULL )
+                    const char *pszPos =
+                        CPLGetXMLValue( psNode, "=Point.pos", NULL );
+                    if( pszPos != NULL && strstr(pszPos, " ") == NULL )
                     {
                         CPLSetXMLValue( psNode, "pos", CPLSPrintf("0 0 %s", pszPos) );
                     }

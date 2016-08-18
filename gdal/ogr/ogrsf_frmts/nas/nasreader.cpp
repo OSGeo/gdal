@@ -861,7 +861,7 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
         return false;
 
     std::string osWork;
-    GMLFeature  *poFeature;
+    GMLFeature  *poFeature = NULL;
 
     while( (poFeature = NextFeature()) != NULL )
     {

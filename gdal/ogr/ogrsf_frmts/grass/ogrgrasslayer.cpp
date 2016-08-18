@@ -133,7 +133,7 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
 	if ( StartDbDriver() )
 	{
 	    db_set_string ( poDbString, poLink->table );
-	    dbTable *table;
+	    dbTable *table = NULL;
 	    if ( db_describe_table ( poDriver, poDbString, &table) == DB_OK )
 	    {
 		nFields = db_get_table_number_of_columns ( table );
@@ -904,11 +904,9 @@ OGRGeometry *OGRGRASSLayer::GetFeatureGeometry ( long nFeatureId, int *cat )
         {
 	    Vect_get_area_points ( poMap, id, poPoints );
 
-	    OGRPolygon 		*poOGRPoly;
-	    poOGRPoly = new OGRPolygon();
+	    OGRPolygon *poOGRPoly = new OGRPolygon();
 
-	    OGRLinearRing       *poRing;
-	    poRing = new OGRLinearRing();
+	    OGRLinearRing *poRing = new OGRLinearRing();
             if (bIs3D)
                 poRing->setPoints( poPoints->n_points,
                                 poPoints->x, poPoints->y, poPoints->z );

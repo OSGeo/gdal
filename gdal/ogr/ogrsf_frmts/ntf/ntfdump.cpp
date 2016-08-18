@@ -81,17 +81,15 @@ int main( int argc, char ** argv )
 static void NTFCount( const char * pszFile )
 
 {
-    FILE      *fp;
-    NTFRecord *poRecord = NULL;
-    int       anCount[100], i;
-
-    for( i = 0; i < 100; i++ )
-        anCount[i] = 0;
-
-    fp = VSIFOpen( pszFile, "r" );
+    FILE *fp = VSIFOpen( pszFile, "r" );
     if( fp == NULL )
         return;
 
+    // int anCount[100] = {};
+    for( int i = 0; i < 100; i++ )
+        anCount[i] = 0;
+
+    NTFRecord *poRecord = NULL;
     do {
         if( poRecord != NULL )
             delete poRecord;
