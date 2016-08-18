@@ -188,8 +188,8 @@ int main( int nArgc, char ** papszArgv )
 
         oReader.AddFeatureDefn( S57GenerateDSIDFeatureDefn() );
 
-        OGRFeature      *poFeature;
-        int             nFeatures = 0;
+        OGRFeature *poFeature = NULL;
+        int nFeatures = 0;
 
         while( (poFeature = oReader.ReadNextFeature()) != NULL )
         {

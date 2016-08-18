@@ -650,7 +650,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      What filename do we use, excluding the extension?               */
 /* -------------------------------------------------------------------- */
-    char *pszFilenameWithoutExt;
+    char *pszFilenameWithoutExt = NULL;
 
     if( bSingleFileDataSource && nLayers == 0 )
     {

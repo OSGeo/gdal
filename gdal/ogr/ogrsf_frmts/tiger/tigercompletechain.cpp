@@ -321,9 +321,7 @@ int TigerCompleteChain::SetModule( const char * pszModuleIn )
 
         if( pszModuleIn )
         {
-            char        *pszFilename;
-
-            pszFilename = poDS->BuildFilename( pszModuleIn, "3" );
+            char *pszFilename = poDS->BuildFilename( pszModuleIn, "3" );
 
             fpRT3 = VSIFOpenL( pszFilename, "rb" );
 
@@ -349,9 +347,7 @@ int TigerCompleteChain::SetModule( const char * pszModuleIn )
 /* -------------------------------------------------------------------- */
     if( pszModuleIn != NULL )
     {
-        char    *pszFilename;
-
-        pszFilename = poDS->BuildFilename( pszModuleIn, "2" );
+        char *pszFilename = poDS->BuildFilename( pszModuleIn, "2" );
 
         fpShape = VSIFOpenL( pszFilename, "rb" );
 
@@ -695,9 +691,7 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
 
         if( pszModule )
         {
-            char        *pszFilename;
-
-            pszFilename = poDS->BuildFilename( pszModule, "3" );
+            char *pszFilename = poDS->BuildFilename( pszModule, "3" );
 
             fpRT3 = VSIFOpenL( pszFilename, "ab" );
 
@@ -717,9 +711,7 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
 
     if( pszModule )
     {
-        char        *pszFilename;
-
-        pszFilename = poDS->BuildFilename( pszModule, "2" );
+        char *pszFilename = poDS->BuildFilename( pszModule, "2" );
 
         fpShape = VSIFOpenL( pszFilename, "ab" );
 

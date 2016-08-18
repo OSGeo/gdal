@@ -103,7 +103,7 @@ int S57ClassRegistrar::FindFile( const char *pszTarget,
                                  VSILFILE **pfp )
 
 {
-    const char *pszFilename;
+    const char *pszFilename = NULL;
 
     if( pszDirectory == NULL )
     {

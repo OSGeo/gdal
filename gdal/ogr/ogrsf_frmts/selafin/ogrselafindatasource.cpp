@@ -64,8 +64,9 @@ void Range::setRange(const char *pszStr) {
         return;
     }
     const char *pszc=pszStr;
-    char *psze;
-    int nMin,nMax;
+    char *psze = NULL;
+    int nMin = 0;
+    int nMax = 0;
     SelafinTypeDef eType;
     while (*pszc!=0 && *pszc!=']') {
         pszc++;
@@ -103,7 +104,7 @@ void Range::setRange(const char *pszStr) {
                 pszc=psze;
             }
         } else nMax=nMin;
-        Range::List *poNew;
+        Range::List *poNew = NULL;
         if (eType!=ALL) poNew=new Range::List(eType,nMin,nMax,NULL); else poNew=new Range::List(POINTS,nMin,nMax,new Range::List(ELEMENTS,nMin,nMax,NULL));
         if (poVals==NULL) {
             poVals=poNew;
@@ -341,12 +342,11 @@ int OGRSelafinDataSource::TakeLock(CPL_UNUSED const char *pszFilename) {
     // For now, this procedure is deactivated and a warning message is issued when a datasource is opened in update mode.
     //CPLDebug("Selafin","TakeLock(%s)",pszFilename);
     if (pszLockName!=0) CPLFree(pszLockName);
-    VSILFILE *fpLock;
     size_t nLen=strlen(pszFilename)+4;
     pszLockName=(char*)CPLMalloc(sizeof(char)*nLen);
     CPLStrlcpy(pszLockName,pszFilename,nLen-3);
     CPLStrlcat(pszLockName,"~~~",nLen);
-    fpLock=VSIFOpenL(pszLockName,"rb+");
+    VSILFILE *fpLock = VSIFOpenL(pszLockName, "rb+");
     // This is not thread-safe but I'm not quite sure how to open a file in exclusive mode and in a portable way
     if (fpLock!=NULL) {
         VSIFCloseL(fpLock);
@@ -375,7 +375,7 @@ void OGRSelafinDataSource::ReleaseLock() {
 int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     //CPLDebug("Selafin","OpenTable(%s,%i)",pszFilename,bUpdate);
     // Open the file
-    VSILFILE * fp;
+    VSILFILE *fp = NULL;
     if( bUpdate ) {
         // We have to implement this locking feature for write access because the same file may hold several layers, and some programs (like QGIS) open each layer in a single datasource,
         // so the same file might be opened several times for write access

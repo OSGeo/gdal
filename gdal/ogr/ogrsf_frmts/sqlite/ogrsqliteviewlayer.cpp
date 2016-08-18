@@ -173,7 +173,6 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     int rc;
     sqlite3 *hDB = poDS->GetDB();
     sqlite3_stmt *hColStmt = NULL;
-    const char *pszSQL;
 
     OGRSQLiteLayer* l_poUnderlyingLayer = GetUnderlyingLayer();
     if (l_poUnderlyingLayer == NULL)
@@ -208,9 +207,10 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
     hColStmt = NULL;
-    pszSQL = CPLSPrintf( "SELECT \"%s\", * FROM '%s' LIMIT 1",
-                         OGRSQLiteEscapeName(pszFIDColumn).c_str(),
-                         pszEscapedTableName );
+    const char *pszSQL =
+        CPLSPrintf( "SELECT \"%s\", * FROM '%s' LIMIT 1",
+                    OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                    pszEscapedTableName );
 
     rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc != SQLITE_OK )
@@ -422,8 +422,9 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
         if (!bHasCheckedSpatialIndexTable)
         {
             bHasCheckedSpatialIndexTable = TRUE;
-            char **papszResult;
-            int nRowCount, nColCount;
+            char **papszResult = NULL;
+            int nRowCount = 0;
+            int nColCount = 0;
             char *pszErrMsg = NULL;
 
             CPLString osSQL;
@@ -556,10 +557,9 @@ GIntBig OGRSQLiteViewLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
 /*      Form count SQL.                                                 */
 /* -------------------------------------------------------------------- */
-    const char *pszSQL;
-
-    pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s' %s",
-                          pszEscapedTableName, osWHERE.c_str() );
+    const char *pszSQL =
+        CPLSPrintf( "SELECT count(*) FROM '%s' %s",
+                    pszEscapedTableName, osWHERE.c_str() );
 
 /* -------------------------------------------------------------------- */
 /*      Execute.                                                        */

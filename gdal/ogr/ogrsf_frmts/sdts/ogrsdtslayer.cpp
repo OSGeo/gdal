@@ -102,9 +102,6 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
          papszATIDRefs != NULL && papszATIDRefs[iTable] != NULL;
          iTable++ )
     {
-        SDTSAttrReader  *poAttrReader;
-        DDFFieldDefn    *poFDefn;
-
 /* -------------------------------------------------------------------- */
 /*      Get the attribute table reader, and the associated user         */
 /*      attribute field.                                                */
@@ -112,13 +109,14 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
         int nLayerIdx = poTransfer->FindLayer( papszATIDRefs[iTable] );
         if( nLayerIdx < 0 )
             continue;
-        poAttrReader = (SDTSAttrReader *)
+        SDTSAttrReader *poAttrReader = (SDTSAttrReader *)
             poTransfer->GetLayerIndexedReader(nLayerIdx);
 
         if( poAttrReader == NULL )
             continue;
 
-        poFDefn = poAttrReader->GetModule()->FindFieldDefn( "ATTP" );
+        DDFFieldDefn *poFDefn =
+            poAttrReader->GetModule()->FindFieldDefn( "ATTP" );
         if( poFDefn == NULL )
             poFDefn = poAttrReader->GetModule()->FindFieldDefn( "ATTS" );
         if( poFDefn == NULL )
@@ -132,14 +130,13 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
         {
             DDFSubfieldDefn     *poSFDefn = poFDefn->GetSubfield( iSF );
             int                 nWidth = poSFDefn->GetWidth();
-            char                *pszFieldName;
 
-            if( poFeatureDefn->GetFieldIndex( poSFDefn->GetName() ) != -1 )
-                pszFieldName = CPLStrdup( CPLSPrintf( "%s_%s",
-                                                      papszATIDRefs[iTable],
-                                                      poSFDefn->GetName() ) );
-            else
-                pszFieldName = CPLStrdup( poSFDefn->GetName() );
+            char *pszFieldName =
+                poFeatureDefn->GetFieldIndex( poSFDefn->GetName() ) != -1
+                ? CPLStrdup( CPLSPrintf( "%s_%s",
+                                         papszATIDRefs[iTable],
+                                         poSFDefn->GetName() ) )
+                : CPLStrdup( poSFDefn->GetName() );
 
             switch( poSFDefn->GetType() )
             {
@@ -248,34 +245,31 @@ AssignAttrRecordToFeature( OGRFeature * poFeature,
         switch( poSFDefn->GetType() )
         {
           case DDFString:
-            const char  *pszValue;
-
-            pszValue = poSFDefn->ExtractStringData(pachData, nMaxBytes,
-                                                   NULL);
+          {
+            const char  *pszValue =
+                poSFDefn->ExtractStringData(pachData, nMaxBytes, NULL);
 
             if( iField != -1 )
                 poFeature->SetField( iField, pszValue );
             break;
-
+          }
           case DDFFloat:
-            double      dfValue;
-
-            dfValue = poSFDefn->ExtractFloatData(pachData, nMaxBytes,
-                                                 NULL);
+          {
+            double dfValue =
+                poSFDefn->ExtractFloatData(pachData, nMaxBytes, NULL);
 
             if( iField != -1 )
                 poFeature->SetField( iField, dfValue );
             break;
-
+          }
           case DDFInt:
-            int         nValue;
-
-            nValue = poSFDefn->ExtractIntData(pachData, nMaxBytes, NULL);
+          {
+            int nValue = poSFDefn->ExtractIntData(pachData, nMaxBytes, NULL);
 
             if( iField != -1 )
                 poFeature->SetField( iField, nValue );
             break;
-
+          }
           default:
             break;
         }
@@ -302,7 +296,6 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /*      Fetch the next sdts style feature object from the reader.       */
 /* -------------------------------------------------------------------- */
     SDTSFeature *poSDTSFeature = poReader->GetNextFeature();
-    OGRFeature  *poFeature;
 
     if( poSDTSFeature == NULL )
         return NULL;
@@ -310,7 +303,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Create the OGR feature.                                         */
 /* -------------------------------------------------------------------- */
-    poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     m_nFeaturesRead++;
 
@@ -383,15 +376,12 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Set attributes for any indicated attribute records.             */
 /* -------------------------------------------------------------------- */
-    int         iAttrRecord;
-
-    for( iAttrRecord = 0;
+    for( int iAttrRecord = 0;
          iAttrRecord < poSDTSFeature->nAttributes;
          iAttrRecord++)
     {
-        DDFField        *poSR;
-
-        poSR = poTransfer->GetAttr( poSDTSFeature->paoATID+iAttrRecord );
+        DDFField *poSR =
+            poTransfer->GetAttr( poSDTSFeature->paoATID+iAttrRecord );
         if( poSR != NULL )
             AssignAttrRecordToFeature( poFeature, poTransfer, poSR );
     }

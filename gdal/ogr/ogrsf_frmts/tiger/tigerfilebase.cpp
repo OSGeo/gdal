@@ -85,7 +85,6 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
                              const char *pszExtension )
 
 {
-    char        *pszFilename;
 
     CPLFree( pszModule );
     pszModule = NULL;
@@ -101,7 +100,7 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
     if( pszModuleToOpen == NULL )
         return TRUE;
 
-    pszFilename = poDS->BuildFilename( pszModuleToOpen, pszExtension );
+    char *pszFilename = poDS->BuildFilename( pszModuleToOpen, pszExtension );
 
     fpPrimary = VSIFOpenL( pszFilename, "rb" );
 
@@ -447,9 +446,7 @@ int TigerFileBase::SetWriteModule( const char *pszExtension,
 /* -------------------------------------------------------------------- */
 /*      Does this file already exist?                                   */
 /* -------------------------------------------------------------------- */
-    char *pszFilename;
-
-    pszFilename = poDS->BuildFilename( szFullModule, pszExtension );
+    char *pszFilename = poDS->BuildFilename( szFullModule, pszExtension );
 
     fpPrimary = VSIFOpenL( pszFilename, "ab" );
     CPLFree(pszFilename);

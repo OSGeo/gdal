@@ -103,11 +103,9 @@ void OGRSUALayer::ResetReading()
 
 OGRFeature *OGRSUALayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -177,17 +175,23 @@ static int GetLatLon(const char* pszStr, double& dfLat, double& dfLon)
 
 OGRFeature *OGRSUALayer::GetNextRawFeature()
 {
-    const char* pszLine;
-    CPLString osTYPE, osCLASS, osTITLE, osTOPS, osBASE;
-    OGRLinearRing oLR;
-    double dfLastLat = 0, dfLastLon = 0;
-    int bFirst = TRUE;
-
-    if (bEOF)
+    if( bEOF )
         return NULL;
+
+    CPLString osTYPE;
+    CPLString osCLASS;
+    CPLString osTITLE;
+    CPLString osTOPS;
+    CPLString osBASE;
+    OGRLinearRing oLR;
+    double dfLastLat = 0.0;
+    double dfLastLon = 0.0;
+    bool bFirst = true;
+
 
     while( true )
     {
+        const char* pszLine = NULL;
         if (bFirst && bHasLastLine)
         {
             pszLine = osLastLine.c_str();

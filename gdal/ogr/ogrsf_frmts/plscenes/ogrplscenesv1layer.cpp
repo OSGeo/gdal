@@ -1433,11 +1433,9 @@ OGRErr OGRPLScenesV1Layer::SetAttributeFilter( const char *pszQuery )
 
 OGRFeature *OGRPLScenesV1Layer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature  *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 

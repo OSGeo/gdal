@@ -285,8 +285,9 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
 /*      Execute.                                                        */
 /* -------------------------------------------------------------------- */
     char *pszErrMsg = NULL;
-    char **papszResult;
-    int nRowCount, nColCount;
+    char **papszResult = NULL;
+    int nRowCount = 0;
+    int nColCount = 0;
     int nResult = -1;
 
     if( sqlite3_get_table( poDS->GetDB(), osFeatureCountSQL, &papszResult,

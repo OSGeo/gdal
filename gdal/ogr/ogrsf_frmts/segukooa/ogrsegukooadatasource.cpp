@@ -94,9 +94,8 @@ int OGRSEGUKOOADataSource::Open( const char * pszFilename )
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    pszLine = CPLReadLine2L(fp,81,NULL);
+    const char* pszLine = CPLReadLine2L(fp,81,NULL);
     CPLPopErrorHandler();
     CPLErrorReset();
 

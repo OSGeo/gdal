@@ -383,16 +383,15 @@ static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
     {
         nRowCount = 0; nColCount = 0;
 
-        const char* pszSQL;
-
-        pszSQL = CPLSPrintf("SELECT name, sql FROM %s "
-                            "WHERE (type = 'trigger' OR type = 'view') AND ("
-                            "sql LIKE '%%%s%%' OR "
-                            "sql LIKE '%%\"%s\"%%' OR "
-                            "sql LIKE '%%ogr_layer_%%' )",
-                            aosDatabaseNames[i].c_str(),
-                            pszVirtualTableName,
-                            OGRSQLiteEscapeName(pszVirtualTableName).c_str());
+        const char* pszSQL =
+            CPLSPrintf("SELECT name, sql FROM %s "
+                       "WHERE (type = 'trigger' OR type = 'view') AND ("
+                       "sql LIKE '%%%s%%' OR "
+                       "sql LIKE '%%\"%s\"%%' OR "
+                       "sql LIKE '%%ogr_layer_%%' )",
+                       aosDatabaseNames[i].c_str(),
+                       pszVirtualTableName,
+                       OGRSQLiteEscapeName(pszVirtualTableName).c_str());
 
         sqlite3_get_table( hDB, pszSQL, &papszResult, &nRowCount, &nColCount,
                            NULL );
@@ -689,7 +688,7 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
     for (i = 0; i < pIndex->nConstraint; i++)
     {
         int iCol = pIndex->aConstraint[i].iColumn;
-        const char* pszFieldName;
+        const char* pszFieldName = NULL;
         if( iCol == -1 )
             pszFieldName = "FID";
         else if( iCol >= 0 && iCol < poFDefn->GetFieldCount() )
@@ -697,7 +696,7 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
         else
             pszFieldName = "unknown_field";
 
-        const char* pszOp;
+        const char* pszOp = NULL;
         switch(pIndex->aConstraint[i].op)
         {
             case SQLITE_INDEX_CONSTRAINT_EQ: pszOp = " = "; break;
@@ -1167,15 +1166,15 @@ static
 int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
                       sqlite3_context* pContext, int nCol)
 {
-    OGR2SQLITE_vtab_cursor* pMyCursor = (OGR2SQLITE_vtab_cursor*) pCursor;
-    OGRFeature* poFeature;
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Column %d", nCol);
 #endif
 
+    OGR2SQLITE_vtab_cursor* pMyCursor = (OGR2SQLITE_vtab_cursor*) pCursor;
+
     OGR2SQLITE_GoToWishedIndex(pMyCursor);
 
-    poFeature = pMyCursor->poFeature;
+    OGRFeature* poFeature = pMyCursor->poFeature;
     if( poFeature == NULL)
         return SQLITE_ERROR;
 
@@ -2251,13 +2250,13 @@ static
 int OGR2SQLITESpatialIndex_Column(sqlite3_vtab_cursor* pCursor,
                       sqlite3_context* pContext, int nCol)
 {
-    OGR2SQLITESpatialIndex_vtab_cursor* pMyCursor = (OGR2SQLITESpatialIndex_vtab_cursor*) pCursor;
-    OGRFeature* poFeature;
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Column %d", nCol);
 #endif
 
-    poFeature = pMyCursor->poFeature;
+    OGR2SQLITESpatialIndex_vtab_cursor* pMyCursor = (OGR2SQLITESpatialIndex_vtab_cursor*) pCursor;
+
+    OGRFeature* poFeature = pMyCursor->poFeature;
     if( poFeature == NULL)
         return SQLITE_ERROR;
 

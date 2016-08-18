@@ -563,9 +563,7 @@ OGRFeature *OGRSQLiteLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -1027,7 +1025,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         double adfTuple[2];
         GInt32 nPointCount;
         int    iPoint;
-        OGRLineString *poLS;
 
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -1042,7 +1039,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (nBytes - 8 < 2 * 8 * nPointCount )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         if( !NEED_SWAP_SPATIALITE() )
         {
             poLS->setPoints( nPointCount, (OGRRawPoint*)(pabyData + 8), NULL );
@@ -1071,7 +1069,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         double adfTuple[3];
         GInt32 nPointCount;
         int    iPoint;
-        OGRLineString *poLS;
 
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -1086,7 +1083,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (nBytes - 8 < 3 * 8 * nPointCount )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         poLS->setNumPoints( nPointCount );
 
         for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -1114,7 +1112,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         double adfTuple[3];
         GInt32 nPointCount;
         int    iPoint;
-        OGRLineString *poLS;
 
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -1129,7 +1126,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (nBytes - 8 < 3 * 8 * nPointCount )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         poLS->setNumPoints( nPointCount );
 
         for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -1157,7 +1155,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         double adfTuple[4];
         GInt32 nPointCount;
         int    iPoint;
-        OGRLineString *poLS;
 
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -1172,7 +1169,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (nBytes - 8 < 4 * 8 * nPointCount )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         poLS->setNumPoints( nPointCount );
 
         for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -1203,7 +1201,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         float asfTuple[2];
         GInt32 nPointCount;
         int    iPoint;
-        OGRLineString *poLS;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1222,7 +1219,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (nBytes - 8 < compressedSize )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         poLS->setNumPoints( nPointCount );
 
         nNextByte = 8;
@@ -1277,7 +1275,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         float asfTuple[3];
         GInt32 nPointCount;
         int    iPoint;
-        OGRLineString *poLS;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1296,7 +1293,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (nBytes - 8 < compressedSize )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         poLS->setNumPoints( nPointCount );
 
         nNextByte = 8;
@@ -1356,7 +1354,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         float asfTuple[2];
         GInt32 nPointCount;
         int    iPoint;
-        OGRLineString *poLS;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1375,7 +1372,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (nBytes - 8 < compressedSize )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         poLS->setNumPoints( nPointCount );
 
         nNextByte = 8;
@@ -1433,7 +1431,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         float asfTuple[3];
         GInt32 nPointCount;
         int    iPoint;
-        OGRLineString *poLS;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1453,7 +1450,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (nBytes - 8 < compressedSize )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         poLS->setNumPoints( nPointCount );
 
         nNextByte = 8;
@@ -1514,10 +1512,9 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         double adfTuple[2];
         GInt32 nPointCount;
         GInt32 nRingCount;
-        int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
-        int    nNextByte;
+        int iPoint;
+        int iRing;
+        int nNextByte;
 
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -1535,7 +1532,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
         nNextByte = 8;
 
-        poGeom = poPoly = new OGRPolygon();
+        OGRPolygon *poPoly = new OGRPolygon();
+        poGeom = poPoly;
 
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
@@ -1563,7 +1561,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             if( !NEED_SWAP_SPATIALITE() )
             {
                 poLR->setPoints( nPointCount, (OGRRawPoint*)(pabyData + nNextByte), NULL );
@@ -1598,8 +1596,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         GInt32 nPointCount;
         GInt32 nRingCount;
         int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1618,7 +1614,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
         nNextByte = 8;
 
-        poGeom = poPoly = new OGRPolygon();
+        OGRPolygon *poPoly = new OGRPolygon();
+        poGeom = poPoly;
 
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
@@ -1646,7 +1643,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount, FALSE );
 
             for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -1680,8 +1677,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         GInt32 nPointCount;
         GInt32 nRingCount;
         int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1700,7 +1695,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
         nNextByte = 8;
 
-        poGeom = poPoly = new OGRPolygon();
+        OGRPolygon *poPoly = new OGRPolygon();
+        poGeom = poPoly;
 
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
@@ -1728,7 +1724,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount, FALSE );
 
             for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -1762,8 +1758,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         GInt32 nPointCount;
         GInt32 nRingCount;
         int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1782,7 +1776,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
         nNextByte = 8;
 
-        poGeom = poPoly = new OGRPolygon();
+        OGRPolygon *poPoly = new OGRPolygon();
+        poGeom = poPoly;
 
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
@@ -1810,7 +1805,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount, FALSE );
 
             for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -1847,8 +1842,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         GInt32 nPointCount;
         GInt32 nRingCount;
         int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1867,7 +1860,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
         nNextByte = 8;
 
-        poGeom = poPoly = new OGRPolygon();
+        OGRPolygon *poPoly = new OGRPolygon();
+        poGeom = poPoly;
 
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
@@ -1900,7 +1894,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount, FALSE );
 
             for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -1955,8 +1949,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         GInt32 nPointCount;
         GInt32 nRingCount;
         int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -1975,7 +1967,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
         nNextByte = 8;
 
-        poGeom = poPoly = new OGRPolygon();
+        OGRPolygon *poPoly = new OGRPolygon();
+        poGeom = poPoly;
 
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
@@ -2009,7 +2002,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount, FALSE );
 
             for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -2068,8 +2061,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         GInt32 nPointCount;
         GInt32 nRingCount;
         int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -2088,7 +2079,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
         nNextByte = 8;
 
-        poGeom = poPoly = new OGRPolygon();
+        OGRPolygon *poPoly = new OGRPolygon();
+        poGeom = poPoly;
 
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
@@ -2122,7 +2114,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount, FALSE );
 
             for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -2180,8 +2172,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         GInt32 nPointCount;
         GInt32 nRingCount;
         int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
         int    nNextByte;
 
         if( nBytes < 8 )
@@ -2200,7 +2190,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
         nNextByte = 8;
 
-        poGeom = poPoly = new OGRPolygon();
+        OGRPolygon *poPoly = new OGRPolygon();
+        poGeom = poPoly;
 
         for( iRing = 0; iRing < nRingCount; iRing++ )
         {
@@ -2235,7 +2226,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount, FALSE );
 
             for( iPoint = 0; iPoint < nPointCount; iPoint++ )
@@ -3046,17 +3037,16 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
 
 {
     /* Spatialite does not support curve geometries */
-    const OGRGeometry* poWorkGeom;
-    if( poGeometry->hasCurveGeometry() )
-        poWorkGeom = poGeometry->getLinearGeometry();
-    else
-        poWorkGeom = poGeometry;
+    const OGRGeometry* poWorkGeom = poGeometry->hasCurveGeometry()
+        ? poGeometry->getLinearGeometry()
+        :  poGeometry;
 
     bUseComprGeom = bUseComprGeom && !bSpatialite2D && CanBeCompressedSpatialiteGeometry(poWorkGeom);
 
-    int     nDataLen = 44 + ComputeSpatiaLiteGeometrySize( poWorkGeom,
-                                                           bSpatialite2D,
-                                                           bUseComprGeom );
+    int nDataLen =
+        44 + ComputeSpatiaLiteGeometrySize( poWorkGeom,
+                                            bSpatialite2D,
+                                            bUseComprGeom );
     OGREnvelope sEnvelope;
 
     *ppabyData =  (GByte *) CPLMalloc( nDataLen );

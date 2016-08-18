@@ -163,7 +163,6 @@ namespace Selafin {
         }
         // Now we can look for the nearest neighbour using this tree
         int nIndex=-1;
-        double dfMin;
         CPLRectObj poObj;
         poObj.minx=dfx-dfMax;
         poObj.maxx=dfx+dfMax;
@@ -172,9 +171,12 @@ namespace Selafin {
         int nFeatureCount;
         void **phResults=CPLQuadTreeSearch(poTree,&poObj,&nFeatureCount);
         if (nFeatureCount<=0) return -1;
-        double dfa,dfb,dfc;
-        dfMin=dfMax*dfMax;
-        for (int i=0;i<nFeatureCount;++i) {
+        double dfa;
+        double dfb;
+        double dfc;
+        double dfMin = dfMax * dfMax;
+        for( int i=0;i<nFeatureCount;++i )
+        {
             Point *poPoint=(Point*)(phResults[i]);
             dfa=dfx-poPoint->poHeader->paadfCoords[0][poPoint->nIndex];
             dfa*=dfa;
@@ -221,8 +223,8 @@ namespace Selafin {
         // We must also remove all the elements referencing the deleted feature, otherwise the file will not be consistent any inter
         int nOldElements=nElements;
         for (int i=0;i<nElements;++i) {
-            bool bReferencing=false;
-            int *panTemp=panConnectivity+i*nPointsPerElement;
+            bool bReferencing = false;
+            int *panTemp = panConnectivity + i * nPointsPerElement;
             for (int j=0;j<nPointsPerElement;++j) bReferencing |= (panTemp[j]==nIndex+1);
             if (bReferencing) {
                 nElements--;
@@ -277,12 +279,12 @@ namespace Selafin {
     /****************************************************************/
     TimeStepList::~TimeStepList() {
         TimeStepList *poFirst=this;
-        TimeStepList *poTmp;
-        while (poFirst!=0) {
-            poTmp=poFirst->poNext;
+        while( poFirst != 0 )
+        {
+            TimeStepList *poTmp = poFirst->poNext;
             delete poFirst->poStep;
             delete poFirst;
-            poFirst=poTmp;
+            poFirst = poTmp;
         }
     }
 #endif
@@ -610,8 +612,8 @@ namespace Selafin {
         if (write_intarray(fp,anTemp,4)==0) return 0;
         if (write_intarray(fp,poHeader->panConnectivity,poHeader->nElements*poHeader->nPointsPerElement)==0) return 0;
         if (write_intarray(fp,poHeader->panBorder,poHeader->nPoints)==0) return 0;
-        double *dfVals;
-        dfVals=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nPoints);
+        double *dfVals = (double*)
+            VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nPoints);
         if (poHeader->nPoints>0 && dfVals==NULL) return 0;
         for (size_t i=0;i<2;++i) {
             for (int j=0;j<poHeader->nPoints;++j) dfVals[j]=poHeader->paadfCoords[i][j]-poHeader->adfOrigin[i];

@@ -145,9 +145,7 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Fetch the feature associated with the record.                   */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature;
-
-    poFeature =
+    OGRFeature  *poFeature =
         poReader->GetFeature( (int)nFeatureId-panModuleOffset[iLastModule]-1 );
 
     if( poFeature != NULL )

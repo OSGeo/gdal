@@ -156,8 +156,8 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
         return poFeature;
     } else {
         if (nFID>=poHeader->nElements) return NULL;
-        double *anData;
-        anData=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nVar);
+        double *anData = (double*)
+            VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nVar);
         if (poHeader->nVar>0 && anData==NULL) return NULL;
         for (int i=0;i<poHeader->nVar;++i) anData[i]=0;
         double nData;
@@ -329,8 +329,8 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
         }
 
         // Now we look for vertices that are already referenced as points in the file
-        int *anMap;
-        anMap=(int*)VSI_MALLOC2_VERBOSE(sizeof(int),poHeader->nPointsPerElement);
+        int *anMap = (int*)
+            VSI_MALLOC2_VERBOSE(sizeof(int), poHeader->nPointsPerElement);
         if (anMap==NULL) {
             return OGRERR_FAILURE;
         }
@@ -361,9 +361,8 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
     }
 
     // Now comes the real insertion. Since values have to be inserted nearly everywhere in the file and we don't want to store everything in memory to overwrite it, we create a new copy of it where we write the new values
-    VSILFILE *fpNew;
     const char *pszTempfile=CPLGenerateTempFilename(NULL);
-    fpNew=VSIFOpenL(pszTempfile,"wb+");
+    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
@@ -375,7 +374,6 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
     }
     int nLen;
     double dfDate;
-    double *padfValues;
     for (int i=0;i<poHeader->nSteps;++i) {
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
@@ -388,12 +386,14 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
             return OGRERR_FAILURE;
         }
         for (int j=0;j<poHeader->nVar;++j) {
+            double *padfValues = NULL;
             if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
             }
-            padfValues=(double*)CPLRealloc(padfValues,sizeof(double)*poHeader->nPoints);
+            padfValues = (double*)
+                CPLRealloc(padfValues, sizeof(double)*poHeader->nPoints);
             if (padfValues==NULL) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
@@ -447,9 +447,8 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
     poFeatureDefn->AddFieldDefn(poField);
 
     // Now comes the real insertion. Since values have to be inserted nearly everywhere in the file and we don't want to store everything in memory to overwrite it, we create a new copy of it where we write the new values
-    VSILFILE *fpNew;
     const char *pszTempfile=CPLGenerateTempFilename(NULL);
-    fpNew=VSIFOpenL(pszTempfile,"wb+");
+    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
@@ -461,7 +460,6 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
     }
     int nLen;
     double dfDate;
-    double *padfValues;
     for (int i=0;i<poHeader->nSteps;++i) {
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
@@ -473,6 +471,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
             VSIUnlink(pszTempfile);
             return OGRERR_FAILURE;
         }
+        double *padfValues = NULL;
         for (int j=0;j<poHeader->nVar-1;++j) {
             if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
                 VSIFCloseL(fpNew);
@@ -517,9 +516,8 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
     poFeatureDefn->DeleteFieldDefn(iField);
 
     // Now comes the real deletion. Since values have to be deleted nearly everywhere in the file and we don't want to store everything in memory to overwrite it, we create a new copy of it where we write the new values
-    VSILFILE *fpNew;
     const char *pszTempfile=CPLGenerateTempFilename(NULL);
-    fpNew=VSIFOpenL(pszTempfile,"wb+");
+    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
@@ -531,7 +529,6 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
     }
     int nLen;
     double dfDate;
-    double *padfValues;
     for (int i=0;i<poHeader->nSteps;++i) {
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
@@ -544,6 +541,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
             return OGRERR_FAILURE;
         }
         for (int j=0;j<poHeader->nVar;++j) {
+            double *padfValues = NULL;
             if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
@@ -579,9 +577,8 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
     poFeatureDefn->ReorderFieldDefns(panMap);
 
     // Now comes the real change.
-    VSILFILE *fpNew;
     const char *pszTempfile=CPLGenerateTempFilename(NULL);
-    fpNew=VSIFOpenL(pszTempfile,"wb+");
+    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
@@ -667,9 +664,8 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
     }
 
     // Now we perform the deletion by creating a new temporary layer
-    VSILFILE *fpNew;
     const char *pszTempfile=CPLGenerateTempFilename(NULL);
-    fpNew=VSIFOpenL(pszTempfile,"wb+");
+    VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
     if( fpNew == NULL ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
@@ -681,7 +677,6 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
     }
     int nLen;
     double dfDate;
-    double *padfValues;
     for (int i=0;i<poHeader->nSteps;++i) {
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
@@ -694,6 +689,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
             return OGRERR_FAILURE;
         }
         for (int j=0;j<poHeader->nVar;++j) {
+            double *padfValues = NULL;
             if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);

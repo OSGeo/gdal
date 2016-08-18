@@ -461,9 +461,7 @@ int TigerPolygon::SetModule( const char * pszModuleIn )
 
         if( pszModuleIn )
         {
-            char        *pszFilename;
-
-            pszFilename = poDS->BuildFilename( pszModuleIn, "S" );
+            char *pszFilename = poDS->BuildFilename( pszModuleIn, "S" );
 
             fpRTS = VSIFOpenL( pszFilename, "rb" );
 
@@ -581,9 +579,7 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
 
         if( pszModule )
         {
-            char        *pszFilename;
-
-            pszFilename = poDS->BuildFilename( pszModule, "S" );
+            char *pszFilename = poDS->BuildFilename( pszModule, "S" );
 
             fpRTS = VSIFOpenL( pszFilename, "ab" );
 
