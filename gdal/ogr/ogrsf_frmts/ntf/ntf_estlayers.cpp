@@ -624,10 +624,12 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /*      boundaries are.  The boundary information will be emitted      */
 /*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-    int         nNumLink = 0;
-    int         anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
-    int         anRingStart[MAX_LINK], nRings = 0;
+    OGRFeature *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    int nNumLink = 0;
+    int anDirList[MAX_LINK*2] = {};
+    int anGeomList[MAX_LINK*2] = {};
+    int anRingStart[MAX_LINK] = {};
+    int nRings = 0;
 
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
@@ -635,13 +637,11 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
              && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
          iRec += 2 )
     {
-        int             i, nLineCount;
-
-        nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
+        const int nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
         anRingStart[nRings++] = nNumLink;
 
-        for( i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
+        for( int i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
         {
             anDirList[nNumLink] =
                 atoi(papoGroup[iRec+1]->GetField( 19+i*7, 19+i*7 ));
@@ -821,10 +821,12 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /*      boundaries are.  The boundary information will be emitted      */
 /*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-    int         nNumLink = 0;
-    int         anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
-    int         anRingStart[MAX_LINK], nRings = 0;
+    OGRFeature *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    int nNumLink = 0;
+    int anDirList[MAX_LINK*2] = {};
+    int anGeomList[MAX_LINK*2] = {};
+    int anRingStart[MAX_LINK] = {};
+    int nRings = 0;
 
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
@@ -832,13 +834,11 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
              && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
          iRec += 2 )
     {
-        int             i, nLineCount;
-
-        nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
+        const int nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
         anRingStart[nRings++] = nNumLink;
 
-        for( i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
+        for( int i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
         {
             anDirList[nNumLink] =
                 atoi(papoGroup[iRec+1]->GetField( 19+i*7, 19+i*7 ));
@@ -1675,15 +1675,11 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                                     ... )
 
 {
-    va_list     hVaArgs;
-    OGRFeatureDefn *poDefn;
-    OGRNTFLayer         *poLayer;
-
 /* -------------------------------------------------------------------- */
 /*      Does this layer already exist?  If so, we do nothing            */
 /*      ... note that we don't check the definition.                    */
 /* -------------------------------------------------------------------- */
-    poLayer = poDS->GetNamedLayer(pszLayerName);
+    OGRNTFLayer *poLayer = poDS->GetNamedLayer(pszLayerName);
 
 /* ==================================================================== */
 /*      Create a new layer matching the request if we don't already      */
@@ -1694,7 +1690,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create a new feature definition.                                */
 /* -------------------------------------------------------------------- */
-        poDefn = new OGRFeatureDefn( pszLayerName );
+        OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszLayerName );
         poDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSpatialRef());
         poDefn->SetGeomType( eGeomType );
         poDefn->Reference();
@@ -1702,21 +1698,20 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Fetch definitions of each field in turn.                        */
 /* -------------------------------------------------------------------- */
+        va_list hVaArgs;
         va_start(hVaArgs, poClass);
         while( true )
         {
-            const char  *pszFieldName = va_arg(hVaArgs, const char *);
-            OGRFieldType     eType;
-            int          nWidth, nPrecision;
+            const char *pszFieldName = va_arg(hVaArgs, const char *);
 
             if( pszFieldName == NULL )
                 break;
 
-            eType = (OGRFieldType) va_arg(hVaArgs, int);
-            nWidth = va_arg(hVaArgs, int);
-            nPrecision = va_arg(hVaArgs, int);
+            const OGRFieldType eType = (OGRFieldType) va_arg(hVaArgs, int);
+            const int nWidth = va_arg(hVaArgs, int);
+            const int nPrecision = va_arg(hVaArgs, int);
 
-            OGRFieldDefn         oFieldDefn( pszFieldName, eType );
+            OGRFieldDefn oFieldDefn( pszFieldName, eType );
             oFieldDefn.SetWidth( nWidth );
             oFieldDefn.SetPrecision( nPrecision );
 

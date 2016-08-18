@@ -253,23 +253,18 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /*      open ... we don't want to occupy a lot of file handles when      */
 /*      handling a whole directory.                                     */
 /* -------------------------------------------------------------------- */
-    int         i;
-
     papoNTFFileReader = (NTFFileReader **)
         CPLCalloc(sizeof(void*), CSLCount(papszFileList));
 
-    for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
+    for( int i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
     {
         if( bTestOpen )
         {
-            char        szHeader[80];
-            FILE        *fp;
-            int         j;
-
-            fp = VSIFOpen( papszFileList[i], "rb" );
+            FILE *fp = VSIFOpen( papszFileList[i], "rb" );
             if( fp == NULL )
                 continue;
 
+            char szHeader[80] = {};
             if( VSIFRead( szHeader, 80, 1, fp ) < 1 )
             {
                 VSIFClose( fp );
@@ -281,7 +276,8 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
             if( !STARTS_WITH_CI(szHeader, "01") )
                 continue;
 
-            for( j = 0; j < 80; j++ )
+            int j = 0;  // Used after for.
+            for( ; j < 80; j++ )
             {
                 if( szHeader[j] == 10 || szHeader[j] == 13 )
                     break;
@@ -292,9 +288,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 
         }
 
-        NTFFileReader   *poFR;
-
-        poFR = new NTFFileReader( this );
+        NTFFileReader *poFR = new NTFFileReader( this );
 
         if( !poFR->Open( papszFileList[i] ) )
         {
