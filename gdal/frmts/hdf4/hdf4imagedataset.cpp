@@ -61,9 +61,9 @@ static const int HDF4_SDS_MAXNAMELEN = 65;
 
 extern const char * const pszGDALSignature;
 
-// Signature to recognize files written by GDAL
-const char      * const pszGDALSignature =
-        "Created with GDAL (http://www.remotesensing.org/gdal/)";
+// Signature to recognize files written by GDAL.
+const char * const pszGDALSignature =
+    "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
 extern CPLMutex *hHDF4Mutex;
 
@@ -313,8 +313,8 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Handle different configurations.                                */
 /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_None;
-    int32 aiStart[H4_MAX_NC_DIMS];
-    int32 aiEdges[H4_MAX_NC_DIMS];
+    int32 aiStart[H4_MAX_NC_DIMS] = {};
+    int32 aiEdges[H4_MAX_NC_DIMS] = {};
 
     switch ( poGDS->iDatasetType )
     {
@@ -561,8 +561,8 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>( poDS );
     CPLAssert( poGDS != NULL );
 
-    int32 aiStart[H4_MAX_NC_DIMS];
-    int32 aiEdges[H4_MAX_NC_DIMS];
+    int32 aiStart[H4_MAX_NC_DIMS] = {};
+    int32 aiEdges[H4_MAX_NC_DIMS] = {};
     CPLErr eErr = CE_None;
 
     CPLMutexHolderD(&hHDF4Mutex);
@@ -1419,13 +1419,15 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
 
     if( l_iSDS != FAIL )
     {
-        char        l_szName[HDF4_SDS_MAXNAMELEN];
-        int32 l_iRank, l_iNumType, l_nAttrs;
-        int32       l_aiDimSizes[H4_MAX_VAR_DIMS];
+        char l_szName[HDF4_SDS_MAXNAMELEN] = {};
+        int32 l_iRank = 0;
+        int32 l_iNumType = 0;
+        int32 l_nAttrs = 0;
+        int32 l_aiDimSizes[H4_MAX_VAR_DIMS] = {};
 
-        double adfGCTP[29];
-        int32 aiStart[H4_MAX_NC_DIMS];
-        int32 aiEdges[H4_MAX_NC_DIMS];
+        double adfGCTP[29] = {};
+        int32 aiStart[H4_MAX_NC_DIMS] = {};
+        int32 aiEdges[H4_MAX_NC_DIMS] = {};
 
         aiStart[0] = 0;
         aiEdges[0] = 29;
@@ -1477,7 +1479,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
 
             CPLFree( pszProjection );
             oSRS.exportToWkt( &pszProjection );
-            bGotGCTPProjection = TRUE;
+            bGotGCTPProjection = true;
         }
 
         SDendaccess(l_iSDS);
@@ -1747,8 +1749,8 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
         const int l_nAttrs = CSLCount( papszAttributes );
         for( int i = 0; i < l_nAttrs; i++ )
         {
-            int32 l_iNumType;
-            int32 nValues;
+            int32 l_iNumType = 0;
+            int32 nValues = 0;
 
             if( SWattrinfo( hSW, papszAttributes[i],
                             &l_iNumType, &nValues ) < 0 )
@@ -1799,16 +1801,16 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
         int32 l_iRank = 0;
         int32 l_iNumType = 0;
         int32 l_nAttrs = 0;
-        char l_szName[HDF4_SDS_MAXNAMELEN];
-        int32 l_aiDimSizes[H4_MAX_VAR_DIMS];
+        char l_szName[HDF4_SDS_MAXNAMELEN] = {};
+        int32 l_aiDimSizes[H4_MAX_VAR_DIMS] = {};
 
         if( SDgetinfo( l_iSDS, l_szName, &l_iRank, l_aiDimSizes, &l_iNumType,
                        &l_nAttrs) == 0 )
         {
             for( int32 iAttribute = 0; iAttribute < l_nAttrs; iAttribute++ )
             {
-                char szAttrName[H4_MAX_NC_NAME];
-                int32 nValues;
+                char szAttrName[H4_MAX_NC_NAME] = {};
+                int32 nValues = 0;
                 SDattrinfo( l_iSDS, iAttribute, szAttrName,
                             &l_iNumType, &nValues );
                 papszLocalMetadata =
@@ -1910,15 +1912,15 @@ void HDF4ImageDataset::GetGridAttrs( int32 hGD )
         int32 l_iNumType = 0;
         int32 l_nAttrs = 0;
         int32 nValues = 0;
-        char l_szName[HDF4_SDS_MAXNAMELEN];
-        int32 l_aiDimSizes[H4_MAX_VAR_DIMS];
+        char l_szName[HDF4_SDS_MAXNAMELEN] = {};
+        int32 l_aiDimSizes[H4_MAX_VAR_DIMS] = {};
 
         if( SDgetinfo( l_iSDS, l_szName, &l_iRank, l_aiDimSizes, &l_iNumType,
                        &l_nAttrs) == 0 )
         {
             for( int32 iAttribute = 0; iAttribute < l_nAttrs; iAttribute++ )
             {
-                char szAttrName[H4_MAX_NC_NAME];
+                char szAttrName[H4_MAX_NC_NAME] = {};
                 SDattrinfo( l_iSDS, iAttribute, szAttrName,
                             &l_iNumType, &nValues );
                 papszLocalMetadata =
@@ -1976,8 +1978,8 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
         int32 l_iRank = 0;
         int32 l_iNumType = 0;
         int32 l_nAttrs = 0;
-        char l_szName[HDF4_SDS_MAXNAMELEN];
-        int32 l_aiDimSizes[H4_MAX_VAR_DIMS];
+        char l_szName[HDF4_SDS_MAXNAMELEN] = {};
+        int32 l_aiDimSizes[H4_MAX_VAR_DIMS] = {};
 
         const int32 l_iSDS = SDselect( hSD, iDSIndex );
 
@@ -2265,17 +2267,17 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 /* -------------------------------------------------------------------- */
 /*      Read geolocation fields.                                        */
 /* -------------------------------------------------------------------- */
-    char    szGeoDimList[N_BUF_SIZE] = "";
-    char    **papszGeolocations = CSLTokenizeString2( pszGeoList, ",",
-                                                      CSLT_HONOURSTRINGS );
-    int     nGeolocationsCount = CSLCount( papszGeolocations );
-    int32   l_aiDimSizes[H4_MAX_VAR_DIMS];
+    char szGeoDimList[N_BUF_SIZE] = "";
+    char **papszGeolocations = CSLTokenizeString2( pszGeoList, ",",
+                                                   CSLT_HONOURSTRINGS );
+    const int nGeolocationsCount = CSLCount( papszGeolocations );
+    int32 l_aiDimSizes[H4_MAX_VAR_DIMS] = {};
 
     int32 iWrkNumType = 0;
     void *pLat = NULL;
     void *pLong = NULL;
 
-    int32 l_iRank;
+    int32 l_iRank = 0;
     int32 nLatCount = 0;
     int32 nLongCount = 0;
     int32 nXPoints = 0;
@@ -2394,8 +2396,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     {
         iLatticeDataSize = GetDataTypeSize( iLatticeType );
 
-        int32 iStart[H4_MAX_NC_DIMS];
-        int32 iEdges[H4_MAX_NC_DIMS];
+        int32 iStart[H4_MAX_NC_DIMS] = {};
+        int32 iEdges[H4_MAX_NC_DIMS] = {};
         iStart[1] = 0;
         iEdges[1] = nXPoints;
 
@@ -2433,16 +2435,17 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 /* -------------------------------------------------------------------- */
     const char *pszGEOL_AS_GCPS = CPLGetConfigOption( "GEOL_AS_GCPS",
                                                       "PARTIAL" );
-    int iGCPStepX;
-    int iGCPStepY;
+    int iGCPStepX = 0;
+    int iGCPStepY = 0;
 
     if( EQUAL(pszGEOL_AS_GCPS,"NONE") )
     {
-        iGCPStepX = iGCPStepY = 0;
+        // Leave as is: iGCPStepX = iGCPStepY = 0;
     }
     else if( EQUAL(pszGEOL_AS_GCPS,"FULL") )
     {
-        iGCPStepX = iGCPStepY = 1;
+        iGCPStepX = 1;
+        iGCPStepY = 1;
     }
     else
     {
@@ -3067,7 +3070,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Decode the dimension map.                                       */
 /* -------------------------------------------------------------------- */
-                char szDimList[N_BUF_SIZE];
+                char szDimList[N_BUF_SIZE] = {};
                 GDfieldinfo( hGD, poDS->pszFieldName, &poDS->iRank,
                              poDS->aiDimSizes, &poDS->iNumType, szDimList );
 #ifdef DEBUG
@@ -3077,7 +3080,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
                 poDS->GetImageDimensions( szDimList );
 
-                int32 tilecode, tilerank;
+                int32 tilecode = 0;
+                int32 tilerank = 0;
                 if( GDtileinfo( hGD, poDS->pszFieldName, &tilecode, &tilerank,
                                 NULL ) == 0 )
                 {
@@ -3261,7 +3265,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               if( pszTmp )
               {
                   dfScale = CPLAtof( pszTmp );
-                  // some producers (i.e. lndcsm from LEDAPS) emit
+                  // Some producers (i.e. lndcsm from LEDAPS) emit
                   // files with scale_factor=0 which is crazy to carry
                   // through.
                   if( dfScale == 0.0 )
@@ -3293,8 +3297,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
       {
 #ifdef HDF4_HAS_MAXOPENFILES
           // Attempt to increase maximum number of opened HDF files
-          intn nCurrMax;
-          intn nSysLimit;
+          intn nCurrMax = 0;
+          intn nSysLimit = 0;
 
           if( SDget_maxopenfiles(&nCurrMax, &nSysLimit) >= 0
               && nCurrMax < nSysLimit )
@@ -3370,9 +3374,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
           for( int32 iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
           {
-              char  szAttrName[H4_MAX_NC_NAME];
-              int32 iAttrNumType;
-              int32 nValues;
+              char szAttrName[H4_MAX_NC_NAME] = {};
+              int32 iAttrNumType = 0;
+              int32 nValues = 0;
               SDattrinfo( iSDS, iAttribute, szAttrName,
                           &iAttrNumType, &nValues );
               poDS->papszLocalMetadata =
@@ -3480,10 +3484,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*  'Plain' HDF rasters.                                                */
 /* -------------------------------------------------------------------- */
       case HDF4_GR:
+      {
         // Attempt to increase maximum number of opened HDF files.
 #ifdef HDF4_HAS_MAXOPENFILES
-        intn nCurrMax;
-        intn nSysLimit;
+        intn nCurrMax = 0;
+        intn nSysLimit = 0;
 
         if( SDget_maxopenfiles(&nCurrMax, &nSysLimit) >= 0
             && nCurrMax < nSysLimit )
@@ -3534,7 +3539,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for( int32 iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
         {
-            char szAttrName[H4_MAX_NC_NAME];
+            char szAttrName[H4_MAX_NC_NAME] = {};
             int32 nValues = 0;
             int32 iAttrNumType = 0;
             GRattrinfo( poDS->iGR, iAttribute, szAttrName,
@@ -3571,6 +3576,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->iYDim = 1;
         poDS->nBandCount = poDS->iRank;
         break;
+      }
       default:
         // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         CPLReleaseMutex(hHDF4Mutex);
@@ -3903,7 +3909,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     poDS->iYDim = 0;
     poDS->iBandDim = 2;
 
-    int32 aiDimSizes[H4_MAX_VAR_DIMS];
+    int32 aiDimSizes[H4_MAX_VAR_DIMS] = {};
     aiDimSizes[poDS->iXDim] = nXSize;
     aiDimSizes[poDS->iYDim] = nYSize;
     aiDimSizes[poDS->iBandDim] = nBands;
