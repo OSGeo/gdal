@@ -59,7 +59,7 @@ void NTFFileReader::EstablishRasterAccess()
 /* -------------------------------------------------------------------- */
 /*      Read the type 50 record.                                        */
 /* -------------------------------------------------------------------- */
-    NTFRecord   *poRecord;
+    NTFRecord *poRecord = NULL;
 
     while( (poRecord = ReadRecord()) != NULL
            && poRecord->GetType() != NRT_GRIDHREC
@@ -152,9 +152,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
     if( panColumnOffset[iColumn] == 0 )
     {
-        int     iPrev;
-
-        for( iPrev = 0; iPrev < iColumn-1; iPrev++ )
+        for( int iPrev = 0; iPrev < iColumn-1; iPrev++ )
         {
             if( panColumnOffset[iPrev+1] == 0 )
             {
@@ -176,10 +174,8 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
 /*      Read requested record.                                          */
 /* -------------------------------------------------------------------- */
-    NTFRecord   *poRecord;
-
     SetFPPos( panColumnOffset[iColumn], iColumn );
-    poRecord = ReadRecord();
+    NTFRecord *poRecord = ReadRecord();
 
     if( iColumn < nRasterXSize-1 )
     {
@@ -191,10 +187,8 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
     if( pafElev != NULL && GetProductId() == NPC_LANDRANGER_DTM )
     {
-        double  dfVScale, dfVOffset;
-
-        dfVOffset = atoi(poRecord->GetField(56,65));
-        dfVScale = atoi(poRecord->GetField(66,75)) * 0.001;
+        const double dfVOffset = atoi(poRecord->GetField(56,65));
+        const double dfVScale = atoi(poRecord->GetField(66,75)) * 0.001;
 
         for( int iPixel = 0; iPixel < nRasterXSize; iPixel++ )
         {

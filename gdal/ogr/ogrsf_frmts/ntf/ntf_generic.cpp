@@ -207,9 +207,8 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
 
                   for( int iAtt = 0; papszTypes[iAtt] != NULL; iAtt++ )
                   {
-                      NTFAttDesc        *poAttDesc;
-
-                      poAttDesc = poReader->GetAttDesc( papszTypes[iAtt] );
+                      NTFAttDesc *poAttDesc =
+                          poReader->GetAttDesc( papszTypes[iAtt] );
                       if( poAttDesc != NULL )
                       {
                           poClass->CheckAddAttr( poAttDesc->val_type,
@@ -258,9 +257,8 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
               case NRT_LINEREC:
                 if( poReader->GetNTFLevel() < 3 )
                 {
-                    NTFAttDesc  *poAttDesc;
-
-                    poAttDesc = poReader->GetAttDesc(poRecord->GetField(9,10));
+                    NTFAttDesc *poAttDesc =
+                        poReader->GetAttDesc(poRecord->GetField(9,10));
                     if( poAttDesc != NULL )
                         poClass->CheckAddAttr( poAttDesc->val_type,
                                                poAttDesc->finter, 6 );
@@ -635,7 +633,7 @@ static OGRFeature *TranslateGenericPoint( NTFFileReader *poReader,
         snprintf( szValType, sizeof(szValType), "%s", papoGroup[0]->GetField(9,10) );
         if( !EQUAL(szValType,"  ") )
         {
-            char        *pszProcessedValue;
+            char *pszProcessedValue = NULL;
 
             if( poReader->ProcessAttValue(szValType,
                                           papoGroup[0]->GetField(11,16),
@@ -682,12 +680,12 @@ static OGRFeature *TranslateGenericLine( NTFFileReader *poReader,
     // Handle singular attribute in pre-level 3 LINEREC.
     if( poReader->GetNTFLevel() < 3 )
     {
-        char    szValType[3];
+        char szValType[3] = {};
 
         snprintf( szValType, sizeof(szValType), "%s", papoGroup[0]->GetField(9,10) );
         if( !EQUAL(szValType,"  ") )
         {
-            char        *pszProcessedValue;
+            char *pszProcessedValue = NULL;
 
             if( poReader->ProcessAttValue(szValType,
                                           papoGroup[0]->GetField(11,16),
