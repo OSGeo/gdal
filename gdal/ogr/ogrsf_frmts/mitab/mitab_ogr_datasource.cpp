@@ -522,7 +522,7 @@ char **OGRTABDataSource::GetFileList()
     {
         static const char* const apszMIFExtensions[] = { "mif", "mid", NULL };
         static const char* const apszTABExtensions[] = { "tab", "map", "ind", "dat", "id", NULL };
-        const char* const * papszExtensions;
+        const char* const * papszExtensions = NULL;
         if( EQUAL(CPLGetExtension(m_pszName), "mif") ||
             EQUAL(CPLGetExtension(m_pszName), "mid") )
         {

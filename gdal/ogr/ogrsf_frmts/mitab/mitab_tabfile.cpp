@@ -200,12 +200,13 @@ void TABFile::ResetReading()
 
         if( m_poFilterGeom != NULL )
         {
-            OGREnvelope  sEnvelope;
-            TABVertex sMin, sMax;
-            /* TABMAPHeaderBlock *poHeader; */
-            /* poHeader = m_poMAPFile->GetHeaderBlock(); */
+            // TABMAPHeaderBlock *poHeader = m_poMAPFile->GetHeaderBlock();
 
+            OGREnvelope  sEnvelope;
             m_poFilterGeom->getEnvelope( &sEnvelope );
+
+            TABVertex sMin;
+            TABVertex sMax;
             m_poMAPFile->GetCoordFilter( sMin, sMax );
 
             if( sEnvelope.MinX > sMin.x
