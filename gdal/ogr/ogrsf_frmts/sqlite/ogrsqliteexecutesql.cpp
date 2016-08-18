@@ -674,11 +674,11 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         rc = sqlite3_prepare(hDB, pszInsertInto, -1, &hStmt, NULL);
     }
 
-    OGRFeature* poFeature;
-    OGREnvelope sEnvelope;
     OGR2SQLITE_IgnoreAllFieldsExceptGeometry(poLayer);
     poLayer->ResetReading();
 
+    OGRFeature* poFeature = NULL;
+    OGREnvelope sEnvelope;
     while( rc == SQLITE_OK &&
             (poFeature = poLayer->GetNextFeature()) != NULL )
     {

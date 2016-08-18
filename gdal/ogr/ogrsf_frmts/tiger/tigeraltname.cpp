@@ -125,9 +125,8 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
 
     for( int iFeat = 0; iFeat < 5; iFeat++ )
     {
-        const char *    pszFieldText;
-
-        pszFieldText = GetField( achRecord, 19 + iFeat*8, 26 + iFeat*8 );
+        const char *pszFieldText =
+            GetField( achRecord, 19 + iFeat*8, 26 + iFeat*8 );
 
         if( *pszFieldText != '\0' )
             anFeatList[nFeatCount++] = atoi(pszFieldText);
@@ -145,21 +144,21 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
 OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
 
 {
-  char        szRecord[OGR_TIGER_RECBUF_LEN];
-    const int   *panValue;
-    int         nValueCount = 0;
 
     if( !SetWriteModule( FILE_CODE, psRTInfo->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
+    char szRecord[OGR_TIGER_RECBUF_LEN] = {};
     memset( szRecord, ' ', psRTInfo->nRecordLength );
 
     WriteFields( psRTInfo, poFeature, szRecord );
 
-    panValue = poFeature->GetFieldAsIntegerList( "FEAT", &nValueCount );
+    int nValueCount = 0;
+    const int *panValue =
+        poFeature->GetFieldAsIntegerList( "FEAT", &nValueCount );
     for( int i = 0; i < nValueCount; i++ )
     {
-        char    szWork[9];
+        char szWork[9] = {};
 
         snprintf( szWork, sizeof(szWork), "%8d", panValue[i] );
         strncpy( szRecord + 18 + 8 * i, szWork, 8 );

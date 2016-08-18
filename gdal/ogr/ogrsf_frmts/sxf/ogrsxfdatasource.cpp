@@ -297,9 +297,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
     else
     {
-        VSILFILE* fpRSC;
-
-        fpRSC = VSIFOpenL(soRSCRileName, "rb");
+        VSILFILE* fpRSC = VSIFOpenL(soRSCRileName, "rb");
         if (fpRSC == NULL)
         {
             CPLError(CE_Warning, CPLE_OpenFailed, "RSC file %s open failed",
@@ -1038,7 +1036,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
         bool bLayerFullName = CPLTestBool(CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO"));
 
-        char* pszRecoded;
+        char* pszRecoded = NULL;
         if (bLayerFullName)
         {
             if(LAYER.szName[0] == 0)
@@ -1102,7 +1100,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         OGRSXFLayer* pLayer = GetLayerById(OBJECT.szLayernNo);
         if (NULL != pLayer)
         {
-            char* pszRecoded;
+            char* pszRecoded = NULL;
             if(OBJECT.szName[0] == 0)
                 pszRecoded = CPLStrdup("Unnamed");
             else if (stRSCFileHeader.nFontEnc == 125)

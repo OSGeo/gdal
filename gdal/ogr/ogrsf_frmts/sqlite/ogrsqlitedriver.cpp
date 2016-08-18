@@ -105,9 +105,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") &&
         nLen > 4 && EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
     {
-        OGRSQLiteDataSource     *poDS;
-
-        poDS = new OGRSQLiteDataSource();
+        OGRSQLiteDataSource *poDS = new OGRSQLiteDataSource();
 
         char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
         int nRet = poDS->Create( ":memory:", papszOptions );
@@ -149,9 +147,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 /*      We think this is really an SQLite database, go ahead and try    */
 /*      and open it.                                                    */
 /* -------------------------------------------------------------------- */
-    OGRSQLiteDataSource     *poDS;
-
-    poDS = new OGRSQLiteDataSource();
+    OGRSQLiteDataSource *poDS = new OGRSQLiteDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
                      poOpenInfo->papszOpenOptions ) )
@@ -191,9 +187,7 @@ static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Try to create datasource.                                       */
 /* -------------------------------------------------------------------- */
-    OGRSQLiteDataSource     *poDS;
-
-    poDS = new OGRSQLiteDataSource();
+    OGRSQLiteDataSource *poDS = new OGRSQLiteDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {

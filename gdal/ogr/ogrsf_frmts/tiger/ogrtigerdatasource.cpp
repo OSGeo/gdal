@@ -394,20 +394,15 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     {
         if( bTestOpen || i == 0 )
         {
-            char        szHeader[500];
-            VSILFILE    *fp;
-            char        *pszRecStart = NULL;
-            int         bIsGDT = FALSE;
-            char       *l_pszFilename;
+            char *l_pszFilename = BuildFilename( papszFileList[i], "1" );
 
-            l_pszFilename = BuildFilename( papszFileList[i], "1" );
-
-            fp = VSIFOpenL( l_pszFilename, "rb" );
+            VSILFILE *fp = VSIFOpenL( l_pszFilename, "rb" );
             CPLFree( l_pszFilename );
 
             if( fp == NULL )
                 continue;
 
+            char szHeader[500] = {};
             if( VSIFReadL( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
             {
                 VSIFCloseL( fp );
@@ -416,13 +411,15 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
             VSIFCloseL( fp );
 
-            pszRecStart = szHeader;
+            char *pszRecStart = szHeader;
             szHeader[sizeof(szHeader)-1] = '\0';
+
+            bool bIsGDT = false;
 
             if( STARTS_WITH_CI(pszRecStart, "Copyright (C)")
                 && strstr(pszRecStart,"Geographic Data Tech") != NULL )
             {
-                bIsGDT = TRUE;
+                bIsGDT = true;
 
                 while( *pszRecStart != '\0'
                        && *pszRecStart != 10
@@ -717,8 +714,6 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
                                     const char *pszExtension )
 
 {
-    char        *pszFilename;
-    char        szLCExtension[3];
 
 /* -------------------------------------------------------------------- */
 /*      Force the record type to lower case if the filename appears     */
@@ -726,6 +721,7 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
 /* -------------------------------------------------------------------- */
     if( *pszExtension >= 'A' && *pszExtension <= 'Z' && *pszModuleName == 't' )
     {
+        char szLCExtension[3] = {};
         szLCExtension[0] = (*pszExtension) + 'a' - 'A';
         szLCExtension[1] = '\0';
         pszExtension = szLCExtension;
@@ -737,7 +733,7 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
     const size_t nFilenameLen = strlen(GetDirPath())
                                      + strlen(pszModuleName)
                                      + strlen(pszExtension) + 10;
-    pszFilename = (char *) CPLMalloc(nFilenameLen);
+    char *pszFilename = (char *) CPLMalloc(nFilenameLen);
 
     if( strlen(GetDirPath()) == 0 )
         snprintf( pszFilename, nFilenameLen, "%s%s",
@@ -956,16 +952,14 @@ OGRLayer *OGRTigerDataSource::ICreateLayer( const char *pszLayerName,
 void OGRTigerDataSource::DeleteModuleFiles( const char *pszModule )
 
 {
-    char        **papszDirFiles = VSIReadDir( GetDirPath() );
-    int         i, nCount = CSLCount(papszDirFiles);
+    char **papszDirFiles = VSIReadDir( GetDirPath() );
+    const int nCount = CSLCount(papszDirFiles);
 
-    for( i = 0; i < nCount; i++ )
+    for( int i = 0; i < nCount; i++ )
     {
         if( EQUALN(pszModule,papszDirFiles[i],strlen(pszModule)) )
         {
-            const char  *pszFilename;
-
-            pszFilename = CPLFormFilename( GetDirPath(),
+            const char *pszFilename = CPLFormFilename( GetDirPath(),
                                            papszDirFiles[i],
                                            NULL );
             if( VSIUnlink( pszFilename ) != 0 )

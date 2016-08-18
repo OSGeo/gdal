@@ -306,11 +306,9 @@ void OGRSEGYLayer::ResetReading()
 
 OGRFeature *OGRSEGYLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -854,11 +852,9 @@ void OGRSEGYHeaderLayer::ResetReading()
 
 OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 

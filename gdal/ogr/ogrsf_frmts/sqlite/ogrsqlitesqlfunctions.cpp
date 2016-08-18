@@ -235,7 +235,7 @@ void OGR2SQLITE_ogr_deflate(sqlite3_context* pContext,
     }
 
     size_t nOutBytes = 0;
-    void* pOut;
+    void* pOut = NULL;
     if( sqlite3_value_type (argv[0]) == SQLITE_TEXT )
     {
         const char* pszVal = (const char*)sqlite3_value_text(argv[0]);
@@ -275,11 +275,10 @@ void OGR2SQLITE_ogr_inflate(sqlite3_context* pContext,
     }
 
     size_t nOutBytes = 0;
-    void* pOut;
 
     const void* pSrc = sqlite3_value_blob (argv[0]);
     int nLen = sqlite3_value_bytes (argv[0]);
-    pOut = CPLZLibInflate( pSrc, nLen, NULL, 0, &nOutBytes);
+    void* pOut = CPLZLibInflate( pSrc, nLen, NULL, 0, &nOutBytes);
 
     if( pOut != NULL )
     {
@@ -1026,7 +1025,7 @@ void OGR2SQLITE_ST_MakePoint(sqlite3_context* pContext,
         return;
     }
 
-    OGRPoint* poPoint;
+    OGRPoint* poPoint = NULL;
     if( argc == 3 )
     {
         double dfZ = OGR2SQLITE_GetValAsDouble(argv[2], &bGotVal);

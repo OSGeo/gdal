@@ -50,11 +50,9 @@ static void ExtractField(char* szField, const char* pszLine, int nOffset, int nL
 
 OGRFeature *OGRSEGUKOOABaseLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -264,14 +262,12 @@ void OGRUKOOAP190Layer::ResetReading()
 
 OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
 {
-    if (bEOF)
+    if( bEOF )
         return NULL;
-
-    const char* pszLine;
 
     while( true )
     {
-        pszLine = CPLReadLine2L(fp,81,NULL);
+        const char* pszLine = CPLReadLine2L(fp, 81, NULL);
         if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
         {
             bEOF = TRUE;

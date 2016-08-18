@@ -90,9 +90,7 @@ static GDALDataset *OGRTigerDriverCreate( const char * pszName,
                                           CPL_UNUSED GDALDataType eDT,
                                           char **papszOptions )
 {
-    OGRTigerDataSource *poDS;
-
-    poDS = new OGRTigerDataSource();
+    OGRTigerDataSource *poDS = new OGRTigerDataSource();
 
     if( poDS->Create( pszName, papszOptions ) )
         return poDS;

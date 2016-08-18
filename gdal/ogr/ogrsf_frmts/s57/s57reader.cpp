@@ -461,10 +461,10 @@ int S57Reader::Ingest()
 /*      appropriate indexes.                                            */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-    DDFRecord *poRecord;
+    DDFRecord *poRecord = NULL;
     while( (poRecord = poModule->ReadRecord()) != NULL )
     {
-        DDFField        *poKeyField = poRecord->GetField(1);
+        DDFField *poKeyField = poRecord->GetField(1);
         if (poKeyField == NULL)
             return FALSE;
 
@@ -1921,11 +1921,9 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
     int nRCNM = 0;
     const int nRCID = ParseName( poFSPT, 0, &nRCNM );
 
-    DDFRecord *poSRecord;
-    if( nRCNM == RCNM_VI )
-        poSRecord = oVI_Index.FindRecord( nRCID );
-    else
-        poSRecord = oVC_Index.FindRecord( nRCID );
+    DDFRecord *poSRecord = nRCNM == RCNM_VI
+        ? oVI_Index.FindRecord( nRCID )
+        : oVC_Index.FindRecord( nRCID );
 
     if( poSRecord == NULL )
         return;
@@ -3119,7 +3117,7 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
 
-    DDFRecord *poRecord;
+    DDFRecord *poRecord = NULL;
 
     while( (poRecord = poUpdateModule->ReadRecord()) != NULL )
     {
@@ -3424,18 +3422,17 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
             }
             else if( poSG2D != NULL )
             {
-                int     i, nVCount = poSG2D->GetRepeatCount();
-                GInt32  nX, nY;
-                const GByte   *pabyData;
+                const int nVCount = poSG2D->GetRepeatCount();
 
-                pabyData = (const GByte*)poSG2D->GetData();
                 if( poSG2D->GetDataSize() < 2 * nVCount * (int)sizeof(int) )
                     return OGRERR_FAILURE;
 
-                for( i = 0; i < nVCount; i++ )
+                const GByte *pabyData = (const GByte*)poSG2D->GetData();
+
+                for( int i = 0; i < nVCount; i++ )
                 {
-                    nX = CPL_LSBINT32PTR(pabyData + 4*(i*2+1));
-                    nY = CPL_LSBINT32PTR(pabyData + 4*(i*2+0));
+                    const GInt32 nX = CPL_LSBINT32PTR(pabyData + 4*(i*2+1));
+                    const GInt32 nY = CPL_LSBINT32PTR(pabyData + 4*(i*2+0));
 
                     if( bGotExtents )
                     {
