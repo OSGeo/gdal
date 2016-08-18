@@ -849,7 +849,7 @@ void OGROSMLayer::AddComputedAttribute(const char* pszName,
 
     CPLDebug("OSM", "SQL : \"%s\"", osSQL.c_str());
 
-    sqlite3_stmt  *hStmt;
+    sqlite3_stmt *hStmt = NULL;
     int rc = sqlite3_prepare( poDS->hDBForComputedAttributes, osSQL, -1,
                               &hStmt, NULL );
     if( rc != SQLITE_OK )

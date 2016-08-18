@@ -71,9 +71,7 @@ OGROGDIDataSource::~OGROGDIDataSource()
 
     if (m_nClientID != -1)
     {
-        ecs_Result *psResult;
-
-        psResult = cln_DestroyClient( m_nClientID );
+        ecs_Result *psResult = cln_DestroyClient( m_nClientID );
         ecs_CleanUp( psResult );
     }
 
@@ -88,10 +86,6 @@ OGROGDIDataSource::~OGROGDIDataSource()
 int OGROGDIDataSource::Open( const char * pszNewName )
 
 {
-    ecs_Result *psResult;
-    char *pszFamily=NULL, *pszLyrName=NULL;
-    char *pszWorkingName;
-
     CPLAssert( m_nLayers == 0 );
 
 /* -------------------------------------------------------------------- */
@@ -101,172 +95,171 @@ int OGROGDIDataSource::Open( const char * pszNewName )
 /*                                                                      */
 /*      Where <Family> is one of: Line, Area, Point, and Text           */
 /* -------------------------------------------------------------------- */
-        if( !STARTS_WITH_CI(pszNewName, "gltp:") )
-            return FALSE;
+    if( !STARTS_WITH_CI(pszNewName, "gltp:") )
+        return FALSE;
 
-        pszWorkingName = CPLStrdup( pszNewName );
+    char *pszWorkingName = CPLStrdup( pszNewName );
 
-        pszFamily = strrchr(pszWorkingName, ':');
+    char *pszFamily = strrchr(pszWorkingName, ':');
 
-        // Don't treat drive name colon as family separator.  It is assumed
-        // that drive names are on character long, and preceded by a
-        // forward or backward slash.
-        if( pszFamily < pszWorkingName+2
-            || pszFamily[-2] == '/'
-            || pszFamily[-2] == '\\' )
-            pszFamily = NULL;
+    // Don't treat drive name colon as family separator.  It is assumed
+    // that drive names are on character long, and preceded by a
+    // forward or backward slash.
+    if( pszFamily < pszWorkingName+2
+        || pszFamily[-2] == '/'
+        || pszFamily[-2] == '\\' )
+        pszFamily = NULL;
 
-        if (pszFamily && pszFamily != pszWorkingName + 4)
+    char *pszLyrName = NULL;
+    if (pszFamily && pszFamily != pszWorkingName + 4)
+    {
+        *pszFamily = '\0';
+        pszFamily++;
+
+        pszLyrName = strrchr(pszWorkingName, ':');
+        if (pszLyrName == pszWorkingName + 4)
+            pszLyrName = NULL;
+
+        if( pszLyrName != NULL )
         {
-            *pszFamily = '\0';
-            pszFamily++;
-
-            pszLyrName = strrchr(pszWorkingName, ':');
-            if (pszLyrName == pszWorkingName + 4)
-                pszLyrName = NULL;
-
-            if( pszLyrName != NULL )
-            {
-                *pszLyrName = '\0';
-                pszLyrName++;
-            }
+            *pszLyrName = '\0';
+            pszLyrName++;
         }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
-        psResult = cln_CreateClient(&m_nClientID, pszWorkingName);
+    ecs_Result *psResult = cln_CreateClient(&m_nClientID, pszWorkingName);
 
-        if( ECSERROR( psResult ) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "OGDI DataSource Open Failed: %s\n",
-                      psResult->message ? psResult->message : "(no message string)");
-            CPLFree( pszWorkingName );
-            return FALSE;
-        }
+    if( ECSERROR( psResult ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "OGDI DataSource Open Failed: %s\n",
+                  psResult->message ? psResult->message : "(no message string)");
+        CPLFree( pszWorkingName );
+        return FALSE;
+    }
 
-        m_pszFullName = CPLStrdup(pszNewName);
+    m_pszFullName = CPLStrdup(pszNewName);
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file.                         */
 /* -------------------------------------------------------------------- */
-        psResult = cln_GetGlobalBound( m_nClientID );
-        if( ECSERROR(psResult) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "GetGlobalBound failed: %s",
-                      psResult->message ? psResult->message : "(no message string)");
-            CPLFree( pszWorkingName );
-            return FALSE;
-        }
+    psResult = cln_GetGlobalBound( m_nClientID );
+    if( ECSERROR(psResult) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "GetGlobalBound failed: %s",
+                  psResult->message ? psResult->message : "(no message string)");
+        CPLFree( pszWorkingName );
+        return FALSE;
+    }
 
-        m_sGlobalBounds = ECSREGION(psResult);
+    m_sGlobalBounds = ECSREGION(psResult);
 
-        psResult = cln_GetServerProjection(m_nClientID);
-        if( ECSERROR(psResult) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "GetServerProjection failed: %s",
-                      psResult->message ? psResult->message : "(no message string)");
-            CPLFree( pszWorkingName );
-            return FALSE;
-        }
+    psResult = cln_GetServerProjection(m_nClientID);
+    if( ECSERROR(psResult) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "GetServerProjection failed: %s",
+                  psResult->message ? psResult->message : "(no message string)");
+        CPLFree( pszWorkingName );
+        return FALSE;
+    }
 
-        m_poSpatialRef = new OGRSpatialReference;
+    m_poSpatialRef = new OGRSpatialReference;
 
-        if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
-        {
-            CPLError( CE_Warning, CPLE_NotSupported,
-                      "untranslatable PROJ.4 projection: %s\n",
-                      ECSTEXT(psResult) ? ECSTEXT(psResult): "(no message string)" );
-            delete m_poSpatialRef;
-            m_poSpatialRef = NULL;
-        }
+    if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "untranslatable PROJ.4 projection: %s\n",
+                  ECSTEXT(psResult) ? ECSTEXT(psResult): "(no message string)" );
+        delete m_poSpatialRef;
+        m_poSpatialRef = NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Select the global region.                                       */
 /* -------------------------------------------------------------------- */
-        psResult = cln_SelectRegion( m_nClientID, &m_sGlobalBounds );
+    psResult = cln_SelectRegion( m_nClientID, &m_sGlobalBounds );
+    if( ECSERROR(psResult) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SelectRegion failed: %s",
+                  psResult->message ? psResult->message : "(no message string)");
+        CPLFree( pszWorkingName );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If an explicit layer was selected, just create that layer.      */
+/* -------------------------------------------------------------------- */
+    m_poCurrentLayer = NULL;
+
+    if( pszLyrName != NULL )
+    {
+        ecs_Family  eFamily;
+
+        if (EQUAL(pszFamily, "Line"))
+            eFamily = Line;
+        else if (EQUAL(pszFamily, "Area"))
+            eFamily = Area;
+        else if (EQUAL(pszFamily, "Point"))
+            eFamily = Point;
+        else if (EQUAL(pszFamily, "Text"))
+            eFamily = Text;
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid or unsupported family name (%s) in URL %s\n",
+                      pszFamily, m_pszFullName);
+            CPLFree( pszWorkingName );
+            return FALSE;
+        }
+
+        IAddLayer( pszLyrName, eFamily );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise create a layer for every layer in the capabilities.   */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        // Call cln_UpdateDictionary so as to be able to report errors
+        // since cln_GetLayerCapabilities() cannot do that
+        // Help in the case of DNC17/COA17A that has a missing env/fcs file
+        char* szEmpty = CPLStrdup("");
+        psResult = cln_UpdateDictionary( m_nClientID, szEmpty );
+        CPLFree(szEmpty);
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "SelectRegion failed: %s",
+                      "UpdateDictionay failed: %s",
                       psResult->message ? psResult->message : "(no message string)");
             CPLFree( pszWorkingName );
             return FALSE;
         }
 
-/* -------------------------------------------------------------------- */
-/*      If an explicit layer was selected, just create that layer.      */
-/* -------------------------------------------------------------------- */
-        m_poCurrentLayer = NULL;
-
-        if( pszLyrName != NULL )
+        const ecs_LayerCapabilities *psLayerCap = NULL;
+        for( int i = 0;
+             (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != NULL;
+             i++ )
         {
-            ecs_Family  eFamily;
-
-            if (EQUAL(pszFamily, "Line"))
-                eFamily = Line;
-            else if (EQUAL(pszFamily, "Area"))
-                eFamily = Area;
-            else if (EQUAL(pszFamily, "Point"))
-                eFamily = Point;
-            else if (EQUAL(pszFamily, "Text"))
-                eFamily = Text;
-            else
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Invalid or unsupported family name (%s) in URL %s\n",
-                          pszFamily, m_pszFullName);
-                CPLFree( pszWorkingName );
-                return FALSE;
-            }
-
-            IAddLayer( pszLyrName, eFamily );
+            if( psLayerCap->families[Point] )
+                IAddLayer( psLayerCap->name, Point );
+            if( psLayerCap->families[Line] )
+                IAddLayer( psLayerCap->name, Line );
+            if( psLayerCap->families[Area] )
+                IAddLayer( psLayerCap->name, Area );
+            if( psLayerCap->families[Text] )
+                IAddLayer( psLayerCap->name, Text );
         }
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Otherwise create a layer for every layer in the capabilities.   */
-/* -------------------------------------------------------------------- */
-        else
-        {
-            int         i;
-            const ecs_LayerCapabilities *psLayerCap;
+    CPLFree( pszWorkingName );
 
-            // Call cln_UpdateDictionary so as to be able to report errors
-            // since cln_GetLayerCapabilities() cannot do that
-            // Help in the case of DNC17/COA17A that has a missing env/fcs file
-            char* szEmpty = CPLStrdup("");
-            psResult = cln_UpdateDictionary( m_nClientID, szEmpty );
-            CPLFree(szEmpty);
-            if( ECSERROR(psResult) )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "UpdateDictionay failed: %s",
-                          psResult->message ? psResult->message : "(no message string)");
-                CPLFree( pszWorkingName );
-                return FALSE;
-            }
-
-            for( i = 0;
-                (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != NULL;
-                 i++ )
-            {
-                if( psLayerCap->families[Point] )
-                    IAddLayer( psLayerCap->name, Point );
-                if( psLayerCap->families[Line] )
-                    IAddLayer( psLayerCap->name, Line );
-                if( psLayerCap->families[Area] )
-                    IAddLayer( psLayerCap->name, Area );
-                if( psLayerCap->families[Text] )
-                    IAddLayer( psLayerCap->name, Text );
-            }
-        }
-
-        CPLFree( pszWorkingName );
-
-        return TRUE;
+    return TRUE;
 }
 
 /************************************************************************/

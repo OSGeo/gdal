@@ -58,8 +58,6 @@ OGRDataSource *OGRODBCDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGRODBCDataSource     *poDS;
-
     if( !STARTS_WITH_CI(pszFilename, "ODBC:")
 #ifdef WIN32
         && !EQUAL(CPLGetExtension(pszFilename), "MDB")
@@ -67,7 +65,7 @@ OGRDataSource *OGRODBCDriver::Open( const char * pszFilename,
         )
         return NULL;
 
-    poDS = new OGRODBCDataSource();
+    OGRODBCDataSource *poDS = new OGRODBCDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {
@@ -86,13 +84,10 @@ OGRDataSource *OGRODBCDriver::CreateDataSource( const char * pszName,
                                               char ** /* papszOptions */ )
 
 {
-    OGRODBCDataSource     *poDS;
-
     if( !STARTS_WITH_CI(pszName, "ODBC:") )
         return NULL;
 
-    poDS = new OGRODBCDataSource();
-
+    OGRODBCDataSource *poDS = new OGRODBCDataSource();
 
     if( !poDS->Open( pszName, TRUE, TRUE ) )
     {

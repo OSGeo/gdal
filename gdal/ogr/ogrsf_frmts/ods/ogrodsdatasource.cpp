@@ -659,17 +659,15 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
 
         if (poCurLayer)
         {
-            OGRFeature* poFeature;
-
             if( CPLTestBool(CPLGetConfigOption("ODS_RESOLVE_FORMULAS", "YES")) )
             {
                 poCurLayer->ResetReading();
 
                 int nRow = 0;
-                poFeature = poCurLayer->GetNextFeature();
+                OGRFeature* poFeature = poCurLayer->GetNextFeature();
                 while (poFeature)
                 {
-                    for(int i=0;i<poFeature->GetFieldCount();i++)
+                    for( int i = 0; i < poFeature->GetFieldCount(); i++ )
                     {
                         if (poFeature->IsFieldSet(i) &&
                             poFeature->GetFieldDefnRef(i)->GetType() == OFTString)
@@ -760,12 +758,9 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
     {
         CPLAssert(strcmp(pszNameIn, "table:table-row") == 0);
 
-        OGRFeature* poFeature;
-        size_t i;
-
         /* Remove blank columns at the right to defer type evaluation */
         /* until necessary */
-        i = apoCurLineTypes.size();
+        size_t i = apoCurLineTypes.size();
         while(i > 0)
         {
             i --;
@@ -775,11 +770,15 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                 apoCurLineTypes.resize(i);
             }
             else
+            {
                 break;
+            }
         }
 
         /* Do not add immediately empty rows. Wait until there is another non */
         /* empty row */
+        OGRFeature* poFeature = NULL;
+
         if (nCurLine >= 2 && apoCurLineTypes.size() == 0)
         {
             nEmptyRowsAccumulated += nRowsRepeated;

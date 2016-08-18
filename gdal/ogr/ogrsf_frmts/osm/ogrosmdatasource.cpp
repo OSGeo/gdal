@@ -653,7 +653,7 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
     abyOutBuffer[nCompressSize] = 0;
 
     nCompressSize = ROUND_COMPRESS_SIZE(nCompressSize);
-    GByte* pabyToWrite;
+    GByte* pabyToWrite = NULL;
     if(nCompressSize >= SECTOR_SIZE)
     {
         nCompressSize = SECTOR_SIZE;
@@ -1989,7 +1989,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
 
             std::map<const char*, KeyDesc*, ConstCharComp>::iterator oIterK =
                 aoMapIndexedKeys.find(pszK);
-            KeyDesc* psKD;
+            KeyDesc* psKD = NULL;
             if (oIterK == aoMapIndexedKeys.end())
             {
                 if( nNextKeyIndex >= 32768 ) /* somewhat arbitrary */
@@ -2234,7 +2234,7 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                                          NULL, NULL, NULL);
             }
 
-            OGRLineString* poLS;
+            OGRLineString* poLS = NULL;
 
             if ( pasCoords[0].nLon == pasCoords[nPoints - 1].nLon &&
                  pasCoords[0].nLat == pasCoords[nPoints - 1].nLat )
@@ -2380,7 +2380,7 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation,
                 oGeom.first,
                 reinterpret_cast<GByte *>(oGeom.second),
                 &bIsArea, pasCoords, NULL, NULL, NULL );
-            OGRLineString* poLS;
+            OGRLineString* poLS = NULL;
             if( bIsArea )
             {
                 OGRLinearRing* poLR = new OGRLinearRing();
@@ -2500,7 +2500,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         }
     }
 
-    OGRGeometry* poGeom;
+    OGRGeometry* poGeom = NULL;
 
     unsigned int nExtraTags = 0;
     OSMTag pasExtraTags[1 + MAX_COUNT_FOR_TAGS_IN_WAY];
@@ -3094,9 +3094,9 @@ bool OGROSMDataSource::SetCacheSize()
         return true;
 
     char* pszErrMsg = NULL;
-    char **papszResult;
-    int nRowCount;
-    int nColCount;
+    char **papszResult = NULL;
+    int nRowCount = 0;
+    int nColCount = 0;
     int iSqlitePageSize = -1;
     const int iSqliteCacheBytes = atoi( pszSqliteCacheMB ) * 1024 * 1024;
 
@@ -3106,8 +3106,7 @@ bool OGROSMDataSource::SetCacheSize()
                                 &pszErrMsg );
     if( rc == SQLITE_OK )
     {
-        int iRow;
-        for (iRow = 1; iRow <= nRowCount; iRow++)
+        for( int iRow = 1; iRow <= nRowCount; iRow++ )
         {
             iSqlitePageSize = atoi( papszResult[(iRow * nColCount) + 0] );
         }
@@ -3343,7 +3342,7 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
     if( fpConf == NULL )
         return false;
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     int iCurLayer = -1;
     std::vector<OGROSMComputedAttribute> oAttributes;
 

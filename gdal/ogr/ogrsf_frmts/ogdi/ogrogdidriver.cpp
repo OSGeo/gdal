@@ -72,8 +72,6 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGROGDIDataSource   *poDS;
-
     if( !STARTS_WITH_CI(pszFilename, "gltp:") )
         return NULL;
 
@@ -83,7 +81,7 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
     ecs_SetReportErrorFunction( MyOGDIReportErrorFunction );
 #endif
 
-    poDS = new OGROGDIDataSource();
+    OGROGDIDataSource *poDS = new OGROGDIDataSource();
 
     if( !poDS->Open( pszFilename ) )
     {

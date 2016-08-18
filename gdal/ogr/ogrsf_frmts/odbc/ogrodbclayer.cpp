@@ -211,9 +211,7 @@ OGRFeature *OGRODBCLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -306,7 +304,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
 
         if ( eErr != OGRERR_NONE )
         {
-            const char *pszMessage;
+            const char *pszMessage = NULL;
 
             switch ( eErr )
             {

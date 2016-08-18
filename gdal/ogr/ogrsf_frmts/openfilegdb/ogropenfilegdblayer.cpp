@@ -426,9 +426,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             }
         }
 
-        OGROpenFileGDBGeomFieldDefn* poGeomFieldDefn;
-
-        poGeomFieldDefn =
+        OGROpenFileGDBGeomFieldDefn* poGeomFieldDefn =
                 new OGROpenFileGDBGeomFieldDefn(NULL, pszName, m_eGeomType);
         poGeomFieldDefn->SetNullable(poGDBGeomField->IsNullable());
 
@@ -1090,8 +1088,8 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
         if( poColumn != NULL && poValue != NULL &&
             poColumn->field_index < GetLayerDefn()->GetFieldCount())
         {
-            OGRFieldDefn *poFieldDefn;
-            poFieldDefn = GetLayerDefn()->GetFieldDefn(poColumn->field_index);
+            OGRFieldDefn *poFieldDefn =
+                GetLayerDefn()->GetFieldDefn(poColumn->field_index);
 
             int nTableColIdx = m_poLyrTable->GetFieldIdx(poFieldDefn->GetNameRef());
             if( nTableColIdx >= 0 && m_poLyrTable->GetField(nTableColIdx)->HasIndex() )

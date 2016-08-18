@@ -240,7 +240,7 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
     {
         if( FileExists(m_pszName) )
         {
-            const char* pszLyrName;
+            const char* pszLyrName = NULL;
             if( nInterestTable <= (int)aosTableNames.size()  &&
                 aosTableNames[nInterestTable-1].size() != 0 )
                 pszLyrName = aosTableNames[nInterestTable-1].c_str();
@@ -475,9 +475,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
             continue;
         }
 
-        const OGRField* psField;
-
-        psField = oTable.GetFieldValue(iGeometryType);
+        const OGRField* psField = oTable.GetFieldValue(iGeometryType);
         if( psField == NULL )
             continue;
         const int nGeomType = psField->Integer;
@@ -544,9 +542,7 @@ OGRLayer* OGROpenFileGDBDataSource::GetLayer( int iIndex )
 
 OGRLayer* OGROpenFileGDBDataSource::GetLayerByName( const char* pszName )
 {
-    OGRLayer* poLayer;
-
-    poLayer = OGRDataSource::GetLayerByName(pszName);
+    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszName);
     if( poLayer != NULL )
         return poLayer;
 

@@ -396,9 +396,7 @@ void  OGRPGTableLayer::SetGeometryInformation(PGGeomColumnDesc* pasDesc,
 int OGRPGTableLayer::ReadTableDefinition()
 
 {
-    PGresult            *hResult;
-    CPLString           osCommand;
-    PGconn              *hPGConn = poDS->GetPGConn();
+    PGconn *hPGConn = poDS->GetPGConn();
 
     if( bTableDefinitionValid >= 0 )
         return bTableDefinitionValid;
@@ -410,26 +408,27 @@ int OGRPGTableLayer::ReadTableDefinition()
     osSchemaClause.Printf("AND n.nspname=%s",
                               OGRPGEscapeString(hPGConn, pszSchemaName).c_str());
 
-    const char* pszTypnameEqualsAnyClause;
-    if (poDS->sPostgreSQLVersion.nMajor == 7 && poDS->sPostgreSQLVersion.nMinor <= 3)
-        pszTypnameEqualsAnyClause = "ANY(SELECT '{int2, int4, int8, serial, bigserial}')";
-    else
-        pszTypnameEqualsAnyClause = "ANY(ARRAY['int2','int4','int8','serial','bigserial'])";
+    const char* pszTypnameEqualsAnyClause =
+        poDS->sPostgreSQLVersion.nMajor == 7 &&
+        poDS->sPostgreSQLVersion.nMinor <= 3
+        ? "ANY(SELECT '{int2, int4, int8, serial, bigserial}')"
+        : "ANY(ARRAY['int2','int4','int8','serial','bigserial'])";
 
-    const char* pszAttnumEqualAnyIndkey;
-    if( poDS->sPostgreSQLVersion.nMajor > 8 || (
-        poDS->sPostgreSQLVersion.nMajor == 8 && poDS->sPostgreSQLVersion.nMinor >= 2) )
-        pszAttnumEqualAnyIndkey = "a.attnum = ANY(i.indkey)";
-    else
-        pszAttnumEqualAnyIndkey = "(i.indkey[0]=a.attnum OR i.indkey[1]=a.attnum OR i.indkey[2]=a.attnum "
-              "OR i.indkey[3]=a.attnum OR i.indkey[4]=a.attnum OR i.indkey[5]=a.attnum "
-              "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR i.indkey[8]=a.attnum "
-              "OR i.indkey[9]=a.attnum)";
+    const char* pszAttnumEqualAnyIndkey =
+        poDS->sPostgreSQLVersion.nMajor > 8 ||
+        (poDS->sPostgreSQLVersion.nMajor == 8 &&
+         poDS->sPostgreSQLVersion.nMinor >= 2)
+        ? "a.attnum = ANY(i.indkey)"
+        : "(i.indkey[0]=a.attnum OR i.indkey[1]=a.attnum OR i.indkey[2]=a.attnum "
+        "OR i.indkey[3]=a.attnum OR i.indkey[4]=a.attnum OR i.indkey[5]=a.attnum "
+        "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR i.indkey[8]=a.attnum "
+        "OR i.indkey[9]=a.attnum)";
 
     CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
 
     /* See #1889 for why we don't use 'AND a.attnum = ANY(i.indkey)' */
+    CPLString osCommand;
     osCommand.Printf("SELECT a.attname, a.attnum, t.typname, "
               "t.typname = %s AS isfid "
               "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n, pg_index i "
@@ -441,7 +440,7 @@ int OGRPGTableLayer::ReadTableDefinition()
               pszTypnameEqualsAnyClause, pszEscapedTableNameSingleQuote,
               pszAttnumEqualAnyIndkey, osSchemaClause.c_str() );
 
-    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
+    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
     if ( hResult && PGRES_TUPLES_OK == PQresultStatus(hResult) )
     {
@@ -932,9 +931,7 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
 
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -1517,12 +1514,11 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         bFirstInsertion = FALSE;
         if( CPLTestBool(CPLGetConfigOption("OGR_TRUNCATE", "NO")) )
         {
-            PGconn              *hPGConn = poDS->GetPGConn();
-            PGresult            *hResult;
-            CPLString            osCommand;
+            PGconn *hPGConn = poDS->GetPGConn();
+            CPLString osCommand;
 
             osCommand.Printf("TRUNCATE TABLE %s", pszSqlTableName );
-            hResult = OGRPG_PQexec( hPGConn, osCommand.c_str() );
+            PGresult *hResult = OGRPG_PQexec( hPGConn, osCommand.c_str() );
             OGRPGClearResult( hResult );
         }
     }
@@ -1699,7 +1695,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
 {
     PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult;
     CPLString           osCommand;
     int                 i;
     int                 bNeedComma = FALSE;
@@ -1897,7 +1892,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
 /* -------------------------------------------------------------------- */
-    hResult = OGRPG_PQexec(hPGConn, osCommand);
+    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
     if (bReturnRequested && PQresultStatus(hResult) == PGRES_TUPLES_OK &&
         PQntuples(hResult) == 1 && PQnfields(hResult) == 1 )
     {
@@ -2244,9 +2239,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
 OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
 {
-    PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult;
-    CPLString            osCommand;
+    PGconn *hPGConn = poDS->GetPGConn();
 
     const char *pszGeometryType = OGRToOGCGeomType(poGeomField->GetType());
     const char *suffix = "";
@@ -2263,6 +2256,7 @@ OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
     else if( poGeomField->GeometryTypeFlags & OGRGeometry::OGR_G_3D )
         dim = 3;
 
+    CPLString osCommand;
     osCommand.Printf(
             "SELECT AddGeometryColumn(%s,%s,%s,%d,'%s%s',%d)",
             OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
@@ -2270,7 +2264,7 @@ OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
             OGRPGEscapeString(hPGConn, poGeomField->GetNameRef()).c_str(),
             poGeomField->nSRSId, pszGeometryType, suffix, dim );
 
-    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
     if( !hResult
         || PQresultStatus(hResult) != PGRES_TUPLES_OK )
@@ -2305,9 +2299,8 @@ OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
 
 OGRErr OGRPGTableLayer::RunCreateSpatialIndex( OGRPGGeomFieldDefn *poGeomField )
 {
-    PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult;
-    CPLString            osCommand;
+    PGconn *hPGConn = poDS->GetPGConn();
+    CPLString osCommand;
 
     osCommand.Printf("CREATE INDEX %s ON %s USING GIST (%s)",
                     OGRPGEscapeColumnName(
@@ -2315,7 +2308,7 @@ OGRErr OGRPGTableLayer::RunCreateSpatialIndex( OGRPGGeomFieldDefn *poGeomField )
                     pszSqlTableName,
                     OGRPGEscapeColumnName(poGeomField->GetNameRef()).c_str());
 
-    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
     if( !hResult
         || PQresultStatus(hResult) != PGRES_COMMAND_OK )
@@ -2864,14 +2857,10 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
     if( nSRSId <= 0 && poGFldDefn->ePostgisType == GEOM_TYPE_GEOMETRY &&
         poDS->sPostGISVersion.nMajor >= 0 )
     {
+        const char* psGetSRIDFct
+            = poDS->sPostGISVersion.nMajor >= 2 ? "ST_SRID" : "getsrid";
+
         CPLString osGetSRID;
-
-        const char* psGetSRIDFct;
-        if (poDS->sPostGISVersion.nMajor >= 2)
-            psGetSRIDFct = "ST_SRID";
-        else
-            psGetSRIDFct = "getsrid";
-
         osGetSRID += "SELECT ";
         osGetSRID += psGetSRIDFct;
         osGetSRID += "(";
@@ -3149,7 +3138,6 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
     OGRPGGeomFieldDefn* poGeomFieldDefn =
         poFeatureDefn->myGetGeomFieldDefn(iGeomField);
 
-    const char* pszExtentFct;
     // if bForce is 0 and ePostgisType is not GEOM_TYPE_GEOGRAPHY we can use
     // the ST_EstimatedExtent function which is quicker
     // ST_EstimatedExtent was called ST_Estimated_Extent up to PostGIS 2.0.x
@@ -3157,13 +3145,13 @@ OGRErr OGRPGTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bF
     //   PostGIS 1.5.4)
     if ( bForce == 0 && TestCapability(OLCFastGetExtent) )
     {
-        PGconn              *hPGConn = poDS->GetPGConn();
+        PGconn *hPGConn = poDS->GetPGConn();
 
-        if ( poDS->sPostGISVersion.nMajor > 2 ||
-             ( poDS->sPostGISVersion.nMajor == 2 && poDS->sPostGISVersion.nMinor >= 1 ) )
-            pszExtentFct = "ST_EstimatedExtent";
-        else
-            pszExtentFct = "ST_Estimated_Extent";
+        const char* pszExtentFct =
+            poDS->sPostGISVersion.nMajor > 2 ||
+            ( poDS->sPostGISVersion.nMajor == 2 && poDS->sPostGISVersion.nMinor >= 1 )
+            ? "ST_EstimatedExtent"
+            : "ST_Estimated_Extent";
 
         osCommand.Printf( "SELECT %s(%s, %s, %s)",
                         pszExtentFct,
@@ -3242,10 +3230,9 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
     osCreateTable += " )";
     CPLString osCommand(osCreateTable);
 
-    PGresult            *hResult;
-    PGconn              *hPGConn = poDS->GetPGConn();
+    PGconn *hPGConn = poDS->GetPGConn();
 
-    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

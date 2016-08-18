@@ -187,7 +187,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 {
                     if (oLR.getNumPoints() == 0)
                     {
-                        OpenAirStyle* psStyle;
+                        OpenAirStyle* psStyle = NULL;
                         if (oStyleMap.find(osCLASS) == oStyleMap.end())
                         {
                             psStyle = (OpenAirStyle*)CPLMalloc(
