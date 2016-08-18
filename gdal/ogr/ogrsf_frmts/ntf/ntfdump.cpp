@@ -85,9 +85,7 @@ static void NTFCount( const char * pszFile )
     if( fp == NULL )
         return;
 
-    // int anCount[100] = {};
-    for( int i = 0; i < 100; i++ )
-        anCount[i] = 0;
+    int anCount[100] = {};
 
     NTFRecord *poRecord = NULL;
     do {
@@ -102,7 +100,7 @@ static void NTFCount( const char * pszFile )
     VSIFClose( fp );
 
     printf( "\nReporting on: %s\n", pszFile );
-    for( i = 0; i < 100; i++ )
+    for( int i = 0; i < 100; i++ )
     {
         if( anCount[i] > 0 )
             printf( "Found %d records of type %d\n", anCount[i], i );
@@ -116,14 +114,14 @@ static void NTFCount( const char * pszFile )
 static void NTFDump( const char * pszFile, char **papszOptions )
 
 {
-    OGRFeature         *poFeature;
-    OGRNTFDataSource   oDS;
+    OGRNTFDataSource oDS;
 
     oDS.SetOptionList( papszOptions );
 
     if( !oDS.Open( pszFile ) )
         return;
 
+    OGRFeature *poFeature = NULL;
     while( (poFeature = oDS.GetNextFeature()) != NULL )
     {
         printf( "-------------------------------------\n" );
