@@ -112,17 +112,16 @@ VFKReader::~VFKReader()
 
 char *GetDataBlockName(const char *pszLine)
 {
-    int         n;
-    const char *pszLineChar;
-    char       *pszBlockName;
+    int n = 0; // Used after for.
+    const char *pszLineChar = pszLine + 2;
 
-    for (pszLineChar = pszLine + 2, n = 0; *pszLineChar != '\0' && *pszLineChar != ';'; pszLineChar++, n++)
+    for( ; *pszLineChar != '\0' && *pszLineChar != ';'; pszLineChar++, n++)
         ;
 
-    if (*pszLineChar == '\0')
+    if( *pszLineChar == '\0' )
         return NULL;
 
-    pszBlockName = (char *) CPLMalloc(n + 1);
+    char *pszBlockName = (char *) CPLMalloc(n + 1);
     strncpy(pszBlockName, pszLine + 2, n);
     pszBlockName[n] = '\0';
 
@@ -136,23 +135,19 @@ char *GetDataBlockName(const char *pszLine)
 
   \return a NULL terminated string which should be freed with CPLFree().
 */
-char *VFKReader::ReadLine(bool bRecode)
+char *VFKReader::ReadLine( bool bRecode )
 {
-    const char *pszRawLine;
-    char *pszLine;
-
-    pszRawLine = CPLReadLine(m_poFD);
+    const char *pszRawLine = CPLReadLine(m_poFD);
     if (pszRawLine == NULL)
         return NULL;
 
-    if (bRecode)
-        pszLine = CPLRecode(pszRawLine,
-                            m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
-                            CPL_ENC_UTF8);
-    else {
-        pszLine = (char *) CPLMalloc(strlen(pszRawLine) + 1);
-        strcpy(pszLine, pszRawLine);
-    }
+    if( bRecode )
+        return CPLRecode(pszRawLine,
+                         m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
+                         CPL_ENC_UTF8);
+
+    char *pszLine = (char *) CPLMalloc(strlen(pszRawLine) + 1);
+    strcpy(pszLine, pszRawLine);
 
     return pszLine;
 }
@@ -166,15 +161,11 @@ char *VFKReader::ReadLine(bool bRecode)
 */
 int VFKReader::ReadDataBlocks()
 {
-    char       *pszLine, *pszBlockName;
-    bool        bInHeader;
-
-    IVFKDataBlock *poNewDataBlock;
-
     CPLAssert(NULL != m_pszFilename);
 
     VSIFSeek(m_poFD, 0, SEEK_SET);
-    bInHeader = TRUE;
+    bool bInHeader = true;
+    char *pszLine = NULL;
     while ((pszLine = ReadLine()) != NULL) {
         if (strlen(pszLine) < 2 || pszLine[0] != '&') {
             CPLFree(pszLine);
@@ -182,10 +173,10 @@ int VFKReader::ReadDataBlocks()
         }
 
         if (pszLine[1] == 'B') {
-            if (bInHeader)
-                bInHeader = FALSE; /* 'B' record closes the header section */
+            if( bInHeader )
+                bInHeader = false; /* 'B' record closes the header section */
 
-            pszBlockName = GetDataBlockName(pszLine);
+            char *pszBlockName = GetDataBlockName(pszLine);
             if (pszBlockName == NULL) {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Corrupted data - line\n%s\n", pszLine);
@@ -194,8 +185,10 @@ int VFKReader::ReadDataBlocks()
             }
 
             /* skip duplicated data blocks (when reading multiple files into single DB)  */
-            if (!GetDataBlock(pszBlockName)) {
-                poNewDataBlock = (IVFKDataBlock *) CreateDataBlock(pszBlockName);
+            if( !GetDataBlock(pszBlockName) )
+            {
+                IVFKDataBlock *poNewDataBlock =
+                    (IVFKDataBlock *) CreateDataBlock(pszBlockName);
                 poNewDataBlock->SetGeometryType();
                 poNewDataBlock->SetProperties(pszLine); /* TODO: check consistency on property level */
                 AddDataBlock(poNewDataBlock, pszLine);
@@ -216,7 +209,8 @@ int VFKReader::ReadDataBlocks()
             CPLFree(pszLine);
             break;
         }
-        else if (bInHeader && pszLine[1] == 'D') {
+        else if( bInHeader && pszLine[1] == 'D' )
+        {
             /* process 'D' records in the header section */
             AddInfo(pszLine);
         }
@@ -265,7 +259,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     int nRecords = 0;
     bool bInHeader = true;
     CPLString osBlockNameLast;
-    char *pszLine;
+    char *pszLine = NULL;
 
     while ((pszLine = ReadLine()) != NULL) {
         iLine++;

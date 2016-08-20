@@ -73,9 +73,7 @@ OGRVFKDataSource::~OGRVFKDataSource()
 */
 int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
 {
-    GDALOpenInfo *poOpenInfo;
-
-    poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly );
+    GDALOpenInfo *poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly );
 
     if (poOpenInfo->fpL == NULL) {
         if (!bTestOpen)
@@ -178,13 +176,10 @@ int OGRVFKDataSource::TestCapability(const char * pszCap)
 */
 OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const IVFKDataBlock *poDataBlock)
 {
-    OGRVFKLayer *poLayer;
-
-    poLayer = NULL;
-
     /* create an empty layer */
-    poLayer = new OGRVFKLayer(poDataBlock->GetName(), NULL,
-                              poDataBlock->GetGeometryType(), this);
+    OGRVFKLayer *poLayer =
+        new OGRVFKLayer(poDataBlock->GetName(), NULL,
+                        poDataBlock->GetGeometryType(), this);
 
     /* define attributes (properties) */
     for (int iField = 0; iField < poDataBlock->GetPropertyCount(); iField++) {

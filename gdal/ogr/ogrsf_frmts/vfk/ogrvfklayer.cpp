@@ -183,9 +183,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
 */
 OGRFeature *OGRVFKLayer::GetFeature(GIntBig nFID)
 {
-    IVFKFeature *poVFKFeature;
-
-    poVFKFeature = poDataBlock->GetFeature(nFID);
+    IVFKFeature *poVFKFeature = poDataBlock->GetFeature(nFID);
 
     if (!poVFKFeature)
         return NULL;
@@ -203,14 +201,12 @@ OGRFeature *OGRVFKLayer::GetFeature(GIntBig nFID)
 */
 OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
 {
-    OGRGeometry *poGeom;
-
     /* skip feature with unknown geometry type */
     if (poVFKFeature->GetGeometryType() == wkbUnknown)
         return NULL;
 
     /* get features geometry */
-    poGeom = CreateGeometry(poVFKFeature);
+    OGRGeometry *poGeom = CreateGeometry(poVFKFeature);
     if (poGeom != NULL)
         poGeom->assignSpatialReference(poSRS);
 

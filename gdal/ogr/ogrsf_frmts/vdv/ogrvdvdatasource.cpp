@@ -344,13 +344,13 @@ void OGRIDFDataSource::Parse()
     OGRLayer* poLinkLyr = m_poMemDS->GetLayerByName("Link");
     if( poLinkLyr )
     {
-        OGRFeature* poFeat;
         iLinkID = poLinkLyr->GetLayerDefn()->GetFieldIndex("LINK_ID");
         if( iLinkID >= 0 )
         {
             poLinkLyr->ResetReading();
             OGRSpatialReference* poSRS =
                 poLinkLyr->GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
+            OGRFeature* poFeat = NULL;
             while( (poFeat = poLinkLyr->GetNextFeature()) != NULL )
             {
                 GIntBig nLinkID = poFeat->GetFieldAsInteger64(iLinkID);
@@ -1596,7 +1596,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
             return NULL;
     }
 
-    VSILFILE* fpL;
+    VSILFILE* fpL = NULL;
     if( m_bSingleFile )
     {
         fpL = m_fpL;
