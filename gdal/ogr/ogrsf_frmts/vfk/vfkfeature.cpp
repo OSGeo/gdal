@@ -386,7 +386,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
     /* read properties into the list */
     const char *poProp = poChar;
     unsigned int iIndex = 0;
-    unsigned int nLength;
+    unsigned int nLength = 0;
     bool inString = false;
     char* pszProp = NULL;
     std::vector<CPLString> oPropList;
