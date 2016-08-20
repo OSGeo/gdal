@@ -7051,14 +7051,16 @@ def tiff_write_157():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157_dst.tif')
 
     # Now try Float32 -> Float16 conversion
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 16, 1, 1, gdal.GDT_Float32, options = ['NBITS=16'])
-    vals = struct.pack('I' * 16,
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 18, 1, 1, gdal.GDT_Float32, options = ['NBITS=16'])
+    vals = struct.pack('I' * 18,
                             0x00000000, # Positive zero
                             0x80000000, # Negative zero
                             0x7f800000, # Positive infinity
                             0xff800000, # Negative infinity
                             0x7fc00000, # Some positive quiet NaN
                             0xffc00000, # Some negative quiet NaN
+                            0x7f800001, # Some positive signaling NaN with significant that will get lost
+                            0xff800001, # Some negative signaling NaN with significant that will get lost
                             0x3fa00000, # 1.25
                             0xbfa00000, # -1.25
                             0x00000001, # Smallest positive denormalized value
@@ -7070,15 +7072,16 @@ def tiff_write_157():
                             0x33800000, # 5.9604644775390625e-08 = Smallest number that can be converted as a float16 denormalized value
                             0x47800000, # 65536 --> converted to infinity
                             )
-    ds.GetRasterBand(1).WriteRaster(0,0,16,1,vals, buf_type = gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(0,0,18,1,vals, buf_type = gdal.GDT_Float32)
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_157.tif')
-    got = struct.unpack('f' * 16, ds.ReadRaster())
+    got = struct.unpack('f' * 18, ds.ReadRaster())
     ds = None
-    expected = (0.0, -0.0, gdaltest.posinf(), -gdaltest.posinf(), gdaltest.NaN(), gdaltest.NaN(),
+    expected = (0.0, -0.0, gdaltest.posinf(), -gdaltest.posinf(),
+                gdaltest.NaN(), gdaltest.NaN(), gdaltest.NaN(), gdaltest.NaN(),
                 1.25, -1.25, 0.0, -0.0, 0.0, -0.0, 0.0, -0.0, 5.9604644775390625e-08, gdaltest.posinf())
-    for i in range(16):
+    for i in range(18):
         if i == 4 or i == 5:
             if got[i] == got[i]:
                 gdaltest.post_reason('failure')
