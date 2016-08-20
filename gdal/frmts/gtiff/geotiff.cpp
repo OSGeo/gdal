@@ -9162,6 +9162,55 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset)
 }
 
 /************************************************************************/
+/*                     CreateTIFFColorTable()                           */
+/************************************************************************/
+
+static void CreateTIFFColorTable(GDALColorTable* poColorTable,
+                                 int nBits,
+                                 std::vector<unsigned short>& anTRed,
+                                 std::vector<unsigned short>& anTGreen,
+                                 std::vector<unsigned short>& anTBlue,
+                                 unsigned short*& panRed,
+                                 unsigned short*& panGreen,
+                                 unsigned short*& panBlue)
+{
+    int nColors;
+
+    if( nBits == 8 )
+        nColors = 256;
+    else if( nBits < 8 )
+        nColors = 1 << nBits;
+    else
+        nColors = 65536;
+
+    anTRed.resize(nColors,0);
+    anTGreen.resize(nColors,0);
+    anTBlue.resize(nColors,0);
+
+    for( int iColor = 0; iColor < nColors; ++iColor )
+    {
+        if( iColor < poColorTable->GetColorEntryCount() )
+        {
+            GDALColorEntry  sRGB;
+
+            poColorTable->GetColorEntryAsRGB( iColor, &sRGB );
+
+            anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
+            anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+            anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+        }
+        else
+        {
+            anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+        }
+    }
+
+    panRed = &(anTRed[0]);
+    panGreen = &(anTGreen[0]);
+    panBlue = &(anTBlue[0]);
+}
+
+/************************************************************************/
 /*                  CreateOverviewsFromSrcOverviews()                   */
 /************************************************************************/
 
@@ -9189,40 +9238,9 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 
     if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
     {
-        int nColors;
-
-        if( nOvBitsPerSample == 8 )
-            nColors = 256;
-        else if( nOvBitsPerSample < 8 )
-            nColors = 1 << nOvBitsPerSample;
-        else
-            nColors = 65536;
-
-        anTRed.resize(nColors,0);
-        anTGreen.resize(nColors,0);
-        anTBlue.resize(nColors,0);
-
-        for( int iColor = 0; iColor < nColors; ++iColor )
-        {
-            if( iColor < poColorTable->GetColorEntryCount() )
-            {
-                GDALColorEntry  sRGB;
-
-                poColorTable->GetColorEntryAsRGB( iColor, &sRGB );
-
-                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
-                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
-            }
-            else
-            {
-                anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
-            }
-        }
-
-        panRed = &(anTRed[0]);
-        panGreen = &(anTGreen[0]);
-        panBlue = &(anTBlue[0]);
+        CreateTIFFColorTable(poColorTable, nOvBitsPerSample,
+                             anTRed, anTGreen, anTBlue,
+                             panRed, panGreen, panBlue);
     }
 
 /* -------------------------------------------------------------------- */
@@ -9557,40 +9575,9 @@ CPLErr GTiffDataset::IBuildOverviews(
 
     if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
     {
-        int nColors;
-
-        if( nOvBitsPerSample == 8 )
-            nColors = 256;
-        else if( nOvBitsPerSample < 8 )
-            nColors = 1 << nOvBitsPerSample;
-        else
-            nColors = 65536;
-
-        anTRed.resize(nColors,0);
-        anTGreen.resize(nColors,0);
-        anTBlue.resize(nColors,0);
-
-        for( int iColor = 0; iColor < nColors; ++iColor )
-        {
-            if( iColor < poColorTable->GetColorEntryCount() )
-            {
-                GDALColorEntry  sRGB;
-
-                poColorTable->GetColorEntryAsRGB( iColor, &sRGB );
-
-                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
-                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
-            }
-            else
-            {
-                anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
-            }
-        }
-
-        panRed = &(anTRed[0]);
-        panGreen = &(anTGreen[0]);
-        panBlue = &(anTBlue[0]);
+        CreateTIFFColorTable(poColorTable, nOvBitsPerSample,
+                             anTRed, anTGreen, anTBlue,
+                             panRed, panGreen, panBlue);
     }
 
 /* -------------------------------------------------------------------- */
