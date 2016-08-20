@@ -308,6 +308,8 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                         osMultiLine += pszLine;
                     CPLFree(pszLine);
 
+                    // Coverity worries about nLength = 2147483647.
+                    // coverity[overflow] for CID 1074645.
                     nLength = static_cast<int>(osMultiLine.size());
                     pszLine = (char *) CPLMalloc(nLength + 1);
                     strncpy(pszLine, osMultiLine.c_str(), nLength);
