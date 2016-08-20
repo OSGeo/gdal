@@ -6436,7 +6436,7 @@ def tiff_write_144():
     # Extend the file to 4 GB
     f = open('tmp/tiff_write_144.tif', 'rb+')
     f.seek(4294967296, 0)
-    f.write(' ')
+    f.write(' '.encode('ascii'))
     f.close()
 
     ds = gdal.Open('tmp/tiff_write_144.tif', gdal.GA_Update)
@@ -6972,6 +6972,148 @@ def tiff_write_156():
     return 'success'
 
 ###############################################################################
+# Test Float16
+
+def tiff_write_157():
+
+    import struct
+
+    # Write controlled values of Float16
+    vals = struct.pack('H' * 14,
+                            0x0000, # Positive zero
+                            0x8000, # Negative zero
+                            0x7C00, # Positive infinity
+                            0xFC00, # Negative infinity
+                            0x7E00, # Some positive quiet NaN
+                            0xFE00, # Some negative quiet NaN
+                            0x3D00, # 1.25
+                            0xBD00, # -1.25
+                            0x0001, # Smallest positive denormalized value
+                            0x8001, # Smallest negative denormalized value
+                            0x03FF, # Largest positive denormalized value
+                            0x83FF, # Largest negative denormalized value
+                            0x0400, # Smallest positive normalized value
+                            0x8400, # Smallest negative normalized value
+                            )
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 14, 1, 1, gdal.GDT_Float32, options = ['NBITS=16'])
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_157.tif')
+    offset = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/tiff_write_157.tif', 'rb+')
+    gdal.VSIFSeekL(f, offset, 0)
+    gdal.VSIFWriteL(vals,1,len(vals),f)
+    gdal.VSIFCloseL(f)
+
+    # Check that we properly deserialize Float16 values
+    ds = gdal.Open('/vsimem/tiff_write_157.tif')
+    if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '16':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    got = struct.unpack('f' * 14, ds.ReadRaster())
+    expected = [0.0, -0.0, gdaltest.posinf(), -gdaltest.posinf(), gdaltest.NaN(), gdaltest.NaN(), 1.25, -1.25, 5.9604644775390625e-08, -5.9604644775390625e-08, 6.0975551605224609e-05, -6.0975551605224609e-05, 6.103515625e-05, -6.103515625e-05]
+    for i in range(14):
+        if i == 4 or i == 5:
+            if got[i] == got[i]:
+                gdaltest.post_reason('failure')
+                print(i)
+                print(got[i])
+                return 'fail'
+        elif abs(got[i] - expected[i]) > 1e-15:
+            gdaltest.post_reason('failure')
+            print(i)
+            print(got[i])
+            print(expected[i])
+            return 'fail'
+
+    # Check that we properly decode&re-encode Float16 values
+    gdal.Translate('/vsimem/tiff_write_157_dst.tif', ds)
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_157_dst.tif')
+    offset = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/tiff_write_157_dst.tif', 'rb')
+    gdal.VSIFSeekL(f, offset, 0)
+    vals_copied = gdal.VSIFReadL(1,14*2,f)
+    gdal.VSIFCloseL(f)
+
+    if vals != vals_copied:
+        gdaltest.post_reason('failure')
+        print(struct.unpack('H' * 14, vals))
+        print(struct.unpack('H' * 14, vals_copied))
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157.tif')
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157_dst.tif')
+
+    # Now try Float32 -> Float16 conversion
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_157.tif', 16, 1, 1, gdal.GDT_Float32, options = ['NBITS=16'])
+    vals = struct.pack('I' * 16,
+                            0x00000000, # Positive zero
+                            0x80000000, # Negative zero
+                            0x7f800000, # Positive infinity
+                            0xff800000, # Negative infinity
+                            0x7fc00000, # Some positive quiet NaN
+                            0xffc00000, # Some negative quiet NaN
+                            0x3fa00000, # 1.25
+                            0xbfa00000, # -1.25
+                            0x00000001, # Smallest positive denormalized value
+                            0x80000001, # Smallest negative denormalized value
+                            0x007fffff, # Largest positive denormalized value
+                            0x807fffff, # Largest negative denormalized value
+                            0x00800000, # Smallest positive normalized value
+                            0x80800000, # Smallest negative normalized value
+                            0x33800000, # 5.9604644775390625e-08 = Smallest number that can be converted as a float16 denormalized value
+                            0x47800000, # 65536 --> converted to infinity
+                            )
+    ds.GetRasterBand(1).WriteRaster(0,0,16,1,vals, buf_type = gdal.GDT_Float32)
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_157.tif')
+    got = struct.unpack('f' * 16, ds.ReadRaster())
+    ds = None
+    expected = (0.0, -0.0, gdaltest.posinf(), -gdaltest.posinf(), gdaltest.NaN(), gdaltest.NaN(),
+                1.25, -1.25, 0.0, -0.0, 0.0, -0.0, 0.0, -0.0, 5.9604644775390625e-08, gdaltest.posinf())
+    for i in range(16):
+        if i == 4 or i == 5:
+            if got[i] == got[i]:
+                gdaltest.post_reason('failure')
+                print(i)
+                print(got[i])
+                return 'fail'
+        elif abs(got[i] - expected[i]) > 1e-15:
+            gdaltest.post_reason('failure')
+            print(i)
+            print(got[i])
+            print(expected[i])
+            return 'fail'
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157.tif')
+
+    # Test pixel interleaved
+    gdal.Translate('/vsimem/tiff_write_157.tif', '../gdrivers/data/small_world.tif', options = '-co NBITS=16 -ot Float32')
+    ds = gdal.Open('/vsimem/tiff_write_157.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 30111:
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(2).Checksum()
+    if cs != 32302:
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7157,10 +7299,11 @@ gdaltest_list = [
     tiff_write_154,
     tiff_write_155,
     tiff_write_156,
+    tiff_write_157,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_155 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_157 ]
 
 if __name__ == '__main__':
 
