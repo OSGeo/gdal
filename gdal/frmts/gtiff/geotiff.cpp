@@ -5618,6 +5618,64 @@ GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *poGDSIn, int nBandIn )
 }
 
 /************************************************************************/
+/*                            FloatToHalf()                             */
+/************************************************************************/
+
+static GUInt16 FloatToHalf( GUInt32 iFloat32 )
+{
+    GUInt32 iSign =     (iFloat32 >> 31) & 0x00000001;
+    GUInt32 iExponent = (iFloat32 >> 23) & 0x000000ff;
+    GUInt32 iMantissa = iFloat32         & 0x007fffff;
+
+    if (iExponent == 255)
+    {
+        if (iMantissa == 0)
+        {
+/* -------------------------------------------------------------------- */
+/*       Positive or negative infinity.                                 */
+/* -------------------------------------------------------------------- */
+
+            return (iSign << 15) | 0x7C00;
+        }
+        else
+        {
+/* -------------------------------------------------------------------- */
+/*       NaN -- preserve sign and significand bits.                     */
+/* -------------------------------------------------------------------- */
+            if( iMantissa >> 13 )
+                return (iSign << 15) | 0x7C00 | (iMantissa >> 13);
+            return (iSign << 15) | 0x7E00;
+        }
+    }
+
+    if( iExponent <= 127 - 15 )
+    {
+        // Zero, float32 denormalized number or float32 too small normalized number
+        if( 13 + 1 + 127 - 15 - iExponent >= 32 )
+            return iSign << 15;
+
+        // Return a denormalized number
+        return (iSign << 15) | ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent));
+    }
+    if( iExponent - (127 - 15) >= 31 )
+        return (iSign << 15) | 0x7C00; // Infinity
+
+/* -------------------------------------------------------------------- */
+/*       Normalized number.                                             */
+/* -------------------------------------------------------------------- */
+
+    iExponent = iExponent - (127 - 15);
+    iMantissa = iMantissa >> 13;
+
+/* -------------------------------------------------------------------- */
+/*       Assemble sign, exponent and mantissa.                          */
+/* -------------------------------------------------------------------- */
+
+    /* coverity[overflow_sink] */
+    return (iSign << 15) | (iExponent << 10) | iMantissa;
+}
+
+/************************************************************************/
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
@@ -5641,10 +5699,11 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != NULL );
 
-    if( eDataType == GDT_Float32 )
+    if( eDataType == GDT_Float32 && poGDS->nBitsPerSample != 16 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Writing float data with nBitsPerSample < 32 is unsupported");
+                 "Writing float data with nBitsPerSample = %d is unsupported",
+                 poGDS->nBitsPerSample);
         return CE_Failure;
     }
 
@@ -5719,6 +5778,20 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     }
                     poGDS->pabyBlockBuf[iBitOffset>>3] = static_cast<GByte>(nRes);
                 }
+            }
+
+            poGDS->bLoadedBlockDirty = true;
+
+            return CE_None;
+        }
+
+        if( eDataType == GDT_Float32 && poGDS->nBitsPerSample == 16 )
+        {
+            for( ; iPixel < nBlockYSize * nBlockXSize; iPixel ++ )
+            {
+                GUInt32 nInWord = static_cast<GUInt32 *>(pImage)[iPixel];
+                GUInt16 nHalf = FloatToHalf(nInWord);
+                reinterpret_cast<GUInt16*>(poGDS->pabyBlockBuf)[iPixel] = nHalf;
             }
 
             poGDS->bLoadedBlockDirty = true;
@@ -5897,6 +5970,26 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
         int iPixel = 0;
+
+        if( eDataType == GDT_Float32 && poGDS->nBitsPerSample == 16 )
+        {
+            for( ; iPixel < nBlockYSize * nBlockXSize; iPixel ++ )
+            {
+                GUInt32 nInWord = reinterpret_cast<const GUInt32 *>(
+                                                        pabyThisImage)[iPixel];
+                GUInt16 nHalf = FloatToHalf(nInWord);
+                reinterpret_cast<GUInt16*>(poGDS->pabyBlockBuf)[
+                                    iPixel * poGDS->nBands + iBand] = nHalf;
+            }
+
+            if( poBlock != NULL )
+            {
+                poBlock->MarkClean();
+                poBlock->DropLock();
+            }
+            continue;
+        }
+
         for( int iY = 0; iY < nBlockYSize; ++iY )
         {
             int iBitOffset = iBandBitOffset + iY * nBitsPerLine;
@@ -12913,7 +13006,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
           nBitsPerSample != 8 ) ||
          (GetRasterBand(1)->GetRasterDataType() == GDT_UInt16 &&
           nBitsPerSample != 16) ||
-         (GetRasterBand(1)->GetRasterDataType() == GDT_UInt32 &&
+         ((GetRasterBand(1)->GetRasterDataType() == GDT_UInt32 ||
+           GetRasterBand(1)->GetRasterDataType() == GDT_Float32) &&
           nBitsPerSample != 32) )
     {
         for( int i = 0; i < nBands; ++i )
@@ -14088,6 +14182,16 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             nMinBits = 17;
             nMaxBits = 32;
         }
+        else if( eType == GDT_Float32 )
+        {
+            if( l_nBitsPerSample != 16 && l_nBitsPerSample != 32 )
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                     "NBITS is not supported for data type %s",
+                     GDALGetDataTypeName(eType));
+                l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
+            }
+        }
         else
         {
             CPLError(CE_Warning, CPLE_NotSupported,
@@ -14889,7 +14993,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     for( int iBand = 0; iBand < l_nBands; ++iBand )
     {
         if( poDS->nBitsPerSample == 8 ||
-            poDS->nBitsPerSample == 16 ||
+            (poDS->nBitsPerSample == 16 && eType != GDT_Float32) ||
             poDS->nBitsPerSample == 32 ||
             poDS->nBitsPerSample == 64 ||
             poDS->nBitsPerSample == 128)
@@ -17269,7 +17373,7 @@ void GDALRegister_GTiff()
 "   <Option name='LZMA_PRESET' type='int' description='LZMA compression level 0(fast)-9(slow)' default='6'/>");
     strcat( szCreateOptions, ""
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
-"   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
+"   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31), or float32 (16)'/>"
 "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
 "       <Value>BAND</Value>"
 "       <Value>PIXEL</Value>"

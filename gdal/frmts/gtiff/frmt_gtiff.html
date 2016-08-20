@@ -279,7 +279,10 @@ option can be used to force creation of tiled TIFF files.</p></li>
 <li><p><b>BLOCKYSIZE=n</b>: Set tile or strip height.  Tile height defaults to
 256, strip height defaults to a value such that one strip is 8K or less. </p></li>
 
-<li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted. </p></li>
+<li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing
+a value from 1 to 7.  The apparent pixel type should be Byte.
+From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted.
+From GDAL 2.2, n=16 is accepted for Float32 type to generate half-precision floating point values.</p></li>
 
 <li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>:
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
