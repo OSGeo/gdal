@@ -711,17 +711,16 @@ void OGRTigerDataSource::AddModule( const char *pszModule )
 /************************************************************************/
 
 char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
-                                    const char *pszExtension )
+                                         const char *pszExtension )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Force the record type to lower case if the filename appears     */
 /*      to be in lower case.                                            */
 /* -------------------------------------------------------------------- */
+    char szLCExtension[3] = {};
     if( *pszExtension >= 'A' && *pszExtension <= 'Z' && *pszModuleName == 't' )
     {
-        char szLCExtension[3] = {};
         szLCExtension[0] = (*pszExtension) + 'a' - 'A';
         szLCExtension[1] = '\0';
         pszExtension = szLCExtension;
@@ -730,9 +729,10 @@ char *OGRTigerDataSource::BuildFilename( const char *pszModuleName,
 /* -------------------------------------------------------------------- */
 /*      Build the filename.                                             */
 /* -------------------------------------------------------------------- */
-    const size_t nFilenameLen = strlen(GetDirPath())
-                                     + strlen(pszModuleName)
-                                     + strlen(pszExtension) + 10;
+    const size_t nFilenameLen =
+        strlen(GetDirPath())
+        + strlen(pszModuleName)
+        + strlen(pszExtension) + 10;
     char *pszFilename = (char *) CPLMalloc(nFilenameLen);
 
     if( strlen(GetDirPath()) == 0 )
