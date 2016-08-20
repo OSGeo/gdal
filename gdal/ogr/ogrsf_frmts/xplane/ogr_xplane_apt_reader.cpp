@@ -1079,13 +1079,13 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
     // bool bLastIsValid = false;
     bool bLastIsBezier = false;
     bool bLastPartIsClosed = false;
-    const char* pszLine;
     OGRPolygon polygon;
 
     OGRLinearRing linearRing;
 
     *ppoGeom = NULL;
 
+    const char* pszLine = NULL;
     while((pszLine = CPLReadLineL(fp)) != NULL)
     {
         int nType = -1;
@@ -1308,7 +1308,7 @@ void OGRXPlaneAptReader::ParsePavement()
     CSLDestroy(papszTokens);
     papszTokens = NULL;
 
-    OGRGeometry* poGeom;
+    OGRGeometry* poGeom = NULL;
     bResumeLine = ParsePolygonalGeometry(&poGeom);
     if (poGeom != NULL && poPavementLayer)
     {
@@ -1358,7 +1358,7 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
     CSLDestroy(papszTokens);
     papszTokens = NULL;
 
-    OGRGeometry* poGeom;
+    OGRGeometry* poGeom = NULL;
     bResumeLine = ParsePolygonalGeometry(&poGeom);
     if (poGeom != NULL && poAPTBoundaryLayer)
     {
@@ -1409,10 +1409,10 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
     // bool bLastIsValid = false;
     bool bLastIsBezier = false;
     bool bLastPartIsClosedOrEnded = false;
-    const char* pszLine;
 
     OGRLineString lineString;
 
+    const char* pszLine = NULL;
     while((pszLine = CPLReadLineL(fp)) != NULL)
     {
         int nType = -1;

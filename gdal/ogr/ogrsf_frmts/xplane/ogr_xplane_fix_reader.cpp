@@ -96,7 +96,7 @@ int OGRXPlaneFixReader::IsRecognizedVersion( const char* pszVersionString)
 
 void OGRXPlaneFixReader::Read()
 {
-    const char* pszLine;
+    const char* pszLine = NULL;
     while((pszLine = CPLReadLineL(fp)) != NULL)
     {
         papszTokens = CSLTokenizeString(pszLine);

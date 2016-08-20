@@ -379,8 +379,7 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
     OGRUnionLayerGeomFieldDefn** papoGeomFields = NULL;
     int nGeomFields = 0;
 
-    CPLXMLNode *psSubNode;
-    for( psSubNode=psLTree->psChild;
+    for( CPLXMLNode *psSubNode = psLTree->psChild;
          psSubNode != NULL;
          psSubNode=psSubNode->psNext )
     {
@@ -591,7 +590,7 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
     int nSrcLayers = 0;
     OGRLayer** papoSrcLayers = NULL;
 
-    for( psSubNode=psLTree->psChild;
+    for( CPLXMLNode *psSubNode = psLTree->psChild;
          psSubNode != NULL;
          psSubNode=psSubNode->psNext )
     {

@@ -163,9 +163,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     nBaseStartIndex = DEFAULT_BASE_START_INDEX;
     if (bPagingAllowed)
     {
-        const char* pszOption;
-
-        pszOption = CPLGetConfigOption("OGR_WFS_PAGE_SIZE", NULL);
+        const char* pszOption = CPLGetConfigOption("OGR_WFS_PAGE_SIZE", NULL);
         if( pszOption != NULL )
         {
             nPageSize = atoi(pszOption);
@@ -477,9 +475,6 @@ int OGRWFSDataSource::DetectRequiresEnvelopeSpatialFilter(CPLXMLNode* psRoot)
     /* request, but requires instead <gml:Envelope>, but some servers (such as MapServer) */
     /* don't like <gml:Envelope> so we are obliged to detect the kind of server */
 
-    int nCount;
-    CPLXMLNode* psChild;
-
     CPLXMLNode* psGeometryOperands =
         CPLGetXMLNode(psRoot, "Filter_Capabilities.Spatial_Capabilities.GeometryOperands");
     if (!psGeometryOperands)
@@ -487,11 +482,11 @@ int OGRWFSDataSource::DetectRequiresEnvelopeSpatialFilter(CPLXMLNode* psRoot)
         return FALSE;
     }
 
-    nCount = 0;
-    psChild = psGeometryOperands->psChild;
-    while(psChild)
+    int nCount = 0;
+    CPLXMLNode* psChild = psGeometryOperands->psChild;
+    while( psChild )
     {
-        nCount ++;
+        nCount++;
         psChild = psChild->psNext;
     }
     /* Magic number... Might be fragile */
@@ -768,20 +763,18 @@ static int FindComparisonOperator(CPLXMLNode* psNode, const char* pszVal)
 
 CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
 {
-    VSILFILE *fp;
-    char achHeader[1024];
-
     VSIStatBufL sStatBuf;
     if (VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0 ||
         VSI_ISDIR(sStatBuf.st_mode))
         return NULL;
 
-    fp = VSIFOpenL( pszFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
 
     if( fp == NULL )
         return NULL;
 
     int nRead;
+    char achHeader[1024] = {};
     if( (nRead = static_cast<int>(VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp ))) == 0 )
     {
         VSIFCloseL( fp );
@@ -859,11 +852,9 @@ CPLHTTPResult* OGRWFSDataSource::SendGetCapabilities(const char* pszBaseURL,
     osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
     osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", NULL);
 
-    CPLHTTPResult* psResult;
-
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    psResult = HTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
         return NULL;
@@ -989,9 +980,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
 /* -------------------------------------------------------------------- */
 /*      Capture other parameters.                                       */
 /* -------------------------------------------------------------------- */
-        const char  *pszParm;
-
-        pszParm = CPLGetXMLValue( psRoot, "Timeout", NULL );
+        const char *pszParm = CPLGetXMLValue( psRoot, "Timeout", NULL );
         if( pszParm )
             papszHttpOptions =
                 CSLSetNameValue(papszHttpOptions,
@@ -1259,11 +1248,9 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
         return FALSE;
     }
 
-    CPLXMLNode* psChildIter;
-
     /* Check if there are layer names whose identical except their prefix */
     std::set<CPLString> aosSetLayerNames;
-    for(psChildIter = psChild->psChild;
+    for( CPLXMLNode* psChildIter = psChild->psChild;
         psChildIter != NULL;
         psChildIter = psChildIter->psNext)
     {
@@ -1291,9 +1278,9 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
     if (osTypeName.size() != 0)
         papszTypenames = CSLTokenizeStringComplex( osTypeName, ",", FALSE, FALSE );
 
-    for(psChildIter = psChild->psChild;
-        psChildIter != NULL;
-        psChildIter = psChildIter->psNext)
+    for( CPLXMLNode* psChildIter = psChild->psChild;
+         psChildIter != NULL;
+         psChildIter = psChildIter->psNext )
     {
         if (psChildIter->eType == CXT_Element &&
             strcmp(psChildIter->pszValue, "FeatureType") == 0)
@@ -1408,9 +1395,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                         CPLString osConcat(pszLC);
                         osConcat += " ";
                         osConcat += pszUC;
-                        char** papszTokens;
-                        papszTokens = CSLTokenizeStringComplex(
-                                            osConcat, " ,", FALSE, FALSE );
+                        char **papszTokens = CSLTokenizeStringComplex(
+                            osConcat, " ,", FALSE, FALSE );
                         if (CSLCount(papszTokens) == 4)
                         {
                             /* bFoundBBox = TRUE; */
@@ -1444,9 +1430,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                     }
                 }
 
-                char* pszCSVEscaped;
-
-                pszCSVEscaped = CPLEscapeString(l_pszName, -1, CPLES_CSV);
+                char* pszCSVEscaped = CPLEscapeString(l_pszName, -1, CPLES_CSV);
                 osLayerMetadataCSV += pszCSVEscaped;
                 CPLFree(pszCSVEscaped);
 
@@ -1523,10 +1507,11 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                         {
                             OGRSpatialReference oWGS84;
                             oWGS84.SetWellKnownGeogCS("WGS84");
-                            OGRCoordinateTransformation* poCT;
                             CPLPushErrorHandler(CPLQuietErrorHandler);
-                            poCT = OGRCreateCoordinateTransformation(&oWGS84, poSRS);
-                            if (poCT)
+                            OGRCoordinateTransformation* poCT =
+                                OGRCreateCoordinateTransformation(&oWGS84,
+                                                                  poSRS);
+                            if( poCT )
                             {
                                 double dfULX = dfMinX;
                                 double dfULY = dfMaxY;
@@ -1816,7 +1801,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
             GMLFeatureClass* poClass = *oIter;
             oIter ++;
 
-            OGRWFSLayer* poLayer;
+            OGRWFSLayer* poLayer = NULL;
 
             if (bKeepLayerNamePrefix && pszNS != NULL && strchr(poClass->GetName(), ':') == NULL)
             {

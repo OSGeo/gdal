@@ -737,7 +737,6 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
     {
         CPLAssert(strcmp(pszNameIn, "row") == 0);
 
-        OGRFeature* poFeature;
         size_t i;
 
         /* Backup first line values and types in special arrays */
@@ -793,7 +792,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                     poCurLayer->CreateField(&oFieldDefn);
                 }
 
-                poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
                 for(i = 0; i < apoFirstLineValues.size(); i++)
                 {
                     SetField(poFeature, static_cast<int>(i), apoFirstLineValues[i].c_str(),
@@ -871,7 +870,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             }
 
             /* Add feature for current line */
-            poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+            OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
             for(i = 0; i < apoCurLineValues.size(); i++)
             {
                 SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str(),
@@ -1553,9 +1552,8 @@ static void WriteOverride(VSILFILE* fp, const char* pszPartName, const char* psz
 
 static void WriteContentTypes(const char* pszName, int nLayers)
 {
-    VSILFILE* fp;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/[Content_Types].xml", pszName), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/[Content_Types].xml", pszName), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<Types xmlns=\"%s/content-types\">\n", SCHEMA_PACKAGE);
     WriteOverride(fp, "/_rels/.rels", "application/vnd.openxmlformats-package.relationships+xml");
@@ -1580,9 +1578,8 @@ static void WriteContentTypes(const char* pszName, int nLayers)
 
 static void WriteApp(const char* pszName)
 {
-    VSILFILE* fp;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/docProps/app.xml", pszName), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/docProps/app.xml", pszName), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<Properties xmlns=\"%s/extended-properties\" "
                     "xmlns:vt=\"%s/docPropsVTypes\">\n", SCHEMA_OD, SCHEMA_OD);
@@ -1597,9 +1594,8 @@ static void WriteApp(const char* pszName)
 
 static void WriteCore(const char* pszName)
 {
-    VSILFILE* fp;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/docProps/core.xml", pszName), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/docProps/core.xml", pszName), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<cp:coreProperties xmlns:cp=\"%s/metadata/core-properties\" "
                     "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
@@ -1617,9 +1613,8 @@ static void WriteCore(const char* pszName)
 
 static void WriteWorkbook(const char* pszName, OGRDataSource* poDS)
 {
-    VSILFILE* fp;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/workbook.xml", pszName), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/workbook.xml", pszName), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<workbook %s xmlns:r=\"%s\">\n", MAIN_NS, SCHEMA_OD_RS);
     VSIFPrintfL(fp, "<fileVersion appName=\"Calc\"/>\n");
@@ -1684,10 +1679,9 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
                        std::map<std::string,int>& oStringMap,
                        std::vector<std::string>& oStringList)
 {
-    VSILFILE* fp;
-    int j;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/worksheets/sheet%d.xml", pszName, iLayer + 1), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/worksheets/sheet%d.xml",
+                             pszName, iLayer + 1), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<worksheet %s xmlns:r=\"%s\">\n", MAIN_NS, SCHEMA_OD_RS);
     /*
@@ -1707,7 +1701,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
     int iRow = 1;
 
     VSIFPrintfL(fp, "<cols>\n");
-    for(j=0;j<poFDefn->GetFieldCount();j++)
+    for( int j=0;j<poFDefn->GetFieldCount();j++)
     {
         int nWidth = 15;
         if (poFDefn->GetFieldDefn(j)->GetType() == OFTDateTime)
@@ -1726,7 +1720,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
     if (bHasHeaders && poFeature != NULL)
     {
         VSIFPrintfL(fp, "<row r=\"%d\">\n", iRow);
-        for(j=0;j<poFDefn->GetFieldCount();j++)
+        for( int j=0;j<poFDefn->GetFieldCount();j++)
         {
             const char* pszVal = poFDefn->GetFieldDefn(j)->GetNameRef();
             std::map<std::string,int>::iterator oIter = oStringMap.find(pszVal);
@@ -1755,7 +1749,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
     while(poFeature != NULL)
     {
         VSIFPrintfL(fp, "<row r=\"%d\">\n", iRow);
-        for(j=0;j<poFeature->GetFieldCount();j++)
+        for( int j=0;j<poFeature->GetFieldCount();j++)
         {
             if (poFeature->IsFieldSet(j))
             {
@@ -1849,9 +1843,8 @@ static void WriteSharedStrings(const char* pszName,
                                CPL_UNUSED std::map<std::string,int>& oStringMap,
                                std::vector<std::string>& oStringList)
 {
-    VSILFILE* fp;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/sharedStrings.xml", pszName), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/sharedStrings.xml", pszName), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<sst %s uniqueCount=\"%d\">\n",
                 MAIN_NS,
@@ -1874,9 +1867,8 @@ static void WriteSharedStrings(const char* pszName,
 
 static void WriteStyles(const char* pszName)
 {
-    VSILFILE* fp;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/styles.xml", pszName), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/styles.xml", pszName), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<styleSheet %s>\n", MAIN_NS);
     VSIFPrintfL(fp, "<numFmts count=\"4\">\n");
@@ -1931,9 +1923,9 @@ static void WriteStyles(const char* pszName)
 
 static void WriteWorkbookRels(const char* pszName, int nLayers)
 {
-    VSILFILE* fp;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/_rels/workbook.xml.rels", pszName), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/_rels/workbook.xml.rels",
+                             pszName), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<Relationships xmlns=\"%s\">\n", SCHEMA_PACKAGE_RS);
     VSIFPrintfL(fp, "<Relationship Id=\"rId1\" Type=\"%s/styles\" Target=\"styles.xml\"/>\n", SCHEMA_OD_RS);
@@ -1954,9 +1946,8 @@ static void WriteWorkbookRels(const char* pszName, int nLayers)
 
 static void WriteDotRels(const char* pszName)
 {
-    VSILFILE* fp;
-
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/_rels/.rels", pszName), "wb");
+    VSILFILE* fp =
+        VSIFOpenL(CPLSPrintf("/vsizip/%s/_rels/.rels", pszName), "wb");
     VSIFPrintfL(fp, XML_HEADER);
     VSIFPrintfL(fp, "<Relationships xmlns=\"%s\">\n", SCHEMA_PACKAGE_RS);
     VSIFPrintfL(fp, "<Relationship Id=\"rId1\" Type=\"%s/officeDocument\" Target=\"xl/workbook.xml\"/>\n", SCHEMA_OD_RS);

@@ -71,10 +71,12 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 /*      appropriate connection string.  Otherwise clip of WALK: to      */
 /*      get the DSN.                                                    */
 /* -------------------------------------------------------------------- */
-    char *pszDSN;
+    char *pszDSN = NULL;
 
     if( STARTS_WITH_CI(pszNewName, "WALK:") )
+    {
         pszDSN = CPLStrdup( pszNewName + 5 );
+    }
     else
     {
         const char *pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";

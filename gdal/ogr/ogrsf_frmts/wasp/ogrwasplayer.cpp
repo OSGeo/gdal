@@ -735,13 +735,11 @@ OGRFeature *OGRWAsPLayer::GetNextFeature()
         return NULL;
     }
 
-    OGRFeature  *poFeature;
-
     GetLayerDefn();
 
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
