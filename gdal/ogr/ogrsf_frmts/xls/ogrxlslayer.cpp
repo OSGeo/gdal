@@ -286,11 +286,9 @@ OGRFeature *OGRXLSLayer::GetNextFeature()
 {
     GetLayerDefn();
 
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 

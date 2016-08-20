@@ -166,7 +166,6 @@ void  OGRXPlaneLayer::AutoAdjustColumnsWidth()
 
 OGRFeature *OGRXPlaneLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
 
     if (poReader)
     {
@@ -184,7 +183,7 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
 
             do
             {
-                poFeature = papoFeatures[nFeatureArrayIndex];
+                OGRFeature *poFeature = papoFeatures[nFeatureArrayIndex];
                 papoFeatures[nFeatureArrayIndex] = NULL;
                 nFeatureArrayIndex++;
 
@@ -205,7 +204,7 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
 
     while(nFeatureArrayIndex < nFeatureArraySize)
     {
-        poFeature = papoFeatures[nFeatureArrayIndex ++];
+        OGRFeature *poFeature = papoFeatures[nFeatureArrayIndex ++];
         CPLAssert (poFeature != NULL);
 
         if( (m_poFilterGeom == NULL

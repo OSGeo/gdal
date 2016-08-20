@@ -787,8 +787,7 @@ try_again:
                 iGeomField < GetSrcLayerDefn()->GetGeomFieldCount();
                 iGeomField++ )
         {
-            OGRVRTGeomFieldProps* poProps;
-            poProps = new OGRVRTGeomFieldProps();
+            OGRVRTGeomFieldProps* poProps = new OGRVRTGeomFieldProps();
             apoGeomFieldProps.push_back(poProps);
             OGRGeomFieldDefn* poFDefn =
                 GetSrcLayerDefn()->GetGeomFieldDefn(iGeomField);
@@ -1360,7 +1359,7 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
         if( poSrcFeature == NULL )
             return NULL;
 
-        OGRFeature *poFeature;
+        OGRFeature *poFeature = NULL;
         if (poFeatureDefn == poSrcFeatureDefn)
         {
             poFeature = poSrcFeature;
@@ -1481,8 +1480,8 @@ retry:
         }
         else if( eGeometryStyle == VGS_WKB && iGeomField != -1 )
         {
-            int nBytes;
-            GByte *pabyWKB;
+            int nBytes = 0;
+            GByte *pabyWKB = NULL;
             bool bNeedFree = false;
 
             if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() == OFTBinary )
@@ -1511,8 +1510,8 @@ retry:
         }
         else if( eGeometryStyle == VGS_Shape && iGeomField != -1 )
         {
-            int nBytes;
-            GByte *pabyWKB;
+            int nBytes = 0;
+            GByte *pabyWKB = NULL;
             int bNeedFree = FALSE;
 
             if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() == OFTBinary )
@@ -1544,7 +1543,7 @@ retry:
         }
         else if( eGeometryStyle == VGS_PointFromColumns )
         {
-            OGRPoint* poPoint;
+            OGRPoint* poPoint = NULL;
             if( apoGeomFieldProps[i]->iGeomZField != -1 )
             {
                 poPoint = new OGRPoint( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomXField ),
@@ -2263,7 +2262,7 @@ const char * OGRVRTLayer::GetFIDColumn()
     if( osFIDFieldName.size() )
         return osFIDFieldName;
 
-    const char* pszFIDColumn;
+    const char* pszFIDColumn = NULL;
     if (iFIDField == -1)
     {
         /* If pass-through, then query the source layer FID column */

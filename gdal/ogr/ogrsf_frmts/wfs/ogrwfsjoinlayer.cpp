@@ -173,8 +173,8 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource* poDSIn,
             psGlobalSchema = NULL;
             break;
         }
-        CPLXMLNode* psIter;
-        for(psIter = psSchema->psChild; psIter != NULL; psIter = psIter->psNext )
+        CPLXMLNode* psIter = psSchema->psChild;  // Used after for.
+        for( ; psIter != NULL; psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element )
                 break;
@@ -508,9 +508,8 @@ GDALDataset* OGRWFSJoinLayer::FetchGetFeature()
 
     CPLHTTPDestroyResult(psResult);
 
-    OGRDataSource* l_poDS;
-
-    l_poDS = (OGRDataSource*) OGROpen(osTmpFileName, FALSE, NULL);
+    OGRDataSource* l_poDS =
+        (OGRDataSource*) OGROpen(osTmpFileName, FALSE, NULL);
     if (l_poDS == NULL)
     {
         if( strstr((const char*)pabyData, "<wfs:FeatureCollection") == NULL &&

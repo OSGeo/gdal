@@ -43,12 +43,9 @@ CPL_CVSID("$Id$");
 void OGRWFSRecursiveUnlink( const char *pszName )
 
 {
-    char **papszFileList;
-    int i;
+    char **papszFileList = VSIReadDir( pszName );
 
-    papszFileList = VSIReadDir( pszName );
-
-    for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
+    for( int i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
     {
         VSIStatBufL  sStatBuf;
 
@@ -1835,7 +1832,7 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
             {
                 if (poGeom->getSpatialReference() == NULL)
                     poGeom->assignSpatialReference(poSRS);
-                char* pszGML;
+                char* pszGML = NULL;
                 if (strcmp(poDS->GetVersion(), "1.1.0") == 0)
                 {
                     char** papszOptions = CSLAddString(NULL, "FORMAT=GML3");
@@ -2076,7 +2073,7 @@ OGRErr OGRWFSLayer::ISetFeature( OGRFeature *poFeature )
         {
             if (poGeom->getSpatialReference() == NULL)
                 poGeom->assignSpatialReference(poSRS);
-            char* pszGML;
+            char* pszGML = NULL;
             if (strcmp(poDS->GetVersion(), "1.1.0") == 0)
             {
                 char** papszOptions = CSLAddString(NULL, "FORMAT=GML3");

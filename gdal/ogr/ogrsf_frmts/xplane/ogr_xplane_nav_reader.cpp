@@ -121,7 +121,7 @@ int OGRXPlaneNavReader::IsRecognizedVersion( const char* pszVersionString)
 
 void OGRXPlaneNavReader::Read()
 {
-    const char* pszLine;
+    const char* pszLine = NULL;
     while((pszLine = CPLReadLineL(fp)) != NULL)
     {
         int nType;
@@ -177,7 +177,6 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
     double dfVal, dfLat, dfLon, dfElevation, dfFrequency, dfRange;
     double dfSlavedVariation = 0, dfTrueHeading = 0,
             dfDMEBias = 0, dfSlope = 0;
-    char* pszNavaidId;
 
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
 
@@ -194,7 +193,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
     RET_IF_FAIL(readDouble(&dfRange, 5, "range"));
     dfRange *= NM_TO_KM;
 
-    pszNavaidId = papszTokens[7];
+    char* pszNavaidId = papszTokens[7];
 
     if (nType == NAVAID_NDB)
     {

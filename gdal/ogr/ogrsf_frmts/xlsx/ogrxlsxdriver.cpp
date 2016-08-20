@@ -146,9 +146,7 @@ OGRDataSource *OGRXLSXDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Try to create datasource.                                       */
 /* -------------------------------------------------------------------- */
-    OGRXLSXDataSource     *poDS;
-
-    poDS = new OGRXLSXDataSource();
+    OGRXLSXDataSource *poDS = new OGRXLSXDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {

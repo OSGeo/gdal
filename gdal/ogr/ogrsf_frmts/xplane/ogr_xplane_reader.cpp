@@ -174,7 +174,7 @@ int OGRXPlaneReader::assertMinCol(int nMinColNum)
 
 int OGRXPlaneReader::readDouble(double* pdfValue, int iToken, const char* pszTokenDesc)
 {
-    char* pszNext;
+    char* pszNext = NULL;
     *pdfValue = CPLStrtod(papszTokens[iToken], &pszNext);
     if (*pszNext != '\0' )
     {

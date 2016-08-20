@@ -196,9 +196,7 @@ OGRFeature *OGRWalkLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -288,7 +286,7 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
 
         if ( eErr != OGRERR_NONE )
         {
-            const char *pszMessage;
+            const char *pszMessage = NULL;
 
             switch ( eErr )
             {
