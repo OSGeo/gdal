@@ -58,15 +58,15 @@ static int OGRVFKDriverIdentify(GDALOpenInfo* poOpenInfo)
 */
 static GDALDataset *OGRVFKDriverOpen(GDALOpenInfo* poOpenInfo)
 {
-    OGRVFKDataSource *poDS;
-
     if( poOpenInfo->eAccess == GA_Update ||
         !OGRVFKDriverIdentify(poOpenInfo) )
         return NULL;
 
-    poDS = new OGRVFKDataSource();
+    OGRVFKDataSource *poDS = new OGRVFKDataSource();
 
-    if(!poDS->Open(poOpenInfo->pszFilename, TRUE) || poDS->GetLayerCount() == 0) {
+    if( !poDS->Open(poOpenInfo->pszFilename, TRUE) ||
+        poDS->GetLayerCount() == 0 )
+    {
         delete poDS;
         return NULL;
     }

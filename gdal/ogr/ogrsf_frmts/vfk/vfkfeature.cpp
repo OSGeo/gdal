@@ -135,8 +135,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
 
     /* check degenerated polygons */
     if (m_nGeometryType == wkbPolygon) {
-        OGRLinearRing *poRing;
-        poRing = ((OGRPolygon *) poGeom)->getExteriorRing();
+        OGRLinearRing *poRing = ((OGRPolygon *) poGeom)->getExteriorRing();
         if (!poRing || poRing->getNumPoints() < 3) {
 	    CPLDebug("OGR-VFK", "%s: invalid polygon fid = " CPL_FRMT_GIB,
 		     m_poDataBlock->GetName(), m_nFID);
@@ -147,10 +146,9 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
     if (m_bValid) {
         if (ftype) {
             OGRPoint pt;
-            OGRGeometry *poGeomCurved;
             OGRCircularString poGeomString;
 
-            poGeomCurved = NULL;
+            OGRGeometry *poGeomCurved = NULL;
             if (EQUAL(ftype, "15") || EQUAL(ftype, "16")) {         /* -> circle or arc */
                 int npoints = ((OGRLineString *) poGeom)->getNumPoints();
                 for (int i = 0; i < npoints; i++) {
@@ -322,12 +320,10 @@ OGRGeometry *IVFKFeature::GetGeometry()
 */
 bool IVFKFeature::LoadGeometry()
 {
-    const char *pszName;
-
     if (m_bGeometry)
-        return TRUE;
+        return true;
 
-    pszName  = m_poDataBlock->GetName();
+    const char *pszName = m_poDataBlock->GetName();
 
     if (EQUAL (pszName, "SOBR") ||
         EQUAL (pszName, "OBBP") ||
@@ -378,28 +374,24 @@ VFKFeature::VFKFeature(IVFKDataBlock *poDataBlock, GIntBig iFID) : IVFKFeature(p
 */
 bool VFKFeature::SetProperties(const char *pszLine)
 {
-    unsigned int iIndex, nLength;
-    const char *poChar, *poProp;
-    char* pszProp;
-    bool inString;
-
-    std::vector<CPLString> oPropList;
-
-    pszProp = NULL;
-
-    for (poChar = pszLine; *poChar != '\0' && *poChar != ';'; poChar++)
+    const char *poChar = pszLine;  // Used after for.
+    for( ; *poChar != '\0' && *poChar != ';'; poChar++ )
         /* skip data block name */
         ;
-    if (*poChar == '\0')
-        return FALSE; /* nothing to read */
+    if( *poChar == '\0' )
+        return false; /* nothing to read */
 
     poChar++; /* skip ';' after data block name*/
 
     /* read properties into the list */
-    poProp = poChar;
-    iIndex = nLength = 0;
-    inString = FALSE;
-    while(*poChar != '\0') {
+    const char *poProp = poChar;
+    unsigned int iIndex = 0;
+    unsigned int nLength;
+    bool inString = false;
+    char* pszProp = NULL;
+    std::vector<CPLString> oPropList;
+    while( *poChar != '\0' )
+    {
         if (*poChar == '"' &&
             (*(poChar-1) == ';' || *(poChar+1) == ';' || *(poChar+1) == '\0')) {
             poChar++; /* skip '"' */
@@ -455,13 +447,11 @@ bool VFKFeature::SetProperties(const char *pszLine)
 	SetProperty(iIndex++, (*ip).c_str());
     }
 
-    // TODO(martinl): What was this block disabled?
+    // TODO(martinl): Why was this block disabled?
     /* set fid
     if (EQUAL(m_poDataBlock->GetName(), "SBP")) {
         GUIntBig id;
-        const VFKProperty *poVfkProperty;
-
-        poVfkProperty = GetProperty("PORADOVE_CISLO_BODU");
+        const VFKProperty *poVfkProperty = GetProperty("PORADOVE_CISLO_BODU");
         if (poVfkProperty)
         {
             id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
@@ -498,12 +488,8 @@ bool VFKFeature::SetProperty(int iIndex, const char *pszValue)
     if (strlen(pszValue) < 1)
         m_propertyList[iIndex] = VFKProperty();
     else {
-        OGRFieldType fType;
-
-        const char *pszEncoding;
-        char       *pszValueEnc;
-
-        fType = m_poDataBlock->GetProperty(iIndex)->GetType();
+        const OGRFieldType fType =
+            m_poDataBlock->GetProperty(iIndex)->GetType();
         switch (fType) {
         case OFTInteger:
             m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
@@ -512,10 +498,11 @@ bool VFKFeature::SetProperty(int iIndex, const char *pszValue)
             m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));
             break;
         default:
-            pszEncoding = m_poDataBlock->GetProperty(iIndex)->GetEncoding();
+            const char *pszEncoding =
+                m_poDataBlock->GetProperty(iIndex)->GetEncoding();
             if (pszEncoding) {
-                pszValueEnc = CPLRecode(pszValue, pszEncoding,
-                                        CPL_ENC_UTF8);
+                char *pszValueEnc =
+                    CPLRecode(pszValue, pszEncoding, CPL_ENC_UTF8);
                 m_propertyList[iIndex] = VFKProperty(pszValueEnc);
                 CPLFree(pszValueEnc);
             }
@@ -569,20 +556,17 @@ const VFKProperty *VFKFeature::GetProperty(const char *pszName) const
 */
 bool VFKFeature::LoadGeometryPoint()
 {
-    double x, y;
-    int i_idxX, i_idxY;
-
-    i_idxY = m_poDataBlock->GetPropertyIndex("SOURADNICE_Y");
-    i_idxX = m_poDataBlock->GetPropertyIndex("SOURADNICE_X");
+    const int i_idxY = m_poDataBlock->GetPropertyIndex("SOURADNICE_Y");
+    const int i_idxX = m_poDataBlock->GetPropertyIndex("SOURADNICE_X");
     if (i_idxY < 0 || i_idxX < 0)
-        return FALSE;
+        return false;
 
-    x = -1.0 * GetProperty(i_idxY)->GetValueD();
-    y = -1.0 * GetProperty(i_idxX)->GetValueD();
+    const double x = -1.0 * GetProperty(i_idxY)->GetValueD();
+    const double y = -1.0 * GetProperty(i_idxX)->GetValueD();
     OGRPoint pt(x, y);
     SetGeometry(&pt);
 
-    return TRUE;
+    return true;
 }
 
 /*!
@@ -594,35 +578,30 @@ bool VFKFeature::LoadGeometryPoint()
 */
 bool VFKFeature::LoadGeometryLineStringSBP()
 {
-    int id, idxId, idxBp_Id, idxPCB, ipcb;
-
-    VFKDataBlock *poDataBlockPoints;
-    VFKFeature   *poPoint, *poLine;
-
-    OGRLineString OGRLine;
-
-    poDataBlockPoints = (VFKDataBlock *) m_poDataBlock->GetReader()->GetDataBlock("SOBR");
+    VFKDataBlock *poDataBlockPoints =
+        (VFKDataBlock *) m_poDataBlock->GetReader()->GetDataBlock("SOBR");
     if (!poDataBlockPoints)
-        return FALSE;
+        return false;
 
-    idxId    = poDataBlockPoints->GetPropertyIndex("ID");
-    idxBp_Id = m_poDataBlock->GetPropertyIndex("BP_ID");
-    idxPCB   = m_poDataBlock->GetPropertyIndex("PORADOVE_CISLO_BODU");
+    const int idxId = poDataBlockPoints->GetPropertyIndex("ID");
+    const int idxBp_Id = m_poDataBlock->GetPropertyIndex("BP_ID");
+    const int idxPCB = m_poDataBlock->GetPropertyIndex("PORADOVE_CISLO_BODU");
     if (idxId < 0 || idxBp_Id < 0 || idxPCB < 0)
         return false;
 
-    poLine = this;
+    VFKFeature *poLine = this;
+    OGRLineString OGRLine;
     while( true )
     {
-        id   = poLine->GetProperty(idxBp_Id)->GetValueI();
-        ipcb = poLine->GetProperty(idxPCB)->GetValueI();
+        const int id = poLine->GetProperty(idxBp_Id)->GetValueI();
+        const int ipcb = poLine->GetProperty(idxPCB)->GetValueI();
         if (OGRLine.getNumPoints() > 0 && ipcb == 1)
         {
             m_poDataBlock->GetPreviousFeature(); /* push back */
             break;
         }
 
-        poPoint = poDataBlockPoints->GetFeature(idxId, id);
+        VFKFeature *poPoint = poDataBlockPoints->GetFeature(idxId, id);
         if (!poPoint)
         {
             continue;
@@ -653,28 +632,25 @@ bool VFKFeature::LoadGeometryLineStringSBP()
 */
 bool VFKFeature::LoadGeometryLineStringHP()
 {
-    int           id, idxId, idxHp_Id;
-    VFKDataBlock *poDataBlockLines;
-    VFKFeature   *poLine;
-
-    poDataBlockLines = (VFKDataBlock *) m_poDataBlock->GetReader()->GetDataBlock("SBP");
+    VFKDataBlock *poDataBlockLines =
+        (VFKDataBlock *) m_poDataBlock->GetReader()->GetDataBlock("SBP");
     if (!poDataBlockLines)
-        return FALSE;
+        return false;
 
-    idxId    = m_poDataBlock->GetPropertyIndex("ID");
-    idxHp_Id = poDataBlockLines->GetPropertyIndex("HP_ID");
+    const int idxId = m_poDataBlock->GetPropertyIndex("ID");
+    const int idxHp_Id = poDataBlockLines->GetPropertyIndex("HP_ID");
     if (idxId < 0 || idxHp_Id < 0)
-        return FALSE;
+        return false;
 
-    id = GetProperty(idxId)->GetValueI();
-    poLine = poDataBlockLines->GetFeature(idxHp_Id, id);
+    const int id = GetProperty(idxId)->GetValueI();
+    VFKFeature *poLine = poDataBlockLines->GetFeature(idxHp_Id, id);
     if (!poLine || !poLine->GetGeometry())
-        return FALSE;
+        return false;
 
     SetGeometry(poLine->GetGeometry());
     poDataBlockLines->ResetReading();
 
-    return TRUE;
+    return true;
 }
 
 /*!

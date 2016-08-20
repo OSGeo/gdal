@@ -105,7 +105,7 @@ VFKPropertyDefn *IVFKDataBlock::GetProperty(int iIndex) const
 */
 void IVFKDataBlock::SetProperties(const char *poLine)
 {
-    const char *poChar;
+    const char *poChar = NULL;
 
     /* skip data block name */
     for (poChar = poLine; *poChar != '0' && *poChar != ';'; poChar++)
@@ -617,24 +617,27 @@ void IVFKDataBlock::SetIncRecordCount(RecordType iRec)
 */
 VFKFeature *VFKDataBlock::GetFeature(int idx, GUIntBig value, VFKFeatureList *poList)
 {
-    GUIntBig    iPropertyValue;
-    VFKFeature *poVfkFeature;
-
     if (poList) {
-        for (VFKFeatureList::iterator i = poList->begin(), e = poList->end();
-             i != e; ++i) {
-            poVfkFeature = *i;
-            iPropertyValue = strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
+        for( VFKFeatureList::iterator i = poList->begin(), e = poList->end();
+             i != e;
+             ++i )
+        {
+            VFKFeature *poVfkFeature = *i;
+            const GUIntBig iPropertyValue =
+                strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
             if (iPropertyValue == value) {
                 poList->erase(i); /* ??? */
                 return poVfkFeature;
             }
         }
     }
-    else {
-        for (int i = 0; i < m_nFeatureCount; i++) {
-            poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
-            iPropertyValue = strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
+    else
+    {
+        for( int i = 0; i < m_nFeatureCount; i++ )
+        {
+            VFKFeature *poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
+            const GUIntBig iPropertyValue =
+                strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
             if (iPropertyValue == value) {
                 m_iNextFeature = i + 1;
                 return poVfkFeature;
@@ -655,13 +658,12 @@ VFKFeature *VFKDataBlock::GetFeature(int idx, GUIntBig value, VFKFeatureList *po
 */
 VFKFeatureList VFKDataBlock::GetFeatures(int idx, GUIntBig value)
 {
-    GUIntBig    iPropertyValue;
-    VFKFeature *poVfkFeature;
     std::vector<VFKFeature *> poResult;
 
     for (int i = 0; i < m_nFeatureCount; i++) {
-        poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
-        iPropertyValue = strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
+        VFKFeature *poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
+        const GUIntBig iPropertyValue =
+            strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
         if (iPropertyValue == value) {
             poResult.push_back(poVfkFeature);
         }
@@ -681,20 +683,22 @@ VFKFeatureList VFKDataBlock::GetFeatures(int idx, GUIntBig value)
 */
 VFKFeatureList VFKDataBlock::GetFeatures(int idx1, int idx2, GUIntBig value)
 {
-    GUIntBig    iPropertyValue1, iPropertyValue2;
-    VFKFeature *poVfkFeature;
     std::vector<VFKFeature *> poResult;
 
-    for (int i = 0; i < m_nFeatureCount; i++) {
-        poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
-        iPropertyValue1 = strtoul(poVfkFeature->GetProperty(idx1)->GetValueS(), NULL, 0);
+    for( int i = 0; i < m_nFeatureCount; i++ )
+    {
+        VFKFeature *poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
+        const GUIntBig iPropertyValue1 =
+            strtoul(poVfkFeature->GetProperty(idx1)->GetValueS(), NULL, 0);
         if (idx2 < 0) {
             if (iPropertyValue1 == value) {
                 poResult.push_back(poVfkFeature);
             }
         }
-        else {
-            iPropertyValue2 = strtoul(poVfkFeature->GetProperty(idx2)->GetValueS(), NULL, 0);
+        else
+        {
+            const GUIntBig iPropertyValue2 =
+                strtoul(poVfkFeature->GetProperty(idx2)->GetValueS(), NULL, 0);
             if (iPropertyValue1 == value || iPropertyValue2 == value) {
                 poResult.push_back(poVfkFeature);
             }
@@ -714,14 +718,14 @@ VFKFeatureList VFKDataBlock::GetFeatures(int idx1, int idx2, GUIntBig value)
 */
 GIntBig VFKDataBlock::GetFeatureCount(const char *pszName, const char *pszValue)
 {
-    int propIdx = GetPropertyIndex(pszName);
+    const int propIdx = GetPropertyIndex(pszName);
     if (propIdx < 0)
         return -1;
 
     int nfeatures = 0;
-    VFKFeature *poVFKFeature;
     for (int i = 0; i < ((IVFKDataBlock *) this)->GetFeatureCount(); i++) {
-        poVFKFeature = (VFKFeature *) ((IVFKDataBlock *) this)->GetFeature(i);
+        VFKFeature *poVFKFeature =
+            (VFKFeature *) ((IVFKDataBlock *) this)->GetFeature(i);
         if (!poVFKFeature)
             return -1;
         if (EQUAL (poVFKFeature->GetProperty(propIdx)->GetValueS(), pszValue))
@@ -886,19 +890,19 @@ int VFKDataBlock::LoadGeometryPolygon()
     int idxOb = 0;
     int idxIdOb = 0;
 
-    VFKFeature   *poFeature;
-    VFKDataBlock *poDataBlockLines1, *poDataBlockLines2;
+    VFKDataBlock *poDataBlockLines1 = NULL;
+    VFKDataBlock *poDataBlockLines2 = NULL;
 
-    bool bIsPar;
+    bool bIsPar = false;
     if (EQUAL (m_pszName, "PAR")) {
         poDataBlockLines1 = (VFKDataBlock *) m_poReader->GetDataBlock("HP");
         poDataBlockLines2 = poDataBlockLines1;
-        bIsPar = TRUE;
+        bIsPar = true;
     }
     else {
         poDataBlockLines1 = (VFKDataBlock *) m_poReader->GetDataBlock("OB");
         poDataBlockLines2 = (VFKDataBlock *) m_poReader->GetDataBlock("SBP");
-        bIsPar = FALSE;
+        bIsPar = false;
     }
     if (NULL == poDataBlockLines1 || NULL == poDataBlockLines2) {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -942,8 +946,9 @@ int VFKDataBlock::LoadGeometryPolygon()
     OGRLinearRing ogrRing;
     OGRPolygon ogrPolygon;
 
-    for (int i = 0; i < ((IVFKDataBlock *) this)->GetFeatureCount(); i++) {
-        poFeature = (VFKFeature *) GetFeatureByIndex(i);
+    for( int i = 0; i < ((IVFKDataBlock *) this)->GetFeatureCount(); i++ )
+    {
+        VFKFeature *poFeature = (VFKFeature *) GetFeatureByIndex(i);
         CPLAssert(NULL != poFeature);
         id = strtoul(poFeature->GetProperty(idxId)->GetValueS(), NULL, 0);
         if (bIsPar) {
