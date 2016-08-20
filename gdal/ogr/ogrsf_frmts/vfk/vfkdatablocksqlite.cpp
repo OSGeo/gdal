@@ -465,7 +465,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
     if( LoadGeometryFromDB() )  // Try to load geometry from DB.
 	return 0;
 
-    const char *vrColumn[2] = { '\0', '\0' };
+    const char *vrColumn[2] = { NULL, NULL };
     GUIntBig vrValue[2] = { 0, 0 };
     if (bIsPar) {
         vrColumn[0] = "PAR_ID_1";
