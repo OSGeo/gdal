@@ -5635,7 +5635,7 @@ static GUInt16 FloatToHalf( GUInt32 iFloat32 )
 /*       Positive or negative infinity.                                 */
 /* -------------------------------------------------------------------- */
 
-            return (iSign << 15) | 0x7C00;
+            return static_cast<GUInt16>((iSign << 15) | 0x7C00);
         }
         else
         {
@@ -5643,22 +5643,26 @@ static GUInt16 FloatToHalf( GUInt32 iFloat32 )
 /*       NaN -- preserve sign and significand bits.                     */
 /* -------------------------------------------------------------------- */
             if( iMantissa >> 13 )
-                return (iSign << 15) | 0x7C00 | (iMantissa >> 13);
-            return (iSign << 15) | 0x7E00;
+                return static_cast<GUInt16>((iSign << 15) | 0x7C00 |
+                                                            (iMantissa >> 13));
+
+            return static_cast<GUInt16>((iSign << 15) | 0x7E00);
         }
     }
 
     if( iExponent <= 127 - 15 )
     {
-        // Zero, float32 denormalized number or float32 too small normalized number
+        // Zero, float32 denormalized number or float32 too small normalized
+        // number
         if( 13 + 1 + 127 - 15 - iExponent >= 32 )
-            return iSign << 15;
+            return static_cast<GUInt16>(iSign << 15);
 
         // Return a denormalized number
-        return (iSign << 15) | ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent));
+        return static_cast<GUInt16>((iSign << 15) |
+                ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent)));
     }
     if( iExponent - (127 - 15) >= 31 )
-        return (iSign << 15) | 0x7C00; // Infinity
+        return static_cast<GUInt16>((iSign << 15) | 0x7C00); // Infinity
 
 /* -------------------------------------------------------------------- */
 /*       Normalized number.                                             */
@@ -5672,7 +5676,7 @@ static GUInt16 FloatToHalf( GUInt32 iFloat32 )
 /* -------------------------------------------------------------------- */
 
     /* coverity[overflow_sink] */
-    return (iSign << 15) | (iExponent << 10) | iMantissa;
+    return static_cast<GUInt16>((iSign << 15) | (iExponent << 10) | iMantissa);
 }
 
 /************************************************************************/
