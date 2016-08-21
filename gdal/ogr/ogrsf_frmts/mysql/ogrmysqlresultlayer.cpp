@@ -241,7 +241,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
         if( hResultSet != NULL )
             mysql_free_result( hResultSet );
-     		hResultSet = NULL;
+        hResultSet = NULL;
 
         if( !mysql_query( poDS->GetConn(), osCommand ) )
             hResultSet = mysql_store_result( poDS->GetConn() );
@@ -260,9 +260,8 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             poDefn->SetGeomType( l_nGeomType );
         }
 
-		nSRSId = FetchSRSId();
+        nSRSId = FetchSRSId();
     }
-
 
     return poDefn;
 }

@@ -405,7 +405,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 6301, 1015,"Tokyo",                      10, -146.414, 507.337, 680.507,0,0,0,0,0},
 { 0,    1016,"Finnish_KKJ",                4, -96.062, -82.428, -121.754, -4.801, -0.345, 1.376, 1.496, 0},
 { 6610, 1017,"Xian 1980",                  53, 24, -123, -94, -0.02, -0.25, 0.13, 1.1, 0},
-{ 0,    1018,"Lithuanian Pulkovo 1942",	   4, -40.59527, -18.54979, -69.33956, -2.508, -1.8319, 2.6114, -4.2991, 0},
+{ 0,    1018,"Lithuanian Pulkovo 1942",    4, -40.59527, -18.54979, -69.33956, -2.508, -1.8319, 2.6114, -4.2991, 0},
 { 0,    1019,"Belgian 1972 7 Parameter",   4, -99.059, 53.322, -112.486, -0.419, 0.83, -1.885, 0.999999, 0},
 { 6818, 1020,"S-JTSK with Ferro prime meridian", 10, 589, 76, 480, 0, 0, 0, 0, -17.666666666667},
 
@@ -1243,7 +1243,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
                                    sTABProj.adProjParams[0],   // dfCenterLong
                                    sTABProj.adProjParams[3],   // dfAzimuth
                                    sTABProj.adProjParams[2],   // dfPseudoStdParallelLat
-                                   1.0,					     // dfScale
+                                   1.0,                        // dfScale
                                    sTABProj.adProjParams[4],   // dfFalseEasting
                                    sTABProj.adProjParams[5] ); // dfFalseNorthing
         break;
@@ -1919,7 +1919,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
     if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
     {
-    	nDatumEPSGCode = atoi(pszDatumCode);
+        nDatumEPSGCode = atoi(pszDatumCode);
     }
 
     /*-----------------------------------------------------------------
@@ -2009,8 +2009,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
         for( i = 0; asDatumInfoList[i].nMapInfoDatumID != -1; i++ )
         {
-        	if ( (nDatumEPSGCode > 0 && asDatumInfoList[i].nDatumEPSGCode == nDatumEPSGCode) ||
-        		   EQUAL(pszWKTDatum,asDatumInfoList[i].pszOGCDatumName) )
+            if ( (nDatumEPSGCode > 0 && asDatumInfoList[i].nDatumEPSGCode == nDatumEPSGCode) ||
+                 EQUAL(pszWKTDatum,asDatumInfoList[i].pszOGCDatumName) )
             {
                 psDatumInfo = asDatumInfoList + i;
                 break;

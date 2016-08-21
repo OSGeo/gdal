@@ -46,9 +46,9 @@ public:
     II_PTR            hStmt;
     II_PTR            hTransaction;
 
-    IIAPI_GETDESCRPARM	getDescrParm;
-    IIAPI_GETCOLPARM	getColParm;
-    IIAPI_DATAVALUE	*pasDataBuffer;
+    IIAPI_GETDESCRPARM  getDescrParm;
+    IIAPI_GETCOLPARM    getColParm;
+    IIAPI_DATAVALUE     *pasDataBuffer;
     IIAPI_GETQINFOPARM  queryInfo;
 
     GByte             *pabyWrkBuffer;
@@ -242,7 +242,7 @@ class OGRIngresDataSource : public OGRDataSource
 
     OGRIngresLayer     *poActiveLayer; /* this layer has active transaction */
 
-    int					bNewIngres; /* TRUE if new spatial library */
+    int                 bNewIngres; /* TRUE if new spatial library */
 
   public:
                         OGRIngresDataSource();
@@ -283,7 +283,7 @@ class OGRIngresDataSource : public OGRDataSource
     char               *LaunderName( const char * );
 
     void                EstablishActiveLayer( OGRIngresLayer * );
-    int					IsNewIngres();
+    int                 IsNewIngres();
 };
 
 /************************************************************************/

@@ -332,12 +332,12 @@ const char *OGRMySQLLayer::GetGeometryColumn()
 
 int OGRMySQLLayer::FetchSRSId()
 {
-	CPLString        osCommand;
+    CPLString        osCommand;
     char           **papszRow;
 
     if( hResultSet != NULL )
         mysql_free_result( hResultSet );
-		hResultSet = NULL;
+    hResultSet = NULL;
 
     osCommand.Printf(
              "SELECT srid FROM geometry_columns "
@@ -359,9 +359,9 @@ int OGRMySQLLayer::FetchSRSId()
     // make sure to free our results
     if( hResultSet != NULL )
         mysql_free_result( hResultSet );
-		hResultSet = NULL;
+    hResultSet = NULL;
 
-	return nSRSId;
+    return nSRSId;
 }
 
 /************************************************************************/

@@ -1030,7 +1030,7 @@ OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszNameIn )
     int  i, count;
 
     if ( !pszNameIn )
-	return NULL;
+        return NULL;
 
     count = GetLayerCount();
 

@@ -97,7 +97,7 @@ class OGRGeomediaTableLayer : public OGRGeomediaLayer
 
     char                *pszQuery;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();
@@ -127,7 +127,7 @@ class OGRGeomediaSelectLayer : public OGRGeomediaLayer
 {
     char                *pszBaseStatement;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();

@@ -336,7 +336,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                          int bApproxOK = TRUE );
     void                ResetReading();
-	OGRErr              ICreateFeature( OGRFeature *poFeater );
+    OGRErr              ICreateFeature( OGRFeature *poFeater );
     OGRErr              ISetFeature( OGRFeature *poFeature );
     OGRErr              DeleteFeature(GIntBig nFID);
     virtual void        SetSpatialFilter( OGRGeometry * );

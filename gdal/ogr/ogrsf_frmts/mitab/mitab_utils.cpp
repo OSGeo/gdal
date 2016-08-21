@@ -650,7 +650,7 @@ char *TABCleanFieldName(const char *pszSrcName)
     for( int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++ )
     {
         if ( pszSrcName[i]=='#' )
-	{
+        {
             if (i == 0)
             {
                 pszNewName[i] = '_';

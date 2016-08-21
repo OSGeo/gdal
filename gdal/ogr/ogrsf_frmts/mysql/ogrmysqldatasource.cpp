@@ -385,7 +385,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
 {
     const char*      pszCommand;
     MYSQL_RES       *hResult;
-    OGRErr	    eErr = OGRERR_NONE;
+    OGRErr          eErr = OGRERR_NONE;
 
     pszCommand = "DESCRIBE geometry_columns";
     if( mysql_query(GetConn(), pszCommand ) )
@@ -838,13 +838,13 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
                               char ** papszOptions )
 
 {
-    MYSQL_RES           *hResult=NULL;
-    CPLString            osCommand;
-    const char          *pszGeometryType;
-    const char		*pszGeomColumnName;
-    const char		*pszExpectedFIDName;
-    char                *pszLayerName;
-    // int                 nDimension = 3; // MySQL only supports 2d currently
+    MYSQL_RES  *hResult=NULL;
+    CPLString   osCommand;
+    const char *pszGeometryType;
+    const char *pszGeomColumnName;
+    const char *pszExpectedFIDName;
+    char       *pszLayerName;
+    // int        nDimension = 3; // MySQL only supports 2d currently
 
 
 /* -------------------------------------------------------------------- */

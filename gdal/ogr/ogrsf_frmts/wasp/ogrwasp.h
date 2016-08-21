@@ -220,7 +220,7 @@ class OGRWAsPDriver : public OGRSFDriver
     virtual OGRDataSource       *CreateDataSource( const char *pszName,
                                                    char ** = NULL );
 
-    virtual OGRErr 	        DeleteDataSource (const char *pszName);
+    virtual OGRErr              DeleteDataSource (const char *pszName);
 
     virtual int                 TestCapability( const char * );
 };

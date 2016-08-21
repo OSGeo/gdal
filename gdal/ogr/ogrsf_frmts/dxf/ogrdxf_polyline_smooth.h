@@ -105,10 +105,10 @@ class DXFSmoothPolyline
 
 private:
 
-    std::vector<DXFSmoothPolylineVertex>    m_vertices;
-    mutable bool                            m_blinestringstarted;
-    bool                                    m_bClosed;
-    int										m_dim;
+    std::vector<DXFSmoothPolylineVertex> m_vertices;
+    mutable bool                         m_blinestringstarted;
+    bool                                 m_bClosed;
+    int                                  m_dim;
 
 public:
     DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),

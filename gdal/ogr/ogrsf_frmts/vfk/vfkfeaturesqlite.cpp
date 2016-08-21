@@ -225,7 +225,7 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
         return OGRERR_FAILURE;
 
     for (int iField = 0; iField < m_poDataBlock->GetPropertyCount(); iField++) {
-	if (sqlite3_column_type(m_hStmt, iField) == SQLITE_NULL) /* skip null values */
+        if (sqlite3_column_type(m_hStmt, iField) == SQLITE_NULL) /* skip null values */
             continue;
         OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
         if (fType == OFTInteger)

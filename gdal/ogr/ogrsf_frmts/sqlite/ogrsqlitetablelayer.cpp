@@ -715,7 +715,7 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
 
     if( rc == SQLITE_OK )
     {
-	return OGRERR_NONE;
+        return OGRERR_NONE;
     }
     else
     {

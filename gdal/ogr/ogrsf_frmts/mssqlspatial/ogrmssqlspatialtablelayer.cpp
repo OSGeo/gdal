@@ -1703,7 +1703,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 }
                 else
                 {
-                    int	pnYear;
+                    int pnYear;
                     int pnMonth;
                     int pnDay;
                     int pnHour;
@@ -1732,7 +1732,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 }
                 else
                 {
-                    int	pnYear;
+                    int pnYear;
                     int pnMonth;
                     int pnDay;
                     int pnHour;
@@ -1761,7 +1761,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 }
                 else
                 {
-                    int	pnYear;
+                    int pnYear;
                     int pnMonth;
                     int pnDay;
                     int pnHour;

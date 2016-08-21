@@ -418,7 +418,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
         if( hResult != NULL )
             mysql_free_result( hResult );   //Free our query results for finding type.
-			hResult = NULL;
+        hResult = NULL;
     }
 
     // Fetch the SRID for this table now
@@ -567,11 +567,11 @@ char *OGRMySQLTableLayer::BuildFields()
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
 
-	/* ------------------------------------------------------------ */
-	/*      Geometry returned from MySQL is as WKB, with the        */
+        /* ------------------------------------------------------------ */
+        /*      Geometry returned from MySQL is as WKB, with the        */
         /*      first 4 bytes being an int that defines the SRID        */
         /*      and the rest being the WKB.                             */
-	/* ------------------------------------------------------------ */
+        /* ------------------------------------------------------------ */
         snprintf( pszFieldList+strlen(pszFieldList), nSize-strlen(pszFieldList),
                  "`%s` `%s`", pszGeomColumn, pszGeomColumn );
     }
@@ -1157,7 +1157,7 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
     if( hResultSet != NULL )
         mysql_free_result( hResultSet );
- 		hResultSet = NULL;
+    hResultSet = NULL;
 
     return poFeature;
 }
@@ -1217,16 +1217,16 @@ GIntBig OGRMySQLTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
 }
 
 /************************************************************************/
-/*                          GetExtent()					*/
+/*                          GetExtent()                                 */
 /*                                                                      */
 /*      Retrieve the MBR of the MySQL table.  This should be made more  */
 /*      in the future when MySQL adds support for a single MBR query    */
-/*      like PostgreSQL.						*/
+/*      like PostgreSQL.                                                */
 /************************************************************************/
 
 OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForce )
 {
-	if( GetLayerDefn()->GetGeomType() == wkbNone )
+    if( GetLayerDefn()->GetGeomType() == wkbNone )
     {
         psExtent->MinX = 0.0;
         psExtent->MaxX = 0.0;
@@ -1236,67 +1236,67 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
         return OGRERR_FAILURE;
     }
 
-	OGREnvelope oEnv;
-	CPLString   osCommand;
-	GBool       bExtentSet = FALSE;
+    OGREnvelope oEnv;
+    CPLString   osCommand;
+    GBool       bExtentSet = FALSE;
 
-	osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+    osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
 
-	if (mysql_query(poDS->GetConn(), osCommand) == 0)
-	{
-		MYSQL_RES* result = mysql_use_result(poDS->GetConn());
-		if ( result == NULL )
+    if (mysql_query(poDS->GetConn(), osCommand) == 0)
+    {
+        MYSQL_RES* result = mysql_use_result(poDS->GetConn());
+        if ( result == NULL )
         {
             poDS->ReportError( "mysql_use_result() failed on extents query." );
             return OGRERR_FAILURE;
         }
 
-		MYSQL_ROW row;
-		unsigned long *panLengths = NULL;
-		while ((row = mysql_fetch_row(result)) != NULL)
-		{
-			if (panLengths == NULL)
-			{
-				panLengths = mysql_fetch_lengths( result );
-				if ( panLengths == NULL )
-				{
-					poDS->ReportError( "mysql_fetch_lengths() failed on extents query." );
-					return OGRERR_FAILURE;
-				}
-			}
+        MYSQL_ROW row;
+        unsigned long *panLengths = NULL;
+        while ((row = mysql_fetch_row(result)) != NULL)
+        {
+            if (panLengths == NULL)
+            {
+                panLengths = mysql_fetch_lengths( result );
+                if ( panLengths == NULL )
+                {
+                    poDS->ReportError( "mysql_fetch_lengths() failed on extents query." );
+                    return OGRERR_FAILURE;
+                }
+            }
 
-			OGRGeometry *poGeometry = NULL;
-			// Geometry columns will have the first 4 bytes contain the SRID.
-			OGRGeometryFactory::createFromWkb(((GByte *)row[0]) + 4,
-											  NULL,
-											  &poGeometry,
-											  static_cast<int>(panLengths[0] - 4) );
+            OGRGeometry *poGeometry = NULL;
+            // Geometry columns will have the first 4 bytes contain the SRID.
+            OGRGeometryFactory::createFromWkb(((GByte *)row[0]) + 4,
+                                              NULL,
+                                              &poGeometry,
+                                              static_cast<int>(panLengths[0] - 4) );
 
-			if ( poGeometry != NULL )
-			{
-				if (poGeometry && !bExtentSet)
-				{
-					poGeometry->getEnvelope(psExtent);
-					bExtentSet = TRUE;
-				}
-				else if (poGeometry)
-				{
-					poGeometry->getEnvelope(&oEnv);
-					if (oEnv.MinX < psExtent->MinX)
-						psExtent->MinX = oEnv.MinX;
-					if (oEnv.MinY < psExtent->MinY)
-						psExtent->MinY = oEnv.MinY;
-					if (oEnv.MaxX > psExtent->MaxX)
-						psExtent->MaxX = oEnv.MaxX;
-					if (oEnv.MaxY > psExtent->MaxY)
-						psExtent->MaxY = oEnv.MaxY;
-				}
-				delete poGeometry;
-			}
-		}
+            if ( poGeometry != NULL )
+            {
+                if (poGeometry && !bExtentSet)
+                {
+                    poGeometry->getEnvelope(psExtent);
+                    bExtentSet = TRUE;
+                }
+                else if (poGeometry)
+                {
+                    poGeometry->getEnvelope(&oEnv);
+                    if (oEnv.MinX < psExtent->MinX)
+                        psExtent->MinX = oEnv.MinX;
+                    if (oEnv.MinY < psExtent->MinY)
+                        psExtent->MinY = oEnv.MinY;
+                    if (oEnv.MaxX > psExtent->MaxX)
+                        psExtent->MaxX = oEnv.MaxX;
+                    if (oEnv.MaxY > psExtent->MaxY)
+                        psExtent->MaxY = oEnv.MaxY;
+                }
+                delete poGeometry;
+            }
+        }
 
-		mysql_free_result(result);
-	}
+        mysql_free_result(result);
+    }
 
-	return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
+    return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
 }
