@@ -285,10 +285,12 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
     }
 
     GDALDataType eDT;
+    int bIsSrcNoDataNan = FALSE;
+    const double dfNoDataValue = GDALGetRasterNoDataValue(hSrcBand,
+                                                              &bSrcHasNoData);
     if( std::numeric_limits<T>::is_integer )
     {
         eDT = GDT_Int32;
-        double dfNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
         if( bSrcHasNoData )
         {
             const int mMinVal = (eDT == GDT_Byte ) ? 0 : (eDT == GDT_UInt16) ? 0 : -32768;
@@ -307,12 +309,13 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
     else
     {
         eDT = GDT_Float32;
-        fSrcNoDataValue = static_cast<T>(GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData));
+        fSrcNoDataValue = static_cast<T>(dfNoDataValue);
+        bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(dfNoDataValue);
     }
+
     fDstNoDataValue = (float) GDALGetRasterNoDataValue(hDstBand, &bDstHasNoData);
     if (!bDstHasNoData)
         fDstNoDataValue = 0;
-    int bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(fSrcNoDataValue);
 
     int nLine1Off = 0*nXSize;
     int nLine2Off = 1*nXSize;
@@ -2194,10 +2197,12 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset<T> *
     nBlockYSize = 1;
 
     bSrcHasNoData = FALSE;
+    bIsSrcNoDataNan = FALSE;
+    const double dfNoDataValue = GDALGetRasterNoDataValue(poDSIn->hSrcBand,
+                                                          &bSrcHasNoData);
     if( std::numeric_limits<T>::is_integer )
     {
         eReadDT = GDT_Int32;
-        double dfNoDataValue = GDALGetRasterNoDataValue(poDSIn->hSrcBand, &bSrcHasNoData);
         if( bSrcHasNoData )
         {
             GDALDataType eSrcDT = GDALGetRasterDataType(poDSIn->hSrcBand);
@@ -2217,10 +2222,9 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset<T> *
     else
     {
         eReadDT = GDT_Float32;
-        fSrcNoDataValue = static_cast<T>(GDALGetRasterNoDataValue(poDSIn->hSrcBand,
-                                                        &bSrcHasNoData));
+        fSrcNoDataValue = static_cast<T>(dfNoDataValue);
+        bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(dfNoDataValue);
     }
-    bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(fSrcNoDataValue);
 }
 
 template<class T>
