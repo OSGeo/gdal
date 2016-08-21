@@ -2007,7 +2007,7 @@ float GDALTRIAlg (const T* afWin,
             MyAbs(afWin[5]-afWin[4]) +
             MyAbs(afWin[6]-afWin[4]) +
             MyAbs(afWin[7]-afWin[4]) +
-            MyAbs(afWin[8]-afWin[4])) * 0.125;
+            MyAbs(afWin[8]-afWin[4])) * 0.125f;
 }
 
 
@@ -2031,7 +2031,7 @@ float GDALTPIAlg (const T* afWin,
               afWin[5]+
               afWin[6]+
               afWin[7]+
-              afWin[8]) * 0.125 );
+              afWin[8]) * 0.125f );
 }
 
 /************************************************************************/
@@ -2059,7 +2059,7 @@ float GDALRoughnessAlg (const T* afWin, float /*fDstNoDataValue*/, void* /*pData
             pafRoughnessMin=afWin[k];
         }
     }
-    return pafRoughnessMax - pafRoughnessMin;
+    return static_cast<float>(pafRoughnessMax - pafRoughnessMin);
 }
 
 /************************************************************************/
