@@ -36,33 +36,38 @@ CPL_CVSID("$Id$");
 /*                        OGREDIGEODataSource()                         */
 /************************************************************************/
 
-OGREDIGEODataSource::OGREDIGEODataSource()
-
+OGREDIGEODataSource::OGREDIGEODataSource() :
+    pszName(NULL),
+    fpTHF(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    poSRS(NULL),
+    bExtentValid(FALSE),
+    dfMinX(0),
+    dfMinY(0),
+    dfMaxX(0),
+    dfMaxY(0),
+    bRecodeToUTF8(
+        CPLTestBool(CPLGetConfigOption("OGR_EDIGEO_RECODE_TO_UTF8", "YES"))),
+    bHasUTF8ContentOnly(TRUE),
+    iATR(-1),
+    iDI3(-1),
+    iDI4(-1),
+    iHEI(-1),
+    iFON(-1),
+    iATR_VAL(-1),
+    iANGLE(-1),
+    iSIZE(-1),
+    iOBJ_LNK(-1),
+    iOBJ_LNK_LAYER(-1),
+    dfSizeFactor(CPLAtof(
+        CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"))),
+    bIncludeFontFamily(CPLTestBool(
+        CPLGetConfigOption("OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES"))),
+    bHasReadEDIGEO(FALSE)
 {
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-    poSRS = NULL;
-
-    bExtentValid = FALSE;
-    dfMinX = dfMinY = dfMaxX = dfMaxY = 0;
-
-    fpTHF = NULL;
-    bHasReadEDIGEO = FALSE;
-
-    bIncludeFontFamily = CPLTestBool(CPLGetConfigOption(
-                                 "OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES"));
-
-    iATR = iDI3 = iDI4 = iHEI = iFON = -1;
-    iATR_VAL = iANGLE = iSIZE = iOBJ_LNK = iOBJ_LNK_LAYER = -1;
-    dfSizeFactor = CPLAtof(CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"));
     if (dfSizeFactor <= 0 || dfSizeFactor >= 100)
         dfSizeFactor = 2;
-
-    bRecodeToUTF8 = CPLTestBool(CPLGetConfigOption(
-                                        "OGR_EDIGEO_RECODE_TO_UTF8", "YES"));
-    bHasUTF8ContentOnly = TRUE;
 }
 
 /************************************************************************/

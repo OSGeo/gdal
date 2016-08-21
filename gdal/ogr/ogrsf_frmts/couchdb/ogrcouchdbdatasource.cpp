@@ -35,18 +35,13 @@ CPL_CVSID("$Id$");
 /*                        OGRCouchDBDataSource()                        */
 /************************************************************************/
 
-OGRCouchDBDataSource::OGRCouchDBDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-
-    bReadWrite = FALSE;
-
-    bMustCleanPersistent = FALSE;
-}
+OGRCouchDBDataSource::OGRCouchDBDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bReadWrite(FALSE),
+    bMustCleanPersistent(FALSE)
+{}
 
 /************************************************************************/
 /*                       ~OGRCouchDBDataSource()                        */

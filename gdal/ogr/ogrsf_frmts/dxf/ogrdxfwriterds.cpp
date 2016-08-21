@@ -38,17 +38,15 @@ CPL_CVSID("$Id$");
 /*                          OGRDXFWriterDS()                          */
 /************************************************************************/
 
-OGRDXFWriterDS::OGRDXFWriterDS()
-
-{
-    fp = NULL;
-    fpTemp = NULL;
-    poLayer = NULL;
-    poBlocksLayer = NULL;
-    papszLayersToCreate = NULL;
-    nNextFID = 80;
-    nHANDSEEDOffset = 0;
-}
+OGRDXFWriterDS::OGRDXFWriterDS() :
+    nNextFID(80),
+    poLayer(NULL),
+    poBlocksLayer(NULL),
+    fp(NULL),
+    fpTemp(NULL),
+    papszLayersToCreate(NULL),
+    nHANDSEEDOffset(0)
+{}
 
 /************************************************************************/
 /*                         ~OGRDXFWriterDS()                          */

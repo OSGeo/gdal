@@ -39,12 +39,11 @@ CPL_CVSID("$Id$");
 /*                         OGRDXFWriterLayer()                          */
 /************************************************************************/
 
-OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn )
-
+OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn ) :
+    fp(fpIn),
+    poFeatureDefn(NULL),  // TODO(schwehr): Can I move the new here?
+    poDS(poDSIn)
 {
-    fp = fpIn;
-    poDS = poDSIn;
-
     nNextAutoID = 1;
     bWriteHatch = CPLTestBool(CPLGetConfigOption("DXF_WRITE_HATCH", "YES"));
 

@@ -51,7 +51,7 @@ OGRBNADataSource::OGRBNADataSource() :
     nbPairPerLine(FALSE),
     coordinatePrecision(0),
     pszCoordinateSeparator(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                         ~OGRBNADataSource()                          */

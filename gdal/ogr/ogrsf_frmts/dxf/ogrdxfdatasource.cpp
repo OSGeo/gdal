@@ -41,7 +41,7 @@ OGRDXFDataSource::OGRDXFDataSource() :
     fp(NULL),
     iEntitiesSectionOffset(0),
     bInlineBlocks(FALSE)
-{ }
+{}
 
 /************************************************************************/
 /*                         ~OGRDXFDataSource()                          */

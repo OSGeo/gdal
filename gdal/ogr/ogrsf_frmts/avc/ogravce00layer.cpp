@@ -40,20 +40,20 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRAVCE00Layer::OGRAVCE00Layer( OGRAVCDataSource *poDSIn,
-                                AVCE00Section *psSectionIn )
-        : OGRAVCLayer( psSectionIn->eType, poDSIn ),
-          psSection(psSectionIn),
-          psRead(NULL),
-          poArcLayer(NULL),
-          nFeatureCount(-1),
-          bNeedReset(0),
-          nNextFID(1),
-          psTableSection(NULL),
-          psTableRead(NULL),
-          pszTableFilename(NULL),
-          nTablePos(0),
-          nTableBaseField(0),
-          nTableAttrIndex(-1)
+                                AVCE00Section *psSectionIn ) :
+    OGRAVCLayer( psSectionIn->eType, poDSIn ),
+    psSection(psSectionIn),
+    psRead(NULL),
+    poArcLayer(NULL),
+    nFeatureCount(-1),
+    bNeedReset(0),
+    nNextFID(1),
+    psTableSection(NULL),
+    psTableRead(NULL),
+    pszTableFilename(NULL),
+    nTablePos(0),
+    nTableBaseField(0),
+    nTableAttrIndex(-1)
 {
     SetupFeatureDefinition( psSection->pszName );
     /* psRead = AVCE00ReadOpenE00(psSection->pszFilename); */
