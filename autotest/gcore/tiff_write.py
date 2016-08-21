@@ -7073,6 +7073,8 @@ def tiff_write_157():
                             0x47800000, # 65536 --> converted to infinity
                             )
     ds.GetRasterBand(1).WriteRaster(0,0,18,1,vals, buf_type = gdal.GDT_Float32)
+    with gdaltest.error_handler():
+        ds.FlushCache()
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_157.tif')

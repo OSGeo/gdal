@@ -5621,7 +5621,7 @@ GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *poGDSIn, int nBandIn )
 /*                            FloatToHalf()                             */
 /************************************************************************/
 
-static GUInt16 FloatToHalf( GUInt32 iFloat32 )
+static GUInt16 FloatToHalf( GUInt32 iFloat32, bool& bHasWarned )
 {
     GUInt32 iSign =     (iFloat32 >> 31) & 0x00000001;
     GUInt32 iExponent = (iFloat32 >> 23) & 0x000000ff;
@@ -5662,7 +5662,18 @@ static GUInt16 FloatToHalf( GUInt32 iFloat32 )
                 ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent)));
     }
     if( iExponent - (127 - 15) >= 31 )
+    {
+        if( !bHasWarned )
+        {
+            bHasWarned = true;
+            float fVal;
+            memcpy(&fVal, &iFloat32, 4);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Value %.8g is beyond range of float16. Converted to %sinf",
+                     fVal, (fVal > 0) ? "+" : "-");
+        }
         return static_cast<GUInt16>((iSign << 15) | 0x7C00); // Infinity
+    }
 
 /* -------------------------------------------------------------------- */
 /*       Normalized number.                                             */
@@ -5794,7 +5805,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             for( ; iPixel < nBlockYSize * nBlockXSize; iPixel ++ )
             {
                 GUInt32 nInWord = static_cast<GUInt32 *>(pImage)[iPixel];
-                GUInt16 nHalf = FloatToHalf(nInWord);
+                GUInt16 nHalf = FloatToHalf(nInWord, poGDS->bClipWarn);
                 reinterpret_cast<GUInt16*>(poGDS->pabyBlockBuf)[iPixel] = nHalf;
             }
 
@@ -5981,7 +5992,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             {
                 GUInt32 nInWord = reinterpret_cast<const GUInt32 *>(
                                                         pabyThisImage)[iPixel];
-                GUInt16 nHalf = FloatToHalf(nInWord);
+                GUInt16 nHalf = FloatToHalf(nInWord, poGDS->bClipWarn);
                 reinterpret_cast<GUInt16*>(poGDS->pabyBlockBuf)[
                                     iPixel * poGDS->nBands + iBand] = nHalf;
             }
