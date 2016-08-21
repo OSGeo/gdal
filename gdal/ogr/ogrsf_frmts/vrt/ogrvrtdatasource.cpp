@@ -112,7 +112,7 @@ OGRVRTDataSource::OGRVRTDataSource(GDALDriver* poDriverIn) :
     poParentDS(NULL),
     bRecursionDetected(FALSE)
 {
-    this->poDriver = poDriverIn;
+    poDriver = poDriverIn;
 }
 
 /************************************************************************/
@@ -823,7 +823,7 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
 {
     CPLAssert( nLayers == 0 );
 
-    this->psTree = psTreeIn;
+    psTree = psTreeIn;
 
 /* -------------------------------------------------------------------- */
 /*      Set name, and capture the directory path so we can use it       */

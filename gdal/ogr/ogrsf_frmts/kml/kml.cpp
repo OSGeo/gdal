@@ -579,7 +579,7 @@ int KML::getNumLayers() const
 }
 
 bool KML::selectLayer(int nNum) {
-    if(this->nNumLayers_ < 1 || nNum >= this->nNumLayers_)
+    if( nNumLayers_ < 1 || nNum >= nNumLayers_ )
         return false;
     poCurrent_ = papoLayers_[nNum];
     return true;

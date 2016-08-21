@@ -204,7 +204,8 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
 
-    void                        SetCoordinatePrecision(int nCoordPrecisionIn) { this->nCoordPrecision = nCoordPrecisionIn; }
+    void                        SetCoordinatePrecision( int nCoordPrecisionIn )
+        { nCoordPrecision = nCoordPrecisionIn; }
 
     virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
 

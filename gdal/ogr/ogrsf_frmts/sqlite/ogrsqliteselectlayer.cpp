@@ -65,7 +65,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
     poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn, bEmptyLayer);
     poDS = poDSIn;
 
-    this->bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
+    bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
 
     std::set<CPLString> aosEmpty;
     BuildFeatureDefn( "SELECT", hStmtIn, aosEmpty, aosEmpty );

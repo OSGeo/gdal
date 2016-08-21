@@ -606,7 +606,7 @@ OGROpenFileGDBSingleFeatureLayer::OGROpenFileGDBSingleFeatureLayer(const char* p
     poFeatureDefn->AddFieldDefn( &oField );
 
     iNextShapeId = 0;
-    this->pszVal = pszValIn ? CPLStrdup(pszValIn) : NULL;
+    pszVal = pszValIn ? CPLStrdup(pszValIn) : NULL;
 }
 
 /************************************************************************/

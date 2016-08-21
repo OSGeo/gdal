@@ -43,10 +43,10 @@ OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDSIn,
                                 OGRSpatialReference* poSRSIn )
 
 {
-    this->poDS = poDSIn;
+    poDS = poDSIn;
     nNextFID = 0;
 
-    this->poSRS = poSRSIn;
+    poSRS = poSRSIn;
     if (poSRS)
         poSRS->Reference();
 

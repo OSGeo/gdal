@@ -110,8 +110,8 @@ class OGRWFSWrappedResultLayer : public OGRLayer
     public:
         OGRWFSWrappedResultLayer(GDALDataset* poDSIn, OGRLayer* poLayerIn)
         {
-            this->poDS = poDSIn;
-            this->poLayer = poLayerIn;
+            poDS = poDSIn;
+            poLayer = poLayerIn;
         }
         ~OGRWFSWrappedResultLayer()
         {

@@ -189,7 +189,7 @@ int OGRGPSBabelWriteDataSource::Create( const char * pszNameIn,
     if (poGPXDS == NULL)
         return FALSE;
 
-    this->pszName = CPLStrdup(pszNameIn);
+    pszName = CPLStrdup(pszNameIn);
 
     return TRUE;
 }

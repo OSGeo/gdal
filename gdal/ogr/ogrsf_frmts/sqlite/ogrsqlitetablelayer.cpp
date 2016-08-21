@@ -159,9 +159,9 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableNameIn,
 {
     SetDescription( pszTableNameIn );
 
-    this->bIsVirtualShape = bIsVirtualShapeIn;
-    this->pszTableName = CPLStrdup(pszTableNameIn);
-    this->bDeferredCreation = bDeferredCreationIn;
+    bIsVirtualShape = bIsVirtualShapeIn;
+    pszTableName = CPLStrdup(pszTableNameIn);
+    bDeferredCreation = bDeferredCreationIn;
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
 
     if( strchr(pszTableName, '(') != NULL &&
@@ -184,7 +184,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableNameIn,
         {
             char* pszGeomCol = CPLStrdup(strchr(pszTableName, '(')+1);
             pszGeomCol[strlen(pszGeomCol)-1] = 0;
-            *strchr(this->pszTableName, '(') = 0;
+            *strchr(pszTableName, '(') = 0;
             CPLFree(pszEscapedTableName),
             pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
             EstablishFeatureDefn(pszGeomCol);

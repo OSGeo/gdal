@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 TigerPoint::TigerPoint( int bRequireGeomIn, const TigerRecordInfo *psRTInfoIn,
                         const char            *m_pszFileCodeIn ) : TigerFileBase(psRTInfoIn, m_pszFileCodeIn)
 {
-    this->bRequireGeom = bRequireGeomIn;
+    bRequireGeom = bRequireGeomIn;
 }
 
 /************************************************************************/

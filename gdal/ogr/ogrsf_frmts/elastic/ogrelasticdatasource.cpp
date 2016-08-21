@@ -520,14 +520,14 @@ int OGRElasticDataSource::Create(const char *pszFilename,
                                  CPL_UNUSED char **papszOptions)
 {
     eAccess = GA_Update;
-    this->m_pszName = CPLStrdup(pszFilename);
+    m_pszName = CPLStrdup(pszFilename);
     m_osURL = (STARTS_WITH_CI(pszFilename, "ES:")) ? pszFilename + 3 : pszFilename;
     if( m_osURL.size() == 0 )
         m_osURL = "localhost:9200";
 
     const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
-    this->m_bOverwrite = CPLTestBool(CPLGetConfigOption("ES_OVERWRITE", "0"));
-    this->m_nBulkUpload = (int) CPLAtof(CPLGetConfigOption("ES_BULK", "0"));
+    m_bOverwrite = CPLTestBool(CPLGetConfigOption("ES_OVERWRITE", "0"));
+    m_nBulkUpload = (int) CPLAtof(CPLGetConfigOption("ES_BULK", "0"));
 
     // Read in the meta file from disk
     if (pszMetaFile != NULL)
@@ -539,7 +539,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
             CPL_IGNORE_RET_VAL(VSIIngestFile( fp, pszMetaFile, &pabyRet, NULL, -1));
             if( pabyRet )
             {
-                this->m_pszMapping = (char*)pabyRet;
+                m_pszMapping = (char*)pabyRet;
             }
             VSIFCloseL(fp);
         }

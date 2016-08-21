@@ -288,15 +288,15 @@ OGRErr OGRWalkTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
+    m_pszAttrQueryString = pszQueryIn ? CPLStrdup(pszQueryIn) : NULL;
 
-    if( (pszQueryIn == NULL && this->pszQuery == NULL)
-        || (pszQueryIn != NULL && this->pszQuery != NULL
-            && EQUAL(pszQueryIn,this->pszQuery)) )
+    if( (pszQueryIn == NULL && pszQuery == NULL)
+        || (pszQueryIn != NULL && pszQuery != NULL
+            && EQUAL(pszQueryIn, pszQuery)) )
         return OGRERR_NONE;
 
-    CPLFree( this->pszQuery );
-    this->pszQuery = (pszQueryIn != NULL ) ? CPLStrdup( pszQueryIn ) : NULL;
+    CPLFree( pszQuery );
+    pszQuery = pszQueryIn != NULL ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 

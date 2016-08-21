@@ -238,7 +238,7 @@ int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
 
           // We don't explore down into the target sequence if we
           // are recursing from a supersequence.
-          if( poFieldVar == this->poTargetVar )
+          if( poFieldVar == poTargetVar )
               return FALSE;
 
           for( v_i = seq->var_begin(); v_i != seq->var_end(); v_i++ )

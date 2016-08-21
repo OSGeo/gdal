@@ -43,7 +43,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char* pszNameIn,
 {
     nLayers = 0;
     papoLayers = NULL;
-    this->pszName = CPLStrdup(pszNameIn);
+    pszName = CPLStrdup(pszNameIn);
     bTriedOpen = FALSE;
     fp = NULL;
     bInTransaction = FALSE;

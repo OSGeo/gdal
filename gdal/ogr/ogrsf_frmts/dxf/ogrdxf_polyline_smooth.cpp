@@ -112,7 +112,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
     DXFSmoothPolylineVertex begin = *oIter;
 
     double dfZ = 0.0;
-    const bool bConstantZ = this->HasConstantZ(dfZ);
+    const bool bConstantZ = HasConstantZ(dfZ);
 
     while(oIter != oEndIter)
     {
@@ -123,12 +123,12 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
         if((len == 0) || (begin.bulge == 0))
         {
-            this->EmitLine(begin, end, poLS, bConstantZ, dfZ);
+            EmitLine(begin, end, poLS, bConstantZ, dfZ);
         }
         else
         {
             const double radius = GetRadius(begin.bulge,len);
-            this->EmitArc(begin, end, radius, len, begin.bulge, poLS, dfZ);
+            EmitArc(begin, end, radius, len, begin.bulge, poLS, dfZ);
         }
 
         // Move to next vertex

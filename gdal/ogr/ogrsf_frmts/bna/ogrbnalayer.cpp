@@ -70,7 +70,7 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eLayerGeomType );
     SetDescription( poFeatureDefn->GetName() );
-    this->bnaFeatureType = bnaFeatureTypeIn;
+    bnaFeatureType = bnaFeatureTypeIn;
 
     if (! bWriter )
     {

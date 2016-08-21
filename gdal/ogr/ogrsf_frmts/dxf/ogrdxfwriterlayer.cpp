@@ -42,8 +42,8 @@ CPL_CVSID("$Id$");
 OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn )
 
 {
-    this->fp = fpIn;
-    this->poDS = poDSIn;
+    fp = fpIn;
+    poDS = poDSIn;
 
     nNextAutoID = 1;
     bWriteHatch = CPLTestBool(CPLGetConfigOption("DXF_WRITE_HATCH", "YES"));

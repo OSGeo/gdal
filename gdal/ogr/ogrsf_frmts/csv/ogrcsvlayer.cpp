@@ -2276,7 +2276,7 @@ void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
                                    OGRCSVGeometryFormat eGeometryFormatIn,
                                    const char* pszGeomCol)
 {
-    this->eGeometryFormat = eGeometryFormatIn;
+    eGeometryFormat = eGeometryFormatIn;
     if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT && eGType != wkbNone )
     {
         OGRGeomFieldDefn oGFld(pszGeomCol, eGType);
@@ -2297,7 +2297,7 @@ void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
 
 void OGRCSVLayer::SetCreateCSVT(int bCreateCSVTIn)
 {
-    this->bCreateCSVT = bCreateCSVTIn;
+    bCreateCSVT = bCreateCSVTIn;
 }
 
 /************************************************************************/
@@ -2306,7 +2306,7 @@ void OGRCSVLayer::SetCreateCSVT(int bCreateCSVTIn)
 
 void OGRCSVLayer::SetWriteBOM(int bWriteBOMIn)
 {
-    this->bWriteBOM = bWriteBOMIn;
+    bWriteBOM = bWriteBOMIn;
 }
 
 /************************************************************************/

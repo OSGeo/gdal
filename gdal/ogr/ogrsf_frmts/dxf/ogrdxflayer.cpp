@@ -302,7 +302,7 @@ public:
 
         dfDeterminant = 0.0;
         Scale2Unit( adfNIn );
-        memcpy( this->adfN, adfNIn, sizeof(double)*3 );
+        memcpy( adfN, adfNIn, sizeof(double)*3 );
 
     if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
             CrossProduct(adfWY, adfN, adfAX);

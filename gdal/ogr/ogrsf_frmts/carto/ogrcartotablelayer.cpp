@@ -1379,7 +1379,7 @@ void OGRCARTOTableLayer::SetDeferredCreation (OGRwkbGeometryType eGType,
     bDeferredCreation = TRUE;
     nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
-    this->bCartodbfy = bCartodbfyIn;
+    bCartodbfy = bCartodbfyIn;
     poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);

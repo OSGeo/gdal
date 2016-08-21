@@ -39,8 +39,8 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource* poDSIn,
                                  const swq_select* psSelectInfo,
                                  const CPLString& osGlobalFilterIn)
 {
-    this->poDS = poDSIn;
-    this->osGlobalFilter = osGlobalFilterIn;
+    poDS = poDSIn;
+    osGlobalFilter = osGlobalFilterIn;
     poFeatureDefn = NULL;
     bPagingActive = FALSE;
     nPagingStartIndex = 0;

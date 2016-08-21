@@ -2373,7 +2373,7 @@ int OGR2SQLITEModule::Setup(sqlite3* hDBIn)
 {
     int rc;
 
-    this->hDB = hDBIn;
+    hDB = hDBIn;
 
     rc = sqlite3_create_module_v2(hDB, "VirtualOGR", &sOGR2SQLITEModule, this,
                                   OGR2SQLITEDestroyModule);

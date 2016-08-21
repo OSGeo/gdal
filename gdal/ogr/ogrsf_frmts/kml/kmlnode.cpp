@@ -724,7 +724,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
 
 Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
 {
-    if(nNum >= this->getNumFeatures())
+    if( nNum >= getNumFeatures() )
         return NULL;
 
     unsigned int nCount;

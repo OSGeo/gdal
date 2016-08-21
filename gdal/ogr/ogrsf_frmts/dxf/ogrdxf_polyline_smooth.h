@@ -52,7 +52,7 @@ public:
 
     DXFSmoothPolylineVertex(double dfX, double dfY, double dfZ, double dfBulge)
         {
-            this->set(dfX, dfY, dfZ, dfBulge);
+            set(dfX, dfY, dfZ, dfBulge);
         }
 
 
@@ -80,7 +80,7 @@ public:
 
     void normalize()
         {
-            const double len = this->length();
+            const double len = length();
             assert(len != 0.0);
 
             x /= len;
@@ -132,8 +132,6 @@ public:
     bool HasConstantZ(double&) const;
 
     void setCoordinateDimension(int n) { m_dim = n; }
-
-
 
 private:
     void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,

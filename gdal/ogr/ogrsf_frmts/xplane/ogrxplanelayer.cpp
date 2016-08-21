@@ -114,11 +114,11 @@ void OGRXPlaneLayer::ResetReading()
 
 void OGRXPlaneLayer::SetReader(OGRXPlaneReader* poReaderIn)
 {
-    if (this->poReader)
+    if( poReader )
     {
-        delete this->poReader;
+        delete poReader;
     }
-    this->poReader = poReaderIn;
+    poReader = poReaderIn;
 }
 
 /************************************************************************/
@@ -333,5 +333,5 @@ OGRFeatureDefn * OGRXPlaneLayer::GetLayerDefn()
 
 void OGRXPlaneLayer::SetDataSource(OGRXPlaneDataSource* poDSIn)
 {
-    this->poDS = poDSIn;
+    poDS = poDSIn;
 }

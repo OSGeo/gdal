@@ -2511,7 +2511,7 @@ OGRGMLSingleFeatureLayer::OGRGMLSingleFeatureLayer( int nValIn )
     OGRFieldDefn oField( "Validates", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oField );
 
-    this->nVal = nValIn;
+    nVal = nValIn;
     iNextShapeId = 0;
 }
 
