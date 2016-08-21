@@ -293,12 +293,12 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         eDT = GDT_Int32;
         if( bSrcHasNoData )
         {
-            const int mMinVal = (eDT == GDT_Byte ) ? 0 : (eDT == GDT_UInt16) ? 0 : -32768;
-            const int mMaxVal = (eDT == GDT_Byte ) ? 255 : (eDT == GDT_UInt16) ? 65535 : 32767;
-            if( fabs(dfNoDataValue - static_cast<int>(dfNoDataValue + 0.5)) < 1e-2 &&
-                dfNoDataValue >= mMinVal && dfNoDataValue <= mMaxVal )
+            const int nMinVal = (eDT == GDT_Byte ) ? 0 : (eDT == GDT_UInt16) ? 0 : -32768;
+            const int nMaxVal = (eDT == GDT_Byte ) ? 255 : (eDT == GDT_UInt16) ? 65535 : 32767;
+            if( fabs(dfNoDataValue - floor(dfNoDataValue + 0.5)) < 1e-2 &&
+                dfNoDataValue >= nMinVal && dfNoDataValue <= nMaxVal )
             {
-                fSrcNoDataValue = static_cast<T>(dfNoDataValue + 0.5);
+                fSrcNoDataValue = static_cast<T>(floor(dfNoDataValue + 0.5));
             }
             else
             {
@@ -2206,12 +2206,12 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset<T> *
         if( bSrcHasNoData )
         {
             GDALDataType eSrcDT = GDALGetRasterDataType(poDSIn->hSrcBand);
-            const int mMinVal = (eSrcDT == GDT_Byte ) ? 0 : (eSrcDT == GDT_UInt16) ? 0 : -32768;
-            const int mMaxVal = (eSrcDT == GDT_Byte ) ? 255 : (eSrcDT == GDT_UInt16) ? 65535 : 32767;
-            if( fabs(dfNoDataValue - static_cast<int>(dfNoDataValue + 0.5)) < 1e-2 &&
-                dfNoDataValue >= mMinVal && dfNoDataValue <= mMaxVal )
+            const int nMinVal = (eSrcDT == GDT_Byte ) ? 0 : (eSrcDT == GDT_UInt16) ? 0 : -32768;
+            const int nMaxVal = (eSrcDT == GDT_Byte ) ? 255 : (eSrcDT == GDT_UInt16) ? 65535 : 32767;
+            if( fabs(dfNoDataValue - floor(dfNoDataValue + 0.5)) < 1e-2 &&
+                dfNoDataValue >= nMinVal && dfNoDataValue <= nMaxVal )
             {
-                fSrcNoDataValue = static_cast<T>(dfNoDataValue + 0.5);
+                fSrcNoDataValue = static_cast<T>(floor(dfNoDataValue + 0.5));
             }
             else
             {
