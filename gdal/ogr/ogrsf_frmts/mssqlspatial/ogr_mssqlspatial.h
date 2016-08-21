@@ -312,7 +312,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
 
     int                 bIdentityInsert;
 
-    void		ClearStatement();
+    void                ClearStatement();
     CPLODBCStatement* BuildStatement(const char* pszColumns);
 
     CPLString BuildFields();
@@ -396,7 +396,7 @@ class OGRMSSQLSpatialSelectLayer : public OGRMSSQLSpatialLayer
 {
     char                *pszBaseStatement;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();

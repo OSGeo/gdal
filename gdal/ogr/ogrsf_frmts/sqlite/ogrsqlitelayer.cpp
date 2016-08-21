@@ -1988,7 +1988,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 return OGRERR_CORRUPT_DATA;
             }
 
-            compressedSize = 24 * 2;                  	// first and last Points
+            compressedSize = 24 * 2;  // first and last Points
             compressedSize += 12 * (nPointCount - 2);  // intermediate Points
 
             nNextByte += 4;
@@ -2105,8 +2105,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             compressedSize += 16 * (nPointCount - 2);  // intermediate Points
 
             nNextByte += 4;
-			adfTupleBase[0] = 0.0;
-			adfTupleBase[1] = 0.0;
+            adfTupleBase[0] = 0.0;
+            adfTupleBase[1] = 0.0;
 
             if (nBytes - nNextByte < compressedSize )
             {

@@ -95,7 +95,7 @@ class OGRODBCTableLayer : public OGRODBCLayer
 
     int                 bHaveSpatialExtents;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();
@@ -144,7 +144,7 @@ class OGRODBCSelectLayer : public OGRODBCLayer
 {
     char                *pszBaseStatement;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();

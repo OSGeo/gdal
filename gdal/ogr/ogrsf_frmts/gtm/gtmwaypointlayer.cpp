@@ -262,7 +262,7 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
         writeDouble(fp, lon);
         float altitude = 0.0;
         if (poGeom->getGeometryType() == wkbPoint25D)
-	    altitude = (float) point->getZ();
+            altitude = (float) point->getZ();
 
         WriteFeatureAttributes(poFeature, altitude);
         break;

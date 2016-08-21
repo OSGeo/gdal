@@ -208,7 +208,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "SDE connect string had wrong number of arguments.\n"
                   "Expected 'SDE:server,instance,database,username,password,layer'\n"
-		          "The layer name value is optional.\n"
+                  "The layer name value is optional.\n"
                   "Got '%s'",
                   pszNewName );
         return FALSE;
@@ -217,7 +217,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    int 	nSDEErr;
+    int nSDEErr;
     SE_ERROR    sSDEErrorInfo;
 
     nSDEErr = SE_connection_create( papszTokens[0],

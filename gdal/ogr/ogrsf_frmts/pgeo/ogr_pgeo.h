@@ -96,7 +96,7 @@ class OGRPGeoTableLayer : public OGRPGeoLayer
 
     char                *pszQuery;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();
@@ -138,7 +138,7 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
 {
     char                *pszBaseStatement;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();

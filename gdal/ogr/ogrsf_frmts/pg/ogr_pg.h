@@ -67,12 +67,12 @@
 #define INT8ARRAYOID            1016
 #define FLOAT4ARRAYOID          1021
 #define FLOAT8ARRAYOID          1022
-#define BPCHAROID		1042
-#define VARCHAROID		1043
-#define DATEOID			1082
-#define TIMEOID			1083
-#define TIMESTAMPOID	        1114
-#define TIMESTAMPTZOID	        1184
+#define BPCHAROID               1042
+#define VARCHAROID              1043
+#define DATEOID                 1082
+#define TIMEOID                 1083
+#define TIMESTAMPOID            1114
+#define TIMESTAMPTZOID          1184
 #define NUMERICOID              1700
 #define NUMERICARRAYOID         1231
 
@@ -279,8 +279,8 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bFIDColumnInCopyFields;
     int                 bFirstInsertion;
 
-    OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
-    OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
+    OGRErr              CreateFeatureViaCopy( OGRFeature *poFeature );
+    OGRErr              CreateFeatureViaInsert( OGRFeature *poFeature );
     CPLString           BuildCopyFields();
 
     int                 bHasWarnedIncompatibleGeom;

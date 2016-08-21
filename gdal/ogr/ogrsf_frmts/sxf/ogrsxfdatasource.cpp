@@ -186,7 +186,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         CPLError(CE_Failure, CPLE_None, "SXF head read failed");
         CloseFile();
-		return FALSE;
+        return FALSE;
     }
 
     //check version

@@ -371,21 +371,21 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
         if( osGeomColumn.size()
             && EQUAL(psFDesc->ds_columnName,osGeomColumn))
         {
-        	if( poDS->IsNewIngres() )
-        	{
-        		OGRGeometry *poGeometry = NULL;
-        		unsigned char *pszWKB = (unsigned char *) papszRow[iField];
+            if( poDS->IsNewIngres() )
+            {
+                OGRGeometry *poGeometry = NULL;
+                unsigned char *pszWKB = (unsigned char *) papszRow[iField];
 
-//        		OGRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeometry);
-        		OGRGeometryFactory::createFromWkb(pszWKB, NULL, &poGeometry, -1);
+                // GRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeometry);
+                OGRGeometryFactory::createFromWkb(pszWKB, NULL, &poGeometry, -1);
 
-        		poFeature->SetGeometryDirectly(poGeometry);
-        	}
-        	else
-        	{
-        		poFeature->SetGeometryDirectly(
-        			TranslateGeometry( papszRow[iField] ) );
-        	}
+                poFeature->SetGeometryDirectly(poGeometry);
+            }
+            else
+            {
+                poFeature->SetGeometryDirectly(
+                    TranslateGeometry( papszRow[iField] ) );
+            }
             continue;
         }
 

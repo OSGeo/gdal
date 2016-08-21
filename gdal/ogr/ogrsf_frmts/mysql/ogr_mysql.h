@@ -95,7 +95,7 @@ class OGRMySQLLayer : public OGRLayer
 
     MYSQL_RES           *hResultSet;
 
-	int                 FetchSRSId();
+    int                 FetchSRSId();
 
   public:
                         OGRMySQLLayer();

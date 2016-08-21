@@ -51,7 +51,7 @@ class OGRSXFLayer : public OGRLayer
 {
 protected:
     OGRFeatureDefn*    poFeatureDefn;
-	VSILFILE*          fpSXF;
+    VSILFILE*          fpSXF;
     GByte              nLayerID;
     std::map<unsigned, CPLString> mnClassificators;
     std::map<long, vsi_l_offset> mnRecordDesc;
@@ -78,7 +78,7 @@ public:
     OGRSXFLayer(VSILFILE* fp, CPLMutex** hIOMutex, GByte nID, const char* pszLayerName, int nVer, const SXFMapDescription&  sxfMapDesc);
     virtual ~OGRSXFLayer();
 
-	virtual void                ResetReading();
+    virtual void                ResetReading();
     virtual OGRFeature         *GetNextFeature();
     virtual OGRErr              SetNextByIndex(GIntBig nIndex);
     virtual OGRFeature         *GetFeature(GIntBig nFID);

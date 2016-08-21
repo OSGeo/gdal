@@ -95,17 +95,17 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
              m_pszDBname);
 
     if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_SPATIAL", "YES")))
-	m_bSpatial = TRUE;    /* build geometry from DB */
+        m_bSpatial = TRUE;    /* build geometry from DB */
     else
-	m_bSpatial = FALSE;   /* store also geometry in DB */
+        m_bSpatial = FALSE;   /* store also geometry in DB */
 
     if (!m_bDbSource && VSIStatL(osDbName, &sStatBufDb) == 0) {
         /* Internal DB exists */
-	if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
-	    m_bNewDb = TRUE;     /* overwrite existing DB */
+        if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_OVERWRITE", "NO"))) {
+            m_bNewDb = TRUE;     /* overwrite existing DB */
             CPLDebug("OGR-VFK", "Internal DB (%s) already exists and will be overwritten",
                      m_pszDBname);
-	    VSIUnlink(osDbName);
+            VSIUnlink(osDbName);
         }
         else {
             if (pszDbNameConf == NULL &&
@@ -514,12 +514,12 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
             osCommand += osColumn;
         }
         osColumn.Printf(",%s integer", FID_COLUMN);
-	osCommand += osColumn;
-	if (poDataBlock->GetGeometryType() != wkbNone) {
-	    osColumn.Printf(",%s blob", GEOM_COLUMN);
+        osCommand += osColumn;
+        if (poDataBlock->GetGeometryType() != wkbNone) {
+            osColumn.Printf(",%s blob", GEOM_COLUMN);
             osCommand += osColumn;
-	}
-	osCommand += ")";
+        }
+        osCommand += ")";
         ExecuteSQL(osCommand.c_str()); /* CREATE TABLE */
 
         /* create indices */
@@ -556,8 +556,8 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
         /* update VFK_DB_TABLE meta-table */
         osCommand.Printf("INSERT INTO %s (file_name, file_size, table_name, "
                          "num_records, num_features, num_geometries, table_defn) VALUES "
-			 "('%s', " CPL_FRMT_GUIB ", '%s', -1, 0, 0, '%s')",
-			 VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
+                         "('%s', " CPL_FRMT_GUIB ", '%s', -1, 0, 0, '%s')",
+                         VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
                          (GUIntBig) m_poFStat->st_size,
                          pszBlockName, pszDefn);
 
@@ -696,7 +696,7 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
                 break;
             case OFTString:
                 if (poDataBlock->GetProperty(i)->IsIntBig())
-		    osValue.Printf("%s", poProperty->GetValueS());
+                    osValue.Printf("%s", poProperty->GetValueS());
                 else
                     osValue.Printf("'%s'", poProperty->GetValueS(TRUE));
                 break;
@@ -709,7 +709,7 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
     }
     osValue.Printf("," CPL_FRMT_GIB, poFeature->GetFID());
     if (poDataBlock->GetGeometryType() != wkbNone) {
-	osValue += ",NULL";
+        osValue += ",NULL";
     }
     osValue += ")";
     osCommand += osValue;

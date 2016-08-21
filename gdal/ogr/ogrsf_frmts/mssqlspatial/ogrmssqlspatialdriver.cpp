@@ -125,9 +125,9 @@ void RegisterOGRMSSQLSpatial()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Microsoft SQL Server Spatial Database"
 #ifdef MSSQL_BCP_SUPPORTED
-			       " (BCP)"
+                               " (BCP)"
 #endif
-	);
+                               );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mssqlspatial.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>");

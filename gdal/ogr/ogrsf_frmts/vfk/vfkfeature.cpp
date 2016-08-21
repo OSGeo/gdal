@@ -109,7 +109,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
     m_bValid = TRUE;
 
     if (!poGeom) {
-	return m_bValid;
+        return m_bValid;
     }
 
     /* check empty geometries */
@@ -137,10 +137,10 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
     if (m_nGeometryType == wkbPolygon) {
         OGRLinearRing *poRing = ((OGRPolygon *) poGeom)->getExteriorRing();
         if (!poRing || poRing->getNumPoints() < 3) {
-	    CPLDebug("OGR-VFK", "%s: invalid polygon fid = " CPL_FRMT_GIB,
-		     m_poDataBlock->GetName(), m_nFID);
+            CPLDebug("OGR-VFK", "%s: invalid polygon fid = " CPL_FRMT_GIB,
+                     m_poDataBlock->GetName(), m_nFID);
             m_bValid = FALSE;
-	}
+        }
     }
 
     if (m_bValid) {
@@ -437,14 +437,14 @@ bool VFKFeature::SetProperties(const char *pszLine)
         CPLError(CE_Warning, CPLE_AppDefined,
                  "%s: invalid number of properties %d should be %d",
                  m_poDataBlock->GetName(),
-		 (int) oPropList.size(), m_poDataBlock->GetPropertyCount());
+                 (int) oPropList.size(), m_poDataBlock->GetPropertyCount());
         CPLFree(pszProp);
         return FALSE;
    }
     iIndex = 0;
     for (std::vector<CPLString>::iterator ip = oPropList.begin();
-	 ip != oPropList.end(); ++ip) {
-	SetProperty(iIndex++, (*ip).c_str());
+         ip != oPropList.end(); ++ip) {
+        SetProperty(iIndex++, (*ip).c_str());
     }
 
     // TODO(martinl): Why was this block disabled?
@@ -482,7 +482,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
 bool VFKFeature::SetProperty(int iIndex, const char *pszValue)
 {
     if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount() ||
-	size_t(iIndex) >= m_propertyList.size())
+        size_t(iIndex) >= m_propertyList.size())
         return FALSE;
 
     if (strlen(pszValue) < 1)
@@ -526,7 +526,7 @@ bool VFKFeature::SetProperty(int iIndex, const char *pszValue)
 const VFKProperty *VFKFeature::GetProperty(int iIndex) const
 {
     if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount() ||
-	size_t(iIndex) >= m_propertyList.size())
+        size_t(iIndex) >= m_propertyList.size())
         return NULL;
 
     const VFKProperty* poProperty = &m_propertyList[iIndex];

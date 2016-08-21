@@ -770,9 +770,9 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             while(SQL_SUCCEEDED(SQLDrivers(hEnv, direction,
                 driver, sizeof(driver), &driver_ret, attr, sizeof(attr), &attr_ret)))
             {
-	            direction = SQL_FETCH_NEXT;
+                direction = SQL_FETCH_NEXT;
                 osDriverList += CPLSPrintf("%s\n", driver);
-	        }
+            }
 
             CPLError( CE_Failure, CPLE_AppDefined,
                 "Unable to initialize connection to the server for %s,\n"
@@ -846,25 +846,25 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     /* if requesting all user database table then this takes priority */
- 	if (papszTableNames == NULL && bListAllTables)
- 	{
- 	    CPLODBCStatement oStmt( &oSession );
+    if (papszTableNames == NULL && bListAllTables)
+    {
+        CPLODBCStatement oStmt( &oSession );
 
- 	    oStmt.Append( "select sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, sys.columns.name from sys.columns join sys.types on sys.columns.system_type_id = sys.types.system_type_id and sys.columns.user_type_id = sys.types.user_type_id join sys.objects on sys.objects.object_id = sys.columns.object_id join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and (sys.objects.type = 'U' or sys.objects.type = 'V') union all select sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, '' from sys.objects join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where not exists (select * from sys.columns sc1 join sys.types on sc1.system_type_id = sys.types.system_type_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and sys.objects.object_id = sc1.object_id) and (sys.objects.type = 'U' or sys.objects.type = 'V')" );
+        oStmt.Append( "select sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, sys.columns.name from sys.columns join sys.types on sys.columns.system_type_id = sys.types.system_type_id and sys.columns.user_type_id = sys.types.user_type_id join sys.objects on sys.objects.object_id = sys.columns.object_id join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and (sys.objects.type = 'U' or sys.objects.type = 'V') union all select sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, '' from sys.objects join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where not exists (select * from sys.columns sc1 join sys.types on sc1.system_type_id = sys.types.system_type_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and sys.objects.object_id = sc1.object_id) and (sys.objects.type = 'U' or sys.objects.type = 'V')" );
 
- 	    if( oStmt.ExecuteSQL() )
- 	    {
- 	        while( oStmt.Fetch() )
- 	        {
- 	            papszSchemaNames =
- 	                    CSLAddString( papszSchemaNames, oStmt.GetColData(0) );
- 	            papszTableNames =
- 	                    CSLAddString( papszTableNames, oStmt.GetColData(1) );
- 	            papszGeomColumnNames =
- 	                    CSLAddString( papszGeomColumnNames, oStmt.GetColData(2) );
- 	        }
- 	    }
- 	}
+        if( oStmt.ExecuteSQL() )
+        {
+            while( oStmt.Fetch() )
+            {
+                papszSchemaNames =
+                    CSLAddString( papszSchemaNames, oStmt.GetColData(0) );
+                papszTableNames =
+                    CSLAddString( papszTableNames, oStmt.GetColData(1) );
+                papszGeomColumnNames =
+                    CSLAddString( papszGeomColumnNames, oStmt.GetColData(2) );
+            }
+        }
+    }
 
     /* Determine the available tables if not specified. */
     if (papszTableNames == NULL && bUseGeometryColumns)

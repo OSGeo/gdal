@@ -275,7 +275,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
 
     /* --------------------------------------------------------------------*
      *      Prefetch all the information needed to determine layers        *
-     * 	    and prebuild LineString features for later assembly.           *
+     *      and prebuild LineString features for later assembly.           *
      * --------------------------------------------------------------------*/
 
     /* allocate room for one pointer per feature */
@@ -292,9 +292,9 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     short          nName, nNumLines;
     long           nNumCoo;
     unsigned short nInfo;
-    LC_SNR_ADM	   oSnradm;
-    LC_BGR		   oNextSerial;
-    LC_BGR		  *poNextSerial;
+    LC_SNR_ADM oSnradm;
+    LC_BGR   oNextSerial;
+    LC_BGR  *poNextSerial;
     poNextSerial =&oNextSerial;
 
     bool bPointLayer = FALSE; /* Initialize four layers for the different geometry types */
@@ -417,8 +417,8 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             /* Get coordinate system from SOSI header. */
             int nEPSG = sosi2epsg(oTrans.sKoordsys);
             if (poSRS->importFromEPSG(nEPSG) != OGRERR_NONE) {
-				CPLError( CE_Failure, CPLE_OpenFailed,
-                          "OGR could not load coordinate system definition EPSG:%i.", nEPSG);
+              CPLError( CE_Failure, CPLE_OpenFailed,
+                        "OGR could not load coordinate system definition EPSG:%i.", nEPSG);
                 return FALSE;
             }
 
@@ -465,7 +465,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     S2I::iterator i;
     if (bPolyLayer) {
         S2I * poHeadersNew = new S2I();
-		OGRFeatureDefn *poFeatureDefn = defineLayer("polygons", wkbPolygon, poPolyHeaders, &poHeadersNew);
+        OGRFeatureDefn *poFeatureDefn = defineLayer("polygons", wkbPolygon, poPolyHeaders, &poHeadersNew);
         delete poPolyHeaders;
         poPolyHeaders = poHeadersNew;
         poFeatureDefn->Reference();
@@ -516,8 +516,8 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
 /************************************************************************/
 
 int  OGRSOSIDataSource::Create( const char *pszFilename ) {
-	short nStatus;
-	short nDetStatus;
+    short nStatus;
+    short nDetStatus;
 
     poBaseadm = LC_OpenBase(LC_KLADD);
     nStatus   = LC_OpenSos(pszFilename, LC_SEKV_SKRIV, LC_NY_IDX, LC_INGEN_STATUS,
@@ -717,5 +717,5 @@ int OGRSOSIDataSource::TestCapability( CPL_UNUSED const char * pszCap ) {
         return TRUE;
     }
 #endif
-	return FALSE;
+    return FALSE;
 }

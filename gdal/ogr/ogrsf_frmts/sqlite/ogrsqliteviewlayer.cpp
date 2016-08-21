@@ -279,11 +279,11 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
                   osWHERE.c_str() );
 
     rc = sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
-		          &hStmt, NULL );
+                          &hStmt, NULL );
 
     if( rc == SQLITE_OK )
     {
-	return OGRERR_NONE;
+        return OGRERR_NONE;
     }
     else
     {

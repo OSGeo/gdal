@@ -197,18 +197,18 @@ typedef short NumericDigit;
 
 typedef struct NumericVar
 {
-        int			ndigits;		/* # of digits in digits[] - can be 0! */
-        int			weight;			/* weight of first digit */
-        int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
-        int			dscale;			/* display scale */
-        NumericDigit *digits;		/* base-NBASE digits */
+        int ndigits;           /* # of digits in digits[] - can be 0! */
+        int weight;            /* weight of first digit */
+        int sign;              /* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
+        int dscale;            /* display scale */
+        NumericDigit *digits;  /* base-NBASE digits */
 } NumericVar;
 
-#define NUMERIC_POS			0x0000
-#define NUMERIC_NEG			0x4000
-#define NUMERIC_NAN			0xC000
+#define NUMERIC_POS 0x0000
+#define NUMERIC_NEG 0x4000
+#define NUMERIC_NAN 0xC000
 
-#define DEC_DIGITS	4
+#define DEC_DIGITS 4
 /*
 * get_str_from_var() -
 *
@@ -219,11 +219,11 @@ typedef struct NumericVar
 static char *
 OGRPGGetStrFromBinaryNumeric(NumericVar *var)
 {
-        char	   *str;
-        char	   *cp;
-        char	   *endcp;
-        int			i;
-        int			d;
+        char   *str;
+        char   *cp;
+        char   *endcp;
+        int     i;
+        int     d;
         NumericDigit dig;
         NumericDigit d1;
 
@@ -329,41 +329,41 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
 
 /* Coming from j2date() in pgsql/src/backend/utils/adt/datetime.c */
 
-#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
+#define POSTGRES_EPOCH_JDATE 2451545 /* == date2j(2000, 1, 1) */
 
 static
 void OGRPGj2date(int jd, int *year, int *month, int *day)
 {
-	unsigned int julian;
-	unsigned int quad;
-	unsigned int extra;
-	int			y;
+    unsigned int julian;
+    unsigned int quad;
+    unsigned int extra;
+    int y;
 
-	julian = jd;
-	julian += 32044;
-	quad = julian / 146097;
-	extra = (julian - quad * 146097) * 4 + 3;
-	julian += 60 + quad * 3 + extra / 146097;
-	quad = julian / 1461;
-	julian -= quad * 1461;
-	y = julian * 4 / 1461;
-	julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
-		+ 123;
-	y += quad * 4;
-	*year = y - 4800;
-	quad = julian * 2141 / 65536;
-	*day = julian - 7834 * quad / 256;
-	*month = (quad + 10) % 12 + 1;
+    julian = jd;
+    julian += 32044;
+    quad = julian / 146097;
+    extra = (julian - quad * 146097) * 4 + 3;
+    julian += 60 + quad * 3 + extra / 146097;
+    quad = julian / 1461;
+    julian -= quad * 1461;
+    y = julian * 4 / 1461;
+    julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
+        + 123;
+    y += quad * 4;
+    *year = y - 4800;
+    quad = julian * 2141 / 65536;
+    *day = julian - 7834 * quad / 256;
+    *month = (quad + 10) % 12 + 1;
 
-	return;
-}	/* j2date() */
+    return;
+}  /* j2date() */
 
 
 /************************************************************************/
 /*                              OGRPGdt2time()                          */
 /************************************************************************/
 
-#define USECS_PER_SEC	1000000
+#define USECS_PER_SEC 1000000
 #define USECS_PER_MIN   ((GIntBig) 60 * USECS_PER_SEC)
 #define USECS_PER_HOUR  ((GIntBig) 3600 * USECS_PER_SEC)
 #define USECS_PER_DAY   ((GIntBig) 3600 * 24 * USECS_PER_SEC)
@@ -374,32 +374,32 @@ static
 void
 OGRPGdt2timeInt8(GIntBig jd, int *hour, int *min, int *sec, double *fsec)
 {
-	GIntBig		time;
+    GIntBig time;
 
-	time = jd;
+    time = jd;
 
-	*hour = (int) (time / USECS_PER_HOUR);
-	time -= (GIntBig) (*hour) * USECS_PER_HOUR;
-	*min = (int) (time / USECS_PER_MIN);
-	time -=  (GIntBig) (*min) * USECS_PER_MIN;
-	*sec = (int)time / USECS_PER_SEC;
-	*fsec = (double)(time - *sec * USECS_PER_SEC);
-}	/* dt2time() */
+    *hour = (int) (time / USECS_PER_HOUR);
+    time -= (GIntBig) (*hour) * USECS_PER_HOUR;
+    *min = (int) (time / USECS_PER_MIN);
+    time -=  (GIntBig) (*min) * USECS_PER_MIN;
+    *sec = (int)time / USECS_PER_SEC;
+    *fsec = (double)(time - *sec * USECS_PER_SEC);
+}  /* dt2time() */
 
 static
 void
 OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec, double *fsec)
 {
-	double	time;
+    double time;
 
-	time = jd;
+    time = jd;
 
-	*hour = (int) (time / 3600.);
-	time -= (*hour) * 3600.;
-	*min = (int) (time / 60.);
-	time -=  (*min) * 60.;
-	*sec = (int)time;
-	*fsec = time - *sec;
+    *hour = (int) (time / 3600.);
+    time -= (*hour) * 3600.;
+    *min = (int) (time / 60.);
+    time -=  (*min) * 60.;
+    *sec = (int)time;
+    *fsec = time - *sec;
 }
 
 /************************************************************************/
@@ -408,8 +408,8 @@ OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec, double *fsec)
 
 #define TMODULO(t,q,u) \
 do { \
-	(q) = ((t) / (u)); \
-	if ((q) != 0) (t) -= ((q) * (u)); \
+        (q) = ((t) / (u)); \
+        if ((q) != 0) (t) -= ((q) * (u)); \
 } while(0)
 
 /* Coming from timestamp2tm() in pgsql/src/backend/utils/adt/timestamp.c */
@@ -418,32 +418,32 @@ static
 int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
                                       int* hour, int* min, double* pdfSec)
 {
-        GIntBig date;
-	GIntBig time;
-        int nSec;
-        double dfSec;
+    GIntBig date;
+    GIntBig time;
+    int nSec;
+    double dfSec;
 
-        time = dt;
-	TMODULO(time, date, USECS_PER_DAY);
+    time = dt;
+    TMODULO(time, date, USECS_PER_DAY);
 
-	if (time < 0)
-	{
-		time += USECS_PER_DAY;
-		date -= 1;
-	}
+    if (time < 0)
+    {
+        time += USECS_PER_DAY;
+        date -= 1;
+    }
 
-	/* add offset to go from J2000 back to standard Julian date */
-	date += POSTGRES_EPOCH_JDATE;
+    /* add offset to go from J2000 back to standard Julian date */
+    date += POSTGRES_EPOCH_JDATE;
 
-	/* Julian day routine does not work for negative Julian days */
-	if (date < 0 || date > (double) INT_MAX)
-		return -1;
+    /* Julian day routine does not work for negative Julian days */
+    if (date < 0 || date > (double) INT_MAX)
+        return -1;
 
-	OGRPGj2date((int) date, year, month, day);
-	OGRPGdt2timeInt8(time, hour, min, &nSec, &dfSec);
-        *pdfSec += nSec + dfSec;
+    OGRPGj2date((int) date, year, month, day);
+    OGRPGdt2timeInt8(time, hour, min, &nSec, &dfSec);
+    *pdfSec += nSec + dfSec;
 
-        return 0;
+    return 0;
 }
 
 #endif // defined(BINARY_CURSOR_ENABLED)
