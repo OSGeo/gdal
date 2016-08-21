@@ -268,10 +268,10 @@ class OGRCSVEditableLayer: public OGREditableLayer
 
 OGRCSVEditableLayer::OGRCSVEditableLayer(OGRCSVLayer* poCSVLayer,
                                          char** papszOpenOptions) :
-        OGREditableLayer(poCSVLayer, true,
-                         new OGRCSVEditableLayerSynchronizer(
-                                         poCSVLayer, papszOpenOptions),
-                         true)
+    OGREditableLayer(poCSVLayer, true,
+                     new OGRCSVEditableLayerSynchronizer(
+                         poCSVLayer, papszOpenOptions),
+                     true)
 {
     SetSupportsCreateGeomField(true);
     SetSupportsCurveGeometries(true);

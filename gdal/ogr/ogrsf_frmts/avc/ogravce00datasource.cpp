@@ -38,10 +38,12 @@ CPL_CVSID("$Id$");
 /*                        OGRAVCE00DataSource()                         */
 /************************************************************************/
 
-OGRAVCE00DataSource::OGRAVCE00DataSource()
-    : nLayers(0), pszName(NULL), psE00(NULL), papoLayers(NULL)
-{
-}
+OGRAVCE00DataSource::OGRAVCE00DataSource() :
+    nLayers(0),
+    pszName(NULL),
+    psE00(NULL),
+    papoLayers(NULL)
+{}
 
 /************************************************************************/
 /*                        ~OGRAVCE00DataSource()                        */

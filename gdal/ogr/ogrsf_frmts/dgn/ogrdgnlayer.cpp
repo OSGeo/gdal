@@ -44,8 +44,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     iNextShapeId(0),
     hDGN(hDGNIn),
     bUpdate(bUpdateIn)
-    // Unused:
-    // bHaveSimpleQuery(FALSE)
 {
 
 /* -------------------------------------------------------------------- */
