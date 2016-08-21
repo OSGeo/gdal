@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+ #include "cpl_port.h"  // Must be first.
+
 #include "xritheaderparser.h"
 #include <cstdlib> // malloc, free
 #include <cstring> // memcpy
