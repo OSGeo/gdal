@@ -45,22 +45,41 @@ CPL_CVSID("$Id$");
 /*                           OGRElasticLayer()                          */
 /************************************************************************/
 
-OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
-                                 const char* pszIndexName,
-                                 const char* pszMappingName,
-                                 OGRElasticDataSource* poDS,
-                                 char** papszOptions,
-                                 const char* pszESSearch)
+OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
+                                  const char* pszIndexName,
+                                  const char* pszMappingName,
+                                  OGRElasticDataSource* poDS,
+                                  char** papszOptions,
+                                  const char* pszESSearch ) :
+
+    m_poDS(poDS),
+    m_osIndexName(pszIndexName ? pszIndexName : ""),
+    m_osMappingName(pszMappingName ? pszMappingName : ""),
+    m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
+    m_bFeatureDefnFinalized(FALSE),
+    m_bManualMapping(FALSE),
+    m_bSerializeMapping(FALSE),
+    m_osWriteMapFilename(
+        CSLFetchNameValueDef(papszOptions, "WRITE_MAPPING",
+                             poDS->m_pszWriteMap ? poDS->m_pszWriteMap : "")),
+    m_bStoreFields(CPLFetchBool(papszOptions, "STORE_FIELDS", false)),
+    m_papszStoredFields(NULL),
+    m_papszNotAnalyzedFields(NULL),
+    m_papszNotIndexedFields(NULL),
+    m_osESSearch(pszESSearch ? pszESSearch : ""),
+    m_nBulkUpload(poDS->m_nBulkUpload),
+    m_eGeomTypeMapping(ES_GEOMTYPE_AUTO),
+    m_osPrecision(CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "")),
+    m_iCurID(0),
+    m_nNextFID(-1),
+    m_iCurFeatureInPage(0),
+    m_bEOF(FALSE),
+    m_poSpatialFilter(NULL),
+    m_bIgnoreSourceID(FALSE),
+    m_bDotAsNestedField(TRUE),
+    // Undocumented. Only useful for developers.
+    m_bAddPretty(CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE")))
 {
-    m_poDS = poDS;
-
-    m_osIndexName = pszIndexName ? pszIndexName : "";
-    m_osMappingName = pszMappingName ? pszMappingName : "";
-    m_osESSearch = pszESSearch ? pszESSearch : "";
-    m_osWriteMapFilename = CSLFetchNameValueDef(papszOptions, "WRITE_MAPPING",
-                                      m_poDS->m_pszWriteMap ? m_poDS->m_pszWriteMap : "");
-
-    m_eGeomTypeMapping = ES_GEOMTYPE_AUTO;
     const char* pszESGeomType = CSLFetchNameValue(papszOptions, "GEOM_MAPPING_TYPE");
     if( pszESGeomType != NULL )
     {
@@ -69,34 +88,23 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
         else if( EQUAL(pszESGeomType, "GEO_SHAPE") )
             m_eGeomTypeMapping = ES_GEOMTYPE_GEO_SHAPE;
     }
-    m_nBulkUpload = m_poDS->m_nBulkUpload;
     if( CPLFetchBool(papszOptions, "BULK_INSERT", true) )
     {
         m_nBulkUpload = atoi(CSLFetchNameValueDef(papszOptions, "BULK_SIZE", "1000000"));
     }
 
-    m_osPrecision = CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "");
-    m_bStoreFields = CPLFetchBool(papszOptions, "STORE_FIELDS", false);
-
     const char* pszStoredFields = CSLFetchNameValue(papszOptions, "STORED_FIELDS");
     if( pszStoredFields )
         m_papszStoredFields = CSLTokenizeString2(pszStoredFields, ",", 0);
-    else
-        m_papszStoredFields = NULL;
 
     const char* pszNotAnalyzedFields = CSLFetchNameValue(papszOptions, "NOT_ANALYZED_FIELDS");
     if( pszNotAnalyzedFields )
         m_papszNotAnalyzedFields = CSLTokenizeString2(pszNotAnalyzedFields, ",", 0);
-    else
-        m_papszNotAnalyzedFields = NULL;
 
     const char* pszNotIndexedFields = CSLFetchNameValue(papszOptions, "NOT_INDEXED_FIELDS");
     if( pszNotIndexedFields )
         m_papszNotIndexedFields = CSLTokenizeString2(pszNotIndexedFields, ",", 0);
-    else
-        m_papszNotIndexedFields = NULL;
 
-    m_poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     SetDescription( m_poFeatureDefn->GetName() );
     m_poFeatureDefn->Reference();
     m_poFeatureDefn->SetGeomType(wkbNone);
@@ -108,21 +116,6 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
         AddFieldDefn("_index", OFTString, std::vector<CPLString>());
         AddFieldDefn("_type", OFTString, std::vector<CPLString>());
     }
-
-    m_bFeatureDefnFinalized = FALSE;
-    m_bSerializeMapping = FALSE;
-    m_bManualMapping = FALSE;
-    m_bDotAsNestedField = TRUE;
-
-    m_iCurID = 0;
-    m_nNextFID = -1;
-    m_iCurFeatureInPage = 0;
-    m_bEOF = FALSE;
-    m_poSpatialFilter = NULL;
-    m_bIgnoreSourceID = FALSE;
-
-    // Undocumented. Only useful for developers
-    m_bAddPretty = CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE"));
 
     ResetReading();
     return;

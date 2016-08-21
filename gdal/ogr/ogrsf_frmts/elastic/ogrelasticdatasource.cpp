@@ -42,19 +42,19 @@ CPL_CVSID("$Id$");
 /*                        OGRElasticDataSource()                        */
 /************************************************************************/
 
-OGRElasticDataSource::OGRElasticDataSource() {
-    m_papoLayers = NULL;
-    m_nLayers = 0;
-    m_pszName = NULL;
-    m_pszMapping = NULL;
-    m_pszWriteMap = NULL;
-    m_bOverwrite = FALSE;
-    m_nBulkUpload = 0;
-    m_nBatchSize = 100;
-    m_nFeatureCountToEstablishFeatureDefn = 100;
-    m_bJSonField = FALSE;
-    m_bFlattenNestedAttributes = TRUE;
-
+OGRElasticDataSource::OGRElasticDataSource() :
+    m_pszName(NULL),
+    m_papoLayers(NULL),
+    m_nLayers(0),
+    m_bOverwrite(FALSE),
+    m_nBulkUpload(0),
+    m_pszWriteMap(NULL),
+    m_pszMapping(NULL),
+    m_nBatchSize(100),
+    m_nFeatureCountToEstablishFeatureDefn(100),
+    m_bJSonField(FALSE),
+    m_bFlattenNestedAttributes(TRUE)
+{
     const char* pszWriteMapIn = CPLGetConfigOption("ES_WRITEMAP", NULL);
     if (pszWriteMapIn != NULL) {
         m_pszWriteMap = CPLStrdup(pszWriteMapIn);
