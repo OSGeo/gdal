@@ -759,12 +759,12 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psNode->length_mult,
                    psNode->height_mult );
           fprintf( fp,
-		   "  max_length=%d, used=%d,",
-		   psNode->max_length,
-		   psNode->max_used );
+                   "  max_length=%d, used=%d,",
+                   psNode->max_length,
+                   psNode->max_used );
           fprintf( fp,
-		   "  node_number=%d\n",
-		   psNode->node_number );
+                   "  node_number=%d\n",
+                   psNode->node_number );
       }
       break;
 

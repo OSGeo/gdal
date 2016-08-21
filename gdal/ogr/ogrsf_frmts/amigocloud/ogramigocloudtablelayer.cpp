@@ -1082,7 +1082,7 @@ bool OGRAmigoCloudTableLayer::IsDatasetExists()
     }
 
     // Sleep 3 sec
-	CPLSleep(3);
+    CPLSleep(3);
 
     return false;
 }

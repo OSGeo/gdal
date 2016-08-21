@@ -91,7 +91,7 @@ OGRCARTOTableLayer::OGRCARTOTableLayer(OGRCARTODataSource* poDSIn,
     nNextFID = -1;
     bDeferredCreation = FALSE;
     bCartodbfy = FALSE;
-    nMaxChunkSize = atoi(CPLGetConfigOption("CARTO_MAX_CHUNK_SIZE", 
+    nMaxChunkSize = atoi(CPLGetConfigOption("CARTO_MAX_CHUNK_SIZE",
             CPLGetConfigOption("CARTODB_MAX_CHUNK_SIZE", "15"))) * 1024 * 1024;
 }
 

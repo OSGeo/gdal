@@ -126,9 +126,9 @@ CPLErr OGRGeomediaLayer::BuildFeatureDefn( const char *pszLayerName,
 
         if( pszGeomColumn == NULL
             && EQUAL(poStmtIn->GetColName(iCol),"Geometry")
-			&& (poStmtIn->GetColType(iCol) == SQL_BINARY ||
-			    poStmtIn->GetColType(iCol) == SQL_VARBINARY ||
-				poStmtIn->GetColType(iCol) == SQL_LONGVARBINARY) )
+            && (poStmtIn->GetColType(iCol) == SQL_BINARY ||
+                poStmtIn->GetColType(iCol) == SQL_VARBINARY ||
+                poStmtIn->GetColType(iCol) == SQL_LONGVARBINARY) )
         {
             pszGeomColumn = CPLStrdup(poStmtIn->GetColName(iCol));
             continue;
