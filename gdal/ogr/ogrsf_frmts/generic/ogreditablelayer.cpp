@@ -37,35 +37,37 @@ CPL_CVSID("$Id$");
 /*                  ~IOGREditableLayerSynchronizer()                    */
 /************************************************************************/
 
-IOGREditableLayerSynchronizer::~IOGREditableLayerSynchronizer()
-{
-}
+IOGREditableLayerSynchronizer::~IOGREditableLayerSynchronizer() {}
 
 /************************************************************************/
 /*                          OGREditableLayer()                          */
 /************************************************************************/
 
-OGREditableLayer::OGREditableLayer(OGRLayer* poDecoratedLayer,
-                                   bool bTakeOwnershipDecoratedLayer,
-                                   IOGREditableLayerSynchronizer* poSynchronizer,
-                                   bool bTakeOwnershipSynchronizer):
+OGREditableLayer::OGREditableLayer(
+    OGRLayer* poDecoratedLayer,
+    bool bTakeOwnershipDecoratedLayer,
+    IOGREditableLayerSynchronizer* poSynchronizer,
+    bool bTakeOwnershipSynchronizer) :
     OGRLayerDecorator(poDecoratedLayer,
                       bTakeOwnershipDecoratedLayer),
     m_poSynchronizer(poSynchronizer),
     m_bTakeOwnershipSynchronizer(bTakeOwnershipSynchronizer),
+    m_poEditableFeatureDefn(poDecoratedLayer->GetLayerDefn()->Clone()),
     m_nNextFID(0),
+    m_poMemLayer(new OGRMemLayer( "", NULL, wkbNone )),
     m_bStructureModified(false),
     m_bSupportsCreateGeomField(false),
     m_bSupportsCurveGeometries(false)
 {
-    m_poEditableFeatureDefn = poDecoratedLayer->GetLayerDefn()->Clone();
     m_poEditableFeatureDefn->Reference();
 
-    m_poMemLayer = new OGRMemLayer( "", NULL, wkbNone );
-    for(int i=0;i<m_poEditableFeatureDefn->GetFieldCount();i++)
+    for( int i = 0; i < m_poEditableFeatureDefn->GetFieldCount(); i++ )
         m_poMemLayer->CreateField(m_poEditableFeatureDefn->GetFieldDefn(i));
-    for(int i=0;i<m_poEditableFeatureDefn->GetGeomFieldCount();i++)
-        m_poMemLayer->CreateGeomField(m_poEditableFeatureDefn->GetGeomFieldDefn(i));
+
+    for( int i = 0; i < m_poEditableFeatureDefn->GetGeomFieldCount(); i++ )
+        m_poMemLayer->
+            CreateGeomField(m_poEditableFeatureDefn->GetGeomFieldDefn(i));
+
     m_oIter = m_oSetCreated.begin();
 }
 

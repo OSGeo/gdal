@@ -38,20 +38,23 @@ CPL_CVSID("$Id$");
 /*                      OGRUnionLayerGeomFieldDefn()                    */
 /************************************************************************/
 
-OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(const char* pszNameIn,
-                                                       OGRwkbGeometryType eType) :
-        OGRGeomFieldDefn(pszNameIn, eType), bGeomTypeSet(FALSE), bSRSSet(FALSE)
-{
-}
+OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
+    const char* pszNameIn,
+    OGRwkbGeometryType eType) :
+    OGRGeomFieldDefn(pszNameIn, eType),
+    bGeomTypeSet(FALSE),
+    bSRSSet(FALSE)
+{}
 
 /************************************************************************/
 /*                      OGRUnionLayerGeomFieldDefn()                    */
 /************************************************************************/
 
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
-                                    OGRGeomFieldDefn* poSrc) :
+    OGRGeomFieldDefn* poSrc) :
     OGRGeomFieldDefn(poSrc->GetNameRef(), poSrc->GetType()),
-    bGeomTypeSet(FALSE), bSRSSet(FALSE)
+    bGeomTypeSet(FALSE),
+    bSRSSet(FALSE)
 {
     SetSpatialRef(poSrc->GetSpatialRef());
 }
@@ -61,9 +64,10 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
 /************************************************************************/
 
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
-                                    OGRUnionLayerGeomFieldDefn* poSrc) :
+    OGRUnionLayerGeomFieldDefn* poSrc) :
     OGRGeomFieldDefn(poSrc->GetNameRef(), poSrc->GetType()),
-    bGeomTypeSet(poSrc->bGeomTypeSet), bSRSSet(poSrc->bSRSSet)
+    bGeomTypeSet(poSrc->bGeomTypeSet),
+    bSRSSet(poSrc->bSRSSet)
 {
     SetSpatialRef(poSrc->GetSpatialRef());
     sStaticEnvelope = poSrc->sStaticEnvelope;
@@ -73,9 +77,7 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
 /*                     ~OGRUnionLayerGeomFieldDefn()                    */
 /************************************************************************/
 
-OGRUnionLayerGeomFieldDefn::~OGRUnionLayerGeomFieldDefn()
-{
-}
+OGRUnionLayerGeomFieldDefn::~OGRUnionLayerGeomFieldDefn() {}
 
 /************************************************************************/
 /*                          OGRUnionLayer()                             */
@@ -103,16 +105,13 @@ OGRUnionLayer::OGRUnionLayer( const char* pszName,
     panMap(NULL),
     papszIgnoredFields(NULL),
     bAttrFilterPassThroughValue(-1),
+    pabModifiedLayers(static_cast<int*>(CPLCalloc(sizeof(int), nSrcLayers))),
+    pabCheckIfAutoWrap(static_cast<int*>(CPLCalloc(sizeof(int), nSrcLayers))),
     poGlobalSRS(NULL)
 {
     CPLAssert(nSrcLayersIn > 0);
 
     SetDescription( pszName );
-
-    pabModifiedLayers
-        = reinterpret_cast<int*>(CPLCalloc(sizeof(int), nSrcLayers));
-    pabCheckIfAutoWrap
-        = reinterpret_cast<int*>(CPLCalloc(sizeof(int), nSrcLayers));
 }
 
 /************************************************************************/

@@ -43,12 +43,10 @@ CPL_CVSID("$Id$");
 /*                         OGRLayerAttrIndex()                          */
 /************************************************************************/
 
-OGRLayerAttrIndex::OGRLayerAttrIndex()
-
-{
-    poLayer = NULL;
-    pszIndexPath = NULL;
-}
+OGRLayerAttrIndex::OGRLayerAttrIndex() :
+    poLayer(NULL),
+    pszIndexPath(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRLayerAttrIndex()                         */
@@ -71,17 +69,12 @@ OGRLayerAttrIndex::~OGRLayerAttrIndex()
 /*                            OGRAttrIndex()                            */
 /************************************************************************/
 
-OGRAttrIndex::OGRAttrIndex()
-
-{
-}
+OGRAttrIndex::OGRAttrIndex() {}
 
 /************************************************************************/
 /*                           ~OGRAttrIndex()                            */
 /************************************************************************/
 
-OGRAttrIndex::~OGRAttrIndex()
-{
-}
+OGRAttrIndex::~OGRAttrIndex() {}
 
 //! @endcond

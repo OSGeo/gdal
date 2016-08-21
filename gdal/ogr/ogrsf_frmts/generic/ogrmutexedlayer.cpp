@@ -33,17 +33,15 @@
 
 CPL_CVSID("$Id$");
 
-OGRMutexedLayer::OGRMutexedLayer(OGRLayer* poDecoratedLayer,
-                                 int bTakeOwnership,
-                                 CPLMutex* hMutex) :
-        OGRLayerDecorator(poDecoratedLayer, bTakeOwnership), m_hMutex(hMutex)
+OGRMutexedLayer::OGRMutexedLayer( OGRLayer* poDecoratedLayer,
+                                  int bTakeOwnership,
+                                  CPLMutex* hMutex ) :
+    OGRLayerDecorator(poDecoratedLayer, bTakeOwnership), m_hMutex(hMutex)
 {
     SetDescription( poDecoratedLayer->GetDescription() );
 }
 
-OGRMutexedLayer::~OGRMutexedLayer()
-{
-}
+OGRMutexedLayer::~OGRMutexedLayer() {}
 
 
 OGRGeometry *OGRMutexedLayer::GetSpatialFilter()

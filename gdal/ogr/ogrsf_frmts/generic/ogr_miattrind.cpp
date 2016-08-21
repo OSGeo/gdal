@@ -117,17 +117,15 @@ public:
 /*                        OGRMILayerAttrIndex()                         */
 /************************************************************************/
 
-OGRMILayerAttrIndex::OGRMILayerAttrIndex()
-
-{
-    poINDFile = NULL;
-    nIndexCount = 0;
-    papoIndexList = NULL;
-    bUnlinkINDFile = FALSE;
-    bINDAsReadOnly = TRUE;
-    pszMIINDFilename = NULL;
-    pszMetadataFilename = NULL;
-}
+OGRMILayerAttrIndex::OGRMILayerAttrIndex() :
+    poINDFile(NULL),
+    nIndexCount(0),
+    papoIndexList(NULL),
+    pszMetadataFilename(NULL),
+    pszMIINDFilename(NULL),
+    bINDAsReadOnly(TRUE),
+    bUnlinkINDFile(FALSE)
+{}
 
 /************************************************************************/
 /*                        ~OGRMILayerAttrIndex()                        */
@@ -679,16 +677,13 @@ OGRLayerAttrIndex *OGRCreateDefaultLayerIndex()
 /************************************************************************/
 
 OGRMIAttrIndex::OGRMIAttrIndex( OGRMILayerAttrIndex *poLayerIndex,
-                                int iIndexIn, int iFieldIn )
-
-{
-    iIndex = iIndexIn;
-    iField = iFieldIn;
-    poLIndex = poLayerIndex;
-    poINDFile = poLayerIndex->poINDFile;
-
-    poFldDefn = poLayerIndex->GetLayer()->GetLayerDefn()->GetFieldDefn(iField);
-}
+                                int iIndexIn, int iFieldIn ) :
+    iIndex(iIndexIn),
+    poINDFile(poLayerIndex->poINDFile),
+    poLIndex(poLayerIndex),
+    poFldDefn(poLayerIndex->GetLayer()->GetLayerDefn()->GetFieldDefn(iField)),
+    iField(iFieldIn)
+{}
 
 /************************************************************************/
 /*                          ~OGRMIAttrIndex()                           */
