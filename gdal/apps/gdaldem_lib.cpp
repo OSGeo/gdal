@@ -329,6 +329,12 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
     //      6 7 8
 
     /* Preload the first 2 lines */
+
+    bool abLineHasNoDataValue[3];
+    abLineHasNoDataValue[0] = CPL_TO_BOOL(bSrcHasNoData);
+    abLineHasNoDataValue[1] = CPL_TO_BOOL(bSrcHasNoData);
+    abLineHasNoDataValue[2] = CPL_TO_BOOL(bSrcHasNoData);
+
     for ( i = 0; i < 2 && i < nYSize; i++)
     {
         if( GDALRasterIO(   hSrcBand,
@@ -342,6 +348,18 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         {
             eErr = CE_Failure;
             goto end;
+        }
+        if( std::numeric_limits<T>::is_integer && bSrcHasNoData )
+        {
+            abLineHasNoDataValue[i] = false;
+            for(int iX = 0; iX < nXSize; iX++ )
+            {
+                if( pafThreeLineWin[i * nXSize + iX] == fSrcNoDataValue )
+                {
+                    abLineHasNoDataValue[i] = true;
+                    break;
+                }
+            }
         }
     }
 
@@ -408,6 +426,41 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         if (eErr != CE_None)
             goto end;
 
+        // In case none of the 3 lines have nodata values, then no need to
+        // check it in ComputeVal()
+        bool bOneOfThreeLinesHasNoData = CPL_TO_BOOL(bSrcHasNoData);
+        if( std::numeric_limits<T>::is_integer && bSrcHasNoData )
+        {
+            bool bLastLineHasNoDataValue = false;
+            int iX = 0;
+            for( ; iX + 3 < nXSize; iX +=4 )
+            {
+                if( pafThreeLineWin[nLine3Off + iX] == fSrcNoDataValue ||
+                    pafThreeLineWin[nLine3Off + iX + 1] == fSrcNoDataValue ||
+                    pafThreeLineWin[nLine3Off + iX + 2] == fSrcNoDataValue ||
+                    pafThreeLineWin[nLine3Off + iX + 3] == fSrcNoDataValue )
+                {
+                    bLastLineHasNoDataValue = true;
+                    break;
+                }
+            }
+            if( !bLastLineHasNoDataValue )
+            {
+                for( ; iX < nXSize; iX++ )
+                {
+                    if( pafThreeLineWin[nLine3Off + iX] == fSrcNoDataValue )
+                    {
+                        bLastLineHasNoDataValue = true;
+                    }
+                }
+            }
+            abLineHasNoDataValue[nLine3Off / nXSize] = bLastLineHasNoDataValue;
+
+            bOneOfThreeLinesHasNoData = abLineHasNoDataValue[0] ||
+                                abLineHasNoDataValue[1] ||
+                                abLineHasNoDataValue[2];
+        }
+
         if (bComputeAtEdges && nXSize >= 2)
         {
             T afWin[9];
@@ -423,7 +476,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[7] = pafThreeLineWin[nLine3Off + j];
             afWin[8] = pafThreeLineWin[nLine3Off + j+1];
 
-            pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+            pafOutputBuf[j] = ComputeVal(bOneOfThreeLinesHasNoData, fSrcNoDataValue,
                                          bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
@@ -439,7 +492,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[7] = pafThreeLineWin[nLine3Off + j];
             afWin[8] = INTERPOL(pafThreeLineWin[nLine3Off + j], pafThreeLineWin[nLine3Off + j-1], bSrcHasNoData, fSrcNoDataValue);
 
-            pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+            pafOutputBuf[j] = ComputeVal(bOneOfThreeLinesHasNoData, fSrcNoDataValue,
                                          bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
@@ -465,7 +518,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[7] = pafThreeLineWin[nLine3Off + j];
             afWin[8] = pafThreeLineWin[nLine3Off + j+1];
 
-            pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+            pafOutputBuf[j] = ComputeVal(bOneOfThreeLinesHasNoData, fSrcNoDataValue,
                                          bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
