@@ -161,9 +161,10 @@ int OGRCARTODataSource::Open( const char * pszFilename,
         }
     }
 
-    osAPIKey = CSLFetchNameValueDef(papszOpenOptionsIn, "API_KEY",
-                            CPLGetConfigOption("CARTO_API_KEY", 
-                                CPLGetConfigOption("CARTODB_API_KEY", "")));
+    osAPIKey = CSLFetchNameValueDef(
+        papszOpenOptionsIn, "API_KEY",
+        CPLGetConfigOption("CARTO_API_KEY",
+                           CPLGetConfigOption("CARTODB_API_KEY", "")));
 
     CPLString osTables = OGRCARTOGetOptionValue(pszFilename, "tables");
 

@@ -152,7 +152,7 @@ OGRDODSSequenceLayer::~OGRDODSSequenceLayer()
 
 /************************************************************************/
 /*                         FindSuperSequence()                          */
-/*									*/
+/*                                                                      */
 /*      Are we a subsequence of a sequence?                             */
 /************************************************************************/
 

@@ -89,19 +89,19 @@ static void knot(int n,int c,double x[])
 
 /*  Subroutine to generate rational B-spline basis functions--open knot vector
 
-	C code for An Introduction to NURBS
-	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
-	All rights reserved.
+        C code for An Introduction to NURBS
+        by David F. Rogers. Copyright (C) 2000 David F. Rogers,
+        All rights reserved.
 
-	Name: rbais
-	Language: C
-	Subroutines called: none
-	Book reference: Chapter 4, Sec. 4. , p 296
+        Name: rbais
+        Language: C
+        Subroutines called: none
+        Book reference: Chapter 4, Sec. 4. , p 296
 
-	c        = order of the B-spline basis function
+    c        = order of the B-spline basis function
     d        = first term of the basis function recursion relation
     e        = second term of the basis function recursion relation
-	h[]	     = array containing the homogeneous weights
+    h[]      = array containing the homogeneous weights
     npts     = number of defining polygon vertices
     nplusc   = constant -- npts + c -- maximum number of knot values
     r[]      = array containing the rationalbasis functions
@@ -124,34 +124,34 @@ static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
 
     temp.resize( nplusc+1 );
 
-/* calculate the first order nonrational basis functions n[i]	*/
+    /* calculate the first order nonrational basis functions n[i] */
 
     for (i = 1; i<= nplusc-1; i++){
-    	if (( t >= x[i]) && (t < x[i+1]))
+        if (( t >= x[i]) && (t < x[i+1]))
             temp[i] = 1.0;
         else
             temp[i] = 0.0;
     }
 
-/* calculate the higher order nonrational basis functions */
+    /* calculate the higher order nonrational basis functions */
 
     for (k = 2; k <= c; k++){
-    	for (i = 1; i <= nplusc-k; i++){
+        for (i = 1; i <= nplusc-k; i++){
             if (temp[i] != 0)    /* if the lower order basis function is zero skip the calculation */
                 d = ((t-x[i])*temp[i])/(x[i+k-1]-x[i]);
             else
                 d = 0;
 
-    	    if (temp[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
+            if (temp[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
                 e = ((x[i+k]-t)*temp[i+1])/(x[i+k]-x[i+1]);
             else
                 e = 0;
 
-    	    temp[i] = d + e;
+            temp[i] = d + e;
         }
     }
 
-    if (t == (double)x[nplusc]){		/*    pick up last point	*/
+    if (t == (double)x[nplusc]){  /* pick up last point */
         temp[npts] = 1;
     }
 
@@ -165,7 +165,7 @@ static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
 /* form rational basis functions and put in r vector */
 
     for (i = 1; i <= npts; i++){
-    	if (sum != 0){
+        if (sum != 0){
             r[i] = (temp[i]*h[i])/(sum);}
         else
             r[i] = 0;
@@ -178,20 +178,20 @@ static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
 
 /*  Subroutine to generate a rational B-spline curve using an uniform open knot vector
 
-	C code for An Introduction to NURBS
-	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
-	All rights reserved.
+    C code for An Introduction to NURBS
+    by David F. Rogers. Copyright (C) 2000 David F. Rogers,
+    All rights reserved.
 
-	Name: rbspline.c
-	Language: C
-	Subroutines called: knot.c, rbasis.c, fmtmul.c
-	Book reference: Chapter 4, Alg. p. 297
+    Name: rbspline.c
+    Language: C
+    Subroutines called: knot.c, rbasis.c, fmtmul.c
+    Book reference: Chapter 4, Alg. p. 297
 
     b[]         = array containing the defining polygon vertices
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-	h[]			= array containing the homogeneous weighting factors
+    h[]         = array containing the homogeneous weighting factors
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values
@@ -252,7 +252,7 @@ void rbspline2(int npts,int k,int p1,double b[],double h[],
                 jcount = jcount + 3;
             }
         }
-    	icount = icount + 3;
+        icount = icount + 3;
         t = t + step;
     }
 }

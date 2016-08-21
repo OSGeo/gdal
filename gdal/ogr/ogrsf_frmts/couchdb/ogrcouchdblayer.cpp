@@ -531,7 +531,7 @@ int OGRCouchDBLayer::FetchNextRowsAnalyseDocs(json_object* poAnswerObj)
 }
 
 /************************************************************************/
-/*              	     GetSpatialRef()                            */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 OGRSpatialReference* OGRCouchDBLayer::GetSpatialRef()

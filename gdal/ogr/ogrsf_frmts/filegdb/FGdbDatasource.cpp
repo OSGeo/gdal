@@ -45,7 +45,7 @@ using std::wstring;
 /*                          FGdbDataSource()                           */
 /************************************************************************/
 
-FGdbDataSource::FGdbDataSource(FGdbDriver* poDriverIn, 
+FGdbDataSource::FGdbDataSource(FGdbDriver* poDriverIn,
                                FGdbDatabaseConnection* pConnection):
 OGRDataSource(),
 m_poDriver(poDriverIn), m_pConnection(pConnection), m_pGeodatabase(NULL), m_bUpdate(false),
@@ -61,7 +61,7 @@ m_poOpenFileGDBDrv(NULL)
 FGdbDataSource::~FGdbDataSource()
 {
     CPLMutexHolderOptionalLockD(m_poDriver ? m_poDriver->GetMutex() : NULL);
-    
+
     if( m_pConnection && m_pConnection->IsLocked() )
         CommitTransaction();
 
@@ -164,11 +164,11 @@ int FGdbDataSource::Open(const char * pszNewName, int bUpdate,
 
     std::vector<std::wstring> typesRequested;
 
-	// We're only interested in Tables, Feature Datasets and Feature Classes
-	typesRequested.push_back(L"Feature Class");
-	typesRequested.push_back(L"Table");
-	typesRequested.push_back(L"Feature Dataset");
-	
+    // We're only interested in Tables, Feature Datasets and Feature Classes
+    typesRequested.push_back(L"Feature Class");
+    typesRequested.push_back(L"Table");
+    typesRequested.push_back(L"Feature Dataset");
+
     bool rv = LoadLayers(L"\\");
 
     return rv;
