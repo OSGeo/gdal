@@ -637,12 +637,38 @@ so:
            sqrt(1 + psData->square_z_scale_factor * xx_plus_yy);
 */
 
+#if defined(__SSE2__) || defined(_M_X64)
+#include "emmintrin.h"
+inline double ApproxADivByInvSqrtB( double a, double b )
+{
+    __m128d regB = _mm_load_sd( &b );
+    __m128d regB_half = _mm_mul_sd( regB, _mm_set1_pd( 0.5 ) );
+    // Compute rough approximation of 1 / sqrt(b) with _mm_rsqrt_ss
+    regB = _mm_cvtss_sd( regB, _mm_rsqrt_ss(
+                            _mm_cvtsd_ss( _mm_setzero_ps(), regB ) ) );
+    // And perform one step of Newton-Raphson approximation to improve it
+    // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
+    //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
+    regB = _mm_mul_sd(regB, _mm_sub_sd( _mm_set1_pd( 1.5 ),
+                                        _mm_mul_sd(regB_half,
+                                                   _mm_mul_sd(regB, regB)) ) );
+    double dOut;
+   _mm_store_sd( &dOut, regB );
+   return a * dOut;
+}
+#else
+inline double ApproxADivByInvSqrtB( double a, double b )
+{
+    return a / sqrt(b);
+}
+#endif
+
 template<class T>
 static
 float GDALHillshadeAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
-    double x, y, xx_plus_yy, cang;
+    double x, y, xx_plus_yy;
 
     // First Slope ...
     x = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
@@ -654,17 +680,17 @@ float GDALHillshadeAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
     xx_plus_yy = x * x + y * y;
 
     // ... then the shade value
-    cang = (psData->sin_altRadians -
+    double cang = ApproxADivByInvSqrtB(psData->sin_altRadians -
            (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor)) /
-           sqrt(1 + psData->square_z_scale_factor * xx_plus_yy);
+            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor),
+           1 + psData->square_z_scale_factor * xx_plus_yy);
 
     if (cang <= 0.0)
         cang = 1.0;
     else
         cang = 1.0 + (254.0 * cang);
 
-    return (float) cang;
+    return static_cast<float>(cang);
 }
 
 static const double INV_SQUARE_OF_HALF_PI = 1.0 / ((M_PI*M_PI)/4);
@@ -688,10 +714,10 @@ float GDALHillshadeCombinedAlg (const T* afWin, float /*fDstNoDataValue*/, void*
     double slope = xx_plus_yy * psData->square_z_scale_factor;
 
     // ... then the shade value
-    cang = acos((psData->sin_altRadians -
+    cang = acos(ApproxADivByInvSqrtB(psData->sin_altRadians -
            (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor)) /
-           sqrt(1 + slope));
+            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor),
+           1 + slope));
 
     // combined shading
     cang = 1 - cang * atan(sqrt(slope)) * INV_SQUARE_OF_HALF_PI;
@@ -718,10 +744,10 @@ float GDALHillshadeZevenbergenThorneAlg (const T* afWin, float /*fDstNoDataValue
 
     xx_plus_yy = x * x + y * y;
 
-    cang = (psData->sin_altRadians -
+    cang = ApproxADivByInvSqrtB(psData->sin_altRadians -
            (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor)) /
-           sqrt(1 + psData->square_z_scale_factor * xx_plus_yy);
+            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor),
+           1 + psData->square_z_scale_factor * xx_plus_yy);
 
     if (cang <= 0.0)
         cang = 1.0;
@@ -748,10 +774,10 @@ float GDALHillshadeZevenbergenThorneCombinedAlg (const T* afWin, float /*fDstNoD
     double slope = xx_plus_yy * psData->square_z_scale_factor;
 
     // ... then the shade value
-    cang = acos((psData->sin_altRadians -
+    cang = acos(ApproxADivByInvSqrtB(psData->sin_altRadians -
            (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor)) /
-           sqrt(1 + slope));
+            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor),
+           1 + slope));
 
     // combined shading
     cang = 1 - cang * atan(sqrt(slope)) * INV_SQUARE_OF_HALF_PI;
