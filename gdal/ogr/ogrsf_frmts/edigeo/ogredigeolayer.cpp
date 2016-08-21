@@ -40,17 +40,15 @@ CPL_CVSID("$Id$");
 
 OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDSIn,
                                 const char* pszName, OGRwkbGeometryType eType,
-                                OGRSpatialReference* poSRSIn )
-
+                                OGRSpatialReference* poSRSIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn( pszName )),
+    poSRS(poSRSIn),
+    nNextFID(0)
 {
-    poDS = poDSIn;
-    nNextFID = 0;
-
-    poSRS = poSRSIn;
-    if (poSRS)
+    if( poSRS )
         poSRS->Reference();
 
-    poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eType );
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
