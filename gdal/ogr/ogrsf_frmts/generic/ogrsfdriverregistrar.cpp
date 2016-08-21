@@ -51,10 +51,7 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar() {}
 /*                       ~OGRSFDriverRegistrar()                        */
 /************************************************************************/
 
-OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
-
-{
-}
+OGRSFDriverRegistrar::~OGRSFDriverRegistrar() {}
 
 //! @cond Doxygen_Suppress
 /************************************************************************/

@@ -40,22 +40,18 @@ CPL_CVSID("$Id$");
 /*                              OGRLayer()                              */
 /************************************************************************/
 
-OGRLayer::OGRLayer()
-
-{
-    m_poStyleTable = NULL;
-    m_poAttrQuery = NULL;
-    m_pszAttrQueryString = NULL;
-    m_poAttrIndex = NULL;
-    m_nRefCount = 0;
-
-    m_nFeaturesRead = 0;
-
-    m_poFilterGeom = NULL;
-    m_bFilterIsEnvelope = FALSE;
-    m_pPreparedFilterGeom = NULL;
-    m_iGeomFieldFilter = 0;
-}
+OGRLayer::OGRLayer() :
+    m_bFilterIsEnvelope(FALSE),
+    m_poFilterGeom(NULL),
+    m_pPreparedFilterGeom(NULL),
+    m_iGeomFieldFilter(0),
+    m_poStyleTable(NULL),
+    m_poAttrQuery(NULL),
+    m_pszAttrQueryString(NULL),
+    m_poAttrIndex(NULL),
+    m_nRefCount(0),
+    m_nFeaturesRead(0)
+{}
 
 /************************************************************************/
 /*                             ~OGRLayer()                              */
@@ -64,7 +60,7 @@ OGRLayer::OGRLayer()
 OGRLayer::~OGRLayer()
 
 {
-    if ( m_poStyleTable )
+    if( m_poStyleTable )
     {
         delete m_poStyleTable;
         m_poStyleTable = NULL;

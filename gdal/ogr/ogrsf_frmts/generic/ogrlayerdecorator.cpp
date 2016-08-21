@@ -32,10 +32,10 @@
 
 CPL_CVSID("$Id$");
 
-OGRLayerDecorator::OGRLayerDecorator(OGRLayer* poDecoratedLayer,
-                                     int bTakeOwnership) :
-                                        m_poDecoratedLayer(poDecoratedLayer),
-                                        m_bHasOwnership(bTakeOwnership)
+OGRLayerDecorator::OGRLayerDecorator( OGRLayer* poDecoratedLayer,
+                                      int bTakeOwnership ) :
+    m_poDecoratedLayer(poDecoratedLayer),
+    m_bHasOwnership(bTakeOwnership)
 {
     CPLAssert(poDecoratedLayer != NULL);
     SetDescription( poDecoratedLayer->GetDescription() );

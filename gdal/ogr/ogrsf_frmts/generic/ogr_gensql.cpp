@@ -90,15 +90,23 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
                                               OGRGeometry *poSpatFilter,
                                               const char *pszWHEREIn,
                                               const char *pszDialect ) :
-    poSrcLayer(NULL), pszWHERE(NULL), papoTableLayers(NULL), poDefn(NULL),
-    panGeomFieldToSrcGeomField(NULL), nIndexSize(0),
-    panFIDIndex(NULL), bOrderByValid(FALSE), nNextIndexFID(0),
-    poSummaryFeature(NULL), iFIDFieldIndex(), nExtraDSCount(0), papoExtraDS(NULL)
+    poSrcDS(poSrcDSIn),
+    poSrcLayer(NULL),
+    pSelectInfo(pSelectInfoIn),
+    pszWHERE(NULL),
+    papoTableLayers(NULL),
+    poDefn(NULL),
+    panGeomFieldToSrcGeomField(NULL),
+    nIndexSize(0),
+    panFIDIndex(NULL),
+    bOrderByValid(FALSE),
+    nNextIndexFID(0),
+    poSummaryFeature(NULL),
+    iFIDFieldIndex(),
+    nExtraDSCount(0),
+    papoExtraDS(NULL)
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfoIn;
-
-    poSrcDS = poSrcDSIn;
-    pSelectInfo = pSelectInfoIn;
 
 /* -------------------------------------------------------------------- */
 /*      Identify all the layers involved in the SELECT.                 */
