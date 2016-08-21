@@ -59,10 +59,10 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDSIn,
                                int         bWriteAsHexIn,
                                int         bCreateTableIn)
 {
-    this->poDS = poDSIn;
-    this->pszSchemaName = CPLStrdup(pszSchemaNameIn);
-    this->pszFIDColumn = CPLStrdup(pszFIDColumnIn);
-    this->bCreateTable = bCreateTableIn;
+    poDS = poDSIn;
+    pszSchemaName = CPLStrdup(pszSchemaNameIn);
+    pszFIDColumn = CPLStrdup(pszFIDColumnIn);
+    bCreateTable = bCreateTableIn;
     poFeatureDefn = new OGRFeatureDefn( pszTableName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType(wkbNone);

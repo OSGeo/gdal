@@ -154,8 +154,8 @@ int OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn, const char *pszVRTDirect
                              int bUpdateIn)
 
 {
-    this->psLTree = psLTreeIn;
-    this->bUpdate = bUpdateIn;
+    psLTree = psLTreeIn;
+    bUpdate = bUpdateIn;
     osVRTDirectory = pszVRTDirectory;
 
     if( !EQUAL(psLTree->pszValue,"OGRVRTLayer") )

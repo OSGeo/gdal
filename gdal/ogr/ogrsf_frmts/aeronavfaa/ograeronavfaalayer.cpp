@@ -388,7 +388,7 @@ OGRAeronavFAARouteLayer::OGRAeronavFAARouteLayer( VSILFILE* fp,
                                                   int bIsDPOrSTARSIn ) :
     OGRAeronavFAALayer(fp, pszLayerName)
 {
-    this->bIsDPOrSTARS = bIsDPOrSTARSIn;
+    bIsDPOrSTARS = bIsDPOrSTARSIn;
 
     poFeatureDefn->SetGeomType( wkbLineString );
 

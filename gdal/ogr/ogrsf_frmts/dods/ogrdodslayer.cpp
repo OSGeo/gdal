@@ -177,7 +177,7 @@ OGRFeature *OGRDODSLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDODSLayer::TestCapability( const char * pszCap )
+int OGRDODSLayer::TestCapability( const char * /* pszCap */ )
 
 {
     return FALSE;
@@ -239,7 +239,7 @@ OGRErr OGRDODSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
     if( bKnowExtent )
     {
-        *psExtent = this->sExtent;
+        *psExtent = sExtent;
         return OGRERR_NONE;
     }
 

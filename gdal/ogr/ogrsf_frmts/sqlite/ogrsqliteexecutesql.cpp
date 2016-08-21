@@ -69,7 +69,7 @@ OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(char* pszTmpDBNameIn,
                                                     bUseStatementForGetNextFeature,
                                                     bEmptyLayer, TRUE)
 {
-    this->pszTmpDBName = pszTmpDBNameIn;
+    pszTmpDBName = pszTmpDBNameIn;
 }
 
 /************************************************************************/

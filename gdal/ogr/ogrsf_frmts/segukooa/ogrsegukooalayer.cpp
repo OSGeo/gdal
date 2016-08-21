@@ -115,7 +115,7 @@ OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
                                       VSILFILE* fpIn )
 
 {
-    this->fp = fpIn;
+    fp = fpIn;
     nNextFID = 0;
     bEOF = FALSE;
     poSRS = NULL;
@@ -471,8 +471,8 @@ OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
                               int nLatitudeColIn )
 
 {
-    this->fp = fpIn;
-    this->nLatitudeCol = nLatitudeColIn;
+    fp = fpIn;
+    nLatitudeCol = nLatitudeColIn;
     nNextFID = 0;
     bEOF = FALSE;
     poSRS = NULL;
@@ -720,7 +720,7 @@ OGRSEGUKOOALineLayer::OGRSEGUKOOALineLayer(const char* pszFilename,
 {
     nNextFID = 0;
     bEOF = FALSE;
-    this->poBaseLayer = poBaseLayerIn;
+    poBaseLayer = poBaseLayerIn;
 
     poFeatureDefn = new OGRFeatureDefn( CPLSPrintf("%s_lines",
                                                    CPLGetBasename(pszFilename)) );

@@ -86,13 +86,13 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDSIn,
                           const char* pszNSValIn )
 
 {
-    this->poDS = poDSIn;
-    this->poSRS = poSRSIn;
-    this->bAxisOrderAlreadyInverted = bAxisOrderAlreadyInvertedIn;
-    this->pszBaseURL = CPLStrdup(pszBaseURLIn);
-    this->pszName = CPLStrdup(pszNameIn);
-    this->pszNS = pszNSIn ? CPLStrdup(pszNSIn) : NULL;
-    this->pszNSVal = pszNSValIn ? CPLStrdup(pszNSValIn) : NULL;
+    poDS = poDSIn;
+    poSRS = poSRSIn;
+    bAxisOrderAlreadyInverted = bAxisOrderAlreadyInvertedIn;
+    pszBaseURL = CPLStrdup(pszBaseURLIn);
+    pszName = CPLStrdup(pszNameIn);
+    pszNS = pszNSIn ? CPLStrdup(pszNSIn) : NULL;
+    pszNSVal = pszNSValIn ? CPLStrdup(pszNSValIn) : NULL;
 
     SetDescription( pszName );
 
@@ -313,7 +313,7 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
 
 OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poClass)
 {
-    this->poGMLFeatureClass = poClass;
+    poGMLFeatureClass = poClass;
 
     OGRFeatureDefn* poFDefn = new OGRFeatureDefn( pszName );
     poFDefn->SetGeomType(wkbNone);
@@ -1660,10 +1660,10 @@ GIntBig OGRWFSLayer::GetFeatureCount( int bForce )
 
 void OGRWFSLayer::SetExtents(double dfMinXIn, double dfMinYIn, double dfMaxXIn, double dfMaxYIn)
 {
-    this->dfMinX = dfMinXIn;
-    this->dfMinY = dfMinYIn;
-    this->dfMaxX = dfMaxXIn;
-    this->dfMaxY = dfMaxYIn;
+    dfMinX = dfMinXIn;
+    dfMinY = dfMinYIn;
+    dfMaxX = dfMaxXIn;
+    dfMaxY = dfMaxYIn;
     bHasExtents = TRUE;
 }
 
@@ -2468,8 +2468,8 @@ OGRErr OGRWFSLayer::CommitTransaction()
 
         bInTransaction = FALSE;
         osGlobalInsert = "";
-        int l_nExpectedInserts = this->nExpectedInserts;
-        this->nExpectedInserts = 0;
+        int l_nExpectedInserts = nExpectedInserts;
+        nExpectedInserts = 0;
 
         CPLDebug("WFS", "Post : %s", osPost.c_str());
 

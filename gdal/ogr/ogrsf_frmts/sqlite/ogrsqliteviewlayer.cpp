@@ -81,7 +81,7 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewNameIn,
                                        const char *pszUnderlyingGeometryColumn)
 
 {
-    this->pszViewName = CPLStrdup(pszViewNameIn);
+    pszViewName = CPLStrdup(pszViewNameIn);
     SetDescription( pszViewName );
 
     osGeomColumn = pszViewGeometry;
@@ -93,8 +93,6 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewNameIn,
     osUnderlyingTableName = pszUnderlyingTableName;
     osUnderlyingGeometryColumn = pszUnderlyingGeometryColumn;
     poUnderlyingLayer = NULL;
-
-    //this->bHasM = bHasM;
 
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszViewName));
     pszEscapedUnderlyingTableName = CPLStrdup(OGRSQLiteEscape(pszUnderlyingTableName));
@@ -201,7 +199,8 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
         return CE_Failure;
     }
 
-    this->bHasSpatialIndex = l_poUnderlyingLayer->HasSpatialIndex(nUnderlyingLayerGeomFieldIndex);
+    bHasSpatialIndex =
+        l_poUnderlyingLayer->HasSpatialIndex(nUnderlyingLayerGeomFieldIndex);
 
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */

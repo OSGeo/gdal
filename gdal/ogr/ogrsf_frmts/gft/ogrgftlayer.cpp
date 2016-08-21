@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn)
 
 {
-    this->poDS = poDSIn;
+    poDS = poDSIn;
 
     nNextInSeq = 0;
 

@@ -166,7 +166,7 @@ int OGRDGNDataSource::PreCreate( const char *pszFilename,
                                  char **papszOptionsIn )
 
 {
-    this->papszOptions = CSLDuplicate( papszOptionsIn );
+    papszOptions = CSLDuplicate( papszOptionsIn );
     pszName = CPLStrdup( pszFilename );
 
     return TRUE;

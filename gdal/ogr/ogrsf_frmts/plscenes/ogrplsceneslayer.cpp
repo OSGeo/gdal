@@ -93,7 +93,7 @@ OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDSIn,
                                    const char* pszBaseURL,
                                    json_object* poObjCount10)
 {
-    this->poDS = poDSIn;
+    poDS = poDSIn;
     osBaseURL = pszBaseURL;
     SetDescription(pszName);
     poFeatureDefn = new OGRFeatureDefn(pszName);

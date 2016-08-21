@@ -150,8 +150,9 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
         pszSchemaName = CPLStrdup( pszSchemaNameIn );
     else
         pszSchemaName = CPLStrdup( osCurrentSchema );
-    this->pszGeomColForced =
-        pszGeomColForcedIn ? CPLStrdup(pszGeomColForcedIn) : NULL;
+    pszGeomColForced = pszGeomColForcedIn
+        ? CPLStrdup(pszGeomColForcedIn)
+        : NULL;
 
     pszSqlGeomParentTableName = NULL;
     bTableDefinitionValid = -1;

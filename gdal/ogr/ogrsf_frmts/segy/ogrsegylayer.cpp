@@ -229,7 +229,7 @@ OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
                             SEGYBinaryFileHeader* psBFH )
 
 {
-    this->fp = fpIn;
+    fp = fpIn;
     nNextFID = 0;
     bEOF = FALSE;
     memcpy(&sBFH, psBFH, sizeof(sBFH));

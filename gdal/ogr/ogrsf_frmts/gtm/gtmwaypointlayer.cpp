@@ -80,7 +80,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
     nNextFID = 0;
     nTotalFCount = poDS->getNWpts();
 
-    this->pszName = CPLStrdup(pszNameIn);
+    pszName = CPLStrdup(pszNameIn);
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );

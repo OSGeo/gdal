@@ -68,8 +68,8 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
 #endif
 
 {
-    this->poDS = poDSIn;
-    this->svgGeomType = svgGeomTypeIn;
+    poDS = poDSIn;
+    svgGeomType = svgGeomTypeIn;
     osLayerName = pszLayerName;
     SetDescription( pszLayerName );
 

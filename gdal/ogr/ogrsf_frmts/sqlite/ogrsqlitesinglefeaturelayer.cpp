@@ -47,7 +47,7 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
     poFeatureDefn->AddFieldDefn( &oField );
 
     iNextShapeId = 0;
-    this->nVal = nValIn;
+    nVal = nValIn;
     pszVal = NULL;
 }
 
@@ -66,7 +66,7 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
 
     iNextShapeId = 0;
     nVal = 0;
-    this->pszVal = CPLStrdup(pszValIn);
+    pszVal = CPLStrdup(pszValIn);
 }
 
 /************************************************************************/

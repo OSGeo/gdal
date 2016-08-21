@@ -93,8 +93,8 @@ int OGRXPlaneReader::StartParsing( const char * pszFilenameIn )
         return FALSE;
     }
 
-    CPLFree(this->pszFilename);
-    this->pszFilename = CPLStrdup(pszFilenameIn);
+    CPLFree(pszFilename);
+    pszFilename = CPLStrdup(pszFilenameIn);
 
     nLineNumber = 2;
     CPLDebug("XPlane", "Version/Copyright : %s", pszLine);

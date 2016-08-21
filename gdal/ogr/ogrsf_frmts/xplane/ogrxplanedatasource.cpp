@@ -113,7 +113,7 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFileIn )
 {
     Reset();
 
-    this->bReadWholeFile = bReadWholeFileIn;
+    bReadWholeFile = bReadWholeFileIn;
 
     const char* pszShortFilename = CPLGetFilename(pszFilename);
     if (EQUAL(pszShortFilename, "nav.dat") ||

@@ -476,7 +476,7 @@ void GMLReader::CleanupParser()
 
 GMLBinInputStream::GMLBinInputStream(VSILFILE* fpIn)
 {
-    this->fp = fpIn;
+    fp = fpIn;
     emptyString = 0;
 }
 

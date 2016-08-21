@@ -601,14 +601,14 @@ OGRErr OGRMySQLTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
+    m_pszAttrQueryString = pszQueryIn ? CPLStrdup(pszQueryIn) : NULL;
 
-    CPLFree( this->pszQuery );
+    CPLFree( pszQuery );
 
     if( pszQueryIn == NULL || strlen(pszQueryIn) == 0 )
-        this->pszQuery = NULL;
+        pszQuery = NULL;
     else
-        this->pszQuery = CPLStrdup( pszQueryIn );
+        pszQuery = CPLStrdup( pszQueryIn );
 
     BuildWhere();
 

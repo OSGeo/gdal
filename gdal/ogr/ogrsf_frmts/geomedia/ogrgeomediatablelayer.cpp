@@ -79,7 +79,7 @@ CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
 
-    this->poSRS = poSRSIn;
+    poSRS = poSRSIn;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
@@ -236,13 +236,13 @@ OGRFeature *OGRGeomediaTableLayer::GetFeature( GIntBig nFeatureId )
 OGRErr OGRGeomediaTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
-    if( (pszQueryIn == NULL && this->pszQuery == NULL)
-        || (pszQueryIn != NULL && this->pszQuery != NULL
-            && EQUAL(pszQueryIn,this->pszQuery)) )
+    if( (pszQueryIn == NULL && pszQuery == NULL)
+        || (pszQueryIn != NULL && pszQuery != NULL
+            && EQUAL(pszQueryIn, pszQuery)) )
         return OGRERR_NONE;
 
-    CPLFree( this->pszQuery );
-    this->pszQuery = pszQueryIn ? CPLStrdup( pszQueryIn ) : NULL;
+    CPLFree( pszQuery );
+    pszQuery = pszQueryIn ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 
