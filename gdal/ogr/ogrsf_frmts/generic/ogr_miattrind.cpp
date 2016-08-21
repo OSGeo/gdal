@@ -681,7 +681,7 @@ OGRMIAttrIndex::OGRMIAttrIndex( OGRMILayerAttrIndex *poLayerIndex,
     iIndex(iIndexIn),
     poINDFile(poLayerIndex->poINDFile),
     poLIndex(poLayerIndex),
-    poFldDefn(poLayerIndex->GetLayer()->GetLayerDefn()->GetFieldDefn(iField)),
+    poFldDefn(poLayerIndex->GetLayer()->GetLayerDefn()->GetFieldDefn(iFieldIn)),
     iField(iFieldIn)
 {}
 
