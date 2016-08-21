@@ -75,6 +75,82 @@ def test_gdaldem_lib_hillshade():
     return 'success'
 
 ###############################################################################
+# Test gdaldem hillshade with source being floating point
+
+def test_gdaldem_lib_hillshade_float():
+
+    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format = 'MEM', outputType = gdal.GDT_Float32)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 45587:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    src_gt = src_ds.GetGeoTransform()
+    dst_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
+            gdaltest.post_reason('Bad geotransform')
+            return 'fail'
+
+    dst_wkt = ds.GetProjectionRef()
+    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
+        gdaltest.post_reason('Bad projection')
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason('Bad nodata value')
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem hillshade with source being floating point
+
+def test_gdaldem_lib_hillshade_float_png():
+
+    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format = 'MEM', outputType = gdal.GDT_Float32)
+    ds = gdal.DEMProcessing('/vsimem/test_gdaldem_lib_hillshade_float_png.png', src_ds, 'hillshade', format = 'PNG', scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 45587:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    src_gt = src_ds.GetGeoTransform()
+    dst_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
+            gdaltest.post_reason('Bad geotransform')
+            return 'fail'
+
+    dst_wkt = ds.GetProjectionRef()
+    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
+        gdaltest.post_reason('Bad projection')
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason('Bad nodata value')
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    gdal.GetDriverByName('PNG').Delete('/vsimem/test_gdaldem_lib_hillshade_float_png.png')
+
+    return 'success'
+
+###############################################################################
 # Test gdaldem hillshade -combined
 
 def test_gdaldem_lib_hillshade_combined():
@@ -86,6 +162,80 @@ def test_gdaldem_lib_hillshade_combined():
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 43876:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    src_gt = src_ds.GetGeoTransform()
+    dst_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
+            gdaltest.post_reason('Bad geotransform')
+            return 'fail'
+
+    dst_wkt = ds.GetProjectionRef()
+    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
+        gdaltest.post_reason('Bad projection')
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason('Bad nodata value')
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem hillshade -alg ZevenbergenThorne
+
+def test_gdaldem_lib_hillshade_ZevenbergenThorne():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', alg = 'ZevenbergenThorne', scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 46544:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    src_gt = src_ds.GetGeoTransform()
+    dst_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
+            gdaltest.post_reason('Bad geotransform')
+            return 'fail'
+
+    dst_wkt = ds.GetProjectionRef()
+    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
+        gdaltest.post_reason('Bad projection')
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason('Bad nodata value')
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem hillshade -alg ZevenbergenThorne -combined
+
+def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', alg = 'ZevenbergenThorne', combined = True, scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 43112:
         gdaltest.post_reason('Bad checksum')
         print(cs)
         return 'fail'
@@ -206,12 +356,117 @@ def test_gdaldem_lib_color_relief():
 
     return 'success'
 
+###############################################################################
+# Test gdaldem tpi
+
+def test_gdaldem_lib_tpi():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'tpi', format = 'MEM')
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 60504:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem tri
+
+def test_gdaldem_lib_tri():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'tri', format = 'MEM')
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 61143:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem roughness
+
+def test_gdaldem_lib_roughness():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'roughness', format = 'MEM')
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 38624:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem slope -alg ZevenbergenThorne
+
+def test_gdaldem_lib_slope_ZevenbergenThorne():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'slope', format = 'MEM', alg = 'ZevenbergenThorne', combined = True, scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 64393:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem aspect -alg ZevenbergenThorne
+
+def test_gdaldem_lib_aspect_ZevenbergenThorne():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'aspect', format = 'MEM', alg = 'ZevenbergenThorne', combined = True, scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 50539:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdaldem_lib_hillshade,
+    test_gdaldem_lib_hillshade_float,
+    test_gdaldem_lib_hillshade_float_png,
     test_gdaldem_lib_hillshade_combined,
+    test_gdaldem_lib_hillshade_ZevenbergenThorne,
+    test_gdaldem_lib_hillshade_ZevenbergenThorne_combined,
     test_gdaldem_lib_hillshade_compute_edges,
     test_gdaldem_lib_hillshade_azimuth,
-    test_gdaldem_lib_color_relief
+    test_gdaldem_lib_color_relief,
+    test_gdaldem_lib_tpi,
+    test_gdaldem_lib_tri,
+    test_gdaldem_lib_roughness,
+    test_gdaldem_lib_slope_ZevenbergenThorne,
+    test_gdaldem_lib_aspect_ZevenbergenThorne
     ]
 
 
