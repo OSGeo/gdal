@@ -78,46 +78,38 @@ static CPLString ReplaceSpaceByPct20IfNeeded(const char* pszURL)
 /*                         OGRGMLDataSource()                         */
 /************************************************************************/
 
-OGRGMLDataSource::OGRGMLDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-
-    poReader = NULL;
-    fpOutput = NULL;
-    bFpOutputIsNonSeekable = false;
-    bFpOutputSingleFile = false;
-    bIsOutputGML3 = false;
-    bIsOutputGML3Deegree = false;
-    bIsOutputGML32 = false;
-    bIsLongSRSRequired = false;
-    bWriteSpaceIndentation = true;
-
-    papszCreateOptions = NULL;
-    bOutIsTempFile = false;
-
-    bExposeGMLId = false;
-    bExposeFid = false;
-    nSchemaInsertLocation = -1;
-    nBoundedByLocation = -1;
-    bBBOX3D = false;
-
-    poWriteGlobalSRS = NULL;
-    bWriteGlobalSRS = false;
-    bUseGlobalSRSName = false;
-    bIsWFS = false;
-
-    eReadMode = STANDARD;
-    poStoredGMLFeature = NULL;
-    poLastReadLayer = NULL;
-
-    m_bInvertAxisOrderIfLatLong = false;
-    m_bConsiderEPSGAsURN = false;
-    m_bGetSecondaryGeometryOption = false;
-    bEmptyAsNull = true;
-}
+OGRGMLDataSource::OGRGMLDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    papszCreateOptions(NULL),
+    fpOutput(NULL),
+    bFpOutputIsNonSeekable(false),
+    bFpOutputSingleFile(false),
+    bBBOX3D(false),
+    nBoundedByLocation(-1),
+    nSchemaInsertLocation(-1),
+    bIsOutputGML3(false),
+    bIsOutputGML3Deegree(false),
+    bIsOutputGML32(false),
+    bIsLongSRSRequired(false),
+    bWriteSpaceIndentation(true),
+    poWriteGlobalSRS(NULL),
+    bWriteGlobalSRS(false),
+    poReader(NULL),
+    bOutIsTempFile(false),
+    bExposeGMLId(false),
+    bExposeFid(false),
+    bIsWFS(false),
+    bUseGlobalSRSName(false),
+    m_bInvertAxisOrderIfLatLong(false),
+    m_bConsiderEPSGAsURN(false),
+    m_bGetSecondaryGeometryOption(false),
+    eReadMode(STANDARD),
+    poStoredGMLFeature(NULL),
+    poLastReadLayer(NULL),
+    bEmptyAsNull(true)
+{}
 
 /************************************************************************/
 /*                        ~OGRGMLDataSource()                         */
@@ -2504,15 +2496,14 @@ class OGRGMLSingleFeatureLayer : public OGRLayer
 /*                      OGRGMLSingleFeatureLayer()                      */
 /************************************************************************/
 
-OGRGMLSingleFeatureLayer::OGRGMLSingleFeatureLayer( int nValIn )
+OGRGMLSingleFeatureLayer::OGRGMLSingleFeatureLayer( int nValIn ) :
+    nVal(nValIn),
+    poFeatureDefn(new OGRFeatureDefn("SELECT")),
+    iNextShapeId(0)
 {
-    poFeatureDefn = new OGRFeatureDefn( "SELECT" );
     poFeatureDefn->Reference();
     OGRFieldDefn oField( "Validates", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oField );
-
-    nVal = nValIn;
-    iNextShapeId = 0;
 }
 
 /************************************************************************/

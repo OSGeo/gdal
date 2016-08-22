@@ -41,9 +41,9 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 GMLFeatureClass::GMLFeatureClass( const char *pszName ) :
-    m_pszName(NULL),
+    m_pszName(CPLStrdup(pszName)),
     m_pszElementName(NULL),
-    n_nNameLen(0),
+    n_nNameLen(static_cast<int>(strlen(pszName))),
     n_nElementNameLen(0),
     m_nPropertyCount(0),
     m_papoProperty(NULL),
@@ -59,10 +59,7 @@ GMLFeatureClass::GMLFeatureClass( const char *pszName ) :
     m_dfYMax(0.0),
     m_pszSRSName(NULL),
     m_bSRSNameConsistent(true)
-{
-    m_pszName = CPLStrdup( pszName );
-    n_nNameLen = static_cast<int>(strlen( m_pszName ));
-}
+{}
 
 /************************************************************************/
 /*                          ~GMLFeatureClass()                          */

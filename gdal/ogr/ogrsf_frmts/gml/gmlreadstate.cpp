@@ -37,22 +37,17 @@ CPL_CVSID("$Id$");
 /*                            GMLReadState()                            */
 /************************************************************************/
 
-GMLReadState::GMLReadState()
-
-{
-    m_poFeature = NULL;
-    m_poParentState = NULL;
-    m_nPathLength = 0;
-}
+GMLReadState::GMLReadState() :
+    m_poFeature(NULL),
+    m_poParentState(NULL),
+    m_nPathLength(0)
+{}
 
 /************************************************************************/
 /*                           ~GMLReadState()                            */
 /************************************************************************/
 
-GMLReadState::~GMLReadState()
-
-{
-}
+GMLReadState::~GMLReadState() {}
 
 /************************************************************************/
 /*                              Reset()                                 */

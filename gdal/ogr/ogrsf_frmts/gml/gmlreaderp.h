@@ -59,12 +59,13 @@ class GFSTemplateItem;
 
 class GFSTemplateList
 {
-private:
+  private:
     bool            m_bSequentialLayers;
     GFSTemplateItem *pFirst;
     GFSTemplateItem *pLast;
     GFSTemplateItem *Insert( const char *pszName );
-public:
+
+  public:
                     GFSTemplateList( void );
                     ~GFSTemplateList();
     void            Update( const char *pszName, int bHasGeom );
@@ -237,6 +238,7 @@ public :
 
 class GMLInputSource : public InputSource
 {
+    // TODO(schwehr): Rename to pBinInputStream to not look like a bool.
     GMLBinInputStream* binInputStream;
 
 public:
@@ -264,7 +266,7 @@ class GMLXercesHandler : public DefaultHandler, public GMLHandler
 {
     int        m_nEntityCounter;
 
-public:
+  public:
     GMLXercesHandler( GMLReader *poReader );
 
     void startElement(
@@ -380,7 +382,7 @@ typedef enum
 
 class GMLReader : public IGMLReader
 {
-private:
+  private:
     static OGRGMLXercesState    m_eXercesInitState;
     static int    m_nInstanceCount;
     bool          m_bClassListLocked;

@@ -48,10 +48,10 @@ static_assert(MAX_TOKEN_SIZE % 4 == 0, "Must be a multiple of 4");
 /*                        GMLXercesHandler()                            */
 /************************************************************************/
 
-GMLXercesHandler::GMLXercesHandler( GMLReader *poReader ) : GMLHandler(poReader)
-{
-    m_nEntityCounter = 0;
-}
+GMLXercesHandler::GMLXercesHandler( GMLReader *poReader ) :
+    GMLHandler(poReader),
+    m_nEntityCounter(0)
+{}
 
 /************************************************************************/
 /*                            startElement()                            */
@@ -509,41 +509,38 @@ static int GMLHandlerSortGeometryElements(const void *_pA, const void *_pB)
 /*                            GMLHandler()                              */
 /************************************************************************/
 
-GMLHandler::GMLHandler( GMLReader *poReader )
-
+GMLHandler::GMLHandler( GMLReader *poReader ) :
+    m_pszCurField(NULL),
+    m_nCurFieldAlloc(0),
+    m_nCurFieldLen(0),
+    m_bInCurField(false),
+    m_nAttributeIndex(-1),
+    m_nAttributeDepth(0),
+    m_pszGeometry(NULL),
+    m_nGeomAlloc(0),
+    m_nGeomLen(0),
+    m_nGeometryDepth(0),
+    m_bAlreadyFoundGeometry(false),
+    m_nGeometryPropertyIndex(0),
+    m_nDepth(0),
+    m_nDepthFeature(0),
+    m_inBoundedByDepth(0),
+    m_pszCityGMLGenericAttrName(NULL),
+    m_inCityGMLGenericAttrDepth(0),
+    m_bReportHref(false),
+    m_pszHref(NULL),
+    m_pszUom(NULL),
+    m_pszValue(NULL),
+    m_pszKieli(NULL),
+    pasGeometryNames(static_cast<GeometryNamesStruct *>(CPLMalloc(
+        GML_GEOMETRY_TYPE_COUNT * sizeof(GeometryNamesStruct)))),
+    m_nSRSDimensionIfMissing(atoi(
+        CPLGetConfigOption("GML_SRS_DIMENSION_IF_MISSING", "0") )),
+    m_poReader(poReader),
+    eAppSchemaType(APPSCHEMA_GENERIC),
+    nStackDepth(0)
 {
-    m_poReader = poReader;
-    m_bInCurField = false;
-    m_nCurFieldAlloc = 0;
-    m_nCurFieldLen = 0;
-    m_pszCurField = NULL;
-    m_nAttributeIndex = -1;
-    m_nAttributeDepth = 0;
-
-    m_pszGeometry = NULL;
-    m_nGeomAlloc = 0;
-    m_nGeomLen = 0;
-    m_nGeometryDepth = 0;
-    m_bAlreadyFoundGeometry = false;
-    m_nGeometryPropertyIndex = 0;
-
-    m_nDepthFeature = m_nDepth = 0;
-    m_inBoundedByDepth = 0;
-
-    eAppSchemaType = APPSCHEMA_GENERIC;
-
-    m_pszCityGMLGenericAttrName = NULL;
-    m_inCityGMLGenericAttrDepth = 0;
-
-    m_bReportHref = false;
-    m_pszHref = NULL;
-    m_pszUom = NULL;
-    m_pszValue = NULL;
-    m_pszKieli = NULL;
-
-    pasGeometryNames = (GeometryNamesStruct*)CPLMalloc(
-        GML_GEOMETRY_TYPE_COUNT * sizeof(GeometryNamesStruct));
-    for(int i=0; i<GML_GEOMETRY_TYPE_COUNT; i++)
+    for( int i = 0; i < GML_GEOMETRY_TYPE_COUNT; i++ )
     {
         pasGeometryNames[i].pszName = apszGMLGeometryElements[i];
         pasGeometryNames[i].nHash =
@@ -553,11 +550,7 @@ GMLHandler::GMLHandler( GMLReader *poReader )
           sizeof(GeometryNamesStruct),
           GMLHandlerSortGeometryElements);
 
-    nStackDepth = 0;
     stateStack[0] = STATE_TOP;
-
-    m_nSRSDimensionIfMissing = atoi(
-                    CPLGetConfigOption("GML_SRS_DIMENSION_IF_MISSING", "0") );
 }
 
 /************************************************************************/

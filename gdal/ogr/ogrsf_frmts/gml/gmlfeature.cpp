@@ -37,21 +37,17 @@ CPL_CVSID("$Id$");
 /*                             GMLFeature()                             */
 /************************************************************************/
 
-GMLFeature::GMLFeature( GMLFeatureClass *poClass )
-
+GMLFeature::GMLFeature( GMLFeatureClass *poClass ) :
+    m_poClass(poClass),
+    m_pszFID(NULL),
+    m_nPropertyCount(0),
+    m_pasProperties(NULL),
+    m_nGeometryCount(0),
+    m_papsGeometry(m_apsGeometry),  // TODO(schwehr): Allowed in init list?
+    m_papszOBProperties(NULL)
 {
-    m_poClass = poClass;
-    m_pszFID = NULL;
-
-    m_nPropertyCount = 0;
-    m_pasProperties = NULL;
-
-    m_nGeometryCount = 0;
-    m_papsGeometry = m_apsGeometry;
     m_apsGeometry[0] = NULL;
     m_apsGeometry[1] = NULL;
-
-    m_papszOBProperties = NULL;
 }
 
 /************************************************************************/
