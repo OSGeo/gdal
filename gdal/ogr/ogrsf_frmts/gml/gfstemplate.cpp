@@ -43,12 +43,13 @@ CPL_CVSID("$Id$");
 
 class GFSTemplateItem
 {
-private:
+  private:
     char            *m_pszName;
     int             n_nItemCount;
     int             n_nGeomCount;
     GFSTemplateItem *pNext;
-public:
+
+  public:
                     GFSTemplateItem( const char *pszName );
                     ~GFSTemplateItem();
     const char      *GetName() { return m_pszName; }
@@ -212,12 +213,11 @@ bool GMLReader::PrescanForTemplate ()
 /*                 GFSTemplateList()               */
 /***************************************************/
 
-GFSTemplateList::GFSTemplateList( void )
-{
-    m_bSequentialLayers = true;
-    pFirst = NULL;
-    pLast = NULL;
-}
+GFSTemplateList::GFSTemplateList() :
+    m_bSequentialLayers(true),
+    pFirst(NULL),
+    pLast(NULL)
+{}
 
 /***************************************************/
 /*                 GFSTemplateList()               */
@@ -225,11 +225,10 @@ GFSTemplateList::GFSTemplateList( void )
 
 GFSTemplateList::~GFSTemplateList()
 {
-    GFSTemplateItem *pNext = NULL;
     GFSTemplateItem *pItem = pFirst;
     while ( pItem != NULL )
     {
-        pNext = pItem->GetNext();
+        GFSTemplateItem *pNext = pItem->GetNext();
         delete pItem;
         pItem = pNext;
     }
@@ -314,13 +313,12 @@ int GFSTemplateList::GetClassCount( )
 /*                 GFSTemplateItem()               */
 /***************************************************/
 
-GFSTemplateItem::GFSTemplateItem( const char *pszName )
-{
-    m_pszName = CPLStrdup( pszName );
-    n_nItemCount = 0;
-    n_nGeomCount = 0;
-    pNext = NULL;
-}
+GFSTemplateItem::GFSTemplateItem( const char *pszName ) :
+    m_pszName(CPLStrdup( pszName )),
+    n_nItemCount(0),
+    n_nGeomCount(0),
+    pNext(NULL)
+{}
 
 /***************************************************/
 /*                ~GFSTemplateItem()               */

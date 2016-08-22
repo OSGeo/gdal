@@ -115,80 +115,70 @@ CPL_UNUSED
                      bool bUseExpatParserPreferably,
                      bool bInvertAxisOrderIfLatLong,
                      bool bConsiderEPSGAsURN,
-                     bool bGetSecondaryGeometryOption)
+                     bool bGetSecondaryGeometryOption ) :
+    m_bClassListLocked(false),
+    m_nClassCount(0),
+    m_papoClass(NULL),
+    m_bLookForClassAtAnyLevel(false),
+    m_pszFilename(NULL),
+#ifndef HAVE_XERCES
+    bUseExpatReader(true),
+#else
+    bUseExpatReader(false),
+#endif
+    m_poGMLHandler(NULL),
+#ifdef HAVE_XERCES
+    m_poSAXReader(NULL),
+    m_poCompleteFeature(NULL),
+    m_GMLInputSource(NULL),
+  m_bEOF(false),
+#endif
+#ifdef HAVE_EXPAT
+    oParser(NULL),
+    ppoFeatureTab(NULL),
+    nFeatureTabLength(0),
+    nFeatureTabIndex(0),
+    nFeatureTabAlloc(0),
+    pabyBuf(NULL),
+#endif
+    fpGML(NULL),
+    m_bReadStarted(false),
+    m_poState(NULL),
+    m_poRecycledState(NULL),
+    m_bStopParsing(false),
+    // Experimental. Not publicly advertized. See commented doc in drv_gml.html
+    m_bFetchAllGeometries(CPLTestBool(
+        CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"))),
+    m_bInvertAxisOrderIfLatLong(bInvertAxisOrderIfLatLong),
+    m_bConsiderEPSGAsURN(bConsiderEPSGAsURN),
+    m_bGetSecondaryGeometryOption(bGetSecondaryGeometryOption),
+    m_pszGlobalSRSName(NULL),
+    m_bCanUseGlobalSRSName(false),
+    m_pszFilteredClassName(NULL),
+    m_nFilteredClassIndex(-1),
+    m_nHasSequentialLayers(-1),
+    // Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer(),
+    // and GMLReader::GMLReader().
+    m_bFaceHoleNegative(CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"))),
+    m_bSetWidthFlag(true),
+    m_bReportAllAttributes(false),
+    m_bIsWFSJointLayer(false),
+    m_bEmptyAsNull(true)
 {
 #ifndef HAVE_XERCES
-    bUseExpatReader = true;
 #else
-    bUseExpatReader = false;
 #ifdef HAVE_EXPAT
-    if(bUseExpatParserPreferably)
+    if( bUseExpatParserPreferably )
         bUseExpatReader = true;
 #endif
 #endif
 
 #if defined(HAVE_EXPAT) && defined(HAVE_XERCES)
-    if (bUseExpatReader)
+    if( bUseExpatReader )
         CPLDebug("GML", "Using Expat reader");
     else
         CPLDebug("GML", "Using Xerces reader");
 #endif
-
-    m_nClassCount = 0;
-    m_papoClass = NULL;
-    m_bLookForClassAtAnyLevel = false;
-
-    m_bClassListLocked = false;
-
-    m_poGMLHandler = NULL;
-#ifdef HAVE_XERCES
-    m_poSAXReader = NULL;
-    m_poCompleteFeature = NULL;
-    m_GMLInputSource = NULL;
-    m_bEOF = false;
-#endif
-#ifdef HAVE_EXPAT
-    oParser = NULL;
-    ppoFeatureTab = NULL;
-    nFeatureTabIndex = 0;
-    nFeatureTabLength = 0;
-    nFeatureTabAlloc = 0;
-    pabyBuf = NULL;
-#endif
-    fpGML = NULL;
-    m_bReadStarted = false;
-
-    m_poState = NULL;
-    m_poRecycledState = NULL;
-
-    m_pszFilename = NULL;
-
-    m_bStopParsing = false;
-
-    /* A bit experimental. Not publicly advertized. See commented doc in drv_gml.html */
-    m_bFetchAllGeometries = CPLTestBool(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"));
-
-    m_bInvertAxisOrderIfLatLong = bInvertAxisOrderIfLatLong;
-    m_bConsiderEPSGAsURN = bConsiderEPSGAsURN;
-    m_bGetSecondaryGeometryOption = bGetSecondaryGeometryOption;
-
-    m_pszGlobalSRSName = NULL;
-    m_bCanUseGlobalSRSName = false;
-
-    m_pszFilteredClassName = NULL;
-    m_nFilteredClassIndex = -1;
-
-    m_nHasSequentialLayers = -1;
-
-    /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
-    m_bFaceHoleNegative = CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
-
-    m_bSetWidthFlag = true;
-
-    m_bReportAllAttributes = false;
-
-    m_bIsWFSJointLayer = false;
-    m_bEmptyAsNull = true;
 }
 
 /************************************************************************/
@@ -474,11 +464,10 @@ void GMLReader::CleanupParser()
 
 #ifdef HAVE_XERCES
 
-GMLBinInputStream::GMLBinInputStream(VSILFILE* fpIn)
-{
-    fp = fpIn;
-    emptyString = 0;
-}
+GMLBinInputStream::GMLBinInputStream(VSILFILE* fpIn) :
+    fp(fpIn),
+    emptyString(0)
+{}
 
 GMLBinInputStream::~ GMLBinInputStream()
 {
@@ -511,10 +500,10 @@ unsigned int GMLBinInputStream::readBytes(XMLByte* const toFill, const unsigned 
 }
 #endif
 
-GMLInputSource::GMLInputSource(VSILFILE* fp, MemoryManager* const manager) : InputSource(manager)
-{
-    binInputStream = new GMLBinInputStream(fp);
-}
+GMLInputSource::GMLInputSource(VSILFILE* fp, MemoryManager* const manager) :
+    InputSource(manager),
+    binInputStream(new GMLBinInputStream(fp))
+{}
 
 GMLInputSource::~GMLInputSource()
 {

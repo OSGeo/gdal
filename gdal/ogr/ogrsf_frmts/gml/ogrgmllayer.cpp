@@ -43,8 +43,9 @@ CPL_CVSID("$Id$");
 
 OGRGMLLayer::OGRGMLLayer( const char * pszName,
                           bool bWriterIn,
-                          OGRGMLDataSource *poDSIn )
-
+                          OGRGMLDataSource *poDSIn ) :
+    poFeatureDefn(
+        new OGRFeatureDefn(pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0)))
 {
     iNextGMLId = 0;
     nTotalGMLCount = -1;
@@ -54,10 +55,6 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
 
     poDS = poDSIn;
 
-    if ( STARTS_WITH_CI(pszName, "ogr:") )
-      poFeatureDefn = new OGRFeatureDefn( pszName+4 );
-    else
-      poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
