@@ -42,16 +42,21 @@ CPL_CVSID("$Id$");
 /*                           OGRGeoJSONDataSource()                     */
 /************************************************************************/
 
-OGRGeoJSONDataSource::OGRGeoJSONDataSource()
-    : pszName_(NULL), pszGeoData_(NULL), nGeoDataLen_(0),
-        papoLayers_(NULL), papoLayersWriter_(NULL), nLayers_(0), fpOut_(NULL),
-        flTransGeom_( OGRGeoJSONDataSource::eGeometryPreserve ),
-        flTransAttrs_( OGRGeoJSONDataSource::eAttributesPreserve ),
-        bOtherPages_(false),
-        bFpOutputIsSeekable_( false ),
-        nBBOXInsertLocation_(0),
-        bUpdatable_( false )
-{ }
+OGRGeoJSONDataSource::OGRGeoJSONDataSource() :
+    pszName_(NULL),
+    pszGeoData_(NULL),
+    nGeoDataLen_(0),
+    papoLayers_(NULL),
+    papoLayersWriter_(NULL),
+    nLayers_(0),
+    fpOut_(NULL),
+    flTransGeom_(OGRGeoJSONDataSource::eGeometryPreserve),
+    flTransAttrs_(OGRGeoJSONDataSource::eAttributesPreserve),
+    bOtherPages_(false),
+    bFpOutputIsSeekable_(false),
+    nBBOXInsertLocation_(0),
+    bUpdatable_(false)
+{}
 
 /************************************************************************/
 /*                           ~OGRGeoJSONDataSource()                    */
