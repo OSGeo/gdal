@@ -37,19 +37,14 @@ CPL_CVSID("$Id$");
 /*                          OGRGFTDataSource()                          */
 /************************************************************************/
 
-OGRGFTDataSource::OGRGFTDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-
-    bReadWrite = FALSE;
-    bUseHTTPS = FALSE;
-
-    bMustCleanPersistent = FALSE;
-}
+OGRGFTDataSource::OGRGFTDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bReadWrite(FALSE),
+    bUseHTTPS(FALSE),
+    bMustCleanPersistent(FALSE)
+{}
 
 /************************************************************************/
 /*                         ~OGRGFTDataSource()                          */
