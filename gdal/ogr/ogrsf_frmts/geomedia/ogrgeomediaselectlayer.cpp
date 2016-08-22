@@ -38,8 +38,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRGeomediaSelectLayer::OGRGeomediaSelectLayer( OGRGeomediaDataSource *poDSIn,
-                                        CPLODBCStatement * poStmtIn )
-
+                                                CPLODBCStatement * poStmtIn ) :
+    pszBaseStatement(CPLStrdup( poStmtIn->GetCommand() ))
 {
     poDS = poDSIn;
 
@@ -48,7 +48,6 @@ OGRGeomediaSelectLayer::OGRGeomediaSelectLayer( OGRGeomediaDataSource *poDSIn,
     poFeatureDefn = NULL;
 
     poStmt = poStmtIn;
-    pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
 
     BuildFeatureDefn( "SELECT", poStmt );
 }
