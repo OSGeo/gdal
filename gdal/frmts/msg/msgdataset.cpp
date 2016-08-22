@@ -26,6 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
+#include "cpl_port.h"  // Must be first.
 
 #include "gdal_frmts.h"
 #include "msgdataset.h"
@@ -53,6 +54,7 @@ const double MSGDataset::rB[12] = {-1, -1, -1, 3.471, 2.219, 0.485, 0.181, 0.060
 const int MSGDataset::iCentralPixelVIS_IR = 1856; // center pixel VIS and IR
 const int MSGDataset::iCentralPixelHRV = 5566; // center pixel HRV
 int MSGDataset::iCurrentSatellite = 1; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
+const char *MSGDataset::metadataDomain = "msg"; // the metadata domain
 
 #define MAX_SATELLITES 4
 
@@ -318,6 +320,13 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*                 Set DataSet metadata informations                    */
+/* -------------------------------------------------------------------- */
+    CPLString metadataValue;
+    metadataValue.Printf("%d", poDS->iCurrentSatellite);
+    poDS->SetMetadataItem("satellite_number", metadataValue.c_str(), metadataDomain);
+
     return( poDS );
 }
 
@@ -462,6 +471,17 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
     std::string sTimeStamp = poDS->command.sCycle(iCycle);
 
     m_rc = new ReflectanceCalculator(sTimeStamp, rRTOA[iChannel-1]);
+
+/* -------------------------------------------------------------------- */
+/*  Set DataSet metadata informations                                   */
+/* -------------------------------------------------------------------- */
+    CPLString metadataValue;
+    metadataValue.Printf("%.10f", poDS->rCalibrationOffset[iChannel - 1]);
+    SetMetadataItem("calibration_offset", metadataValue.c_str(), poDS->metadataDomain);
+    metadataValue.Printf("%.10f", poDS->rCalibrationSlope[iChannel - 1]);
+    SetMetadataItem("calibration_slope", metadataValue.c_str(), poDS->metadataDomain);
+    metadataValue.Printf("%d", iChannel);
+    SetMetadataItem("channel_number", metadataValue.c_str(), poDS->metadataDomain);
 }
 
 /************************************************************************/
