@@ -54,7 +54,7 @@ OGRGeoRSSDataSource::OGRGeoRSSDataSource() :
     oCurrentParser(NULL),
     nDataHandlerCounter(0)
 #endif
-{ }
+{}
 
 /************************************************************************/
 /*                         ~OGRGeoRSSDataSource()                          */
@@ -63,11 +63,11 @@ OGRGeoRSSDataSource::OGRGeoRSSDataSource() :
 OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
 
 {
-    if ( fpOutput != NULL )
+    if( fpOutput != NULL )
     {
-        if (bWriteHeaderAndFooter)
+        if( bWriteHeaderAndFooter )
         {
-            if (eFormat == GEORSS_RSS)
+            if( eFormat == GEORSS_RSS )
             {
                 VSIFPrintfL(fpOutput, "  </channel>\n");
                 VSIFPrintfL(fpOutput, "</rss>\n");
