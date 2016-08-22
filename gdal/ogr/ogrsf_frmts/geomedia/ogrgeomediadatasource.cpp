@@ -39,16 +39,14 @@ CPL_CVSID("$Id$");
 /*                       OGRGeomediaDataSource()                        */
 /************************************************************************/
 
-OGRGeomediaDataSource::OGRGeomediaDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    papoLayersInvisible = NULL;
-    nLayers = 0;
-    nLayersWithInvisible = 0;
-    bDSUpdate = FALSE;
-}
+OGRGeomediaDataSource::OGRGeomediaDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    papoLayersInvisible(NULL),
+    nLayersWithInvisible(0),
+    pszName(NULL),
+    bDSUpdate(FALSE)
+{}
 
 /************************************************************************/
 /*                       ~OGRGeomediaDataSource()                       */
@@ -57,15 +55,13 @@ OGRGeomediaDataSource::OGRGeomediaDataSource()
 OGRGeomediaDataSource::~OGRGeomediaDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    for( i = 0; i < nLayersWithInvisible; i++ )
+    for( int i = 0; i < nLayersWithInvisible; i++ )
         delete papoLayersInvisible[i];
     CPLFree( papoLayersInvisible );
 }

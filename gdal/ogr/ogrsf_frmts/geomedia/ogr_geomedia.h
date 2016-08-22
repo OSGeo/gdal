@@ -130,11 +130,11 @@ class OGRGeomediaSelectLayer : public OGRGeomediaLayer
     void                ClearStatement();
     OGRErr              ResetStatement();
 
-    virtual CPLODBCStatement *  GetStatement();
+    virtual CPLODBCStatement *GetStatement();
 
   public:
                         OGRGeomediaSelectLayer( OGRGeomediaDataSource *,
-                                           CPLODBCStatement * );
+                                                CPLODBCStatement * );
                         virtual ~OGRGeomediaSelectLayer();
 
     virtual void        ResetReading();

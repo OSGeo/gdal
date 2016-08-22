@@ -39,23 +39,17 @@ CPL_CVSID("$Id$");
 /*                          OGRGeomediaLayer()                          */
 /************************************************************************/
 
-OGRGeomediaLayer::OGRGeomediaLayer()
-
-{
-    poDS = NULL;
-
-    pszGeomColumn = NULL;
-    pszFIDColumn = NULL;
-
-    poStmt = NULL;
-
-    iNextShapeId = 0;
-
-    poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet.
-    poFeatureDefn = NULL;
-    panFieldOrdinals = NULL;
-}
+OGRGeomediaLayer::OGRGeomediaLayer() :
+    poFeatureDefn(NULL),
+    poStmt(NULL),
+    poSRS(NULL),
+    nSRSId(-2), // we haven't even queried the database for it yet.
+    iNextShapeId(0),
+    poDS(NULL),
+    pszGeomColumn(NULL),
+    pszFIDColumn(NULL),
+    panFieldOrdinals(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRGeomediaLayer()                          */

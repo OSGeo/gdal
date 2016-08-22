@@ -36,12 +36,11 @@ CPL_CVSID("$Id$");
 /*                          OGRGeomediaTableLayer()                     */
 /************************************************************************/
 
-OGRGeomediaTableLayer::OGRGeomediaTableLayer( OGRGeomediaDataSource *poDSIn )
-
+OGRGeomediaTableLayer::OGRGeomediaTableLayer( OGRGeomediaDataSource *poDSIn ) :
+    bUpdateAccess(TRUE),
+    pszQuery(NULL)
 {
     poDS = poDSIn;
-    pszQuery = NULL;
-    bUpdateAccess = TRUE;
     iNextShapeId = 0;
     nSRSId = -1;
     poFeatureDefn = NULL;
