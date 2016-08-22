@@ -93,8 +93,6 @@ class OGRGeomediaLayer : public OGRLayer
 
 class OGRGeomediaTableLayer : public OGRGeomediaLayer
 {
-    int                 bUpdateAccess;
-
     char                *pszQuery;
 
     void                ClearStatement();
