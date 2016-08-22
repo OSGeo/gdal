@@ -37,7 +37,6 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRGeomediaTableLayer::OGRGeomediaTableLayer( OGRGeomediaDataSource *poDSIn ) :
-    bUpdateAccess(TRUE),
     pszQuery(NULL)
 {
     poDS = poDSIn;
