@@ -41,8 +41,9 @@ CPL_CVSID("$Id$");
 /*                          OGRESRIJSONReader()                         */
 /************************************************************************/
 
-OGRESRIJSONReader::OGRESRIJSONReader()
-    : poGJObject_( NULL ), poLayer_( NULL )
+OGRESRIJSONReader::OGRESRIJSONReader() :
+    poGJObject_( NULL ),
+    poLayer_( NULL )
 {}
 
 /************************************************************************/

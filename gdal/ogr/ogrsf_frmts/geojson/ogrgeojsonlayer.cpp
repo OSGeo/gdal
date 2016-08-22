@@ -51,8 +51,10 @@ const OGRwkbGeometryType OGRGeoJSONLayer::DefaultGeometryType = wkbUnknown;
 OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRSpatialReference* poSRSIn,
                                   OGRwkbGeometryType eGType,
-                                  OGRGeoJSONDataSource* poDS )
-  : OGRMemLayer( pszName, poSRSIn, eGType), poDS_(poDS), bUpdated_(false),
+                                  OGRGeoJSONDataSource* poDS ) :
+    OGRMemLayer( pszName, poSRSIn, eGType),
+    poDS_(poDS),
+    bUpdated_(false),
     bOriginalIdModified_(false)
 {
     SetAdvertizeUTF8(true);

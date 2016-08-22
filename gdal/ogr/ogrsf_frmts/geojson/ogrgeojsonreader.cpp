@@ -52,7 +52,7 @@ OGRGeoJSONReader::OGRGeoJSONReader() :
     bFoundTypeFeature(false),
     bIsGeocouchSpatiallistFormat(false),
     bFoundFeatureId(false)
-{ }
+{}
 
 /************************************************************************/
 /*                          ~OGRGeoJSONReader                           */
