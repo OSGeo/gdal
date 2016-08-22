@@ -38,11 +38,7 @@ CPL_CVSID("$Id$");
 /*                          OGRTopoJSONReader()                         */
 /************************************************************************/
 
-OGRTopoJSONReader::OGRTopoJSONReader()
-    : poGJObject_( NULL )
-{
-    // Take a deep breath and get to work.
-}
+OGRTopoJSONReader::OGRTopoJSONReader() : poGJObject_( NULL ) {}
 
 /************************************************************************/
 /*                         ~OGRTopoJSONReader()                         */

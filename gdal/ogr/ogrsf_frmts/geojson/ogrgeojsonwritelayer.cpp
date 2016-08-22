@@ -44,20 +44,22 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
                                             OGRwkbGeometryType eGType,
                                             char** papszOptions,
                                             bool bWriteFC_BBOXIn,
-                                           OGRGeoJSONDataSource* poDS )
-    : poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), nOutCounter_( 0 )
+                                            OGRGeoJSONDataSource* poDS ) :
+    poDS_(poDS),
+    poFeatureDefn_(new OGRFeatureDefn( pszName )),
+    nOutCounter_(0),
+    bWriteBBOX(CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"))),
+    bBBOX3D(false),
+    bWriteFC_BBOX(bWriteFC_BBOXIn),
+    nCoordPrecision_(atoi(
+        CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"))),
+    nSignificantFigures_(atoi(
+        CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1")))
 {
-    bWriteBBOX = CPLTestBool(CSLFetchNameValueDef(
-        papszOptions, "WRITE_BBOX", "FALSE"));
-    bBBOX3D = false;
-    bWriteFC_BBOX = bWriteFC_BBOXIn;
-
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType( eGType );
     SetDescription( poFeatureDefn_->GetName() );
-
-    nCoordPrecision_ = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
-    nSignificantFigures_ = atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));
 }
 
 /************************************************************************/

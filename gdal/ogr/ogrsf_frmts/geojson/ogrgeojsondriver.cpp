@@ -48,7 +48,7 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
         bool            bUseSequentialFID;
 
     public:
-        OGRESRIFeatureServiceLayer(OGRESRIFeatureServiceDataset* poDS);
+        OGRESRIFeatureServiceLayer( OGRESRIFeatureServiceDataset* poDS );
         virtual ~OGRESRIFeatureServiceLayer();
 
         void ResetReading();
@@ -69,15 +69,16 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
 class OGRESRIFeatureServiceDataset: public GDALDataset
 {
         CPLString              osURL;
-        GIntBig                nFirstOffset, nLastOffset;
-        OGRGeoJSONDataSource* poCurrent;
-        OGRESRIFeatureServiceLayer* poLayer;
+        GIntBig                nFirstOffset;
+        GIntBig                nLastOffset;
+        OGRGeoJSONDataSource  *poCurrent;
+        OGRESRIFeatureServiceLayer *poLayer;
 
         int                     LoadPage();
 
     public:
-        OGRESRIFeatureServiceDataset(const CPLString &osURL,
-                                     OGRGeoJSONDataSource* poFirst);
+        OGRESRIFeatureServiceDataset( const CPLString &osURL,
+                                      OGRGeoJSONDataSource* poFirst );
        ~OGRESRIFeatureServiceDataset();
 
         int GetLayerCount() { return 1; }
@@ -108,9 +109,11 @@ OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
-    for(int i=0;i<poSrcFeatDefn->GetFieldCount();i++)
+
+    for( int i = 0; i < poSrcFeatDefn->GetFieldCount(); i++ )
         poFeatureDefn->AddFieldDefn(poSrcFeatDefn->GetFieldDefn(i));
-    for(int i=0;i<poSrcFeatDefn->GetGeomFieldCount();i++)
+
+    for( int i = 0; i <poSrcFeatDefn->GetGeomFieldCount(); i++ )
         poFeatureDefn->AddGeomFieldDefn(poSrcFeatDefn->GetGeomFieldDefn(i));
 }
 
@@ -273,8 +276,9 @@ OGRErr OGRESRIFeatureServiceLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 /*                      OGRESRIFeatureServiceDataset()                  */
 /************************************************************************/
 
-OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(const CPLString &osURLIn,
-                                                           OGRGeoJSONDataSource* poFirst) :
+OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
+    const CPLString &osURLIn,
+    OGRGeoJSONDataSource* poFirst) :
     poCurrent(poFirst)
 {
     poLayer = new OGRESRIFeatureServiceLayer(this);
