@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import struct
 import sys
 
 sys.path.append( '../pymod' )
@@ -282,6 +283,26 @@ def test_gdaldem_lib_hillshade_compute_edges():
     return 'success'
 
 ###############################################################################
+# Test gdaldem hillshade with -compute_edges with floating point
+
+def test_gdaldem_lib_hillshade_compute_edges_float():
+
+    src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format = 'MEM', outputType = gdal.GDT_Float32)
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True, scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 50239:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test gdaldem hillshade with -az parameter
 
 def test_gdaldem_lib_hillshade_azimuth():
@@ -452,6 +473,80 @@ def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
     return 'success'
 
+###############################################################################
+# Test gdaldem hillshade with nodata values
+
+def test_gdaldem_lib_nodata():
+
+    for ( value, type ) in [ ( 0, gdal.GDT_Byte ),
+                             ( 1, gdal.GDT_Byte ),
+                             ( 255, gdal.GDT_Byte ),
+                             ( 0, gdal.GDT_UInt16 ),
+                             ( 1, gdal.GDT_UInt16 ),
+                             ( 65535, gdal.GDT_UInt16 ),
+                             ( 0, gdal.GDT_Int16 ),
+                             ( -32678, gdal.GDT_Int16 ),
+                             ( 32767, gdal.GDT_Int16 ) ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1, type)
+        src_ds.GetRasterBand(1).SetNoDataValue(value)
+        src_ds.GetRasterBand(1).Fill(value)
+        
+        ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
+        if ds is None:
+            return 'fail'
+
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 0:
+            gdaltest.post_reason('Bad checksum')
+            print(cs)
+            return 'fail'
+
+        src_ds = None
+        ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3, 1)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(1,1,1,1, struct.pack('B', 255))
+        
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 0:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        print(ds.ReadAsArray())
+        return 'fail'
+        
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True)
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 10:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        print(ds.ReadAsArray()) # Should be 0 0 0 0 181 0 0 0 0
+        return 'fail'
+
+    # Same with floating point
+    src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3, 1, gdal.GDT_Float32)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(1,1,1,1, struct.pack('f', 255))
+        
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 0:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        print(ds.ReadAsArray())
+        return 'fail'
+        
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True)
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 10:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        print(ds.ReadAsArray()) # Should be 0 0 0 0 181 0 0 0 0
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdaldem_lib_hillshade,
     test_gdaldem_lib_hillshade_float,
@@ -460,13 +555,15 @@ gdaltest_list = [
     test_gdaldem_lib_hillshade_ZevenbergenThorne,
     test_gdaldem_lib_hillshade_ZevenbergenThorne_combined,
     test_gdaldem_lib_hillshade_compute_edges,
+    test_gdaldem_lib_hillshade_compute_edges_float,
     test_gdaldem_lib_hillshade_azimuth,
     test_gdaldem_lib_color_relief,
     test_gdaldem_lib_tpi,
     test_gdaldem_lib_tri,
     test_gdaldem_lib_roughness,
     test_gdaldem_lib_slope_ZevenbergenThorne,
-    test_gdaldem_lib_aspect_ZevenbergenThorne
+    test_gdaldem_lib_aspect_ZevenbergenThorne,
+    test_gdaldem_lib_nodata
     ]
 
 
