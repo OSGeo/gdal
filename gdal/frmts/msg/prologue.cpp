@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+ #include "cpl_port.h"  // Must be first.
+
 #include "prologue.h"
 
 CPL_CVSID("$Id$");

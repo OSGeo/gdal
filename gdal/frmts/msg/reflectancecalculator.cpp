@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+ #include "cpl_port.h"  // Must be first.
+
 #include "reflectancecalculator.h"
 #include <cmath>
 #include <cstdlib>
