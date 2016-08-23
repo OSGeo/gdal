@@ -80,8 +80,7 @@ TABIDFile::TABIDFile() :
     m_poIDBlock(NULL),
     m_nBlockSize(0),
     m_nMaxId(-1)
-{
-}
+{}
 
 /**********************************************************************
  *                   TABIDFile::~TABIDFile()

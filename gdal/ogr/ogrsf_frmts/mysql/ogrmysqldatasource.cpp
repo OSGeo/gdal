@@ -66,7 +66,7 @@ OGRMySQLDataSource::OGRMySQLDataSource() :
     panSRID(NULL),
     papoSRS(NULL),
     poLongResultLayer(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                        ~OGRMySQLDataSource()                         */

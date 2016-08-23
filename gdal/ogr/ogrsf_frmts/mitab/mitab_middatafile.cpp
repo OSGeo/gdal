@@ -89,20 +89,21 @@ CPL_CVSID("$Id$");
  *
  *====================================================================*/
 
-MIDDATAFile::MIDDATAFile()
+MIDDATAFile::MIDDATAFile() :
+    m_fp(NULL),
+    m_pszDelimiter("\t"), // Encom 2003 (was NULL)
+    m_pszFname(NULL),
+    m_eAccessMode(TABRead),
+    // TODO(schwehr): m_szLastRead({}),
+    // TODO(schwehr): m_szSavedLine({}),
+    m_dfXMultiplier(1.0),
+    m_dfYMultiplier(1.0),
+    m_dfXDisplacement(0.0),
+    m_dfYDisplacement(0.0),
+    m_bEof(FALSE)
 {
-    m_fp = NULL;
     m_szLastRead[0] = '\0';
     m_szSavedLine[0] = '\0';
-    m_pszDelimiter = "\t"; // Encom 2003 (was NULL)
-
-    m_dfXMultiplier = 1.0;
-    m_dfYMultiplier = 1.0;
-    m_dfXDisplacement = 0.0;
-    m_dfYDisplacement = 0.0;
-    m_pszFname = NULL;
-    m_eAccessMode = TABRead;
-    m_bEof = FALSE;
 }
 
 MIDDATAFile::~MIDDATAFile()

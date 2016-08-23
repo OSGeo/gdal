@@ -209,52 +209,46 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-MIFFile::MIFFile()
-{
-    m_pszFname = NULL;
-    m_nVersion = 300;
-
+MIFFile::MIFFile() :
+    m_pszFname(NULL),
+    m_eAccessMode(TABRead),
+    m_nVersion(300),
     // Tab is default delimiter in MIF spec if not explicitly specified.  Use
     // that by default for read mode. In write mode, we will use "," as
     // delimiter since it's more common than tab (we do this in Open())
-    m_pszDelimiter = CPLStrdup("\t");
-
-    m_pszUnique = NULL;
-    m_pszIndex = NULL;
-    m_pszCoordSys = NULL;
-
-    m_paeFieldType = NULL;
-    m_pabFieldIndexed = NULL;
-    m_pabFieldUnique = NULL;
-
-    m_dfXMultiplier = 1.0;
-    m_dfYMultiplier = 1.0;
-    m_dfXDisplacement = 0.0;
-    m_dfYDisplacement = 0.0;
-
-    m_poMIDFile = NULL;
-    m_poMIFFile = NULL;
-    m_nPreloadedId = 0;
-
-    m_poDefn = NULL;
-    m_poSpatialRef = NULL;
-
+    m_pszDelimiter(CPLStrdup("\t")),
+    m_pszUnique(NULL),
+    m_pszIndex(NULL),
+    m_pszCoordSys(NULL),
+    m_paeFieldType(NULL),
+    m_pabFieldIndexed(NULL),
+    m_pabFieldUnique(NULL),
+    m_dfXMultiplier(1.0),
+    m_dfYMultiplier(1.0),
+    m_dfXDisplacement(0.0),
+    m_dfYDisplacement(0.0),
+    m_dXMin(0),
+    m_dYMin(0),
+    m_dXMax(0),
+    m_dYMax(0),
+    m_bExtentsSet(FALSE),
+    m_nPoints(0),
+    m_nLines(0),
+    m_nRegions(0),
+    m_nTexts(0),
+    m_nPreloadedId(0),
+    m_poMIDFile(NULL),
+    m_poMIFFile(NULL),
+    m_poDefn(NULL),
+    m_poSpatialRef(NULL),
+    m_nFeatureCount(0),
+    m_nWriteFeatureId(-1),
+    m_nAttribut(0),
+    m_bPreParsed(FALSE),
+    m_bHeaderWrote(FALSE)
+{
     m_nCurFeatureId = 0;
-    m_nFeatureCount = 0;
-    m_nWriteFeatureId = -1;
     m_poCurFeature = NULL;
-
-    m_bPreParsed = FALSE;
-    m_nAttribut = 0;
-    m_bHeaderWrote = FALSE;
-    m_nPoints = m_nLines = m_nRegions = m_nTexts = 0;
-
-    m_bExtentsSet = FALSE;
-    m_eAccessMode = TABRead;
-    m_dXMin = 0;
-    m_dYMin = 0;
-    m_dXMax = 0;
-    m_dYMax = 0;
 }
 
 /**********************************************************************

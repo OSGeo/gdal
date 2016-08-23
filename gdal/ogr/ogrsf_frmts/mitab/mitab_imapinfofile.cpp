@@ -147,13 +147,12 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-IMapInfoFile::IMapInfoFile()
-{
-    m_nCurFeatureId = 0;
-    m_poCurFeature = NULL;
-    m_bBoundsSet = FALSE;
-    m_pszCharset = NULL;
-}
+IMapInfoFile::IMapInfoFile() :
+    m_nCurFeatureId(0),
+    m_poCurFeature(NULL),
+    m_bBoundsSet(FALSE),
+    m_pszCharset(NULL)
+{}
 
 
 /**********************************************************************
@@ -163,7 +162,7 @@ IMapInfoFile::IMapInfoFile()
  **********************************************************************/
 IMapInfoFile::~IMapInfoFile()
 {
-    if (m_poCurFeature)
+    if( m_poCurFeature )
     {
         delete m_poCurFeature;
         m_poCurFeature = NULL;

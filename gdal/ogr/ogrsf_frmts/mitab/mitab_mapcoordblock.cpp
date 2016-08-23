@@ -108,34 +108,32 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABMAPCoordBlock::TABMAPCoordBlock(TABAccess eAccessMode /*= TABRead*/):
-    TABRawBinBlock(eAccessMode, TRUE)
-{
-    m_nComprOrgX = m_nComprOrgY = m_nNextCoordBlock = m_numDataBytes = 0;
-
-    m_numBlocksInChain = 1;  // Current block counts as 1
-
-    m_poBlockManagerRef = NULL;
-
-    m_nTotalDataSize = 0;
-    m_nFeatureDataSize = 0;
-
-    m_nFeatureXMin = m_nMinX = 1000000000;
-    m_nFeatureYMin = m_nMinY = 1000000000;
-    m_nFeatureXMax = m_nMaxX = -1000000000;
-    m_nFeatureYMax = m_nMaxY = -1000000000;
-
-}
+TABMAPCoordBlock::TABMAPCoordBlock( TABAccess eAccessMode /*= TABRead*/ ) :
+    TABRawBinBlock(eAccessMode, TRUE),
+    m_numDataBytes(0),
+    m_nNextCoordBlock(0),
+    m_numBlocksInChain(1),  // Current block counts as 1
+    m_nComprOrgX(0),
+    m_nComprOrgY(0),
+    m_nMinX(1000000000),
+    m_nMinY(1000000000),
+    m_nMaxX(-1000000000),
+    m_nMaxY(-1000000000),
+    m_poBlockManagerRef(NULL),
+    m_nTotalDataSize(0),
+    m_nFeatureDataSize(0),
+    m_nFeatureXMin(1000000000),
+    m_nFeatureYMin(1000000000),
+    m_nFeatureXMax(-1000000000),
+    m_nFeatureYMax(-1000000000)
+{}
 
 /**********************************************************************
  *                   TABMAPCoordBlock::~TABMAPCoordBlock()
  *
  * Destructor.
  **********************************************************************/
-TABMAPCoordBlock::~TABMAPCoordBlock()
-{
-
-}
+TABMAPCoordBlock::~TABMAPCoordBlock() {}
 
 
 /**********************************************************************

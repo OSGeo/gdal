@@ -96,20 +96,18 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABMAPIndexBlock::TABMAPIndexBlock(TABAccess eAccessMode /*= TABRead*/):
-    TABRawBinBlock(eAccessMode, TRUE)
+TABMAPIndexBlock::TABMAPIndexBlock( TABAccess eAccessMode /*= TABRead*/ ) :
+    TABRawBinBlock(eAccessMode, TRUE),
+    m_numEntries(0),
+    m_nMinX(1000000000),
+    m_nMinY(1000000000),
+    m_nMaxX(-1000000000),
+    m_nMaxY(-1000000000),
+    m_poBlockManagerRef(NULL),
+    m_poCurChild(NULL),
+    m_nCurChildIndex(-1),
+    m_poParentRef(NULL)
 {
-    m_numEntries = 0;
-
-    m_nMinX = 1000000000;
-    m_nMinY = 1000000000;
-    m_nMaxX = -1000000000;
-    m_nMaxY = -1000000000;
-
-    m_poCurChild = NULL;
-    m_nCurChildIndex = -1;
-    m_poParentRef = NULL;
-    m_poBlockManagerRef = NULL;
     memset(m_asEntries, 0, sizeof(m_asEntries));
 }
 

@@ -67,22 +67,20 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABToolDefTable::TABToolDefTable()
-{
-    m_papsPen = NULL;
-    m_papsBrush = NULL;
-    m_papsFont = NULL;
-    m_papsSymbol = NULL;
-    m_numPen = 0;
-    m_numBrushes = 0;
-    m_numFonts = 0;
-    m_numSymbols = 0;
-    m_numAllocatedPen = 0;
-    m_numAllocatedBrushes = 0;
-    m_numAllocatedFonts = 0;
-    m_numAllocatedSymbols = 0;
-
-}
+TABToolDefTable::TABToolDefTable() :
+    m_papsPen(NULL),
+    m_numPen(0),
+    m_numAllocatedPen(0),
+    m_papsBrush(NULL),
+    m_numBrushes(0),
+    m_numAllocatedBrushes(0),
+    m_papsFont(NULL),
+    m_numFonts(0),
+    m_numAllocatedFonts(0),
+    m_papsSymbol(NULL),
+    m_numSymbols(0),
+    m_numAllocatedSymbols(0)
+{}
 
 /**********************************************************************
  *                   TABToolDefTable::~TABToolDefTable()
@@ -91,24 +89,21 @@ TABToolDefTable::TABToolDefTable()
  **********************************************************************/
 TABToolDefTable::~TABToolDefTable()
 {
-    int i;
-
-    for(i=0; m_papsPen && i < m_numPen; i++)
+    for( int i = 0; m_papsPen && i < m_numPen; i++ )
         CPLFree(m_papsPen[i]);
     CPLFree(m_papsPen);
 
-    for(i=0; m_papsBrush && i < m_numBrushes; i++)
+    for( int i = 0; m_papsBrush && i < m_numBrushes; i++ )
         CPLFree(m_papsBrush[i]);
     CPLFree(m_papsBrush);
 
-    for(i=0; m_papsFont && i < m_numFonts; i++)
+    for( int i = 0; m_papsFont && i < m_numFonts; i++ )
         CPLFree(m_papsFont[i]);
     CPLFree(m_papsFont);
 
-    for(i=0; m_papsSymbol && i < m_numSymbols; i++)
+    for( int i = 0; m_papsSymbol && i < m_numSymbols; i++ )
         CPLFree(m_papsSymbol[i]);
     CPLFree(m_papsSymbol);
-
 }
 
 

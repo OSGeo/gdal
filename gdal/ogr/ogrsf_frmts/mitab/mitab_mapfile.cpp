@@ -202,42 +202,37 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABMAPFile::TABMAPFile()
+TABMAPFile::TABMAPFile() :
+    m_nMinTABVersion(300),
+    m_pszFname(NULL),
+    m_fp(NULL),
+    m_eAccessMode(TABRead),
+    m_poHeader(NULL),
+    m_poSpIndex(NULL),
+    // See bug 1732: Optimized spatial index produces broken files because of
+    // the way CoordBlocks are split. For now we have to force using the quick
+    // (old) spatial index mode by default until bug 1732 is fixed.
+    m_bQuickSpatialIndexMode(TRUE),
+    m_poIdIndex(NULL),
+    m_poCurObjBlock(NULL),
+    m_nCurObjPtr(-1),
+    m_nCurObjType(TAB_GEOM_UNSET),
+    m_nCurObjId(-1),
+    m_poCurCoordBlock(NULL),
+    m_poToolDefTable(NULL),
+    m_XMinFilter(0),
+    m_YMinFilter(0),
+    m_XMaxFilter(0),
+    m_YMaxFilter(0),
+    m_bUpdated(FALSE),
+    m_bLastOpWasRead(FALSE),
+    m_bLastOpWasWrite(FALSE),
+    m_poSpIndexLeaf(NULL)
 {
-    m_nMinTABVersion = 300;
-    m_fp = NULL;
-    m_pszFname = NULL;
-    m_poHeader = NULL;
-    m_poSpIndex = NULL;
-    m_poSpIndexLeaf = NULL;
-/* See bug 1732: Optimized spatial index produces broken files because
- * of the way CoordBlocks are split. For now we have to force using the
- * Quick (old) spatial index mode by default until bug 1732 is fixed.
- */
-    m_bQuickSpatialIndexMode = TRUE;
-//  m_bQuickSpatialIndexMode = FALSE;
-
-    m_poCurObjBlock = NULL;
-    m_nCurObjPtr = -1;
-    m_nCurObjType = TAB_GEOM_UNSET;
-    m_nCurObjId = -1;
-    m_poCurCoordBlock = NULL;
-    m_poToolDefTable = NULL;
-
-    m_bUpdated = FALSE;
-    m_bLastOpWasRead = FALSE;
-    m_bLastOpWasWrite = FALSE;
-
-    m_eAccessMode = TABRead;
-    m_poIdIndex = NULL;
     m_sMinFilter.x = 0;
     m_sMinFilter.y = 0;
     m_sMaxFilter.x = 0;
     m_sMaxFilter.y = 0;
-    m_XMinFilter = 0;
-    m_YMinFilter = 0;
-    m_XMaxFilter = 0;
-    m_YMaxFilter = 0;
 
     m_oBlockManager.SetName("MAP");
 }
