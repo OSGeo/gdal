@@ -434,7 +434,8 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_nOverviewCount(0),
     m_papoOverviewDS(NULL),
     m_bZoomOther(false),
-    m_bInFlushCache(false)
+    m_bInFlushCache(false),
+    m_osTilingScheme("CUSTOM")
 {
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;
@@ -442,7 +443,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_adfGeoTransform[3] = 0.0;
     m_adfGeoTransform[4] = 0.0;
     m_adfGeoTransform[5] = 1.0;
-    m_osTilingScheme = "CUSTOM";
 }
 
 /************************************************************************/

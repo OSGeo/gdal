@@ -38,10 +38,10 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( GDALGeoPackageDataset *poDS,
                                             CPLString osSQLIn,
                                             sqlite3_stmt *hStmtIn,
                                             int bUseStatementForGetNextFeature,
-                                            int bEmptyLayer ) : OGRGeoPackageLayer(poDS)
-
+                                            int bEmptyLayer ) :
+    OGRGeoPackageLayer(poDS),
+    poBehaviour(new OGRSQLiteSelectLayerCommonBehaviour(poDS, this, osSQLIn, bEmptyLayer))
 {
-    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDS, this, osSQLIn, bEmptyLayer);
     BuildFeatureDefn( "SELECT", hStmtIn );
 
     if( bUseStatementForGetNextFeature )
@@ -50,7 +50,9 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( GDALGeoPackageDataset *poDS,
         bDoStep = FALSE;
     }
     else
+    {
         sqlite3_finalize( hStmtIn );
+    }
 }
 
 /************************************************************************/

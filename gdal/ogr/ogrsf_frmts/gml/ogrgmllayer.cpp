@@ -45,41 +45,29 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
                           bool bWriterIn,
                           OGRGMLDataSource *poDSIn ) :
     poFeatureDefn(
-        new OGRFeatureDefn(pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0)))
+        new OGRFeatureDefn(pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
+    iNextGMLId(0),
+    nTotalGMLCount(-1),
+    bInvalidFIDFound(false),
+    pszFIDPrefix(NULL),
+    bWriter(bWriterIn),
+    bSameSRS(false),
+    poDS(poDSIn),
+    poFClass(!bWriter ? poDS->GetReader()->GetClass(pszName) :  NULL),
+    // Reader's should get the corresponding GMLFeatureClass and cache it.
+    hCacheSRS(GML_BuildOGRGeometryFromList_CreateCache()),
+    // Compatibility option. Not advertized, because hopefully won't be needed.
+    // Just put here in case.
+    bUseOldFIDFormat(CPLTestBool(
+        CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE"))),
+    // Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer()
+    // and GMLReader::GMLReader().
+    bFaceHoleNegative(CPLTestBool(
+        CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")))
 {
-    iNextGMLId = 0;
-    nTotalGMLCount = -1;
-    bInvalidFIDFound = false;
-    pszFIDPrefix = NULL;
-    bFaceHoleNegative = false;
-
-    poDS = poDSIn;
-
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
-
-    bWriter = bWriterIn;
-    bSameSRS = false;
-
-/* -------------------------------------------------------------------- */
-/*      Reader's should get the corresponding GMLFeatureClass and       */
-/*      cache it.                                                       */
-/* -------------------------------------------------------------------- */
-    if( !bWriter )
-        poFClass = poDS->GetReader()->GetClass( pszName );
-    else
-        poFClass = NULL;
-
-    hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
-
-    /* Compatibility option. Not advertized, because hopefully won't be needed */
-    /* Just put here in provision... */
-    bUseOldFIDFormat = CPLTestBool(CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE"));
-
-    /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
-    bFaceHoleNegative = CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
-
 }
 
 /************************************************************************/

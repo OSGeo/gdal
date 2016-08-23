@@ -893,29 +893,30 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
 
 OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
                     GDALGeoPackageDataset *poDS,
-                    const char * pszTableName) : OGRGeoPackageLayer(poDS)
+                    const char * pszTableName) :
+    OGRGeoPackageLayer(poDS),
+    m_pszTableName(CPLStrdup(pszTableName)),
+    m_iSrs(0),
+    m_poExtent(NULL),
+    m_soColumns(""),
+    m_soFilter(""),
+    m_bExtentChanged(false),
+    m_bContentChanged(false),
+    m_poUpdateStatement(NULL),
+    m_bInsertStatementWithFID(false),
+    m_poInsertStatement(NULL),
+    m_bDeferredSpatialIndexCreation(false),
+    m_bHasSpatialIndex(-1),
+    m_bDropRTreeTable(false),
+    m_bPreservePrecision(true),
+    m_bTruncateFields(false),
+    m_bDeferredCreation(false),
+    m_iFIDAsRegularColumnIndex(-1),
+    m_bHasReadMetadataFromStorage(false),
+    m_bRegisterAsAspatial(false)
 {
-    m_pszTableName = CPLStrdup(pszTableName);
-    m_iSrs = 0;
-    m_poExtent = NULL;
-    m_bExtentChanged = false;
-    m_bContentChanged = false;
     m_poQueryStatement = NULL;
-    m_poUpdateStatement = NULL;
-    m_bInsertStatementWithFID = false;
-    m_poInsertStatement = NULL;
-    m_soColumns = "";
-    m_soFilter = "";
-    m_bDeferredSpatialIndexCreation = false;
-    m_bHasSpatialIndex = -1;
-    m_bDropRTreeTable = false;
-    memset(m_abHasGeometryExtension, 0, sizeof(m_abHasGeometryExtension)); /* false */
-    m_bPreservePrecision = true;
-    m_bTruncateFields = false;
-    m_bDeferredCreation = false;
-    m_iFIDAsRegularColumnIndex = -1;
-    m_bHasReadMetadataFromStorage = false;
-    m_bRegisterAsAspatial = false;
+    memset(m_abHasGeometryExtension, 0, sizeof(m_abHasGeometryExtension));
 }
 
 
