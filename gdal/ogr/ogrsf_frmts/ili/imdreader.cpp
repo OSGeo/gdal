@@ -339,14 +339,13 @@ public:
 
 ImdReader::ImdReader(int iliVersionIn) :
     iliVersion(iliVersionIn),
-    modelInfos()
-{
-    mainModelName = "OGR";
-    mainTopicName = "OGR";
-    codeBlank = '_';
-    codeUndefined = '@';
-    codeContinue = '\\';
-}
+    modelInfos(),  // TODO(schwehr): Remove.  No need for default ctor, correct?
+    mainModelName("OGR"),
+    mainTopicName("OGR"),
+    codeBlank('_'),
+    codeUndefined('@'),
+    codeContinue('\\')
+{}
 
 ImdReader::~ImdReader() {}
 

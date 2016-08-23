@@ -122,7 +122,7 @@ protected:
 /************************************************************************/
 class GTMWaypointLayer : public OGRGTMLayer
 {
-public:
+  public:
     GTMWaypointLayer( const char* pszName,
                       OGRSpatialReference* poSRSIn,
                       int bWriterIn,
@@ -134,7 +134,8 @@ public:
     GIntBig GetFeatureCount(int bForce = TRUE);
 
     enum WaypointFields{NAME, COMMENT, ICON, DATE};
-private:
+
+  private:
     void WriteFeatureAttributes( OGRFeature *poFeature, float altitude );
 };
 
@@ -143,7 +144,7 @@ private:
 /************************************************************************/
 class GTMTrackLayer : public OGRGTMLayer
 {
-public:
+  public:
     GTMTrackLayer( const char* pszName,
                    OGRSpatialReference* poSRSIn,
                    int bWriterIn,
@@ -155,10 +156,9 @@ public:
     GIntBig GetFeatureCount(int bForce = TRUE);
     enum TrackFields{NAME, TYPE, COLOR};
 
-private:
+  private:
     void WriteFeatureAttributes( OGRFeature *poFeature );
     void WriteTrackpoint( double lat, double lon, float altitude, bool start );
-
 };
 
 

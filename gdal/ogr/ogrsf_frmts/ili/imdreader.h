@@ -141,7 +141,7 @@ typedef std::list<IliModelInfo> IliModelInfos;
 
 class ImdReader
 {
-public:
+  public:  // TODO(schwehr): Private?
     int                  iliVersion; /* 1 or 2 */
     IliModelInfos        modelInfos;
     CPLString            mainModelName;
@@ -151,7 +151,7 @@ public:
     char                 codeBlank;
     char                 codeUndefined;
     char                 codeContinue;
-public:
+  public:
                          ImdReader(int iliVersion);
                         ~ImdReader();
     void                 ReadModel(const char *pszFilename);
