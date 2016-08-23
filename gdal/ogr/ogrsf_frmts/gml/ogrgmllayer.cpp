@@ -47,7 +47,6 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
     poFeatureDefn(
         new OGRFeatureDefn(pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
     iNextGMLId(0),
-    nTotalGMLCount(-1),
     bInvalidFIDFound(false),
     pszFIDPrefix(NULL),
     bWriter(bWriterIn),

@@ -53,7 +53,6 @@ class OGRGMLLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
     GIntBig             iNextGMLId;
-    int                 nTotalGMLCount;
     bool                bInvalidFIDFound;
     char                *pszFIDPrefix;
 
