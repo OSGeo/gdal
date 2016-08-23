@@ -40,6 +40,8 @@ CPL_CVSID("$Id$");
 
 OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth ) :
     poFeatureDefn(NULL),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    fpHTF(VSIFOpenL(pszFilename, "rb")),
     bEOF(false),
     nNextFID(0),
     bHasExtent(false),
@@ -48,9 +50,6 @@ OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth ) :
     dfMaxX(0),
     dfMaxY(0)
 {
-    fpHTF = VSIFOpenL(pszFilename, "rb");
-
-    poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     poSRS->SetUTM( nZone, bIsNorth );
 }
 
@@ -68,15 +67,15 @@ OGRHTFPolygonLayer::OGRHTFPolygonLayer( const char* pszFilename, int nZone,
     poFeatureDefn->SetGeomType( wkbPolygon  );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    OGRFieldDefn    oField1( "DESCRIPTION", OFTString);
+    OGRFieldDefn oField1( "DESCRIPTION", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );
-    OGRFieldDefn    oField2( "IDENTIFIER", OFTInteger);
+    OGRFieldDefn oField2( "IDENTIFIER", OFTInteger);
     poFeatureDefn->AddFieldDefn( &oField2 );
-    OGRFieldDefn    oField3( "SEAFLOOR_COVERAGE", OFTString);
+    OGRFieldDefn oField3( "SEAFLOOR_COVERAGE", OFTString);
     poFeatureDefn->AddFieldDefn( &oField3 );
-    OGRFieldDefn    oField4( "POSITION_ACCURACY", OFTReal);
+    OGRFieldDefn oField4( "POSITION_ACCURACY", OFTReal);
     poFeatureDefn->AddFieldDefn( &oField4 );
-    OGRFieldDefn    oField5( "DEPTH_ACCURACY", OFTReal);
+    OGRFieldDefn oField5( "DEPTH_ACCURACY", OFTReal);
     poFeatureDefn->AddFieldDefn( &oField5 );
 
     ResetReading();

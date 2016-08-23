@@ -46,11 +46,12 @@ static const char* const ILI2_DATASECTION = "DATASECTION";
 // ILI2Handler
 //
 ILI2Handler::ILI2Handler( ILI2Reader *poReader ) :
+    m_poReader(poReader),
     level(0),
+    dom_doc(NULL),
+    dom_elem(NULL),
     m_nEntityCounter(0)
 {
-  m_poReader = poReader;
-
   XMLCh *tmpCh = XMLString::transcode("CORE");
   DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(tmpCh);
   XMLString::release(&tmpCh);

@@ -33,6 +33,7 @@
 #include "ogr_gpsbabel.h"
 
 #include <cstring>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -47,10 +48,8 @@ OGRGPSBabelDataSource::OGRGPSBabelDataSource() :
     pszFilename(NULL),
     poGPXDS(NULL)
 {
-  for(int i=0; i<5; ++i)
-  {
-    apoLayers[i] = NULL;
-  }
+  std::fill_n(apoLayers, CPL_ARRAYSIZE(apoLayers),
+              static_cast<OGRLayer*>(NULL));
 }
 
 /************************************************************************/

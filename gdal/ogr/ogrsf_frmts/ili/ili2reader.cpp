@@ -490,13 +490,12 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
 IILI2Reader::~IILI2Reader() {
 }
 
-ILI2Reader::ILI2Reader() {
-    m_poILI2Handler = NULL;
-    m_poSAXReader = NULL;
-    m_bReadStarted = FALSE;
-
-    m_pszFilename = NULL;
-
+ILI2Reader::ILI2Reader() :
+    m_pszFilename(NULL),
+    m_poILI2Handler(NULL),
+    m_poSAXReader(NULL),
+    m_bReadStarted(FALSE)
+{
     SetupParser();
 }
 
