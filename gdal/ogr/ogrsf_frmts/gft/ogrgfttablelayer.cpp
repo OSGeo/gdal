@@ -34,31 +34,30 @@ CPL_CVSID("$Id$");
 /*                         OGRGFTTableLayer()                           */
 /************************************************************************/
 
-OGRGFTTableLayer::OGRGFTTableLayer(OGRGFTDataSource* poDSIn,
-                         const char* pszTableName,
-                         const char* pszTableId,
-                         const char* pszGeomColumnName) : OGRGFTLayer(poDSIn)
-
+OGRGFTTableLayer::OGRGFTTableLayer( OGRGFTDataSource* poDSIn,
+                                    const char* pszTableName,
+                                    const char* pszTableId,
+                                    const char* pszGeomColumnName ) :
+    OGRGFTLayer(poDSIn),
+    osTableName(pszTableName),
+    osTableId(pszTableId),
+    osGeomColumnName(pszGeomColumnName ? pszGeomColumnName : ""),
+    bHasTriedCreateTable(FALSE),
+    bInTransaction(FALSE),
+    nFeaturesInTransaction(0),
+    eGTypeForCreation(wkbUnknown)
 {
-    osTableName = pszTableName;
-    osTableId = pszTableId;
-    osGeomColumnName = pszGeomColumnName ? pszGeomColumnName : "";
-
-    bHasTriedCreateTable = FALSE;
-    bInTransaction = FALSE;
-    nFeaturesInTransaction = 0;
-
     bFirstTokenIsFID = TRUE;
-    eGTypeForCreation = wkbUnknown;
 
     SetDescription( osTableName );
 
-    if (osTableId.size() == 0)
+    if( osTableId.size() == 0 )
     {
         poFeatureDefn = new OGRFeatureDefn( osTableName );
         poFeatureDefn->Reference();
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        poFeatureDefn->GetGeomFieldDefn(0)->SetName(GetDefaultGeometryColumnName());
+        poFeatureDefn->GetGeomFieldDefn(0)->
+            SetName(GetDefaultGeometryColumnName());
     }
 }
 

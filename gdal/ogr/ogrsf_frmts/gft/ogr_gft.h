@@ -119,17 +119,17 @@ class OGRGFTTableLayer : public OGRGFTLayer
     int                nFeaturesInTransaction;
 
     int                FetchDescribe();
-    virtual int                FetchNextRows();
+    virtual int        FetchNextRows();
 
     OGRwkbGeometryType eGTypeForCreation;
 
     std::vector<CPLString>  aosColumnInternalName;
 
     public:
-            OGRGFTTableLayer(OGRGFTDataSource* poDS,
-                             const char* pszTableName,
-                             const char* pszTableId = "",
-                             const char* pszGeomColumnName = "");
+            OGRGFTTableLayer( OGRGFTDataSource* poDS,
+                              const char* pszTableName,
+                              const char* pszTableId = "",
+                              const char* pszGeomColumnName = "" );
             virtual ~OGRGFTTableLayer();
 
     virtual void                ResetReading();

@@ -45,18 +45,10 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
     bHeaderComplete(CPL_TO_BOOL(!bUpdate)),
     bRegionComplete(false),
     nRegionOffset(0),
+    fp(VSIFOpenL( pszFilename, (bUpdateIn ? "r+" : "r" ))),
     papszKeyedValues(NULL),
     bValidFile(FALSE)
 {
-
-/* -------------------------------------------------------------------- */
-/*      Open file.                                                      */
-/* -------------------------------------------------------------------- */
-    if( bUpdate )
-        fp = VSIFOpenL( pszFilename, "r+" );
-    else
-        fp = VSIFOpenL( pszFilename, "r" );
-
     if( fp == NULL )
         return;
 
