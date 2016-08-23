@@ -127,29 +127,26 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABDATFile::TABDATFile()
-{
-    m_fp = NULL;
-    m_pszFname = NULL;
-    m_eTableType = TABTableNative;
-
-    m_poHeaderBlock = NULL;
-    m_poRecordBlock = NULL;
-    m_pasFieldDef = NULL;
-
-    m_numFields = -1;
-    m_numRecords = -1;
-    m_nFirstRecordPtr = 0;
-    m_nBlockSize = 0;
-    m_nRecordSize = -1;
-    m_nCurRecordId = -1;
-    m_bCurRecordDeletedFlag = FALSE;
-    m_bWriteHeaderInitialized = FALSE;
-    m_bWriteEOF = FALSE;
-
-    m_bUpdated = FALSE;
-    m_eAccessMode = TABRead;
-}
+TABDATFile::TABDATFile() :
+    m_pszFname(NULL),
+    m_fp(NULL),
+    m_eAccessMode(TABRead),
+    m_eTableType(TABTableNative),
+    m_poHeaderBlock(NULL),
+    m_numFields(-1),
+    m_pasFieldDef(NULL),
+    m_poRecordBlock(NULL),
+    m_nBlockSize(0),
+    m_nRecordSize(-1),
+    m_nCurRecordId(-1),
+    m_bCurRecordDeletedFlag(FALSE),
+    m_numRecords(-1),
+    m_nFirstRecordPtr(0),
+    m_bWriteHeaderInitialized(FALSE),
+    m_bWriteEOF(FALSE),
+    m_bUpdated(FALSE)
+    // TODO(schwehr): m_szBuffer({})
+{}
 
 /**********************************************************************
  *                   TABDATFile::~TABDATFile()

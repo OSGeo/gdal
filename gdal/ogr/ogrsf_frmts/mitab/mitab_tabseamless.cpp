@@ -96,20 +96,19 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABSeamless::TABSeamless()
+TABSeamless::TABSeamless() :
+    m_pszFname(NULL),
+    m_pszPath(NULL),
+    m_eAccessMode(TABRead),
+    m_poFeatureDefnRef(NULL),
+    m_poIndexTable(NULL),
+    m_nTableNameField(-1),
+    m_nCurBaseTableId(-1),
+    m_poCurBaseTable(NULL),
+    m_bEOF(FALSE)
 {
-    m_pszFname = NULL;
-    m_pszPath = NULL;
-    m_eAccessMode = TABRead;
-    m_poFeatureDefnRef = NULL;
     m_poCurFeature = NULL;
     m_nCurFeatureId = -1;
-
-    m_poIndexTable = NULL;
-    m_nTableNameField = -1;
-    m_nCurBaseTableId = -1;
-    m_poCurBaseTable = NULL;
-    m_bEOF = FALSE;
 }
 
 /**********************************************************************

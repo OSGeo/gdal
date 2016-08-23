@@ -122,32 +122,28 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABFile::TABFile()
+TABFile::TABFile() :
+    m_pszFname(NULL),
+    m_eAccessMode(TABRead),
+    m_papszTABFile(NULL),
+    m_nVersion(300),
+    m_panIndexNo(NULL),
+    m_eTableType(TABTableNative),
+    m_poDATFile(NULL),
+    m_poMAPFile(NULL),
+    m_poINDFile(NULL),
+    m_poDefn(NULL),
+    m_poSpatialRef(NULL),
+    bUseSpatialTraversal(FALSE),
+    m_nLastFeatureId(0),
+    m_panMatchingFIDs(NULL),
+    m_iMatchingFID(0),
+    m_bNeedTABRewrite(FALSE),
+    m_bLastOpWasRead(FALSE),
+    m_bLastOpWasWrite(FALSE)
 {
-    m_eAccessMode = TABRead;
-    m_pszFname = NULL;
-    m_papszTABFile = NULL;
-    m_nVersion = 300;
-    m_eTableType = TABTableNative;
-
-    m_poMAPFile = NULL;
-    m_poDATFile = NULL;
-    m_poINDFile = NULL;
-    m_poDefn = NULL;
-    m_poSpatialRef = NULL;
     m_poCurFeature = NULL;
     m_nCurFeatureId = 0;
-    m_nLastFeatureId = 0;
-    m_panIndexNo = NULL;
-
-    bUseSpatialTraversal = FALSE;
-
-    m_panMatchingFIDs = NULL;
-    m_iMatchingFID = 0;
-
-    m_bNeedTABRewrite = FALSE;
-    m_bLastOpWasRead = FALSE;
-    m_bLastOpWasWrite = FALSE;
 }
 
 /**********************************************************************

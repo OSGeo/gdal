@@ -86,21 +86,19 @@ CPL_CVSID("$Id$");
 /*                         OGRTABDataSource()                           */
 /************************************************************************/
 
-OGRTABDataSource::OGRTABDataSource()
-
-{
-    m_pszName = NULL;
-    m_pszDirectory = NULL;
-    m_nLayerCount = 0;
-    m_papoLayers = NULL;
-    m_papszOptions = NULL;
-    m_bCreateMIF = FALSE;
-    m_bSingleFile = FALSE;
-    m_bSingleLayerAlreadyCreated = FALSE;
-    m_bQuickSpatialIndexMode = -1;
-    m_nBlockSize = 512;
-    m_bUpdate = FALSE;
-}
+OGRTABDataSource::OGRTABDataSource() :
+    m_pszName(NULL),
+    m_pszDirectory(NULL),
+    m_nLayerCount(0),
+    m_papoLayers(NULL),
+    m_papszOptions(NULL),
+    m_bCreateMIF(FALSE),
+    m_bSingleFile(FALSE),
+    m_bSingleLayerAlreadyCreated(FALSE),
+    m_bQuickSpatialIndexMode(-1),
+    m_bUpdate(FALSE),
+    m_nBlockSize(512)
+{}
 
 /************************************************************************/
 /*                         ~OGRTABDataSource()                          */

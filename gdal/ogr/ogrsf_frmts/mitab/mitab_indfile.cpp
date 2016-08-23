@@ -95,14 +95,14 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABINDFile::TABINDFile()
+TABINDFile::TABINDFile() :
+    m_pszFname(NULL),
+    m_fp(NULL),
+    m_eAccessMode(TABRead),
+    m_numIndexes(0),
+    m_papoIndexRootNodes(NULL),
+    m_papbyKeyBuffers(NULL)
 {
-    m_fp = NULL;
-    m_pszFname = NULL;
-    m_eAccessMode = TABRead;
-    m_numIndexes = 0;
-    m_papoIndexRootNodes = NULL;
-    m_papbyKeyBuffers = NULL;
     m_oBlockManager.SetName("IND");
     m_oBlockManager.SetBlockSize(512);
 }
@@ -900,25 +900,23 @@ void TABINDFile::Dump(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABINDNode::TABINDNode(TABAccess eAccessMode /*=TABRead*/)
-{
-    m_fp = NULL;
-    m_poCurChildNode = NULL;
-    m_nSubTreeDepth = 0;
-    m_nKeyLength = 0;
-    m_eFieldType = TABFUnknown;
-    m_poDataBlock = NULL;
-    m_numEntriesInNode = 0;
-    m_nCurIndexEntry = 0;
-    m_nPrevNodePtr = 0;
-    m_nNextNodePtr = 0;
-    m_poBlockManagerRef = NULL;
-    m_poParentNodeRef = NULL;
-    m_bUnique = FALSE;
-
-    m_eAccessMode = eAccessMode;
-    m_nCurDataBlockPtr = 0;
-}
+TABINDNode::TABINDNode( TABAccess eAccessMode /*=TABRead*/ ) :
+    m_fp(NULL),
+    m_eAccessMode(eAccessMode),
+    m_poCurChildNode(NULL),
+    m_poParentNodeRef(NULL),
+    m_poBlockManagerRef(NULL),
+    m_nSubTreeDepth(0),
+    m_nKeyLength(0),
+    m_eFieldType(TABFUnknown),
+    m_bUnique(FALSE),
+    m_nCurDataBlockPtr(0),
+    m_nCurIndexEntry(0),
+    m_poDataBlock(NULL),
+    m_numEntriesInNode(0),
+    m_nPrevNodePtr(0),
+    m_nNextNodePtr(0)
+{}
 
 /**********************************************************************
  *                   TABINDNode::~TABINDNode()

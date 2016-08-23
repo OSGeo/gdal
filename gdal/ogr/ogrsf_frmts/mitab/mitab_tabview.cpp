@@ -122,24 +122,20 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABView::TABView()
-{
-    m_pszFname = NULL;
-    m_eAccessMode = TABRead;
-    m_papszTABFile = NULL;
-    m_pszVersion = NULL;
-
-    m_numTABFiles = 0;
-    m_papszTABFnames = NULL;
-    m_papoTABFiles = NULL;
-    m_nMainTableIndex = -1;
-
-    m_papszFieldNames = NULL;
-    m_papszWhereClause = NULL;
-
-    m_poRelation = NULL;
-    m_bRelFieldsCreated = FALSE;
-}
+TABView::TABView() :
+    m_pszFname(NULL),
+    m_eAccessMode(TABRead),
+    m_papszTABFile(NULL),
+    m_pszVersion(NULL),
+    m_papszTABFnames(NULL),
+    m_papoTABFiles(NULL),
+    m_numTABFiles(0),
+    m_nMainTableIndex(-1),
+    m_papszFieldNames(NULL),
+    m_papszWhereClause(NULL),
+    m_poRelation(NULL),
+    m_bRelFieldsCreated(FALSE)
+{}
 
 /**********************************************************************
  *                   TABView::~TABView()
@@ -1286,25 +1282,20 @@ void TABView::Dump(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABRelation::TABRelation()
-{
-    m_poMainTable = NULL;
-    m_pszMainFieldName = NULL;
-    m_nMainFieldNo = -1;
-
-    m_poRelTable = NULL;
-    m_pszRelFieldName = NULL;
-    m_nRelFieldNo = -1;
-    m_nRelFieldIndexNo = -1;
-    m_poRelINDFileRef = NULL;
-
-    m_nUniqueRecordNo = 0;
-
-    m_panMainTableFieldMap = NULL;
-    m_panRelTableFieldMap = NULL;
-
-    m_poDefn = NULL;
-}
+TABRelation::TABRelation() :
+    m_poMainTable(NULL),
+    m_pszMainFieldName(NULL),
+    m_nMainFieldNo(-1),
+    m_poRelTable(NULL),
+    m_pszRelFieldName(NULL),
+    m_nRelFieldNo(-1),
+    m_poRelINDFileRef(NULL),
+    m_nRelFieldIndexNo(-1),
+    m_nUniqueRecordNo(0),
+    m_panMainTableFieldMap(NULL),
+    m_panRelTableFieldMap(NULL),
+    m_poDefn(NULL)
+{}
 
 /**********************************************************************
  *                   TABRelation::~TABRelation()

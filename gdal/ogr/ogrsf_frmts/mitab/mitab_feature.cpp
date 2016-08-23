@@ -186,23 +186,21 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABFeature::TABFeature(OGRFeatureDefn *poDefnIn):
-               OGRFeature(poDefnIn)
-{
-    m_nMapInfoType = TAB_GEOM_NONE;
-    m_bDeletedFlag = FALSE;
-
-    m_nXMin = 0;
-    m_nYMin = 0;
-    m_nXMax = 0;
-    m_nYMax = 0;
-    m_nComprOrgX = 0;
-    m_nComprOrgY = 0;
-    m_dXMin = 0;
-    m_dYMin = 0;
-    m_dXMax = 0;
-    m_dYMax = 0;
-}
+TABFeature::TABFeature(OGRFeatureDefn *poDefnIn) :
+    OGRFeature(poDefnIn),
+    m_nMapInfoType(TAB_GEOM_NONE),
+    m_dXMin(0),
+    m_dYMin(0),
+    m_dXMax(0),
+    m_dYMax(0),
+    m_bDeletedFlag(FALSE),
+    m_nXMin(0),
+    m_nYMin(0),
+    m_nXMax(0),
+    m_nYMax(0),
+    m_nComprOrgX(0),
+    m_nComprOrgY(0)
+{}
 
 /**********************************************************************
  *                   TABFeature::~TABFeature()
@@ -947,10 +945,9 @@ void TABFeature::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABPoint::TABPoint(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-}
+TABPoint::TABPoint(OGRFeatureDefn *poDefnIn) :
+    TABFeature(poDefnIn)
+{}
 
 /**********************************************************************
  *                   TABPoint::~TABPoint()
@@ -1299,12 +1296,11 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABFontPoint::TABFontPoint(OGRFeatureDefn *poDefnIn):
-              TABPoint(poDefnIn)
-{
-    m_nFontStyle = 0;
-    m_dAngle = 0.0;
-}
+TABFontPoint::TABFontPoint(OGRFeatureDefn *poDefnIn) :
+    TABPoint(poDefnIn),
+    m_dAngle(0.0),
+    m_nFontStyle(0)
+{}
 
 /**********************************************************************
  *                   TABFontPoint::~TABFontPoint()
@@ -1622,20 +1618,18 @@ const char *TABFontPoint::GetStyleString()
  *
  * Constructor.
  **********************************************************************/
-TABCustomPoint::TABCustomPoint(OGRFeatureDefn *poDefnIn):
-                    TABPoint(poDefnIn)
-{
-    m_nUnknown_ = m_nCustomStyle = 0;
-}
+TABCustomPoint::TABCustomPoint(OGRFeatureDefn *poDefnIn) :
+    TABPoint(poDefnIn),
+    m_nCustomStyle(0),
+    m_nUnknown_(0)
+{}
 
 /**********************************************************************
  *                   TABCustomPoint::~TABCustomPoint()
  *
  * Destructor.
  **********************************************************************/
-TABCustomPoint::~TABCustomPoint()
-{
-}
+TABCustomPoint::~TABCustomPoint() {}
 
 /**********************************************************************
  *                     TABCustomPoint::CloneTABFeature()
@@ -1832,15 +1826,14 @@ const char *TABCustomPoint::GetStyleString()
  *
  * Constructor.
  **********************************************************************/
-TABPolyline::TABPolyline(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_bCenterIsSet = FALSE;
-    m_bSmooth = FALSE;
-    m_bWriteTwoPointLineAsPolyline = FALSE;
-    m_dCenterX = 0;
-    m_dCenterY = 0;
-}
+TABPolyline::TABPolyline(OGRFeatureDefn *poDefnIn) :
+    TABFeature(poDefnIn),
+    m_bCenterIsSet(FALSE),
+    m_dCenterX(0.0),
+    m_dCenterY(0.0),
+    m_bWriteTwoPointLineAsPolyline(FALSE),
+    m_bSmooth(FALSE)
+{}
 
 /**********************************************************************
  *                   TABPolyline::~TABPolyline()
@@ -2894,23 +2887,20 @@ void TABPolyline::TwoPointLineAsPolyline(GBool bTwoPointLineAsPolyline)
  *
  * Constructor.
  **********************************************************************/
-TABRegion::TABRegion(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_bCenterIsSet = FALSE;
-    m_bSmooth = FALSE;
-    m_dCenterX = 0;
-    m_dCenterY = 0;
-}
+TABRegion::TABRegion(OGRFeatureDefn *poDefnIn) :
+    TABFeature(poDefnIn),
+    m_bSmooth(FALSE),
+    m_bCenterIsSet(FALSE),
+    m_dCenterX(0.0),
+    m_dCenterY(0.0)
+{}
 
 /**********************************************************************
  *                   TABRegion::~TABRegion()
  *
  * Destructor.
  **********************************************************************/
-TABRegion::~TABRegion()
-{
-}
+TABRegion::~TABRegion() {}
 
 /**********************************************************************
  *                     TABRegion::CloneTABFeature()
@@ -3860,21 +3850,19 @@ void TABRegion::SetCenter(double dX, double dY)
  *
  * Constructor.
  **********************************************************************/
-TABRectangle::TABRectangle(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_bRoundCorners = FALSE;
-    m_dRoundXRadius = m_dRoundYRadius = 0.0;
-}
+TABRectangle::TABRectangle( OGRFeatureDefn *poDefnIn ) :
+    TABFeature(poDefnIn),
+    m_bRoundCorners(FALSE),
+    m_dRoundXRadius(0.0),
+    m_dRoundYRadius(0.0)
+{}
 
 /**********************************************************************
  *                   TABRectangle::~TABRectangle()
  *
  * Destructor.
  **********************************************************************/
-TABRectangle::~TABRectangle()
-{
-}
+TABRectangle::~TABRectangle() {}
 
 /**********************************************************************
  *                     TABRectangle::CloneTABFeature()
@@ -4309,23 +4297,20 @@ void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABEllipse::TABEllipse(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_dCenterX = 0;
-    m_dCenterY = 0;
-    m_dXRadius = 0;
-    m_dYRadius = 0;
-}
+TABEllipse::TABEllipse( OGRFeatureDefn *poDefnIn ) :
+    TABFeature(poDefnIn),
+    m_dCenterX(0.0),
+    m_dCenterY(0.0),
+    m_dXRadius(0.0),
+    m_dYRadius(0.0)
+{}
 
 /**********************************************************************
  *                   TABEllipse::~TABEllipse()
  *
  * Destructor.
  **********************************************************************/
-TABEllipse::~TABEllipse()
-{
-}
+TABEllipse::~TABEllipse() {}
 
 /**********************************************************************
  *                     TABEllipse::CloneTABFeature()
@@ -4713,22 +4698,22 @@ void TABEllipse::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABArc::TABArc(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_dStartAngle = m_dEndAngle = 0.0;
-    m_dCenterX = m_dCenterY = m_dXRadius = m_dYRadius = 0.0;
-
-}
+TABArc::TABArc( OGRFeatureDefn *poDefnIn ) :
+    TABFeature(poDefnIn),
+    m_dStartAngle(0.0),
+    m_dEndAngle(0.0),
+    m_dCenterX(0.0),
+    m_dCenterY(0.0),
+    m_dXRadius(0.0),
+    m_dYRadius(0.0)
+{}
 
 /**********************************************************************
  *                   TABArc::~TABArc()
  *
  * Destructor.
  **********************************************************************/
-TABArc::~TABArc()
-{
-}
+TABArc::~TABArc() {}
 
 /**********************************************************************
  *                     TABArc::CloneTABFeature()
@@ -5219,24 +5204,22 @@ void TABArc::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABText::TABText(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_pszString = NULL;
-
-    m_dAngle = m_dHeight = 0.0;
-    m_dfLineEndX = m_dfLineEndY = 0.0;
-    m_bLineEndSet = FALSE;
-
-    m_rgbForeground = 0x000000;
-    m_rgbBackground = 0xffffff;
-    m_rgbOutline    = 0xffffff;
-    m_rgbShadow     = 0x808080;
-
-    m_nTextAlignment = 0;
-    m_nFontStyle = 0;
-    m_dWidth = 0;
-}
+TABText::TABText( OGRFeatureDefn *poDefnIn ) :
+    TABFeature(poDefnIn),
+    m_pszString(NULL),
+    m_dAngle(0.0),
+    m_dHeight(0.0),
+    m_dWidth(0.0),
+    m_dfLineEndX(0.0),
+    m_dfLineEndY(0.0),
+    m_bLineEndSet(FALSE),
+    m_rgbForeground(0x000000),
+    m_rgbBackground(0xffffff),
+    m_rgbOutline(0xffffff),
+    m_rgbShadow(0x808080),
+    m_nTextAlignment(0),
+    m_nFontStyle(0)
+{}
 
 /**********************************************************************
  *                   TABText::~TABText()
@@ -6303,22 +6286,19 @@ void TABText::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABMultiPoint::TABMultiPoint(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_bCenterIsSet = FALSE;
-    m_dCenterX = 0;
-    m_dCenterY = 0;
-}
+TABMultiPoint::TABMultiPoint( OGRFeatureDefn *poDefnIn ) :
+    TABFeature(poDefnIn),
+    m_bCenterIsSet(FALSE),
+    m_dCenterX(0.0),
+    m_dCenterY(0.0)
+{}
 
 /**********************************************************************
  *                   TABMultiPoint::~TABMultiPoint()
  *
  * Destructor.
  **********************************************************************/
-TABMultiPoint::~TABMultiPoint()
-{
-}
+TABMultiPoint::~TABMultiPoint() {}
 
 /**********************************************************************
  *                     TABMultiPoint::CloneTABFeature()
@@ -6832,13 +6812,12 @@ void TABMultiPoint::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABCollection::TABCollection(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_poRegion = NULL;
-    m_poPline = NULL;
-    m_poMpoint = NULL;
-}
+TABCollection::TABCollection( OGRFeatureDefn *poDefnIn ) :
+    TABFeature(poDefnIn),
+    m_poRegion(NULL),
+    m_poPline(NULL),
+    m_poMpoint(NULL)
+{}
 
 /**********************************************************************
  *                   TABCollection::~TABCollection()
@@ -7967,22 +7946,20 @@ void TABCollection::DumpMIF(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABDebugFeature::TABDebugFeature(OGRFeatureDefn *poDefnIn):
-              TABFeature(poDefnIn)
-{
-    m_nSize = 0;
-    m_nCoordDataPtr = 0;
-    m_nCoordDataSize = 0;
-}
+TABDebugFeature::TABDebugFeature( OGRFeatureDefn *poDefnIn ) :
+    TABFeature(poDefnIn),
+    // TODO(schwehr): m_abyBuf
+    m_nSize(0),
+    m_nCoordDataPtr(0),
+    m_nCoordDataSize(0)
+{}
 
 /**********************************************************************
  *                   TABDebugFeature::~TABDebugFeature()
  *
  * Destructor.
  **********************************************************************/
-TABDebugFeature::~TABDebugFeature()
-{
-}
+TABDebugFeature::~TABDebugFeature() {}
 
 /**********************************************************************
  *                   TABDebugFeature::ReadGeometryFromMAPFile()
@@ -8095,15 +8072,13 @@ void TABDebugFeature::DumpMIF(FILE *fpOut /*=NULL*/)
  *                   ITABFeaturePen::ITABFeaturePen()
  **********************************************************************/
 
-ITABFeaturePen::ITABFeaturePen()
-{
-    static const TABPenDef csDefaultPen = MITAB_PEN_DEFAULT;
+// MI default is PEN(1, 2, 0)
+static const TABPenDef csDefaultPen = MITAB_PEN_DEFAULT;
 
-    m_nPenDefIndex=-1;
-
-    /* MI default is PEN(1,2,0) */
-    m_sPenDef = csDefaultPen;
-}
+ITABFeaturePen::ITABFeaturePen() :
+    m_nPenDefIndex(-1),
+    m_sPenDef(csDefaultPen)
+{}
 
 
 /**********************************************************************
@@ -8537,15 +8512,13 @@ void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=NULL*/)
  *                   ITABFeatureBrush::ITABFeatureBrush()
  **********************************************************************/
 
-ITABFeatureBrush::ITABFeatureBrush()
-{
-    static const TABBrushDef csDefaultBrush = MITAB_BRUSH_DEFAULT;
+// MI default is BRUSH(2, 16777215, 16777215)
+static const TABBrushDef csDefaultBrush = MITAB_BRUSH_DEFAULT;
 
-    m_nBrushDefIndex=-1;
-
-    /* MI default is BRUSH(2,16777215,16777215) */
-    m_sBrushDef = csDefaultBrush;
-}
+ITABFeatureBrush::ITABFeatureBrush() :
+    m_nBrushDefIndex(-1),
+    m_sBrushDef(csDefaultBrush)
+{}
 
 
 /**********************************************************************
@@ -8732,15 +8705,13 @@ void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=NULL*/)
  *                   ITABFeatureFont::ITABFeatureFont()
  **********************************************************************/
 
-ITABFeatureFont::ITABFeatureFont()
-{
-    static const TABFontDef csDefaultFont = MITAB_FONT_DEFAULT;
+// MI default is Font("Arial", 0, 0, 0)
+static const TABFontDef csDefaultFont = MITAB_FONT_DEFAULT;
 
-    m_nFontDefIndex=-1;
-
-    /* MI default is Font("Arial",0,0,0) */
-    m_sFontDef = csDefaultFont;
-}
+ITABFeatureFont::ITABFeatureFont() :
+    m_nFontDefIndex(-1),
+    m_sFontDef(csDefaultFont)
+{}
 
 /**********************************************************************
  *                   ITABFeatureFont::SetFontName()
@@ -8777,15 +8748,13 @@ void ITABFeatureFont::DumpFontDef(FILE *fpOut /*=NULL*/)
  *                   ITABFeatureSymbol::ITABFeatureSymbol()
  **********************************************************************/
 
-ITABFeatureSymbol::ITABFeatureSymbol()
-{
-    static const TABSymbolDef csDefaultSymbol = MITAB_SYMBOL_DEFAULT;
+// MI default is Symbol(35, 0, 12)
+static const TABSymbolDef csDefaultSymbol = MITAB_SYMBOL_DEFAULT;
 
-    m_nSymbolDefIndex=-1;
-
-    /* MI default is Symbol(35,0,12) */
-    m_sSymbolDef = csDefaultSymbol;
-}
+ITABFeatureSymbol::ITABFeatureSymbol() :
+    m_nSymbolDefIndex(-1),
+    m_sSymbolDef(csDefaultSymbol)
+{}
 
 /**********************************************************************
  *                   ITABFeatureSymbol::GetSymbolStyleString()

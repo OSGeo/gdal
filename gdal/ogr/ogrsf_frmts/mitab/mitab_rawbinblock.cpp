@@ -84,21 +84,21 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABRawBinBlock::TABRawBinBlock(TABAccess eAccessMode /*= TABRead*/,
-                               GBool bHardBlockSize /*= TRUE*/)
-{
-    m_fp = NULL;
-    m_pabyBuf = NULL;
-    m_nFirstBlockPtr = 0;
-    m_nBlockSize = m_nSizeUsed = m_nFileOffset = m_nCurPos = 0;
-    m_bHardBlockSize = bHardBlockSize;
-    m_nFileSize = -1;
-
-    m_bModified = FALSE;
-
-    m_eAccess = eAccessMode;
-    m_nBlockType = 0;
-}
+TABRawBinBlock::TABRawBinBlock( TABAccess eAccessMode /*= TABRead*/,
+                                GBool bHardBlockSize /*= TRUE*/ ) :
+    m_fp(NULL),
+    m_eAccess(eAccessMode),
+    m_nBlockType(0),
+    m_pabyBuf(NULL),
+    m_nBlockSize(0),
+    m_nSizeUsed(0),
+    m_bHardBlockSize(bHardBlockSize),
+    m_nFileOffset(0),
+    m_nCurPos(0),
+    m_nFirstBlockPtr(0),
+    m_nFileSize(-1),
+    m_bModified(FALSE)
+{}
 
 /**********************************************************************
  *                   TABRawBinBlock::~TABRawBinBlock()
@@ -1163,13 +1163,12 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
  *
  * Constructor.
  **********************************************************************/
-TABBinBlockManager::TABBinBlockManager()
+TABBinBlockManager::TABBinBlockManager() :
+    m_nBlockSize(0),
+    m_nLastAllocatedBlock(-1),
+    m_psGarbageBlocksFirst(NULL),
+    m_psGarbageBlocksLast(NULL)
 {
-
-    m_nBlockSize=0;
-    m_nLastAllocatedBlock = -1;
-    m_psGarbageBlocksFirst = NULL;
-    m_psGarbageBlocksLast = NULL;
     m_szName[0] = '\0';
 }
 

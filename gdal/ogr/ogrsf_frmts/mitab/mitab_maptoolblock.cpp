@@ -73,15 +73,13 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABMAPToolBlock::TABMAPToolBlock(TABAccess eAccessMode /*= TABRead*/):
-    TABRawBinBlock(eAccessMode, TRUE)
-{
-    m_nNextToolBlock = m_numDataBytes = 0;
-
-    m_numBlocksInChain = 1;  // Current block counts as 1
-
-    m_poBlockManagerRef = NULL;
-}
+TABMAPToolBlock::TABMAPToolBlock( TABAccess eAccessMode /*= TABRead*/ ) :
+    TABRawBinBlock(eAccessMode, TRUE),
+    m_numDataBytes(0),
+    m_nNextToolBlock(0),
+    m_numBlocksInChain(1),  // Current block counts as 1
+    m_poBlockManagerRef(NULL)
+{}
 
 /**********************************************************************
  *                   TABMAPToolBlock::~TABMAPToolBlock()
@@ -89,7 +87,6 @@ TABMAPToolBlock::TABMAPToolBlock(TABAccess eAccessMode /*= TABRead*/):
  * Destructor.
  **********************************************************************/
 TABMAPToolBlock::~TABMAPToolBlock() {}
-
 
 /**********************************************************************
  *                   TABMAPToolBlock::EndOfChain()

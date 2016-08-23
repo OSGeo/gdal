@@ -126,23 +126,22 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABMAPObjectBlock::TABMAPObjectBlock(TABAccess eAccessMode /*= TABRead*/):
-    TABRawBinBlock(eAccessMode, TRUE)
-{
-    m_bLockCenter = FALSE;
-    m_numDataBytes = 0;
-    m_nFirstCoordBlock = 0;
-    m_nLastCoordBlock = 0;
-    m_nCenterX = 0;
-    m_nCenterY = 0;
-    m_nMinX = 0;
-    m_nMinY = 0;
-    m_nMaxX = 0;
-    m_nMaxY = 0;
-    m_nCurObjectOffset = 0;
-    m_nCurObjectId = 0;
-    m_nCurObjectType = TAB_GEOM_UNSET;
-}
+TABMAPObjectBlock::TABMAPObjectBlock( TABAccess eAccessMode /*= TABRead*/ ) :
+    TABRawBinBlock(eAccessMode, TRUE),
+    m_numDataBytes(0),
+    m_nFirstCoordBlock(0),
+    m_nLastCoordBlock(0),
+    m_nCenterX(0),
+    m_nCenterY(0),
+    m_nMinX(0),
+    m_nMinY(0),
+    m_nMaxX(0),
+    m_nMaxY(0),
+    m_nCurObjectOffset(0),
+    m_nCurObjectId(0),
+    m_nCurObjectType(TAB_GEOM_UNSET),
+    m_bLockCenter(FALSE)
+{}
 
 /**********************************************************************
  *                   TABMAPObjectBlock::~TABMAPObjectBlock()
@@ -151,7 +150,7 @@ TABMAPObjectBlock::TABMAPObjectBlock(TABAccess eAccessMode /*= TABRead*/):
  **********************************************************************/
 TABMAPObjectBlock::~TABMAPObjectBlock()
 {
-
+    // TODO(schwehr): Why set these?  Should remove.
     m_nMinX = 1000000000;
     m_nMinY = 1000000000;
     m_nMaxX = -1000000000;

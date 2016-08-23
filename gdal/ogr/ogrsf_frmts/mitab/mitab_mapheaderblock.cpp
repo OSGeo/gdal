@@ -183,12 +183,13 @@ static const GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
  *
  * Constructor.
  **********************************************************************/
-TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/):
+TABMAPHeaderBlock::TABMAPHeaderBlock( TABAccess eAccessMode /*= TABRead*/ ):
     TABRawBinBlock(eAccessMode, TRUE)
 {
+    // TODO(schwehr): Consider using initializer list for most values.
     InitMembersWithDefaultValues();
 
-    /* We don't want to reset it once it is set */
+    // We don't want to reset it once it is set.
     m_bIntBoundsOverflow = FALSE;
 }
 
@@ -197,18 +198,13 @@ TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/):
  *
  * Destructor.
  **********************************************************************/
-TABMAPHeaderBlock::~TABMAPHeaderBlock()
-{
-
-}
+TABMAPHeaderBlock::~TABMAPHeaderBlock() {}
 
 /**********************************************************************
  *            TABMAPHeaderBlock::InitMembersWithDefaultValues()
  **********************************************************************/
 void TABMAPHeaderBlock::InitMembersWithDefaultValues()
 {
-    int i;
-
     /*-----------------------------------------------------------------
      * Set acceptable default values for member vars.
      *----------------------------------------------------------------*/
@@ -255,13 +251,13 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
     m_XPrecision = 0.0;  // not specified
     m_YPrecision = 0.0;  // not specified
 
-    for(i=0; i<6; i++)
+    for( int i = 0; i<6; i++ )
         m_sProj.adProjParams[i] = 0.0;
 
     m_sProj.dDatumShiftX = 0.0;
     m_sProj.dDatumShiftY = 0.0;
     m_sProj.dDatumShiftZ = 0.0;
-    for(i=0; i<5; i++)
+    for( int i = 0; i < 5; i++ )
         m_sProj.adDatumParams[i] = 0.0;
 
     m_sProj.nAffineFlag = 0;    // Only in version 500 and up
