@@ -284,17 +284,19 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         return CE_Failure;
     }
 
-    GDALDataType eDT;
+    GDALDataType eReadDT;
     int bIsSrcNoDataNan = FALSE;
     const double dfNoDataValue = GDALGetRasterNoDataValue(hSrcBand,
                                                               &bSrcHasNoData);
     if( std::numeric_limits<T>::is_integer )
     {
-        eDT = GDT_Int32;
+        eReadDT = GDT_Int32;
         if( bSrcHasNoData )
         {
-            const int nMinVal = (eDT == GDT_Byte ) ? 0 : (eDT == GDT_UInt16) ? 0 : -32768;
-            const int nMaxVal = (eDT == GDT_Byte ) ? 255 : (eDT == GDT_UInt16) ? 65535 : 32767;
+            GDALDataType eSrcDT = GDALGetRasterDataType( hSrcBand );
+            CPLAssert( eSrcDT == GDT_Byte || eSrcDT == GDT_UInt16 || eSrcDT == GDT_Int16 );
+            const int nMinVal = (eSrcDT == GDT_Byte ) ? 0 : (eSrcDT == GDT_UInt16) ? 0 : -32768;
+            const int nMaxVal = (eSrcDT == GDT_Byte ) ? 255 : (eSrcDT == GDT_UInt16) ? 65535 : 32767;
             if( fabs(dfNoDataValue - floor(dfNoDataValue + 0.5)) < 1e-2 &&
                 dfNoDataValue >= nMinVal && dfNoDataValue <= nMaxVal )
             {
@@ -308,7 +310,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
     }
     else
     {
-        eDT = GDT_Float32;
+        eReadDT = GDT_Float32;
         fSrcNoDataValue = static_cast<T>(dfNoDataValue);
         bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(dfNoDataValue);
     }
@@ -343,7 +345,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                         nXSize, 1,
                         pafThreeLineWin + i * nXSize,
                         nXSize, 1,
-                        eDT,
+                        eReadDT,
                         0, 0) != CE_None )
         {
             eErr = CE_Failure;
@@ -421,7 +423,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                         nXSize, 1,
                         pafThreeLineWin + nLine3Off,
                         nXSize, 1,
-                        eDT,
+                        eReadDT,
                         0, 0);
         if (eErr != CE_None)
             goto end;
@@ -2276,6 +2278,7 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset<T> *
     nBlockYSize = 1;
 
     bSrcHasNoData = FALSE;
+    fSrcNoDataValue = 0;
     bIsSrcNoDataNan = FALSE;
     const double dfNoDataValue = GDALGetRasterNoDataValue(poDSIn->hSrcBand,
                                                           &bSrcHasNoData);
@@ -2285,6 +2288,7 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset<T> *
         if( bSrcHasNoData )
         {
             GDALDataType eSrcDT = GDALGetRasterDataType(poDSIn->hSrcBand);
+            CPLAssert( eSrcDT == GDT_Byte || eSrcDT == GDT_UInt16 || eSrcDT == GDT_Int16 );
             const int nMinVal = (eSrcDT == GDT_Byte ) ? 0 : (eSrcDT == GDT_UInt16) ? 0 : -32768;
             const int nMaxVal = (eSrcDT == GDT_Byte ) ? 255 : (eSrcDT == GDT_UInt16) ? 65535 : 32767;
             if( fabs(dfNoDataValue - floor(dfNoDataValue + 0.5)) < 1e-2 &&
