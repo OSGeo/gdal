@@ -596,17 +596,17 @@ class OGROpenFileGDBSingleFeatureLayer : public OGRLayer
 /*                 OGROpenFileGDBSingleFeatureLayer()                   */
 /************************************************************************/
 
-OGROpenFileGDBSingleFeatureLayer::OGROpenFileGDBSingleFeatureLayer(const char* pszLayerName,
-                                                                   const char *pszValIn )
+OGROpenFileGDBSingleFeatureLayer::OGROpenFileGDBSingleFeatureLayer(
+    const char* pszLayerName,
+    const char *pszValIn ) :
+    pszVal(pszValIn ? CPLStrdup(pszValIn) : NULL),
+    poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
+    iNextShapeId(0)
 {
-    poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     OGRFieldDefn oField( "FIELD_1", OFTString );
     poFeatureDefn->AddFieldDefn( &oField );
-
-    iNextShapeId = 0;
-    pszVal = pszValIn ? CPLStrdup(pszValIn) : NULL;
 }
 
 /************************************************************************/
@@ -672,11 +672,13 @@ class OGROpenFileGDBSimpleSQLLayer: public OGRLayer
 /***********************************************************************/
 
 OGROpenFileGDBSimpleSQLLayer::OGROpenFileGDBSimpleSQLLayer(
-                                            OGRLayer* poBaseLayerIn,
-                                            FileGDBIterator* poIterIn,
-                                            int nColumns,
-                                            swq_col_def* pasColDefs) :
-        poBaseLayer(poBaseLayerIn), poIter(poIterIn)
+    OGRLayer* poBaseLayerIn,
+    FileGDBIterator* poIterIn,
+    int nColumns,
+    swq_col_def* pasColDefs) :
+    poBaseLayer(poBaseLayerIn),
+    poIter(poIterIn),
+    poFeatureDefn(NULL)
 {
     if( nColumns == 1 && strcmp(pasColDefs[0].field_name, "*") == 0 )
     {
