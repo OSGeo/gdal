@@ -228,7 +228,6 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
                                       NTFFileReader * poReaderIn ) :
     poFeatureDefn(NULL),
     poFilterGeom(NULL),
-    poDS(poDSIn),
     poReader(poReaderIn),
     pafColumn(static_cast<float *>(
         CPLCalloc(sizeof(float), poReaderIn->GetRasterYSize()))),
