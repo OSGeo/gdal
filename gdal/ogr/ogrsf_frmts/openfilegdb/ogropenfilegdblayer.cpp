@@ -130,34 +130,36 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
 /*                      OGROpenFileGDBLayer()                           */
 /************************************************************************/
 
-OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
-                                         const char* pszName,
-                                         const std::string& osDefinition,
-                                         const std::string& osDocumentation,
-                                         const char* /* pszGeomName */,
-                                         OGRwkbGeometryType eGeomType) :
-            m_osGDBFilename(pszGDBFilename),
-            m_osName(pszName),
-            m_poLyrTable(NULL),
-            m_poFeatureDefn(NULL),
-            m_iGeomFieldIdx(-1),
-            m_iCurFeat(0),
-            m_osDefinition(osDefinition),
-            m_osDocumentation(osDocumentation),
-            m_eGeomType(wkbNone),
-            m_bValidLayerDefn(-1),
-            m_bEOF(FALSE),
-            m_poGeomConverter(NULL),
-            m_iFieldToReadAsBinary(-1),
-            m_poIterator(NULL),
-            m_bIteratorSufficientToEvaluateFilter(FALSE),
-            m_poIterMinMax(NULL),
-            m_eSpatialIndexState(SPI_IN_BUILDING),
-            m_pQuadTree(NULL),
-            m_pahFilteredFeatures(NULL),
-            m_nFilteredFeatureCount(-1)
+OGROpenFileGDBLayer::OGROpenFileGDBLayer( const char* pszGDBFilename,
+                                          const char* pszName,
+                                          const std::string& osDefinition,
+                                          const std::string& osDocumentation,
+                                          const char* /* pszGeomName */,
+                                          OGRwkbGeometryType eGeomType ) :
+    m_osGDBFilename(pszGDBFilename),
+    m_osName(pszName),
+    m_poLyrTable(NULL),
+    m_poFeatureDefn(NULL),
+    m_iGeomFieldIdx(-1),
+    m_iCurFeat(0),
+    m_osDefinition(osDefinition),
+    m_osDocumentation(osDocumentation),
+    m_eGeomType(wkbNone),
+    m_bValidLayerDefn(-1),
+    m_bEOF(FALSE),
+    m_poGeomConverter(NULL),
+    m_iFieldToReadAsBinary(-1),
+    m_poIterator(NULL),
+    m_bIteratorSufficientToEvaluateFilter(FALSE),
+    m_poIterMinMax(NULL),
+    m_eSpatialIndexState(SPI_IN_BUILDING),
+    m_pQuadTree(NULL),
+    m_pahFilteredFeatures(NULL),
+    m_nFilteredFeatureCount(-1)
 {
-    // We cannot initialize m_poFeatureDefn in above list since MSVC doesn't like
+    // TODO(rouault): What error on compiler versions?  r33032 does not say.
+
+    // We cannot initialize m_poFeatureDefn in above list. MSVC doesn't like
     // this to be used in initialization list.
     m_poFeatureDefn = new OGROpenFileGDBFeatureDefn(this, pszName);
     SetDescription( m_poFeatureDefn->GetName() );
@@ -168,7 +170,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
 
     if( m_osDefinition.size() )
     {
-        (void) BuildGeometryColumnGDBv10();
+        BuildGeometryColumnGDBv10();
     }
 }
 
