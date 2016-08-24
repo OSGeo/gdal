@@ -43,7 +43,7 @@ OGRPGeoDataSource::OGRPGeoDataSource() :
     nLayers(0),
     pszName(NULL),
     bDSUpdate(FALSE)
-{ }
+{}
 
 /************************************************************************/
 /*                         ~OGRPGeoDataSource()                         */

@@ -45,43 +45,39 @@ static void OGRPGNoticeProcessor( void *arg, const char * pszMessage );
 /************************************************************************/
 
 OGRPGDataSource::OGRPGDataSource() :
-    bDSUpdate(FALSE)
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    pszDBName(NULL),
+    bDSUpdate(FALSE),
+    bHavePostGIS(FALSE),
+    bHaveGeography(FALSE),
+    bUserTransactionActive(FALSE),
+    bSavePointActive(FALSE),
+    nSoftTransactionLevel(0),
+    hPGConn(NULL),
+    nGeometryOID(static_cast<Oid>(0)),
+    nGeographyOID(static_cast<Oid>(0)),
+    nKnownSRID(0),
+    panSRID(NULL),
+    papoSRS(NULL),
+    poLayerInCopyMode(NULL),
+    // Actual value will be auto-detected if PostGIS >= 2.0 detected.
+    nUndefinedSRID(-1),
+    pszForcedTables(NULL),
+    papszSchemaList(NULL),
+    bHasLoadTables(FALSE),
+    bListAllTables(FALSE),
+    bUseBinaryCursor(FALSE),
+    bBinaryTimeFormatIsInt8(FALSE),
+    bUseEscapeStringSyntax(FALSE)
 {
-    pszName = NULL;
-    pszDBName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    hPGConn = NULL;
-    bHavePostGIS = FALSE;
-    bHaveGeography = FALSE;
     sPostgreSQLVersion.nMajor = 0;
     sPostgreSQLVersion.nMinor = 0;
     sPostgreSQLVersion.nRelease = 0;
     sPostGISVersion.nMajor = 0;
     sPostGISVersion.nMinor = 0;
     sPostGISVersion.nRelease = 0;
-    bUseBinaryCursor = FALSE;
-    bUserTransactionActive = FALSE;
-    bSavePointActive = FALSE;
-    nSoftTransactionLevel = 0;
-    bBinaryTimeFormatIsInt8 = FALSE;
-    bUseEscapeStringSyntax = FALSE;
-
-    nGeometryOID = (Oid) 0;
-    nGeographyOID = (Oid) 0;
-
-    nKnownSRID = 0;
-    panSRID = NULL;
-    papoSRS = NULL;
-
-    poLayerInCopyMode = NULL;
-    // Actual value will be auto-detected if PostGIS >= 2.0 detected.
-    nUndefinedSRID = -1;
-
-    pszForcedTables = NULL;
-    papszSchemaList = NULL;
-    bListAllTables = FALSE;
-    bHasLoadTables = FALSE;
 }
 
 /************************************************************************/
@@ -91,8 +87,6 @@ OGRPGDataSource::OGRPGDataSource() :
 OGRPGDataSource::~OGRPGDataSource()
 
 {
-    int         i;
-
     FlushCache();
 
     CPLFree( pszName );
@@ -100,14 +94,14 @@ OGRPGDataSource::~OGRPGDataSource()
     CPLFree( pszForcedTables );
     CSLDestroy( papszSchemaList );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree( papoLayers );
 
     if( hPGConn != NULL )
     {
-        /* If there are prelude statements we don't want to mess with transactions */
+        // If there are prelude statements, don't mess with transactions.
         if( CSLFetchNameValue(papszOpenOptions, "PRELUDE_STATEMENTS") == NULL )
             FlushSoftTransaction();
 
@@ -118,7 +112,8 @@ OGRPGDataSource::~OGRPGDataSource()
                                                              "CLOSING_STATEMENTS");
         if( pszClosingStatements != NULL )
         {
-            PGresult    *hResult = OGRPG_PQexec( hPGConn, pszClosingStatements, TRUE );
+            PGresult *hResult =
+                OGRPG_PQexec( hPGConn, pszClosingStatements, TRUE );
             OGRPGClearResult(hResult);
         }
 
@@ -129,7 +124,7 @@ OGRPGDataSource::~OGRPGDataSource()
         hPGConn = NULL;
     }
 
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( papoSRS[i] != NULL )
             papoSRS[i]->Release();

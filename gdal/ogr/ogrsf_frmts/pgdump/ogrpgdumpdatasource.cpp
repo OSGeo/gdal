@@ -37,45 +37,46 @@ CPL_CVSID("$Id$");
 /*                      OGRPGDumpDataSource()                           */
 /************************************************************************/
 
-OGRPGDumpDataSource::OGRPGDumpDataSource(const char* pszNameIn,
-                                         char** papszOptions)
-
+OGRPGDumpDataSource::OGRPGDumpDataSource( const char* pszNameIn,
+                                          char** papszOptions ) :
+    nLayers(0),
+    papoLayers(NULL),
+    pszName(CPLStrdup(pszNameIn)),
+    bTriedOpen(FALSE),
+    fp(NULL),
+    bInTransaction(FALSE),
+    poLayerInCopyMode(NULL),
+    pszEOL("\n")
 {
-    nLayers = 0;
-    papoLayers = NULL;
-    pszName = CPLStrdup(pszNameIn);
-    bTriedOpen = FALSE;
-    fp = NULL;
-    bInTransaction = FALSE;
-    poLayerInCopyMode = NULL;
-
     const char *pszCRLFFormat = CSLFetchNameValue( papszOptions, "LINEFORMAT");
 
-    int bUseCRLF;
+    bool bUseCRLF = false;
     if( pszCRLFFormat == NULL )
     {
 #ifdef WIN32
-        bUseCRLF = TRUE;
-#else
-        bUseCRLF = FALSE;
+        bUseCRLF = true;
 #endif
     }
-    else if( EQUAL(pszCRLFFormat,"CRLF") )
-        bUseCRLF = TRUE;
-    else if( EQUAL(pszCRLFFormat,"LF") )
-        bUseCRLF = FALSE;
+    else if( EQUAL(pszCRLFFormat, "CRLF") )
+    {
+        bUseCRLF = true;
+    }
+    else if( EQUAL(pszCRLFFormat, "LF") )
+    {
+        bUseCRLF = false;
+    }
     else
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                   pszCRLFFormat );
 #ifdef WIN32
-        bUseCRLF = TRUE;
-#else
-        bUseCRLF = FALSE;
+        bUseCRLF = true;
 #endif
     }
-    pszEOL = (bUseCRLF) ? "\r\n" : "\n";
+
+    if( bUseCRLF )
+        pszEOL =  "\r\n";
 }
 
 /************************************************************************/
@@ -85,16 +86,14 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char* pszNameIn,
 OGRPGDumpDataSource::~OGRPGDumpDataSource()
 
 {
-    int i;
-
-    if (fp)
+    if( fp )
     {
         LogCommit();
         VSIFCloseL(fp);
         fp = NULL;
     }
 
-    for(i=0;i<nLayers;i++)
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree(papoLayers);
     CPLFree(pszName);
@@ -143,7 +142,7 @@ char *OGRPGCommonLaunderName( const char *pszSrcName, const char* pszDebugPrefix
     }
 
     if( strcmp(pszSrcName,pszSafeName) != 0 )
-        CPLDebug(pszDebugPrefix,"LaunderName('%s') -> '%s'", 
+        CPLDebug(pszDebugPrefix,"LaunderName('%s') -> '%s'",
                  pszSrcName, pszSafeName);
 
     return pszSafeName;

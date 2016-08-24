@@ -77,31 +77,22 @@ CPL_CVSID("$Id$");
 /*                           OGRPGLayer()                               */
 /************************************************************************/
 
-OGRPGLayer::OGRPGLayer()
-
-{
-    poDS = NULL;
-
-    bWkbAsOid = FALSE;
-    pszQueryStatement = NULL;
-
-    pszFIDColumn = NULL;
-
-    nCursorPage = atoi(CPLGetConfigOption("OGR_PG_CURSOR_PAGE", "500"));
-    iNextShapeId = 0;
-    nResultOffset = 0;
-
-    pszCursorName = CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this));
-
-    hCursorResult = NULL;
-    bInvalidated = FALSE;
-
-    bCanUseBinaryCursor = TRUE;
-
-    poFeatureDefn = NULL;
-    m_panMapFieldNameToIndex = NULL;
-    m_panMapFieldNameToGeomIndex = NULL;
-}
+OGRPGLayer::OGRPGLayer() :
+    poFeatureDefn(NULL),
+    nCursorPage(atoi(CPLGetConfigOption("OGR_PG_CURSOR_PAGE", "500"))),
+    iNextShapeId(0),
+    poDS(NULL),
+    pszQueryStatement(NULL),
+    pszCursorName(CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this))),
+    hCursorResult(NULL),
+    bInvalidated(FALSE),
+    nResultOffset(0),
+    bWkbAsOid(FALSE),
+    pszFIDColumn(NULL),
+    bCanUseBinaryCursor(TRUE),
+    m_panMapFieldNameToIndex(NULL),
+    m_panMapFieldNameToGeomIndex(NULL)
+{}
 
 /************************************************************************/
 /*                            ~OGRPGLayer()                             */

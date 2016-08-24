@@ -112,7 +112,7 @@ typedef enum {
 class IODSCellEvaluator;
 
 class ods_formula_node {
-private:
+  private:
     void           FreeSubExpr();
     std::string    TransformToString() const;
 
@@ -144,10 +144,12 @@ private:
 
     int            EvaluateCELL(IODSCellEvaluator* poEvaluator);
 
-public:
+ public:
     ods_formula_node();
 
-    ods_formula_node( const char *, ods_formula_field_type field_type_in = ODS_FIELD_TYPE_STRING );
+    ods_formula_node(
+        const char *,
+        ods_formula_field_type field_type_in = ODS_FIELD_TYPE_STRING );
     ods_formula_node( int );
     ods_formula_node( double );
     ods_formula_node( ods_formula_op );
