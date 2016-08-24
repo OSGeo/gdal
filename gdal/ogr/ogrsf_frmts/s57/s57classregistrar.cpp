@@ -47,7 +47,7 @@ S57ClassRegistrar::S57ClassRegistrar() :
     nClasses(0),
     nAttrCount(0),
     papszNextLine(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                         ~S57ClassRegistrar()                         */

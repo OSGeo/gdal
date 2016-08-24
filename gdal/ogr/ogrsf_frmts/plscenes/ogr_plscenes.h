@@ -43,6 +43,7 @@
 #include <vector>
 
 class OGRPLScenesLayer;
+
 class OGRPLScenesDataset: public GDALDataset
 {
         int             bMustCleanPersistent;

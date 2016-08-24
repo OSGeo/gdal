@@ -46,32 +46,32 @@ int OGRPLScenesV1FeatureDefn::GetFieldCount()
 /*                          OGRPLScenesV1Layer()                        */
 /************************************************************************/
 
-OGRPLScenesV1Layer::OGRPLScenesV1Layer(OGRPLScenesV1Dataset* poDS,
-                                       const char* pszName,
-                                       const char* pszSpecURL,
-                                       const char* pszItemsURL,
-                                       GIntBig nCount)
+OGRPLScenesV1Layer::OGRPLScenesV1Layer( OGRPLScenesV1Dataset* poDS,
+                                        const char* pszName,
+                                        const char* pszSpecURL,
+                                        const char* pszItemsURL,
+                                        GIntBig nCount ) :
+    m_poDS(poDS),
+    m_bFeatureDefnEstablished(false),
+    m_poFeatureDefn(new OGRPLScenesV1FeatureDefn(this, pszName)),
+    m_poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    m_osSpecURL(pszSpecURL),
+    m_osItemsURL(pszItemsURL),
+    m_nTotalFeatures(nCount),
+    m_nNextFID(1),
+    m_bEOF(false),
+    m_bStillInFirstPage(true),
+    m_nPageSize(atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "250"))),
+    m_bInFeatureCountOrGetExtent(false),
+    m_poPageObj(NULL),
+    m_poFeatures(NULL),
+    m_nFeatureIdx(0),
+    m_bFilterMustBeClientSideEvaluated(false)
 {
-    m_poDS = poDS;
     SetDescription(pszName);
-    m_bFeatureDefnEstablished = false;
-    m_poFeatureDefn = new OGRPLScenesV1FeatureDefn(this, pszName);
     m_poFeatureDefn->SetGeomType(wkbMultiPolygon);
     m_poFeatureDefn->Reference();
-    m_poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
-    m_osSpecURL = pszSpecURL;
-    m_osItemsURL = pszItemsURL;
-    m_nTotalFeatures = nCount;
-    m_nNextFID = 1;
-    m_bEOF = false;
-    m_bStillInFirstPage = true;
-    m_poPageObj = NULL;
-    m_poFeatures = NULL;
-    m_nFeatureIdx = 0;
-    m_nPageSize = atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "250"));
-    m_bFilterMustBeClientSideEvaluated = false;
-    m_bInFeatureCountOrGetExtent = false;
     ResetReading();
 }
 

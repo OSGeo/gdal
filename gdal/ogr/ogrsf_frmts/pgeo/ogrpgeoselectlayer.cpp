@@ -38,8 +38,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
-                                        CPLODBCStatement * poStmtIn )
-
+                                        CPLODBCStatement * poStmtIn ) :
+    pszBaseStatement(CPLStrdup(poStmtIn->GetCommand()))
 {
     poDS = poDSIn;
 
@@ -48,10 +48,9 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
     poFeatureDefn = NULL;
 
     poStmt = poStmtIn;
-    pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
 
-    /* Just to make test_ogrsf happy, but would/could need be extended to */
-    /* other cases */
+    // Just to make test_ogrsf happy, but would/could need be extended to
+    // other cases.
     if( STARTS_WITH_CI(pszBaseStatement, "SELECT * FROM ") )
     {
 
