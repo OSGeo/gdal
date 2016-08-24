@@ -42,32 +42,69 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR ) :
 
     // Setting up layer geometry type
     OGRwkbGeometryType eGeomType;
-    switch( poCADLayer.getGeometryType() )
+    char dLineStringPresented = 0, dCircularStringPresented = 0, dPointPresented = 0,
+                                                                 dPolygonPresented = 0;
+    vector<CADObject::ObjectType> aePresentedGeometryTypes = poCADLayer.getGeometryTypes();
+    for( size_t i = 0; i < aePresentedGeometryTypes.size(); ++i )
     {
+        switch( aePresentedGeometryTypes[i] )
+        {
         case CADObject::ATTDEF:
         case CADObject::TEXT:
         case CADObject::MTEXT:
         case CADObject::POINT:
-            eGeomType = wkbPoint;
+            dPointPresented = 1;
             break;
+        case CADObject::CIRCLE:
+            dCircularStringPresented = 1;
+            break;
+        case CADObject::SPLINE:
         case CADObject::ELLIPSE:
         case CADObject::ARC:
-        case CADObject::CIRCLE:
         case CADObject::POLYLINE3D:
         case CADObject::POLYLINE2D:
         case CADObject::LWPOLYLINE:
         case CADObject::LINE:
-            eGeomType = wkbLineString;
+            dLineStringPresented = 1;
             break;
         case CADObject::FACE3D:
-            eGeomType = wkbPolygon;
-            break;
-        case -1:
-            eGeomType = wkbGeometryCollection;
+        case CADObject::SOLID:
+            dPolygonPresented = 1;
             break;
         default:
-            eGeomType = wkbUnknown;
             break;
+        }
+    }
+
+    if( ( dLineStringPresented + 
+          dCircularStringPresented + 
+          dPointPresented + 
+          dPolygonPresented ) > 1 )
+    {
+        eGeomType = wkbGeometryCollection;
+    }
+    else
+    {
+        if( dLineStringPresented )
+        {
+            eGeomType = wkbLineString;
+        }
+        else if( dCircularStringPresented )
+        {
+            eGeomType = wkbCircularString;
+        }
+        else if( dPointPresented )
+        {
+            eGeomType = wkbPoint;
+        }
+        else if( dPolygonPresented )
+        {
+            eGeomType = wkbPolygon;
+        }
+        else 
+        {
+            eGeomType = wkbUnknown;
+        }
     }
     poFeatureDefn->SetGeomType(eGeomType);
 
@@ -145,6 +182,12 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
         return NULL;
     }
 
+    if( nFID == 1960 )
+    {
+        int midkek = 0;
+        midkek++;
+    }
+
     OGRFeature  *poFeature = NULL;
     CADGeometry *poCADGeometry = poCADLayer.getGeometry( nFID );
 
@@ -178,12 +221,13 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     RGBColor stRGB = poCADGeometry->getColor();
     short adRGB[3] { stRGB.R, stRGB.G, stRGB.B };
     std::stringstream oStringStream;
-    oStringStream << "#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
-    oStringStream << "ff ";
+    oStringStream << "#" << std::hex << std::setw(2) << std::setfill('0');
+    oStringStream << adRGB[0] << adRGB[1] << adRGB[2] << "ff";
     poFeature->SetField( "color", oStringStream.str().c_str() );
 
     oStringStream.str(std::string());
-    oStringStream << "PEN(c:#" << std::hex << adRGB[0] << adRGB[1] << adRGB[2];
+    oStringStream << "PEN(c:#" << std::hex << std::setw(2) << std::setfill('0');
+    oStringStream << adRGB[0] << adRGB[1] << adRGB[2];
     oStringStream << ",w:5px)" << std::dec;
     poFeature->SetStyleString( oStringStream.str().c_str() );
 
@@ -232,16 +276,56 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             break;
         }
 
+        case CADGeometry::SOLID:
+        {
+            CADSolid * const poCADSolid = ( CADSolid* ) poCADGeometry;
+            OGRPolygon * poPoly = new OGRPolygon();
+            OGRLinearRing * poLR = new OGRLinearRing();
+
+            vector<CADVector> astSolidCorners = poCADSolid->getCorners();
+            for( size_t i = 0; i < astSolidCorners.size(); ++i )
+            {
+                poLR->addPoint( astSolidCorners[i].getX(),
+                                astSolidCorners[i].getY(),
+                                astSolidCorners[i].getZ()
+                );
+            }
+            poPoly->addRingDirectly( poLR );
+            poPoly->closeRings();
+            poFeature->SetGeometryDirectly( poPoly );
+
+            poFeature->SetField( "cadgeom_type", "CADSolid" );
+            break;
+        }
+
         case CADGeometry::CIRCLE:
         {
             CADCircle * const poCADCircle = ( CADCircle* ) poCADGeometry;
-            OGRGeometry *poCircle = OGRGeometryFactory::approximateArcAngles(
+            OGRCircularString * poCircle = new OGRCircularString();
+
+            CADVector stCircleCenter = poCADCircle->getPosition();
+            OGRPoint  oCirclePoint;
+            oCirclePoint.setX( stCircleCenter.getX() + poCADCircle->getRadius() * cos( M_PI/3 ) );
+            oCirclePoint.setY( stCircleCenter.getY() + poCADCircle->getRadius() * sin( M_PI/3 ) );
+            oCirclePoint.setZ( stCircleCenter.getZ() );
+            poCircle->addPoint( oCirclePoint.getX(), oCirclePoint.getY(), oCirclePoint.getZ() );
+
+            oCirclePoint.setX( stCircleCenter.getX() + poCADCircle->getRadius() * cos( -M_PI/3 ) );
+            oCirclePoint.setY( stCircleCenter.getY() + poCADCircle->getRadius() * sin( -M_PI/3 ) );
+            oCirclePoint.setZ( stCircleCenter.getZ() );
+            poCircle->addPoint( oCirclePoint.getX(), oCirclePoint.getY(), oCirclePoint.getZ() );
+
+            oCirclePoint.setX( stCircleCenter.getX() + poCADCircle->getRadius() * cos( 2*M_PI/3 ) );
+            oCirclePoint.setY( stCircleCenter.getY() + poCADCircle->getRadius() * sin( 2*M_PI/3 ) );
+            oCirclePoint.setZ( stCircleCenter.getZ() );
+            poCircle->addPoint( oCirclePoint.getX(), oCirclePoint.getY(), oCirclePoint.getZ() );
+            /*OGRGeometry *poCircle = OGRGeometryFactory::approximateArcAngles(
                     poCADCircle->getPosition().getX(), 
                     poCADCircle->getPosition().getY(),
                     poCADCircle->getPosition().getZ(),
                     poCADCircle->getRadius(), poCADCircle->getRadius(), 0.0,
                     0.0, 360.0,
-                    0.0 );
+                    0.0 );*/
             poFeature->SetGeometryDirectly( poCircle );
 
             poFeature->SetField( "cadgeom_type", "CADCircle" );

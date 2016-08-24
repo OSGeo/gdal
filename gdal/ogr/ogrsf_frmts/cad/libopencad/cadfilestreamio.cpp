@@ -30,17 +30,15 @@
 *******************************************************************************/
 #include "cadfilestreamio.h"
 
-CADFileStreamIO::CADFileStreamIO(const char* pszFilePath) : CADFileIO(pszFilePath)
+CADFileStreamIO::CADFileStreamIO( const char * pszFilePath ) : CADFileIO( pszFilePath )
 {
-
 }
 
 CADFileStreamIO::~CADFileStreamIO()
 {
-
 }
 
-const char* CADFileStreamIO::ReadLine()
+const char * CADFileStreamIO::ReadLine()
 {
     // TODO: getline
     return nullptr;
@@ -51,19 +49,19 @@ bool CADFileStreamIO::Eof()
     return m_oFileStream.eof();
 }
 
-bool CADFileStreamIO::Open(int mode)
+bool CADFileStreamIO::Open( int mode )
 {
-    auto io_mode = std::ios_base::in; // as we use ifstream
-    if(mode & OpenMode::binary)
-        io_mode |= std::ios_base::binary;
+    auto io_mode = std::ifstream::in; // as we use ifstream
+    if( mode & OpenMode::binary )
+        io_mode |= std::ifstream::binary;
 
-    if(mode & OpenMode::write)
-        //io_mode |= std::ios_base::out;
+    if( mode & OpenMode::write )
+        //io_mode |= std::ifstream::out;
         return false;
 
     m_oFileStream.open( m_soFilePath, io_mode );
 
-    if(m_oFileStream.is_open())
+    if( m_oFileStream.is_open() )
         m_bIsOpened = true;
 
     return m_bIsOpened;
@@ -75,22 +73,23 @@ bool CADFileStreamIO::Close()
     return CADFileIO::Close();
 }
 
-int CADFileStreamIO::Seek(long offset, CADFileIO::SeekOrigin origin)
+int CADFileStreamIO::Seek( long offset, CADFileIO::SeekOrigin origin )
 {
     std::ios_base::seekdir direction;
-    switch (origin) {
-    case SeekOrigin::CUR:
-        direction = std::ios_base::cur;
-        break;
-    case SeekOrigin::END:
-        direction = std::ios_base::end;
-        break;
-    case SeekOrigin::BEG:
-        direction = std::ios_base::beg;
-        break;
+    switch( origin )
+    {
+        case SeekOrigin::CUR:
+            direction = std::ios_base::cur;
+            break;
+        case SeekOrigin::END:
+            direction = std::ios_base::end;
+            break;
+        case SeekOrigin::BEG:
+            direction = std::ios_base::beg;
+            break;
     }
 
-    return m_oFileStream.seekg(offset, direction).good() ? 0 : 1;
+    return m_oFileStream.seekg( offset, direction ).good() ? 0 : 1;
 }
 
 long CADFileStreamIO::Tell()
@@ -98,14 +97,12 @@ long CADFileStreamIO::Tell()
     return m_oFileStream.tellg();
 }
 
-size_t CADFileStreamIO::Read(void* ptr, size_t size)
+size_t CADFileStreamIO::Read( void * ptr, size_t size )
 {
-    return static_cast<size_t>(m_oFileStream.read(
-                                   static_cast<char*>(ptr),
-                                   static_cast<long>(size)).gcount());
+    return static_cast<size_t>(m_oFileStream.read( static_cast<char *>(ptr), static_cast<long>(size) ).gcount());
 }
 
-size_t CADFileStreamIO::Write(void* /*ptr*/, size_t /*size*/)
+size_t CADFileStreamIO::Write( void * /*ptr*/, size_t /*size*/ )
 {
     // unsupported
     return 0;
@@ -113,5 +110,5 @@ size_t CADFileStreamIO::Write(void* /*ptr*/, size_t /*size*/)
 
 void CADFileStreamIO::Rewind()
 {
-    m_oFileStream.seekg(0, std::ios_base::beg);
+    m_oFileStream.seekg( 0, std::ios_base::beg );
 }

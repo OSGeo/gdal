@@ -50,30 +50,30 @@ public:
 
     enum OpenMode
     {
-        binary 		= 1L << 2,
-        read		= 1L << 3,
-        write 		= 1L << 4
+        binary      = 1L << 2,
+        read        = 1L << 3,
+        write       = 1L << 4
     };
 
 public:
-    CADFileIO(const char* pszFileName);
+    CADFileIO( const char * pszFileName );
     virtual                 ~CADFileIO();
 
-    virtual const char*     ReadLine() = 0;
-    virtual bool            Eof() = 0;
-    virtual bool            Open(int mode) = 0;
-    virtual bool            IsOpened() const;
-    virtual bool            Close();
-    virtual int             Seek(long int offset, SeekOrigin origin) = 0;
-    virtual long int        Tell() = 0;
-    virtual size_t          Read(void* ptr, size_t size) = 0;
-    virtual size_t          Write(void* ptr, size_t size) = 0;
-    virtual void            Rewind() = 0;
-    const char*             GetFilePath() const;
+    virtual const char * ReadLine() = 0;
+    virtual bool     Eof()                                      = 0;
+    virtual bool     Open( int mode )                           = 0;
+    virtual bool     IsOpened() const;
+    virtual bool     Close();
+    virtual int      Seek( long int offset, SeekOrigin origin ) = 0;
+    virtual long int Tell()                                     = 0;
+    virtual size_t   Read( void * ptr, size_t size )            = 0;
+    virtual size_t   Write( void * ptr, size_t size )           = 0;
+    virtual void     Rewind()                                   = 0;
+    const char * GetFilePath() const;
 
 protected:
-    std::string             m_soFilePath;
-    bool                    m_bIsOpened;
+    std::string m_soFilePath;
+    bool        m_bIsOpened;
 };
 
 #endif // CADFILEIO_H

@@ -28,16 +28,17 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *******************************************************************************/
-#include <iostream>
 #include "cadlayer.h"
 #include "cadfile.h"
+
 #include <cassert>
+#include <iostream>
+#include <algorithm>
 
-CADLayer::CADLayer(CADFile * file) : frozen(false), on(true),
-    frozenByDefault(false), locked(false), plotting(false), lineWeight(1),
-    color(0), layerId(0), layer_handle(0), geometryType(-2), pCADFile(file)
+CADLayer::CADLayer( CADFile * file ) : frozen( false ), on( true ), frozenByDefault( false ), locked( false ),
+                                       plotting( false ), lineWeight( 1 ), color( 0 ), layerId( 0 ), layer_handle( 0 ),
+                                       pCADFile( file )
 {
-
 }
 
 string CADLayer::getName() const
@@ -45,7 +46,7 @@ string CADLayer::getName() const
     return layerName;
 }
 
-void CADLayer::setName(const string &value)
+void CADLayer::setName( const string& value )
 {
     layerName = value;
 }
@@ -55,7 +56,7 @@ bool CADLayer::getFrozen() const
     return frozen;
 }
 
-void CADLayer::setFrozen(bool value)
+void CADLayer::setFrozen( bool value )
 {
     frozen = value;
 }
@@ -65,7 +66,7 @@ bool CADLayer::getOn() const
     return on;
 }
 
-void CADLayer::setOn(bool value)
+void CADLayer::setOn( bool value )
 {
     on = value;
 }
@@ -75,7 +76,7 @@ bool CADLayer::getFrozenByDefault() const
     return frozenByDefault;
 }
 
-void CADLayer::setFrozenByDefault(bool value)
+void CADLayer::setFrozenByDefault( bool value )
 {
     frozenByDefault = value;
 }
@@ -85,7 +86,7 @@ bool CADLayer::getLocked() const
     return locked;
 }
 
-void CADLayer::setLocked(bool value)
+void CADLayer::setLocked( bool value )
 {
     locked = value;
 }
@@ -95,7 +96,7 @@ bool CADLayer::getPlotting() const
     return plotting;
 }
 
-void CADLayer::setPlotting(bool value)
+void CADLayer::setPlotting( bool value )
 {
     plotting = value;
 }
@@ -105,7 +106,7 @@ short CADLayer::getLineWeight() const
     return lineWeight;
 }
 
-void CADLayer::setLineWeight(short value)
+void CADLayer::setLineWeight( short value )
 {
     lineWeight = value;
 }
@@ -115,7 +116,7 @@ short CADLayer::getColor() const
     return color;
 }
 
-void CADLayer::setColor(short value)
+void CADLayer::setColor( short value )
 {
     color = value;
 }
@@ -125,7 +126,7 @@ size_t CADLayer::getId() const
     return layerId;
 }
 
-void CADLayer::setId(const size_t &value)
+void CADLayer::setId( const size_t& value )
 {
     layerId = value;
 }
@@ -135,93 +136,86 @@ long CADLayer::getHandle() const
     return layer_handle;
 }
 
-void CADLayer::setHandle(long value)
+void CADLayer::setHandle( long value )
 {
     layer_handle = value;
 }
 
-void CADLayer::addHandle(long handle, CADObject::ObjectType type, long cadinserthandle)
+void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinserthandle )
 {
 #ifdef _DEBUG
     cout << "addHandle: " << handle << " type: " << type << endl;
 #endif //_DEBUG
     if( type == CADObject::ATTRIB || type == CADObject::ATTDEF )
     {
-        unique_ptr< CADAttdef > attdef( static_cast< CADAttdef*>( pCADFile->getGeometry ( handle ) ) );
+        unique_ptr<CADAttdef> attdef( static_cast< CADAttdef *>( pCADFile->GetGeometry( this->getId() - 1, handle ) ) );
 
-        attributesNames.insert ( attdef->getTag () );
+        attributesNames.insert( attdef->getTag() );
     }
 
-    if( type == CADObject::INSERT)
+    if( type == CADObject::INSERT )
     {
         // TODO: transform insert to block of objects (do we need to transform
         // coordinates according to insert point)?
-        unique_ptr< CADObject > insert( pCADFile->getObject ( handle, false ) );
-        CADInsertObject *pInsert = static_cast<CADInsertObject *>(insert.get ());
-        if(nullptr != pInsert)
+        unique_ptr<CADObject> insert( pCADFile->GetObject( handle, false ) );
+        CADInsertObject * pInsert = static_cast<CADInsertObject *>(insert.get());
+        if( nullptr != pInsert )
         {
-            unique_ptr< CADObject > blockHeader(
-                        pCADFile->getObject (
-                            pInsert->hBlockHeader.getAsLong (), false ));
-            CADBlockHeaderObject *pBlockHeader = static_cast<CADBlockHeaderObject *>(blockHeader.get ());
-            if(nullptr != pBlockHeader)
+            unique_ptr<CADObject> blockHeader( pCADFile->GetObject( pInsert->hBlockHeader.getAsLong(), false ) );
+            CADBlockHeaderObject * pBlockHeader = static_cast<CADBlockHeaderObject *>(blockHeader.get());
+            if( nullptr != pBlockHeader )
             {
 #ifdef _DEBUG
-                if(pBlockHeader->bBlkisXRef)
+                if( pBlockHeader->bBlkisXRef )
                 {
-                    assert(0);
+                    assert( 0 );
                 }
 #endif //_DEBUG
-                auto dCurrentEntHandle = pBlockHeader->hEntities[0].getAsLong ();
-                auto dLastEntHandle    = pBlockHeader->hEntities[
-                        pBlockHeader->hEntities.size() - 1].getAsLong (); // FIXME: in 2000+ entities probably has no links to each other.
+                auto dCurrentEntHandle = pBlockHeader->hEntities[0].getAsLong();
+                auto dLastEntHandle    = pBlockHeader->hEntities[pBlockHeader->hEntities.size() -
+                                                                 1].getAsLong(); // FIXME: in 2000+ entities probably has no links to each other.
 
                 if( dCurrentEntHandle == dLastEntHandle ) // Blocks can be empty (contain no objects)
                     return;
 
                 while( true )
                 {
-                    unique_ptr< CADEntityObject > entity( static_cast< CADEntityObject* >(
-                            pCADFile->getObject ( dCurrentEntHandle,
-                                                  true ) ) );
+                    unique_ptr<CADEntityObject> entity( static_cast< CADEntityObject * >(
+                                                                pCADFile->GetObject( dCurrentEntHandle, true ) ) );
 
                     if( dCurrentEntHandle == dLastEntHandle )
                     {
                         if( entity != nullptr )
                         {
-                            addHandle (dCurrentEntHandle, entity->getType (), handle);
+                            addHandle( dCurrentEntHandle, entity->getType(), handle );
                             Matrix mat;
-                            mat.translate (pInsert->vertInsertionPoint);
-                            mat.scale (pInsert->vertScales);
-                            mat.rotate (pInsert->dfRotation);
+                            mat.translate( pInsert->vertInsertionPoint );
+                            mat.scale( pInsert->vertScales );
+                            mat.rotate( pInsert->dfRotation );
                             transformations[dCurrentEntHandle] = mat;
                             break;
-                        }
-                        else
+                        } else
                         {
-                            assert(0);
+                            assert( 0 );
                         }
                     }
 
                     if( entity != nullptr )
                     {
-                        addHandle ( dCurrentEntHandle, entity->getType (), handle );
+                        addHandle( dCurrentEntHandle, entity->getType(), handle );
                         Matrix mat;
-                        mat.translate (pInsert->vertInsertionPoint);
-                        mat.scale (pInsert->vertScales);
-                        mat.rotate (pInsert->dfRotation);
+                        mat.translate( pInsert->vertInsertionPoint );
+                        mat.scale( pInsert->vertScales );
+                        mat.rotate( pInsert->dfRotation );
                         transformations[dCurrentEntHandle] = mat;
 
                         if( entity->stCed.bNoLinks )
                             ++dCurrentEntHandle;
                         else
-                            dCurrentEntHandle = entity->stChed.hNextEntity.getAsLong (
-                                    entity->stCed.hObjectHandle
-                            );
-                    }
-                    else
+                            dCurrentEntHandle = entity->stChed.hNextEntity.getAsLong( entity->stCed.hObjectHandle );
+                    } else
                     {
-                        assert (0);
+                        assert ( 0 );
                     }
                 }
             }
@@ -229,62 +223,81 @@ void CADLayer::addHandle(long handle, CADObject::ObjectType type, long cadinsert
         return;
     }
 
-    if(isCommonEntityType (type))
+    if( isCommonEntityType( type ) )
     {
-        if(type == CADObject::IMAGE)
+        if( type == CADObject::IMAGE )
             imageHandles.push_back( handle );
         else
         {
-            geometryHandles.push_back( make_pair( handle, cadinserthandle ) );
+            if( pCADFile->isReadingUnsupportedGeometries() == false )
+            {
+                if( isSupportedGeometryType( type ) )
+                {
+                    if( geometryTypes.size() == 0 ) geometryTypes.push_back( type );
+
+                    if( find( geometryTypes.begin(), geometryTypes.end(), type ) == geometryTypes.end() )
+                    {
+                        geometryTypes.push_back( type );
+                    }
+                    geometryHandles.push_back( make_pair( handle, cadinserthandle ) );
+                }
+            }
+            else
+            {
+                if( geometryTypes.size() == 0 ) geometryTypes.push_back( type );
+
+                if( find( geometryTypes.begin(), geometryTypes.end(), type ) == geometryTypes.end() )
+                {
+                    geometryTypes.push_back( type );
+                }
+                geometryHandles.push_back( make_pair( handle, cadinserthandle ) );
+            }
         }
-        if( geometryType == -2 ) // if not inited set type for first geometry
-            geometryType = type;
-        else if( geometryType != type ) // if type differs from previous geometry this is geometry bag (geometry type any)
-            geometryType = -1;
     }
 }
 
 size_t CADLayer::getGeometryCount() const
 {
-    return geometryHandles.size ();
+    return geometryHandles.size();
 }
 
-CADGeometry *CADLayer::getGeometry(size_t index)
+CADGeometry * CADLayer::getGeometry( size_t index )
 {
     auto handleBlockRefPair = geometryHandles[index];
-    CADGeometry* pGeom = pCADFile->getGeometry(handleBlockRefPair.first, handleBlockRefPair.second);
-    if(nullptr == pGeom)
+    CADGeometry * pGeom = pCADFile->GetGeometry( this->getId() - 1, handleBlockRefPair.first,
+                                                 handleBlockRefPair.second );
+    if( nullptr == pGeom )
         return nullptr;
-    auto iter = transformations.find(handleBlockRefPair.first);
-    if(iter != transformations.end())
+    auto iter = transformations.find( handleBlockRefPair.first );
+    if( iter != transformations.end() )
     {
         // transform geometry if nHandle is in transformations
-        pGeom->transform (iter->second);
+        pGeom->transform( iter->second );
     }
     return pGeom;
 }
 
 size_t CADLayer::getImageCount() const
 {
-    return imageHandles.size ();
+    return imageHandles.size();
 }
 
-CADImage *CADLayer::getImage(size_t index)
+CADImage * CADLayer::getImage( size_t index )
 {
-    return static_cast<CADImage*>(pCADFile->getGeometry(imageHandles[index]));
+    return static_cast<CADImage *>(pCADFile->GetGeometry( this->getId() - 1, imageHandles[index] ));
 }
 
-bool CADLayer::addAttribute(const CADObject *pObject)
+bool CADLayer::addAttribute( const CADObject * pObject )
 {
-    if(nullptr == pObject)
+    if( nullptr == pObject )
         return true;
 
-    auto attrib = static_cast<const CADAttribObject*>(pObject);
-    for ( auto i = geometryAttributes.begin (); i != geometryAttributes.end(); ++i )
+    auto      attrib = static_cast<const CADAttribObject *>(pObject);
+    for( auto i      = geometryAttributes.begin(); i != geometryAttributes.end(); ++i )
     {
-        if ( i->first == attrib->stChed.hOwner.getAsLong () )
+        if( i->first == attrib->stChed.hOwner.getAsLong() )
         {
-            i->second.insert ( make_pair( attrib->sTag, layer_handle ) );
+            i->second.insert( make_pair( attrib->sTag, layer_handle ) );
             return true;
         }
     }
@@ -292,12 +305,12 @@ bool CADLayer::addAttribute(const CADObject *pObject)
     return false;
 }
 
-short CADLayer::getGeometryType ()
+vector<CADObject::ObjectType> CADLayer::getGeometryTypes()
 {
-    return geometryType;
+    return geometryTypes;
 }
 
-unordered_set<string> CADLayer::getAttributesTags ()
+unordered_set<string> CADLayer::getAttributesTags()
 {
     return attributesNames;
 }

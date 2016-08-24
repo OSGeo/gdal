@@ -36,45 +36,48 @@
 
 using namespace std;
 
+/*
+ * @brief Class which basicly implements implements 3D vertex
+ */
 class CADVector
 {
 public:
     CADVector();
-    CADVector( double dx, double dy);
-    CADVector( double dx, double dy, double dz);
-    CADVector(const CADVector& other);
-    bool operator == (const CADVector& second);
-    CADVector operator = (const CADVector& second);
+    CADVector( double dx, double dy );
+    CADVector( double dx, double dy, double dz );
+    CADVector( const CADVector& other );
+    bool      operator==( const CADVector& second );
+    CADVector operator=( const CADVector& second );
     double getX() const;
-    void setX(double value);
+    void   setX( double value );
 
     double getY() const;
-    void setY(double value);
+    void   setY( double value );
 
     double getZ() const;
-    void setZ(double value);
+    void   setZ( double value );
 
     bool getBHasZ() const;
-    void setBHasZ(bool value);
+    void setBHasZ( bool value );
 
 protected:
-    inline bool fcmp(double x, double y);
+    inline bool fcmp( double x, double y );
 protected:
     double X;
     double Y;
     double Z;
-    bool bHasZ;
+    bool   bHasZ;
 };
 
 typedef struct _Eed
 {
-    short dLength = 0;
-    CADHandle hApplication;
+    short                 dLength = 0;
+    CADHandle             hApplication;
     vector<unsigned char> acData;
 } CADEed;
 
 typedef vector<CADHandle> CADHandleArray;
-typedef vector<CADEed> CADEedArray;
+typedef vector<CADEed>    CADEedArray;
 
 /**
  * @brief The base CAD object class
@@ -84,177 +87,175 @@ class CADObject
 public:
     enum ObjectType
     {
-        UNUSED = 0x0,                   // 0
-        TEXT = 0x1,                     // 1
-        ATTRIB = 0x2,                   // 2
-        ATTDEF = 0x3,                   // 3
-        BLOCK = 0x4,                    // 4
-        ENDBLK = 0x5,                   // 5
-        SEQEND = 0x6,                   // 6
-        INSERT = 0x7,                   // 7
-        MINSERT1 = 0x8,                 // 8
-        MINSERT2 = 0x9,                 // 9
-        VERTEX2D = 0x0A,                // 10
-        VERTEX3D = 0x0B,                // 11
-        VERTEX_MESH = 0x0C,             // 12
-        VERTEX_PFACE = 0x0D,            // 13
-        VERTEX_PFACE_FACE = 0x0E,       // 14
-        POLYLINE2D = 0x0F,              // 15
-        POLYLINE3D = 0x10,              // 16
-        ARC = 0x11,                     // 17
-        CIRCLE = 0x12,                  // 18
-        LINE = 0x13,                    // 19
-        DIMENSION_ORDINATE = 0x14,      // 20
-        DIMENSION_LINEAR = 0x15,        // 21
-        DIMENSION_ALIGNED = 0x16,       // 22
-        DIMENSION_ANG_3PT = 0x17,       // 23
-        DIMENSION_ANG_2LN = 0x18,       // 24
-        DIMENSION_RADIUS = 0x19,        // 25
-        DIMENSION_DIAMETER = 0x1A,      // 26
-        POINT = 0x1B,                   // 27
-        FACE3D = 0x1C,                  // 28
-        POLYLINE_PFACE = 0x1D,          // 29
-        POLYLINE_MESH = 0x1E,           // 30
-        SOLID = 0x1F,                   // 31
-        TRACE = 0x20,                   // 32
-        SHAPE = 0x21,                   // 33
-        VIEWPORT = 0x22,                // 34
-        ELLIPSE = 0x23,                 // 35
-        SPLINE = 0x24,                  // 36
-        REGION = 0x25,                  // 37
-        SOLID3D = 0x26,                 // 38
-        BODY = 0x27,                    // 39
-        RAY = 0x28,                     // 40
-        XLINE = 0x29,                   // 41
-        DICTIONARY = 0x2A,              // 42
-        OLEFRAME = 0x2B,                // 43
-        MTEXT = 0x2C,                   // 44
-        LEADER = 0x2D,                  // 45
-        TOLERANCE = 0x2E,               // 46
-        MLINE = 0x2F,                   // 47
-        BLOCK_CONTROL_OBJ = 0x30,       // 48
-        BLOCK_HEADER = 0x31,            // 49
-        LAYER_CONTROL_OBJ = 0x32,       // 50
-        LAYER = 0x33,                   // 51
-        STYLE_CONTROL_OBJ = 0x34,       // 52
-        STYLE1 = 0x35,                  // 53
-        STYLE2 = 0x36,                  // 54
-        STYLE3 = 0x37,                  // 55
-        LTYPE_CONTROL_OBJ = 0x38,       // 56
-        LTYPE1 = 0x39,                  // 57
-        LTYPE2 = 0x3A,                  // 58
-        LTYPE3 = 0x3B,                  // 59
-        VIEW_CONTROL_OBJ = 0x3C,        // 60
-        VIEW = 0x3D,                    // 61
-        UCS_CONTROL_OBJ = 0x3E,         // 62
-        UCS = 0x3F,                     // 63
-        VPORT_CONTROL_OBJ = 0x40,       // 64
-        VPORT = 0x41,                   // 65
-        APPID_CONTROL_OBJ = 0x42,       // 66
-        APPID = 0x43,                   // 67
+        UNUSED               = 0x0,                   // 0
+        TEXT                 = 0x1,                     // 1
+        ATTRIB               = 0x2,                   // 2
+        ATTDEF               = 0x3,                   // 3
+        BLOCK                = 0x4,                    // 4
+        ENDBLK               = 0x5,                   // 5
+        SEQEND               = 0x6,                   // 6
+        INSERT               = 0x7,                   // 7
+        MINSERT1             = 0x8,                 // 8
+        MINSERT2             = 0x9,                 // 9
+        VERTEX2D             = 0x0A,                // 10
+        VERTEX3D             = 0x0B,                // 11
+        VERTEX_MESH          = 0x0C,             // 12
+        VERTEX_PFACE         = 0x0D,            // 13
+        VERTEX_PFACE_FACE    = 0x0E,       // 14
+        POLYLINE2D           = 0x0F,              // 15
+        POLYLINE3D           = 0x10,              // 16
+        ARC                  = 0x11,                     // 17
+        CIRCLE               = 0x12,                  // 18
+        LINE                 = 0x13,                    // 19
+        DIMENSION_ORDINATE   = 0x14,      // 20
+        DIMENSION_LINEAR     = 0x15,        // 21
+        DIMENSION_ALIGNED    = 0x16,       // 22
+        DIMENSION_ANG_3PT    = 0x17,       // 23
+        DIMENSION_ANG_2LN    = 0x18,       // 24
+        DIMENSION_RADIUS     = 0x19,        // 25
+        DIMENSION_DIAMETER   = 0x1A,      // 26
+        POINT                = 0x1B,                   // 27
+        FACE3D               = 0x1C,                  // 28
+        POLYLINE_PFACE       = 0x1D,          // 29
+        POLYLINE_MESH        = 0x1E,           // 30
+        SOLID                = 0x1F,                   // 31
+        TRACE                = 0x20,                   // 32
+        SHAPE                = 0x21,                   // 33
+        VIEWPORT             = 0x22,                // 34
+        ELLIPSE              = 0x23,                 // 35
+        SPLINE               = 0x24,                  // 36
+        REGION               = 0x25,                  // 37
+        SOLID3D              = 0x26,                 // 38
+        BODY                 = 0x27,                    // 39
+        RAY                  = 0x28,                     // 40
+        XLINE                = 0x29,                   // 41
+        DICTIONARY           = 0x2A,              // 42
+        OLEFRAME             = 0x2B,                // 43
+        MTEXT                = 0x2C,                   // 44
+        LEADER               = 0x2D,                  // 45
+        TOLERANCE            = 0x2E,               // 46
+        MLINE                = 0x2F,                   // 47
+        BLOCK_CONTROL_OBJ    = 0x30,       // 48
+        BLOCK_HEADER         = 0x31,            // 49
+        LAYER_CONTROL_OBJ    = 0x32,       // 50
+        LAYER                = 0x33,                   // 51
+        STYLE_CONTROL_OBJ    = 0x34,       // 52
+        STYLE1               = 0x35,                  // 53
+        STYLE2               = 0x36,                  // 54
+        STYLE3               = 0x37,                  // 55
+        LTYPE_CONTROL_OBJ    = 0x38,       // 56
+        LTYPE1               = 0x39,                  // 57
+        LTYPE2               = 0x3A,                  // 58
+        LTYPE3               = 0x3B,                  // 59
+        VIEW_CONTROL_OBJ     = 0x3C,        // 60
+        VIEW                 = 0x3D,                    // 61
+        UCS_CONTROL_OBJ      = 0x3E,         // 62
+        UCS                  = 0x3F,                     // 63
+        VPORT_CONTROL_OBJ    = 0x40,       // 64
+        VPORT                = 0x41,                   // 65
+        APPID_CONTROL_OBJ    = 0x42,       // 66
+        APPID                = 0x43,                   // 67
         DIMSTYLE_CONTROL_OBJ = 0x44,    // 68
-        DIMSTYLE = 0x45,                // 69
-        VP_ENT_HDR_CTRL_OBJ = 0x46,     // 70
-        VP_ENT_HDR = 0x47,              // 71
-        GROUP = 0x48,                   // 72
-        MLINESTYLE = 0x49,              // 73
-        OLE2FRAME = 0x4A,               // 74
-        DUMMY = 0x4B,                   // 75
-        LONG_TRANSACTION = 0x4C,        // 76
-        LWPOLYLINE = 0x4D,              // 77
-        HATCH = 0x4E,                   // 78
-        XRECORD = 0x4F,                 // 79
-        ACDBPLACEHOLDER = 0x50,         // 80
-        VBA_PROJECT = 0x51,             // 81
-        LAYOUT = 0x52,                  // 82
+        DIMSTYLE             = 0x45,                // 69
+        VP_ENT_HDR_CTRL_OBJ  = 0x46,     // 70
+        VP_ENT_HDR           = 0x47,              // 71
+        GROUP                = 0x48,                   // 72
+        MLINESTYLE           = 0x49,              // 73
+        OLE2FRAME            = 0x4A,               // 74
+        DUMMY                = 0x4B,                   // 75
+        LONG_TRANSACTION     = 0x4C,        // 76
+        LWPOLYLINE           = 0x4D,              // 77
+        HATCH                = 0x4E,                   // 78
+        XRECORD              = 0x4F,                 // 79
+        ACDBPLACEHOLDER      = 0x50,         // 80
+        VBA_PROJECT          = 0x51,             // 81
+        LAYOUT               = 0x52,                  // 82
         // Codes below arent fixed, libopencad uses it for reading, in writing it will be different!
-        CELLSTYLEMAP = 0x53,            // 83
-        DBCOLOR = 0x54,                 // 84
-        DICTIONARYVAR = 0x55,           // 85
-        DICTIONARYWDFLT = 0x56,         // 86
-        FIELD = 0x57,                   // 87
-        GROUP_UNFIXED = 0x58,           // 88
-        HATCH_UNFIXED = 0x59,           // 89
-        IDBUFFER = 0x5A,                // 90
-        IMAGE = 0x5B,                   // 91
-        IMAGEDEF = 0x5C,                // 92
-        IMAGEDEFREACTOR = 0x5D,         // 93
-        LAYER_INDEX = 0x5E,             // 94
-        LAYOUT_UNFIXED = 0x5F,          // 95
-        LWPOLYLINE_UNFIXED = 0x60,      // 96
-        MATERIAL = 0x61,                // 97
-        MLEADER = 0x62,                 // 98
-        MLEADERSTYLE = 0x63,            // 99
-        OLE2FRAME_UNFIXED = 0x64,       // 100
-        PLACEHOLDER = 0x65,             // 101
-        PLOTSETTINGS = 0x66,            // 102
-        RASTERVARIABLES = 0x67,         // 103
-        SCALE = 0x68,                   // 104
-        SORTENTSTABLE = 0x69,           // 105
-        SPATIAL_FILTER = 0x6A,          // 106
-        SPATIAL_INDEX = 0x6B,           // 107
-        TABLEGEOMETRY = 0x6C,           // 108
-        TABLESTYLES = 0x6D,             // 109
-        VBA_PROJECT_UNFIXED = 0x6E,     // 110
-        VISUALSTYLE = 0x6F,             // 111
-        WIPEOUTVARIABLE = 0x70,         // 112
-        XRECORD_UNFIXED = 0x71,         // 113
-        WIPEOUT = 0x72                  // 114
+        CELLSTYLEMAP         = 0x53,            // 83
+        DBCOLOR              = 0x54,                 // 84
+        DICTIONARYVAR        = 0x55,           // 85
+        DICTIONARYWDFLT      = 0x56,         // 86
+        FIELD                = 0x57,                   // 87
+        GROUP_UNFIXED        = 0x58,           // 88
+        HATCH_UNFIXED        = 0x59,           // 89
+        IDBUFFER             = 0x5A,                // 90
+        IMAGE                = 0x5B,                   // 91
+        IMAGEDEF             = 0x5C,                // 92
+        IMAGEDEFREACTOR      = 0x5D,         // 93
+        LAYER_INDEX          = 0x5E,             // 94
+        LAYOUT_UNFIXED       = 0x5F,          // 95
+        LWPOLYLINE_UNFIXED   = 0x60,      // 96
+        MATERIAL             = 0x61,                // 97
+        MLEADER              = 0x62,                 // 98
+        MLEADERSTYLE         = 0x63,            // 99
+        OLE2FRAME_UNFIXED    = 0x64,       // 100
+        PLACEHOLDER          = 0x65,             // 101
+        PLOTSETTINGS         = 0x66,            // 102
+        RASTERVARIABLES      = 0x67,         // 103
+        SCALE                = 0x68,                   // 104
+        SORTENTSTABLE        = 0x69,           // 105
+        SPATIAL_FILTER       = 0x6A,          // 106
+        SPATIAL_INDEX        = 0x6B,           // 107
+        TABLEGEOMETRY        = 0x6C,           // 108
+        TABLESTYLES          = 0x6D,             // 109
+        VBA_PROJECT_UNFIXED  = 0x6E,     // 110
+        VISUALSTYLE          = 0x6F,             // 111
+        WIPEOUTVARIABLE      = 0x70,         // 112
+        XRECORD_UNFIXED      = 0x71,         // 113
+        WIPEOUT              = 0x72                  // 114
     };
 
-
     ObjectType getType() const;
-    long getSize() const;
+    long       getSize() const;
 
-    void setSize(long value);
+    void setSize( long value );
 
-    void setType(const ObjectType &value);
+    void setType( const ObjectType& value );
 
     short getCRC() const;
-    void setCRC(short value);
+    void  setCRC( short value );
 
 protected:
-    long  size;
+    long       size;
     ObjectType type;
-    short CRC;
+    short      CRC;
 };
 
-
-
-string getNameByType(CADObject::ObjectType eType);
-bool isCommonEntityType(short nType);
+string getNameByType( CADObject::ObjectType eType );
+bool   isCommonEntityType( short nType );
+bool   isSupportedGeometryType( short nType );
 
 /**
  * @brief The CADCommonED struct
  */
 struct CADCommonED
 {
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
+    long        nObjectSizeInBits;
+    CADHandle   hObjectHandle;
     CADEedArray aEED;
 
-    bool bGraphicsPresented;
+    bool         bGraphicsPresented;
     vector<char> abyGraphicsData;
 
     unsigned char bbEntMode;
-    long nNumReactors;
+    long          nNumReactors;
 
     bool bNoXDictionaryHandlePresent;
     bool bBinaryDataPresent;
 
     bool bIsByLayerLT; // R13-14 only
 
-    bool bNoLinks;
+    bool  bNoLinks;
     short nCMColor;
 
-    double dfLTypeScale;
+    double        dfLTypeScale;
     unsigned char bbLTypeFlags;
     unsigned char bbPlotStyleFlags;
-    char bbMaterialFlags;
-    char nShadowFlags;
+    char          bbMaterialFlags;
+    char          nShadowFlags;
 
-    short nInvisibility;
-    unsigned char  nLineWeight;
+    short         nInvisibility;
+    unsigned char nLineWeight;
 };
 
 /**
@@ -262,11 +263,11 @@ struct CADCommonED
  */
 struct CADCommonEHD
 {
-    CADHandle hOwner; // depends on entmode.
+    CADHandle      hOwner; // depends on entmode.
     CADHandleArray hReactors;
-    CADHandle hXDictionary;
-    CADHandle hLayer;
-    CADHandle hLType;
+    CADHandle      hXDictionary;
+    CADHandle      hLayer;
+    CADHandle      hLType;
 
     CADHandle hPrevEntity;
     CADHandle hNextEntity;
@@ -287,7 +288,7 @@ struct CADCommonEHD
 class CADEntityObject : public CADObject
 {
 public:
-    struct CADCommonED stCed;
+    struct CADCommonED  stCed;
     struct CADCommonEHD stChed;
 };
 
@@ -297,21 +298,21 @@ public:
 class CADTextObject : public CADEntityObject
 {
 public:
-    CADTextObject();
-    unsigned char   DataFlags;
-    double dfElevation;
-    CADVector vertInsetionPoint;
-    CADVector vertAlignmentPoint;
-    CADVector vectExtrusion;
-    double dfThickness;
-    double dfObliqueAng;
-    double dfRotationAng;
-    double dfHeight;
-    double dfWidthFactor;
-    string sTextValue;
-    short  dGeneration;
-    short  dHorizAlign;
-    short  dVertAlign;
+                  CADTextObject();
+    unsigned char DataFlags;
+    double        dfElevation;
+    CADVector     vertInsetionPoint;
+    CADVector     vertAlignmentPoint;
+    CADVector     vectExtrusion;
+    double        dfThickness;
+    double        dfObliqueAng;
+    double        dfRotationAng;
+    double        dfHeight;
+    double        dfWidthFactor;
+    string        sTextValue;
+    short         dGeneration;
+    short         dHorizAlign;
+    short         dVertAlign;
 
     CADHandle hStyle;
 };
@@ -322,26 +323,26 @@ public:
 class CADAttribObject : public CADEntityObject
 {
 public:
-    CADAttribObject();
-    unsigned char   DataFlags;
-    double dfElevation;
-    CADVector vertInsetionPoint;
-    CADVector vertAlignmentPoint;
-    CADVector vectExtrusion;
-    double dfThickness;
-    double dfObliqueAng;
-    double dfRotationAng;
-    double dfHeight;
-    double dfWidthFactor;
-    string sTextValue;
-    short  dGeneration;
-    short  dHorizAlign;
-    short  dVertAlign;
-    char   dVersion; // R2010+
-    string sTag;
-    short  nFieldLength;
-    unsigned char   nFlags;
-    bool   bLockPosition;
+                  CADAttribObject();
+    unsigned char DataFlags;
+    double        dfElevation;
+    CADVector     vertInsetionPoint;
+    CADVector     vertAlignmentPoint;
+    CADVector     vectExtrusion;
+    double        dfThickness;
+    double        dfObliqueAng;
+    double        dfRotationAng;
+    double        dfHeight;
+    double        dfWidthFactor;
+    string        sTextValue;
+    short         dGeneration;
+    short         dHorizAlign;
+    short         dVertAlign;
+    char          dVersion; // R2010+
+    string        sTag;
+    short         nFieldLength;
+    unsigned char nFlags;
+    bool          bLockPosition;
 
     CADHandle hStyle;
 };
@@ -352,7 +353,7 @@ public:
 class CADAttdefObject : public CADAttribObject
 {
 public:
-    CADAttdefObject();
+           CADAttdefObject();
     string sPrompt;
 };
 
@@ -362,7 +363,7 @@ public:
 class CADBlockObject : public CADEntityObject
 {
 public:
-    CADBlockObject();
+           CADBlockObject();
     string sBlockName;
 };
 
@@ -394,17 +395,17 @@ public:
 class CADInsertObject : public CADEntityObject
 {
 public:
-    CADInsertObject();
+              CADInsertObject();
     CADVector vertInsertionPoint;
     CADVector vertScales;
-    double dfRotation;
+    double    dfRotation;
     CADVector vectExtrusion;
-    bool    bHasAttribs;
-    long    nObjectsOwned;
+    bool      bHasAttribs;
+    long      nObjectsOwned;
 
-    CADHandle hBlockHeader;
-    CADHandleArray hAtrribs;
-    CADHandle hSeqend; // if bHasAttribs == true
+    CADHandle      hBlockHeader;
+    CADHandleArray hAttribs;
+    CADHandle      hSeqend; // if bHasAttribs == true
 };
 
 /**
@@ -413,22 +414,22 @@ public:
 class CADMInsertObject : public CADEntityObject
 {
 public:
-    CADMInsertObject();
+              CADMInsertObject();
     CADVector vertInsertionPoint;
     CADVector vertScales;
-    double dfRotation;
+    double    dfRotation;
     CADVector vectExtrusion;
-    bool    bHasAttribs;
-    long    nObjectsOwned;
+    bool      bHasAttribs;
+    long      nObjectsOwned;
 
     short nNumCols;
     short nNumRows;
     short nColSpacing;
     short nRowSpacing;
 
-    CADHandle hBlockHeader;
+    CADHandle      hBlockHeader;
     CADHandleArray hAtrribs;
-    CADHandle hSeqend; // if bHasAttribs == true
+    CADHandle      hSeqend; // if bHasAttribs == true
 };
 
 /**
@@ -437,13 +438,13 @@ public:
 class CADVertex2DObject : public CADEntityObject
 {
 public:
-    CADVertex2DObject();
+              CADVertex2DObject();
     CADVector vertPosition; // Z must be taken from 2d polyline elevation.
-    double   dfStartWidth;
-    double   dfEndWidth;
-    double   dfBulge;
-    long     nVertexID;
-    double   dfTangentDir;
+    double    dfStartWidth;
+    double    dfEndWidth;
+    double    dfBulge;
+    long      nVertexID;
+    double    dfTangentDir;
 
 /* NOTES: Neither elevation nor thickness are present in the 2D VERTEX data.
  * Both should be taken from the 2D POLYLINE entity (15)
@@ -469,7 +470,7 @@ public:
 class CADVertexMeshObject : public CADEntityObject
 {
 public:
-    CADVertexMeshObject();
+              CADVertexMeshObject();
     CADVector vertPosition;
 };
 
@@ -479,7 +480,7 @@ public:
 class CADVertexPFaceObject : public CADEntityObject
 {
 public:
-    CADVertexPFaceObject ();
+              CADVertexPFaceObject();
     CADVector vertPosition;
 };
 
@@ -489,7 +490,7 @@ public:
 class CADVertexPFaceFaceObject : public CADEntityObject
 {
 public:
-    CADVertexPFaceFaceObject();
+          CADVertexPFaceFaceObject();
     // TODO: check DXF ref to get info what does it mean.
     short iVertexIndex1;
     short iVertexIndex2;
@@ -505,15 +506,15 @@ class CADPolyline2DObject : public CADEntityObject
 public:
     CADPolyline2DObject();
 
-    short  dFlags;
-    short  dCurveNSmoothSurfType;
-    double dfStartWidth;
-    double dfEndWidth;
-    double dfThickness;
-    double dfElevation;
+    short     dFlags;
+    short     dCurveNSmoothSurfType;
+    double    dfStartWidth;
+    double    dfEndWidth;
+    double    dfThickness;
+    double    dfElevation;
     CADVector vectExtrusion;
 
-    long   nObjectsOwned;
+    long nObjectsOwned;
 
     CADHandleArray hVertexes; // content really depends on DWG version.
 
@@ -526,11 +527,11 @@ public:
 class CADPolyline3DObject : public CADEntityObject
 {
 public:
-    CADPolyline3DObject();
+                  CADPolyline3DObject();
     unsigned char SplinedFlags;
     unsigned char ClosedFlags;
 
-    long   nObjectsOwned;
+    long nObjectsOwned;
 
     CADHandleArray hVertexes; // content really depends on DWG version.
 
@@ -543,13 +544,13 @@ public:
 class CADArcObject : public CADEntityObject
 {
 public:
-    CADArcObject();
+              CADArcObject();
     CADVector vertPosition;
-    double   dfRadius;
-    double   dfThickness;
+    double    dfRadius;
+    double    dfThickness;
     CADVector vectExtrusion;
-    double   dfStartAngle;
-    double   dfEndAngle;
+    double    dfStartAngle;
+    double    dfEndAngle;
 };
 
 /**
@@ -558,10 +559,10 @@ public:
 class CADCircleObject : public CADEntityObject
 {
 public:
-    CADCircleObject();
+              CADCircleObject();
     CADVector vertPosition;
-    double   dfRadius;
-    double   dfThickness;
+    double    dfRadius;
+    double    dfThickness;
     CADVector vectExtrusion;
 };
 
@@ -571,10 +572,10 @@ public:
 class CADLineObject : public CADEntityObject
 {
 public:
-    CADLineObject();
+              CADLineObject();
     CADVector vertStart;
     CADVector vertEnd;
-    double   dfThickness;
+    double    dfThickness;
     CADVector vectExtrusion;
 };
 
@@ -584,15 +585,15 @@ public:
 class CADBlockControlObject : public CADObject
 {
 public:
-    CADBlockControlObject();
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
-    CADEedArray aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    long nNumEntries; // doesnt count MODELSPACE and PAPERSPACE
-    CADHandle hNull;
-    CADHandle hXDictionary;
+                   CADBlockControlObject();
+    long           nObjectSizeInBits;
+    CADHandle      hObjectHandle;
+    CADEedArray    aEED;
+    long           nNumReactors;
+    bool           bNoXDictionaryPresent;
+    long           nNumEntries; // doesnt count MODELSPACE and PAPERSPACE
+    CADHandle      hNull;
+    CADHandle      hXDictionary;
     CADHandleArray hBlocks; // ends with modelspace and paperspace handles.
 };
 
@@ -602,40 +603,40 @@ public:
 class CADBlockHeaderObject : public CADObject
 {
 public:
-    CADBlockHeaderObject();
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
-    CADEedArray aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    string sEntryName;
-    bool b64Flag;
-    short dXRefIndex;
-    bool bXDep;
-    bool bAnonymous;
-    bool bHasAtts;
-    bool bBlkisXRef;
-    bool bXRefOverlaid;
-    bool bLoadedBit;
-    long nOwnedObjectsCount;
-    CADVector vertBasePoint;
-    string sXRefPName;
+                          CADBlockHeaderObject();
+    long                  nObjectSizeInBits;
+    CADHandle             hObjectHandle;
+    CADEedArray           aEED;
+    long                  nNumReactors;
+    bool                  bNoXDictionaryPresent;
+    string                sEntryName;
+    bool                  b64Flag;
+    short                 dXRefIndex;
+    bool                  bXDep;
+    bool                  bAnonymous;
+    bool                  bHasAtts;
+    bool                  bBlkisXRef;
+    bool                  bXRefOverlaid;
+    bool                  bLoadedBit;
+    long                  nOwnedObjectsCount;
+    CADVector             vertBasePoint;
+    string                sXRefPName;
     vector<unsigned char> adInsertCount; // TODO: ???
-    string sBlockDescription;
-    long nSizeOfPreviewData;
+    string                sBlockDescription;
+    long                  nSizeOfPreviewData;
     vector<unsigned char> abyBinaryPreviewData;
-    short nInsertUnits;
-    bool bExplodable;
-    char dBlockScaling;
-    CADHandle hBlockControl;
-    vector<CADHandle> hReactors;
-    CADHandle hXDictionary;
-    CADHandle hNull;
-    CADHandle hBlockEntity;
-    CADHandleArray hEntities;
-    CADHandle hEndBlk;
-    CADHandleArray hInsertHandles;
-    CADHandle hLayout;
+    short                 nInsertUnits;
+    bool                  bExplodable;
+    char                  dBlockScaling;
+    CADHandle             hBlockControl;
+    vector<CADHandle>     hReactors;
+    CADHandle             hXDictionary;
+    CADHandle             hNull;
+    CADHandle             hBlockEntity;
+    CADHandleArray        hEntities;
+    CADHandle             hEndBlk;
+    CADHandleArray        hInsertHandles;
+    CADHandle             hLayout;
 };
 
 /**
@@ -646,14 +647,14 @@ class CADLayerControlObject : public CADObject
 public:
     CADLayerControlObject();
 
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
-    CADEedArray aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    long nNumEntries; // counts layer "0"
-    CADHandle hNull;
-    CADHandle hXDictionary;
+    long           nObjectSizeInBits;
+    CADHandle      hObjectHandle;
+    CADEedArray    aEED;
+    long           nNumReactors;
+    bool           bNoXDictionaryPresent;
+    long           nNumEntries; // counts layer "0"
+    CADHandle      hNull;
+    CADHandle      hXDictionary;
     CADHandleArray hLayers;
 };
 
@@ -665,31 +666,31 @@ class CADLayerObject : public CADObject
 public:
     CADLayerObject();
 
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
+    long        nObjectSizeInBits;
+    CADHandle   hObjectHandle;
     CADEedArray aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    string sLayerName;
-    bool b64Flag;
-    short dXRefIndex;
-    bool bXDep;
-    bool bFrozen;
-    bool bOn;
-    bool bFrozenInNewVPORT;
-    bool bLocked;
-    bool bPlottingFlag;
-    short dLineWeight;
-    short dCMColor;
+    long        nNumReactors;
+    bool        bNoXDictionaryPresent;
+    string      sLayerName;
+    bool        b64Flag;
+    short       dXRefIndex;
+    bool        bXDep;
+    bool        bFrozen;
+    bool        bOn;
+    bool        bFrozenInNewVPORT;
+    bool        bLocked;
+    bool        bPlottingFlag;
+    short       dLineWeight;
+    short       dCMColor;
 
-    CADHandle hLayerControl;
+    CADHandle      hLayerControl;
     CADHandleArray hReactors;
-    CADHandle hXDictionary;
-    CADHandle hExternalRefBlockHandle;
-    CADHandle hPlotStyle;
-    CADHandle hMaterial;
-    CADHandle hLType;
-    CADHandle hUnknownHandle;
+    CADHandle      hXDictionary;
+    CADHandle      hExternalRefBlockHandle;
+    CADHandle      hPlotStyle;
+    CADHandle      hMaterial;
+    CADHandle      hLType;
+    CADHandle      hUnknownHandle;
 };
 
 /**
@@ -700,28 +701,27 @@ class CADLineTypeControlObject : public CADObject
 public:
     CADLineTypeControlObject();
 
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
-    CADEedArray aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    long nNumEntries; // doesnt count BYBLOCK / BYLAYER.
-    CADHandle hNull;
-    CADHandle hXDictionary;
+    long           nObjectSizeInBits;
+    CADHandle      hObjectHandle;
+    CADEedArray    aEED;
+    long           nNumReactors;
+    bool           bNoXDictionaryPresent;
+    long           nNumEntries; // doesnt count BYBLOCK / BYLAYER.
+    CADHandle      hNull;
+    CADHandle      hXDictionary;
     CADHandleArray hLTypes;
 };
-
 
 typedef struct _dash
 {
     double dfLength;
-    short dComplexShapecode;
+    short  dComplexShapecode;
     double dfXOffset;
     double dfYOffset;
     double dfScale;
     double dfRotation;
-    short dShapeflag;
-} CADDash;
+    short  dShapeflag;
+}      CADDash;
 
 /**
  * @brief The CADLineTypeObject class
@@ -731,26 +731,26 @@ class CADLineTypeObject : public CADObject
 public:
     CADLineTypeObject();
 
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
-    CADEedArray aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    string sEntryName;
-    bool b64Flag;
-    short dXRefIndex;
-    bool bXDep;
-    string sDescription;
-    double dfPatternLen;
-    unsigned char dAlignment;
-    unsigned char nNumDashes;
-    vector<CADDash> astDashes;
+    long                  nObjectSizeInBits;
+    CADHandle             hObjectHandle;
+    CADEedArray           aEED;
+    long                  nNumReactors;
+    bool                  bNoXDictionaryPresent;
+    string                sEntryName;
+    bool                  b64Flag;
+    short                 dXRefIndex;
+    bool                  bXDep;
+    string                sDescription;
+    double                dfPatternLen;
+    unsigned char         dAlignment;
+    unsigned char         nNumDashes;
+    vector<CADDash>       astDashes;
     vector<unsigned char> abyTextArea; // TODO: what is it?
-    CADHandle hLTControl;
-    CADHandleArray hReactors;
-    CADHandle hXDictionary;
-    CADHandle hXRefBlock;
-    CADHandleArray hShapefiles; // TODO: one for each dash?
+    CADHandle             hLTControl;
+    CADHandleArray        hReactors;
+    CADHandle             hXDictionary;
+    CADHandle             hXRefBlock;
+    CADHandleArray        hShapefiles; // TODO: one for each dash?
 };
 
 /**
@@ -762,9 +762,9 @@ public:
     CADPointObject();
 
     CADVector vertPosition;
-    double   dfThickness;
+    double    dfThickness;
     CADVector vectExtrusion;
-    double   dfXAxisAng;
+    double    dfXAxisAng;
 };
 
 /**
@@ -775,10 +775,10 @@ class CADSolidObject : public CADEntityObject
 public:
     CADSolidObject();
 
-    double dfThickness;
-    double dfElevation;
+    double            dfThickness;
+    double            dfElevation;
     vector<CADVector> avertCorners;
-    CADVector vectExtrusion;
+    CADVector         vectExtrusion;
 };
 
 /**
@@ -792,9 +792,9 @@ public:
     CADVector vertPosition;
     CADVector vectSMAxis;
     CADVector vectExtrusion;
-    double   dfAxisRatio;
-    double   dfBegAngle;
-    double   dfEndAngle;
+    double    dfAxisRatio;
+    double    dfBegAngle;
+    double    dfEndAngle;
 };
 
 /**
@@ -829,20 +829,20 @@ class CADDictionaryObject : public CADObject
 public:
     CADDictionaryObject();
 
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
-    CADEedArray aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    long nNumItems;
-    short dCloningFlag;
-    unsigned char  dHardOwnerFlag;
+    long          nObjectSizeInBits;
+    CADHandle     hObjectHandle;
+    CADEedArray   aEED;
+    long          nNumReactors;
+    bool          bNoXDictionaryPresent;
+    long          nNumItems;
+    short         dCloningFlag;
+    unsigned char dHardOwnerFlag;
 
     vector<string> sItemNames;
 
-    CADHandle hParentHandle;
+    CADHandle      hParentHandle;
     CADHandleArray hReactors;
-    CADHandle hXDictionary;
+    CADHandle      hXDictionary;
     CADHandleArray hItemHandles;
 };
 
@@ -854,14 +854,14 @@ class CADLWPolylineObject : public CADEntityObject
 public:
     CADLWPolylineObject();
 
-    bool   bClosed;
-    double dfConstWidth;
-    double dfElevation;
-    double dfThickness;
-    CADVector vectExtrusion;
-    vector<CADVector> avertVertexes;
-    vector<double> adfBulges;
-    vector<short> adVertexesID;
+    bool                         bClosed;
+    double                       dfConstWidth;
+    double                       dfElevation;
+    double                       dfThickness;
+    CADVector                    vectExtrusion;
+    vector<CADVector>            avertVertexes;
+    vector<double>               adfBulges;
+    vector<short>                adVertexesID;
     vector<pair<double, double>> astWidths; // start, end.
 };
 
@@ -877,23 +877,23 @@ public:
     long dSplineFlags; // 2013+
     long dKnotParameter; // 2013+
 
-    long   dDegree;
-    double dfFitTol;
+    long      dDegree;
+    double    dfFitTol;
     CADVector vectBegTangDir;
     CADVector vectEndTangDir;
-    long   nNumFitPts;
+    long      nNumFitPts;
 
-    bool bRational;
-    bool bClosed;
-    bool bPeriodic;
+    bool   bRational;
+    bool   bClosed;
+    bool   bPeriodic;
     double dfKnotTol;
     double dfCtrlTol;
-    long nNumKnots;
-    long nNumCtrlPts;
-    bool bWeight;
+    long   nNumKnots;
+    long   nNumCtrlPts;
+    bool   bWeight;
 
-    vector<double> adfKnots;
-    vector<double> adfCtrlPointsWeight;
+    vector<double>    adfKnots;
+    vector<double>    adfCtrlPointsWeight;
     vector<CADVector> avertCtrlPoints;
     vector<CADVector> averFitPoints;
 };
@@ -903,21 +903,21 @@ public:
  */
 typedef struct _dimdata
 {
-    char dVersion;
-    CADVector vectExtrusion;
-    CADVector vertTextMidPt;
-    double dfElevation;
+    char          dVersion;
+    CADVector     vectExtrusion;
+    CADVector     vertTextMidPt;
+    double        dfElevation;
     unsigned char dFlags;
-    string sUserText;
-    double dfTextRotation;
-    double dfHorizDir;
-    double dfInsXScale;
-    double dfInsYScale;
-    double dfInsZScale;
-    double dfInsRotation;
+    string        sUserText;
+    double        dfTextRotation;
+    double        dfHorizDir;
+    double        dfInsXScale;
+    double        dfInsYScale;
+    double        dfInsZScale;
+    double        dfInsRotation;
 
-    short dAttachmentPoint;
-    short dLineSpacingStyle;
+    short  dAttachmentPoint;
+    short  dLineSpacingStyle;
     double dfLineSpacingFactor;
     double dfActualMeasurement;
 
@@ -926,7 +926,7 @@ typedef struct _dimdata
     bool bFlipArrow2;
 
     CADVector vert12Pt;
-} CADCommonDimensionData;
+}      CADCommonDimensionData;
 
 /**
  * @brief The CADDimensionObject class
@@ -935,9 +935,9 @@ class CADDimensionObject : public CADEntityObject
 {
 public:
     CADCommonDimensionData cdd;
-    CADVector vert10pt;
-    CADHandle hDimstyle;
-    CADHandle hAnonymousBlock;
+    CADVector              vert10pt;
+    CADHandle              hDimstyle;
+    CADHandle              hAnonymousBlock;
 };
 
 /**
@@ -946,8 +946,8 @@ public:
 class CADDimensionOrdinateObject : public CADDimensionObject
 {
 public:
-    CADDimensionOrdinateObject();
-    CADVector vert13pt, vert14pt;
+                  CADDimensionOrdinateObject();
+    CADVector     vert13pt, vert14pt;
     unsigned char Flags2;
 };
 
@@ -957,7 +957,7 @@ public:
 class CADDimensionLinearObject : public CADDimensionObject
 {
 public:
-    CADDimensionLinearObject();
+              CADDimensionLinearObject();
     CADVector vert13pt, vert14pt;
 
     double dfExtLnRot;
@@ -970,7 +970,7 @@ public:
 class CADDimensionAlignedObject : public CADDimensionObject
 {
 public:
-    CADDimensionAlignedObject();
+              CADDimensionAlignedObject();
     CADVector vert13pt, vert14pt;
 
     double dfExtLnRot;
@@ -982,7 +982,7 @@ public:
 class CADDimensionAngular3PtObject : public CADDimensionObject
 {
 public:
-    CADDimensionAngular3PtObject();
+              CADDimensionAngular3PtObject();
     CADVector vert13pt, vert14pt;
     CADVector vert15pt;
 };
@@ -1007,7 +1007,7 @@ public:
     CADDimensionRadiusObject();
 
     CADVector vert15pt;
-    double dfLeaderLen;
+    double    dfLeaderLen;
 };
 
 /**
@@ -1027,27 +1027,27 @@ class CADImageObject : public CADEntityObject
 public:
     CADImageObject();
 
-    long dClassVersion;
+    long      dClassVersion;
     CADVector vertInsertion;
     CADVector vectUDirection;
     CADVector vectVDirection;
-    double dfSizeX;
-    double dfSizeY;
+    double    dfSizeX;
+    double    dfSizeY;
     /*  display properties (bit coded), 1==show image,
         2==show image when not aligned with screen, 4==use
         clipping boundary, 8==transparency on */
-    short dDisplayProps;
+    short     dDisplayProps;
 
-    bool bClipping;
+    bool          bClipping;
     unsigned char dBrightness;
     unsigned char dContrast;
     unsigned char dFade;
-    bool bClipMode; // R2010+
+    bool          bClipMode; // R2010+
 
     short dClipBoundaryType;
 
-    long nNumberVertexesInClipPolygon;
-    vector < CADVector > avertClippingPolygonVertexes;
+    long              nNumberVertexesInClipPolygon;
+    vector<CADVector> avertClippingPolygonVertexes;
 
     CADHandle hImageDef;
     CADHandle hImageDefReactor;
@@ -1061,15 +1061,15 @@ class CADImageDefReactorObject : public CADObject
 public:
     CADImageDefReactorObject();
 
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
-    vector < CADEed > aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    long dClassVersion;
-    CADHandle hParentHandle;
-    vector < CADHandle > hReactors;
-    CADHandle hXDictionary;
+    long              nObjectSizeInBits;
+    CADHandle         hObjectHandle;
+    vector<CADEed>    aEED;
+    long              nNumReactors;
+    bool              bNoXDictionaryPresent;
+    long              dClassVersion;
+    CADHandle         hParentHandle;
+    vector<CADHandle> hReactors;
+    CADHandle         hXDictionary;
 };
 
 /**
@@ -1080,13 +1080,13 @@ class CADImageDefObject : public CADImageDefReactorObject
 public:
     CADImageDefObject();
 
-    double dfXImageSizeInPx;
-    double dfYImageSizeInPx;
-    string sFilePath;
-    bool bIsLoaded;
+    double        dfXImageSizeInPx;
+    double        dfYImageSizeInPx;
+    string        sFilePath;
+    bool          bIsLoaded;
     unsigned char dResUnits; // 0 == none, 2 == centimeters, 5 == inches
-    double dfXPixelSize; // size of 1 pixel in autocad units
-    double dfYPixelSize;
+    double        dfXPixelSize; // size of 1 pixel in autocad units
+    double        dfYPixelSize;
 };
 
 /**
@@ -1100,20 +1100,20 @@ public:
     CADVector vertInsertionPoint;
     CADVector vectExtrusion;
     CADVector vectXAxisDir;
-    double dfRectWidth;
-    double dfTextHeight;
-    short dAttachment; // TODO: meaning unknown
-    short dDrawingDir;
-    double dfExtents; // TODO: meaning unknown
-    double dfExtentsWidth; // TODO: meaning unknown
-    string sTextValue;
-    short dLineSpacingStyle;
-    double dLineSpacingFactor;
-    bool bUnknownBit;
-    long dBackgroundFlags;
-    long dBackgroundScaleFactor;
-    short dBackgroundColor;
-    long dBackgroundTransparency;
+    double    dfRectWidth;
+    double    dfTextHeight;
+    short     dAttachment; // TODO: meaning unknown
+    short     dDrawingDir;
+    double    dfExtents; // TODO: meaning unknown
+    double    dfExtentsWidth; // TODO: meaning unknown
+    string    sTextValue;
+    short     dLineSpacingStyle;
+    double    dLineSpacingFactor;
+    bool      bUnknownBit;
+    long      dBackgroundFlags;
+    long      dBackgroundScaleFactor;
+    short     dBackgroundColor;
+    long      dBackgroundTransparency;
     CADHandle hStyle;
 };
 
@@ -1126,18 +1126,18 @@ typedef struct _linestyle
     vector<double> adfSegparms;
     short          nAreaFillParms;
     vector<double> adfAreaFillParameters;
-} CADLineStyle;
+}      CADLineStyle;
 
 /**
  * @brief MLine vertex data structure
  */
 typedef struct _mlinevertex
 {
-    CADVector vertPosition;
-    CADVector vectDirection;
-    CADVector vectMIterDirection;
-    vector < CADLineStyle > astLStyles;
-} CADMLineVertex;
+    CADVector            vertPosition;
+    CADVector            vectDirection;
+    CADVector            vectMIterDirection;
+    vector<CADLineStyle> astLStyles;
+}      CADMLineVertex;
 
 /**
  * @brief The CADMLineObject class
@@ -1147,15 +1147,15 @@ class CADMLineObject : public CADEntityObject
 public:
     CADMLineObject();
 
-    double dfScale;
+    double        dfScale;
     unsigned char dJust;
-    CADVector vertBasePoint;
-    CADVector vectExtrusion;
-    short dOpenClosed; // 1 open, 3 closed
+    CADVector     vertBasePoint;
+    CADVector     vectExtrusion;
+    short         dOpenClosed; // 1 open, 3 closed
     unsigned char nLinesInStyle;
-    short nNumVertexes;
+    short         nNumVertexes;
 
-    vector < CADMLineVertex > avertVertexes;
+    vector<CADMLineVertex> avertVertexes;
 
     CADHandle hMLineStyle;
 };
@@ -1168,10 +1168,10 @@ class CAD3DFaceObject : public CADEntityObject
 public:
     CAD3DFaceObject();
 
-    bool bHasNoFlagInd; // 2000+
-    bool bZZero;
-    vector < CADVector > avertCorners;
-    short dInvisFlags;
+    bool              bHasNoFlagInd; // 2000+
+    bool              bZZero;
+    vector<CADVector> avertCorners;
+    short             dInvisFlags;
 };
 
 /**
@@ -1182,11 +1182,11 @@ class CADPolylinePFaceObject : public CADEntityObject
 public:
     CADPolylinePFaceObject();
 
-    short nNumVertexes;
-    short nNumFaces;
-    long   nObjectsOwned;
-    vector < CADHandle > hVertexes; // content really depends on DWG version.
-    CADHandle hSeqend;
+    short             nNumVertexes;
+    short             nNumFaces;
+    long              nObjectsOwned;
+    vector<CADHandle> hVertexes; // content really depends on DWG version.
+    CADHandle         hSeqend;
 };
 
 /**
@@ -1205,30 +1205,30 @@ public:
 
     CADHatchObject();
 
-    long dIsGradientFill; // 2004+
-    long dReserved;
-    double dfGradientAngle;
-    double dfGradientShift;
-    long dSingleColorGrad;
-    double dfGradientTint;
-    long nGradientColors;
-    vector < _gradient_color > astGradientColors;
+    long                    dIsGradientFill; // 2004+
+    long                    dReserved;
+    double                  dfGradientAngle;
+    double                  dfGradientShift;
+    long                    dSingleColorGrad;
+    double                  dfGradientTint;
+    long                    nGradientColors;
+    vector<_gradient_color> astGradientColors;
 
     string sGradientName;
 
-    double dfZCoord; // always X = Y = 0.0
+    double    dfZCoord; // always X = Y = 0.0
     CADVector vectExtrusion;
-    string sHatchName;
-    bool bSolidFill;
-    bool bAssociative;
-    long nNumPaths;
+    string    sHatchName;
+    bool      bSolidFill;
+    bool      bAssociative;
+    long      nNumPaths;
 
     typedef struct
     {
-        char dPathTypeStatus;
+        char      dPathTypeStatus;
         CADVector vectPt0;
         CADVector vectPt1;
-    } _path_segment;
+    }         _path_segment;
 };
 
 /**
@@ -1237,20 +1237,20 @@ public:
 class CADXRecordObject : public CADObject
 {
 public:
-    CADXRecordObject();
-    long nObjectSizeInBits;
-    CADHandle hObjectHandle;
-    CADEedArray aEED;
-    long nNumReactors;
-    bool bNoXDictionaryPresent;
-    long nNumDataBytes;
-    vector < char > abyDataBytes;
-    short dCloningFlag;
-    vector < pair < short, vector < char > > > astXRecordData;
-    CADHandle hParentHandle;
-    vector < CADHandle > hReactors;
-    CADHandle hXDictionary;
-    vector < CADHandle > hObjIdHandles;
+                                        CADXRecordObject();
+    long                                nObjectSizeInBits;
+    CADHandle                           hObjectHandle;
+    CADEedArray                         aEED;
+    long                                nNumReactors;
+    bool                                bNoXDictionaryPresent;
+    long                                nNumDataBytes;
+    vector<char>                        abyDataBytes;
+    short                               dCloningFlag;
+    vector<pair<short, vector<char> > > astXRecordData;
+    CADHandle                           hParentHandle;
+    vector<CADHandle>                   hReactors;
+    CADHandle                           hXDictionary;
+    vector<CADHandle>                   hObjIdHandles;
 };
 
 #endif //CADOBJECTS_H

@@ -119,11 +119,12 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
 
     const char * papszOpenOptions = CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, "MODE", 
                                                                            "READ_FAST");
-    /* const char * papszReadUnsupportedGeoms = CSLFetchNameValueDef( 
+    const char * papszReadUnsupportedGeoms = CSLFetchNameValueDef( 
                 poOpenInfo->papszOpenOptions, "ADD_UNSUPPORTED_GEOMETRIES_DATA",
-                "NO"); */
+                "NO");
 
     enum CADFile::OpenOptions openOpts = CADFile::READ_FAST;
+    bool bReadUnsupportedGeometries = false;
     if( !strcmp( papszOpenOptions, "READ_ALL" ) )
     {
         openOpts = CADFile::READ_ALL;
@@ -133,7 +134,12 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
         openOpts = CADFile::READ_FASTEST;
     }
 
-    poCADFile = OpenCADFile( pFileIO, openOpts );
+    if( !strcmp( papszReadUnsupportedGeoms, "YES") )
+    {
+        bReadUnsupportedGeometries = true;
+    }
+
+    poCADFile = OpenCADFile( pFileIO, openOpts, bReadUnsupportedGeometries );
 
     if ( GetLastErrorCode() == CADErrorCodes::UNSUPPORTED_VERSION )
     {
@@ -174,11 +180,11 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
         nLayers = 0;
         // FIXME: we allocate extra memory, do we need more strict policy here?
         papoLayers = ( OGRCADLayer** ) CPLMalloc(sizeof(OGRCADLayer*) * 
-                                                poCADFile->getLayersCount());
+                                                poCADFile->GetLayersCount());
 
-        for(i = 0; i < poCADFile->getLayersCount(); ++i)
+        for(i = 0; i < poCADFile->GetLayersCount(); ++i)
         {
-            CADLayer &oLayer = poCADFile->getLayer( i );
+            CADLayer &oLayer = poCADFile->GetLayer( i );
             if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR && oLayer.getGeometryCount() > 0)
             {
                 papoLayers[nLayers++] = new OGRCADLayer( oLayer, poSpatialRef );
@@ -206,7 +212,7 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
     // the only one raster layer in dataset is present or subdataset is request
     if( nRasters == 2 )
     {
-        CADLayer &oLayer = poCADFile->getLayer( nSubRasterLayer );
+        CADLayer &oLayer = poCADFile->GetLayer( nSubRasterLayer );
         CADImage* pImage = oLayer.getImage(nSubRasterFID);
         if(pImage)
         {
@@ -308,9 +314,9 @@ char** GDALCADDataset::GetFileList()
     if(NULL != pszPRJFilename)
         papszFileList = CSLAddString( papszFileList, pszPRJFilename );
 
-    for(i = 0; i < poCADFile->getLayersCount(); ++i)
+    for(i = 0; i < poCADFile->GetLayersCount(); ++i)
     {
-        CADLayer &oLayer = poCADFile->getLayer( i );
+        CADLayer &oLayer = poCADFile->GetLayer( i );
         for( j = 0; j < oLayer.getImageCount(); ++j )
         {
             CADImage* pImage = oLayer.getImage(j);
@@ -337,7 +343,7 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
     {
         CPLString sESRISpatRef;
         poSpatialRef = new OGRSpatialReference();
-        CADDictionary oNOD = poCADFile->getNOD();
+        CADDictionary oNOD = poCADFile->GetNOD();
         for( size_t i = 0; i < oNOD.getRecordsCount(); ++i )
         {
             if( !strcmp( oNOD.getRecord(i).first.c_str(), "ESRI_PRJ" ) )

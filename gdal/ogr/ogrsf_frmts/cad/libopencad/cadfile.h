@@ -28,7 +28,6 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *******************************************************************************/
-
 #ifndef CADFILE_H
 #define CADFILE_H
 
@@ -45,37 +44,39 @@
 class OCAD_EXTERN CADFile
 {
     friend class CADTables;
+
     friend class CADLayer;
+
 public:
     /**
      * @brief The CAD file open options enum
      */
     enum OpenOptions
     {
-        READ_ALL,       /**< read all available information */
-        READ_FAST,      /**< read some methadata */
+        READ_ALL, /**< read all available information */
+        READ_FAST, /**< read some methadata */
         READ_FASTEST    /**< read only geometry and layers */
     };
 
 public:
-    CADFile (CADFileIO* poFileIO);
+    CADFile( CADFileIO * poFileIO );
     virtual                 ~CADFile();
 
 public:
-    const CADHeader&        getHeader() const;
-    const CADClasses&       getClasses() const;
-    const CADTables&        getTables() const;
+    const CADHeader & getHeader() const;
+    const CADClasses& getClasses() const;
+    const CADTables & getTables() const;
 
 public:
-    virtual int             parseFile(enum OpenOptions eOptions);
-    virtual size_t          getLayersCount() const;
-    virtual CADLayer&       getLayer(size_t index);
+    virtual int    ParseFile( enum OpenOptions eOptions, bool bReadUnsupportedGeometries = true );
+    virtual size_t GetLayersCount() const;
+    virtual CADLayer& GetLayer( size_t index );
 
     /**
      * @brief returns NamedObjectDictionary (root) of all others dictionaries
      * @return pointer to the root CADDictionary
      */
-    virtual CADDictionary   getNOD() = 0;
+    virtual CADDictionary GetNOD() = 0;
 
 //    virtual size_t GetBlocksCount();
 //    virtual CADBlockObject * GetBlock( size_t index );
@@ -83,61 +84,68 @@ public:
 protected:
     /**
      * @brief Get CAD Object from file
-     * @param index Object index
+     * @param dObjectHandle Object handle
      * @param bHandlesOnly set TRUE if object data should be skipped, and only object handles should be read.
      * @return pointer to CADObject or nullptr. User have to free returned pointer.
      */
-    virtual CADObject *     getObject( long index, bool bHandlesOnly = false ) = 0;
+    virtual CADObject * GetObject( long dObjectHandle, bool bHandlesOnly = false ) = 0;
 
     /**
      * @brief read geometry from CAD file
+     * @param size_t LayerIndex
      * @param handle Handle of CAD object
      * @param handle Handle of BlockRef (0 if geometry is not in block reference)
      * @return NULL if failed or pointer which mast be feed by user
      */
-    virtual CADGeometry *   getGeometry( long index, long blockrefhandle = 0 ) = 0;
+    virtual CADGeometry * GetGeometry( size_t iLayerIndex, long dHandle, long dBlockRefHandle = 0 ) = 0;
 
     /**
      * @brief initially read some basic values and section locator
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int             readSectionLocator() = 0;
+    virtual int ReadSectionLocators() = 0;
 
     /**
      * @brief Read header from CAD file
      * @param eOptions Read options
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int             readHeader(enum OpenOptions eOptions) = 0;
+    virtual int ReadHeader( enum OpenOptions eOptions ) = 0;
 
     /**
      * @brief Read classes from CAD file
      * @param eOptions Read options
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int             readClasses(enum OpenOptions eOptions) = 0;
+    virtual int ReadClasses( enum OpenOptions eOptions ) = 0;
 
     /**
      * @brief Create the file map for fast access to CAD objects
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int             createFileMap() = 0;
+    virtual int CreateFileMap() = 0;
 
     /**
      * @brief Read tables from CAD file
      * @param eOptions Read options
      * @return CADErrorCodes::SUCCESS if OK, or error code
      */
-    virtual int             readTables(enum OpenOptions eOptions);
+    virtual int ReadTables( enum OpenOptions eOptions );
+
+    /**
+     * @brief returns value of flag Read Unsupported Geometries
+     */
+    bool isReadingUnsupportedGeometries();
 
 protected:
-    CADFileIO*              fileIO;
-    CADHeader               header;
-    CADClasses              classes;
-    CADTables               tables;
+    CADFileIO * pFileIO;
+    CADHeader  oHeader;
+    CADClasses oClasses;
+    CADTables  oTables;
 
 protected:
-    std::map<long, long>    objectsMap; // object index <-> file offset
+    std::map<long, long> mapObjects; // object index <-> file offset
+    bool bReadingUnsupportedGeometries;
 };
 
 

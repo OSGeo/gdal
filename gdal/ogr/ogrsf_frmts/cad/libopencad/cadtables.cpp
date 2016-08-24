@@ -28,7 +28,6 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *******************************************************************************/
-
 #include "cadtables.h"
 #include "opencad_api.h"
 
@@ -40,151 +39,141 @@ using namespace std;
 
 CADTables::CADTables()
 {
-
 }
 
-void CADTables::addTable(TableType eType, CADHandle hHandle)
+void CADTables::AddTable( TableType eType, CADHandle hHandle )
 {
-    tableMap[eType] = hHandle;
+    mapTables[eType] = hHandle;
 }
 
-int CADTables::readTable( CADFile * const file, CADTables::TableType eType)
+int CADTables::ReadTable( CADFile * const pCADFile, CADTables::TableType eType )
 {
-    auto iter = tableMap.find (eType);
-    if( iter == tableMap.end () )
+    auto iterAskedTable = mapTables.find( eType );
+    if( iterAskedTable == mapTables.end() )
         return CADErrorCodes::TABLE_READ_FAILED;
 
     // TODO: read different tables
-    switch (eType)
+    switch( eType )
     {
         case LayersTable:
-            return readLayersTable(file, iter->second.getAsLong ());
+            return ReadLayersTable( pCADFile, iterAskedTable->second.getAsLong() );
         default:
-            std::cerr << "Unsupported table";
+            std::cerr << "Unsupported table.";
             break;
     }
 
     return CADErrorCodes::SUCCESS;
 }
 
-size_t CADTables::getLayerCount() const
+size_t CADTables::GetLayerCount() const
 {
-    return layers.size ();
+    return aLayers.size();
 }
 
-CADLayer& CADTables::getLayer(size_t index)
+CADLayer& CADTables::GetLayer( size_t iIndex )
 {
-    return layers[index];
+    return aLayers[iIndex];
 }
 
-CADHandle CADTables::getTableHandle ( enum TableType type )
+CADHandle CADTables::GetTableHandle( enum TableType eType )
 {
     // FIXME: need to add try/catch to prevent crashes on not found elem.
-    return tableMap[type];
+    return mapTables[eType];
 }
 
-int CADTables::readLayersTable( CADFile  * const file, long index)
+int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHandle )
 {
-    // Reading Layer Control obj, and layers.
-    unique_ptr<CADLayerControlObject> layerControl(
-                static_cast<CADLayerControlObject*>(file->getObject (index)));
-    if(nullptr == layerControl)
+    // Reading Layer Control obj, and aLayers.
+    unique_ptr<CADLayerControlObject> spLayerControl(
+            static_cast<CADLayerControlObject *>(pCADFile->GetObject( dLayerControlHandle )) );
+    if( spLayerControl == nullptr )
         return CADErrorCodes::TABLE_READ_FAILED;
 
-    for ( size_t i = 0; i < layerControl->hLayers.size(); ++i )
+    for( size_t i = 0; i < spLayerControl->hLayers.size(); ++i )
     {
-        if ( !layerControl->hLayers[i].isNull())
+        if( !spLayerControl->hLayers[i].isNull() )
         {
-            CADLayer layer(file);
+            CADLayer oCADLayer( pCADFile );
 
-            // Init CADLayer from objLayer properties
-            unique_ptr<CADLayerObject> objLayer(
-                        static_cast<CADLayerObject*>(file->getObject (
-                                        layerControl->hLayers[i].getAsLong ())));
+            // Init CADLayer from CADLayerObject properties
+            unique_ptr<CADLayerObject> oCADLayerObj(
+                    static_cast<CADLayerObject *>(pCADFile->GetObject( spLayerControl->hLayers[i].getAsLong() )) );
 
-            layer.setName (objLayer->sLayerName);
-            layer.setFrozen (objLayer->bFrozen);
-            layer.setOn (objLayer->bOn);
-            layer.setFrozenByDefault (objLayer->bFrozenInNewVPORT);
-            layer.setLocked (objLayer->bLocked);
-            layer.setLineWeight (objLayer->dLineWeight);
-            layer.setColor (objLayer->dCMColor);
-            layer.setId (layers.size () + 1);
-            layer.setHandle (objLayer->hObjectHandle.getAsLong ());
+            oCADLayer.setName( oCADLayerObj->sLayerName );
+            oCADLayer.setFrozen( oCADLayerObj->bFrozen );
+            oCADLayer.setOn( oCADLayerObj->bOn );
+            oCADLayer.setFrozenByDefault( oCADLayerObj->bFrozenInNewVPORT );
+            oCADLayer.setLocked( oCADLayerObj->bLocked );
+            oCADLayer.setLineWeight( oCADLayerObj->dLineWeight );
+            oCADLayer.setColor( oCADLayerObj->dCMColor );
+            oCADLayer.setId( aLayers.size() + 1 );
+            oCADLayer.setHandle( oCADLayerObj->hObjectHandle.getAsLong() );
 
-            layers.push_back (layer);
+            aLayers.push_back( oCADLayer );
         }
     }
 
-    auto it = tableMap.find (BlockRecordModelSpace);
-    if(it == tableMap.end ())
+    auto iterBlockMS = mapTables.find( BlockRecordModelSpace );
+    if( iterBlockMS == mapTables.end() )
         return CADErrorCodes::TABLE_READ_FAILED;
 
-    unique_ptr<CADBlockHeaderObject> pstModelSpace (
-            static_cast<CADBlockHeaderObject *>(file->getObject (
-                                                    it->second.getAsLong ())));
+    unique_ptr<CADBlockHeaderObject> spModelSpace(
+            static_cast<CADBlockHeaderObject *>(pCADFile->GetObject( iterBlockMS->second.getAsLong() )) );
 
-    auto dCurrentEntHandle = pstModelSpace->hEntities[0].getAsLong ();
-    auto dLastEntHandle    = pstModelSpace->hEntities[1].getAsLong ();
-    while ( true )
+    auto dCurrentEntHandle = spModelSpace->hEntities[0].getAsLong();
+    auto dLastEntHandle    = spModelSpace->hEntities[1].getAsLong();
+    while( dCurrentEntHandle != 0 )
     {
-        unique_ptr<CADEntityObject> ent( static_cast<CADEntityObject *>(
-                                          file->getObject (dCurrentEntHandle,
-                                                           true))); // true = read CED && handles only
+        unique_ptr<CADEntityObject> spEntityObj( static_cast<CADEntityObject *>(
+                                                         pCADFile->GetObject( dCurrentEntHandle, true )) );
 
-        if ( dCurrentEntHandle == dLastEntHandle )
+        if( dCurrentEntHandle == dLastEntHandle )
         {
-            if(nullptr != ent)
-                fillLayer(ent.get ());
+            if( nullptr != spEntityObj )
+                FillLayer( spEntityObj.get() );
             else
             {
 #ifdef _DEBUG
-                assert(0);
+                assert( 0 );
 #endif //_DEBUG
             }
             break;
         }
 
-        /* TODO: this check is excessive, but if something goes wrong way -
+        /* This check may look excessive, but if something goes wrong way -
          * some part of geometries will be parsed. */
-        if ( ent != nullptr )
+        if( spEntityObj != nullptr )
         {
-            fillLayer(ent.get ());
+            FillLayer( spEntityObj.get() );
 
-            if ( ent->stCed.bNoLinks )
+            if( spEntityObj->stCed.bNoLinks )
                 ++dCurrentEntHandle;
             else
-                dCurrentEntHandle = ent->stChed.hNextEntity.getAsLong (
-                            ent->stCed.hObjectHandle);
-        }
-        else
+                dCurrentEntHandle = spEntityObj->stChed.hNextEntity.getAsLong( spEntityObj->stCed.hObjectHandle );
+        } else
         {
 #ifdef _DEBUG
-            assert(0);
+            assert( 0 );
 #endif //_DEBUG
         }
     }
 
-    DebugMsg ("Readed layers using LayerControl object count: %zd\n",
-              layers.size ());
+    DebugMsg( "Readed aLayers using LayerControl object count: %zd\n", aLayers.size() );
 
     return CADErrorCodes::SUCCESS;
 }
 
-void CADTables::fillLayer(const CADEntityObject *ent)
+void CADTables::FillLayer( const CADEntityObject * pEntityObject )
 {
-    for ( CADLayer &layer : layers )
+    for( CADLayer& oLayer : aLayers )
     {
-        if ( ent->stChed.hLayer.getAsLong (ent->stCed.hObjectHandle) ==
-             layer.getHandle () )
+        if( pEntityObject->stChed.hLayer.getAsLong( pEntityObject->stCed.hObjectHandle ) == oLayer.getHandle() )
         {
-            DebugMsg ("Object with type: %s is attached to layer named: %s\n",
-                      getNameByType(ent->getType()).c_str (),
-                      layer.getName ().c_str ());
+            DebugMsg( "Object with type: %s is attached to layer named: %s\n",
+                      getNameByType( pEntityObject->getType() ).c_str(), oLayer.getName().c_str() );
 
-            layer.addHandle (ent->stCed.hObjectHandle.getAsLong (),
-                             ent->getType());
-            break; // TODO: check if only can be add to one layer
+            oLayer.addHandle( pEntityObject->stCed.hObjectHandle.getAsLong(), pEntityObject->getType() );
+            break;
         }
     }
 }

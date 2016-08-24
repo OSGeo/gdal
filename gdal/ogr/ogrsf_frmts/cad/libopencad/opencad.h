@@ -28,7 +28,6 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *******************************************************************************/
-
 #ifndef OPENCAD_H
 #define OPENCAD_H
 
@@ -51,6 +50,7 @@
 
 #define DWG_VERSION_STR_SIZE  6
 
+#ifndef OCAD_EXTERN
 #ifdef OCAD_STATIC
   #define OCAD_EXTERN extern
 #else
@@ -76,8 +76,18 @@
 #     endif 
 #   endif
 #endif
+#endif
 
-#define CPL_PRINT_FUNC_FORMAT( format_idx, arg_idx ) __attribute__((__format__ (__printf__, format_idx, arg_idx)))
-void DebugMsg(const char *, ...) CPL_PRINT_FUNC_FORMAT (1,2);
+#if defined(__GNUC__) && __GNUC__ >= 4
+#define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx ) __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#else
+#define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#endif
+
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#define snprintf _snprintf
+#endif
+
+void DebugMsg( const char *, ... ) OCAD_PRINT_FUNC_FORMAT( 1, 2 );
 
 #endif // OPENCAD_H

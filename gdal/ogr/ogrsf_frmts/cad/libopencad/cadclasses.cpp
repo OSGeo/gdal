@@ -39,32 +39,27 @@ CADClasses::CADClasses()
 {
 }
 
-void CADClasses::addClass(CADClass stClass)
+void CADClasses::addClass( CADClass stClass )
 {
-    classes.push_back (stClass);
+    classes.push_back( stClass );
 
-    DebugMsg ("CLASS INFO\n"
+    DebugMsg( "CLASS INFO\n"
                       "  Class Number: %d\n"
                       "  Proxy capabilities flag or Version: %d\n"
                       "  App name: %s\n"
                       "  C++ Class Name: %s\n"
                       "  DXF Class name: %s\n"
                       "  Was a zombie? %x\n"
-                      "  Is-an-entity flag: %x\n\n",
-              stClass.dClassNum,
-              stClass.dProxyCapFlag,
-              stClass.sApplicationName.c_str(),
-              stClass.sCppClassName.c_str(),
-              stClass.sDXFRecordName.c_str(),
-              stClass.bWasZombie,
-              stClass.bIsEntity);
+                      "  Is-an-entity flag: %x\n\n", stClass.dClassNum, stClass.dProxyCapFlag,
+              stClass.sApplicationName.c_str(), stClass.sCppClassName.c_str(), stClass.sDXFRecordName.c_str(),
+              stClass.bWasZombie, stClass.bIsEntity );
 }
 
-CADClass CADClasses::getClassByNum(short num) const
+CADClass CADClasses::getClassByNum( short num ) const
 {
-    for(CADClass cadClass : classes)
+    for( CADClass cadClass : classes )
     {
-        if(cadClass.dClassNum == num)
+        if( cadClass.dClassNum == num )
             return cadClass;
     }
     return CADClass();
@@ -74,12 +69,11 @@ void CADClasses::print() const
 {
     cout << "============ CLASSES Section ============" << endl;
 
-    for(CADClass stClass : classes)
+    for( CADClass stClass : classes )
     {
         cout << "Class: " << endl;
         cout << "  Class Number: " << stClass.dClassNum << endl;
-        cout << "  Proxy capabilities flag or Version: " <<
-                stClass.dProxyCapFlag << endl;
+        cout << "  Proxy capabilities flag or Version: " << stClass.dProxyCapFlag << endl;
         cout << "  App name: " << stClass.sApplicationName << endl;
         cout << "  C++ Class Name: " << stClass.sCppClassName << endl;
         cout << "  DXF Class name: " << stClass.sDXFRecordName << endl;
