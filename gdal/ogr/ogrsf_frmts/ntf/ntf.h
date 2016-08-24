@@ -456,8 +456,6 @@ class OGRNTFRasterLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
     OGRGeometry        *poFilterGeom;
 
-    OGRNTFDataSource   *poDS;
-
     NTFFileReader      *poReader;
 
     float              *pafColumn;
