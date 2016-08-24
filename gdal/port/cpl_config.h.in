@@ -177,6 +177,9 @@
 /* For .cpp files, define as const if the declaration of iconv() needs const. */
 #undef ICONV_CPP_CONST
 
+/* Define to 1 if libjvm.so should be dlopen'd */
+#undef JVM_LIB_DLOPEN
+
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
