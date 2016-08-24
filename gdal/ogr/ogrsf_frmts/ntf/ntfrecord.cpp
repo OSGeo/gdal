@@ -44,21 +44,19 @@ static char *pszFieldBuf = NULL;
 /*      transparent merging of continuation lines.                      */
 /************************************************************************/
 
-NTFRecord::NTFRecord( FILE * fp )
-
+NTFRecord::NTFRecord( FILE * fp ) :
+    nType(99),
+    nLength(0),
+    pszData(NULL)
 {
-    nType = 99;
-    nLength = 0;
-    pszData = NULL;
-
     if( fp == NULL )
         return;
 
 /* ==================================================================== */
 /*      Read lines until we get to one without a continuation mark.     */
 /* ==================================================================== */
-    char      szLine[MAX_RECORD_LEN+3];
-    int       nNewLength;
+    char szLine[MAX_RECORD_LEN+3] = {};
+    int nNewLength;
 
     do {
         nNewLength = ReadPhysicalLine( fp, szLine );
@@ -118,7 +116,7 @@ NTFRecord::NTFRecord( FILE * fp )
 /* -------------------------------------------------------------------- */
     if( pszData != NULL )
     {
-        char      szType[3];
+        char  szType[3];
 
         strncpy( szType, pszData, 2 );
         szType[2] = '\0';

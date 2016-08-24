@@ -225,37 +225,31 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /************************************************************************/
 
 OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
-                                      NTFFileReader * poReaderIn )
-
+                                      NTFFileReader * poReaderIn ) :
+    poFeatureDefn(NULL),
+    poFilterGeom(NULL),
+    poDS(poDSIn),
+    poReader(poReaderIn),
+    pafColumn(static_cast<float *>(
+        CPLCalloc(sizeof(float), poReaderIn->GetRasterYSize()))),
+    iColumnOffset(-1),
+    iCurrentFC(0),
+    // Check for DEM subsampling.
+    nDEMSample(poDSIn->GetOption( "DEM_SAMPLE" ) == NULL ?
+               1 : MAX(1,atoi(poDSIn->GetOption("DEM_SAMPLE")))),
+    nFeatureCount(0)
 {
-    char        szLayerName[128];
-
-    snprintf( szLayerName, sizeof(szLayerName), "DTM_%s", poReaderIn->GetTileName() );
+    char szLayerName[128];
+    snprintf( szLayerName, sizeof(szLayerName),
+              "DTM_%s", poReaderIn->GetTileName() );
     poFeatureDefn = new OGRFeatureDefn( szLayerName );
+
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint25D );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDSIn->GetSpatialRef());
 
-    OGRFieldDefn      oHeight( "HEIGHT", OFTReal );
+    OGRFieldDefn oHeight( "HEIGHT", OFTReal );
     poFeatureDefn->AddFieldDefn( &oHeight );
-
-    poReader = poReaderIn;
-    poDS = poDSIn;
-    poFilterGeom = NULL;
-
-    pafColumn = (float *) CPLCalloc(sizeof(float),
-                                    poReader->GetRasterYSize());
-    iColumnOffset = -1;
-    iCurrentFC = 0;
-
-/* -------------------------------------------------------------------- */
-/*      Check for DEM subsampling, and compute total feature count      */
-/*      accordingly.                                                    */
-/* -------------------------------------------------------------------- */
-    if( poDS->GetOption( "DEM_SAMPLE" ) == NULL )
-        nDEMSample = 1;
-    else
-        nDEMSample = MAX(1,atoi(poDS->GetOption("DEM_SAMPLE")));
 
     nFeatureCount = (poReader->GetRasterXSize() / nDEMSample)
                   * (poReader->GetRasterYSize() / nDEMSample);

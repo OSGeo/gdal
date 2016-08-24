@@ -40,23 +40,22 @@ CPL_CVSID("$Id$");
 
 OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn,
                                         CPL_UNUSED const char * pszTableName,
-                                        int bUpdate, int nSRSIdIn )
+                                        int bUpdate, int nSRSIdIn ) :
+    bUpdateAccess(bUpdate),
+    pszQuery(NULL),
+    pszWHERE(CPLStrdup("")),
+    bLaunderColumnNames(TRUE),
+    bPreservePrecision(FALSE)
 {
     poDS = poDSIn;
 
-    pszQuery = NULL;
-    pszWHERE = CPLStrdup( "" );
     pszQueryStatement = NULL;
-
-    bUpdateAccess = bUpdate;
 
     iNextShapeId = 0;
 
     nSRSId = nSRSIdIn;
 
     poFeatureDefn = NULL;
-    bLaunderColumnNames = TRUE;
-    bPreservePrecision = FALSE;
 
     SetDescription( pszTableName );
 }

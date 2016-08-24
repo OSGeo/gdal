@@ -93,7 +93,7 @@ NASHandler::NASHandler( NASReader *poReader ) :
     m_bInUpdate(false),
     m_bInUpdateProperty(false),
     m_nDepthElement(0)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~NASHandler()                             */

@@ -37,16 +37,14 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRODBCDataSource::OGRODBCDataSource() :
-    bDSUpdate(FALSE)
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-
-    nKnownSRID = 0;
-    panSRID = NULL;
-    papoSRS = NULL;
-}
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    bDSUpdate(FALSE),
+    nKnownSRID(0),
+    panSRID(NULL),
+    papoSRS(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRODBCDataSource()                         */
@@ -55,16 +53,14 @@ OGRODBCDataSource::OGRODBCDataSource() :
 OGRODBCDataSource::~OGRODBCDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree( papoLayers );
 
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( papoSRS[i] != NULL )
             papoSRS[i]->Release();

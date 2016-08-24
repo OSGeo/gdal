@@ -37,18 +37,16 @@ CPL_CVSID("$Id$");
 /*                             NTFCodeList                              */
 /************************************************************************/
 
-NTFCodeList::NTFCodeList( NTFRecord * poRecord )
-
+NTFCodeList::NTFCodeList( NTFRecord * poRecord ) :
+    nNumCode(atoi(poRecord->GetField(20,22))),
+    papszCodeVal(static_cast<char **>(CPLMalloc(sizeof(char*) * nNumCode))),
+    papszCodeDes(static_cast<char **>(CPLMalloc(sizeof(char*) * nNumCode)))
 {
+
     CPLAssert( EQUAL(poRecord->GetField(1,2),"42") );
 
     snprintf( szValType, sizeof(szValType), "%s", poRecord->GetField(13,14) );
     snprintf( szFInter, sizeof(szFInter), "%s", poRecord->GetField(15,19) );
-
-    nNumCode = atoi(poRecord->GetField(20,22));
-
-    papszCodeVal = (char **) CPLMalloc(sizeof(char*) * nNumCode );
-    papszCodeDes = (char **) CPLMalloc(sizeof(char*) * nNumCode );
 
     const char *pszText = poRecord->GetData() + 22;
     int iThisField = 0;

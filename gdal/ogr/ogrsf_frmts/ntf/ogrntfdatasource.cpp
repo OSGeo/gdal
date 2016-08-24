@@ -50,10 +50,22 @@ OGRNTFDataSource::OGRNTFDataSource() :
     nFCCount(0),
     papszFCNum(NULL),
     papszFCName(NULL),
+    poSpatialRef(new OGRSpatialReference(
+        "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\","
+        "DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646,"
+        "AUTHORITY[\"EPSG\",\"7001\"]],AUTHORITY[\"EPSG\",\"6277\"]],"
+        "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
+        "UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4277\"]],"
+        "PROJECTION[\"Transverse_Mercator\"],"
+        "PARAMETER[\"latitude_of_origin\",49],"
+        "PARAMETER[\"central_meridian\",-2],"
+        "PARAMETER[\"scale_factor\",0.999601272],"
+        "PARAMETER[\"false_easting\",400000],"
+        "PARAMETER[\"false_northing\",-100000],"
+        "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],"
+        "AUTHORITY[\"EPSG\",\"27700\"]]")),
     papszOptions(NULL)
 {
-    poSpatialRef = new OGRSpatialReference( "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646,AUTHORITY[\"EPSG\",\"7001\"]],AUTHORITY[\"EPSG\",\"6277\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4277\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"27700\"]]" );
-
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
 /* -------------------------------------------------------------------- */
