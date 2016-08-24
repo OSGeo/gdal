@@ -36,7 +36,6 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRODBCTableLayer::OGRODBCTableLayer( OGRODBCDataSource *poDSIn ) :
-    bUpdateAccess(TRUE),
     pszQuery(NULL),
     bHaveSpatialExtents(FALSE),
     pszTableName(NULL),

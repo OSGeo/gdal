@@ -89,8 +89,6 @@ class OGRODBCLayer : public OGRLayer
 
 class OGRODBCTableLayer : public OGRODBCLayer
 {
-    int                 bUpdateAccess;
-
     char                *pszQuery;
 
     int                 bHaveSpatialExtents;
