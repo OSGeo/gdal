@@ -35,24 +35,19 @@ CPL_CVSID("$Id$");
 /*                          OGRODBCTableLayer()                         */
 /************************************************************************/
 
-OGRODBCTableLayer::OGRODBCTableLayer( OGRODBCDataSource *poDSIn )
-
+OGRODBCTableLayer::OGRODBCTableLayer( OGRODBCDataSource *poDSIn ) :
+    bUpdateAccess(TRUE),
+    pszQuery(NULL),
+    bHaveSpatialExtents(FALSE),
+    pszTableName(NULL),
+    pszSchemaName(NULL)
 {
     poDS = poDSIn;
-
-    pszQuery = NULL;
-
-    bUpdateAccess = TRUE;
-    bHaveSpatialExtents = FALSE;
-
     iNextShapeId = 0;
 
     nSRSId = -1;
 
     poFeatureDefn = NULL;
-
-    pszTableName = NULL;
-    pszSchemaName = NULL;
 }
 
 /************************************************************************/

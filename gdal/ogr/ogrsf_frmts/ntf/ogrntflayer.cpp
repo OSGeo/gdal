@@ -40,17 +40,15 @@ CPL_CVSID("$Id$");
 
 OGRNTFLayer::OGRNTFLayer( OGRNTFDataSource *poDSIn,
                           OGRFeatureDefn * poFeatureDefine,
-                          NTFFeatureTranslator pfnTranslatorIn )
-
+                          NTFFeatureTranslator pfnTranslatorIn ) :
+    poFeatureDefn(poFeatureDefine),
+    pfnTranslator(pfnTranslatorIn),
+    poDS(poDSIn),
+    iCurrentReader(-1),
+    nCurrentPos(-1),
+    nCurrentFID(1)
 {
-    poDS = poDSIn;
-    poFeatureDefn = poFeatureDefine;
     SetDescription( poFeatureDefn->GetName() );
-    pfnTranslator = pfnTranslatorIn;
-
-    iCurrentReader = -1;
-    nCurrentPos = -1;
-    nCurrentFID = 1;
 }
 
 /************************************************************************/

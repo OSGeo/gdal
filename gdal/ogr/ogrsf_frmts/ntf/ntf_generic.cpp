@@ -49,17 +49,15 @@ CPL_CVSID("$Id$");
 /*                           NTFGenericClass                            */
 /************************************************************************/
 
-NTFGenericClass::NTFGenericClass()
-{
-    nFeatureCount = 0;
-
-    b3D = FALSE;
-    nAttrCount = 0;
-    papszAttrNames = NULL;
-    papszAttrFormats = NULL;
-    panAttrMaxWidth = NULL;
-    pabAttrMultiple = NULL;
-}
+NTFGenericClass::NTFGenericClass() :
+    nFeatureCount(0),
+    b3D(FALSE),
+    nAttrCount(0),
+    papszAttrNames(NULL),
+    papszAttrFormats(NULL),
+    panAttrMaxWidth(NULL),
+    pabAttrMultiple(NULL)
+{}
 
 /************************************************************************/
 /*                           ~NTFGenericClass                           */

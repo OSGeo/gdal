@@ -38,29 +38,25 @@ CPL_CVSID("$Id$");
 /*      OGRFeatureDefn object.                                          */
 /************************************************************************/
 
-OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn )
-
+OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn ) :
+    poFeatureDefn(new OGRFeatureDefn("FEATURE_CLASSES")),
+    poFilterGeom(NULL),
+    poDS(poDSIn),
+    iCurrentFC(0)
 {
-    poFilterGeom = NULL;
-
-    poDS = poDSIn;
-
-    iCurrentFC = 0;
-
 /* -------------------------------------------------------------------- */
 /*      Establish the schema.                                           */
 /* -------------------------------------------------------------------- */
-    poFeatureDefn = new OGRFeatureDefn( "FEATURE_CLASSES" );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType( wkbNone );
     poFeatureDefn->Reference();
 
-    OGRFieldDefn      oFCNum( "FEAT_CODE", OFTString );
+    OGRFieldDefn oFCNum( "FEAT_CODE", OFTString );
 
     oFCNum.SetWidth( 4 );
     poFeatureDefn->AddFieldDefn( &oFCNum );
 
-    OGRFieldDefn      oFCName( "FC_NAME", OFTString );
+    OGRFieldDefn oFCName( "FC_NAME", OFTString );
 
     oFCNum.SetWidth( 80 );
     poFeatureDefn->AddFieldDefn( &oFCName );

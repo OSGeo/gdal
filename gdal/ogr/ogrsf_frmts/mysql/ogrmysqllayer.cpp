@@ -38,28 +38,20 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRMySQLLayer::OGRMySQLLayer() :
-    nGeomType(0)
-{
-    poDS = NULL;
-
-    pszGeomColumn = NULL;
-    pszGeomColumnTable = NULL;
-    pszFIDColumn = NULL;
-    pszQueryStatement = NULL;
-
-    bHasFid = FALSE;
-    pszFIDColumn = NULL;
-
-    iNextShapeId = 0;
-    nResultOffset = 0;
-
-    poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet.
-
-    poFeatureDefn = NULL;
-
-    hResultSet = NULL;
-}
+    poFeatureDefn(NULL),
+    poSRS(NULL),
+    nSRSId(-2), // we haven't even queried the database for it yet.
+    iNextShapeId(0),
+    poDS(NULL),
+    pszQueryStatement(NULL),
+    nResultOffset(0),
+    pszGeomColumn(NULL),
+    pszGeomColumnTable(NULL),
+    nGeomType(0),
+    bHasFid(FALSE),
+    pszFIDColumn(NULL),
+    hResultSet(NULL)
+{}
 
 /************************************************************************/
 /*                           ~OGRMySQLLayer()                           */
