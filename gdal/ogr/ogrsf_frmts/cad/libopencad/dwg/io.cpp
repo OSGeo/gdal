@@ -60,15 +60,15 @@ unsigned char Read2B( const char * pabyInput, size_t& nBitOffsetFromStart )
     switch( nBitOffsetInByte )
     {
         case 7:
-            result = ( a2BBytes[0] & binary(00000001) ) << 1;
-            result |= ( a2BBytes[1] & binary(10000000) ) >> 7;
+            result  = ( a2BBytes[0] & binary( 00000001 ) ) << 1;
+            result |= ( a2BBytes[1] & binary( 10000000 ) ) >> 7;
             break;
         default:
             result = ( a2BBytes[0] >> ( 6 - nBitOffsetInByte ) );
             break;
     }
 
-    result &= binary(00000011);
+    result &= binary( 00000011 );
     nBitOffsetFromStart += 2;
 
     return result;
@@ -87,13 +87,13 @@ unsigned char Read3B( const char * pabyInput, size_t& nBitOffsetFromStart )
     switch( nBitOffsetInByte )
     {
         case 6:
-            result = ( a3BBytes[0] & binary(00000011) ) << 1;
-            result |= ( a3BBytes[1] & binary(10000000) ) >> 7;
+            result  = ( a3BBytes[0] & binary( 00000011 ) ) << 1;
+            result |= ( a3BBytes[1] & binary( 10000000 ) ) >> 7;
             break;
 
         case 7:
-            result = ( a3BBytes[0] & binary(00000001) ) << 2;
-            result |= ( a3BBytes[1] & binary(11000000) ) >> 6;
+            result  = ( a3BBytes[0] & binary( 00000001 ) ) << 2;
+            result |= ( a3BBytes[1] & binary( 11000000 ) ) >> 6;
             break;
 
         default:
@@ -101,7 +101,7 @@ unsigned char Read3B( const char * pabyInput, size_t& nBitOffsetFromStart )
             break;
     }
 
-    result &= binary(00000111);
+    result &= binary( 00000111 );
     nBitOffsetFromStart += 3;
 
     return result;
@@ -120,17 +120,17 @@ unsigned char Read4B( const char * pabyInput, size_t& nBitOffsetFromStart )
     switch( nBitOffsetInByte )
     {
         case 5:
-            result = ( a4BBytes[0] & binary(00000111) ) << 1;
-            result |= ( a4BBytes[1] & binary(10000000) ) >> 7;
+            result  = ( a4BBytes[0] & binary( 00000111 ) ) << 1;
+            result |= ( a4BBytes[1] & binary( 10000000 ) ) >> 7;
             break;
         case 6:
-            result = ( a4BBytes[0] & binary(00000011) ) << 2;
-            result |= ( a4BBytes[1] & binary(11000000) ) >> 6;
+            result  = ( a4BBytes[0] & binary( 00000011 ) ) << 2;
+            result |= ( a4BBytes[1] & binary( 11000000 ) ) >> 6;
             break;
 
         case 7:
-            result = ( a4BBytes[0] & binary(00000001) ) << 3;
-            result |= ( a4BBytes[1] & binary(11100000) ) >> 5;
+            result  = ( a4BBytes[0] & binary( 00000001 ) ) << 3;
+            result |= ( a4BBytes[1] & binary( 11100000 ) ) >> 5;
             break;
 
         default:
@@ -138,7 +138,7 @@ unsigned char Read4B( const char * pabyInput, size_t& nBitOffsetFromStart )
             break;
     }
 
-    result &= binary(00001111);
+    result &= binary( 00001111 );
     nBitOffsetFromStart += 4;
 
     return result;
@@ -259,8 +259,7 @@ bool ReadBIT( const char * pabyInput, size_t& nBitOffsetFromStart )
 
     const char * pBoolByte = pabyInput + nByteOffset;
 
-    unsigned char resultVal = ( pBoolByte[0] >> ( 7 - nBitOffsetInByte ) ) & binary(00000001);
-
+    unsigned char resultVal = ( pBoolByte[0] >> ( 7 - nBitOffsetInByte ) ) & binary( 00000001 );
     ++nBitOffsetFromStart;
 
     return resultVal == 0 ? false : true;
@@ -371,7 +370,7 @@ long ReadUMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
     {
         aMCharBytes[i] = ReadCHAR( pabyInput, nBitOffsetFromStart );
         ++MCharBytesCount;
-        if( !( aMCharBytes[i] & binary(10000000) ) )
+        if ( !( aMCharBytes[i] & binary( 10000000 ) ) )
         {
             break;
         }
@@ -381,7 +380,7 @@ long ReadUMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
 
     for( size_t i = 0; i < MCharBytesCount; ++i )
     {
-        aMCharBytes[i] &= binary(01111111);
+        aMCharBytes[i] &= binary( 01111111 );
     }
 
     // TODO: this code doesnt cover case when char.bytescount > 3, but its
@@ -393,29 +392,29 @@ long ReadUMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
             break;
         case 2:
         {
-            char tmp = aMCharBytes[0] & binary(00000001);
+            char tmp = aMCharBytes[0] & binary( 00000001 );
             aMCharBytes[0] = aMCharBytes[0] >> 1;
             aMCharBytes[1] |= ( tmp << 7 );
             break;
         }
         case 3:
         {
-            unsigned char tmp1 = aMCharBytes[0] & binary(00000011);
-            unsigned char tmp2 = aMCharBytes[1] & binary(00000001);
-            aMCharBytes[0]     = aMCharBytes[0] >> 2;
-            aMCharBytes[1]     = aMCharBytes[1] >> 1;
+            unsigned char tmp1 = aMCharBytes[0] & binary( 00000011 );
+            unsigned char tmp2 = aMCharBytes[1] & binary( 00000001 );
+            aMCharBytes[0] = aMCharBytes[0] >> 2;
+            aMCharBytes[1] = aMCharBytes[1] >> 1;
             aMCharBytes[1] |= ( tmp1 << 6 );
             aMCharBytes[2] |= ( tmp2 << 7 );
             break;
         }
         case 4:
         {
-            unsigned char tmp1 = aMCharBytes[0] & binary(00000111);
-            unsigned char tmp2 = aMCharBytes[1] & binary(00000011);
-            unsigned char tmp3 = aMCharBytes[2] & binary(00000001);
-            aMCharBytes[0]     = aMCharBytes[0] >> 3;
-            aMCharBytes[1]     = aMCharBytes[1] >> 2;
-            aMCharBytes[2]     = aMCharBytes[2] >> 1;
+            unsigned char tmp1 = aMCharBytes[0] & binary( 00000111 );
+            unsigned char tmp2 = aMCharBytes[1] & binary( 00000011 );
+            unsigned char tmp3 = aMCharBytes[2] & binary( 00000001 );
+            aMCharBytes[0] = aMCharBytes[0] >> 3;
+            aMCharBytes[1] = aMCharBytes[1] >> 2;
+            aMCharBytes[2] = aMCharBytes[2] >> 1;
             aMCharBytes[1] |= ( tmp1 << 5 );
             aMCharBytes[2] |= ( tmp2 << 6 );
             aMCharBytes[3] |= ( tmp3 << 7 );
@@ -448,7 +447,7 @@ long ReadMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
     {
         aMCharBytes[i] = ReadCHAR( pabyInput, nBitOffsetFromStart );
         ++MCharBytesCount;
-        if( !( aMCharBytes[i] & binary(10000000) ) )
+        if ( !( aMCharBytes[i] & binary( 10000000 ) ) )
         {
             break;
         }
@@ -456,15 +455,15 @@ long ReadMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
 
     SwapEndianness( aMCharBytes, MCharBytesCount ); // LSB to MSB
 
-    if( ( aMCharBytes[0] & binary(01000000) ) == binary(01000000) )
+    if ( ( aMCharBytes[0] & binary( 01000000 ) ) == binary( 01000000 ) )
     {
-        aMCharBytes[0] &= binary(10111111);
+        aMCharBytes[0] &= binary( 10111111 );
         negative = true;
     }
 
     for( size_t i = 0; i < MCharBytesCount; ++i )
     {
-        aMCharBytes[i] &= binary(01111111);
+        aMCharBytes[i] &= binary( 01111111 );
     }
 
     // TODO: this code doesnt cover case when char.bytescount > 3, but its
@@ -476,29 +475,29 @@ long ReadMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
             break;
         case 2:
         {
-            char tmp = aMCharBytes[0] & binary(00000001);
+            char tmp = aMCharBytes[0] & binary( 00000001 );
             aMCharBytes[0] = aMCharBytes[0] >> 1;
             aMCharBytes[1] |= ( tmp << 7 );
             break;
         }
         case 3:
         {
-            unsigned char tmp1 = aMCharBytes[0] & binary(00000011);
-            unsigned char tmp2 = aMCharBytes[1] & binary(00000001);
-            aMCharBytes[0]     = aMCharBytes[0] >> 2;
-            aMCharBytes[1]     = aMCharBytes[1] >> 1;
+            unsigned char tmp1 = aMCharBytes[0] & binary( 00000011 );
+            unsigned char tmp2 = aMCharBytes[1] & binary( 00000001 );
+            aMCharBytes[0] = aMCharBytes[0] >> 2;
+            aMCharBytes[1] = aMCharBytes[1] >> 1;
             aMCharBytes[1] |= ( tmp1 << 6 );
             aMCharBytes[2] |= ( tmp2 << 7 );
             break;
         }
         case 4:
         {
-            unsigned char tmp1 = aMCharBytes[0] & binary(00000111);
-            unsigned char tmp2 = aMCharBytes[1] & binary(00000011);
-            unsigned char tmp3 = aMCharBytes[2] & binary(00000001);
-            aMCharBytes[0]     = aMCharBytes[0] >> 3;
-            aMCharBytes[1]     = aMCharBytes[1] >> 2;
-            aMCharBytes[2]     = aMCharBytes[2] >> 1;
+            unsigned char tmp1 = aMCharBytes[0] & binary( 00000111 );
+            unsigned char tmp2 = aMCharBytes[1] & binary( 00000011 );
+            unsigned char tmp3 = aMCharBytes[2] & binary( 00000001 );
+            aMCharBytes[0] = aMCharBytes[0] >> 3;
+            aMCharBytes[1] = aMCharBytes[1] >> 2;
+            aMCharBytes[2] = aMCharBytes[2] >> 1;
             aMCharBytes[1] |= ( tmp1 << 5 );
             aMCharBytes[2] |= ( tmp2 << 6 );
             aMCharBytes[3] |= ( tmp3 << 7 );
@@ -527,9 +526,9 @@ unsigned int ReadMSHORT( const char * pabyInput, size_t& nBitOffsetFromStart )
     // TODO: this function doesnot support MSHORTS longer than 4 bytes. ODA says
     //       its impossible, but not sure.
     size_t MShortBytesCount = 2;
-    aMShortBytes[0] = ReadCHAR( pabyInput, nBitOffsetFromStart );
-    aMShortBytes[1] = ReadCHAR( pabyInput, nBitOffsetFromStart );
-    if( aMShortBytes[1] & binary(10000000) )
+    aMShortBytes[0] = ReadCHAR ( pabyInput, nBitOffsetFromStart );
+    aMShortBytes[1] = ReadCHAR ( pabyInput, nBitOffsetFromStart );
+    if ( aMShortBytes[1] & binary( 10000000 ) )
     {
         aMShortBytes[2] = ReadCHAR( pabyInput, nBitOffsetFromStart );
         aMShortBytes[3] = ReadCHAR( pabyInput, nBitOffsetFromStart );
@@ -540,11 +539,12 @@ unsigned int ReadMSHORT( const char * pabyInput, size_t& nBitOffsetFromStart )
 
     if( MShortBytesCount == 2 )
     {
-        aMShortBytes[0] &= binary(01111111); // drop high order flag bit.
-    } else if( MShortBytesCount == 4 )
+        aMShortBytes[0] &= binary( 01111111 ); // drop high order flag bit.
+    }
+    else if ( MShortBytesCount == 4 )
     {
-        aMShortBytes[0] &= binary(01111111);
-        aMShortBytes[2] &= binary(01111111);
+        aMShortBytes[0] &= binary( 01111111 );
+        aMShortBytes[2] &= binary( 01111111 );
 
         aMShortBytes[2] |= ( aMShortBytes[1] << 7 );
         aMShortBytes[1] = ( aMShortBytes[1] >> 1 );

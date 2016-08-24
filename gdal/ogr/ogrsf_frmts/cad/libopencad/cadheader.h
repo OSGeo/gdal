@@ -74,23 +74,23 @@ public:
     CADVariant( const CADVariant& orig );
     CADVariant& operator=( const CADVariant& orig );
 public:
-    long   getDecimal() const;
-    double getReal() const;
-    const std::string& getString() const;
-    DataType getType() const;
-    double   getX() const;
-    double   getY() const;
-    double   getZ() const;
-    const CADHandle& getHandle() const;
+    long                getDecimal() const;
+    double              getReal() const;
+    const std::string&  getString() const;
+    DataType       getType() const;
+    double              getX() const;
+    double              getY() const;
+    double              getZ() const;
+    const CADHandle&    getHandle() const;
 protected:
-    DataType    type;
-    long        decimalVal;
-    double      xVal;
-    double      yVal;
-    double      zVal;
-    std::string stringVal;
-    CADHandle   handleVal;
-    time_t      dateTimeVal;
+    DataType       type;
+    long                decimalVal;
+    double              xVal;
+    double              yVal;
+    double              zVal;
+    std::string         stringVal;
+    CADHandle           handleVal;
+    time_t              dateTimeVal;
 };
 
 /**

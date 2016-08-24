@@ -79,15 +79,15 @@
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 4
-#define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx ) __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+# define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx ) __attribute__((__format__ (__printf__, format_idx, arg_idx)))
 #else
-#define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx )
-#endif
+#  define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx )    
+#endif  
 
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
-#define snprintf _snprintf
+#  define snprintf _snprintf
 #endif
 
-void DebugMsg( const char *, ... ) OCAD_PRINT_FUNC_FORMAT( 1, 2 );
+void DebugMsg(const char *, ...) OCAD_PRINT_FUNC_FORMAT (1,2);
 
 #endif // OPENCAD_H
