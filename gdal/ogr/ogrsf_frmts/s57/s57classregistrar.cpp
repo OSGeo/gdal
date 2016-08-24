@@ -57,7 +57,7 @@ S57ClassRegistrar::~S57ClassRegistrar()
 
 {
     nClasses = 0;
-    for(size_t i=0;i<aoAttrInfos.size();i++)
+    for( size_t i = 0; i < aoAttrInfos.size(); i++ )
         delete aoAttrInfos[i];
     aoAttrInfos.resize(0);
     nAttrCount = 0;
@@ -67,15 +67,14 @@ S57ClassRegistrar::~S57ClassRegistrar()
 /*                        S57ClassContentExplorer()                     */
 /************************************************************************/
 
-S57ClassContentExplorer::S57ClassContentExplorer(S57ClassRegistrar* poRegistrarIn):
-    poRegistrar(poRegistrarIn)
-{
-    iCurrentClass = -1;
-
-    papszCurrentFields = NULL;
-    papapszClassesFields = NULL;
-    papszTempResult = NULL;
-}
+S57ClassContentExplorer::S57ClassContentExplorer(
+    S57ClassRegistrar* poRegistrarIn ) :
+    poRegistrar(poRegistrarIn),
+    papapszClassesFields(NULL),
+    iCurrentClass(-1),
+    papszCurrentFields(NULL),
+    papszTempResult(NULL)
+{}
 
 /************************************************************************/
 /*                        ~S57ClassContentExplorer()                    */

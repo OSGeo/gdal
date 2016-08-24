@@ -36,17 +36,13 @@ CPL_CVSID("$Id$");
 /*                          OGRSDTSDataSource()                          */
 /************************************************************************/
 
-OGRSDTSDataSource::OGRSDTSDataSource()
-
-{
-    nLayers = 0;
-    papoLayers = NULL;
-
-    pszName = NULL;
-    poSRS = NULL;
-
-    poTransfer = NULL;
-}
+OGRSDTSDataSource::OGRSDTSDataSource() :
+    poTransfer(NULL),
+    pszName(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    poSRS(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRSDTSDataSource()                          */
@@ -55,9 +51,7 @@ OGRSDTSDataSource::OGRSDTSDataSource()
 OGRSDTSDataSource::~OGRSDTSDataSource()
 
 {
-    int         i;
-
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree( papoLayers );

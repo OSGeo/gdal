@@ -112,29 +112,30 @@ static const FieldDesc UKOOAP190Fields[] =
 #define FIELD_DATETIME      12
 
 OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
-                                      VSILFILE* fpIn )
-
+                                      VSILFILE* fpIn ) :
+    poSRS(NULL),
+    fp(fpIn),
+    bUseEastingNorthingAsGeometry(CPLTestBool(
+        CPLGetConfigOption("UKOOAP190_USE_EASTING_NORTHING", "NO"))),
+    nYear(0)
 {
-    fp = fpIn;
     nNextFID = 0;
     bEOF = FALSE;
-    poSRS = NULL;
-    nYear = 0;
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint );
 
-    for(int i=0;i<(int)(sizeof(UKOOAP190Fields)/sizeof(UKOOAP190Fields[0]));i++)
+    for( int i = 0;
+         i < static_cast<int>(sizeof(UKOOAP190Fields) /
+                              sizeof(UKOOAP190Fields[0]));
+         i++ )
     {
         OGRFieldDefn    oField( UKOOAP190Fields[i].pszName,
                                 UKOOAP190Fields[i].eType );
         poFeatureDefn->AddFieldDefn( &oField );
     }
-
-    bUseEastingNorthingAsGeometry =
-        CPLTestBool(CPLGetConfigOption("UKOOAP190_USE_EASTING_NORTHING", "NO"));
 
     ParseHeaders();
 
@@ -468,14 +469,15 @@ static const FieldDesc SEGP1Fields[] =
 
 OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
                               VSILFILE* fpIn,
-                              int nLatitudeColIn )
-
+                              int nLatitudeColIn ) :
+    poSRS(NULL),
+    fp(fpIn),
+    nLatitudeCol(nLatitudeColIn),
+    bUseEastingNorthingAsGeometry(CPLTestBool(
+        CPLGetConfigOption("SEGP1_USE_EASTING_NORTHING", "NO")))
 {
-    fp = fpIn;
-    nLatitudeCol = nLatitudeColIn;
     nNextFID = 0;
     bEOF = FALSE;
-    poSRS = NULL;
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
     SetDescription( poFeatureDefn->GetName() );
@@ -489,8 +491,6 @@ OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
         poFeatureDefn->AddFieldDefn( &oField );
     }
 
-    bUseEastingNorthingAsGeometry =
-        CPLTestBool(CPLGetConfigOption("SEGP1_USE_EASTING_NORTHING", "NO"));
 
     ResetReading();
 }
@@ -715,23 +715,24 @@ int OGRSEGP1Layer::DetectLatitudeColumn(const char* pszLine)
 /*                        OGRSEGUKOOALineLayer()                        */
 /************************************************************************/
 
-OGRSEGUKOOALineLayer::OGRSEGUKOOALineLayer(const char* pszFilename,
-                                           OGRLayer *poBaseLayerIn)
+OGRSEGUKOOALineLayer::OGRSEGUKOOALineLayer( const char* pszFilename,
+                                            OGRLayer *poBaseLayerIn ) :
+    poBaseLayer(poBaseLayerIn),
+    poNextBaseFeature(NULL)
 {
     nNextFID = 0;
     bEOF = FALSE;
-    poBaseLayer = poBaseLayerIn;
 
-    poFeatureDefn = new OGRFeatureDefn( CPLSPrintf("%s_lines",
-                                                   CPLGetBasename(pszFilename)) );
+    poFeatureDefn = new OGRFeatureDefn(
+        CPLSPrintf("%s_lines",
+                   CPLGetBasename(pszFilename)) );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbLineString );
-    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poBaseLayer->GetSpatialRef());
+    poFeatureDefn->GetGeomFieldDefn(0)->
+        SetSpatialRef(poBaseLayer->GetSpatialRef());
 
-    OGRFieldDefn    oField( "LINENAME", OFTString );
+    OGRFieldDefn oField( "LINENAME", OFTString );
     poFeatureDefn->AddFieldDefn( &oField );
-
-    poNextBaseFeature = NULL;
 }
 
 /************************************************************************/

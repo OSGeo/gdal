@@ -41,19 +41,17 @@ CPL_CVSID("$Id$");
 
 OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
                             OGRSDTSDataSource * poDSIn ) :
+    poFeatureDefn(NULL),
+    poTransfer(poTransferIn),
+    iLayer(iLayerIn),
+    poReader(poTransferIn->GetLayerIndexedReader( iLayerIn )),
+    poDS(poDSIn),
     bPolygonsBuilt(FALSE)
 {
-    poDS = poDSIn;
-
-    poTransfer = poTransferIn;
-    iLayer = iLayerIn;
-
-    poReader = poTransfer->GetLayerIndexedReader( iLayer );
-
 /* -------------------------------------------------------------------- */
 /*      Define the feature.                                             */
 /* -------------------------------------------------------------------- */
-    int         iCATDEntry = poTransfer->GetLayerCATDEntry( iLayer );
+    const int iCATDEntry = poTransfer->GetLayerCATDEntry( iLayer );
 
     poFeatureDefn =
         new OGRFeatureDefn(poTransfer->GetCATD()->GetEntryModule(iCATDEntry));
@@ -90,7 +88,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
 /* -------------------------------------------------------------------- */
 /*      Add schema from referenced attribute records.                   */
 /* -------------------------------------------------------------------- */
-    char        **papszATIDRefs = NULL;
+    char **papszATIDRefs = NULL;
 
     if( poTransfer->GetLayerType(iLayer) != SLTAttr )
         papszATIDRefs = poReader->ScanModuleReferences();
@@ -106,7 +104,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
 /*      Get the attribute table reader, and the associated user         */
 /*      attribute field.                                                */
 /* -------------------------------------------------------------------- */
-        int nLayerIdx = poTransfer->FindLayer( papszATIDRefs[iTable] );
+        const int nLayerIdx = poTransfer->FindLayer( papszATIDRefs[iTable] );
         if( nLayerIdx < 0 )
             continue;
         SDTSAttrReader *poAttrReader = (SDTSAttrReader *)
@@ -126,10 +124,10 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
 /*      Process each user subfield on the attribute table into an       */
 /*      OGR field definition.                                           */
 /* -------------------------------------------------------------------- */
-        for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
+        for( int iSF = 0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
         {
-            DDFSubfieldDefn     *poSFDefn = poFDefn->GetSubfield( iSF );
-            int                 nWidth = poSFDefn->GetWidth();
+            DDFSubfieldDefn *poSFDefn = poFDefn->GetSubfield( iSF );
+            const int nWidth = poSFDefn->GetWidth();
 
             char *pszFieldName =
                 poFeatureDefn->GetFieldIndex( poSFDefn->GetName() ) != -1
@@ -195,7 +193,7 @@ OGRSDTSLayer::~OGRSDTSLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "SDTS", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead,
+                  static_cast<int>(m_nFeaturesRead),
                   poFeatureDefn->GetName() );
     }
 

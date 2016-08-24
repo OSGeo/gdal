@@ -36,14 +36,11 @@ CPL_CVSID("$Id$");
 /*                        OGRSEGYDataSource()                       */
 /************************************************************************/
 
-OGRSEGYDataSource::OGRSEGYDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-}
+OGRSEGYDataSource::OGRSEGYDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                       ~OGRSEGYDataSource()                       */
