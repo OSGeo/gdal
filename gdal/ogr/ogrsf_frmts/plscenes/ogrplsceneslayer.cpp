@@ -88,34 +88,37 @@ static bool OGRPLScenesLayerFieldNameComparator(const CPLString& osFirst,
 /*                           OGRPLScenesLayer()                         */
 /************************************************************************/
 
-OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDSIn,
-                                   const char* pszName,
-                                   const char* pszBaseURL,
-                                   json_object* poObjCount10)
+OGRPLScenesLayer::OGRPLScenesLayer( OGRPLScenesDataset* poDSIn,
+                                    const char* pszName,
+                                    const char* pszBaseURL,
+                                    json_object* poObjCount10 ) :
+    poDS(poDSIn),
+    osBaseURL(pszBaseURL),
+    poFeatureDefn(new OGRFeatureDefn(pszName)),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    bEOF(FALSE),
+    nNextFID(1),
+    nFeatureCount(-1),
+    poGeoJSONDS(NULL),
+    poGeoJSONLayer(NULL),
+    poMainFilter(NULL),
+    nPageSize(atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "1000"))),
+    bStillInFirstPage(FALSE),
+    bAcquiredAscending(-1),
+    bFilterMustBeClientSideEvaluated(FALSE)
 {
-    poDS = poDSIn;
-    osBaseURL = pszBaseURL;
     SetDescription(pszName);
-    poFeatureDefn = new OGRFeatureDefn(pszName);
     poFeatureDefn->SetGeomType(wkbMultiPolygon);
-    for(int i = 0; i < (int)sizeof(apsAttrs) / (int)sizeof(apsAttrs[0]); i++)
+    for( int i = 0;
+         i < static_cast<int>(sizeof(apsAttrs)) /
+             static_cast<int>(sizeof(apsAttrs[0]));
+         i++ )
     {
         OGRFieldDefn oField(apsAttrs[i].pszName, apsAttrs[i].eType);
         poFeatureDefn->AddFieldDefn(&oField);
     }
     poFeatureDefn->Reference();
-    poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-    bEOF = FALSE;
-    nFeatureCount = -1;
-    nNextFID = 1;
-    poGeoJSONDS = NULL;
-    poGeoJSONLayer = NULL;
-    poMainFilter = NULL;
-    nPageSize = atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "1000"));
-    bStillInFirstPage = FALSE;
-    bAcquiredAscending = -1;
-    bFilterMustBeClientSideEvaluated = FALSE;
     ResetReading();
 
     if( poObjCount10 != NULL )

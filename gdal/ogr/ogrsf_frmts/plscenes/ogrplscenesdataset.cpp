@@ -34,12 +34,11 @@ CPL_CVSID("$Id$");
 /*                         OGRPLScenesDataset()                         */
 /************************************************************************/
 
-OGRPLScenesDataset::OGRPLScenesDataset()
-{
-    bMustCleanPersistent = FALSE;
-    nLayers = 0;
-    papoLayers = NULL;
-}
+OGRPLScenesDataset::OGRPLScenesDataset() :
+    bMustCleanPersistent(FALSE),
+    nLayers(0),
+    papoLayers(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRPLScenesDataset()                        */
@@ -47,14 +46,16 @@ OGRPLScenesDataset::OGRPLScenesDataset()
 
 OGRPLScenesDataset::~OGRPLScenesDataset()
 {
-    for(int i=0;i<nLayers;i++)
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree(papoLayers);
 
-    if (bMustCleanPersistent)
+    if( bMustCleanPersistent )
     {
-        char** papszOptions = NULL;
-        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("PLSCENES:%p", this));
+
+        char **papszOptions =
+            CSLSetNameValue(NULL, "CLOSE_PERSISTENT",
+                            CPLSPrintf("PLSCENES:%p", this));
         CPLHTTPDestroyResult(CPLHTTPFetch(osBaseURL, papszOptions));
         CSLDestroy(papszOptions);
     }
