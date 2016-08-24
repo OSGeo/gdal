@@ -37,8 +37,10 @@ class DerivedDataset : public VRTDataset
     public:
         DerivedDataset(int nXSize, int nYSize);
         ~DerivedDataset();
-
+  
+        static int Identify( GDALOpenInfo * );
         static GDALDataset *Open( GDALOpenInfo * );
+  
 };
 
 
@@ -50,6 +52,23 @@ DerivedDataset::DerivedDataset(int nXSize, int nYSize) : VRTDataset(nXSize,nYSiz
 
 DerivedDataset::~DerivedDataset()
 {
+}
+
+int DerivedDataset::Identify(GDALOpenInfo * poOpenInfo)
+{
+  /* Try to open original dataset */
+  CPLString filename(poOpenInfo->pszFilename);
+    
+  /* DERIVED_SUBDATASET should be first domain */
+  const size_t dsds_pos = filename.find("DERIVED_SUBDATASET:");
+  
+  if (dsds_pos == std::string::npos)
+    {
+    /* Unable to Open in this case */
+    return FALSE;
+    }
+  
+  return TRUE; 
 }
 
 GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
@@ -173,6 +192,17 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
 
     GDALClose(poTmpDS);
 
+    // If dataset is a real file, initialize overview manager
+    VSIStatBufL  sStat;
+    if( VSIStatL( odFilename, &sStat ) == 0 )
+      {
+      CPLString path = CPLGetPath(odFilename);
+      CPLString ovrFileName = "DERIVED_DATASET_"+odDerivedName+"_"+CPLGetFilename(odFilename);
+      CPLString ovrFilePath = CPLFormFilename(path,ovrFileName,NULL);
+    
+      poDS->oOvManager.Initialize( poDS, ovrFilePath );
+      }
+    
     return poDS;
 }
 
