@@ -382,10 +382,12 @@ int FileGDBIterator::GetRowCount()
 /*                         FileGDBTrivialIterator()                     */
 /************************************************************************/
 
-FileGDBTrivialIterator::FileGDBTrivialIterator(FileGDBIterator* poParentIterIn) :
-        poParentIter(poParentIterIn), poTable(poParentIterIn->GetTable()), iRow(0)
-{
-}
+FileGDBTrivialIterator::FileGDBTrivialIterator(
+    FileGDBIterator* poParentIterIn ) :
+    poParentIter(poParentIterIn),
+    poTable(poParentIterIn->GetTable()),
+    iRow(0)
+{}
 
 /************************************************************************/
 /*                        GetNextRowSortedByFID()                       */
@@ -404,7 +406,10 @@ int FileGDBTrivialIterator::GetNextRowSortedByFID()
 /************************************************************************/
 
 FileGDBNotIterator::FileGDBNotIterator(FileGDBIterator* poIterBaseIn) :
-    poIterBase(poIterBaseIn), poTable(poIterBaseIn->GetTable()), iRow(0), iNextRowBase(-1)
+    poIterBase(poIterBaseIn),
+    poTable(poIterBaseIn->GetTable()),
+    iRow(0),
+    iNextRowBase(-1)
 {
     bNoHoles = (poTable->GetValidRecordCount() == poTable->GetTotalRecordCount());
 }
@@ -481,10 +486,12 @@ int FileGDBNotIterator::GetRowCount()
 /*                          FileGDBAndIterator()                        */
 /************************************************************************/
 
-FileGDBAndIterator::FileGDBAndIterator(FileGDBIterator* poIter1In,
-                                       FileGDBIterator* poIter2In) :
-                                       poIter1(poIter1In), poIter2(poIter2In),
-                                       iNextRow1(-1), iNextRow2(-1)
+FileGDBAndIterator::FileGDBAndIterator( FileGDBIterator* poIter1In,
+                                        FileGDBIterator* poIter2In ) :
+    poIter1(poIter1In),
+    poIter2(poIter2In),
+    iNextRow1(-1),
+    iNextRow2(-1)
 {
     CPLAssert(poIter1->GetTable() == poIter2->GetTable());
 }
@@ -551,9 +558,9 @@ int FileGDBAndIterator::GetNextRowSortedByFID()
 /************************************************************************/
 
 
-FileGDBOrIterator::FileGDBOrIterator(FileGDBIterator* poIter1In,
-                                     FileGDBIterator* poIter2In,
-                                     int bIteratorAreExclusiveIn) :
+FileGDBOrIterator::FileGDBOrIterator( FileGDBIterator* poIter1In,
+                                      FileGDBIterator* poIter2In,
+                                      int bIteratorAreExclusiveIn ) :
     poIter1(poIter1In),
     poIter2(poIter2In),
     bIteratorAreExclusive(bIteratorAreExclusiveIn),
@@ -645,7 +652,7 @@ int FileGDBOrIterator::GetRowCount()
 /************************************************************************/
 
 FileGDBIndexIterator::FileGDBIndexIterator( FileGDBTable* poParentIn,
-                                            int bAscendingIn) :
+                                            int bAscendingIn ) :
   poParent(poParentIn),
   bAscending(CPL_TO_BOOL(bAscendingIn)),
   fpCurIdx(NULL),

@@ -1994,9 +1994,12 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
 /*                           FileGDBField()                             */
 /************************************************************************/
 
-FileGDBField::FileGDBField(FileGDBTable* poParentIn) :
-    poParent(poParentIn), eType(FGFT_UNDEFINED), bNullable(FALSE),
-    nMaxWidth(0), poIndex(NULL)
+FileGDBField::FileGDBField( FileGDBTable* poParentIn ) :
+    poParent(poParentIn),
+    eType(FGFT_UNDEFINED),
+    bNullable(FALSE),
+    nMaxWidth(0),
+    poIndex(NULL)
 {
     sDefault.Set.nMarker1 = OGRUnsetMarker;
     sDefault.Set.nMarker2 = OGRUnsetMarker;
@@ -2039,14 +2042,26 @@ FileGDBIndex *FileGDBField::GetIndex()
 /*                           FileGDBGeomField()                         */
 /************************************************************************/
 
-FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParentIn) :
-    FileGDBField(poParentIn), bHasZ(FALSE), bHasM(FALSE),
-    dfXOrigin(0.0), dfYOrigin(0.0), dfXYScale(0.0), dfMOrigin(0.0),
-    dfMScale(0.0), dfZOrigin(0.0), dfZScale(0.0), dfXYTolerance(0.0),
-    dfMTolerance(0.0), dfZTolerance(0.0), dfXMin(0.0), dfYMin(0.0),
-    dfXMax(0.0), dfYMax(0.0), bHas3D(FALSE)
-{
-}
+FileGDBGeomField::FileGDBGeomField( FileGDBTable* poParentIn ) :
+    FileGDBField(poParentIn),
+    bHasZ(FALSE),
+    bHasM(FALSE),
+    dfXOrigin(0.0),
+    dfYOrigin(0.0),
+    dfXYScale(0.0),
+    dfMOrigin(0.0),
+    dfMScale(0.0),
+    dfZOrigin(0.0),
+    dfZScale(0.0),
+    dfXYTolerance(0.0),
+    dfMTolerance(0.0),
+    dfZTolerance(0.0),
+    dfXMin(0.0),
+    dfYMin(0.0),
+    dfXMax(0.0),
+    dfYMax(0.0),
+    bHas3D(FALSE)
+{}
 
 /************************************************************************/
 /*                      FileGDBOGRGeometryConverterImpl                 */
@@ -2104,15 +2119,15 @@ class FileGDBOGRGeometryConverterImpl CPL_FINAL : public FileGDBOGRGeometryConve
 /************************************************************************/
 
 FileGDBOGRGeometryConverterImpl::FileGDBOGRGeometryConverterImpl(
-                                    const FileGDBGeomField* poGeomFieldIn) :
-                                                poGeomField(poGeomFieldIn)
-{
-    panPointCount = NULL;
-    nPointCountMax = 0;
+    const FileGDBGeomField* poGeomFieldIn) :
+    poGeomField(poGeomFieldIn),
+    panPointCount(NULL),
+    nPointCountMax(0)
 #ifdef ASSUME_INNER_RINGS_IMMEDIATELY_AFTER_OUTER_RING
-    bUseOrganize = CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL) != NULL;
+    ,
+    bUseOrganize(CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL) != NULL)
 #endif
-}
+{}
 
 /************************************************************************/
 /*                 ~FileGDBOGRGeometryConverter()                       */
