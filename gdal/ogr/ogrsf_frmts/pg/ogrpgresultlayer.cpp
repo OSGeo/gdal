@@ -41,22 +41,19 @@ CPL_CVSID("$Id$");
 
 OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
                                     const char * pszRawQueryIn,
-                                    PGresult *hInitialResultIn )
+                                    PGresult *hInitialResultIn ) :
+    pszRawStatement(CPLStrdup(pszRawQueryIn)),
+    pszGeomTableName(NULL),
+    pszGeomTableSchemaName(NULL),
+    osWHERE("")
 {
     poDS = poDSIn;
 
     iNextShapeId = 0;
 
-    pszRawStatement = CPLStrdup(pszRawQueryIn);
-
-    osWHERE = "";
-
     BuildFullQueryStatement();
 
     ReadResultDefinition(hInitialResultIn);
-
-    pszGeomTableName = NULL;
-    pszGeomTableSchemaName = NULL;
 
     /* Find at which index the geometry column is */
     /* and prepare a request to identify not-nullable fields */
@@ -64,7 +61,9 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
     CPLString osRequest;
     std::map< std::pair<int,int>, int> oMapAttributeToFieldIndex;
 
-    for( int iRawField = 0; iRawField < PQnfields(hInitialResultIn); iRawField++ )
+    for( int iRawField = 0;
+         iRawField < PQnfields(hInitialResultIn);
+         iRawField++ )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 1 &&
             strcmp(PQfname(hInitialResultIn,iRawField),

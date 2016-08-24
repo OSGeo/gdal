@@ -52,41 +52,42 @@ static CPLString OGRPGDumpEscapeStringWithUserData(   CPL_UNUSED void* user_data
 /*                        OGRPGDumpLayer()                              */
 /************************************************************************/
 
-OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDSIn,
-                               const char* pszSchemaNameIn,
-                               const char* pszTableName,
-                               const char *pszFIDColumnIn,
-                               int         bWriteAsHexIn,
-                               int         bCreateTableIn)
+OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
+                                const char* pszSchemaNameIn,
+                                const char* pszTableName,
+                                const char *pszFIDColumnIn,
+                                int bWriteAsHexIn,
+                                int bCreateTableIn ) :
+    pszSchemaName(CPLStrdup(pszSchemaNameIn)),
+    pszSqlTableName(CPLStrdup(
+        CPLString().Printf("%s.%s",
+                           OGRPGDumpEscapeColumnName(pszSchemaName).c_str(),
+                           OGRPGDumpEscapeColumnName(pszTableName).c_str()))),
+    pszFIDColumn(CPLStrdup(pszFIDColumnIn)),
+    poFeatureDefn(new OGRFeatureDefn(pszTableName)),
+    poDS(poDSIn),
+    bLaunderColumnNames(TRUE),
+    bPreservePrecision(TRUE),
+    bUseCopy(USE_COPY_UNSET),
+    bWriteAsHex(bWriteAsHexIn),
+    bCopyActive(FALSE),
+    bFIDColumnInCopyFields(FALSE),
+    bCreateTable(bCreateTableIn),
+    nUnknownSRSId(-1),
+    nForcedSRSId(-2),
+    nForcedGeometryTypeFlags(-1),
+    bCreateSpatialIndexFlag(TRUE),
+    nPostGISMajor(1),
+    nPostGISMinor(2),
+    iNextShapeId(0),
+    iFIDAsRegularColumnIndex(-1),
+    bAutoFIDOnCreateViaCopy(TRUE),
+    bCopyStatementWithFID(FALSE),
+    papszOverrideColumnTypes(NULL)
 {
-    poDS = poDSIn;
-    pszSchemaName = CPLStrdup(pszSchemaNameIn);
-    pszFIDColumn = CPLStrdup(pszFIDColumnIn);
-    bCreateTable = bCreateTableIn;
-    poFeatureDefn = new OGRFeatureDefn( pszTableName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType(wkbNone);
     poFeatureDefn->Reference();
-    pszSqlTableName = CPLStrdup(CPLString().Printf("%s.%s",
-                               OGRPGDumpEscapeColumnName(pszSchemaName).c_str(),
-                               OGRPGDumpEscapeColumnName(pszTableName).c_str() ));
-    bLaunderColumnNames = TRUE;
-    bPreservePrecision = TRUE;
-    bUseCopy = USE_COPY_UNSET;
-    bFIDColumnInCopyFields = FALSE;
-    bWriteAsHex = bWriteAsHexIn;
-    bCopyActive = FALSE;
-    papszOverrideColumnTypes = NULL;
-    nUnknownSRSId = -1;
-    nForcedSRSId = -2;
-    nForcedGeometryTypeFlags = -1;
-    bCreateSpatialIndexFlag = TRUE;
-    nPostGISMajor = 1;
-    nPostGISMinor = 2;
-    iNextShapeId = 0;
-    iFIDAsRegularColumnIndex = -1;
-    bAutoFIDOnCreateViaCopy = TRUE;
-    bCopyStatementWithFID = FALSE;
 }
 
 /************************************************************************/

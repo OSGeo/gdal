@@ -39,13 +39,13 @@ namespace OGRPDS {
 /*                           OGRPDSLayer()                              */
 /************************************************************************/
 
-OGRPDSLayer::OGRPDSLayer(   CPLString osTableIDIn,
-                            const char* pszLayerName, VSILFILE* fp,
-                            CPLString osLabelFilename,
-                            CPLString osStructureFilename,
-                            int nRecordsIn,
-                            int nStartBytesIn, int nRecordSizeIn,
-                            GByte* pabyRecordIn, bool bIsASCII) :
+OGRPDSLayer::OGRPDSLayer( CPLString osTableIDIn,
+                          const char* pszLayerName, VSILFILE* fp,
+                          CPLString osLabelFilename,
+                          CPLString osStructureFilename,
+                          int nRecordsIn,
+                          int nStartBytesIn, int nRecordSizeIn,
+                          GByte* pabyRecordIn, bool bIsASCII ) :
     poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
     osTableID(osTableIDIn),
     fpPDS(fp),
@@ -80,7 +80,7 @@ OGRPDSLayer::OGRPDSLayer(   CPLString osTableIDIn,
         char **papszTokens = CSLTokenizeString2(
                 (const char*)pabyRecord, " ", CSLT_HONOURSTRINGS );
         const int nTokens = CSLCount(papszTokens);
-        for( int i=0; i<nTokens; i++)
+        for( int i = 0; i < nTokens; i++ )
         {
             const char* pszStr = papszTokens[i];
             char ch;

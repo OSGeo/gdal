@@ -126,57 +126,58 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
                                   const char * pszSchemaNameIn,
                                   const char * pszDescriptionIn,
                                   const char * pszGeomColForcedIn,
-                                  int bUpdate )
-
+                                  int bUpdate ) :
+    bUpdateAccess(bUpdate),
+    pszTableName(CPLStrdup(pszTableNameIn)),
+    pszSchemaName(CPLStrdup(pszSchemaNameIn ?
+                            pszSchemaNameIn : osCurrentSchema.c_str())),
+    pszDescription(pszDescriptionIn ? CPLStrdup(pszDescriptionIn) : NULL),
+    pszSqlTableName(NULL),
+    bTableDefinitionValid(-1),
+    osPrimaryKey(CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" )),
+    bGeometryInformationSet(FALSE),
+    pszSqlGeomParentTableName(NULL),
+    pszGeomColForced(pszGeomColForcedIn ? CPLStrdup(pszGeomColForcedIn) : NULL),
+    bLaunderColumnNames(TRUE),
+    bPreservePrecision(TRUE),
+    bUseCopy(USE_COPY_UNSET),  // unknown
+    bCopyActive(FALSE),
+    bFIDColumnInCopyFields(FALSE),
+    bFirstInsertion(TRUE),
+    bHasWarnedIncompatibleGeom(FALSE),
+    // Just in provision for people yelling about broken backward compatibility.
+    bRetrieveFID(CPLTestBool(
+        CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE"))),
+    bHasWarnedAlreadySetFID(FALSE),
+    papszOverrideColumnTypes(NULL),
+    nForcedSRSId(UNDETERMINED_SRID),
+    nForcedGeometryTypeFlags(-1),
+    bCreateSpatialIndexFlag(TRUE),
+    bInResetReading(FALSE),
+    bAutoFIDOnCreateViaCopy(FALSE),
+    bUseCopyByDefault(FALSE),
+    bDeferredCreation(FALSE),
+    iFIDAsRegularColumnIndex(-1)
 {
     poDS = poDSIn;
-
     pszQueryStatement = NULL;
-
-    bUpdateAccess = bUpdate;
-
-    bGeometryInformationSet = FALSE;
-
-    bLaunderColumnNames = TRUE;
-    bPreservePrecision = TRUE;
-    bCopyActive = FALSE;
-    bUseCopy = USE_COPY_UNSET;  // unknown
-    bUseCopyByDefault = FALSE;
-    bFIDColumnInCopyFields = FALSE;
-    bFirstInsertion = TRUE;
-
-    pszTableName = CPLStrdup( pszTableNameIn );
-    if (pszSchemaNameIn)
-        pszSchemaName = CPLStrdup( pszSchemaNameIn );
-    else
-        pszSchemaName = CPLStrdup( osCurrentSchema );
-    pszGeomColForced = pszGeomColForcedIn
-        ? CPLStrdup(pszGeomColForcedIn)
-        : NULL;
-
-    pszSqlGeomParentTableName = NULL;
-    bTableDefinitionValid = -1;
-
-    bHasWarnedIncompatibleGeom = FALSE;
-    bHasWarnedAlreadySetFID = FALSE;
-
-    /* Just in provision for people yelling about broken backward compatibility ... */
-    bRetrieveFID = CPLTestBool(CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE"));
 
 /* -------------------------------------------------------------------- */
 /*      Build the layer defn name.                                      */
 /* -------------------------------------------------------------------- */
     CPLString osDefnName;
-    if ( pszSchemaNameIn && osCurrentSchema != pszSchemaNameIn )
+    if( pszSchemaNameIn && osCurrentSchema != pszSchemaNameIn )
     {
         osDefnName.Printf("%s.%s", pszSchemaNameIn, pszTableName );
-        pszSqlTableName = CPLStrdup(CPLString().Printf("%s.%s",
+        pszSqlTableName = CPLStrdup(
+            CPLString().Printf("%s.%s",
                                OGRPGEscapeColumnName(pszSchemaNameIn).c_str(),
                                OGRPGEscapeColumnName(pszTableName).c_str() ));
     }
     else
     {
-        //no prefix for current_schema in layer name, for backwards compatibility
+        // no prefix for current_schema in layer name, for backwards
+        // compatibility.
         osDefnName = pszTableName;
         pszSqlTableName = CPLStrdup(OGRPGEscapeColumnName(pszTableName));
     }
@@ -187,24 +188,10 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
         osDefnName += ")";
     }
 
-    osPrimaryKey = CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" );
-
-    papszOverrideColumnTypes = NULL;
-    nForcedSRSId = UNDETERMINED_SRID;
-    nForcedGeometryTypeFlags = -1;
-    bCreateSpatialIndexFlag = TRUE;
-    bInResetReading = FALSE;
-
     poFeatureDefn = new OGRPGTableFeatureDefn( this, osDefnName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
-    bAutoFIDOnCreateViaCopy = FALSE;
-
-    bDeferredCreation = FALSE;
-    iFIDAsRegularColumnIndex = -1;
-
-    pszDescription = (pszDescriptionIn) ? CPLStrdup(pszDescriptionIn) : NULL;
     if( pszDescriptionIn != NULL && !EQUAL(pszDescriptionIn, "") )
     {
         OGRLayer::SetMetadataItem("DESCRIPTION", pszDescriptionIn);
@@ -219,7 +206,7 @@ OGRPGTableLayer::~OGRPGTableLayer()
 
 {
     if( bDeferredCreation ) RunDeferredCreationIfNecessary();
-    if ( bCopyActive ) EndCopy();
+    if( bCopyActive ) EndCopy();
     CPLFree( pszSqlTableName );
     CPLFree( pszTableName );
     CPLFree( pszSqlGeomParentTableName );
@@ -774,7 +761,9 @@ void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
     }
     else if( pszGFldName != NULL )
+    {
         m_osFirstGeometryFieldName = pszGFldName;
+    }
 }
 
 /************************************************************************/

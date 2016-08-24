@@ -75,9 +75,8 @@ class OGRPGDumpGeomFieldDefn : public OGRGeomFieldDefn
     public:
         OGRPGDumpGeomFieldDefn( OGRGeomFieldDefn *poGeomField ) :
             OGRGeomFieldDefn(poGeomField), nSRSId(-1), GeometryTypeFlags(0)
-            {
-            }
-            
+            {}
+
         int nSRSId;
         int GeometryTypeFlags;
 };
@@ -134,10 +133,10 @@ class OGRPGDumpLayer : public OGRLayer
 
     virtual OGRFeatureDefn *GetLayerDefn() {return poFeatureDefn;}
     virtual const char* GetFIDColumn() { return pszFIDColumn; }
-    
+
     virtual void        ResetReading()  { }
     virtual int         TestCapability( const char * );
-    
+
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeatureViaInsert( OGRFeature *poFeature );
     virtual OGRErr      CreateFeatureViaCopy( OGRFeature *poFeature );

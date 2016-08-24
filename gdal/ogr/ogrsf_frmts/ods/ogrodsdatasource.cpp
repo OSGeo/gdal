@@ -154,40 +154,34 @@ OGRErr OGRODSLayer::DeleteFeature( GIntBig nFID )
 /************************************************************************/
 
 OGRODSDataSource::OGRODSDataSource() :
-    nFlags(0)
+    pszName(NULL),
+    bUpdatable(false),
+    bUpdated(false),
+    bAnalysedFile(false),
+    nLayers(0),
+    papoLayers(NULL),
+    fpSettings(NULL),
+    nFlags(0),
+    fpContent(NULL),
+    bFirstLineIsHeaders(false),
+    bAutodetectTypes(
+        !EQUAL(CPLGetConfigOption("OGR_ODS_FIELD_TYPES", ""), "STRING")),
+    oParser(NULL),
+    bStopParsing(false),
+    nWithoutEventCounter(0),
+    nDataHandlerCounter(0),
+    nCurLine(0),
+    nEmptyRowsAccumulated(0),
+    nRowsRepeated(0),
+    nCurCol(0),
+    nCellsRepeated(0),
+    bEndTableParsing(FALSE),
+    poCurLayer(NULL),
+    nStackDepth(0),
+    nDepth(0)
 {
-    pszName = NULL;
-    fpContent = NULL;
-    fpSettings = NULL;
-    bUpdatable = false;
-    bUpdated = false;
-    bAnalysedFile = false;
-
-    nLayers = 0;
-    papoLayers = NULL;
-
-    bFirstLineIsHeaders = false;
-
-    oParser = NULL;
-    bStopParsing = false;
-    nWithoutEventCounter = 0;
-    nDataHandlerCounter = 0;
-    nStackDepth = 0;
-    nDepth = 0;
-    nCurLine = 0;
-    nEmptyRowsAccumulated = 0;
-    nCurCol = 0;
-    nRowsRepeated = 0;
-    nCellsRepeated = 0;
     stateStack[0].eVal = STATE_DEFAULT;
     stateStack[0].nBeginDepth = 0;
-    bEndTableParsing = FALSE;
-
-    poCurLayer = NULL;
-
-    const char* pszODSFieldTypes =
-                CPLGetConfigOption("OGR_ODS_FIELD_TYPES", "");
-    bAutodetectTypes = !EQUAL(pszODSFieldTypes, "STRING");
 }
 
 /************************************************************************/

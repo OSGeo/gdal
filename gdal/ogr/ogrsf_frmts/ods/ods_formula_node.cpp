@@ -113,26 +113,25 @@ ods_formula_node::ods_formula_node( ods_formula_op eOpIn ) :
 /*              ods_formula_node(const ods_formula_node&)               */
 /************************************************************************/
 
-ods_formula_node::ods_formula_node( const ods_formula_node& other )
+ods_formula_node::ods_formula_node( const ods_formula_node& other ) :
+    eNodeType(other.eNodeType),
+    field_type(other.field_type),
+    eOp(other.eOp),
+    nSubExprCount(other.nSubExprCount),
+    papoSubExpr(NULL),
+    string_value(other.string_value ? CPLStrdup(other.string_value) : NULL),
+    int_value(other.int_value),
+    float_value(other.float_value)
 {
-    eNodeType = other.eNodeType;
-    eOp = other.eOp;
-    field_type = other.field_type;
-    int_value = other.int_value;
-    float_value = other.float_value;
-    string_value = other.string_value ? CPLStrdup(other.string_value) : NULL;
-    nSubExprCount = other.nSubExprCount;
-    if (nSubExprCount)
+    if( nSubExprCount )
     {
         papoSubExpr = static_cast<ods_formula_node **>(
             CPLMalloc( sizeof(void*) * nSubExprCount ) );
-        for(int i=0;i<nSubExprCount;i++)
+        for( int i = 0; i < nSubExprCount; i++ )
         {
             papoSubExpr[i] = new ods_formula_node( *(other.papoSubExpr[i]) );
         }
     }
-    else
-        papoSubExpr = NULL;
 }
 
 /************************************************************************/
