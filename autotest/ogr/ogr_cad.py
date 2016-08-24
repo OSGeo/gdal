@@ -165,7 +165,7 @@ def ogr_cad_2():
         return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbLineString25D:
+    if geom.GetGeometryType() != ogr.wkbCircularStringZ:
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
@@ -210,7 +210,7 @@ def ogr_cad_2():
         return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbLineString25D:
+    if geom.GetGeometryType() != ogr.wkbCircularStringZ:
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
         
@@ -252,7 +252,7 @@ def ogr_cad_2():
         return 'fail'
 
     geom = feat.GetGeometryRef()
-    if geom.GetGeometryType() != ogr.wkbLineString25D:
+    if geom.GetGeometryType() != ogr.wkbCircularStringZ:
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
