@@ -36,14 +36,11 @@ CPL_CVSID("$Id$");
 /*                        OGRSEGUKOOADataSource()                       */
 /************************************************************************/
 
-OGRSEGUKOOADataSource::OGRSEGUKOOADataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-}
+OGRSEGUKOOADataSource::OGRSEGUKOOADataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                       ~OGRSEGUKOOADataSource()                       */

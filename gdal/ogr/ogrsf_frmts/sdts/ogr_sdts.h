@@ -62,11 +62,7 @@ class OGRSDTSLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-//    OGRFeature         *GetFeature( GIntBig nFeatureId );
-
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-
-//    GIntBig             GetFeatureCount( int );
 
     int                 TestCapability( const char * );
 };

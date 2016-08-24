@@ -45,7 +45,7 @@ S57Writer::S57Writer() :
     poClassContentExplorer(NULL),
     nCOMF(10000000),
     nSOMF(10)
-{ }
+{}
 
 /************************************************************************/
 /*                             ~S57Writer()                             */

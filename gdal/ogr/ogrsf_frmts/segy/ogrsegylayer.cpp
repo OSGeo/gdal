@@ -226,16 +226,16 @@ static float SEGYReadMSBFloat32(const GByte* pabyVal)
 
 OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
                             VSILFILE* fpIn,
-                            SEGYBinaryFileHeader* psBFH )
-
+                            SEGYBinaryFileHeader* psBFH ) :
+    poFeatureDefn(new OGRFeatureDefn(CPLGetBasename(pszFilename))),
+    bEOF(FALSE),
+    nNextFID(0),
+    fp(fpIn),
+    nDataSize(0)
 {
-    fp = fpIn;
-    nNextFID = 0;
-    bEOF = FALSE;
     memcpy(&sBFH, psBFH, sizeof(sBFH));
 
-    nDataSize = 0;
-    switch (sBFH.nDataSampleType)
+    switch( sBFH.nDataSampleType )
     {
         case DT_IBM_4BYTES_FP: nDataSize = 4; break;
         case DT_4BYTES_INT: nDataSize = 4; break;
@@ -246,24 +246,27 @@ OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
         default: break;
     }
 
-    poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint );
 
-    int i;
-    for(i=0;i<(int)(sizeof(SEGYFields)/sizeof(SEGYFields[0]));i++)
+    for( int i = 0; i < static_cast<int>(sizeof(SEGYFields) /
+                                         sizeof(SEGYFields[0]));
+         i++ )
     {
-        OGRFieldDefn    oField( SEGYFields[i].pszName,
-                                SEGYFields[i].eType );
+        OGRFieldDefn oField( SEGYFields[i].pszName,
+                             SEGYFields[i].eType );
         poFeatureDefn->AddFieldDefn( &oField );
     }
 
-    if (sBFH.dfSEGYRevisionNumber >= 1.0)
+    if( sBFH.dfSEGYRevisionNumber >= 1.0 )
     {
-        for(i=0;i<(int)(sizeof(SEGYFields10)/sizeof(SEGYFields10[0]));i++)
+        for( int i = 0;
+             i < static_cast<int>(sizeof(SEGYFields10) /
+                                  sizeof(SEGYFields10[0]));
+             i++ )
         {
-            OGRFieldDefn    oField( SEGYFields10[i].pszName,
-                                    SEGYFields10[i].eType );
+            OGRFieldDefn oField( SEGYFields10[i].pszName,
+                                 SEGYFields10[i].eType );
             poFeatureDefn->AddFieldDefn( &oField );
         }
     }
@@ -802,23 +805,24 @@ static const FieldDesc SEGYHeaderFields[] =
 
 OGRSEGYHeaderLayer::OGRSEGYHeaderLayer( const char* pszLayerName,
                                         SEGYBinaryFileHeader* psBFH,
-                                        const char* pszHeaderTextIn )
-
+                                        const char* pszHeaderTextIn ) :
+    poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
+    bEOF(FALSE),
+    pszHeaderText(CPLStrdup(pszHeaderTextIn))
 {
-    bEOF = FALSE;
     memcpy(&sBFH, psBFH, sizeof(sBFH));
-    pszHeaderText = CPLStrdup(pszHeaderTextIn);
 
-    poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
-    int i;
-    for(i=0;i<(int)(sizeof(SEGYHeaderFields)/sizeof(SEGYHeaderFields[0]));i++)
+    for( int i = 0;
+         i < static_cast<int>(sizeof(SEGYHeaderFields)/
+                              sizeof(SEGYHeaderFields[0]));
+         i++ )
     {
-        OGRFieldDefn    oField( SEGYHeaderFields[i].pszName,
-                                SEGYHeaderFields[i].eType );
+        OGRFieldDefn oField( SEGYHeaderFields[i].pszName,
+                             SEGYHeaderFields[i].eType );
         poFeatureDefn->AddFieldDefn( &oField );
     }
 
