@@ -381,7 +381,9 @@ static const TigerRecordInfo rtS_info =
 /************************************************************************/
 
 TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
-                            CPL_UNUSED const char * pszPrototypeModule ) :
+                            const char * /* pszPrototypeModule */ ) :
+    psRTAInfo(NULL),
+    psRTSInfo(NULL),
     fpRTS(NULL),
     bUsingRTS(TRUE),
     nRTSRecLen(0)
@@ -413,13 +415,11 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
     /* -------------------------------------------------------------------- */
     /*      Fields from type A record.                                      */
     /* -------------------------------------------------------------------- */
-
     AddFieldDefns(psRTAInfo, poFeatureDefn);
 
     /* -------------------------------------------------------------------- */
     /*      Add the RTS records if it is available.                         */
     /* -------------------------------------------------------------------- */
-
     if( bUsingRTS ) {
       AddFieldDefns(psRTSInfo, poFeatureDefn);
     }

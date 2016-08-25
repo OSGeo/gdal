@@ -83,15 +83,12 @@ static const long aoVCS[] =
 /*                         OGRSXFDataSource()                           */
 /************************************************************************/
 
-OGRSXFDataSource::OGRSXFDataSource()
-
+OGRSXFDataSource::OGRSXFDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    fpSXF(NULL),
+    hIOMutex(NULL)
 {
-    papoLayers = NULL;
-    nLayers = 0;
-
-    fpSXF = NULL;
-    hIOMutex = NULL;
-
     oSXFPassport.stMapDescription.pSpatRef = NULL;
 }
 

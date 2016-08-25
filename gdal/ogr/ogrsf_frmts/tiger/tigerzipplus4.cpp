@@ -64,7 +64,5 @@ TigerZipPlus4::TigerZipPlus4( OGRTigerDataSource * poDSIn,
     /* -------------------------------------------------------------------- */
     /*      Fields from type Z record.                                      */
     /* -------------------------------------------------------------------- */
-
     AddFieldDefns( psRTInfo, poFeatureDefn );
-
 }

@@ -66,5 +66,4 @@ TigerZeroCellID::TigerZeroCellID( OGRTigerDataSource * poDSIn,
 /* -------------------------------------------------------------------- */
 
     AddFieldDefns( psRTInfo, poFeatureDefn );
-
 }

@@ -75,5 +75,4 @@ TigerKeyFeatures::TigerKeyFeatures( OGRTigerDataSource * poDSIn,
     /* -------------------------------------------------------------------- */
 
     AddFieldDefns( psRTInfo, poFeatureDefn );
-
 }

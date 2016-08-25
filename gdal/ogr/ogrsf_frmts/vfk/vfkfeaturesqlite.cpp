@@ -43,13 +43,14 @@ CPL_CVSID("$Id$");
 
   \param poDataBlock pointer to related IVFKDataBlock
 */
-VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poDataBlock)
+VFKFeatureSQLite::VFKFeatureSQLite( IVFKDataBlock *poDataBlock ) :
+    IVFKFeature(poDataBlock),
+    // Starts at 1.
+    m_iRowId(static_cast<int>(poDataBlock->GetFeatureCount() + 1)),
+    m_hStmt(NULL)
 {
-    m_hStmt  = NULL;
-    m_iRowId = (int)m_poDataBlock->GetFeatureCount() + 1; /* starts at 1 */
-
-    /* set FID from DB */
-    SetFIDFromDB(); /* -> m_nFID */
+    // Set FID from DB.
+    SetFIDFromDB();  // -> m_nFID
 }
 
 /*!
@@ -59,11 +60,13 @@ VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poD
   \param iRowId feature DB rowid (starts at 1)
   \param nFID feature id
 */
-VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock, int iRowId, GIntBig nFID) : IVFKFeature(poDataBlock)
+VFKFeatureSQLite::VFKFeatureSQLite( IVFKDataBlock *poDataBlock, int iRowId,
+                                    GIntBig nFID) :
+    IVFKFeature(poDataBlock),
+    m_iRowId(iRowId),
+    m_hStmt(NULL)
 {
-    m_hStmt  = NULL;
-    m_iRowId = iRowId;
-    m_nFID   = nFID;
+    m_nFID = nFID;
 }
 
 /*!
@@ -153,11 +156,14 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
 
   Read VFK feature from VFK file and insert it into DB
 */
-VFKFeatureSQLite::VFKFeatureSQLite(const VFKFeature *poVFKFeature) : IVFKFeature(poVFKFeature->m_poDataBlock)
+VFKFeatureSQLite::VFKFeatureSQLite( const VFKFeature *poVFKFeature ) :
+    IVFKFeature(poVFKFeature->m_poDataBlock),
+    // Starts at 1.
+    m_iRowId(static_cast<int>(
+        poVFKFeature->m_poDataBlock->GetFeatureCount() + 1)),
+    m_hStmt(NULL)
 {
-    m_nFID   = poVFKFeature->m_nFID;
-    m_hStmt  = NULL;
-    m_iRowId = (int)m_poDataBlock->GetFeatureCount() + 1; /* starts at 1 */
+    m_nFID = poVFKFeature->m_nFID;
 }
 
 /*!

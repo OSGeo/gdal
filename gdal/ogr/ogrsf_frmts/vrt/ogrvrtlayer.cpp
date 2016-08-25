@@ -55,7 +55,7 @@ OGRVRTGeomFieldProps::OGRVRTGeomFieldProps() :
     bReportSrcColumn(TRUE),
     bUseSpatialSubquery(FALSE),
     bNullable(TRUE)
-{ }
+{}
 
 /************************************************************************/
 /*                      ~OGRVRTGeomFieldProps()                         */
@@ -73,7 +73,7 @@ OGRVRTGeomFieldProps::~OGRVRTGeomFieldProps()
 /*                            OGRVRTLayer()                             */
 /************************************************************************/
 
-OGRVRTLayer::OGRVRTLayer(OGRVRTDataSource* poDSIn) :
+OGRVRTLayer::OGRVRTLayer( OGRVRTDataSource* poDSIn ) :
     poDS(poDSIn),
     bHasFullInitialized(FALSE),
     psLTree(NULL),
@@ -91,7 +91,7 @@ OGRVRTLayer::OGRVRTLayer(OGRVRTDataSource* poDSIn) :
     bUpdate(FALSE),
     nFeatureCount(-1),
     bError(FALSE)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~OGRVRTLayer()                            */

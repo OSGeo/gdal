@@ -40,7 +40,7 @@ OGRWalkDataSource::OGRWalkDataSource() :
     papoLayers(NULL),
     nLayers(0),
     bDSUpdate(FALSE)
-{ }
+{}
 
 /************************************************************************/
 /*                        ~OGRWalkDataSource()                          */

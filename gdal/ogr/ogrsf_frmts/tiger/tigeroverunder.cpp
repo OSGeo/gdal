@@ -68,7 +68,6 @@ TigerOverUnder::TigerOverUnder( OGRTigerDataSource * poDSIn,
     poFeatureDefn->SetGeomType( wkbNone );
 
     AddFieldDefns( psRTInfo, poFeatureDefn );
-
 }
 
 OGRFeature *TigerOverUnder::GetFeature( int nRecordId )

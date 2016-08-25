@@ -68,8 +68,9 @@ static const TigerRecordInfo rtB_info =
 /*                     TigerPolygonCorrections()                        */
 /************************************************************************/
 
-TigerPolygonCorrections::TigerPolygonCorrections( OGRTigerDataSource * poDSIn,
-                                                  CPL_UNUSED const char * pszPrototypeModule ) :
+TigerPolygonCorrections::TigerPolygonCorrections(
+    OGRTigerDataSource * poDSIn,
+    const char * /* pszPrototypeModule */ ) :
     TigerFileBase(&rtB_info, FILE_CODE)
 {
     OGRFieldDefn        oField("",OFTInteger);
@@ -82,6 +83,5 @@ TigerPolygonCorrections::TigerPolygonCorrections( OGRTigerDataSource * poDSIn,
     /* -------------------------------------------------------------------- */
     /*      Fields from type B record.                                      */
     /* -------------------------------------------------------------------- */
-
     AddFieldDefns( psRTInfo, poFeatureDefn );
 }

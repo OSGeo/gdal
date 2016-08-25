@@ -37,15 +37,12 @@ CPL_CVSID("$Id$");
 /*!
   \brief OGRVFKDataSource constructor
 */
-OGRVFKDataSource::OGRVFKDataSource()
-{
-    pszName    = NULL;
-
-    poReader   = NULL;
-
-    papoLayers = NULL;
-    nLayers    = 0;
-}
+OGRVFKDataSource::OGRVFKDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    poReader(NULL)
+{}
 
 /*!
   \brief OGRVFKDataSource destructor
@@ -54,10 +51,10 @@ OGRVFKDataSource::~OGRVFKDataSource()
 {
     CPLFree(pszName);
 
-    if (poReader)
+    if( poReader )
         delete poReader;
 
-    for(int i = 0; i < nLayers; i++)
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree(papoLayers);

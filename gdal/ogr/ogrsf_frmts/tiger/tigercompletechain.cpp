@@ -213,18 +213,25 @@ static const TigerRecordInfo rt3_info =
 /*                         TigerCompleteChain()                         */
 /************************************************************************/
 
-TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
-                                        CPL_UNUSED const char * pszPrototypeModule )
+TigerCompleteChain::TigerCompleteChain(
+    OGRTigerDataSource * poDSIn,
+    const char * /* pszPrototypeModule */ ) :
+    fpShape(NULL),
+    panShapeRecordId(NULL),
+    fpRT3(NULL),
+    bUsingRT3(FALSE),
+    psRT1Info(NULL),
+    psRT2Info(NULL),
+    psRT3Info(NULL)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "CompleteChain" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbLineString );
 
-
     if (poDS->GetVersion() >= TIGER_2002) {
       psRT1Info = &rt1_2002_info;
-      bUsingRT3 = FALSE;
+      // bUsingRT3 = FALSE;
     } else {
       psRT1Info = &rt1_info;
       bUsingRT3 = TRUE;
@@ -239,11 +246,6 @@ TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
     } else {
       psRT3Info = &rt3_info;
     }
-
-    fpRT3 = NULL;
-
-    panShapeRecordId = NULL;
-    fpShape = NULL;
 
     /* -------------------------------------------------------------------- */
     /*      Fields from type 1 record.                                      */
