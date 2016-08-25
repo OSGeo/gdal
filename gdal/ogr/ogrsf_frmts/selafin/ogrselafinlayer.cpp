@@ -58,14 +58,26 @@ static void MoveOverwrite(VSILFILE *fpDest,VSILFILE *fpSource) {
 /*       Note that no operation on OGRSelafinLayer is thread-safe       */
 /************************************************************************/
 
-OGRSelafinLayer::OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,OGRSpatialReference *poSpatialRefP,Selafin::Header *poHeaderP,int nStepNumberP,SelafinTypeDef eTypeP):eType(eTypeP),bUpdate(bUpdateP),nStepNumber(nStepNumberP),poHeader(poHeaderP),poSpatialRef(poSpatialRefP),nCurrentId(-1) {
-    //CPLDebug("Selafin","Opening layer %s",pszLayerNameP);
-    poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( pszLayerNameP ) );
+OGRSelafinLayer::OGRSelafinLayer(
+    const char *pszLayerNameP, int bUpdateP, OGRSpatialReference *poSpatialRefP,
+    Selafin::Header *poHeaderP, int nStepNumberP, SelafinTypeDef eTypeP ) :
+    eType(eTypeP),
+    bUpdate(bUpdateP),
+    nStepNumber(nStepNumberP),
+    poHeader(poHeaderP),
+    poFeatureDefn(new OGRFeatureDefn(CPLGetBasename(pszLayerNameP))),
+    poSpatialRef(poSpatialRefP),
+    nCurrentId(-1)
+{
+#ifdef DEBUG_VERBOSE
+    CPLDebug("Selafin", "Opening layer %s", pszLayerNameP);
+#endif
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    if (eType==POINTS) poFeatureDefn->SetGeomType( wkbPoint );
+    if( eType == POINTS ) poFeatureDefn->SetGeomType( wkbPoint );
     else poFeatureDefn->SetGeomType(wkbPolygon);
-    for (int i=0;i<poHeader->nVar;++i) {
+    for( int i = 0; i < poHeader->nVar; ++i )
+    {
         OGRFieldDefn oFieldDefn(poHeader->papszVariables[i],OFTReal);
         poFeatureDefn->AddFieldDefn(&oFieldDefn);
     }
@@ -75,11 +87,14 @@ OGRSelafinLayer::OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,OGRSpa
 /************************************************************************/
 /*                           ~OGRSelafinLayer()                         */
 /************************************************************************/
-OGRSelafinLayer::~OGRSelafinLayer() {
-    //CPLDebug("Selafin","Closing layer %s",GetName());
+OGRSelafinLayer::~OGRSelafinLayer()
+{
+#ifdef DEBUG_VERBOSE
+    CPLDebug("Selafin", "Closing layer %s", GetName());
+#endif
     poFeatureDefn->Release();
-    //poHeader->nRefCount--;
-    //if (poHeader->nRefCount==0) delete poHeader;
+    // poHeader->nRefCount--;
+    // if (poHeader->nRefCount==0) delete poHeader;
 }
 
 /************************************************************************/

@@ -37,24 +37,19 @@ CPL_CVSID("$Id$");
 /*                        OGRSQLiteViewLayer()                         */
 /************************************************************************/
 
-OGRSQLiteViewLayer::OGRSQLiteViewLayer( OGRSQLiteDataSource *poDSIn )
-
+OGRSQLiteViewLayer::OGRSQLiteViewLayer( OGRSQLiteDataSource *poDSIn ) :
+    bHasCheckedSpatialIndexTable(FALSE),
+    eGeomFormat(OSGF_None),
+    bHasSpatialIndex(FALSE),
+    pszViewName(NULL),
+    pszEscapedTableName(NULL),
+    pszEscapedUnderlyingTableName(NULL),
+    bLayerDefnError(FALSE),
+    poUnderlyingLayer(NULL)
 {
     poDS = poDSIn;
-
     iNextShapeId = 0;
-
     poFeatureDefn = NULL;
-    pszViewName = NULL;
-    pszEscapedTableName = NULL;
-    pszEscapedUnderlyingTableName = NULL;
-    bHasSpatialIndex = FALSE;
-
-    bHasCheckedSpatialIndexTable = FALSE;
-
-    bLayerDefnError = FALSE;
-    eGeomFormat = OSGF_None;
-    poUnderlyingLayer = NULL;
 }
 
 /************************************************************************/

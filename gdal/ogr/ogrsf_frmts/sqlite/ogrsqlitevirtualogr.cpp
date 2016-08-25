@@ -121,12 +121,14 @@ class OGR2SQLITEModule
 /************************************************************************/
 
 OGR2SQLITEModule::OGR2SQLITEModule() :
-    hDB(NULL), poDS(NULL), poSQLiteDS(NULL), hHandleSQLFunctions(NULL)
-{
 #ifdef DEBUG
-    pDummy = CPLMalloc(1);
+    pDummy(CPLMalloc(1)),
 #endif
-}
+    hDB(NULL),
+    poDS(NULL),
+    poSQLiteDS(NULL),
+    hHandleSQLFunctions(NULL)
+{}
 
 /************************************************************************/
 /*                          ~OGR2SQLITEModule                           */
@@ -138,7 +140,7 @@ OGR2SQLITEModule::~OGR2SQLITEModule()
     CPLFree(pDummy);
 #endif
 
-    for(int i=0;i<(int)apoExtraDS.size();i++)
+    for( int i = 0; i < static_cast<int>(apoExtraDS.size()); i++ )
         delete apoExtraDS[i];
 
     OGRSQLiteUnregisterSQLFunctions(hHandleSQLFunctions);

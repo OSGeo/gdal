@@ -242,26 +242,20 @@ int OGRSQLiteDataSource::GetSpatialiteVersionNumber()
 /*                       OGRSQLiteBaseDataSource()                      */
 /************************************************************************/
 
-OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource()
-
-{
-    m_pszFilename = NULL;
-    hDB = NULL;
-    bUpdate = FALSE;
-
+OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource() :
+    m_pszFilename(NULL),
+    hDB(NULL),
+    bUpdate(FALSE),
 #ifdef HAVE_SQLITE_VFS
-    pMyVFS = NULL;
+    pMyVFS(NULL),
 #endif
-
-    fpMainFile = NULL; /* Do not close ! The VFS layer will do it for us */
-
+    fpMainFile(NULL),  // Do not close. The VFS layer will do it for us.
 #ifdef SPATIALITE_412_OR_LATER
-    hSpatialiteCtxt = NULL;
+    hSpatialiteCtxt(NULL),
 #endif
-
-    bUserTransactionActive = FALSE;
-    nSoftTransactionLevel = 0;
-}
+    bUserTransactionActive(FALSE),
+    nSoftTransactionLevel(0)
+{}
 
 /************************************************************************/
 /*                      ~OGRSQLiteBaseDataSource()                      */
@@ -305,26 +299,20 @@ void OGRSQLiteBaseDataSource::CloseDB()
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
 
-OGRSQLiteDataSource::OGRSQLiteDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    nKnownSRID = 0;
-    panSRID = NULL;
-    papoSRS = NULL;
-
-    bHaveGeometryColumns = FALSE;
-    bIsSpatiaLiteDB = FALSE;
-    bSpatialite4Layout = FALSE;
-
-    nUndefinedSRID = -1; /* will be changed to 0 if Spatialite >= 4.0 detected */
-
-    nFileTimestamp = 0;
-    bLastSQLCommandIsUpdateLayerStatistics = FALSE;
-    papszOpenOptions = NULL;
-}
+OGRSQLiteDataSource::OGRSQLiteDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    nKnownSRID(0),
+    panSRID(NULL),
+    papoSRS(NULL),
+    papszOpenOptions(NULL),
+    bHaveGeometryColumns(FALSE),
+    bIsSpatiaLiteDB(FALSE),
+    bSpatialite4Layout(FALSE),
+    nUndefinedSRID(-1),  // Will be set to 0 if Spatialite >= 4.0 detected.
+    nFileTimestamp(0),
+    bLastSQLCommandIsUpdateLayerStatistics(FALSE)
+{}
 
 /************************************************************************/
 /*                        ~OGRSQLiteDataSource()                        */
@@ -333,13 +321,12 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 {
-    int         i;
-
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( papoLayers[iLayer]->IsTableLayer() )
         {
-            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
+            OGRSQLiteTableLayer* poLayer =
+                (OGRSQLiteTableLayer*) papoLayers[iLayer];
             poLayer->RunDeferredCreationIfNecessary();
             poLayer->CreateSpatialIndexIfNecessary();
         }
@@ -347,12 +334,12 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
     SaveStatistics();
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree( papoLayers );
 
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( papoSRS[i] != NULL )
             papoSRS[i]->Release();

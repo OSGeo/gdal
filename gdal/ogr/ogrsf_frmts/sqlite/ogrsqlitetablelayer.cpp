@@ -42,40 +42,28 @@ CPL_CVSID("$Id$");
 /*                        OGRSQLiteTableLayer()                         */
 /************************************************************************/
 
-OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
-
+OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn ) :
+    bLaunderColumnNames(TRUE),
+    // SpatiaLite v.2.4.0 (or any subsequent) is required
+    // to support 2.5D: if an obsolete version of the library
+    // is found we'll unconditionally activate 2D casting mode.
+    bSpatialite2D(poDSIn->GetSpatialiteVersionNumber() < 24),
+    bDeferredSpatialIndexCreation(FALSE),
+    pszTableName(NULL),
+    pszEscapedTableName(NULL),
+    bLayerDefnError(FALSE),
+    hInsertStmt(NULL),
+    bHasCheckedTriggers(!CPLTestBool(
+        CPLGetConfigOption("OGR_SQLITE_DISABLE_INSERT_TRIGGERS", "YES"))),
+    bStatisticsNeedsToBeFlushed(FALSE),
+    nFeatureCount(-1),
+    bDeferredCreation(FALSE),
+    pszCreationGeomFormat(NULL),
+    iFIDAsRegularColumnIndex(-1)
 {
     poDS = poDSIn;
-
-    bLaunderColumnNames = TRUE;
-
-    /* SpatiaLite v.2.4.0 (or any subsequent) is required
-       to support 2.5D: if an obsolete version of the library
-       is found we'll unconditionally activate 2D casting mode.
-    */
-    bSpatialite2D = poDS->GetSpatialiteVersionNumber() < 24;
-
     iNextShapeId = 0;
-
     poFeatureDefn = NULL;
-    pszTableName = NULL;
-    pszEscapedTableName = NULL;
-
-    bDeferredSpatialIndexCreation = FALSE;
-
-    hInsertStmt = NULL;
-
-    bLayerDefnError = FALSE;
-
-    bStatisticsNeedsToBeFlushed = FALSE;
-    nFeatureCount = -1;
-
-    int bDisableInsertTriggers = CPLTestBool(CPLGetConfigOption(
-                            "OGR_SQLITE_DISABLE_INSERT_TRIGGERS", "YES"));
-    bHasCheckedTriggers = !bDisableInsertTriggers;
-    bDeferredCreation = FALSE;
-    pszCreationGeomFormat = NULL;
-    iFIDAsRegularColumnIndex = -1;
 }
 
 /************************************************************************/
@@ -88,30 +76,39 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
     ClearStatement();
     ClearInsertStmt();
 
-    int nGeomFieldCount = (poFeatureDefn) ? poFeatureDefn->GetGeomFieldCount() : 0;
-    for(int i=0;i<nGeomFieldCount; i++)
+    const int nGeomFieldCount =
+        poFeatureDefn ? poFeatureDefn->GetGeomFieldCount() : 0;
+    for( int i = 0; i < nGeomFieldCount; i++ )
     {
-        OGRSQLiteGeomFieldDefn* poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(i);
-        // Restore temporarily disabled triggers
-        for(int j = 0; j < (int)poGeomFieldDefn->aosDisabledTriggers.size(); j++ )
+        OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
+            poFeatureDefn->myGetGeomFieldDefn(i);
+        // Restore temporarily disabled triggers.
+        for( int j = 0;
+             j < static_cast<int>(poGeomFieldDefn->aosDisabledTriggers.size());
+             j++ )
         {
             CPLDebug("SQLite", "Restoring trigger %s",
                      poGeomFieldDefn->aosDisabledTriggers[j].first.c_str());
             // This may fail since CreateSpatialIndex() reinstalls triggers, so
-            // don't check result
-            CPL_IGNORE_RET_VAL(sqlite3_exec( poDS->GetDB(),
-                          poGeomFieldDefn->aosDisabledTriggers[j].second.c_str(),
-                          NULL, NULL, NULL ));
+            // don't check result.
+            CPL_IGNORE_RET_VAL(
+                sqlite3_exec(
+                    poDS->GetDB(),
+                    poGeomFieldDefn->aosDisabledTriggers[j].second.c_str(),
+                    NULL, NULL, NULL ));
         }
 
-        // Update geometry_columns_time
+        // Update geometry_columns_time.
         if( poGeomFieldDefn->aosDisabledTriggers.size() != 0 )
         {
             char* pszSQL3 = sqlite3_mprintf(
-                "UPDATE geometry_columns_time SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
-                "WHERE Lower(f_table_name) = Lower('%q') AND Lower(f_geometry_column) = Lower('%q')",
+                "UPDATE geometry_columns_time "
+                "SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
+                "WHERE Lower(f_table_name) = Lower('%q') AND "
+                "Lower(f_geometry_column) = Lower('%q')",
                 pszTableName, poGeomFieldDefn->GetNameRef());
-            CPL_IGNORE_RET_VAL(sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, NULL ));
+            CPL_IGNORE_RET_VAL(
+                sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, NULL ));
             sqlite3_free( pszSQL3 );
         }
     }

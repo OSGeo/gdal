@@ -47,32 +47,22 @@ CPL_CVSID("$Id$");
 /*                           OGRSQLiteLayer()                           */
 /************************************************************************/
 
-OGRSQLiteLayer::OGRSQLiteLayer()
-
-{
-    poDS = NULL;
-
-    pszFIDColumn = NULL;
-
-    hStmt = NULL;
-    bDoStep = TRUE;
-
-    poFeatureDefn = NULL;
-    iNextShapeId = 0;
-
-    panFieldOrdinals = NULL;
-    iFIDCol = -1;
-    iOGRNativeDataCol = -1;
-    iOGRNativeMediaTypeCol = -1;
-
-    bIsVirtualShape = FALSE;
-
-    bUseComprGeom = CPLTestBool(CPLGetConfigOption("COMPRESS_GEOM", "FALSE"));
-
-    papszCompressedColumns = NULL;
-
-    bAllowMultipleGeomFields = FALSE;
-}
+OGRSQLiteLayer::OGRSQLiteLayer() :
+    poFeatureDefn(NULL),
+    iNextShapeId(0),
+    hStmt(NULL),
+    bDoStep(TRUE),
+    poDS(NULL),
+    pszFIDColumn(NULL),
+    panFieldOrdinals(NULL),
+    iFIDCol(-1),
+    iOGRNativeDataCol(-1),
+    iOGRNativeMediaTypeCol(-1),
+    bIsVirtualShape(FALSE),
+    bUseComprGeom(CPLTestBool(CPLGetConfigOption("COMPRESS_GEOM", "FALSE"))),
+    papszCompressedColumns(NULL),
+    bAllowMultipleGeomFields(FALSE)
+{}
 
 /************************************************************************/
 /*                          ~OGRSQLiteLayer()                           */

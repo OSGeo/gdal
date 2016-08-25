@@ -223,7 +223,7 @@ OGRSelafinDataSource::OGRSelafinDataSource() :
     bUpdate(FALSE),
     poHeader(NULL),
     poSpatialRef(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                         ~OGRSelafinDataSource()                      */

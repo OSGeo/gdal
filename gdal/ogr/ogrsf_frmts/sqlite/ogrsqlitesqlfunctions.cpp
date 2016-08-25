@@ -72,12 +72,12 @@ class OGRSQLiteExtensionData
 /************************************************************************/
 
 OGRSQLiteExtensionData::OGRSQLiteExtensionData(CPL_UNUSED sqlite3* hDB) :
-        hRegExpCache(NULL), hGeocodingSession(NULL)
-{
 #ifdef DEBUG
-    pDummy = CPLMalloc(1);
+    pDummy(CPLMalloc(1)),
 #endif
-}
+    hRegExpCache(NULL),
+    hGeocodingSession(NULL)
+{}
 
 /************************************************************************/
 /*                       ~OGRSQLiteExtensionData()                      */
