@@ -83,28 +83,31 @@ namespace Selafin {
         panBorder(NULL),
         panStartDate(NULL),
         nSteps(0),
-        nEpsg(0) {
-        paadfCoords[0]=NULL;
-        paadfCoords[1]=NULL;
-        for (size_t i=0;i<7;++i) anUnused[i]=0;
+        nEpsg(0)
+    {
+        paadfCoords[0] = NULL;
+        paadfCoords[1] = NULL;
+        for( size_t i = 0; i < 7; ++i ) anUnused[i] = 0;
     }
 
     Header::~Header() {
         CPLFree(pszFilename);
         CPLFree(pszTitle);
-        if (papszVariables!=NULL) {
-            for (int i=0;i<nVar;++i) CPLFree(papszVariables[i]);
+        if( papszVariables!=NULL )
+        {
+            for( int i = 0; i < nVar; ++i ) CPLFree(papszVariables[i]);
             CPLFree(papszVariables);
         }
         CPLFree(panConnectivity);
         CPLFree(panBorder);
-        if (poTree!=NULL) {
+        if( poTree!=NULL )
+        {
             CPLQuadTreeForeach(poTree,DumpFeatures,NULL);
             CPLQuadTreeDestroy(poTree);
         }
         CPLFree(panStartDate);
-        for (size_t i=0;i<2;++i) CPLFree(paadfCoords[i]);
-        if (fp!=NULL) VSIFCloseL(fp);
+        for( size_t i = 0; i < 2; ++i ) CPLFree(paadfCoords[i]);
+        if( fp != NULL ) VSIFCloseL(fp);
     }
 
     void Header::setUpdated() {
@@ -264,7 +267,9 @@ namespace Selafin {
     /****************************************************************/
     /*                         TimeStep                             */
     /****************************************************************/
-    TimeStep::TimeStep(int nRecordsP,int nFieldsP):nFields(nFieldsP) {
+    TimeStep::TimeStep( int nRecordsP, int nFieldsP ) :
+        nFields(nFieldsP)
+    {
         papadfData=(double**)VSI_MALLOC2_VERBOSE(sizeof(double*),nFieldsP);
         for (int i=0;i<nFieldsP;++i) papadfData[i]=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),nRecordsP);
     }

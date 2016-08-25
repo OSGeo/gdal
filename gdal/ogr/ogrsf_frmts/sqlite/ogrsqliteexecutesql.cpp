@@ -42,35 +42,34 @@ CPL_CVSID("$Id$");
 
 class OGRSQLiteExecuteSQLLayer: public OGRSQLiteSelectLayer
 {
-        char             *pszTmpDBName;
+    char             *pszTmpDBName;
 
-    public:
-        OGRSQLiteExecuteSQLLayer(char* pszTmpDBName,
-                                 OGRSQLiteDataSource* poDS,
-                                 CPLString osSQL,
-                                 sqlite3_stmt * hStmt,
-                                 int bUseStatementForGetNextFeature,
-                                 int bEmptyLayer );
-        virtual ~OGRSQLiteExecuteSQLLayer();
+  public:
+    OGRSQLiteExecuteSQLLayer( char* pszTmpDBName,
+                              OGRSQLiteDataSource* poDS,
+                              CPLString osSQL,
+                              sqlite3_stmt * hStmt,
+                              int bUseStatementForGetNextFeature,
+                              int bEmptyLayer );
+    virtual ~OGRSQLiteExecuteSQLLayer();
 };
 
 /************************************************************************/
 /*                         OGRSQLiteExecuteSQLLayer()                   */
 /************************************************************************/
 
-OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(char* pszTmpDBNameIn,
-                                                   OGRSQLiteDataSource* poDSIn,
-                                                   CPLString osSQL,
-                                                   sqlite3_stmt * hStmtIn,
-                                                   int bUseStatementForGetNextFeature,
-                                                   int bEmptyLayer ) :
-
-                               OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
-                                                    bUseStatementForGetNextFeature,
-                                                    bEmptyLayer, TRUE)
-{
-    pszTmpDBName = pszTmpDBNameIn;
-}
+OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
+    char* pszTmpDBNameIn,
+    OGRSQLiteDataSource* poDSIn,
+    CPLString osSQL,
+    sqlite3_stmt * hStmtIn,
+    int bUseStatementForGetNextFeature,
+    int bEmptyLayer ) :
+    OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
+                         bUseStatementForGetNextFeature,
+                         bEmptyLayer, TRUE),
+    pszTmpDBName(pszTmpDBNameIn)
+{}
 
 /************************************************************************/
 /*                        ~OGRSQLiteExecuteSQLLayer()                   */
@@ -78,10 +77,10 @@ OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(char* pszTmpDBNameIn,
 
 OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
 {
-    /* This is a bit peculiar: we must "finalize" the OGRLayer, since */
-    /* it has objects that depend on the datasource, that we are just */
-    /* going to destroy afterwards. The issue here is that we destroy */
-    /* our own datasource ! */
+    // This is a bit peculiar: we must "finalize" the OGRLayer, since
+    // it has objects that depend on the datasource, that we are just
+    // going to destroy afterwards. The issue here is that we destroy
+    // our own datasource,
     Finalize();
 
     delete poDS;

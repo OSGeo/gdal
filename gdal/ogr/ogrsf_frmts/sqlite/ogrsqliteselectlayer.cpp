@@ -39,16 +39,19 @@ CPL_CVSID("$Id$");
 /*                   OGRSQLiteSelectLayerCommonBehaviour()              */
 /************************************************************************/
 
-OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(OGRSQLiteBaseDataSource* poDSIn,
-                                            IOGRSQLiteSelectLayer* poLayerIn,
-                                            CPLString osSQLIn,
-                                            int bEmptyLayerIn) :
-            poDS(poDSIn), poLayer(poLayerIn), osSQLBase(osSQLIn),
-            bEmptyLayer(bEmptyLayerIn), osSQLCurrent(osSQLIn)
-{
-    bAllowResetReadingEvenIfIndexAtZero = FALSE;
-    bSpatialFilterInSQL = TRUE;
-}
+OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(
+    OGRSQLiteBaseDataSource* poDSIn,
+    IOGRSQLiteSelectLayer* poLayerIn,
+    CPLString osSQLIn,
+    int bEmptyLayerIn) :
+    poDS(poDSIn),
+    poLayer(poLayerIn),
+    osSQLBase(osSQLIn),
+    bEmptyLayer(bEmptyLayerIn),
+    bAllowResetReadingEvenIfIndexAtZero(FALSE),
+    bSpatialFilterInSQL(TRUE),
+    osSQLCurrent(osSQLIn)
+{}
 
 /************************************************************************/
 /*                        OGRSQLiteSelectLayer()                        */
@@ -59,10 +62,10 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                                             sqlite3_stmt *hStmtIn,
                                             int bUseStatementForGetNextFeature,
                                             int bEmptyLayer,
-                                            int bAllowMultipleGeomFieldsIn )
-
+                                            int bAllowMultipleGeomFieldsIn ) :
+    poBehaviour(new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn,
+                                                        bEmptyLayer))
 {
-    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn, bEmptyLayer);
     poDS = poDSIn;
 
     bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
