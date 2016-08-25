@@ -37,8 +37,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRWalkSelectLayer::OGRWalkSelectLayer( OGRWalkDataSource *poDSIn,
-                                        CPLODBCStatement * poStmtIn )
-
+                                        CPLODBCStatement * poStmtIn ) :
+    pszBaseStatement(CPLStrdup(poStmtIn->GetCommand()))
 {
     poDS = poDSIn;
 
@@ -46,8 +46,6 @@ OGRWalkSelectLayer::OGRWalkSelectLayer( OGRWalkDataSource *poDSIn,
     poFeatureDefn = NULL;
 
     poStmt = poStmtIn;
-    pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
-
     BuildFeatureDefn( "SELECT", poStmt );
 }
 

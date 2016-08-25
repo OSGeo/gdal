@@ -35,12 +35,10 @@ CPL_CVSID("$Id$");
 /*                          OGRWalkTableLayer()                         */
 /************************************************************************/
 
-OGRWalkTableLayer::OGRWalkTableLayer( OGRWalkDataSource *poDSIn )
-
+OGRWalkTableLayer::OGRWalkTableLayer( OGRWalkDataSource *poDSIn ) :
+    pszQuery(NULL)
 {
     poDS = poDSIn;
-
-    pszQuery = NULL;
 
     iNextShapeId = 0;
     poFeatureDefn = NULL;

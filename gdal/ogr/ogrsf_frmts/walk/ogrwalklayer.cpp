@@ -34,23 +34,17 @@ CPL_CVSID("$Id$");
 /*                            OGRWalkLayer()                            */
 /************************************************************************/
 
-OGRWalkLayer::OGRWalkLayer( )
-
-{
-    poDS = NULL;
-
-    bGeomColumnWKB = FALSE;
-    pszGeomColumn = NULL;
-    pszFIDColumn = NULL;
-    panFieldOrdinals = NULL;
-
-    poStmt = NULL;
-
-    poFeatureDefn = NULL;
-    iNextShapeId = 0;
-
-    poSRS = NULL;
-}
+OGRWalkLayer::OGRWalkLayer() :
+    poFeatureDefn(NULL),
+    poStmt(NULL),
+    poSRS(NULL),
+    iNextShapeId(0),
+    poDS(NULL),
+    bGeomColumnWKB(FALSE),
+    pszGeomColumn(NULL),
+    pszFIDColumn(NULL),
+    panFieldOrdinals(NULL)
+{}
 
 /************************************************************************/
 /*                           ~OGRWalkLayer()                            */
@@ -62,7 +56,7 @@ OGRWalkLayer::~OGRWalkLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "Walk", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead,
+                  static_cast<int>(m_nFeaturesRead),
                   poFeatureDefn->GetName() );
     }
 
