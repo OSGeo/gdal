@@ -42,16 +42,15 @@ CPL_CVSID("$Id$");
 
   \param poDataBlock pointer to VFKDataBlock instance
 */
-IVFKFeature::IVFKFeature(IVFKDataBlock *poDataBlock)
+IVFKFeature::IVFKFeature( IVFKDataBlock *poDataBlock ) :
+    m_poDataBlock(poDataBlock),
+    m_nFID(-1),
+    m_nGeometryType(poDataBlock->GetGeometryType()),
+    m_bGeometry(FALSE),
+    m_bValid(FALSE),
+    m_paGeom(NULL)
 {
     CPLAssert(NULL != poDataBlock);
-    m_poDataBlock   = poDataBlock;
-
-    m_nFID          = -1;
-    m_nGeometryType = poDataBlock->GetGeometryType();
-    m_bGeometry     = FALSE;
-    m_bValid        = FALSE;
-    m_paGeom        = NULL;
 }
 
 /*!
@@ -59,7 +58,7 @@ IVFKFeature::IVFKFeature(IVFKDataBlock *poDataBlock)
 */
 IVFKFeature::~IVFKFeature()
 {
-    if (m_paGeom)
+    if( m_paGeom )
         delete m_paGeom;
 
     m_poDataBlock = NULL;
@@ -358,11 +357,13 @@ bool IVFKFeature::LoadGeometry()
 
   \param poDataBlock pointer to VFKDataBlock instance
 */
-VFKFeature::VFKFeature(IVFKDataBlock *poDataBlock, GIntBig iFID) : IVFKFeature(poDataBlock)
+VFKFeature::VFKFeature( IVFKDataBlock *poDataBlock, GIntBig iFID ) :
+    IVFKFeature(poDataBlock)
 {
     m_nFID = iFID;
     m_propertyList.assign(poDataBlock->GetPropertyCount(), VFKProperty());
-    CPLAssert(size_t (poDataBlock->GetPropertyCount()) == m_propertyList.size());
+    CPLAssert(
+        size_t (poDataBlock->GetPropertyCount()) == m_propertyList.size());
 }
 
 /*!

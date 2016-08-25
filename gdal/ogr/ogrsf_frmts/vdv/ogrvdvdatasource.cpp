@@ -125,11 +125,11 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
 /*                           OGRIDFDataSource()                         */
 /************************************************************************/
 
-OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpLIn) : m_fpL(fpLIn)
-{
-    m_bHasParsed = false;
-    m_poMemDS = NULL;
-}
+OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpLIn) :
+    m_fpL(fpLIn),
+    m_bHasParsed(false),
+    m_poMemDS(NULL)
+{}
 
 /************************************************************************/
 /*                          ~OGRIDFDataSource()                         */
@@ -430,8 +430,7 @@ OGRVDVDataSource::OGRVDVDataSource(const char* pszFilename,
     m_poCurrentWriterLayer(NULL),
     m_bMustWriteEof(false),
     m_bVDV452Loaded(false)
-{
-}
+{}
 
 /************************************************************************/
 /*                          ~OGRVDVDataSource()                         */
@@ -1069,6 +1068,7 @@ OGRVDVWriterLayer::OGRVDVWriterLayer( OGRVDVDataSource *poDS,
                                       const CPLString& osVDV452Lang,
                                       bool bProfileStrict):
     m_poDS(poDS),
+    m_poFeatureDefn(new OGRFeatureDefn(pszName)),
     m_bWritePossible(true),
     m_fpL(fpL),
     m_bOwnFP(bOwnFP),
@@ -1079,7 +1079,6 @@ OGRVDVWriterLayer::OGRVDVWriterLayer( OGRVDVDataSource *poDS,
     m_iLongitudeVDV452(-1),
     m_iLatitudeVDV452(-1)
 {
-    m_poFeatureDefn = new OGRFeatureDefn(pszName);
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
     SetDescription(pszName);

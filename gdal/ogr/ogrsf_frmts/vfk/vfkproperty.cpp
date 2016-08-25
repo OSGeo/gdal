@@ -39,63 +39,69 @@ CPL_CVSID("$Id$");
 /*!
   \brief Set VFK property (null)
 */
-VFKProperty::VFKProperty()
-    : m_bIsNull(TRUE), m_nValue(0), m_dValue(0.0)
-{
-}
+VFKProperty::VFKProperty() :
+    m_bIsNull(TRUE),
+    m_nValue(0),
+    m_dValue(0.0)
+{}
 
 /*!
   \brief Set VFK property (integer)
 */
-VFKProperty::VFKProperty(int iValue)
-    : m_bIsNull(FALSE), m_nValue(iValue), m_dValue(0.0)
-{
-}
+VFKProperty::VFKProperty( int iValue ) :
+    m_bIsNull(FALSE),
+    m_nValue(iValue),
+    m_dValue(0.0)
+{}
 
 /*!
   \brief Set VFK property (double)
 */
-VFKProperty::VFKProperty(double dValue)
-    : m_bIsNull(FALSE), m_nValue(0), m_dValue(dValue)
-{
-}
+VFKProperty::VFKProperty( double dValue ) :
+    m_bIsNull(FALSE),
+    m_nValue(0),
+    m_dValue(dValue)
+{}
 
 /*!
   \brief Set VFK property (string)
 */
-VFKProperty::VFKProperty(const char *pszValue)
-    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(NULL != pszValue ? pszValue : "")
-{
-}
+VFKProperty::VFKProperty( const char *pszValue ) :
+    m_bIsNull(FALSE),
+    m_nValue(0),
+    m_dValue(0.0),
+    m_strValue(NULL != pszValue ? pszValue : "")
+{}
 
 /*!
   \brief Set VFK property (string)
 */
-VFKProperty::VFKProperty(CPLString const& strValue)
-    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(strValue)
-{
-}
+VFKProperty::VFKProperty( CPLString const& strValue ) :
+    m_bIsNull(FALSE),
+    m_nValue(0),
+    m_dValue(0.0),
+    m_strValue(strValue)
+{}
 
 /*!
   \brief VFK property destructor
 */
-VFKProperty::~VFKProperty()
-{
-}
+VFKProperty::~VFKProperty() {}
 
 /*!
   \brief Copy constructor.
 */
-VFKProperty::VFKProperty(VFKProperty const& other)
-    : m_bIsNull(other.m_bIsNull),
-      m_nValue(other.m_nValue), m_dValue(other.m_dValue), m_strValue(other.m_strValue)
-{
-}
+VFKProperty::VFKProperty( VFKProperty const& other ) :
+    m_bIsNull(other.m_bIsNull),
+    m_nValue(other.m_nValue),
+    m_dValue(other.m_dValue),
+    m_strValue(other.m_strValue)
+{}
 
 /*!
   \brief Assignment operator.
 */
-VFKProperty& VFKProperty::operator=(VFKProperty const& other)
+VFKProperty& VFKProperty::operator=( VFKProperty const& other )
 {
     if (&other != this) {
         m_bIsNull = other.m_bIsNull;

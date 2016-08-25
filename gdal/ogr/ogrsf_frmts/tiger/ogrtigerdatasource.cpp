@@ -193,6 +193,10 @@ OGRTigerDataSource::OGRTigerDataSource() :
     pszName(NULL),
     nLayers(0),
     papoLayers(NULL),
+    poSpatialRef(new OGRSpatialReference(
+        "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\","
+        "SPHEROID[\"GRS 1980\",6378137,298.257222101]],PRIMEM[\"Greenwich\",0],"
+        "UNIT[\"degree\",0.0174532925199433]]")),
     papszOptions(NULL),
     pszPath(NULL),
     nModules(0),
@@ -200,12 +204,7 @@ OGRTigerDataSource::OGRTigerDataSource() :
     nVersionCode(0),
     nVersion(TIGER_Unknown),
     bWriteMode(FALSE)
-{
-    poSpatialRef = new OGRSpatialReference(
-        "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\","
-        "SPHEROID[\"GRS 1980\",6378137,298.257222101]],PRIMEM[\"Greenwich\",0],"
-        "UNIT[\"degree\",0.0174532925199433]]" );
-}
+{}
 
 /************************************************************************/
 /*                        ~OGRTigerDataSource()                         */

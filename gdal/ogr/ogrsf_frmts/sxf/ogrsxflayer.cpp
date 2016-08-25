@@ -43,28 +43,28 @@ CPL_CVSID("$Id$");
 /*                        OGRSXFLayer()                                 */
 /************************************************************************/
 
-OGRSXFLayer::OGRSXFLayer(VSILFILE* fp, CPLMutex** hIOMutex, GByte nID, const char* pszLayerName, int nVer, const SXFMapDescription&  sxfMapDesc) : OGRLayer()
+OGRSXFLayer::OGRSXFLayer(
+    VSILFILE* fp, CPLMutex** hIOMutex, GByte nID, const char* pszLayerName,
+    int nVer, const SXFMapDescription&  sxfMapDesc) :
+    OGRLayer(),
+    poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
+    fpSXF(fp),
+    nLayerID(nID),
+    stSXFMapDescription(sxfMapDesc),
+    m_nSXFFormatVer(nVer),
+    sFIDColumn_("ogc_fid"),
+    m_hIOMutex(hIOMutex),
+    m_dfCoeff(sxfMapDesc.dfScale / sxfMapDesc.nResolution)
 {
-    sFIDColumn_ = "ogc_fid";
-    fpSXF = fp;
-    nLayerID = nID;
-    stSXFMapDescription = sxfMapDesc;
     stSXFMapDescription.pSpatRef->Reference();
-    m_nSXFFormatVer = nVer;
     oNextIt = mnRecordDesc.begin();
-    m_hIOMutex = hIOMutex;
-    m_dfCoeff = stSXFMapDescription.dfScale / stSXFMapDescription.nResolution;
-    poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
     poFeatureDefn->SetGeomType(wkbUnknown);
     if (poFeatureDefn->GetGeomFieldCount() != 0)
-        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(stSXFMapDescription.pSpatRef);
-
-    //OGRGeomFieldDefn oGeomFieldDefn("Shape", wkbGeometryCollection);
-    //oGeomFieldDefn.SetSpatialRef(stSXFMapDescription.pSpatRef);
-    //poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
+        poFeatureDefn->GetGeomFieldDefn(0)->
+            SetSpatialRef(stSXFMapDescription.pSpatRef);
 
     OGRFieldDefn oFIDField(sFIDColumn_, OFTInteger);
     poFeatureDefn->AddFieldDefn(&oFIDField);

@@ -46,8 +46,7 @@ OGRSVGDataSource::OGRSVGDataSource() :
     oCurrentParser(NULL),
     nDataHandlerCounter(0)
 #endif
-{
-}
+{}
 
 /************************************************************************/
 /*                         ~OGRSVGDataSource()                          */

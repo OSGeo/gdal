@@ -39,31 +39,28 @@ CPL_CVSID("$Id$");
 /*                            OGRSUALayer()                             */
 /************************************************************************/
 
-OGRSUALayer::OGRSUALayer( VSILFILE* fp )
-
+OGRSUALayer::OGRSUALayer( VSILFILE* fp ) :
+    poFeatureDefn(new OGRFeatureDefn( "layer" )),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    fpSUA(fp),
+    bEOF(FALSE),
+    bHasLastLine(FALSE),
+    nNextFID(0)
 {
-    fpSUA = fp;
-    nNextFID = 0;
-    bEOF = FALSE;
-    bHasLastLine = FALSE;
-
-    poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
-
-    poFeatureDefn = new OGRFeatureDefn( "layer" );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPolygon );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    OGRFieldDefn    oField1( "TYPE", OFTString);
+    OGRFieldDefn oField1( "TYPE", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );
-    OGRFieldDefn    oField2( "CLASS", OFTString);
+    OGRFieldDefn oField2( "CLASS", OFTString);
     poFeatureDefn->AddFieldDefn( &oField2 );
-    OGRFieldDefn    oField3( "TITLE", OFTString);
+    OGRFieldDefn oField3( "TITLE", OFTString);
     poFeatureDefn->AddFieldDefn( &oField3 );
-    OGRFieldDefn    oField4( "TOPS", OFTString);
+    OGRFieldDefn oField4( "TOPS", OFTString);
     poFeatureDefn->AddFieldDefn( &oField4 );
-    OGRFieldDefn    oField5( "BASE", OFTString);
+    OGRFieldDefn oField5( "BASE", OFTString);
     poFeatureDefn->AddFieldDefn( &oField5 );
 }
 

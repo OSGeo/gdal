@@ -101,7 +101,7 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError)
 /*                          OGRVRTDataSource()                          */
 /************************************************************************/
 
-OGRVRTDataSource::OGRVRTDataSource(GDALDriver* poDriverIn) :
+OGRVRTDataSource::OGRVRTDataSource( GDALDriver* poDriverIn ) :
     papoLayers(NULL),
     paeLayerType(NULL),
     nLayers(0),

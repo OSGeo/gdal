@@ -68,18 +68,19 @@ IVFKReader *CreateVFKReader(const char *pszFilename)
 /*!
   \brief VFKReader constructor
 */
-VFKReader::VFKReader(const char *pszFilename)
+VFKReader::VFKReader( const char *pszFilename ) :
+    m_bLatin2(TRUE),  // Encoding ISO-8859-2 or WINDOWS-1250.
+    m_poFD(NULL),
+    m_pszFilename(CPLStrdup(pszFilename)),
+    m_poFStat((VSIStatBuf*) CPLMalloc(sizeof(VSIStatBuf))),
+    // VFK are provided in two forms - stative and amendment data.
+    m_bAmendment(FALSE),
+    m_nDataBlockCount(0),
+    m_papoDataBlock(NULL)
 {
-    m_nDataBlockCount = 0;
-    m_papoDataBlock   = NULL;
-    m_bLatin2         = TRUE;    /* encoding ISO-8859-2 or WINDOWS-1250 */
-    m_bAmendment      = FALSE;   /* VFK are provided in two forms - stative and amendment data */
-
-    /* open VFK file for reading */
+    // Open VFK file for reading.
     CPLAssert(NULL != pszFilename);
-    m_pszFilename = CPLStrdup(pszFilename);
 
-    m_poFStat = (VSIStatBuf*) CPLMalloc(sizeof(VSIStatBuf));
     if (CPLStat(pszFilename, m_poFStat) != 0 ||
         !VSI_ISREG(m_poFStat->st_mode)) {
       CPLError(CE_Failure, CPLE_OpenFailed,

@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 TigerFileBase::TigerFileBase( const TigerRecordInfo *psRTInfoIn,
-                              const char            *m_pszFileCodeIn ) :
+                              const char *m_pszFileCodeIn ) :
     poDS(NULL),
     pszModule(NULL),
     pszShortModule(NULL),
@@ -52,7 +52,7 @@ TigerFileBase::TigerFileBase( const TigerRecordInfo *psRTInfoIn,
     nVersion(TIGER_Unknown),
     psRTInfo(psRTInfoIn),
     m_pszFileCode(m_pszFileCodeIn)
-{ }
+{}
 
 /************************************************************************/
 /*                           ~TigerFileBase()                           */

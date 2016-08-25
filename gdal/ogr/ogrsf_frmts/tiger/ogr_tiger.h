@@ -249,7 +249,7 @@ class TigerAltName : public TigerFileBase
 {
  public:
                       TigerAltName( OGRTigerDataSource *,
-                                          const char * );
+                                    const char * );
 
   virtual OGRFeature *GetFeature( int );
 

@@ -66,11 +66,11 @@ protected:
     void            AddDataBlock(IVFKDataBlock *, const char *);
     OGRErr          AddFeature(IVFKDataBlock *, VFKFeature *);
 
-    /* metadata */
+    // Metadata.
     std::map<CPLString, CPLString> poInfo;
 
 public:
-    VFKReader(const char *);
+    VFKReader( const char *pszFilename );
     virtual ~VFKReader();
 
     bool           IsLatin2() const { return m_bLatin2; }

@@ -51,14 +51,23 @@ CPL_CVSID("$Id$");
   \brief VFKReaderSQLite constructor
 */
 VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
-    VFKReader(pszFileName)
+    VFKReader(pszFileName),
+    m_pszDBname(NULL),
+    m_poDB(NULL),
+    // True - build geometry from DB
+    // False - store also geometry in DB
+    m_bSpatial(CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_SPATIAL", "YES"))),
+    m_bNewDb(FALSE),
+    m_bDbSource(FALSE)
 {
     size_t nLen = 0;
     VSIStatBufL sStatBufDb;
-    GDALOpenInfo *poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly);
-    m_bDbSource = poOpenInfo->nHeaderBytes >= 16 &&
-      STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3");
-    delete poOpenInfo;
+    {
+        GDALOpenInfo *poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly);
+        m_bDbSource = poOpenInfo->nHeaderBytes >= 16 &&
+            STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3");
+        delete poOpenInfo;
+    }
 
     const char *pszDbNameConf = CPLGetConfigOption("OGR_VFK_DB_NAME", NULL);
     CPLString osDbName;
@@ -70,7 +79,8 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
         if (pszDbNameConf) {
             osDbName = pszDbNameConf;
         }
-        else {
+        else
+        {
             osDbName = CPLResetExtension(m_pszFilename, "db");
         }
         nLen = osDbName.length();
@@ -80,9 +90,9 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
             osDbName.resize(nLen);
         }
     }
-    else {
-        m_bNewDb = FALSE;
-
+    else
+    {
+        // m_bNewDb = false;
         nLen = strlen(pszFileName);
         osDbName = pszFileName;
     }
@@ -93,11 +103,6 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
 
     CPLDebug("OGR-VFK", "Using internal DB: %s",
              m_pszDBname);
-
-    if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_SPATIAL", "YES")))
-        m_bSpatial = TRUE;    /* build geometry from DB */
-    else
-        m_bSpatial = FALSE;   /* store also geometry in DB */
 
     if (!m_bDbSource && VSIStatL(osDbName, &sStatBufDb) == 0) {
         /* Internal DB exists */
@@ -132,8 +137,8 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
                  sqlite3_errmsg(m_poDB));
     }
 
-    int nRowCount;
-    int nColCount;
+    int nRowCount = 0;
+    int nColCount = 0;
     CPLString osCommand;
     if (m_bDbSource) {
         /* check if it's really VFK DB datasource */
@@ -202,15 +207,19 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
                                     NULL, NULL, &pszErrMsg));
     sqlite3_free(pszErrMsg);
 
-    if (m_bNewDb) {
+    if( m_bNewDb )
+    {
         /* new DB, create support metadata tables */
-        osCommand.Printf("CREATE TABLE %s (file_name text, file_size integer, table_name text, num_records integer, "
-                         "num_features integer, num_geometries integer, table_defn text)",
-                         VFK_DB_TABLE);
+        osCommand.Printf(
+            "CREATE TABLE %s (file_name text, file_size integer, "
+            "table_name text, num_records integer, "
+            "num_features integer, num_geometries integer, table_defn text)",
+            VFK_DB_TABLE);
         ExecuteSQL(osCommand.c_str());
 
         /* header table */
-        osCommand.Printf("CREATE TABLE %s (key text, value text)", VFK_DB_HEADER);
+        osCommand.Printf(
+            "CREATE TABLE %s (key text, value text)", VFK_DB_HEADER);
         ExecuteSQL(osCommand.c_str());
     }
 }
@@ -220,19 +229,19 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
 */
 VFKReaderSQLite::~VFKReaderSQLite()
 {
-    /* close tmp SQLite DB */
-    if (SQLITE_OK != sqlite3_close(m_poDB)) {
+    // Close tmp SQLite DB.
+    if( SQLITE_OK != sqlite3_close(m_poDB) )
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Closing SQLite DB failed: %s",
                  sqlite3_errmsg(m_poDB));
     }
-    CPLDebug("OGR-VFK", "Internal DB (%s) closed",
-             m_pszDBname);
+    CPLDebug("OGR-VFK", "Internal DB (%s) closed", m_pszDBname);
 
     /* delete tmp SQLite DB if requested */
-    if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_DELETE", "NO"))) {
-        CPLDebug("OGR-VFK", "Internal DB (%s) deleted",
-                 m_pszDBname);
+    if( CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_DELETE", "NO")) )
+    {
+        CPLDebug("OGR-VFK", "Internal DB (%s) deleted", m_pszDBname);
         VSIUnlink(m_pszDBname);
     }
     delete[] m_pszDBname;

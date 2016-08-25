@@ -44,23 +44,21 @@ CPL_CVSID("$Id$");
 
   \param pszName data block name
 */
-IVFKDataBlock::IVFKDataBlock(const char *pszName, const IVFKReader *poReader) :
+IVFKDataBlock::IVFKDataBlock( const char *pszName, const IVFKReader *poReader ) :
+    m_papoFeature(NULL),
     m_nPropertyCount(0),
     m_papoProperty(NULL),
-    m_bGeometry(false),   // geometry is not loaded by default
+    m_pszName(CPLStrdup(pszName)),
+    m_bGeometry(false),   // Geometry is not loaded by default.
     m_nGeometryType(wkbUnknown),
-    m_bGeometryPerBlock(true),    // load geometry per block/feature
-    m_nFeatureCount(-1),  // Load data on first request
+    m_bGeometryPerBlock(true),    // Load geometry per block/feature.
+    m_nFeatureCount(-1),  // Load data on first request.
     m_iNextFeature(-1),
     m_poReader(const_cast<IVFKReader *>(poReader))
 {
-    m_pszName        = CPLStrdup(pszName);
-
-    m_papoFeature    = NULL;
-
-    m_nRecordCount[RecordValid]      = 0L;  /* number of valid records */
-    m_nRecordCount[RecordSkipped]    = 0L;  /* number of skipped (invalid) records */
-    m_nRecordCount[RecordDuplicated] = 0L;  /* number of duplicated records */
+    m_nRecordCount[RecordValid] = 0L;  // Number of valid records.
+    m_nRecordCount[RecordSkipped] = 0L;  // Number of skipped (invalid) records.
+    m_nRecordCount[RecordDuplicated] = 0L;  // Number of duplicated records.
 }
 
 /*!
@@ -70,14 +68,16 @@ IVFKDataBlock::~IVFKDataBlock()
 {
     CPLFree(m_pszName);
 
-    for (int i = 0; i < m_nPropertyCount; i++) {
-        if (m_papoProperty[i])
+    for( int i = 0; i < m_nPropertyCount; i++ )
+    {
+        if( m_papoProperty[i] )
             delete m_papoProperty[i];
     }
     CPLFree(m_papoProperty);
 
-    for (int i = 0; i < m_nFeatureCount; i++) {
-        if (m_papoFeature[i])
+    for( int i = 0; i < m_nFeatureCount; i++ )
+    {
+        if( m_papoFeature[i] )
             delete m_papoFeature[i];
     }
     CPLFree(m_papoFeature);

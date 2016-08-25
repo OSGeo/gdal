@@ -42,36 +42,30 @@ CPL_CVSID("$Id$");
   \param eReqType WKB geometry type
   \param poDSIn  data source where to register OGR layer
 */
-OGRVFKLayer::OGRVFKLayer(const char *pszName,
-                         OGRSpatialReference *poSRSIn,
-                         OGRwkbGeometryType eReqType,
-                         OGRVFKDataSource *poDSIn) :
+OGRVFKLayer::OGRVFKLayer( const char *pszName,
+                          OGRSpatialReference *poSRSIn,
+                          OGRwkbGeometryType eReqType,
+                          OGRVFKDataSource *poDSIn ) :
+    poSRS(poSRSIn == NULL ? new OGRSpatialReference() : poSRSIn->Clone()),
+    poFeatureDefn(new OGRFeatureDefn(pszName)),
     poDS(poDSIn),
+    poDataBlock(poDSIn->GetReader()->GetDataBlock(pszName)),
     m_iNextFeature(0)
 {
-    /* set spatial reference */
     if( poSRSIn == NULL ) {
-        /* default is S-JTSK (EPSG: 5514) */
-        poSRS = new OGRSpatialReference();
-        if (poSRS->importFromEPSG(5514) != OGRERR_NONE) {
+        // Default is S-JTSK (EPSG: 5514).
+        if( poSRS->importFromEPSG(5514) != OGRERR_NONE )
+        {
             delete poSRS;
             poSRS = NULL;
         }
     }
-    else {
-        poSRS = poSRSIn->Clone();
-    }
 
-    /* feature definition */
-    poFeatureDefn = new OGRFeatureDefn(pszName);
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(eReqType);
-
-    /* data block reference */
-    poDataBlock = poDS->GetReader()->GetDataBlock(pszName);
 }
 
 /*!
@@ -79,10 +73,10 @@ OGRVFKLayer::OGRVFKLayer(const char *pszName,
 */
 OGRVFKLayer::~OGRVFKLayer()
 {
-    if(poFeatureDefn)
+    if( poFeatureDefn )
         poFeatureDefn->Release();
 
-    if(poSRS)
+    if( poSRS )
         poSRS->Release();
 }
 
