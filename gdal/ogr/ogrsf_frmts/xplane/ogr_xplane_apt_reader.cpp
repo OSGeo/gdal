@@ -2106,7 +2106,8 @@ OGRFeature* OGRXPlaneRunwayThresholdLayer::
 
 
 
-OGRXPlaneRunwayLayer::OGRXPlaneRunwayLayer() : OGRXPlaneLayer("RunwayPolygon")
+OGRXPlaneRunwayLayer::OGRXPlaneRunwayLayer() :
+    OGRXPlaneLayer("RunwayPolygon")
 {
     poFeatureDefn->SetGeomType( wkbPolygon );
 
@@ -2227,7 +2228,8 @@ OGRFeature*
 
 
 
-OGRXPlaneStopwayLayer::OGRXPlaneStopwayLayer() : OGRXPlaneLayer("Stopway")
+OGRXPlaneStopwayLayer::OGRXPlaneStopwayLayer() :
+    OGRXPlaneLayer("Stopway")
 {
     poFeatureDefn->SetGeomType( wkbPolygon );
 
@@ -2472,7 +2474,8 @@ OGRFeature*
 /************************************************************************/
 
 
-OGRXPlaneHelipadLayer::OGRXPlaneHelipadLayer() : OGRXPlaneLayer("Helipad")
+OGRXPlaneHelipadLayer::OGRXPlaneHelipadLayer() :
+    OGRXPlaneLayer("Helipad")
 {
     poFeatureDefn->SetGeomType( wkbPoint );
 
@@ -2673,7 +2676,8 @@ OGRFeature*
 /************************************************************************/
 
 
-OGRXPlaneTaxiwayRectangleLayer::OGRXPlaneTaxiwayRectangleLayer() : OGRXPlaneLayer("TaxiwayRectangle")
+OGRXPlaneTaxiwayRectangleLayer::OGRXPlaneTaxiwayRectangleLayer() :
+    OGRXPlaneLayer("TaxiwayRectangle")
 {
     poFeatureDefn->SetGeomType( wkbPolygon );
 
@@ -2772,7 +2776,8 @@ OGRFeature*
 /************************************************************************/
 
 
-OGRXPlanePavementLayer::OGRXPlanePavementLayer() : OGRXPlaneLayer("Pavement")
+OGRXPlanePavementLayer::OGRXPlanePavementLayer() :
+    OGRXPlaneLayer("Pavement")
 {
     poFeatureDefn->SetGeomType( wkbPolygon );
 
@@ -2916,7 +2921,8 @@ OGRFeature*
 /************************************************************************/
 
 
-OGRXPlaneATCFreqLayer::OGRXPlaneATCFreqLayer() : OGRXPlaneLayer("ATCFreq")
+OGRXPlaneATCFreqLayer::OGRXPlaneATCFreqLayer() :
+    OGRXPlaneLayer("ATCFreq")
 {
     poFeatureDefn->SetGeomType( wkbNone );
 

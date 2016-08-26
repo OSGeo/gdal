@@ -40,12 +40,10 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRWAsPDataSource::OGRWAsPDataSource( const char * pszName,
-                                      VSILFILE * hFileHandle )
-    : sFilename( pszName )
-    , hFile( hFileHandle )
-
-{
-}
+                                      VSILFILE * hFileHandle ) :
+    sFilename(pszName),
+    hFile(hFileHandle)
+{}
 
 /************************************************************************/
 /*                         ~OGRWAsPDataSource()                          */

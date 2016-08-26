@@ -36,25 +36,22 @@ CPL_CVSID("$Id$");
 /*                            OGRXPlaneLayer()                          */
 /************************************************************************/
 
-OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName )
-
+OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName ) :
+    nFID(0),
+    nFeatureArraySize(0),
+    nFeatureArrayMaxSize(0),
+    nFeatureArrayIndex(0),
+    papoFeatures(NULL),
+    poSRS(new OGRSpatialReference()),
+    poDS(NULL),
+    poReader(NULL),
+    poFeatureDefn(new OGRFeatureDefn(pszLayerName))
 {
-    nFID = 0;
-    nFeatureArraySize = 0;
-    nFeatureArrayMaxSize = 0;
-    nFeatureArrayIndex = 0;
-    papoFeatures = NULL;
-    poDS = NULL;
-
-    poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
-    poSRS = new OGRSpatialReference();
     poSRS->SetWellKnownGeogCS("WGS84");
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-
-    poReader = NULL;
 }
 
 

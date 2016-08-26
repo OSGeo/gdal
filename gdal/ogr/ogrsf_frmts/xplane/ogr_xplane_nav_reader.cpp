@@ -44,31 +44,29 @@ OGRXPlaneReader* OGRXPlaneCreateNavFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 /*                         OGRXPlaneNavReader()                         */
 /************************************************************************/
-OGRXPlaneNavReader::OGRXPlaneNavReader()
-{
-    poILSLayer = NULL;
-    poVORLayer = NULL;
-    poNDBLayer = NULL;
-    poGSLayer = NULL;
-    poMarkerLayer = NULL;
-    poDMELayer = NULL;
-    poDMEILSLayer = NULL;
-}
+OGRXPlaneNavReader::OGRXPlaneNavReader() :
+    poILSLayer(NULL),
+    poVORLayer(NULL),
+    poNDBLayer(NULL),
+    poGSLayer(NULL),
+    poMarkerLayer(NULL),
+    poDMELayer(NULL),
+    poDMEILSLayer(NULL)
+{}
 
 /************************************************************************/
 /*                          OGRXPlaneNavReader()                        */
 /************************************************************************/
 
-OGRXPlaneNavReader::OGRXPlaneNavReader( OGRXPlaneDataSource* poDataSource )
+OGRXPlaneNavReader::OGRXPlaneNavReader( OGRXPlaneDataSource* poDataSource ) :
+    poILSLayer(new OGRXPlaneILSLayer()),
+    poVORLayer(new OGRXPlaneVORLayer()),
+    poNDBLayer(new OGRXPlaneNDBLayer()),
+    poGSLayer(new OGRXPlaneGSLayer()),
+    poMarkerLayer(new OGRXPlaneMarkerLayer()),
+    poDMELayer(new OGRXPlaneDMELayer()),
+    poDMEILSLayer(new OGRXPlaneDMEILSLayer())
 {
-    poILSLayer = new OGRXPlaneILSLayer();
-    poVORLayer = new OGRXPlaneVORLayer();
-    poNDBLayer = new OGRXPlaneNDBLayer();
-    poGSLayer = new OGRXPlaneGSLayer();
-    poMarkerLayer = new OGRXPlaneMarkerLayer();
-    poDMELayer = new OGRXPlaneDMELayer();
-    poDMEILSLayer = new OGRXPlaneDMEILSLayer();
-
     poDataSource->RegisterLayer(poILSLayer);
     poDataSource->RegisterLayer(poVORLayer);
     poDataSource->RegisterLayer(poNDBLayer);
@@ -620,7 +618,8 @@ OGRFeature*
 /*                           OGRXPlaneGSLayer                          */
 /************************************************************************/
 
-OGRXPlaneGSLayer::OGRXPlaneGSLayer() : OGRXPlaneLayer("GS")
+OGRXPlaneGSLayer::OGRXPlaneGSLayer() :
+    OGRXPlaneLayer("GS")
 {
     poFeatureDefn->SetGeomType( wkbPoint );
 
@@ -700,7 +699,8 @@ OGRFeature*
 /*                         OGRXPlaneMarkerLayer                         */
 /************************************************************************/
 
-OGRXPlaneMarkerLayer::OGRXPlaneMarkerLayer() : OGRXPlaneLayer("Marker")
+OGRXPlaneMarkerLayer::OGRXPlaneMarkerLayer() :
+    OGRXPlaneLayer("Marker")
 {
     poFeatureDefn->SetGeomType( wkbPoint );
 
@@ -758,7 +758,8 @@ OGRFeature*
 /*                           OGRXPlaneDMEILSLayer                          */
 /************************************************************************/
 
-OGRXPlaneDMEILSLayer::OGRXPlaneDMEILSLayer() : OGRXPlaneLayer("DMEILS")
+OGRXPlaneDMEILSLayer::OGRXPlaneDMEILSLayer() :
+    OGRXPlaneLayer("DMEILS")
 {
     poFeatureDefn->SetGeomType( wkbPoint );
 
@@ -831,7 +832,8 @@ OGRFeature*
 /************************************************************************/
 
 
-OGRXPlaneDMELayer::OGRXPlaneDMELayer() : OGRXPlaneLayer("DME")
+OGRXPlaneDMELayer::OGRXPlaneDMELayer() :
+    OGRXPlaneLayer("DME")
 {
     poFeatureDefn->SetGeomType( wkbPoint );
 

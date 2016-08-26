@@ -42,16 +42,12 @@ CPL_CVSID("$Id$");
 /*                          OGRXLSDataSource()                          */
 /************************************************************************/
 
-OGRXLSDataSource::OGRXLSDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-
-    xlshandle = NULL;
-}
+OGRXLSDataSource::OGRXLSDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    xlshandle(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRXLSDataSource()                          */
@@ -66,7 +62,7 @@ OGRXLSDataSource::~OGRXLSDataSource()
 
     CPLFree( pszName );
 
-    if (xlshandle)
+    if( xlshandle )
         freexl_close(xlshandle);
 }
 

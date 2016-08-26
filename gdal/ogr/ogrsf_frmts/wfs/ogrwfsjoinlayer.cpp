@@ -35,29 +35,27 @@ CPL_CVSID("$Id$");
 /*                          OGRWFSJoinLayer()                           */
 /************************************************************************/
 
-OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource* poDSIn,
-                                 const swq_select* psSelectInfo,
-                                 const CPLString& osGlobalFilterIn)
+OGRWFSJoinLayer::OGRWFSJoinLayer( OGRWFSDataSource* poDSIn,
+                                  const swq_select* psSelectInfo,
+                                  const CPLString& osGlobalFilterIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    osGlobalFilter(osGlobalFilterIn),
+    bDistinct(psSelectInfo->query_mode == SWQM_DISTINCT_LIST),
+    poBaseDS(NULL),
+    poBaseLayer(NULL),
+    bReloadNeeded(FALSE),
+    bHasFetched(FALSE),
+    bPagingActive(FALSE),
+    nPagingStartIndex(0),
+    nFeatureRead(0),
+    nFeatureCountRequested(0)
 {
-    poDS = poDSIn;
-    osGlobalFilter = osGlobalFilterIn;
-    poFeatureDefn = NULL;
-    bPagingActive = FALSE;
-    nPagingStartIndex = 0;
-    nFeatureRead = 0;
-    nFeatureCountRequested = 0;
-    poBaseDS = NULL;
-    poBaseLayer = NULL;
-    bReloadNeeded = FALSE;
-    bHasFetched = FALSE;
-    bDistinct = (psSelectInfo->query_mode == SWQM_DISTINCT_LIST);
-
     CPLString osName("join_");
-    CPLString osLayerName;
-    osLayerName = psSelectInfo->table_defs[0].table_name;
+    CPLString osLayerName = psSelectInfo->table_defs[0].table_name;
     apoLayers.push_back((OGRWFSLayer*)poDS->GetLayerByName(osLayerName));
     osName += osLayerName;
-    for(int i=0;i<psSelectInfo->join_count;i++)
+    for( int i = 0; i < psSelectInfo->join_count; i++ )
     {
         osName += "_";
         osLayerName = psSelectInfo->table_defs[
@@ -67,7 +65,7 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource* poDSIn,
     }
 
     osFeatureTypes = "(";
-    for(int i=0;i<(int)apoLayers.size();i++)
+    for( int i = 0; i < (int)apoLayers.size(); i++ )
     {
         if( i > 0 )
             osFeatureTypes += ",";

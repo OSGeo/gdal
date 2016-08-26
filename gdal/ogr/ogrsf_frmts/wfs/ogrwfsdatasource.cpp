@@ -132,35 +132,42 @@ class OGRWFSWrappedResultLayer : public OGRLayer
 /*                          OGRWFSDataSource()                          */
 /************************************************************************/
 
-OGRWFSDataSource::OGRWFSDataSource()
-
+OGRWFSDataSource::OGRWFSDataSource() :
+    pszName(NULL),
+    bRewriteFile(FALSE),
+    psFileXML(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bUpdate(FALSE),
+    bGetFeatureSupportHits(FALSE),
+    bNeedNAMESPACE(FALSE),
+    bHasMinOperators(FALSE),
+    bHasNullCheck(FALSE),
+    // Advertized by deegree but not implemented.
+    bPropertyIsNotEqualToSupported(TRUE),
+    bUseFeatureId(FALSE),  // CubeWerx doesn't like GmlObjectId.
+    bGmlObjectIdNeedsGMLPrefix(FALSE),
+    bRequiresEnvelopeSpatialFilter(FALSE),
+    bTransactionSupport(FALSE),
+    papszIdGenMethods(NULL),
+    bUseHttp10(FALSE),
+    papszHttpOptions(NULL),
+    bPagingAllowed(CPLTestBool(
+        CPLGetConfigOption("OGR_WFS_PAGING_ALLOWED", "OFF"))),
+    nPageSize(DEFAULT_PAGE_SIZE),
+    nBaseStartIndex(DEFAULT_BASE_START_INDEX),
+    bStandardJoinsWFS2(FALSE),
+    bLoadMultipleLayerDefn(CPLTestBool(
+        CPLGetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "TRUE"))),
+    poLayerMetadataDS(NULL),
+    poLayerMetadataLayer(NULL),
+    poLayerGetCapabilitiesDS(NULL),
+    poLayerGetCapabilitiesLayer(NULL),
+    bKeepLayerNamePrefix(FALSE),
+    bEmptyAsNull(TRUE),
+    bInvertAxisOrderIfLatLong(TRUE),
+    bExposeGMLId(TRUE)
 {
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-
-    bUpdate = FALSE;
-    bGetFeatureSupportHits = FALSE;
-    bNeedNAMESPACE = FALSE;
-    bHasMinOperators = FALSE;
-    bHasNullCheck = FALSE;
-    bPropertyIsNotEqualToSupported = TRUE; /* advertized by deegree but not implemented */
-    bTransactionSupport = FALSE;
-    papszIdGenMethods = NULL;
-    bUseFeatureId = FALSE; /* CubeWerx doesn't like GmlObjectId */
-    bGmlObjectIdNeedsGMLPrefix = FALSE;
-    bRequiresEnvelopeSpatialFilter = FALSE;
-
-    bRewriteFile = FALSE;
-    psFileXML = NULL;
-
-    bUseHttp10 = FALSE;
-    papszHttpOptions = NULL;
-
-    bPagingAllowed = CPLTestBool(CPLGetConfigOption("OGR_WFS_PAGING_ALLOWED", "OFF"));
-    nPageSize = DEFAULT_PAGE_SIZE;
-    nBaseStartIndex = DEFAULT_BASE_START_INDEX;
     if (bPagingAllowed)
     {
         const char* pszOption = CPLGetConfigOption("OGR_WFS_PAGE_SIZE", NULL);
@@ -176,23 +183,8 @@ OGRWFSDataSource::OGRWFSDataSource()
             nBaseStartIndex = atoi(pszOption);
     }
 
-    bStandardJoinsWFS2 = FALSE;
-
-    bLoadMultipleLayerDefn = CPLTestBool(CPLGetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "TRUE"));
-
-    poLayerMetadataDS = NULL;
-    poLayerMetadataLayer = NULL;
-
-    poLayerGetCapabilitiesDS = NULL;
-    poLayerGetCapabilitiesLayer = NULL;
-
-    bKeepLayerNamePrefix = FALSE;
     apszGetCapabilities[0] = NULL;
     apszGetCapabilities[1] = NULL;
-    bEmptyAsNull = TRUE;
-
-    bInvertAxisOrderIfLatLong = TRUE;
-    bExposeGMLId = TRUE;
 }
 
 /************************************************************************/

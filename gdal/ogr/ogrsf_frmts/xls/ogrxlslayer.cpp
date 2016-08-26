@@ -42,17 +42,16 @@ OGRXLSLayer::OGRXLSLayer( OGRXLSDataSource* poDSIn,
                           const char* pszSheetname,
                           int iSheetIn,
                           int nRowsIn,
-                          unsigned short nColsIn )
-
+                          unsigned short nColsIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    pszName(CPLStrdup(pszSheetname)),
+    iSheet(iSheetIn),
+    bFirstLineIsHeaders(FALSE),
+    nRows(nRowsIn),
+    nCols(nColsIn),
+    nNextFID(0)
 {
-    poDS = poDSIn;
-    iSheet = iSheetIn;
-    nNextFID = 0;
-    bFirstLineIsHeaders = FALSE;
-    poFeatureDefn = NULL;
-    pszName = CPLStrdup(pszSheetname);
-    nRows = nRowsIn;
-    nCols = nColsIn;
     SetDescription( pszName );
 }
 
@@ -64,7 +63,7 @@ OGRXLSLayer::~OGRXLSLayer()
 
 {
     CPLFree(pszName);
-    if (poFeatureDefn)
+    if( poFeatureDefn )
         poFeatureDefn->Release();
 }
 
