@@ -44,21 +44,19 @@ OGRXPlaneReader* OGRXPlaneCreateAwyFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 /*                         OGRXPlaneAwyReader()                         */
 /************************************************************************/
-OGRXPlaneAwyReader::OGRXPlaneAwyReader()
-{
-    poAirwaySegmentLayer = NULL;
-    poAirwayIntersectionLayer = NULL;
-}
+OGRXPlaneAwyReader::OGRXPlaneAwyReader() :
+    poAirwaySegmentLayer(NULL),
+    poAirwayIntersectionLayer(NULL)
+{}
 
 /************************************************************************/
 /*                          OGRXPlaneAwyReader()                        */
 /************************************************************************/
 
-OGRXPlaneAwyReader::OGRXPlaneAwyReader( OGRXPlaneDataSource* poDataSource )
+OGRXPlaneAwyReader::OGRXPlaneAwyReader( OGRXPlaneDataSource* poDataSource ) :
+    poAirwaySegmentLayer(new OGRXPlaneAirwaySegmentLayer()),
+    poAirwayIntersectionLayer(new OGRXPlaneAirwayIntersectionLayer())
 {
-    poAirwaySegmentLayer = new OGRXPlaneAirwaySegmentLayer();
-    poAirwayIntersectionLayer = new OGRXPlaneAirwayIntersectionLayer();
-
     poDataSource->RegisterLayer(poAirwaySegmentLayer);
     poDataSource->RegisterLayer(poAirwayIntersectionLayer);
 }
@@ -205,7 +203,8 @@ void OGRXPlaneAwyReader::ParseRecord()
 /*                       OGRXPlaneAirwaySegmentLayer()                  */
 /************************************************************************/
 
-OGRXPlaneAirwaySegmentLayer::OGRXPlaneAirwaySegmentLayer() : OGRXPlaneLayer("AirwaySegment")
+OGRXPlaneAirwaySegmentLayer::OGRXPlaneAirwaySegmentLayer() :
+    OGRXPlaneLayer("AirwaySegment")
 {
     poFeatureDefn->SetGeomType( wkbLineString );
 
@@ -357,16 +356,16 @@ static void FreeAirwayIntersectionFeatureFunc(void* _feature)
 /*                 OGRXPlaneAirwayIntersectionLayer()                   */
 /************************************************************************/
 
-OGRXPlaneAirwayIntersectionLayer::OGRXPlaneAirwayIntersectionLayer() : OGRXPlaneLayer("AirwayIntersection")
+OGRXPlaneAirwayIntersectionLayer::OGRXPlaneAirwayIntersectionLayer() :
+    OGRXPlaneLayer("AirwayIntersection"),
+    poSet(CPLHashSetNew(HashAirwayIntersectionFeatureFunc,
+                        EqualAirwayIntersectionFeatureFunc,
+                        FreeAirwayIntersectionFeatureFunc))
 {
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldName("name", OFTString );
     poFeatureDefn->AddFieldDefn( &oFieldName );
-
-    poSet = CPLHashSetNew(HashAirwayIntersectionFeatureFunc,
-                          EqualAirwayIntersectionFeatureFunc,
-                          FreeAirwayIntersectionFeatureFunc);
 }
 
 /************************************************************************/

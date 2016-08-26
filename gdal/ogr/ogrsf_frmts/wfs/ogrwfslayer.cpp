@@ -83,46 +83,41 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDSIn,
                           const char* pszBaseURLIn,
                           const char* pszNameIn,
                           const char* pszNSIn,
-                          const char* pszNSValIn )
-
+                          const char* pszNSValIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    bGotApproximateLayerDefn(FALSE),
+    poGMLFeatureClass(NULL),
+    bAxisOrderAlreadyInverted(bAxisOrderAlreadyInvertedIn),
+    poSRS(poSRSIn),
+    pszBaseURL(CPLStrdup(pszBaseURLIn)),
+    pszName(CPLStrdup(pszNameIn)),
+    pszNS(pszNSIn ? CPLStrdup(pszNSIn) : NULL),
+    pszNSVal(pszNSValIn ? CPLStrdup(pszNSValIn) : NULL),
+    bStreamingDS(FALSE),
+    poBaseDS(NULL),
+    poBaseLayer(NULL),
+    bHasFetched(FALSE),
+    bReloadNeeded(FALSE),
+    eGeomType(wkbUnknown),
+    nFeatures(-1),
+    bCountFeaturesInGetNextFeature(FALSE),
+    dfMinX(0.0),
+    dfMinY(0.0),
+    dfMaxX(0.0),
+    dfMaxY(0.0),
+    bHasExtents(FALSE),
+    poFetchedFilterGeom(NULL),
+    nExpectedInserts(0),
+    bInTransaction(FALSE),
+    bUseFeatureIdAtLayerLevel(FALSE),
+    bPagingActive(FALSE),
+    nPagingStartIndex(0),
+    nFeatureRead(0),
+    nFeatureCountRequested(0),
+    pszRequiredOutputFormat(NULL)
 {
-    poDS = poDSIn;
-    poSRS = poSRSIn;
-    bAxisOrderAlreadyInverted = bAxisOrderAlreadyInvertedIn;
-    pszBaseURL = CPLStrdup(pszBaseURLIn);
-    pszName = CPLStrdup(pszNameIn);
-    pszNS = pszNSIn ? CPLStrdup(pszNSIn) : NULL;
-    pszNSVal = pszNSValIn ? CPLStrdup(pszNSValIn) : NULL;
-
     SetDescription( pszName );
-
-    poFeatureDefn = NULL;
-    poGMLFeatureClass = NULL;
-    bGotApproximateLayerDefn = FALSE;
-
-    bStreamingDS = FALSE;
-    poBaseDS = NULL;
-    poBaseLayer = NULL;
-    bReloadNeeded = FALSE;
-    bHasFetched = FALSE;
-    eGeomType = wkbUnknown;
-    nFeatures = -1;
-    bCountFeaturesInGetNextFeature = FALSE;
-
-    dfMinX = dfMinY = dfMaxX = dfMaxY = 0;
-    bHasExtents = FALSE;
-    poFetchedFilterGeom = NULL;
-
-    nExpectedInserts = 0;
-    bInTransaction = FALSE;
-    bUseFeatureIdAtLayerLevel = FALSE;
-
-    bPagingActive = FALSE;
-    nPagingStartIndex = 0;
-    nFeatureRead = 0;
-    nFeatureCountRequested = 0;
-
-    pszRequiredOutputFormat = NULL;
 }
 
 /************************************************************************/
@@ -156,13 +151,13 @@ OGRWFSLayer* OGRWFSLayer::Clone()
 OGRWFSLayer::~OGRWFSLayer()
 
 {
-    if (bInTransaction)
+    if( bInTransaction )
         CommitTransaction();
 
     if( poSRS != NULL )
         poSRS->Release();
 
-    if (poFeatureDefn != NULL)
+    if( poFeatureDefn != NULL )
         poFeatureDefn->Release();
     delete poGMLFeatureClass;
 

@@ -36,16 +36,15 @@ CPL_CVSID("$Id$");
 /*                       OGRXPlaneReader()                             */
 /***********************************************************************/
 
-OGRXPlaneReader::OGRXPlaneReader()
-{
-    papszTokens = NULL;
-    fp = NULL;
-    pszFilename = NULL;
-    bEOF = FALSE;
-    nLineNumber = 0;
-    poInterestLayer = NULL;
-    nTokens = 0;
-}
+OGRXPlaneReader::OGRXPlaneReader() :
+    nLineNumber(0),
+    papszTokens(NULL),
+    nTokens(0),
+    fp(NULL),
+    pszFilename(NULL),
+    bEOF(FALSE),
+    poInterestLayer(NULL)
+{}
 
 /***********************************************************************/
 /*                         ~OGRXPlaneReader()                          */
@@ -288,14 +287,14 @@ int OGRXPlaneReader::readTrueHeading(double* pdfTrueHeading, int iToken, const c
 /***********************************************************************/
 
 
-OGRXPlaneEnumeration::OGRXPlaneEnumeration(const char *pszEnumerationName,
-                            const sEnumerationElement*  osElements,
-                            int nElements) :
-                                 m_pszEnumerationName(pszEnumerationName),
-                                 m_osElements(osElements),
-                                 m_nElements(nElements)
-{
-}
+OGRXPlaneEnumeration::OGRXPlaneEnumeration(
+    const char *pszEnumerationName,
+    const sEnumerationElement*  osElements,
+    int nElements ) :
+    m_pszEnumerationName(pszEnumerationName),
+    m_osElements(osElements),
+    m_nElements(nElements)
+{}
 
 /***********************************************************************/
 /*                              GetText()                              */

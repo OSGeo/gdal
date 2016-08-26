@@ -83,7 +83,7 @@ class OGRWFSLayer : public OGRLayer
     int                 bGotApproximateLayerDefn;
     GMLFeatureClass*    poGMLFeatureClass;
 
-    int                  bAxisOrderAlreadyInverted;
+    int                 bAxisOrderAlreadyInverted;
     OGRSpatialReference *poSRS;
 
     char*               pszBaseURL;
@@ -110,7 +110,10 @@ class OGRWFSLayer : public OGRLayer
     OGRFeatureDefn*     DescribeFeatureType();
     GIntBig             ExecuteGetFeatureResultTypeHits();
 
-    double              dfMinX, dfMinY, dfMaxX, dfMaxY;
+    double              dfMinX;
+    double              dfMinY;
+    double              dfMaxX;
+    double              dfMaxY;
     int                 bHasExtents;
 
     OGRGeometry        *poFetchedFilterGeom;
@@ -237,7 +240,8 @@ class OGRWFSJoinLayer : public OGRLayer
     int                 nFeatureRead;
     int                 nFeatureCountRequested;
 
-    std::vector<CPLString> aoSrcFieldNames, aoSrcGeomFieldNames;
+    std::vector<CPLString> aoSrcFieldNames;
+    std::vector<CPLString> aoSrcGeomFieldNames;
 
     CPLString           osFeatureTypes;
 

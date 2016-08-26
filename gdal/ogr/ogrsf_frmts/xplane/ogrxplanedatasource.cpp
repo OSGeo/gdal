@@ -35,16 +35,14 @@ CPL_CVSID("$Id$");
 /*                          OGRXPlaneDataSource()                          */
 /************************************************************************/
 
-OGRXPlaneDataSource::OGRXPlaneDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    poReader = NULL;
-    bReadWholeFile = TRUE;
-    bWholeFiledReadingDone = FALSE;
-}
+OGRXPlaneDataSource::OGRXPlaneDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    poReader(NULL),
+    bReadWholeFile(TRUE),
+    bWholeFiledReadingDone(FALSE)
+{}
 
 /************************************************************************/
 /*                         ~OGRXPlaneDataSource()                       */

@@ -42,15 +42,14 @@ namespace OGRXLSX {
 OGRXLSXLayer::OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
                             int nSheetIdIn,
                             const char * pszName,
-                            int bUpdatedIn) :
-                                OGRMemLayer(pszName, NULL, wkbNone)
-{
-    bInit = FALSE;
-    nSheetId = nSheetIdIn;
-    poDS = poDSIn;
-    bUpdated = bUpdatedIn;
-    bHasHeaderLine = FALSE;
-}
+                            int bUpdatedIn ) :
+    OGRMemLayer(pszName, NULL, wkbNone),
+    bInit(FALSE),
+    poDS(poDSIn),
+    nSheetId(nSheetIdIn),
+    bUpdated(bUpdatedIn),
+    bHasHeaderLine(FALSE)
+{}
 
 /************************************************************************/
 /*                              Init()                                  */
@@ -153,35 +152,28 @@ OGRErr OGRXLSXLayer::DeleteFeature( GIntBig nFID )
 /*                          OGRXLSXDataSource()                         */
 /************************************************************************/
 
-OGRXLSXDataSource::OGRXLSXDataSource()
-
+OGRXLSXDataSource::OGRXLSXDataSource() :
+    pszName(NULL),
+    bUpdatable(FALSE),
+    bUpdated(FALSE),
+    nLayers(0),
+    papoLayers(NULL),
+    bFirstLineIsHeaders(FALSE),
+    bAutodetectTypes(!EQUAL(CPLGetConfigOption("OGR_XLSX_FIELD_TYPES", ""),
+                            "STRING")),
+    oParser(NULL),
+    bStopParsing(FALSE),
+    nWithoutEventCounter(0),
+    nDataHandlerCounter(0),
+    nCurLine(0),
+    nCurCol(0),
+    poCurLayer(NULL),
+    nStackDepth(0),
+    nDepth(0),
+    bInCellXFS(FALSE)
 {
-    pszName = NULL;
-    bUpdatable = FALSE;
-    bUpdated = FALSE;
-
-    nLayers = 0;
-    papoLayers = NULL;
-
-    bFirstLineIsHeaders = FALSE;
-
-    oParser = NULL;
-    bStopParsing = FALSE;
-    nWithoutEventCounter = 0;
-    nDataHandlerCounter = 0;
-    nStackDepth = 0;
-    nDepth = 0;
-    nCurLine = 0;
-    nCurCol = 0;
     stateStack[0].eVal = STATE_DEFAULT;
     stateStack[0].nBeginDepth = 0;
-    bInCellXFS = FALSE;
-
-    poCurLayer = NULL;
-
-    const char* pszXLSXFieldTypes =
-                CPLGetConfigOption("OGR_XLSX_FIELD_TYPES", "");
-    bAutodetectTypes = !EQUAL(pszXLSXFieldTypes, "STRING");
 }
 
 /************************************************************************/
@@ -195,7 +187,7 @@ OGRXLSXDataSource::~OGRXLSXDataSource()
 
     CPLFree( pszName );
 
-    for(int i=0;i<nLayers;i++)
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
 }

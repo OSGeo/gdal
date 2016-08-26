@@ -44,19 +44,17 @@ OGRXPlaneReader* OGRXPlaneCreateFixFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 /*                         OGRXPlaneFixReader()                         */
 /************************************************************************/
-OGRXPlaneFixReader::OGRXPlaneFixReader()
-{
-    poFIXLayer = NULL;
-}
+OGRXPlaneFixReader::OGRXPlaneFixReader() :
+    poFIXLayer(NULL)
+{}
 
 /************************************************************************/
 /*                          OGRXPlaneFixReader()                        */
 /************************************************************************/
 
-OGRXPlaneFixReader::OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource )
+OGRXPlaneFixReader::OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource ) :
+    poFIXLayer(new OGRXPlaneFIXLayer())
 {
-    poFIXLayer = new OGRXPlaneFIXLayer();
-
     poDataSource->RegisterLayer(poFIXLayer);
 }
 
@@ -152,7 +150,8 @@ void    OGRXPlaneFixReader::ParseRecord()
 /*                           OGRXPlaneFIXLayer()                        */
 /************************************************************************/
 
-OGRXPlaneFIXLayer::OGRXPlaneFIXLayer() : OGRXPlaneLayer("FIX")
+OGRXPlaneFIXLayer::OGRXPlaneFIXLayer() :
+    OGRXPlaneLayer("FIX")
 {
     poFeatureDefn->SetGeomType( wkbPoint );
 
