@@ -115,11 +115,10 @@ public:
  * ================================================================ *
  ********************************************************************/
 
-COASPMetadataItem::COASPMetadataItem(char *pszItemName_, char *pszItemValue_)
-{
-    pszItemName = VSIStrdup(pszItemName_);
-    pszItemValue = VSIStrdup(pszItemValue_);
-}
+COASPMetadataItem::COASPMetadataItem(char *pszItemName_, char *pszItemValue_) :
+    pszItemName(VSIStrdup(pszItemName_)),
+    pszItemValue(VSIStrdup(pszItemValue_))
+{}
 
 COASPMetadataItem::~COASPMetadataItem()
 {
@@ -137,20 +136,21 @@ char *COASPMetadataItem::GetItemValue()
         return VSIStrdup(pszItemValue);
 }
 
-COASPMetadataGeorefGridItem::COASPMetadataGeorefGridItem(int nIdIn, int nPixelsIn,
-        int nLinesIn, double ndLatIn, double ndLongIn)
+COASPMetadataGeorefGridItem::COASPMetadataGeorefGridItem(
+    int nIdIn, int nPixelsIn,
+    int nLinesIn, double ndLatIn, double ndLongIn ) :
+    nId(nIdIn),
+    nPixels(nPixelsIn),
+    nLines(nLinesIn),
+    ndLat(ndLatIn),
+    ndLong(ndLongIn)
 {
-        this->nId = nIdIn;
-        this->nPixels = nPixelsIn;
-        this->nLines = nLinesIn;
-        this->ndLat = ndLatIn;
-        this->ndLong = ndLongIn;
-        pszItemName = VSIStrdup("georef_grid");
+    pszItemName = VSIStrdup("georef_grid");
 }
 
 GDAL_GCP *COASPMetadataGeorefGridItem::GetItemValue()
 {
-        return NULL;
+    return NULL;
 }
 
 /********************************************************************
@@ -160,9 +160,11 @@ GDAL_GCP *COASPMetadataGeorefGridItem::GetItemValue()
  ********************************************************************/
 
 COASPMetadataReader::COASPMetadataReader(char *pszFname) :
-    fp(NULL), papszMetadata(NULL), nMetadataCount(0), nCurrentItem(0)
+    fp(NULL),
+    papszMetadata(CSLLoad(pszFname)),
+    nMetadataCount(0),
+    nCurrentItem(0)
 {
-    papszMetadata = CSLLoad(pszFname);
     nMetadataCount = CSLCount(papszMetadata);
 }
 
@@ -282,18 +284,20 @@ class COASPRasterBand : public GDALRasterBand {
         VSILFILE *fp;
         int ePol;
 public:
-        COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType, int ePol, VSILFILE *fp );
+        COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
+                         int ePol, VSILFILE *fp );
         virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void *pImage);
 };
 
-COASPRasterBand::COASPRasterBand( COASPDataset *poDSIn, GDALDataType eDataTypeIn,
-        int ePolIn, VSILFILE *fpIn)
+COASPRasterBand::COASPRasterBand( COASPDataset *poDSIn,
+                                  GDALDataType eDataTypeIn,
+                                  int ePolIn, VSILFILE *fpIn ) :
+        fp(fpIn),
+        ePol(ePolIn)
 {
-        this->fp = fpIn;
-        this->ePol = ePolIn;
-        this->poDS = poDSIn;
-        this->eDataType = eDataTypeIn;
+        poDS = poDSIn;
+        eDataType = eDataTypeIn;
         nBlockXSize = poDS->GetRasterXSize();
         nBlockYSize = 1;
 }

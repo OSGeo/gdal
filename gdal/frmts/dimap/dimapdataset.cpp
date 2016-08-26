@@ -117,11 +117,11 @@ DIMAPDataset::DIMAPDataset() :
     poVRTDS(NULL),
     nGCPCount(0),
     pasGCPList(NULL),
+    pszGCPProjection(CPLStrdup("")),
     bHaveGeoTransform(FALSE),
     nProductVersion(1),
     papszXMLDimapMetadata(NULL)
 {
-    pszGCPProjection = CPLStrdup("");
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;

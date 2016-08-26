@@ -306,8 +306,11 @@ public:
 /*                            DODSDataset()                             */
 /************************************************************************/
 
-DODSDataset::DODSDataset()
-
+DODSDataset::DODSDataset() :
+    poConnect(NULL),
+    bGotGeoTransform(FALSE),
+    poDDS(new DDS( poBaseTypeFactory )),
+    poBaseTypeFactory(new BaseTypeFactory())
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -315,11 +318,6 @@ DODSDataset::DODSDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    bGotGeoTransform = FALSE;
-
-    poConnect = NULL;
-    poBaseTypeFactory = new BaseTypeFactory();
-    poDDS = new DDS( poBaseTypeFactory );
 }
 
 /************************************************************************/
@@ -1122,23 +1120,22 @@ DODSDataset::GetProjectionRef()
 /*                           DODSRasterBand()                           */
 /************************************************************************/
 
-DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
-                               string oCEIn, int nOverviewFactorIn )
+DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
+                                string oCEIn, int nOverviewFactorIn ) :
+    oVarName(oVarNameIn),
+    oCE(oCEIn),
+    eColorInterp(GCI_Undefined),
+    poCT(NULL),
+    nOverviewCount(0),
+    papoOverviewBand(NULL),
+    nOverviewFactor(nOverviewFactorIn),
+    bTranspose(FALSE),
+    bFlipX(FALSE),
+    bFlipY(FALSE),
+    bNoDataSet(FALSE),
+    dfNoDataValue(0.0)
 {
     poDS = poDSIn;
-
-    bTranspose = FALSE;
-    bFlipX = FALSE;
-    bFlipY = FALSE;
-
-    oVarName = oVarNameIn;
-    oCE = oCEIn;
-    nOverviewFactor = nOverviewFactorIn;
-    eColorInterp = GCI_Undefined;
-    poCT = NULL;
-
-    nOverviewCount = 0;
-    papoOverviewBand = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the DDS definition, and isolate the Array.                */
@@ -1228,22 +1225,22 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
     if( nBytesPerPixel == 1 )
     {
         nBlockXSize = 1024;
-        nBlockYSize= 256;
+        nBlockYSize = 256;
     }
     else if( nBytesPerPixel == 2 )
     {
         nBlockXSize = 512;
-        nBlockYSize= 256;
+        nBlockYSize = 256;
     }
     else if( nBytesPerPixel == 4 )
     {
         nBlockXSize = 512;
-        nBlockYSize= 128;
+        nBlockYSize = 128;
     }
     else
     {
         nBlockXSize = 256;
-        nBlockYSize= 128;
+        nBlockYSize = 128;
     }
 
     if( nRasterXSize < nBlockXSize * 2 )
@@ -1263,15 +1260,13 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
 /* -------------------------------------------------------------------- */
     if( nOverviewFactorIn == 1 )
     {
-        int iOverview;
-
         nOverviewCount = 0;
         papoOverviewBand = (DODSRasterBand **)
             CPLCalloc( sizeof(void*), 8 );
 
-        for( iOverview = 1; iOverview < 8; iOverview++ )
+        for( int iOverview = 1; iOverview < 8; iOverview++ )
         {
-            int nThisFactor = 1 << iOverview;
+            const int nThisFactor = 1 << iOverview;
 
             if( nRasterXSize / nThisFactor < 128
                 && nRasterYSize / nThisFactor < 128 )

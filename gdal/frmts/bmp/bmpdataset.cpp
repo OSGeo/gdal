@@ -299,7 +299,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     }
     else
     {
-        pabyScan = NULL;
+        // pabyScan = NULL;
         return;
     }
 
@@ -309,7 +309,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
               nBand, nBlockXSize, nBlockYSize, nScanSize );
 #endif
 
-    pabyScan = (GByte *) VSIMalloc( nScanSize );
+    pabyScan = static_cast<GByte *>(VSIMalloc( nScanSize ));
 }
 
 /************************************************************************/
@@ -688,8 +688,10 @@ class BMPComprRasterBand : public BMPRasterBand
 /*                           BMPComprRasterBand()                       */
 /************************************************************************/
 
-BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
-    : BMPRasterBand( poDSIn, nBandIn )
+BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
+    BMPRasterBand( poDSIn, nBandIn ),
+    pabyComprBuf(NULL),
+    pabyUncomprBuf(NULL)
 {
     /* TODO: it might be interesting to avoid uncompressing the whole data */
     /* in a single pass, especially if nXSize * nYSize is big */
@@ -698,8 +700,6 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Too big dimensions : %d x %d",
                  poDS->GetRasterXSize(), poDS->GetRasterYSize());
-        pabyComprBuf = NULL;
-        pabyUncomprBuf = NULL;
         return;
     }
 
@@ -707,8 +707,6 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits > INT_MAX )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid header");
-        pabyComprBuf = NULL;
-        pabyUncomprBuf = NULL;
         return;
     }
 
@@ -746,7 +744,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         pabyUncomprBuf = NULL;
         return;
     }
-    unsigned int k, iLength = 0;
+    unsigned int k = 0;
+    unsigned int iLength = 0;
     unsigned int i = 0;
     unsigned int j = 0;
     if ( poDSIn->sInfoHeader.iBitCount == 8 )         // RLE8
@@ -920,8 +919,12 @@ CPLErr BMPComprRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 BMPDataset::BMPDataset() :
-    nColorElems(0), pabyColorTable(NULL),
-    poColorTable(NULL), bGeoTransformValid(FALSE), pszFilename(NULL), fp(NULL)
+    nColorElems(0),
+    pabyColorTable(NULL),
+    poColorTable(NULL),
+    bGeoTransformValid(FALSE),
+    pszFilename(NULL),
+    fp(NULL)
 {
     nBands = 0;
 

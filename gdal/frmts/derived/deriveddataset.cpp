@@ -35,24 +35,21 @@ CPL_CVSID("$Id$");
 class DerivedDataset : public VRTDataset
 {
     public:
-        DerivedDataset(int nXSize, int nYSize);
-        ~DerivedDataset();
+        DerivedDataset( int nXSize, int nYSize );
+       ~DerivedDataset() {};
 
         static GDALDataset *Open( GDALOpenInfo * );
 };
 
 
-DerivedDataset::DerivedDataset(int nXSize, int nYSize) : VRTDataset(nXSize,nYSize)
+DerivedDataset::DerivedDataset(int nXSize, int nYSize) :
+    VRTDataset(nXSize, nYSize)
 {
     poDriver = NULL;
     SetWritable(FALSE);
 }
 
-DerivedDataset::~DerivedDataset()
-{
-}
-
-GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
+GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     /* Try to open original dataset */
     CPLString filename(poOpenInfo->pszFilename);

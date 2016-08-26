@@ -104,8 +104,8 @@ class BSBRasterBand : public GDALPamRasterBand
 BSBRasterBand::BSBRasterBand( BSBDataset *poDSIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = 1;
+    poDS = poDSIn;
+    nBand = 1;
 
     eDataType = GDT_Byte;
 
@@ -116,12 +116,12 @@ BSBRasterBand::BSBRasterBand( BSBDataset *poDSIn )
     // shifted down.
     for( int i = 0; i < poDSIn->psInfo->nPCTSize-1; i++ )
     {
-        GDALColorEntry  oColor;
-
-        oColor.c1 = poDSIn->psInfo->pabyPCT[i*3+0+3];
-        oColor.c2 = poDSIn->psInfo->pabyPCT[i*3+1+3];
-        oColor.c3 = poDSIn->psInfo->pabyPCT[i*3+2+3];
-        oColor.c4 = 255;
+        GDALColorEntry oColor = {
+            poDSIn->psInfo->pabyPCT[i*3+0+3],
+            poDSIn->psInfo->pabyPCT[i*3+1+3],
+            poDSIn->psInfo->pabyPCT[i*3+2+3],
+            255
+        };
 
         oCT.SetColorEntry( i, &oColor );
     }
@@ -188,10 +188,9 @@ GDALColorInterp BSBRasterBand::GetColorInterpretation()
 BSBDataset::BSBDataset() :
     nGCPCount(0),
     pasGCPList(NULL),
-    bGeoTransformSet(FALSE)
+    bGeoTransformSet(FALSE),
+    psInfo(NULL)
 {
-    psInfo = NULL;
-
 
     osGCPProjection =
         "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4326]]";
