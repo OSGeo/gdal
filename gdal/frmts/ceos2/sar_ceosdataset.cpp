@@ -215,8 +215,8 @@ SAR_CEOSRasterBand::SAR_CEOSRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn,
                                         GDALDataType eType )
 
 {
-    this->poDS = poGDSIn;
-    this->nBand = nBandIn;
+    poDS = poGDSIn;
+    nBand = nBandIn;
 
     eDataType = eType;
 
@@ -317,8 +317,8 @@ CCPRasterBand::CCPRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn,
                               GDALDataType eType )
 
 {
-    this->poDS = poGDSIn;
-    this->nBand = nBandIn;
+    poDS = poGDSIn;
+    nBand = nBandIn;
 
     eDataType = eType;
 
@@ -474,8 +474,8 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn )
 
 {
-    this->poDS = poGDSIn;
-    this->nBand = nBandIn;
+    poDS = poGDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_CInt16;
 

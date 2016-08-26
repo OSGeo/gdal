@@ -161,8 +161,8 @@ BLXDataset::BLXDataset() :
     nOverviewCount(0),
     bIsOverview(FALSE)
 {
-    for(int i=0; i < BLX_OVERVIEWLEVELS; i++)
-        papoOverviewDS[i]=NULL;
+    for( int i = 0; i < BLX_OVERVIEWLEVELS; i++ )
+        papoOverviewDS[i] = NULL;
 }
 
 BLXDataset::~BLXDataset() {
@@ -199,14 +199,14 @@ const char *BLXDataset::GetProjectionRef()
         "AUTHORITY[\"EPSG\",\"4326\"]]";
 }
 
-BLXRasterBand::BLXRasterBand( BLXDataset *poDSIn, int nBandIn, int overviewLevelIn )
-
+BLXRasterBand::BLXRasterBand( BLXDataset *poDSIn, int nBandIn,
+                              int overviewLevelIn ) :
+    overviewLevel(overviewLevelIn)
 {
     BLXDataset *poGDS = poDSIn;
 
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->overviewLevel = overviewLevelIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Int16;
 

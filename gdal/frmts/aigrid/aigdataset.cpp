@@ -111,8 +111,8 @@ class AIGRasterBand : public GDALPamRasterBand
 AIGRasterBand::AIGRasterBand( AIGDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     nBlockXSize = poDSIn->psInfo->nBlockXSize;
     nBlockYSize = poDSIn->psInfo->nBlockYSize;
@@ -316,12 +316,11 @@ GDALColorTable *AIGRasterBand::GetColorTable()
 AIGDataset::AIGDataset() :
     psInfo(NULL),
     papszPrj(NULL),
+    pszProjection(CPLStrdup("")),
     poCT(NULL),
     bHasReadRat(FALSE),
     poRAT(NULL)
-{
-    pszProjection = CPLStrdup("");
-}
+{}
 
 /************************************************************************/
 /*                           ~AIGDataset()                            */

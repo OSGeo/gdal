@@ -105,8 +105,8 @@ AirSARRasterBand::AirSARRasterBand( AirSARDataset *poDSIn,
                                     int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
@@ -272,7 +272,7 @@ AirSARDataset::AirSARDataset() :
     padfMatrix(NULL),
     nDataStart(0),
     nRecordLength(0)
-{ }
+{}
 
 /************************************************************************/
 /*                           ~AirSARDataset()                           */

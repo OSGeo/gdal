@@ -58,7 +58,7 @@ public:
 class COSARRasterBand : public GDALRasterBand
 {
     unsigned long nRTNB;
-    // int nBurstNumber;
+
 public:
         COSARRasterBand(COSARDataset *, unsigned long nRTNB);
         virtual CPLErr IReadBlock(int, int, void *);
@@ -68,10 +68,9 @@ public:
  * COSARRasterBand Implementation
  *****************************************************************************/
 
-COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNBIn)  // :
-    // nBurstNumber(1)
+COSARRasterBand::COSARRasterBand( COSARDataset *pDS, unsigned long nRTNBIn ) :
+    nRTNB(nRTNBIn)
 {
-        nRTNB = nRTNBIn;
         nBlockXSize = pDS->GetRasterXSize();
         nBlockYSize = 1;
         eDataType = GDT_CInt16;

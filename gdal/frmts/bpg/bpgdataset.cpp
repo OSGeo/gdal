@@ -90,13 +90,13 @@ class BPGRasterBand : public GDALPamRasterBand
 /*                          BPGRasterBand()                            */
 /************************************************************************/
 
-BPGRasterBand::BPGRasterBand( BPGDataset *poDS, int nbits )
+BPGRasterBand::BPGRasterBand( BPGDataset *poDSIn, int nbits )
 {
-    this->poDS = poDS;
+    poDS = poDS;
 
-    eDataType = (nbits > 8) ? GDT_UInt16 : GDT_Byte;
+    eDataType = nbits > 8 ? GDT_UInt16 : GDT_Byte;
 
-    nBlockXSize = poDS->nRasterXSize;
+    nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 }
 
@@ -161,14 +161,12 @@ GDALColorInterp BPGRasterBand::GetColorInterpretation()
 /*                            BPGDataset()                              */
 /************************************************************************/
 
-BPGDataset::BPGDataset()
-
-{
-    fpImage = NULL;
-    pabyUncompressed = NULL;
-    bHasBeenUncompressed = FALSE;
-    eUncompressErrRet = CE_None;
-}
+BPGDataset::BPGDataset() :
+    fpImage(NULL),
+    pabyUncompressed(NULL),
+    bHasBeenUncompressed(FALSE),
+    eUncompressErrRet(CE_None)
+{}
 
 /************************************************************************/
 /*                           ~BPGDataset()                              */
@@ -178,7 +176,7 @@ BPGDataset::~BPGDataset()
 
 {
     FlushCache();
-    if (fpImage)
+    if( fpImage )
         VSIFCloseL(fpImage);
     VSIFree(pabyUncompressed);
 }

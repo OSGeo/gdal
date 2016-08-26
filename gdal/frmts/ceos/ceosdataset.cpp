@@ -78,8 +78,8 @@ class CEOSRasterBand : public GDALPamRasterBand
 CEOSRasterBand::CEOSRasterBand( CEOSDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Byte;
 
@@ -112,11 +112,9 @@ CPLErr CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                            CEOSDataset()                             */
 /************************************************************************/
 
-CEOSDataset::CEOSDataset()
-
-{
-    psCEOS = NULL;
-}
+CEOSDataset::CEOSDataset() :
+    psCEOS(NULL)
+{}
 
 /************************************************************************/
 /*                            ~CEOSDataset()                            */

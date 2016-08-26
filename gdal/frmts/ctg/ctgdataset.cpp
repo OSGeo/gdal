@@ -166,8 +166,8 @@ class CTGRasterBand : public GDALPamRasterBand
 CTGRasterBand::CTGRasterBand( CTGDataset *poDSIn, int nBandIn ) :
     papszCategories(NULL)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Int32;
 
@@ -256,7 +256,7 @@ CTGDataset::CTGDataset() :
     pszProjection(NULL),
     bHasReadImagery(FALSE),
     pabyImage(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~CTGDataset()                            */
@@ -267,7 +267,7 @@ CTGDataset::~CTGDataset()
 {
     CPLFree(pszProjection);
     CPLFree(pabyImage);
-    if (fp != NULL)
+    if( fp != NULL )
         VSIFCloseL(fp);
 }
 
