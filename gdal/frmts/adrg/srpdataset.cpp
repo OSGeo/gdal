@@ -65,11 +65,9 @@ class SRPDataset : public GDALPamDataset
     int          PCB;
     int          PVB;
 
-
     char**       papszSubDatasets;
 
     GDALColorTable oCT;
-
 
     static char** GetGENListFromTHF(const char* pszFileName);
     static char** GetIMGListFromGEN(const char* pszFileName, int* pnRecordIndex = NULL);
@@ -125,8 +123,8 @@ class SRPRasterBand : public GDALPamRasterBand
 SRPRasterBand::SRPRasterBand( SRPDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Byte;
 
@@ -329,14 +327,22 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 SRPDataset::SRPDataset() :
-    NFC(0), NFL(0), ZNA(0), LSO(0.0), PSO(0.0), LOD(0.0), LAD(0.0), ARV(0),
-    BRV(0), PCB(0), PVB(0)
-{
-    fdIMG = NULL;
-    TILEINDEX = NULL;
-    offsetInIMG = 0;
-    papszSubDatasets = NULL;
-}
+    fdIMG(NULL),
+    TILEINDEX(NULL),
+    offsetInIMG(0),
+    NFC(0),
+    NFL(0),
+    ZNA(0),
+    LSO(0.0),
+    PSO(0.0),
+    LOD(0.0),
+    LAD(0.0),
+    ARV(0),
+    BRV(0),
+    PCB(0),
+    PVB(0),
+    papszSubDatasets(NULL)
+{}
 
 /************************************************************************/
 /*                          ~SRPDataset()                              */
@@ -344,15 +350,14 @@ SRPDataset::SRPDataset() :
 
 SRPDataset::~SRPDataset()
 {
-
     CSLDestroy(papszSubDatasets);
 
-    if (fdIMG)
+    if( fdIMG )
     {
         VSIFCloseL(fdIMG);
     }
 
-    if (TILEINDEX)
+    if( TILEINDEX )
     {
         delete [] TILEINDEX;
     }
