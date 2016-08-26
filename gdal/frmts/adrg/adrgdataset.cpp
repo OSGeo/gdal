@@ -128,8 +128,8 @@ class ADRGRasterBand : public GDALPamRasterBand
 ADRGRasterBand::ADRGRasterBand( ADRGDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Byte;
 
@@ -519,17 +519,23 @@ static int WriteFieldDecl(VSILFILE* fd, char _data_struct_code , char _data_type
 /************************************************************************/
 
 ADRGDataset::ADRGDataset() :
-    offsetInIMG(0), NFC(0), NFL(0), LSO(0.0), PSO(0.0), ARV(0), BRV(0),
-    bGeoTransformValid(0), nNextAvailableBlock(0)
-{
-    bCreation = FALSE;
-    poOverviewDS = NULL;
-    fdIMG = NULL;
-    fdGEN = NULL;
-    fdTHF = NULL;
-    TILEINDEX = NULL;
-    papszSubDatasets = NULL;
-}
+    fdIMG(NULL),
+    TILEINDEX(NULL),
+    offsetInIMG(0),
+    NFC(0),
+    NFL(0),
+    LSO(0.0),
+    PSO(0.0),
+    ARV(0),
+    BRV(0),
+    papszSubDatasets(NULL),
+    poOverviewDS(NULL),
+    bCreation(FALSE),
+    fdGEN(NULL),
+    fdTHF(NULL),
+    bGeoTransformValid(0),
+    nNextAvailableBlock(0)
+{}
 
 /************************************************************************/
 /*                          ~ADRGDataset()                              */
