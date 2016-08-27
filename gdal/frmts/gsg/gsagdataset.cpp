@@ -168,30 +168,29 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
     dfMaxY(0.0),
     dfMinZ(0.0),
     dfMaxZ(0.0),
-    nLastReadLine(0),
+    nLastReadLine(poDSIn->nRasterYSize),
     nMaxLineSize(128),
     padfRowMinZ(NULL),
     padfRowMaxZ(NULL),
     nMinZRow(-1),
     nMaxZRow(-1)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Float64;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
-    panLineOffset =
-        (vsi_l_offset *)VSI_CALLOC_VERBOSE( poDSIn->nRasterYSize+1, sizeof(vsi_l_offset) );
+    panLineOffset = static_cast<vsi_l_offset *>(
+        VSI_CALLOC_VERBOSE( poDSIn->nRasterYSize+1, sizeof(vsi_l_offset) ));
     if( panLineOffset == NULL )
     {
         return;
     }
 
-    panLineOffset[poDSIn->nRasterYSize-1] = nDataStart;
-    nLastReadLine = poDSIn->nRasterYSize;
+    panLineOffset[poDSIn->nRasterYSize - 1] = nDataStart;
 }
 
 /************************************************************************/

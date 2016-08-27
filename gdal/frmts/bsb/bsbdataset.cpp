@@ -188,20 +188,22 @@ GDALColorInterp BSBRasterBand::GetColorInterpretation()
 BSBDataset::BSBDataset() :
     nGCPCount(0),
     pasGCPList(NULL),
+    osGCPProjection(
+        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
+        "SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],"
+        "TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],"
+        "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],"
+        "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],"
+        "AUTHORITY[\"EPSG\",4326]]"),
     bGeoTransformSet(FALSE),
     psInfo(NULL)
 {
-
-    osGCPProjection =
-        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4326]]";
-
     adfGeoTransform[0] = 0.0;     /* X Origin (top left corner) */
     adfGeoTransform[1] = 1.0;     /* X Pixel size */
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;     /* Y Origin (top left corner) */
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;     /* Y Pixel Size */
-
 }
 
 /************************************************************************/

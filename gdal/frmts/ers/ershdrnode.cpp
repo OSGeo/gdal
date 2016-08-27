@@ -43,7 +43,7 @@ ERSHdrNode::ERSHdrNode() :
     papszItemName(NULL),
     papszItemValue(NULL),
     papoItemChild(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~ERSHdrNode()                             */

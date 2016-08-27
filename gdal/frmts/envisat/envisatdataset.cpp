@@ -67,28 +67,26 @@ class MerisL2FlagBand : public GDALPamRasterBand
 /*                        MerisL2FlagBand()                       */
 /************************************************************************/
 MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDSIn, int nBandIn,
-                                  VSILFILE* fpImageIn, vsi_l_offset nImgOffsetIn,
+                                  VSILFILE* fpImageIn,
+                                  vsi_l_offset nImgOffsetIn,
                                   int nPrefixBytesIn ) :
-    nBytePerPixel(3)
+    nImgOffset(nImgOffsetIn),
+    nPrefixBytes(nPrefixBytesIn),
+    nBytePerPixel(3),
+    nRecordSize(nPrefixBytesIn + nBlockXSize * nBytePerPixel),
+    nDataSize(nBlockXSize * nBytePerPixel),
+    pReadBuf(static_cast<GByte *>(CPLMalloc(nRecordSize)))
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
-    this->fpImage = fpImageIn;
-    this->nImgOffset = nImgOffsetIn;
-    this->nPrefixBytes = nPrefixBytesIn;
+    fpImage = fpImageIn;
 
     eDataType = GDT_UInt32;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-
-    nDataSize = nBlockXSize * nBytePerPixel;
-    nRecordSize = nPrefixBytes + nDataSize;
-
-    pReadBuf = (GByte *) CPLMalloc( nRecordSize );
 }
-
 
 /************************************************************************/
 /*                        ~MerisL2FlagBand()                       */
@@ -203,8 +201,7 @@ EnvisatDataset::EnvisatDataset() :
     nGCPCount(0),
     pasGCPList(NULL),
     papszTempMD(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                            ~EnvisatDataset()                         */

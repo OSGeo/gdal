@@ -94,10 +94,10 @@ public:
 /*                          FITSRasterBand()                           */
 /************************************************************************/
 
-FITSRasterBand::FITSRasterBand(FITSDataset *poDSIn, int nBandIn) {
-
-  this->poDS = poDSIn;
-  this->nBand = nBandIn;
+FITSRasterBand::FITSRasterBand( FITSDataset *poDSIn, int nBandIn )
+{
+  poDS = poDSIn;
+  nBand = nBandIn;
   eDataType = poDSIn->gdalDataType;
   nBlockXSize = poDSIn->nRasterXSize;;
   nBlockYSize = 1;
@@ -107,7 +107,8 @@ FITSRasterBand::FITSRasterBand(FITSDataset *poDSIn, int nBandIn) {
 /*                          ~FITSRasterBand()                           */
 /************************************************************************/
 
-FITSRasterBand::~FITSRasterBand() {
+FITSRasterBand::~FITSRasterBand()
+{
     FlushCache();
 }
 
@@ -228,9 +229,9 @@ static bool isIgnorableFITSHeader(const char* name) {
 /*                            FITSDataset()                            */
 /************************************************************************/
 
-FITSDataset::FITSDataset() {
-  hFITS = NULL;
-}
+FITSDataset::FITSDataset():
+    hFITS(NULL)
+{}
 
 /************************************************************************/
 /*                           ~FITSDataset()                            */
@@ -239,9 +240,13 @@ FITSDataset::FITSDataset() {
 FITSDataset::~FITSDataset() {
 
   int status;
-  if (hFITS) {
-    if(eAccess == GA_Update) {   // Only do this if we've successfully opened the file and  update capability
-      // Write any meta data to the file that's compatible with FITS
+  if( hFITS )
+  {
+    if(eAccess == GA_Update)
+    {
+      // Only do this if we've successfully opened the file and update
+      // capability.  Write any meta data to the file that's compatible with
+      // FITS.
       status = 0;
       fits_movabs_hdu(hFITS, 1, NULL, &status);
       fits_write_key_longwarn(hFITS, &status);

@@ -102,7 +102,6 @@ public:
     void    UncacheData();
 
 private:
-
     CPLErr       LoadData();
 
     static void ReadGribData( DataSource &, sInt4, int, double**,
@@ -500,6 +499,11 @@ GRIBDataset::GRIBDataset() :
     fp(NULL),
     pszProjection(CPLStrdup("")),
     nCachedBytes(0),
+    // Switch caching strategy once 100 MB threshold is reached.
+    // Why 100 MB ? --> why not.
+    nCachedBytesThreshold(
+        static_cast<GIntBig>(atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100")))
+        * 1024 * 1024),
     bCacheOnlyOneBand(FALSE),
     poLastUsedBand(NULL)
 {
@@ -509,12 +513,6 @@ GRIBDataset::GRIBDataset() :
   adfGeoTransform[3] = 0.0;
   adfGeoTransform[4] = 0.0;
   adfGeoTransform[5] = 1.0;
-
-  /* Switch caching strategy once 100 MB threshold is reached */
-  /* Why 100 MB ? --> why not ! */
-  nCachedBytesThreshold =
-      static_cast<GIntBig>(atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100")))
-      * 1024 * 1024;
 }
 
 /************************************************************************/
