@@ -75,19 +75,6 @@ def doit(opts, args):
     elif not opts.outF:
         raise Exception("No output file provided.")
 
-    # set up global namespace for eval with all functions of gdalnumeric
-    global_namespace = dict([(key, getattr(gdalnumeric, key))
-        for key in dir(gdalnumeric) if not key.startswith('__')])
-
-    if not opts.calc:
-        raise Exception("No calculation provided.")
-    elif not opts.outF:
-        raise Exception("No output file provided.")
-
-    # set up global namespace for eval with all functions of gdalnumeric
-    global_namespace = dict([(key, getattr(gdalnumeric, key))
-        for key in dir(gdalnumeric) if not key.startswith('__')])
-
     ################################################################
     # fetch details of input layers
     ################################################################
@@ -269,12 +256,6 @@ def doit(opts, args):
                 # create empty buffer to mark where nodata occurs
                 myNDVs=numpy.zeros(myBufSize)
                 myNDVs.shape=(nYValid,nXValid)
-
-                # modules available to calculation
-                local_namespace = {}
-
-                # make local namespace for calculation
-                local_namespace = {}
 
                 # make local namespace for calculation
                 local_namespace = {}
