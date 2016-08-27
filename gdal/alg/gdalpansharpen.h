@@ -102,7 +102,7 @@ typedef struct
 
     /** Shift in pixels of multispectral bands w.r.t panchromatic band, in X direction */
     double               dfMSShiftX;
-    
+
     /** Shift in pixels of multispectral bands w.r.t panchromatic band, in Y direction */
     double               dfMSShiftY;
 

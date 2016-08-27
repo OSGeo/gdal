@@ -1169,7 +1169,7 @@ def hfa_verify_dataset_projection(dataset_path, exp_wkt):
         return 'fail'
 
     ds = None
-    return 'success'	
+    return 'success'
 
 ###############################################################################
 # Verify can read Transverse Mercator (South Orientated) projections

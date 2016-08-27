@@ -2687,7 +2687,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
     pafCoeffs[0] = fHalfDeltaX * (-1 + fDeltaX * (2 - fDeltaX));
     pafCoeffs[1] = 1 + fHalfDeltaX2 * (-5 + fThreeDeltaX);
     pafCoeffs[2] = fHalfDeltaX * (1 + fDeltaX * (4 - fThreeDeltaX));
-    pafCoeffs[3] = fHalfDeltaX2 * (-1 + fDeltaX); 
+    pafCoeffs[3] = fHalfDeltaX2 * (-1 + fDeltaX);
     __m128 xmmCoeffs = _mm_load_ps(pafCoeffs);
     const __m128 xmmThreshold = _mm_load1_ps(&SRC_DENSITY_THRESHOLD);
 
@@ -2719,7 +2719,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
     pafCoeffs[0] = fHalfDeltaY * (-1 + fDeltaY * (2 - fDeltaY));
     pafCoeffs[1] = 1 + fHalfDeltaY2 * (-5 + fThreeDeltaY);
     pafCoeffs[2] = fHalfDeltaY * (1 + fDeltaY * (4 - fThreeDeltaY));
-    pafCoeffs[3] = fHalfDeltaY2 * (-1 + fDeltaY); 
+    pafCoeffs[3] = fHalfDeltaY2 * (-1 + fDeltaY);
 
     xmmCoeffs = _mm_load_ps(pafCoeffs);
 
@@ -4756,7 +4756,7 @@ static void GWKRealCaseThread( void* pData)
         CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
     const bool bSrcMaskIsDensity = (poWK->panUnifiedSrcValid == NULL &&
-                                  poWK->papanBandSrcValid == NULL && 
+                                  poWK->papanBandSrcValid == NULL &&
                                   poWK->pafUnifiedSrcDensity != NULL);
 
     // Precompute values

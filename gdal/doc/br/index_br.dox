@@ -29,9 +29,9 @@ A p&aacute;gina
 <a href="http://trac.osgeo.org/gdal/wiki/Release/2.0.0-News">novidades</a> descreve o
 lan&ccedil;amento em Junho de 2015 da release 2.0.0 da biblioteca GDAL/OGR.
 
-Tradicionalmente a bilioteca GDAL referia-se a dados Raster enquanto que OGR 
-referia-se a dados Vetorias (Simple Features). Mas a partir da ver&ccedil;&atilde;o 2.0 as duas partes 
-est&atilde;o mais integradas. Voce ainda pode se referir a 
+Tradicionalmente a bilioteca GDAL referia-se a dados Raster enquanto que OGR
+referia-se a dados Vetorias (Simple Features). Mas a partir da ver&ccedil;&atilde;o 2.0 as duas partes
+est&atilde;o mais integradas. Voce ainda pode se referir a
 <a href="http://gdal.org/1.11/index.html">documenta&ccedil;&atilde;o da GDAL 1.X</a> se necess&aacute;rio.
 
 

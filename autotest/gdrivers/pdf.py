@@ -2041,7 +2041,7 @@ def pdf_pam_georef():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Now disable internal georeferencing, so georef should go to PAM 
+    # Now disable internal georeferencing, so georef should go to PAM
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options = ['GEO_ENCODING=NONE'] )
     if not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
         gdaltest.post_reason('fail')

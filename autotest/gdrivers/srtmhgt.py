@@ -93,7 +93,7 @@ def srtmhgt_2():
         gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
         return 'fail'
     dsDst = None
-    
+
     # Test update support
     dsDst = gdal.Open( '/vsimem/n43w080.hgt', gdal.GA_Update )
     dsDst.WriteRaster(0, 0, dsDst.RasterXSize, dsDst.RasterYSize,
@@ -104,7 +104,7 @@ def srtmhgt_2():
         gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
         return 'fail'
     dsDst = None
-    
+
     return 'success'
 
 ###############################################################################
@@ -115,7 +115,7 @@ def srtmhgt_3():
     ds = gdal.Open( 'tmp/n43w080.hgt' )
     driver = gdal.GetDriverByName( "SRTMHGT" );
     driver.CreateCopy( '/vsizip//vsimem/N43W080.SRTMGL1.hgt.zip/N43W080.hgt', ds)
-    
+
     dsDst = gdal.Open('/vsimem/N43W080.SRTMGL1.hgt.zip')
 
     band = dsDst.GetRasterBand(1)

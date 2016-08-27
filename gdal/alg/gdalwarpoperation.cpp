@@ -410,13 +410,11 @@ static void SetAlphaMax( GDALWarpOptions* psOptions,
     }
     else if( GDALGetRasterDataType( hBand ) == GDT_Int16 )
     {
-        
         psOptions->papszWarpOptions = CSLSetNameValue(
             psOptions->papszWarpOptions, pszKey, "32767" );
     }
     else if( GDALGetRasterDataType( hBand ) == GDT_UInt16 )
     {
-        
         psOptions->papszWarpOptions = CSLSetNameValue(
             psOptions->papszWarpOptions,pszKey, "65535" );
     }

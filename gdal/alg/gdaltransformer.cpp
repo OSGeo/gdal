@@ -3452,7 +3452,7 @@ void* GDALCreateSimilarTransformer( void* pTransformArg, double dfRatioX, double
 
 /**
  * Set ApproxTransformer or GenImgProj output geotransform.
- * 
+ *
  * This is a layer above GDALSetGenImgProjTransformerDstGeoTransform() that
  * checks that the passed hTransformArg is compatible.
  *

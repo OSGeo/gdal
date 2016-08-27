@@ -1789,7 +1789,7 @@ def warp_54():
     gdal.Unlink('/vsimem/warp_54.tif')
 
     return 'success'
-            
+
 
 gdaltest_list = [
     warp_1,
