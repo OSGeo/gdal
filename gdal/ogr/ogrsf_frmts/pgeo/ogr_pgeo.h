@@ -92,8 +92,6 @@ class OGRPGeoLayer : public OGRLayer
 
 class OGRPGeoTableLayer : public OGRPGeoLayer
 {
-    int                 bUpdateAccess;
-
     char                *pszQuery;
 
     void                ClearStatement();
