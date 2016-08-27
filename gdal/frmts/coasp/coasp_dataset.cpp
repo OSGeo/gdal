@@ -95,11 +95,13 @@ public:
  */
 class COASPMetadataGeorefGridItem : public COASPMetadataItem
 {
+#ifdef unused
         int nId;
         int nPixels;
         int nLines;
         double ndLat;
         double ndLong;
+#endif
 
 public:
         COASPMetadataGeorefGridItem( int nId, int nPixels, int nLines,
@@ -137,13 +139,16 @@ char *COASPMetadataItem::GetItemValue()
 }
 
 COASPMetadataGeorefGridItem::COASPMetadataGeorefGridItem(
-    int nIdIn, int nPixelsIn,
-    int nLinesIn, double ndLatIn, double ndLongIn ) :
+    int /*nIdIn*/, int /*nPixelsIn*/,
+    int /*nLinesIn*/, double /*ndLatIn*/, double /*ndLongIn*/ )
+#ifdef unused
+:
     nId(nIdIn),
     nPixels(nPixelsIn),
     nLines(nLinesIn),
     ndLat(ndLatIn),
     ndLong(ndLongIn)
+#endif
 {
     pszItemName = VSIStrdup("georef_grid");
 }
@@ -282,7 +287,7 @@ public:
 
 class COASPRasterBand : public GDALRasterBand {
         VSILFILE *fp;
-        int ePol;
+        /*int ePol;*/
 public:
         COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
                          int ePol, VSILFILE *fp );
@@ -292,9 +297,9 @@ public:
 
 COASPRasterBand::COASPRasterBand( COASPDataset *poDSIn,
                                   GDALDataType eDataTypeIn,
-                                  int ePolIn, VSILFILE *fpIn ) :
-        fp(fpIn),
-        ePol(ePolIn)
+                                  int /*ePolIn*/, VSILFILE *fpIn ) :
+        fp(fpIn)/*,
+        ePol(ePolIn)*/
 {
         poDS = poDSIn;
         eDataType = eDataTypeIn;
