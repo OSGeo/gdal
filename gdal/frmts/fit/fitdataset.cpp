@@ -109,16 +109,15 @@ public:
 /************************************************************************/
 
 FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
-        recordSize(0),
-        numXBlocks(0),
-        numYBlocks(0),
-        bytesPerComponent(0),
-        bytesPerPixel(0),
-        tmpImage( NULL )
-
+    recordSize(0),
+    numXBlocks(0),
+    numYBlocks(0),
+    bytesPerComponent(0),
+    bytesPerPixel(0),
+    tmpImage( NULL )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
@@ -134,7 +133,7 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
 /* -------------------------------------------------------------------- */
 /*      Caculate the values for record offset calculations.             */
 /* -------------------------------------------------------------------- */
-    bytesPerComponent = (GDALGetDataTypeSize(eDataType) / 8);
+    bytesPerComponent = GDALGetDataTypeSizeBytes(eDataType);
     if( bytesPerComponent == 0 )
         return;
     bytesPerPixel = nBandsIn * bytesPerComponent;
@@ -776,12 +775,13 @@ GDALColorInterp FITRasterBand::GetColorInterpretation()
 /*                             FITDataset()                             */
 /************************************************************************/
 
-FITDataset::FITDataset() : fp( NULL ), info( NULL )
+FITDataset::FITDataset() :
+    fp( NULL ),
+    info( NULL )
 {
     adfGeoTransform[0] = 0.0; // x origin (top left corner)
     adfGeoTransform[1] = 1.0; // x pixel size
     adfGeoTransform[2] = 0.0;
-
     adfGeoTransform[3] = 0.0; // y origin (top left corner)
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0; // y pixel size
@@ -794,9 +794,9 @@ FITDataset::FITDataset() : fp( NULL ), info( NULL )
 FITDataset::~FITDataset()
 {
     FlushCache();
-    if (info)
+    if( info )
         delete(info);
-    if(fp)
+    if( fp )
     {
         if( VSIFCloseL(fp) != 0 )
         {

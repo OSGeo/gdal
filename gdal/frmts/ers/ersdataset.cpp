@@ -119,22 +119,21 @@ ERSDataset::ERSDataset() :
     fpImage(NULL),
     poDepFile(NULL),
     bGotTransform(FALSE),
+    pszProjection(CPLStrdup("")),
     bHDRDirty(FALSE),
     poHeader(NULL),
     nGCPCount(0),
     pasGCPList(NULL),
+    pszGCPProjection(CPLStrdup("")),
     bHasNoDataValue(FALSE),
     dfNoDataValue(0.0)
 {
-    pszProjection = CPLStrdup("");
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    pszGCPProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -740,14 +739,14 @@ class ERSRasterBand : public RawRasterBand
 /************************************************************************/
 
 ERSRasterBand::ERSRasterBand( GDALDataset *poDSIn, int nBandIn, void * fpRawIn,
-                                vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
-                                int nLineOffsetIn,
-                                GDALDataType eDataTypeIn, int bNativeOrderIn,
-                                int bIsVSILIn, int bOwnsFPIn ) :
+                              vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                              int nLineOffsetIn,
+                              GDALDataType eDataTypeIn, int bNativeOrderIn,
+                              int bIsVSILIn, int bOwnsFPIn ) :
     RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn, bOwnsFPIn)
-{
-}
+                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, bIsVSILIn,
+                  bOwnsFPIn)
+{}
 
 /************************************************************************/
 /*                           GetNoDataValue()                           */

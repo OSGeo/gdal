@@ -124,7 +124,6 @@ class E00GRIDRasterBand : public GDALPamRasterBand
     friend class E00GRIDDataset;
 
   public:
-
                 E00GRIDRasterBand( E00GRIDDataset *, int, GDALDataType );
 
     virtual CPLErr      IReadBlock( int, int, void * );
@@ -147,8 +146,8 @@ E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDSIn, int nBandIn,
                                       GDALDataType eDT )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = eDT;
 

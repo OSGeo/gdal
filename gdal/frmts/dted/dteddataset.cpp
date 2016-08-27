@@ -98,14 +98,13 @@ class DTEDRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDSIn, int nBandIn ) :
-    bNoDataSet(TRUE)
+    bNoDataSet(TRUE),
+    dfNoDataValue(static_cast<double>(DTED_NODATA_VALUE))
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Int16;
-
-    dfNoDataValue = (double) DTED_NODATA_VALUE;
 
     /* For some applications, it may be valuable to consider the whole DTED */
     /* file as single block, as the column orientation doesn't fit very well */
@@ -241,12 +240,13 @@ double DTEDRasterBand::GetNoDataValue( int * pbSuccess )
 /*                            ~DTEDDataset()                            */
 /************************************************************************/
 
-DTEDDataset::DTEDDataset() : psDTED(NULL)
-{
-    pszFilename = CPLStrdup("unknown");
-    pszProjection = CPLStrdup("");
-    bVerifyChecksum = CPLTestBool(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"));
-}
+DTEDDataset::DTEDDataset() :
+    pszFilename(CPLStrdup("unknown")),
+    psDTED(NULL),
+    bVerifyChecksum(CPLTestBool(
+        CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"))),
+    pszProjection(CPLStrdup(""))
+{}
 
 /************************************************************************/
 /*                            ~DTEDDataset()                            */
