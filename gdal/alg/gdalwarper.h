@@ -289,7 +289,7 @@ CPL_C_END
 #define WARP_EXTRA_ELTS    1
 
 /** This class represents the lowest level of abstraction of warping.
- * 
+ *
  * It holds the imagery for one "chunk" of a warp, and the
  * pre-prepared masks.  All IO is done before and after its
  * operation.  This class is not normally used by the

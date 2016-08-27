@@ -490,7 +490,7 @@ def test_gdaldem_lib_nodata():
         src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1, type)
         src_ds.GetRasterBand(1).SetNoDataValue(value)
         src_ds.GetRasterBand(1).Fill(value)
-        
+
         ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
         if ds is None:
             return 'fail'
@@ -507,7 +507,7 @@ def test_gdaldem_lib_nodata():
     src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3, 1)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
     src_ds.GetRasterBand(1).WriteRaster(1,1,1,1, struct.pack('B', 255))
-        
+
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
@@ -515,7 +515,7 @@ def test_gdaldem_lib_nodata():
         print(cs)
         print(ds.ReadAsArray())
         return 'fail'
-        
+
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True)
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 10:
@@ -528,7 +528,7 @@ def test_gdaldem_lib_nodata():
     src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3, 1, gdal.GDT_Float32)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
     src_ds.GetRasterBand(1).WriteRaster(1,1,1,1, struct.pack('f', 255))
-        
+
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 0:
@@ -536,7 +536,7 @@ def test_gdaldem_lib_nodata():
         print(cs)
         print(ds.ReadAsArray())
         return 'fail'
-        
+
     ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', computeEdges = True)
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 10:

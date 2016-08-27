@@ -58,7 +58,7 @@ dnl warning #1684: conversion from pointer to same-sized integral type (potentia
 dnl warning #2259: non-pointer conversion from "size_t={unsigned long}" to "int" may lose significant bits
 dnl warning #2304: non-explicit constructor with single argument may cause implicit type conversion
 dnl warning #3280: declaration hides member
-dnl remark #11074: Inlining inhibited by limit max-size 
+dnl remark #11074: Inlining inhibited by limit max-size
 dnl remark #11076: To get full report use -qopt-report=4 -qopt-report-phase ipo
 AX_CHECK_COMPILE_FLAG([-diag-disable 188,1684,2259,2304,3280,11074,11076],[C_WFLAGS="$C_WFLAGS -diag-disable 188,1684,2259,2304,3280,11074,11076" CXX_WFLAGS="$CXX_WFLAGS -diag-disable 188,1684,2259,2304,3280,11074,11076"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 

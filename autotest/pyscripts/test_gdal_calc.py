@@ -258,7 +258,7 @@ def test_gdal_calc_py_5():
     gdal_calc.Calc('A', A='tmp/test_gdal_calc_py.tif', overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_5_1.tif')
     gdal_calc.Calc('A', A='tmp/test_gdal_calc_py.tif', A_band=2, overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_5_2.tif')
     gdal_calc.Calc('Z', Z='tmp/test_gdal_calc_py.tif', Z_band=2, overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_5_3.tif')
-    
+
     sys.path = backup_sys_path
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_5_1.tif')
@@ -313,7 +313,7 @@ def test_gdal_calc_py_6():
     gdal_calc.Calc('A', A='tmp/test_gdal_calc_py.tif', overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_6.tif', NoDataValue = 1)
 
     sys.path = backup_sys_path
-    
+
     ds = gdal.Open('tmp/test_gdal_calc_py_6.tif')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 4673:

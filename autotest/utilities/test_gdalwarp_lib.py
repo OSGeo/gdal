@@ -1097,7 +1097,7 @@ def test_gdalwarp_lib_129():
 # GTiff output
 
 def test_gdalwarp_lib_130():
-  
+
     src_ds = gdal.GetDriverByName('GTiff').Create(
         '/vsimem/test_gdalwarp_lib_130.tif', 1, 1, 5, options = ['PHOTOMETRIC=RGB'])
     src_ds.SetGeoTransform([100,1,0,200,0,-1])

@@ -4,21 +4,21 @@
 \page gdal_datamodel GDAL Data Model
 
 This document attempts to describe the GDAL data model.  That is the
-types of information that a GDAL data store can contain, and their 
+types of information that a GDAL data store can contain, and their
 semantics.<p>
 
 \section gdal_datamodel_dataset Dataset
 
-A dataset (represented by the GDALDataset class) is an assembly of 
+A dataset (represented by the GDALDataset class) is an assembly of
 related raster bands and some information common to them all.  In particular
 the dataset has a concept of the raster size (in pixels and lines) that
-applies to all the bands.  The dataset is also responsible for the 
+applies to all the bands.  The dataset is also responsible for the
 georeferencing transform and coordinate system definition of all bands.  The
 dataset itself can also have associated metadata, a list of name/value
-pairs in string form. 
+pairs in string form.
 
-Note that the GDAL dataset, and raster band data model is loosely 
-based on the OpenGIS Grid Coverages specification. 
+Note that the GDAL dataset, and raster band data model is loosely
+based on the OpenGIS Grid Coverages specification.
 
 \subsection gdal_datamodel_dataset_cs Coordinate System
 
@@ -26,41 +26,41 @@ Dataset coordinate systems are represented as OpenGIS Well Known Text
 strings.  This can contain:
 
 <ul>
-<li> An overall coordinate system name. 
-<li> A geographic coordinate system name. 
-<li> A datum identifier. 
-<li> An ellipsoid name, semi-major axis, and inverse flattening. 
-<li> A prime meridian name and offset from Greenwich. 
-<li> A projection method type (i.e. Transverse Mercator). 
-<li> A list of projection parameters (i.e. central_meridian). 
-<li> A units name, and conversion factor to meters or radians. 
-<li> Names and ordering for the axes. 
+<li> An overall coordinate system name.
+<li> A geographic coordinate system name.
+<li> A datum identifier.
+<li> An ellipsoid name, semi-major axis, and inverse flattening.
+<li> A prime meridian name and offset from Greenwich.
+<li> A projection method type (i.e. Transverse Mercator).
+<li> A list of projection parameters (i.e. central_meridian).
+<li> A units name, and conversion factor to meters or radians.
+<li> Names and ordering for the axes.
 <li> Codes for most of the above in terms of predefined coordinate systems
-from authorities such as EPSG. 
+from authorities such as EPSG.
 </ul>
 
-For more information on OpenGIS WKT coordinate system definitions, and 
+For more information on OpenGIS WKT coordinate system definitions, and
 mechanisms to manipulate them, refer to the <a href="ogr/osr_tutorial.html">
 osr_tutorial</a> document and/or the OGRSpatialReference class documentation.
 
-The coordinate system returned by GDALDataset::GetProjectionRef() 
+The coordinate system returned by GDALDataset::GetProjectionRef()
 describes the georeferenced coordinates implied by the affine georeferencing
 transform returned by GDALDataset::GetGeoTransform().  The coordinate
-system returned by GDALDataset::GetGCPProjection() describes the 
+system returned by GDALDataset::GetGCPProjection() describes the
 georeferenced coordinates of the GCPs returned by GDALDataset::GetGCPs().
 
 Note that a returned coordinate system strings of "" indicates nothing
-is known about the georeferencing coordinate system.  
+is known about the georeferencing coordinate system.
 
 \subsection gdal_datamodel_dataset_gtm Affine GeoTransform
 
 GDAL datasets have two ways of describing the relationship between
 raster positions (in pixel/line coordinates) and georeferenced coordinates.
 The first, and most commonly used is the affine transform (the other is
-GCPs).  
+GCPs).
 
-The affine transform consists of six coefficients returned by 
-GDALDataset::GetGeoTransform() which map pixel/line coordinates into 
+The affine transform consists of six coefficients returned by
+GDALDataset::GetGeoTransform() which map pixel/line coordinates into
 georeferenced space using the following relationship:
 
 <pre>
@@ -75,7 +75,7 @@ position is the top left corner of the top left pixel of the raster.
 Note that the pixel/line coordinates in the above are from (0.0,0.0) at the
 top left corner of the top left pixel to (width_in_pixels,height_in_pixels)
 at the bottom right corner of the bottom right pixel.  The pixel/line location
-of the center of the top left pixel would therefore be (0.5,0.5). 
+of the center of the top left pixel would therefore be (0.5,0.5).
 
 \subsection gdal_datamodel_dataset_gcp GCPs
 
@@ -87,7 +87,7 @@ coordinate system (returned by GDALDataset::GetGCPProjection()).  Each GCP
 <pre>
 typedef struct
 {
-    char	*pszId; 
+    char	*pszId;
     char	*pszInfo;
     double 	dfGCPPixel;
     double	dfGCPLine;
@@ -100,31 +100,31 @@ typedef struct
 The pszId string is intended to be a unique (and often, but not always
 numerical) identifier for the GCP within the set of GCPs on this dataset.
 The pszInfo is usually an empty string, but can contain any user defined
-text associated with the GCP.  Potentially this can also contain machine 
+text associated with the GCP.  Potentially this can also contain machine
 parsable information on GCP status though that isn't done at this time.
 
 The (Pixel,Line) position is the GCP location on the raster.  The (X,Y,Z)
 position is the associated georeferenced location with the Z often being
-zero. 
+zero.
 
 The GDAL data model does not imply a transformation mechanism that must
 be generated from the GCPs ... this is left to the application.  However
-1st to 5th order polynomials are common. 
+1st to 5th order polynomials are common.
 
 Normally a dataset will contain either an affine geotransform, GCPs or
-neither.  It is uncommon to have both, and it is undefined which is 
+neither.  It is uncommon to have both, and it is undefined which is
 authoritative.
 
 \subsection gdal_datamodel_dataset_metadata Metadata
 
 GDAL metadata is auxiliary format and application specific textual data
-kept as a list of name/value pairs.  The names are required to be well 
+kept as a list of name/value pairs.  The names are required to be well
 behaved tokens (no spaces, or odd characters).  The values can be of
-any length, and contain anything except an embedded null (ASCII zero).  
+any length, and contain anything except an embedded null (ASCII zero).
 
 The metadata handling system is not well tuned to handling very large bodies
 of metadata.  Handling of more than 100K of metadata for a dataset is likely
-to lead to performance degradation. 
+to lead to performance degradation.
 
 Some formats will support generic (user defined) metadata, while other
 format drivers will map specific format fields to metadata names.  For
@@ -136,7 +136,7 @@ TIFFTAG_DATETIME=1999:05:11 11:29:56
 </pre>
 
 Metadata is split into named groups called domains, with the default
-domain having no name (NULL or "").  Some specific domains exist for 
+domain having no name (NULL or "").  Some specific domains exist for
 special purposes.  Note that currently there is no way to enumerate all
 the domains available for a given object, but applications can "test" for
 any domains they know how to interpret.
@@ -145,17 +145,17 @@ The following metadata items have well defined semantics in the default
 domain:
 
 <ul>
-<li> AREA_OR_POINT: May be either "Area" (the default) or "Point".  Indicates 
-whether a pixel value should be assumed to represent a sampling over the 
-region of the pixel or a point sample at the center of the pixel.  This is not 
-intended to influence interpretation of georeferencing which remains area 
+<li> AREA_OR_POINT: May be either "Area" (the default) or "Point".  Indicates
+whether a pixel value should be assumed to represent a sampling over the
+region of the pixel or a point sample at the center of the pixel.  This is not
+intended to influence interpretation of georeferencing which remains area
 oriented.
 <li> NODATA_VALUES: The value is a list of space separated pixel values matching
 the number of bands in the dataset that can be collectively used to identify
 pixels that are nodata in the dataset.  With this style of nodata a pixel
-is considered nodata in all bands if and only if all bands match the 
+is considered nodata in all bands if and only if all bands match the
 corresponding value in the NODATA_VALUES tuple.  This metadata is not widely
-honoured by GDAL drivers, algorithms or utilities at this time. 
+honoured by GDAL drivers, algorithms or utilities at this time.
 <li> MATRIX_REPRESENTATION: This value, used for Polarimetric SAR datasets, contains the matrix representation that this data is provided in. The following are acceptable values:
     <ul>
     <li>SCATTERING
@@ -183,7 +183,7 @@ honoured by GDAL drivers, algorithms or utilities at this time.
 
 The SUBDATASETS domain holds a list of child datasets.  Normally this is
 used to provide pointers to a list of images stored within a single multi
-image file. 
+image file.
 
 For example, an NITF with two images might have the following subdataset list.
 
@@ -194,34 +194,34 @@ For example, an NITF with two images might have the following subdataset list.
   SUBDATASET_2_DESC=Image 2 of multi_1b.ntf
 </pre>
 
-The value of the _NAME is the string that can be passed to GDALOpen() to 
+The value of the _NAME is the string that can be passed to GDALOpen() to
 access the file.  The _DESC value is intended to be a more user friendly
-string that can be displayed to the user in a selector. 
+string that can be displayed to the user in a selector.
 
-Drivers which support subdatasets advertize the DMD_SUBDATASETS capability. 
-This information is reported when the \-\-format and \-\-formats options are 
+Drivers which support subdatasets advertize the DMD_SUBDATASETS capability.
+This information is reported when the \-\-format and \-\-formats options are
 passed to the command line utilities.
 
-Currently, drivers which support subdatasets are: 
-ADRG, ECRGTOC, GEORASTER, GTiff, HDF4, HDF5, netCDF, NITF, NTv2, OGDI, PDF, 
+Currently, drivers which support subdatasets are:
+ADRG, ECRGTOC, GEORASTER, GTiff, HDF4, HDF5, netCDF, NITF, NTv2, OGDI, PDF,
 PostGISRaster, Rasterlite, RPFTOC, RS2, WCS, and WMS.
- 
+
 \subsubsection gdal_datamodel_image_structure IMAGE_STRUCTURE Domain
 
-Metadata in the default domain is intended to be related to the 
+Metadata in the default domain is intended to be related to the
 image, and not particularly related to the way the image is stored on
 disk.  That is, it is suitable for copying with the dataset when it is
 copied to a new format.  Some information of interest is closely tied
 to a particular file format and storage mechanism.  In order to prevent
 this getting copied along with datasets it is placed in a special domain
-called IMAGE_STRUCTURE that should not normally be copied to new formats. 
+called IMAGE_STRUCTURE that should not normally be copied to new formats.
 
-Currently the following items are defined by 
-<a href="http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure">RFC 14</a> 
-as having specific semantics in the IMAGE_STRUCTURE domain. 
+Currently the following items are defined by
+<a href="http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure">RFC 14</a>
+as having specific semantics in the IMAGE_STRUCTURE domain.
 
 <ul>
-<li> COMPRESSION:     The compression type used for this dataset or band. There is no fixed catalog of compression type names, but where a given format includes a COMPRESSION creation option, the same list of values should be used here as there. 
+<li> COMPRESSION:     The compression type used for this dataset or band. There is no fixed catalog of compression type names, but where a given format includes a COMPRESSION creation option, the same list of values should be used here as there.
 <li> NBITS: The actual number of bits used for this band, or the bands of this dataset. Normally only present when the number of bits is non-standard for the datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_Byte.
 <li> INTERLEAVE: This only applies on datasets, and the value should be one of PIXEL, LINE or BAND. It can be used as a data access hint.
 <li> PIXELTYPE: This may appear on a GDT_Byte band (or the corresponding dataset) and have the value SIGNEDBYTE to indicate the unsigned byte values between 128 and 255 should be interpreted as being values between -128 and -1 for applications that recognise the SIGNEDBYTE type.
@@ -260,69 +260,69 @@ The line and pixel offset expressed with LINE_OFF and SAMP_OFF are with respect 
 \subsubsection gdal_datamodel_imagery IMAGERY Domain (remote sensing)
 
 For satellite or aerial imagery the IMAGERY Domain may be present. It depends on exist special metadata files near the image file. The files at the same directory with image file tested by the set of metadata readers, if files can be processed by the metadata reader, it fill the IMAGERY Domain with the following items:
-   
+
 <ul>
 <li>  SATELLITEID: A satellite or scanner name
 <li>  CLOUDCOVER: Cloud coverage. The value between 0 - 100 or 999 if not available
 <li>  ACQUISITIONDATETIME: The image acquisition date time in UTC
-</ul>  
+</ul>
 
 
 \subsubsection gdal_datamodel_xml xml: Domains
 
-Any domain name prefixed with "xml:" is not normal name/value metadata. 
-It is a single XML document stored in one big string. 
+Any domain name prefixed with "xml:" is not normal name/value metadata.
+It is a single XML document stored in one big string.
 
 
 \section gdal_datamodel_rasterband Raster Band
 
-A raster band is represented in GDAL with the GDALRasterBand class.  It 
+A raster band is represented in GDAL with the GDALRasterBand class.  It
 represents a single raster band/channel/layer.  It does not necessarily
 represent a whole image.  For instance, a 24bit RGB image would normally
 be represented as a dataset with three bands, one for red, one for green
-and one for blue. 
+and one for blue.
 
 A raster band has the following properties:
 
 <ul>
 
-<li> A width and height in pixels and lines.  This is the same as that 
-defined for the dataset, if this is a full resolution band. 
+<li> A width and height in pixels and lines.  This is the same as that
+defined for the dataset, if this is a full resolution band.
 
-<li> A datatype (GDALDataType).  One of Byte, UInt16, Int16, UInt32, Int32, 
+<li> A datatype (GDALDataType).  One of Byte, UInt16, Int16, UInt32, Int32,
 Float32, Float64, and the complex types CInt16, CInt32, CFloat32, and CFloat64.
 
-<li> A block size.  This is a preferred (efficient) access chunk size.  For 
-tiled images this will be one tile.  For scanline oriented images this will 
-normally be one scanline. 
+<li> A block size.  This is a preferred (efficient) access chunk size.  For
+tiled images this will be one tile.  For scanline oriented images this will
+normally be one scanline.
 
 <li> A list of name/value pair metadata in the same format as the dataset,
 but of information that is potentially specific to this band.
 
-<li> An optional description string. 
+<li> An optional description string.
 
-<li> An optional single nodata pixel value (see also NODATA_VALUES metadata on 
+<li> An optional single nodata pixel value (see also NODATA_VALUES metadata on
 the dataset for multi-band style nodata values).
 
-<li> An optional nodata mask band marking pixels as nodata or in some cases 
-transparency as discussed in <a 
-href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15: Band 
+<li> An optional nodata mask band marking pixels as nodata or in some cases
+transparency as discussed in <a
+href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15: Band
 Masks</a>.
 
-<li> An optional list of category names (effectively class names in a 
-thematic image).  
+<li> An optional list of category names (effectively class names in a
+thematic image).
 
-<li> An optional minimum and maximum value. 
+<li> An optional minimum and maximum value.
 
 <li> An optional offset and scale for transforming raster values into meaning
 full values (i.e. translate height to meters).
 
-<li> An optional raster unit name.  For instance, this might indicate linear 
+<li> An optional raster unit name.  For instance, this might indicate linear
 units for elevation data.
 
 <li> A color interpretation for the band.  This is one of:
 
-  <ul> 
+  <ul>
   <li> GCI_Undefined: the default, nothing is known.
   <li> GCI_GrayIndex: this is an independent gray-scale image
   <li> GCI_PaletteIndex: this raster acts as an index into a color table
@@ -336,12 +336,12 @@ units for elevation data.
   <li> GCI_CyanBand: this band is the cyan portion of a CMY or CMYK image
   <li> GCI_MagentaBand: this band is the magenta portion of a CMY or CMYK image
   <li> GCI_YellowBand: this band is the yellow portion of a CMY or CMYK image
-  <li> GCI_BlackBand: this band is the black portion of a CMYK image. 
+  <li> GCI_BlackBand: this band is the black portion of a CMYK image.
   </ul>
 
-<li> A color table, described in more detail later. 
+<li> A color table, described in more detail later.
 
-<li> Knowledge of reduced resolution overviews (pyramids) if available. 
+<li> Knowledge of reduced resolution overviews (pyramids) if available.
 
 </ul>
 
@@ -354,49 +354,49 @@ following structure:
 typedef struct
 {
     /- gray, red, cyan or hue -/
-    short      c1;      
+    short      c1;
 
-    /- green, magenta, or lightness -/    
-    short      c2;      
+    /- green, magenta, or lightness -/
+    short      c2;
 
     /- blue, yellow, or saturation -/
-    short      c3;      
+    short      c3;
 
     /- alpha or black band -/
-    short      c4;      
+    short      c4;
 } GDALColorEntry;
 </pre>
 
 The color table also has a palette interpretation value (GDALPaletteInterp)
 which is one of the following values, and indicates how the c1/c2/c3/c4 values
-of a color entry should be interpreted. 
+of a color entry should be interpreted.
 
 <ul>
-<li> GPI_Gray: Use c1 as gray scale value. 
+<li> GPI_Gray: Use c1 as gray scale value.
 <li> GPI_RGB: Use c1 as red, c2 as green, c3 as blue and c4 as alpha.
-<li> GPI_CMYK: Use c1 as cyan, c2 as magenta, c3 as yellow and c4 as black. 
-<li> GPI_HLS: Use c1 as hue, c2 as lightness, and c3 as saturation. 
+<li> GPI_CMYK: Use c1 as cyan, c2 as magenta, c3 as yellow and c4 as black.
+<li> GPI_HLS: Use c1 as hue, c2 as lightness, and c3 as saturation.
 </ul>
 
 To associate a color with a raster pixel, the pixel value is used as a
 subscript into the color table.  That means that the colors are always
 applied starting at zero and ascending.  There is no provision for indicating
-a pre-scaling mechanism before looking up in the color table. 
+a pre-scaling mechanism before looking up in the color table.
 
 \section gdal_datamodel_rasterband_overviews Overviews
 
 A band may have zero or more overviews.  Each overview is represented as
-a "free standing" GDALRasterBand.  The size (in pixels and lines) of the 
+a "free standing" GDALRasterBand.  The size (in pixels and lines) of the
 overview will be different than the underlying raster, but the geographic
-region covered by overviews is the same as the full resolution band.  
+region covered by overviews is the same as the full resolution band.
 
 The overviews are used to display reduced resolution overviews more quickly
-than could be done by reading all the full resolution data and downsampling. 
+than could be done by reading all the full resolution data and downsampling.
 
 Bands also have a HasArbitraryOverviews property which is TRUE if the
 raster can be read at any resolution efficiently but with no distinct
 overview levels.  This applies to some FFT encoded images, or images pulled
 through gateways (like OGDI) where downsampling can be done efficiently
-at the remote point. 
+at the remote point.
 
 */

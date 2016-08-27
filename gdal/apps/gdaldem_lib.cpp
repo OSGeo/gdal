@@ -811,7 +811,7 @@ void*  GDALCreateHillshadeData(double* adfGeoTransform,
     double z_scale_factor = z / (((bZevenbergenThorne) ? 2 : 8) * scale);
     pData->cos_altRadians_mul_z_scale_factor =
         cos(alt * degreesToRadians) * z_scale_factor;
-    pData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor = 
+    pData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor =
         cos(pData->azRadians) * pData->cos_altRadians_mul_z_scale_factor;
     pData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor =
         sin(pData->azRadians) * pData->cos_altRadians_mul_z_scale_factor;
@@ -3003,7 +3003,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
         {
             if( eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16 )
             {
-                GDALGeneric3x3Dataset<GInt32>* poDS = 
+                GDALGeneric3x3Dataset<GInt32>* poDS =
                     new GDALGeneric3x3Dataset<GInt32>(hSrcDataset, hSrcBand,
                                             eDstDataType,
                                             bDstHasNoData,
@@ -3023,7 +3023,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
             }
             else
             {
-                GDALGeneric3x3Dataset<float>* poDS = 
+                GDALGeneric3x3Dataset<float>* poDS =
                     new GDALGeneric3x3Dataset<float>(hSrcDataset, hSrcBand,
                                             eDstDataType,
                                             bDstHasNoData,

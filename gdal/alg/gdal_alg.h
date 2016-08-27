@@ -560,7 +560,7 @@ typedef struct
 } GDALTriFacet;
 
 /** Triangle barycentric coefficients.
- * 
+ *
  * Conversion from cartesian (x,y) to barycentric (l1,l2,l3) with :
  *  l1 = dfMul1X * (x - dfCxtX) + dfMul1Y * (y - dfCstY)
  *  l2 = dfMul2X * (x - dfCxtX) + dfMul2Y * (y - dfCstY)

@@ -84,7 +84,7 @@ def derived_test1():
                 gdaltest.post_reason('fail')
                 import pprint
                 pprint.pprint("Expected projection: "+str(expected_prj)+", got: "+str(gt))
-                return 'fail'   
+                return 'fail'
     return 'success'
 
 def derived_test2():

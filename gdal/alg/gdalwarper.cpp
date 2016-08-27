@@ -1011,7 +1011,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                 ((int*)pafMask)[iPixel] = (int) ( pafMask[iPixel] * cst_alpha_max );
                 iPixel ++;
             }
-            CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) ); 
+            CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
             const __m128 xmm_alpha_max = _mm_load1_ps(&cst_alpha_max);
             for( ; iPixel + 31 < nPixels; iPixel+=32 )
             {
@@ -1173,7 +1173,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * ratio, the higher the performance will be, since exact
  * reprojections must statistically be done with a frequency of
  * 4*error_threshold/SRC_COORD_PRECISION.</li>
- * 
+ *
  * <li>SRC_ALPHA_MAX: (GDAL >= 2.2). Maximum value for the alpha band of the
  * source dataset. If the value is not set and the alpha band has a NBITS
  * metadata item, it is used to set SRC_ALPHA_MAX = 2^NBITS-1. Otherwise, if the
@@ -1221,7 +1221,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
 /************************************************************************/
 
 /** Create a warp options structure.
- * 
+ *
  * Must be deallocated with GDALDestroyWarpOptions()
  */
 GDALWarpOptions * CPL_STDCALL GDALCreateWarpOptions()
@@ -1282,7 +1282,7 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 /************************************************************************/
 
 /** Clone a warp options structure.
- * 
+ *
  * Must be deallocated with GDALDestroyWarpOptions()
  */
 GDALWarpOptions * CPL_STDCALL

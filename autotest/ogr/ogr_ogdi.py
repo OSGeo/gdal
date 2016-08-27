@@ -46,7 +46,7 @@ def ogr_ogdi_1():
     if 'TRAVIS_BRANCH' in os.environ and \
        os.environ['TRAVIS_BRANCH'].find('sanitize') >= 0:
        print('Skipping because of memory leaks in OGDI')
-       ogrtest.ogdi_drv = None 
+       ogrtest.ogdi_drv = None
        return 'skip'
 
     try:

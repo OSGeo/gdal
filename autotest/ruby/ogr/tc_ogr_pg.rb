@@ -10,31 +10,31 @@ require 'ogrtest'
 
 class TestOgrPg < Test::Unit::TestCase
   def setup
- 		driver = Gdal::Ogr.get_driver_by_name( 'PostgreSQL' )
-		@pg_ds = driver.open( 'PG:dbname=autotest user=postgres', 1 )
-	end   
-		
-	def teardown
-    @pg_ds.execute_sql( 'DELLAYER:tpoly' )
-	  @pg_ds = nil
-	end 
+    driver = Gdal::Ogr.get_driver_by_name( 'PostgreSQL' )
+    @pg_ds = driver.open( 'PG:dbname=autotest user=postgres', 1 )
+  end
 
- 	## Write more features with a bunch of different geometries.
-	def create_features_from_file
+  def teardown
+    @pg_ds.execute_sql( 'DELLAYER:tpoly' )
+    @pg_ds = nil
+  end
+
+  ## Write more features with a bunch of different geometries.
+  def create_features_from_file
     pg_lyr = @pg_ds.get_layer(0)
     dst_feat = Gdal::Ogr::Feature.new( feature_def = pg_lyr.get_layer_defn() )
-    
+
 		wkt_list = [ '10', '2', '1', '3d_1', '4', '5', '6' ]
     wkt = nil
-    
+
     wkt_list.each do |item|
       file_name = File.join('..', '..','ogr','data','wkb_wkt',item + '.wkt')
 			File.open(file_name, 'rb') do |file|
 			  wkt = file.read
 			end
-		
+
 			geom = Gdal::Ogr.create_geometry_from_wkt( wkt )
-        
+
 			## Write geometry as a new Postgis feature.
 			dst_feat.set_geometry_directly( geom )
 			dst_feat.set_field( 'PRFEDEA', item )
@@ -62,36 +62,36 @@ class TestOgrPg < Test::Unit::TestCase
  		pg_lyr = create_poly_layer(@pg_ds)
  		feat = populate_poly_layer(pg_lyr)
  		check_poly_layer(pg_lyr, feat)
-	end								 
+	end
 
 	# Write more features with a bunch of different geometries, and verify the
 	# geometries are still OK.
 	def test_create_features
 	  pg_lyr = create_poly_layer(@pg_ds)
 	  create_features_from_file
- 		
+
     wkt_list = [ '10', '2', '1', '3d_1', '4', '5', '6' ]
-    
+
    	wkt_list.each do |item|
       pg_lyr.set_attribute_filter( "PRFEDEA='#{item}'")
-      assert_equal(1, pg_lyr.get_feature_count, 
+      assert_equal(1, pg_lyr.get_feature_count,
                    "Incorrect number of features returned.")
-      
+
       pg_lyr.set_attribute_filter( "")
       feat_read = pg_lyr.get_next_feature()
       assert_not_nil(feat_read)
-      
+
 			geom_read = feat_read.get_geometry_ref()
-			
+
 			assert(check_feature_geometry( feat_read, geom_read ))
 		end
 	end
-    
+
 	# Test ExecuteSQL() results layers with geometry.
 	def test_release_resultset()
  		pg_lyr = create_poly_layer(@pg_ds)
  		populate_poly_layer(pg_lyr)
-	  
+
 	  sql_lyr = @pg_ds.execute_sql( "select * from tpoly" )
 	  assert_equal(10, sql_lyr.get_feature_count)
 
@@ -101,16 +101,16 @@ class TestOgrPg < Test::Unit::TestCase
 	  # Must free the feature before the layer
 	  feat = nil
 	  GC.start
-	  
+
     @pg_ds.release_result_set( sql_lyr )
   end
-  
+
   def test_release_resultset2()
     # This test just runs test_release_resultset again. The reason
     # is that running the tests twice reveals segmentation faults.
     test_release_resultset
   end
-  
+
 	# Test ExecuteSQL() results layers without geometry.
 	def test_execute_sql_no_geom()
 	  pg_lyr = create_poly_layer(@pg_ds)
@@ -124,7 +124,7 @@ class TestOgrPg < Test::Unit::TestCase
 
    	assert(check_features_against_list( sql_lyr, 'eas_id', expect ))
 
-	  # Release the resultset  
+	  # Release the resultset
     pg_ds.release_result_set( sql_lyr )
 	end
 
@@ -132,7 +132,7 @@ class TestOgrPg < Test::Unit::TestCase
 	def test_execute_sql_with_geom()
 	  pg_lyr = create_poly_layer(@pg_ds)
 	  create_features_from_file
-	  
+
 		sql_lyr = @pg_ds.execute_sql( "select * from tpoly where prfedea = '2'" )
 		assert_equal(1, sql_lyr.get_feature_count, "Wrong number of features returned.")
 
@@ -142,29 +142,29 @@ class TestOgrPg < Test::Unit::TestCase
 		sql_lyr.each do |feat|
 		  assert(check_feature_geometry( feat, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ))
 		end
-		
+
     ## Must do a gc to get rid of features created in check_features_against_list
     ## Otherwise, we'll get a segmentation fault when we call release_result_set.
     GC.start
 		@pg_ds.release_result_set( sql_lyr )
 	end
-	
-	# Test spatial filtering. 
+
+	# Test spatial filtering.
 	def test_spatial_filtering()
 	  pg_lyr = create_poly_layer(@pg_ds)
 	  populate_poly_layer(pg_lyr)
-	  
+
 		pg_lyr.set_attribute_filter( "" )
-    
+
     geom = Gdal::Ogr.create_geometry_from_wkt('LINESTRING(479505 4763195,480526 4762819)')
     pg_lyr.set_spatial_filter( geom )
-    
+
 		assert(check_features_against_list(pg_lyr, 'eas_id', [ 158 ] ))
-		
+
 
     pg_lyr.set_spatial_filter( nil )
 	end
-	  
+
 
 	# Write a feature with too long a text value for a fixed length text field.
 	# The driver should now truncate this (but with a debug message).  Also,
@@ -175,22 +175,22 @@ class TestOgrPg < Test::Unit::TestCase
 	def test_long_text()
 	  pg_lyr = create_poly_layer(@pg_ds)
 		create_crazy_key
-    
+
  		pg_lyr.set_attribute_filter( "PRFEDEA = 'CrazyKey'" )
     feat_read = pg_lyr.get_next_feature()
 
     assert_not_nil(feat_read, 'creating crazy feature failed!' )
 
-    short_name = feat_read.get_field('shortname') 
+    short_name = feat_read.get_field('shortname')
     assert_equal('Crazy"\'L', short_name,
 							   "Value not properly escaped or truncated: #{short_name}")
 	end
-    
+
 	## Verify inplace update of a feature with SetFeature().
 	def test_verify_inplace_edit
 	  pg_lyr = create_poly_layer(@pg_ds)
 	  create_crazy_key
-	  
+
 		pg_lyr.set_attribute_filter( "PRFEDEA = 'CrazyKey'" )
     feat = pg_lyr.get_next_feature()
     pg_lyr.set_attribute_filter( "" )
@@ -210,7 +210,7 @@ class TestOgrPg < Test::Unit::TestCase
 
     shortname = feat.get_field( 'SHORTNAME' )
     shortname = shortname[0..4]
-    assert_equal('Reset', shortname, 
+    assert_equal('Reset', shortname,
                  "SetFeature() did not update SHORTNAME, got #{shortname}")
 
     assert(check_feature_geometry( feat, 'POINT(5 6 7)' ))
@@ -220,7 +220,7 @@ class TestOgrPg < Test::Unit::TestCase
 	def test_delete_feature()
 	  pg_lyr = create_poly_layer(@pg_ds)
 	  create_crazy_key
-	  
+
 		pg_lyr.set_attribute_filter( "PRFEDEA = 'CrazyKey'" )
 
 	  feat = pg_lyr.get_next_feature()

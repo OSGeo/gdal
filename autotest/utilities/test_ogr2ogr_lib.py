@@ -379,7 +379,7 @@ def test_ogr2ogr_lib_16():
 # Test gdal.VectorTranslate(dst_ds, ...) without accessMode specified (#6612)
 
 def test_ogr2ogr_lib_17():
-  
+
     ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     gdal.VectorTranslate(ds, gdal.OpenEx('../ogr/data/poly.shp'))
     lyr = ds.GetLayer(0)

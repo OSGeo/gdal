@@ -119,7 +119,7 @@ def test_ogrlineref_4():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/subline.shp')
 
     return 'success'
-    
+
 ###############################################################################
 # test kml
 def test_ogrlineref_5():
@@ -133,7 +133,7 @@ def test_ogrlineref_5():
     if os.path.exists('tmp/parts.kml'):
         return 'success'
 
-    return 'fail'    
+    return 'fail'
 
 
 def test_ogrlineref_cleanup():
