@@ -48,7 +48,6 @@ OGRVFKLayer::OGRVFKLayer( const char *pszName,
                           OGRVFKDataSource *poDSIn ) :
     poSRS(poSRSIn == NULL ? new OGRSpatialReference() : poSRSIn->Clone()),
     poFeatureDefn(new OGRFeatureDefn(pszName)),
-    poDS(poDSIn),
     poDataBlock(poDSIn->GetReader()->GetDataBlock(pszName)),
     m_iNextFeature(0)
 {

@@ -53,9 +53,6 @@ private:
     /* feature definition */
     OGRFeatureDefn      *poFeatureDefn;
 
-    /* OGR data source */
-    OGRVFKDataSource    *poDS;
-
     /* VFK data block */
     IVFKDataBlock       *poDataBlock;
 
