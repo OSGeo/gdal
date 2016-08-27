@@ -254,8 +254,7 @@ def doit(opts, args):
                 myY=Y*myBlockSize[1]
 
                 # create empty buffer to mark where nodata occurs
-                myNDVs=numpy.zeros(myBufSize)
-                myNDVs.shape=(nYValid,nXValid)
+                myNDVs = None
 
                 # make local namespace for calculation
                 local_namespace = {}
@@ -273,7 +272,11 @@ def doit(opts, args):
                                           win_xsize=nXValid, win_ysize=nYValid)
 
                     # fill in nodata values
-                    myNDVs=1*numpy.logical_or(myNDVs==1, myval==myNDV[i])
+                    if myNDV[i] is not None:
+                        if myNDVs is None:
+                            myNDVs = numpy.zeros(myBufSize)
+                            myNDVs.shape=(nYValid,nXValid)
+                        myNDVs=1*numpy.logical_or(myNDVs==1, myval==myNDV[i])
 
                     # add an array of values for this block to the eval namespace
                     local_namespace[Alpha] = myval
@@ -289,7 +292,10 @@ def doit(opts, args):
 
                 # Propagate nodata values (set nodata cells to zero
                 # then add nodata value to these cells).
-                myResult = ((1*(myNDVs==0))*myResult) + (myOutNDV*myNDVs)
+                if myNDVs is not None:
+                    myResult = ((1*(myNDVs==0))*myResult) + (myOutNDV*myNDVs)
+                elif not isinstance(myResult, numpy.ndarray):
+                    myResult = numpy.ones( (nYValid,nXValid) ) * myResult
 
                 # write data block to the output file
                 myOutB=myOut.GetRasterBand(bandNo)
