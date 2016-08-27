@@ -38,7 +38,6 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRPGeoTableLayer::OGRPGeoTableLayer( OGRPGeoDataSource *poDSIn ) :
-    bUpdateAccess(TRUE),
     pszQuery(NULL)
 {
     poDS = poDSIn;
