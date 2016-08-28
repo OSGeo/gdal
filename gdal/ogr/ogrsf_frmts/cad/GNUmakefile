@@ -9,7 +9,7 @@ OBJ	= \
 	ogrcadlayer.o \
 	vsilfileio.o
 
-CPPFLAGS	:=	-I. -I.. -I../.. $(CPPFLAGS) -std=c++11 
+CPPFLAGS	:=	-I. -I.. -I../.. -Ilibopencad $(CPPFLAGS) -std=c++11 
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target) $(O_OBJ:.o=.$(OBJ_EXT)) 
 

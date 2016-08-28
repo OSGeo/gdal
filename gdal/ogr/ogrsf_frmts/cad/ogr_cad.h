@@ -37,8 +37,8 @@
 
 #include "ogrsf_frmts.h"
 
-#include "libopencad/opencad_api.h"
-#include "libopencad/cadgeometry.h"
+#include "opencad_api.h"
+#include "cadgeometry.h"
 
 class OGRCADLayer : public OGRLayer
 {
