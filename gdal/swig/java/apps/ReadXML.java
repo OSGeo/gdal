@@ -46,11 +46,11 @@ import org.gdal.gdal.XMLNodeType;
 
 /// <summary>
 /// A C# based sample for demonstrating the usage of the XMLNode class.
-/// </summary> 
+/// </summary>
 
 public class ReadXML {
 
-    public static void usage() 
+    public static void usage()
 
     {
             System.out.println("usage example: readxml {xml string}");

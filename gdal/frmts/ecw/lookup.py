@@ -78,7 +78,7 @@ for line in pfile.readlines():
         tokens = string.split(string.strip(line),',')
         if len(tokens) < 3:
             continue
-        
+
 	for i in range(len(tokens)):
 	    tokens[i] = string.strip(tokens[i])
 
@@ -119,14 +119,14 @@ for line in pfile.readlines():
                            float(dline[3]), fe, fn )
 
 	elif type == 'lamcon2':
-	    srs.SetLCC( r2d(dline[7]), r2d(dline[8]), 
+	    srs.SetLCC( r2d(dline[7]), r2d(dline[8]),
 		        r2d(dline[9]), r2d(dline[6]), fe, fn )
 
 #	elif type == 'lambert2':
 #	    false_en = '+y_0=%.2f +x_0=%.2f' \
 #		% (float(dline[12])*lsize, float(dline[13])*lsize)
 #	    result = '+proj=lcc %s +lat_0=%s +lon_0=%s +lat_1=%s +lat_2=%s' \
-#               % (false_en, r2d(dline[3]), r2d(dline[4]), 
+#               % (false_en, r2d(dline[3]), r2d(dline[4]),
 #			r2d(dline[7]), r2d(dline[8]))
 
 	elif type == 'albersea':
@@ -153,7 +153,7 @@ for line in pfile.readlines():
 	    print '%s,%s' % (id, srs.ExportToWkt())
         else:
             print '%s,LOCAL_CS["%s - (unsupported)"]' % (id,id)
-		
+
     except KeyError:
         print '%s,LOCAL_CS["%s - (unsupported)"]' % (id,id)
 
@@ -179,9 +179,9 @@ for line in pfile.readlines():
 
     if id == 'WGS84':
         srs.SetWellKnownGeogCS( 'WGS84' )
-    elif id == 'NAD27': 
+    elif id == 'NAD27':
         srs.SetWellKnownGeogCS( 'NAD27' )
-    elif id == 'NAD83': 
+    elif id == 'NAD83':
         srs.SetWellKnownGeogCS( 'NAD83' )
     else:
         srs.SetGeogCS( tokens[1], id, sp_name, float(dline[2]), float(dline[4]) )

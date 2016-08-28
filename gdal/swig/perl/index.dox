@@ -3,7 +3,7 @@
 \section index_version Version
 
 These pages document the development version of the GDAL Perl API,
-which is extended from the released versions APIs. Old versions: 
+which is extended from the released versions APIs. Old versions:
 <a href="../1.4/index.html">1.4</a>
 <a href="../1.5/index.html">1.5</a>
 <a href="../1.6/index.html">1.6</a>
@@ -201,17 +201,17 @@ OGR Error: Unsupported geometry type at <long path>/OGR.pm line 652.
 and
 
 \code
-BEGIN { 
-    $SIG{__WARN__} = sub {  print STDERR "Warning: @_"; } 
+BEGIN {
+    $SIG{__WARN__} = sub {  print STDERR "Warning: @_"; }
 }
-Geo::GDAL::GetDriver('GTiff')->Create( Name => 'my.tiff', 
-                                       Width => 100, 
-                                       Height => 100, 
-                                       Type => 'Byte', 
+Geo::GDAL::GetDriver('GTiff')->Create( Name => 'my.tiff',
+                                       Width => 100,
+                                       Height => 100,
+                                       Type => 'Byte',
                                        Options => { my_unknown_option => 'b' } );
 \endcode
 
-Produces: 
+Produces:
 \code
 Warning: Driver GTiff does not support my_unknown_option creation option at site/lib/Geo/GDAL.pm line 771.
 \endcode
@@ -239,7 +239,7 @@ Prints
 
 OGR: OGRMultiPoint::exportToWkt() - skipping POINT EMPTY.
 
-to STDERR, and 
+to STDERR, and
 
 MULTIPOINT ((1 1))
 
@@ -260,7 +260,7 @@ ProgressData, the method will happily recognize also progress_data.
 
 Some methods accept a callback function for reporting the
 progress. The progress subroutine is called with three arguments: a
-number, a string, and user defined data. The user defined data 
+number, a string, and user defined data. The user defined data
 is an argument to the method.
 
 \code
@@ -302,14 +302,14 @@ GDAL maintains its own reference counting but this is largely lost in
 the bindings.
 
 The Perl bindings attempt to maintain these dependencies by keeping
-the parent objects alive under the hood, independent of their existence 
+the parent objects alive under the hood, independent of their existence
 in the user space. Thus it is perfectly legal to do something like
 
 \code
 my $layer = Geo::OGR::Driver('Memory')->
     Create()->
-        CreateLayer(Name => 'layer', 
-                    Fields => [{Name => 'test', Type => 'Integer'}, 
+        CreateLayer(Name => 'layer',
+                    Fields => [{Name => 'test', Type => 'Integer'},
                                {Name => 'geom', Type => 'Point'}]);
 \endcode
 

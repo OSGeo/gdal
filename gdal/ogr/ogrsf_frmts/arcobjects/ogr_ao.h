@@ -135,13 +135,13 @@ public:
 
 
   int         Open(IWorkspace* pWorkspace, const char *, int );
-  
+
   const char* GetName() { return m_pszName; }
   int         GetLayerCount() { return static_cast<int>(m_layers.size()); }
-  
+
   OGRLayer*   GetLayer( int );
 
-  
+
   /*
   virtual OGRLayer* ICreateLayer( const char *,
                                  OGRSpatialReference* = NULL,

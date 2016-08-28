@@ -19,7 +19,7 @@ This problem can be solved using data interpolation or approximation
 algorithms. But you are not limited by interpolation here. Sometimes you don't
 need to interpolate your data but rather compute some statistics or data
 metrics over the region. Statistics is valuable itself or could be used for
-better choosing the interpolation algorithm and parameters. 
+better choosing the interpolation algorithm and parameters.
 
 That is what GDAL Grid API is about. It helps you to interpolate your data
 (see \ref grid_tutorial_interpolation) or compute data metrics (see \ref
@@ -47,7 +47,7 @@ formula:
      Z=\frac{\sum_{i=1}^n{\frac{Z_i}{r_i^p}}}{\sum_{i=1}^n{\frac{1}{r_i^p}}}
 \f]
 
-where 
+where
 <ul>
     <li> \f$Z_i\f$ is a known value at point \f$i\f$,
     <li> \f$r\f$ is a distance from the grid node to point \f$i\f$,
@@ -82,7 +82,7 @@ Mathematically it can be expressed with the formula:
      Z=\frac{\sum_{i=1}^n{Z_i}}{n}
 \f]
 
-where 
+where
 <ul>
     <li> \f$Z\f$ is a resulting value at the grid node,
     <li> \f$Z_i\f$ is a known value at point \f$i\f$,
@@ -118,7 +118,7 @@ If there are no points found, the specified NODATA value will be returned.
      Z=\min{(Z_1,Z_2,\ldots,Z_n)}
 \f]
 
-where 
+where
 <ul>
     <li> \f$Z\f$ is a resulting value at the grid node,
     <li> \f$Z_i\f$ is a known value at point \f$i\f$,
@@ -135,7 +135,7 @@ If there are no points found, the specified NODATA value will be returned.
      Z=\max{(Z_1,Z_2,\ldots,Z_n)}
 \f]
 
-where 
+where
 <ul>
     <li> \f$Z\f$ is a resulting value at the grid node,
     <li> \f$Z_i\f$ is a known value at point \f$i\f$,
@@ -153,7 +153,7 @@ specified NODATA value will be returned.
      Z=\max{(Z_1,Z_2,\ldots,Z_n)}-\min{(Z_1,Z_2,\ldots,Z_n)}
 \f]
 
-where 
+where
 <ul>
     <li> \f$Z\f$ is a resulting value at the grid node,
     <li> \f$Z_i\f$ is a known value at point \f$i\f$,

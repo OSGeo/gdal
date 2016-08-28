@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Program to generate a UMN MapServer compatible tile index for a
- *           set of OGR data sources. 
+ *           set of OGR data sources.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -46,8 +46,8 @@ public class ogrtindex {
 
    public static void main(String[] args) {
 
-      boolean bLayersWildcarded = true; 
-      int nFirstSourceDataset = -1; 
+      boolean bLayersWildcarded = true;
+      int nFirstSourceDataset = -1;
       String pszFormat = "ESRI Shapefile";
       String pszTileIndexField = "LOCATION";
       String pszOutputName = null;
@@ -64,7 +64,7 @@ public class ogrtindex {
       /* -------------------------------------------------------------------- */
       // fixed: http://osgeo-org.1803224.n2.nabble.com/GDAL-Java-Binding-meomory-problem-under-intensive-method-calls-td7155011.html#a7157916
       if( ogr.GetDriverCount() == 0 )
-         ogr.RegisterAll(); 
+         ogr.RegisterAll();
 
       /* -------------------------------------------------------------------- */
       /*      Processing command line arguments.                              */
@@ -99,7 +99,7 @@ public class ogrtindex {
          {
             pszTileIndexField = args[++iArg];
          }
-         else if( args[iArg].equalsIgnoreCase("-lnum") 
+         else if( args[iArg].equalsIgnoreCase("-lnum")
                || args[iArg].equalsIgnoreCase("-lname") )
          {
             iArg++;
@@ -128,7 +128,7 @@ public class ogrtindex {
       /*      If that failed, find the driver so we can create the tile index.*/
       /* -------------------------------------------------------------------- */
       if( poDstDS == null )
-      {        
+      {
          Driver poDriver = null;
 
          for( int iDriver = 0; iDriver < ogr.GetDriverCount() && poDriver == null; iDriver++ )
@@ -150,7 +150,7 @@ public class ogrtindex {
 
          if( !poDriver.TestCapability( ogr.ODrCCreateDataSource ) )
          {
-            System.err.print(pszFormat + " driver does not support data source creation.\n");                  
+            System.err.print(pszFormat + " driver does not support data source creation.\n");
             return;
          }
 
@@ -192,10 +192,10 @@ public class ogrtindex {
 
                      for(int iArg = 0; iArg < args.length && !bRequested; iArg++ )
                      {
-                        if( args[iArg].equalsIgnoreCase("-lnum") 
+                        if( args[iArg].equalsIgnoreCase("-lnum")
                               && Integer.parseInt(args[iArg+1]) == iLayer )
                            bRequested = true;
-                        else if( args[iArg].equalsIgnoreCase("-lname") 
+                        else if( args[iArg].equalsIgnoreCase("-lname")
                               && args[iArg+1].equalsIgnoreCase(poLayer.GetLayerDefn().GetName()) )
                            bRequested = true;
                      }
@@ -218,7 +218,7 @@ public class ogrtindex {
             /* with the OGR Java bindings, avoid using the delete() methods,
              * except on the datasource objects, where it is necessary to close properly the
              * native file handles.
-             */  
+             */
             // poSrcSpatialRef.delete();
          }
       }
@@ -235,7 +235,7 @@ public class ogrtindex {
          return;
       }
 
-      iTileIndexField = 
+      iTileIndexField =
          poDstLayer.GetLayerDefn().GetFieldIndex( pszTileIndexField );
       if( iTileIndexField == -1 )
       {
@@ -321,7 +321,7 @@ public class ogrtindex {
          String fileNameToWrite;
 
          //VSIStatBuf sStatBuf;
-         // FIXME: handle absolute path check 
+         // FIXME: handle absolute path check
          //if (write_absolute_path && CPLIsFilenameRelative( args[nFirstSourceDataset] ) &&
          //      VSIStat( args[nFirstSourceDataset], &sStatBuf ) == 0)
          //{
@@ -351,10 +351,10 @@ public class ogrtindex {
 
             for(int iArg = 0; iArg < args.length && !bRequested; iArg++ )
             {
-               if( args[iArg].equalsIgnoreCase("-lnum") 
+               if( args[iArg].equalsIgnoreCase("-lnum")
                      && Integer.parseInt(args[iArg+1]) == iLayer )
                   bRequested = true;
-               else if( args[iArg].equalsIgnoreCase("-lname") 
+               else if( args[iArg].equalsIgnoreCase("-lname")
                      && args[iArg+1].equalsIgnoreCase(poLayer.GetLayerDefn().GetName()) )
                   bRequested = true;
             }
@@ -434,13 +434,13 @@ public class ogrtindex {
                   FieldDefn poField = poFeatureDefn.GetFieldDefn(fn);
                   FieldDefn poFieldCur = poFeatureDefnCur.GetFieldDefn(fn);
 
-                  /* XXX - Should those pointers be checked against null? */ 
+                  /* XXX - Should those pointers be checked against null? */
                   assert(null != poField);
                   assert(null != poFieldCur);
 
-                  if( !poField.GetTypeName().equalsIgnoreCase(poFieldCur.GetTypeName()) 
-                        || poField.GetWidth() != poFieldCur.GetWidth() 
-                        || poField.GetPrecision() != poFieldCur.GetPrecision() 
+                  if( !poField.GetTypeName().equalsIgnoreCase(poFieldCur.GetTypeName())
+                        || poField.GetWidth() != poFieldCur.GetWidth()
+                        || poField.GetPrecision() != poFieldCur.GetPrecision()
                         || !poField.GetNameRef().equalsIgnoreCase(poFieldCur.GetNameRef()) )
                   {
                      System.err.print("Schema of attributes of layer "+poLayer.GetLayerDefn().GetName()+" of "+args[nFirstSourceDataset]+" does not match ... skipping it.\n");
@@ -451,7 +451,7 @@ public class ogrtindex {
                               + "but this may result in a tileindex incompatible with MapServer\n");
                         bFirstWarningForNonMatchingAttributes = false;
                      }
-                     bSkip = true; 
+                     bSkip = true;
                      break;
                   }
                }
@@ -468,12 +468,12 @@ public class ogrtindex {
             double sExtents[] = poLayer.GetExtent(true);
             Geometry/*Polygon*/ oRegion = new Geometry(ogr.wkbPolygon);
             Geometry/*LinearRing*/ oRing = new Geometry(ogr.wkbLinearRing);
-             
+
             if (sExtents == null) {
                System.err.print("GetExtent() failed on layer "+poLayer.GetLayerDefn().GetName()+" of "+args[nFirstSourceDataset]+", skipping.\n");
                continue;
             }
-                                    
+
             // XXX: sExtents [minX, maxX, minY, maxY]
             //oRing.addPoint( sExtents.MinX, sExtents.MinY );
             //oRing.addPoint( sExtents.MinX, sExtents.MaxY );
@@ -533,35 +533,35 @@ public class ogrtindex {
    static void Usage()
 
    {
-      System.out.print( 
-            "Usage: ogrtindex [-lnum n]... [-lname name]... [-f output_format]\n" 
+      System.out.print(
+            "Usage: ogrtindex [-lnum n]... [-lname name]... [-f output_format]\n"
             + "                 [-write_absolute_path] [-skip_different_projection]\n"
             + "                 [-accept_different_schemas]\n"
             + "                 output_dataset src_dataset...\n" );
       System.out.print( "\n" );
-      System.out.print( 
+      System.out.print(
             "  -lnum n: Add layer number 'n' from each source file\n"
             + "           in the tile index.\n" );
-      System.out.print( 
+      System.out.print(
             "  -lname name: Add the layer named 'name' from each source file\n"
             + "               in the tile index.\n" );
-      System.out.print( 
+      System.out.print(
             "  -f output_format: Select an output format name.  The default\n"
             + "                    is to create a shapefile.\n" );
-      System.out.print( 
+      System.out.print(
             "  -tileindex field_name: The name to use for the dataset name.\n"
             + "                         Defaults to LOCATION.\n" );
       System.out.print( "  -write_absolute_path: Filenames are written with absolute paths.\n" );
-      System.out.print( 
+      System.out.print(
             "  -skip_different_projection: Only layers with same projection ref \n"
             + "        as layers already inserted in the tileindex will be inserted.\n" );
-      System.out.print( 
+      System.out.print(
             "  -accept_different_schemas: by default ogrtindex checks that all layers inserted\n"
             + "                             into the index have the same attribute schemas. If you\n"
             + "                             specify this option, this test will be disabled. Be aware that\n"
             + "                             resulting index may be incompatible with MapServer!\n" );
       System.out.print( "\n" );
-      System.out.print( 
+      System.out.print(
             "If no -lnum or -lname arguments are given it is assumed that\n"
             + "all layers in source datasets should be added to the tile index\n"
             + "as independent records.\n" );

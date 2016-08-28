@@ -2,7 +2,7 @@ $Id$
 
 zlib 1.2.3 is a general purpose data compression library.
 All the code is thread safe. The data format used by the zlib library
-is described by RFCs (Request for Comments) 1950 to 1952 in the files 
+is described by RFCs (Request for Comments) 1950 to 1952 in the files
 ftp://ds.internic.net/rfc/rfc1950.txt (zlib format), rfc1951.txt (deflate
 format) and rfc1952.txt (gzip format). These documents are also available in
 other formats from ftp://ftp.uu.net/graphics/png/documents/zlib/zdoc-index.html
@@ -92,7 +92,7 @@ Notes for some targets:
   With -O, one libpng test fails. The test works in 32 bit mode (with
   the -n32 compiler flag). The compiler bug has been reported to SGI.
 
-- zlib doesn't work with gcc 2.6.3 on a DEC 3000/300LX under OSF/1 2.1   
+- zlib doesn't work with gcc 2.6.3 on a DEC 3000/300LX under OSF/1 2.1
   it works when compiled with cc.
 
 - on Digital Unix 4.0D (formerly OSF/1) on AlphaServer, the cc option -std1

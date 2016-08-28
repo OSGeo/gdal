@@ -170,7 +170,7 @@ int CPL_DLL     VSIFPrintfL( VSILFILE *, const char *, ... ) EXPERIMENTAL_CPL_WA
 int CPL_DLL     VSIFPutcL( int, VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 
 /** Range status */
-typedef enum 
+typedef enum
 {
     VSI_RANGE_STATUS_UNKNOWN, /**< Unknown */
     VSI_RANGE_STATUS_DATA,    /**< Data present */

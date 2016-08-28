@@ -14,9 +14,9 @@ gdal_fillnodata.py [-q] [-md max_distance] [-si smooth_iterations]
 \section gdal_fillnodata_description DESCRIPTION
 
 The gdal_fillnodata.py script fills selection regions (usually nodata areas)
-by interpolating from valid pixels around the edges of the area.  
+by interpolating from valid pixels around the edges of the area.
 
-Additional details on the algorithm are available in the GDALFillNodata() 
+Additional details on the algorithm are available in the GDALFillNodata()
 docs.
 
 <dl>
@@ -27,7 +27,7 @@ messages are not displayed.
 
 <dt> <b>-md</b> <i>max_distance</i>:</dt><dd>
 The maximum distance (in pixels) that the algorithm will search out for
-values to interpolate. 
+values to interpolate.
 
 <dt> <b>-si</b> <i>smooth_iterations</i>:</dt><dd>
 The number of 3x3 average filter smoothing iterations to run after the
@@ -44,13 +44,13 @@ The band to operate on, by default the first band is operated on.
 <dt> <i>srcfile</i></dt><dd> The source raster file used to identify target pixels.  Only one band is used.</dd>
 
 <dt> <b>-nomask</b>:</dt><dd>
-Do not use the default validity mask for the input band (such as nodata, or 
-alpha masks). 
+Do not use the default validity mask for the input band (such as nodata, or
+alpha masks).
 </dd>
 
 <dt> <b>-mask</b> <i>filename</i>:</dt><dd>
-Use the first band of the specified file as a validity mask (zero is invalid, 
-non-zero is valid). 
+Use the first band of the specified file as a validity mask (zero is invalid,
+non-zero is valid).
 </dd>
 
 <dt> <i>dstfile</i></dt><dd> The new file to create with the interpolated result.  If not provided, the source band is updated in place.</dd>

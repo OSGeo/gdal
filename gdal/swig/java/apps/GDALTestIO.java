@@ -52,19 +52,19 @@ public class GDALTestIO implements Runnable
     static volatile int nReady = 0;
     static Object waiter = new Object();
     static Object notifier = new Object();
-    
+
     public GDALTestIO(String filename, int nbIters)
     {
         this.filename = filename;
         this.nbIters = nbIters;
     }
-    
+
     public void run()
     {
         Dataset dataset = null;
         Driver driver = null;
         Band band = null;
-        
+
         int xsize = 4000;
         int ysize = 400;
 
@@ -89,16 +89,16 @@ public class GDALTestIO implements Runnable
         }
 
         driver = gdal.GetDriverByName("GTiff");
-            
+
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * xsize);
         byteBuffer.order(ByteOrder.nativeOrder());
         FloatBuffer floatBuffer = byteBuffer.asFloatBuffer();
         int[] intArray = new int[xsize];
         float[] floatArray = new float[xsize];
-        
+
         dataset = driver.Create(filename, xsize, ysize, 1, gdalconst.GDT_Float32);
         band = dataset.GetRasterBand(1);
-        
+
         for(int iter = 0; iter < nbIters; iter++)
         {
             if (method == METHOD_DBB)
@@ -120,13 +120,13 @@ public class GDALTestIO implements Runnable
                 }
             }
         }
-        
+
         dataset.delete();
-        
+
         /* Open the file to check the values */
         dataset = gdal.Open(filename);
         band = dataset.GetRasterBand(1);
-        
+
         for(int iter = 0; iter < nbIters; iter++)
         {
             if (method == METHOD_DBB)
@@ -149,26 +149,26 @@ public class GDALTestIO implements Runnable
                         if (val != (i + j))
                             throw new RuntimeException("Bad value for (" + j + "," + i + ") : " + val);
                     }
-                } 
+                }
             }
         }
-        
+
         dataset.delete();
-        
+
         /* Free the memory occupied by the /vsimem file */
-        gdal.Unlink(filename);  
+        gdal.Unlink(filename);
     }
 
     public static void main(String[] args) throws InterruptedException
     {
         gdal.AllRegister();
-        
+
         int nbIters = 50;
-        
+
         method = METHOD_JAVA_ARRAYS;
         if (args.length >= 1 && args[0].equalsIgnoreCase("-dbb"))
             method = METHOD_DBB;
-        
+
         Thread t1 = new Thread(new GDALTestIO("/vsimem/test1.tif", nbIters));
         Thread t2 = new Thread(new GDALTestIO("/vsimem/test2.tif", nbIters));
         t1.start();

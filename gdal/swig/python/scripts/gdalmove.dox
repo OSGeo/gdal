@@ -14,28 +14,28 @@ gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
 
 The gdalmove.py script transforms the bounds of a raster file from
 one coordinate system to another, and then updates the coordinate
-system and geotransform of the file.  This is done without altering 
+system and geotransform of the file.  This is done without altering
 pixel values at all.  It is loosely similar to using gdalwarp to transform
-an image but avoiding the resampling step in order to avoid image damage. 
+an image but avoiding the resampling step in order to avoid image damage.
 It is generally only suitable for transformations that are effectively linear
-in the area of the file. 
+in the area of the file.
 
 If no error threshold value (-et) is provided then the file is not actually
 updated, but the errors that would be incurred are reported.  If -et is
 provided then the file is only modify if the apparent error being introduced
-is less than the indicate threshold (in pixels). 
+is less than the indicate threshold (in pixels).
 
-Currently the transformed geotransform is computed based on the 
+Currently the transformed geotransform is computed based on the
 transformation of the top left, top right, and bottom left corners.  A reduced
 overall error could be produced using a least squares fit of at least all
-four corner points. 
+four corner points.
 
 <dl>
 
 <dt> <b>-s_srs</b> <i>srs_defn</i>:</dt><dd>
 
 Override the coordinate system of the file with the indicated coordinate
-system definition.  Optional.  If not provided the source coordinate 
+system definition.  Optional.  If not provided the source coordinate
 system is read from the source file.
 
 <dt> <b>-t_srs</b> <i>srs_defn</i>:</dt><dd>

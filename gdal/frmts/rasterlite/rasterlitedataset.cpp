@@ -265,7 +265,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             }
             if (hDSTile == NULL)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d", 
+                CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d",
                          nTileId);
             }
 
@@ -279,13 +279,13 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 GDALClose(hDSTile);
                 hDSTile = NULL;
             }
-            
+
             if( hDSTile )
             {
                 if( GDALGetRasterXSize(hDSTile) != nTileXSize ||
                     GDALGetRasterYSize(hDSTile) != nTileYSize )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions for tile %d", 
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions for tile %d",
                              nTileId);
                     GDALClose(hDSTile);
                     hDSTile = NULL;
@@ -761,7 +761,7 @@ char **RasterliteDataset::GetMetadata( const char *pszDomain )
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
-const char *RasterliteDataset::GetMetadataItem( const char *pszName, 
+const char *RasterliteDataset::GetMetadataItem( const char *pszName,
                                                 const char *pszDomain )
 {
     if (pszDomain != NULL &&EQUAL(pszDomain,"OVERVIEWS") )
@@ -882,7 +882,7 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevelIn,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d", 
+        CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d",
                  OGR_F_GetFieldAsInteger(hFeat, 1));
     }
 
@@ -992,7 +992,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     else
     {
-        papszTokens = CSLTokenizeStringComplex( 
+        papszTokens = CSLTokenizeStringComplex(
                 poOpenInfo->pszFilename + 11, ",", FALSE, FALSE );
         int nTokens = CSLCount(papszTokens);
         if (nTokens == 0)

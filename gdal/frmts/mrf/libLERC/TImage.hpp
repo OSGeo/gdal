@@ -140,7 +140,7 @@ bool TImage< Element >::resize(int width, int height)
 
   width_ = width;
   height_ = height;
-  
+
   return true;
 }
 
@@ -173,7 +173,7 @@ TImage< Element >& TImage< Element >::operator = (const TImage& tImg)
   memcpy(getData(), tImg.getData(), getSize() * sizeof(Element));
 
   Image::operator=(tImg);
-  
+
   return *this;
 }
 

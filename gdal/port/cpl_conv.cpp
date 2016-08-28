@@ -2329,7 +2329,7 @@ void CPLDumpSharedList( FILE *fp )
 /************************************************************************/
 
 /** Recursively unlink a directory.
- * 
+ *
  * @return 0 on successful completion, -1 if function fails.
  */
 
