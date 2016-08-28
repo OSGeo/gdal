@@ -593,7 +593,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
         if( hDriver == NULL
             || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL )
         {
-            int	iDr;
+            int iDr;
 
             CPLError( CE_Failure, CPLE_NotSupported,
                       "Output driver `%s' not recognised or does not support "

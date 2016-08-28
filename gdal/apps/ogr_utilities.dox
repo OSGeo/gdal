@@ -282,14 +282,14 @@ system or even reprojecting the features during translation.
 
 <dl>
 <dt><b> -f</b><em> format_name</em>:</dt><dd> output file format name (default is ESRI Shapefile), some possible values are:
-	 \verbatim
+  \verbatim
      -f "ESRI Shapefile"
      -f "TIGER"
      -f "MapInfo File"
      -f "GML"
      -f "PostgreSQL"
-	 \endverbatim
-	 </dd>
+  \endverbatim
+  </dd>
 <dt><b>-append</b>:</dt><dd> Append to existing layer instead of creating
 new</dd>
 <dt><b>-overwrite</b>:</dt><dd> Delete the output layer and recreate it empty</dd>
