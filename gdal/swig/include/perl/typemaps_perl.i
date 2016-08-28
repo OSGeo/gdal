@@ -18,7 +18,7 @@
 %typemap(out) GIntBig
 {
     char temp[256];
-    sprintf(temp, ""CPL_FRMT_GIB"", $1);
+    sprintf(temp, "" CPL_FRMT_GIB "", $1);
     $result = sv_2mortal(newSVpv(temp, 0));
     argvi++;
 }
@@ -31,7 +31,7 @@
 %typemap(out) GUIntBig
 {
     char temp[256];
-    sprintf(temp, ""CPL_FRMT_GUIB"", $1);
+    sprintf(temp, "" CPL_FRMT_GUIB "", $1);
     $result = sv_2mortal(newSVpv(temp, 0));
     argvi++;
 }
@@ -1185,9 +1185,9 @@
     if ( !$1 ) {
         switch (err) {
         case 1:
-            do_confess(ARRAY_TO_XML_FAILED" "NEED_DEF, 1);
+            do_confess(ARRAY_TO_XML_FAILED " " NEED_DEF, 1);
         case 2:
-            do_confess(ARRAY_TO_XML_FAILED" "NEED_ARRAY_REF, 1);
+            do_confess(ARRAY_TO_XML_FAILED " " NEED_ARRAY_REF, 1);
         }
     }
 }
