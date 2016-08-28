@@ -17,7 +17,7 @@ the progress semantics.
 
 \code
   int (*GDALProgressFunc)(double dfComplete, const char *pszMessage,
-		          void *pProgressArg);
+                          void *pProgressArg);
 \endcode
 
 @param dfComplete The ratio of completeness of the process from 0.0 for just
