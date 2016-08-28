@@ -1776,16 +1776,16 @@ creates regular grid from the scattered data
 \verbatim
 gdal_grid [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
           CInt16/CInt32/CFloat32/CFloat64}]
-	  [-of format] [-co "NAME=VALUE"]
-	  [-zfield field_name] [-z_increase increase_value] [-z_multiply multiply_value]
-	  [-a_srs srs_def] [-spat xmin ymin xmax ymax]
+          [-of format] [-co "NAME=VALUE"]
+          [-zfield field_name] [-z_increase increase_value] [-z_multiply multiply_value]
+          [-a_srs srs_def] [-spat xmin ymin xmax ymax]
           [-clipsrc <xmin ymin xmax ymax>|WKT|datasource|spat_extent]
           [-clipsrcsql sql_statement] [-clipsrclayer layer]
           [-clipsrcwhere expression]
-	  [-l layername]* [-where expression] [-sql select_statement]
-	  [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]
-	  [-a algorithm[:parameter1=value1]*] [-q]
-	  <src_datasource> <dst_filename>
+          [-l layername]* [-where expression] [-sql select_statement]
+          [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]
+          [-a algorithm[:parameter1=value1]*] [-q]
+          <src_datasource> <dst_filename>
 \endverbatim
 
 \section gdal_grid_description DESCRIPTION
@@ -2084,8 +2084,8 @@ content:
 <OGRVRTDataSource>
     <OGRVRTLayer name="dem">
         <SrcDataSource>dem.csv</SrcDataSource>
-	<GeometryType>wkbPoint</GeometryType>
-	<GeometryField encoding="PointFromColumns" x="Easting" y="Northing" z="Elevation"/>
+        <GeometryType>wkbPoint</GeometryType>
+        <GeometryField encoding="PointFromColumns" x="Easting" y="Northing" z="Elevation"/>
     </OGRVRTLayer>
 </OGRVRTDataSource>
 \endverbatim

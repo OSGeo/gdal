@@ -2785,7 +2785,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
         || (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL &&
             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) == NULL))
     {
-        int	iDr;
+        int iDr;
 
         CPLError(CE_Failure, CPLE_AppDefined, "Output driver `%s' not recognised to have output support.",
                  psOptions->pszFormat );

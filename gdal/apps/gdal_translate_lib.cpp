@@ -505,10 +505,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                         GDALTranslateOptionsNew(NULL, NULL);
 
     GDALDatasetH hOutDS;
-    int			i;
-    int			nRasterXSize, nRasterYSize;
-    GDALDriverH		hDriver;
-    int			nOXSize = 0, nOYSize = 0;
+    int i;
+    int nRasterXSize, nRasterYSize;
+    GDALDriverH hDriver;
+    int nOXSize = 0, nOYSize = 0;
     const char          *pszProjection;
     const char *pszSource = NULL;
     int bGotBounds = FALSE;
@@ -608,7 +608,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
 /* -------------------------------------------------------------------- */
-/*	Build band list to translate					*/
+/*      Build band list to translate                                    */
 /* -------------------------------------------------------------------- */
     if( psOptions->panBandList == NULL )
     {
@@ -678,7 +678,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if( psOptions->dfULX != 0.0 || psOptions->dfULY != 0.0
         || psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0 )
     {
-        double	adfGeoTransform[6];
+        double adfGeoTransform[6];
 
         GDALGetGeoTransform( hSrcDataset, adfGeoTransform );
 
@@ -1338,7 +1338,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
         if( bScale && !bHaveScaleSrc )
         {
-            double	adfCMinMax[2];
+            double adfCMinMax[2];
             GDALComputeRasterMinMax( poSrcBand, TRUE, adfCMinMax );
             dfScaleSrcMin = adfCMinMax[0];
             dfScaleSrcMax = adfCMinMax[1];
