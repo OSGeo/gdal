@@ -45,25 +45,25 @@ using OSGeo.OGR;
 
 /// <summary>
 /// A sample app to demonstrate the usage of the RFC-39 functions.
-/// </summary> 
+/// </summary>
 
 class OGRLayerAlg {
-	
-	public static void usage() 
+
+	public static void usage()
 
 	{
         Console.WriteLine("usage: ogrlayeralg {function} {Data Source 1} {layer1} {Data Source 2} {layer2} {Result Data Source Name} {Result Layer Name} [{Options}]");
         Console.WriteLine("example: ogrlayeralg Union data1.shp layer1 data.shp layer2 result.shp resultlayer SKIP_FAILURES=YES");
 		System.Environment.Exit(-1);
 	}
- 
-    public static void Main(string[] args) 
+
+    public static void Main(string[] args)
     {
         if (args.Length <= 6) usage();
-        
+
         Console.WriteLine("");
 
-        try 
+        try
         {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
@@ -107,10 +107,10 @@ class OGRLayerAlg {
 
             /* -------------------------------------------------------------------- */
 		    /*      Get driver for creating the result ds                          */
-		    /* -------------------------------------------------------------------- */	
+		    /* -------------------------------------------------------------------- */
             Driver drv = Ogr.GetDriverByName("ESRI Shapefile");
 
-		    if (drv == null) 
+		    if (drv == null)
 		    {
 			    Console.WriteLine("Can't get driver.");
                 System.Environment.Exit(-1);
@@ -118,10 +118,10 @@ class OGRLayerAlg {
 
             /* -------------------------------------------------------------------- */
 		    /*      Creating the datasource                                         */
-		    /* -------------------------------------------------------------------- */	
+		    /* -------------------------------------------------------------------- */
 
             DataSource ds = drv.CreateDataSource( args[5], new string[] {} );
-            if (drv == null) 
+            if (drv == null)
             {
                 Console.WriteLine("Can't create the datasource.");
                 System.Environment.Exit(-1);
@@ -143,7 +143,7 @@ class OGRLayerAlg {
             /* -------------------------------------------------------------------- */
 
             Layer layer;
-        
+
             int i;
             for(i=0;i<ds.GetLayerCount();i++)
             {
@@ -188,7 +188,7 @@ class OGRLayerAlg {
                     break;
             }
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             Console.WriteLine("Application error: " + e.Message);
         }
@@ -201,7 +201,7 @@ class OGRLayerAlg {
 			Console.Write(" Message:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Message));
 		if (Data != IntPtr.Zero)
 			Console.Write(" Data:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Data));
-	
+
 		Console.WriteLine("");
 		return 1;
 	}

@@ -2,7 +2,7 @@ Geo-GDAL
 =======================
 
 This is the swig-generated Perl interface to the GDAL/OGR library. The
-master copy of this module is developed and distributed with GDAL. 
+master copy of this module is developed and distributed with GDAL.
 GDAL is available from www.gdal.org.
 
 You need to have the development (header files etc.) versions of gdal and
@@ -52,7 +52,7 @@ INSTALLATION FROM GDAL SOURCE TREE
 
 This module will be built and installed as a part of gdal build and
 installation, if you use --with-perl in configure of gdal. That
-process is controlled by GNUmakefile. 
+process is controlled by GNUmakefile.
 
 The build process comprises three steps:
 

@@ -188,7 +188,7 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
 /*                     RasterliteCreateTables ()                        */
 /************************************************************************/
 
-static 
+static
 OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableName,
                                       int nSRSId, int bWipeExistingData)
 {
@@ -607,7 +607,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
 
             GDALDatasetH hMemDS = GDALCreate(hMemDriver, "MEM:::",
-                                              nReqXSize, nReqYSize, 0, 
+                                              nReqXSize, nReqYSize, 0,
                                               eDataType, NULL);
             if (hMemDS == NULL)
             {

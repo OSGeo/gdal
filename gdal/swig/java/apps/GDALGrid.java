@@ -1,24 +1,24 @@
 /******************************************************************************
  * $Id: GDALGrid.java $
- * 
- * Project: GDAL Java applications 
- * Purpose: GDAL scattered data gridding (interpolation) tool 
- * Author:  Ivan Lucena, ivan.lucena@pmldnet.com, 
- *          translated from gdal_grid.cpp 
+ *
+ * Project: GDAL Java applications
+ * Purpose: GDAL scattered data gridding (interpolation) tool
+ * Author:  Ivan Lucena, ivan.lucena@pmldnet.com,
+ *          translated from gdal_grid.cpp
  *          originally written by Andrey Kiselev, dron@ak4719.spb.edu
- ****************************************************************************** 
+ ******************************************************************************
  * Copyright (c) 2010, Ivan Lucena
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -107,7 +107,7 @@ public class GDALGrid {
 
     /*
      * ProcessGeometry
-     * 
+     *
      * Extract point coordinates from the geometry reference and set the Z value
      * as requested. Test whether we are in the clipped region before
      * processing.
@@ -330,7 +330,7 @@ public class GDALGrid {
                     requestY = sizeY - offsetY;
                 }
 
-                
+
                 /*
                  * Reformat arguments
                  */
@@ -349,15 +349,15 @@ public class GDALGrid {
 
                 if (quiet == false) {
                     griddingProgress = new GDALGridScaledProgress(
-                            blockIndex * 1.0 / blockCount, 
-                            (blockIndex + 1) * 1.0 / blockCount, 
+                            blockIndex * 1.0 / blockCount,
+                            (blockIndex + 1) * 1.0 / blockCount,
                             progressCallback);
                 }
 
                 /*
                  * Create Grid
                  */
-                                
+
                 gdal.GridCreate(algorithmAndOptions, points, minX[0] + deltaX
                         * offsetX, minX[0] + deltaX * (offsetX + requestX), minY[0]
                         + deltaY * offsetY, minY[0] + deltaY
@@ -382,7 +382,7 @@ public class GDALGrid {
 
     /*
      * LoadGeometry
-     * 
+     *
      * Read geometries from the given dataset using specified filters and
      * returns a collection of read geometries.
      */

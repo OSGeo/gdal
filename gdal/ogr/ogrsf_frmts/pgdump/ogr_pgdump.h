@@ -48,7 +48,7 @@ void CPL_DLL OGRPGCommonLayerNormalizeDefault(OGRFieldDefn* poFieldDefn,
 CPLString CPL_DLL OGRPGCommonLayerGetPGDefault(OGRFieldDefn* poFieldDefn);
 
 typedef CPLString (*OGRPGCommonEscapeStringCbk)(void* userdata,
-                                                const char* pszValue, 
+                                                const char* pszValue,
                                                 int nWidth,
                                                 const char* pszLayerName,
                                                 const char* pszFieldRef);

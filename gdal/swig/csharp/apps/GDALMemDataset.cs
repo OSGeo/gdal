@@ -49,17 +49,17 @@ using System.Drawing.Imaging;
 
 /// <summary>
 /// A C# based sample for demonstrating the in-memory dataset driver..
-/// </summary> 
+/// </summary>
 
 class GDALMemDataset {
-	
-	public static void usage() 
 
-	{ 
+	public static void usage()
+
+	{
 		Console.WriteLine("usage example: GDALMemDataset [image file]");
 		System.Environment.Exit(-1);
 	}
- 
+
 	public static void Main(string[] args) {
 
 		if (args.Length != 1) usage();

@@ -40,7 +40,7 @@ using OSGeo.OSR;
 
 /// <summary>
 /// A C# based sample to make simple transformations.
-/// </summary> 
+/// </summary>
 class OSRTransform {
 	public static void Main(string[] args) {
 		try

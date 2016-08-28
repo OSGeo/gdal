@@ -50,12 +50,12 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
 
 bool GDBToOGRSpatialReference(const std::string & wkt, OGRSpatialReference** ppSR);
 
-// Feature mapping 
-bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeometry, 
+// Feature mapping
+bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeometry,
                               OGRSpatialReference* pOGRSR, OGRGeometry** ppOutGeometry);
 
 //temporary version - until we can parse the full binary format
-bool GhettoGDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeometry, 
+bool GhettoGDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeometry,
                                     OGRSpatialReference* pOGRSR, OGRGeometry** ppOutGeometry);
 //
 // GDB API to OGR Field Mapping

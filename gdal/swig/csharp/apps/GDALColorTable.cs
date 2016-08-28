@@ -44,18 +44,18 @@ using OSGeo.GDAL;
 
 /// <summary>
 /// A C# based sample for demonstrating the usage of the ColorTable object.
-/// </summary> 
+/// </summary>
 
 class GDALColorTable {
-	
-	public static void usage() 
 
-	{ 
+	public static void usage()
+
+	{
 		Console.WriteLine("usage: gdalcolortable {source dataset} {destination file}");
 		System.Environment.Exit(-1);
 	}
- 
-    public static void Main(string[] args) 
+
+    public static void Main(string[] args)
     {
 
         if (args.Length != 2) usage();
@@ -68,7 +68,7 @@ class GDALColorTable {
             /*      Register driver(s).                                             */
             /* -------------------------------------------------------------------- */
             Gdal.AllRegister();
-            
+
             Driver dv = null;
             Dataset ds = null, ds_out = null;
             Band ba = null, ba_out = null;
@@ -84,7 +84,7 @@ class GDALColorTable {
 
             if( ct != null )
                 Console.WriteLine( "Band has a color table with " + ct.GetCount() + " entries.");
-            else 
+            else
             {
                 Console.WriteLine( "Data source has no color table");
                 return;
@@ -96,7 +96,7 @@ class GDALColorTable {
 
             /* -------------------------------------------------------------------- */
             /*      Get driver                                                      */
-            /* -------------------------------------------------------------------- */	
+            /* -------------------------------------------------------------------- */
             dv = Gdal.GetDriverByName("GTiff");
 
             ds_out = dv.Create(file_out, ds.RasterXSize, ds.RasterYSize,
@@ -130,7 +130,7 @@ class GDALColorTable {
 
             ba_out.SetRasterColorTable(ct_out);
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             Console.WriteLine("Application error: " + e.Message);
         }

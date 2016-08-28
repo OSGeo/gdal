@@ -3318,7 +3318,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
 /*                        GDALComputeBandStats()                        */
 /************************************************************************/
 
-/** Undocumented 
+/** Undocumented
  * @param hSrcBand undocumented.
  * @param nSampleStep undocumented.
  * @param pdfMean undocumented.
@@ -3457,7 +3457,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 /************************************************************************/
 
 
-/** Undocumented 
+/** Undocumented
  * @param hBaseBand undocumented.
  * @param nOverviewCount undocumented.
  * @param pahOverviews undocumented.

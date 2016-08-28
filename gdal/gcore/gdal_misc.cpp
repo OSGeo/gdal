@@ -523,7 +523,7 @@ GDALDataType CPL_STDCALL GDALGetNonComplexDataType( GDALDataType eDataType )
         return GDT_Int32;
       case GDT_CFloat32:
         return GDT_Float32;
-      case GDT_CFloat64:  
+      case GDT_CFloat64:
         return GDT_Float64;
       default:
         return eDataType;
@@ -760,7 +760,7 @@ GDALColorInterp GDALGetColorInterpretationByName( const char *pszName )
 /************************************************************************/
 
 
-/** Undocumented 
+/** Undocumented
  * @param hBand undocumented.
  * @param nSamples undocumented.
  * @param pafSampleBuf undocumented.
@@ -937,12 +937,12 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 /************************************************************************/
 
 /** Initialize an array of GCPs.
- * 
+ *
  * Numeric values are initialized to 0 and strings to the empty string ""
  * allocated with CPLStrdup()
  * An array initialized with GDALInitGCPs() must be de-initialized with
  * GDALDeinitGCPs().
- * 
+ *
  * @param nCount number of GCPs in psGCP
  * @param psGCP array of GCPs of size nCount.
  */
@@ -968,7 +968,7 @@ void CPL_STDCALL GDALInitGCPs( int nCount, GDAL_GCP *psGCP )
 /************************************************************************/
 
 /** De-initialize an array of GCPs (initialized with GDALInitGCPs())
- * 
+ *
  * @param nCount number of GCPs in psGCP
  * @param psGCP array of GCPs of size nCount.
  */
@@ -993,9 +993,9 @@ void CPL_STDCALL GDALDeinitGCPs( int nCount, GDAL_GCP *psGCP )
 /************************************************************************/
 
 /** Duplicate an array of GCPs
- * 
+ *
  * The return must be freed with GDALDeinitGCPs() followed by CPLFree()
- * 
+ *
  * @param nCount number of GCPs in psGCP
  * @param pasGCPList array of GCPs of size nCount.
  */
@@ -3004,7 +3004,7 @@ static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
 /** Extract RPC info from metadata, and apply to an RPCInfo structure.
  *
  * The inverse of this function is RPCInfoToMD() in alg/gdal_rpc.cpp
- * 
+ *
  * @param papszMD Dictionary of metadata representing RPC
  * @param psRPC (output) Pointer to structure to hold the RPC values.
  * @return TRUE in case of success. FALSE in case of failure.

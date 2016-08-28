@@ -64,7 +64,7 @@ int DerivedDataset::Identify(GDALOpenInfo * poOpenInfo)
         return FALSE;
     }
 
-    return TRUE; 
+    return TRUE;
 }
 
 GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
@@ -198,7 +198,7 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->oOvManager.Initialize( poDS, ovrFilePath );
     }
-      
+
     return poDS;
 }
 

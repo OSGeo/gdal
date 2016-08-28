@@ -4863,7 +4863,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     GDALUInt128::Mul(nSumSquare,nSampleCount) -
                     GDALUInt128::Mul(nSum,nSum));
             const double dfStdDev =
-                nSampleCount > 0 ? 
+                nSampleCount > 0 ?
                     sqrt(static_cast<double>(nTmpForStdDev)) / nSampleCount :
                     0.0;
 

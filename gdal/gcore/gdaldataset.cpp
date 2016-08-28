@@ -560,7 +560,7 @@ CPLErr CPL_STDCALL GDALAddBand( GDALDatasetH hDataset,
 //! @cond Doxygen_Suppress
 /**  Set a band in the band array, updating the band count, and array size
  * appropriately.
- * 
+ *
  * @param nNewBand new band number (indexing starts at 1)
  * @param poBand band object.
  */
@@ -3198,7 +3198,7 @@ GDALDataset::BeginAsyncReader(int nXOff, int nYOff,
  * This method is the same as the C++ GDALDataset::BeginAsyncReader() method.
  *
  * @param hDS handle to the dataset object.
- * 
+ *
  * @param nXOff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
  *

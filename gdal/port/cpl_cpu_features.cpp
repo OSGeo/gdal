@@ -169,7 +169,7 @@ bool CPLHaveRuntimeAVX()
     {
         return false;
     }
- 
+
     return true;
 }
 

@@ -146,7 +146,7 @@ GDALAsyncReader::~GDALAsyncReader()
  * be ended.
  * - GARIO_COMPLETE: An update has occurred and there is no more pending work
  * on this request. The request should be ended and the buffer used.
- * 
+ *
  * This is the same as GDALAsyncReader::GetNextUpdatedRegion()
  *
  * @param hARIO handle to the async reader.
@@ -211,7 +211,7 @@ int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
  * This is useful to ensure the image buffer is not being modified while
  * it is being used by the application.  UnlockBuffer() should be used
  * to release this lock when it is no longer needed.
- * 
+ *
  * This is the same as GDALAsyncReader::LockBuffer()
  *
  * @param hARIO handle to async reader.
@@ -252,7 +252,7 @@ void GDALAsyncReader::UnlockBuffer()
  * \brief Unlock image buffer.
  *
  * Releases a lock on the image buffer previously taken with LockBuffer().
- * 
+ *
  * This is the same as GDALAsyncReader::UnlockBuffer()
  *
  * @param hARIO handle to async reader.

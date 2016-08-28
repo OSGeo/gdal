@@ -35,7 +35,7 @@ my $pdl = PDL->new;
 # GDAL data types: Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64
 # obtained with $band->DataType
 
-my %map = ( 
+my %map = (
     Byte => 0,
     UInt16 => 2,
     Int16 => 1,

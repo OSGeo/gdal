@@ -3,7 +3,7 @@
  *
  * Name:     GDALtest.java
  * Project:  GDAL SWIG Interface
- * Purpose:  Sample Java application showing some basic loading of raster data 
+ * Purpose:  Sample Java application showing some basic loading of raster data
  * Author:   Benjamin Collins, The MITRE Corporation
  *
  *
@@ -72,8 +72,8 @@ public class GDALtest extends JFrame implements ActionListener{
 			}
 		}
 	}
-	
-	public GDALtest() {		
+
+	public GDALtest() {
 		load = new JButton("Load Image");
 		load.addActionListener(this);
 
@@ -88,15 +88,15 @@ public class GDALtest extends JFrame implements ActionListener{
 		this.setSize(1024, 768);
 		this.show();
 	}
-	
+
 	public void setImage(BufferedImage image) {
 		ImageIcon icon = new ImageIcon(image);
-		
+
 		if(this.canvas != null) {
 			canvas.setIcon(icon);
 		}
 	}
-	
+
 	public BufferedImage openFile(File f) {
 		Dataset poDataset = null;
 		try {
@@ -124,7 +124,7 @@ public class GDALtest extends JFrame implements ActionListener{
 		if (poDataset.GetProjectionRef() != null)
 			System.out.println("Projection is `" + poDataset.GetProjectionRef()
 					+ "'");
-		
+
 		Hashtable dict = poDataset.GetMetadata_Dict("");
 		Enumeration keys = dict.keys();
 		System.out.println(dict.size() + " items of metadata found (via Hashtable dict):");
@@ -140,7 +140,7 @@ public class GDALtest extends JFrame implements ActionListener{
 			String s = (String)enumerate.nextElement();
 			System.out.println(" " + s);
 		}
-		
+
 		Vector GCPs = new Vector();
 		poDataset.GetGCPs(GCPs);
 		System.out.println("Got " + GCPs.size() + " GCPs");
@@ -154,7 +154,7 @@ public class GDALtest extends JFrame implements ActionListener{
 					" line:" + gcp.getGCPLine() +
 					" line:" + gcp.getInfo());
 		}
-		
+
 
 		poDataset.GetGeoTransform(adfGeoTransform);
 		{
@@ -169,12 +169,12 @@ public class GDALtest extends JFrame implements ActionListener{
 		double[] adfMinMax = new double[2];
 		Double[] max = new Double[1];
 		Double[] min = new Double[1];
-		
+
 		int bandCount = poDataset.getRasterCount();
 		ByteBuffer[] bands = new ByteBuffer[bandCount];
 		int[] banks = new int[bandCount];
 		int[] offsets = new int[bandCount];
-		
+
 		int xsize = 1024;//poDataset.getRasterXSize();
 		int ysize = 1024;//poDataset.getRasterYSize();
 		int pixels = xsize * ysize;
@@ -183,7 +183,7 @@ public class GDALtest extends JFrame implements ActionListener{
 		for(int band = 0; band < bandCount; band++) {
 			/* Bands are not 0-base indexed, so we must add 1 */
 			poBand = poDataset.GetRasterBand(band+1);
-			
+
 			buf_type = poBand.getDataType();
 			buf_size = pixels * gdal.GetDataTypeSize(buf_type) / 8;
 
@@ -192,10 +192,10 @@ public class GDALtest extends JFrame implements ActionListener{
 			System.out.println(" ColorInterp = "
 					+ gdal.GetColorInterpretationName(poBand
 							.GetRasterColorInterpretation()));
-			
+
 			System.out.println("Band size is: " + poBand.getXSize() + "x"
 					+ poBand.getYSize());
-	
+
 			poBand.GetMinimum(min);
 			poBand.GetMaximum(max);
 			if(min[0] != null || max[0] != null) {
@@ -204,21 +204,21 @@ public class GDALtest extends JFrame implements ActionListener{
 			} else {
 				System.out.println("  No Min/Max values stored in raster.");
 			}
-	
+
 			if (poBand.GetOverviewCount() > 0) {
 				System.out.println("Band has " + poBand.GetOverviewCount()
 						+ " overviews.");
 			}
-	
+
 			if (poBand.GetRasterColorTable() != null) {
 				System.out.println("Band has a color table with "
 						+ poBand.GetRasterColorTable().GetCount() + " entries.");
 				for(int i = 0; i < poBand.GetRasterColorTable().GetCount(); i++) {
-					System.out.println(" " + i + ": " + 
+					System.out.println(" " + i + ": " +
 							poBand.GetRasterColorTable().GetColorEntry(i));
 				}
 			}
-			
+
 			System.out.println("Allocating ByteBuffer of size: " + buf_size);
 
 			ByteBuffer data = ByteBuffer.allocateDirect(buf_size);
@@ -226,7 +226,7 @@ public class GDALtest extends JFrame implements ActionListener{
 
 			int returnVal = 0;
 			try {
-				returnVal = poBand.ReadRaster_Direct(0, 0, poBand.getXSize(), 
+				returnVal = poBand.ReadRaster_Direct(0, 0, poBand.getXSize(),
 						poBand.getYSize(), xsize, ysize,
 						buf_type, data);
 			} catch(Exception ex) {
@@ -247,40 +247,40 @@ public class GDALtest extends JFrame implements ActionListener{
 		DataBuffer imgBuffer = null;
 		SampleModel sampleModel = null;
 		int data_type = 0, buffer_type = 0;
-		
+
 		if(buf_type == gdalconstConstants.GDT_Byte) {
 			byte[][] bytes = new byte[bandCount][];
-			for(int i = 0; i < bandCount; i++) {				
+			for(int i = 0; i < bandCount; i++) {
 				bytes[i] = new byte[pixels];
 				bands[i].get(bytes[i]);
 			}
 			imgBuffer = new DataBufferByte(bytes, pixels);
 			buffer_type = DataBuffer.TYPE_BYTE;
-			sampleModel = new BandedSampleModel(buffer_type, 
+			sampleModel = new BandedSampleModel(buffer_type,
 					xsize, ysize, xsize, banks, offsets);
-			data_type = (poBand.GetRasterColorInterpretation() == 
-				gdalconstConstants.GCI_PaletteIndex)? 
+			data_type = (poBand.GetRasterColorInterpretation() ==
+				gdalconstConstants.GCI_PaletteIndex)?
 				BufferedImage.TYPE_BYTE_INDEXED : BufferedImage.TYPE_BYTE_GRAY;
 		} else if(buf_type == gdalconstConstants.GDT_Int16) {
 			short[][] shorts = new short[bandCount][];
-			for(int i = 0; i < bandCount; i++) {				
+			for(int i = 0; i < bandCount; i++) {
 				shorts[i] = new short[pixels];
 				bands[i].asShortBuffer().get(shorts[i]);
 			}
 			imgBuffer = new DataBufferShort(shorts, pixels);
 			buffer_type = DataBuffer.TYPE_USHORT;
-			sampleModel = new BandedSampleModel(buffer_type, 
+			sampleModel = new BandedSampleModel(buffer_type,
 					xsize, ysize, xsize, banks, offsets);
 			data_type = BufferedImage.TYPE_USHORT_GRAY;
 		} else if(buf_type == gdalconstConstants.GDT_Int32) {
 			int[][] ints = new int[bandCount][];
-			for(int i = 0; i < bandCount; i++) {				
+			for(int i = 0; i < bandCount; i++) {
 				ints[i] = new int[pixels];
 				bands[i].asIntBuffer().get(ints[i]);
 			}
 			imgBuffer = new DataBufferInt(ints, pixels);
 			buffer_type = DataBuffer.TYPE_INT;
-			sampleModel = new BandedSampleModel(buffer_type, 
+			sampleModel = new BandedSampleModel(buffer_type,
 					xsize, ysize, xsize, banks, offsets);
 			data_type = BufferedImage.TYPE_CUSTOM;
 		}
@@ -289,7 +289,7 @@ public class GDALtest extends JFrame implements ActionListener{
 		BufferedImage img = null;
 		ColorModel cm = null;
 
-		if(poBand.GetRasterColorInterpretation() == 
+		if(poBand.GetRasterColorInterpretation() ==
 			gdalconstConstants.GCI_PaletteIndex) {
 			data_type = BufferedImage.TYPE_BYTE_INDEXED;
 			cm = poBand.GetRasterColorTable().getIndexColorModel(
@@ -299,7 +299,7 @@ public class GDALtest extends JFrame implements ActionListener{
 			ColorSpace cs = null;
 			if(bandCount > 2){
 				cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-				cm = new ComponentColorModel(cs, false, false, 
+				cm = new ComponentColorModel(cs, false, false,
 						ColorModel.OPAQUE, buffer_type);
 				img = new BufferedImage(cm, raster, true, null);
 			} else {

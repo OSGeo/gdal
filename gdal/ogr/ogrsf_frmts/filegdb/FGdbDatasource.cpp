@@ -219,7 +219,7 @@ int FGdbDataSource::ReOpen()
                  m_osFSName.c_str());
         return FALSE;
     }
-    
+
     int bRet = TRUE;
     size_t count = m_layers.size();
     for(size_t i = 0; i < count; ++i )
@@ -242,14 +242,14 @@ int FGdbDataSource::ReOpen()
         m_layers[i]->m_oMapOGRFIDToFGDBFID.clear();
         m_layers[i]->m_oMapFGDBFIDToOGRFID.clear();
     }
-    
+
     m_pGeodatabase = pDS->m_pGeodatabase;
     pDS->m_pGeodatabase = NULL;
 
     pDS->m_poDriver = NULL;
     pDS->m_pConnection = NULL;
     delete pDS;
-    
+
     return bRet;
 }
 
@@ -268,7 +268,7 @@ bool FGdbDataSource::OpenFGDBTables(const std::wstring &type,
         if (FAILED(hr = m_pGeodatabase->OpenTable(layers[i], *pTable)))
         {
             delete pTable;
-            
+
             std::wstring fgdb_error_desc_w;
             fgdbError er;
             er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
@@ -303,7 +303,7 @@ bool FGdbDataSource::OpenFGDBTables(const std::wstring &type,
 /*                            LoadLayers()                             */
 /************************************************************************/
 
-bool FGdbDataSource::LoadLayers(const std::wstring &root) 
+bool FGdbDataSource::LoadLayers(const std::wstring &root)
 {
     std::vector<wstring> tables;
     std::vector<wstring> featureclasses;
@@ -436,7 +436,7 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 
     if( iLayer < 0 || iLayer >= static_cast<int>(m_layers.size()) )
         return OGRERR_FAILURE;
-    
+
     FGdbLayer* poBaseLayer = m_layers[iLayer];
 
     // Fetch FGDBAPI Table before deleting OGR layer object
@@ -455,7 +455,7 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
     m_layers.erase(m_layers.begin() + iLayer);
 
     long hr;
-  
+
     if (FAILED(hr = m_pGeodatabase->Delete(strPath, strType)))
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -489,7 +489,7 @@ int FGdbDataSource::TestCapability( const char * pszCap )
 /************************************************************************/
 
 OGRLayer *FGdbDataSource::GetLayer( int iLayer )
-{ 
+{
     int count = static_cast<int>(m_layers.size());
 
     if( iLayer < 0 || iLayer >= count )
@@ -522,7 +522,7 @@ FGdbDataSource::ICreateLayer( const char * pszLayerName,
 
     m_layers.push_back(pLayer);
 
-    return pLayer;  
+    return pLayer;
 }
 
 
@@ -615,7 +615,7 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         m_layers[i]->EndBulkLoad();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */

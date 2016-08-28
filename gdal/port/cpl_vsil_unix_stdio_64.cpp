@@ -748,7 +748,7 @@ GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace( const char*
 #include <sys/vfs.h>
 #endif
 
-int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char* 
+int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
 #ifdef __linux
                                                         pszPath
 #endif
@@ -763,7 +763,7 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
         switch( sStatFS.f_type )
         {
             // Codes from http://man7.org/linux/man-pages/man2/statfs.2.html
-            case 0xef53: // ext2,3,4 
+            case 0xef53: // ext2,3,4
             case 0x52654973: // reiser
             case 0x58465342: // xfs
             case 0x3153464a: // jfs
@@ -781,7 +781,7 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
                 if( !bUnknownFSEmitted )
                 {
                     CPLDebug("VSI", "Filesystem with type %X unknown. "
-                             "Assuming it does not support sparse files", 
+                             "Assuming it does not support sparse files",
                              static_cast<int>(sStatFS.f_type) );
                     bUnknownFSEmitted = true;
                 }

@@ -299,7 +299,7 @@ void GDALRasterAttributeTable::SetRowCount( CPL_UNUSED int nNewCount ) {}
  *
  * This function is the same as the C++ method
  * GDALRasterAttributeTable::SetRowCount()
- * 
+ *
  * @param hRAT RAT handle.
  * @param nNewCount the new number of rows.
  */
@@ -365,9 +365,9 @@ GDALRATGetRowOfValue( GDALRasterAttributeTableH hRAT, double dfValue )
  * Given a raw pixel value, the raster attribute table is scanned to
  * determine which row in the table applies to the pixel value.  The
  * row index is returned.
- * 
+ *
  * Int arg for now just converted to double.  Perhaps we will
- * handle this in a special way some day?    
+ * handle this in a special way some day?
  *
  * This method is the same as the C function GDALRATGetRowOfValue().
  *

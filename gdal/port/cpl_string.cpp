@@ -63,7 +63,7 @@ CPL_CVSID("$Id$");
 
 /** Append a string to a StringList and return a pointer to the modified
  * StringList.
- * 
+ *
  * If the input StringList is NULL, then a new StringList is created.
  * Note that CSLAddString performance when building a list is in O(n^2)
  * which can cause noticeable slow down when n > 10000.
@@ -154,7 +154,7 @@ int CSLCount(const char * const *papszStrList)
 
 /** Fetches the indicated field, being careful not to crash if the field
  *doesn't exist within this string list.
- * 
+ *
  * The returned pointer should not be freed, and doesn't necessarily last long.
  */
 const char *CSLGetField( char ** papszStrList, int iField )
@@ -476,7 +476,7 @@ int CSLPrint( char **papszStrList, FILE *fpOut )
  *
  * Returns the modified StringList.
  */
- 
+
 char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
                         char **papszNewLines)
 {
@@ -541,7 +541,7 @@ char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
  *
  * Returns the modified StringList.
  */
- 
+
 char **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
                        const char *pszNewLine)
 {
@@ -567,7 +567,7 @@ char **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
  *
  * Returns the modified StringList.
  */
- 
+
 char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
                         int nNumToRemove, char ***ppapszRetStrings)
 {
@@ -1021,8 +1021,8 @@ const char *CPLSPrintf(const char *fmt, ...)
 /**********************************************************************
  *                       CSLAppendPrintf()
  **********************************************************************/
-  
- 
+
+
 /** Use CPLSPrintf() to append a new line at the end of a StringList.
  * Returns the modified StringList.
  */

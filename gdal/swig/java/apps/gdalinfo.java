@@ -442,7 +442,7 @@ public class gdalinfo {
                                         if ( bComputeChecksum)
                                         {
                                             System.out.print( "  Overviews checksum: " );
-                                            for( iOverview = 0; 
+                                            for( iOverview = 0;
                                                 iOverview < hBand.GetOverviewCount();
                                                 iOverview++ )
                                             {
@@ -486,7 +486,7 @@ public class gdalinfo {
                                         int		iOverview;
 
                                         System.out.print( "  Overviews of mask band: " );
-                                        for( iOverview = 0; 
+                                        for( iOverview = 0;
                                             iOverview < hMaskBand.GetOverviewCount();
                                             iOverview++ )
                                         {
@@ -496,7 +496,7 @@ public class gdalinfo {
                                                 System.out.print( ", " );
 
                                             hOverview = hMaskBand.GetOverview( iOverview );
-                                            System.out.print( 
+                                            System.out.print(
                                                     hOverview.getXSize() + "x" +
                                                     hOverview.getYSize() );
                                         }

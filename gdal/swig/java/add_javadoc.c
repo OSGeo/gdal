@@ -5,10 +5,10 @@
 * Project:  GDAL/OGR Java bindings
 * Purpose:  Add javadoc located in a special file into generated SWIG Java files
 * Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-* 
+*
 *******************************************************************************
  * Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-* 
+*
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
 * to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 *
 * The above copyright notice and this permission notice shall be included
 * in all copies or substantial portions of the Software.
-* 
+*
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -54,7 +54,7 @@ char* stripline(char* pszBuf)
     while(pszBuf[i] == ' ' && pszBuf[i] != 0)
         i ++;
     memmove(pszBuf, pszBuf + i, strlen(pszBuf) - i + 1);
-    
+
     i = strlen(pszBuf) - 1;
     while(i > 0 && (pszBuf[i] == '{' || pszBuf[i] == '\n' || pszBuf[i] == ' '))
     {
@@ -78,7 +78,7 @@ char* removeargnames(char* pszBuf)
 
     if (strstr(pszBuf, "(") == NULL)
         return pszBuf;
-    
+
     //fprintf(stderr, "%s\n", pszBuf);
 
     if (strstr(pszBuf, "{"))
@@ -128,7 +128,7 @@ char* removeargnames(char* pszBuf)
 int main(int argc, char* argv[])
 {
     const char* patch_filename = argv[1];
-    
+
     FILE* fSrc = fopen(patch_filename, "rt");
     FILE* fDst;
     JavaDocInstance* instances = (JavaDocInstance*)calloc(sizeof(JavaDocInstance), 3000);
@@ -155,7 +155,7 @@ begin:
             else if (strstr(szLine, "*") == NULL)
             {
                 instances[nInstances].javadoc = strdup(javadoc);
-                
+
                 char* pszLine = szLine;
                 if (strncmp(pszLine, "@hide ", 6) == 0)
                 {
@@ -164,7 +164,7 @@ begin:
                 }
                 else
                     instances[nInstances].bHide = 0;
-                
+
                 instances[nInstances].methodName = strdup(stripline(pszLine));
                 instances[nInstances].compactMethodName = strdup(removeargnames(stripline(pszLine)));
                 nInstances++;
@@ -177,7 +177,7 @@ begin:
     }
     //fprintf(stderr, "nInstances=%d\n", nInstances);
     fclose(fSrc);
-    
+
     int i;
     for(i=3;i<argc;i++)
     {
@@ -266,7 +266,7 @@ begin:
                             }
                             break;
                         }
-                            
+
                         fprintf(fDst, "%s", instances[j].javadoc);
                         if (strchr(szMethodName, '('))
                         {
@@ -313,17 +313,17 @@ begin:
                 fprintf(fDst, "%s", szOriLine);
             free(szOriLine);
         }
-        
+
         fclose(fSrc);
         fclose(fDst);
     }
-    
+
     int j;
     for(j=0;j<nInstances;j++)
     {
         if (!instances[j].bUsed)
             fprintf(stderr, "WARNING: did not find occurrence of %s\n", instances[j].methodName);
     }
-    
+
     return 0;
 }
