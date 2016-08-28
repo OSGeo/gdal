@@ -155,14 +155,12 @@ CPLErr GXFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                             GXFDataset()                             */
 /************************************************************************/
 
-GXFDataset::GXFDataset()
-
-{
-    pszProjection = NULL;
-    hGXF = NULL;
-    dfNoDataValue = 0;
-    eDataType = GDT_Float32;
-}
+GXFDataset::GXFDataset() :
+    hGXF(NULL),
+    pszProjection(NULL),
+    dfNoDataValue(0),
+    eDataType(GDT_Float32)
+{}
 
 /************************************************************************/
 /*                            ~GXFDataset()                             */

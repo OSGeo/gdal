@@ -505,20 +505,21 @@ protected:
 
 HFARasterAttributeTable::HFARasterAttributeTable(
     HFARasterBand *poBand, const char *pszName) :
+    hHFA(poBand->hHFA),
+    poDT(poBand->hHFA->papoBand[poBand->nBand-1]->
+         poNode->GetNamedChild(pszName)),
+    osName(pszName),
+    nBand(poBand->nBand),
+    eAccess(poBand->GetAccess()),
+    nRows(0),
+    bLinearBinning(false),
     dfRow0Min(0.0),
     dfBinSize(0.0)
 {
-    hHFA = poBand->hHFA;
-    poDT = poBand->hHFA->papoBand[poBand->nBand-1]->poNode->GetNamedChild(pszName);
-    nBand = poBand->nBand;
-    eAccess = poBand->GetAccess();
-    osName = pszName;
-    nRows = 0;
-    bLinearBinning = false;
 
-    if( this->poDT != NULL )
+    if( poDT != NULL )
     {
-        this->nRows = this->poDT->GetIntField( "numRows" );
+        nRows = poDT->GetIntField( "numRows" );
 
 /* -------------------------------------------------------------------- */
 /*      Scan under table for columns.                                   */
@@ -533,7 +534,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(
                 const double dfMin = poDTChild->GetDoubleField( "minLimit" );
                 const int nBinCount = poDTChild->GetIntField( "numBins" );
 
-                if( nBinCount == this->nRows
+                if( nBinCount == nRows
                     && dfMax != dfMin && nBinCount != 0 )
                 {
                     // Can't call SetLinearBinning since it will re-write
@@ -1939,6 +1940,7 @@ CPLXMLNode *HFARasterAttributeTable::Serialize() const
 
 HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
     poCT(NULL),
+    // eHFADataType
     nOverviews(-1),
     nThisOverview(iOverview),
     papoOverviewBands(NULL),

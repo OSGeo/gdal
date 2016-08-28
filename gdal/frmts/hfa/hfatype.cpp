@@ -48,7 +48,7 @@ HFAType::HFAType() :
     nFields(0),
     papoFields(NULL),
     pszTypeName(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                              ~HFAType()                              */

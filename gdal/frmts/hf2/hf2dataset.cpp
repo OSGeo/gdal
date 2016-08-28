@@ -100,8 +100,8 @@ HF2RasterBand::HF2RasterBand( HF2Dataset *poDSIn, int nBandIn, GDALDataType eDT 
     pafBlockData(NULL),
     nLastBlockYOff(-1)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = eDT;
 

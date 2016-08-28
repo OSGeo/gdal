@@ -34,18 +34,19 @@ CPL_CVSID("$Id$");
 HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType ) :
     m_pData(pData),
     m_nBlockSize(nBlockSize),
+    m_nBlockCount((nBlockSize * 8) / HFAGetDataTypeBits(eDataType)),
     m_eDataType(eDataType),
+    m_nDataTypeNumBits(HFAGetDataTypeBits(eDataType)),
+    m_pCounts(NULL),
     m_pCurrCount(NULL),
     m_nSizeCounts(0),
+    m_pValues(NULL),
     m_pCurrValues(NULL),
     m_nSizeValues(0),
     m_nMin(0),
     m_nNumRuns(0),
     m_nNumBits(0)
 {
-  m_nDataTypeNumBits = HFAGetDataTypeBits( m_eDataType );
-  m_nBlockCount = (nBlockSize * 8) / m_nDataTypeNumBits;
-
   // Allocate some memory for the count and values - probably too big.
   // About right for worst case scenario.
   m_pCounts = static_cast<GByte *>(

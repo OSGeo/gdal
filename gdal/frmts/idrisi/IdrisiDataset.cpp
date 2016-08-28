@@ -422,7 +422,6 @@ int GetToMeterIndex( const char *pszToMeter );
 int  SaveAsCRLF(char **papszStrList, const char *pszFname);
 
 //----- Classes pre-definition:
-class IdrisiDataset;
 class IdrisiRasterBand;
 
 //  ----------------------------------------------------------------------------
@@ -536,9 +535,9 @@ IdrisiDataset::IdrisiDataset() :
     papszRDC(NULL),
     pszProjection(NULL),
     papszCategories(NULL),
-    pszUnitType(NULL)
+    pszUnitType(NULL),
+    poColorTable(new GDALColorTable())
 {
-    poColorTable = new GDALColorTable();
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -1435,32 +1434,22 @@ CPLErr IdrisiDataset::SetProjection( const char *pszProjString )
 
 IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDSIn,
                                     int nBandIn,
-                                    GDALDataType eDataTypeIn )
+                                    GDALDataType eDataTypeIn ) :
+    poDefaultRAT(NULL),
+    nRecordSize(poDSIn->GetRasterXSize() * poDSIn->nBands *
+                GDALGetDataTypeSizeBytes(eDataTypeIn)),
+    pabyScanLine(static_cast<GByte *>(VSI_MALLOC2_VERBOSE(
+        poDSIn->GetRasterXSize() * GDALGetDataTypeSizeBytes(eDataTypeIn),
+        poDSIn->nBands))),
+    fMaximum(0.0),
+    fMinimum(0.0),
+    bFirstVal(true)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eDataType = eDataTypeIn;
-    this->poDefaultRAT = NULL;
-    this->fMinimum = 0.0;
-    this->fMaximum = 0.0;
-    this->bFirstVal = true;
-
-    // --------------------------------------------------------------------
-    //      Set Dimension
-    // --------------------------------------------------------------------
-
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = eDataTypeIn;
     nBlockYSize = 1;
     nBlockXSize = poDS->GetRasterXSize();
-
-    // --------------------------------------------------------------------
-    //      Get ready for reading and writing
-    // --------------------------------------------------------------------
-
-    nRecordSize  = poDS->GetRasterXSize() * GDALGetDataTypeSize( eDataType ) / 8;
-
-    pabyScanLine = (GByte*) VSI_MALLOC2_VERBOSE( nRecordSize, poDSIn->nBands );
-
-    nRecordSize *= poDSIn->nBands;
 }
 
 /************************************************************************/
