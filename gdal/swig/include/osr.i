@@ -354,6 +354,11 @@ public:
     return OSRSetLinearUnitsAndUpdateParameters( self, name, to_meters );
   }
 
+  double GetTargetLinearUnits( const char *target_key ) {
+    // Return code ignored.
+    return OSRGetTargetLinearUnits( self, target_key, 0 );
+  }
+
   double GetLinearUnits() {
     // Return code ignored.
     return OSRGetLinearUnits( self, 0 );
