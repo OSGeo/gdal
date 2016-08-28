@@ -39,26 +39,33 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
+    nBlocks(0),
     panBlockStart(NULL),
     panBlockSize(NULL),
     panBlockFlag(NULL),
+    nBlockStart(0),
+    nBlockSize(0),
+    nLayerStackCount(0),
+    nLayerStackIndex(0),
     nPCTColors(-1),
     padfPCTBins(NULL),
     psInfo(psInfoIn),
     fpExternal(NULL),
+    eDataType(static_cast<EPTType>(poNodeIn->GetIntField("pixelType"))),
     poNode(poNodeIn),
+    nBlockXSize(poNodeIn->GetIntField("blockWidth")),
+    nBlockYSize(poNodeIn->GetIntField("blockHeight")),
+    nWidth(poNodeIn->GetIntField("width")),
+    nHeight(poNodeIn->GetIntField("height")),
+    nBlocksPerRow(0),
+    nBlocksPerColumn(0),
     bNoDataSet(false),
     dfNoData(0.0),
     bOverviewsPending(true),
     nOverviews(0),
     papoOverviews(NULL)
 {
-    nBlockXSize = poNodeIn->GetIntField( "blockWidth" );
-    nBlockYSize = poNodeIn->GetIntField( "blockHeight" );
     const int nDataType = poNodeIn->GetIntField( "pixelType" );
-
-    nWidth = poNodeIn->GetIntField( "width" );
-    nHeight = poNodeIn->GetIntField( "height" );
 
     apadfPCT[0] = NULL;
     apadfPCT[1] = NULL;
@@ -82,14 +89,15 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn ) :
                  "HFABand::HFABand : nDataType=%d unhandled", nDataType);
         return;
     }
-    eDataType = static_cast<EPTType>(nDataType);
 
+    // TODO(schwehr): Move to initializer list.
     nBlocksPerRow = DIV_ROUND_UP(nWidth, nBlockXSize);
     nBlocksPerColumn = DIV_ROUND_UP(nHeight, nBlockYSize);
 
     if( nBlocksPerRow > INT_MAX / nBlocksPerColumn )
     {
-        nWidth = nHeight = 0;
+        nWidth = 0;
+        nHeight = 0;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "HFABand::HFABand : too big dimensions / block size");
         return;

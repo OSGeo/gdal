@@ -53,7 +53,7 @@ HFAField::HFAField() :
     poItemObjectType(NULL),
     papszEnumNames(NULL),
     pszFieldName(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                             ~HFAField()                              */
