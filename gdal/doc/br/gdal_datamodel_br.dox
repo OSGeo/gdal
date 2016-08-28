@@ -84,13 +84,13 @@ pelo classe GDAL_GCP) cont&eacute;n as seguintes estrutura:
 <pre>
 typedef struct
 {
-    char	*pszId;
-    char	*pszInfo;
-    double 	dfGCPPixel;
-    double	dfGCPLine;
-    double	dfGCPX;
-    double	dfGCPY;
-    double	dfGCPZ;
+    char   *pszId;
+    char   *pszInfo;
+    double dfGCPPixel;
+    double dfGCPLine;
+    double dfGCPX;
+    double dfGCPY;
+    double dfGCPZ;
 } GDAL_GCP;
 </pre>
 

@@ -29,7 +29,7 @@ int main()
     poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
     if( poDataset == NULL )
     {
-	...;
+        ...;
     }
 \endcode
 
@@ -46,7 +46,7 @@ int main()
     hDataset = GDALOpen( pszFilename, GA_ReadOnly );
     if( hDataset == NULL )
     {
-	...;
+        ...;
     }
 \endcode
 
@@ -128,7 +128,7 @@ Em C:
             GDALGetDriverLongName( hDriver ) );
 
     printf( "Size is %dx%dx%d\n",
-	    GDALGetRasterXSize( hDataset ),
+            GDALGetRasterXSize( hDataset ),
             GDALGetRasterYSize( hDataset ),
             GDALGetRasterCount( hDataset ) );
 
@@ -155,8 +155,8 @@ Em Python:
 
     geotransform = dataset.GetGeoTransform()
     if not geotransform is None:
-	print 'Origin = (',geotransform[0], ',',geotransform[3],')'
-	print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
+        print 'Origin = (',geotransform[0], ',',geotransform[3],')'
+        print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
 \endcode
 
 \section gdal_tutorial_band Extraindo uma Banda Raster
@@ -170,13 +170,13 @@ informa&ccedil;&otilde;es sobre ela.
 
 Em C++:
 \code
-	GDALRasterBand  *poBand;
+        GDALRasterBand  *poBand;
         int             nBlockXSize, nBlockYSize;
         int             bGotMin, bGotMax;
         double          adfMinMax[2];
 
         poBand = poDataset->GetRasterBand( 1 );
-	poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+        poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
         printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
                 nBlockXSize, nBlockYSize,
                 GDALGetDataTypeName(poBand->GetRasterDataType()),
@@ -200,53 +200,53 @@ Em C++:
 
 Em C:
 \code
-	GDALRasterBandH hBand;
-        int             nBlockXSize, nBlockYSize;
-        int             bGotMin, bGotMax;
-        double          adfMinMax[2];
+    GDALRasterBandH hBand;
+    int             nBlockXSize, nBlockYSize;
+    int             bGotMin, bGotMax;
+    double          adfMinMax[2];
 
-        hBand = GDALGetRasterBand( hDataset, 1 );
-        GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
-        printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
-                nBlockXSize, nBlockYSize,
-                GDALGetDataTypeName(GDALGetRasterDataType(hBand)),
-                GDALGetColorInterpretationName(
-                    GDALGetRasterColorInterpretation(hBand)) );
+    hBand = GDALGetRasterBand( hDataset, 1 );
+    GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
+    printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
+            nBlockXSize, nBlockYSize,
+            GDALGetDataTypeName(GDALGetRasterDataType(hBand)),
+            GDALGetColorInterpretationName(
+                GDALGetRasterColorInterpretation(hBand)) );
 
-        adfMinMax[0] = GDALGetRasterMinimum( hBand, &bGotMin );
-        adfMinMax[1] = GDALGetRasterMaximum( hBand, &bGotMax );
-        if( ! (bGotMin && bGotMax) )
-            GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
+    adfMinMax[0] = GDALGetRasterMinimum( hBand, &bGotMin );
+    adfMinMax[1] = GDALGetRasterMaximum( hBand, &bGotMax );
+    if( ! (bGotMin && bGotMax) )
+        GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
 
-        printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+    printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
 
-        if( GDALGetOverviewCount(hBand) > 0 )
-            printf( "Band has %d overviews.\n", GDALGetOverviewCount(hBand));
+    if( GDALGetOverviewCount(hBand) > 0 )
+        printf( "Band has %d overviews.\n", GDALGetOverviewCount(hBand));
 
-        if( GDALGetRasterColorTable( hBand ) != NULL )
-            printf( "Band has a color table with %d entries.\n",
-                     GDALGetColorEntryCount(
-                         GDALGetRasterColorTable( hBand ) ) );
+    if( GDALGetRasterColorTable( hBand ) != NULL )
+        printf( "Band has a color table with %d entries.\n",
+                 GDALGetColorEntryCount(
+                     GDALGetRasterColorTable( hBand ) ) );
 \endcode
 
 In Python (note several bindings are missing):
 \code
-	band = dataset.GetRasterBand(1)
+    band = dataset.GetRasterBand(1)
 
-	print 'Band Type=',gdal.GetDataTypeName(band.DataType)
+    print 'Band Type=',gdal.GetDataTypeName(band.DataType)
 
-	min = band.GetMinimum()
-	max = band.GetMaximum()
-	if min is not None and max is not None:
-	    (min,max) = ComputeRasterMinMax(1)
-	print 'Min=%.3f, Max=%.3f' % (min,max)
+    min = band.GetMinimum()
+    max = band.GetMaximum()
+    if min is not None and max is not None:
+        (min,max) = ComputeRasterMinMax(1)
+    print 'Min=%.3f, Max=%.3f' % (min,max)
 
-	if band.GetOverviewCount() > 0:
-	    print 'Band has ', band.GetOverviewCount(), ' overviews.'
+    if band.GetOverviewCount() > 0:
+        print 'Band has ', band.GetOverviewCount(), ' overviews.'
 
-        if not band.GetRasterColorTable() is None:
-	    print 'Band has a color table with ', \
-	    band.GetRasterColorTable().GetCount(), ' entries.'
+    if not band.GetRasterColorTable() is None:
+        print 'Band has a color table with ', \
+          band.GetRasterColorTable().GetCount(), ' entries.'
 \endcode
 
 \section gdal_tutorial_read Lendo dato Raster
@@ -275,7 +275,7 @@ Em C:
         int   nXSize = GDALGetRasterBandXSize( hBand );
 
         pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
-	    GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, 1,
+        GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, 1,
                       pafScanline, nXSize, 1, GDT_Float32,
                       0, 0 );
 \endcode
@@ -283,8 +283,8 @@ Em C:
 Em Python:
 
 \code
-  	scanline = band.ReadRaster( 0, 0, band.XSize, 1, \
-                                     band.XSize, 1, GDT_Float32 )
+        scanline = band.ReadRaster( 0, 0, band.XSize, 1, \
+                                    band.XSize, 1, GDT_Float32 )
 \endcode
 
 Note que o scanline retornado &eacute; do tipo char*, e contem os
@@ -293,9 +293,9 @@ pode ser convertido em Python usando o m&oacute;dulo do <b>struct</b>
 da biblioteca padr&atilde;o:
 
 \code
-	import struct
+        import struct
 
-	tuple_of_floats = struct.unpack('f' * b2.XSize, scanline)
+        tuple_of_floats = struct.unpack('f' * b2.XSize, scanline)
 \endcode
 
 A chamada de RasterIO espera os seguintes argumentos.
