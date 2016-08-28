@@ -58,12 +58,12 @@ typedef unsigned char   GByte;
 typedef int             GBool;
 
 #ifndef FALSE
-#  define FALSE		0
-#  define TRUE		1
+#  define FALSE 0
+#  define TRUE  1
 #endif
 
 #ifndef NULL
-#  define NULL		0
+#  define NULL 0
 #endif
 
 #ifndef GDAL_ENTRY
@@ -77,8 +77,8 @@ typedef int             GBool;
 
 /*! Pixel data types */
 typedef enum {
-    /*! Unknown or unspecified type */ 		    GDT_Unknown = 0,
-    /*! Eight bit unsigned integer */ 		    GDT_Byte = 1,
+    /*! Unknown or unspecified type */          GDT_Unknown = 0,
+    /*! Eight bit unsigned integer */           GDT_Byte = 1,
     /*! Sixteen bit unsigned integer */         GDT_UInt16 = 2,
     /*! Sixteen bit signed integer */           GDT_Int16 = 3,
     /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
@@ -89,10 +89,10 @@ typedef enum {
     /*! Complex Int32 */                        GDT_CInt32 = 9,
     /*! Complex Float32 */                      GDT_CFloat32 = 10,
     /*! Complex Float64 */                      GDT_CFloat64 = 11,
-    GDT_TypeCount = 12		/* maximum type # + 1 */
+    GDT_TypeCount = 12  /* maximum type # + 1 */
 } GDALDataType;
 
-GDAL_ENTRY int	(*pfnGDALGetDataTypeSize)( GDALDataType ) GDAL_NULL;
+GDAL_ENTRY int (*pfnGDALGetDataTypeSize)( GDALDataType ) GDAL_NULL;
 #define GDALGetDataTypeSize pfnGDALGetDataTypeSize
 
 typedef enum {
@@ -148,16 +148,16 @@ typedef enum
 
 } CPLErr;
 
-#define CPLE_AppDefined			1
-#define CPLE_OutOfMemory		2
-#define CPLE_FileIO			3
-#define CPLE_OpenFailed			4
-#define CPLE_IllegalArg			5
-#define CPLE_NotSupported		6
-#define CPLE_AssertionFailed		7
-#define CPLE_NoWriteAccess		8
+#define CPLE_AppDefined         1
+#define CPLE_OutOfMemory        2
+#define CPLE_FileIO             3
+#define CPLE_OpenFailed         4
+#define CPLE_IllegalArg         5
+#define CPLE_NotSupported       6
+#define CPLE_AssertionFailed    7
+#define CPLE_NoWriteAccess      8
 
-#define CPLE_WrongFormat	200
+#define CPLE_WrongFormat        200
 
 typedef int OGRErr;
 
@@ -213,24 +213,24 @@ typedef void *OGRCoordinateTransformationH;
 typedef struct
 {
     /** Unique identifier, often numeric */
-    char	*pszId;
+    char *pszId;
 
     /** Informational message or "" */
-    char	*pszInfo;
+    char *pszInfo;
 
     /** Pixel (x) location of GCP on raster */
-    double 	dfGCPPixel;
+    double dfGCPPixel;
     /** Line (y) location of GCP on raster */
-    double	dfGCPLine;
+    double dfGCPLine;
 
     /** X position of GCP in georeferenced space */
-    double	dfGCPX;
+    double dfGCPX;
 
     /** Y position of GCP in georeferenced space */
-    double	dfGCPY;
+    double dfGCPY;
 
     /** Elevation of GCP, or zero if not known */
-    double	dfGCPZ;
+    double dfGCPZ;
 } GDAL_GCP;
 
 /* ==================================================================== */
@@ -390,7 +390,7 @@ GDAL_ENTRY void (*pGDALComputeRasterMinMax)( GDALRasterBandH, int,
 #define GDALComputeRasterMinMax pGDALComputeRasterMinMax
 
 GDAL_ENTRY GDALColorInterp (*pGDALGetRasterColorInterpretation)
-						( GDALRasterBandH ) GDAL_NULL;
+( GDALRasterBandH ) GDAL_NULL;
 #define GDALGetRasterColorInterpretation pGDALGetRasterColorInterpretation
 
 GDAL_ENTRY const char *(*pGDALGetColorInterpretationName)( GDALColorInterp ) GDAL_NULL;
@@ -456,15 +456,15 @@ GDAL_ENTRY const char *(*pGDALDecToDMS)( double, const char *, int ) GDAL_NULL;
 /* -------------------------------------------------------------------- */
 
 GDAL_ENTRY OGRSpatialReferenceH
-	(*pOSRNewSpatialReference)( const char * ) GDAL_NULL;
+(*pOSRNewSpatialReference)( const char * ) GDAL_NULL;
 #define OSRNewSpatialReference pOSRNewSpatialReference
 
 GDAL_ENTRY OGRSpatialReferenceH
-	(*pOSRCloneGeogCS)( OGRSpatialReferenceH ) GDAL_NULL;
+(*pOSRCloneGeogCS)( OGRSpatialReferenceH ) GDAL_NULL;
 #define OSRCloneGeogCS pOSRCloneGeogCS
 
 GDAL_ENTRY void
-	(*pOSRDestroySpatialReference)( OGRSpatialReferenceH ) GDAL_NULL;
+(*pOSRDestroySpatialReference)( OGRSpatialReferenceH ) GDAL_NULL;
 #define OSRDestroySpatialReference pOSRDestroySpatialReference
 
 GDAL_ENTRY int (*pOSRReference)( OGRSpatialReferenceH ) GDAL_NULL;
@@ -477,15 +477,15 @@ GDAL_ENTRY OGRErr (*pOSRImportFromEPSG)( OGRSpatialReferenceH, int ) GDAL_NULL;
 #define OSRImportFromEPSG pOSRImportFromEPSG
 
 GDAL_ENTRY OGRErr
-	(*pOSRImportFromWkt)( OGRSpatialReferenceH, char ** ) GDAL_NULL;
+(*pOSRImportFromWkt)( OGRSpatialReferenceH, char ** ) GDAL_NULL;
 #define OSRImportFromWkt pOSRImportFromWkt
 
 GDAL_ENTRY OGRErr
-	(*pOSRImportFromProj4)( OGRSpatialReferenceH, const char *) GDAL_NULL;
+(*pOSRImportFromProj4)( OGRSpatialReferenceH, const char *) GDAL_NULL;
 #define OSRImportFromProj4 pOSRImportFromProj4
 
 GDAL_ENTRY OGRErr
-	(*pOSRExportToWkt)( OGRSpatialReferenceH, char ** ) GDAL_NULL;
+(*pOSRExportToWkt)( OGRSpatialReferenceH, char ** ) GDAL_NULL;
 #define OSRExportToWkt pOSRExportToWkt
 
 GDAL_ENTRY OGRErr
@@ -493,11 +493,11 @@ GDAL_ENTRY OGRErr
 #define OSRExportToPrettyWkt pOSRExportToPrettyWkt
 
 GDAL_ENTRY OGRErr
-	(*pOSRExportToProj4)( OGRSpatialReferenceH, char **) GDAL_NULL;
+(*pOSRExportToProj4)( OGRSpatialReferenceH, char **) GDAL_NULL;
 #define OSRExportToProj4 pOSRExportToProj4
 
 GDAL_ENTRY OGRErr
-	(*pOSRSetAttrValue)( OGRSpatialReferenceH hSRS,
+(*pOSRSetAttrValue)( OGRSpatialReferenceH hSRS,
                              const char * pszNodePath,
                              const char * pszNewNodeValue ) GDAL_NULL;
 #define OSRSetAttrValue pOSRSetAttrValue
@@ -584,12 +584,12 @@ GDAL_ENTRY int (*pOSRGetUTMZone)( OGRSpatialReferenceH hSRS,
 #define OSRGetUTMZone pOSRGetUTMZone
 
 GDAL_ENTRY OGRCoordinateTransformationH (*pOCTNewCoordinateTransformation)
-    			( OGRSpatialReferenceH hSourceSRS,
+( OGRSpatialReferenceH hSourceSRS,
                           OGRSpatialReferenceH hTargetSRS ) GDAL_NULL;
 #define OCTNewCoordinateTransformation pOCTNewCoordinateTransformation
 
 GDAL_ENTRY void (*pOCTDestroyCoordinateTransformation)
-			( OGRCoordinateTransformationH ) GDAL_NULL;
+( OGRCoordinateTransformationH ) GDAL_NULL;
 #define OCTDestroyCoordinateTransformation pOCTDestroyCoordinateTransformation
 
 GDAL_ENTRY int (*pOCTTransform)( OGRCoordinateTransformationH hCT,
@@ -708,8 +708,8 @@ GDAL_ENTRY int (*pOCTTransform)( OGRCoordinateTransformationH hCT,
 /*      libraries (given a hint of a directory it might be in).  It     */
 /*      returns TRUE if it succeeds, or FALSE otherwise.                */
 /* -------------------------------------------------------------------- */
-int	GDALBridgeInitialize( const char *, FILE * );
-void	*GBGetSymbol( const char *, const char * );
+int GDALBridgeInitialize( const char *, FILE * );
+void *GBGetSymbol( const char *, const char * );
 
 /* -------------------------------------------------------------------- */
 /*      Terminate C context.                                            */
