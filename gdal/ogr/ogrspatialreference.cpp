@@ -1308,7 +1308,7 @@ OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS,
  * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node
  * for units.
  *
- * This method does the same thing as the C function OSRGetLinearUnits()/
+ * This method does the same thing as the C function OSRGetLinearUnits()
  *
  * @param ppszName a pointer to be updated with the pointer to the units name.
  * The returned value remains internal to the OGRSpatialReference and should
@@ -1351,13 +1351,15 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
  *
- * This method does the same thing as the C function OSRGetTargetLinearUnits()/
+ * This method does the same thing as the C function OSRGetTargetLinearUnits()
  *
- * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS".  @param
- * ppszName a pointer to be updated with the pointer to the units name.  The
- * returned value remains internal to the OGRSpatialReference and should not
+ * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS". Might be
+ * NULL, in which case PROJCS will be implied (and if not found, LOCAL_CS,
+ * GEOCCS and VERT_CS are looked up)
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should not
  * be freed, or modified.  It may be invalidated on the next
- * OGRSpatialReference call.
+ * OGRSpatialReference call. ppszName can be set to NULL.
  *
  * @return the value to multiply by linear distances to transform them to
  * meters.
