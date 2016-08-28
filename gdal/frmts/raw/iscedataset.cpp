@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "gdal_frmts.h"
+#include "ogr_spatialref.h"
 #include "rawdataset.h"
 
 CPL_CVSID("$Id$");
@@ -361,18 +362,73 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     }
     CPLXMLNode *psCur  = CPLGetXMLNode( psNode, "=imageFile" )->psChild;
     char **papszXmlProps = NULL;
-    while ( psCur != NULL ) {
-        if ( strcmp(psCur->pszValue, "property") != 0) {
-            psCur = psCur->psNext;
-            continue;
+    while ( psCur != NULL )
+    {
+        if ( strcmp( psCur->pszValue, "property" ) == 0)
+        {
+            /* Top-level property */
+            const char *pszName = CPLGetXMLValue( psCur, "name", NULL );
+            const char *pszValue = CPLGetXMLValue( psCur, "value", NULL );
+            if ( pszName != NULL && pszValue != NULL)
+            {
+                papszXmlProps = CSLSetNameValue( papszXmlProps,
+                                                 pszName, pszValue );
+            }
         }
-        const char *name = CPLGetXMLValue( psCur, "name", NULL );
-        const char *value = CPLGetXMLValue( psCur, "value.", NULL );
-        papszXmlProps = CSLSetNameValue( papszXmlProps,
-                                         name, value );
+        else if ( strcmp( psCur->pszValue, "component" ) == 0)
+        {
+            /* "components" elements in ISCE store set of properties.   */
+            /* For now, they are avoided as I am not sure the full      */
+            /* scope of these. An exception is made for the ones named  */
+            /* Coordinate1 and Coordinate2, because they may have the   */
+            /* georeferencing information.                              */
+            const char *pszCurName = CPLGetXMLValue( psCur, "name", NULL );
+            if ( pszCurName != NULL 
+                && ( strcmp( pszCurName, "Coordinate1" ) == 0
+                    || strcmp( pszCurName, "Coordinate2" ) == 0 ) )
+            {
+                /* We need two subproperties: startingValue and delta.  */
+                /* To simplify parsing code, we will store them in      */
+                /* papszXmlProps with the coordinate name prefixed to   */
+                /* the property name.                                   */
+                CPLXMLNode *psCur2 = psCur->psChild;
+                while ( psCur2 != NULL )
+                {
+                    if ( strcmp( psCur2->pszValue, "property" ) != 0 )
+                    {
+                        psCur2 = psCur2->psNext;
+                        continue; /* Skip non property elements */
+                    }
+
+                    const char 
+                       *pszCur2Name = CPLGetXMLValue( psCur2, "name", NULL ),
+                       *pszCur2Value = CPLGetXMLValue( psCur2, "value", NULL );
+
+                    if ( pszCur2Name == NULL || pszCur2Value == NULL )
+                    {
+                        psCur2 = psCur2->psNext;
+                        continue; /* Skip malformatted elements */
+                    }
+
+                    if ( strcmp( pszCur2Name, "startingValue" ) == 0
+                        || strcmp( pszCur2Name, "delta" ) == 0 )
+                    {
+                        char pszPropName[32]; 
+                        strncpy(pszPropName, pszCurName, sizeof(pszPropName)-1);
+                        strncat(pszPropName, pszCur2Name, sizeof(pszPropName)-1);
+
+                        papszXmlProps =
+                            CSLSetNameValue( papszXmlProps,
+                                             pszPropName,
+                                             pszCur2Value );
+                    }
+                    psCur2 = psCur2->psNext;
+                }
+            }
+        }
         psCur = psCur->psNext;
     }
-    /* TODO: extract <component name=Coordinate[12]> for georeferencing */
+    
     CPLDestroyXMLNode( psNode );
 
 /* -------------------------------------------------------------------- */
@@ -509,7 +565,28 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Interpret georeferencing, if present.                           */
 /* -------------------------------------------------------------------- */
-   /* TODO */
+    if ( CSLFetchNameValue( papszXmlProps, "Coordinate1startingValue" ) != NULL
+         && CSLFetchNameValue( papszXmlProps, "Coordinate1delta" ) != NULL
+         && CSLFetchNameValue( papszXmlProps, "Coordinate2startingValue" ) != NULL
+         && CSLFetchNameValue( papszXmlProps, "Coordinate2delta" ) != NULL )
+    {
+        double adfGeoTransform[6];
+        adfGeoTransform[0] = CPLAtof( CSLFetchNameValue( papszXmlProps,
+                                                         "Coordinate1startingValue" ) );
+        adfGeoTransform[1] = CPLAtof( CSLFetchNameValue( papszXmlProps,
+                                                         "Coordinate1delta" ) );
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = CPLAtof( CSLFetchNameValue( papszXmlProps,
+                                                         "Coordinate2startingValue" ) );
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = CPLAtof( CSLFetchNameValue( papszXmlProps,
+                                                               "Coordinate2delta" ) );
+        poDS->SetGeoTransform( adfGeoTransform );
+
+        /* ISCE format seems not to have a projection field, but uses   */
+        /* WGS84.                                                       */
+        poDS->SetProjection( SRS_WKT_WGS84 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set all the other header metadata into the ISCE domain          */
@@ -525,7 +602,11 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
               || strcmp( papszTokens[0], "LENGTH" ) == 0
               || strcmp( papszTokens[0], "NUMBER_BANDS" ) == 0
               || strcmp( papszTokens[0], "DATA_TYPE" ) == 0
-              || strcmp( papszTokens[0], "SCHEME" ) == 0 )
+              || strcmp( papszTokens[0], "SCHEME" ) == 0 
+              || strcmp( papszTokens[0], "Coordinate1startingValue" ) == 0
+              || strcmp( papszTokens[0], "Coordinate1delta" ) == 0
+              || strcmp( papszTokens[0], "Coordinate2startingValue" ) == 0
+              || strcmp( papszTokens[0], "Coordinate2delta" ) == 0 )
         {
             CSLDestroy( papszTokens );
             continue;
