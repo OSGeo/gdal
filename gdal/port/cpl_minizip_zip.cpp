@@ -1250,12 +1250,63 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
     const bool bCompressed =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
 
+    // If the filename is ASCII only, then no need for an extended field
+    bool bIsAscii = true;
+    for( int i=0; pszFilename[i] != '\0'; i++ )
+    {
+        if( (reinterpret_cast<const GByte*>(pszFilename))[i] > 127 )
+        {
+            bIsAscii = false;
+            break;
+        }
+    }
+
+    char* pszCPFilename = NULL;
+    unsigned int nExtraLength = 0;
+    GByte* pabyExtra = NULL;
+    if( !bIsAscii )
+    {
+        const char* pszDestEncoding = CPLGetConfigOption("CPL_ZIP_ENCODING",
+#if defined(_WIN32) && !defined(HAVE_ICONV)
+                                                        "CP_OEMCP"
+#else
+                                                        "CP437"
+#endif
+                                                        );
+
+        pszCPFilename = CPLRecode(pszFilename, CPL_ENC_UTF8, pszDestEncoding);
+
+        /* Create a Info-ZIP Unicode Path Extra Field (0x7075) */
+        const GUInt16 nDataLength = 1 + 4 +
+                                    static_cast<GUInt16>(strlen(pszFilename));
+        nExtraLength = 2 + 2 + nDataLength;
+        pabyExtra = reinterpret_cast<GByte*>(CPLMalloc(nExtraLength));
+        const GUInt16 nHeaderIdLE = CPL_LSBWORD16(0x7075);
+        memcpy(pabyExtra, &nHeaderIdLE, 2);
+        const GUInt16 nDataLengthLE = CPL_LSBWORD16(nDataLength);
+        memcpy(pabyExtra + 2, &nDataLengthLE, 2);
+        const GByte nVersion = 1;
+        memcpy(pabyExtra + 2 + 2, &nVersion, 1);
+        const GUInt32 nNameCRC32LE = CPL_LSBWORD32(crc32(0,
+                (const Bytef*)pszCPFilename,
+                static_cast<uInt>(strlen(pszCPFilename))));
+        memcpy(pabyExtra + 2 + 2 + 1, &nNameCRC32LE, 4);
+        memcpy(pabyExtra + 2 + 2 + 1 + 4, pszFilename, strlen(pszFilename));
+    }
+    else
+    {
+        pszCPFilename = CPLStrdup(pszFilename);
+    }
+
     const int nErr =
         cpl_zipOpenNewFileInZip(
-            psZip->hZip, pszFilename, NULL,
-            NULL, 0, NULL, 0, "",
+            psZip->hZip, pszCPFilename, NULL,
+            NULL, 0, pabyExtra, nExtraLength, "",
             bCompressed ? Z_DEFLATED : 0,
             bCompressed ? Z_DEFAULT_COMPRESSION : 0 );
+
+    CPLFree( pabyExtra );
+    CPLFree( pszCPFilename );
 
     if( nErr != ZIP_OK )
         return CE_Failure;
