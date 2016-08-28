@@ -1287,9 +1287,10 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
         memcpy(pabyExtra + 2, &nDataLengthLE, 2);
         const GByte nVersion = 1;
         memcpy(pabyExtra + 2 + 2, &nVersion, 1);
-        const GUInt32 nNameCRC32LE = CPL_LSBWORD32(crc32(0,
+        const GUInt32 nNameCRC32 = static_cast<GUInt32>(crc32(0,
                 (const Bytef*)pszCPFilename,
                 static_cast<uInt>(strlen(pszCPFilename))));
+        const GUInt32 nNameCRC32LE = CPL_LSBWORD32(nNameCRC32);
         memcpy(pabyExtra + 2 + 2 + 1, &nNameCRC32LE, 4);
         memcpy(pabyExtra + 2 + 2 + 1 + 4, pszFilename, strlen(pszFilename));
     }
