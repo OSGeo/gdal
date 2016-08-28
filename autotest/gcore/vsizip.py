@@ -592,6 +592,38 @@ def vsizip_13():
 
     return 'success'
 
+###############################################################################
+# Test that we can recode filenames in ZIP when writing (#6631)
+
+def vsizip_14():
+
+    fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_14.zip', 'wb')
+    try:
+        exec("cp866_filename = u'\u0430\u0431\u0432\u0433\u0434\u0435'")
+    except:
+        cp866_filename = '\u0430\u0431\u0432\u0433\u0434\u0435'
+
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_14.zip/' + cp866_filename, 'wb')
+    if f is None:
+        gdal.VSIFCloseL(fmain)
+        gdal.Unlink('/vsimem/vsizip_14.zip')
+        return 'skip'
+
+    gdal.VSIFWriteL('hello', 1, 5, f)
+    gdal.VSIFCloseL(f)
+    gdal.VSIFCloseL(fmain)
+
+    content = gdal.ReadDir("/vsizip//vsimem/vsizip_14.zip")
+    if content != [cp866_filename]:
+        gdaltest.post_reason('bad content')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/vsizip_14.zip')
+
+    return 'success'
+
 
 gdaltest_list = [ vsizip_1,
                   vsizip_2,
@@ -606,6 +638,7 @@ gdaltest_list = [ vsizip_1,
                   vsizip_11,
                   vsizip_12,
                   vsizip_13,
+                  vsizip_14
                   ]
 
 
