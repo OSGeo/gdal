@@ -42,12 +42,12 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 int main( int argc, char ** argv )
 
 {
-    GDALDatasetH	hDataset;
-    GDALRasterBandH	hBand;
-    int			i, iBand;
-    double		adfGeoTransform[6];
-    GDALDriverH		hDriver;
-    char		**papszMetadata;
+    GDALDatasetH        hDataset;
+    GDALRasterBandH     hBand;
+    int                 i, iBand;
+    double              adfGeoTransform[6];
+    GDALDriverH         hDriver;
+    char                **papszMetadata;
     int                 bComputeMinMax = FALSE;
 
     if( !GDALBridgeInitialize( "..", stderr ) )
@@ -92,14 +92,14 @@ int main( int argc, char ** argv )
     if( GDALGetProjectionRef( hDataset ) != NULL )
     {
         OGRSpatialReferenceH  hSRS;
-        char		      *pszProjection;
+        char                  *pszProjection;
 
         pszProjection = (char *) GDALGetProjectionRef( hDataset );
 
         hSRS = OSRNewSpatialReference(NULL);
         if( OSRImportFromWkt( hSRS, &pszProjection ) == CE_None )
         {
-            char	*pszPrettyWkt = NULL;
+            char *pszPrettyWkt = NULL;
 
             OSRExportToPrettyWkt( hSRS, &pszPrettyWkt, FALSE );
             printf( "Coordinate System is:\n%s\n", pszPrettyWkt );
@@ -131,7 +131,7 @@ int main( int argc, char ** argv )
         printf( "GCP Projection = %s\n", GDALGetGCPProjection(hDataset) );
         for( i = 0; i < GDALGetGCPCount(hDataset); i++ )
         {
-            const GDAL_GCP	*psGCP;
+            const GDAL_GCP *psGCP;
 
             psGCP = GDALGetGCPs( hDataset ) + i;
 
@@ -222,14 +222,14 @@ int main( int argc, char ** argv )
 
         if( GDALGetOverviewCount(hBand) > 0 )
         {
-            int		iOverview;
+            int iOverview;
 
             printf( "  Overviews: " );
             for( iOverview = 0;
                  iOverview < GDALGetOverviewCount(hBand);
                  iOverview++ )
             {
-                GDALRasterBandH	hOverview;
+                GDALRasterBandH hOverview;
 
                 if( iOverview != 0 )
                     printf( ", " );
@@ -254,8 +254,8 @@ int main( int argc, char ** argv )
 
         if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex )
         {
-            GDALColorTableH	hTable;
-            int			i;
+            GDALColorTableH hTable;
+            int i;
 
             hTable = GDALGetRasterColorTable( hBand );
             printf( "  Color Table (%s with %d entries)\n",
@@ -265,7 +265,7 @@ int main( int argc, char ** argv )
 
             for( i = 0; i < GDALGetColorEntryCount( hTable ); i++ )
             {
-                GDALColorEntry	sEntry;
+                GDALColorEntry sEntry;
 
                 GDALGetColorEntryAsRGB( hTable, i, &sEntry );
                 printf( "  %3d: %d,%d,%d,%d\n",
@@ -293,9 +293,9 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
                       double x, double y )
 
 {
-    double	dfGeoX, dfGeoY;
+    double dfGeoX, dfGeoY;
     const char  *pszProjection;
-    double	adfGeoTransform[6];
+    double adfGeoTransform[6];
     OGRCoordinateTransformationH hTransform = NULL;
 
     printf( "%-11s ", corner_name );

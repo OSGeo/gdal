@@ -30,13 +30,13 @@
  ****************************************************************************/
 
 /* ==================================================================== */
-/*      We #define GDAL_ENTRY to nothing so that when the include 	*/
-/*	file is include the real definition of the function pointer     */
+/*      We #define GDAL_ENTRY to nothing so that when the include       */
+/*      file is include the real definition of the function pointer     */
 /*      variables will occur in this files object file.                 */
 /* ==================================================================== */
 
 #define GDAL_ENTRY
-#define GDAL_NULL	= NULL
+#define GDAL_NULL = NULL
 
 #include "gdalbridge.h"
 #include <stdio.h>
@@ -46,20 +46,20 @@
 #ifdef _WIN32
 #define PATH_SEP '\\'
 static const char *papszSOFilenames[] = {
-	 "gdal11.dll"
-	,"gdal.1.0.dll"
-	, NULL };
+    "gdal11.dll"
+    ,"gdal.1.0.dll"
+    , NULL };
 #else
 #define PATH_SEP '/'
 static const char *papszSOFilenames[] = {
-	 "libgdal.1.1.so"
-	,"gdal.1.0.so"
-	,"gdal.so.1.0"
-	,"libgdal.so.1"
-	, NULL };
+    "libgdal.1.1.so"
+    ,"gdal.1.0.so"
+    ,"gdal.so.1.0"
+    ,"libgdal.so.1"
+    , NULL };
 #endif
 
-#define MAX_SYMBOL	1024
+#define MAX_SYMBOL 1024
 
 /************************************************************************/
 /*                          GBGetSymbolCheck()                          */
@@ -73,13 +73,13 @@ static void *GBGetSymbolCheck( const char *pszLibrary,
                                char **papszErrorList )
 
 {
-    void	*pReturn;
+    void *pReturn;
 
     pReturn = GBGetSymbol( pszLibrary, pszSymbolName );
 
     if( pReturn == NULL && papszErrorList != NULL )
     {
-        int	i;
+        int i;
 
         for( i = 0; papszErrorList[i] != NULL; i++ ) {}
 
@@ -100,10 +100,10 @@ static void *GBGetSymbolCheck( const char *pszLibrary,
 int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
 
 {
-    char	szPath[2048];
-    void	*pfnTest = NULL;
-    int		iSOFile;
-    char        *apszFailed[MAX_SYMBOL];
+    char szPath[2048];
+    void *pfnTest = NULL;
+    int  iSOFile;
+    char *apszFailed[MAX_SYMBOL];
 
 /* -------------------------------------------------------------------- */
 /*      Do we want to force reporting on?                               */
@@ -501,7 +501,7 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
 /* -------------------------------------------------------------------- */
     if( apszFailed[0] != NULL && fpReportFailure != NULL )
     {
-        int	iError;
+        int iError;
 
         fprintf( fpReportFailure,
                  "While a GDAL .DLL/.so was found at `%s'\n"
