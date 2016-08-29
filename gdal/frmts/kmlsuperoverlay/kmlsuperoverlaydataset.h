@@ -108,7 +108,8 @@ class KmlSuperOverlayReadDataset : public GDALDataset
 class KmlSuperOverlayRasterBand: public GDALRasterBand
 {
     public:
-                    KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset* poDS, int nBand);
+                    KmlSuperOverlayRasterBand( KmlSuperOverlayReadDataset* poDS,
+                                               int nBand );
   protected:
 
     virtual CPLErr IReadBlock( int, int, void * );
