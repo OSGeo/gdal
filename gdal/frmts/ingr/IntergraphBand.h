@@ -50,7 +50,7 @@ protected:
     int             nFullBlocksX;
     int             nFullBlocksY;
 
-    GByte	   *pabyBlockBuf;
+    GByte          *pabyBlockBuf;
     uint32          nTiles;
 
     INGR_TileItem  *pahTiles;
@@ -93,9 +93,9 @@ class IntergraphRGBBand : public IntergraphRasterBand
 {
 public:
     IntergraphRGBBand( IntergraphDataset *poDS,
-        int nBand,
-        int nBandOffset,
-        int nRGorB );
+                       int nBand,
+                       int nBandOffset,
+                       int nRGorB );
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };
@@ -109,16 +109,16 @@ class IntergraphBitmapBand : public IntergraphRasterBand
     friend class IntergraphDataset;
 
 private:
-    GByte	       *pabyBMPBlock;
+    GByte          *pabyBMPBlock;
     uint32          nBMPSize;
     int             nQuality;
     int             nRGBBand;
 
 public:
     IntergraphBitmapBand( IntergraphDataset *poDS,
-        int nBand,
-        int nBandOffset,
-        int nRGorB = 1 );
+                          int nBand,
+                          int nBandOffset,
+                          int nRGorB = 1 );
     virtual ~IntergraphBitmapBand();
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
@@ -134,16 +134,16 @@ class IntergraphRLEBand : public IntergraphRasterBand
     friend class IntergraphDataset;
 
 private:
-    GByte	       *pabyRLEBlock;
+    GByte          *pabyRLEBlock;
     uint32          nRLESize;
     int             bRLEBlockLoaded;
     uint32         *panRLELineOffset;
 
 public:
     IntergraphRLEBand( IntergraphDataset *poDS,
-        int nBand,
-        int nBandOffset,
-        int nRGorB = 0);
+                       int nBand,
+                       int nBandOffset,
+                       int nRGorB = 0 );
     virtual ~IntergraphRLEBand();
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
