@@ -129,7 +129,6 @@ class CPL_ODLL DDFModule
     const char* GetExtendedCharSet() const { return _extendedCharSet; }
     void        SetFieldControlLength(int nVal) { _fieldControlLength = nVal; }
 
-
   private:
     VSILFILE    *fpDDF;
     int         bReadOnly;
@@ -354,9 +353,7 @@ typedef enum {
 
     DDFBinaryFormat GetBinaryFormat(void) const { return eBinaryFormat; }
 
-
 private:
-
   char      *pszName;   // a.k.a. subfield mnemonic
   char      *pszFormatString;
 
