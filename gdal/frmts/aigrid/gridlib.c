@@ -1122,11 +1122,12 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
     VSILFILE	*fp;
     double	adfStats[4];
     const size_t nHDRFilenameLen = strlen(pszCoverName)+40;
+    size_t nRead;
 
     psInfo->dfMin = 0.0;
     psInfo->dfMax = 0.0;
     psInfo->dfMean = 0.0;
-    psInfo->dfStdDev = 0.0;
+    psInfo->dfStdDev = -1.0;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file sta.adf file.                                     */
@@ -1149,27 +1150,44 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
     CPLFree( pszHDRFilename );
 
 /* -------------------------------------------------------------------- */
-/*      Get the contents - four doubles.                                */
+/*      Get the contents - 3 or 4 doubles.                              */
 /* -------------------------------------------------------------------- */
-    if( VSIFReadL( adfStats, 1, 32, fp ) != 32 )
-    {
-        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
-        return CE_Failure;
-    }
+    nRead = VSIFReadL( adfStats, 1, 32, fp );
 
     CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
 
+    if( nRead == 32 )
+    {
 #ifdef CPL_LSB
-    CPL_SWAPDOUBLE(adfStats+0);
-    CPL_SWAPDOUBLE(adfStats+1);
-    CPL_SWAPDOUBLE(adfStats+2);
-    CPL_SWAPDOUBLE(adfStats+3);
+        CPL_SWAPDOUBLE(adfStats+0);
+        CPL_SWAPDOUBLE(adfStats+1);
+        CPL_SWAPDOUBLE(adfStats+2);
+        CPL_SWAPDOUBLE(adfStats+3);
 #endif
 
-    psInfo->dfMin = adfStats[0];
-    psInfo->dfMax = adfStats[1];
-    psInfo->dfMean = adfStats[2];
-    psInfo->dfStdDev = adfStats[3];
+        psInfo->dfMin = adfStats[0];
+        psInfo->dfMax = adfStats[1];
+        psInfo->dfMean = adfStats[2];
+        psInfo->dfStdDev = adfStats[3];
+    }
+    else if( nRead == 24 )
+    {
+        /* See dataset at https://trac.osgeo.org/gdal/ticket/6633 */
+        /* In that case, we have only min, max and mean, in LSB ordering */
+        CPL_LSBPTR64(adfStats+0);
+        CPL_LSBPTR64(adfStats+1);
+        CPL_LSBPTR64(adfStats+2);
+
+        psInfo->dfMin = adfStats[0];
+        psInfo->dfMax = adfStats[1];
+        psInfo->dfMean = adfStats[2];
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Wrong content for %s",
+                  pszHDRFilename );
+        return CE_Failure;
+    }
 
     return( CE_None );
 }
