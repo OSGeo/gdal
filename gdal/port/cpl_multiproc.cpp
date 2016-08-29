@@ -1686,7 +1686,7 @@ void CPLUnlockFile( void *hLock )
 GIntBig CPLGetPID()
 
 {
-    return reinterpret_cast<GIntBig>(pthread_self());
+    return (GIntBig)pthread_self();
 }
 
 static pthread_key_t oTLSKey;
