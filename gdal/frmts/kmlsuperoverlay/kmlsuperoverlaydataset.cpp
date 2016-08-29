@@ -877,27 +877,24 @@ static CPLString KMLRemoveSlash(const char* pszPathIn)
 /*                      KmlSuperOverlayReadDataset()                    */
 /************************************************************************/
 
-KmlSuperOverlayReadDataset::KmlSuperOverlayReadDataset()
-
+KmlSuperOverlayReadDataset::KmlSuperOverlayReadDataset() :
+    nFactor(1),
+    psRoot(NULL),
+    psDocument(NULL),
+    poDSIcon(NULL),
+    nOverviewCount(0),
+    papoOverviewDS(NULL),
+    bIsOvr(FALSE),
+    poParent(NULL),
+    psFirstLink(NULL),
+    psLastLink(NULL)
 {
-    nFactor = 1;
-    psRoot = NULL;
-    psDocument = NULL;
-    poDSIcon = NULL;
-    adfGeoTransform[0] = 0;
-    adfGeoTransform[1] = 1;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = 0;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = 1;
-
-    nOverviewCount = 0;
-    papoOverviewDS = NULL;
-    bIsOvr = FALSE;
-
-    poParent = NULL;
-    psFirstLink = NULL;
-    psLastLink = NULL;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -982,8 +979,8 @@ CPLErr KmlSuperOverlayReadDataset::GetGeoTransform( double * padfGeoTransform )
 /*                        KmlSuperOverlayRasterBand()                   */
 /************************************************************************/
 
-KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(KmlSuperOverlayReadDataset* poDSIn,
-                                                     int)
+KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(
+    KmlSuperOverlayReadDataset* poDSIn, int /* nBand*/ )
 {
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
@@ -1937,11 +1934,11 @@ void KmlSingleDocRasterDataset::BuildOverviews()
 /*                      KmlSingleDocRasterRasterBand()                  */
 /************************************************************************/
 
-KmlSingleDocRasterRasterBand::KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset* poDSIn,
-                                                           int nBandIn)
+KmlSingleDocRasterRasterBand::KmlSingleDocRasterRasterBand(
+    KmlSingleDocRasterDataset* poDSIn, int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     nBlockXSize = poDSIn->nTileSize;
     nBlockYSize = poDSIn->nTileSize;
     eDataType = GDT_Byte;
