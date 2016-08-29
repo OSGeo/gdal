@@ -30,6 +30,8 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -110,7 +112,6 @@ class JDEMRasterBand : public GDALPamRasterBand
     int          bBufferAllocFailed;
 
   public:
-
                 JDEMRasterBand( JDEMDataset *, int );
     virtual ~JDEMRasterBand();
 
@@ -123,19 +124,18 @@ class JDEMRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn ) :
+    // Cannot overflow as nBlockXSize <= 999.
+    nRecordSize(poDSIn->GetRasterXSize() * 5 + 9 + 2),
     pszRecord(NULL),
     bBufferAllocFailed(FALSE)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Float32;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-
-    /* Cannot overflow as nBlockXSize <= 999 */
-    nRecordSize = nBlockXSize*5 + 9 + 2;
 }
 
 /************************************************************************/
@@ -210,7 +210,9 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 JDEMDataset::JDEMDataset() :
     fp(NULL)
-{ }
+{
+    std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), 0);
+}
 
 /************************************************************************/
 /*                           ~JDEMDataset()                             */
