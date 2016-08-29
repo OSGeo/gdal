@@ -205,17 +205,17 @@ void ISCEDataset::FlushCache( void )
     CPLXMLNode *psTmpNode
         = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "WIDTH" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nRasterXSize);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nRasterXSize);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "LENGTH" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nRasterYSize);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nRasterYSize);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "NUMBER_BANDS" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nBands);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nBands);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     const char *sType = GDALGetDataTypeName( band->GetRasterDataType() );
@@ -239,6 +239,15 @@ void ISCEDataset::FlushCache( void )
 #else
     CPLCreateXMLElementAndValue( psTmpNode, "value", "b" );
 #endif
+
+    psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "ACCESS_MODE" );
+    CPLCreateXMLElementAndValue( psTmpNode, "value", "read" );
+
+    const char *pszFilename = CPLGetBasename( pszXMLFilename );
+    psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "FILE_NAME" );
+    CPLCreateXMLElementAndValue( psTmpNode, "value", pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Then, add the ISCE domain metadata.                             */
@@ -282,6 +291,137 @@ void ISCEDataset::FlushCache( void )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create the "Coordinate" component elements, possibly with       */
+/*      georeferencing.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psCoordinate1Node, *psCoordinate2Node;
+    double adfGeoTransform[6];
+
+    /* Coordinate 1 */
+    psCoordinate1Node = CPLCreateXMLNode( psDocNode,
+                                          CXT_Element,
+                                          "component" );
+    CPLAddXMLAttributeAndValue( psCoordinate1Node, "name", "Coordinate1" );
+    CPLCreateXMLElementAndValue( psCoordinate1Node,
+                                 "factorymodule",
+                                 "isceobj.Image" );
+    CPLCreateXMLElementAndValue( psCoordinate1Node,
+                                 "factoryname",
+                                 "createCoordinate" );
+    CPLCreateXMLElementAndValue( psCoordinate1Node,
+                                 "doc",
+                                 "First coordinate of a 2D image (witdh)." );
+    /* Property name */
+    psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "name" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 "ImageCoordinate_name" );
+    /* Property family */
+    psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "family" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 "ImageCoordinate" );
+    /* Property size */
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nRasterXSize);
+    psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "size" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 sBuf );
+
+    /* Coordinate 2 */
+    psCoordinate2Node = CPLCreateXMLNode( psDocNode,
+                                          CXT_Element,
+                                          "component" );
+    CPLAddXMLAttributeAndValue( psCoordinate2Node, "name", "Coordinate2" );
+    CPLCreateXMLElementAndValue( psCoordinate2Node,
+                                 "factorymodule",
+                                 "isceobj.Image" );
+    CPLCreateXMLElementAndValue( psCoordinate2Node,
+                                 "factoryname",
+                                 "createCoordinate" );
+    /* Property name */
+    psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "name" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 "ImageCoordinate_name" );
+    /* Property family */
+    psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "family" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 "ImageCoordinate" );
+    /* Property size */
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nRasterYSize);
+    psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "size" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 sBuf );
+
+    if ( GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        if ( adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "ISCE format do not support geotransform with "
+                          "rotation, discarding info.");
+        }
+        else {
+            CPLsnprintf( sBuf, sizeof(sBuf), "%g", adfGeoTransform[0] );
+            psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                          CXT_Element,
+                                          "property" );
+            CPLAddXMLAttributeAndValue( psTmpNode, "name", "startingValue" );
+            CPLCreateXMLElementAndValue( psTmpNode,
+                                         "value",
+                                         sBuf );
+
+            CPLsnprintf( sBuf, sizeof(sBuf), "%g", adfGeoTransform[1] );
+            psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                          CXT_Element,
+                                          "property" );
+            CPLAddXMLAttributeAndValue( psTmpNode, "name", "delta" );
+            CPLCreateXMLElementAndValue( psTmpNode,
+                                         "value",
+                                         sBuf );
+
+            CPLsnprintf( sBuf, sizeof(sBuf), "%g", adfGeoTransform[3] );
+            psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                          CXT_Element,
+                                          "property" );
+            CPLAddXMLAttributeAndValue( psTmpNode, "name", "startingValue" );
+            CPLCreateXMLElementAndValue( psTmpNode,
+                                         "value",
+                                         sBuf );
+
+            CPLsnprintf( sBuf, sizeof(sBuf), "%g", adfGeoTransform[5] );
+            psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                          CXT_Element,
+                                          "property" );
+            CPLAddXMLAttributeAndValue( psTmpNode, "name", "delta" );
+            CPLCreateXMLElementAndValue( psTmpNode,
+                                         "value",
+                                         sBuf );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Write the XML file.                                             */
 /* -------------------------------------------------------------------- */
     CPLSerializeXMLTreeToFile( psDocNode, pszXMLFilename );
@@ -316,7 +456,6 @@ int ISCEDataset::Identify( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      TODO: This function is unusable now:                            */
 /*          * we can't just check for the presence of a XML file        */
-/*            the presence of a XML file                                */
 /*          * we cannot parse it to check basic tree (Identify() is     */
 /*            supposed to be faster than this                           */
 /*          * we could read only a few bytes and strstr() for           */
@@ -676,17 +815,17 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
         = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "WIDTH" );
     char sBuf[64] = { '\0' };
-    snprintf(sBuf, sizeof(sBuf), "%d", nXSize);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nXSize);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "LENGTH" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nYSize);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nYSize);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "NUMBER_BANDS" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nBands);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nBands);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
