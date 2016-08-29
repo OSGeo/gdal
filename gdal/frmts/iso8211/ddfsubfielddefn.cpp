@@ -37,22 +37,17 @@ CPL_CVSID("$Id$");
 /*                          DDFSubfieldDefn()                           */
 /************************************************************************/
 
-DDFSubfieldDefn::DDFSubfieldDefn()
-
-{
-    pszName = NULL;
-
-    bIsVariable = TRUE;
-    nFormatWidth = 0;
-    chFormatDelimiter = DDF_UNIT_TERMINATOR;
-    eBinaryFormat = NotBinary;
-    eType = DDFString;
-
-    pszFormatString = CPLStrdup("");
-
-    nMaxBufChars = 0;
-    pachBuffer = NULL;
-}
+DDFSubfieldDefn::DDFSubfieldDefn() :
+    pszName(NULL),
+    pszFormatString(CPLStrdup("")),
+    eType(DDFString),
+    eBinaryFormat(NotBinary),
+    bIsVariable(TRUE),
+    chFormatDelimiter(DDF_UNIT_TERMINATOR),
+    nFormatWidth(0),
+    nMaxBufChars(0),
+    pachBuffer(NULL)
+{}
 
 /************************************************************************/
 /*                          ~DDFSubfieldDefn()                          */

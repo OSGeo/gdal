@@ -41,31 +41,28 @@ CPL_CVSID("$Id$");
  */
 
 DDFModule::DDFModule() :
-    nFirstRecordOffset(0)
+    fpDDF(NULL),
+    bReadOnly(TRUE),
+    nFirstRecordOffset(0),
+    _interchangeLevel('\0'),
+    _inlineCodeExtensionIndicator('\0'),
+    _versionNumber('\0'),
+    _appIndicator('\0'),
+    _fieldControlLength(9),
+    _recLength(0),
+    _leaderIden('L'),
+    _fieldAreaStart(0),
+    _sizeFieldLength(0),
+    _sizeFieldPos(0),
+    _sizeFieldTag(0),
+    nFieldDefnCount(0),
+    papoFieldDefns(NULL),
+    poRecord(NULL),
+    nCloneCount(0),
+    nMaxCloneCount(0),
+    papoClones(NULL)
 {
-    nFieldDefnCount = 0;
-    papoFieldDefns = NULL;
-    poRecord = NULL;
-
-    papoClones = NULL;
-    nCloneCount = nMaxCloneCount = 0;
-
-    fpDDF = NULL;
-    bReadOnly = TRUE;
-
-    _interchangeLevel = '\0';
-    _inlineCodeExtensionIndicator = '\0';
-    _versionNumber = '\0';
-    _appIndicator = '\0';
-    _fieldControlLength = 9;
     strcpy( _extendedCharSet, " ! " );
-
-    _recLength = 0;
-    _leaderIden = 'L';
-    _fieldAreaStart = 0;
-    _sizeFieldLength = 0;
-    _sizeFieldPos = 0;
-    _sizeFieldTag = 0;
 }
 
 /************************************************************************/

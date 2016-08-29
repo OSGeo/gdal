@@ -38,27 +38,19 @@ static const int nLeaderSize = 24;
 /*                             DDFRecord()                              */
 /************************************************************************/
 
-DDFRecord::DDFRecord( DDFModule * poModuleIn )
-
-{
-    poModule = poModuleIn;
-
-    nReuseHeader = FALSE;
-
-    nFieldOffset = 0;
-
-    nDataSize = 0;
-    pachData = NULL;
-
-    nFieldCount = 0;
-    paoFields = NULL;
-
-    bIsClone = FALSE;
-
-    _sizeFieldTag = poModuleIn->GetSizeFieldTag();
-    _sizeFieldPos = 5;
-    _sizeFieldLength = 5;
-}
+DDFRecord::DDFRecord( DDFModule * poModuleIn ) :
+    poModule(poModuleIn),
+    nReuseHeader(FALSE),
+    nFieldOffset(0),
+    _sizeFieldTag(poModuleIn->GetSizeFieldTag()),
+    _sizeFieldPos(5),
+    _sizeFieldLength(5),
+    nDataSize(0),
+    pachData(NULL),
+    nFieldCount(0),
+    paoFields(NULL),
+    bIsClone(FALSE)
+{}
 
 /************************************************************************/
 /*                             ~DDFRecord()                             */

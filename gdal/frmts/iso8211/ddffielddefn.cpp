@@ -38,12 +38,19 @@ CPL_CVSID("$Id$");
 /*                            DDFFieldDefn()                            */
 /************************************************************************/
 
-DDFFieldDefn::DDFFieldDefn()
-    : poModule(NULL), pszTag(NULL), _fieldName(NULL), _arrayDescr(NULL),
-      _formatControls(NULL), bRepeatingSubfields(FALSE), nFixedWidth(0),
-      _data_struct_code(dsc_elementary), _data_type_code(dtc_char_string),
-      nSubfieldCount(0), papoSubfields(NULL)
-{ }
+DDFFieldDefn::DDFFieldDefn() :
+    poModule(NULL),
+    pszTag(NULL),
+    _fieldName(NULL),
+    _arrayDescr(NULL),
+    _formatControls(NULL),
+    bRepeatingSubfields(FALSE),
+    nFixedWidth(0),
+    _data_struct_code(dsc_elementary),
+    _data_type_code(dtc_char_string),
+    nSubfieldCount(0),
+    papoSubfields(NULL)
+{}
 
 /************************************************************************/
 /*                           ~DDFFieldDefn()                            */
