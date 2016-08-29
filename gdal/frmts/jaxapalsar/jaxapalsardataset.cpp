@@ -177,7 +177,7 @@ PALSARJaxaDataset::PALSARJaxaDataset() :
     pasGCPList(NULL),
     nGCPCount(0),
     nFileType(level_unknown)
-{ }
+{}
 
 PALSARJaxaDataset::~PALSARJaxaDataset()
 {
@@ -217,16 +217,19 @@ public:
 
 PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDSIn,
                                             int nBandIn, VSILFILE *fpIn ) :
-    nPolarization(hh)
+    fp(fpIn),
+    nRasterXSize(0),
+    nRasterYSize(0),
+    nPolarization(hh),
+    nBitsPerSample(0),
+    nSamplesPerGroup(0),
+    nRecordSize(0)
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    this->fp = fpIn;
 
     /* Read image options record to determine the type of data */
     VSIFSeekL( fp, BITS_PER_SAMPLE_OFFSET, SEEK_SET );
-    nBitsPerSample = 0;
-    nSamplesPerGroup = 0;
     READ_CHAR_VAL( nBitsPerSample, BITS_PER_SAMPLE_LENGTH, fp );
     READ_CHAR_VAL( nSamplesPerGroup, SAMPLES_PER_GROUP_LENGTH, fp );
 
@@ -250,19 +253,19 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDSIn,
     READ_CHAR_VAL( nRasterYSize, NUMBER_LINES_LENGTH, fp );
     VSIFSeekL( fp, SAR_DATA_RECORD_LENGTH_OFFSET, SEEK_SET );
     READ_CHAR_VAL( nRecordSize, SAR_DATA_RECORD_LENGTH_LENGTH, fp );
-    int nDenom = ((nBitsPerSample / 8) * nSamplesPerGroup);
-    if( nDenom == 0 )
-        nRasterXSize = 0;
-    else
-        nRasterXSize = (nRecordSize -
-                    (nFileType != level_15 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
-        / nDenom;
+    const int nDenom = ((nBitsPerSample / 8) * nSamplesPerGroup);
+    if( nDenom != 0 )
+        nRasterXSize =
+            (nRecordSize -
+             (nFileType != level_15 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
+            / nDenom;
 
     poDSIn->nRasterXSize = nRasterXSize;
     poDSIn->nRasterYSize = nRasterYSize;
 
     /* Polarization */
-    switch (nBand) {
+    switch( nBand )
+    {
       case 0:
         nPolarization = hh;
         SetMetadataItem( "POLARIMETRIC_INTERP", "HH" );
