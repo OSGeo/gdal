@@ -142,8 +142,10 @@ class CPL_DLL CPLMutexHolder
 {
   private:
     CPLMutex   *hMutex;
+#ifndef MUTEX_NONE
     const char *pszFile;
     int         nLine;
+#endif
 
   public:
 
