@@ -83,7 +83,8 @@ typedef struct {
     CPLXMLNode *psLastNode;
 } ParseContext;
 
-static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
+static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent,
+                                      CPLXMLNodeType eType,
                                       const char *pszText );
 
 /************************************************************************/
