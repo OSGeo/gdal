@@ -92,24 +92,21 @@ class JPEGLSRasterBand : public GDALPamRasterBand
 /*                        JPEGLSRasterBand()                            */
 /************************************************************************/
 
-JPEGLSRasterBand::JPEGLSRasterBand( JPEGLSDataset *poDSIn, int nBandIn)
+JPEGLSRasterBand::JPEGLSRasterBand( JPEGLSDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eDataType = (poDSIn->nBitsPerSample <= 8) ? GDT_Byte : GDT_Int16;
-    this->nBlockXSize = poDSIn->nRasterXSize;
-    this->nBlockYSize = poDSIn->nRasterYSize;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = (poDSIn->nBitsPerSample <= 8) ? GDT_Byte : GDT_Int16;
+    nBlockXSize = poDSIn->nRasterXSize;
+    nBlockYSize = poDSIn->nRasterYSize;
 }
 
 /************************************************************************/
 /*                      ~JPEGLSRasterBand()                             */
 /************************************************************************/
 
-JPEGLSRasterBand::~JPEGLSRasterBand()
-{
-}
-
+JPEGLSRasterBand::~JPEGLSRasterBand() {}
 
 /************************************************************************/
 /*                    JPEGLSGetErrorAsString()                          */
@@ -220,12 +217,12 @@ GDALColorInterp JPEGLSRasterBand::GetColorInterpretation()
 /*                        JPEGLSDataset()                          */
 /************************************************************************/
 
-JPEGLSDataset::JPEGLSDataset()
-{
-    pabyUncompressedData = NULL;
-    bHasUncompressed = FALSE;
-    nBitsPerSample = 0;
-}
+JPEGLSDataset::JPEGLSDataset() :
+    pabyUncompressedData(NULL),
+    bHasUncompressed(FALSE),
+    nBitsPerSample(0),
+    nOffset(0)
+{}
 
 /************************************************************************/
 /*                         ~JPEGLSDataset()                        */
