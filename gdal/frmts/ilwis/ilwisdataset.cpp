@@ -83,22 +83,24 @@ static string GetLine(VSILFILE* fil)
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-IniFile::IniFile(const string& filenam)
+IniFile::IniFile( const string& filenameIn ) :
+    filename(filenameIn),
+    bChanged(false)  // Start tracking changes.
 {
-    filename = filenam;
     Load();
-    bChanged = false; // Start tracking changes
 }
 
 IniFile::~IniFile()
 {
-    if (bChanged)
+    if( bChanged )
     {
         Store();
         bChanged = false;
     }
 
-    for (Sections::iterator iter = sections.begin(); iter != sections.end(); ++iter)
+    for( Sections::iterator iter = sections.begin();
+         iter != sections.end();
+         ++iter )
     {
         (*(*iter).second).clear();
         delete (*iter).second;
@@ -445,10 +447,10 @@ static CPLErr GetStoreType(string pszFileName, ilwisStoreType &stStoreType)
 
 
 ILWISDataset::ILWISDataset() :
+    pszProjection(CPLStrdup("")),
     bGeoDirty(FALSE),
     bNewDataset(FALSE)
 {
-    pszProjection = CPLStrdup("");
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -1227,18 +1229,21 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*                       ILWISRasterBand()                              */
 /************************************************************************/
 
-ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn )
-
+ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn ) :
+    fpRaw(NULL),
+    nSizePerPixel(0)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     string sBandName;
-    if ( EQUAL(poDSIn->pszFileType.c_str(),"Map"))
-        sBandName = string(poDSIn->osFileName);
-    else //map list
+    if( EQUAL(poDSIn->pszFileType.c_str(), "Map"))
     {
-        //Form the band name
+        sBandName = string(poDSIn->osFileName);
+    }
+    else  // Map list.
+    {
+        // Form the band name.
         char cBandName[45];
         snprintf( cBandName, sizeof(cBandName), "Map%d", nBand-1);
         sBandName = ReadElement("MapList", string(cBandName), string(poDSIn->osFileName));
@@ -1251,7 +1256,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn )
           sBandName = string(CPLFormFilename(sBandPath.c_str(),sBandBaseName.c_str(),"mpr" ));
     }
 
-    if (poDSIn->bNewDataset)
+    if( poDSIn->bNewDataset )
     {
       // Called from Create():
       // eDataType is defaulted to GDT_Byte by GDALRasterBand::GDALRasterBand
@@ -1262,26 +1267,28 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn )
         eDataType = ILWIS2GDALType(psInfo.stStoreType);
     }
     else // Called from Open(), thus convert ILWIS type from ODF to eDataType
+    {
         GetILWISInfo(sBandName);
+    }
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-    switch (psInfo.stStoreType)
+    switch( psInfo.stStoreType )
     {
       case stByte:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Byte) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Byte);
         break;
       case stInt:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Int16) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Int16) ;
         break;
       case stLong:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Int32) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Int32);
         break;
       case stFloat:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Float32) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Float32);
         break;
       case stReal:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Float64) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Float64);
         break;
     }
     ILWISOpen(sBandName);
@@ -1848,17 +1855,23 @@ static double doubleConv(const char* s)
     return r;
 }
 
-ValueRange::ValueRange(string sRng) :
-    _rLo(0.0), _rHi(0.0), _rStep(0.0), _iDec(0), _r0(0.0), iRawUndef(0),
-    _iWidth(0), st(stByte)
+ValueRange::ValueRange( string sRng ) :
+    _rLo(0.0),
+    _rHi(0.0),
+    _rStep(0.0),
+    _iDec(0),
+    _r0(0.0),
+    iRawUndef(0),
+    _iWidth(0),
+    st(stByte)
 {
     char* sRange = new char[sRng.length() + 1];
-    for (unsigned int i = 0; i < sRng.length(); ++i)
+    for( unsigned int i = 0; i < sRng.length(); ++i )
         sRange[i] = sRng[i];
     sRange[sRng.length()] = 0;
 
     char *p1 = strchr(sRange, ':');
-    if (NULL == p1)
+    if( NULL == p1 )
     {
         delete[] sRange;
         init();
@@ -1866,27 +1879,31 @@ ValueRange::ValueRange(string sRng) :
     }
 
     char *p3 = strstr(sRange, ",offset=");
-    if (NULL == p3)
+    if( NULL == p3 )
         p3 = strstr(sRange, ":offset=");
     _r0 = rUNDEF;
-    if (NULL != p3) {
+    if( NULL != p3 )
+    {
         _r0 = doubleConv(p3+8);
         *p3 = 0;
     }
     char *p2 = strrchr(sRange, ':');
     _rStep = 1;
-    if (p1 != p2) { // step
+    if( p1 != p2 )
+    { // step
         _rStep = doubleConv(p2+1);
         *p2 = 0;
     }
 
     p2 = strchr(sRange, ':');
-    if (p2 != NULL) {
+    if( p2 != NULL )
+    {
         *p2 = 0;
         _rLo = CPLAtof(sRange);
         _rHi = CPLAtof(p2+1);
     }
-    else {
+    else
+    {
         _rLo = CPLAtof(sRange);
         _rHi = _rLo;
     }
@@ -1895,7 +1912,7 @@ ValueRange::ValueRange(string sRng) :
     delete [] sRange;
 }
 
-ValueRange::ValueRange(double min, double max)  // step = 1
+ValueRange::ValueRange( double min, double max )  // step = 1
 {
     _rLo = min;
     _rHi = max;
@@ -1903,7 +1920,7 @@ ValueRange::ValueRange(double min, double max)  // step = 1
     init();
 }
 
-ValueRange::ValueRange(double min, double max, double step)
+ValueRange::ValueRange( double min, double max, double step )
 {
     _rLo = min;
     _rHi = max;
@@ -1925,7 +1942,7 @@ void ValueRange::init()
     init(rUNDEF);
 }
 
-void ValueRange::init(double rRaw0)
+void ValueRange::init( double rRaw0 )
 {
         _iDec = 0;
         if (_rStep < 0)

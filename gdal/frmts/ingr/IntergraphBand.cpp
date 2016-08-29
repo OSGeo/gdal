@@ -72,13 +72,13 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
                                             int nBandIn,
                                             int nBandOffset,
                                             GDALDataType eType ) :
-    poColorTable(NULL),
+    poColorTable(new GDALColorTable()),
     nDataOffset(0),
     nBlockBufSize(0),
     nBandStart(nBandOffset),
     nRGBIndex(0),
     eFormat(IngrUnknownFrmt),
-    bTiled(FALSE),
+    bTiled(false),
     nFullBlocksX(0),
     nFullBlocksY(0),
     pabyBlockBuf(NULL),
@@ -86,15 +86,13 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     pahTiles(NULL),
     nRLEOffset(0)
 {
-    this->poColorTable  = new GDALColorTable();
-    this->poDS          = poDSIn;
-    this->nBand         = nBandIn != 0 ? nBandIn : poDSIn->nBands;
-    eDataType     = eType;
+    poDS = poDSIn;
+    nBand = nBandIn != 0 ? nBandIn : poDSIn->nBands;
+    eDataType = eType;
 
     // --------------------------------------------------------------------
     // Get Header Info
     // --------------------------------------------------------------------
-
     memcpy(&hHeaderOne, &poDSIn->hHeaderOne, sizeof(hHeaderOne));
     memcpy(&hHeaderTwo, &poDSIn->hHeaderTwo, sizeof(hHeaderTwo));
 
@@ -113,7 +111,6 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // --------------------------------------------------------------------
     // Get Color Tabel from Color Table Type (CTV)
     // --------------------------------------------------------------------
-
     uint32 nEntries = hHeaderTwo.NumberOfCTEntries;
 
     if( nEntries > 0 )
@@ -152,7 +149,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
 
     eFormat = (INGR_Format) hHeaderOne.DataTypeCode;
 
-    bTiled = (hHeaderOne.DataTypeCode == TiledRasterData);
+    bTiled = hHeaderOne.DataTypeCode == TiledRasterData;
 
     if( bTiled )
     {
@@ -184,26 +181,24 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // --------------------------------------------------------------------
     // Incomplete tiles have Block Offset greater than:
     // --------------------------------------------------------------------
-
-    nFullBlocksX  = ( nRasterXSize / nBlockXSize );
-    nFullBlocksY  = ( nRasterYSize / nBlockYSize );
+    nFullBlocksX = nRasterXSize / nBlockXSize;
+    nFullBlocksY = nRasterYSize / nBlockYSize;
 
     // --------------------------------------------------------------------
     // Get the Data Type from Format
     // --------------------------------------------------------------------
-
-    eDataType = INGR_GetDataType( (uint16) eFormat );
+    eDataType = INGR_GetDataType( static_cast<uint16>(eFormat) );
 
     // --------------------------------------------------------------------
     // Allocate buffer for a Block of data
     // --------------------------------------------------------------------
-
     if( nBlockYSize == 0 ||
         nBlockXSize > INT_MAX / nBlockYSize ||
         nBlockXSize > INT_MAX / 4 - 2 ||
         GDALGetDataTypeSize( eDataType ) == 0 ||
         nBlockYSize > INT_MAX / (GDALGetDataTypeSize( eDataType ) / 8) ||
-        nBlockXSize > INT_MAX / (nBlockYSize * (GDALGetDataTypeSize( eDataType ) / 8)) )
+        nBlockXSize > INT_MAX / (nBlockYSize *
+                                 (GDALGetDataTypeSizeBytes( eDataType ))) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Too big block size");
         return;
@@ -214,25 +209,27 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
 
     if (eFormat == RunLengthEncoded)
     {
-        pabyBlockBuf = (GByte*) VSIMalloc3( nBlockXSize*4+2, nBlockYSize,
-                                            GDALGetDataTypeSize( eDataType ) / 8);
+        pabyBlockBuf = (GByte*) VSIMalloc3(
+            nBlockXSize*4+2, nBlockYSize,
+            GDALGetDataTypeSizeBytes( eDataType ) );
     }
     else
     {
-        pabyBlockBuf = (GByte*) VSIMalloc3( nBlockXSize, nBlockYSize,
-                                            GDALGetDataTypeSize( eDataType ) / 8);
+        pabyBlockBuf = (GByte*) VSIMalloc3(
+            nBlockXSize, nBlockYSize,
+            GDALGetDataTypeSizeBytes( eDataType ) );
     }
 
     if (pabyBlockBuf == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBlockBufSize);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot allocate %d bytes", nBlockBufSize);
         return;
     }
 
     // --------------------------------------------------------------------
     // More Metadata Information
     // --------------------------------------------------------------------
-
     SetMetadataItem( "FORMAT", INGR_GetFormatName( (uint16) eFormat ),
         "IMAGE_STRUCTURE" );
 
@@ -257,7 +254,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
         SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
     }
 
-    this->nRLEOffset = 0;
+    nRLEOffset = 0;
 }
 
 //  ----------------------------------------------------------------------------
@@ -482,15 +479,15 @@ int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff,
 //  ----------------------------------------------------------------------------
 
 IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDSIn,
-                                     int nBandIn,
-                                     int nBandOffset,
-                                     int nRGorB )
+                                      int nBandIn,
+                                      int nBandOffset,
+                                      int nRGorB )
     : IntergraphRasterBand( poDSIn, nBandIn, nBandOffset )
 {
-    if (pabyBlockBuf == NULL)
+    if( pabyBlockBuf == NULL )
         return;
 
-    nRGBIndex     = (uint8) nRGorB;
+    nRGBIndex = static_cast<uint8>(nRGorB);
 
     // --------------------------------------------------------------------
     // Reallocate buffer for a block of RGB Data
@@ -498,10 +495,11 @@ IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDSIn,
 
     nBlockBufSize *= 3;
     CPLFree( pabyBlockBuf );
-    pabyBlockBuf = (GByte*) VSIMalloc( nBlockBufSize );
-    if (pabyBlockBuf == NULL)
+    pabyBlockBuf = static_cast<GByte *>(VSIMalloc( nBlockBufSize ));
+    if( pabyBlockBuf == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBlockBufSize);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot allocate %d bytes", nBlockBufSize);
     }
 }
 
@@ -539,18 +537,18 @@ CPLErr IntergraphRGBBand::IReadBlock( int nBlockXOff,
 //  ----------------------------------------------------------------------------
 
 IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
-                                     int nBandIn,
-                                     int nBandOffset,
-                                     int nRGorB )
-    : IntergraphRasterBand( poDSIn, nBandIn, nBandOffset )
+                                      int nBandIn,
+                                      int nBandOffset,
+                                      int nRGorB ) :
+    IntergraphRasterBand( poDSIn, nBandIn, nBandOffset ),
+    pabyRLEBlock(NULL),
+    nRLESize(0),
+    bRLEBlockLoaded(FALSE),
+    panRLELineOffset(NULL)
 {
-    nRLESize         = 0;
-    nRGBIndex        = (uint8) nRGorB;
-    bRLEBlockLoaded  = FALSE;
-    pabyRLEBlock     = NULL;
-    panRLELineOffset = NULL;
+    nRGBIndex = static_cast<uint8>(nRGorB);
 
-    if (pabyBlockBuf == NULL)
+    if( pabyBlockBuf == NULL )
         return;
 
     if( !bTiled )
@@ -576,9 +574,9 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
             nFullBlocksY = 1;
         }
 
-        nRLESize     = INGR_GetDataBlockSize( poDSIn->pszFilename,
-                          hHeaderTwo.CatenatedFilePointer,
-                          nDataOffset);
+        nRLESize = INGR_GetDataBlockSize( poDSIn->pszFilename,
+                                          hHeaderTwo.CatenatedFilePointer,
+                                          nDataOffset);
 
         if( nBlockYSize == 0 || nBlockXSize > INT_MAX / nBlockYSize )
         {
@@ -843,14 +841,14 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
 IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDSIn,
                                             int nBandIn,
                                             int nBandOffset,
-                                            int nRGorB )
-    : IntergraphRasterBand( poDSIn, nBandIn, nBandOffset, GDT_Byte ),
-      pabyBMPBlock(NULL),
-      nBMPSize(0),
-      nQuality(0),
-      nRGBBand(nRGorB)
+                                            int nRGorB ) :
+    IntergraphRasterBand( poDSIn, nBandIn, nBandOffset, GDT_Byte ),
+    pabyBMPBlock(NULL),
+    nBMPSize(0),
+    nQuality(0),
+    nRGBBand(nRGorB)
 {
-    if (pabyBlockBuf == NULL)
+    if( pabyBlockBuf == NULL )
         return;
 
     if( !bTiled )
@@ -860,9 +858,9 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDSIn,
         // ------------------------------------------------------------
 
         nBlockYSize = nRasterYSize;
-        nBMPSize    = INGR_GetDataBlockSize( poDSIn->pszFilename,
-                                             hHeaderTwo.CatenatedFilePointer,
-                                             nDataOffset);
+        nBMPSize = INGR_GetDataBlockSize( poDSIn->pszFilename,
+                                          hHeaderTwo.CatenatedFilePointer,
+                                          nDataOffset );
     }
     else
     {
@@ -883,7 +881,8 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDSIn,
     pabyBMPBlock = (GByte*) VSIMalloc( nBMPSize );
     if (pabyBMPBlock == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nBMPSize);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot allocate %d bytes", nBMPSize);
     }
 
     // ----------------------------------------------------------------
