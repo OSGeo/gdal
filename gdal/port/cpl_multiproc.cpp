@@ -132,7 +132,7 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex,
     // fprintf() will do the job right.
     fprintf( stderr,
              "CPLMutexHolder: Request %p for pid %ld at %d/%s.\n",
-             *phMutex, static_cast<long>(CPLGetPID()), nLine, pszFile );
+             *phMutex, reinterpret_cast<long>(CPLGetPID()), nLine, pszFile );
 #endif
 
     if( !CPLCreateOrAcquireMutexEx( phMutex, dfWaitInSeconds, nOptions ) )
