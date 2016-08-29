@@ -217,14 +217,14 @@ class JPEG2000RasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDSIn, int nBandIn,
-                int iDepthIn, int bSignednessIn )
-
+                                        int iDepthIn, int bSignednessIn ) :
+    poGDS(poDSIn),
+    psMatrix(NULL),
+    iDepth(iDepthIn),
+    bSignedness(bSignednessIn)
 {
-    this->poDS = poDSIn;
-    poGDS = poDSIn;
-    this->nBand = nBandIn;
-    this->iDepth = iDepthIn;
-    this->bSignedness = bSignednessIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     // XXX: JasPer can't handle data with depth > 32 bits
     // Maximum possible depth for JPEG2000 is 38!
@@ -412,13 +412,13 @@ GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
 /************************************************************************/
 
 JPEG2000Dataset::JPEG2000Dataset() :
-    iFormat(0)
+    psStream(NULL),
+    psImage(NULL),
+    iFormat(0),
+    bPromoteTo8Bit(FALSE),
+    bAlreadyDecoded(FALSE)
 {
-    psStream = NULL;
-    psImage = NULL;
     nBands = 0;
-    bAlreadyDecoded = FALSE;
-    bPromoteTo8Bit = FALSE;
 
     poDriver = (GDALDriver *)GDALGetDriverByName("JPEG2000");
 }
