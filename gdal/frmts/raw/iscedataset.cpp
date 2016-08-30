@@ -272,12 +272,12 @@ void ISCEDataset::FlushCache( void )
 
         /* Don't write it out if it is one of the bits of metadata that is
          * written out elsewhere in this routine */
-        if ( strcmp( papszTokens[0], "WIDTH" ) == 0
-              || strcmp( papszTokens[0], "LENGTH" ) == 0
-              || strcmp( papszTokens[0], "NUMBER_BANDS" ) == 0
-              || strcmp( papszTokens[0], "DATA_TYPE" ) == 0
-              || strcmp( papszTokens[0], "SCHEME" ) == 0
-              || strcmp( papszTokens[0], "BYTE_ORDER" ) == 0 )
+        if ( EQUAL( papszTokens[0], "WIDTH" )
+              || EQUAL( papszTokens[0], "LENGTH" )
+              || EQUAL( papszTokens[0], "NUMBER_BANDS" )
+              || EQUAL( papszTokens[0], "DATA_TYPE" )
+              || EQUAL( papszTokens[0], "SCHEME" )
+              || EQUAL( papszTokens[0], "BYTE_ORDER" ) )
         {
             CSLDestroy( papszTokens );
             continue;
@@ -503,7 +503,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     char **papszXmlProps = NULL;
     while ( psCur != NULL )
     {
-        if ( strcmp( psCur->pszValue, "property" ) == 0)
+        if ( EQUAL( psCur->pszValue, "property" ) )
         {
             /* Top-level property */
             const char *pszName = CPLGetXMLValue( psCur, "name", NULL );
@@ -514,7 +514,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                                                  pszName, pszValue );
             }
         }
-        else if ( strcmp( psCur->pszValue, "component" ) == 0)
+        else if ( EQUAL( psCur->pszValue, "component" ) )
         {
             /* "components" elements in ISCE store set of properties.   */
             /* For now, they are avoided as I am not sure the full      */
@@ -523,8 +523,8 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
             /* georeferencing information.                              */
             const char *pszCurName = CPLGetXMLValue( psCur, "name", NULL );
             if ( pszCurName != NULL 
-                && ( strcmp( pszCurName, "Coordinate1" ) == 0
-                    || strcmp( pszCurName, "Coordinate2" ) == 0 ) )
+                && ( EQUAL( pszCurName, "Coordinate1" ) 
+                    || EQUAL( pszCurName, "Coordinate2" ) ) )
             {
                 /* We need two subproperties: startingValue and delta.  */
                 /* To simplify parsing code, we will store them in      */
@@ -533,7 +533,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                 CPLXMLNode *psCur2 = psCur->psChild;
                 while ( psCur2 != NULL )
                 {
-                    if ( strcmp( psCur2->pszValue, "property" ) != 0 )
+                    if ( ! EQUAL( psCur2->pszValue, "property" ) )
                     {
                         psCur2 = psCur2->psNext;
                         continue; /* Skip non property elements */
@@ -549,8 +549,8 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                         continue; /* Skip malformatted elements */
                     }
 
-                    if ( strcmp( pszCur2Name, "startingValue" ) == 0
-                        || strcmp( pszCur2Name, "delta" ) == 0 )
+                    if ( EQUAL( pszCur2Name, "startingValue" )
+                        || EQUAL( pszCur2Name, "delta" ) )
                     {
                         char pszPropName[32]; 
                         strncpy(pszPropName, pszCurName, sizeof(pszPropName)-1);
@@ -721,7 +721,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
         adfGeoTransform[5] = CPLAtof( CSLFetchNameValue( papszXmlProps,
                                                                "Coordinate2delta" ) );
         poDS->SetGeoTransform( adfGeoTransform );
-
+         
         /* ISCE format seems not to have a projection field, but uses   */
         /* WGS84.                                                       */
         poDS->SetProjection( SRS_WKT_WGS84 );
@@ -737,15 +737,16 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                                 "=",
                                 CSLT_STRIPLEADSPACES
                                 | CSLT_STRIPENDSPACES);
-        if ( strcmp( papszTokens[0], "WIDTH" ) == 0
-              || strcmp( papszTokens[0], "LENGTH" ) == 0
-              || strcmp( papszTokens[0], "NUMBER_BANDS" ) == 0
-              || strcmp( papszTokens[0], "DATA_TYPE" ) == 0
-              || strcmp( papszTokens[0], "SCHEME" ) == 0 
-              || strcmp( papszTokens[0], "Coordinate1startingValue" ) == 0
-              || strcmp( papszTokens[0], "Coordinate1delta" ) == 0
-              || strcmp( papszTokens[0], "Coordinate2startingValue" ) == 0
-              || strcmp( papszTokens[0], "Coordinate2delta" ) == 0 )
+        if ( EQUAL( papszTokens[0], "WIDTH" )
+              || EQUAL( papszTokens[0], "LENGTH" )
+              || EQUAL( papszTokens[0], "NUMBER_BANDS" )
+              || EQUAL( papszTokens[0], "DATA_TYPE" )
+              || EQUAL( papszTokens[0], "SCHEME" )
+              || EQUAL( papszTokens[0], "BYTE_ORDER" )
+              || EQUAL( papszTokens[0], "Coordinate1startingValue" )
+              || EQUAL( papszTokens[0], "Coordinate1delta" )
+              || EQUAL( papszTokens[0], "Coordinate2startingValue" )
+              || EQUAL( papszTokens[0], "Coordinate2delta" ) )
         {
             CSLDestroy( papszTokens );
             continue;
