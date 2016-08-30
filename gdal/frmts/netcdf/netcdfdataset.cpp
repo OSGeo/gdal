@@ -170,9 +170,17 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     const int *panBandZPosIn,
                                     const int *paDimIds,
                                     int nBandIn ) :
+    nc_datatype(NC_NAT),
     cdfid(poNCDFDS->GetCDFID()),
+    nZId(nZIdIn),
+    nZDim(nZDimIn),
+    nLevel(nLevelIn),
     nBandXPos(panBandZPosIn[0]),
     nBandYPos(panBandZPosIn[1]),
+    panBandZPos(NULL),
+    panBandZLev(NULL),
+    bNoDataSet(FALSE),
+    dfNoDataValue(0.0),
     bHaveScale(false),
     bHaveOffset(false),
     dfScale(1.0),
@@ -180,36 +188,28 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     bSignedData(true),   // Default signed, except for Byte.
     bCheckLongitude(false)
 {
-    this->poDS = poNCDFDS;
-    this->panBandZPos = NULL;
-    this->panBandZLev = NULL;
-    this->nBand = nBandIn;
-    this->nZId = nZIdIn;
-    this->nZDim = nZDimIn;
-    this->nLevel = nLevelIn;
+    poDS = poNCDFDS;
+    nBand = nBandIn;
 
 /* ------------------------------------------------------------------- */
 /*      Take care of all other dimensions                              */
 /* ------------------------------------------------------------------- */
-    if( nZDim > 2 ) {
-        this->panBandZPos =
-            (int *) CPLCalloc( nZDim-1, sizeof( int ) );
-        this->panBandZLev =
-            (int *) CPLCalloc( nZDim-1, sizeof( int ) );
+    if( nZDim > 2 )
+    {
+        panBandZPos = static_cast<int *>(CPLCalloc( nZDim-1, sizeof( int ) ));
+        panBandZLev = static_cast<int *>(CPLCalloc( nZDim-1, sizeof( int ) ));
 
-        for ( int i=0; i < nZDim - 2; i++ ){
-            this->panBandZPos[i] = panBandZPosIn[i+2];
-            this->panBandZLev[i] = panBandZLevIn[i];
+        for ( int i=0; i < nZDim - 2; i++ )
+        {
+            panBandZPos[i] = panBandZPosIn[i+2];
+            panBandZLev[i] = panBandZLevIn[i];
         }
     }
 
-    this->dfNoDataValue = 0.0;
-    this->bNoDataSet = FALSE;
-
-    nRasterXSize  = poDS->GetRasterXSize( );
-    nRasterYSize  = poDS->GetRasterYSize( );
-    nBlockXSize   = poDS->GetRasterXSize( );
-    nBlockYSize   = 1;
+    nRasterXSize = poDS->GetRasterXSize();
+    nRasterYSize = poDS->GetRasterYSize();
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
 
 /* -------------------------------------------------------------------- */
 /*      Get the type of the "z" variable, our target raster array.      */
@@ -247,7 +247,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         if( nBand == 1 )
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Unsupported netCDF datatype (%d), treat as Float32.",
-                      (int) nc_datatype );
+                      static_cast<int>(nc_datatype) );
         eDataType = GDT_Float32;
         nc_datatype = NC_FLOAT;
     }
@@ -255,8 +255,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* -------------------------------------------------------------------- */
 /*      Find and set No Data for this variable                          */
 /* -------------------------------------------------------------------- */
-    nc_type atttype=NC_NAT;
-    size_t attlen;
+    nc_type atttype = NC_NAT;
+    size_t attlen = 0;
     const char* pszNoValueName = NULL;
 
     /* find attribute name, either _FillValue or missing_value */
@@ -264,10 +264,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     if( status == NC_NOERR ) {
         pszNoValueName = _FillValue;
     }
-    else {
+    else
+    {
         status = nc_inq_att( cdfid, nZId,
                              "missing_value", &atttype, &attlen );
-        if( status == NC_NOERR ) {
+        if( status == NC_NOERR )
+        {
             pszNoValueName = "missing_value";
         }
     }
@@ -275,7 +277,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     /* fetch missing value */
     double dfNoData = 0.0;
     bool bGotNoData = false;
-    if( status == NC_NOERR ) {
+    if( status == NC_NOERR )
+    {
         if ( NCDFGetAttr( cdfid, nZId, pszNoValueName,
                           &dfNoData ) == CE_None )
         {
@@ -284,11 +287,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     }
 
     /* if NoData was not found, use the default value */
-    nc_type vartype=NC_NAT;
-    if ( ! bGotNoData ) {
+    nc_type vartype = NC_NAT;
+    if( ! bGotNoData )
+    {
         nc_inq_vartype( cdfid, nZId, &vartype );
         dfNoData = NCDFGetDefaultNoDataValue( vartype );
-        /*bGotNoData = true;*/
+        // bGotNoData = true;
         CPLDebug( "GDAL_netCDF",
                   "did not get nodata value for variable #%d, using default %f",
                   nZId, dfNoData );
@@ -303,23 +307,28 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     /* first look for valid_range */
     bool bGotValidRange = false;
     status = nc_inq_att( cdfid, nZId, "valid_range", &atttype, &attlen);
-    if( (status == NC_NOERR) && (attlen == 2)) {
-        int vrange[2];
-        int vmin, vmax;
+    if( (status == NC_NOERR) && (attlen == 2))
+    {
+        int vrange[2] = { 0, 0 };
+        int vmin = 0;
+        int vmax = 0;
         status = nc_get_att_int( cdfid, nZId, "valid_range", vrange );
         if( status == NC_NOERR ) {
             bGotValidRange = true;
             adfValidRange[0] = vrange[0];
             adfValidRange[1] = vrange[1];
         }
-        /* if not found look for valid_min and valid_max */
-        else {
+        // If not found look for valid_min and valid_max.
+        else
+        {
             status = nc_get_att_int( cdfid, nZId, "valid_min", &vmin );
-            if( status == NC_NOERR ) {
+            if( status == NC_NOERR )
+            {
                 adfValidRange[0] = vmin;
                 status = nc_get_att_int( cdfid, nZId,
                                          "valid_max", &vmax );
-                if( status == NC_NOERR ) {
+                if( status == NC_NOERR )
+                {
                     adfValidRange[1] = vmax;
                     bGotValidRange = true;
                 }
@@ -330,44 +339,52 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* -------------------------------------------------------------------- */
 /*  Special For Byte Bands: check for signed/unsigned byte              */
 /* -------------------------------------------------------------------- */
-    if ( nc_datatype == NC_BYTE ) {
-
-        /* netcdf uses signed byte by default, but GDAL uses unsigned by default */
-        /* This may cause unexpected results, but is needed for back-compat */
+    if ( nc_datatype == NC_BYTE )
+    {
+        // netcdf uses signed byte by default, but GDAL uses unsigned by default
+        // This may cause unexpected results, but is needed for back-compat.
         if ( poNCDFDS->bIsGdalFile )
             bSignedData = false;
         else
             bSignedData = true;
 
         /* For NC4 format NC_BYTE is signed, NC_UBYTE is unsigned */
-        if ( poNCDFDS->eFormat == NCDF_FORMAT_NC4 ) {
+        if ( poNCDFDS->eFormat == NCDF_FORMAT_NC4 )
+        {
             bSignedData = true;
         }
-        else  {
-            /* if we got valid_range, test for signed/unsigned range */
-            /* http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html */
-            if ( bGotValidRange ) {
-                /* If we got valid_range={0,255}, treat as unsigned */
-                if ( (adfValidRange[0] == 0) && (adfValidRange[1] == 255) ) {
+        else
+        {
+            // if we got valid_range, test for signed/unsigned range
+            // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html
+            if( bGotValidRange )
+            {
+                // If we got valid_range={0,255}, treat as unsigned.
+                if( (adfValidRange[0] == 0) && (adfValidRange[1] == 255) )
+                {
                     bSignedData = false;
                     /* reset valid_range */
                     adfValidRange[0] = dfNoData;
                     adfValidRange[1] = dfNoData;
                 }
-                /* If we got valid_range={-128,127}, treat as signed */
-                else if ( (adfValidRange[0] == -128) && (adfValidRange[1] == 127) ) {
+                // If we got valid_range={-128,127}, treat as signed.
+                else if( (adfValidRange[0] == -128) &&
+                         (adfValidRange[1] == 127) )
+                {
                     bSignedData = true;
                     /* reset valid_range */
                     adfValidRange[0] = dfNoData;
                     adfValidRange[1] = dfNoData;
                 }
             }
-            /* else test for _Unsigned */
-            /* http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html */
-            else {
+            // else test for _Unsigned
+            // http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html
+            else
+            {
                 char *pszTemp = NULL;
                 if ( NCDFGetAttr( cdfid, nZId, "_Unsigned", &pszTemp )
-                     == CE_None ) {
+                     == CE_None )
+                {
                     if ( EQUAL(pszTemp,"true"))
                         bSignedData = false;
                     else if ( EQUAL(pszTemp,"false"))
@@ -377,7 +394,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             }
         }
 
-        if ( bSignedData )
+        if( bSignedData )
         {
             /* set PIXELTYPE=SIGNEDBYTE */
             /* See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure */
@@ -385,7 +402,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         }
         else
         {
-            // Fix nodata value as it was stored signed
+            // Fix nodata value as it was stored signed.
             if( dfNoData < 0 )
                 dfNoData += 256;
         }
@@ -450,13 +467,15 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     status = nc_inq_format( cdfid, &nTmpFormat);
     NetCDFFormatEnum eTmpFormat = static_cast<NetCDFFormatEnum>(nTmpFormat);
     if( ( status == NC_NOERR ) && ( ( eTmpFormat == NCDF_FORMAT_NC4 ) ||
-          ( eTmpFormat == NCDF_FORMAT_NC4C ) ) ) {
-        /* check for chunksize and set it as the blocksize (optimizes read) */
+          ( eTmpFormat == NCDF_FORMAT_NC4C ) ) )
+    {
+        // Check for chunksize and set it as the blocksize (optimizes read).
         status = nc_inq_var_chunking( cdfid, nZId, &nTmpFormat, chunksize );
         if( ( status == NC_NOERR ) && ( nTmpFormat == NC_CHUNKED ) ) {
             CPLDebug( "GDAL_netCDF",
-                      "setting block size to chunk size : %ld x %ld\n",
-                      static_cast<long>(chunksize[nZDim-1]), static_cast<long>(chunksize[nZDim-2]));
+                      "setting block size to chunk size : %ld x %ld",
+                      static_cast<long>(chunksize[nZDim-1]),
+                      static_cast<long>(chunksize[nZDim-2]));
             nBlockXSize = (int) chunksize[nZDim-1];
             nBlockYSize = (int) chunksize[nZDim-2];
         }
@@ -467,7 +486,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /*      Force block size to 1 scanline for bottom-up datasets if        */
 /*      nBlockYSize != 1                                                */
 /* -------------------------------------------------------------------- */
-    if( poNCDFDS->bBottomUp && nBlockYSize != 1 ) {
+    if( poNCDFDS->bBottomUp && nBlockYSize != 1 )
+    {
         nBlockXSize = nRasterXSize;
         nBlockYSize = 1;
     }
@@ -490,8 +510,13 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     const int *paDimIds ) :
     nc_datatype(NC_NAT),
     cdfid(poNCDFDS->GetCDFID()),
+    nZId(nZIdIn),
+    nZDim(nZDimIn),
+    nLevel(nLevelIn),
     nBandXPos(1),
     nBandYPos(0),
+    panBandZPos(NULL),
+    panBandZLev(NULL),
     bNoDataSet(FALSE),
     dfNoDataValue(0.0),
     bHaveScale(false),
@@ -501,22 +526,19 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     bSignedData(bSigned),
     bCheckLongitude(false)
 {
-    this->poDS = poNCDFDS;
-    this->nBand = nBandIn;
-    this->nZId = nZIdIn;
-    this->nZDim = nZDimIn;
-    this->nLevel = nLevelIn;
-    this->panBandZPos = NULL;
-    this->panBandZLev = NULL;
+    poDS = poNCDFDS;
+    nBand = nBandIn;
 
-    nRasterXSize   = poDS->GetRasterXSize( );
-    nRasterYSize   = poDS->GetRasterYSize( );
-    nBlockXSize   = poDS->GetRasterXSize( );
-    nBlockYSize   = 1;
+    nRasterXSize = poDS->GetRasterXSize();
+    nRasterYSize = poDS->GetRasterYSize();
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
 
-    if ( poDS->GetAccess() != GA_Update ) {
+    if( poDS->GetAccess() != GA_Update )
+    {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Dataset is not in update mode, wrong netCDFRasterBand constructor" );
+                  "Dataset is not in update mode, "
+                  "wrong netCDFRasterBand constructor" );
         return;
     }
 
@@ -527,12 +549,13 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         nBandXPos = panBandZPosIn[0];
         nBandYPos = panBandZPosIn[1];
 
-        this->panBandZPos = (int *) CPLCalloc( nZDim-1, sizeof( int ) );
-        this->panBandZLev = (int *) CPLCalloc( nZDim-1, sizeof( int ) );
+        panBandZPos = static_cast<int *>(CPLCalloc( nZDim-1, sizeof( int )));
+        panBandZLev = static_cast<int *>(CPLCalloc( nZDim-1, sizeof( int )));
 
-        for ( int i=0; i < nZDim - 2; i++ ){
-            this->panBandZPos[i] = panBandZPosIn[i+2];
-            this->panBandZLev[i] = panBandZLevIn[i];
+        for( int i = 0; i < nZDim - 2; i++ )
+        {
+            panBandZPos[i] = panBandZPosIn[i+2];
+            panBandZLev[i] = panBandZLevIn[i];
         }
     }
 
@@ -541,7 +564,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* -------------------------------------------------------------------- */
     eDataType = eType;
 
-    switch ( eDataType )
+    switch( eDataType )
     {
         case GDT_Byte:
             nc_datatype = NC_BYTE;
@@ -565,13 +588,15 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             break;
 #ifdef NETCDF_HAS_NC4
         case GDT_UInt16:
-            if ( poNCDFDS->eFormat == NCDF_FORMAT_NC4 ) {
+            if( poNCDFDS->eFormat == NCDF_FORMAT_NC4 )
+            {
                 nc_datatype = NC_USHORT;
                 break;
             }
             CPL_FALLTHROUGH
         case GDT_UInt32:
-            if ( poNCDFDS->eFormat == NCDF_FORMAT_NC4 ) {
+            if( poNCDFDS->eFormat == NCDF_FORMAT_NC4 )
+            {
                 nc_datatype = NC_UINT;
                 break;
             }
@@ -581,7 +606,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             if( nBand == 1 )
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Unsupported GDAL datatype (%d), treat as NC_FLOAT.",
-                          (int) eDataType );
+                          static_cast<int>(eDataType) );
             nc_datatype = NC_FLOAT;
             eDataType = eType = GDT_Float32;
             break;
@@ -592,7 +617,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* -------------------------------------------------------------------- */
     bool bDefineVar = false;
 
-    if ( nZId == -1 ) {
+    if( nZId == -1 )
+    {
         bDefineVar = true;
 
         /* make sure we are in define mode */
@@ -609,11 +635,13 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             pszTemp = pszBandName;
 
         int status;
-        if ( nZDim > 2 && paDimIds != NULL ) {
+        if( nZDim > 2 && paDimIds != NULL )
+        {
             status = nc_def_var( cdfid, pszTemp, nc_datatype,
                                  nZDim, paDimIds, &nZId );
         }
-        else {
+        else
+        {
             int anBandDims[2] = {poNCDFDS->nYDimID, poNCDFDS->nXDimID};
             status = nc_def_var( cdfid, pszTemp, nc_datatype,
                                  2, anBandDims, &nZId );
@@ -637,7 +665,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     }
 
     /* for Byte data add signed/unsigned info */
-    if ( eDataType == GDT_Byte ) {
+    if( eDataType == GDT_Byte )
+    {
 
         if ( bDefineVar ) { //only add attributes if creating variable
           /* For unsigned NC_BYTE (except NC4 format) */
@@ -645,7 +674,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
           int status = NC_NOERR;
           if ( (nc_datatype == NC_BYTE) && (poNCDFDS->eFormat != NCDF_FORMAT_NC4) ) {
             CPLDebug( "GDAL_netCDF", "adding valid_range attributes for Byte Band" );
-            short l_adfValidRange[2];
+            short l_adfValidRange[2] = { 0, 0 };
             if  ( bSignedData ) {
                 l_adfValidRange[0] = -128;
                 l_adfValidRange[1] = 127;
@@ -666,7 +695,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         }
         /* for unsigned byte set PIXELTYPE=SIGNEDBYTE */
         /* See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure */
-        if  ( bSignedData )
+        if( bSignedData )
             SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
 
     }
