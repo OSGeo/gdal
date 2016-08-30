@@ -261,12 +261,12 @@ void ISCEDataset::FlushCache( void )
 
         /* Don't write it out if it is one of the bits of metadata that is
          * written out elsewhere in this routine */
-        if ( strcmp( papszTokens[0], "WIDTH" ) == 0
-              || strcmp( papszTokens[0], "LENGTH" ) == 0
-              || strcmp( papszTokens[0], "NUMBER_BANDS" ) == 0
-              || strcmp( papszTokens[0], "DATA_TYPE" ) == 0
-              || strcmp( papszTokens[0], "SCHEME" ) == 0
-              || strcmp( papszTokens[0], "BYTE_ORDER" ) == 0 )
+        if ( EQUAL( papszTokens[0], "WIDTH" )
+              || EQUAL( papszTokens[0], "LENGTH" )
+              || EQUAL( papszTokens[0], "NUMBER_BANDS" )
+              || EQUAL( papszTokens[0], "DATA_TYPE" )
+              || EQUAL( papszTokens[0], "SCHEME" )
+              || EQUAL( papszTokens[0], "BYTE_ORDER" ) )
         {
             CSLDestroy( papszTokens );
             continue;
@@ -362,7 +362,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     char **papszXmlProps = NULL;
     while ( psCur != NULL ) {
         const char *name, *value;
-        if ( strcmp(psCur->pszValue, "property") != 0) {
+        if ( ! EQUAL(psCur->pszValue, "property") ) {
             psCur = psCur->psNext;
             continue;
         }
@@ -519,11 +519,12 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                                           "=",
                                           CSLT_STRIPLEADSPACES
                                             | CSLT_STRIPENDSPACES);
-        if ( strcmp( papszTokens[0], "WIDTH" ) == 0
-              || strcmp( papszTokens[0], "LENGTH" ) == 0
-              || strcmp( papszTokens[0], "NUMBER_BANDS" ) == 0
-              || strcmp( papszTokens[0], "DATA_TYPE" ) == 0
-              || strcmp( papszTokens[0], "SCHEME" ) == 0 )
+        if ( EQUAL( papszTokens[0], "WIDTH" )
+              || EQUAL( papszTokens[0], "LENGTH" )
+              || EQUAL( papszTokens[0], "NUMBER_BANDS" )
+              || EQUAL( papszTokens[0], "DATA_TYPE" )
+              || EQUAL( papszTokens[0], "SCHEME" )
+              || EQUAL( papszTokens[0], "BYTE_ORDER" ) )
         {
             CSLDestroy( papszTokens );
             continue;
