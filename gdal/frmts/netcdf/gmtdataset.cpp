@@ -52,7 +52,7 @@ class GMTDataset : public GDALPamDataset
   public:
     int         cdfid;
 
-                GMTDataset() : z_id(0), cdfid(0) { }
+                GMTDataset() : z_id(0), cdfid(0) {}
                 ~GMTDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -84,12 +84,12 @@ class GMTRasterBand : public GDALPamRasterBand
 /*                           GMTRasterBand()                            */
 /************************************************************************/
 
-GMTRasterBand::GMTRasterBand( GMTDataset *poDSIn, int nZIdIn, int nBandIn )
-
+GMTRasterBand::GMTRasterBand( GMTDataset *poDSIn, int nZIdIn, int nBandIn ) :
+    nc_datatype(NC_NAT),
+    nZId(nZIdIn)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->nZId = nZIdIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
