@@ -406,14 +406,13 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
     double dfMaxY;
     double dfPixelXSize;
     double dfPixelYSize;
-    ECRGTOCSubDataset* poSubDataset;
 
     public:
-        ECRGTOCProxyRasterDataSet(ECRGTOCSubDataset* poSubDataset,
-                                  const char* fileName,
-                                  int nXSize, int nYSize,
-                                  double dfMinX, double dfMaxY,
-                                  double dfPixelXSize, double dfPixelYSize);
+        ECRGTOCProxyRasterDataSet( ECRGTOCSubDataset* /* poSubDataset */,
+                                   const char* fileName,
+                                   int nXSize, int nYSize,
+                                   double dfMinX, double dfMaxY,
+                                   double dfPixelXSize, double dfPixelYSize );
 
         GDALDataset* RefUnderlyingDataset()
         {
@@ -444,7 +443,7 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
 /************************************************************************/
 
 ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
-    ECRGTOCSubDataset* poSubDatasetIn,
+    ECRGTOCSubDataset* /* poSubDatasetIn */,
     const char* fileNameIn,
     int nXSizeIn, int nYSizeIn,
     double dfMinXIn, double dfMaxYIn,
@@ -458,8 +457,7 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
     dfMinX(dfMinXIn),
     dfMaxY(dfMaxYIn),
     dfPixelXSize(dfPixelXSizeIn),
-    dfPixelYSize(dfPixelYSizeIn),
-    poSubDataset(poSubDatasetIn)
+    dfPixelYSize(dfPixelYSizeIn)
 {
 
     for( int i = 0; i < 3; i++ )
