@@ -64,11 +64,22 @@ static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBa
 /************************************************************************/
 
 NITFDataset::NITFDataset() :
-    psFile(NULL), psImage(NULL), poJ2KDataset(NULL), bJP2Writing(FALSE),
-    poJPEGDataset(NULL), bGotGeoTransform(FALSE), nGCPCount(0),
-    pasGCPList(NULL), pszGCPProjection(NULL), panJPEGBlockOffset(NULL),
-    pabyJPEGBlock(NULL), nQLevel(0), nIMIndex(0), papszTextMDToWrite(NULL),
-    papszCgmMDToWrite(NULL), bInLoadXML(FALSE),
+    psFile(NULL),
+    psImage(NULL),
+    poJ2KDataset(NULL),
+    bJP2Writing(FALSE),
+    poJPEGDataset(NULL),
+    bGotGeoTransform(FALSE),
+    nGCPCount(0),
+    pasGCPList(NULL),
+    pszGCPProjection(NULL),
+    panJPEGBlockOffset(NULL),
+    pabyJPEGBlock(NULL),
+    nQLevel(0),
+    nIMIndex(0),
+    papszTextMDToWrite(NULL),
+    papszCgmMDToWrite(NULL),
+    bInLoadXML(FALSE),
     bExposeUnderlyingJPEGDatasetOverviews(FALSE)
 {
     pszProjection = CPLStrdup("");
