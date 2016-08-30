@@ -443,26 +443,29 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
 /*                    ECRGTOCProxyRasterDataSet()                       */
 /************************************************************************/
 
-ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet
-        (ECRGTOCSubDataset* poSubDatasetIn,
-         const char* fileNameIn,
-         int nXSizeIn, int nYSizeIn,
-         double dfMinXIn, double dfMaxYIn,
-         double dfPixelXSizeIn, double dfPixelYSizeIn) :
-    /* Mark as shared since the VRT will take several references if we are in RGBA mode (4 bands for this dataset) */
-    GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly, TRUE, SRS_WKT_WGS84),
+ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
+    ECRGTOCSubDataset* poSubDatasetIn,
+    const char* fileNameIn,
+    int nXSizeIn, int nYSizeIn,
+    double dfMinXIn, double dfMaxYIn,
+    double dfPixelXSizeIn, double dfPixelYSizeIn ) :
+    // Mark as shared since the VRT will take several references if we are in
+    // RGBA mode (4 bands for this dataset).
+    GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly,
+                         TRUE, SRS_WKT_WGS84),
     checkDone(FALSE),
-    checkOK(FALSE)
+    checkOK(FALSE),
+    dfMinX(dfMinXIn),
+    dfMaxY(dfMaxYIn),
+    dfPixelXSize(dfPixelXSizeIn),
+    dfPixelYSize(dfPixelYSizeIn),
+    poSubDataset(poSubDatasetIn)
 {
-    this->poSubDataset = poSubDatasetIn;
-    this->dfMinX = dfMinXIn;
-    this->dfMaxY = dfMaxYIn;
-    this->dfPixelXSize = dfPixelXSizeIn;
-    this->dfPixelYSize = dfPixelYSizeIn;
 
-    for(int i=0;i<3;i++)
+    for( int i = 0; i < 3; i++ )
     {
-        SetBand(i + 1, new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
+        SetBand(i + 1,
+                new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
     }
 }
 
