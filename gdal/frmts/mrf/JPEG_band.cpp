@@ -340,23 +340,29 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 }
 
 // PHOTOMETRIC == MULTISPECTRAL turns off YCbCr conversion and downsampling
-JPEG_Band::JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-GDALMRFRasterBand(pDS, image, b, int(level)), codec(image)
+JPEG_Band::JPEG_Band( GDALMRFDataset *pDS, const ILImage &image,
+                      int b, int level ) :
+    GDALMRFRasterBand(pDS, image, b, int(level)),
+    codec(image)
 {
-    int nbands = image.pagesize.c;
+    const int nbands = image.pagesize.c;
     // Check behavior on signed 16bit.  Does the libjpeg sign extend?
 #if defined(LIBJPEG_12_H)
-    if (GDT_Byte != image.dt && GDT_UInt16 != image.dt) {
+    if (GDT_Byte != image.dt && GDT_UInt16 != image.dt)
 #else
-    if (GDT_Byte != image.dt) {
+    if (GDT_Byte != image.dt)
 #endif
-        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPEG");
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Data type not supported by MRF JPEG");
         return;
     }
 
-    if (nbands == 3) { // Only the 3 band JPEG has storage flavors
+    if( nbands == 3 )
+    { // Only the 3 band JPEG has storage flavors
         CPLString const &pm = pDS->GetPhotometricInterpretation();
-        if (pm == "RGB" || pm == "MULTISPECTRAL") { // Explicit RGB or MS
+        if (pm == "RGB" || pm == "MULTISPECTRAL")
+        { // Explicit RGB or MS
             codec.rgb = TRUE;
             codec.sameres = TRUE;
         }
@@ -364,7 +370,7 @@ GDALMRFRasterBand(pDS, image, b, int(level)), codec(image)
             codec.sameres = TRUE;
     }
 
-    if (GDT_Byte == image.dt)
+    if( GDT_Byte == image.dt )
         codec.optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
     else
         codec.optimize = true; // Required for 12bit

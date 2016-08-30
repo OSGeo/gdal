@@ -71,10 +71,11 @@ GDALRasterBandH MEMCreateRasterBandEx( GDALDataset *poDS, int nBand,
 MEMRasterBand::MEMRasterBand( GDALDataset *poDSIn, int nBandIn,
                               GByte *pabyDataIn, GDALDataType eTypeIn,
                               GSpacing nPixelOffsetIn, GSpacing nLineOffsetIn,
-                              int bAssumeOwnership, const char * pszPixelType) :
+                              int bAssumeOwnership, const char * pszPixelType ) :
     GDALPamRasterBand(FALSE),
     pabyData(pabyDataIn),
-    // Skip nPixelOffset and nLineOffset.
+    nPixelOffset(nPixelOffsetIn),
+    nLineOffset(nLineOffsetIn),
     bOwnData(bAssumeOwnership),
     bNoDataSet(FALSE),
     dfNoData(0.0),
@@ -97,14 +98,10 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDSIn, int nBandIn,
     nBlockYSize = 1;
 
     if( nPixelOffsetIn == 0 )
-        nPixelOffsetIn = GDALGetDataTypeSizeBytes(eTypeIn);
+        nPixelOffset = GDALGetDataTypeSizeBytes(eTypeIn);
 
     if( nLineOffsetIn == 0 )
-        nLineOffsetIn = nPixelOffsetIn * static_cast<size_t>(nBlockXSize);
-
-    nPixelOffset = nPixelOffsetIn;
-    nLineOffset = nLineOffsetIn;
-    bOwnData = bAssumeOwnership;
+        nLineOffset = nPixelOffset * static_cast<size_t>(nBlockXSize);
 
     if( pszPixelType && EQUAL(pszPixelType,"SIGNEDBYTE") )
         SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );

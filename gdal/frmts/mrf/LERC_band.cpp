@@ -279,25 +279,24 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
         return CompressLERC(dst, src, img, precision);
 }
 
-LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level):
+LERC_Band::LERC_Band( GDALMRFDataset *pDS, const ILImage &image,
+                      int b, int level ) :
     GDALMRFRasterBand(pDS, image, b, level)
 {
-    // Pick 1/1000 for floats and 0.5 losless for integers
+    // Pick 1/1000 for floats and 0.5 losless for integers.
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64 )
         precision = strtod(GetOptionValue( "LERC_PREC" , ".001" ),NULL);
     else
-        precision = std::max(0.5, strtod(GetOptionValue("LERC_PREC", ".5"), NULL));
+        precision =
+            std::max(0.5, strtod(GetOptionValue("LERC_PREC", ".5"), NULL));
 
-    // Encode in V2 by default
-    version = GetOptlist().FetchBoolean("V1", FALSE) ? 1:2;
+    // Encode in V2 by default.
+    version = GetOptlist().FetchBoolean("V1", FALSE) ? 1 : 2;
 
-    // Enlarge the page buffer in this case, LERC may expand data
+    // Enlarge the page buffer in this case, LERC may expand data.
     pDS->SetPBufferSize( 2 * image.pageSizeBytes);
 }
 
-LERC_Band::~LERC_Band()
-{
-}
-
+LERC_Band::~LERC_Band() {}
 
 NAMESPACE_MRF_END

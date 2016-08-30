@@ -292,8 +292,6 @@ enum { SAMPLING_ERR, SAMPLING_Avg, SAMPLING_Near };
 GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level = 0);
 
 class GDALMRFDataset : public GDALPamDataset {
-
-
     friend class GDALMRFRasterBand;
     friend GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level);
 
@@ -407,7 +405,6 @@ protected:
     virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
         GDALProgressFunc, void*);
 
-
     // Write a tile, the infooffset is the relative position in the index file
     virtual CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
 
@@ -518,7 +515,6 @@ public:
     // These get set with SetStatistics.  Let PAM handle it
     virtual double  GetMinimum(int *);
     virtual double  GetMaximum(int *);
-
 
     // MRF specific, fetch is from a remote source
     CPLErr FetchBlock(int xblk, int yblk, void *buffer = NULL);

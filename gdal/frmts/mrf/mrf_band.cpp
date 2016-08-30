@@ -200,15 +200,19 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
 // itself is not set.  This allows for PNG features to be controlled, as well
 // as any other bands that use zlib by itself
 //
-GDALMRFRasterBand::GDALMRFRasterBand(GDALMRFDataset *parent_dataset,
-                                     const ILImage &image, int band, int ov)
+GDALMRFRasterBand::GDALMRFRasterBand( GDALMRFDataset *parent_dataset,
+                                      const ILImage &image, int band, int ov ) :
+    poDS(parent_dataset),
+    m_band(band - 1),
+    deflatep(GetOptlist().FetchBoolean("DEFLATE", FALSE)),
+    // Bring the quality to 0 to 9
+    deflate_flags(image.quality / 10),
+    m_l(ov),
+    img(image),
+    overview(0)
 {
-    poDS=parent_dataset;
-    nBand=band;
-    m_band=band-1;
-    m_l=ov;
-    img=image;
-    eDataType=parent_dataset->current.dt;
+    nBand = band;
+    eDataType = parent_dataset->current.dt;
     nRasterXSize = img.size.x;
     nRasterYSize = img.size.y;
     nBlockXSize = img.pagesize.x;
@@ -217,17 +221,15 @@ GDALMRFRasterBand::GDALMRFRasterBand(GDALMRFDataset *parent_dataset,
     nBlocksPerColumn = img.pagecount.y;
     img.NoDataValue = GetNoDataValue(&img.hasNoData);
 
-    deflatep = GetOptlist().FetchBoolean("DEFLATE", FALSE);
-    // Bring the quality to 0 to 9
-    deflate_flags = img.quality / 10;
     // Pick up the twists, aka GZ, RAWZ headers
-    if (GetOptlist().FetchBoolean("GZ", FALSE))
+    if( GetOptlist().FetchBoolean("GZ", FALSE) )
         deflate_flags |= ZFLAG_GZ;
-    else if (GetOptlist().FetchBoolean("RAWZ", FALSE))
+    else if( GetOptlist().FetchBoolean("RAWZ", FALSE) )
         deflate_flags |= ZFLAG_RAW;
     // And Pick up the ZLIB strategy, if any
     const char *zstrategy = GetOptlist().FetchNameValueDef("Z_STRATEGY", NULL);
-    if (zstrategy) {
+    if( zstrategy )
+    {
         int zv = Z_DEFAULT_STRATEGY;
         if (EQUAL(zstrategy, "Z_HUFFMAN_ONLY"))
             zv = Z_HUFFMAN_ONLY;
@@ -239,13 +241,13 @@ GDALMRFRasterBand::GDALMRFRasterBand(GDALMRFDataset *parent_dataset,
             zv = Z_FIXED;
         deflate_flags |= (zv << 6);
     }
-    overview = 0;
 }
 
 // Clean up the overviews if they exist
 GDALMRFRasterBand::~GDALMRFRasterBand()
 {
-    while (0!=overviews.size()) {
+    while( 0!=overviews.size() )
+    {
         delete overviews[overviews.size()-1];
         overviews.pop_back();
     };
