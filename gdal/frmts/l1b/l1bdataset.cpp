@@ -285,7 +285,6 @@ class L1BDataset : public GDALPamDataset
 
     VSILFILE   *fp;
 
-    int         bFetchGeolocation;
     int         bGuessDataFormat;
 
     int         bByteSwap;
@@ -586,7 +585,6 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn ) :
         "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],"
         "AUTHORITY[\"EPSG\",4322]]" )),
     fp(NULL),
-    bFetchGeolocation(FALSE),
     bGuessDataFormat(FALSE),
     // L1B is normally big-endian ordered, so byte-swap on little-endian CPU.
     bByteSwap(CPL_IS_LSB),
