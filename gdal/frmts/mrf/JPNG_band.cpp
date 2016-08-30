@@ -185,22 +185,32 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 * The presence of the PNGColors and PNGAlpha is used as a flag for PPNG only
 */
 
-JPNG_Band::JPNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
+JPNG_Band::JPNG_Band( GDALMRFDataset *pDS, const ILImage &image,
+                      int b, int level ) :
     GDALMRFRasterBand(pDS, image, b, level),
-    rgb(FALSE), sameres(FALSE), optimize(false)
+    rgb(FALSE),
+    sameres(FALSE),
+    optimize(false)
 {   // Check error conditions
-    if (image.dt != GDT_Byte) {
-        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPNG");
+    if( image.dt != GDT_Byte )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Data type not supported by MRF JPNG");
         return;
     }
-    if (image.order != IL_Interleaved || (image.pagesize.c != 4 && image.pagesize.c != 2)) {
-        CPLError(CE_Failure, CPLE_NotSupported, "MRF JPNG can only handle 2 or 4 interleaved bands");
+    if( image.order != IL_Interleaved ||
+        (image.pagesize.c != 4 && image.pagesize.c != 2) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "MRF JPNG can only handle 2 or 4 interleaved bands");
         return;
     }
 
-    if (img.pagesize.c == 4) { // RGBA can have storage flavors
+    if( img.pagesize.c == 4 )
+    { // RGBA can have storage flavors
         CPLString const &pm = pDS->GetPhotometricInterpretation();
-        if (pm == "RGB" || pm == "MULTISPECTRAL") { // Explicit RGB or MS
+        if (pm == "RGB" || pm == "MULTISPECTRAL")
+        { // Explicit RGB or MS
             rgb = TRUE;
             sameres = TRUE;
         }
@@ -210,11 +220,11 @@ JPNG_Band::JPNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level
 
     optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
 
-    // PNGs and JPGs can be larger than the source, especially for small page size
+    // PNGs and JPGs can be larger than the source, especially for
+    // small page size.
     poDS->SetPBufferSize(image.pageSizeBytes + 100);
 }
 
-JPNG_Band::~JPNG_Band() {
-}
+JPNG_Band::~JPNG_Band() {}
 
 NAMESPACE_MRF_END

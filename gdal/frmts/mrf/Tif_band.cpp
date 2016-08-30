@@ -184,8 +184,9 @@ CPLErr TIF_Band::Compress(buf_mgr &dst, buf_mgr &src)
     return CompressTIF(dst,src,img, papszOptions);
 }
 
-TIF_Band::TIF_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level):
-        GDALMRFRasterBand(pDS,image,b,int(level))
+TIF_Band::TIF_Band( GDALMRFDataset *pDS, const ILImage &image,
+                    int b, int level ):
+    GDALMRFRasterBand(pDS, image, b, int(level))
 {
     // Increase the page buffer by 1K in case Tiff expands data
     pDS->SetPBufferSize(image.pageSizeBytes + 1024);
@@ -193,12 +194,16 @@ TIF_Band::TIF_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level):
     // Static create options for TIFF tiles
     papszOptions = CSLAddNameValue(NULL, "COMPRESS", "DEFLATE");
     papszOptions = CSLAddNameValue(papszOptions, "TILED", "Yes");
-    papszOptions = CSLAddNameValue(papszOptions, "BLOCKXSIZE", CPLString().Printf("%d",img.pagesize.x));
-    papszOptions = CSLAddNameValue(papszOptions, "BLOCKYSIZE", CPLString().Printf("%d",img.pagesize.y));
+    papszOptions = CSLAddNameValue(papszOptions, "BLOCKXSIZE",
+                                   CPLString().Printf("%d",img.pagesize.x));
+    papszOptions = CSLAddNameValue(papszOptions, "BLOCKYSIZE",
+                                   CPLString().Printf("%d",img.pagesize.y));
     int q = img.quality / 10;
-    // Move down so the default 85 maps to 6.  This makes the maz ZLEVEL 8, which is OK
+    // Move down so the default 85 maps to 6.  This makes the maz
+    // ZLEVEL 8, which is OK.
     if (q >2) q-=2;
-    papszOptions = CSLAddNameValue(papszOptions, "ZLEVEL", CPLString().Printf("%d",q));
+    papszOptions = CSLAddNameValue(papszOptions, "ZLEVEL",
+                                   CPLString().Printf("%d", q));
 };
 
 TIF_Band::~TIF_Band()

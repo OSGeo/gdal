@@ -428,8 +428,8 @@ LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDSIn ) :
     m_pLine(NULL),
     m_bFirstTime(true)
 {
-    this->poDS = poDSIn;
-    this->nBand = 1;
+    poDS = poDSIn;
+    nBand = 1;
 
     eDataType = GDT_Float32;
 
@@ -640,9 +640,14 @@ double LevellerRasterBand::GetOffset(int* pbSuccess)
 /************************************************************************/
 
 LevellerDataset::LevellerDataset() :
-    m_version(0), m_pszFilename(NULL), m_pszProjection(NULL), m_dElevScale(),
-    m_dElevBase(), m_fp(NULL), m_nDataOffset()
-{ }
+    m_version(0),
+    m_pszFilename(NULL),
+    m_pszProjection(NULL),
+    m_dElevScale(),
+    m_dElevBase(),
+    m_fp(NULL),
+    m_nDataOffset()
+{}
 
 /************************************************************************/
 /*                          ~LevellerDataset()                          */

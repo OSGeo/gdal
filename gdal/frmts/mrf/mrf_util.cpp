@@ -183,22 +183,22 @@ GIntBig IdxSize(const ILImage &full, const int scale) {
     return sz*sizeof(ILIdx);
 }
 
-ILImage::ILImage()
-{
-    dataoffset = idxoffset = 0;
-    quality = 85;
-    size = ILSize(1, 1, 1, 1, 0);
-    pagesize = ILSize(384, 384, 1, 1, 0);
-    pagecount = pcount(size, pagesize);
-    comp = IL_PNG;
-    order = IL_Interleaved;
-    ci = GCI_Undefined;
-    pageSizeBytes = 0;
-    nbo = 0;
-    hasNoData = FALSE;
-    NoDataValue = 0.0;
-    dt = GDT_Unknown;
-}
+ILImage::ILImage() :
+    dataoffset(0),
+    idxoffset(0),
+    quality(85),
+    pageSizeBytes(0),
+    size(ILSize(1, 1, 1, 1, 0)),
+    pagesize(ILSize(384, 384, 1, 1, 0)),
+    pagecount(pcount(size, pagesize)),
+    comp(IL_PNG),
+    order(IL_Interleaved),
+    nbo(0),
+    hasNoData(FALSE),
+    NoDataValue(0.0),
+    dt(GDT_Unknown),
+    ci(GCI_Undefined)
+{}
 
 /**
  *\brief Get a file name by replacing the extension.

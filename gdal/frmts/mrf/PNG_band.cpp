@@ -347,16 +347,21 @@ CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
  * The presence of the PNGColors and PNGAlpha is used as a flag for PPNG only
  */
 
-PNG_Band::PNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-GDALMRFRasterBand(pDS, image, b, level), codec(image)
-
+PNG_Band::PNG_Band( GDALMRFDataset *pDS, const ILImage &image,
+                    int b, int level ) :
+    GDALMRFRasterBand(pDS, image, b, level),
+    codec(image)
 {   // Check error conditions
-    if (image.dt != GDT_Byte && image.dt != GDT_Int16 && image.dt != GDT_UInt16) {
-        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF PNG");
+    if (image.dt != GDT_Byte && image.dt != GDT_Int16 && image.dt != GDT_UInt16)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Data type not supported by MRF PNG");
         return;
     }
-    if (image.pagesize.c > 4) {
-        CPLError(CE_Failure, CPLE_NotSupported, "MRF PNG can only handle up to 4 bands per page");
+    if (image.pagesize.c > 4)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "MRF PNG can only handle up to 4 bands per page");
         return;
     }
     // PNGs can be larger than the source, especially for small page size

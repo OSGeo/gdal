@@ -63,34 +63,33 @@ using std::string;
 NAMESPACE_MRF_START
 
 // Initialize as invalid
-GDALMRFDataset::GDALMRFDataset()
-{   //                X0   Xx   Xy  Y0    Yx   Yy
+GDALMRFDataset::GDALMRFDataset() :
+    zslice(0),
+    idxSize(0),
+    clonedSource(FALSE),
+    bypass_cache(
+        CPLTestBool(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"))),
+    mp_safe(FALSE),
+    hasVersions(FALSE),
+    verCount(0),
+    bCrystalized(FALSE), // Assume not in create mode
+    poSrcDS(NULL),
+    level(-1),
+    cds(NULL),
+    scale(0.0),
+    pbuffer(NULL),
+    pbsize(0),
+    tile(ILSize()),
+    bdirty(0),
+    bGeoTransformValid(TRUE),
+    poColorTable(NULL),
+    Quality(0)
+{
+    //                X0   Xx   Xy  Y0    Yx   Yy
     double gt[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
 
-    ILImage img;
-
     memcpy(GeoTransform, gt, sizeof(gt));
-    bGeoTransformValid = TRUE;
     ifp.FP = dfp.FP = NULL;
-    pbuffer = NULL;
-    pbsize = 0;
-    bdirty = 0;
-    scale = 0;
-    zslice = 0;
-    hasVersions = FALSE;
-    clonedSource = FALSE;
-    mp_safe = FALSE;
-    level = -1;
-    tile = ILSize();
-    cds = NULL;
-    poSrcDS = NULL;
-    poColorTable = NULL;
-    bCrystalized = FALSE; // Assume not in create mode
-    bypass_cache =
-        CPLTestBool(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"));
-    idxSize = 0;
-    verCount = 0;
-    Quality = 0;
     dfp.acc = GF_Read;
     ifp.acc = GF_Read;
 }
@@ -624,8 +623,10 @@ CPLErr GDALMRFDataset::LevelInit(const int l) {
     }
 
     GDALMRFRasterBand *srcband = (GDALMRFRasterBand *)cds->GetRasterBand(1)->GetOverview(l);
+
     // Copy the sizes from this level
-    current = full = srcband->img;
+    full = srcband->img;
+    current = srcband->img;
     current.size.c = cds->current.size.c;
     scale = cds->scale;
     SetProjection(cds->GetProjectionRef());
