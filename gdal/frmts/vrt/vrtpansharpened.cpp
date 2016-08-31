@@ -1383,10 +1383,10 @@ VRTPansharpenedRasterBand::VRTPansharpenedRasterBand( GDALDataset *poDSIn, int n
 {
     Initialize( poDSIn->GetRasterXSize(), poDSIn->GetRasterYSize() );
 
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eAccess = GA_Update;
-    this->eDataType = eDataTypeIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eAccess = GA_Update;
+    eDataType = eDataTypeIn;
 
     reinterpret_cast<VRTPansharpenedDataset *>(
         poDS )->GetBlockSize( &nBlockXSize, &nBlockYSize );

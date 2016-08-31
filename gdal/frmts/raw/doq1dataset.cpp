@@ -112,8 +112,10 @@ class DOQ1Dataset : public RawDataset
 {
     VSILFILE    *fpImage;       // image data file.
 
-    double      dfULX, dfULY;
-    double      dfXPixelSize, dfYPixelSize;
+    double      dfULX;
+    double      dfULY;
+    double      dfXPixelSize;
+    double      dfYPixelSize;
 
     char        *pszProjection;
 
@@ -138,7 +140,7 @@ DOQ1Dataset::DOQ1Dataset() :
     dfXPixelSize(0.0),
     dfYPixelSize(0.0),
     pszProjection(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~DOQ1Dataset()                            */

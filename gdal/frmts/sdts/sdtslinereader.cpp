@@ -170,11 +170,9 @@ void SDTSRawLine::Dump( FILE * fp )
 /*                           SDTSLineReader()                           */
 /************************************************************************/
 
-SDTSLineReader::SDTSLineReader( SDTS_IREF * poIREFIn )
-
-{
-    poIREF = poIREFIn;
-}
+SDTSLineReader::SDTSLineReader( SDTS_IREF * poIREFIn ) :
+    poIREF(poIREFIn)
+{}
 
 /************************************************************************/
 /*                             ~SDTSLineReader()                        */

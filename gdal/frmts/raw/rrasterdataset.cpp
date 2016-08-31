@@ -192,8 +192,8 @@ CPLErr RRASTERRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                           RRASTERDataset()                           */
 /************************************************************************/
 
-RRASTERDataset::RRASTERDataset()
-    : m_fpImage(NULL)
+RRASTERDataset::RRASTERDataset() :
+    m_fpImage(NULL)
 {
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;

@@ -280,12 +280,13 @@ private:
 
     void ReadLUT();
 public:
-    RS2CalibRasterBand( RS2Dataset *poDataset, const char *pszPolarization,
+    RS2CalibRasterBand(
+        RS2Dataset *poDataset, const char *pszPolarization,
         GDALDataType eType, GDALDataset *poBandDataset, eCalibration eCalib,
-        const char *pszLUT);
+        const char *pszLUT );
     ~RS2CalibRasterBand();
 
-    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage);
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };
 
 /************************************************************************/
@@ -328,7 +329,9 @@ RS2CalibRasterBand::RS2CalibRasterBand(
     m_poBandDataset(poBandDataset),
     m_eType(eType),
     m_nfTable(NULL),
-    m_nTableSize(0)
+    m_nTableSize(0),
+    m_nfOffset(0),
+    m_pszLUTFile(VSIStrdup(pszLUT))
 {
     poDS = poDataset;
 
@@ -336,7 +339,6 @@ RS2CalibRasterBand::RS2CalibRasterBand(
         SetMetadataItem( "POLARIMETRIC_INTERP", pszPolarization );
     }
 
-    m_pszLUTFile = VSIStrdup(pszLUT);
 
     if (eType == GDT_CInt16)
         eDataType = GDT_CFloat32;

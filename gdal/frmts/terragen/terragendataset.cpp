@@ -236,9 +236,10 @@ public:
 /*                         TerragenRasterBand()                         */
 /************************************************************************/
 
-TerragenRasterBand::TerragenRasterBand( TerragenDataset *poDSIn )
+TerragenRasterBand::TerragenRasterBand( TerragenDataset *poDSIn ) :
+    m_pvLine(CPLMalloc( sizeof(GInt16) * poDSIn->GetRasterXSize() )),
+    m_bFirstTime(true)
 {
-    m_bFirstTime = true;
     poDS = poDSIn;
     nBand = 1;
 
@@ -248,8 +249,6 @@ TerragenRasterBand::TerragenRasterBand( TerragenDataset *poDSIn )
 
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
-
-    m_pvLine = CPLMalloc( sizeof(GInt16) * nBlockXSize );
 }
 
 
@@ -436,10 +435,19 @@ CPLErr TerragenRasterBand::SetUnitType( const char* psz )
 /************************************************************************/
 
 TerragenDataset::TerragenDataset() :
-    m_dScale(0.0), m_dOffset(0.0), m_dSCAL(30.0), m_dGroundScale(0.0),
-    m_dMetersPerGroundUnit(1.0), m_dMetersPerElevUnit(0.0), m_fp(NULL),
-    m_nDataOffset(0),  m_nHeightScale(0), m_nBaseHeight(0), m_pszFilename(NULL),
-    m_pszProjection(NULL), m_bIsGeo(false)
+    m_dScale(0.0),
+    m_dOffset(0.0),
+    m_dSCAL(30.0),
+    m_dGroundScale(0.0),
+    m_dMetersPerGroundUnit(1.0),
+    m_dMetersPerElevUnit(0.0),
+    m_fp(NULL),
+    m_nDataOffset(0),
+    m_nHeightScale(0),
+    m_nBaseHeight(0),
+    m_pszFilename(NULL),
+    m_pszProjection(NULL),
+    m_bIsGeo(false)
 {
     m_dLogSpan[0] = 0.0;
     m_dLogSpan[1] = 0.0;

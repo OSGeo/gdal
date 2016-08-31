@@ -229,12 +229,11 @@ SENTINEL2AlphaBand::SENTINEL2AlphaBand( GDALDataset *poDSIn, int nBandIn,
                                         GDALDataType eType,
                                         int nXSize, int nYSize,
                                         int nSaturatedVal, int nNodataVal ) :
-                            VRTSourcedRasterBand(poDSIn, nBandIn, eType,
-                                                 nXSize, nYSize),
-                            m_nSaturatedVal(nSaturatedVal),
-                            m_nNodataVal(nNodataVal)
-{
-}
+    VRTSourcedRasterBand(poDSIn, nBandIn, eType,
+                         nXSize, nYSize),
+    m_nSaturatedVal(nSaturatedVal),
+    m_nNodataVal(nNodataVal)
+{}
 
 /************************************************************************/
 /*                             IRasterIO()                              */
@@ -317,7 +316,8 @@ CPLErr SENTINEL2AlphaBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                          SENTINEL2Dataset()                          */
 /************************************************************************/
 
-SENTINEL2Dataset::SENTINEL2Dataset(int nXSize, int nYSize) : VRTDataset(nXSize,nYSize)
+SENTINEL2Dataset::SENTINEL2Dataset( int nXSize, int nYSize ) :
+    VRTDataset(nXSize, nYSize)
 {
     poDriver = NULL;
     SetWritable(FALSE);
@@ -327,9 +327,7 @@ SENTINEL2Dataset::SENTINEL2Dataset(int nXSize, int nYSize) : VRTDataset(nXSize,n
 /*                         ~SENTINEL2Dataset()                          */
 /************************************************************************/
 
-SENTINEL2Dataset::~SENTINEL2Dataset()
-{
-}
+SENTINEL2Dataset::~SENTINEL2Dataset() {}
 
 /************************************************************************/
 /*                            GetFileList()                             */

@@ -47,10 +47,29 @@ CPL_CVSID("$Id$");
 /*                           VRTRasterBand()                            */
 /************************************************************************/
 
-VRTRasterBand::VRTRasterBand()
-
+VRTRasterBand::VRTRasterBand() :
+    m_bIsMaskBand(FALSE),
+    m_bNoDataValueSet(FALSE),
+    m_bHideNoDataValue(FALSE),
+    m_dfNoDataValue(-10000.0),
+    m_poColorTable(NULL),
+    m_eColorInterp(GCI_Undefined),
+    m_pszUnitType(NULL),
+    m_papszCategoryNames(NULL),
+    m_dfOffset(0.0),
+    m_dfScale(1.0),
+    m_psSavedHistograms(NULL),
+    m_poMaskBand(NULL)
 {
-    Initialize( 0, 0 );
+    // Initialize( 0, 0 );
+    poDS = NULL;
+    nBand = 0;
+    eAccess = GA_ReadOnly;
+    eDataType = GDT_Byte;
+    nRasterXSize = 0;
+    nRasterYSize = 0;
+    nBlockXSize = 0;
+    nBlockYSize = 0;
 }
 
 /************************************************************************/

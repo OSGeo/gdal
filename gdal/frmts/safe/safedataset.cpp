@@ -117,14 +117,13 @@ class SAFERasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 SAFERasterBand::SAFERasterBand( SAFEDataset *poDSIn,
-                              GDALDataType eDataTypeIn,
-                              const char *pszSwath,
-                              const char *pszPolarisation,
-                              GDALDataset *poBandFileIn )
-
+                                GDALDataType eDataTypeIn,
+                                const char *pszSwath,
+                                const char *pszPolarisation,
+                                GDALDataset *poBandFileIn ) :
+    poBandFile(poBandFileIn)
 {
     poDS = poDSIn;
-    poBandFile = poBandFileIn;
 
     GDALRasterBand *poSrcBand = poBandFile->GetRasterBand( 1 );
 

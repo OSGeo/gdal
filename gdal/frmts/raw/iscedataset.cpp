@@ -164,7 +164,7 @@ ISCEDataset::ISCEDataset() :
     fpImage(NULL),
     pszXMLFilename(NULL),
     eScheme(BIL)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~ISCEDataset()                          */

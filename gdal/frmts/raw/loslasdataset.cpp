@@ -101,7 +101,7 @@ class LOSLASDataset : public RawDataset
 /*                             LOSLASDataset()                          */
 /************************************************************************/
 
-LOSLASDataset::LOSLASDataset() : fpImage(NULL), nRecordLength(0) { }
+LOSLASDataset::LOSLASDataset() : fpImage(NULL), nRecordLength(0) {}
 
 /************************************************************************/
 /*                            ~LOSLASDataset()                          */
