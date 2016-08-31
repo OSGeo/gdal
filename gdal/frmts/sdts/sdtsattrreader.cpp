@@ -83,7 +83,7 @@ void SDTSAttrRecord::Dump( FILE * fp )
 
 SDTSAttrReader::SDTSAttrReader() :
     bIsSecondary(FALSE)
-{ }
+{}
 
 /************************************************************************/
 /*                          ~SDTSAttrReader()                           */

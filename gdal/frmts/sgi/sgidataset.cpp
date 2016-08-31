@@ -260,7 +260,7 @@ public:
 /*                           SGIRasterBand()                            */
 /************************************************************************/
 
-SGIRasterBand::SGIRasterBand(SGIDataset* poDSIn, int nBandIn)
+SGIRasterBand::SGIRasterBand( SGIDataset* poDSIn, int nBandIn )
 
 {
   poDS = poDSIn;
@@ -464,8 +464,8 @@ GDALColorInterp SGIRasterBand::GetColorInterpretation()
 /*                            SGIDataset()                              */
 /************************************************************************/
 
-SGIDataset::SGIDataset()
-  : fpImage(NULL),
+SGIDataset::SGIDataset() :
+    fpImage(NULL),
     bGeoTransformValid(FALSE)
 {
     adfGeoTransform[0] = 0.0;

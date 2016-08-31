@@ -171,14 +171,13 @@ const char *ACE2Dataset::GetProjectionRef()
 /*                          ACE2RasterBand()                            */
 /************************************************************************/
 
-ACE2RasterBand::ACE2RasterBand(VSILFILE* fpRawIn,
-                               GDALDataType eDataTypeIn,
-                               int nXSize, int nYSize) :
-    RawRasterBand( fpRawIn, 0, GDALGetDataTypeSize(eDataTypeIn) / 8,
-                   nXSize * GDALGetDataTypeSize(eDataTypeIn) / 8, eDataTypeIn,
-                   CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE)
-{
-}
+ACE2RasterBand::ACE2RasterBand( VSILFILE* fpRawIn,
+                                GDALDataType eDataTypeIn,
+                                int nXSize, int nYSize) :
+    RawRasterBand( fpRawIn, 0, GDALGetDataTypeSizeBytes(eDataTypeIn),
+                   nXSize * GDALGetDataTypeSizeBytes(eDataTypeIn), eDataTypeIn,
+                   CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE )
+{}
 
 /************************************************************************/
 /*                             GetUnitType()                            */

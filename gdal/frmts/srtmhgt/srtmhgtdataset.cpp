@@ -103,7 +103,7 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
 /*                           SRTMHGTRasterBand()                            */
 /************************************************************************/
 
-SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDSIn, int nBandIn) :
+SRTMHGTRasterBand::SRTMHGTRasterBand( SRTMHGTDataset* poDSIn, int nBandIn ) :
     bNoDataSet(TRUE),
     dfNoDataValue(SRTMHG_NODATA_VALUE)
 {

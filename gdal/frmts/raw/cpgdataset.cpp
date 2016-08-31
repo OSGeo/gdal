@@ -1328,22 +1328,23 @@ CPG_STOKESRasterBand::CPG_STOKESRasterBand( GDALDataset *poDSIn, int nBandIn,
     nBand(nBandIn),
     bNativeOrder(bNativeOrderIn)
 {
-    static const char * const apszPolarizations[16] = { "Covariance_11",
-                                                 "Covariance_12",
-                                                 "Covariance_13",
-                                                 "Covariance_14",
-                                                 "Covariance_21",
-                                                 "Covariance_22",
-                                                 "Covariance_23",
-                                                 "Covariance_24",
-                                                 "Covariance_31",
-                                                 "Covariance_32",
-                                                 "Covariance_33",
-                                                 "Covariance_34",
-                                                 "Covariance_41",
-                                                 "Covariance_42",
-                                                 "Covariance_43",
-                                                 "Covariance_44" };
+    static const char * const apszPolarizations[16] = {
+        "Covariance_11",
+        "Covariance_12",
+        "Covariance_13",
+        "Covariance_14",
+        "Covariance_21",
+        "Covariance_22",
+        "Covariance_23",
+        "Covariance_24",
+        "Covariance_31",
+        "Covariance_32",
+        "Covariance_33",
+        "Covariance_34",
+        "Covariance_41",
+        "Covariance_42",
+        "Covariance_43",
+        "Covariance_44" };
 
     poDS = poDSIn;
     eDataType = eType;
