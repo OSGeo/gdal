@@ -513,18 +513,17 @@ GDALPDFStream::~GDALPDFStream()
 /*                           GDALPDFObjectRW()                          */
 /************************************************************************/
 
-GDALPDFObjectRW::GDALPDFObjectRW(GDALPDFObjectType eType)
-{
-    m_eType = eType;
-    m_nVal = 0;
-    m_dfVal = 0.0;
-    //m_osVal;
-    m_poDict = NULL;
-    m_poArray = NULL;
-    m_nNum = 0;
-    m_nGen = 0;
-    m_bCanRepresentRealAsString = FALSE;
-}
+GDALPDFObjectRW::GDALPDFObjectRW(GDALPDFObjectType eType) :
+    m_eType(eType),
+    m_nVal(0),
+    m_dfVal(0.0),
+    // m_osVal
+    m_poDict(NULL),
+    m_poArray(NULL),
+    m_nNum(0),
+    m_nGen(0),
+    m_bCanRepresentRealAsString(FALSE)
+{}
 
 /************************************************************************/
 /*                             ~GDALPDFObjectRW()                       */
@@ -763,9 +762,7 @@ int GDALPDFObjectRW::GetRefGen()
 /*                           GDALPDFDictionaryRW()                      */
 /************************************************************************/
 
-GDALPDFDictionaryRW::GDALPDFDictionaryRW()
-{
-}
+GDALPDFDictionaryRW::GDALPDFDictionaryRW() {}
 
 /************************************************************************/
 /*                          ~GDALPDFDictionaryRW()                      */
@@ -844,9 +841,7 @@ GDALPDFDictionaryRW& GDALPDFDictionaryRW::Remove(const char* pszKey)
 /*                             GDALPDFArrayRW()                         */
 /************************************************************************/
 
-GDALPDFArrayRW::GDALPDFArrayRW()
-{
-}
+GDALPDFArrayRW::GDALPDFArrayRW() {}
 
 /************************************************************************/
 /*                            ~GDALPDFArrayRW()                         */
@@ -854,7 +849,7 @@ GDALPDFArrayRW::GDALPDFArrayRW()
 
 GDALPDFArrayRW::~GDALPDFArrayRW()
 {
-    for(size_t i=0; i < m_array.size(); i++)
+    for( size_t i = 0; i < m_array.size(); i++ )
         delete m_array[i];
 }
 
@@ -1479,8 +1474,13 @@ class GDALPDFStreamPodofo : public GDALPDFStream
 /*                          GDALPDFObjectPodofo()                       */
 /************************************************************************/
 
-GDALPDFObjectPodofo::GDALPDFObjectPodofo(PoDoFo::PdfObject* po, PoDoFo::PdfVecObjects& poObjects) :
-        m_po(po), m_poObjects(poObjects), m_poDict(NULL), m_poArray(NULL), m_poStream(NULL)
+GDALPDFObjectPodofo::GDALPDFObjectPodofo(PoDoFo::PdfObject* po,
+                                         PoDoFo::PdfVecObjects& poObjects) :
+    m_po(po),
+    m_poObjects(poObjects),
+    m_poDict(NULL),
+    m_poArray(NULL),
+    m_poStream(NULL)
 {
     try
     {
@@ -1914,7 +1914,8 @@ class GDALPDFStreamPdfium : public GDALPDFStream
         void Decompress();
 
     public:
-        GDALPDFStreamPdfium(CPDF_Stream* pStream) : m_pStream(pStream), m_nSize(0), m_pData(NULL) { }
+        GDALPDFStreamPdfium( CPDF_Stream* pStream ) :
+            m_pStream(pStream), m_nSize(0), m_pData(NULL) {}
         virtual ~GDALPDFStreamPdfium() { FX_Free(m_pData); }
 
         virtual int GetLength();
@@ -1931,8 +1932,11 @@ class GDALPDFStreamPdfium : public GDALPDFStream
 /*                          GDALPDFObjectPdfium()                       */
 /************************************************************************/
 
-GDALPDFObjectPdfium::GDALPDFObjectPdfium(CPDF_Object *po) :
-        m_po(po), m_poDict(NULL), m_poArray(NULL), m_poStream(NULL)
+GDALPDFObjectPdfium::GDALPDFObjectPdfium( CPDF_Object *po ) :
+    m_po(po),
+    m_poDict(NULL),
+    m_poArray(NULL),
+    m_poStream(NULL)
 {
     CPLAssert(m_po != NULL);
 }

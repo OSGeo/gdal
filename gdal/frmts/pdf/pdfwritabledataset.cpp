@@ -36,13 +36,12 @@ CPL_CVSID("$Id$");
 /*                      PDFWritableVectorDataset()                      */
 /************************************************************************/
 
-PDFWritableVectorDataset::PDFWritableVectorDataset()
-{
-    papszOptions = NULL;
-    nLayers = 0;
-    papoLayers = NULL;
-    bModified = FALSE;
-}
+PDFWritableVectorDataset::PDFWritableVectorDataset() :
+    papszOptions(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    bModified(FALSE)
+{}
 
 /************************************************************************/
 /*                      ~PDFWritableVectorDataset()                     */
@@ -53,7 +52,7 @@ PDFWritableVectorDataset::~PDFWritableVectorDataset()
     SyncToDisk();
 
     CSLDestroy(papszOptions);
-    for(int i=0;i<nLayers;i++)
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
 }
