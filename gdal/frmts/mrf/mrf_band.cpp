@@ -203,7 +203,6 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
 GDALMRFRasterBand::GDALMRFRasterBand( GDALMRFDataset *parent_dataset,
                                       const ILImage &image, int band, int ov ) :
     poDS(parent_dataset),
-    m_band(band - 1),
     deflatep(GetOptlist().FetchBoolean("DEFLATE", FALSE)),
     // Bring the quality to 0 to 9
     deflate_flags(image.quality / 10),
@@ -282,7 +281,7 @@ CPLErr  GDALMRFRasterBand::SetNoDataValue(double val)
     }
     if (GInt32(poDS->vNoData.size()) < nBand)
         poDS->vNoData.resize(nBand);
-    poDS->vNoData[m_band] = val;
+    poDS->vNoData[nBand - 1] = val;
     // We also need to set it for this band
     img.NoDataValue = val;
     img.hasNoData = true;
@@ -295,7 +294,7 @@ double GDALMRFRasterBand::GetNoDataValue(int *pbSuccess)
     if (v.size() == 0)
         return GDALPamRasterBand::GetNoDataValue(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
-    return getBandValue(v, m_band);
+    return getBandValue(v, nBand - 1);
 }
 
 double GDALMRFRasterBand::GetMinimum(int *pbSuccess)
@@ -304,7 +303,7 @@ double GDALMRFRasterBand::GetMinimum(int *pbSuccess)
     if (v.size() == 0)
         return GDALPamRasterBand::GetMinimum(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
-    return getBandValue(v, m_band);
+    return getBandValue(v, nBand - 1);
 }
 
 double GDALMRFRasterBand::GetMaximum(int *pbSuccess)
@@ -313,10 +312,10 @@ double GDALMRFRasterBand::GetMaximum(int *pbSuccess)
     if (v.size() == 0)
         return GDALPamRasterBand::GetMaximum(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
-    return getBandValue(v, m_band);
+    return getBandValue(v, nBand - 1);
 }
 
-// Fill, with ndv
+// Fill with typed ndv, count is always in bytes
 template<typename T> static CPLErr buff_fill(void *b, size_t count, const T ndv)
 {
     T *buffer = static_cast<T*>(b);
@@ -370,7 +369,7 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
 
     for (int i = 0; i < poDS->nBands; i++) {
         GDALRasterBand *b = poDS->GetRasterBand(i+1);
-        if (b->GetOverviewCount() && m_l)
+        if (b->GetOverviewCount() && 0 != m_l)
             b = b->GetOverview(m_l-1);
 
         void *ob = buffer;
@@ -389,7 +388,7 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
     blockSizeBytes()/sizeof(T), img.pagesize.c)
 
         // Page is already in poDS->pbuffer, not empty
-        // There are only four cases, since only the real data type matters
+        // There are only four cases, since only the data size matters
         switch (GDALGetDataTypeSize(eDataType)/8)
         {
         case 1: CpySI(GByte); break;
@@ -421,13 +420,13 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
 
 {
     assert(!poDS->source.empty());
-    CPLDebug("MRF_IB", "FetchBlock %d,%d,0,%d, level  %d\n", xblk, yblk, m_band, m_l);
+    CPLDebug("MRF_IB", "FetchBlock %d,%d,0,%d, level  %d\n", xblk, yblk, nBand, m_l);
 
     if (poDS->clonedSource)  // This is a clone
         return FetchClonedBlock(xblk, yblk, buffer);
 
     const GInt32 cstride = img.pagesize.c; // 1 if band separate
-    ILSize req(xblk, yblk, 0, m_band / cstride, m_l);
+    ILSize req(xblk, yblk, 0, (nBand-1) / cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
     GDALDataset *poSrcDS = NULL;
@@ -556,7 +555,7 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
 
 CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
 {
-    CPLDebug("MRF_IB","FetchClonedBlock %d,%d,0,%d, level  %d\n", xblk, yblk, m_band, m_l);
+    CPLDebug("MRF_IB","FetchClonedBlock %d,%d,0,%d, level  %d\n", xblk, yblk, nBand, m_l);
 
     // Paranoid check
     assert(poDS->clonedSource);
@@ -578,7 +577,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
         return b->IReadBlock(xblk,yblk,buffer);
     }
 
-    ILSize req(xblk, yblk, 0, m_band/img.pagesize.c , m_l);
+    ILSize req(xblk, yblk, 0, (nBand-1)/img.pagesize.c , m_l);
     ILIdx tinfo;
 
     // Get the cloned source tile info
@@ -652,9 +651,9 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 {
     ILIdx tinfo;
     GInt32 cstride = img.pagesize.c;
-    ILSize req(xblk, yblk, 0, m_band / cstride, m_l);
+    ILSize req(xblk, yblk, 0, (nBand-1)/cstride, m_l);
     CPLDebug("MRF_IB", "IReadBlock %d,%d,0,%d, level %d, idxoffset " CPL_FRMT_GIB "\n",
-        xblk, yblk, m_band, m_l, IdxOffset(req,img));
+        xblk, yblk, nBand-1, m_l, IdxOffset(req,img));
 
     // If this is a caching file and bypass is on, just do the fetch
     if (poDS->bypass_cache && !poDS->source.empty())
@@ -802,11 +801,11 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
 {
     GInt32 cstride = img.pagesize.c;
-    ILSize req(xblk, yblk, 0, m_band/cstride, m_l);
+    ILSize req(xblk, yblk, 0, (nBand-1)/cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
     CPLDebug("MRF_IB", "IWriteBlock %d,%d,0,%d, level  %d, stride %d\n", xblk, yblk,
-        m_band, m_l, cstride);
+        nBand, m_l, cstride);
 
     if (1 == cstride) {     // Separate bands, we can write it as is
         // Empty page skip
@@ -863,7 +862,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         const char *pabyThisImage=NULL;
         GDALRasterBlock *poBlock=NULL;
 
-        if (iBand == m_band)
+        if (iBand == nBand-1)
         {
             pabyThisImage = (char *) buffer;
             poDS->bdirty |= bandbit();
