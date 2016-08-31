@@ -93,10 +93,10 @@ echo    1 : Visual C++ version is not the same as Visual Studio version ^( =^> 1
 echo    2 : Windows platform 32 for Win32 and 64 for Win64
 echo    3 : Base file name, with no path and no extension ^(*^)
 echo Examples:
-echo    makegdal_gen 10.1 makefileproj_vs10
-echo    makegdal_gen 11.0 makefileproj_vs11
-echo    makegdal_gen 12.0 makefileproj_vs12
-echo    makegdal_gen 14.0 makefileproj_vs14
+echo    makegdal_gen 10.1 32 makefileproj_vs10
+echo    makegdal_gen 11.0 64 makefileproj_vs11
+echo    makegdal_gen 12.0 64 makefileproj_vs12
+echo    makegdal_gen 14.0 64 makefileproj_vs14
 
 goto :end
 
@@ -157,7 +157,7 @@ echo ^</Project^>                                               >> %_userfile_%
 :: **********************************************
 
 echo ^<?xml version="1.0" encoding="utf-8"?^>                   >> %_ftrlfile_%
-echo ^<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"^>         >> %_ftrlfile_%
+echo ^<Project ToolsVersion="5.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"^>         >> %_ftrlfile_%
 
 :: **********************************************
 :: Main file generator (.vcxproj) and filters file (.vcxproj.filters)
