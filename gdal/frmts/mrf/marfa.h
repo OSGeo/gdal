@@ -58,15 +58,9 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef GDAL_COMPILATION
 #define NAMESPACE_MRF_START namespace GDAL_MRF {
 #define NAMESPACE_MRF_END   }
 #define USING_NAMESPACE_MRF using namespace GDAL_MRF;
-#else
-#define NAMESPACE_MRF_START
-#define NAMESPACE_MRF_END
-#define USING_NAMESPACE_MRF
-#endif
 
 NAMESPACE_MRF_START
 
@@ -512,7 +506,7 @@ public:
     virtual double  GetNoDataValue(int *);
     virtual CPLErr  SetNoDataValue(double);
 
-    // These get set with SetStatistics.  Let PAM handle it
+    // These get set with SetStatistics
     virtual double  GetMinimum(int *);
     virtual double  GetMaximum(int *);
 
@@ -534,8 +528,7 @@ public:
 protected:
     // Pointer to the GDALMRFDataset
     GDALMRFDataset *poDS;
-    // 0 based
-    GInt32 m_band;
+    // Deflate page requested, named to avoid conflict with libz deflate()
     int deflatep;
     int deflate_flags;
     // Level count of this band
@@ -566,7 +559,7 @@ protected:
     //    virtual CPLErr ReadTileIdx(const ILSize &, ILIdx &, GIntBig bias = 0);
 
     GIntBig bandbit(int b) { return ((GIntBig)1) << b; }
-    GIntBig bandbit() { return bandbit(m_band); }
+    GIntBig bandbit() { return bandbit(nBand - 1); }
     GIntBig AllBandMask() { return bandbit(poDS->nBands) - 1; }
 
     // Overview Support

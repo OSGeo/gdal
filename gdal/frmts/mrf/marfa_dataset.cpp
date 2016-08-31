@@ -62,13 +62,19 @@ using std::string;
 
 NAMESPACE_MRF_START
 
+#if GDAL_VERSION_MAJOR >= 2
+#define BOOLTEST CPLTestBool
+#else
+#define BOOLTEST CSLTestBoolean
+#endif
+
 // Initialize as invalid
 GDALMRFDataset::GDALMRFDataset() :
     zslice(0),
     idxSize(0),
     clonedSource(FALSE),
     bypass_cache(
-        CPLTestBool(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"))),
+        BOOLTEST(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"))),
     mp_safe(FALSE),
     hasVersions(FALSE),
     verCount(0),
@@ -299,7 +305,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             // last level that will be otherwised initialized to black
             if( !EQUAL(pszResampling, "NONE") &&
                 nOverviews != GetRasterBand(1)->GetOverviewCount() &&
-                CPLTestBool(CPLGetConfigOption("MRF_ALL_OVERVIEW_LEVELS",
+                BOOLTEST(CPLGetConfigOption("MRF_ALL_OVERVIEW_LEVELS",
                                                "YES")) )
             {
                 bool bIncreasingPowers = true;
