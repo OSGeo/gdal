@@ -131,14 +131,14 @@ class OGDIRasterBand : public GDALRasterBand
 
 OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDSIn, int nBandIn,
                                 const char * pszName, ecs_Family eFamilyIn,
-                                int nComponentIn )
-
+                                int nComponentIn ) :
+    nOGDIImageType(0),
+    pszLayerName(CPLStrdup(pszName)),
+    eFamily(eFamilyIn),
+    nComponent(nComponentIn)
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    eFamily = eFamilyIn;
-    pszLayerName = CPLStrdup(pszName);
-    nComponent = nComponentIn;
     poCT = NULL;
 
 /* -------------------------------------------------------------------- */

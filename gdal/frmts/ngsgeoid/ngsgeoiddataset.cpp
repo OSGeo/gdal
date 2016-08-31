@@ -80,11 +80,9 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
     friend class NGSGEOIDDataset;
 
   public:
-
                 explicit NGSGEOIDRasterBand( NGSGEOIDDataset * );
 
     virtual CPLErr IReadBlock( int, int, void * );
-
     virtual const char* GetUnitType() { return "m"; }
 };
 
@@ -96,8 +94,8 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
 NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDSIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = 1;
+    poDS = poDSIn;
+    nBand = 1;
 
     eDataType = GDT_Float32;
 

@@ -154,8 +154,6 @@ class GDALPDFWriter
     CPLString    osOffLayers;
     CPLString    osExclusiveLayers;
 
-    void    Init();
-
     void    StartObj(int nObjectId, int nGen = 0);
     void    EndObj();
     void    WriteXRefTableAndTrailer();
@@ -179,7 +177,7 @@ class GDALPDFWriter
     int     AllocNewObject();
 
     public:
-        GDALPDFWriter(VSILFILE* fpIn, int bAppend = FALSE);
+        GDALPDFWriter( VSILFILE* fpIn, int bAppend = FALSE );
        ~GDALPDFWriter();
 
        void Close();

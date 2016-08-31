@@ -101,8 +101,8 @@ class NWT_GRCRasterBand : public GDALPamRasterBand
 
 NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
 
     if( poGDS->pGrd->nBitsPerPixel == 8 )
@@ -247,9 +247,12 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* ==================================================================== */
 /************************************************************************/
 NWT_GRCDataset::NWT_GRCDataset() :
-    fp(NULL), pGrd(NULL), papszCategories(NULL), pszProjection(NULL),
+    fp(NULL),
+    pGrd(NULL),
+    papszCategories(NULL),
+    pszProjection(NULL),
     poColorTable(NULL)
-{ }
+{}
 
 
 /************************************************************************/

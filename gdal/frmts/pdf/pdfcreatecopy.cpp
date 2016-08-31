@@ -52,38 +52,33 @@ class GDALFakePDFDataset : public GDALDataset
         GDALFakePDFDataset() {}
 };
 
-/************************************************************************/
-/*                             Init()                                   */
-/************************************************************************/
-
-void GDALPDFWriter::Init()
-{
-    nPageResourceId = 0;
-    nStructTreeRootId = 0;
-    nCatalogId = nCatalogGen = 0;
-    bInWriteObj = FALSE;
-    nInfoId = nInfoGen = 0;
-    nXMPId = nXMPGen = 0;
-    nNamesId = 0;
-
-    nLastStartXRef = 0;
-    nLastXRefSize = 0;
-    bCanUpdate = FALSE;
-}
 
 /************************************************************************/
 /*                         GDALPDFWriter()                              */
 /************************************************************************/
 
-GDALPDFWriter::GDALPDFWriter(VSILFILE* fpIn, int bAppend) : fp(fpIn)
+GDALPDFWriter::GDALPDFWriter( VSILFILE* fpIn, int bAppend ) :
+    fp(fpIn),
+    nInfoId(0),
+    nInfoGen(0),
+    nPageResourceId(0),
+    nStructTreeRootId(0),
+    nCatalogId(0),
+    nCatalogGen(0),
+    nXMPId(0),
+    nXMPGen(0),
+    nNamesId(0),
+    bInWriteObj(FALSE),
+    nLastStartXRef(0),
+    nLastXRefSize(0),
+    bCanUpdate(FALSE)
 {
-    Init();
-
-    if (!bAppend)
+    if( !bAppend )
     {
         VSIFPrintfL(fp, "%%PDF-1.6\n");
 
-        /* See PDF 1.7 reference, page 92. Write 4 non-ASCII bytes to indicate that the content will be binary */
+        // See PDF 1.7 reference, page 92. Write 4 non-ASCII bytes to indicate
+        // that the content will be binary.
         VSIFPrintfL(fp, "%%%c%c%c%c\n", 0xFF, 0xFF, 0xFF, 0xFF);
 
         nPageResourceId = AllocNewObject();

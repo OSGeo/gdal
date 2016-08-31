@@ -69,10 +69,10 @@ class OGRPDFLayer : public OGRMemLayer
     int               bGeomTypeMixed;
 
 public:
-        OGRPDFLayer(PDFDataset* poDS,
-                    const char * pszName,
-                    OGRSpatialReference *poSRS,
-                    OGRwkbGeometryType eGeomType);
+        OGRPDFLayer( PDFDataset* poDS,
+                     const char * pszName,
+                     OGRSpatialReference *poSRS,
+                     OGRwkbGeometryType eGeomType );
 
     void                Fill( GDALPDFArray* poArray );
 
@@ -226,7 +226,8 @@ class PDFDataset : public GDALPamDataset
 
     int          bTried;
     GByte       *pabyCachedData;
-    int          nLastBlockXOff, nLastBlockYOff;
+    int          nLastBlockXOff;
+    int          nLastBlockYOff;
 
     OGRPolygon*  poNeatLine;
 

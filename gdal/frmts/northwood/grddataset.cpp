@@ -130,10 +130,15 @@ public:
 /************************************************************************/
 /*                           NWT_GRDRasterBand()                        */
 /************************************************************************/
-NWT_GRDRasterBand::NWT_GRDRasterBand(NWT_GRDDataset * poDSIn, int nBandIn, int nBands) {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->dfNoData = 0.0;
+NWT_GRDRasterBand::NWT_GRDRasterBand( NWT_GRDDataset * poDSIn, int nBandIn,
+                                      int nBands ) :
+    bHaveOffsetScale(FALSE),
+    dfOffset(0.0),
+    dfScale(1.0),
+    dfNoData(0.0)
+{
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     /*
     * If nBand = 4 we have opened in read mode and have created the 3 'virtual' RGB bands.
@@ -153,7 +158,9 @@ NWT_GRDRasterBand::NWT_GRDRasterBand(NWT_GRDDataset * poDSIn, int nBandIn, int n
             dfScale = (poDSIn->pGrd->fZMax - poDSIn->pGrd->fZMin)
                     / (double) SCALE32BIT;
         }
-    } else {
+    }
+    else
+    {
         bHaveOffsetScale = FALSE;
         dfOffset = 0;
         dfScale = 1.0;
@@ -376,9 +383,13 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 NWT_GRDDataset::NWT_GRDDataset() :
-        fp(NULL), pGrd(NULL), bUpdateHeader(false) {
+    fp(NULL),
+    pGrd(NULL),
+    bUpdateHeader(false)
+{
     //poCT = NULL;
-    for (size_t i = 0; i < CPL_ARRAYSIZE(ColorMap); ++i) {
+    for( size_t i = 0; i < CPL_ARRAYSIZE(ColorMap); ++i )
+    {
         ColorMap[i].r = 0;
         ColorMap[i].g = 0;
         ColorMap[i].b = 0;
