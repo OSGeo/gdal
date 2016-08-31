@@ -67,8 +67,7 @@ CPL_CVSID("$Id$");
 NASAKeywordHandler::NASAKeywordHandler() :
     papszKeywordList(NULL),
     pszHeaderNext(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                        ~NASAKeywordHandler()                         */

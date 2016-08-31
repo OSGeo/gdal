@@ -216,7 +216,10 @@ private:
     ResolutionStrategy resolutionStrategy;
     WorkingMode nMode;
     int m_nTiles;
-    double xmin, ymin, xmax, ymax;
+    double xmin;
+    double ymin;
+    double xmax;
+    double ymax;
     PostGISRasterTileDataset ** papoSourcesHolders;
     CPLQuadTree * hQuadTree;
 
@@ -324,8 +327,8 @@ protected:
                                          int nLineSpace);
 public:
 
-    PostGISRasterRasterBand(PostGISRasterDataset *, int ,
-		GDALDataType, GBool, double, GBool);
+    PostGISRasterRasterBand( PostGISRasterDataset *, int ,
+                             GDALDataType, GBool, double, GBool );
 
     virtual ~PostGISRasterRasterBand();
 

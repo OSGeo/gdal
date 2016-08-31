@@ -46,20 +46,19 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
     PostGISRasterDataset * poDSIn, int nBandIn,
     GDALDataType eDataTypeIn, GBool bNoDataValueSetIn, double dfNodata,
     GBool bIsOfflineIn = false) :
-    VRTSourcedRasterBand(poDSIn, nBandIn)
+    VRTSourcedRasterBand(poDSIn, nBandIn),
+    bIsOffline(bIsOfflineIn),
+    pszSchema(poDSIn->pszSchema),
+    pszTable(poDSIn->pszTable),
+    pszColumn(poDSIn->pszColumn)
 {
     /* Basic properties */
-    this->poDS = poDSIn;
-    this->bIsOffline = bIsOfflineIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
-    this->eDataType = eDataTypeIn;
-    this->m_bNoDataValueSet = bNoDataValueSetIn;
-    this->m_dfNoDataValue = dfNodata;
-
-    this->pszSchema = poDSIn->pszSchema;
-    this->pszTable = poDSIn->pszTable;
-    this->pszColumn = poDSIn->pszColumn;
+    eDataType = eDataTypeIn;
+    m_bNoDataValueSet = bNoDataValueSetIn;
+    m_dfNoDataValue = dfNodata;
 
     nRasterXSize = poDS->GetRasterXSize();
     nRasterYSize = poDS->GetRasterYSize();
@@ -75,8 +74,8 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
      * table. Otherwise, the reading operations are performed by the
      * sources, not the PostGISRasterBand object itself.
      ******************************************************************/
-    this->nBlockXSize = MIN(MAX_BLOCK_SIZE, this->nRasterXSize);
-    this->nBlockYSize = MIN(MAX_BLOCK_SIZE, this->nRasterYSize);
+    nBlockXSize = MIN(MAX_BLOCK_SIZE, this->nRasterXSize);
+    nBlockYSize = MIN(MAX_BLOCK_SIZE, this->nRasterYSize);
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",
@@ -95,9 +94,7 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
 /***********************************************
  * \brief: Band destructor
  ***********************************************/
-PostGISRasterRasterBand::~PostGISRasterRasterBand()
-{
-}
+PostGISRasterRasterBand::~PostGISRasterRasterBand() {}
 
 #ifdef notdef
 /***********************************************************************
@@ -110,7 +107,7 @@ PostGISRasterRasterBand::~PostGISRasterRasterBand()
 void PostGISRasterRasterBand::NullBlock(void *pData)
 {
     int nWords = nBlockXSize * nBlockYSize;
-    int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+    int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
 
     int bNoDataSet;
     double dfNoData = GetNoDataValue(&bNoDataSet);

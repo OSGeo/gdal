@@ -38,14 +38,14 @@ CPL_CVSID("$Id$");
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterTileDataset::PostGISRasterTileDataset(PostGISRasterDataset* poRDSIn,
-                                                   int nXSize,
-                                                   int nYSize)
+PostGISRasterTileDataset::PostGISRasterTileDataset( PostGISRasterDataset* poRDSIn,
+                                                    int nXSize,
+                                                    int nYSize ) :
+    poRDS(poRDSIn),
+    pszPKID(NULL)
 {
-    this->poRDS = poRDSIn;
-    this->pszPKID = NULL;
-    this->nRasterXSize = nXSize;
-    this->nRasterYSize = nYSize;
+    nRasterXSize = nXSize;
+    nRasterYSize = nYSize;
 
     adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0;
     adfGeoTransform[GEOTRSFRM_WE_RES] = 1;

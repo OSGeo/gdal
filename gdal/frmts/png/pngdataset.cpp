@@ -241,8 +241,8 @@ PNGRasterBand::PNGRasterBand( PNGDataset *poDSIn, int nBandIn ) :
     bHaveNoData(FALSE),
     dfNoDataValue(-1)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     if( poDSIn->nBitDepth == 16 )
         eDataType = GDT_UInt16;
@@ -253,7 +253,7 @@ PNGRasterBand::PNGRasterBand( PNGDataset *poDSIn, int nBandIn ) :
     nBlockYSize = 1;
 
 #ifdef SUPPORT_CREATE
-    this->reset_band_provision_flags();
+    reset_band_provision_flags();
 #endif
 }
 

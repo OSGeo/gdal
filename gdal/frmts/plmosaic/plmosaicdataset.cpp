@@ -176,12 +176,12 @@ PLMosaicRasterBand::PLMosaicRasterBand( PLMosaicDataset *poDSIn, int nBandIn,
                                         GDALDataType eDataTypeIn )
 
 {
-    this->eDataType = eDataTypeIn;
+    eDataType = eDataTypeIn;
     nBlockXSize = 256;
     nBlockYSize = 256;
 
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     if( eDataType == GDT_UInt16 )
     {
