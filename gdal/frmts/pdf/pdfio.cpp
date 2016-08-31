@@ -52,49 +52,50 @@ static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE* f)
 /*                         VSIPDFFileStream()                           */
 /************************************************************************/
 
-VSIPDFFileStream::VSIPDFFileStream(VSILFILE* fIn, const char* pszFilename, Object *dictA):
+VSIPDFFileStream::VSIPDFFileStream(
+    VSILFILE* fIn, const char* pszFilename, Object *dictA) :
 #ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
-                                                        BaseStream(dictA, (setPos_offset_type)VSIPDFFileStreamGetSize(fIn))
+    BaseStream(dictA, (setPos_offset_type)VSIPDFFileStreamGetSize(fIn)),
 #else
-                                                        BaseStream(dictA)
+    BaseStream(dictA),
 #endif
-{
-    poParent = NULL;
-    poFilename = new GooString(pszFilename);
-    this->f = fIn;
-    nStart = 0;
-    bLimited = gFalse;
-    nLength = 0;
-    nCurrentPos = VSI_L_OFFSET_MAX;
-    bHasSavedPos = FALSE;
-    nSavedPos = 0;
-    nPosInBuffer = nBufferLength = -1;
-}
+    poParent(NULL),
+    poFilename(new GooString(pszFilename)),
+    f(fIn),
+    nStart(0),
+    bLimited(gFalse),
+    nLength(0),
+    nCurrentPos(VSI_L_OFFSET_MAX),
+    bHasSavedPos(FALSE),
+    nSavedPos(0),
+    nPosInBuffer(-1),
+    nBufferLength(-1)
+{}
 
 /************************************************************************/
 /*                         VSIPDFFileStream()                           */
 /************************************************************************/
 
-VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream* poParentIn,
-                                   vsi_l_offset startA, GBool limitedA,
-                                   vsi_l_offset lengthA, Object *dictA):
+VSIPDFFileStream::VSIPDFFileStream( VSIPDFFileStream* poParentIn,
+                                    vsi_l_offset startA, GBool limitedA,
+                                    vsi_l_offset lengthA, Object *dictA ) :
 #ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
-                                                        BaseStream(dictA, (makeSubStream_offset_type)lengthA)
+    BaseStream(dictA, (makeSubStream_offset_type)lengthA)
 #else
-                                                        BaseStream(dictA)
+    BaseStream(dictA)
 #endif
-{
-    this->poParent = poParentIn;
-    poFilename = poParent->poFilename;
-    f = poParent->f;
-    nStart = startA;
-    bLimited = limitedA;
-    nLength = lengthA;
-    nCurrentPos = VSI_L_OFFSET_MAX;
-    bHasSavedPos = FALSE;
-    nSavedPos = 0;
-    nPosInBuffer = nBufferLength = -1;
-}
+    poParent(poParentIn),
+    poFilename(poParentIn->poFilename),
+    f(poParentIn->f),
+    nStart(startA),
+    bLimited(limitedA),
+    nLength(lengthA),
+    nCurrentPos(VSI_L_OFFSET_MAX),
+    bHasSavedPos(FALSE),
+    nSavedPos(0),
+    nPosInBuffer(-1),
+    nBufferLength(-1)
+{}
 
 /************************************************************************/
 /*                        ~VSIPDFFileStream()                           */
