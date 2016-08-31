@@ -94,15 +94,15 @@ CPLString RasterliteGetSpatialFilterCond(double minx, double miny,
 /*                            RasterliteBand()                          */
 /************************************************************************/
 
-RasterliteBand::RasterliteBand(RasterliteDataset* poDSIn, int nBandIn,
+RasterliteBand::RasterliteBand( RasterliteDataset* poDSIn, int nBandIn,
                                 GDALDataType eDataTypeIn,
-                                int nBlockXSizeIn, int nBlockYSizeIn)
+                                int nBlockXSizeIn, int nBlockYSizeIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eDataType = eDataTypeIn;
-    this->nBlockXSize = nBlockXSizeIn;
-    this->nBlockYSize = nBlockYSizeIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = eDataTypeIn;
+    nBlockXSize = nBlockXSizeIn;
+    nBlockYSize = nBlockYSizeIn;
 }
 
 /************************************************************************/
@@ -590,6 +590,7 @@ RasterliteDataset::RasterliteDataset() :
     poMainDS(NULL),
     nLevel(0),
     papszMetadata(NULL),
+    papszImageStructure(CSLAddString(NULL, "INTERLEAVE=PIXEL")),
     papszSubDatasets(NULL),
     nResolutions(0),
     padfXResolutions(NULL),
@@ -602,15 +603,15 @@ RasterliteDataset::RasterliteDataset() :
     bCheckForExistingOverview(TRUE),
     hDS(NULL)
 {
-    papszImageStructure =
-        CSLAddString(NULL, "INTERLEAVE=PIXEL");
+    // TODO(schwehr): Set adfGeoTransform.
 }
 
 /************************************************************************/
 /*                         RasterliteDataset()                          */
 /************************************************************************/
 
-RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDSIn, int nLevelIn) :
+RasterliteDataset::RasterliteDataset( RasterliteDataset* poMainDSIn,
+                                      int nLevelIn ) :
     bMustFree(FALSE),
     poMainDS(poMainDSIn),
     nLevel(nLevelIn),

@@ -87,18 +87,18 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
                               GIntBig nFirstTileOffsetIn,
                               GIntBig nXTileOffsetIn,
                               GIntBig nYTileOffsetIn,
-                              int bNativeOrderIn )
-
+                              int bNativeOrderIn ) :
+    fpVSIL(fpVSILIn),
+    nFirstTileOffset(0),
+    nXTileOffset(nXTileOffsetIn),
+    nYTileOffset(nYTileOffsetIn),
+    bNativeOrder(bNativeOrderIn)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->fpVSIL = fpVSILIn;
-    this->bNativeOrder = bNativeOrderIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = eDT;
     nBlockXSize = nTileXSize;
     nBlockYSize = nTileYSize;
-    this->nXTileOffset = nXTileOffsetIn;
-    this->nYTileOffset = nYTileOffsetIn;
 
     const int l_nBlocksPerRow =
             (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
@@ -107,11 +107,13 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
 
     if( nXTileOffset == 0 && nYTileOffset == 0 )
     {
-        nXTileOffset = static_cast<GIntBig>(GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
+        nXTileOffset =
+            static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eDT)) *
+            nTileXSize * nTileYSize;
         nYTileOffset = nXTileOffset * l_nBlocksPerRow;
     }
 
-    this->nFirstTileOffset = nFirstTileOffsetIn
+    nFirstTileOffset = nFirstTileOffsetIn
         + (nBand-1) * nYTileOffset * l_nBlocksPerColumn;
 
 }

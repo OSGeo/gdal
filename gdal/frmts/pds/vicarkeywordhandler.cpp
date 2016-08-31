@@ -48,7 +48,7 @@ VICARKeywordHandler::VICARKeywordHandler() :
     papszKeywordList(NULL),
     pszHeaderNext(NULL),
     LabelSize(0)
-{ }
+{}
 
 /************************************************************************/
 /*                        ~VICARKeywordHandler()                        */

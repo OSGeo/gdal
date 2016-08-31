@@ -141,7 +141,7 @@ RDataset::RDataset() :
     bASCII(FALSE),
     nStartOfData(0),
     padfMatrixValues(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                             ~RDataset()                              */

@@ -36,10 +36,9 @@ CPL_CVSID("$Id$");
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterDriver::PostGISRasterDriver()
-{
-    hMutex = NULL;
-}
+PostGISRasterDriver::PostGISRasterDriver() :
+    hMutex(NULL)
+{}
 
 /************************
  * \brief Destructor

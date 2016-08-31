@@ -137,7 +137,7 @@ class RasterliteBand: public GDALPamRasterBand
   public:
                             RasterliteBand( RasterliteDataset* poDS, int nBand,
                                             GDALDataType eDataType,
-                                            int nBlockXSize, int nBlockYSize);
+                                            int nBlockXSize, int nBlockYSize );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable* GetColorTable();

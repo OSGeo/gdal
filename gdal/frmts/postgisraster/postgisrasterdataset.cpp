@@ -94,40 +94,61 @@ CPL_CVSID("$Id$");
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
-
-    papszSubdatasets = NULL;
-    nSrid = -1;
-    nOverviewFactor = 1;
-    nBandsToCreate = 0;
-    poConn = NULL;
-    bRegularBlocking = false;
-    bAllTilesSnapToSameGrid = false;
-
-    bCheckAllTiles = CPLTestBool(
-        CPLGetConfigOption("PR_ALLOW_WHOLE_TABLE_SCAN", "YES"));
-
-    pszSchema = NULL;
-    pszTable = NULL;
-    pszColumn = NULL;
-    pszWhere = NULL;
-    pszProjection = NULL;
+PostGISRasterDataset::PostGISRasterDataset() :
+    VRTDataset(0, 0),
+    papszSubdatasets(NULL),
+    nSrid(-1),
+    nOverviewFactor(1),
+    nBandsToCreate(0),
+    poConn(NULL),
+    bRegularBlocking(false),
+    bAllTilesSnapToSameGrid(false),
+    bCheckAllTiles(CPLTestBool(
+        CPLGetConfigOption("PR_ALLOW_WHOLE_TABLE_SCAN", "YES"))),
+    pszSchema(NULL),
+    pszTable(NULL),
+    pszColumn(NULL),
+    pszWhere(NULL),
+    pszPrimaryKeyName(NULL),
+    bIsFastPK(false),
+    bHasTriedFetchingPrimaryKeyName(false),
+    pszProjection(NULL),
+    // Default
+    resolutionStrategy(AVERAGE_APPROX_RESOLUTION),
+    nMode(NO_MODE),
+    m_nTiles(0),
+    xmin(0.0),
+    ymin(0.0),
+    xmax(0.0),
+    ymax(0.0),
+    papoSourcesHolders(NULL),
+    hQuadTree(NULL),
+    bHasBuiltOverviews(false),
+    nOverviewCount(0),
+    poParentDS(NULL),
+    papoOverviewDS(NULL),
+    bAssumeMultiBandReadPattern(true),
+    nNextExpectedBand(1),
+    nXOffPrev(0),
+    nYOffPrev(0),
+    nXSizePrev(0),
+    nYSizePrev(0),
+    bHasTriedHasSpatialIndex(false),
+    bHasSpatialIndex(false),
+    bBuildQuadTreeDynamically(false),
+    bTilesSameDimension(false),
+    nTileWidth(0),
+  nTileHeight(0)
+{
 
     adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
     adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
     adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = 0.0;
     adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
-    adfGeoTransform[GEOTRSFRM_WE_RES] = 0;
-    adfGeoTransform[GEOTRSFRM_NS_RES] = 0;
-
     adfGeoTransform[GEOTRSFRM_WE_RES] =
         CPLAtof(CPLGetConfigOption("PR_WE_RES", NO_VALID_RES));
-
     adfGeoTransform[GEOTRSFRM_NS_RES] =
         CPLAtof(CPLGetConfigOption("PR_NS_RES", NO_VALID_RES));
-
-    // Default
-    resolutionStrategy = AVERAGE_APPROX_RESOLUTION;
 
     const char * pszTmp = NULL;
     // We ignore this option if we provided the desired resolution
@@ -167,50 +188,17 @@ PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
                 "STRATEGY = %s", pszTmp);
 #endif
 
-    m_nTiles = 0;
-    nMode = NO_MODE;
     poDriver = NULL;
 
     nRasterXSize = nRasterYSize = 0;
-    pszPrimaryKeyName = NULL;
-    bIsFastPK = false;
-    bHasTriedFetchingPrimaryKeyName = false;
-
-    papoSourcesHolders = NULL;
-    hQuadTree = NULL;
-
-    bHasBuiltOverviews = false;
-    nOverviewCount = 0;
-    papoOverviewDS = NULL;
-    poParentDS = NULL;
-
-    bAssumeMultiBandReadPattern = true;
-    nNextExpectedBand = 1;
-    nXOffPrev = 0;
-    nYOffPrev = 0;
-    nXSizePrev = 0;
-    nYSizePrev = 0;
-
-    bHasTriedHasSpatialIndex = false;
-    bHasSpatialIndex = false;
-
-    bBuildQuadTreeDynamically = false;
-
-    bTilesSameDimension = false;
-    nTileWidth = 0;
-    nTileHeight = 0;
 
     SetWritable(false);
 
-
-    /**
-     * TODO: Parametrize bAllTilesSnapToSameGrid. It controls if all the
-     * raster rows, in ONE_RASTER_PER_TABLE mode, must be checked to
-     * test if they snap to the same grid and have the same SRID. It can
-     * be the user decision, if he/she's sure all the rows pass the
-     * test and want more speed.
-     **/
-
+    // TODO: Parametrize bAllTilesSnapToSameGrid. It controls if all the
+    // raster rows, in ONE_RASTER_PER_TABLE mode, must be checked to
+    // test if they snap to the same grid and have the same SRID. It can
+    // be the user decision, if he/she's sure all the rows pass the
+    // test and want more speed.
 }
 
 /************************
