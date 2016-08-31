@@ -562,12 +562,12 @@ void GDALPDFDumper::Dump(GDALPDFDictionary* poDict, int nDepth)
 /*                         PDFRasterBand()                              */
 /************************************************************************/
 
-PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn, int nResolutionLevelIn )
-
+PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn,
+                              int nResolutionLevelIn ) :
+    nResolutionLevel(nResolutionLevelIn)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->nResolutionLevel = nResolutionLevelIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Byte;
 
@@ -2084,10 +2084,9 @@ class PDFImageRasterBand : public PDFRasterBand
 /*                        PDFImageRasterBand()                          */
 /************************************************************************/
 
-PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDSIn, int nBandIn ) : PDFRasterBand(poDSIn, nBandIn, 0)
-
-{
-}
+PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDSIn, int nBandIn ) :
+    PDFRasterBand(poDSIn, nBandIn, 0)
+{}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -2154,66 +2153,64 @@ CPLErr PDFImageRasterBand::IReadBlock( int CPL_UNUSED nBlockXOff, int nBlockYOff
 /*                            PDFDataset()                              */
 /************************************************************************/
 
-PDFDataset::PDFDataset(PDFDataset* poParentDSIn, int nXSize, int nYSize)
+PDFDataset::PDFDataset( PDFDataset* poParentDSIn, int nXSize, int nYSize ) :
+    poParentDS(poParentDSIn),
+    pszWKT(NULL),
+    dfDPI(GDAL_DEFAULT_DPI),
+    bHasCTM(FALSE),
+    bGeoTransformValid(FALSE),
+    nGCPCount(0),
+    pasGCPList(NULL),
+    bProjDirty(FALSE),
+    bNeatLineDirty(FALSE),
+    bInfoDirty(FALSE),
+    bXMPDirty(FALSE),
+#ifdef HAVE_POPPLER
+    poDocPoppler(NULL),
+#endif
+#ifdef HAVE_PODOFO
+    poDocPodofo(NULL),
+    bPdfToPpmFailed(FALSE),
+#endif
+#ifdef HAVE_PDFIUM
+    poDocPdfium(poParentDSIn ? poParentDSIn->poDocPdfium : NULL),
+    poPagePdfium(poParentDSIn ? poParentDSIn->poPagePdfium : NULL),
+#endif
+    poPageObj(NULL),
+    iPage(-1),
+    poImageObj(NULL),
+    dfMaxArea(0),
+    bTried(FALSE),
+    pabyCachedData(NULL),
+    nLastBlockXOff(-1),
+    nLastBlockYOff(-1),
+    poNeatLine(NULL),
+#ifdef HAVE_POPPLER
+    poCatalogObjectPoppler(NULL),
+#endif
+    poCatalogObject(NULL),
+    bUseOCG(FALSE),
+    papszOpenOptions(NULL),
+    bHasLoadedLayers(FALSE),
+    nLayers(0),
+    papoLayers(NULL),
+    dfPageWidth(0),
+    dfPageHeight(0),
+    bSetStyle(CPLTestBool(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES")))
 {
-    poParentDS = poParentDSIn;
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
     bUseLib.reset();
     if( poParentDSIn )
         bUseLib = poParentDS->bUseLib;
-#ifdef HAVE_POPPLER
-    poDocPoppler = NULL;
-#endif
-#ifdef HAVE_PODOFO
-    poDocPodofo = NULL;
-    bPdfToPpmFailed = FALSE;
-#endif
-#ifdef HAVE_PDFIUM
-    poDocPdfium = poParentDSIn ? poParentDSIn->poDocPdfium: NULL;
-    poPagePdfium = poParentDSIn ? poParentDSIn->poPagePdfium: NULL;
-#endif
-    poPageObj = NULL;
-    poImageObj = NULL;
-    pszWKT = NULL;
-    dfDPI = GDAL_DEFAULT_DPI;
-    dfMaxArea = 0;
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
-    bHasCTM = FALSE;
-    bGeoTransformValid = FALSE;
-    nGCPCount = 0;
-    pasGCPList = NULL;
-    bProjDirty = FALSE;
-    bNeatLineDirty = FALSE;
-    bInfoDirty = FALSE;
-    bXMPDirty = FALSE;
-    bTried = FALSE;
-    pabyCachedData = NULL;
-    nLastBlockXOff = -1;
-    nLastBlockYOff = -1;
-    iPage = -1;
-    poNeatLine = NULL;
-    bUseOCG = FALSE;
-    poCatalogObject = NULL;
-#ifdef HAVE_POPPLER
-    poCatalogObjectPoppler = NULL;
-#endif
     nBlockXSize = 0;
     nBlockYSize = 0;
-    papszOpenOptions = NULL;
-
-    bHasLoadedLayers = FALSE;
-    nLayers = 0;
-    papoLayers = NULL;
-
-    dfPageWidth = dfPageHeight = 0;
-
-    bSetStyle = CPLTestBool(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES"));
 
     InitMapOperators();
 }
