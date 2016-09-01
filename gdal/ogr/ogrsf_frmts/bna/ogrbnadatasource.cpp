@@ -315,7 +315,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
                   "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                   pszCRLFFormat );
 #ifdef WIN32
-        busecrlf = true;
+        bUseCRLF = true;
 #else
         bUseCRLF = false;
 #endif
