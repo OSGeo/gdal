@@ -31,14 +31,13 @@
 
 CPL_CVSID("$Id$");
 
-GDALWMSCache::GDALWMSCache() {
-    m_cache_path = "./gdalwmscache";
-    m_postfix = "";
-    m_cache_depth = 2;
-}
+GDALWMSCache::GDALWMSCache() :
+    m_cache_path("./gdalwmscache"),
+    // No need to do the default: m_postfix("");
+    m_cache_depth(2)
+{}
 
-GDALWMSCache::~GDALWMSCache() {
-}
+GDALWMSCache::~GDALWMSCache() {}
 
 CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
     const char *xmlcache_path = CPLGetXMLValue(config, "Path", NULL);

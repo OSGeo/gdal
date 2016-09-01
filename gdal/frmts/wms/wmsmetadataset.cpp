@@ -36,9 +36,7 @@ int VersionStringToInt(const char *version);
 /*                          GDALWMSMetaDataset()                        */
 /************************************************************************/
 
-GDALWMSMetaDataset::GDALWMSMetaDataset() : papszSubDatasets(NULL)
-{
-}
+GDALWMSMetaDataset::GDALWMSMetaDataset() : papszSubDatasets(NULL) {}
 
 /************************************************************************/
 /*                         ~GDALWMSMetaDataset()                        */

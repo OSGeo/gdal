@@ -50,30 +50,30 @@ CPL_CVSID("$Id$");
 /*                           GDALWMSDataset()                           */
 /************************************************************************/
 GDALWMSDataset::GDALWMSDataset() :
+    m_mini_driver(NULL),
+    m_cache(NULL),
+    m_poColorTable(NULL),
+    m_data_type(GDT_Byte),
     m_block_size_x(0),
     m_block_size_y(0),
     m_use_advise_read(0),
     m_verify_advise_read(0),
     m_offline_mode(0),
     m_http_max_conn(0),
-    m_http_timeout(0)
+    m_http_timeout(0),
+    m_clamp_requests(true),
+    m_unsafeSsl(false),
+    m_zeroblock_on_serverexceptions(0),
+    m_default_block_size_x(1024),
+    m_default_block_size_y(1024),
+    m_default_tile_count_x(1),
+    m_default_tile_count_y(1),
+    m_default_overview_count(-1),
+    m_bNeedsDataWindow(TRUE)
 {
-    m_mini_driver = NULL;
-    m_cache = NULL;
     m_hint.m_valid = false;
-    m_data_type = GDT_Byte;
-    m_clamp_requests = true;
-    m_unsafeSsl = false;
     m_data_window.m_sx = -1;
     nBands = 0;
-    m_default_block_size_x = 1024;
-    m_default_block_size_y = 1024;
-    m_bNeedsDataWindow = TRUE;
-    m_default_tile_count_x = 1;
-    m_default_tile_count_y = 1;
-    m_default_overview_count = -1;
-    m_zeroblock_on_serverexceptions = 0;
-    m_poColorTable = NULL;
 }
 
 /************************************************************************/

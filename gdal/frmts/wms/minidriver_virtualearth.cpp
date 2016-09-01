@@ -34,13 +34,9 @@ CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(VirtualEarth)
 
-GDALWMSMiniDriver_VirtualEarth::GDALWMSMiniDriver_VirtualEarth()
-{
-}
+GDALWMSMiniDriver_VirtualEarth::GDALWMSMiniDriver_VirtualEarth() {}
 
-GDALWMSMiniDriver_VirtualEarth::~GDALWMSMiniDriver_VirtualEarth()
-{
-}
+GDALWMSMiniDriver_VirtualEarth::~GDALWMSMiniDriver_VirtualEarth() {}
 
 CPLErr GDALWMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config)
 {

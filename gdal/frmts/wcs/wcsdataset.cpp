@@ -157,12 +157,16 @@ class WCSRasterBand : public GDALPamRasterBand
 /*                           WCSRasterBand()                            */
 /************************************************************************/
 
-WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn, int iOverviewIn )
-
+WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn,
+                              int iOverviewIn ) :
+    iOverview(iOverviewIn),
+    nResFactor(1 << (iOverviewIn+1)), // iOverview == -1 is base layer
+    poODS(poDSIn),
+    nOverviewCount(0),
+    papoOverviews(NULL)
 {
     poDS = poDSIn;
-    poODS = poDSIn;
-    this->nBand = nBandIn;
+    nBand = nBandIn;
 
     eDataType = GDALGetDataTypeByName(
         CPLGetXMLValue( poDSIn->psService, "BandType", "Byte" ) );
@@ -170,8 +174,6 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn, int iOverviewIn )
 /* -------------------------------------------------------------------- */
 /*      Establish resolution reduction for this overview level.         */
 /* -------------------------------------------------------------------- */
-    this->iOverview = iOverviewIn;
-    nResFactor = 1 << (iOverview+1); // iOverview == -1 is base layer
 
 /* -------------------------------------------------------------------- */
 /*      Establish block size.                                           */
@@ -203,8 +205,6 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn, int iOverviewIn )
 /* -------------------------------------------------------------------- */
     if( iOverview == -1 )
     {
-        int i;
-
         nOverviewCount = atoi(CPLGetXMLValue(poODS->psService,"OverviewCount",
                                              "-1"));
         if( nOverviewCount < 0 )
@@ -223,13 +223,8 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn, int iOverviewIn )
         papoOverviews = (WCSRasterBand **)
             CPLCalloc( nOverviewCount, sizeof(void*) );
 
-        for( i = 0; i < nOverviewCount; i++ )
+        for( int i = 0; i < nOverviewCount; i++ )
             papoOverviews[i] = new WCSRasterBand( poODS, nBand, i );
-    }
-    else
-    {
-        nOverviewCount = 0;
-        papoOverviews = NULL;
     }
 }
 
@@ -244,9 +239,7 @@ WCSRasterBand::~WCSRasterBand()
 
     if( nOverviewCount > 0 )
     {
-        int i;
-
-        for( i = 0; i < nOverviewCount; i++ )
+        for( int i = 0; i < nOverviewCount; i++ )
             delete papoOverviews[i];
 
         CPLFree( papoOverviews );
@@ -449,9 +442,15 @@ GDALRasterBand *WCSRasterBand::GetOverview( int iOverviewIn )
 /************************************************************************/
 
 WCSDataset::WCSDataset() :
-    bServiceDirty(FALSE), psService(NULL), papszSDSModifiers(NULL),
-    nVersion(0), pszProjection(NULL), pabySavedDataBuffer(NULL),
-    papszHttpOptions(NULL), nMaxCols(-1), nMaxRows(-1)
+    bServiceDirty(FALSE),
+    psService(NULL),
+    papszSDSModifiers(NULL),
+    nVersion(0),
+    pszProjection(NULL),
+    pabySavedDataBuffer(NULL),
+    papszHttpOptions(NULL),
+    nMaxCols(-1),
+    nMaxRows(-1)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
