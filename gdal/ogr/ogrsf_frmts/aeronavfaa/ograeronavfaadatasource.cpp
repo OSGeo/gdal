@@ -99,24 +99,36 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
     int nbRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
     szBuffer[nbRead] = '\0';
 
-    int bIsDOF = (szBuffer[128] == 13 && szBuffer[128+1] == 10 &&
-                  szBuffer[130+128] == 13 && szBuffer[130+129] == 10 &&
-                  szBuffer[2*130+128] == 13 && szBuffer[2*130+129] == 10 &&
-                  STARTS_WITH(szBuffer + 3 * 130, "------------------------------------------------------------------------------------------------------------------------- "));
+    const bool bIsDOF =
+        szBuffer[128] == 13 && szBuffer[128+1] == 10 &&
+        szBuffer[130+128] == 13 && szBuffer[130+129] == 10 &&
+        szBuffer[2*130+128] == 13 && szBuffer[2*130+129] == 10 &&
+        STARTS_WITH(
+            szBuffer + 3 * 130,
+            "-----------------------------------------------------------------"
+            "-------------------------------------------------------- ");
 
-    int bIsNAVAID = (szBuffer[132] == 13 && szBuffer[132+1] == 10 &&
-                     STARTS_WITH(szBuffer + 20 - 1, "CREATION DATE") &&
-                     szBuffer[134 + 132] == 13 && szBuffer[134 + 132+1] == 10);
+    const bool bIsNAVAID =
+        szBuffer[132] == 13 && szBuffer[132+1] == 10 &&
+        STARTS_WITH(szBuffer + 20 - 1, "CREATION DATE") &&
+        szBuffer[134 + 132] == 13 && szBuffer[134 + 132+1] == 10;
 
-    int bIsROUTE = STARTS_WITH(szBuffer, "           UNITED STATES GOVERNMENT FLIGHT INFORMATION PUBLICATION             149343") &&
-                   szBuffer[85] == 13 && szBuffer[85+1] == 10;
+    const bool bIsIAP =
+        strstr(szBuffer,
+               "INSTRUMENT APPROACH PROCEDURE NAVAID & FIX DATA") != NULL &&
+        szBuffer[85] == 13 && szBuffer[85+1] == 10;
 
-    int bIsIAP = strstr(szBuffer, "INSTRUMENT APPROACH PROCEDURE NAVAID & FIX DATA") != NULL &&
-                   szBuffer[85] == 13 && szBuffer[85+1] == 10;
-    if (bIsIAP)
-        bIsROUTE = FALSE;
+    bool bIsROUTE = STARTS_WITH(
+        szBuffer,
+        "           UNITED STATES GOVERNMENT FLIGHT INFORMATION PUBLICATION"
+        "             149343") &&
+        szBuffer[85] == 13 && szBuffer[85+1] == 10;
 
-    if (bIsDOF)
+    // TODO(schwehr): Fold into bool bIsROUTE so it can be const.
+    if( bIsIAP )
+        bIsROUTE = false;
+
+    if( bIsDOF )
     {
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
@@ -124,7 +136,7 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
         papoLayers[0] = new OGRAeronavFAADOFLayer(fp, CPLGetBasename(pszFilename));
         return TRUE;
     }
-    else if (bIsNAVAID)
+    else if( bIsNAVAID )
     {
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
@@ -142,8 +154,9 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
     }
     else if (bIsROUTE)
     {
-        int bIsDPOrSTARS = strstr(szBuffer, "DPs - DEPARTURE PROCEDURES") != NULL ||
-                           strstr(szBuffer, "STARS - STANDARD TERMINAL ARRIVALS") != NULL;
+        const bool bIsDPOrSTARS =
+            strstr(szBuffer, "DPs - DEPARTURE PROCEDURES") != NULL ||
+            strstr(szBuffer, "STARS - STANDARD TERMINAL ARRIVALS") != NULL;
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
         papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));

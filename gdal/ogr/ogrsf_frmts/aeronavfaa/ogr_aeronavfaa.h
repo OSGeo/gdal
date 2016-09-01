@@ -62,7 +62,7 @@ protected:
     OGRSpatialReference *poSRS;
 
     VSILFILE*          fpAeronavFAA;
-    int                bEOF;
+    bool               bEOF;
 
     int                nNextFID;
 

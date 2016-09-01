@@ -41,7 +41,7 @@ class OGRARCGENLayer : public OGRLayer
     OGRFeatureDefn*    poFeatureDefn;
 
     VSILFILE*          fp;
-    int                bEOF;
+    bool               bEOF;
 
     int                nNextFID;
 

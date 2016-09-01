@@ -49,12 +49,12 @@ class OGRAVCLayer : public OGRLayer
     AVCFileType         eSectionType;
 
     int                 SetupFeatureDefinition( const char *pszName );
-    int                 AppendTableDefinition( AVCTableDef *psTableDef );
+    bool                AppendTableDefinition( AVCTableDef *psTableDef );
 
-    int                 MatchesSpatialFilter( void * );
+    bool                MatchesSpatialFilter( void * );
     OGRFeature          *TranslateFeature( void * );
 
-    int                 TranslateTableFields( OGRFeature *poFeature,
+    bool                TranslateTableFields( OGRFeature *poFeature,
                                               int nFieldBase,
                                               AVCTableDef *psTableDef,
                                               AVCField *pasFields );
@@ -106,7 +106,7 @@ class OGRAVCBinLayer : public OGRAVCLayer
     AVCBinFile          *hFile;
 
     OGRAVCBinLayer      *poArcLayer;
-    int                 bNeedReset;
+    bool                bNeedReset;
 
     char                szTableName[128];
     AVCBinFile          *hTable;
@@ -115,11 +115,11 @@ class OGRAVCBinLayer : public OGRAVCLayer
 
     int                 nNextFID;
 
-    int                 FormPolygonGeometry( OGRFeature *poFeature,
+    bool                FormPolygonGeometry( OGRFeature *poFeature,
                                              AVCPal *psPAL );
 
-    int                 CheckSetupTable();
-    int                 AppendTableFields( OGRFeature *poFeature );
+    bool                CheckSetupTable();
+    bool                AppendTableFields( OGRFeature *poFeature );
 
   public:
                         OGRAVCBinLayer( OGRAVCBinDataSource *poDS,
@@ -175,7 +175,7 @@ class OGRAVCE00Layer : public OGRAVCLayer
     AVCE00ReadE00Ptr    psRead;
     OGRAVCE00Layer      *poArcLayer;
     int                 nFeatureCount;
-    int                 bNeedReset;
+    bool                bNeedReset;
     int                 nNextFID;
 
     AVCE00Section       *psTableSection;
@@ -185,7 +185,7 @@ class OGRAVCE00Layer : public OGRAVCLayer
     int                 nTableBaseField;
     int                 nTableAttrIndex;
 
-    int                 FormPolygonGeometry( OGRFeature *poFeature,
+    bool                FormPolygonGeometry( OGRFeature *poFeature,
                                              AVCPal *psPAL );
   public:
                         OGRAVCE00Layer( OGRAVCDataSource *poDS,
@@ -197,8 +197,8 @@ class OGRAVCE00Layer : public OGRAVCLayer
     OGRFeature *        GetNextFeature();
     OGRFeature *GetFeature( GIntBig nFID );
     GIntBig GetFeatureCount(int bForce);
-    int CheckSetupTable(AVCE00Section *psTblSectionIn);
-    int AppendTableFields( OGRFeature *poFeature );
+    bool CheckSetupTable(AVCE00Section *psTblSectionIn);
+    bool AppendTableFields( OGRFeature *poFeature );
 };
 
 /************************************************************************/

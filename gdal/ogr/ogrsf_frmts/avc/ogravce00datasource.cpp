@@ -183,7 +183,7 @@ int OGRAVCE00DataSource::CheckAddTable( AVCE00Section *psTblSection )
     int nCount = 0;
     for (int i = 0; i < nLayers; ++i)
     {
-        if (papoLayers[i]->CheckSetupTable(psTblSection))
+        if( papoLayers[i]->CheckSetupTable(psTblSection) )
             ++nCount;
     }
     return nCount;

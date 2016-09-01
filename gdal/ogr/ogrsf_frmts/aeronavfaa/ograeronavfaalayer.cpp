@@ -43,7 +43,7 @@ OGRAeronavFAALayer::OGRAeronavFAALayer( VSILFILE* fp,
     poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
     poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
     fpAeronavFAA(fp),
-    bEOF(FALSE),
+    bEOF(false),
     nNextFID(0),
     psRecordDesc(NULL)
 {
@@ -76,7 +76,7 @@ void OGRAeronavFAALayer::ResetReading()
 
 {
     nNextFID = 0;
-    bEOF = FALSE;
+    bEOF = false;
     VSIFSeekL( fpAeronavFAA, 0, SEEK_SET );
 }
 
@@ -89,7 +89,7 @@ OGRFeature *OGRAeronavFAALayer::GetNextFeature()
 {
     while( true )
     {
-        if (bEOF)
+        if( bEOF )
             return NULL;
 
             OGRFeature  *poFeature = GetNextRawFeature();
@@ -230,7 +230,7 @@ OGRFeature *OGRAeronavFAADOFLayer::GetNextRawFeature()
         const char* pszLine = CPLReadLine2L(fpAeronavFAA, 130, NULL);
         if (pszLine == NULL)
         {
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
         if (strlen(pszLine) != 128)
@@ -335,7 +335,7 @@ OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
         const char* pszLine = CPLReadLine2L(fpAeronavFAA, 134, NULL);
         if (pszLine == NULL)
         {
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
         if (strlen(pszLine) != 132)
@@ -441,7 +441,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
 
         if (pszLine == NULL)
         {
-            bEOF = TRUE;
+            bEOF = true;
             break;
         }
         if (strlen(pszLine) != 85)
@@ -475,7 +475,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
 
         if (strcmp(pszLine, "================================DELETIONS LIST=================================198326") == 0)
         {
-            bEOF = TRUE;
+            bEOF = true;
             break;
         }
 
@@ -498,7 +498,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
 
                 if (strcmp(osName.c_str(), "(DELETIONS LIST)") == 0)
                 {
-                    bEOF = TRUE;
+                    bEOF = true;
                     return NULL;
                 }
 
@@ -634,7 +634,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
         const char* pszLine = CPLReadLine2L(fpAeronavFAA, 87, NULL);
         if (pszLine == NULL)
         {
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
         if (strlen(pszLine) != 85)
@@ -642,7 +642,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
 
         if (STARTS_WITH(pszLine, "DELETIONS"))
         {
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
 
