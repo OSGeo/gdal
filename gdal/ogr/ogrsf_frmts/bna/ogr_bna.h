@@ -113,7 +113,7 @@ class OGRBNADataSource : public OGRDataSource
 
     /*  Export related */
     VSILFILE                *fpOutput; /* Virtual file API */
-    int                 bUseCRLF;
+    bool                bUseCRLF;
     int                 bMultiLine;
     int                 nbOutID;
     int                 bEllipsesAsEllipses;
@@ -126,7 +126,7 @@ class OGRBNADataSource : public OGRDataSource
                         ~OGRBNADataSource();
 
     VSILFILE                *GetOutputFP() { return fpOutput; }
-    int                 GetUseCRLF() { return bUseCRLF; }
+    bool                GetUseCRLF() { return bUseCRLF; }
     int                 GetMultiLine() { return bMultiLine; }
     int                 GetNbOutId() { return nbOutID; }
     int                 GetEllipsesAsEllipses() { return bEllipsesAsEllipses; }

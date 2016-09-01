@@ -303,7 +303,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (poDS->GetUseCRLF())
+    if( poDS->GetUseCRLF() )
     {
         eol[0] = 13;
         eol[1] = 10;

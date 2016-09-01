@@ -44,7 +44,7 @@ OGRBNADataSource::OGRBNADataSource() :
     nLayers(0),
     bUpdate(FALSE),
     fpOutput(NULL),
-    bUseCRLF(FALSE),
+    bUseCRLF(false),
     bMultiLine(FALSE),
     nbOutID(0),
     bEllipsesAsEllipses(FALSE),
@@ -300,24 +300,24 @@ int OGRBNADataSource::Create( const char *pszFilename,
     if( pszCRLFFormat == NULL )
     {
 #ifdef WIN32
-        bUseCRLF = TRUE;
+        bUseCRLF = true;
 #else
-        bUseCRLF = FALSE;
+        bUseCRLF = false;
 #endif
     }
     else if( EQUAL(pszCRLFFormat,"CRLF") )
-        bUseCRLF = TRUE;
+        bUseCRLF = true;
     else if( EQUAL(pszCRLFFormat,"LF") )
-        bUseCRLF = FALSE;
+        bUseCRLF = false;
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                   pszCRLFFormat );
 #ifdef WIN32
-        bUseCRLF = TRUE;
+        busecrlf = true;
 #else
-        bUseCRLF = FALSE;
+        bUseCRLF = false;
 #endif
     }
 
