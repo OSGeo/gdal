@@ -1841,7 +1841,7 @@ def ogr_vrt_29():
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 1000)
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 0)'))
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 91)'))
     lyr.CreateFeature(feat)
     feat = None
 
@@ -1890,7 +1890,7 @@ def ogr_vrt_29():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 0)'))
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 91)'))
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.SetFeature(feat)
     gdal.PopErrorHandler()
@@ -1900,7 +1900,7 @@ def ogr_vrt_29():
     feat = None
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 0)'))
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-180 91)'))
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.CreateFeature(feat)
     gdal.PopErrorHandler()
