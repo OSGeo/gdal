@@ -116,7 +116,7 @@ class OGRBNADataSource : public OGRDataSource
     bool                bUseCRLF;
     int                 bMultiLine;
     int                 nbOutID;
-    int                 bEllipsesAsEllipses;
+    bool                bEllipsesAsEllipses;
     int                 nbPairPerLine;
     int                 coordinatePrecision;
     char*               pszCoordinateSeparator;
@@ -129,7 +129,7 @@ class OGRBNADataSource : public OGRDataSource
     bool                GetUseCRLF() { return bUseCRLF; }
     int                 GetMultiLine() { return bMultiLine; }
     int                 GetNbOutId() { return nbOutID; }
-    int                 GetEllipsesAsEllipses() { return bEllipsesAsEllipses; }
+    bool                GetEllipsesAsEllipses() { return bEllipsesAsEllipses; }
     int                 GetNbPairPerLine() { return nbPairPerLine; }
     int                 GetCoordinatePrecision() { return coordinatePrecision; }
     const char*         GetCoordinateSeparator() { return pszCoordinateSeparator; }
