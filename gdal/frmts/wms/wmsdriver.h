@@ -388,7 +388,9 @@ protected:
     GDALWMSCache *m_cache;
     CPLString m_projection;
     GDALColorTable *m_poColorTable;
-    std::vector<double> vNoData, vMin, vMax;
+    std::vector<double> vNoData;
+    std::vector<double> vMin;
+    std::vector<double> vMax;
     GDALDataType m_data_type;
     int m_block_size_x;
     int m_block_size_y;
@@ -407,8 +409,10 @@ protected:
     CPLString m_osUserPwd;
 
     GDALWMSDataWindow m_default_data_window;
-    int m_default_block_size_x, m_default_block_size_y;
-    int m_default_tile_count_x, m_default_tile_count_y;
+    int m_default_block_size_x;
+    int m_default_block_size_y;
+    int m_default_tile_count_x;
+    int m_default_tile_count_y;
     int m_default_overview_count;
 
     int m_bNeedsDataWindow;
@@ -432,7 +436,7 @@ class GDALWMSRasterBand : public GDALPamRasterBand {
     CPLString osMetadataItemURL;
 
 public:
-    GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);
+    GDALWMSRasterBand( GDALWMSDataset *parent_dataset, int band, double scale );
     virtual ~GDALWMSRasterBand();
     void AddOverview(double scale);
     virtual double GetNoDataValue( int * );

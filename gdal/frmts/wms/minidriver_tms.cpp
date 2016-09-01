@@ -34,11 +34,9 @@ CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(TMS)
 
-GDALWMSMiniDriver_TMS::GDALWMSMiniDriver_TMS() {
-}
+GDALWMSMiniDriver_TMS::GDALWMSMiniDriver_TMS() {}
 
-GDALWMSMiniDriver_TMS::~GDALWMSMiniDriver_TMS() {
-}
+GDALWMSMiniDriver_TMS::~GDALWMSMiniDriver_TMS() {}
 
 CPLErr GDALWMSMiniDriver_TMS::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;

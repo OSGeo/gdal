@@ -1602,9 +1602,7 @@ void VRTSimpleSource::SetResampling( const char* pszResampling )
 /*                         VRTAveragedSource()                          */
 /************************************************************************/
 
-VRTAveragedSource::VRTAveragedSource()
-{
-}
+VRTAveragedSource::VRTAveragedSource() {}
 
 /************************************************************************/
 /*                           SerializeToXML()                           */

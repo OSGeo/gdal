@@ -34,11 +34,9 @@ CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(WorldWind)
 
-GDALWMSMiniDriver_WorldWind::GDALWMSMiniDriver_WorldWind() {
-}
+GDALWMSMiniDriver_WorldWind::GDALWMSMiniDriver_WorldWind() {}
 
-GDALWMSMiniDriver_WorldWind::~GDALWMSMiniDriver_WorldWind() {
-}
+GDALWMSMiniDriver_WorldWind::~GDALWMSMiniDriver_WorldWind() {}
 
 CPLErr GDALWMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;

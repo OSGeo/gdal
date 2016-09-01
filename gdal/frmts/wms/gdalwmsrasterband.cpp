@@ -31,26 +31,36 @@
 
 CPL_CVSID("$Id$");
 
-GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale) {
-    // printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n", this, parent_dataset, band, scale);
-    m_parent_dataset = parent_dataset;
-    m_scale = scale;
-    m_overview = -1;
-    m_color_interp = GCI_Undefined;
+GDALWMSRasterBand::GDALWMSRasterBand( GDALWMSDataset *parent_dataset, int band,
+                                      double scale ) :
+    m_parent_dataset(parent_dataset),
+    m_scale(scale),
+    m_overview(-1),
+    m_color_interp(GCI_Undefined)
+{
+#ifdef DEBUG_VERBOSE
+    printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n",
+           this, parent_dataset, band, scale);
+#endif
 
     if( scale == 1.0 )
         poDS = parent_dataset;
     else
         poDS = NULL;
-    if( parent_dataset->m_mini_driver_caps.m_overview_dim_computation_method == OVERVIEW_ROUNDED )
+    if( parent_dataset->m_mini_driver_caps.m_overview_dim_computation_method ==
+        OVERVIEW_ROUNDED )
     {
-        nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
-        nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale + 0.5);
+        nRasterXSize = static_cast<int>(
+            m_parent_dataset->m_data_window.m_sx * scale + 0.5);
+        nRasterYSize = static_cast<int>(
+            m_parent_dataset->m_data_window.m_sy * scale + 0.5);
     }
     else
     {
-        nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale);
-        nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale);
+        nRasterXSize = static_cast<int>(
+            m_parent_dataset->m_data_window.m_sx * scale);
+        nRasterYSize = static_cast<int>(
+            m_parent_dataset->m_data_window.m_sy * scale);
     }
     nBand = band;
     eDataType = m_parent_dataset->m_data_type;

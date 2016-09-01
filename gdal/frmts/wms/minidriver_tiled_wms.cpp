@@ -276,7 +276,7 @@ GDALWMSMiniDriver_TiledWMS::GDALWMSMiniDriver_TiledWMS() :
     m_requests(NULL),
     m_bsx(0),
     m_bsy(0)
-{ }
+{}
 
 GDALWMSMiniDriver_TiledWMS::~GDALWMSMiniDriver_TiledWMS() {
     CSLDestroy(m_requests);

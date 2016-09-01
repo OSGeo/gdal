@@ -33,11 +33,9 @@ CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(IIP)
 
-GDALWMSMiniDriver_IIP::GDALWMSMiniDriver_IIP() {
-}
+GDALWMSMiniDriver_IIP::GDALWMSMiniDriver_IIP() {}
 
-GDALWMSMiniDriver_IIP::~GDALWMSMiniDriver_IIP() {
-}
+GDALWMSMiniDriver_IIP::~GDALWMSMiniDriver_IIP() {}
 
 CPLErr GDALWMSMiniDriver_IIP::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;

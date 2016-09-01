@@ -35,11 +35,9 @@ CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(WMS)
 
-GDALWMSMiniDriver_WMS::GDALWMSMiniDriver_WMS() : m_iversion(0) {
-}
+GDALWMSMiniDriver_WMS::GDALWMSMiniDriver_WMS() : m_iversion(0) {}
 
-GDALWMSMiniDriver_WMS::~GDALWMSMiniDriver_WMS() {
-}
+GDALWMSMiniDriver_WMS::~GDALWMSMiniDriver_WMS() {}
 
 CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;

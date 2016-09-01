@@ -34,13 +34,9 @@ CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(AGS)
 
-GDALWMSMiniDriver_AGS::GDALWMSMiniDriver_AGS()
-{
-}
+GDALWMSMiniDriver_AGS::GDALWMSMiniDriver_AGS() {}
 
-GDALWMSMiniDriver_AGS::~GDALWMSMiniDriver_AGS()
-{
-}
+GDALWMSMiniDriver_AGS::~GDALWMSMiniDriver_AGS() {}
 
 CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
 {

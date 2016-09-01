@@ -199,12 +199,13 @@ class WMTSBand : public GDALPamRasterBand
 /*                            WMTSBand()                                */
 /************************************************************************/
 
-WMTSBand::WMTSBand(WMTSDataset* poDSIn, int nBandIn)
+WMTSBand::WMTSBand( WMTSDataset* poDSIn, int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = GDT_Byte;
-    poDSIn->apoDatasets[0]->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    poDSIn->apoDatasets[0]->GetRasterBand(1)->
+        GetBlockSize(&nBlockXSize, &nBlockYSize);
 }
 
 /************************************************************************/
@@ -407,7 +408,8 @@ const char *WMTSBand::GetMetadataItem( const char * pszName,
 /*                          WMTSDataset()                               */
 /************************************************************************/
 
-WMTSDataset::WMTSDataset()
+WMTSDataset::WMTSDataset() :
+    papszHTTPOptions(NULL)
 {
     adfGT[0] = 0;
     adfGT[1] = 1;
@@ -415,7 +417,6 @@ WMTSDataset::WMTSDataset()
     adfGT[3] = 0;
     adfGT[4] = 0;
     adfGT[5] = 1;
-    papszHTTPOptions = NULL;
 }
 
 /************************************************************************/
