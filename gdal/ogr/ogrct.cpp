@@ -78,7 +78,7 @@ static void    (*pfn_pj_ctx_free)( projCtx ) = NULL;
 
 // Locale-safe proj starts with 4.10
 #if defined(PJ_LOCALE_SAFE)
-static bool      bProjLocaleSafe = PJ_LOCALE_SAFE;
+static bool      bProjLocaleSafe = PJ_LOCALE_SAFE != 0;
 #else
 static bool      bProjLocaleSafe = false;
 #endif
@@ -804,13 +804,13 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         {
             if( pjctx != NULL)
             {
-                int pj_errno = pfn_pj_ctx_get_errno(pjctx);
+                int l_pj_errno = pfn_pj_ctx_get_errno(pjctx);
 
                 /* pfn_pj_strerrno not yet thread-safe in PROJ 4.8.0 */
                 CPLMutexHolderD(&hPROJMutex);
                 CPLError( CE_Failure, CPLE_NotSupported,
                         "Failed to initialize PROJ.4 with `%s'.\n%s",
-                        pszSrcProj4Defn, pfn_pj_strerrno(pj_errno) );
+                        pszSrcProj4Defn, pfn_pj_strerrno(l_pj_errno) );
             }
             else if( pfn_pj_get_errno_ref != NULL
                 && pfn_pj_strerrno != NULL )
