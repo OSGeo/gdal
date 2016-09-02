@@ -681,6 +681,14 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                     oField.SetType(OFTTime);
                 else if (EQUAL(papszFieldTypes[iField], "DateTime"))
                     oField.SetType(OFTDateTime);
+                else if (EQUAL(papszFieldTypes[iField], "JSonStringList"))
+                    oField.SetType(OFTStringList);
+                else if (EQUAL(papszFieldTypes[iField], "JSonIntegerList"))
+                    oField.SetType(OFTIntegerList);
+                else if (EQUAL(papszFieldTypes[iField], "JSonInteger64List"))
+                    oField.SetType(OFTInteger64List);
+                else if (EQUAL(papszFieldTypes[iField], "JSonRealList"))
+                    oField.SetType(OFTRealList);
                 else
                     CPLError( CE_Warning, CPLE_NotSupported,
                               "Unknown type : %s", papszFieldTypes[iField]);
@@ -1205,6 +1213,14 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                 osFieldType = "Date";
             else if( aeFieldType[iField] == OFTTime  )
                 osFieldType = "Time";
+            else if( aeFieldType[iField] == OFTStringList  )
+                osFieldType = "JSonStringList";
+            else if( aeFieldType[iField] == OFTIntegerList  )
+                osFieldType = "JSonIntegerList";
+            else if( aeFieldType[iField] == OFTInteger64List  )
+                osFieldType = "JSonInteger64List";
+            else if( aeFieldType[iField] == OFTRealList  )
+                osFieldType = "JSonRealList";
             else if( abFieldBoolean[iField] )
                 osFieldType = "Integer(Boolean)";
             else
@@ -1742,8 +1758,7 @@ OGRCSVCreateFieldAction OGRCSVLayer::PreCreateField( OGRFeatureDefn* poFeatureDe
     }
 
 /* -------------------------------------------------------------------- */
-/*      Is this a legal field type for CSV?  For now we only allow      */
-/*      simple integer, real and string fields.                         */
+/*      Is this a legal field type for CSV?                             */
 /* -------------------------------------------------------------------- */
     switch( poNewField->GetType() )
     {
@@ -1751,6 +1766,13 @@ OGRCSVCreateFieldAction OGRCSVLayer::PreCreateField( OGRFeatureDefn* poFeatureDe
       case OFTInteger64:
       case OFTReal:
       case OFTString:
+      case OFTIntegerList:
+      case OFTInteger64List:
+      case OFTRealList:
+      case OFTStringList:
+      case OFTTime:
+      case OFTDate:
+      case OFTDateTime:
         // these types are OK.
         break;
 
@@ -2022,6 +2044,10 @@ OGRErr OGRCSVLayer::WriteHeader()
                   case OFTDate:     bOK &= VSIFPrintfL( fpCSVT, "%s", "Date") > 0; break;
                   case OFTTime:     bOK &= VSIFPrintfL( fpCSVT, "%s", "Time") > 0; break;
                   case OFTDateTime: bOK &= VSIFPrintfL( fpCSVT, "%s", "DateTime") > 0; break;
+                  case OFTStringList:     bOK &= VSIFPrintfL( fpCSVT, "%s", "JSonStringList") > 0; break;
+                  case OFTIntegerList:     bOK &= VSIFPrintfL( fpCSVT, "%s", "JSonIntegerList") > 0; break;
+                  case OFTInteger64List:     bOK &= VSIFPrintfL( fpCSVT, "%s", "JSonInteger64List") > 0; break;
+                  case OFTRealList:     bOK &= VSIFPrintfL( fpCSVT, "%s", "JSonRealList") > 0; break;
                   default:          bOK &= VSIFPrintfL( fpCSVT, "%s", "String") > 0; break;
                 }
 
@@ -2213,21 +2239,39 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                 pszEscaped = CPLStrdup("");
             }
         }
-        else if (poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTReal)
-        {
-            if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTFloat32 &&
-                poNewFeature->IsFieldSet(iField) )
-            {
-                pszEscaped = CPLStrdup(CPLSPrintf("%.8g", poNewFeature->GetFieldAsDouble(iField)));
-            }
-            else
-                pszEscaped = CPLStrdup(poNewFeature->GetFieldAsString(iField));
-        }
         else
         {
-            pszEscaped =
-                CPLEscapeString( poNewFeature->GetFieldAsString(iField),
-                                -1, CPLES_CSV );
+            const OGRFieldType eType(poFeatureDefn->GetFieldDefn(iField)->GetType());
+            if ( eType == OFTReal)
+            {
+                if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTFloat32 &&
+                    poNewFeature->IsFieldSet(iField) )
+                {
+                    pszEscaped = CPLStrdup(CPLSPrintf("%.8g", poNewFeature->GetFieldAsDouble(iField)));
+                }
+                else
+                    pszEscaped = CPLStrdup(poNewFeature->GetFieldAsString(iField));
+            }
+            else if( eType == OFTStringList || eType == OFTIntegerList ||
+                     eType == OFTInteger64List || eType == OFTRealList )
+            {
+                char* pszJSon = poNewFeature->GetFieldAsSerializedJSon(iField);
+                if( pszJSon )
+                {
+                    pszEscaped = CPLEscapeString( pszJSon, -1, CPLES_CSV );
+                }
+                else
+                {
+                    pszEscaped = CPLStrdup("");
+                }
+                CPLFree( pszJSon );
+            }
+            else
+            {
+                pszEscaped =
+                    CPLEscapeString( poNewFeature->GetFieldAsString(iField),
+                                    -1, CPLES_CSV );
+            }
         }
 
         int nLen = (int)strlen(pszEscaped);
