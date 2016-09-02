@@ -1797,7 +1797,7 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
     // Handle the chipping case where the image is a subset.
     const double rowOffset = (nCount == 93) ? CPLAtof(papszFields[90]) : 0;
     const double colOffset = (nCount == 93) ? CPLAtof(papszFields[91]) : 0;
-    if (rowOffset || colOffset)
+    if (rowOffset != 0.0 || colOffset != 0.0)
     {
         SetMetadataItem("ICHIP_SCALE_FACTOR", "1");
         SetMetadataItem("ICHIP_ANAMORPH_CORR", "0");

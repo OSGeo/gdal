@@ -1525,7 +1525,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         double dfNormX = -dfDirY;
         double dfNormY = dfDirX;
         double dfNorm = sqrt(dfNormX * dfNormX + dfNormY * dfNormY);
-        if( dfNorm )
+        if( dfNorm != 0.0 )
         {
             dfNormX /= dfNorm;
             dfNormY /= dfNorm;

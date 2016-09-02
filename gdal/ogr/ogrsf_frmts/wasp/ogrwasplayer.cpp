@@ -636,7 +636,7 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
     if ( !geom ) return OGRERR_NONE; /* null geom, nothing to do */
 
     const OGRwkbGeometryType geomType = geom->getGeometryType();
-    const double bPolygon = (geomType == wkbPolygon)
+    const bool bPolygon = (geomType == wkbPolygon)
                          || (geomType == wkbPolygon25D)
                          || (geomType == wkbMultiPolygon)
                          || (geomType == wkbMultiPolygon25D);

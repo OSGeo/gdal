@@ -512,7 +512,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             break;
 
         case EQUIDC:
-            if ( padfPrjParams[8] )
+            if ( padfPrjParams[8] != 0.0 )
             {
                 SetEC( pfnUnpackAnglesFn(padfPrjParams[2]),
                        pfnUnpackAnglesFn(padfPrjParams[3]),
@@ -594,7 +594,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             break;
 
         case HOM:
-            if ( padfPrjParams[12] )
+            if ( padfPrjParams[12] != 0.0 )
             {
                 SetHOM( pfnUnpackAnglesFn(padfPrjParams[5]),
                         pfnUnpackAnglesFn(padfPrjParams[4]),

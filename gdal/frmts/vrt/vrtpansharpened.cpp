@@ -1181,12 +1181,12 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
         CPLCreateXMLElementAndValue( psOptionsNode, "NoData", "None" );
     }
 
-    if( psOptions->dfMSShiftX )
+    if( psOptions->dfMSShiftX != 0.0 )
     {
         CPLCreateXMLElementAndValue( psOptionsNode, "MSShiftX",
                                      CPLSPrintf("%.16g", psOptions->dfMSShiftX) );
     }
-    if( psOptions->dfMSShiftY )
+    if( psOptions->dfMSShiftY != 0.0 )
     {
         CPLCreateXMLElementAndValue( psOptionsNode, "MSShiftY",
                                      CPLSPrintf("%.16g", psOptions->dfMSShiftY) );

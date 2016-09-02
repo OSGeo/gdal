@@ -1138,7 +1138,7 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
 
     // Done with the raster node
 
-    if (scale) {
+    if (scale != 0.0) {
         CPLCreateXMLNode(config, CXT_Element, "Rsets");
         CPLSetXMLValue(config, "Rsets.#model", "uniform");
         CPLSetXMLValue(config, "Rsets.#scale", PrintDouble(scale));

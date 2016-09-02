@@ -669,7 +669,7 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
 
     real32 fNormFactor  = ( fMaxRed > fMaxGreen ? fMaxRed : fMaxGreen );
     fNormFactor  = ( fNormFactor > fMaxBlues ? fNormFactor : fMaxBlues );
-    if (fNormFactor)
+    if (fNormFactor != 0.0f )
         fNormFactor = 255 / fNormFactor;
 
     // -------------------------------------------------------------
