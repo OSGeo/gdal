@@ -3160,6 +3160,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
             printf( "ERROR: ExecuteSQL() should have returned a layer without features.\n" );
         }
         OGRFeature::DestroyFeature(poSQLFeat);
+ 
         LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
     }
     else
@@ -3167,6 +3168,51 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
         printf( "ERROR: ExecuteSQL() should have returned a non-NULL result.\n");
         bRet = FALSE;
     }
+
+    // Test that installing a spatial filter on an empty layer at ExecuteSQL()
+    // does not raise an error
+    osSQL.Printf("SELECT * FROM %s WHERE 0 = 1", GetLayerNameForSQL(poDS, poLayer->GetName()));
+
+    OGRPolygon oPoly;
+    OGRLinearRing oRing;
+    oRing.setPoint( 0, 0, 0 );
+    oRing.setPoint( 1, 0, 1 );
+    oRing.setPoint( 2, 1, 1 );
+    oRing.setPoint( 3, 1, 0 );
+    oRing.setPoint( 4, 0, 0 );
+    oPoly.addRing( &oRing );
+
+    CPLErrorReset();
+    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), &oPoly, NULL));
+    if( CPLGetLastErrorType() != CE_None )
+    {
+        bRet = FALSE;
+        printf( "ERROR: ExecuteSQL() triggered an unexpected error.\n" );
+    }
+    if (poSQLLyr)
+    {
+        CPLErrorReset();
+        poSQLFeat = LOG_ACTION(poSQLLyr->GetNextFeature());
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            bRet = FALSE;
+            printf( "ERROR: GetNextFeature() triggered an unexpected error.\n" );
+        }
+        if (poSQLFeat != NULL)
+        {
+            bRet = FALSE;
+            printf( "ERROR: ExecuteSQL() should have returned a layer without features.\n" );
+        }
+        OGRFeature::DestroyFeature(poSQLFeat);
+        LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
+    }
+    else
+    {
+        printf( "ERROR: ExecuteSQL() should have returned a non-NULL result.\n");
+        bRet = FALSE;
+    }
+
+
 
     if( bRet && bVerbose )
         printf("INFO: TestLayerSQL passed.\n");
