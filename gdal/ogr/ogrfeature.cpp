@@ -28,6 +28,8 @@
  ****************************************************************************/
 
 #include "ogr_feature.h"
+#include "ogrgeojsonreader.h"
+#include <json.h>
 
 #include <errno.h>
 
@@ -2822,6 +2824,95 @@ static int OGRFeatureGetIntegerValue(OGRFieldDefn *poFDefn, int nValue)
 }
 
 /************************************************************************/
+/*                        GetFieldAsSerializedJSon()                   */
+/************************************************************************/
+
+/**
+ * \brief Fetch field value as a serialized JSon object.
+ *
+ * Currently this method only works for OFTStringList, OFTIntegerList,
+ * OFTInteger64List and OFTRealList
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return a string that must be de-allocate with CPLFree()
+ * @since GDAL 2.2
+ */
+char* OGRFeature::GetFieldAsSerializedJSon( int iField )
+
+{
+    int iSpecialField = iField - poDefn->GetFieldCount();
+    if (iSpecialField >= 0)
+    {
+        return NULL;
+    }
+
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+
+    if( poFDefn == NULL )
+        return NULL;
+
+    if( !IsFieldSet(iField) )
+        return NULL;
+
+    char* pszRet = NULL;
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTStringList )
+    {
+        json_object* poObj = json_object_new_array();
+        char** papszValues = GetFieldAsStringList(iField);
+        for( int i=0; papszValues[i] != NULL; i++)
+        {
+            json_object_array_add( poObj,
+                            json_object_new_string(papszValues[i]) );
+        }
+        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+        json_object_put(poObj);
+    }
+    else if( eType == OFTIntegerList )
+    {
+        json_object* poObj = json_object_new_array();
+        int nCount = 0;
+        const int* panValues = GetFieldAsIntegerList(iField, &nCount);
+        for( int i=0; i<nCount; i++)
+        {
+            json_object_array_add( poObj,
+                                    json_object_new_int(panValues[i]) );
+        }
+        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+        json_object_put(poObj);
+    }
+    else if( eType == OFTInteger64List )
+    {
+        json_object* poObj = json_object_new_array();
+        int nCount = 0;
+        const GIntBig* panValues = GetFieldAsInteger64List(iField, &nCount);
+        for( int i=0; i<nCount; i++)
+        {
+            json_object_array_add( poObj,
+                            json_object_new_int64(panValues[i]) );
+        }
+        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+        json_object_put(poObj);
+    }
+    else if( eType == OFTRealList )
+    {
+        json_object* poObj = json_object_new_array();
+        int nCount = 0;
+        const double* padfValues = GetFieldAsDoubleList(iField, &nCount);
+        for( int i=0; i<nCount; i++)
+        {
+            json_object_array_add( poObj,
+                            json_object_new_double(padfValues[i]) );
+        }
+        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+        json_object_put(poObj);
+    }
+
+    return pszRet;
+}
+
+/************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
 
@@ -3314,72 +3405,114 @@ void OGRFeature::SetField( int iField, const char * pszValue )
              || eType == OFTInteger64List
              || eType == OFTRealList )
     {
-        char **papszValueList = NULL;
-
-        if( pszValue[0] == '(' && strchr(pszValue,':') != NULL )
+        json_object* poJSonObj = NULL;
+        if( pszValue[0] == '[' && pszValue[strlen(pszValue)-1] == ']' &&
+            OGRJSonParse(pszValue, &poJSonObj, false) )
         {
-            papszValueList = CSLTokenizeString2(
-                pszValue, ",:()", 0 );
-        }
-
-        if( papszValueList == NULL || *papszValueList == NULL
-            || atoi(papszValueList[0]) != CSLCount(papszValueList)-1 )
-        {
-            /* do nothing - the count does not match entries */
-        }
-        else if( eType == OFTIntegerList )
-        {
-            int nCount = atoi(papszValueList[0]);
-            std::vector<int> anValues;
-            if( nCount == CSLCount(papszValueList)-1 )
+            const int nLength = json_object_array_length(poJSonObj);
+            if( eType == OFTIntegerList && nLength > 0 )
             {
-                for( int i = 0; i < nCount; i++ )
+                std::vector<int> anValues;
+                for( int i = 0; i < nLength; i++ )
                 {
-                    errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
-                    int nVal = atoi(papszValueList[i+1]);
-                    if( errno == ERANGE )
+                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    anValues.push_back( json_object_get_int( poItem ) );
+                }
+                SetField( iField, nLength, &(anValues[0]) );
+            }
+            else if( eType == OFTInteger64List && nLength > 0 )
+            {
+                std::vector<GIntBig> anValues;
+                for( int i = 0; i < nLength; i++ )
+                {
+                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    anValues.push_back( json_object_get_int64( poItem ) );
+                }
+                SetField( iField, nLength, &(anValues[0]) );
+            }
+            else if( eType == OFTRealList && nLength > 0 )
+            {
+                std::vector<double> adfValues;
+                for( int i = 0; i < nLength; i++ )
+                {
+                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    adfValues.push_back( json_object_get_double( poItem ) );
+                }
+                SetField( iField, nLength, &(adfValues[0]) );
+            }
+
+            json_object_put(poJSonObj);
+        }
+        else
+        {
+            char **papszValueList = NULL;
+
+            if( pszValue[0] == '(' && strchr(pszValue,':') != NULL )
+            {
+                papszValueList = CSLTokenizeString2(
+                    pszValue, ",:()", 0 );
+            }
+
+            if( papszValueList == NULL || *papszValueList == NULL
+                || atoi(papszValueList[0]) != CSLCount(papszValueList)-1 )
+            {
+                /* do nothing - the count does not match entries */
+            }
+            else if( eType == OFTIntegerList )
+            {
+                int nCount = atoi(papszValueList[0]);
+                std::vector<int> anValues;
+                if( nCount == CSLCount(papszValueList)-1 )
+                {
+                    for( int i = 0; i < nCount; i++ )
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "32 bit integer overflow when converting %s",
-                                 pszValue);
+                        errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
+                        int nVal = atoi(papszValueList[i+1]);
+                        if( errno == ERANGE )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                    "32 bit integer overflow when converting %s",
+                                    pszValue);
+                        }
+                        anValues.push_back( nVal );
                     }
-                    anValues.push_back( nVal );
+                    SetField( iField, nCount, &(anValues[0]) );
                 }
-                SetField( iField, nCount, &(anValues[0]) );
             }
-        }
-        else if( eType == OFTInteger64List )
-        {
-            int nCount = atoi(papszValueList[0]);
-            std::vector<GIntBig> anValues;
-            if( nCount == CSLCount(papszValueList)-1 )
+            else if( eType == OFTInteger64List )
             {
-                for( int i = 0; i < nCount; i++ )
+                int nCount = atoi(papszValueList[0]);
+                std::vector<GIntBig> anValues;
+                if( nCount == CSLCount(papszValueList)-1 )
                 {
-                    GIntBig nVal = CPLAtoGIntBigEx(papszValueList[i+1], TRUE, NULL);
-                    anValues.push_back( nVal );
+                    for( int i = 0; i < nCount; i++ )
+                    {
+                        GIntBig nVal = CPLAtoGIntBigEx(papszValueList[i+1], TRUE, NULL);
+                        anValues.push_back( nVal );
+                    }
+                    SetField( iField, nCount, &(anValues[0]) );
                 }
-                SetField( iField, nCount, &(anValues[0]) );
             }
-        }
-        else if( eType == OFTRealList )
-        {
-            int nCount = atoi(papszValueList[0]);
-            std::vector<double> adfValues;
-            if( nCount == CSLCount(papszValueList)-1 )
+            else if( eType == OFTRealList )
             {
-                for( int i = 0; i < nCount; i++ )
-                    adfValues.push_back( CPLAtof(papszValueList[i+1]) );
-                SetField( iField, nCount, &(adfValues[0]) );
+                int nCount = atoi(papszValueList[0]);
+                std::vector<double> adfValues;
+                if( nCount == CSLCount(papszValueList)-1 )
+                {
+                    for( int i = 0; i < nCount; i++ )
+                        adfValues.push_back( CPLAtof(papszValueList[i+1]) );
+                    SetField( iField, nCount, &(adfValues[0]) );
+                }
             }
-        }
 
-        CSLDestroy(papszValueList);
+            CSLDestroy(papszValueList);
+        }
     }
     else if ( eType == OFTStringList )
     {
         if( pszValue && *pszValue )
         {
+            json_object* poJSonObj = NULL;
             if( pszValue[0] == '(' && strchr(pszValue,':') != NULL &&
                 pszValue[strlen(pszValue)-1] == ')' )
             {
@@ -3395,6 +3528,23 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                     SetField( iField, &(aosValues[0]) );
                 }
                 CSLDestroy(papszValueList);
+            }
+            // Is this a JSon array ?
+            else if( pszValue[0] == '[' && pszValue[strlen(pszValue)-1] == ']' &&
+                     OGRJSonParse(pszValue, &poJSonObj, false) )
+            {
+                CPLStringList aoList;
+                const int nLength = json_object_array_length(poJSonObj);
+                for( int i = 0; i < nLength; i++ )
+                {
+                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    if( !poItem )
+                        aoList.AddString("");
+                    else
+                        aoList.AddString( json_object_get_string(poItem) );
+                }
+                SetField( iField, aoList.List() );
+                json_object_put(poJSonObj);
             }
             else
             {

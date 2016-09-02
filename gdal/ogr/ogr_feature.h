@@ -359,6 +359,7 @@ class CPL_DLL OGRFeature
                                             int *pnHour, int *pnMinute,
                                             float *pfSecond,
                                             int *pnTZFlag );
+    char               *GetFieldAsSerializedJSon( int i );
 
     int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
