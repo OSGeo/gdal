@@ -3387,6 +3387,52 @@ def ogr_sqlite_43():
     return 'success'
 
 ###############################################################################
+# Test reading/writing StringList, etc..
+
+def ogr_sqlite_44():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList,WKT\n')
+    gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csv',
+"""stringlist,intlist,int64list,reallist,WKT
+"[""a"",null]","[1]","[1234567890123]","[0.125]",
+""")
+
+    gdal.VectorTranslate('/vsimem/ogr_sqlite_44.sqlite', '/vsimem/ogr_sqlite_44.csv', format = 'SQLite' )
+    gdal.VectorTranslate('/vsimem/ogr_sqlite_44_out.csv', '/vsimem/ogr_sqlite_44.sqlite', format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES'])
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_sqlite_44_out.csv', 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('stringlist,intlist,int64list,reallist,wkt\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125000 ]') != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_sqlite_44_out.csvt', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList') != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_sqlite_44.csv')
+    gdal.Unlink('/vsimem/ogr_sqlite_44.csvt')
+    gdal.Unlink('/vsimem/ogr_sqlite_44.sqlite')
+    gdal.Unlink('/vsimem/ogr_sqlite_44_out.csv')
+    gdal.Unlink('/vsimem/ogr_sqlite_44_out.csvt')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_sqlite_cleanup():
@@ -3570,6 +3616,7 @@ gdaltest_list = [
     ogr_sqlite_41,
     ogr_sqlite_42,
     ogr_sqlite_43,
+    ogr_sqlite_44,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]
