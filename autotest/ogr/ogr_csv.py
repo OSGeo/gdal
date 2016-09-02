@@ -2458,7 +2458,7 @@ def ogr_csv_48():
 "[""a"",null]","[1]","[1234567890123]","[0.125]"
 """)
 
-    gdal.VectorTranslate('/vsimem/ogr_csv_48_out.csv', '/vsimem/ogr_csv_48.csv', format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES'])
+    gdal.VectorTranslate('/vsimem/ogr_csv_48_out.csv', '/vsimem/ogr_csv_48.csv', format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'LINEFORMAT=LF'])
 
     f = gdal.VSIFOpenL('/vsimem/ogr_csv_48_out.csv', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
