@@ -25,8 +25,11 @@ sub progress {
     state $s = -1; # requires 'use v5.10;'
     my $p = int($_[0]*100);
     return 1 if $p == $s;
-    $s = $p;
-    print $p%10 == 0 ? $p : ($p%2 == 0 ? '.' : '');
+    $s = 0 if $s < 0;
+    while ($s < $p) {
+        print $s%10 == 0 ? $s : ($s%2 == 0 ? '.' : '');
+        ++$s;
+    }
     return 1;
 }
 \endcode

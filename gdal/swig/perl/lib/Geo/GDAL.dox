@@ -440,8 +440,9 @@
 # @return a boolean value.
 
 ## @method $Extension()
-# @return a suggested extension or extensions (e.g., ext1/ext2) for
-# datasets.
+# @note The returned extension does not contain a '.' prefix.
+# @return a suggested single extension or a list of extensions (in
+# list context) for datasets.
 
 ## @method $MIMEType()
 # @return a suggested MIME type for datasets.
@@ -612,11 +613,11 @@
 # Example:
 # \code
 # my $roads = Geo::OGR::Driver('Memory')->Create('road')->
-# .   CreateLayer(
-# .       Fields => [ { Name => 'class',
-# .                     Type => 'Integer' },
-# .                   { Name => 'geom',
-# .                     Type => 'LineString25D' } ] );
+#    CreateLayer(
+#        Fields => [ { Name => 'class',
+#                      Type => 'Integer' },
+#                    { Name => 'geom',
+#                      Type => 'LineString25D' } ] );
 # \endcode
 #
 # @note Many formats allow only one spatial field, which currently
@@ -1108,19 +1109,19 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # my($W,$H) = $dataset->Band(1)->Size();
 # my($xoff,$yoff,$w,$h) = (0,0,200,200);
 # while (1) {
-# .    if ($xoff >= $W) {
-# .        $xoff = 0;
-# .        $yoff += $h;
-# .        last if $yoff >= $H;
-# .    }
-# .    my $data = $dataset->Band(1)->ReadTile($xoff,$yoff,min($W-$xoff,$w),min($H-$yoff,$h));
-# .    # add your data processing code here
-# .    $dataset->Band(1)->WriteTile($data,$xoff,$yoff);
-# .    $xoff += $w;
+#     if ($xoff >= $W) {
+#         $xoff = 0;
+#         $yoff += $h;
+#         last if $yoff >= $H;
+#     }
+#     my $data = $dataset->Band(1)->ReadTile($xoff,$yoff,min($W-$xoff,$w),min($H-$yoff,$h));
+#     # add your data processing code here
+#     $dataset->Band(1)->WriteTile($data,$xoff,$yoff);
+#     $xoff += $w;
 # }
 #
 # sub min {
-# .    return $_[0] < $_[1] ? $_[0] : $_[1];
+#     return $_[0] < $_[1] ? $_[0] : $_[1];
 # }
 # \endcode
 # @param xoff Number of cell to skip before starting to read from a row. Pixels are read from left to right.
