@@ -1254,28 +1254,16 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn,
         case OFTDate    : return "DATE"; break;
         case OFTTime    : return "TIME"; break;
         case OFTIntegerList:
-            if (bSQLiteDialectInternalUse )
-                return "INTEGERLIST";
-            else
-                return "VARCHAR";
+            return "JSONINTEGERLIST";
             break;
         case OFTInteger64List:
-            if (bSQLiteDialectInternalUse )
-                return "INTEGER64LIST";
-            else
-                return "VARCHAR";
+            return "JSONINTEGER64LIST";
             break;
         case OFTRealList:
-            if (bSQLiteDialectInternalUse )
-                return "REALLIST";
-            else
-                return "VARCHAR";
+            return "JSONREALLIST";
             break;
         case OFTStringList:
-            if (bSQLiteDialectInternalUse )
-                return "STRINGLIST";
-            else
-                return "VARCHAR";
+            return "JSONSTRINGLIST";
             break;
         default         : return "VARCHAR"; break;
     }
@@ -2498,19 +2486,14 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                 }
 
                 case OFTStringList:
+                case OFTIntegerList:
+                case OFTInteger64List:
+                case OFTRealList:
                 {
-                    char** papszValues = poFeature->GetFieldAsStringList( iField );
-                    CPLString osValue;
-                    osValue += CPLSPrintf("(%d:", CSLCount(papszValues));
-                    for(int i=0; papszValues[i] != NULL; i++)
-                    {
-                        if( i != 0 )
-                            osValue += ",";
-                        osValue += papszValues[i];
-                    }
-                    osValue += ")";
+                    char* pszJSon = poFeature->GetFieldAsSerializedJSon(iField);
                     rc = sqlite3_bind_text(hStmtIn, nBindField++,
-                                               osValue.c_str(), -1, SQLITE_TRANSIENT);
+                                               pszJSon, -1, SQLITE_TRANSIENT);
+                    CPLFree(pszJSon);
                     break;
                 }
 

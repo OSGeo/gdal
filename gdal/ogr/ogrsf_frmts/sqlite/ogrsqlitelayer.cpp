@@ -269,19 +269,19 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 oField.SetType(OFTInteger);
                 oField.SetSubType(OFSTInt16);
             }
-            else if (EQUAL(pszDeclType, "INTEGERLIST"))
+            else if (EQUAL(pszDeclType, "JSONINTEGERLIST"))
             {
                 oField.SetType(OFTIntegerList);
             }
-            else if (EQUAL(pszDeclType, "INTEGER64LIST"))
+            else if (EQUAL(pszDeclType, "JSONINTEGER64LIST"))
             {
                 oField.SetType(OFTInteger64List);
             }
-            else if (EQUAL(pszDeclType, "REALLIST"))
+            else if (EQUAL(pszDeclType, "JSONREALLIST"))
             {
                 oField.SetType(OFTRealList);
             }
-            else if (EQUAL(pszDeclType, "STRINGLIST"))
+            else if (EQUAL(pszDeclType, "JSONSTRINGLIST"))
             {
                 oField.SetType(OFTStringList);
             }
