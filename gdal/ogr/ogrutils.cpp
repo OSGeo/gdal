@@ -205,7 +205,9 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     // Assumed max length of the target buffer.
     const size_t maxTargetSize = 75;
     const char chDecimalSep = '.';
-    const int nPrecision = 15;
+    static int nPrecision = -1;
+    if( nPrecision < 0 )
+        nPrecision = atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
 
     char szX[bufSize] = {};
     char szY[bufSize] = {};
@@ -305,7 +307,9 @@ void OGRMakeWktCoordinateM( char *pszTarget,
     // Assumed max length of the target buffer.
     const size_t maxTargetSize = 75;
     const char chDecimalSep = '.';
-    const int nPrecision = 15;
+    static int nPrecision = -1;
+    if( nPrecision < 0 )
+        nPrecision = atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
 
     char szX[bufSize] = {};
     char szY[bufSize] = {};
