@@ -8374,7 +8374,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     if (bIsNull) pszPenName = NULL;
 
     // Set the width
-    if(poPenStyle->Width(bIsNull))
+    if(poPenStyle->Width(bIsNull) != 0.0)
     {
         nPenWidth = poPenStyle->Width(bIsNull);
         // Width < 10 is a pixel
@@ -8950,7 +8950,7 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
 
     // Set SymbolSize
     dSymbolSize = poSymbolStyle->Size(bIsNull);
-    if(dSymbolSize)
+    if(dSymbolSize != 0.0)
     {
         SetSymbolSize((GInt16)dSymbolSize);
     }

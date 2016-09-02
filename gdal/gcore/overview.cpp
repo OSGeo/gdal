@@ -1849,7 +1849,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             }
         }
 
-        if( fMaxVal )
+        if( fMaxVal != 0.0f )
         {
             for( int i = 0; i < nDstXSize; ++i )
             {

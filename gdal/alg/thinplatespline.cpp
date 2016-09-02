@@ -180,7 +180,7 @@ static CPL_INLINE double VizGeorefSpline2DBase_func( const double x1, const doub
                           const double x2, const double y2 )
 {
     double dist  = SQ( x2 - x1 )  + SQ( y2 - y1 );
-    return dist ? dist * log( dist ) : 0.0;
+    return dist != 0.0 ? dist * log( dist ) : 0.0;
 }
 
 #if defined(__GNUC__) && defined(__x86_64__)
