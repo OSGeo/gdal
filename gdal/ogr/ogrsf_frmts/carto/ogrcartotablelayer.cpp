@@ -808,9 +808,8 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
                 {
                     if( bMustComma )
                         osSQL += ", ";
-                    else
-                        bMustComma = TRUE;
-
+                    // No need to set bMustComma to true in else case.
+                    // Not in a loop.
                     osSQL += CPLSPrintf(CPL_FRMT_GIB, nNextFID);
                 }
             }
@@ -818,8 +817,8 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             {
                 if( bMustComma )
                     osSQL += ", ";
-                else
-                    bMustComma = TRUE;
+                // No need to set bMustComma to true in else case
+                // Not in a loop.
 
                 osSQL += CPLSPrintf(CPL_FRMT_GIB, poFeature->GetFID());
             }
@@ -827,7 +826,6 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         osSQL += ")";
     }
-    CPL_IGNORE_RET_VAL(bMustComma);
 
     if( !bHasUserFieldMatchingFID && osFIDColName.size() && nNextFID >= 0 )
     {
