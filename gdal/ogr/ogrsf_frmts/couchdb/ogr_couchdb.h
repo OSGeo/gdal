@@ -62,7 +62,7 @@ protected:
 
     int                         nNextInSeq;
     int                         nOffset;
-    int                         bEOF;
+    bool                        bEOF;
 
     json_object*                poFeatures;
     std::vector<json_object*>   aoFeatures;
@@ -73,15 +73,15 @@ protected:
                                                 const char* pszKey,
                                                 json_object* poValue);
 
-    int                         FetchNextRowsAnalyseDocs(json_object* poAnswerObj);
-   virtual int                  FetchNextRows() = 0;
+    bool                        FetchNextRowsAnalyseDocs( json_object* poAnswerObj );
+    virtual bool                FetchNextRows() = 0;
 
-   int                          bGeoJSONDocument;
+    bool                        bGeoJSONDocument;
 
-   void                         BuildFeatureDefnFromDoc(json_object* poDoc);
-   int                          BuildFeatureDefnFromRows(json_object* poAnswerObj);
+    void                        BuildFeatureDefnFromDoc(json_object* poDoc);
+    bool                        BuildFeatureDefnFromRows( json_object* poAnswerObj );
 
-   virtual int                  GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
+    virtual int                 GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
 
   public:
                          OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
@@ -108,27 +108,27 @@ protected:
 class OGRCouchDBTableLayer : public OGRCouchDBLayer
 {
     int                       nNextFIDForCreate;
-    int                       bInTransaction;
+    bool                      bInTransaction;
     std::vector<json_object*> aoTransactionFeatures;
 
-    virtual int               FetchNextRows();
+    virtual bool              FetchNextRows();
 
     int                       bHasOGRSpatial;
-    int                       bHasGeocouchUtilsMinimalSpatialView;
-    int                       bServerSideAttributeFilteringWorks;
-    int                       FetchNextRowsSpatialFilter();
+    bool                      bHasGeocouchUtilsMinimalSpatialView;
+    bool                      bServerSideAttributeFilteringWorks;
+    bool                      FetchNextRowsSpatialFilter();
 
-    int                       bHasInstalledAttributeFilter;
+    bool                      bHasInstalledAttributeFilter;
     CPLString                 osURIAttributeFilter;
     std::map<CPLString, int>  oMapFilterFields;
-    CPLString                 BuildAttrQueryURI(int& bOutHasStrictComparisons);
-    int                       FetchNextRowsAttributeFilter();
+    CPLString                 BuildAttrQueryURI(bool& bOutHasStrictComparisons);
+    bool                      FetchNextRowsAttributeFilter();
 
     int                       GetTotalFeatureCount();
     int                       GetMaximumId();
 
     int                       nUpdateSeq;
-    int                       bAlwaysValid;
+    bool                      bAlwaysValid;
     int                       FetchUpdateSeq();
 
     int                       nCoordPrecision;
@@ -140,15 +140,15 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     CPLString                 osName;
     CPLString                 osEscapedName;
-    int                       bMustWriteMetadata;
-    int                       bMustRunSpatialFilter;
+    bool                      bMustWriteMetadata;
+    bool                      bMustRunSpatialFilter;
     std::vector<CPLString>    aosIdsToFetch;
-    int                       bServerSideSpatialFilteringWorks;
-    int                       bHasLoadedMetadata;
+    bool                      bServerSideSpatialFilteringWorks;
+    bool                      bHasLoadedMetadata;
     CPLString                 osMetadataRev;
-    int                       bExtentValid;
+    bool                      bExtentValid;
 
-    int                       bExtentSet;
+    bool                      bExtentSet;
     double                    dfMinX;
     double                    dfMinY;
     double                    dfMaxX;
@@ -158,7 +158,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     virtual void              WriteMetadata();
     virtual void              LoadMetadata();
-    virtual int               RunSpatialFilterQueryIfNecessary();
+    virtual bool              RunSpatialFilterQueryIfNecessary();
 
     public:
             OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
@@ -184,7 +184,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     virtual OGRErr              SetAttributeFilter( const char * );
 
     virtual OGRErr              CreateField( OGRFieldDefn *poField,
-                                            int bApproxOK = TRUE );
+                                             int bApproxOK = TRUE );
     virtual OGRErr              ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr              ISetFeature( OGRFeature *poFeature );
     virtual OGRErr              DeleteFeature( GIntBig nFID );
@@ -195,10 +195,10 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     virtual int                 TestCapability( const char * );
 
-    void                        SetInfoAfterCreation(OGRwkbGeometryType eGType,
-                                             OGRSpatialReference* poSRSIn,
-                                             int nUpdateSeqIn,
-                                             int bGeoJSONDocumentIn);
+    void                        SetInfoAfterCreation( OGRwkbGeometryType eGType,
+                                                      OGRSpatialReference* poSRSIn,
+                                                      int nUpdateSeqIn,
+                                                      bool bGeoJSONDocumentIn );
 
     void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; };
 
@@ -218,17 +218,17 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
 class OGRCouchDBRowsLayer : public OGRCouchDBLayer
 {
-    int                       bAllInOne;
+    bool                      bAllInOne;
 
-    virtual int               FetchNextRows();
+    virtual bool              FetchNextRows();
 
     public:
-            OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDS);
+            OGRCouchDBRowsLayer( OGRCouchDBDataSource* poDS );
             virtual ~OGRCouchDBRowsLayer();
 
     virtual void                ResetReading();
 
-    int                         BuildFeatureDefn();
+    bool                        BuildFeatureDefn();
 
     virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
 };
@@ -245,9 +245,9 @@ class OGRCouchDBDataSource : public OGRDataSource
     OGRLayer**          papoLayers;
     int                 nLayers;
 
-    int                 bReadWrite;
+    bool                bReadWrite;
 
-    int                 bMustCleanPersistent;
+    bool                bMustCleanPersistent;
 
     CPLString           osURL;
     CPLString           osUserPwd;
@@ -288,7 +288,7 @@ class OGRCouchDBDataSource : public OGRDataSource
                                    const char *pszDialect );
     virtual void       ReleaseResultSet( OGRLayer * poLayer );
 
-    int                         IsReadWrite() const { return bReadWrite; }
+    bool                IsReadWrite() const { return bReadWrite; }
 
     char*                 GetETag(const char* pszURI);
     json_object*                GET(const char* pszURI);
@@ -298,9 +298,9 @@ class OGRCouchDBDataSource : public OGRDataSource
 
     const CPLString&            GetURL() const { return osURL; }
 
-    static int                  IsError(json_object* poAnswerObj,
+    static bool                 IsError(json_object* poAnswerObj,
                                         const char* pszErrorMsg);
-    static int                  IsOK   (json_object* poAnswerObj,
+    static bool                 IsOK   (json_object* poAnswerObj,
                                         const char* pszErrorMsg);
 };
 

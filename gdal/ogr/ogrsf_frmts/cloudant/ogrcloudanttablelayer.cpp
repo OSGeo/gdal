@@ -58,7 +58,7 @@ OGRCloudantTableLayer::~OGRCloudantTableLayer()
     if( bMustWriteMetadata )
     {
         WriteMetadata();
-        bMustWriteMetadata = FALSE;
+        bMustWriteMetadata = false;
     }
 
     if (pszSpatialDDoc)
@@ -69,12 +69,12 @@ OGRCloudantTableLayer::~OGRCloudantTableLayer()
 /*                   RunSpatialFilterQueryIfNecessary()                 */
 /************************************************************************/
 
-int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
+bool OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
 {
-    if (!bMustRunSpatialFilter)
-        return TRUE;
+    if( !bMustRunSpatialFilter )
+        return true;
 
-    bMustRunSpatialFilter = FALSE;
+    bMustRunSpatialFilter = false;
 
     CPLAssert(nOffset == 0);
 
@@ -100,19 +100,19 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
-        return FALSE;
+        bServerSideSpatialFilteringWorks = false;
+        return false;
     }
 
     if ( !json_object_is_type(poAnswerObj, json_type_object) )
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
+        bServerSideSpatialFilteringWorks = false;
         CPLError(CE_Failure, CPLE_AppDefined,
                     "FetchNextRowsSpatialFilter() failed");
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     /* Catch error for a non cloudant geo database */
@@ -127,18 +127,18 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
+        bServerSideSpatialFilteringWorks = false;
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     if (poDS->IsError(poAnswerObj, "FetchNextRowsSpatialFilter() failed"))
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
+        bServerSideSpatialFilteringWorks = false;
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     json_object* poRows = json_object_object_get(poAnswerObj, "rows");
@@ -147,11 +147,11 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
+        bServerSideSpatialFilteringWorks = false;
         CPLError(CE_Failure, CPLE_AppDefined,
                     "FetchNextRowsSpatialFilter() failed");
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     int nRows = json_object_array_length(poRows);
@@ -164,7 +164,7 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
             CPLError(CE_Failure, CPLE_AppDefined,
                         "FetchNextRowsSpatialFilter() failed");
             json_object_put(poAnswerObj);
-            return FALSE;
+            return false;
         }
 
         json_object* poId = json_object_object_get(poRow, "id");
@@ -179,7 +179,7 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
 
     json_object_put(poAnswerObj);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -382,10 +382,10 @@ static int OGRCloudantIsNumericObject(json_object* poObj)
 
 void OGRCloudantTableLayer::LoadMetadata()
 {
-    if (bHasLoadedMetadata)
+    if( bHasLoadedMetadata )
         return;
 
-    bHasLoadedMetadata = TRUE;
+    bHasLoadedMetadata = true;
 
     if (pszSpatialDDoc == NULL)
         GetSpatialView();
@@ -447,7 +447,7 @@ void OGRCloudantTableLayer::LoadMetadata()
         if (EQUAL(pszGeomType, "NONE"))
         {
             eGeomType = wkbNone;
-            bExtentValid = TRUE;
+            bExtentValid = true;
         }
         else
         {
@@ -473,7 +473,8 @@ void OGRCloudantTableLayer::LoadMetadata()
                     dfMinY = json_object_get_double(json_object_array_get_idx(poBbox, 1));
                     dfMaxX = json_object_get_double(json_object_array_get_idx(poBbox, 2));
                     dfMaxY = json_object_get_double(json_object_array_get_idx(poBbox, 3));
-                    bExtentValid = bExtentSet = TRUE;
+                    bExtentValid = true;
+                    bExtentSet = true;
                 }
             }
         }
@@ -481,7 +482,7 @@ void OGRCloudantTableLayer::LoadMetadata()
 
     json_object* poGeoJSON = json_object_object_get(poAnswerObj, "geojson_documents");
     if (poGeoJSON && json_object_is_type(poGeoJSON, json_type_boolean))
-        bGeoJSONDocument = json_object_get_boolean(poGeoJSON);
+        bGeoJSONDocument = CPL_TO_BOOL(json_object_get_boolean(poGeoJSON));
 
     json_object* poFields = json_object_object_get(poAnswerObj, "fields");
     if (poFields && json_object_is_type(poFields, json_type_array))
