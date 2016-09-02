@@ -463,14 +463,14 @@ void IRISDataset::LoadProjection()
 
     // TODO(schwehr): Document 4294967295.
     const float fCenterLon =
-        CPL_LSBUINT32PTR(abyHeader+112+320+12) * 360.0f / 4294967295LL;
+        static_cast<float>(CPL_LSBUINT32PTR(abyHeader+112+320+12) * 360.0 / 4294967295UL);
     const float fCenterLat =
-        CPL_LSBUINT32PTR(abyHeader+108+320+12) * 360.0f / 4294967295LL;
+        static_cast<float>(CPL_LSBUINT32PTR(abyHeader+108+320+12) * 360.0 / 4294967295UL);
 
     const float fProjRefLon =
-        CPL_LSBUINT32PTR(abyHeader+244+320+12) * 360.0f / 4294967295LL;
+        static_cast<float>(CPL_LSBUINT32PTR(abyHeader+244+320+12) * 360.0 / 4294967295UL);
     const float fProjRefLat =
-        CPL_LSBUINT32PTR(abyHeader+240+320+12) * 360.0f / 4294967295LL;
+        static_cast<float>(CPL_LSBUINT32PTR(abyHeader+240+320+12) * 360.0 / 4294967295UL);
 
     const float fRadarLocX = CPL_LSBSINT32PTR(abyHeader + 112 + 12 ) / 1000.0f;
     const float fRadarLocY = CPL_LSBSINT32PTR(abyHeader + 116 + 12 ) / 1000.0f;

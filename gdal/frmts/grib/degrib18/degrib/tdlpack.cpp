@@ -1453,7 +1453,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
       }
    }
    meta->gridAttrib.numMiss = dataCnt - numVal;
-   meta->gridAttrib.refVal = minVal * scale;
+   meta->gridAttrib.refVal = (float)(minVal * scale);
 
    free (grp);
    return 0;

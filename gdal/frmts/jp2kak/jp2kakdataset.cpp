@@ -2682,10 +2682,10 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             if( dfXRes != 0.0 && dfYRes != 0.0 )
             {
                 if( fabs(dfXRes/dfYRes - 1.0) > 0.00001 )
-                    res.init( dfYRes/dfXRes );
+                    res.init( static_cast<float>(dfYRes/dfXRes) );
                 else
                     res.init( 1.0 );
-                res.set_resolution( dfXRes, true );
+                res.set_resolution( static_cast<float>(dfXRes), true );
             }
         }
     }

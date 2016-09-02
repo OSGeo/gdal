@@ -44,8 +44,8 @@ g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
       g2float  ref,bscale,dscale;
 
       rdieee(idrstmpl+0,&ref,1);
-      bscale = int_power(2.0,idrstmpl[1]);
-      dscale = int_power(10.0,-idrstmpl[2]);
+      bscale = (float)int_power(2.0,idrstmpl[1]);
+      dscale = (float)int_power(10.0,-idrstmpl[2]);
       nbits = idrstmpl[3];
 //
 //  if nbits equals 0, we have a constant field where the reference value

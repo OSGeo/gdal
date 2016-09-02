@@ -549,7 +549,7 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
             && fNearDistSq <= dfMaxDist * dfMaxDist
             && (pafProximity[iPixel] < 0
                 || fNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]) )
-            pafProximity[iPixel] = sqrt(fNearDistSq);
+            pafProximity[iPixel] = static_cast<float>(sqrt(fNearDistSq));
     }
 
     return CE_None;
