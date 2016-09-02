@@ -182,7 +182,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableNameIn,
             char* pszGeomCol = CPLStrdup(strchr(pszTableName, '(')+1);
             pszGeomCol[strlen(pszGeomCol)-1] = 0;
             *strchr(pszTableName, '(') = 0;
-            CPLFree(pszEscapedTableName),
+            CPLFree(pszEscapedTableName);
             pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
             EstablishFeatureDefn(pszGeomCol);
             CPLFree(pszGeomCol);

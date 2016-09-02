@@ -2325,7 +2325,7 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                                         TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
                         if( poBlock && poBlock->GetDirty() )
                         {
-                            pabySrc = (GByte*)poBlock->GetDataRef(),
+                            pabySrc = (GByte*)poBlock->GetDataRef();
                             poBlock->MarkClean();
                         }
                         else

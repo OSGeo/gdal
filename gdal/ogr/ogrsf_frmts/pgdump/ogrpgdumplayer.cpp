@@ -436,7 +436,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             osCommand += "\t";
         if ( pszGeom )
         {
-            osCommand += pszGeom,
+            osCommand += pszGeom;
             CPLFree( pszGeom );
         }
         else

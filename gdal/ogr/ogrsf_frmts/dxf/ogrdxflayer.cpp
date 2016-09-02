@@ -1400,7 +1400,9 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
             double *z = &dfZ1;
             oTransformer.InverseTransform( 1, x, y, z );
 
-            x = &dfAxisX; y = &dfAxisY, z = &dfAxisZ;
+            x = &dfAxisX;
+            y = &dfAxisY;
+            z = &dfAxisZ;
             oTransformer.InverseTransform( 1, x, y, z );
         }
     }
