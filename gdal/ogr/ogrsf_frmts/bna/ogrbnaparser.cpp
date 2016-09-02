@@ -159,17 +159,17 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
         return BNA_LINE_EOF;
     }
 
-    int bFoundEOL = FALSE;
+    bool bFoundEOL = false;
     while (*ptrCurLine)
     {
         if (*ptrCurLine == 0x0d || *ptrCurLine == 0x0a)
         {
-            bFoundEOL = TRUE;
+            bFoundEOL = true;
             break;
         }
         ptrCurLine ++;
     }
-    if (!bFoundEOL)
+    if( !bFoundEOL )
     {
         if (nRead < LINE_BUFFER_SIZE)
             return BNA_LINE_OK;
@@ -278,7 +278,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
         numChar = static_cast<int>(ptrCurLine - ptrBeginLine);
         char c = *ptrCurLine;
         if (c == 0) c = 10;
-        if (inQuotes)
+        if( inQuotes )
         {
           if (c == 10)
           {
@@ -298,7 +298,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
           }
           else if (c == '"')
           {
-            inQuotes = FALSE;
+            inQuotes = false;
           }
           else
           {
@@ -512,7 +512,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
         {
           if (numField < NB_MIN_BNA_IDS)
           {
-            inQuotes = TRUE;
+            inQuotes = true;
           }
           else if ( numField >= NB_MIN_BNA_IDS
                     && currentFeatureType == BNA_UNKNOWN)
@@ -525,7 +525,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
                 goto error;
               }
               nbExtraId ++;
-              inQuotes = TRUE;
+              inQuotes = true;
             }
             else
             {

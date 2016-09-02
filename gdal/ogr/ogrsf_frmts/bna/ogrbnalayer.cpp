@@ -51,8 +51,8 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
     poDS(poDSIn),
     bWriter(bWriterIn),
     nIDs(nIDsIn),
-    eof(FALSE),
-    failed(FALSE),
+    eof(false),
+    failed(false),
     curLine(0),
     nNextFID(0),
     nFeatures(0),
@@ -135,7 +135,7 @@ void OGRBNALayer::SetFeatureIndexTable(
 {
     nFeatures = nFeaturesIn;
     offsetAndLineFeaturesTable = offsetAndLineFeaturesTableIn;
-    partialIndexTable = partialIndexTableIn;
+    partialIndexTable = CPL_TO_BOOL(partialIndexTableIn);
 }
 
 /************************************************************************/
@@ -147,8 +147,8 @@ void OGRBNALayer::ResetReading()
 {
     if( fpBNA == NULL )
         return;
-    eof = FALSE;
-    failed = FALSE;
+    eof = false;
+    failed = false;
     curLine = 0;
     nNextFID = 0;
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpBNA, 0, SEEK_SET ));
@@ -161,10 +161,10 @@ void OGRBNALayer::ResetReading()
 
 OGRFeature *OGRBNALayer::GetNextFeature()
 {
-    if (failed || eof || fpBNA == NULL)
+    if( failed || eof || fpBNA == NULL )
         return NULL;
 
-    while(1)
+    while( true )
     {
         int ok = FALSE;
         const int offset = static_cast<int>( VSIFTellL(fpBNA) );
@@ -181,16 +181,16 @@ OGRFeature *OGRBNALayer::GetNextFeature()
         if (ok == FALSE)
         {
             BNA_FreeRecord(record);
-            failed = TRUE;
+            failed = true;
             return NULL;
         }
         if (record == NULL)
         {
             /* end of file */
-            eof = TRUE;
+            eof = true;
 
             /* and we have finally build the whole index table */
-            partialIndexTable = FALSE;
+            partialIndexTable = false;
             return NULL;
         }
 
@@ -353,7 +353,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
             double firstX = ring->getX(0);
             double firstY = ring->getY(0);
             int nBNAPoints = ring->getNumPoints();
-            int is_ellipse = FALSE;
+            bool is_ellipse = false;
 
             /* This code tries to detect an ellipse in a polygon geometry */
             /* This will only work presumably on ellipses already read from a BNA file */
@@ -378,17 +378,17 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
                 {
                     double major_radius = fabs(firstX - center1X);
                     double minor_radius = fabs(quarterY - center1Y);
-                    is_ellipse = TRUE;
+                    is_ellipse = true;
                     for(int i=0;i<360;i++)
                     {
                         if (!(fabs(center1X + major_radius * cos(i * (M_PI / 180)) - ring->getX(i)) < 1e-5 &&
                               fabs(center1Y + minor_radius * sin(i * (M_PI / 180)) - ring->getY(i)) < 1e-5))
                         {
-                            is_ellipse = FALSE;
+                            is_ellipse = false;
                             break;
                         }
                     }
-                    if ( is_ellipse == TRUE )
+                    if( is_ellipse )
                     {
                         WriteFeatureAttributes(fp, poFeature);
                         CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "2"));
@@ -401,7 +401,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
                 }
             }
 
-            if ( is_ellipse == FALSE)
+            if( !is_ellipse )
             {
                 int nInteriorRings = polygon->getNumInteriorRings();
                 for(int i=0;i<nInteriorRings;i++)
@@ -778,7 +778,7 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
 /************************************************************************/
 void OGRBNALayer::FastParseUntil ( int interestFID)
 {
-    if (partialIndexTable)
+    if( partialIndexTable )
     {
         ResetReading();
 
@@ -808,16 +808,16 @@ void OGRBNALayer::FastParseUntil ( int interestFID)
                                        BNA_READ_NONE);
             if (ok == FALSE)
             {
-                failed = TRUE;
+                failed = true;
                 return;
             }
             if (record == NULL)
             {
                 /* end of file */
-                eof = TRUE;
+                eof = true;
 
                 /* and we have finally build the whole index table */
-                partialIndexTable = FALSE;
+                partialIndexTable = false;
                 return;
             }
 
