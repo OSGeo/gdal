@@ -23,7 +23,7 @@ else
 ZLIB_XTRA_OPT =
 endif
 
-CPPFLAGS	:=	-Iogrsf_frmts -Iogrsf_frmts/mem -I.  $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
+CPPFLAGS	:=	-Iogrsf_frmts -Iogrsf_frmts/mem -Iogrsf_frmts/geojson $(JSON_INCLUDE) -I.  $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
 
 default:	lib
 
