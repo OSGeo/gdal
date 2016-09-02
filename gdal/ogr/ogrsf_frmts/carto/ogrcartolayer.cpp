@@ -67,7 +67,7 @@ void OGRCARTOLayer::ResetReading()
     if( poCachedObj != NULL )
         json_object_put(poCachedObj);
     poCachedObj = NULL;
-    bEOF = FALSE;
+    bEOF = false;
     nFetchedObjects = -1;
     iNextInFetchedObjects = 0;
     iNext = 0;
@@ -152,7 +152,7 @@ OGRFeature *OGRCARTOLayer::BuildFeature(json_object* poRowObj)
                 json_object_get_type(poVal) == json_type_string )
             {
                 OGRGeometry* poGeom = OGRGeometryFromHexEWKB(
-                                        json_object_get_string(poVal), NULL, FALSE);
+                    json_object_get_string(poVal), NULL, FALSE);
                 if( poGeom != NULL )
                     poGeom->assignSpatialReference(poGeomFldDefn->GetSpatialRef());
                 poFeature->SetGeomFieldDirectly(i, poGeom);
@@ -193,7 +193,7 @@ OGRFeature *OGRCARTOLayer::GetNextRawFeature()
     {
         if( nFetchedObjects > 0 && nFetchedObjects < GetFeaturesToFetch() )
         {
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
 
@@ -205,7 +205,7 @@ OGRFeature *OGRCARTOLayer::GetNextRawFeature()
         json_object* poObj = FetchNewFeatures(iNext);
         if( poObj == NULL )
         {
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
 
@@ -220,7 +220,7 @@ OGRFeature *OGRCARTOLayer::GetNextRawFeature()
             json_object_array_length(poRows) == 0 )
         {
             json_object_put(poObj);
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
 

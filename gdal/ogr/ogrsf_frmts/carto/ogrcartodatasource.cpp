@@ -40,10 +40,10 @@ OGRCARTODataSource::OGRCARTODataSource() :
     pszAccount(NULL),
     papoLayers(NULL),
     nLayers(0),
-    bReadWrite(FALSE),
-    bBatchInsert(TRUE),
-    bUseHTTPS(FALSE),
-    bMustCleanPersistent(FALSE),
+    bReadWrite(false),
+    bBatchInsert(true),
+    bUseHTTPS(false),
+    bMustCleanPersistent(false),
     bHasOGRMetadataFunction(-1),
     nPostGISMajor(2),
     nPostGISMinor(0)
@@ -60,7 +60,7 @@ OGRCARTODataSource::~OGRCARTODataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (bMustCleanPersistent)
+    if( bMustCleanPersistent )
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CARTO:%p", this));
@@ -139,8 +139,9 @@ int OGRCARTODataSource::Open( const char * pszFilename,
                                 int bUpdateIn )
 
 {
-    bReadWrite = bUpdateIn;
-    bBatchInsert = CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_INSERT", "YES"));
+    bReadWrite = CPL_TO_BOOL(bUpdateIn);
+    bBatchInsert = CPLTestBool(
+        CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_INSERT", "YES"));
 
     pszName = CPLStrdup( pszFilename );
     if( CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT") )
@@ -175,8 +176,9 @@ int OGRCARTODataSource::Open( const char * pszFilename,
         return FALSE;
     }*/
 
-    bUseHTTPS = CPLTestBool(CPLGetConfigOption("CARTO_HTTPS",
-                                CPLGetConfigOption("CARTODB_HTTPS", "YES")));
+    bUseHTTPS = CPLTestBool(
+        CPLGetConfigOption("CARTO_HTTPS",
+                           CPLGetConfigOption("CARTODB_HTTPS", "YES")));
 
     OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
     if( poSchemaLayer )
@@ -328,7 +330,7 @@ const char* OGRCARTODataSource::GetAPIURL() const
                                 CPLGetConfigOption("CARTODB_API_URL", NULL));
     if (pszAPIURL)
         return pszAPIURL;
-    else if (bUseHTTPS)
+    else if( bUseHTTPS )
         return CPLSPrintf("https://%s.carto.com/api/v2/sql", pszAccount);
     else
         return CPLSPrintf("http://%s.carto.com/api/v2/sql", pszAccount);
@@ -399,7 +401,7 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
 {
-    if (!bReadWrite)
+    if( !bReadWrite )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in read-only mode");
         return NULL;
@@ -442,11 +444,12 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
 
 
     OGRCARTOTableLayer* poLayer = new OGRCARTOTableLayer(this, osName);
-    const bool bGeomNullable = CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
+    const bool bGeomNullable =
+        CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
     int nSRID = (poSpatialRef && eGType != wkbNone) ? FetchSRSId( poSpatialRef ) : 0;
     bool bCartoify = CPLFetchBool(papszOptions, "CARTODBFY",
-                                    CPLFetchBool(papszOptions, "CARTODBIFY",
-                                                 true));
+                                  CPLFetchBool(papszOptions, "CARTODBIFY",
+                                               true));
     if( bCartoify )
     {
         if( nSRID != 4326 )
@@ -462,7 +465,8 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
     }
 
     poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
-    poLayer->SetDeferredCreation(eGType, poSpatialRef, bGeomNullable, bCartoify);
+    poLayer->SetDeferredCreation(eGType, poSpatialRef,
+                                 bGeomNullable, bCartoify);
     papoLayers = (OGRCARTOTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRCARTOTableLayer*));
     papoLayers[nLayers ++] = poLayer;
@@ -476,7 +480,7 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
 
 OGRErr OGRCARTODataSource::DeleteLayer(int iLayer)
 {
-    if (!bReadWrite)
+    if( !bReadWrite )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Operation not available in read-only mode");
@@ -530,7 +534,7 @@ OGRErr OGRCARTODataSource::DeleteLayer(int iLayer)
 
 char** OGRCARTODataSource::AddHTTPOptions()
 {
-    bMustCleanPersistent = TRUE;
+    bMustCleanPersistent = true;
 
     return CSLAddString(NULL, CPLSPrintf("PERSISTENT=CARTO:%p", this));
 }
@@ -689,13 +693,13 @@ OGRLayer * OGRCARTODataSource::ExecuteSQL( const char *pszSQLCommand,
 
 {
     return ExecuteSQLInternal(pszSQLCommand, poSpatialFilter, pszDialect,
-                              TRUE);
+                              true);
 }
 
 OGRLayer * OGRCARTODataSource::ExecuteSQLInternal( const char *pszSQLCommand,
-                                                     OGRGeometry *poSpatialFilter,
-                                                     const char *pszDialect,
-                                                     int bRunDeferredActions )
+                                                   OGRGeometry *poSpatialFilter,
+                                                   const char *pszDialect,
+                                                   bool bRunDeferredActions )
 
 {
     if( bRunDeferredActions )
