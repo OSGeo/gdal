@@ -1904,7 +1904,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
 {
     GDALDriverManager  *poDM = GetGDALDriverManager();
     CPLAssert( NULL != poDM );
-    GDALOpenInfo oOpenInfo( pszFilename, GA_ReadOnly, papszFileList );
+    GDALOpenInfo oOpenInfo( pszFilename, GA_ReadOnly, (char**)papszFileList );
 
     CPLErrorReset();
 
@@ -1913,7 +1913,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
     // First pass: only use drivers that have a pfnIdentify implementation.
     for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
     {
-		GDALDriver * const poDriver;
+		GDALDriver* poDriver;
 
 		if( iDriver < 0 )
             poDriver = GDALGetAPIPROXYDriver();
@@ -1951,7 +1951,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
     // Second pass: slow method.
     for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
     {
-        GDALDriver * const poDriver;
+        GDALDriver* poDriver;
 
 		if( iDriver < 0 )
             poDriver = GDALGetAPIPROXYDriver();
