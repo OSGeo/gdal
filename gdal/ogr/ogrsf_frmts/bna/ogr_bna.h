@@ -54,13 +54,13 @@ class OGRBNALayer : public OGRLayer
     int                bWriter;
 
     int                nIDs;
-    int                eof;
-    int                failed;
+    bool               eof;
+    bool               failed;
     int                curLine;
     int                nNextFID;
     VSILFILE*          fpBNA;
     int                nFeatures;
-    int                partialIndexTable;
+    bool               partialIndexTable;
     OffsetAndLine*     offsetAndLineFeaturesTable;
 
     BNAFeatureType     bnaFeatureType;
