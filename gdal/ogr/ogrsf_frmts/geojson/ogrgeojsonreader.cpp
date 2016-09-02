@@ -1225,14 +1225,14 @@ json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
     if( NULL != json_object_get_object(poTmp) &&
         NULL != json_object_get_object(poTmp)->head )
     {
-        for( it.entry = json_object_get_object(poTmp)->head;
-             ( it.entry ?
-               ( it.key = (char*)it.entry->k,
-                 it.val = (json_object*)it.entry->v, 1) : 0);
-             it.entry = it.entry->next)
+        it.entry = json_object_get_object(poTmp)->head;
+        while( it.entry != NULL )
         {
+            it.key = (char*)it.entry->k;
+            it.val = (json_object*)it.entry->v;
             if( EQUAL( it.key, pszName ) )
                 return it.val;
+            it.entry = it.entry->next;
         }
     }
 

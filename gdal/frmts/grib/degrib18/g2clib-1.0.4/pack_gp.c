@@ -455,7 +455,8 @@ L105:
 
 		if (ic[k] != ic[kstart]) {
 /* Computing MAX */
-		    i__2 = nenda, i__3 = k - 1;
+		    i__2 = nenda;
+            i__3 = k - 1;
 		    /*nenda = max(i__2,i__3);*/
 		    nenda = (i__2 > i__3) ? i__2 : i__3;
 		    goto L114;
@@ -477,7 +478,8 @@ L105:
 
 		    if (ic[k] != ic[kstart]) {
 /* Computing MAX */
-			i__2 = nenda, i__3 = k - 1;
+			i__2 = nenda;
+            i__3 = k - 1;
 			/*nenda = max(i__2,i__3);*/
 			nenda = (i__2 > i__3) ? i__2 : i__3;
 			goto L114;
@@ -501,7 +503,8 @@ L105:
 
 		    if (ic[k] != ic[kstart]) {
 /* Computing MAX */
-			i__2 = nenda, i__3 = k - 1;
+			i__2 = nenda;
+            i__3 = k - 1;
 			/*nenda = max(i__2,i__3);*/
 			nenda = (i__2 > i__3) ? i__2 : i__3;
 			goto L114;
@@ -672,7 +675,8 @@ L150:
 /* Computing MIN */
     i__3 = ktotal + lminpk;
     /*i__1 = nendb, i__2 = min(i__3,*nxy);*/
-    i__1 = nendb, i__2 = (i__3 < *nxy) ? i__3 : *nxy;
+    i__1 = nendb;
+    i__2 = (i__3 < *nxy) ? i__3 : *nxy;
     /*nendb = max(i__1,i__2);*/
     nendb = (i__1 > i__2) ? i__1 : i__2;
 /* **** 150  NENDB=MIN(KTOTAL+LMINPK,NXY) */

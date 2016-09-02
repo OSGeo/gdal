@@ -92,12 +92,12 @@ OWConnection::OWConnection( const char* pszUserIn,
     //  Initialize Environment handler
     // ------------------------------------------------------
 
-    if( OCIEnvCreate( &hEnv,
+    if( CheckError( OCIEnvCreate( &hEnv,
         (ub4) ( OCI_DEFAULT | OCI_OBJECT | OCI_THREADED ),
         (dvoid *) 0, (dvoid * (*)(dvoid *, size_t)) 0,
         (dvoid * (*)(dvoid *, dvoid *, size_t)) 0,
         (void (*)(dvoid *, dvoid *)) 0, (size_t) 0,
-        (dvoid **) 0), NULL )
+        (dvoid **) 0), NULL ) )
     {
         return;
     }

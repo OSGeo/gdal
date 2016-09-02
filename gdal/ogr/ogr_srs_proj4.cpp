@@ -1321,7 +1321,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             const LinearUnitsStruct* psLinearUnits = GetLinearFromLinearConvOrName( dfValue, pszValue );
             if( psLinearUnits != NULL )
             {
-                pszUnitName = psLinearUnits->pszWKTName,
+                pszUnitName = psLinearUnits->pszWKTName;
                 pszUnitConv = psLinearUnits->pszValueInMeter;
             }
             else
@@ -1335,7 +1335,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             const LinearUnitsStruct* psLinearUnits = GetLinearFromProjName( pszValue );
             if( psLinearUnits != NULL )
             {
-                pszUnitName = psLinearUnits->pszWKTName,
+                pszUnitName = psLinearUnits->pszWKTName;
                 pszUnitConv = psLinearUnits->pszValueInMeter;
             }
             else

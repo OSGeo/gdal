@@ -210,7 +210,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             int i = static_cast<int>(strlen( pszGML_FID ))-1;
             while( i >= 0 && pszGML_FID[i] >= '0'
                           && pszGML_FID[i] <= '9' && j<20)
-                i--, j++;
+            {
+                i--;
+                j++;
+            }
             /* i points the last character of the fid */
             if( i >= 0 && j < 20 && pszFIDPrefix == NULL)
             {

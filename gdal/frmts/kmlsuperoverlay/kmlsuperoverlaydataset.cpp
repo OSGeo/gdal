@@ -1674,7 +1674,7 @@ static void KmlSuperOverlayComputeDepth(CPLString osFilename,
                     osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                 else
                 {
-                    osSubFilename = CPLFormFilename(CPLGetPath(osFilename), pszHref, NULL),
+                    osSubFilename = CPLFormFilename(CPLGetPath(osFilename), pszHref, NULL);
                     osSubFilename = KMLRemoveSlash(osSubFilename);
                 }
 
