@@ -620,7 +620,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #else
 /** Return whether a floating-pointer number is NaN */
 #if defined(__cplusplus) && defined(__GNUC__)
-/* so to not get warning about conversion from double to float with *
+/* so to not get warning about conversion from double to float with */
 /* gcc -Wfloat-conversion when using isnan()/isinf() macros */
 extern "C++" {
 static inline int CPLIsNan(float f) { return __isnanf(f); }
