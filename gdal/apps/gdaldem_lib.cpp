@@ -921,7 +921,7 @@ float GDALAspectAlg (const T* afWin, float fDstNoDataValue, void* pData)
     }
     else if ( psData->bAngleAsAzimuth )
     {
-        if (aspect > 90.0)
+        if (aspect > 90.0f)
             aspect = 450.0f - aspect;
         else
             aspect = 90.0f - aspect;
@@ -929,10 +929,10 @@ float GDALAspectAlg (const T* afWin, float fDstNoDataValue, void* pData)
     else
     {
         if (aspect < 0)
-            aspect += 360.0;
+            aspect += 360.0f;
     }
 
-    if (aspect == 360.0)
+    if (aspect == 360.0f)
         aspect = 0.0;
 
     return aspect;
@@ -960,7 +960,7 @@ float GDALAspectZevenbergenThorneAlg (const T* afWin, float fDstNoDataValue, voi
     }
     else if ( psData->bAngleAsAzimuth )
     {
-        if (aspect > 90.0)
+        if (aspect > 90.0f)
             aspect = 450.0f - aspect;
         else
             aspect = 90.0f - aspect;
@@ -968,10 +968,10 @@ float GDALAspectZevenbergenThorneAlg (const T* afWin, float fDstNoDataValue, voi
     else
     {
         if (aspect < 0)
-            aspect += 360.0;
+            aspect += 360.0f;
     }
 
-    if (aspect == 360.0)
+    if (aspect == 360.0f)
         aspect = 0.0;
 
     return aspect;
@@ -2074,7 +2074,7 @@ CPLErr GDALGenerateVRTColorRelief(const char* pszDstFilename,
 
 template<class T> static T MyAbs(T x);
 
-template<> float MyAbs(float x) { return fabs(x); }
+template<> float MyAbs(float x) { return fabsf(x); }
 template<> int MyAbs(int x) { return x >= 0 ? x : -x; }
 
 template<class T>

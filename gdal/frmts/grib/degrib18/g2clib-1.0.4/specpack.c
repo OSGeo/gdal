@@ -58,9 +58,9 @@ void specpack(g2float *fld,g2int ndpts,g2int JJ,g2int KK,g2int MM,
 //   Calculate Laplacian scaling factors for each possible wave number.
 //
       pscale=(g2float *)malloc((JJ+MM)*sizeof(g2float));
-      tscale=(g2float)idrstmpl[4]*1E-6;
+      tscale=(g2float)(idrstmpl[4]*1E-6);
       for (n=Js;n<=JJ+MM;n++)
-           pscale[n]=pow((g2float)(n*(n+1)),tscale);
+           pscale[n]=(float)pow((g2float)(n*(n+1)),tscale);
 //
 //   Separate spectral coeffs into two lists; one to contain unpacked
 //   values within the sub-spectrum Js, Ks, Ms, and the other with values 

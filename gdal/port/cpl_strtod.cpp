@@ -359,7 +359,7 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
         CPLFree( pszNumber );
 
     errno = nError;
-    return dfValue;
+    return static_cast<float>(dfValue);
 
 #else
 

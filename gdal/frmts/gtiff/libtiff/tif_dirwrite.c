@@ -2143,13 +2143,13 @@ TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry*
 		}
 		else if (*na<1.0)
 		{
-			nb[0]=(uint32)((*na)*0xFFFFFFFF);
+			nb[0]=(uint32)((double)(*na)*0xFFFFFFFF);
 			nb[1]=0xFFFFFFFF;
 		}
 		else
 		{
 			nb[0]=0xFFFFFFFF;
-			nb[1]=(uint32)(0xFFFFFFFF/(*na));
+			nb[1]=(uint32)((double)0xFFFFFFFF/(*na));
 		}
 	}
 	if (tif->tif_flags&TIFF_SWAB)
@@ -2186,13 +2186,13 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 			}
 			else if (*na>-1.0)
 			{
-				nb[0]=-(int32)((-*na)*0x7FFFFFFF);
+				nb[0]=-(int32)((double)(-*na)*0x7FFFFFFF);
 				nb[1]=0x7FFFFFFF;
 			}
 			else
 			{
 				nb[0]=-0x7FFFFFFF;
-				nb[1]=(int32)(0x7FFFFFFF/(-*na));
+				nb[1]=(int32)((double)0x7FFFFFFF/(-*na));
 			}
 		}
 		else
@@ -2204,13 +2204,13 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 			}
 			else if (*na<1.0)
 			{
-				nb[0]=(int32)((*na)*0x7FFFFFFF);
+				nb[0]=(int32)((double)(*na)*0x7FFFFFFF);
 				nb[1]=0x7FFFFFFF;
 			}
 			else
 			{
 				nb[0]=0x7FFFFFFF;
-				nb[1]=(int32)(0x7FFFFFFF/(*na));
+				nb[1]=(int32)((double)0x7FFFFFFF/(*na));
 			}
 		}
 	}

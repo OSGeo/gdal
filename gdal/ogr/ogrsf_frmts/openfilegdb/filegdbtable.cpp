@@ -1765,7 +1765,7 @@ void FileGDBTable::InstallFilterEnvelope(const OGREnvelope* psFilterEnvelope)
         else
             nFilterXMin = 0;
         if( psFilterEnvelope->MaxX - poGeomField->dfXOrigin <
-                                        MAX_GUINTBIG / poGeomField->dfXYScale )
+                                        static_cast<double>(MAX_GUINTBIG) / poGeomField->dfXYScale )
             nFilterXMax = (GUIntBig)(0.5 + (psFilterEnvelope->MaxX -
                             poGeomField->dfXOrigin) * poGeomField->dfXYScale);
         else
@@ -1776,7 +1776,7 @@ void FileGDBTable::InstallFilterEnvelope(const OGREnvelope* psFilterEnvelope)
         else
             nFilterYMin = 0;
         if( psFilterEnvelope->MaxY - poGeomField->dfYOrigin <
-                                        MAX_GUINTBIG / poGeomField->dfXYScale )
+                                        static_cast<double>(MAX_GUINTBIG) / poGeomField->dfXYScale )
             nFilterYMax = (GUIntBig)(0.5 + (psFilterEnvelope->MaxY -
                                 poGeomField->dfYOrigin) * poGeomField->dfXYScale);
         else

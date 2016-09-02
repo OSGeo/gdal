@@ -1489,7 +1489,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    meta->gridAttrib.max = meta->gridAttrib.min;
    meta->gridAttrib.f_maxmin = 1;
    meta->gridAttrib.numMiss = 0;
-   meta->gridAttrib.refVal = refVal;
+   meta->gridAttrib.refVal = (float)refVal;
    meta->gridAttrib.ESF = ESF;
    meta->gridAttrib.DSF = DSF;
    bufLoc = 8;

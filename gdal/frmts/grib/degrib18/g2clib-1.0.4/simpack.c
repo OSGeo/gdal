@@ -64,10 +64,10 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
       g2int  j,nbits,imin,imax,maxdif,nbittot,left;
       g2float  bscale,dscale,rmax,rmin,temp;
       double maxnum;
-      const g2float alog2=0.69314718;       //  ln(2.0)
+      const g2float alog2=0.69314718f;       //  ln(2.0)
       
-      bscale=int_power(2.0,-idrstmpl[1]);
-      dscale=int_power(10.0,idrstmpl[2]);
+      bscale=(float)int_power(2.0,-idrstmpl[1]);
+      dscale=(float)int_power(10.0,idrstmpl[2]);
       if (idrstmpl[3] <= 0 || idrstmpl[3] > 31)
          nbits=0;
       else
@@ -102,7 +102,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            imin=(g2int)RINT(rmin*dscale);
            imax=(g2int)RINT(rmax*dscale);
            maxdif=imax-imin;
-           temp=log((double)(maxdif+1))/alog2;
+           temp=(float)(log((double)(maxdif+1))/alog2);
            nbits=(g2int)ceil(temp);
            rmin=(g2float)imin;
            //   scale data
@@ -117,9 +117,9 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            rmin=rmin*dscale;
            rmax=rmax*dscale;
            maxnum=int_power(2.0,nbits)-1;
-           temp=log(maxnum/(rmax-rmin))/alog2;
+           temp=(float)(log(maxnum/(rmax-rmin))/alog2);
            idrstmpl[1]=(g2int)ceil(-1.0*temp);
-           bscale=int_power(2.0,-idrstmpl[1]);
+           bscale=(float)int_power(2.0,-idrstmpl[1]);
            //   scale data
            for (j=0;j<ndpts;j++)
              ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin)*bscale);
@@ -132,7 +132,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            rmin=rmin*dscale;
            rmax=rmax*dscale;
            maxdif=(g2int)RINT((rmax-rmin)*bscale);
-           temp=log((double)(maxdif+1))/alog2;
+           temp=(float)(log((double)(maxdif+1))/alog2);
            nbits=(g2int)ceil(temp);
            //   scale data
            for (j=0;j<ndpts;j++)
