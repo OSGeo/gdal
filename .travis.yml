@@ -70,7 +70,7 @@ install:
   - cd ../autotest/cpp
   - make -j3
   - cd ../../gdal
-  - wget http://mdb-sqlite.googlecode.com/files/mdb-sqlite-1.0.2.tar.bz2
+  - wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/mdb-sqlite/mdb-sqlite-1.0.2.tar.bz2
   - tar xjvf mdb-sqlite-1.0.2.tar.bz2
   - sudo cp mdb-sqlite-1.0.2/lib/*.jar /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext
 
