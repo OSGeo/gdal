@@ -69,7 +69,7 @@ protected:
     CPLString            osBaseSQL;
     CPLString            osFIDColName;
 
-    int                  bEOF;
+    bool                 bEOF;
     int                  nFetchedObjects;
     int                  iNextInFetchedObjects;
     GIntBig              iNext;
@@ -121,15 +121,15 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     CPLString           osWHERE;
     CPLString           osSELECTWithoutWHERE;
 
-    int                 bLaunderColumnNames;
+    bool                bLaunderColumnNames;
 
-    int                 bInDeferredInsert;
+    bool                bInDeferredInsert;
     InsertState         eDeferredInsertState;
     CPLString           osDeferredInsertSQL;
     GIntBig             nNextFID;
 
-    int                 bDeferredCreation;
-    int                 bCartodbfy;
+    bool                bDeferredCreation;
+    bool                bCartodbfy;
     int                 nMaxChunkSize;
 
     void                BuildWhere();
@@ -167,15 +167,17 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
 
-    void                SetLaunderFlag( int bFlag )
-                                { bLaunderColumnNames = bFlag; }
+    void                SetLaunderFlag( bool bFlag )
+        { bLaunderColumnNames = bFlag; }
     void                SetDeferredCreation( OGRwkbGeometryType eGType,
-                                            OGRSpatialReference* poSRS,
-                                            int bGeomNullable,
-                                            int bCartodbfy);
+                                             OGRSpatialReference* poSRS,
+                                             bool bGeomNullable,
+                                             bool bCartodbfy);
     OGRErr              RunDeferredCreationIfNecessary();
-    int                 GetDeferredCreation() const { return bDeferredCreation; }
-    void                CancelDeferredCreation() { bDeferredCreation = FALSE; bCartodbfy = FALSE; }
+    bool                GetDeferredCreation() const
+        { return bDeferredCreation; }
+    void                CancelDeferredCreation()
+        { bDeferredCreation = false; bCartodbfy = false; }
 
     OGRErr              FlushDeferredInsert(bool bReset = true);
     void                RunDeferredCartofy();
@@ -214,14 +216,14 @@ class OGRCARTODataSource : public OGRDataSource
     OGRCARTOTableLayer**  papoLayers;
     int                 nLayers;
 
-    int                 bReadWrite;
-    int                 bBatchInsert;
+    bool                bReadWrite;
+    bool                bBatchInsert;
 
-    int                 bUseHTTPS;
+    bool                bUseHTTPS;
 
     CPLString           osAPIKey;
 
-    int                 bMustCleanPersistent;
+    bool                bMustCleanPersistent;
 
     CPLString           osCurrentSchema;
 
@@ -258,8 +260,8 @@ class OGRCARTODataSource : public OGRDataSource
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     const char*                 GetAPIURL() const;
-    int                         IsReadWrite() const { return bReadWrite; }
-    int                         DoBatchInsert() const { return bBatchInsert; }
+    bool                        IsReadWrite() const { return bReadWrite; }
+    bool                        DoBatchInsert() const { return bBatchInsert; }
     char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
@@ -269,10 +271,11 @@ class OGRCARTODataSource : public OGRDataSource
     int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
     void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
 
-    OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
-                                                    OGRGeometry *poSpatialFilter = NULL,
-                                                    const char *pszDialect = NULL,
-                                                    int bRunDeferredActions = FALSE );
+    OGRLayer *                  ExecuteSQLInternal(
+        const char *pszSQLCommand,
+        OGRGeometry *poSpatialFilter = NULL,
+        const char *pszDialect = NULL,
+        bool bRunDeferredActions = false );
 
     int                         GetPostGISMajor() const { return nPostGISMajor; }
     int                         GetPostGISMinor() const { return nPostGISMinor; }

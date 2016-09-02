@@ -79,18 +79,17 @@ CPLString OGRCARTOEscapeLiteral(const char* pszStr)
 /************************************************************************/
 
 OGRCARTOTableLayer::OGRCARTOTableLayer(OGRCARTODataSource* poDSIn,
-                                           const char* pszName) :
-                                           OGRCARTOLayer(poDSIn)
-
+                                       const char* pszName) :
+    OGRCARTOLayer(poDSIn)
 {
     osName = pszName;
     SetDescription( osName );
-    bLaunderColumnNames = TRUE;
+    bLaunderColumnNames = true;
     bInDeferredInsert = poDS->DoBatchInsert();
     eDeferredInsertState = INSERT_UNINIT;
     nNextFID = -1;
-    bDeferredCreation = FALSE;
-    bCartodbfy = FALSE;
+    bDeferredCreation = false;
+    bCartodbfy = false;
     nMaxChunkSize = atoi(CPLGetConfigOption("CARTO_MAX_CHUNK_SIZE",
             CPLGetConfigOption("CARTODB_MAX_CHUNK_SIZE", "15"))) * 1024 * 1024;
 }
@@ -404,7 +403,7 @@ void OGRCARTOTableLayer::RunDeferredCartofy()
 {
     if( bCartodbfy )
     {
-        bCartodbfy = FALSE;
+        bCartodbfy = false;
 
         CPLString osSQL;
         if( poDS->GetCurrentSchema() == "public" )
@@ -446,7 +445,7 @@ OGRErr OGRCARTOTableLayer::FlushDeferredInsert(bool bReset)
         }
         else
         {
-            bInDeferredInsert = FALSE;
+            bInDeferredInsert = false;
             eErr = OGRERR_FAILURE;
         }
     }
@@ -454,7 +453,7 @@ OGRErr OGRCARTOTableLayer::FlushDeferredInsert(bool bReset)
     osDeferredInsertSQL = "";
     if( bReset )
     {
-        bInDeferredInsert = FALSE;
+        bInDeferredInsert = false;
         nNextFID = -1;
     }
     return eErr;
@@ -580,7 +579,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     GetLayerDefn();
-    int bHasUserFieldMatchingFID = FALSE;
+    bool bHasUserFieldMatchingFID = false;
     if( osFIDColName.size() )
         bHasUserFieldMatchingFID = poFeatureDefn->GetFieldIndex(osFIDColName) >= 0;
 
@@ -593,7 +592,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     CPLString osSQL;
 
-    int bHasJustGotNextFID = FALSE;
+    bool bHasJustGotNextFID = false;
     if( !bHasUserFieldMatchingFID && bInDeferredInsert && nNextFID < 0 && osFIDColName.size() )
     {
         osSQL.Printf("SELECT nextval('%s') AS nextid",
@@ -607,7 +606,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             if( poID != NULL && json_object_get_type(poID) == json_type_int )
             {
                 nNextFID = json_object_get_int64(poID);
-                bHasJustGotNextFID = TRUE;
+                bHasJustGotNextFID = true;
             }
         }
 
@@ -651,7 +650,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
-    int bMustComma = FALSE;
+    bool bMustComma = false;
     if( bWriteInsertInto )
     {
         osSQL.Printf("INSERT INTO %s ", OGRCARTOEscapeIdentifier(osName).c_str());
@@ -666,7 +665,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             else
             {
                 osSQL += "(";
-                bMustComma = TRUE;
+                bMustComma = true;
             }
 
             osSQL += OGRCARTOEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
@@ -683,7 +682,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             else
             {
                 osSQL += "(";
-                bMustComma = TRUE;
+                bMustComma = true;
             }
 
             osSQL += OGRCARTOEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
@@ -697,7 +696,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             else
             {
                 osSQL += "(";
-                bMustComma = TRUE;
+                bMustComma = true;
             }
 
             osSQL += OGRCARTOEscapeIdentifier(osFIDColName);
@@ -716,7 +715,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
         else
             osSQL += ") VALUES (";
 
-        bMustComma = FALSE;
+        bMustComma = false;
         for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
         {
             if( !poFeature->IsFieldSet(i) )
@@ -726,7 +725,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
                     if( bMustComma )
                         osSQL += ", ";
                     else
-                        bMustComma = TRUE;
+                        bMustComma = true;
                     osSQL += "NULL";
                 }
                 continue;
@@ -735,7 +734,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             if( bMustComma )
                 osSQL += ", ";
             else
-                bMustComma = TRUE;
+                bMustComma = true;
 
             OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
             if( eType == OFTString || eType == OFTDateTime || eType == OFTDate || eType == OFTTime )
@@ -763,7 +762,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
                     if( bMustComma )
                         osSQL += ", ";
                     else
-                        bMustComma = TRUE;
+                        bMustComma = true;
                     osSQL += "NULL";
                 }
                 continue;
@@ -772,7 +771,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             if( bMustComma )
                 osSQL += ", ";
             else
-                bMustComma = TRUE;
+                bMustComma = true;
 
             OGRCartoGeomFieldDefn* poGeomFieldDefn =
                 (OGRCartoGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(i);
@@ -836,7 +835,9 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
     if( bInDeferredInsert )
     {
         OGRErr eRet = OGRERR_NONE;
-        if( eDeferredInsertState == INSERT_SINGLE_FEATURE && /* in multiple mode, this would require rebuilding the osSQL buffer. Annoying... */
+        // In multiple mode, this would require rebuilding the osSQL
+        // buffer. Annoying.
+        if( eDeferredInsertState == INSERT_SINGLE_FEATURE &&
             osDeferredInsertSQL.size() != 0 &&
             (int)osDeferredInsertSQL.size() + (int)osSQL.size() > nMaxChunkSize )
         {
@@ -935,13 +936,13 @@ OGRErr OGRCARTOTableLayer::ISetFeature( OGRFeature *poFeature )
 
     CPLString osSQL;
     osSQL.Printf("UPDATE %s SET ", OGRCARTOEscapeIdentifier(osName).c_str());
-    int bMustComma = FALSE;
+    bool bMustComma = false;
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( bMustComma )
             osSQL += ", ";
         else
-            bMustComma = TRUE;
+            bMustComma = true;
 
         osSQL += OGRCARTOEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
         osSQL += " = ";
@@ -974,7 +975,7 @@ OGRErr OGRCARTOTableLayer::ISetFeature( OGRFeature *poFeature )
         if( bMustComma )
             osSQL += ", ";
         else
-            bMustComma = TRUE;
+            bMustComma = true;
 
         osSQL += OGRCARTOEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
         osSQL += " = ";
@@ -1369,12 +1370,12 @@ int OGRCARTOTableLayer::TestCapability( const char * pszCap )
 /*                        SetDeferredCreation()                          */
 /************************************************************************/
 
-void OGRCARTOTableLayer::SetDeferredCreation (OGRwkbGeometryType eGType,
-                                               OGRSpatialReference* poSRSIn,
-                                               int bGeomNullable,
-                                               int bCartodbfyIn)
+void OGRCARTOTableLayer::SetDeferredCreation( OGRwkbGeometryType eGType,
+                                              OGRSpatialReference* poSRSIn,
+                                              bool bGeomNullable,
+                                              bool bCartodbfyIn )
 {
-    bDeferredCreation = TRUE;
+    bDeferredCreation = true;
     nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
     bCartodbfy = bCartodbfyIn;
@@ -1412,7 +1413,7 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
 {
     if( !bDeferredCreation )
         return OGRERR_NONE;
-    bDeferredCreation = FALSE;
+    bDeferredCreation = false;
 
     CPLString osSQL;
     osSQL.Printf("CREATE TABLE %s ( %s SERIAL,",
