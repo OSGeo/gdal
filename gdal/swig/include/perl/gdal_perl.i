@@ -621,7 +621,20 @@ sub TestCapability {
 sub Extension {
     my $self = shift;
     my $h = $self->GetMetadata;
-    return $h->{DMD_EXTENSION};
+    if (wantarray) {
+        my $e = $h->{DMD_EXTENSIONS};
+        my @e = split / /, $e;
+        @e = split /\//, $e if $e =~ /\//; # ILWIS returns mpr/mpl
+        for my $i (0..$#e) {
+            $e[$i] =~ s/^\.//; # CALS returns extensions with a dot prefix
+        }
+        return @e;
+    } else {
+        my $e = $h->{DMD_EXTENSION};
+        return '' if $e =~ /\//; # ILWIS returns mpr/mpl
+        $e =~ s/^\.//;
+        return $e;
+    }
 }
 
 sub MIMEType {
