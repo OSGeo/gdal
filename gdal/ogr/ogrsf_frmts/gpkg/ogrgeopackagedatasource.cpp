@@ -1081,7 +1081,7 @@ OGRLayer * OGRGeoPackageDataSource::ExecuteSQL( const char *pszSQLCommand,
     poLayer = new OGRGeopackageSelectLayer( this, osSQL, hSQLStmt,
                                         bUseStatementForGetNextFeature, bEmptyLayer, TRUE );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != NULL && poLayer->GetLayerDefn()->GetGeomFieldCount() > 0 )
         poLayer->SetSpatialFilter( 0, poSpatialFilter );
     
     return poLayer;
