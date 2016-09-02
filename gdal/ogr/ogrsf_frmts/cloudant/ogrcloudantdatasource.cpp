@@ -122,18 +122,17 @@ OGRLayer* OGRCloudantDataSource::OpenDatabase(const char* pszLayerName)
 int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
-    int bHTTP = FALSE;
-    if (STARTS_WITH(pszFilename, "http://") ||
-        STARTS_WITH(pszFilename, "https://"))
-        bHTTP = TRUE;
-    else if (!STARTS_WITH_CI(pszFilename, "cloudant:"))
+    const bool bHTTP =
+        STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://");
+    if( !bHTTP && !STARTS_WITH_CI(pszFilename, "cloudant:") )
         return FALSE;
 
-    bReadWrite = bUpdateIn;
+    bReadWrite = CPL_TO_BOOL(bUpdateIn);
 
     pszName = CPLStrdup( pszFilename );
 
-    if (bHTTP)
+    if( bHTTP )
         osURL = pszFilename;
     else
         osURL = pszFilename + 9;
@@ -287,7 +286,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
     if (poAnswerObj == NULL)
         return NULL;
 
-    if (!IsOK(poAnswerObj, "Layer creation failed"))
+    if( !IsOK(poAnswerObj, "Layer creation failed") )
     {
         json_object_put(poAnswerObj);
         return NULL;
@@ -358,20 +357,22 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
 
         poAnswerObj = PUT(osURI, json_object_to_json_string(poDoc));
 
-        if (IsOK(poAnswerObj, "Cloudant spatial index creation failed"))
-            nUpdateSeq ++;
+        if( IsOK(poAnswerObj, "Cloudant spatial index creation failed") )
+            nUpdateSeq++;
 
         json_object_put(poDoc);
         json_object_put(poAnswerObj);
     }
 
-    int bGeoJSONDocument = CPLTestBool(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
+    const bool bGeoJSONDocument =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
     int nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 
     OGRCloudantTableLayer* poLayer = new OGRCloudantTableLayer(this, osLayerName);
     if (nCoordPrecision != -1)
         poLayer->SetCoordinatePrecision(nCoordPrecision);
-    poLayer->SetInfoAfterCreation(eGType, poSpatialRef, nUpdateSeq, bGeoJSONDocument);
+    poLayer->SetInfoAfterCreation(eGType, poSpatialRef,
+                                  nUpdateSeq, bGeoJSONDocument);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;
     return poLayer;

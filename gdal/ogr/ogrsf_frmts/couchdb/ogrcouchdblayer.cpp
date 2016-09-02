@@ -42,9 +42,9 @@ OGRCouchDBLayer::OGRCouchDBLayer(OGRCouchDBDataSource* poDSIn) :
     poSRS(NULL),
     nNextInSeq(0),
     nOffset(0),
-    bEOF(FALSE),
+    bEOF(false),
     poFeatures(NULL),
-    bGeoJSONDocument(TRUE)
+    bGeoJSONDocument(true)
 {}
 
 /************************************************************************/
@@ -72,7 +72,7 @@ void OGRCouchDBLayer::ResetReading()
 {
     nNextInSeq = 0;
     nOffset = 0;
-    bEOF = FALSE;
+    bEOF = false;
 }
 
 /************************************************************************/
@@ -100,11 +100,11 @@ OGRFeature *OGRCouchDBLayer::GetNextFeature()
         if (nNextInSeq < nOffset ||
             nNextInSeq >= nOffset + static_cast<int>(aoFeatures.size()))
         {
-            if (bEOF)
+            if( bEOF )
                 return NULL;
 
             nOffset += static_cast<int>(aoFeatures.size());
-            if (!FetchNextRows())
+            if( !FetchNextRows() )
                 return NULL;
         }
 
@@ -151,7 +151,7 @@ OGRErr OGRCouchDBLayer::SetNextByIndex( GIntBig nIndex )
 {
     if (nIndex < 0 || nIndex >= INT_MAX )
         return OGRERR_FAILURE;
-    bEOF = FALSE;
+    bEOF = false;
     nNextInSeq = (int)nIndex;
     return OGRERR_NONE;
 }
@@ -366,7 +366,7 @@ void OGRCouchDBLayer::BuildFeatureDefnFromDoc(json_object* poDoc)
     }
     else
     {
-        bGeoJSONDocument = FALSE;
+        bGeoJSONDocument = false;
 
         json_object_object_foreachC( poDoc, it )
         {
@@ -394,18 +394,18 @@ void OGRCouchDBLayer::BuildFeatureDefnFromDoc(json_object* poDoc)
 /*                      BuildFeatureDefnFromRows()                      */
 /************************************************************************/
 
-int OGRCouchDBLayer::BuildFeatureDefnFromRows(json_object* poAnswerObj)
+bool OGRCouchDBLayer::BuildFeatureDefnFromRows( json_object* poAnswerObj )
 {
     if ( !json_object_is_type(poAnswerObj, json_type_object) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Layer definition creation failed");
-        return FALSE;
+        return false;
     }
 
     if (poDS->IsError(poAnswerObj, "Layer definition creation failed"))
     {
-        return FALSE;
+        return false;
     }
 
     json_object* poRows = json_object_object_get(poAnswerObj, "rows");
@@ -414,7 +414,7 @@ int OGRCouchDBLayer::BuildFeatureDefnFromRows(json_object* poAnswerObj)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Layer definition creation failed");
-        return FALSE;
+        return false;
     }
 
     int nRows = json_object_array_length(poRows);
@@ -438,7 +438,7 @@ int OGRCouchDBLayer::BuildFeatureDefnFromRows(json_object* poAnswerObj)
 
     if ( poRow == NULL )
     {
-        return FALSE;
+        return false;
     }
 
     json_object* poDoc = json_object_object_get(poRow, "doc");
@@ -449,35 +449,35 @@ int OGRCouchDBLayer::BuildFeatureDefnFromRows(json_object* poAnswerObj)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Layer definition creation failed");
-        return FALSE;
+        return false;
     }
 
     BuildFeatureDefnFromDoc(poDoc);
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                   FetchNextRowsAnalyseDocs()                         */
 /************************************************************************/
 
-int OGRCouchDBLayer::FetchNextRowsAnalyseDocs(json_object* poAnswerObj)
+bool OGRCouchDBLayer::FetchNextRowsAnalyseDocs( json_object* poAnswerObj )
 {
     if (poAnswerObj == NULL)
-        return FALSE;
+        return false;
 
     if ( !json_object_is_type(poAnswerObj, json_type_object) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "FetchNextRowsAnalyseDocs() failed");
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     if (poDS->IsError(poAnswerObj, "FetchNextRowsAnalyseDocs() failed"))
     {
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     json_object* poRows = json_object_object_get(poAnswerObj, "rows");
@@ -487,7 +487,7 @@ int OGRCouchDBLayer::FetchNextRowsAnalyseDocs(json_object* poAnswerObj)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "FetchNextRowsAnalyseDocs() failed");
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     int nRows = json_object_array_length(poRows);
@@ -500,7 +500,7 @@ int OGRCouchDBLayer::FetchNextRowsAnalyseDocs(json_object* poAnswerObj)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "FetchNextRowsAnalyseDocs() failed");
             json_object_put(poAnswerObj);
-            return FALSE;
+            return false;
         }
 
         json_object* poDoc = json_object_object_get(poRow, "doc");
@@ -512,7 +512,7 @@ int OGRCouchDBLayer::FetchNextRowsAnalyseDocs(json_object* poAnswerObj)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "FetchNextRowsAnalyseDocs() failed");
             json_object_put(poAnswerObj);
-            return FALSE;
+            return false;
         }
 
         json_object* poId = json_object_object_get(poDoc, "_id");
@@ -527,7 +527,7 @@ int OGRCouchDBLayer::FetchNextRowsAnalyseDocs(json_object* poAnswerObj)
 
     poFeatures = poAnswerObj;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

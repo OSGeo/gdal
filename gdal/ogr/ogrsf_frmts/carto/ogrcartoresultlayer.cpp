@@ -87,7 +87,7 @@ OGRFeature  *OGRCARTOResultLayer::GetNextRawFeature()
 /*                                IsOK()                                */
 /************************************************************************/
 
-int  OGRCARTOResultLayer::IsOK()
+bool OGRCARTOResultLayer::IsOK()
 {
     CPLErrorReset();
     poFirstFeature = GetNextFeature();

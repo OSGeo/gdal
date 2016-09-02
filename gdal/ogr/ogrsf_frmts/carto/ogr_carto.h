@@ -201,7 +201,7 @@ class OGRCARTOResultLayer : public OGRCARTOLayer
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object* poObjIn);
     virtual OGRFeature  *GetNextRawFeature();
 
-    int                 IsOK();
+    bool                IsOK();
 };
 
 /************************************************************************/

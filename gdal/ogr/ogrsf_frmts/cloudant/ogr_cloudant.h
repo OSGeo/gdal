@@ -46,7 +46,7 @@ class OGRCloudantDataSource;
 
 class OGRCloudantTableLayer : public OGRCouchDBTableLayer
 {
-    int                       bHasStandardSpatial;
+    int                       bHasStandardSpatial;  // -1, TRUE, FALSE
     const char*               pszSpatialView;
     char*                     pszSpatialDDoc;
 
@@ -55,14 +55,14 @@ class OGRCloudantTableLayer : public OGRCouchDBTableLayer
                return atoi(CPLGetConfigOption("CLOUDANT_PAGE_SIZE", "200"));
             }
 
-            virtual int               RunSpatialFilterQueryIfNecessary();
+            virtual bool              RunSpatialFilterQueryIfNecessary();
             virtual void              GetSpatialView();
             virtual void              WriteMetadata();
             virtual void              LoadMetadata();
 
     public:
-            OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
-                                 const char* pszName);
+            OGRCloudantTableLayer( OGRCloudantDataSource* poDS,
+                                   const char* pszName );
             virtual ~OGRCloudantTableLayer();
 };
 
