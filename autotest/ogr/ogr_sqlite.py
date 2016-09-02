@@ -3401,7 +3401,7 @@ def ogr_sqlite_44():
 """)
 
     gdal.VectorTranslate('/vsimem/ogr_sqlite_44.sqlite', '/vsimem/ogr_sqlite_44.csv', format = 'SQLite' )
-    gdal.VectorTranslate('/vsimem/ogr_sqlite_44_out.csv', '/vsimem/ogr_sqlite_44.sqlite', format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES'])
+    gdal.VectorTranslate('/vsimem/ogr_sqlite_44_out.csv', '/vsimem/ogr_sqlite_44.sqlite', format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'LINEFORMAT=LF'])
 
     f = gdal.VSIFOpenL('/vsimem/ogr_sqlite_44_out.csv', 'rb')
     if f is None:
