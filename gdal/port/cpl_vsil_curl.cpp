@@ -74,6 +74,7 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 #else
 
 //! @cond Doxygen_Suppress
+#ifndef DOXYGEN_SKIP
 
 #include <curl/curl.h>
 
@@ -4231,6 +4232,7 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 }
 
+#endif // DOXYGEN_SKIP
 //! @endcond
 
 /************************************************************************/
@@ -4280,10 +4282,6 @@ void VSIInstallCurlFileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );
 }
-
-//! @cond Doxygen_Suppress
-
-//! @endcond
 
 /************************************************************************/
 /*                      VSIInstallS3FileHandler()                       */
