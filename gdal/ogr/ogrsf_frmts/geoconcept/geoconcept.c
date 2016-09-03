@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#include "cpl_port.h"
 #include <math.h>
 #include "geoconcept.h"
 #include "cpl_conv.h"

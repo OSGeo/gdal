@@ -29,6 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
 #include <ctype.h>
 #include "gxfopen.h"
 
