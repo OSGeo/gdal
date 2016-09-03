@@ -62,11 +62,12 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                                             sqlite3_stmt *hStmtIn,
                                             int bUseStatementForGetNextFeature,
                                             int bEmptyLayer,
-                                            int bAllowMultipleGeomFieldsIn ) :
-    poBehaviour(new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn,
-                                                        bEmptyLayer))
+                                            int bAllowMultipleGeomFieldsIn )
 {
     poDS = poDSIn;
+    // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
+    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn,
+                                                          bEmptyLayer);
 
     bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
 
