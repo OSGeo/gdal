@@ -90,7 +90,7 @@ OGRLayer* OGRCloudantDataSource::OpenDatabase(const char* pszLayerName)
         return NULL;
 
     if ( !json_object_is_type(poAnswerObj, json_type_object) ||
-            json_object_object_get(poAnswerObj, "db_name") == NULL )
+            CPL_json_object_object_get(poAnswerObj, "db_name") == NULL )
     {
         IsError(poAnswerObj, "Database opening failed");
 
@@ -100,9 +100,9 @@ OGRLayer* OGRCloudantDataSource::OpenDatabase(const char* pszLayerName)
 
     OGRCloudantTableLayer* poLayer = new OGRCloudantTableLayer(this, osTableName);
 
-    if ( json_object_object_get(poAnswerObj, "update_seq") != NULL )
+    if ( CPL_json_object_object_get(poAnswerObj, "update_seq") != NULL )
     {
-        int nUpdateSeq = json_object_get_int(json_object_object_get(poAnswerObj, "update_seq"));
+        int nUpdateSeq = json_object_get_int(CPL_json_object_object_get(poAnswerObj, "update_seq"));
         poLayer->SetUpdateSeq(nUpdateSeq);
     }
 
@@ -175,8 +175,8 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         if ( json_object_is_type(poAnswerObj, json_type_object) )
         {
-            json_object* poError = json_object_object_get(poAnswerObj, "error");
-            json_object* poReason = json_object_object_get(poAnswerObj, "reason");
+            json_object* poError = CPL_json_object_object_get(poAnswerObj, "error");
+            json_object* poReason = CPL_json_object_object_get(poAnswerObj, "reason");
 
             const char* pszError = json_object_get_string(poError);
             const char* pszReason = json_object_get_string(poReason);

@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_couchdb.h"
+#include "ogrgeojsonreader.h"
 #include "swq.h"
 
 CPL_CVSID("$Id$");
@@ -150,7 +151,7 @@ OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
         return NULL;
 
     if ( !json_object_is_type(poAnswerObj, json_type_object) ||
-            json_object_object_get(poAnswerObj, "db_name") == NULL )
+            CPL_json_object_object_get(poAnswerObj, "db_name") == NULL )
     {
         IsError(poAnswerObj, "Database opening failed");
 
@@ -160,9 +161,9 @@ OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
 
     OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, osTableName);
 
-    if ( json_object_object_get(poAnswerObj, "update_seq") != NULL )
+    if ( CPL_json_object_object_get(poAnswerObj, "update_seq") != NULL )
     {
-        int nUpdateSeq = json_object_get_int(json_object_object_get(poAnswerObj, "update_seq"));
+        int nUpdateSeq = json_object_get_int(CPL_json_object_object_get(poAnswerObj, "update_seq"));
         poLayer->SetUpdateSeq(nUpdateSeq);
     }
 
@@ -258,8 +259,8 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         if ( json_object_is_type(poAnswerObj, json_type_object) )
         {
-            json_object* poError = json_object_object_get(poAnswerObj, "error");
-            json_object* poReason = json_object_object_get(poAnswerObj, "reason");
+            json_object* poError = CPL_json_object_object_get(poAnswerObj, "error");
+            json_object* poReason = CPL_json_object_object_get(poAnswerObj, "reason");
 
             const char* pszError = json_object_get_string(poError);
             const char* pszReason = json_object_get_string(poReason);
@@ -890,7 +891,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
     json_object* poRows = NULL;
     if (!(poAnswerObj != NULL &&
           json_object_is_type(poAnswerObj, json_type_object) &&
-          (poRows = json_object_object_get(poAnswerObj, "rows")) != NULL &&
+          (poRows = CPL_json_object_object_get(poAnswerObj, "rows")) != NULL &&
           json_object_is_type(poRows, json_type_array)))
     {
         json_object_put(poAnswerObj);
@@ -911,17 +912,17 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
         return NULL;
     }
 
-    json_object* poValue = json_object_object_get(poRow, "value");
+    json_object* poValue = CPL_json_object_object_get(poRow, "value");
     if (!(poValue != NULL && json_object_is_type(poValue, json_type_object)))
     {
         json_object_put(poAnswerObj);
         return NULL;
     }
 
-    json_object* poSum = json_object_object_get(poValue, "sum");
-    json_object* poCount = json_object_object_get(poValue, "count");
-    json_object* poMin = json_object_object_get(poValue, "min");
-    json_object* poMax = json_object_object_get(poValue, "max");
+    json_object* poSum = CPL_json_object_object_get(poValue, "sum");
+    json_object* poCount = CPL_json_object_object_get(poValue, "count");
+    json_object* poMin = CPL_json_object_object_get(poValue, "min");
+    json_object* poMax = CPL_json_object_object_get(poValue, "max");
     if (poSum != NULL && (json_object_is_type(poSum, json_type_int) ||
                             json_object_is_type(poSum, json_type_double)) &&
         poCount != NULL && (json_object_is_type(poCount, json_type_int) ||
@@ -1197,8 +1198,8 @@ bool OGRCouchDBDataSource::IsError(json_object* poAnswerObj,
         return false;
     }
 
-    json_object* poError = json_object_object_get(poAnswerObj, "error");
-    json_object* poReason = json_object_object_get(poAnswerObj, "reason");
+    json_object* poError = CPL_json_object_object_get(poAnswerObj, "error");
+    json_object* poReason = CPL_json_object_object_get(poAnswerObj, "reason");
 
     const char* pszError = json_object_get_string(poError);
     const char* pszReason = json_object_get_string(poReason);
@@ -1232,7 +1233,7 @@ bool OGRCouchDBDataSource::IsOK(json_object* poAnswerObj,
         return false;
     }
 
-    json_object* poOK = json_object_object_get(poAnswerObj, "ok");
+    json_object* poOK = CPL_json_object_object_get(poAnswerObj, "ok");
     if ( !poOK )
     {
         IsError(poAnswerObj, pszErrorMsg);

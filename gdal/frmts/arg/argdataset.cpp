@@ -33,7 +33,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-#include <json.h>
+#include "ogrgeojsonreader.h"
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -135,7 +135,7 @@ static json_object * GetJsonObject(CPLString pszFilename)
 /************************************************************************/
 static const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
 {
-    json_object *pJSONItem = json_object_object_get(pJSONObject, pszKey.c_str());
+    json_object *pJSONItem = CPL_json_object_object_get(pJSONObject, pszKey.c_str());
     if (pJSONItem == NULL) {
         CPLDebug("ARGDataset", "GetJsonValueStr(): "
             "Could not find '%s' in JSON.", pszKey.c_str());

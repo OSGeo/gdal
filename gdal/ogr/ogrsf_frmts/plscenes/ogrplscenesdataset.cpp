@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_plscenes.h"
+#include "ogrgeojsonreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -321,7 +322,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     json_object* poObj = RunRequest( osRasterURL );
     if( poObj == NULL )
         return NULL;
-    json_object* poProperties = json_object_object_get(poObj, "properties");
+    json_object* poProperties = CPL_json_object_object_get(poObj, "properties");
     if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find properties object");
@@ -332,26 +333,26 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     const char* pszLink = NULL;
     if( EQUAL(pszProductType, "thumb") )
     {
-        json_object* poLinks = json_object_object_get(poProperties, "links");
+        json_object* poLinks = CPL_json_object_object_get(poProperties, "links");
         if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
         {
-            json_object* poThumbnail = json_object_object_get(poLinks, "thumbnail");
+            json_object* poThumbnail = CPL_json_object_object_get(poLinks, "thumbnail");
             if( poThumbnail && json_object_get_type(poThumbnail) == json_type_string )
                 pszLink = json_object_get_string(poThumbnail);
         }
     }
     else
     {
-        json_object* poData = json_object_object_get(poProperties, "data");
+        json_object* poData = CPL_json_object_object_get(poProperties, "data");
         if( poData != NULL && json_object_get_type(poData) == json_type_object )
         {
-            json_object* poProducts = json_object_object_get(poData, "products");
+            json_object* poProducts = CPL_json_object_object_get(poData, "products");
             if( poProducts != NULL && json_object_get_type(poProducts) == json_type_object )
             {
-                json_object* poProduct = json_object_object_get(poProducts, pszProductType);
+                json_object* poProduct = CPL_json_object_object_get(poProducts, pszProductType);
                 if( poProduct != NULL && json_object_get_type(poProduct) == json_type_object )
                 {
-                    json_object* poFull = json_object_object_get(poProduct, "full");
+                    json_object* poFull = CPL_json_object_object_get(poProduct, "full");
                     if( poFull && json_object_get_type(poFull) == json_type_string )
                         pszLink = json_object_get_string(poFull);
                 }

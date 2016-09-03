@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_plscenes.h"
+#include "ogrgeojsonreader.h"
 #include <time.h>
 
 CPL_CVSID("$Id$");
@@ -96,30 +97,30 @@ OGRLayer* OGRPLScenesV1Dataset::ParseCatalog(json_object* poCatalog)
 {
     if( poCatalog == NULL || json_object_get_type(poCatalog) != json_type_object )
         return NULL;
-    json_object* poId = json_object_object_get(poCatalog, "id");
+    json_object* poId = CPL_json_object_object_get(poCatalog, "id");
     if( poId == NULL || json_object_get_type(poId) != json_type_string )
         return NULL;
-    json_object* poLinks = json_object_object_get(poCatalog, "_links");
+    json_object* poLinks = CPL_json_object_object_get(poCatalog, "_links");
     if( poLinks == NULL || json_object_get_type(poLinks) != json_type_object )
         return NULL;
-    json_object* poSpec = json_object_object_get(poLinks, "spec");
+    json_object* poSpec = CPL_json_object_object_get(poLinks, "spec");
     if( poSpec == NULL || json_object_get_type(poSpec) != json_type_string )
         return NULL;
-    json_object* poItems = json_object_object_get(poLinks, "items");
+    json_object* poItems = CPL_json_object_object_get(poLinks, "items");
     if( poItems == NULL || json_object_get_type(poItems) != json_type_string )
         return NULL;
-    json_object* poCount = json_object_object_get(poCatalog, "item_count");
+    json_object* poCount = CPL_json_object_object_get(poCatalog, "item_count");
     GIntBig nCount = -1;
     if( poCount != NULL && json_object_get_type(poCount) == json_type_int )
     {
         nCount = json_object_get_int64(poCount);
     }
     CPLString osDisplayDescription;
-    json_object* poDisplayDescription = json_object_object_get(poCatalog, "display_description");
+    json_object* poDisplayDescription = CPL_json_object_object_get(poCatalog, "display_description");
     if( poDisplayDescription != NULL && json_object_get_type(poDisplayDescription) == json_type_string )
         osDisplayDescription = json_object_get_string(poDisplayDescription);
     CPLString osDisplayName;
-    json_object* poDisplayName = json_object_object_get(poCatalog, "display_name");
+    json_object* poDisplayName = CPL_json_object_object_get(poCatalog, "display_name");
     if( poDisplayName != NULL && json_object_get_type(poDisplayName) == json_type_string )
         osDisplayName = json_object_get_string(poDisplayName);
 
@@ -158,7 +159,7 @@ OGRLayer* OGRPLScenesV1Dataset::ParseCatalog(json_object* poCatalog)
 bool OGRPLScenesV1Dataset::ParseCatalogsPage(json_object* poObj,
                                              CPLString& osNext)
 {
-    json_object* poCatalogs = json_object_object_get(poObj, "catalogs");
+    json_object* poCatalogs = CPL_json_object_object_get(poObj, "catalogs");
     if( poCatalogs == NULL || json_object_get_type(poCatalogs) != json_type_array )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -174,10 +175,10 @@ bool OGRPLScenesV1Dataset::ParseCatalogsPage(json_object* poObj,
 
     // Is there a next page ?
     osNext = "";
-    json_object* poLinks = json_object_object_get(poObj, "_links");
+    json_object* poLinks = CPL_json_object_object_get(poObj, "_links");
     if( poLinks && json_object_get_type(poLinks) == json_type_object )
     {
-        json_object* poNext = json_object_object_get(poLinks, "_next");
+        json_object* poNext = CPL_json_object_object_get(poLinks, "_next");
         if( poNext && json_object_get_type(poNext) == json_type_string )
         {
             osNext = json_object_get_string(poNext);
@@ -464,19 +465,19 @@ retry:
 
     json_object* poSubObj = NULL;
     if( pszProductType != NULL &&
-        (poSubObj = json_object_object_get(poObj, pszProductType)) != NULL )
+        (poSubObj = CPL_json_object_object_get(poObj, pszProductType)) != NULL )
     {
        /* do nothing */
     }
     else if( pszProductType != NULL && !EQUAL(pszProductType, "LIST") &&
-        (poSubObj = json_object_object_get(poObj, pszProductType)) == NULL )
+        (poSubObj = CPL_json_object_object_get(poObj, pszProductType)) == NULL )
     {
        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find asset %s", pszProductType);
        json_object_put(poObj);
        return NULL;
     }
     else if( pszProductType == NULL &&
-             (poSubObj = json_object_object_get(poObj, "visual")) != NULL )
+             (poSubObj = CPL_json_object_object_get(poObj, "visual")) != NULL )
     {
         /* do nothing */
     }
@@ -517,7 +518,7 @@ retry:
         return NULL;
     }
 
-    json_object* poPermissions = json_object_object_get(poSubObj, "_permissions");
+    json_object* poPermissions = CPL_json_object_object_get(poSubObj, "_permissions");
     if( poPermissions != NULL )
     {
         const char* pszPermissions = json_object_to_json_string_ext( poPermissions, 0 );
@@ -535,8 +536,8 @@ retry:
         json_object_put(poObj);
         return NULL;
     }
-    json_object* poLocation = json_object_object_get(poHTTP, "location");
-    json_object* poStatus = json_object_object_get(poHTTP, "status");
+    json_object* poLocation = CPL_json_object_object_get(poHTTP, "location");
+    json_object* poStatus = CPL_json_object_object_get(poHTTP, "status");
     bool bActive = false;
     if( poStatus != NULL && json_object_get_type(poStatus) == json_type_string )
     {

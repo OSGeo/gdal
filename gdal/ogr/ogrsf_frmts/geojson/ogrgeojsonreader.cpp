@@ -639,7 +639,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                 if( NULL != poObjProps &&
                     json_object_get_type(poObjProps) == json_type_object )
                 {
-                    bHasRegularIdProp = (json_object_object_get(poObjProps, "id") != NULL);
+                    bHasRegularIdProp = (CPL_json_object_object_get(poObjProps, "id") != NULL);
                 }
                 if( !bHasRegularIdProp )
                 {
@@ -677,7 +677,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
     {
         if (bIsGeocouchSpatiallistFormat)
         {
-            poObjProps = json_object_object_get(poObjProps, "properties");
+            poObjProps = CPL_json_object_object_get(poObjProps, "properties");
             if( NULL == poObjProps ||
                 json_object_get_type(poObjProps) != json_type_object )
             {
@@ -1017,15 +1017,15 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
     {
         if (bIsGeocouchSpatiallistFormat)
         {
-            json_object* poId = json_object_object_get(poObjProps, "_id");
+            json_object* poId = CPL_json_object_object_get(poObjProps, "_id");
             if (poId != NULL && json_object_get_type(poId) == json_type_string)
                 poFeature->SetField( "_id", json_object_get_string(poId) );
 
-            json_object* poRev = json_object_object_get(poObjProps, "_rev");
+            json_object* poRev = CPL_json_object_object_get(poObjProps, "_rev");
             if (poRev != NULL && json_object_get_type(poRev) == json_type_string)
                 poFeature->SetField( "_rev", json_object_get_string(poRev) );
 
-            poObjProps = json_object_object_get(poObjProps, "properties");
+            poObjProps = CPL_json_object_object_get(poObjProps, "properties");
             if( NULL == poObjProps ||
                 json_object_get_type(poObjProps) != json_type_object )
             {
@@ -1870,7 +1870,7 @@ json_object* json_ex_get_object_by_path(json_object* poObj, const char* pszPath 
     char** papszTokens = CSLTokenizeString2( pszPath, ".", 0 );
     for( int i = 0; papszTokens[i] != NULL; i++ )
     {
-        poObj = json_object_object_get(poObj, papszTokens[i]);
+        poObj = CPL_json_object_object_get(poObj, papszTokens[i]);
         if( poObj == NULL )
             break;
         if( papszTokens[i+1] != NULL )
@@ -1911,4 +1911,19 @@ bool OGRJSonParse(const char* pszText, json_object** ppoObj, bool bVerboseError)
     }
     json_tokener_free(jstok);
     return true;
+}
+
+/************************************************************************/
+/*                    CPL_json_object_object_get()                      */
+/************************************************************************/
+
+// This is the same as json_object_object_get() except it will not raise
+// deprecation warning
+
+json_object*  CPL_json_object_object_get(struct json_object* obj,
+                                         const char *key)
+{
+    json_object* poRet = NULL;
+    json_object_object_get_ex(obj, key, &poRet);
+    return poRet;
 }

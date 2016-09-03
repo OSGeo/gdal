@@ -28,6 +28,7 @@
 
 #include "ogr_amigocloud.h"
 #include "ogr_p.h"
+#include "ogrgeojsonreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -97,7 +98,7 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
 
         if( osFIDColName.size() > 0 )
         {
-            json_object* poVal = json_object_object_get(poRowObj, osFIDColName);
+            json_object* poVal = CPL_json_object_object_get(poRowObj, osFIDColName);
             if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_string )
             {
@@ -112,7 +113,7 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
 
         for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
         {
-            json_object* poVal = json_object_object_get(poRowObj,
+            json_object* poVal = CPL_json_object_object_get(poRowObj,
                             poFeatureDefn->GetFieldDefn(i)->GetNameRef());
 
             if( poVal != NULL &&
@@ -148,7 +149,7 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
         for(int i=0;i<poFeatureDefn->GetGeomFieldCount();i++)
         {
             OGRGeomFieldDefn* poGeomFldDefn = poFeatureDefn->GetGeomFieldDefn(i);
-            json_object* poVal = json_object_object_get(poRowObj,
+            json_object* poVal = CPL_json_object_object_get(poRowObj,
                             poGeomFldDefn->GetNameRef());
             if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_string )
@@ -216,7 +217,7 @@ OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
             GetLayerDefnInternal(poObj);
         }
 
-        json_object* poRows = json_object_object_get(poObj, "data");
+        json_object* poRows = CPL_json_object_object_get(poObj, "data");
 
         if( poRows == NULL ||
             json_object_get_type(poRows) != json_type_array ||
@@ -235,7 +236,7 @@ OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
         iNextInFetchedObjects = 0;
     }
 
-    json_object* poRows = json_object_object_get(poCachedObj, "data");
+    json_object* poRows = CPL_json_object_object_get(poCachedObj, "data");
     json_object* poRowObj = json_object_array_get_idx(poRows, iNextInFetchedObjects);
 
     iNextInFetchedObjects ++;
@@ -324,7 +325,7 @@ void OGRAmigoCloudLayer::EstablishLayerDefn(const char* pszLayerName,
         }
     }
 
-    json_object* poFields = json_object_object_get(poObj, "columns");
+    json_object* poFields = CPL_json_object_object_get(poObj, "columns");
     if( poFields == NULL || json_object_get_type(poFields) != json_type_array)
     {
         if( poObjIn == NULL )
@@ -435,13 +436,13 @@ OGRSpatialReference* OGRAmigoCloudLayer::GetSRS(const char* pszGeomCol,
         return NULL;
     }
 
-    json_object* poSRID = json_object_object_get(poRowObj, "srid");
+    json_object* poSRID = CPL_json_object_object_get(poRowObj, "srid");
     if( poSRID != NULL && json_object_get_type(poSRID) == json_type_int )
     {
         *pnSRID = json_object_get_int(poSRID);
     }
 
-    json_object* poSRTEXT = json_object_object_get(poRowObj, "srtext");
+    json_object* poSRTEXT = CPL_json_object_object_get(poRowObj, "srtext");
     OGRSpatialReference* poSRS = NULL;
     if( poSRTEXT != NULL && json_object_get_type(poSRTEXT) == json_type_string )
     {

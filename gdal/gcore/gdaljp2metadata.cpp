@@ -35,7 +35,7 @@
 #include "gt_wkt_srs_for_gdal.h"
 #include "gdaljp2metadata.h"
 #include "gdaljp2metadatagenerator.h"
-#include "json.h"
+#include "ogrgeojsonreader.h"
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
@@ -1911,23 +1911,23 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         }
         json_tokener_free(jstok);
 
-        json_object* poRootInstance = json_object_object_get(poObj, "root_instance");
+        json_object* poRootInstance = CPL_json_object_object_get(poObj, "root_instance");
         if( poRootInstance && json_object_get_type(poRootInstance) == json_type_object )
         {
-            json_object* poGMLId = json_object_object_get(poRootInstance, "gml_id");
+            json_object* poGMLId = CPL_json_object_object_get(poRootInstance, "gml_id");
             if( poGMLId && json_object_get_type(poGMLId) == json_type_string )
                 osRootGMLId = json_object_get_string(poGMLId);
 
-            json_object* poGridCoverageFile = json_object_object_get(poRootInstance, "grid_coverage_file");
+            json_object* poGridCoverageFile = CPL_json_object_object_get(poRootInstance, "grid_coverage_file");
             if( poGridCoverageFile && json_object_get_type(poGridCoverageFile) == json_type_string )
                 osGridCoverageFile = json_object_get_string(poGridCoverageFile);
 
-            json_object* poCRSURL = json_object_object_get(poRootInstance, "crs_url");
+            json_object* poCRSURL = CPL_json_object_object_get(poRootInstance, "crs_url");
             if( poCRSURL && json_object_get_type(poCRSURL) == json_type_boolean )
                 bCRSURL = CPL_TO_BOOL(json_object_get_boolean(poCRSURL));
 
 
-            json_object* poMetadatas = json_object_object_get(poRootInstance, "metadata");
+            json_object* poMetadatas = CPL_json_object_object_get(poRootInstance, "metadata");
             if( poMetadatas && json_object_get_type(poMetadatas) == json_type_array )
             {
                 for( int i = 0; i < json_object_array_length(poMetadatas); ++i )
@@ -1948,28 +1948,28 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     else if ( poMetadata && json_object_get_type(poMetadata) == json_type_object )
                     {
                         const char* pszFile = NULL;
-                        json_object* poFile = json_object_object_get(poMetadata, "file");
+                        json_object* poFile = CPL_json_object_object_get(poMetadata, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
 
                         const char* pszContent = NULL;
-                        json_object* poContent = json_object_object_get(poMetadata, "content");
+                        json_object* poContent = CPL_json_object_object_get(poMetadata, "content");
                         if( poContent && json_object_get_type(poContent) == json_type_string )
                             pszContent = json_object_get_string(poContent);
 
                         const char* pszTemplate = NULL;
                         const char* pszSource = NULL;
-                        json_object* poDynamicMetadata = json_object_object_get(poMetadata, "dynamic_metadata");
+                        json_object* poDynamicMetadata = CPL_json_object_object_get(poMetadata, "dynamic_metadata");
                         if( poDynamicMetadata && json_object_get_type(poDynamicMetadata) == json_type_object )
                         {
 #ifdef HAVE_LIBXML2
                             if( CPLTestBool(CPLGetConfigOption("GDAL_DEBUG_PROCESS_DYNAMIC_METADATA", "YES")) )
                             {
-                                json_object* poTemplate = json_object_object_get(poDynamicMetadata, "template");
+                                json_object* poTemplate = CPL_json_object_object_get(poDynamicMetadata, "template");
                                 if( poTemplate && json_object_get_type(poTemplate) == json_type_string )
                                     pszTemplate = json_object_get_string(poTemplate);
 
-                                json_object* poSource = json_object_object_get(poDynamicMetadata, "source");
+                                json_object* poSource = CPL_json_object_object_get(poDynamicMetadata, "source");
                                 if( poSource && json_object_get_type(poSource) == json_type_string )
                                     pszSource = json_object_get_string(poSource);
                             }
@@ -1982,7 +1982,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         }
 
                         bool bGDALMetadata = false;
-                        json_object* poGDALMetadata = json_object_object_get(poMetadata, "gdal_metadata");
+                        json_object* poGDALMetadata = CPL_json_object_object_get(poMetadata, "gdal_metadata");
                         if( poGDALMetadata && json_object_get_type(poGDALMetadata) == json_type_boolean )
                             bGDALMetadata = CPL_TO_BOOL(
                                 json_object_get_boolean(poGDALMetadata));
@@ -2002,7 +2002,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                 oDesc.osSourceFile = pszSource;
                             oDesc.bGDALMetadata = bGDALMetadata;
 
-                            json_object* poLocation = json_object_object_get(poMetadata, "parent_node");
+                            json_object* poLocation = CPL_json_object_object_get(poMetadata, "parent_node");
                             if( poLocation && json_object_get_type(poLocation) == json_type_string )
                             {
                                 const char* pszLocation = json_object_get_string(poLocation);
@@ -2021,7 +2021,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
             }
 
-            json_object* poAnnotations = json_object_object_get(poRootInstance, "annotations");
+            json_object* poAnnotations = CPL_json_object_object_get(poRootInstance, "annotations");
             if( poAnnotations && json_object_get_type(poAnnotations) == json_type_array )
             {
                 for( int i = 0;
@@ -2039,7 +2039,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             }
 
             json_object* poGMLFileList =
-                json_object_object_get(poRootInstance, "gml_filelist");
+                CPL_json_object_object_get(poRootInstance, "gml_filelist");
             if( poGMLFileList &&
                 json_object_get_type(poGMLFileList) == json_type_array )
             {
@@ -2053,12 +2053,12 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         json_object_get_type(poGMLFile) == json_type_object )
                     {
                         const char* pszFile = NULL;
-                        json_object* poFile = json_object_object_get(poGMLFile, "file");
+                        json_object* poFile = CPL_json_object_object_get(poGMLFile, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
 
                         const char* pszRemoteResource = NULL;
-                        json_object* poRemoteResource = json_object_object_get(poGMLFile, "remote_resource");
+                        json_object* poRemoteResource = CPL_json_object_object_get(poGMLFile, "remote_resource");
                         if( poRemoteResource && json_object_get_type(poRemoteResource) == json_type_string )
                             pszRemoteResource = json_object_get_string(poRemoteResource);
 
@@ -2070,20 +2070,20 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             else if( pszRemoteResource )
                                 oDesc.osRemoteResource = pszRemoteResource;
 
-                            json_object* poNamespace = json_object_object_get(poGMLFile, "namespace");
+                            json_object* poNamespace = CPL_json_object_object_get(poGMLFile, "namespace");
                             if( poNamespace && json_object_get_type(poNamespace) == json_type_string )
                                 oDesc.osNamespace = json_object_get_string(poNamespace);
 
-                            json_object* poSchemaLocation = json_object_object_get(poGMLFile, "schema_location");
+                            json_object* poSchemaLocation = CPL_json_object_object_get(poGMLFile, "schema_location");
                             if( poSchemaLocation && json_object_get_type(poSchemaLocation) == json_type_string )
                                 oDesc.osSchemaLocation = json_object_get_string(poSchemaLocation);
 
-                            json_object* poInline = json_object_object_get(poGMLFile, "inline");
+                            json_object* poInline = CPL_json_object_object_get(poGMLFile, "inline");
                             if( poInline && json_object_get_type(poInline) == json_type_boolean )
                                 oDesc.bInline = json_object_get_boolean(poInline);
 
 
-                            json_object* poLocation = json_object_object_get(poGMLFile, "parent_node");
+                            json_object* poLocation = CPL_json_object_object_get(poGMLFile, "parent_node");
                             if( poLocation && json_object_get_type(poLocation) == json_type_string )
                             {
                                 const char* pszLocation = json_object_get_string(poLocation);
@@ -2108,7 +2108,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
             }
 
-            json_object* poStyles = json_object_object_get(poRootInstance, "styles");
+            json_object* poStyles = CPL_json_object_object_get(poRootInstance, "styles");
             if( poStyles && json_object_get_type(poStyles) == json_type_array )
             {
                 for( int i = 0; i < json_object_array_length(poStyles); ++i )
@@ -2117,7 +2117,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     if( poStyle && json_object_get_type(poStyle) == json_type_object )
                     {
                         const char* pszFile = NULL;
-                        json_object* poFile = json_object_object_get(poStyle, "file");
+                        json_object* poFile = CPL_json_object_object_get(poStyle, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
 
@@ -2126,7 +2126,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             GMLJP2V2StyleDesc oDesc;
                             oDesc.osFile = pszFile;
 
-                            json_object* poLocation = json_object_object_get(poStyle, "parent_node");
+                            json_object* poLocation = CPL_json_object_object_get(poStyle, "parent_node");
                             if( poLocation && json_object_get_type(poLocation) == json_type_string )
                             {
                                 const char* pszLocation = json_object_get_string(poLocation);
@@ -2151,7 +2151,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
             }
 
-            json_object* poExtensions = json_object_object_get(poRootInstance, "extensions");
+            json_object* poExtensions = CPL_json_object_object_get(poRootInstance, "extensions");
             if( poExtensions && json_object_get_type(poExtensions) == json_type_array )
             {
                 for( int i = 0;
@@ -2162,7 +2162,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     if( poExtension && json_object_get_type(poExtension) == json_type_object )
                     {
                         const char* pszFile = NULL;
-                        json_object* poFile = json_object_object_get(poExtension, "file");
+                        json_object* poFile = CPL_json_object_object_get(poExtension, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
 
@@ -2171,7 +2171,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             GMLJP2V2ExtensionDesc oDesc;
                             oDesc.osFile = pszFile;
 
-                            json_object* poLocation = json_object_object_get(poExtension, "parent_node");
+                            json_object* poLocation = CPL_json_object_object_get(poExtension, "parent_node");
                             if( poLocation && json_object_get_type(poLocation) == json_type_string )
                             {
                                 const char* pszLocation = json_object_get_string(poLocation);
@@ -2197,7 +2197,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             }
         }
 
-        json_object* poBoxes = json_object_object_get(poObj, "boxes");
+        json_object* poBoxes = CPL_json_object_object_get(poObj, "boxes");
         if( poBoxes && json_object_get_type(poBoxes) == json_type_array )
         {
             for( int i = 0; i < json_object_array_length(poBoxes); ++i )
@@ -2205,7 +2205,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 json_object* poBox = json_object_array_get_idx(poBoxes, i);
                 if( poBox && json_object_get_type(poBox) == json_type_object )
                 {
-                    json_object* poFile = json_object_object_get(poBox, "file");
+                    json_object* poFile = CPL_json_object_object_get(poBox, "file");
                     if( poFile &&
                         json_object_get_type(poFile) == json_type_string )
                     {
@@ -2213,7 +2213,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         oDesc.osFile = json_object_get_string(poFile);
 
                         json_object* poLabel =
-                            json_object_object_get(poBox, "label");
+                            CPL_json_object_object_get(poBox, "label");
                         if( poLabel &&
                             json_object_get_type(poLabel) == json_type_string )
                             oDesc.osLabel = json_object_get_string(poLabel);
