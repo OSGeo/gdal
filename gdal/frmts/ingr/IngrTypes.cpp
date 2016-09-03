@@ -986,7 +986,7 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
         }
         else if( cAtomHead < 0 )
         {
-            const unsigned int nRun = abs( cAtomHead );
+            const unsigned int nRun = (cAtomHead < 0) ? -cAtomHead : cAtomHead;
 
             if (pabyDstData)
             {
