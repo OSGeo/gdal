@@ -12,7 +12,20 @@
  */
 
 /* For S_IFDIR */
+#if defined(__sun__) && __STDC_VERSION__ >= 201112L
+#if _XOPEN_SOURCE < 600
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
+#define _XOPEN_SOURCE 600
+#endif
+#else
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
 #define _XOPEN_SOURCE 500
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
