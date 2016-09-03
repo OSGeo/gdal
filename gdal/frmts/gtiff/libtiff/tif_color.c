@@ -1,4 +1,4 @@
-/* $Id: tif_color.c,v 1.20 2015-10-17 10:13:14 erouault Exp $ */
+/* $Id: tif_color.c,v 1.21 2016-09-03 20:15:36 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -175,7 +175,7 @@ TIFFCIELabToRGBInit(TIFFCIELabToRGB* cielab,
 #define	SHIFT			16
 #define	FIX(x)			((int32)((x) * (1L<<SHIFT) + 0.5))
 #define	ONE_HALF		((int32)(1<<(SHIFT-1)))
-#define	Code2V(c, RB, RW, CR)	((((c)-(int32)(RB))*(float)(CR))/(float)(((RW)-(RB)) ? ((RW)-(RB)) : 1))
+#define	Code2V(c, RB, RW, CR)	((((c)-(int32)(RB))*(float)(CR))/(float)(((RW)-(RB)!=0) ? ((RW)-(RB)) : 1))
 #define	CLAMP(f,min,max)	((f)<(min)?(min):(f)>(max)?(max):(f))
 #define HICLAMP(f,max)		((f)>(max)?(max):(f))
 
