@@ -54,7 +54,6 @@ OGRPLScenesV1Layer::OGRPLScenesV1Layer( OGRPLScenesV1Dataset* poDS,
                                         GIntBig nCount ) :
     m_poDS(poDS),
     m_bFeatureDefnEstablished(false),
-    m_poFeatureDefn(new OGRPLScenesV1FeatureDefn(this, pszName)),
     m_poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
     m_osSpecURL(pszSpecURL),
     m_osItemsURL(pszItemsURL),
@@ -69,6 +68,9 @@ OGRPLScenesV1Layer::OGRPLScenesV1Layer( OGRPLScenesV1Dataset* poDS,
     m_nFeatureIdx(0),
     m_bFilterMustBeClientSideEvaluated(false)
 {
+    // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
+    m_poFeatureDefn = new OGRPLScenesV1FeatureDefn(this, pszName);
+
     SetDescription(pszName);
     m_poFeatureDefn->SetGeomType(wkbMultiPolygon);
     m_poFeatureDefn->Reference();

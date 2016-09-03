@@ -39,9 +39,11 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( GDALGeoPackageDataset *poDS,
                                             sqlite3_stmt *hStmtIn,
                                             int bUseStatementForGetNextFeature,
                                             int bEmptyLayer ) :
-    OGRGeoPackageLayer(poDS),
-    poBehaviour(new OGRSQLiteSelectLayerCommonBehaviour(poDS, this, osSQLIn, bEmptyLayer))
+    OGRGeoPackageLayer(poDS)
 {
+    // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
+    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDS, this, osSQLIn, bEmptyLayer);
+
     BuildFeatureDefn( "SELECT", hStmtIn );
 
     if( bUseStatementForGetNextFeature )
