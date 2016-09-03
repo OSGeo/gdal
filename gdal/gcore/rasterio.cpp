@@ -1919,6 +1919,8 @@ static void GDALCopyWordsT_4atatime( const Tin* const CPL_RESTRICT pSrcData,
 
 #if defined(__x86_64) || defined(_M_X64)
 
+#include <emmintrin.h>
+
 template<> void GDALCopyWordsT( const GByte* const CPL_RESTRICT pSrcData,
                                 int nSrcPixelStride,
                                 int* const CPL_RESTRICT pDstData,
@@ -2402,7 +2404,7 @@ static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
     GDALUnrolledCopyGeneric<T,srcStride,dstStride>(pDest, pSrc, nIters);
 }
 
-#if defined(__x86_64) || defined(_M_X64)
+#if (defined(__x86_64) || defined(_M_X64)) &&  !(defined(__GNUC__) && __GNUC__ < 4)
 
 template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
