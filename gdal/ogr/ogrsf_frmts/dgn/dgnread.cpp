@@ -801,6 +801,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
         if( nLevel == 24 )
         {
             psElement = DGNParseTagSet( psDGN );
+            if( psElement == NULL )
+                return NULL;
         }
         else
         {
