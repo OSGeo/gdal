@@ -2069,11 +2069,6 @@ inline void GDALCopyWordsComplexT( const Tin* const CPL_RESTRICT pSrcData,
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
 
-    // Determine the minimum and maximum value we can have based
-    // on the constraints of Tin and Tout.
-    Tin tMaxValue, tMinValue;
-    GDALGetDataLimits<Tin, Tout>(tMaxValue, tMinValue);
-
     for (std::ptrdiff_t n = 0; n < nWordCount; n++)
     {
         const Tin* const pPixelIn =
