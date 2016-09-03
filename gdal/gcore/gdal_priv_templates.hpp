@@ -256,7 +256,8 @@ inline void GDALCopy4Words(const Tin* pValueIn, Tout* const &pValueOut)
 }
 
 // Needs SSE2
-#if defined(__x86_64) || defined(_M_X64)
+// _mm_cvtsi128_si64 doesn't work gcc 3.4
+#if (defined(__x86_64) || defined(_M_X64)) && !(defined(__GNUC__) && __GNUC__ < 4)
 
 #include <emmintrin.h>
 

@@ -118,9 +118,12 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
                                  VRTSourceParser pfnParser )
 
 {
-  char szPtrValue[128] = { '\0' };
+    char szPtrValue[128] = { '\0' };
+    void* ptr;
+    CPL_STATIC_ASSERT(sizeof(pfnParser) == sizeof(void*));
+    memcpy(&ptr, &pfnParser, sizeof(void*));
     int nRet = CPLPrintPointer( szPtrValue,
-                                reinterpret_cast<void*>(pfnParser),
+                                ptr,
                                 sizeof(szPtrValue) );
     szPtrValue[nRet] = 0;
 
@@ -148,9 +151,11 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
     if( pszParserFunc == NULL )
         return NULL;
 
-    VRTSourceParser pfnParser = reinterpret_cast<VRTSourceParser>(
-        CPLScanPointer( pszParserFunc,
-                        static_cast<int>(strlen(pszParserFunc)) ) );
+    VRTSourceParser pfnParser;
+    CPL_STATIC_ASSERT(sizeof(pfnParser) == sizeof(void*));
+    void* ptr = CPLScanPointer( pszParserFunc,
+                        static_cast<int>(strlen(pszParserFunc)) );
+    memcpy(&pfnParser, &ptr, sizeof(void*));
 
     if( pfnParser == NULL )
         return NULL;
