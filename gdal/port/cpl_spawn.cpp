@@ -703,8 +703,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 #endif // #ifdef HAVE_POSIX_SPAWNP
 
     pid_t pid;
-#ifdef HAVE_VFORK
-    /* coverity[dead_error_line] */
+#if defined(HAVE_VFORK) && !defined(HAVE_POSIX_SPAWNP)
     if( papszArgv != NULL && !bDup2In && !bDup2Out && !bDup2Err )
     {
         /* Workaround clang static analyzer warning about unsafe use of vfork */
