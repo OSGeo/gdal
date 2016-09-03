@@ -124,7 +124,9 @@ typedef struct
 class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poBaseHandle;
+#ifdef DEBUG
     vsi_l_offset      m_offset;
+#endif
     vsi_l_offset      m_compressed_size;
     vsi_l_offset      m_uncompressed_size;
     vsi_l_offset      offsetEndCompressedData;
@@ -295,7 +297,9 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
                               uLong expected_crc,
                               int transparent ) :
     m_poBaseHandle(poBaseHandle),
+#ifdef DEBUG
     m_offset(offset),
+#endif
     m_expected_crc(expected_crc),
     m_pszBaseFileName(pszBaseFileName ? CPLStrdup(pszBaseFileName) : NULL),
     m_bCanSaveInfo(true),
