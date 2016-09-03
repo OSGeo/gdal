@@ -261,8 +261,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
   protected:
     virtual struct curl_slist* GetCurlHeaders(const CPLString& ) { return NULL; }
     virtual bool StopReceivingBytesOnError() { return true; }
-    bool CanRestartOnError(const char* pszErrorMsg) { return CanRestartOnError(pszErrorMsg, false); }
-    virtual bool CanRestartOnError(const char*, bool) { return false; }
+    virtual bool CanRestartOnError(const char* /*pszErrorMsg*/, bool /*bSetError*/ ) { return false; }
     virtual bool InterpretRedirect() { return true; }
     void SetURL(const char* pszURL);
 
@@ -1611,7 +1610,7 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
   protected:
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
         virtual bool StopReceivingBytesOnError() { return false; }
-        virtual bool CanRestartOnError(const char*, bool);
+        virtual bool CanRestartOnError(const char* pszErrorMsg, bool bSetError);
         virtual bool InterpretRedirect() { return false; }
 
     public:
