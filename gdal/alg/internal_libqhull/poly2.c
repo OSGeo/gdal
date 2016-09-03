@@ -219,7 +219,7 @@ void qh_check_maxout(void) {
         }
         if (dist > qh TRACEdist || (bestfacet && bestfacet == qh tracefacet))
           qh_fprintf(qh ferr, 8094, "qh_check_maxout: p%d is %.2g above f%d\n",
-                     qh_pointid(point), dist, bestfacet ? bestfacet->id : -1);
+                     qh_pointid(point), dist, bestfacet ? (int)bestfacet->id : -1);
       }
     }
   }while
