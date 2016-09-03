@@ -167,8 +167,6 @@ typedef struct
     int             bDownloadHeaderOnly;
 } WriteFuncStruct;
 
-} /* end of anoymous namespace */
-
 /************************************************************************/
 /*                       VSICurlStreamingFSHandler                      */
 /************************************************************************/
@@ -1551,48 +1549,6 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
     return nRet;
 }
 
-//! @endcond
-
-/************************************************************************/
-/*                   VSIInstallCurlFileHandler()                        */
-/************************************************************************/
-
-/**
- * \brief Install /vsicurl_streaming/ HTTP/FTP file system handler (requires libcurl)
- *
- * A special file handler is installed that allows on-the-fly sequential reading of files
- * streamed through HTTP/FTP web protocols (typically dynamically generated files),
- * without prior download of the entire file.
- *
- * Although this file handler is able seek to random offsets in the file, this will not
- * be efficient. If you need efficient random access and that the server supports range
- * dowloading, you should use the /vsicurl/ file system handler instead.
- *
- * Recognized filenames are of the form /vsicurl_streaming/http://path/to/remote/resource or
- * /vsicurl_streaming/ftp://path/to/remote/resource where path/to/remote/resource is the
- * URL of a remote resource.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
- * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
- * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * The file can be cached in RAM by setting the configuration option
- * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
- * the configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member and file
- * nature- file or directory - in st_mode member (the later only reliable with FTP
- * resources for now).
- *
- * @since GDAL 1.10
- */
-void VSIInstallCurlStreamingFileHandler(void)
-{
-    VSIFileManager::InstallHandler( "/vsicurl_streaming/", new VSICurlStreamingFSHandler );
-}
-
-//! @cond Doxygen_Suppress
-
 /************************************************************************/
 /*                       VSIS3StreamingFSHandler                        */
 /************************************************************************/
@@ -1726,6 +1682,46 @@ bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetE
 }
 
 //! @endcond
+
+} /* end of anoymous namespace */
+
+/************************************************************************/
+/*                   VSIInstallCurlFileHandler()                        */
+/************************************************************************/
+
+/**
+ * \brief Install /vsicurl_streaming/ HTTP/FTP file system handler (requires libcurl)
+ *
+ * A special file handler is installed that allows on-the-fly sequential reading of files
+ * streamed through HTTP/FTP web protocols (typically dynamically generated files),
+ * without prior download of the entire file.
+ *
+ * Although this file handler is able seek to random offsets in the file, this will not
+ * be efficient. If you need efficient random access and that the server supports range
+ * dowloading, you should use the /vsicurl/ file system handler instead.
+ *
+ * Recognized filenames are of the form /vsicurl_streaming/http://path/to/remote/resource or
+ * /vsicurl_streaming/ftp://path/to/remote/resource where path/to/remote/resource is the
+ * URL of a remote resource.
+ *
+ * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
+ * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
+ * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ *
+ * The file can be cached in RAM by setting the configuration option
+ * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
+ * the configuration option VSI_CACHE_SIZE (in bytes).
+ *
+ * VSIStatL() will return the size in st_size member and file
+ * nature- file or directory - in st_mode member (the later only reliable with FTP
+ * resources for now).
+ *
+ * @since GDAL 1.10
+ */
+void VSIInstallCurlStreamingFileHandler(void)
+{
+    VSIFileManager::InstallHandler( "/vsicurl_streaming/", new VSICurlStreamingFSHandler );
+}
 
 /************************************************************************/
 /*                   VSIInstallS3StreamingFileHandler()                 */

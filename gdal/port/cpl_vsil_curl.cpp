@@ -154,8 +154,6 @@ typedef struct
     bool                bInterrupted;
 } WriteFuncStruct;
 
-} /* end of anoymous namespace */
-
 static const char* VSICurlGetCacheFileName()
 {
     return "gdal_vsicurl_cache.bin";
@@ -486,42 +484,6 @@ int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
     return 0;
 }
 
-/************************************************************************/
-/*                       VSICurlSetOptions()                            */
-/************************************************************************/
-
-void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
-{
-    curl_easy_setopt(hCurlHandle, CURLOPT_URL, pszURL);
-
-    CPLHTTPSetOptions(hCurlHandle, NULL);
-
-/* 7.16 */
-#if LIBCURL_VERSION_NUM >= 0x071000
-    long option = CURLFTPMETHOD_SINGLECWD;
-    curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
-#endif
-
-/* 7.12.3 */
-#if LIBCURL_VERSION_NUM > 0x070C03
-    /* ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/ doesn't like EPSV command */
-    curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
-#endif
-
-    curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 0);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 1);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 0);
-
-/* 7.16.4 */
-#if LIBCURL_VERSION_NUM <= 0x071004
-    curl_easy_setopt(hCurlHandle, CURLOPT_FTPLISTONLY, 0);
-#elif LIBCURL_VERSION_NUM > 0x071004
-    curl_easy_setopt(hCurlHandle, CURLOPT_DIRLISTONLY, 0);
-#endif
-
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
-}
 
 /************************************************************************/
 /*                 VSICurlGetTimeStampFromRFC822DateTime()              */
@@ -3213,82 +3175,6 @@ char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
     return ReadDirInternal(pszDirname, nMaxFiles, NULL);
 }
 
-//! @endcond
-
-/************************************************************************/
-/*                   VSIInstallCurlFileHandler()                        */
-/************************************************************************/
-
-/**
- * \brief Install /vsicurl/ HTTP/FTP file system handler (requires libcurl)
- *
- * A special file handler is installed that allows on-the-fly random reading of files
- * available through HTTP/FTP web protocols, without prior download of the entire file.
- *
- * Recognized filenames are of the form /vsicurl/http://path/to/remote/resource or
- * /vsicurl/ftp://path/to/remote/resource where path/to/remote/resource is the
- * URL of a remote resource.
- *
- * Partial downloads (requires the HTTP server to support random reading) are done
- * with a 16 KB granularity by default. If the driver detects sequential reading
- * it will progressively increase the chunk size up to 2 MB to improve download
- * performance.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
- * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
- * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * Starting with GDAL 1.10, the file can be cached in RAM by setting the configuration option
- * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
- * the configuration option VSI_CACHE_SIZE (in bytes).
- *
- * Starting with GDAL 2.1, /vsicurl/ will try to query directly redirected URLs to Amazon S3
- * signed URLs during their validity period, so as to minimize round-trips. This behaviour
- * can be disabled by setting the configuration option CPL_VSIL_CURL_USE_S3_REDIRECT to NO.
- *
- * VSIStatL() will return the size in st_size member and file
- * nature- file or directory - in st_mode member (the later only reliable with FTP
- * resources for now).
- *
- * VSIReadDir() should be able to parse the HTML directory listing returned by the
- * most popular web servers, such as Apache or Microsoft IIS.
- *
- * This special file handler can be combined with other virtual filesystems handlers,
- * such as /vsizip. For example, /vsizip//vsicurl/path/to/remote/file.zip/path/inside/zip
- *
- * @since GDAL 1.8.0
- */
-void VSIInstallCurlFileHandler(void)
-{
-    VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );
-}
-
-//! @cond Doxygen_Suppress
-
-/************************************************************************/
-/*                      VSICurlInstallReadCbk()                         */
-/************************************************************************/
-
-int VSICurlInstallReadCbk (VSILFILE* fp,
-                           VSICurlReadCbkFunc pfnReadCbk,
-                           void* pfnUserData,
-                           int bStopOnInterrruptUntilUninstall)
-{
-    return ((VSICurlHandle*)fp)->InstallReadCbk(pfnReadCbk, pfnUserData,
-                                                bStopOnInterrruptUntilUninstall);
-}
-
-
-/************************************************************************/
-/*                    VSICurlUninstallReadCbk()                         */
-/************************************************************************/
-
-int VSICurlUninstallReadCbk(VSILFILE* fp)
-{
-    return ((VSICurlHandle*)fp)->UninstallReadCbk();
-}
-
-
 /************************************************************************/
 /*                         VSIS3FSHandler                               */
 /************************************************************************/
@@ -4280,6 +4166,122 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
 {
     bIsDirectory = strstr(pszContent, "ListBucketResult") != NULL;
 }
+
+} /* end of anoymous namespace */
+
+
+/************************************************************************/
+/*                      VSICurlInstallReadCbk()                         */
+/************************************************************************/
+
+int VSICurlInstallReadCbk (VSILFILE* fp,
+                           VSICurlReadCbkFunc pfnReadCbk,
+                           void* pfnUserData,
+                           int bStopOnInterrruptUntilUninstall)
+{
+    return ((VSICurlHandle*)fp)->InstallReadCbk(pfnReadCbk, pfnUserData,
+                                                bStopOnInterrruptUntilUninstall);
+}
+
+
+/************************************************************************/
+/*                    VSICurlUninstallReadCbk()                         */
+/************************************************************************/
+
+int VSICurlUninstallReadCbk(VSILFILE* fp)
+{
+    return ((VSICurlHandle*)fp)->UninstallReadCbk();
+}
+
+
+/************************************************************************/
+/*                       VSICurlSetOptions()                            */
+/************************************************************************/
+
+void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
+{
+    curl_easy_setopt(hCurlHandle, CURLOPT_URL, pszURL);
+
+    CPLHTTPSetOptions(hCurlHandle, NULL);
+
+/* 7.16 */
+#if LIBCURL_VERSION_NUM >= 0x071000
+    long option = CURLFTPMETHOD_SINGLECWD;
+    curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
+#endif
+
+/* 7.12.3 */
+#if LIBCURL_VERSION_NUM > 0x070C03
+    /* ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/ doesn't like EPSV command */
+    curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
+#endif
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 0);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 1);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 0);
+
+/* 7.16.4 */
+#if LIBCURL_VERSION_NUM <= 0x071004
+    curl_easy_setopt(hCurlHandle, CURLOPT_FTPLISTONLY, 0);
+#elif LIBCURL_VERSION_NUM > 0x071004
+    curl_easy_setopt(hCurlHandle, CURLOPT_DIRLISTONLY, 0);
+#endif
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
+}
+
+//! @endcond
+
+/************************************************************************/
+/*                   VSIInstallCurlFileHandler()                        */
+/************************************************************************/
+
+/**
+ * \brief Install /vsicurl/ HTTP/FTP file system handler (requires libcurl)
+ *
+ * A special file handler is installed that allows on-the-fly random reading of files
+ * available through HTTP/FTP web protocols, without prior download of the entire file.
+ *
+ * Recognized filenames are of the form /vsicurl/http://path/to/remote/resource or
+ * /vsicurl/ftp://path/to/remote/resource where path/to/remote/resource is the
+ * URL of a remote resource.
+ *
+ * Partial downloads (requires the HTTP server to support random reading) are done
+ * with a 16 KB granularity by default. If the driver detects sequential reading
+ * it will progressively increase the chunk size up to 2 MB to improve download
+ * performance.
+ *
+ * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
+ * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
+ * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ *
+ * Starting with GDAL 1.10, the file can be cached in RAM by setting the configuration option
+ * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
+ * the configuration option VSI_CACHE_SIZE (in bytes).
+ *
+ * Starting with GDAL 2.1, /vsicurl/ will try to query directly redirected URLs to Amazon S3
+ * signed URLs during their validity period, so as to minimize round-trips. This behaviour
+ * can be disabled by setting the configuration option CPL_VSIL_CURL_USE_S3_REDIRECT to NO.
+ *
+ * VSIStatL() will return the size in st_size member and file
+ * nature- file or directory - in st_mode member (the later only reliable with FTP
+ * resources for now).
+ *
+ * VSIReadDir() should be able to parse the HTML directory listing returned by the
+ * most popular web servers, such as Apache or Microsoft IIS.
+ *
+ * This special file handler can be combined with other virtual filesystems handlers,
+ * such as /vsizip. For example, /vsizip//vsicurl/path/to/remote/file.zip/path/inside/zip
+ *
+ * @since GDAL 1.8.0
+ */
+void VSIInstallCurlFileHandler(void)
+{
+    VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );
+}
+
+//! @cond Doxygen_Suppress
 
 //! @endcond
 
