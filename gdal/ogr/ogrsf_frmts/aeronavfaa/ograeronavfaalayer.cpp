@@ -92,7 +92,7 @@ OGRFeature *OGRAeronavFAALayer::GetNextFeature()
         if( bEOF )
             return NULL;
 
-            OGRFeature  *poFeature = GetNextRawFeature();
+        OGRFeature  *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
