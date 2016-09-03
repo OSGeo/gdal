@@ -50,8 +50,8 @@ bool WriteElement(string sSection, string sEntry, string fn, double dValue);
 //////////////////////////////////////////////////////////////////////
 bool CompareAsNum::operator() (const string& s1, const string& s2) const
 {
-    long Num1 = atoi(s1.c_str());
-    long Num2 = atoi(s2.c_str());
+    int Num1 = atoi(s1.c_str());
+    int Num2 = atoi(s2.c_str());
     return Num1 < Num2;
 }
 
@@ -261,11 +261,11 @@ void IniFile::Store()
 // End of the implementation of IniFile class. ///////////////////////
 //////////////////////////////////////////////////////////////////////
 
-static long longConv(double x) {
-    if ((x == rUNDEF) || (x > LONG_MAX) || (x < LONG_MIN))
+static int intConv(double x) {
+    if ((x == rUNDEF) || (x > INT_MAX) || (x < INT_MIN))
         return iUNDEF;
 
-    return (long)floor(x + 0.5);
+    return (int)floor(x + 0.5);
 }
 
 string ReadElement(string section, string entry, string filename)
@@ -1336,7 +1336,7 @@ void ILWISRasterBand::ReadValueDomainProperties(string pszFileName)
         psInfo.bUseValueRange = true; // use ILWIS ValueRange object to convert from "raw" to "value"
         double rMin = psInfo.vr.get_rLo();
         double rMax = psInfo.vr.get_rHi();
-        if (rStep - (long)rStep == 0.0) // Integer values
+        if (rStep >= INT_MIN && rStep <= INT_MAX && rStep - (int)rStep == 0.0) // Integer values
         {
             if ( rMin >= 0 && rMax <= UCHAR_MAX)
               eDataType =  GDT_Byte;
@@ -1928,7 +1928,7 @@ ValueRange::ValueRange( double min, double max, double step )
     init();
 }
 
-static ilwisStoreType stNeeded(unsigned long iNr)
+static ilwisStoreType stNeeded(unsigned int iNr)
 {
     if (iNr <= 256)
         return stByte;
@@ -1975,15 +1975,15 @@ void ValueRange::init( double rRaw0 )
         }
         else {
             r = get_rHi() - get_rLo();
-            if (r <= ULONG_MAX) {
+            if (r <= UINT_MAX) {
                 r /= _rStep;
                 r += 1;
             }
             r += 1;
-            if (r > LONG_MAX)
+            if (r > INT_MAX)
                 st = stReal;
             else {
-                st = stNeeded((unsigned long)floor(r+0.5));
+                st = stNeeded((unsigned int)floor(r+0.5));
                 if (st < stByte)
                     st = stByte;
             }
@@ -2042,8 +2042,7 @@ int ValueRange::iRaw(double rValueIn)
     rValueIn /= _rStep;
     double rVal = floor(rValueIn+0.5);
     rVal -= _r0;
-    long iVal = longConv(rVal);
-    return static_cast<int>(iVal);
+    return intConv(rVal);
 }
 
 
