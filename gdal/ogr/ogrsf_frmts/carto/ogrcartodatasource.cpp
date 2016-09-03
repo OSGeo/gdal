@@ -28,6 +28,7 @@
 
 #include "ogr_carto.h"
 #include "ogr_pgdump.h"
+#include "ogrgeojsonreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -631,7 +632,7 @@ json_object* OGRCARTODataSource::RunSQL(const char* pszUnescapedSQL)
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -666,7 +667,7 @@ json_object* OGRCARTOGetSingleRow(json_object* poObj)
         return NULL;
     }
 
-    json_object* poRows = json_object_object_get(poObj, "rows");
+    json_object* poRows = CPL_json_object_object_get(poObj, "rows");
     if( poRows == NULL ||
         json_object_get_type(poRows) != json_type_array ||
         json_object_array_length(poRows) != 1 )

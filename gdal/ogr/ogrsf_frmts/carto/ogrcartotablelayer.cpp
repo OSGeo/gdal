@@ -29,6 +29,7 @@
 #include "ogr_carto.h"
 #include "ogr_p.h"
 #include "ogr_pgdump.h"
+#include "ogrgeojsonreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -602,7 +603,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
         json_object* poRowObj = OGRCARTOGetSingleRow(poObj);
         if( poRowObj != NULL )
         {
-            json_object* poID = json_object_object_get(poRowObj, "nextid");
+            json_object* poID = CPL_json_object_object_get(poRowObj, "nextid");
             if( poID != NULL && json_object_get_type(poID) == json_type_int )
             {
                 nNextFID = json_object_get_int64(poID);
@@ -873,7 +874,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             return OGRERR_FAILURE;
         }
 
-        json_object* poID = json_object_object_get(poRowObj, osFIDColName);
+        json_object* poID = CPL_json_object_object_get(poRowObj, osFIDColName);
         if( poID != NULL && json_object_get_type(poID) == json_type_int )
         {
             poFeature->SetFID(json_object_get_int64(poID));
@@ -890,7 +891,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
         json_object* poObj = poDS->RunSQL(osSQL);
         if( poObj != NULL )
         {
-            json_object* poTotalRows = json_object_object_get(poObj, "total_rows");
+            json_object* poTotalRows = CPL_json_object_object_get(poObj, "total_rows");
             if( poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int )
             {
                 int nTotalRows = json_object_get_int(poTotalRows);
@@ -1010,7 +1011,7 @@ OGRErr OGRCARTOTableLayer::ISetFeature( OGRFeature *poFeature )
     json_object* poObj = poDS->RunSQL(osSQL);
     if( poObj != NULL )
     {
-        json_object* poTotalRows = json_object_object_get(poObj, "total_rows");
+        json_object* poTotalRows = CPL_json_object_object_get(poObj, "total_rows");
         if( poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int )
         {
             int nTotalRows = json_object_get_int(poTotalRows);
@@ -1062,7 +1063,7 @@ OGRErr OGRCARTOTableLayer::DeleteFeature( GIntBig nFID )
     json_object* poObj = poDS->RunSQL(osSQL);
     if( poObj != NULL )
     {
-        json_object* poTotalRows = json_object_object_get(poObj, "total_rows");
+        json_object* poTotalRows = CPL_json_object_object_get(poObj, "total_rows");
         if( poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int )
         {
             int nTotalRows = json_object_get_int(poTotalRows);
@@ -1220,7 +1221,7 @@ GIntBig OGRCARTOTableLayer::GetFeatureCount(int bForce)
         return OGRCARTOLayer::GetFeatureCount(bForce);
     }
 
-    json_object* poCount = json_object_object_get(poRowObj, "count");
+    json_object* poCount = CPL_json_object_object_get(poRowObj, "count");
     if( poCount == NULL || json_object_get_type(poCount) != json_type_int )
     {
         json_object_put(poObj);
@@ -1273,7 +1274,7 @@ OGRErr OGRCARTOTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int
     json_object* poRowObj = OGRCARTOGetSingleRow(poObj);
     if( poRowObj != NULL )
     {
-        json_object* poExtent = json_object_object_get(poRowObj, "st_extent");
+        json_object* poExtent = CPL_json_object_object_get(poRowObj, "st_extent");
         if( poExtent != NULL && json_object_get_type(poExtent) == json_type_string )
         {
             const char* pszBox = json_object_get_string(poExtent);

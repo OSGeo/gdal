@@ -29,6 +29,7 @@
 #include "ogr_amigocloud.h"
 #include "ogr_p.h"
 #include "ogr_pgdump.h"
+#include "ogrgeojsonreader.h"
 #include <sstream>
 
 CPL_CVSID("$Id$");
@@ -150,7 +151,7 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
         json_object* poObj = poDS->RunSQL(sql);
         if( poObj != NULL && json_object_get_type(poObj) == json_type_object)
         {
-            json_object* poRows = json_object_object_get(poObj, "data");
+            json_object* poRows = CPL_json_object_object_get(poObj, "data");
 
             if(poRows!=NULL && json_object_get_type(poRows) == json_type_array)
             {
@@ -621,7 +622,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
 
         if(poObj != NULL)
         {
-            json_object *poTotalRows = json_object_object_get(poObj, "total_rows");
+            json_object *poTotalRows = CPL_json_object_object_get(poObj, "total_rows");
             if(poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int)
             {
                 int nTotalRows = json_object_get_int(poTotalRows);
@@ -827,7 +828,7 @@ GIntBig OGRAmigoCloudTableLayer::GetFeatureCount(int bForce)
         return OGRAmigoCloudLayer::GetFeatureCount(bForce);
     }
 
-    json_object* poCount = json_object_object_get(poRowObj, "count");
+    json_object* poCount = CPL_json_object_object_get(poRowObj, "count");
     if( poCount == NULL || json_object_get_type(poCount) != json_type_int )
     {
         json_object_put(poObj);
@@ -879,7 +880,7 @@ OGRErr OGRAmigoCloudTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent
     json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
     if( poRowObj != NULL )
     {
-        json_object* poExtent = json_object_object_get(poRowObj, "st_extent");
+        json_object* poExtent = CPL_json_object_object_get(poRowObj, "st_extent");
         if( poExtent != NULL && json_object_get_type(poExtent) == json_type_string )
         {
             const char* pszBox = json_object_get_string(poExtent);
@@ -1071,7 +1072,7 @@ bool OGRAmigoCloudTableLayer::IsDatasetExists()
         int type = json_object_get_type(result);
         if(type == json_type_object)
         {
-            json_object *poId = json_object_object_get(result, "id");
+            json_object *poId = CPL_json_object_object_get(result, "id");
             if(poId != NULL)
             {
                 json_object_put(result);
@@ -1163,7 +1164,7 @@ OGRErr OGRAmigoCloudTableLayer::RunDeferredCreationIfNecessary()
     {
         if(json_object_get_type(result) == json_type_object)
         {
-            json_object *poId = json_object_object_get(result, "id");
+            json_object *poId = CPL_json_object_object_get(result, "id");
             if(poId!=NULL)
             {
                 osTableName = CPLString("dataset_") + json_object_to_json_string(poId);

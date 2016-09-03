@@ -193,7 +193,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                                                  const char* pszPrefix,
                                                  const std::vector<CPLString>& aosPath)
 {
-    json_object* poTopProperties = json_object_object_get(poSchema, "properties");
+    json_object* poTopProperties = CPL_json_object_object_get(poSchema, "properties");
     if( poTopProperties == NULL || json_object_get_type(poTopProperties) != json_type_object )
         return;
     json_object_iter it;
@@ -202,7 +202,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
     it.entry = NULL;
     json_object_object_foreachC( poTopProperties, it )
     {
-        json_object* poProperties = json_object_object_get(it.val, "properties");
+        json_object* poProperties = CPL_json_object_object_get(it.val, "properties");
         if( poProperties && json_object_get_type(poProperties) == json_type_object )
         {
             json_object* poType = json_ex_get_object_by_path(poProperties, "coordinates.type");
@@ -269,19 +269,19 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
 
     if( aosPath.size() == 0 )
     {
-        json_object* poMeta = json_object_object_get(poSchema, "_meta");
+        json_object* poMeta = CPL_json_object_object_get(poSchema, "_meta");
         if( poMeta && json_object_get_type(poMeta) == json_type_object )
         {
-            json_object* poFID = json_object_object_get(poMeta, "fid");
+            json_object* poFID = CPL_json_object_object_get(poMeta, "fid");
             if( poFID && json_object_get_type(poFID) == json_type_string )
                 m_osFID = json_object_get_string(poFID);
 
-            json_object* poGeomFields = json_object_object_get(poMeta, "geomfields");
+            json_object* poGeomFields = CPL_json_object_object_get(poMeta, "geomfields");
             if( poGeomFields && json_object_get_type(poGeomFields) == json_type_object )
             {
                 for( int i=0; i< m_poFeatureDefn->GetGeomFieldCount(); i++ )
                 {
-                    json_object* poObj = json_object_object_get(poGeomFields,
+                    json_object* poObj = CPL_json_object_object_get(poGeomFields,
                             m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
                     if( poObj && json_object_get_type(poObj) == json_type_string )
                     {
@@ -292,12 +292,12 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                 }
             }
 
-            json_object* poFields = json_object_object_get(poMeta, "fields");
+            json_object* poFields = CPL_json_object_object_get(poMeta, "fields");
             if( poFields && json_object_get_type(poFields) == json_type_object )
             {
                 for( int i=0; i< m_poFeatureDefn->GetFieldCount(); i++ )
                 {
-                    json_object* poObj = json_object_object_get(poFields,
+                    json_object* poObj = CPL_json_object_object_get(poFields,
                             m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
                     if( poObj && json_object_get_type(poObj) == json_type_string )
                     {
@@ -327,7 +327,7 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
                                             json_object* poObj)
 {
     const char* pszType = "";
-    json_object* poType = json_object_object_get(poObj, "type");
+    json_object* poType = CPL_json_object_object_get(poObj, "type");
     if( poType && json_object_get_type(poType) == json_type_string )
     {
         pszType = json_object_get_string(poType);
@@ -374,7 +374,7 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
         else if( EQUAL(pszType, "date") )
         {
             eType = OFTDateTime;
-            json_object* poFormat = json_object_object_get(poObj, "format");
+            json_object* poFormat = CPL_json_object_object_get(poObj, "format");
             if( poFormat && json_object_get_type(poFormat) == json_type_string )
             {
                 const char* pszFormat = json_object_get_string(poFormat);
@@ -446,7 +446,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
             {
                 break;
             }
-            json_object* poScrollID = json_object_object_get(poResponse, "_scroll_id");
+            json_object* poScrollID = CPL_json_object_object_get(poResponse, "_scroll_id");
             if( poScrollID )
             {
                 const char* pszScrollID = json_object_get_string(poScrollID);
@@ -474,7 +474,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
                 {
                     continue;
                 }
-                json_object* poSource = json_object_object_get(poHit, "_source");
+                json_object* poSource = CPL_json_object_object_get(poHit, "_source");
                 if( poSource == NULL || json_object_get_type(poSource) != json_type_object )
                 {
                     continue;
@@ -482,10 +482,10 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
 
                 if( m_osESSearch.size() )
                 {
-                    json_object* poIndex = json_object_object_get(poHit, "_index");
+                    json_object* poIndex = CPL_json_object_object_get(poHit, "_index");
                     if( poIndex == NULL || json_object_get_type(poIndex) != json_type_string )
                         break;
-                    json_object* poType = json_object_object_get(poHit, "_type");
+                    json_object* poType = CPL_json_object_object_get(poHit, "_type");
                     if( poType == NULL || json_object_get_type(poType) != json_type_string )
                         break;
                     CPLString osIndex(json_object_get_string(poIndex));
@@ -499,13 +499,13 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
                             (m_poDS->GetURL() + CPLString("/") + osIndex + CPLString("/_mapping/") + m_osMappingName + CPLString("?pretty")).c_str());
                         if( poMappingRes )
                         {
-                            json_object* poLayerObj = json_object_object_get(poMappingRes, osIndex);
+                            json_object* poLayerObj = CPL_json_object_object_get(poMappingRes, osIndex);
                             json_object* poMappings = NULL;
                             if( poLayerObj && json_object_get_type(poLayerObj) == json_type_object )
-                                poMappings = json_object_object_get(poLayerObj, "mappings");
+                                poMappings = CPL_json_object_object_get(poLayerObj, "mappings");
                             if( poMappings && json_object_get_type(poMappings) == json_type_object )
                             {
-                                json_object* poMapping = json_object_object_get(poMappings, m_osMappingName);
+                                json_object* poMapping = CPL_json_object_object_get(poMappings, m_osMappingName);
                                 if( poMapping)
                                 {
                                     InitFeatureDefnFromMapping(poMapping, "", std::vector<CPLString>());
@@ -627,11 +627,11 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
 
     if( eJSONType == json_type_object )
     {
-        json_object* poType = json_object_object_get(poObj, "type");
+        json_object* poType = CPL_json_object_object_get(poObj, "type");
         OGRwkbGeometryType eGeomType;
         if( poType && json_object_get_type(poType) == json_type_string &&
             (eGeomType = GetOGRGeomTypeFromES(json_object_get_string(poType))) != wkbUnknown &&
-            json_object_object_get(poObj, (eGeomType == wkbGeometryCollection) ? "geometries" : "coordinates") )
+            CPL_json_object_object_get(poObj, (eGeomType == wkbGeometryCollection) ? "geometries" : "coordinates") )
         {
             int nIndex = m_poFeatureDefn->GetGeomFieldIndex(pszAttrName);
             if( nIndex < 0 )
@@ -881,7 +881,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         m_bEOF = TRUE;
         return NULL;
     }
-    json_object* poScrollID = json_object_object_get(poResponse, "_scroll_id");
+    json_object* poScrollID = CPL_json_object_object_get(poResponse, "_scroll_id");
     if( poScrollID )
     {
         const char* pszScrollID = json_object_get_string(poScrollID);
@@ -889,14 +889,14 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
             m_osScrollID = pszScrollID;
     }
 
-    json_object* poHits = json_object_object_get(poResponse, "hits");
+    json_object* poHits = CPL_json_object_object_get(poResponse, "hits");
     if( poHits == NULL || json_object_get_type(poHits) != json_type_object )
     {
         m_bEOF = TRUE;
         json_object_put(poResponse);
         return NULL;
     }
-    poHits = json_object_object_get(poHits, "hits");
+    poHits = CPL_json_object_object_get(poHits, "hits");
     if( poHits == NULL || json_object_get_type(poHits) != json_type_array )
     {
         m_bEOF = TRUE;
@@ -918,14 +918,14 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         {
             continue;
         }
-        json_object* poSource = json_object_object_get(poHit, "_source");
+        json_object* poSource = CPL_json_object_object_get(poHit, "_source");
         if( poSource == NULL || json_object_get_type(poSource) != json_type_object )
         {
             continue;
         }
 
         const char* pszId = NULL;
-        json_object* poId = json_object_object_get(poHit, "_id");
+        json_object* poId = CPL_json_object_object_get(poHit, "_id");
         if( poId != NULL && json_object_get_type(poId) == json_type_string )
             pszId = json_object_get_string(poId);
 
@@ -935,11 +935,11 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
 
         if( m_osESSearch.size() )
         {
-            json_object* poIndex = json_object_object_get(poHit, "_index");
+            json_object* poIndex = CPL_json_object_object_get(poHit, "_index");
             if( poIndex != NULL && json_object_get_type(poIndex) == json_type_string )
                 poFeature->SetField("_index", json_object_get_string(poIndex));
 
-            json_object* poType = json_object_object_get(poHit, "_type");
+            json_object* poType = CPL_json_object_object_get(poHit, "_type");
             if( poType != NULL && json_object_get_type(poType) == json_type_string )
                 poFeature->SetField("_type", json_object_get_string(poType));
         }
@@ -1127,8 +1127,8 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                 }
                 else if( eJSONType == json_type_object )
                 {
-                    json_object* poX = json_object_object_get(it.val, "lon");
-                    json_object* poY = json_object_object_get(it.val, "lat");
+                    json_object* poX = CPL_json_object_object_get(it.val, "lon");
+                    json_object* poY = CPL_json_object_object_get(it.val, "lat");
                     if( poX != NULL && poY != NULL )
                     {
                         poGeom = new OGRPoint( json_object_get_double(poX),
@@ -1157,9 +1157,9 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
             }
             else if( json_object_get_type(it.val) == json_type_object )
             {
-                json_object* poType = json_object_object_get(it.val, "type");
-                json_object* poRadius = json_object_object_get(it.val, "radius");
-                json_object* poCoordinates = json_object_object_get(it.val, "coordinates");
+                json_object* poType = CPL_json_object_object_get(it.val, "type");
+                json_object* poRadius = CPL_json_object_object_get(it.val, "radius");
+                json_object* poCoordinates = CPL_json_object_object_get(it.val, "coordinates");
                 if( poType && poRadius && poCoordinates &&
                     json_object_get_type(poType) == json_type_string &&
                     EQUAL( json_object_get_string(poType), "circle" ) &&
@@ -2038,7 +2038,7 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
         }
         if( pszId == NULL )
         {
-            json_object* poId = json_object_object_get(poRes, "_id");
+            json_object* poId = CPL_json_object_object_get(poRes, "_id");
             if( poId != NULL && json_object_get_type(poId) == json_type_string )
             {
                 pszId = json_object_get_string(poId);

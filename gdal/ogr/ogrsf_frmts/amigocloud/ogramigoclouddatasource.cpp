@@ -28,6 +28,7 @@
 
 #include "ogr_amigocloud.h"
 #include "ogr_pgdump.h"
+#include "ogrgeojsonreader.h"
 #include <sstream>
 
 CPL_CVSID("$Id$");
@@ -440,7 +441,7 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -537,7 +538,7 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -630,7 +631,7 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -745,7 +746,7 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -780,7 +781,7 @@ json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj)
         return NULL;
     }
 
-    json_object* poRows = json_object_object_get(poObj, "data");
+    json_object* poRows = CPL_json_object_object_get(poObj, "data");
     if( poRows == NULL ||
         json_object_get_type(poRows) != json_type_array ||
         json_object_array_length(poRows) != 1 )

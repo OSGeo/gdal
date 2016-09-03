@@ -596,7 +596,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
             if( poObj && json_object_get_type(poObj) == json_type_object )
             {
                 json_object* poExceededTransferLimit =
-                    json_object_object_get(poObj, "exceededTransferLimit");
+                    CPL_json_object_object_get(poObj, "exceededTransferLimit");
                 if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
                     bOtherPages_ = CPL_TO_BOOL(
                         json_object_get_boolean(poExceededTransferLimit) );
@@ -659,11 +659,11 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
         json_object* poObj = reader.GetJSonObject();
         if( poObj && json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poProperties = json_object_object_get(poObj, "properties");
+            json_object* poProperties = CPL_json_object_object_get(poObj, "properties");
             if( poProperties && json_object_get_type(poProperties) == json_type_object )
             {
                 json_object* poExceededTransferLimit =
-                    json_object_object_get(poProperties, "exceededTransferLimit");
+                    CPL_json_object_object_get(poProperties, "exceededTransferLimit");
                 if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
                   bOtherPages_ = CPL_TO_BOOL(
                       json_object_get_boolean(poExceededTransferLimit) );

@@ -35,6 +35,7 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 #include "cpl_http.h"
+#include "ogrgeojsonreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -415,10 +416,10 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
         json_object* poRes = RunRequest((m_osURL + CPLString("/") + pszIndexName + CPLString("?pretty")).c_str());
         if( poRes )
         {
-            json_object* poLayerObj = json_object_object_get(poRes, pszIndexName);
+            json_object* poLayerObj = CPL_json_object_object_get(poRes, pszIndexName);
             json_object* poMappings = NULL;
             if( poLayerObj && json_object_get_type(poLayerObj) == json_type_object )
-                poMappings = json_object_object_get(poLayerObj, "mappings");
+                poMappings = CPL_json_object_object_get(poLayerObj, "mappings");
             if( poMappings && json_object_get_type(poMappings) == json_type_object )
             {
                 json_object_iter it;
@@ -435,7 +436,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
                 {
                     OGRElasticLayer* poLayer = new OGRElasticLayer(
                         pszCur, pszCur, aosMappings[0], this, poOpenInfo->papszOpenOptions);
-                    poLayer->InitFeatureDefnFromMapping(json_object_object_get(poMappings, aosMappings[0]),
+                    poLayer->InitFeatureDefnFromMapping(CPL_json_object_object_get(poMappings, aosMappings[0]),
                                                         "", std::vector<CPLString>());
 
                     m_nLayers++;
@@ -448,7 +449,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
                     {
                         OGRElasticLayer* poLayer = new OGRElasticLayer(
                             (pszCur + CPLString("_") + aosMappings[i]).c_str(), pszCur, aosMappings[i], this, poOpenInfo->papszOpenOptions);
-                        poLayer->InitFeatureDefnFromMapping(json_object_object_get(poMappings, aosMappings[i]),
+                        poLayer->InitFeatureDefnFromMapping(CPL_json_object_object_get(poMappings, aosMappings[i]),
                                                             "", std::vector<CPLString>());
 
                         m_nLayers++;

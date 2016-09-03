@@ -161,7 +161,7 @@ static bool OGRGeoJSONIsPatchableGeometry( json_object* poJSonGeometry,
         if( strcmp(it.key, "coordinates") == 0 )
         {
             json_object* poJSonCoordinates =
-                    json_object_object_get(poJSonGeometry, "coordinates");
+                    CPL_json_object_object_get(poJSonGeometry, "coordinates");
             json_object* poNativeCoordinates = it.val;
             // 0 = Point
             // 1 = LineString or MultiPoint
@@ -180,7 +180,7 @@ static bool OGRGeoJSONIsPatchableGeometry( json_object* poJSonGeometry,
         if( strcmp(it.key, "geometries") == 0 )
         {
             json_object* poJSonGeometries =
-                    json_object_object_get(poJSonGeometry, "geometries");
+                    CPL_json_object_object_get(poJSonGeometry, "geometries");
             json_object* poNativeGeometries = it.val;
             int nLength;
             if( json_object_get_type(poJSonGeometries) == json_type_array &&
@@ -228,7 +228,7 @@ static void OGRGeoJSONPatchGeometry( json_object* poJSonGeometry,
         if( strcmp(it.key, "coordinates") == 0 )
         {
             json_object* poJSonCoordinates =
-                json_object_object_get(poJSonGeometry, "coordinates");
+                CPL_json_object_object_get(poJSonGeometry, "coordinates");
             json_object* poNativeCoordinates = it.val;
             for(int i=0;i<=3;i++)
             {
@@ -246,7 +246,7 @@ static void OGRGeoJSONPatchGeometry( json_object* poJSonGeometry,
         if( strcmp(it.key, "geometries") == 0 )
         {
             json_object* poJSonGeometries =
-                json_object_object_get(poJSonGeometry, "geometries");
+                CPL_json_object_object_get(poJSonGeometry, "geometries");
             json_object* poNativeGeometries = it.val;
             int nLength = json_object_array_length(poJSonGeometries);
             for( int i=0; i < nLength; i++ )

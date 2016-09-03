@@ -34,7 +34,7 @@
 #include "gdalwarper.h"
 
 #include "zlib.h"
-#include "json.h"
+#include "ogrgeojsonreader.h"
 
 #include <math.h>
 
@@ -447,7 +447,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
 
     if (json_object_is_type(jsobj, json_type_object))
     {
-        poGrid = json_object_object_get(jsobj, "grid");
+        poGrid = CPL_json_object_object_get(jsobj, "grid");
     }
     if (poGrid != NULL && json_object_is_type(poGrid, json_type_array))
     {
@@ -517,7 +517,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
             }
 
             /* Find key */
-            json_object* poKeys = json_object_object_get(jsobj, "keys");
+            json_object* poKeys = CPL_json_object_object_get(jsobj, "keys");
             if (nKey >= 0 && poKeys != NULL &&
                 json_object_is_type(poKeys, json_type_array) &&
                 nKey < json_object_array_length(poKeys))

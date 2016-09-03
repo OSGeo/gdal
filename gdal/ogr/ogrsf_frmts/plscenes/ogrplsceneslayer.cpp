@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_plscenes.h"
+#include "ogrgeojsonreader.h"
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -123,7 +124,7 @@ OGRPLScenesLayer::OGRPLScenesLayer( OGRPLScenesDataset* poDSIn,
 
     if( poObjCount10 != NULL )
     {
-        json_object* poCount = json_object_object_get(poObjCount10, "count");
+        json_object* poCount = CPL_json_object_object_get(poObjCount10, "count");
         if( poCount != NULL )
             nFeatureCount = MAX(0, json_object_get_int64(poCount));
 
@@ -385,7 +386,7 @@ int OGRPLScenesLayer::GetNextPage()
 
     if( !bFilterMustBeClientSideEvaluated && nFeatureCount < 0 )
     {
-        json_object* poType = json_object_object_get(poObj, "type");
+        json_object* poType = CPL_json_object_object_get(poObj, "type");
         if( poType && json_object_get_type(poType) == json_type_string &&
             strcmp(json_object_get_string(poType), "Feature") == 0 )
         {
@@ -393,7 +394,7 @@ int OGRPLScenesLayer::GetNextPage()
         }
         else
         {
-            json_object* poCount = json_object_object_get(poObj, "count");
+            json_object* poCount = CPL_json_object_object_get(poObj, "count");
             if( poCount == NULL )
             {
                 json_object_put(poObj);
@@ -416,10 +417,10 @@ int OGRPLScenesLayer::GetNextPage()
     osNextURL = "";
     if( poGeoJSONLayer )
     {
-        json_object* poLinks = json_object_object_get(poObj, "links");
+        json_object* poLinks = CPL_json_object_object_get(poObj, "links");
         if( poLinks && json_object_get_type(poLinks) == json_type_object )
         {
-            json_object* poNext = json_object_object_get(poLinks, "next");
+            json_object* poNext = CPL_json_object_object_get(poLinks, "next");
             if( poNext && json_object_get_type(poNext) == json_type_string )
             {
                 osNextURL = json_object_get_string(poNext);
@@ -645,7 +646,7 @@ GIntBig OGRPLScenesLayer::GetFeatureCount(int bForce)
             json_object* poObj = poDS->RunRequest(osURL);
             if( poObj != NULL )
             {
-                json_object* poCount = json_object_object_get(poObj, "count");
+                json_object* poCount = CPL_json_object_object_get(poObj, "count");
                 if( poCount != NULL )
                     nFeatureCount = MAX(0, json_object_get_int64(poCount));
 
