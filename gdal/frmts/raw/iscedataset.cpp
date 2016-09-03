@@ -552,13 +552,13 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                     if ( EQUAL( pszCur2Name, "startingValue" )
                         || EQUAL( pszCur2Name, "delta" ) )
                     {
-                        char pszPropName[32]; 
-                        strncpy(pszPropName, pszCurName, sizeof(pszPropName)-1);
-                        strncat(pszPropName, pszCur2Name, sizeof(pszPropName)-1);
+                        char szPropName[32]; 
+                        snprintf(szPropName, sizeof(szPropName), "%s%s",
+                                 pszCurName, pszCur2Name);
 
                         papszXmlProps =
                             CSLSetNameValue( papszXmlProps,
-                                             pszPropName,
+                                             szPropName,
                                              pszCur2Value );
                     }
                     psCur2 = psCur2->psNext;
