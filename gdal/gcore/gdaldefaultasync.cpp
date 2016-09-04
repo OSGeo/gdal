@@ -180,7 +180,7 @@ GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
 /************************************************************************/
 
 /**
- * \fn GDALAsyncReader::LockBuffer
+ * \fn GDALAsyncReader::LockBuffer(double)
  * \brief Lock image buffer.
  *
  * Locks the image buffer passed into GDALDataset::BeginAsyncReader().

@@ -28,6 +28,11 @@
  ****************************************************************************/
 
 /* This file is to be used with openjpeg 2.0 */
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 
 #if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
 #include <openjpeg-2.1/openjpeg.h>
@@ -35,6 +40,11 @@
 #include <stdio.h> /* openjpeg.h needs FILE* */
 #include <openjpeg-2.0/openjpeg.h>
 #endif
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 #include <vector>
 
 #include "cpl_atomic_ops.h"

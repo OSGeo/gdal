@@ -399,7 +399,7 @@ int GDALRasterAttributeTable::GetRowOfValue( int nValue ) const
 /************************************************************************/
 
 /**
- * \fn GDALRasterAttributeTable::CreateColumn
+ * \fn GDALRasterAttributeTable::CreateColumn(const char*, GDALRATFieldType, GDALRATFieldUsage)
  * \brief Create new column.
  *
  * If the table already has rows, all row values for the new column will

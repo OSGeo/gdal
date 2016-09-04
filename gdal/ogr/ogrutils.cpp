@@ -878,7 +878,7 @@ void OGRFree( void * pMemory )
 }
 
 /**
- * \fn OGRGeneralCmdLineProcessor
+ * \fn OGRGeneralCmdLineProcessor(int, char***,int)
  * General utility option processing.
  *
  * This function is intended to provide a variety of generic commandline

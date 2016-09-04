@@ -184,7 +184,7 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
 /************************************************************************/
 
 /**
- * \fn GDALTermProgress
+ * \fn GDALTermProgress(double, const char*, void*)
  * \brief Simple progress report to terminal.
  *
  * This progress reporter prints simple progress report to the

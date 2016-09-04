@@ -210,8 +210,8 @@ protected:
      *
      * @param nFID - Vertex identificator from which to start tree building
      * @param mstEdges - TODO
-     * @param mnPathTree - means < vertex id, edge id >
-     * @return std::map where the first is vertex identificator and the second
+     * @param mnPathTree - means < vertex id, edge id >.
+     * std::map where the first is vertex identificator and the second
      * is the edge identificator, which is the best way to the current vertex.
      * The identificator to the start vertex is -1. If the vertex is isolated
      * the returned map will be empty.

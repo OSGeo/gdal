@@ -1301,6 +1301,12 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
 /*                           CPLsnprintf()                              */
 /************************************************************************/
 
+#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ <= 2
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 /** snprintf() wrapper that is not sensitive to LC_NUMERIC settings.
   *
   * This function has the same contract as standard snprintf(), except that
@@ -1315,6 +1321,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
   * written if size is big enough
   * @since GDAL 2.0
   */
+
 int CPLsnprintf(char *str, size_t size, const char* fmt, ...)
 {
     va_list args;
@@ -1482,6 +1489,10 @@ int CPLsscanf(const char* str, const char* fmt, ...)
 
     return ret;
 }
+
+#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ <= 2
+#pragma clang diagnostic pop
+#endif
 
 /************************************************************************/
 /*                         CPLTestBool()                                */
