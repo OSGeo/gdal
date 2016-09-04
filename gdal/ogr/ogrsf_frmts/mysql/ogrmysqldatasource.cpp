@@ -40,7 +40,15 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <my_sys.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
 #pragma GCC diagnostic pop
 #endif
