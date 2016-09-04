@@ -27,7 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include <algorithm> // for_each, find_if
-#include <json.h> // JSON-C
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+#include <json.h>
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
+
+
 #include "ogr_geojson.h"
 
 CPL_CVSID("$Id$");

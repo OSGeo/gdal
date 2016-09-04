@@ -1838,7 +1838,6 @@ namespace {
  * @note
  * This is a private function, and should not be exposed outside of rasterio.cpp.
  * External users should call the GDALCopyWords driver function.
- * @note
  */
 
 template <class Tin, class Tout>

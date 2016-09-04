@@ -435,7 +435,7 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
 /**
  * Read data from the standard output of a forked process.
  *
- * @param p handle returned by CPLSpawnAsyncGetInputFileHandle().
+ * @param fin handle returned by CPLSpawnAsyncGetInputFileHandle().
  * @param data buffer in which to write.
  * @param length number of bytes to read.
  *
@@ -814,6 +814,7 @@ CPL_PID CPLSpawnAsyncGetChildProcessId( CPLSpawnedProcess* p )
 /************************************************************************/
 
 /**
+ * \fn CPLSpawnAsyncFinish
  * Wait for the forked process to finish.
  *
  * @param p handle returned by CPLSpawnAsync()
@@ -826,6 +827,10 @@ CPL_PID CPLSpawnAsyncGetChildProcessId( CPLSpawnedProcess* p )
  *
  * @since GDAL 1.10.0
  */
+
+/**/
+/**/
+
 int CPLSpawnAsyncFinish( CPLSpawnedProcess* p, int bWait, int /* bKill */ )
 {
     int status = 0;

@@ -292,7 +292,7 @@ GDALDataset* PCRasterDataset::createCopy(
 
 //! Constructor.
 /*!
-  \param     map PCRaster map handle. It is ours to close.
+  \param     mapIn PCRaster map handle. It is ours to close.
 */
 PCRasterDataset::PCRasterDataset( MAP* mapIn) :
     GDALPamDataset(),

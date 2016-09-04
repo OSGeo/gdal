@@ -596,7 +596,9 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-/** Write a block of data.
+/** 
+ * \fn GDALRasterBand::IWriteBlock
+ * Write a block of data.
  *
  * Default internal implementation ... to be overridden by
  * subclasses that support writing.
@@ -605,9 +607,13 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
  * @param pData Pixel buffer to write
  * @return error code.
  */
-CPLErr GDALRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
-                                    CPL_UNUSED int nBlockYOff,
-                                    CPL_UNUSED void *pData )
+
+/**/
+/**/
+
+CPLErr GDALRasterBand::IWriteBlock( int /*nBlockXOff*/,
+                                    int /*nBlockYOff*/,
+                                    void * /*pData*/ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1456,6 +1462,7 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::SetCategoryNames
  * \brief Set the category names for this band.
  *
  * See the GetCategoryNames() method for more on the interpretation of
@@ -1470,7 +1477,10 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
  * by the driver CE_Failure is returned, but no error message is reported.
  */
 
-CPLErr GDALRasterBand::SetCategoryNames( CPL_UNUSED char ** papszNames )
+/**/
+/**/
+
+CPLErr GDALRasterBand::SetCategoryNames( char ** /*papszNames*/ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -1553,6 +1563,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::SetNoDataValue
  * \brief Set the no data value for this band.
  *
  * Depending on drivers, changing the no data value may or may not have an
@@ -1574,7 +1585,10 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
  * been emitted.
  */
 
-CPLErr GDALRasterBand::SetNoDataValue( CPL_UNUSED double dfNoData )
+/**/
+/**/
+
+CPLErr GDALRasterBand::SetNoDataValue( double /*dfNoData*/ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1890,6 +1904,7 @@ GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::SetColorInterpretation
  * \brief Set color interpretation of a band.
  *
  * This method is the same as the C function GDALSetRasterColorInterpretation().
@@ -1899,8 +1914,11 @@ GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
  * @return CE_None on success or CE_Failure if method is unsupported by format.
  */
 
+/**/
+/**/
+
 CPLErr GDALRasterBand::SetColorInterpretation(
-    CPL_UNUSED GDALColorInterp eColorInterp )
+    GDALColorInterp /*eColorInterp*/ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1976,6 +1994,7 @@ GDALColorTableH CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH hBand )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::SetColorTable
  * \brief Set the raster color table.
  *
  * The driver will make a copy of all desired data in the colortable.  It
@@ -1991,7 +2010,10 @@ GDALColorTableH CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH hBand )
  * error is issued.
  */
 
-CPLErr GDALRasterBand::SetColorTable( CPL_UNUSED GDALColorTable * poCT )
+/**/
+/**/
+
+CPLErr GDALRasterBand::SetColorTable( GDALColorTable * /*poCT*/ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -2250,6 +2272,7 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::BuildOverviews
  * \brief Build raster overview(s)
  *
  * If the operation is unsupported for the indicated dataset, then
@@ -2273,11 +2296,14 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
  * @return CE_None on success or CE_Failure if the operation doesn't work.
  */
 
-CPLErr GDALRasterBand::BuildOverviews( CPL_UNUSED const char* pszResampling,
-                                       CPL_UNUSED int nOverviews,
-                                       CPL_UNUSED int* panOverviewList,
-                                       CPL_UNUSED GDALProgressFunc pfnProgress,
-                                       CPL_UNUSED void * pProgressData )
+/**/
+/**/
+
+CPLErr GDALRasterBand::BuildOverviews( const char* /*pszResampling*/,
+                                       int /*nOverviews*/,
+                                       int* /*panOverviewList*/,
+                                       GDALProgressFunc /*pfnProgress*/,
+                                       void * /*pProgressData*/ )
 
 {
     ReportError( CE_Failure, CPLE_NotSupported,
@@ -2344,6 +2370,7 @@ double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::SetOffset
  * \brief Set scaling offset.
  *
  * Very few formats implement this method.   When not implemented it will
@@ -2356,7 +2383,10 @@ double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
  * @return CE_None or success or CE_Failure on failure.
  */
 
-CPLErr GDALRasterBand::SetOffset( CPL_UNUSED double dfNewOffset )
+/**/
+/**/
+
+CPLErr GDALRasterBand::SetOffset( double /*dfNewOffset*/ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -2443,6 +2473,7 @@ double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::SetScale
  * \brief Set scaling ratio.
  *
  * Very few formats implement this method.   When not implemented it will
@@ -2455,7 +2486,10 @@ double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
  * @return CE_None or success or CE_Failure on failure.
  */
 
-CPLErr GDALRasterBand::SetScale( CPL_UNUSED double dfNewScale )
+/**/
+/**/
+
+CPLErr GDALRasterBand::SetScale( double /*dfNewScale*/ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -2532,6 +2566,7 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::SetUnitType
  * \brief Set unit type.
  *
  * Set the unit type for a raster band.  Values should be one of
@@ -2546,7 +2581,10 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
  * unsupported.
  */
 
-CPLErr GDALRasterBand::SetUnitType( CPL_UNUSED const char * pszNewValue )
+/**/
+/**/
+
+CPLErr GDALRasterBand::SetUnitType( const char * /*pszNewValue*/ )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -3474,6 +3512,7 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogramEx(
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::AdviseRead
  * \brief Advise driver of upcoming read requests.
  *
  * Some GDAL drivers operate more efficiently if they know in advance what
@@ -3511,15 +3550,18 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogramEx(
  * is ignored.
  */
 
+/**/
+/**/
+
 CPLErr GDALRasterBand::AdviseRead(
-    CPL_UNUSED int nXOff,
-    CPL_UNUSED int nYOff,
-    CPL_UNUSED int nXSize,
-    CPL_UNUSED int nYSize,
-    CPL_UNUSED int nBufXSize,
-    CPL_UNUSED int nBufYSize,
-    CPL_UNUSED GDALDataType eBufType,
-    CPL_UNUSED char ** papszOptions )
+    int /*nXOff*/,
+    int /*nYOff*/,
+    int /*nXSize*/,
+    int /*nYSize*/,
+    int /*nBufXSize*/,
+    int /*nBufYSize*/,
+    GDALDataType /*eBufType*/,
+    char ** /*papszOptions*/ )
 {
     return CE_None;
 }
@@ -5639,6 +5681,7 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
 /************************************************************************/
 
 /**
+ * \fn GDALRasterBand::SetDefaultRAT
  * \brief Set default Raster Attribute Table.
  *
  * Associates a default RAT with the band.  If not implemented for the
@@ -5653,8 +5696,11 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
  * failing.
  */
 
+/**/
+/**/
+
 CPLErr GDALRasterBand::SetDefaultRAT(
-    CPL_UNUSED const GDALRasterAttributeTable * poRAT )
+    const GDALRasterAttributeTable * /* poRAT */ )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,

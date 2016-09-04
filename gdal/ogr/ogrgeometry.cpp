@@ -1078,8 +1078,6 @@ void OGR_G_Set3D( OGRGeometryH hGeom, int bIs3D)
 /************************************************************************/
 
 /**
- * \brief Set the coordinate dimension.
- *
  * \brief Add or remove the M coordinate dimension.
  *
  * This method adds or removes the explicit M coordinate dimension.

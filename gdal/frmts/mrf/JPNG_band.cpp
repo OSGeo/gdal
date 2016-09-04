@@ -181,7 +181,7 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 }
 
 /**
-* \Brief For PPNG, builds the data structures needed to write the palette
+* \brief For PPNG, builds the data structures needed to write the palette
 * The presence of the PNGColors and PNGAlpha is used as a flag for PPNG only
 */
 

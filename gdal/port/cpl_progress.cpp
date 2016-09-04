@@ -184,6 +184,7 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
 /************************************************************************/
 
 /**
+ * \fn GDALTermProgress
  * \brief Simple progress report to terminal.
  *
  * This progress reporter prints simple progress report to the
@@ -210,6 +211,9 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  *
  * @return Always returns TRUE indicating the process should continue.
  */
+
+/**/
+/**/
 
 int CPL_STDCALL GDALTermProgress( double dfComplete,
                                   const char * /* pszMessage */,

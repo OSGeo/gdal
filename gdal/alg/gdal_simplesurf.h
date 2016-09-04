@@ -503,7 +503,7 @@ public:
      * Find corresponding points (equal points in two collections).
      *
      * @param poMatchPairs Resulting collection for matched points
-     * @param poSecondCollect Points on the first image
+     * @param poFirstCollect Points on the first image
      * @param poSecondCollect Points on the second image
      * @param dfThreshold Value from 0 to 1. Threshold affects to number of
      * matched points. If threshold is lower, amount of corresponding

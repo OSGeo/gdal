@@ -53,9 +53,20 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_RECENT_LIBXML2
 #include <string.h>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #include <libxml/xmlschemas.h>
 #include <libxml/parserInternals.h>
 #include <libxml/catalog.h>
+
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
 
 #include "cpl_string.h"
 #include "cpl_hash_set.h"

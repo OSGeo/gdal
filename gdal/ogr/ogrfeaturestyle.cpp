@@ -2165,7 +2165,6 @@ double OGRStyleTool::GetParamDbl(const OGRStyleParamId &sStyleParam ,
  * @param sStyleParam undocumented.
  * @param sStyleValue undocumented.
  * @param pszParamString undocumented.
- * @return Undocumented.
  */
 void OGRStyleTool::SetParamStr(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,
@@ -2205,7 +2204,6 @@ void OGRStyleTool::SetParamStr(const OGRStyleParamId &sStyleParam ,
  * @param sStyleParam undocumented.
  * @param sStyleValue undocumented.
  * @param nParam undocumented.
- * @return Undocumented.
  */
 void OGRStyleTool::SetParamNum(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,
@@ -2246,7 +2244,6 @@ void OGRStyleTool::SetParamNum(const OGRStyleParamId &sStyleParam ,
  * @param sStyleParam undocumented.
  * @param sStyleValue undocumented.
  * @param dfParam undocumented.
- * @return Undocumented.
  */
 void OGRStyleTool::SetParamDbl(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,

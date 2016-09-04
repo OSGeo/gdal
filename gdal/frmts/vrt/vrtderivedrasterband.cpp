@@ -175,7 +175,7 @@ VRTDerivedRasterBand::GetPixelFunction( const char *pszFuncName )
  * Set the pixel function name to be applied to this derived band.  The
  * name should match a pixel function registered using AddPixelFunction.
  *
- * @param pszFuncName Name of pixel function to be applied to this derived
+ * @param pszFuncNameIn Name of pixel function to be applied to this derived
  * band.
  */
 void VRTDerivedRasterBand::SetPixelFunctionName( const char *pszFuncNameIn )
@@ -195,7 +195,7 @@ void VRTDerivedRasterBand::SetPixelFunctionName( const char *pszFuncNameIn )
  * if the pixel function generates a raster for a derived band that
  * is of type Byte.
  *
- * @param eDataType Data type to use to obtain pixel information from
+ * @param eDataTypeIn Data type to use to obtain pixel information from
  * the sources to be passed to the derived band pixel function.
  */
 void VRTDerivedRasterBand::SetSourceTransferType( GDALDataType eDataTypeIn )

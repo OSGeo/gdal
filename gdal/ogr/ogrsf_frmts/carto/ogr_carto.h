@@ -34,7 +34,17 @@
 #include "cpl_http.h"
 
 #include <vector>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <json.h>
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
+
 
 json_object* OGRCARTOGetSingleRow(json_object* poObj);
 CPLString OGRCARTOEscapeIdentifier(const char* pszStr);

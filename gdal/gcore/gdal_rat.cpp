@@ -29,7 +29,15 @@
 
 #include "gdal_priv.h"
 #include "gdal_rat.h"
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include "json.h"
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
 #include "ogrgeojsonwriter.h"
 
 CPL_CVSID("$Id$");
@@ -317,6 +325,7 @@ GDALRATSetRowCount( GDALRasterAttributeTableH hRAT, int nNewCount )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterAttributeTable::GetRowOfValue(double) const
  * \brief Get row for pixel value.
  *
  * Given a raw pixel value, the raster attribute table is scanned to
@@ -329,6 +338,9 @@ GDALRATSetRowCount( GDALRasterAttributeTableH hRAT, int nNewCount )
  *
  * @return the row index or -1 if no row is appropriate.
  */
+
+/**/
+/**/
 
 int GDALRasterAttributeTable::GetRowOfValue( double /* dfValue */ ) const
 {
@@ -387,6 +399,7 @@ int GDALRasterAttributeTable::GetRowOfValue( int nValue ) const
 /************************************************************************/
 
 /**
+ * \fn GDALRasterAttributeTable::CreateColumn
  * \brief Create new column.
  *
  * If the table already has rows, all row values for the new column will
@@ -402,6 +415,9 @@ int GDALRasterAttributeTable::GetRowOfValue( int nValue ) const
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
+
+/**/
+/**/
 
 CPLErr GDALRasterAttributeTable::CreateColumn(
     const char * /* pszFieldName */, GDALRATFieldType /* eFieldType */,

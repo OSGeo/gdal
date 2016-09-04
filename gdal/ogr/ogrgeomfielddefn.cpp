@@ -284,15 +284,13 @@ OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn void OGRGeomFieldDefn::SetType( OGRwkbGeometryType eType );
- *
  * \brief Set the geometry type of this field.
  * This should never be done to an OGRGeomFieldDefn
  * that is already part of an OGRFeatureDefn.
  *
  * This method is the same as the C function OGR_GFld_SetType().
  *
- * @param eType the new field geometry type.
+ * @param eTypeIn the new field geometry type.
  *
  * @since GDAL 1.11
  */

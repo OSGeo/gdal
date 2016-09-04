@@ -367,8 +367,6 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
   * Translate a RFInfo_t into the corresponding block of binary data.
   *
   * @param  SRITModel        Satellite Model structure.
-  * @param  pnBinaryLength   Length of binary data.
-  * @return Binary data for a  Satellite Model structure.
   */
 void
 CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )

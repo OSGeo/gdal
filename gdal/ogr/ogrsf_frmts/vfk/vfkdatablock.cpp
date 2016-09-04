@@ -486,7 +486,7 @@ int IVFKDataBlock::LoadGeometry()
   \param[in,out] papoRing list of rings
   \param poLine pointer to linestring to be added to a ring
   \param bNewRing  create new ring
-  \param bBackword allow backward direction
+  \param bBackward allow backward direction
 
   \return TRUE on success or FALSE on failure
 */

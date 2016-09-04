@@ -450,15 +450,15 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual void FlushCache(void);
 
     virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr SetProjection( const char * pszProjection );
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual CPLErr SetGeoTransform( double * padfTransform );
 
     virtual CPLErr        AddBand( GDALDataType eType,
                                    char **papszOptions=NULL );
 
-    virtual void *GetInternalHandle( const char * );
+    virtual void *GetInternalHandle( const char * pszHandleName );
     virtual GDALDriver *GetDriver(void);
     virtual char      **GetFileList(void);
 
@@ -536,9 +536,9 @@ private:
   public:
 
     virtual int         GetLayerCount();
-    virtual OGRLayer    *GetLayer(int);
+    virtual OGRLayer    *GetLayer(int iLayer);
     virtual OGRLayer    *GetLayerByName(const char *);
-    virtual OGRErr      DeleteLayer(int);
+    virtual OGRErr      DeleteLayer(int iLayer);
 
     virtual int         TestCapability( const char * );
 
@@ -857,8 +857,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 //! @endcond
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * ) = 0;
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData ) = 0;
+    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void * pData );
 
 #ifdef DETECT_OLD_IRASTERIO
     virtual signature_changed IRasterIO( GDALRWFlag, int, int, int, int,
@@ -942,14 +942,14 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual GDALColorTable *GetColorTable();
     virtual CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0);
 
-    virtual CPLErr SetCategoryNames( char ** );
-    virtual CPLErr SetNoDataValue( double );
+    virtual CPLErr SetCategoryNames( char ** papszNames );
+    virtual CPLErr SetNoDataValue( double dfNoData );
     virtual CPLErr DeleteNoDataValue();
-    virtual CPLErr SetColorTable( GDALColorTable * );
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
-    virtual CPLErr SetOffset( double );
-    virtual CPLErr SetScale( double );
-    virtual CPLErr SetUnitType( const char * );
+    virtual CPLErr SetColorTable( GDALColorTable * poCT );
+    virtual CPLErr SetColorInterpretation( GDALColorInterp eColorInterp );
+    virtual CPLErr SetOffset( double dfNewOffset );
+    virtual CPLErr SetScale( double dfNewScale );
+    virtual CPLErr SetUnitType( const char * pszNewValue );
 
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax,
@@ -966,12 +966,15 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
     virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig );
-    virtual CPLErr BuildOverviews( const char *, int, int *,
-                                   GDALProgressFunc, void * );
+    virtual CPLErr BuildOverviews( const char * pszResampling,
+                                   int nOverviews,
+                                   int * panOverviewList,
+                                   GDALProgressFunc pfnProgress,
+                                   void * pProgressData );
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
-                               GDALDataType eDT, char **papszOptions );
+                               GDALDataType eBufType, char **papszOptions );
 
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,
                           int nBuckets, GUIntBig * panHistogram,
@@ -986,7 +989,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                         int nBuckets, GUIntBig *panHistogram );
 
     virtual GDALRasterAttributeTable *GetDefaultRAT();
-    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * poRAT );
 
     virtual GDALRasterBand *GetMaskBand();
     virtual int             GetMaskFlags();

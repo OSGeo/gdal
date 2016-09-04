@@ -92,6 +92,9 @@ AX_CHECK_COMPILE_FLAG([-Wcomma], [C_WFLAGS="$C_WFLAGS -Wcomma" CXX_WFLAGS="$CXX_
 dnl clang and gcc 5
 AX_CHECK_COMPILE_FLAG([-Wfloat-conversion], [C_WFLAGS="$C_WFLAGS -Wfloat-conversion" CXX_WFLAGS="$CXX_WFLAGS -Wfloat-conversion"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
+dnl clang >= 3.2
+AX_CHECK_COMPILE_FLAG([-Wdocumentation -Wno-documentation-deprecated-sync], [C_WFLAGS="$C_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync" CXX_WFLAGS="$CXX_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+
 dnl C++ specific stuff
 
 AC_LANG_PUSH([C++])

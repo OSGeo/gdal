@@ -36,14 +36,14 @@
 
 CPL_CVSID("$Id$");
 
-/******************************************************************************
+/**
 * Recode the given string from a source encoding to UTF-8 encoding.  The source
 * encoding is established by inspecting the AALL and NALL fields of the S57
 * DSSI record. If first time, the DSSI is read to setup appropriate
 * variables. Main scope of this function is to have the strings of all
 * attributes encoded/recoded to the same codepage in the final Shapefiles .DBF.
 *
-* @param[in] SourceString: source string to be recoded to UTF-8.
+* @param[in] SourceString source string to be recoded to UTF-8.
 *     LookAtAALL-NALL: flag indicating if the string becomes from an
 *     international attribute (e.g.  INFORM, OBJNAM) or national attribute (e.g
 *     NINFOM, NOBJNM). The type of encoding is contained in two different
@@ -55,9 +55,9 @@ CPL_CVSID("$Id$");
 *     0: the type of endoding is for international attributes
 *     1: the type of endoding is for national attributes
 *
-* @param[out]
+* @param[in] LookAtAALL_NALL to be documented
 *
-* @return: the output string recoded to UTF-8 or left unchanged if no valid
+* @return the output string recoded to UTF-8 or left unchanged if no valid
 *     recoding applicable. The recodinf relies on GDAL functions appropriately
 *     called, which allocate themselves the necessary memory to hold the
 *     recoded string.
