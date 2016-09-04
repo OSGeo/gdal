@@ -640,7 +640,7 @@ static inline int CPLIsFinite(double f) { return !__isnan(f) && !__isinf(f); }
 }
 #else
 #  define CPLIsNan(x) isnan(x)
-#  ifdef isinf
+#  if defined(isinf) || defined(__FreeBSD__)
 /** Return whether a floating-pointer number is +/- infinty */
 #    define CPLIsInf(x) isinf(x)
 /** Return whether a floating-pointer number is finite */
