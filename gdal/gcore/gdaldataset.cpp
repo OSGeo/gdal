@@ -506,7 +506,7 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
 /************************************************************************/
 
 /**
- * \fn GDALDataset::AddBand
+ * \fn GDALDataset::AddBand(GDALDataType, char**)
  * \brief Add a band to a dataset.
  *
  * This method will add a new band to the dataset if the underlying format
@@ -841,7 +841,7 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * \fn GDALDataset::SetProjection
+ * \fn GDALDataset::SetProjection(const char*)
  * \brief Set the projection reference string for this dataset.
  *
  * The string should be in OGC WKT or PROJ.4 format.  An error may occur
@@ -955,7 +955,7 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
 /************************************************************************/
 
 /**
- * \fn GDALDataset::SetGeoTransform
+ * \fn GDALDataset::SetGeoTransform(double*)
  * \brief Set the affine transformation coefficients.
  *
  * See GetGeoTransform() for details on the meaning of the padfTransform
@@ -1007,7 +1007,7 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 /************************************************************************/
 
 /**
- * \fn GDALDataset::GetInternalHandle
+ * \fn GDALDataset::GetInternalHandle(const char*)
  * \brief Fetch a format specific internally meaningful handle.
  *
  * This method is the same as the C GDALGetInternalHandle() method.
@@ -1334,7 +1334,7 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * \fn GDALDataset::SetGCPs
+ * \fn GDALDataset::SetGCPs(int, const GDAL_GCP*, const char*)
  * \brief Assign GCPs.
  *
  * This method is the same as the C function GDALSetGCPs().
@@ -4507,7 +4507,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /************************************************************************/
 
 /**
- \fn GDALDataset::DeleteLayer
+ \fn GDALDataset::DeleteLayer(int)
  \brief Delete the indicated layer from the datasource.
 
  If this method is supported
@@ -5963,7 +5963,7 @@ int GDALDataset::GetLayerCount()
 /************************************************************************/
 
 /**
- \fn GDALDataset::GetLayer
+ \fn GDALDataset::GetLayer(int)
  \brief Fetch a layer by index.
 
  The returned layer remains owned by the
@@ -6031,7 +6031,7 @@ int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
 /************************************************************************/
 
 /**
- \fn GDALDataset::StartTransaction
+ \fn GDALDataset::StartTransaction(int)
  \brief For datasources which support transactions, StartTransaction creates a
 `transaction.
 

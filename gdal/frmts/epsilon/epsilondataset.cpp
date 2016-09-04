@@ -29,7 +29,16 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include "epsilon.h"
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
 
 CPL_CVSID("$Id$");
 

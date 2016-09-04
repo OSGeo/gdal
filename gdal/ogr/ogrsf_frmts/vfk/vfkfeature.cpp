@@ -477,8 +477,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
   \param iIndex property index
   \param pszValue property value
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success, FALSE on failure
 */
 bool VFKFeature::SetProperty(int iIndex, const char *pszValue)
 {
@@ -521,8 +520,7 @@ bool VFKFeature::SetProperty(int iIndex, const char *pszValue)
 
   \param iIndex property index
 
-  \return property value
-  \return NULL on error
+  \return property value, NULL on error
 */
 const VFKProperty *VFKFeature::GetProperty(int iIndex) const
 {
@@ -539,8 +537,7 @@ const VFKProperty *VFKFeature::GetProperty(int iIndex) const
 
   \param pszName property name
 
-  \return property value
-  \return NULL on error
+  \return property value, NULL on error
 */
 const VFKProperty *VFKFeature::GetProperty(const char *pszName) const
 {
@@ -552,8 +549,7 @@ const VFKProperty *VFKFeature::GetProperty(const char *pszName) const
 
   \todo Really needed?
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success, FALSE on failure
 */
 bool VFKFeature::LoadGeometryPoint()
 {

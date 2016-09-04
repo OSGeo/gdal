@@ -1029,7 +1029,7 @@ GDAL_GCP * CPL_STDCALL GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList
 /************************************************************************/
 
 /**
- * \fn GDALFindAssociatedFile
+ * \fn GDALFindAssociatedFile(const char*, const char*, char**, int)
  * Find file with alternate extension.
  *
  * Finds the file with the indicated extension, substituting it in place

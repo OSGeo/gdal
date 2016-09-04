@@ -814,7 +814,7 @@ CPL_PID CPLSpawnAsyncGetChildProcessId( CPLSpawnedProcess* p )
 /************************************************************************/
 
 /**
- * \fn CPLSpawnAsyncFinish
+ * \fn CPLSpawnAsyncFinish(CPLSpawnedProcess*,int,int)
  * Wait for the forked process to finish.
  *
  * @param p handle returned by CPLSpawnAsync()

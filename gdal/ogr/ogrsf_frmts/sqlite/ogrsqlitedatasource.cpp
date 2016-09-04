@@ -42,8 +42,18 @@
 #include "cpl_multiproc.h"
 #include "ogrsqlitevirtualogr.h"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #if defined(HAVE_SPATIALITE) && !defined(SPATIALITE_DLOPEN)
 #include "spatialite.h"
+#endif
+
+#ifdef __clang__
+#pragma clang diagnostic pop
 #endif
 
 #ifndef SPATIALITE_412_OR_LATER

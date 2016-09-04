@@ -597,7 +597,7 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 /************************************************************************/
 
 /** 
- * \fn GDALRasterBand::IWriteBlock
+ * \fn GDALRasterBand::IWriteBlock(int, int, void*)
  * Write a block of data.
  *
  * Default internal implementation ... to be overridden by
@@ -1462,7 +1462,7 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::SetCategoryNames
+ * \fn GDALRasterBand::SetCategoryNames(char**)
  * \brief Set the category names for this band.
  *
  * See the GetCategoryNames() method for more on the interpretation of
@@ -1563,7 +1563,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::SetNoDataValue
+ * \fn GDALRasterBand::SetNoDataValue(double)
  * \brief Set the no data value for this band.
  *
  * Depending on drivers, changing the no data value may or may not have an
@@ -1904,7 +1904,7 @@ GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::SetColorInterpretation
+ * \fn GDALRasterBand::SetColorInterpretation(GDALColorInterp)
  * \brief Set color interpretation of a band.
  *
  * This method is the same as the C function GDALSetRasterColorInterpretation().
@@ -1994,7 +1994,7 @@ GDALColorTableH CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH hBand )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::SetColorTable
+ * \fn GDALRasterBand::SetColorTable(GDALColorTable*)
  * \brief Set the raster color table.
  *
  * The driver will make a copy of all desired data in the colortable.  It
@@ -2272,7 +2272,7 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::BuildOverviews
+ * \fn GDALRasterBand::BuildOverviews(const char*, int, int*, GDALProgressFunc, void*)
  * \brief Build raster overview(s)
  *
  * If the operation is unsupported for the indicated dataset, then
@@ -2370,7 +2370,7 @@ double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::SetOffset
+ * \fn GDALRasterBand::SetOffset(double)
  * \brief Set scaling offset.
  *
  * Very few formats implement this method.   When not implemented it will
@@ -2473,7 +2473,7 @@ double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::SetScale
+ * \fn GDALRasterBand::SetScale(double)
  * \brief Set scaling ratio.
  *
  * Very few formats implement this method.   When not implemented it will
@@ -2566,7 +2566,7 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::SetUnitType
+ * \fn GDALRasterBand::SetUnitType(const char*)
  * \brief Set unit type.
  *
  * Set the unit type for a raster band.  Values should be one of
@@ -3512,7 +3512,7 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogramEx(
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::AdviseRead
+ * \fn GDALRasterBand::AdviseRead(int,int,int,int,int,int,GDALDataType,char**)
  * \brief Advise driver of upcoming read requests.
  *
  * Some GDAL drivers operate more efficiently if they know in advance what
@@ -5681,7 +5681,7 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::SetDefaultRAT
+ * \fn GDALRasterBand::SetDefaultRAT(const GDALRasterAttributeTable*)
  * \brief Set default Raster Attribute Table.
  *
  * Associates a default RAT with the band.  If not implemented for the
