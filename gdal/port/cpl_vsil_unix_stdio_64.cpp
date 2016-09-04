@@ -166,13 +166,18 @@ class VSIUnixStdioHandle CPL_FINAL : public VSIVirtualHandle
     bool          bLastOpWrite;
     bool          bLastOpRead;
     bool          bAtEOF;
+    // In a+ mode, disable any optimization since the behaviour of the file
+    // pointer on Mac and other BSD system is to have a seek() to the end of
+    // file and thus a call to our Seek(0, SEEK_SET) before a read will be a no-op
+    bool          bModeAppendReadWrite;
 #ifdef VSI_COUNT_BYTES_READ
     vsi_l_offset  nTotalBytesRead;
     VSIUnixStdioFilesystemHandler *poFS;
 #endif
   public:
                       VSIUnixStdioHandle(VSIUnixStdioFilesystemHandler *poFSIn,
-                                         FILE* fpIn, bool bReadOnlyIn);
+                                         FILE* fpIn, bool bReadOnlyIn,
+                                         bool bModeAppendReadWriteIn);
 
     virtual int       Seek( vsi_l_offset nOffsetIn, int nWhence );
     virtual vsi_l_offset Tell();
@@ -198,13 +203,15 @@ VSIUnixStdioHandle::VSIUnixStdioHandle(
 CPL_UNUSED
 #endif
                                        VSIUnixStdioFilesystemHandler *poFSIn,
-                                       FILE* fpIn, bool bReadOnlyIn) :
+                                       FILE* fpIn, bool bReadOnlyIn,
+                                       bool bModeAppendReadWriteIn) :
     fp(fpIn),
     m_nOffset(0),
     bReadOnly(bReadOnlyIn),
     bLastOpWrite(false),
     bLastOpRead(false),
-    bAtEOF(false)
+    bAtEOF(false),
+    bModeAppendReadWrite(bModeAppendReadWriteIn)
 #ifdef VSI_COUNT_BYTES_READ
     ,
     nTotalBytesRead(0),
@@ -238,7 +245,7 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffsetIn, int nWhence )
 
     // seeks that do nothing are still surprisingly expensive with MSVCRT.
     // try and short circuit if possible.
-    if( nWhence == SEEK_SET && nOffsetIn == m_nOffset )
+    if( !bModeAppendReadWrite && nWhence == SEEK_SET && nOffsetIn == m_nOffset )
         return 0;
 
     // on a read-only file, we can avoid a lseek() system call to be issued
@@ -361,7 +368,7 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*      keep careful track of what happened last to know if we          */
 /*      skipped a flushing seek that we may need to do now.             */
 /* -------------------------------------------------------------------- */
-    if( bLastOpWrite )
+    if( !bModeAppendReadWrite && bLastOpWrite )
     {
         if( VSI_FSEEK64( fp, m_nOffset, SEEK_SET ) != 0 )
         {
@@ -423,7 +430,7 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
 /*      keep careful track of what happened last to know if we          */
 /*      skipped a flushing seek that we may need to do now.             */
 /* -------------------------------------------------------------------- */
-    if( bLastOpRead )
+    if( !bModeAppendReadWrite && bLastOpRead )
     {
         if( VSI_FSEEK64( fp, m_nOffset, SEEK_SET ) != 0 )
         {
@@ -605,8 +612,11 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
 
     const bool bReadOnly =
         strcmp(pszAccess, "rb") == 0 || strcmp(pszAccess, "r") == 0;
+    const bool bModeAppendReadWrite =
+        strcmp(pszAccess, "a+b") == 0 || strcmp(pszAccess, "a+") == 0;
     VSIUnixStdioHandle *poHandle =
-        new(std::nothrow) VSIUnixStdioHandle( this, fp, bReadOnly );
+        new(std::nothrow) VSIUnixStdioHandle( this, fp, bReadOnly,
+                                              bModeAppendReadWrite );
     if( poHandle == NULL )
     {
         fclose(fp);
