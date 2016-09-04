@@ -215,7 +215,9 @@ public:
 class GMLBinInputStream : public BinInputStream
 {
     VSILFILE* fp;
+#if XERCES_VERSION_MAJOR >= 3
     XMLCh emptyString;
+#endif
 
 public :
 

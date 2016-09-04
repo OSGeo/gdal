@@ -465,8 +465,10 @@ void GMLReader::CleanupParser()
 #ifdef HAVE_XERCES
 
 GMLBinInputStream::GMLBinInputStream(VSILFILE* fpIn) :
-    fp(fpIn),
-    emptyString(0)
+    fp(fpIn)
+#if XERCES_VERSION_MAJOR >= 3
+    ,emptyString(0)
+#endif
 {}
 
 GMLBinInputStream::~ GMLBinInputStream()
