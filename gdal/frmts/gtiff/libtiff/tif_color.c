@@ -1,4 +1,4 @@
-/* $Id: tif_color.c,v 1.21 2016-09-03 20:15:36 erouault Exp $ */
+/* $Id: tif_color.c,v 1.22 2016-09-04 21:32:56 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -186,7 +186,9 @@ TIFFYCbCrtoRGB(TIFFYCbCrToRGB *ycbcr, uint32 Y, int32 Cb, int32 Cr,
 	int32 i;
 
 	/* XXX: Only 8-bit YCbCr input supported for now */
-	Y = HICLAMP(Y, 255), Cb = CLAMP(Cb, 0, 255), Cr = CLAMP(Cr, 0, 255);
+	Y = HICLAMP(Y, 255);
+	Cb = CLAMP(Cb, 0, 255);
+	Cr = CLAMP(Cr, 0, 255);
 
 	i = ycbcr->Y_tab[Y] + ycbcr->Cr_r_tab[Cr];
 	*r = CLAMP(i, 0, 255);
