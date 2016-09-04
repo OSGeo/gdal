@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.125 2016-01-23 21:20:34 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.126 2016-09-04 21:32:56 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -43,8 +43,10 @@
 static void
 setByteArray(void** vpp, void* vp, size_t nmemb, size_t elem_size)
 {
-	if (*vpp)
-		_TIFFfree(*vpp), *vpp = 0;
+	if (*vpp) {
+		_TIFFfree(*vpp);
+		*vpp = 0;
+	}
 	if (vp) {
 		tmsize_t bytes = (tmsize_t)(nmemb * elem_size);
 		if (elem_size && bytes / elem_size == nmemb)
