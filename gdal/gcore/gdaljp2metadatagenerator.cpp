@@ -33,10 +33,20 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_LIBXML2
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
 
 /************************************************************************/
 /*                            GDALGMLJP2Expr                            */

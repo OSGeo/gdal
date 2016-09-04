@@ -34,7 +34,7 @@
 */
 
 
-
+  
 /*
  * JPEG band
  * JPEG page compression and decompression functions, gets compiled twice
@@ -95,12 +95,12 @@ static void errorExit(j_common_ptr cinfo)
 
 
 /**
-*\Brief Do nothing stub function for JPEG library, called
+*\brief Do nothing stub function for JPEG library, called
 */
 static void stub_source_dec(j_decompress_ptr /*cinfo*/) {}
 
 /**
-*\Brief: This function is supposed to do refilling of the input buffer,
+*\brief: This function is supposed to do refilling of the input buffer,
 * but as we provided everything at the beginning, if it is called, then
 * we have an error.
 */
@@ -113,7 +113,7 @@ static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 }
 
 /**
-*\Brief: Do nothing stub function for JPEG library, not called
+*\brief: Do nothing stub function for JPEG library, not called
 */
 static void skip_input_data_dec(j_decompress_ptr /*cinfo*/, long /*l*/) {};
 
@@ -127,7 +127,7 @@ static boolean empty_output_buffer(j_compress_ptr /*cinfo*/) {
 }
 
 /*
-*\Brief Compress a JPEG page in memory
+*\brief Compress a JPEG page in memory
 *
 * It handles byte or 12 bit data, grayscale, RGB, CMYK, multispectral
 *

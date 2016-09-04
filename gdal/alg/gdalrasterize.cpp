@@ -772,7 +772,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * is. This is implemented properly only for points and lines for now. Polygons
  * will be burned using the Z value from the first point. The M value may be
  * supported in the future.</li>
- * <"MERGE_ALG":May be REPLACE (the default) or ADD.  REPLACE results in
+ * <li>"MERGE_ALG":May be REPLACE (the default) or ADD.  REPLACE results in
  * overwriting of value, while ADD adds the new value to the existing raster,
  * suitable for heatmaps for instance.</li>
  * </ul>

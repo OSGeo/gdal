@@ -34,7 +34,6 @@
 #include "ogrsf_frmts.h"
 #include "ogr_srs_api.h"
 #include "cpl_http.h"
-#include <json.h>
 #include "ogr_geojson.h"
 #include "ogrgeojsonreader.h"
 #include "swq.h"

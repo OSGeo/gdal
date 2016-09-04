@@ -252,7 +252,7 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
 
 
 /**
- *\Brief Extracts a numerical value from a XML node
+ *\brief Extracts a numerical value from a XML node
  * It works like CPLGetXMLValue except for the default value being
  * a number instead of a string
  */
@@ -320,14 +320,14 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
 }
 
 /**
- *\Brief log in a given base
+ *\brief log in a given base
  */
 double logb(double val, double base) {
     return log(val)/log(base);
 }
 
 /**
- *\Brief Is logb(val) an integer?
+ *\brief Is logb(val) an integer?
  *
  */
 
@@ -341,7 +341,7 @@ int IsPower(double value, double base) {
 /************************************************************************/
 
 /**
- *\Brief Search for a sibling of the root node with a given name.
+ *\brief Search for a sibling of the root node with a given name.
  *
  * Searches only the next siblings of the node passed in for the named element or attribute.
  * If the first character of the pszElement is '=', the search includes the psRoot node
@@ -472,7 +472,7 @@ GDALColorEntry GetXMLColorEntry(CPLXMLNode *p) {
 }
 
 /**
- *\Brief Verify or make a file that big
+ *\brief Verify or make a file that big
  *
  * @return true if size is OK or if extend succeeded
  */

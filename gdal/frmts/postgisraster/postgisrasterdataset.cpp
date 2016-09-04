@@ -2784,11 +2784,11 @@ int PostGISRasterDataset::Identify(GDALOpenInfo* poOpenInfo)
 /***********************************************************************
  * \brief Open a connection with PostgreSQL. The connection string will
  * have the PostgreSQL accepted format, plus the next key=value pairs:
- *  schema = <schema_name>
- *  table = <table_name>
- *  column = <column_name>
- *  where = <SQL where>
- *  mode = <working mode> (1 or 2)
+ *  schema = &lt;schema_name&gt;
+ *  table = &lt;table_name&gt;
+ *  column = &lt;column_name&gt;
+ *  where = &lt;SQL where&gt;
+ *  mode = &lt;working mode&gt; (1 or 2)
  *
  * These pairs are used for selecting the right raster table.
  **********************************************************************/

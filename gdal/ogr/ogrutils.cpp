@@ -878,6 +878,7 @@ void OGRFree( void * pMemory )
 }
 
 /**
+ * \fn OGRGeneralCmdLineProcessor
  * General utility option processing.
  *
  * This function is intended to provide a variety of generic commandline
@@ -916,6 +917,9 @@ void OGRFree( void * pMemory )
  * @return updated nArgc argument count.  Return of 0 requests terminate
  * without error, return of -1 requests exit with error code.
  */
+
+/**/
+/**/
 
 int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
                                 int /* nOptions */ )

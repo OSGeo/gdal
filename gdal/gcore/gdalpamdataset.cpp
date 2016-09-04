@@ -123,6 +123,7 @@ CPL_CVSID("$Id$");
  *      poDS->TryLoadXML();
  * \endcode
  */
+class GDALPamDataset;
 
 GDALPamDataset::GDALPamDataset() :
     nPamFlags(0),

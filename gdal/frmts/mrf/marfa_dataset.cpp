@@ -455,10 +455,9 @@ int GDALMRFDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 /**
 *
-*\Brief Read the XML config tree, from file
+*\brief Read the XML config tree, from file
 *  Caller is responsible for freeing the memory
 *
-* @param pszFilename the file to open.
 * @return NULL on failure, or the document tree on success.
 *
 */
@@ -471,7 +470,7 @@ CPLXMLNode *GDALMRFDataset::ReadConfig() const
 }
 
 /**
-*\Brief Write the XML config tree
+*\brief Write the XML config tree
 * Caller is responsible for correctness of data
 * and for freeing the memory
 *
@@ -509,7 +508,7 @@ static int getnum(const vector<string> &theStringVector, const char prefix, int 
 }
 
 /**
-*\Brief Open a MRF file
+*\brief Open a MRF file
 *
 */
 GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -669,9 +668,9 @@ inline bool on(const char *pszValue) {
 /**
 *\brief Initialize the image structure and the dataset from the XML Raster node
 *
-* @param image, the structure to be initialized
-* @param config, the Raster node of the xml structure
-* @param ds, the parent dataset, some things get inherited
+* @param image the structure to be initialized
+* @param ds the parent dataset, some things get inherited
+* @param defimage defimage
 *
 * The structure should be initialized with the default values as much as possible
 *
@@ -1181,7 +1180,7 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
 
 
 /**
-* \Brief Populates the dataset variables from the XML definition
+* \brief Populates the dataset variables from the XML definition
 *
 *
 */
@@ -1380,7 +1379,7 @@ static inline void make_absolute(CPLString &name, const CPLString &path)
 }
 
 /**
-*\Brief Get the source dataset, open it if necessary
+*\brief Get the source dataset, open it if necessary
 */
 GDALDataset *GDALMRFDataset::GetSrcDS() {
     if (poSrcDS) return poSrcDS;
@@ -1399,7 +1398,7 @@ GDALDataset *GDALMRFDataset::GetSrcDS() {
 }
 
 /**
-*\Brief Add or verify that all overlays exits
+*\brief Add or verify that all overlays exits
 *
 * @return size of the index file
 */
@@ -1620,7 +1619,7 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
 }
 
 /**
- *\Brief Create an MRF dataset, some settings can be changed later
+ *\brief Create an MRF dataset, some settings can be changed later
  * papszOptions might be anything that an MRF might take
  * Still missing are the georeference ...
  *

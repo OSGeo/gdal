@@ -411,9 +411,9 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
 /**
 *\brief Fetch a block from the backing store dataset and keep a copy in the cache
 *
-* @xblk The X block number, zero based
-* @yblk The Y block number, zero based
-* @param tinfo The return, updated tinfo for this specific tile
+* @param xblk The X block number, zero based
+* @param yblk The Y block number, zero based
+* @param buffer buffer
 *
 */
 CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
@@ -547,9 +547,9 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
 /**
 *\brief Fetch for a cloned MRF
 *
-* @xblk The X block number, zero based
-* @yblk The Y block number, zero based
-* @param tinfo The return, updated tinfo for this specific tile
+* @param xblk The X block number, zero based
+* @param yblk The Y block number, zero based
+* @param buffer buffer
 *
 */
 
