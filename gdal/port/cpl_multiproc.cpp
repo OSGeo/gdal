@@ -782,8 +782,8 @@ CPLMutex *CPLCreateMutex()
 #else
     CRITICAL_SECTION *pcs;
 
-	/* Do not use CPLMalloc() since its debugging infrastructure */
-	/* can call the CPL*Mutex functions... */
+    /* Do not use CPLMalloc() since its debugging infrastructure */
+    /* can call the CPL*Mutex functions... */
     pcs = (CRITICAL_SECTION *)malloc(sizeof(*pcs));
     if( pcs )
     {
