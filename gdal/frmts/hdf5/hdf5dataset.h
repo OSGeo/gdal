@@ -93,9 +93,9 @@ protected:
    * Important: It allocates the memory for the attributes internally,
    * so the caller must free the returned array after using it.
    * @param pszAttrName Name of the attribute to be read.
-   * 			the attribute name must be the form:
-   * 					root attribute name
-   * 					SUBDATASET/subdataset attribute name
+   *                    the attribute name must be the form:
+   *                                    root attribute name
+   *                                    SUBDATASET/subdataset attribute name
    * @param pdfValues pointer which will store the array of doubles read.
    * @param nLen it stores the length of the array read. If NULL it doesn't inform
    *        the length of the array.
@@ -105,7 +105,7 @@ protected:
 
 public:
 
-  char	           **papszMetadata;
+  char             **papszMetadata;
   HDF5GroupObjects *poH5CurrentObject;
 
   HDF5Dataset();

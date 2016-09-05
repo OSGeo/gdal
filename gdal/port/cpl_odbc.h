@@ -153,7 +153,7 @@ class CPLODBCStatement;
 #else
 #  define CPL_SQLULEN SQLUINTEGER
 #  define CPL_SQLLEN  SQLINTEGER
-#endif	/* ifdef SQLULEN */
+#endif  /* ifdef SQLULEN */
 /*! @endcond */
 
 /**

@@ -44,16 +44,16 @@
 CPL_C_START
 
 typedef struct {
-    int		nRecordNum;
-    GUInt32	nRecordType;
-    int		nLength;
+    int         nRecordNum;
+    GUInt32     nRecordType;
+    int         nLength;
 
-    char	*pachData;
+    char        *pachData;
 }CEOSRecord;
 
 /* well known record types */
-#define CRT_IMAGE_FDR	0x3FC01212
-#define CRT_IMAGE_DATA	0xEDED1212
+#define CRT_IMAGE_FDR   0x3FC01212
+#define CRT_IMAGE_DATA  0xEDED1212
 
 
 /* -------------------------------------------------------------------- */
@@ -63,25 +63,25 @@ typedef struct {
 typedef struct {
 
     /* public information */
-    int		nPixels;
-    int		nLines;
-    int		nBands;
+    int         nPixels;
+    int         nLines;
+    int         nBands;
 
-    int		nBitsPerPixel;
+    int         nBitsPerPixel;
 
     /* private information */
-    VSILFILE	*fpImage;
+    VSILFILE    *fpImage;
 
     int         bLittleEndian;
 
-    int		nImageRecCount;
-    int		nImageRecLength;
+    int         nImageRecCount;
+    int         nImageRecLength;
 
-    int		nPrefixBytes;
-    int		nSuffixBytes;
+    int         nPrefixBytes;
+    int         nSuffixBytes;
 
-    int		*panDataStart;
-    int		nLineOffset;
+    int         *panDataStart;
+    int         nLineOffset;
 
 } CEOSImage;
 
@@ -90,7 +90,7 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 
 CEOSImage CPL_ODLL *CEOSOpen( const char *, const char * );
-void CPL_ODLL 	    CEOSClose( CEOSImage * );
+void CPL_ODLL       CEOSClose( CEOSImage * );
 CPLErr CPL_ODLL     CEOSReadScanline( CEOSImage *psImage, int nBand,
                                       int nScanline, void * pData );
 
@@ -98,7 +98,7 @@ CPLErr CPL_ODLL     CEOSReadScanline( CEOSImage *psImage, int nBand,
 /*      Internal prototypes.                                            */
 /* -------------------------------------------------------------------- */
 CEOSRecord CPL_ODLL *CEOSReadRecord( CEOSImage * );
-void CPL_ODLL	     CEOSDestroyRecord( CEOSRecord * );
+void CPL_ODLL        CEOSDestroyRecord( CEOSRecord * );
 
 CPL_C_END
 

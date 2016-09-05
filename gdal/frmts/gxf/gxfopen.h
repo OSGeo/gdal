@@ -57,10 +57,10 @@ CPLErr   GXFGetInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize );
 CPLErr   GXFGetRawScanline( GXFHandle, int iScanline, double * padfLineBuf );
 CPLErr   GXFGetScanline( GXFHandle, int iScanline, double * padfLineBuf );
 
-char	**GXFGetMapProjection( GXFHandle );
-char	**GXFGetMapDatumTransform( GXFHandle );
-char	*GXFGetMapProjectionAsPROJ4( GXFHandle );
-char	*GXFGetMapProjectionAsOGCWKT( GXFHandle );
+char    **GXFGetMapProjection( GXFHandle );
+char    **GXFGetMapDatumTransform( GXFHandle );
+char    *GXFGetMapProjectionAsPROJ4( GXFHandle );
+char    *GXFGetMapProjectionAsOGCWKT( GXFHandle );
 
 CPLErr  GXFGetRawPosition( GXFHandle, double *, double *, double *, double *,
                            double * );
@@ -72,14 +72,14 @@ CPLErr  GXFGetPROJ4Position( GXFHandle, double *, double *, double *, double *,
 
 void     GXFClose( GXFHandle hGXF );
 
-#define GXFS_LL_UP	-1
-#define GXFS_LL_RIGHT	1
-#define GXFS_UL_RIGHT	-2
-#define GXFS_UL_DOWN	2
-#define GXFS_UR_DOWN	-3
-#define GXFS_UR_LEFT	3
-#define GXFS_LR_LEFT	-4
-#define GXFS_LR_UP	4
+#define GXFS_LL_UP      -1
+#define GXFS_LL_RIGHT   1
+#define GXFS_UL_RIGHT   -2
+#define GXFS_UL_DOWN    2
+#define GXFS_UR_DOWN    -3
+#define GXFS_UR_LEFT    3
+#define GXFS_LR_LEFT    -4
+#define GXFS_LR_UP      4
 
 CPL_C_END
 
@@ -87,38 +87,38 @@ CPL_C_END
 /*      This is consider to be a private structure.                     */
 /* -------------------------------------------------------------------- */
 typedef struct {
-    FILE	*fp;
+    FILE        *fp;
 
-    int		nRawXSize;
-    int		nRawYSize;
-    int		nSense;		/* GXFS_ codes */
-    int		nGType;		/* 0 is uncompressed */
+    int         nRawXSize;
+    int         nRawYSize;
+    int         nSense;         /* GXFS_ codes */
+    int         nGType;         /* 0 is uncompressed */
 
-    double	dfXPixelSize;
-    double	dfYPixelSize;
-    double	dfRotation;
-    double	dfXOrigin;	/* lower left corner */
-    double	dfYOrigin;	/* lower left corner */
+    double      dfXPixelSize;
+    double      dfYPixelSize;
+    double      dfRotation;
+    double      dfXOrigin;      /* lower left corner */
+    double      dfYOrigin;      /* lower left corner */
 
-    char	szDummy[64];
-    double	dfSetDummyTo;
+    char        szDummy[64];
+    double      dfSetDummyTo;
 
-    char	*pszTitle;
+    char        *pszTitle;
 
-    double	dfTransformScale;
-    double	dfTransformOffset;
-    char	*pszTransformName;
+    double      dfTransformScale;
+    double      dfTransformOffset;
+    char        *pszTransformName;
 
-    char	**papszMapProjection;
-    char	**papszMapDatumTransform;
+    char        **papszMapProjection;
+    char        **papszMapDatumTransform;
 
-    char	*pszUnitName;
-    double	dfUnitToMeter;
+    char        *pszUnitName;
+    double      dfUnitToMeter;
 
-    double	dfZMaximum;
-    double	dfZMinimum;
+    double      dfZMaximum;
+    double      dfZMinimum;
 
-    long	*panRawLineOffset;
+    long        *panRawLineOffset;
 } GXFInfo_t;
 
 #endif /* ndef GXFOPEN_H_INCLUDED */

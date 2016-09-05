@@ -54,11 +54,11 @@ protected:
 
 protected:
     CPLString m_base_url;
-	/*
-	 * png | png8 | png24 | jpg | pdf | bmp | gif | svg | png32
-	 * http://resources.arcgis.com/en/help/rest/apiref/
-	 * Parameter - format
-	 */
+    /*
+     * png | png8 | png24 | jpg | pdf | bmp | gif | svg | png32
+     * http://resources.arcgis.com/en/help/rest/apiref/
+     * Parameter - format
+     */
     CPLString m_image_format;
     CPLString m_transparent;
     CPLString m_bbox_order;

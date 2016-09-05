@@ -45,7 +45,7 @@ typedef struct {
     int         nBufferAllocation;
     int         nSavedCharacter;
 
-    int		nXSize;
+    int         nXSize;
     int         nYSize;
 
     int         nPCTSize;
@@ -53,11 +53,11 @@ typedef struct {
 
     char        **papszHeader;
 
-    int		*panLineOffset;
+    int         *panLineOffset;
 
     int         nColorSize;
 
-    int		nVersion; /* times 100 */
+    int         nVersion; /* times 100 */
 
     int         bNO1;
 

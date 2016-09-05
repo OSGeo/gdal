@@ -41,8 +41,8 @@ CPL_C_START
 
 typedef struct Link_t_struct
 {
-  struct Link_t_struct	*next;
-  void		*object;
+  struct Link_t_struct *next;
+  void          *object;
 } Link_t;
 
 #define HMalloc CPLMalloc
@@ -305,7 +305,7 @@ void RegisterRecipes(void);
 void FreeRecipes(void);
 
 void AddRecipe( int ( *function )( CeosSARVolume_t *volume, const void *token ),
-		const void *token, const char *name );
+                const void *token, const char *name );
 
 int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token );
 int ScanSARRecipeFCN( CeosSARVolume_t *volume, const void *token );

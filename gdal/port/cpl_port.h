@@ -433,7 +433,7 @@ extern "C++" {
 
 #ifndef M_PI
 /** PI definition */
-# define M_PI		3.14159265358979323846
+# define M_PI 3.14159265358979323846
 /* 3.1415926535897932384626433832795 */
 #endif
 
