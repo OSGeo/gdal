@@ -6,6 +6,7 @@ GDAL - Geospatial Data Abstraction Library
 | Ubuntu 12.04 64 bit      | [![Build Status](https://travis-ci.org/OSGeo/gdal.svg?branch=trunk)](https://travis-ci.org/OSGeo/gdal) |
 | Ubuntu 12.04 32 bit      | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_32bit)](https://travis-ci.org/rouault/gdal_coverage) |
 | Ubuntu 14.04 64 bit      | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_trusty)](https://travis-ci.org/rouault/gdal_coverage) |
+| Ubuntu 16.04 64 / CL 3.9 | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_ubuntu16_04)](https://travis-ci.org/rouault/gdal_coverage) |
 | Python 3                 | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=python3)](https://travis-ci.org/rouault/gdal_coverage) |
 | MacOS X                  | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_travis_macosx)](https://travis-ci.org/rouault/gdal_coverage) |
 | MSVC 2008                | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc9?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
