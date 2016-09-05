@@ -133,7 +133,7 @@ The gnmanalyse program provides analysing capabilities of geographical networks 
 </dl>
 
 \if man
-\section gnmmanage_author AUTHORS
+\section gnmanalyse_author AUTHORS
 Mikhail Gusev <gusevmihs@gmail.com>
 Dmitry Baryshnikov <polimax@mail.ru>
 \endif
