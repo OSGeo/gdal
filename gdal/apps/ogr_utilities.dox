@@ -11,7 +11,7 @@ toolkit:
 <li> \ref ogrlineref - Create linear reference and provide some calculations using it
 </ul>
 
-\section gdal_utilities_switches General Command Line Switches
+\section ogr_utilities_switches General Command Line Switches
 All GDAL OGR command line utility programs support the following
 "general" options.<p>
 

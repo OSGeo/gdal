@@ -31,11 +31,11 @@ Options:
   --quiet               suppress progress messages
 \endverbatim
 
-\section gdal_edit_description DESCRIPTION
+\section gdal_calc_description DESCRIPTION
 
 Command line raster calculator with numpy syntax. Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical operators such as >.  Note that all files must have the same dimensions, but no projection checking is performed.
 
-\section gdal_edit_example EXAMPLE
+\section gdal_calc_example EXAMPLE
 
 add two files together
 \verbatim
@@ -53,7 +53,7 @@ gdal_calc.py -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
 \endverbatim
 
 \if man
-\section gdal_edit_author AUTHORS
+\section gdal_calc_author AUTHORS
 Chris Yesson &lt;chris dot yesson at ioz dot ac dot uk&gt;
 Etienne Tourigny &lt;etourigny dot dev at gmail dot com&gt;
 \endif
