@@ -306,13 +306,13 @@ public:
      * network objects. All the following combinations are available:
      *
      *  Notation:
-     *	layer1, layer2, layer3 - a layer names (the corresponding layers must be
+     *  layer1, layer2, layer3 - a layer names (the corresponding layers must be
      *                           exist;
-     *	field1 - a field name (field must be exist);
-     *	constant1 - any double constant;
-     *	string1 - any string;
+     *  field1 - a field name (field must be exist);
+     *  constant1 - any double constant;
+     *  string1 - any string;
      *
-     *	Rules describing which layer can be connected or not connected with each
+     *  Rules describing which layer can be connected or not connected with each
      *  other, and (optional) which layer must serve as a connector. By default
      *  all connections are forbidden. But while network creation process the
      *  rule to allow any connection added. During the connection process each
@@ -320,8 +320,8 @@ public:
      *
      *    "ALLOW CONNECTS ANY"
      *    "DENY CONNECTS ANY"
-     *	  "DENY CONNECTS layer1 WITH layer2"
-     *	  "ALLOW CONNECTS layer1 WITH layer2 VIA layer3"
+     *    "DENY CONNECTS layer1 WITH layer2"
+     *    "ALLOW CONNECTS layer1 WITH layer2 VIA layer3"
      *
      * @param pszRuleStr Rule string which will parsed. If the parsing was
      *        successful, the rule will start having effect immediately.

@@ -42,7 +42,7 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*			     defines    		                             		*/
+/*                           defines                                    */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -481,9 +481,9 @@ static const oNetcdfSRS_PP poM1SPMappings[] = {
 static const oNetcdfSRS_PP poM2SPMappings[] = {
     {CF_PP_LON_PROJ_ORIGIN, SRS_PP_CENTRAL_MERIDIAN},
     {CF_PP_STD_PARALLEL_1, SRS_PP_STANDARD_PARALLEL_1},
-    //From best understanding of this projection, only
- 	// actually specify one SP - it is the same N/S of equator.
-    //{CF_PP_STD_PARALLEL_2, SRS_PP_LATITUDE_OF_ORIGIN},
+    // From best understanding of this projection, only
+    // actually specify one SP - it is the same N/S of equator.
+    // {CF_PP_STD_PARALLEL_2, SRS_PP_LATITUDE_OF_ORIGIN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
     {NULL, NULL}
@@ -856,10 +856,10 @@ class netCDFDataset : public GDALPamDataset
     virtual ~netCDFDataset();
 
     /* Projection/GT */
-    CPLErr 	GetGeoTransform( double * );
-    CPLErr 	SetGeoTransform (double *);
+    CPLErr      GetGeoTransform( double * );
+    CPLErr      SetGeoTransform (double *);
     const char * GetProjectionRef();
-    CPLErr 	SetProjection (const char *);
+    CPLErr      SetProjection (const char *);
 
     virtual char      **GetMetadataDomainList();
     char ** GetMetadata( const char * );

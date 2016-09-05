@@ -356,7 +356,7 @@ class VSIIOStream : public CNCSJPCIOStream
             else
             {
                 GByte prevBuffer[] =
-		  { (GByte)(nCOMLength >> 8), (GByte) (nCOMLength & 0xff) };
+                  { (GByte)(nCOMLength >> 8), (GByte) (nCOMLength & 0xff) };
                 VSIFWriteL(prevBuffer, 2, 1, fpVSIL);
                 nCOMState = 0;
             }
@@ -423,7 +423,7 @@ public:
 
 /************************************************************************/
 /* ==================================================================== */
-/*				ECWDataset				*/
+/*                              ECWDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -491,7 +491,7 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
     NCS::CError StatisticsEnsureInitialized();
     NCS::CError StatisticsWrite();
     void CleanupStatistics();
-	void ReadFileMetaDataFromFile();
+    void ReadFileMetaDataFromFile();
 
     int bFileMetaDataDirty;
     void WriteFileMetaData(NCSFileMetaData* pFileMetaDataCopy);

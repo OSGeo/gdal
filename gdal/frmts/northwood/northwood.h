@@ -90,14 +90,14 @@ typedef struct
 
 
 typedef struct {
-	int iBrightness;
-	int iContrast;
-	bool bGreyscale;
-	bool bGrey;
-	bool bColour;
-	bool bTransparent;
-	int iTransColour;
-	int iTranslucency;
+    int iBrightness;
+    int iContrast;
+    bool bGreyscale;
+    bool bGrey;
+    bool bColour;
+    bool bTransparent;
+    int iTransColour;
+    int iTranslucency;
 } RASTER_STYLE;
 
 typedef struct

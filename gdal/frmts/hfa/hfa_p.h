@@ -38,7 +38,7 @@
 #include <vector>
 
 #ifdef CPL_LSB
-#  define HFAStandard(n,p)	{}
+#  define HFAStandard(n,p) {}
 #else
    void HFAStandard( int, void *);
 #endif
@@ -66,34 +66,34 @@ typedef enum {
 /*      dataset within hfaopen.cpp                                      */
 /************************************************************************/
 struct hfainfo {
-    VSILFILE	*fp;
+    VSILFILE    *fp;
 
-    char	*pszPath;
+    char        *pszPath;
     char        *pszFilename; /* sans path */
     char        *pszIGEFilename; /* sans path */
 
-    HFAAccess	eAccess;
+    HFAAccess   eAccess;
 
     GUInt32     nEndOfFile;
-    GUInt32	nRootPos;
-    GUInt32	nDictionaryPos;
+    GUInt32     nRootPos;
+    GUInt32     nDictionaryPos;
 
-    GInt16	nEntryHeaderLength;
-    GInt32	nVersion;
+    GInt16      nEntryHeaderLength;
+    GInt32      nVersion;
 
     bool        bTreeDirty;
-    HFAEntry	*poRoot;
+    HFAEntry    *poRoot;
 
     HFADictionary *poDictionary;
-    char	*pszDictionary;
+    char        *pszDictionary;
 
-    int		nXSize;
-    int		nYSize;
+    int         nXSize;
+    int         nYSize;
 
-    int		nBands;
-    HFABand	**papoBand;
+    int         nBands;
+    HFABand     **papoBand;
 
-    void	*pMapInfo;
+    void        *pMapInfo;
     void        *pDatum;
     void        *pProParameters;
 
@@ -141,12 +141,12 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
 class HFABand
 {
-    int		nBlocks;
+    int         nBlocks;
 
     // Used for single-file modification
     vsi_l_offset *panBlockStart;
-    int		*panBlockSize;
-    int		*panBlockFlag;
+    int         *panBlockSize;
+    int         *panBlockFlag;
 
     // Used for spill-file modification
     vsi_l_offset nBlockStart;
@@ -154,15 +154,15 @@ class HFABand
     int         nLayerStackCount;
     int         nLayerStackIndex;
 
-#define BFLG_VALID	0x01
-#define BFLG_COMPRESSED	0x02
+#define BFLG_VALID      0x01
+#define BFLG_COMPRESSED 0x02
 
-    int		nPCTColors;
-    double	*apadfPCT[4];
+    int         nPCTColors;
+    double      *apadfPCT[4];
     double      *padfPCTBins;
 
-    CPLErr	LoadBlockInfo();
-    CPLErr	LoadExternalBlockInfo();
+    CPLErr      LoadBlockInfo();
+    CPLErr      LoadExternalBlockInfo();
 
     void ReAllocBlock( int iBlock, int nSize );
     void NullBlock( void * );
@@ -170,43 +170,43 @@ class HFABand
     CPLString   osOverName;
 
   public:
-    		HFABand( HFAInfo_t *, HFAEntry * );
+                HFABand( HFAInfo_t *, HFAEntry * );
                 ~HFABand();
 
-    HFAInfo_t	*psInfo;
+    HFAInfo_t   *psInfo;
 
-    VSILFILE	*fpExternal;
+    VSILFILE    *fpExternal;
 
-    EPTType	eDataType;
-    HFAEntry	*poNode;
+    EPTType     eDataType;
+    HFAEntry    *poNode;
 
-    int		nBlockXSize;
-    int		nBlockYSize;
+    int         nBlockXSize;
+    int         nBlockYSize;
 
-    int		nWidth;
-    int		nHeight;
+    int         nWidth;
+    int         nHeight;
 
-    int		nBlocksPerRow;
-    int		nBlocksPerColumn;
+    int         nBlocksPerRow;
+    int         nBlocksPerColumn;
 
     bool        bNoDataSet;
     double      dfNoData;
 
     bool        bOverviewsPending;
-    int		nOverviews;
+    int         nOverviews;
     HFABand     **papoOverviews;
 
-    CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDataSize );
-    CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
+    CPLErr      GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDataSize );
+    CPLErr      SetRasterBlock( int nXBlock, int nYBlock, void * pData );
 
     const char * GetBandName();
     void SetBandName(const char *pszName);
 
     CPLErr  SetNoDataValue( double dfValue );
 
-    CPLErr	GetPCT( int *, double **, double **, double **, double **,
+    CPLErr      GetPCT( int *, double **, double **, double **, double **,
                         double ** );
-    CPLErr	SetPCT( int, double *, double *, double *, double * );
+    CPLErr      SetPCT( int, double *, double *, double *, double * );
 
     int         CreateOverview( int nOverviewLevel, const char *pszResampling );
     CPLErr      CleanOverviews();
@@ -225,30 +225,30 @@ class HFABand
 class HFAEntry
 {
     bool        bDirty;
-    GUInt32	nFilePos;
+    GUInt32     nFilePos;
 
-    HFAInfo_t	*psHFA;
-    HFAEntry	*poParent;
-    HFAEntry	*poPrev;
+    HFAInfo_t   *psHFA;
+    HFAEntry    *poParent;
+    HFAEntry    *poPrev;
 
-    GUInt32	nNextPos;
-    HFAEntry	*poNext;
+    GUInt32     nNextPos;
+    HFAEntry    *poNext;
 
-    GUInt32	nChildPos;
-    HFAEntry	*poChild;
+    GUInt32     nChildPos;
+    HFAEntry    *poChild;
 
-    char	szName[64];
-    char	szType[32];
+    char        szName[64];
+    char        szType[32];
 
-    HFAType	*poType;
+    HFAType     *poType;
 
-    GUInt32	nDataPos;
-    GUInt32	nDataSize;
-    GByte	*pabyData;
+    GUInt32     nDataPos;
+    GUInt32     nDataSize;
+    GByte      *pabyData;
 
-    void	LoadData();
+    void        LoadData();
 
-    int 	GetFieldValue( const char *, char, void *,
+    int         GetFieldValue( const char *, char, void *,
                                int *pnRemainingDataSize );
     CPLErr      SetFieldValue( const char *, char, void * );
 
@@ -285,27 +285,27 @@ public:
 
     CPLErr      RemoveAndDestroy();
 
-    GUInt32	GetFilePos() CPL_WARN_UNUSED_RESULT { return nFilePos; }
+    GUInt32     GetFilePos() CPL_WARN_UNUSED_RESULT { return nFilePos; }
 
-    const char	*GetName() CPL_WARN_UNUSED_RESULT { return szName; }
+    const char  *GetName() CPL_WARN_UNUSED_RESULT { return szName; }
     void SetName( const char *pszNodeName );
 
     const char  *GetType() CPL_WARN_UNUSED_RESULT { return szType; }
     HFAType     *GetTypeObject() CPL_WARN_UNUSED_RESULT;
 
     GByte      *GetData() CPL_WARN_UNUSED_RESULT { LoadData(); return pabyData; }
-    GUInt32	GetDataPos() CPL_WARN_UNUSED_RESULT { return nDataPos; }
-    GUInt32	GetDataSize() CPL_WARN_UNUSED_RESULT { return nDataSize; }
+    GUInt32     GetDataPos() CPL_WARN_UNUSED_RESULT { return nDataPos; }
+    GUInt32     GetDataSize() CPL_WARN_UNUSED_RESULT { return nDataSize; }
 
-    HFAEntry	*GetChild() CPL_WARN_UNUSED_RESULT;
-    HFAEntry	*GetNext() CPL_WARN_UNUSED_RESULT;
+    HFAEntry    *GetChild() CPL_WARN_UNUSED_RESULT;
+    HFAEntry    *GetNext() CPL_WARN_UNUSED_RESULT;
     HFAEntry    *GetNamedChild( const char * ) CPL_WARN_UNUSED_RESULT;
     std::vector<HFAEntry*> FindChildren( const char *pszName,
                                          const char *pszType) CPL_WARN_UNUSED_RESULT;
 
-    GInt32	GetIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
-    double	GetDoubleField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
-    const char	*GetStringField( const char *, CPLErr * = NULL, int *pnRemainingDataSize = NULL ) CPL_WARN_UNUSED_RESULT;
+    GInt32      GetIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    double      GetDoubleField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
+    const char  *GetStringField( const char *, CPLErr * = NULL, int *pnRemainingDataSize = NULL ) CPL_WARN_UNUSED_RESULT;
     GIntBig     GetBigIntField( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
     int         GetFieldCount( const char *, CPLErr * = NULL ) CPL_WARN_UNUSED_RESULT;
 
@@ -313,12 +313,12 @@ public:
     CPLErr      SetDoubleField( const char *, double );
     CPLErr      SetStringField( const char *, const char * );
 
-    void	DumpFieldValues( FILE *, const char * = NULL );
+    void        DumpFieldValues( FILE *, const char * = NULL );
 
     void        SetPosition();
     CPLErr      FlushToDisk();
 
-    void	MarkDirty();
+    void        MarkDirty();
     GByte      *MakeData( int nSize = 0 );
 };
 
@@ -331,31 +331,31 @@ public:
 class HFAField
 {
   public:
-    int		nBytes;
+    int         nBytes;
 
-    int		nItemCount;
-    char	chPointer; 	/* '\0', '*' or 'p' */
-    char	chItemType;	/* 1|2|4|e|... */
+    int         nItemCount;
+    char        chPointer;      /* '\0', '*' or 'p' */
+    char        chItemType;     /* 1|2|4|e|... */
 
-    char	*pszItemObjectType; /* if chItemType == 'o' */
-    HFAType	*poItemObjectType;
+    char        *pszItemObjectType; /* if chItemType == 'o' */
+    HFAType     *poItemObjectType;
 
-    char	**papszEnumNames; /* normally NULL if not an enum */
+    char        **papszEnumNames; /* normally NULL if not an enum */
 
-    char	*pszFieldName;
+    char        *pszFieldName;
 
     char        szNumberString[36]; /* buffer used to return an int as a string */
 
-    		HFAField();
+                HFAField();
                 ~HFAField();
 
     const char *Initialize( const char * );
 
-    void	CompleteDefn( HFADictionary * );
+    void        CompleteDefn( HFADictionary * );
 
-    void	Dump( FILE * );
+    void        Dump( FILE * );
 
-    int 	ExtractInstValue( const char * pszField, int nIndexValue,
+    int         ExtractInstValue( const char * pszField, int nIndexValue,
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                      char chReqType, void *pReqReturn, int *pnRemainingDataSize = NULL );
 
@@ -363,12 +363,12 @@ class HFAField
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                      char chReqType, void *pValue );
 
-    void	DumpInstValue( FILE *fpOut,
-                     GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                     const char *pszPrefix = NULL );
+    void        DumpInstValue( FILE *fpOut,
+                               GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                               const char *pszPrefix = NULL );
 
-    int		GetInstBytes( GByte *, int );
-    int		GetInstCount( GByte * pabyData, int nDataSize );
+    int         GetInstBytes( GByte *, int );
+    int         GetInstCount( GByte * pabyData, int nDataSize );
 };
 
 
@@ -383,23 +383,23 @@ class HFAType
     bool bInCompleteDefn;
 
   public:
-    int		nBytes;
+    int         nBytes;
 
-    int		nFields;
-    HFAField	**papoFields;
+    int         nFields;
+    HFAField    **papoFields;
 
-    char	*pszTypeName;
+    char        *pszTypeName;
 
-    		HFAType();
+                HFAType();
                 ~HFAType();
 
     const char *Initialize( const char * );
 
-    void	CompleteDefn( HFADictionary * );
+    void        CompleteDefn( HFADictionary * );
 
-    void	Dump( FILE * );
+    void        Dump( FILE * );
 
-    int		GetInstBytes( GByte *, int );
+    int         GetInstBytes( GByte *, int );
     int         GetInstCount( const char *pszField,
                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize);
     int         ExtractInstValue( const char * pszField,
@@ -408,7 +408,7 @@ class HFAType
     CPLErr      SetInstValue( const char * pszField,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            char chReqType, void * pValue );
-    void	DumpInstValue( FILE *fpOut,
+    void        DumpInstValue( FILE *fpOut,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            const char *pszPrefix = NULL );
 };
@@ -420,9 +420,9 @@ class HFAType
 class HFADictionary
 {
   public:
-    int		nTypes;
+    int         nTypes;
     int         nTypesMax;
-    HFAType	**papoTypes;
+    HFAType     **papoTypes;
 
     CPLString   osDictionaryText;
     bool        bDictionaryTextDirty;
@@ -430,12 +430,12 @@ class HFADictionary
                 HFADictionary( const char *pszDict );
                 ~HFADictionary();
 
-    HFAType	*FindType( const char * );
+    HFAType     *FindType( const char * );
     void        AddType( HFAType * );
 
-    static int	GetItemSize( char );
+    static int  GetItemSize( char );
 
-    void	Dump( FILE * );
+    void        Dump( FILE * );
 };
 
 /************************************************************************/

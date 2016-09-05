@@ -36,7 +36,7 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*				RawDataset				*/
+/*                              RawDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -85,13 +85,13 @@ protected:
     int         bIsVSIL;
 
     vsi_l_offset nImgOffset;
-    int		nPixelOffset;
-    int		nLineOffset;
+    int         nPixelOffset;
+    int         nLineOffset;
     int         nLineSize;
-    int		bNativeOrder;
+    int         bNativeOrder;
 
-    int		nLoadedScanline;
-    void	*pLineBuffer;
+    int         nLoadedScanline;
+    void        *pLineBuffer;
     void        *pLineStart;
     int         bDirty;
 
@@ -160,7 +160,7 @@ public:
     void            SetAccess( GDALAccess eAccess );
 
     // this is deprecated.
-    void	 StoreNoDataValue( double );
+    void         StoreNoDataValue( double );
 
     // Query methods for internal data.
     vsi_l_offset GetImgOffset() { return nImgOffset; }

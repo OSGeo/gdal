@@ -218,9 +218,9 @@ class JPIPKAKRasterBand : public GDALPamRasterBand
 
     int         nDiscardLevels;
 
-    kdu_dims 	band_dims;
+    kdu_dims    band_dims;
 
-    int		nOverviewCount;
+    int         nOverviewCount;
     JPIPKAKRasterBand **papoOverviewBand;
 
     kdu_codestream *oCodeStream;

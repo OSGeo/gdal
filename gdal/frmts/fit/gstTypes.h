@@ -35,12 +35,12 @@
 
 typedef int (*gstItemGetFunc)(void *data, int tag, ...);
 
-typedef GUInt16				uint16;
-typedef GInt16				int16;
-typedef GUInt32				uint32;
-typedef GInt32				int32;
-typedef GUIntBig			uint64;
-typedef GIntBig				int64;
+typedef GUInt16                         uint16;
+typedef GInt16                          int16;
+typedef GUInt32                         uint32;
+typedef GInt32                          int32;
+typedef GUIntBig                        uint64;
+typedef GIntBig                         int64;
 
 typedef unsigned char                   uchar;
 

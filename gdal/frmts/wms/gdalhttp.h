@@ -34,7 +34,7 @@ typedef struct {
     char **papszOptions;
 
     /* Output */
-    int nStatus;		/* 200 = success, 404 = not found, 0 = no response / error */
+    int nStatus;  /* 200 = success, 404 = not found, 0 = no response / error */
     char *pszContentType;
     char *pszError;
 

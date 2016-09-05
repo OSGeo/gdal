@@ -33,30 +33,30 @@
 #include "cpl_list.h"
 #include "gdal_pam.h"
 
-typedef enum			// Types of dataset:
+typedef enum                    // Types of dataset:
 {
-    HDF4_SDS,			// Scientific Dataset
-    HDF4_GR,			// General Raster Image
+    HDF4_SDS,                   // Scientific Dataset
+    HDF4_GR,                    // General Raster Image
     HDF4_EOS,                   // HDF EOS
     HDF4_UNKNOWN
 } HDF4DatasetType;
 
-typedef enum			// Types of data products:
+typedef enum                    // Types of data products:
 {
-    H4ST_GDAL,		        // HDF written by GDAL
+    H4ST_GDAL,                  // HDF written by GDAL
     H4ST_EOS_GRID,              // HDF-EOS Grid
     H4ST_EOS_SWATH,             // HDF-EOS Swath
     H4ST_EOS_SWATH_GEOL,        // HDF-EOS Swath Geolocation Array
-    H4ST_SEAWIFS_L1A,		// SeaWiFS Level-1A Data
-    H4ST_SEAWIFS_L2,		// SeaWiFS Level-2 Data
-    H4ST_SEAWIFS_L3,		// SeaWiFS Level-3 Standard Mapped Image
+    H4ST_SEAWIFS_L1A,           // SeaWiFS Level-1A Data
+    H4ST_SEAWIFS_L2,            // SeaWiFS Level-2 Data
+    H4ST_SEAWIFS_L3,            // SeaWiFS Level-3 Standard Mapped Image
     H4ST_HYPERION_L1,           // Hyperion L1 Data Product
     H4ST_UNKNOWN
 } HDF4SubdatasetType;
 
 /************************************************************************/
 /* ==================================================================== */
-/*				HDF4Dataset				*/
+/*                              HDF4Dataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -72,14 +72,14 @@ class HDF4Dataset : public GDALPamDataset
                                     char **ppszAttrClass, char **ppszAttrValue );
 
   protected:
-    int32	hGR;
-    int32	hSD;
-    int32	nImages;
+    int32       hGR;
+    int32       hSD;
+    int32       nImages;
     HDF4SubdatasetType iSubdatasetType;
-    const char	*pszSubdatasetType;
+    const char  *pszSubdatasetType;
 
-    char	**papszGlobalMetadata;
-    char	**papszSubDatasets;
+    char        **papszGlobalMetadata;
+    char        **papszSubDatasets;
 
     CPLErr              ReadGlobalAttributes( int32 );
 
