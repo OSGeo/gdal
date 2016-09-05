@@ -2432,7 +2432,7 @@ Output types:
 - <b>xml</b>&nbsp;&nbsp;&nbsp;XML format (GML based)
 
 \n
-\section gdal_grid_example EXAMPLE
+\section gdalsrsinfo_example EXAMPLE
 
 \verbatim
 $  gdalsrsinfo   "EPSG:4326"
