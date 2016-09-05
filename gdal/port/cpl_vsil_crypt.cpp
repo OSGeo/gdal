@@ -111,18 +111,18 @@ void __cdecl SetNewAndDeleteFromCryptoPP(CryptoPP::PNew pNew,
                                          CryptoPP::PDelete pDelete,
                                          CryptoPP::PSetNewHandler pSetNewHandler)
 {
-	s_pNew = pNew;
-	s_pDelete = pDelete;
+    s_pNew = pNew;
+    s_pDelete = pDelete;
 }
 
 void * __cdecl operator new (size_t size)
 {
-	return s_pNew(size);
+    return s_pNew(size);
 }
 
 void __cdecl operator delete (void * p)
 {
-	s_pDelete(p);
+    s_pDelete(p);
 }
 
 #endif //  defined(WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)

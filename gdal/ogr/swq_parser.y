@@ -773,7 +773,7 @@ opt_joins:
             context->poCurSelect->PushJoin( static_cast<int>($3->int_value),
                                             $5 );
             delete $3;
-	    }
+        }
 
 opt_order_by:
     | SWQT_ORDER SWQT_BY sort_spec_list

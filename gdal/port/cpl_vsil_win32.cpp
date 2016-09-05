@@ -92,8 +92,8 @@ class VSIWin32Handle CPL_FINAL : public VSIVirtualHandle
     virtual int       Close();
     virtual int       Truncate( vsi_l_offset nNewSize );
     virtual void     *GetNativeFileDescriptor() { return (void*) hFile; }
-	virtual VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
-                                             vsi_l_offset nLength );
+    virtual VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
+                                           vsi_l_offset nLength );
 };
 
 /************************************************************************/
