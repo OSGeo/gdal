@@ -92,6 +92,7 @@
 #  undef WIN32
 #endif
 
+/*! @cond Doxygen_Suppress */
 #if defined(VSI_NEED_LARGEFILE64_SOURCE) && !defined(_LARGEFILE64_SOURCE)
 #  define _LARGEFILE64_SOURCE 1
 #endif
@@ -102,7 +103,6 @@
 /*      faster than iconv() for encodings it supports.                  */
 /* ==================================================================== */
 
-/*! @cond Doxygen_Suppress */
 #if defined(HAVE_ICONV)
 #  define CPL_RECODE_ICONV
 #endif

@@ -1312,7 +1312,7 @@ Produces the following output in meters in the "Belge 1972 / Belgian Lambert
 244510.77404604 166154.532871342 -1046.79270555763
 \endverbatim
 
-\section gdaltransform_example Image RPC Example
+\section gdaltransform_rpc_example Image RPC Example
 
 The following command requests an RPC based transformation using the RPC
 model associated with the named file.  Because the -i (inverse) flag is
