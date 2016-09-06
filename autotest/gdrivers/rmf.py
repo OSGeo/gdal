@@ -100,6 +100,15 @@ def rmf_9():
     return tst.testCreateCopy( check_srs = 1, check_gt = 1, vsimem = 1 )
 
 ###############################################################################
+# Compressed DEM
+
+def rmf_10():
+
+    tst = gdaltest.GDALTest( 'rmf', 't100.mtw', 1, 6388 )
+
+    return tst.testOpen()
+
+###############################################################################
 
 gdaltest_list = [
     rmf_1,
@@ -110,7 +119,8 @@ gdaltest_list = [
     rmf_6,
     rmf_7,
     rmf_8,
-    rmf_9
+    rmf_9,
+    rmf_10
 ]
 
 if __name__ == '__main__':
