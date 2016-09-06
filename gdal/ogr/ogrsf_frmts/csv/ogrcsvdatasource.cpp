@@ -78,7 +78,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
 
     CPLString osLayerName(m_poCSVLayer->GetName());
     CPLString osFilename(m_poCSVLayer->GetFilename());
-    const bool bCreateCSVT = m_poCSVLayer->GetCreateCSVT() != FALSE;
+    const bool bCreateCSVT = m_poCSVLayer->GetCreateCSVT();
     CPLString osCSVTFilename(CPLResetExtension(osFilename, "csvt"));
     VSIStatBufL sStatBuf;
     const bool bHasCSVT = VSIStatL(osCSVTFilename, &sStatBuf) == 0;
@@ -318,8 +318,8 @@ OGRCSVDataSource::OGRCSVDataSource() :
     pszName(NULL),
     papoLayers(NULL),
     nLayers(0),
-    bUpdate(FALSE),
-    bEnableGeometryFields(FALSE)
+    bUpdate(false),
+    bEnableGeometryFields(false)
 {}
 
 /************************************************************************/
@@ -401,13 +401,13 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 
 {
     pszName = CPLStrdup( pszFilename );
-    bUpdate = bUpdateIn;
+    bUpdate = CPL_TO_BOOL(bUpdateIn);
 
-    if (bUpdateIn && bForceOpen && EQUAL(pszFilename, "/vsistdout/"))
+    if( bUpdate && bForceOpen && EQUAL(pszFilename, "/vsistdout/") )
         return TRUE;
 
     /* For writable /vsizip/, do nothing more */
-    if (bUpdateIn && bForceOpen && STARTS_WITH(pszFilename, "/vsizip/"))
+    if( bUpdate && bForceOpen && STARTS_WITH(pszFilename, "/vsizip/") )
         return TRUE;
 
     CPLString osFilename(pszFilename);
@@ -430,7 +430,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         EQUAL(osBaseFilename, "NfdcRemarks.xls") ||
         EQUAL(osBaseFilename, "NfdcSchedules.xls"))
     {
-        if (bUpdateIn)
+        if( bUpdate )
             return FALSE;
         bIgnoreExtension = true;
     }
@@ -451,7 +451,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
                 STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
              (EQUAL(osExt, "txt") || EQUAL(osExt, "zip")) )
     {
-        if (bUpdateIn)
+        if( bUpdate )
             return FALSE;
         bIgnoreExtension = true;
         bUSGeonamesFile = true;
@@ -465,7 +465,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
     else if (EQUAL(osBaseFilename, "allCountries.txt") ||
              EQUAL(osBaseFilename, "allCountries.zip"))
     {
-        if (bUpdateIn)
+        if( bUpdate )
             return FALSE;
         bIgnoreExtension = true;
         /* bGeonamesOrgFile = true; */
@@ -795,8 +795,9 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
     if (EQUAL(pszFilename, "/vsistdin/"))
         osLayerName = "layer";
 
-    OGRCSVLayer* poCSVLayer = new OGRCSVLayer( osLayerName, fp, pszFilename, FALSE, bUpdate,
-                                            chDelimiter  );
+    OGRCSVLayer* poCSVLayer =
+        new OGRCSVLayer( osLayerName, fp, pszFilename, FALSE, bUpdate,
+                         chDelimiter  );
     poCSVLayer->BuildFeatureDefn( pszNfdcRunwaysGeomField,
                                              pszGeonamesGeomFieldPrefix,
                                              papszOpenOptionsIn );
@@ -823,7 +824,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
 /* -------------------------------------------------------------------- */
-    if (!bUpdate)
+    if( !bUpdate )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Data source %s opened read-only.\n"
@@ -908,7 +909,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 
     OGRCSVLayer* poCSVLayer = new OGRCSVLayer( pszLayerName, NULL, osFilename,
-                                             TRUE, TRUE, chDelimiter );
+                                               TRUE, TRUE, chDelimiter );
 
     poCSVLayer->BuildFeatureDefn();
 
@@ -916,29 +917,28 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /*      Was a particular CRLF order requested?                          */
 /* -------------------------------------------------------------------- */
     const char *pszCRLFFormat = CSLFetchNameValue( papszOptions, "LINEFORMAT");
-    int bUseCRLF;
+    bool bUseCRLF = false;
 
     if( pszCRLFFormat == NULL )
     {
 #ifdef WIN32
-        bUseCRLF = TRUE;
-#else
-        bUseCRLF = FALSE;
+        bUseCRLF = true;
 #endif
     }
-    else if( EQUAL(pszCRLFFormat,"CRLF") )
-        bUseCRLF = TRUE;
-    else if( EQUAL(pszCRLFFormat,"LF") )
-        bUseCRLF = FALSE;
+    else if( EQUAL(pszCRLFFormat, "CRLF") )
+    {
+        bUseCRLF = true;
+    }
+    else if( EQUAL(pszCRLFFormat, "LF") )
+    {
+    }
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                   pszCRLFFormat );
 #ifdef WIN32
-        bUseCRLF = TRUE;
-#else
-        bUseCRLF = FALSE;
+        bUseCRLF = true;
 #endif
     }
 
@@ -995,7 +995,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
     const char *pszCreateCSVT = CSLFetchNameValue( papszOptions, "CREATE_CSVT");
     if (pszCreateCSVT && CPLTestBool(pszCreateCSVT))
     {
-        poCSVLayer->SetCreateCSVT(TRUE);
+        poCSVLayer->SetCreateCSVT(true);
 
 /* -------------------------------------------------------------------- */
 /*      Create .prj file                                                */
@@ -1102,6 +1102,6 @@ void OGRCSVDataSource::CreateForSingleFile( const char* pszDirname,
                                             const char *pszFilename )
 {
     pszName = CPLStrdup( pszDirname );
-    bUpdate = TRUE;
+    bUpdate = true;
     osDefaultCSVName = CPLGetFilename(pszFilename);
 }

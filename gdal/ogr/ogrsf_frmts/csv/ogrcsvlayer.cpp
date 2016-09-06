@@ -229,7 +229,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     bNeedRewindBeforeRead(FALSE),
     eGeometryFormat(OGR_CSV_GEOM_NONE),
     pszFilename(CPLStrdup(pszFilenameIn)),
-    bCreateCSVT(FALSE),
+    bCreateCSVT(false),
     bWriteBOM(FALSE),
     chDelimiter(chDelimiterIn),
     nCSVFieldCount(0),
@@ -1909,10 +1909,10 @@ OGRErr OGRCSVLayer::WriteHeader()
     bHasFieldNames = TRUE;
     bool bOK = true;
 
-    for(int iFile=0;iFile<((bCreateCSVT) ? 2 : 1);iFile++)
+    for( int iFile = 0; iFile < (bCreateCSVT ? 2 : 1); iFile++ )
     {
         VSILFILE* fpCSVT = NULL;
-        if (bCreateCSVT && iFile == 0)
+        if( bCreateCSVT && iFile == 0 )
         {
             char* pszDirName = CPLStrdup(CPLGetDirname(pszFilename));
             char* pszBaseName = CPLStrdup(CPLGetBasename(pszFilename));
@@ -2339,7 +2339,7 @@ void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
 /*                          SetCreateCSVT()                             */
 /************************************************************************/
 
-void OGRCSVLayer::SetCreateCSVT(int bCreateCSVTIn)
+void OGRCSVLayer::SetCreateCSVT( bool bCreateCSVTIn )
 {
     bCreateCSVT = bCreateCSVTIn;
 }
