@@ -3,13 +3,6 @@ GDAL_ROOT = .
 !INCLUDE nmake.opt
 
 ##############################################################################
-# We need to add vb6 support if STDCALL is defined. 
-!IF DEFINED(STDCALL) && $(MSVC_VER) < 1500
-VB6_OBJ = vb6\vb6_support.obj
-VB6_TARGET = vb6_dir
-!ENDIF
-
-##############################################################################
 # The following determines whether we are linking all the OGR formats 
 # into the DLL, or only the minimum spatial reference related stuff required
 # for a raster-gdal build.
@@ -34,15 +27,11 @@ CPPFLAGS = $(CPPFLAGS) -DGNM_ENABLED
 
 !IF DEFINED(STDCALL) && !DEFINED(WIN64)
 
-!IF $(MSVC_VER) < 1500
-VB6_SAFEARRAYSYM =	/INCLUDE:_vbSafeArrayToPtr@16
-!ENDIF
-
 BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp@36 \
 		/INCLUDE:_GDALReprojectImage@48 \
 		/INCLUDE:_GDALComputeMedianCutPCT@32 \
 		/INCLUDE:_GDALDitherRGB2PCT@28 \
-		/INCLUDE:_OCTNewCoordinateTransformation@8 $(VB6_SAFEARRAYSYM)
+		/INCLUDE:_OCTNewCoordinateTransformation@8
 !ELSE
 BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 		/INCLUDE:$(SYM_PREFIX)GDALReprojectImage \
@@ -51,13 +40,13 @@ BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 		/INCLUDE:$(SYM_PREFIX)OCTNewCoordinateTransformation
 !ENDIF
 
-LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj $(VB6_OBJ) \
+LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj \
 	 apps\commonutils.obj apps\gdalinfo_lib.obj apps\gdal_translate_lib.obj apps\gdalwarp_lib.obj apps\ogr2ogr_lib.obj \
 	 apps\gdaldem_lib.obj apps\nearblack_lib.obj apps\gdal_grid_lib.obj apps\gdal_rasterize_lib.obj apps\gdalbuildvrt_lib.obj
 
 DISTDIR	=	gdal_$(VERSION)
 
-default:	port_dir ogr_dir gnm_dir core_dir frmts_dir appslib-target $(VB6_TARGET)$(GDAL_DLL) \
+default:	port_dir ogr_dir gnm_dir core_dir frmts_dir appslib-target $(GDAL_DLL) \
 		plugin_dir apps_dir 
 
 staticlib:
