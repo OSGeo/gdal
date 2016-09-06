@@ -130,7 +130,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter,
 /************************************************************************/
 
 char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
-                             int bDontHonourStrings,
+                             bool bDontHonourStrings,
                              int bKeepLeadingAndClosingQuotes,
                              int bMergeDelimiter )
 
@@ -145,7 +145,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
         pszLine += 3;
 
     // Special fix to read NdfcFacilities.xls with un-balanced double quotes.
-    if (chDelimiter == '\t' && bDontHonourStrings)
+    if( chDelimiter == '\t' && bDontHonourStrings )
     {
         return CSLTokenizeStringComplex(pszLine, "\t", FALSE, TRUE);
     }
@@ -222,23 +222,23 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     poFeatureDefn(NULL),
     fpCSV(fp),
     nNextFID(1),
-    bHasFieldNames(FALSE),
+    bHasFieldNames(false),
     bNew(bNewIn),
     bInWriteMode(bInWriteModeIn),
-    bUseCRLF(FALSE),
-    bNeedRewindBeforeRead(FALSE),
+    bUseCRLF(false),
+    bNeedRewindBeforeRead(false),
     eGeometryFormat(OGR_CSV_GEOM_NONE),
     pszFilename(CPLStrdup(pszFilenameIn)),
     bCreateCSVT(false),
-    bWriteBOM(FALSE),
+    bWriteBOM(false),
     chDelimiter(chDelimiterIn),
     nCSVFieldCount(0),
     panGeomFieldIndex(NULL),
-    bFirstFeatureAppendedDuringSession(TRUE),
-    bHiddenWKTColumn(FALSE),
+    bFirstFeatureAppendedDuringSession(true),
+    bHiddenWKTColumn(false),
     iNfdcLongitudeS(-1),
     iNfdcLatitudeS(-1),
-    bDontHonourStrings(FALSE),
+    bDontHonourStrings(false),
     iLongitudeField(-1),
     iLatitudeField(-1),
     iZField(-1),
@@ -335,7 +335,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         {
             if( chNewByte == 13 )
             {
-                bUseCRLF = TRUE;
+                bUseCRLF = true;
                 break;
             }
             nBytesRead ++;
@@ -377,43 +377,48 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             const char* pszCSVHeaders
                 = CSLFetchNameValueDef(papszOpenOptions, "HEADERS", "AUTO");
 
-            if (EQUAL(pszCSVHeaders, "YES"))
-                bHasFieldNames = TRUE;
-            else if (EQUAL(pszCSVHeaders, "NO"))
-                bHasFieldNames = FALSE;
-            else {
-                // detect via checking for the presence of numeric values.
-                bHasFieldNames = TRUE;
+            if( EQUAL(pszCSVHeaders, "YES") )
+            {
+                bHasFieldNames = true;
+            }
+            else if( EQUAL(pszCSVHeaders, "NO") )
+            {
+                bHasFieldNames = false;
+            }
+            else
+            {
+                // Detect via checking for the presence of numeric values.
+                bHasFieldNames = true;
                 for( int iField = 0;
                      iField < nFieldCount && bHasFieldNames;
                      iField++ )
                 {
-                    const CPLValueType eType
-                        = CPLGetValueType(papszTokens[iField]);
+                    const CPLValueType eType =
+                        CPLGetValueType(papszTokens[iField]);
                     if ( (eType == CPL_VALUE_INTEGER ||
-                          eType == CPL_VALUE_REAL) ) {
+                          eType == CPL_VALUE_REAL) )
+                    {
                         // We have a numeric field, therefore do not consider
                         // the first line as field names.
-                        bHasFieldNames = FALSE;
+                        bHasFieldNames = false;
                     }
                 }
 
-                const CPLString osExt
-                    = OGRCSVDataSource::GetRealExtension(pszFilename);
+                const CPLString osExt =
+                    OGRCSVDataSource::GetRealExtension(pszFilename);
 
                 /* Eurostat .tsv files */
                 if( EQUAL(osExt, "tsv") && nFieldCount > 1 &&
                     strchr(papszTokens[0], ',') != NULL
                     && strchr(papszTokens[0], '\\') != NULL )
                 {
-                    bHasFieldNames = TRUE;
+                    bHasFieldNames = true;
                     bIsEurostatTSV = TRUE;
                 }
             }
 
             /* tokenize without quotes to get the actual values */
             CSLDestroy( papszTokens );
-            // papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, FALSE );
             int l_nFlags = CSLT_HONOURSTRINGS;
             if( !bMergeDelimiter )
                 l_nFlags |= CSLT_ALLOWEMPTYTOKENS;
@@ -422,7 +427,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         }
     }
     else
-        bHasFieldNames = FALSE;
+    {
+        bHasFieldNames = false;
+    }
 
     if( !bNew )
         ResetReading();
@@ -488,7 +495,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 
             nFieldCount = 0;
 
-            bDontHonourStrings = TRUE;
+            bDontHonourStrings = true;
         }
     }
 
@@ -506,7 +513,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         CPLFree(fname);
         if (fpCSVT!=NULL) {
             VSIRewindL(fpCSVT);
-            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', FALSE,FALSE);
+            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', false, FALSE);
             VSIFCloseL(fpCSVT);
         }
     }
@@ -835,7 +842,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 
     if ( iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1 )
     {
-        bDontHonourStrings = TRUE;
+        bDontHonourStrings = true;
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
             poFeatureDefn->SetGeomType( wkbPoint );
         else
@@ -1014,7 +1021,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
         while( !VSIFEofL(fpMem) )
         {
             char** papszTokens = OGRCSVReadParseLineL( fpMem, chDelimiter,
-                                                       FALSE,
+                                                       false,
                                                        bQuotedFieldAsString,
                                                        bMergeDelimiter );
             /* Can happen if we just reach EOF while trying to read new bytes */
@@ -1298,9 +1305,10 @@ void OGRCSVLayer::ResetReading()
         VSIRewindL( fpCSV );
 
     if( bHasFieldNames )
-        CSLDestroy( OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings ) );
+        CSLDestroy(
+            OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings ) );
 
-    bNeedRewindBeforeRead = FALSE;
+    bNeedRewindBeforeRead = false;
 
     nNextFID = 1;
 }
@@ -1318,7 +1326,8 @@ char** OGRCSVLayer::GetNextLineTokens()
 
     while( true )
     {
-        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings,
+        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter,
+                                            bDontHonourStrings,
                                             FALSE, bMergeDelimiter );
         if( papszTokens == NULL )
             return NULL;
@@ -1379,7 +1388,9 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     int         iAttr;
     int         iOGRField = 0;
-    int         nAttrCount = MIN(CSLCount(papszTokens), nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0) );
+    int nAttrCount =
+        MIN( CSLCount(papszTokens),
+             nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0) );
     CPLValueType eType;
 
     for( iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
@@ -1906,7 +1917,7 @@ OGRErr OGRCSVLayer::WriteHeader()
 /*      Write .csvt file if needed                                      */
 /* -------------------------------------------------------------------- */
     bNew = FALSE;
-    bHasFieldNames = TRUE;
+    bHasFieldNames = true;
     bool bOK = true;
 
     for( int iFile = 0; iFile < (bCreateCSVT ? 2 : 1); iFile++ )
@@ -1937,7 +1948,7 @@ OGRErr OGRCSVLayer::WriteHeader()
             }
         }
 
-        if (bWriteBOM && fpCSV)
+        if( bWriteBOM && fpCSV )
         {
             bOK &= VSIFWriteL("\xEF\xBB\xBF", 1, 3, fpCSV) > 0;
         }
@@ -2104,9 +2115,9 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
     /* If we need rewind, it means that we have just written a feature before */
     /* so there's no point seeking to the end of the file, as we're already */
     /* at the end */
-    int bNeedSeekEnd = !bNeedRewindBeforeRead;
+    bool bNeedSeekEnd = !bNeedRewindBeforeRead;
 
-    bNeedRewindBeforeRead = TRUE;
+    bNeedRewindBeforeRead = true;
 
 /* -------------------------------------------------------------------- */
 /*      Write field names if we haven't written them yet.               */
@@ -2117,7 +2128,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         OGRErr eErr = WriteHeader();
         if (eErr != OGRERR_NONE)
             return eErr;
-        bNeedSeekEnd = FALSE;
+        bNeedSeekEnd = false;
     }
 
     if (fpCSV == NULL)
@@ -2127,12 +2138,12 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 /* -------------------------------------------------------------------- */
 /*      Make sure we are at the end of the file.                        */
 /* -------------------------------------------------------------------- */
-    if (bNeedSeekEnd)
+    if( bNeedSeekEnd )
     {
-        if (bFirstFeatureAppendedDuringSession)
+        if( bFirstFeatureAppendedDuringSession )
         {
             /* Add a newline character to the end of the file if necessary */
-            bFirstFeatureAppendedDuringSession = FALSE;
+            bFirstFeatureAppendedDuringSession = false;
             bRet &= VSIFSeekL( fpCSV, 0, SEEK_END ) >= 0;
             bRet &= VSIFSeekL( fpCSV, VSIFTellL(fpCSV) - 1, SEEK_SET) >= 0;
             char chLast;
@@ -2306,7 +2317,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 /*                              SetCRLF()                               */
 /************************************************************************/
 
-void OGRCSVLayer::SetCRLF( int bNewValue )
+void OGRCSVLayer::SetCRLF( bool bNewValue )
 
 {
     bUseCRLF = bNewValue;
@@ -2321,10 +2332,10 @@ void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
                                    const char* pszGeomCol)
 {
     eGeometryFormat = eGeometryFormatIn;
-    if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT && eGType != wkbNone )
+    if( eGeometryFormat == OGR_CSV_GEOM_AS_WKT && eGType != wkbNone )
     {
         OGRGeomFieldDefn oGFld(pszGeomCol, eGType);
-        bHiddenWKTColumn = TRUE;
+        bHiddenWKTColumn = true;
         /* We don't use CreateGeomField() since we don't want to generate */
         /* a geometry field in first position, as it confuses applications */
         /* (such as MapServer <= 6.4) that assume that the first regular field */
@@ -2348,7 +2359,7 @@ void OGRCSVLayer::SetCreateCSVT( bool bCreateCSVTIn )
 /*                          SetWriteBOM()                               */
 /************************************************************************/
 
-void OGRCSVLayer::SetWriteBOM(int bWriteBOMIn)
+void OGRCSVLayer::SetWriteBOM( bool bWriteBOMIn )
 {
     bWriteBOM = bWriteBOMIn;
 }
@@ -2382,7 +2393,7 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
         char szBuffer[4096+1];
 
         nTotalFeatures = 0;
-        int bLastWasNewLine = FALSE;
+        bool bLastWasNewLine = false;
         while( true )
         {
             int nRead = static_cast<int>(VSIFReadL(szBuffer, 1, 4096, fpCSV));
@@ -2393,12 +2404,12 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
             {
                 if( szBuffer[i] == 13 || szBuffer[i] == 10 )
                 {
-                    bLastWasNewLine = TRUE;
+                    bLastWasNewLine = true;
                 }
                 else if( bLastWasNewLine )
                 {
-                    nTotalFeatures ++;
-                    bLastWasNewLine = FALSE;
+                    nTotalFeatures++;
+                    bLastWasNewLine = false;
                 }
             }
 
