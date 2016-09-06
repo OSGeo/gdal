@@ -82,7 +82,7 @@ class OGRCSVLayer : public OGRLayer
     OGRCSVGeometryFormat eGeometryFormat;
 
     char*               pszFilename;
-    int                 bCreateCSVT;
+    bool                bCreateCSVT;
     int                 bWriteBOM;
     char                chDelimiter;
 
@@ -130,7 +130,7 @@ class OGRCSVLayer : public OGRLayer
     const char*         GetFilename() const { return pszFilename; }
     char                GetDelimiter() const { return chDelimiter; }
     int                 GetCRLF() const { return bUseCRLF; }
-    int                 GetCreateCSVT() const { return bCreateCSVT; }
+    bool                GetCreateCSVT() const { return bCreateCSVT; }
     int                 GetWriteBOM() const { return bWriteBOM; }
     OGRCSVGeometryFormat GetGeometryFormat() const { return eGeometryFormat; }
     int                 HasHiddenWKTColumn() const { return bHiddenWKTColumn; }
@@ -165,7 +165,7 @@ class OGRCSVLayer : public OGRLayer
     void                SetWriteGeometry(OGRwkbGeometryType eGType,
                                          OGRCSVGeometryFormat eGeometryFormat,
                                          const char* pszGeomCol = NULL);
-    void                SetCreateCSVT(int bCreateCSVT);
+    void                SetCreateCSVT( bool bCreateCSVT );
     void                SetWriteBOM(int bWriteBOM);
 
     virtual GIntBig     GetFeatureCount( int bForce = TRUE );
@@ -185,11 +185,11 @@ class OGRCSVDataSource : public OGRDataSource
     OGRLayer          **papoLayers;
     int                 nLayers;
 
-    int                 bUpdate;
+    bool                bUpdate;
 
     CPLString           osDefaultCSVName;
 
-    int                 bEnableGeometryFields;
+    bool                bEnableGeometryFields;
 
   public:
                         OGRCSVDataSource();
@@ -220,7 +220,7 @@ class OGRCSVDataSource : public OGRDataSource
     void                CreateForSingleFile( const char* pszDirname,
                                              const char *pszFilename );
 
-    void                EnableGeometryFields() { bEnableGeometryFields = TRUE; }
+    void                EnableGeometryFields() { bEnableGeometryFields = true; }
 
     static CPLString    GetRealExtension(CPLString osFilename);
 };
