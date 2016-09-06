@@ -159,7 +159,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     break;
                 if ( nSizeOut < nCount )
                     break;
-                nSizeIn -= (nCount + 1) / 2;
+                nSizeIn -= nCount / 2;
                 nSizeOut -= nCount;
                 while ( nCount-- > 0 )
                 {
@@ -206,7 +206,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     break;
                 if ( nSizeOut < nCount )
                     break;
-                nSizeIn -= (3 * nCount + 1) / 2;
+                nSizeIn -= 3 * nCount / 2;
                 nSizeOut -= nCount;
 
                 while ( nCount-- > 0 )
