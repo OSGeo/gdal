@@ -708,10 +708,11 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
         }
         else
         {
-            for( int bDontHonourStrings = 0;
-                 bDontHonourStrings <= 1;
-                 bDontHonourStrings++ )
+            for( int nDontHonourStrings = 0;
+                 nDontHonourStrings <= 1;
+                 nDontHonourStrings++ )
             {
+                const bool bDontHonourStrings = CPL_TO_BOOL(nDontHonourStrings);
                 // Read the first 2 lines to see if they have the same number
                 // of fields, if using tabulation.
                 VSIRewindL( fp );
@@ -762,7 +763,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
         strchr(pszLine, '|') != NULL)
         chDelimiter = '|';
 
-    char **papszFields = OGRCSVReadParseLineL( fp, chDelimiter, FALSE );
+    char **papszFields = OGRCSVReadParseLineL( fp, chDelimiter, false );
 
     if( CSLCount(papszFields) < 2 )
     {
@@ -1024,7 +1025,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 
     const char *pszWriteBOM = CSLFetchNameValue( papszOptions, "WRITE_BOM");
-    if (pszWriteBOM)
+    if( pszWriteBOM )
         poCSVLayer->SetWriteBOM(CPLTestBool(pszWriteBOM));
 
     nLayers++;
