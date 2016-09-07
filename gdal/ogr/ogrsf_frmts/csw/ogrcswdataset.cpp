@@ -55,19 +55,20 @@ class OGRCSWLayer : public OGRLayer
     int                 nFeatureRead;
     int                 nFeaturesInCurrentPage;
 
-    CPLString           osQuery, osCSWWhere;
+    CPLString           osQuery;
+    CPLString           osCSWWhere;
 
     GDALDataset*        FetchGetRecords();
     GIntBig             GetFeatureCountWithHits();
     void                BuildQuery();
 
   public:
-                        OGRCSWLayer(OGRCSWDataSource* poDS);
+                        OGRCSWLayer( OGRCSWDataSource* poDS );
                virtual ~OGRCSWLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature*         GetNextFeature();
-    virtual GIntBig             GetFeatureCount(int bForce = FALSE);
+    virtual GIntBig             GetFeatureCount( int bForce = FALSE );
 
     virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -93,7 +94,7 @@ class OGRCSWDataSource : public OGRDataSource
     int                 nMaxRecords;
 
     OGRCSWLayer*        poLayer;
-    int                 bFullExtentRecordsAsNonSpatial;
+    bool                bFullExtentRecordsAsNonSpatial;
 
     CPLHTTPResult*      SendGetCapabilities();
 
@@ -117,7 +118,7 @@ class OGRCSWDataSource : public OGRDataSource
     const CPLString&            GetVersion() { return osVersion; }
     const CPLString&            GetElementSetName() { return osElementSetName; }
     const CPLString&            GetOutputSchema() { return osOutputSchema; }
-    int                         FullExtentRecordsAsNonSpatial() { return bFullExtentRecordsAsNonSpatial; }
+    bool                        FullExtentRecordsAsNonSpatial() { return bFullExtentRecordsAsNonSpatial; }
     int                         GetMaxRecords() { return nMaxRecords; }
 };
 
@@ -125,7 +126,7 @@ class OGRCSWDataSource : public OGRDataSource
 /*                           OGRCSWLayer()                              */
 /************************************************************************/
 
-OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn) :
+OGRCSWLayer::OGRCSWLayer( OGRCSWDataSource* poDSIn ) :
     poDS(poDSIn),
     poFeatureDefn(new OGRFeatureDefn("records")),
     poBaseDS(NULL),
@@ -589,10 +590,11 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
                     CPLFree(psBBox->pszValue);
                     psBBox->pszValue = CPLStrdup("gml:Envelope");
                     CPLString osSRS = CPLGetXMLValue(psBBox, "crs", "");
-                    OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psBBox,
-                                                          FALSE,
-                                                          0, 0, false, true,
-                                                          false );
+                    OGRGeometry* poGeom =
+                        GML2OGRGeometry_XMLNode( psBBox,
+                                                 FALSE,
+                                                 0, 0, false, true,
+                                                 false );
                     bool bLatLongOrder = true;
                     if( osSRS.size() )
                         bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
@@ -838,7 +840,7 @@ OGRCSWDataSource::OGRCSWDataSource() :
     pszName(NULL),
     nMaxRecords(500),
     poLayer(NULL),
-    bFullExtentRecordsAsNonSpatial(FALSE)
+    bFullExtentRecordsAsNonSpatial(false)
 {}
 
 /************************************************************************/
