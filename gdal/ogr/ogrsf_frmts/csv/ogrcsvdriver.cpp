@@ -133,7 +133,7 @@ void OGRCSVDriverRemoveFromMap(const char* pszName, GDALDataset* poDS)
 static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( OGRCSVDriverIdentify(poOpenInfo) == FALSE )
+    if( !OGRCSVDriverIdentify(poOpenInfo) )
         return NULL;
 
     if( poMap != NULL )

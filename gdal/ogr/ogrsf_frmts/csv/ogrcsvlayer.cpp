@@ -46,8 +46,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 static char **CSVSplitLine( const char *pszString, char chDelimiter,
-                            int bKeepLeadingAndClosingQuotes,
-                            int bMergeDelimiter )
+                            bool bKeepLeadingAndClosingQuotes,
+                            bool bMergeDelimiter )
 
 {
     char **papszRetList = NULL;
@@ -131,8 +131,8 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter,
 
 char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
                              bool bDontHonourStrings,
-                             int bKeepLeadingAndClosingQuotes,
-                             int bMergeDelimiter )
+                             bool bKeepLeadingAndClosingQuotes,
+                             bool bMergeDelimiter )
 
 {
     const char *pszLine = CPLReadLineL( fp );
@@ -223,8 +223,8 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     fpCSV(fp),
     nNextFID(1),
     bHasFieldNames(false),
-    bNew(bNewIn),
-    bInWriteMode(bInWriteModeIn),
+    bNew(CPL_TO_BOOL(bNewIn)),
+    bInWriteMode(CPL_TO_BOOL(bInWriteModeIn)),
     bUseCRLF(false),
     bNeedRewindBeforeRead(false),
     eGeometryFormat(OGR_CSV_GEOM_NONE),
@@ -242,14 +242,14 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     iLongitudeField(-1),
     iLatitudeField(-1),
     iZField(-1),
-    bIsEurostatTSV(FALSE),
+    bIsEurostatTSV(false),
     nEurostatDims(0),
-    nTotalFeatures( bNewIn ? 0 : -1 ),
-    bWarningBadTypeOrWidth(FALSE),
-    bKeepSourceColumns(FALSE),
-    bKeepGeomColumns(TRUE),
-    bMergeDelimiter(FALSE),
-    bEmptyStringNull(FALSE)
+    nTotalFeatures(bNewIn ? 0 : -1),
+    bWarningBadTypeOrWidth(false),
+    bKeepSourceColumns(false),
+    bKeepGeomColumns(true),
+    bMergeDelimiter(false),
+    bEmptyStringNull(false)
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
     SetDescription( poFeatureDefn->GetName() );
@@ -261,10 +261,10 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 /*                             Matches()                                */
 /************************************************************************/
 
-int OGRCSVLayer::Matches(const char* pszFieldName, char** papszPossibleNames)
+bool OGRCSVLayer::Matches( const char* pszFieldName, char** papszPossibleNames )
 {
     if( papszPossibleNames == NULL )
-        return FALSE;
+        return false;
     for(char** papszIter = papszPossibleNames; *papszIter; papszIter++)
     {
         const char* pszPattern = *papszIter;
@@ -272,7 +272,7 @@ int OGRCSVLayer::Matches(const char* pszFieldName, char** papszPossibleNames)
         if( pszStar == NULL )
         {
             if( EQUAL(pszFieldName, pszPattern) )
-                return TRUE;
+                return true;
         }
         else
         {
@@ -286,7 +286,7 @@ int OGRCSVLayer::Matches(const char* pszFieldName, char** papszPossibleNames)
                     oPattern.resize(oPattern.size()-1);
                     if( CPLString(pszFieldName).ifind(oPattern)
                         != std::string::npos )
-                        return TRUE;
+                        return true;
                 }
                 else
                 {
@@ -295,7 +295,7 @@ int OGRCSVLayer::Matches(const char* pszFieldName, char** papszPossibleNames)
                         EQUAL( pszFieldName + strlen(pszFieldName)
                                - (strlen(pszPattern)-1), pszPattern+1) )
                     {
-                        return TRUE;
+                        return true;
                     }
                 }
             }
@@ -303,11 +303,11 @@ int OGRCSVLayer::Matches(const char* pszFieldName, char** papszPossibleNames)
             {
                 // pattern*
                 if( EQUALN(pszFieldName, pszPattern, strlen(pszPattern)-1) )
-                    return TRUE;
+                    return true;
             }
         }
     }
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -413,7 +413,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                     && strchr(papszTokens[0], '\\') != NULL )
                 {
                     bHasFieldNames = true;
-                    bIsEurostatTSV = TRUE;
+                    bIsEurostatTSV = true;
                 }
             }
 
@@ -513,7 +513,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         CPLFree(fname);
         if (fpCSVT!=NULL) {
             VSIRewindL(fpCSVT);
-            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', false, FALSE);
+            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', false, false);
             VSIFCloseL(fpCSVT);
         }
     }
@@ -978,18 +978,25 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
             nBytes = INT_MAX;
     }
     else if( nBytes < 0 || (vsi_l_offset)nBytes < VSIFTellL(fpCSV) )
+    {
         nBytes = 1000000;
+    }
 
-    const char* pszAutodetectWidth
-        = CSLFetchNameValueDef(papszOpenOptions, "AUTODETECT_WIDTH", "NO");
-    int bAutodetectWidth = FALSE;
-    int bAutodetectWidthForIntOrReal = FALSE;
+    const char* pszAutodetectWidth =
+        CSLFetchNameValueDef(papszOpenOptions, "AUTODETECT_WIDTH", "NO");
+    bool bAutodetectWidth = false;
+    bool bAutodetectWidthForIntOrReal = false;
     if( EQUAL(pszAutodetectWidth, "YES") )
-        bAutodetectWidth = bAutodetectWidthForIntOrReal = TRUE;
+    {
+        bAutodetectWidth = true;
+        bAutodetectWidthForIntOrReal = true;
+    }
     else if( EQUAL(pszAutodetectWidth, "STRING_ONLY") )
-        bAutodetectWidth = TRUE;
+    {
+        bAutodetectWidth = true;
+    }
 
-    int bQuotedFieldAsString = CPLTestBool(
+    const bool bQuotedFieldAsString = CPLTestBool(
         CSLFetchNameValueDef( papszOpenOptions, "QUOTED_FIELDS_AS_STRING",
                               "NO" ) );
 
@@ -1097,14 +1104,17 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                 {
                     OGRField sWrkField;
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    int bSuccess = OGRParseDate( papszTokens[iField], &sWrkField, 0 );
+                    const bool bSuccess = CPL_TO_BOOL(
+                        OGRParseDate( papszTokens[iField], &sWrkField, 0 ));
                     CPLPopErrorHandler();
                     CPLErrorReset();
                     if( bSuccess )
                     {
-                        int bHasDate = strchr( papszTokens[iField], '/' ) != NULL ||
-                                       strchr( papszTokens[iField], '-' ) != NULL;
-                        int bHasTime = strchr( papszTokens[iField], ':' ) != NULL;
+                        const bool bHasDate =
+                            strchr( papszTokens[iField], '/' ) != NULL ||
+                            strchr( papszTokens[iField], '-' ) != NULL;
+                        const bool bHasTime =
+                            strchr( papszTokens[iField], ':' ) != NULL;
                         if( bHasDate && bHasTime )
                             eOGRFieldType = OFTDateTime;
                         else if( bHasDate )
@@ -1243,9 +1253,9 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                 {
                     osFieldType += CPLSPrintf(" (%d)", anFieldWidth[iField]);
                 }
-                else if ( anFieldWidth[iField] > 0 &&
-                        bAutodetectWidthForIntOrReal &&
-                        aeFieldType[iField] == OFTReal )
+                else if( anFieldWidth[iField] > 0 &&
+                         bAutodetectWidthForIntOrReal &&
+                         aeFieldType[iField] == OFTReal )
                 {
                     osFieldType += CPLSPrintf(" (%d.%d)", anFieldWidth[iField],
                                             anFieldPrecision[iField]);
@@ -1328,7 +1338,7 @@ char** OGRCSVLayer::GetNextLineTokens()
     {
         papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter,
                                             bDontHonourStrings,
-                                            FALSE, bMergeDelimiter );
+                                            false, bMergeDelimiter );
         if( papszTokens == NULL )
             return NULL;
 
@@ -1466,7 +1476,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 }
                 else if( !bWarningBadTypeOrWidth )
                 {
-                    bWarningBadTypeOrWidth = TRUE;
+                    bWarningBadTypeOrWidth = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                                 "Invalid value type found in record %d for field %s. "
                                 "This warning will no longer be emitted",
@@ -1490,24 +1500,28 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 {
                     poFeature->SetField( iOGRField, papszTokens[iAttr] );
                     if( !bWarningBadTypeOrWidth &&
-                        (eFieldType == OFTInteger || eFieldType == OFTInteger64) && eType == CPL_VALUE_REAL )
+                        (eFieldType == OFTInteger ||
+                         eFieldType == OFTInteger64) &&
+                        eType == CPL_VALUE_REAL )
                     {
-                        bWarningBadTypeOrWidth = TRUE;
+                        bWarningBadTypeOrWidth = true;
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Invalid value type found in record %d for field %s. "
                                  "This warning will no longer be emitted",
                                  nNextFID, poFieldDefn->GetNameRef());
                     }
-                    else if( !bWarningBadTypeOrWidth && poFieldDefn->GetWidth() > 0 &&
+                    else if( !bWarningBadTypeOrWidth &&
+                             poFieldDefn->GetWidth() > 0 &&
                              (int)strlen(papszTokens[iAttr]) > poFieldDefn->GetWidth() )
                     {
-                        bWarningBadTypeOrWidth = TRUE;
+                        bWarningBadTypeOrWidth = true;
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Value with a width greater than field width found in record %d for field %s. "
                                  "This warning will no longer be emitted",
                                  nNextFID, poFieldDefn->GetNameRef());
                     }
-                    else if( !bWarningBadTypeOrWidth && eType == CPL_VALUE_REAL &&
+                    else if( !bWarningBadTypeOrWidth &&
+                             eType == CPL_VALUE_REAL &&
                              poFieldDefn->GetWidth() > 0)
                     {
                         const char* pszDot = strchr(papszTokens[iAttr], '.');
@@ -1516,7 +1530,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                             nPrecision = static_cast<int>(strlen(pszDot + 1));
                         if( nPrecision > poFieldDefn->GetPrecision() )
                         {
-                             bWarningBadTypeOrWidth = TRUE;
+                             bWarningBadTypeOrWidth = true;
                             CPLError(CE_Warning, CPLE_AppDefined,
                                      "Value with a precision greater than field precision found in record %d for field %s. "
                                      "This warning will no longer be emitted",
@@ -1528,11 +1542,12 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 {
                     if( !bWarningBadTypeOrWidth )
                     {
-                        bWarningBadTypeOrWidth = TRUE;
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                    "Invalid value type found in record %d for field %s. "
-                                    "This warning will no longer be emitted",
-                                    nNextFID, poFieldDefn->GetNameRef());
+                        bWarningBadTypeOrWidth = true;
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Invalid value type found in record %d for field "
+                            "%s. This warning will no longer be emitted.",
+                            nNextFID, poFieldDefn->GetNameRef());
                     }
                 }
             }
@@ -1542,9 +1557,10 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
             if (papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored())
             {
                 poFeature->SetField( iOGRField, papszTokens[iAttr] );
-                if( !bWarningBadTypeOrWidth && !poFeature->IsFieldSet(iOGRField) )
+                if( !bWarningBadTypeOrWidth &&
+                    !poFeature->IsFieldSet(iOGRField) )
                 {
-                    bWarningBadTypeOrWidth = TRUE;
+                    bWarningBadTypeOrWidth = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Invalid value type found in record %d for field %s. "
                              "This warning will no longer be emitted",
@@ -1561,11 +1577,12 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 if( !bWarningBadTypeOrWidth && poFieldDefn->GetWidth() > 0 &&
                     (int)strlen(papszTokens[iAttr]) > poFieldDefn->GetWidth() )
                 {
-                    bWarningBadTypeOrWidth = TRUE;
+                    bWarningBadTypeOrWidth = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
-                                "Value with a width greater than field width found in record %d for field %s. "
-                                "This warning will no longer be emitted",
-                                nNextFID, poFieldDefn->GetNameRef());
+                             "Value with a width greater than field width "
+                             "found in record %d for field %s. "
+                             "This warning will no longer be emitted",
+                             nNextFID, poFieldDefn->GetNameRef());
                 }
             }
         }
@@ -1748,7 +1765,8 @@ int OGRCSVLayer::TestCapability( const char * pszCap )
 /************************************************************************/
 
 OGRCSVCreateFieldAction OGRCSVLayer::PreCreateField( OGRFeatureDefn* poFeatureDefn,
-                                    OGRFieldDefn *poNewField, int bApproxOK )
+                                                     OGRFieldDefn *poNewField,
+                                                     int bApproxOK )
 {
 
 /* -------------------------------------------------------------------- */
@@ -1916,7 +1934,7 @@ OGRErr OGRCSVLayer::WriteHeader()
 /*      Write field names if we haven't written them yet.               */
 /*      Write .csvt file if needed                                      */
 /* -------------------------------------------------------------------- */
-    bNew = FALSE;
+    bNew = false;
     bHasFieldNames = true;
     bool bOK = true;
 
@@ -2004,9 +2022,9 @@ OGRErr OGRCSVLayer::WriteHeader()
 
             if( fpCSV )
             {
-                int bAddDoubleQuote = FALSE;
+                bool bAddDoubleQuote = false;
                 if( chDelimiter == ' ' && pszEscaped[0] != '"' && strchr(pszEscaped, ' ') != NULL )
-                    bAddDoubleQuote = TRUE;
+                    bAddDoubleQuote = true;
                 if( bAddDoubleQuote )
                     bOK &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
                 bOK &= VSIFPrintfL( fpCSV, "%s", pszEscaped ) >= 0;
@@ -2202,7 +2220,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 /* -------------------------------------------------------------------- */
 /*      Special case to deal with hidden "WKT" geometry column          */
 /* -------------------------------------------------------------------- */
-    int bNonEmptyLine = FALSE;
+    bool bNonEmptyLine = false;
 
     if( bHiddenWKTColumn )
     {
@@ -2210,7 +2228,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         OGRGeometry     *poGeom = poNewFeature->GetGeomFieldRef(0);
         if (poGeom && poGeom->exportToWkt(&pszWKT, wkbVariantIso) == OGRERR_NONE)
         {
-            bNonEmptyLine = TRUE;
+            bNonEmptyLine = true;
             bRet &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
             bRet &= VSIFWriteL( pszWKT, strlen(pszWKT), 1, fpCSV ) > 0;
             bRet &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
@@ -2286,10 +2304,10 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         }
 
         int nLen = (int)strlen(pszEscaped);
-        bNonEmptyLine |= (nLen != 0);
-        int bAddDoubleQuote = FALSE;
+        bNonEmptyLine |= nLen != 0;
+        bool bAddDoubleQuote = false;
         if( chDelimiter == ' ' && pszEscaped[0] != '"' && strchr(pszEscaped, ' ') != NULL )
-            bAddDoubleQuote = TRUE;
+            bAddDoubleQuote = true;
         if( bAddDoubleQuote )
             bRet &= VSIFWriteL( "\"", 1, 1, fpCSV ) > 0;
         if( nLen )
@@ -2300,7 +2318,8 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
     }
 
     if( (poFeatureDefn->GetFieldCount() == 1 ||
-         (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn)) && !bNonEmptyLine )
+         (poFeatureDefn->GetFieldCount() == 0 && bHiddenWKTColumn)) &&
+        !bNonEmptyLine )
         bRet &= VSIFPrintfL( fpCSV, "%c", chDelimiter ) > 0;
 
     if( bUseCRLF )
