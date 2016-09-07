@@ -890,12 +890,14 @@ protected:
 
     int            m_nColorTableComponent;
 
+    template <class WorkingDT>
     CPLErr          RasterIOInternal( int nReqXOff, int nReqYOff,
                                       int nReqXSize, int nReqYSize,
                                       void *pData, int nOutXSize, int nOutYSize,
                                       GDALDataType eBufType,
                                       GSpacing nPixelSpace, GSpacing nLineSpace,
-                                      GDALRasterIOExtraArg* psExtraArg );
+                                      GDALRasterIOExtraArg* psExtraArg,
+                                      GDALDataType eWrkDataType );
 
 public:
                    VRTComplexSource();
