@@ -41,7 +41,8 @@ static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
 static void Usage()
 
 {
-    printf( "Usage: dgndump [-e xmin ymin xmax ymax] [-s] [-r n] filename.dgn\n" );
+    printf( "Usage: dgndump [-e xmin ymin xmax ymax] [-s] [-r n] "
+            "filename.dgn\n" );
     printf( "\n" );
     printf( "  -e xmin ymin xmax ymax: only get elements within extents.\n" );
     printf( "  -s: produce summary report of element types and levels.\n");
@@ -57,20 +58,21 @@ static void Usage()
 int main( int argc, char ** argv )
 
 {
-    DGNHandle   hDGN;
-    DGNElemCore *psElement;
-    const char  *pszFilename = NULL;
-    int         bSummary = FALSE, iArg, bRaw = FALSE, bReportExtents = FALSE;
-    char        achRaw[128];
-    double      dfSFXMin=0.0, dfSFXMax=0.0, dfSFYMin=0.0, dfSFYMax=0.0;
+    char achRaw[128] = {};
+    bool bRaw = false;
+    bool bReportExtents = false;
+    bool bSummary = false;
+    double dfSFXMin = 0.0;
+    double dfSFXMax = 0.0;
+    double dfSFYMin = 0.0;
+    double dfSFYMax = 0.0;
+    const char *pszFilename = NULL;
 
-    memset( achRaw, 0, 128 );
-
-    for( iArg = 1; iArg < argc; iArg++ )
+    for( int iArg = 1; iArg < argc; iArg++ )
     {
         if( strcmp(argv[iArg],"-s") == 0 )
         {
-            bSummary = TRUE;
+            bSummary = true;
         }
         else if( strcmp(argv[iArg],"-e") == 0 && iArg < argc-4 )
         {
@@ -83,12 +85,12 @@ int main( int argc, char ** argv )
         else if( strcmp(argv[iArg],"-r") == 0 && iArg < argc-1 )
         {
             achRaw[MAX(0,MIN(127,atoi(argv[iArg+1])))] = 1;
-            bRaw = TRUE;
+            bRaw = true;
             iArg++;
         }
         else if( strcmp(argv[iArg],"-extents") == 0 )
         {
-            bReportExtents = TRUE;
+            bReportExtents = true;
         }
         else if( argv[iArg][0] == '-' || pszFilename != NULL )
             Usage();
@@ -99,7 +101,7 @@ int main( int argc, char ** argv )
     if( pszFilename == NULL )
         Usage();
 
-    hDGN = DGNOpen( pszFilename, FALSE );
+    DGNHandle hDGN = DGNOpen( pszFilename, FALSE );
     if( hDGN == NULL )
         exit( 1 );
 
@@ -110,6 +112,7 @@ int main( int argc, char ** argv )
 
     if( !bSummary )
     {
+        DGNElemCore *psElement = NULL;
         while( (psElement=DGNReadElement(hDGN)) != NULL )
         {
             DGNDumpElement( hDGN, psElement, stdout );
@@ -134,12 +137,7 @@ int main( int argc, char ** argv )
     }
     else
     {
-        const DGNElementInfo    *pasEI;
-        int                     nCount, i, nLevel, nType;
-        int                     anLevelTypeCount[128*64];
-        int                     anLevelCount[64];
-        int                     anTypeCount[128];
-        double                  adfExtents[6];
+        double adfExtents[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
         DGNGetExtents( hDGN, adfExtents );
         printf( "X Range: %.2f to %.2f\n",
@@ -149,15 +147,16 @@ int main( int argc, char ** argv )
         printf( "Z Range: %.2f to %.2f\n",
                 adfExtents[2], adfExtents[5] );
 
-        pasEI = DGNGetElementIndex( hDGN, &nCount );
+        int nCount = 0;
+        const DGNElementInfo *pasEI = DGNGetElementIndex( hDGN, &nCount );
 
         printf( "Total Elements: %d\n", nCount );
 
-        memset( anLevelTypeCount, 0, 128*64*sizeof(int) );
-        memset( anLevelCount, 0, 64*sizeof(int) );
-        memset( anTypeCount, 0, 128*sizeof(int) );
+        int anLevelTypeCount[128*64] = {};
+        int anLevelCount[64] = {};
+        int anTypeCount[128] = {};
 
-        for( i = 0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
         {
             anLevelTypeCount[pasEI[i].level * 128 + pasEI[i].type]++;
             anLevelCount[pasEI[i].level]++;
@@ -168,7 +167,7 @@ int main( int argc, char ** argv )
         printf( "Per Type Report\n" );
         printf( "===============\n" );
 
-        for( nType = 0; nType < 128; nType++ )
+        for( int nType = 0; nType < 128; nType++ )
         {
             if( anTypeCount[nType] != 0 )
             {
@@ -182,7 +181,7 @@ int main( int argc, char ** argv )
         printf( "Per Level Report\n" );
         printf( "================\n" );
 
-        for( nLevel = 0; nLevel < 64; nLevel++ )
+        for( int nLevel = 0; nLevel < 64; nLevel++ )
         {
             if( anLevelCount[nLevel] == 0 )
                 continue;
@@ -191,7 +190,7 @@ int main( int argc, char ** argv )
                     nLevel,
                     anLevelCount[nLevel] );
 
-            for( nType = 0; nType < 128; nType++ )
+            for( int nType = 0; nType < 128; nType++ )
             {
                 if( anLevelTypeCount[nLevel * 128 + nType] != 0 )
                 {
@@ -214,25 +213,26 @@ int main( int argc, char ** argv )
 /*                         DGNDumpRawElement()                          */
 /************************************************************************/
 
-static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
+static void DGNDumpRawElement( DGNHandle /* hDGN */, DGNElemCore *psCore,
                                FILE *fpOut )
 
 {
-    int         i, iChar = 0;
-    char        szLine[80];
+    int iChar = 0;
+    const size_t knLineSize = 80;
+    char szLine[knLineSize] = {};
 
     fprintf( fpOut, "  Raw Data (%d bytes):\n", psCore->raw_bytes );
-    for( i = 0; i < psCore->raw_bytes; i++ )
+    for( int i = 0; i < psCore->raw_bytes; i++ )
     {
-        char    szHex[3];
-
         if( (i % 16) == 0 )
         {
-            sprintf( szLine, "%6d: %71s", i, " " );
+            snprintf( szLine, knLineSize, "%6d: %71s", i, " " );
             iChar = 0;
         }
 
-        sprintf( szHex, "%02x", psCore->raw_data[i] );
+        const size_t knHexSize = 3;
+        char szHex[knHexSize] = { '\0', '\0', '\0' };
+        snprintf( szHex, knHexSize, "%02x", psCore->raw_data[i] );
         strncpy( szLine+8+iChar*2, szHex, 2 );
 
         if( psCore->raw_data[i] < 32 || psCore->raw_data[i] > 127 )
