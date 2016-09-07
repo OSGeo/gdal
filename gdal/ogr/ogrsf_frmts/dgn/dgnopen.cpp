@@ -130,7 +130,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
     psDGN->fp = fp;
     psDGN->next_element_id = 0;
 
-    psDGN->got_tcb = FALSE;
+    psDGN->got_tcb = false;
     psDGN->scale = 1.0;
     psDGN->origin_x = 0.0;
     psDGN->origin_y = 0.0;
@@ -243,20 +243,22 @@ void DGNSetSpatialFilter( DGNHandle hDGN,
 void DGNSpatialFilterToUOR( DGNInfo *psDGN )
 
 {
-    DGNPoint    sMin, sMax;
-
     if( psDGN->sf_converted_to_uor
         || !psDGN->has_spatial_filter
         || !psDGN->got_tcb )
         return;
 
-    sMin.x = psDGN->sf_min_x_geo;
-    sMin.y = psDGN->sf_min_y_geo;
-    sMin.z = 0;
+    DGNPoint sMin = {
+        psDGN->sf_min_x_geo,
+        psDGN->sf_min_y_geo,
+        0
+    };
 
-    sMax.x = psDGN->sf_max_x_geo;
-    sMax.y = psDGN->sf_max_y_geo;
-    sMax.z = 0;
+    DGNPoint sMax = {
+        psDGN->sf_max_x_geo,
+        psDGN->sf_max_y_geo,
+        0
+    };
 
     DGNInverseTransformPoint( psDGN, &sMin );
     DGNInverseTransformPoint( psDGN, &sMax );
