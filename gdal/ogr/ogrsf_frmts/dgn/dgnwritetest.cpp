@@ -35,21 +35,16 @@ CPL_CVSID("$Id$");
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+int main( int /* argc */, char ** /* argv */ )
 
 {
-    DGNHandle hNewDGN;
-    DGNElemCore *psMembers[2];
-    DGNPoint   asPoints[10];
-    DGNElemCore *psLine;
-
 /* -------------------------------------------------------------------- */
 /*      Create new DGN file.                                            */
 /* -------------------------------------------------------------------- */
-    hNewDGN = DGNCreate( "out.dgn", "seed.dgn",
-                         DGNCF_USE_SEED_UNITS
-                         | DGNCF_USE_SEED_ORIGIN,
-                         0.0, 0.0, 0.0, 0, 0, "", "" );
+    DGNHandle hNewDGN = DGNCreate( "out.dgn", "seed.dgn",
+                                   DGNCF_USE_SEED_UNITS
+                                   | DGNCF_USE_SEED_ORIGIN,
+                                   0.0, 0.0, 0.0, 0, 0, "", "" );
 
     if( hNewDGN == NULL )
     {
@@ -60,6 +55,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Write one line segment to it.                                   */
 /* -------------------------------------------------------------------- */
+    DGNPoint asPoints[10];
     memset( &asPoints, 0, sizeof(asPoints) );
 
     asPoints[0].x = 0;
@@ -69,7 +65,8 @@ int main( int argc, char ** argv )
     asPoints[1].y = 4000;
     asPoints[1].z = 110;
 
-    psLine = DGNCreateMultiPointElem( hNewDGN, DGNT_LINE, 2, asPoints );
+    DGNElemCore *psLine =
+        DGNCreateMultiPointElem( hNewDGN, DGNT_LINE, 2, asPoints );
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
     DGNWriteElement( hNewDGN, psLine );
     DGNFreeElement( hNewDGN, psLine );
@@ -150,8 +147,10 @@ int main( int argc, char ** argv )
     asPoints[2].x = 6000;
     asPoints[2].y = 6000;
 
-    psMembers[0] = DGNCreateMultiPointElem( hNewDGN, DGNT_LINE_STRING, 3,
-                                            asPoints );
+    DGNElemCore *psMembers[2] = {
+        DGNCreateMultiPointElem( hNewDGN, DGNT_LINE_STRING, 3, asPoints ),
+        DGNCreateMultiPointElem( hNewDGN, DGNT_LINE_STRING, 3, asPoints )
+    };
     DGNUpdateElemCore( hNewDGN, psMembers[0], 9, 0, 3, 1, 0 );
 
     asPoints[0].x = 6000;
@@ -161,8 +160,6 @@ int main( int argc, char ** argv )
     asPoints[2].x = 8000;
     asPoints[2].y = 8000;
 
-    psMembers[1] = DGNCreateMultiPointElem( hNewDGN, DGNT_LINE_STRING, 3,
-                                            asPoints );
     DGNUpdateElemCore( hNewDGN, psMembers[1], 9, 0, 3, 1, 0 );
 
     psLine = DGNCreateComplexHeaderFromGroup( hNewDGN,
