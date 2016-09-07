@@ -92,7 +92,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
     const char chDelimiter = m_poCSVLayer->GetDelimiter();
     OGRCSVLayer* poCSVTmpLayer = new OGRCSVLayer( osLayerName, NULL,
                                                   osTmpFilename,
-                                                  TRUE, TRUE, chDelimiter );
+                                                  true, true, chDelimiter );
     poCSVTmpLayer->BuildFeatureDefn(NULL, NULL, m_papszOpenOptions);
     poCSVTmpLayer->SetCRLF( m_poCSVLayer->GetCRLF() );
     poCSVTmpLayer->SetCreateCSVT( bCreateCSVT || bHasCSVT );
@@ -238,8 +238,8 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
 
     m_poCSVLayer = new OGRCSVLayer( osLayerName, fp,
                                     osFilename,
-                                    FALSE, /* new */
-                                    TRUE, /* update */
+                                    false, /* new */
+                                    true, /* update */
                                     chDelimiter );
     m_poCSVLayer->BuildFeatureDefn(NULL, NULL, m_papszOpenOptions);
     *ppoDecoratedLayer = m_poCSVLayer;
@@ -281,7 +281,8 @@ OGRCSVEditableLayer::OGRCSVEditableLayer(OGRCSVLayer* poCSVLayer,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCSVEditableLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
+OGRErr OGRCSVEditableLayer::CreateField( OGRFieldDefn *poNewField,
+                                         int bApproxOK )
 
 {
     OGRCSVCreateFieldAction eAction = OGRCSVLayer::PreCreateField(
@@ -596,8 +597,8 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
                   STARTS_WITH_CI(papszNames[i]+2, "_Features_") &&
                   EQUAL(CPLGetExtension(papszNames[i]), "txt") )
         {
-            int bRet
-                = OpenTable( oSubFilename, papszOpenOptionsIn, NULL, "PRIM");
+            bool bRet =
+                OpenTable( oSubFilename, papszOpenOptionsIn, NULL, "PRIM");
             bRet |=
                 OpenTable( oSubFilename, papszOpenOptionsIn, NULL, "SOURCE");
             if ( !bRet )
@@ -640,10 +641,10 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /*                              OpenTable()                             */
 /************************************************************************/
 
-int OGRCSVDataSource::OpenTable( const char * pszFilename,
-                                 char** papszOpenOptionsIn,
-                                 const char* pszNfdcRunwaysGeomField,
-                                 const char* pszGeonamesGeomFieldPrefix)
+bool OGRCSVDataSource::OpenTable( const char * pszFilename,
+                                  char** papszOpenOptionsIn,
+                                  const char* pszNfdcRunwaysGeomField,
+                                  const char* pszGeonamesGeomFieldPrefix)
 
 {
 /* -------------------------------------------------------------------- */
@@ -660,7 +661,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
         CPLError( CE_Warning, CPLE_OpenFailed,
                   "Failed to open %s, %s.",
                   pszFilename, VSIStrerror( errno ) );
-        return FALSE;
+        return false;
     }
 
     if( !bUpdate && strstr(pszFilename, "/vsigzip/") == NULL &&
@@ -695,7 +696,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
     if (pszLine == NULL)
     {
         VSIFCloseL( fp );
-        return FALSE;
+        return false;
     }
     char chDelimiter = CSVDetectSeperator(pszLine);
     if( chDelimiter != '\t' && strchr(pszLine, '\t') != NULL )
@@ -769,7 +770,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
     {
         VSIFCloseL( fp );
         CSLDestroy( papszFields );
-        return FALSE;
+        return false;
     }
 
     VSIRewindL( fp );
@@ -809,7 +810,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
     }
     papoLayers[nLayers-1] = poLayer;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -910,7 +911,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 
     OGRCSVLayer* poCSVLayer = new OGRCSVLayer( pszLayerName, NULL, osFilename,
-                                               TRUE, TRUE, chDelimiter );
+                                               true, true, chDelimiter );
 
     poCSVLayer->BuildFeatureDefn();
 
