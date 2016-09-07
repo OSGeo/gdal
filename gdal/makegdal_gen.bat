@@ -307,7 +307,7 @@ goto :end
     
     set _folder_=%~nx1
   
-    for %%d in (data debian docs html m4 pymod swig bridge vb6) do (
+    for %%d in (data debian docs html m4 pymod swig) do (
         if "%_folder_%"=="%%d" (
             goto :end
         )

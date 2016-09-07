@@ -85,9 +85,6 @@ clean:
 	cd swig
 	$(MAKE) /f makefile.vc clean
 	cd ..
-	cd vb6
-	$(MAKE) /f makefile.vc clean
-	cd ..
 	if exist gdal.lib del gdal.lib
 	if exist $(GDAL_DLL) del $(GDAL_DLL)
 	if exist $(GDAL_DLL).manifest del $(GDAL_DLL).manifest
@@ -129,11 +126,6 @@ plugin_dir:
 
 apps_dir:
 	cd apps
-	$(MAKE) /f makefile.vc
-	cd ..
-
-vb6_dir:
-	cd vb6
 	$(MAKE) /f makefile.vc
 	cd ..
 
