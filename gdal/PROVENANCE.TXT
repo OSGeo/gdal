@@ -117,10 +117,6 @@ Note: all the following are build options, not required.
 * llrasterize.c: Derived from GD which has compatible MIT/X license.  Properly noted in header.
 * thinplatespline.cpp: Contributed by VIZRT Inc.,  Relicensed to MIT/X with their explicit permission as noted in the header.
 
-=== gdal/bridge ===
-
-* All FrankW, no issues of note.
-
 === gdal/data ===
 
 * Contains various data files without copyright messages embedded.
@@ -130,7 +126,6 @@ Note: all the following are build options, not required.
 * ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Modifications to EPSG data violate the EPSG use agreement (if we are to still attribute it to EPSG) so I have segregated changes into override files (i.e. gcs.override.csv).
 * seed_2d.dgn, seed_3d.dgn: Exact source of these files is unclear.  The files contain no substantial creative content since all but the header elements were stripped.  Judged to acceptable use.
 * NTS-50kindex.csv: Provided by Matt Wilkie, derived from NRCan dataset, rights unclear.  See http://trac.osgeo.org/gdal/ticket/2164 (closed - this file isn't actually in the source tree - it is separately distributed as part of FWTools!)
-
 
 === gdal/apps ===
 
@@ -166,10 +161,6 @@ Note: all the following are build options, not required.
 * gdal_vrtmerge.py: Under LGPL (derived from gdal_merge.py), several contributors.
 * histrep.py: corrected copyright message (Atlantis to FrankW), change license to MIT/X.
 * various contributors, all under proper and compatible copyright headers.
-
-=== gdal/vb6 ===
-
-* all written by FrankW, clean.
 
 === gdal/ogr/ogrsf_rmts/generic ===
 
