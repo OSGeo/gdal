@@ -40,7 +40,7 @@ typedef struct {
     int         nElemBytes;
     GByte       abyElem[131076];
 
-    int         got_tcb;
+    bool        got_tcb;
     int         dimension;
     int         options;
     double      scale;
