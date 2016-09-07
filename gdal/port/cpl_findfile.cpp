@@ -154,11 +154,11 @@ const char *CPLDefaultFindFile( const char * /* pszClass */,
 
     for( int i = nLocations-1; i >= 0; i-- )
     {
-        const char  *pszResult
-            = CPLFormFilename( pTLSData->papszFinderLocations[i], pszBasename,
-                               NULL );
+        const char *pszResult =
+            CPLFormFilename( pTLSData->papszFinderLocations[i], pszBasename,
+                             NULL );
 
-        VSIStatBufL  sStat;
+        VSIStatBufL sStat;
         if( VSIStatL( pszResult, &sStat ) == 0 )
             return pszResult;
     }
@@ -180,8 +180,8 @@ const char *CPLFindFile( const char *pszClass, const char *pszBasename )
 
     for( int i = pTLSData->nFileFinders-1; i >= 0; i-- )
     {
-        const char * pszResult
-            = (pTLSData->papfnFinders[i])( pszClass, pszBasename );
+        const char * pszResult =
+            (pTLSData->papfnFinders[i])( pszClass, pszBasename );
         if( pszResult != NULL )
             return pszResult;
     }
@@ -211,7 +211,7 @@ void CPLPushFileFinder( CPLFileFinder pfnFinder )
 /*                          CPLPopFileFinder()                          */
 /************************************************************************/
 
-CPLFileFinder CPLPopFileFinderInternal(FindFileTLS* pTLSData)
+CPLFileFinder CPLPopFileFinderInternal( FindFileTLS* pTLSData )
 
 {
     if( pTLSData == NULL || pTLSData->nFileFinders == 0 )
@@ -250,9 +250,8 @@ void CPLPushFinderLocation( const char *pszLocation )
     if( CSLFindStringCaseSensitive(pTLSData->papszFinderLocations,
                                    pszLocation) > -1 )
         return;
-    pTLSData->papszFinderLocations
-        = CSLAddStringMayFail( pTLSData->papszFinderLocations,
-                               pszLocation );
+    pTLSData->papszFinderLocations =
+        CSLAddStringMayFail( pTLSData->papszFinderLocations, pszLocation );
 }
 
 
