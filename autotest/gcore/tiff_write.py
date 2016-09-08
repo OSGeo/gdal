@@ -5010,6 +5010,23 @@ def tiff_write_123():
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_guua.tif')
 
+    # Test that CreateCopy() from a RGB UInt16 doesn't generate ExtraSamples
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_rgb_src.tif',
+                            1,1,3,gdal.GDT_UInt16,options=['PHOTOMETRIC=RGB'])
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgb.tif', src_ds)
+    src_ds = None
+    if ds.GetMetadataItem('TIFFTAG_PHOTOMETRIC', '_DEBUG_') != '2':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataItem('TIFFTAG_PHOTOMETRIC', '_DEBUG_'))
+        return 'fail'
+    if ds.GetMetadataItem('TIFFTAG_EXTRASAMPLES', '_DEBUG_') is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataItem('TIFFTAG_EXTRASAMPLES', '_DEBUG_'))
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb_src.tif')
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb.tif')
+
     return 'success'
 
 ###############################################################################
