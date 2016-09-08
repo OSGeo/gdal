@@ -13565,6 +13565,25 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #endif
 
 /* -------------------------------------------------------------------- */
+/*      If the source is RGB, then set the PHOTOMETRIC=RGB value        */
+/* -------------------------------------------------------------------- */
+
+    const bool bForcePhotometric =
+        CSLFetchNameValue(papszOptions, "PHOTOMETRIC") != NULL;
+
+    if( nBands >= 3 && !bForcePhotometric &&
+#ifdef HAVE_LIBJPEG
+        !bCopyFromJPEG &&
+#endif
+        poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
+        poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
+        poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
+    {
+        papszCreateOptions =
+            CSLSetNameValue( papszCreateOptions, "PHOTOMETRIC", "RGB" );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
     VSILFILE* fpL = NULL;
@@ -13590,39 +13609,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
         nCompression = COMPRESSION_NONE;
-
-    bool bForcePhotometric =
-        CSLFetchNameValue(papszOptions,"PHOTOMETRIC") != NULL;
-
-/* -------------------------------------------------------------------- */
-/*      If the source is RGB, then set the PHOTOMETRIC_RGB value        */
-/* -------------------------------------------------------------------- */
-    if( nBands >= 3 && !bForcePhotometric &&
-        nCompression != COMPRESSION_JPEG &&
-        poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
-        poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
-        poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
-    {
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
-
-        /* We need to update the number of extra samples */
-        uint16 *v;
-        uint16 count = 0;
-        uint16 nNewExtraSamplesCount = static_cast<uint16>(nBands - 3);
-        if( nBands >= 4 &&
-            TIFFGetField( hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) &&
-            count > nNewExtraSamplesCount )
-        {
-            uint16* pasNewExtraSamples =
-                (uint16*)CPLMalloc( nNewExtraSamplesCount * sizeof(uint16) );
-            memcpy( pasNewExtraSamples, v + count - nNewExtraSamplesCount,
-                    nNewExtraSamplesCount * sizeof(uint16) );
-
-            TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nNewExtraSamplesCount, pasNewExtraSamples);
-
-            CPLFree(pasNewExtraSamples);
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the alpha channel if it is the last one.                    */
