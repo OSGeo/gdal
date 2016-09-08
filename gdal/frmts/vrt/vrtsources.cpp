@@ -2316,7 +2316,8 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLErr eErr;
     // For Int32, float32 isn't sufficiently precise as working data type
     if( eBufType == GDT_CInt32 || eBufType == GDT_CFloat64 ||
-        eBufType == GDT_Int32 || eBufType == GDT_Float64 )
+        eBufType == GDT_Int32 || eBufType == GDT_UInt32 ||
+        eBufType == GDT_Float64 )
     {
         eErr = RasterIOInternal<double>(
                 nReqXOff, nReqYOff, nReqXSize, nReqYSize,
