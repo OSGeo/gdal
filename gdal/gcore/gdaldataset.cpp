@@ -1406,12 +1406,17 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
  * CE_Failure is returned, and CPLGetLastErrorNo() will return
  * CPLE_NotSupported.
  *
+ * Depending on the actual file format, all overviews level can be also
+ * deleted by specifying nOverviews == 0. This works at least for external
+ * overviews (.ovr), TIFF internal overviews, etc.
+ *
  * This method is the same as the C function GDALBuildOverviews().
  *
  * @param pszResampling one of "NEAREST", "GAUSS", "CUBIC", "AVERAGE", "MODE",
  * "AVERAGE_MAGPHASE" or "NONE" controlling the downsampling method applied.
- * @param nOverviews number of overviews to build.
- * @param panOverviewList the list of overview decimation factors to build.
+ * @param nOverviews number of overviews to build, or 0 to clean overviews.
+ * @param panOverviewList the list of overview decimation factors to build, or
+ *                        NULL if nOverviews == 0.
  * @param nListBands number of bands to build overviews for in panBandList.  Build
  * for all bands if this is 0.
  * @param panBandList list of band numbers.
