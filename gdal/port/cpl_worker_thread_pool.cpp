@@ -66,7 +66,9 @@ CPLWorkerThreadPool::~CPLWorkerThreadPool()
     {
         WaitCompletion();
 
+        CPLAcquireMutex(hMutex, 1000.0);
         eState = CPLWTS_STOP;
+        CPLReleaseMutex(hMutex);
 
         for(size_t i=0;i<aWT.size();i++)
         {
