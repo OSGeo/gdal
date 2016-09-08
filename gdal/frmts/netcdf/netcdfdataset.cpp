@@ -6662,6 +6662,14 @@ CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     pszVarValue = (char *) CPLCalloc( nVarValueSize, sizeof( char ));
     *pszVarValue = '\0';
 
+    if ( nVarLen == 0 )
+    {
+        /* set return values */
+        *pszValue = pszVarValue;
+
+        return CE_None;
+    }
+
     if ( nVarLen > 1 && nVarType != NC_CHAR )    
         NCDFSafeStrcat(&pszVarValue, (char *)"{", &nVarValueSize);
 
