@@ -76,7 +76,6 @@ int DGNStrokeArc( CPL_UNUSED DGNHandle hFile,
                   int nPoints, DGNPoint * pasPoints )
 {
     double      dfAngleStep, dfAngle;
-    int         i;
 
     if( nPoints < 2 )
         return FALSE;
@@ -89,7 +88,7 @@ int DGNStrokeArc( CPL_UNUSED DGNHandle hFile,
     }
 
     dfAngleStep = psArc->sweepang / (nPoints - 1);
-    for( i = 0; i < nPoints; i++ )
+    for( int i = 0; i < nPoints; i++ )
     {
         dfAngle = (psArc->startang + dfAngleStep * i) * DEG_TO_RAD;
 

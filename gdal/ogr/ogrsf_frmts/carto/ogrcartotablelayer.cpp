@@ -43,7 +43,7 @@ CPLString OGRCARTOEscapeIdentifier(const char* pszStr)
 
     osStr += "\"";
 
-    char ch;
+    char ch = '\0';
     for(int i=0; (ch = pszStr[i]) != '\0'; i++)
     {
         if (ch == '"')
@@ -64,7 +64,7 @@ CPLString OGRCARTOEscapeLiteral(const char* pszStr)
 {
     CPLString osStr;
 
-    char ch;
+    char ch = '\0';
     for(int i=0; (ch = pszStr[i]) != '\0'; i++)
     {
         if (ch == '\'')
@@ -571,8 +571,6 @@ OGRErr OGRCARTOTableLayer::DeleteField( int iField )
 OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
-    int i;
-
     if( bDeferredCreation )
     {
         if( RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -643,7 +641,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
         else
         {
             eDeferredInsertState = INSERT_MULTIPLE_FEATURE;
-            for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+            for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
             {
                 if( poFeatureDefn->GetFieldDefn(i)->GetDefault() != NULL )
                     eDeferredInsertState = INSERT_SINGLE_FEATURE;
@@ -655,7 +653,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
     if( bWriteInsertInto )
     {
         osSQL.Printf("INSERT INTO %s ", OGRCARTOEscapeIdentifier(osName).c_str());
-        for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
             if( eDeferredInsertState != INSERT_MULTIPLE_FEATURE &&
                 !poFeature->IsFieldSet(i) )
@@ -672,7 +670,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             osSQL += OGRCARTOEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
         }
 
-        for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+        for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
         {
             if( eDeferredInsertState != INSERT_MULTIPLE_FEATURE &&
                 poFeature->GetGeomFieldRef(i) == NULL )
@@ -717,7 +715,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             osSQL += ") VALUES (";
 
         bMustComma = false;
-        for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
         {
             if( !poFeature->IsFieldSet(i) )
             {
@@ -753,7 +751,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
                 osSQL += poFeature->GetFieldAsString(i);
         }
 
-        for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+        for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
         {
             OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
             if( poGeom == NULL )

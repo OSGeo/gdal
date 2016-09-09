@@ -247,9 +247,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    int iLayer;
-
-    for( iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
+    for( int iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
     {
         if( EQUAL(osLayerName, papoLayers[iLayer]->GetName()) )
         {

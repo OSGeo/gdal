@@ -256,12 +256,10 @@ int OGRAmigoCloudDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
     {
-        int             nAuthorityCode;
-
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
-        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
+        const int nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
 
         return nAuthorityCode;
     }

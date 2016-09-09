@@ -329,7 +329,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
     if( !bNew && bInWriteMode )
     {
         int nBytesRead = 0;
-        char chNewByte;
+        char chNewByte = '\0';
 
         while( nBytesRead < 10000 && VSIFReadL( &chNewByte, 1, 1, fpCSV ) == 1 )
         {
@@ -1396,30 +1396,29 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Set attributes for any indicated attribute records.             */
 /* -------------------------------------------------------------------- */
-    int         iAttr;
-    int         iOGRField = 0;
-    int nAttrCount =
+    int iOGRField = 0;
+    const int nAttrCount =
         MIN( CSLCount(papszTokens),
              nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0) );
     CPLValueType eType;
 
-    for( iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
+    for( int iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++ )
     {
         if( (iAttr == iLongitudeField || iAttr == iLatitudeField || iAttr == iZField ) &&
             !bKeepGeomColumns )
         {
             continue;
         }
-        int iGeom;
+        int iGeom = 0;
         if( bHiddenWKTColumn )
         {
-            if(iAttr == 0)
-                iGeom = 0;
-            else
+            if(iAttr != 0)
                 iGeom = panGeomFieldIndex[iAttr - 1];
         }
         else
+        {
             iGeom = panGeomFieldIndex[iAttr];
+        }
         if( iGeom >= 0 )
         {
             if ( papszTokens[iAttr][0] != '\0'&&
@@ -1604,7 +1603,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /*      Eurostat TSV files.                                             */
 /* -------------------------------------------------------------------- */
 
-    for( iAttr = 0; bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
+    for( int iAttr = 0; bIsEurostatTSV && iAttr < nAttrCount; iAttr++ )
     {
         if( iAttr == 0 )
         {
@@ -2121,8 +2120,6 @@ OGRErr OGRCSVLayer::WriteHeader()
 OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 
 {
-    int iField;
-
     if( !bInWriteMode )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -2164,10 +2161,10 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
             bFirstFeatureAppendedDuringSession = false;
             bRet &= VSIFSeekL( fpCSV, 0, SEEK_END ) >= 0;
             bRet &= VSIFSeekL( fpCSV, VSIFTellL(fpCSV) - 1, SEEK_SET) >= 0;
-            char chLast;
+            char chLast = '\0';
             bRet &= VSIFReadL( &chLast, 1, 1, fpCSV ) > 0;
             bRet &= VSIFSeekL( fpCSV, 0, SEEK_END ) >= 0;
-            if (chLast != '\n')
+            if( chLast != '\n' )
             {
                 if( bUseCRLF )
                     bRet &= VSIFPutcL( 13, fpCSV ) != EOF;
@@ -2239,8 +2236,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 /* -------------------------------------------------------------------- */
 /*      Write out all the field values.                                 */
 /* -------------------------------------------------------------------- */
-
-    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         char *pszEscaped = NULL;
 

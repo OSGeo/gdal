@@ -181,11 +181,11 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
     {
         if (ptrCurLine == szLineBuffer + LINE_BUFFER_SIZE - 1)
         {
-            char c;
+            char c = '\0';
             nRead = static_cast<int>(VSIFReadL(&c, 1, 1, f));
-            if (nRead == 1)
+            if( nRead == 1 )
             {
-                if (c == 0x0a)
+                if( c == 0x0a )
                 {
                     /* Do nothing */
                 }
@@ -404,7 +404,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
           }
           else if (numField == NB_MIN_BNA_IDS + nbExtraId)
           {
-            int nCoords;
+            int nCoords = 0;
             if (ptrBeginningOfNumber == NULL)
             {
               detailedErrorMsg = INTEGER_NUMBER_EXPECTED;

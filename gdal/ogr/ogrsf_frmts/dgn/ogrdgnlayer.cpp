@@ -399,11 +399,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
 /*      Lookup color.                                                   */
 /* -------------------------------------------------------------------- */
-    int gv_red;
-    int gv_green;
-    int gv_blue;
+    int gv_red = 0;
+    int gv_green = 0;
+    int gv_blue = 0;
 
-    char szFSColor[128];
+    char szFSColor[128] = {};
     szFSColor[0] = '\0';
     if( DGNLookupColor( hDGN, psElement->color,
                         &gv_red, &gv_green, &gv_blue ) )

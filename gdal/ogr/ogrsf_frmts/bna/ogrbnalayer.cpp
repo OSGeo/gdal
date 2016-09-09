@@ -724,7 +724,7 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
         }
         else
         {
-            int isValidGeometry;
+            int isValidGeometry = FALSE;
             poFeature->SetGeometryDirectly(
                 OGRGeometryFactory::organizePolygons(
                     reinterpret_cast<OGRGeometry**>( tabPolygons ),
@@ -858,11 +858,11 @@ OGRFeature *  OGRBNALayer::GetFeature( GIntBig nFID )
     if (nFID >= nFeatures)
         return NULL;
 
-    int ok;
     if( VSIFSeekL( fpBNA, offsetAndLineFeaturesTable[nFID].offset, SEEK_SET ) < 0 )
         return NULL;
 
     curLine = offsetAndLineFeaturesTable[nFID].line;
+    int ok = FALSE;
     BNARecord* record
         = BNA_GetNextRecord(fpBNA, &ok, &curLine, TRUE, bnaFeatureType);
 

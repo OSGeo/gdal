@@ -480,12 +480,9 @@ bool OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
 /*      nTableAttrIndex will already be setup to refer to the           */
 /*      PolyId field.                                                   */
 /* -------------------------------------------------------------------- */
-    int nRecordId;
-
-    if( nTableAttrIndex == -1 )
-        nRecordId = static_cast<int>( poFeature->GetFID() );
-    else
-        nRecordId = poFeature->GetFieldAsInteger( nTableAttrIndex );
+    const int nRecordId = nTableAttrIndex == -1
+        ? static_cast<int>( poFeature->GetFID() )
+        : poFeature->GetFieldAsInteger( nTableAttrIndex );
 
     if (nRecordId <= nTablePos)
     {

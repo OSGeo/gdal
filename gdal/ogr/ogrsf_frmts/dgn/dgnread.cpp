@@ -719,9 +719,10 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               && *(psDGN->abyElem + text_off + 1) == 0xFD)
           {
               int n=0;
-              for (int i=0;i<num_chars/2-1;i++) {
-                  unsigned short w;
-                  memcpy(&w,psDGN->abyElem + text_off + 2 + i*2 ,2);
+              for( int i = 0; i < num_chars/2 - 1; i++ )
+              {
+                  unsigned short w = 0;
+                  memcpy(&w, psDGN->abyElem + text_off + 2 + i*2, 2);
                   w = CPL_LSBWORD16(w);
                   if (w<256) { // if alpa-numeric code area : Normal character
                       *(psText->string + n) = (char) (w & 0xFF);
@@ -1043,9 +1044,8 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
 {
     DGNInfo     *psDGN = (DGNInfo *) hDGN;
-    DGNElemCore *psElement = NULL;
-    int nType;
-    int nLevel;
+    int nType = 0;
+    int nLevel = 0;
     bool bInsideFilter = false;
 
 /* -------------------------------------------------------------------- */
@@ -1109,7 +1109,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 /* -------------------------------------------------------------------- */
 /*      Convert into an element structure.                              */
 /* -------------------------------------------------------------------- */
-    psElement = DGNProcessElement( psDGN, nType, nLevel );
+    DGNElemCore *psElement = DGNProcessElement( psDGN, nType, nLevel );
 
     return psElement;
 }
@@ -1188,9 +1188,7 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
 
     if( psElement->properties & DGNPF_ATTRIBUTES )
     {
-        int   nAttIndex;
-
-        nAttIndex = psData[30] + psData[31] * 256;
+        const int nAttIndex = psData[30] + psData[31] * 256;
 
         psElement->attr_bytes = psDGN->nElemBytes - nAttIndex*2 - 32;
         if( psElement->attr_bytes > 0 )
@@ -1421,7 +1419,6 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
     {
         unsigned char *pabyRawView = psDGN->abyElem + 46 + iView*118;
         DGNViewInfo *psView = psTCB->views + iView;
-        int i;
 
         psView->flags = pabyRawView[0] + pabyRawView[1] * 256;
         memcpy( psView->levels, pabyRawView + 2, 8 );
@@ -1441,7 +1438,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
         psView->delta.z *= psDGN->scale;
 
         memcpy( psView->transmatrx, pabyRawView + 34, sizeof(double) * 9 );
-        for( i = 0; i < 9; i++ )
+        for( int i = 0; i < 9; i++ )
             DGN2IEEEDouble( psView->transmatrx + i );
 
         memcpy( &(psView->conversion), pabyRawView + 106, sizeof(double) );
@@ -1561,14 +1558,13 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
 
 {
     double     adfCT[3];
-    int        i;
 
     adfCT[0] = (psPoint->x + psDGN->origin_x) / psDGN->scale;
     adfCT[1] = (psPoint->y + psDGN->origin_y) / psDGN->scale;
     adfCT[2] = (psPoint->z + psDGN->origin_z) / psDGN->scale;
 
     const int nIter = MIN(3, psDGN->dimension);
-    for( i = 0; i < nIter; i++ )
+    for( int i = 0; i < nIter; i++ )
     {
         GInt32 nCTI;
         unsigned char *pabyCTI = (unsigned char *) &nCTI;

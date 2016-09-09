@@ -44,8 +44,8 @@ CPLString OGRAMIGOCLOUDEscapeIdentifier(const char* pszStr)
 
     osStr += "\"";
 
-    char ch;
-    for(int i=0; (ch = pszStr[i]) != '\0'; i++)
+    char ch = '\0';
+    for( int i = 0; (ch = pszStr[i]) != '\0'; i++ )
     {
         if (ch == '"')
             osStr.append(1, ch);
@@ -65,8 +65,8 @@ CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr)
 {
     CPLString osStr;
 
-    char ch;
-    for(int i=0; (ch = pszStr[i]) != '\0'; i++)
+    char ch = '\0';
+    for( int i=0; (ch = pszStr[i]) != '\0'; i++ )
     {
         if (ch == '\'')
             osStr.append(1, ch);
@@ -396,8 +396,6 @@ OGRErr OGRAmigoCloudTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
-    int i;
-
     if( bDeferredCreation )
     {
         if( RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -421,7 +419,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
     int counter=0;
 
     // Add geometry field
-    for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+    for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
         if( poFeature->GetGeomFieldRef(i) == NULL )
             continue;
@@ -457,7 +455,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
     std::string amigo_id_value;
 
     // Add non-geometry field
-    for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         std::string name = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
         std::string value = poFeature->GetFieldAsString(i);
@@ -512,7 +510,6 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
 OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
-    int i;
     OGRErr eRet = OGRERR_FAILURE;
 
     if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -543,13 +540,13 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
 
         CPLString osSQL;
         osSQL.Printf("UPDATE %s SET ", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
-        int bMustComma = FALSE;
-        for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+        bool bMustComma = false;
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
-            if(bMustComma)
+            if( bMustComma )
                 osSQL += ", ";
             else
-                bMustComma = TRUE;
+                bMustComma = true;
 
             osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
             osSQL += " = ";
@@ -577,12 +574,12 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
             }
         }
 
-        for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+        for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
         {
-            if(bMustComma)
+            if( bMustComma )
                 osSQL += ", ";
             else
-                bMustComma = TRUE;
+                bMustComma = true;
 
             osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
             osSQL += " = ";
