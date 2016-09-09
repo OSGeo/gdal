@@ -98,7 +98,7 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
     {
         pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_contents SET "
-                    "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP)"
+                    "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
                     "WHERE table_name = '%q' AND "
                     "Lower(data_type) IN ('features', 'gdal_aspatial')",
                     m_pszTableName);
@@ -2597,7 +2597,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
             osInsertGpkgContentsFormatting.c_str(),
             pszLayerName, (bIsSpatial ? "features": "aspatial"),
             pszIdentifier, pszDescription,
-            pszCurrentDate ? pszCurrentDate : "strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)",
+            pszCurrentDate ? pszCurrentDate : "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
             m_iSrs);
 
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
