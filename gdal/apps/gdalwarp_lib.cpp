@@ -2190,14 +2190,13 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
 
 {
     OGRGeometryH hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
-    char **papszTO = CSLDuplicate( papszTO_In );
 
 /* -------------------------------------------------------------------- */
 /*      Checkout that if there's a cutline SRS, there's also a raster   */
 /*      one.                                                            */
 /* -------------------------------------------------------------------- */
     OGRSpatialReferenceH  hRasterSRS = NULL;
-    const char *pszProjection = CSLFetchNameValue( papszTO, "SRC_SRS" );
+    const char *pszProjection = CSLFetchNameValue( papszTO_In, "SRC_SRS" );
     if( pszProjection == NULL )
     {
         char** papszMD;
@@ -2223,7 +2222,35 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Extract the cutline SRS.                                        */
+/* -------------------------------------------------------------------- */
     OGRSpatialReferenceH hCutlineSRS = OGR_G_GetSpatialReference( hMultiPolygon );
+
+/* -------------------------------------------------------------------- */
+/*      Detect if there's no transform at all involved, in which case   */
+/*      we can avoid densification.                                     */
+/* -------------------------------------------------------------------- */
+    bool bMayNeedDensify = true;
+    if( hRasterSRS != NULL && hCutlineSRS != NULL &&
+        OSRIsSame(hRasterSRS, hCutlineSRS) &&
+        GDALGetGCPCount( hSrcDS ) == 0 &&
+        GDALGetMetadata( hSrcDS, "RPC" ) == NULL &&
+        GDALGetMetadata( hSrcDS, "GEOLOCATION" ) == NULL )
+    {
+        char **papszTOTmp = CSLDuplicate( papszTO_In );
+        papszTOTmp = CSLSetNameValue(papszTOTmp, "SRC_SRS", NULL);
+        papszTOTmp = CSLSetNameValue(papszTOTmp, "DST_SRS", NULL);
+        if( CSLCount(papszTOTmp) == 0 )
+        {
+            bMayNeedDensify = false;
+        }
+        CSLDestroy(papszTOTmp);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compare source raster SRS and cutline SRS                       */
+/* -------------------------------------------------------------------- */
     if( hRasterSRS != NULL && hCutlineSRS != NULL )
     {
         /* OK, we will reproject */
@@ -2245,9 +2272,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     if( hRasterSRS != NULL )
         OSRDestroySpatialReference(hRasterSRS);
 
-/* -------------------------------------------------------------------- */
-/*      Extract the cutline SRS WKT.                                    */
-/* -------------------------------------------------------------------- */
+    char **papszTO = CSLDuplicate( papszTO_In );
     if( hCutlineSRS != NULL )
     {
         char *pszCutlineSRS_WKT = NULL;
@@ -2299,7 +2324,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     const bool bWasValidInitialy = OGR_G_IsValid(hMultiPolygon) != FALSE;
     CPLPopErrorHandler();
     bool bDensify = false;
-    if( eErr == OGRERR_NONE && dfInitialMaxLengthInPixels > 1.0 )
+    if( bMayNeedDensify && eErr == OGRERR_NONE && dfInitialMaxLengthInPixels > 1.0 )
     {
         const char* pszDensifyCutline = CPLGetConfigOption("GDALWARP_DENSIFY_CUTLINE", "YES");
         if( EQUAL(pszDensifyCutline, "ONLY_IF_INVALID") )
