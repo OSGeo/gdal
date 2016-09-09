@@ -380,12 +380,10 @@ int OGRCARTODataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
     {
-        int             nAuthorityCode;
-
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
-        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
+        const int nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
 
         return nAuthorityCode;
     }
@@ -412,9 +410,7 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    int iLayer;
-
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
         {

@@ -326,9 +326,7 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszNameIn,
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    int iLayer;
-
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
         {
@@ -453,12 +451,11 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszNameIn,
 void OGRCouchDBDataSource::DeleteLayer( const char *pszLayerName )
 
 {
-    int iLayer;
-
 /* -------------------------------------------------------------------- */
 /*      Try to find layer.                                              */
 /* -------------------------------------------------------------------- */
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    int iLayer = 0;  // Used after for.
+    for( ; iLayer < nLayers; iLayer++ )
     {
         if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
             break;
@@ -785,8 +782,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
     PointerAutoFree oHolderTableIds(sFieldList.table_ids);
     PointerAutoFree oHolderIds(sFieldList.ids);
 
-    int iField;
-    for( iField = 0;
+    for( int iField = 0;
          iField < poSrcLayer->GetLayerDefn()->GetFieldCount();
          iField++ )
     {
@@ -807,7 +803,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
     }
 
     CPLString osLastFieldName;
-    for( iField = 0; iField < sSelectInfo.result_columns; iField++ )
+    for( int iField = 0; iField < sSelectInfo.result_columns; iField++ )
     {
         swq_col_def *psColDef = sSelectInfo.column_defs + iField;
         if (psColDef->field_name == NULL)
@@ -859,7 +855,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
         return NULL;
     }
 
-    for( iField = 0; iField < sSelectInfo.result_columns; iField++ )
+    for( int iField = 0; iField < sSelectInfo.result_columns; iField++ )
     {
         swq_col_def *psColDef = sSelectInfo.column_defs + iField;
         if (psColDef->field_index == -1)
@@ -944,7 +940,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
         OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(poSrcLayer->GetName());
         poFeatureDefn->Reference();
 
-        for( iField = 0; iField < sSelectInfo.result_columns; iField++ )
+        for( int iField = 0; iField < sSelectInfo.result_columns; iField++ )
         {
             swq_col_def *psColDef = sSelectInfo.column_defs + iField;
             OGRFieldDefn oFDefn( "", OFTInteger );
@@ -974,7 +970,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
 
         OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-        for( iField = 0; iField < sSelectInfo.result_columns; iField++ )
+        for( int iField = 0; iField < sSelectInfo.result_columns; iField++ )
         {
             swq_col_def *psColDef = sSelectInfo.column_defs + iField;
             switch(psColDef->col_func)

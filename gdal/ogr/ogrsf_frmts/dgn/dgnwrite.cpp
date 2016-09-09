@@ -200,7 +200,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
         if( !DGNGotoElement( hDGN, psDGN->element_count-1 ) )
             return FALSE;
 
-        int nJunk;
+        int nJunk = 0;
         if( !DGNLoadRawElement( psDGN, &nJunk, &nJunk ) )
             return FALSE;
 
@@ -844,8 +844,6 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 
 {
     DGNInfo *psDGN = (DGNInfo *) hDGN;
-    DGNPoint sMin;
-    DGNPoint sMax;
 
     CPLAssert( nType == DGNT_LINE
                || nType == DGNT_LINE_STRING
@@ -924,15 +922,16 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
-    sMin = sMax = pasVertices[0];
+    DGNPoint sMin = pasVertices[0];
+    DGNPoint sMax = pasVertices[0];
     for( int i = 1; i < nPointCount; i++ )
     {
-        sMin.x = MIN(pasVertices[i].x,sMin.x);
-        sMin.y = MIN(pasVertices[i].y,sMin.y);
-        sMin.z = MIN(pasVertices[i].z,sMin.z);
-        sMax.x = MAX(pasVertices[i].x,sMax.x);
-        sMax.y = MAX(pasVertices[i].y,sMax.y);
-        sMax.z = MAX(pasVertices[i].z,sMax.z);
+        sMin.x = MIN(pasVertices[i].x, sMin.x);
+        sMin.y = MIN(pasVertices[i].y, sMin.y);
+        sMin.z = MIN(pasVertices[i].z, sMin.z);
+        sMax.x = MAX(pasVertices[i].x, sMax.x);
+        sMax.y = MAX(pasVertices[i].y, sMax.y);
+        sMax.z = MAX(pasVertices[i].z, sMax.z);
     }
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
@@ -995,14 +994,9 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
                   double dfRotation, int *panQuaternion )
 
 {
-    DGNInfo *psDGN = (DGNInfo *) hDGN;
-    DGNPoint sMin;
-    DGNPoint sMax;
-    DGNPoint sOrigin;
-    GInt32 nAngle;
-
     CPLAssert( nType == DGNT_ARC || nType == DGNT_ELLIPSE );
 
+    DGNInfo *psDGN = (DGNInfo *) hDGN;
     DGNLoadTCB( hDGN );
 
 /* -------------------------------------------------------------------- */
@@ -1018,6 +1012,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Set arc specific information in the structure.                  */
 /* -------------------------------------------------------------------- */
+    DGNPoint sOrigin;
     sOrigin.x = dfOriginX;
     sOrigin.y = dfOriginY;
     sOrigin.z = dfOriginZ;
@@ -1042,6 +1037,8 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the arc section.                             */
 /* -------------------------------------------------------------------- */
+    GInt32 nAngle = 0;
+
     if( nType == DGNT_ARC )
     {
         double dfScaledAxis;
@@ -1175,9 +1172,11 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
+    DGNPoint sMin;
     sMin.x = dfOriginX - MAX(dfPrimaryAxis,dfSecondaryAxis);
     sMin.y = dfOriginY - MAX(dfPrimaryAxis,dfSecondaryAxis);
     sMin.z = dfOriginZ - MAX(dfPrimaryAxis,dfSecondaryAxis);
+    DGNPoint sMax;
     sMax.x = dfOriginX + MAX(dfPrimaryAxis,dfSecondaryAxis);
     sMax.y = dfOriginY + MAX(dfPrimaryAxis,dfSecondaryAxis);
     sMax.z = dfOriginZ + MAX(dfPrimaryAxis,dfSecondaryAxis);
@@ -1223,11 +1222,6 @@ DGNCreateConeElem( DGNHandle hDGN,
                    int *panQuaternion )
 {
     DGNInfo *psDGN = (DGNInfo *) hDGN;
-    DGNPoint sMin;
-    DGNPoint sMax;
-    DGNPoint sCenter_1;
-    DGNPoint sCenter_2;
-    double dfScaledRadius;
 
     DGNLoadTCB( hDGN );
 
@@ -1244,9 +1238,11 @@ DGNCreateConeElem( DGNHandle hDGN,
 /* -------------------------------------------------------------------- */
 /*      Set cone specific information in the structure.                 */
 /* -------------------------------------------------------------------- */
+    DGNPoint sCenter_1;
     sCenter_1.x = dfCenter_1X;
     sCenter_1.y = dfCenter_1Y;
     sCenter_1.z = dfCenter_1Z;
+    DGNPoint sCenter_2;
     sCenter_2.x = dfCenter_2X;
     sCenter_2.y = dfCenter_2Y;
     sCenter_2.z = dfCenter_2Z;
@@ -1293,7 +1289,7 @@ DGNCreateConeElem( DGNHandle hDGN,
     IEEE2DGNDouble( psCore->raw_data + 70 );
 
     /* radius_1 */
-    dfScaledRadius = psCone->radius_1 / psDGN->scale;
+    double dfScaledRadius = psCone->radius_1 / psDGN->scale;
     memcpy( psCore->raw_data + 78, &dfScaledRadius, 8 );
     IEEE2DGNDouble( psCore->raw_data + 78 );
 
@@ -1330,6 +1326,8 @@ DGNCreateConeElem( DGNHandle hDGN,
 //     sMax.y = psCone->center_2.y+largestRadius;
 //     sMax.z = psCone->center_2.z;
 
+    DGNPoint sMin;
+    DGNPoint sMax;
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
 
     return (DGNElemCore*) psCone;
@@ -2095,15 +2093,14 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
                            unsigned char *pabyTarget )
 
 {
-    double     adfCT[3];
-    int        i;
-
-    adfCT[0] = psPoint->x;
-    adfCT[1] = psPoint->y;
-    adfCT[2] = psPoint->z;
+    double adfCT[3] = {
+        psPoint->x,
+        psPoint->y,
+        psPoint->z
+    };
 
     const int nIter = MIN(3, psDGN->dimension);
-    for( i = 0; i < nIter; i++ )
+    for( int i = 0; i < nIter; i++ )
     {
         GInt32 nCTI;
         unsigned char *pabyCTI = (unsigned char *) &nCTI;
@@ -2168,10 +2165,6 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
                               double dfRotation )
 
 {
-    int         nTotalLength;
-    int         i /* , nLevel */;
-    DGNPoint    sMin={0.0,0.0,0.0}, sMax={0.0,0.0,0.0};
-    unsigned char abyLevelsOccurring[8] = {0,0,0,0,0,0,0,0};
     DGNInfo *psInfo = (DGNInfo *) hDGN;
 
     DGNLoadTCB( hDGN );
@@ -2183,21 +2176,17 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
         return NULL;
     }
 
-    if( psInfo->dimension == 2 )
-        nTotalLength = 27;
-    else
-        nTotalLength = 43;
-
 /* -------------------------------------------------------------------- */
 /*      Collect the total size, and bounds.                             */
 /* -------------------------------------------------------------------- */
-    /* nLevel = papsElems[0]->level; */
+    int nTotalLength = psInfo->dimension == 2 ? 27 : 43;
+    // nLevel = papsElems[0]->level;x
+    DGNPoint sMin={0.0, 0.0, 0.0};
+    DGNPoint sMax={0.0, 0.0, 0.0};
+    unsigned char abyLevelsOccurring[8] = {0,0,0,0,0,0,0,0};
 
-    for( i = 0; i < nNumElems; i++ )
+    for( int i = 0; i < nNumElems; i++ )
     {
-        DGNPoint sThisMin, sThisMax;
-        int  nLevel;
-
         nTotalLength += papsElems[i]->raw_bytes / 2;
 
         /* mark as complex */
@@ -2205,10 +2194,12 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
         papsElems[i]->raw_data[0] |= 0x80;
 
         /* establish level */
-        nLevel = papsElems[i]->level;
+        int nLevel = papsElems[i]->level;
         nLevel = MAX(1,MIN(nLevel,64));
         abyLevelsOccurring[(nLevel-1) >> 3] |= (0x1 << ((nLevel-1)&0x7));
 
+        DGNPoint sThisMin;
+        DGNPoint sThisMax;
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
         {
@@ -2293,8 +2284,8 @@ int DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
                   int nLinkageType, int nEntityNum, int nMSLink )
 
 {
-    unsigned char abyLinkage[32];
-    int           nLinkageSize;
+    unsigned char abyLinkage[32] = {};
+    int nLinkageSize = 0;
 
     if( nLinkageType == DGNLT_DMRS )
     {
@@ -2363,8 +2354,6 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
                        int nLinkSize, unsigned char *pabyRawLinkData )
 
 {
-    int   iLinkage;
-
     if( nLinkSize % 2 == 1 )
         nLinkSize++;
 
@@ -2426,14 +2415,15 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
 /* -------------------------------------------------------------------- */
 /*      Figure out what the linkage index is.                           */
 /* -------------------------------------------------------------------- */
-    for( iLinkage = 0; ; iLinkage++ )
+    int iLinkage = 0;  // Used after for.
+    for( ; ; iLinkage++ )
     {
         if( DGNGetLinkage( hDGN, psElement, iLinkage, NULL, NULL, NULL, NULL )
             == NULL )
             break;
     }
 
-    return iLinkage-1;
+    return iLinkage - 1;
 }
 
 /************************************************************************/

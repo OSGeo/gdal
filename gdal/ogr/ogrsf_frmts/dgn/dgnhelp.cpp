@@ -584,8 +584,6 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
     if( psElement->properties != 0 )
     {
-        int     nClass;
-
         fprintf( fp, "  properties=%d", psElement->properties );
         if( psElement->properties & DGNPF_HOLE )
             fprintf( fp, ",HOLE" );
@@ -604,7 +602,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
         if( psElement->properties & DGNPF_LOCKED )
             fprintf( fp, ",LOCKED" );
 
-        nClass = psElement->properties & DGNPF_CLASS;
+        int nClass = psElement->properties & DGNPF_CLASS;
         if( nClass == DGNC_PATTERN_COMPONENT )
             fprintf( fp, ",PATTERN_COMPONENT" );
         else if( nClass == DGNC_CONSTRUCTION_ELEMENT )
@@ -798,7 +796,6 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       case DGNST_TCB:
       {
           DGNElemTCB *psTCB = (DGNElemTCB *) psElement;
-          int iView;
 
           fprintf( fp, "  dimension = %d\n", psTCB->dimension );
           fprintf( fp, "  uor_per_subunit = %ld, subunits = `%s'\n",
@@ -810,7 +807,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psTCB->origin_y,
                    psTCB->origin_z );
 
-          for( iView = 0; iView < 8; iView++ )
+          for( int iView = 0; iView < 8; iView++ )
           {
               DGNViewInfo *psView = psTCB->views + iView;
 
@@ -1252,7 +1249,7 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                               int *pnEntityNum, int *pnMSLink, int *pnLength )
 
 {
-    int nLinkSize;
+    int nLinkSize = 0;
 
     for( int iLinkage=0, nAttrOffset=0;
          (nLinkSize = DGNGetAttrLinkSize( hDGN, psElement, nAttrOffset)) != 0;

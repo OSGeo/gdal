@@ -314,8 +314,8 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
             {
                 int nLength = json_object_array_length(poValue);
                 char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
-                int i;
-                for(i=0;i<nLength;i++)
+                int i = 0;  // Used after for.
+                for( ; i < nLength; i++ )
                 {
                     json_object* poRow = json_object_array_get_idx(poValue, i);
                     const char* pszVal = json_object_get_string(poRow);

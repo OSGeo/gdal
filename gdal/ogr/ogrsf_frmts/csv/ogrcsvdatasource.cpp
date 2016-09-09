@@ -107,7 +107,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
                   i < poEditableFDefn->GetFieldCount(); i++ )
     {
         OGRFieldDefn oFieldDefn(poEditableFDefn->GetFieldDefn(i));
-        int iGeomFieldIdx;
+        int iGeomFieldIdx = 0;
         if( (EQUAL(oFieldDefn.GetNameRef(), "WKT") &&
              (iGeomFieldIdx = poEditableFDefn->GetGeomFieldIndex("")) >= 0) ||
             (iGeomFieldIdx = poEditableFDefn->GetGeomFieldIndex(oFieldDefn.GetNameRef())) >= 0 )
