@@ -48,8 +48,8 @@ POSSIBILITY OF SUCH DAMAGE.
 CPL_CVSID("$Id$");
 
 /* used by ogrdxflayer.cpp */
-void rbspline2(int npts,int k,int p1,double b[],double h[],
-        bool xflag, double x[], double p[]);
+void rbspline2( int npts,int k,int p1,double b[],double h[],
+                bool xflag, double x[], double p[] );
 
 /************************************************************************/
 /*                                knot()                                */
@@ -66,16 +66,15 @@ void rbspline2(int npts,int k,int p1,double b[],double h[],
     x()          = array containing the knot vector
 */
 
-static void knot(int n,int c,double x[])
+static void knot( int n, int c, double x[] )
 
 {
-    int nplusc,nplus2,i;
-
-    nplusc = n + c;
-    nplus2 = n + 2;
+    const int nplusc = n + c;
+    const int nplus2 = n + 2;
 
     x[1] = 0.0;
-    for (i = 2; i <= nplusc; i++){
+    for( int i = 2; i <= nplusc; i++ )
+    {
         if ( (i > c) && (i < nplus2) )
             x[i] = x[i-1] + 1.0;
         else
@@ -111,22 +110,19 @@ static void knot(int n,int c,double x[])
     x[]      = knot vector
 */
 
-static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
+static void rbasis( int c, double t, int npts,
+                    double x[], double h[], double r[] )
 
 {
-    int nplusc;
-    int i,k;
-    double d,e;
-    double sum;
+    const int nplusc = npts + c;
+
     std::vector<double> temp;
-
-    nplusc = npts + c;
-
     temp.resize( nplusc+1 );
 
     /* calculate the first order nonrational basis functions n[i] */
 
-    for (i = 1; i<= nplusc-1; i++){
+    for( int i = 1; i<= nplusc-1; i++ )
+    {
         if (( t >= x[i]) && (t < x[i+1]))
             temp[i] = 1.0;
         else
@@ -135,17 +131,21 @@ static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
 
     /* calculate the higher order nonrational basis functions */
 
-    for (k = 2; k <= c; k++){
-        for (i = 1; i <= nplusc-k; i++){
+    for( int k = 2; k <= c; k++ )
+    {
+        for ( int i = 1; i <= nplusc-k; i++ )
+        {
+            double d = 0.0;
+            double e = 0.0;
             if (temp[i] != 0)    /* if the lower order basis function is zero skip the calculation */
                 d = ((t-x[i])*temp[i])/(x[i+k-1]-x[i]);
-            else
-                d = 0;
+            // else
+            //    d = 0.0 ;
 
             if (temp[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
                 e = ((x[i+k]-t)*temp[i+1])/(x[i+k]-x[i+1]);
-            else
-                e = 0;
+            // else
+            //     e = 0.0;
 
             temp[i] = d + e;
         }
@@ -157,18 +157,24 @@ static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
 
 /* calculate sum for denominator of rational basis functions */
 
-    sum = 0.;
-    for (i = 1; i <= npts; i++){
+    double sum = 0.0;
+    for( int i = 1; i <= npts; i++ )
+    {
         sum = sum + temp[i]*h[i];
     }
 
 /* form rational basis functions and put in r vector */
 
-    for (i = 1; i <= npts; i++){
-        if (sum != 0){
-            r[i] = (temp[i]*h[i])/(sum);}
+    for( int i = 1; i <= npts; i++ )
+    {
+        if (sum != 0)
+        {
+            r[i] = (temp[i]*h[i])/(sum);
+        }
         else
+        {
             r[i] = 0;
+        }
     }
 }
 
@@ -205,49 +211,44 @@ static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
     x[]         = array containing the knot vector
 */
 
-void rbspline2(int npts,int k,int p1,double b[],double h[],
-        bool xflag, double x[], double p[])
+void rbspline2( int npts,int k,int p1,double b[],double h[],
+                bool xflag, double x[], double p[] )
 
 {
-    int i,j,icount,jcount;
-    int i1;
-    int nplusc;
+    const int nplusc = npts + k;
 
-    double step;
-    double t;
-    double temp;
     std::vector<double> nbasis;
-
-    nplusc = npts + k;
-
     nbasis.resize( npts+1 );
 
 /* generate the uniform open knot vector */
 
     if( xflag == true )
-        knot(npts,k,x);
+        knot(npts, k, x);
 
-    icount = 0;
+    int icount = 0;
 
 /*    calculate the points on the rational B-spline curve */
 
-    t = 0;
-    step = ((double)x[nplusc])/((double)(p1-1));
+    double t = 0.0;
+    const double step = ((double)x[nplusc])/((double)(p1-1));
 
-    for (i1 = 1; i1<= p1; i1++){
-
-        if ((double)x[nplusc] - t < 5e-6){
+    for( int i1 = 1; i1<= p1; i1++ )
+    {
+        if( (double)x[nplusc] - t < 5e-6 )
+        {
             t = (double)x[nplusc];
         }
 
         /* generate the basis function for this value of t */
-        rbasis(k,t,npts,x,h,&(nbasis[0]));
-        for (j = 1; j <= 3; j++){      /* generate a point on the curve */
-            jcount = j;
+        rbasis(k, t, npts, x, h, &(nbasis[0]));
+        for( int j = 1; j <= 3; j++ )
+        {      /* generate a point on the curve */
+            int jcount = j;
             p[icount+j] = 0.;
 
-            for (i = 1; i <= npts; i++){ /* Do local matrix multiplication */
-                temp = nbasis[i]*b[jcount];
+            for( int i = 1; i <= npts; i++ )
+            { /* Do local matrix multiplication */
+                const double temp = nbasis[i]*b[jcount];
                 p[icount + j] = p[icount + j] + temp;
                 jcount = jcount + 3;
             }
