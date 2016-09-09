@@ -790,8 +790,8 @@ GIntBig OGRDGNLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
 /*      Otherwise scan the index.                                       */
 /* -------------------------------------------------------------------- */
-    int nElementCount;
-    const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN,&nElementCount);
+    int nElementCount = 0;
+    const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN, &nElementCount);
 
     int nFeatureCount = 0;
     bool bInComplexShape = false;
@@ -809,13 +809,13 @@ GIntBig OGRDGNLayer::GetFeatureCount( int bForce )
             if( !(pasIndex[i].flags & DGNEIF_COMPLEX) || !bInComplexShape )
             {
                 nFeatureCount++;
-                bInComplexShape = FALSE;
+                bInComplexShape = false;
             }
             break;
 
           case DGNST_COMPLEX_HEADER:
             nFeatureCount++;
-            bInComplexShape = TRUE;
+            bInComplexShape = true;
             break;
 
           default:

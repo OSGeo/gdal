@@ -136,21 +136,21 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
     psDGN->origin_y = 0.0;
     psDGN->origin_z = 0.0;
 
-    psDGN->index_built = FALSE;
+    psDGN->index_built = false;
     psDGN->element_count = 0;
     psDGN->element_index = NULL;
 
-    psDGN->got_bounds = FALSE;
+    psDGN->got_bounds = false;
 
     if( abyHeader[0] == 0xC8 )
         psDGN->dimension = 3;
     else
         psDGN->dimension = 2;
 
-    psDGN->has_spatial_filter = FALSE;
-    psDGN->sf_converted_to_uor = FALSE;
-    psDGN->select_complex_group = FALSE;
-    psDGN->in_complex_group = FALSE;
+    psDGN->has_spatial_filter = false;
+    psDGN->sf_converted_to_uor = false;
+    psDGN->select_complex_group = false;
+    psDGN->in_complex_group = false;
 
     return (DGNHandle) psDGN;
 }
@@ -220,12 +220,12 @@ void DGNSetSpatialFilter( DGNHandle hDGN,
     if( dfXMin == 0.0 && dfXMax == 0.0
         && dfYMin == 0.0 && dfYMax == 0.0 )
     {
-        psDGN->has_spatial_filter = FALSE;
+        psDGN->has_spatial_filter = false;
         return;
     }
 
-    psDGN->has_spatial_filter = TRUE;
-    psDGN->sf_converted_to_uor = FALSE;
+    psDGN->has_spatial_filter = true;
+    psDGN->sf_converted_to_uor = false;
 
     psDGN->sf_min_x_geo = dfXMin;
     psDGN->sf_min_y_geo = dfYMin;
@@ -268,7 +268,7 @@ void DGNSpatialFilterToUOR( DGNInfo *psDGN )
     psDGN->sf_max_x = (GUInt32) (sMax.x + 2147483648.0);
     psDGN->sf_max_y = (GUInt32) (sMax.y + 2147483648.0);
 
-    psDGN->sf_converted_to_uor = TRUE;
+    psDGN->sf_converted_to_uor = true;
 }
 
 /************************************************************************/

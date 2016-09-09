@@ -68,7 +68,7 @@ int DGNGotoElement( DGNHandle hDGN, int element_id )
         return FALSE;
 
     psDGN->next_element_id = element_id;
-    psDGN->in_complex_group = FALSE;
+    psDGN->in_complex_group = false;
 
     return TRUE;
 }
@@ -84,8 +84,6 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /*      Read the first four bytes to get the level, type, and word      */
 /*      count.                                                          */
 /* -------------------------------------------------------------------- */
-    int         nType, nWords, nLevel;
-
     if( VSIFRead( psDGN->abyElem, 1, 4, psDGN->fp ) != 4 )
         return FALSE;
 
@@ -93,9 +91,9 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
     if( psDGN->abyElem[0] == 0xff && psDGN->abyElem[1] == 0xff )
         return FALSE;
 
-    nWords = psDGN->abyElem[2] + psDGN->abyElem[3]*256;
-    nType = psDGN->abyElem[1] & 0x7f;
-    nLevel = psDGN->abyElem[0] & 0x3f;
+    int nWords = psDGN->abyElem[2] + psDGN->abyElem[3]*256;
+    int nType = psDGN->abyElem[1] & 0x7f;
+    int nLevel = psDGN->abyElem[0] & 0x3f;
 
 /* -------------------------------------------------------------------- */
 /*      Read the rest of the element data into the working buffer.      */
@@ -127,14 +125,14 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /************************************************************************/
 /*                          DGNGetRawExtents()                          */
 /*                                                                      */
-/*      Returns FALSE if the element type does not have recognizable    */
-/*      element extents, other TRUE and the extents will be updated.    */
+/*      Returns false if the element type does not have recognizable    */
+/*      element extents, other true and the extents will be updated.    */
 /*                                                                      */
 /*      It is assumed the raw element data has been loaded into the     */
 /*      working area by DGNLoadRawElement().                            */
 /************************************************************************/
 
-static int
+static bool
 DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
                   GUInt32 *pnXMin, GUInt32 *pnYMin, GUInt32 *pnZMin,
                   GUInt32 *pnXMax, GUInt32 *pnYMax, GUInt32 *pnZMax )
@@ -170,10 +168,10 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
         *pnYMax = DGN_INT32( pabyRawData + 20 );
         if( pnZMax != NULL )
             *pnZMax = DGN_INT32( pabyRawData + 24 );
-        return TRUE;
+        return true;
 
       default:
-        return FALSE;
+        return false;
     }
 }
 
@@ -211,9 +209,10 @@ int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement,
                           DGNPoint *psMin, DGNPoint *psMax )
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
-    GUInt32 anMin[3], anMax[3];
-    int bResult;
+    DGNInfo *psDGN = (DGNInfo *) hDGN;
+    GUInt32 anMin[3];
+    GUInt32 anMax[3];
+    bool bResult = false;
 
 /* -------------------------------------------------------------------- */
 /*      Get the extents if we have raw data in the element, or          */
@@ -1045,8 +1044,9 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 {
     DGNInfo     *psDGN = (DGNInfo *) hDGN;
     DGNElemCore *psElement = NULL;
-    int         nType, nLevel;
-    int         bInsideFilter;
+    int nType;
+    int nLevel;
+    bool bInsideFilter = false;
 
 /* -------------------------------------------------------------------- */
 /*      Load the element data into the current buffer.  If a spatial    */
@@ -1054,31 +1054,35 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 /*      spatial constraints.                                            */
 /* -------------------------------------------------------------------- */
     do {
-        bInsideFilter = TRUE;
+        bInsideFilter = true;
 
         if( !DGNLoadRawElement( psDGN, &nType, &nLevel ) )
             return NULL;
 
         if( psDGN->has_spatial_filter )
         {
-            GUInt32     nXMin, nXMax, nYMin, nYMax;
-
             if( !psDGN->sf_converted_to_uor )
                 DGNSpatialFilterToUOR( psDGN );
 
+            GUInt32 nXMin = 0;
+            GUInt32 nXMax = 0;
+            GUInt32 nYMin = 0;
+            GUInt32 nYMax = 0;
             if( !DGNGetRawExtents( psDGN, nType, NULL,
                                    &nXMin, &nYMin, NULL,
                                    &nXMax, &nYMax, NULL ) )
             {
                 /* If we don't have spatial characteristics for the element
                    we will pass it through. */
-                bInsideFilter = TRUE;
+                bInsideFilter = true;
             }
             else if( nXMin > psDGN->sf_max_x
                      || nYMin > psDGN->sf_max_y
                      || nXMax < psDGN->sf_min_x
                      || nYMax < psDGN->sf_min_y )
-                bInsideFilter = FALSE;
+            {
+                bInsideFilter = false;
+            }
 
             /*
             ** We want to select complex elements based on the extents of
@@ -1087,7 +1091,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
             if( nType == DGNT_COMPLEX_CHAIN_HEADER
                 || nType == DGNT_COMPLEX_SHAPE_HEADER )
             {
-                psDGN->in_complex_group = TRUE;
+                psDGN->in_complex_group = true;
                 psDGN->select_complex_group = bInsideFilter;
             }
             else if( psDGN->abyElem[0] & 0x80 /* complex flag set */ )
@@ -1096,7 +1100,9 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
                     bInsideFilter = psDGN->select_complex_group;
             }
             else
-                psDGN->in_complex_group = FALSE;
+            {
+                psDGN->in_complex_group = false;
+            }
         }
     } while( !bInsideFilter );
 
@@ -1398,7 +1404,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
 
     if( !psDGN->got_tcb )
     {
-        psDGN->got_tcb = TRUE;
+        psDGN->got_tcb = true;
         psDGN->dimension = psTCB->dimension;
         psDGN->origin_x = psTCB->origin_x;
         psDGN->origin_y = psTCB->origin_y;
@@ -1471,12 +1477,10 @@ void DGNFreeElement( CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement )
 
     if( psElement->stype == DGNST_TAG_SET )
     {
-        int             iTag;
-
         DGNElemTagSet *psTagSet = (DGNElemTagSet *) psElement;
         CPLFree( psTagSet->tagSetName );
 
-        for( iTag = 0; iTag < psTagSet->tagCount; iTag++ )
+        for( int iTag = 0; iTag < psTagSet->tagCount; iTag++ )
         {
             CPLFree( psTagSet->tagList[iTag].name );
             CPLFree( psTagSet->tagList[iTag].prompt );
@@ -1512,12 +1516,12 @@ void DGNFreeElement( CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement )
 void DGNRewind( DGNHandle hDGN )
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *) hDGN;
 
     VSIRewind( psDGN->fp );
 
     psDGN->next_element_id = 0;
-    psDGN->in_complex_group = FALSE;
+    psDGN->in_complex_group = false;
 }
 
 /************************************************************************/
@@ -1688,13 +1692,13 @@ int DGNGetExtents( DGNHandle hDGN, double * padfExtents )
 
 {
     DGNInfo     *psDGN = (DGNInfo *) hDGN;
-    DGNPoint    sMin, sMax;
 
     DGNBuildIndex( psDGN );
 
     if( !psDGN->got_bounds )
         return FALSE;
 
+    DGNPoint sMin;
     sMin.x = psDGN->min_x - 2147483648.0;
     sMin.y = psDGN->min_y - 2147483648.0;
     sMin.z = psDGN->min_z - 2147483648.0;
@@ -1705,6 +1709,7 @@ int DGNGetExtents( DGNHandle hDGN, double * padfExtents )
     padfExtents[1] = sMin.y;
     padfExtents[2] = sMin.z;
 
+    DGNPoint sMax;
     sMax.x = psDGN->max_x - 2147483648.0;
     sMax.y = psDGN->max_y - 2147483648.0;
     sMax.z = psDGN->max_z - 2147483648.0;
@@ -1732,7 +1737,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
     int nLevel = 0;
     GUInt32 anRegion[6] = {};
 
-    psDGN->index_built = TRUE;
+    psDGN->index_built = true;
 
     DGNRewind( psDGN );
 
@@ -1839,7 +1844,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
                 psDGN->max_x = anRegion[3];
                 psDGN->max_y = anRegion[4];
                 psDGN->max_z = anRegion[5];
-                psDGN->got_bounds = TRUE;
+                psDGN->got_bounds = true;
             }
         }
 

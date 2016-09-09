@@ -48,7 +48,7 @@ typedef struct {
     double      origin_y;
     double      origin_z;
 
-    int         index_built;
+    bool        index_built;
     int         element_count;
     int         max_element_count;
     DGNElementInfo *element_index;
@@ -56,7 +56,7 @@ typedef struct {
     int         got_color_table;
     GByte       color_table[256][3];
 
-    int         got_bounds;
+    bool        got_bounds;
     GUInt32     min_x;
     GUInt32     min_y;
     GUInt32     min_z;
@@ -64,11 +64,11 @@ typedef struct {
     GUInt32     max_y;
     GUInt32     max_z;
 
-    int         has_spatial_filter;
-    int         sf_converted_to_uor;
+    bool        has_spatial_filter;
+    bool        sf_converted_to_uor;
 
-    int         select_complex_group;
-    int         in_complex_group;
+    bool        select_complex_group;
+    bool        in_complex_group;
 
     GUInt32     sf_min_x;
     GUInt32     sf_min_y;
