@@ -2530,7 +2530,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
         "INSERT INTO gpkg_contents "
         "(table_name,data_type,identifier,description,last_change,srs_id)"
         " VALUES "
-        "('%q','%q','%q','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP),%d)",
+        "('%q','%q','%q','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now'),%d)",
         pszLayerName, (bIsSpatial ? "features": "aspatial"), pszIdentifier, pszDescription, m_iSrs);
 
     err = SQLCommand(m_poDS->GetDB(), pszSQL);
