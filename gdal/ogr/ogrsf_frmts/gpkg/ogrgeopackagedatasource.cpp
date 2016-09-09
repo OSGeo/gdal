@@ -1375,7 +1375,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         m_osIdentifier.c_str(),
         m_osDescription.c_str(),
         dfGDALMinX, dfGDALMinY, dfGDALMaxX, dfGDALMaxY,
-        pszCurrentDate ? pszCurrentDate : "strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)",
+        pszCurrentDate ? pszCurrentDate : "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
         m_nSRID);
 
     eErr = SQLCommand(hDB, pszSQL);
@@ -1493,7 +1493,7 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode()
         {
             pszSQL = sqlite3_mprintf(
                         "UPDATE gpkg_contents SET "
-                        "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP)"
+                        "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
                         "WHERE table_name = '%q' AND "
                         "Lower(data_type) = 'tiles'",
                         m_osRasterTable.c_str());
@@ -2614,7 +2614,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "data_type TEXT NOT NULL,"
             "identifier TEXT UNIQUE,"
             "description TEXT DEFAULT '',"
-            "last_change DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)),"
+            "last_change DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),"
             "min_x DOUBLE, min_y DOUBLE,"
             "max_x DOUBLE, max_y DOUBLE,"
             "srs_id INTEGER,"
