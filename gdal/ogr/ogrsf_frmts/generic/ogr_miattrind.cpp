@@ -499,9 +499,7 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
 /* -------------------------------------------------------------------- */
 /*      Create the index.                                               */
 /* -------------------------------------------------------------------- */
-    int iINDIndex;
-
-    iINDIndex = poINDFile->CreateIndex( eTABFT, nFieldWidth );
+    const int iINDIndex = poINDFile->CreateIndex( eTABFT, nFieldWidth );
 
     // CreateIndex() reports it's own errors.
     if( iINDIndex < 0 )
@@ -774,9 +772,7 @@ GIntBig OGRMIAttrIndex::GetFirstMatch( OGRField *psKey )
 
 {
     GByte *pabyKey = BuildKey( psKey );
-    GIntBig nFID;
-
-    nFID = poINDFile->FindFirst( iIndex, pabyKey );
+    const GIntBig nFID = poINDFile->FindFirst( iIndex, pabyKey );
     if( nFID < 1 )
         return OGRNullFID;
     else
@@ -790,7 +786,6 @@ GIntBig OGRMIAttrIndex::GetFirstMatch( OGRField *psKey )
 GIntBig *OGRMIAttrIndex::GetAllMatches( OGRField *psKey, GIntBig* panFIDList, int* nFIDCount, int* nLength )
 {
     GByte *pabyKey = BuildKey( psKey );
-    GIntBig nFID;
 
     if (panFIDList == NULL)
     {
@@ -799,7 +794,7 @@ GIntBig *OGRMIAttrIndex::GetAllMatches( OGRField *psKey, GIntBig* panFIDList, in
         *nLength = 2;
     }
 
-    nFID = poINDFile->FindFirst( iIndex, pabyKey );
+    GIntBig nFID = poINDFile->FindFirst( iIndex, pabyKey );
     while( nFID > 0 )
     {
         if( *nFIDCount >= *nLength-1 )

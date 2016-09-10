@@ -296,43 +296,43 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
       }
     }
 
-    int nbGeom;
-    int isSingle;
+    int nbGeom = 0;
+    bool isSingle = false;
 
     switch( eGt ) {
     case wkbPoint                 :
     case wkbPoint25D              :
-      nbGeom= 1;
-      isSingle= TRUE;
+      nbGeom = 1;
+      isSingle = true;
       break;
     case wkbMultiPoint            :
     case wkbMultiPoint25D         :
-      nbGeom= ((OGRGeometryCollection*)poGeom)->getNumGeometries();
-      isSingle= FALSE;
+      nbGeom = ((OGRGeometryCollection*)poGeom)->getNumGeometries();
+      isSingle = false;
       break;
     case wkbLineString            :
     case wkbLineString25D         :
-      nbGeom= 1;
-      isSingle= TRUE;
+      nbGeom = 1;
+      isSingle = true;
       break;
     case wkbMultiLineString       :
     case wkbMultiLineString25D    :
-      nbGeom= ((OGRGeometryCollection*)poGeom)->getNumGeometries();
-      isSingle= FALSE;
+      nbGeom = ((OGRGeometryCollection*)poGeom)->getNumGeometries();
+      isSingle = false;
       break;
     case wkbPolygon               :
     case wkbPolygon25D            :
-      nbGeom= 1;
-      isSingle= TRUE;
+      nbGeom = 1;
+      isSingle = true;
       break;
     case wkbMultiPolygon          :
     case wkbMultiPolygon25D       :
-      nbGeom= ((OGRGeometryCollection*)poGeom)->getNumGeometries();
-      isSingle= FALSE;
+      nbGeom = ((OGRGeometryCollection*)poGeom)->getNumGeometries();
+      isSingle = false;
       break;
     default                       :
-      nbGeom= 0;
-      isSingle= FALSE;
+      nbGeom = 0;
+      isSingle = false;
       break;
     }
 

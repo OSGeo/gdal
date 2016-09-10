@@ -379,11 +379,11 @@ OGRErr      OGRWarpedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
 /************************************************************************/
 
 static double TransformAndUpdateBBAndReturnX(
-                                   OGRCoordinateTransformation* poCT,
-                                   double dfX, double dfY,
-                                   double& dfMinX, double& dfMinY, double& dfMaxX, double& dfMaxY)
+    OGRCoordinateTransformation* poCT,
+    double dfX, double dfY,
+    double& dfMinX, double& dfMinY, double& dfMaxX, double& dfMaxY )
 {
-    int bSuccess;
+    int bSuccess = FALSE;
     poCT->TransformEx( 1, &dfX, &dfY, NULL, &bSuccess );
     if( bSuccess )
     {
@@ -393,8 +393,8 @@ static double TransformAndUpdateBBAndReturnX(
         if( dfY > dfMaxY ) dfMaxY = dfY;
         return dfX;
     }
-    else
-        return 0.0;
+
+    return 0.0;
 }
 
 /************************************************************************/
