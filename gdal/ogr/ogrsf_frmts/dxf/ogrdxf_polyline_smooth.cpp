@@ -175,20 +175,17 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 /*                DXFSmoothPolyline::EmitArc()                        */
 /************************************************************************/
 
-void DXFSmoothPolyline::EmitArc
-(
+void DXFSmoothPolyline::EmitArc(
     const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end,
     double radius, double len, double bulge,
     OGRLineString* poLS,
-    double dfZ
-) const
+    double dfZ ) const
 {
     assert(poLS);
 
     double  ogrArcRotation = 0.0,
             ogrArcRadius = fabs(radius);
-
 
 /* -------------------------------------------------------------------- */
 /*      Set arc's direction and keep bulge positive                     */
@@ -196,9 +193,8 @@ void DXFSmoothPolyline::EmitArc
 
     const bool bClockwise = (bulge < 0);
 
-    if(bClockwise)
+    if( bClockwise )
         bulge *= -1;
-
 
 /* -------------------------------------------------------------------- */
 /*      Get arc's center point                                          */
@@ -230,7 +226,6 @@ void DXFSmoothPolyline::EmitArc
     ogrArcCenter.x = midpoint.x + (pperp.x * apo);
     ogrArcCenter.y = midpoint.y + (pperp.y * apo);
 
-
 /* -------------------------------------------------------------------- */
 /*      Get the line's general vertical direction (-1 = down, +1 = up)  */
 /* -------------------------------------------------------------------- */
@@ -248,7 +243,6 @@ void DXFSmoothPolyline::EmitArc
         a += (linedir * 180.0);
 
     double ogrArcStartAngle = GetOGRangle(a);
-
 
 /* -------------------------------------------------------------------- */
 /*      Get arc's ending angle.                                         */
@@ -297,14 +291,12 @@ void DXFSmoothPolyline::EmitArc
 /*                DXFSmoothPolyline::EmitLine()                         */
 /************************************************************************/
 
-void DXFSmoothPolyline::EmitLine
-(
+void DXFSmoothPolyline::EmitLine(
     const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end,
     OGRLineString* poLS,
     bool bConstantZ,
-    double dfZ
-) const
+    double dfZ ) const
 {
     assert(poLS);
 
@@ -346,7 +338,7 @@ void DXFSmoothPolyline::Close()
 /*                DXFSmoothPolyline::HasConstantZ()                     */
 /************************************************************************/
 
-bool DXFSmoothPolyline::HasConstantZ(double& dfZ) const
+bool DXFSmoothPolyline::HasConstantZ( double& dfZ ) const
 {
     // Treat the polyline as having constant Z if all Z members
     // are equal or if any bulge attribute exists. In the latter case,
@@ -356,9 +348,9 @@ bool DXFSmoothPolyline::HasConstantZ(double& dfZ) const
 
     const double d = m_vertices[0].z;
 
-    for(size_t i = 1; i < m_vertices.size(); i++)
+    for( size_t i = 1; i < m_vertices.size(); i++ )
     {
-        if(m_vertices[i].bulge != 0.0)
+        if( m_vertices[i].bulge != 0.0 )
         {
             dfZ = 0.0;
             return true;

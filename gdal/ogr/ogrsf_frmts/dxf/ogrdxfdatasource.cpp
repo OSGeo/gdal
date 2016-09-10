@@ -186,8 +186,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
         if( EQUAL(szLineBuf,"CLASSES") )
         {
-            int nCode = 0;
-            while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1
+            // int nCode = 0;
+            while( (/* nCode = */ ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1
                    && !EQUAL(szLineBuf,"ENDSEC") )
             {
                 //printf("C:%d/%s\n", nCode, szLineBuf );
@@ -365,7 +365,7 @@ bool OGRDXFDataSource::ReadLayerDefinition()
 {
     char szLineBuf[257];
     int nCode = 0;
-    std::map<CPLString,CPLString> oLayerProperties;
+    std::map<CPLString,CPLString>  oLayerProperties;
     CPLString osLayerName = "";
 
     oLayerProperties["Hidden"] = "0";
@@ -412,7 +412,7 @@ bool OGRDXFDataSource::ReadLayerDefinition()
         return false;
     }
 
-    if( oLayerProperties.size() > 0 )
+    if( !oLayerProperties.empty() )
         oLayerTable[osLayerName] = oLayerProperties;
 
     if( nCode == 0 )

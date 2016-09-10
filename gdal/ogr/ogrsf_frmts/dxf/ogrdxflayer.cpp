@@ -453,7 +453,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
 {
     char szLineBuf[257];
-    int nCode;
+    int nCode = 0;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     double dfX = 0.0;
     double dfY = 0.0;
@@ -1333,7 +1333,6 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     double dfAxisY = 0.0;
     double dfAxisZ=0.0;
     int bHaveZ = FALSE;
-    double adfN[3];
     bool bApplyOCSTransform = false;
 
 /* -------------------------------------------------------------------- */
@@ -1404,9 +1403,11 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
         && oStyleProperties.count("220_N.dY") != 0
         && oStyleProperties.count("230_N.dZ") != 0 )
     {
-        adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
-        adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
-        adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
+        double adfN[3] = {
+            CPLAtof(oStyleProperties["210_N.dX"]),
+            CPLAtof(oStyleProperties["220_N.dY"]),
+            CPLAtof(oStyleProperties["230_N.dZ"])
+        };
 
         if( (adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == 1.0) == false )
         {
@@ -1472,7 +1473,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
 
 {
     char szLineBuf[257];
-    int nCode;
+    int nCode = 0;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     double dfX1 = 0.0;
     double dfY1 = 0.0;
