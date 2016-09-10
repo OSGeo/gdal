@@ -226,14 +226,13 @@ the approach is as above in all these cases.
     double dfBaselineLength = POINT_DIST(dfArrowX1,dfArrowY1,
                                          dfArrowX2,dfArrowY2);
     double dfTargetLength = dfBaselineLength * 0.03;
-    double dfScaleFactor;
 
     // recompute vector 2 to ensure the direction is regular
     dfVec2X = (dfArrowX2 - dfArrowX1);
     dfVec2Y = (dfArrowY2 - dfArrowY1);
 
     // vector 1
-    dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec1X,dfVec1Y);
+    double dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec1X, dfVec1Y);
     dfVec1X *= dfScaleFactor;
     dfVec1Y *= dfScaleFactor;
 

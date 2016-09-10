@@ -76,7 +76,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
                  && pszInput[2] == '+' )
         {
             CPLString osHex;
-            int iChar;
+            int iChar = 0;
 
             osHex.assign( pszInput+3, 4 );
             sscanf( osHex.c_str(), "%x", &iChar );

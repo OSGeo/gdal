@@ -123,8 +123,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /*      Confirm we have a header section.                               */
 /* -------------------------------------------------------------------- */
     char szLineBuf[257];
-    int  nCode;
-    int  bEntitiesOnly = FALSE;
+    int bEntitiesOnly = FALSE;
 
     if( ReadValue( szLineBuf ) != 0 || !EQUAL(szLineBuf,"SECTION") )
         return FALSE;
@@ -187,6 +186,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
         if( EQUAL(szLineBuf,"CLASSES") )
         {
+            int nCode = 0;
             while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > -1
                    && !EQUAL(szLineBuf,"ENDSEC") )
             {
@@ -309,7 +309,7 @@ bool OGRDXFDataSource::ReadTablesSection()
 
 {
     char szLineBuf[257];
-    int  nCode;
+    int nCode = 0;
 
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
            && !EQUAL(szLineBuf,"ENDSEC") )
@@ -364,7 +364,7 @@ bool OGRDXFDataSource::ReadLayerDefinition()
 
 {
     char szLineBuf[257];
-    int  nCode;
+    int nCode = 0;
     std::map<CPLString,CPLString> oLayerProperties;
     CPLString osLayerName = "";
 
@@ -446,7 +446,7 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
 
 {
     char szLineBuf[257];
-    int  nCode;
+    int nCode = 0;
     CPLString osLineTypeName;
     CPLString osLineTypeDef;
 
@@ -511,7 +511,7 @@ bool OGRDXFDataSource::ReadHeaderSection()
 
 {
     char szLineBuf[257];
-    int  nCode;
+    int nCode = 0;
 
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
            && !EQUAL(szLineBuf,"ENDSEC") )

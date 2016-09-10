@@ -333,8 +333,10 @@ int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
 /*      Copy header, inserting in new objects as needed.                */
 /* -------------------------------------------------------------------- */
     char szLineBuf[257];
-    int nCode;
-    CPLString osSection, osTable, osEntity;
+    int nCode = 0;
+    CPLString osSection;
+    CPLString osTable;
+    CPLString osEntity;
 
     while( (nCode = oHeaderDS.ReadValue( szLineBuf, sizeof(szLineBuf) )) != -1
            && osSection != "ENTITIES" )
@@ -582,12 +584,12 @@ int OGRDXFWriterDS::FixupHANDSEED( VSILFILE *fpIn )
 /* -------------------------------------------------------------------- */
 /*      What is a good next handle seed?  Scan existing values.         */
 /* -------------------------------------------------------------------- */
-    unsigned int   nHighestHandle = 0;
+    unsigned int nHighestHandle = 0;
     std::set<CPLString>::iterator it;
 
-    for( it = aosUsedEntities.begin(); it != aosUsedEntities.end(); it++ )
+    for( it = aosUsedEntities.begin(); it != aosUsedEntities.end(); ++it )
     {
-        unsigned int nHandle;
+        unsigned int nHandle = 0;
         if( sscanf( (*it).c_str(), "%x", &nHandle ) == 1 )
         {
             if( nHandle > nHighestHandle )
@@ -598,15 +600,14 @@ int OGRDXFWriterDS::FixupHANDSEED( VSILFILE *fpIn )
 /* -------------------------------------------------------------------- */
 /*      Read the existing handseed value, replace it, and write back.   */
 /* -------------------------------------------------------------------- */
-    char szWorkBuf[30];
-    int  i = 0;
-
     if( nHANDSEEDOffset == 0 )
         return FALSE;
 
+    char szWorkBuf[30];
     VSIFSeekL( fpIn, nHANDSEEDOffset, SEEK_SET );
     VSIFReadL( szWorkBuf, 1, sizeof(szWorkBuf), fpIn );
 
+    int i = 0;
     while( szWorkBuf[i] != '\n' )
         i++;
 
