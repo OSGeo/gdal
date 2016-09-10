@@ -68,9 +68,8 @@ class GFSTemplateItem
                                 GMLReader *pReader,
                                 int *pbSequentialLayers )
 {
-/* updating the FeatureClass list */
-    int clIdx;
-    for (clIdx = 0; clIdx < pReader->GetClassCount(); clIdx++)
+    // Updating the FeatureClass list.
+    for( int clIdx = 0; clIdx < pReader->GetClassCount(); clIdx++ )
     {
         GMLFeatureClass* poClass = pReader->GetClass( clIdx );
         if (poClass != NULL)
@@ -101,20 +100,21 @@ class GFSTemplateItem
 
 bool GMLReader::ReArrangeTemplateClasses ( GFSTemplateList *pCC )
 {
-/* rearranging the final FeatureClass list [SEQUENTIAL] */
-    int m_nSavedClassCount = GetClassCount();
+    // Rearranging the final FeatureClass list [SEQUENTIAL].
+    // TODO(schwehr): Why the m_ for m_nSavedClassCount?  Not a member.
+    const int m_nSavedClassCount = GetClassCount();
 
-/* saving the previous FeatureClass list */
+    // Saving the previous FeatureClass list.
     GMLFeatureClass **m_papoSavedClass = (GMLFeatureClass **)
                     CPLMalloc( sizeof(void*) * m_nSavedClassCount );
-    int clIdx;
-    for (clIdx = 0; clIdx < GetClassCount(); clIdx++)
+
+    for( int clIdx = 0; clIdx < GetClassCount(); clIdx++ )
     {
-    /* Transferring any previous FeatureClass */
+        // Transferring any previous FeatureClass.
         m_papoSavedClass[clIdx] = m_papoClass[clIdx];
     }
 
-/* cleaning the previous FeatureClass list */
+    // Cleaning the previous FeatureClass list.
     SetClassListLocked( false );
     CPLFree( m_papoClass );
     m_nClassCount = 0;

@@ -539,39 +539,39 @@ static int OGRESRIJSONReaderParseZM( json_object* poObj, int *bHasZ,
     ** implies the 3rd number in the tuple is z.  if hasM is true, but hasZ
     ** is not, it is the M value, and is not supported in OGR.
     */
-    int bZ;
+    bool bZ = false;
     json_object* poObjHasZ = OGRGeoJSONFindMemberByName( poObj, "hasZ" );
     if( poObjHasZ == NULL )
     {
-        bZ = FALSE;
+        // bZ = false;
     }
     else
     {
         if( json_object_get_type( poObjHasZ ) != json_type_boolean )
         {
-            bZ = FALSE;
+            // bZ = false;
         }
         else
         {
-            bZ = json_object_get_boolean( poObjHasZ );
+            bZ = CPL_TO_BOOL(json_object_get_boolean( poObjHasZ ));
         }
     }
 
-    int bM;
+    bool bM = false;
     json_object* poObjHasM = OGRGeoJSONFindMemberByName( poObj, "hasM" );
     if( poObjHasM == NULL )
     {
-        bM = FALSE;
+        // bM = FALSE;
     }
     else
     {
         if( json_object_get_type( poObjHasM ) != json_type_boolean )
         {
-            bM = FALSE;
+            // bM = FALSE;
         }
         else
         {
-            bM = json_object_get_boolean( poObjHasM );
+            bM = CPL_TO_BOOL(json_object_get_boolean( poObjHasM ));
         }
     }
     if( bHasZ != NULL )

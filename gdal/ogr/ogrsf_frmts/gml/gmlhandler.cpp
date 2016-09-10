@@ -297,7 +297,7 @@ void XMLCALL GMLExpatHandler::startElementCbk( void *pUserData, const char *pszN
         return;
 
     const char* pszIter = pszName;
-    char ch;
+    char ch = '\0';
     while( (ch = *pszIter) != '\0' )
     {
         if( ch == ':' )
@@ -1288,7 +1288,7 @@ OGRErr GMLHandler::startElementDefault(const char *pszName, int nLenName, void* 
 /* -------------------------------------------------------------------- */
 /*      Is it a feature?  If so push a whole new state, and return.     */
 /* -------------------------------------------------------------------- */
-    int nClassIndex;
+    int nClassIndex = 0;
     const char* pszFilteredClassName = NULL;
 
     if( nLenName == 9 && strcmp(pszName, "boundedBy") == 0 )

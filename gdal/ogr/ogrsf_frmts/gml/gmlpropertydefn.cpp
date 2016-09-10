@@ -163,9 +163,8 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
         {
             if( bSetWidth )
             {
-                /* grow the Width to the length of the string passed in */
-                int nWidth;
-                nWidth = static_cast<int>(strlen(pszValue));
+                // Grow the Width to the length of the string passed in.
+                const int nWidth = static_cast<int>(strlen(pszValue));
                 if ( m_nWidth < nWidth )
                     SetWidth( nWidth );
             }

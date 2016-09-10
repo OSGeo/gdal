@@ -353,7 +353,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Convert the whole feature into an OGRFeature.                   */
 /* -------------------------------------------------------------------- */
-        int iField;
         int iDstField = 0;
         OGRFeature *poOGRFeature = new OGRFeature( poFeatureDefn );
 
@@ -366,7 +365,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         }
 
         int nPropertyCount = poFClass->GetPropertyCount();
-        for( iField = 0; iField < nPropertyCount; iField++, iDstField ++ )
+        for( int iField = 0; iField < nPropertyCount; iField++, iDstField ++ )
         {
             const GMLProperty *psGMLProperty = poGMLFeature->GetProperty( iField );
             if( psGMLProperty == NULL || psGMLProperty->nSubProperties == 0 )
