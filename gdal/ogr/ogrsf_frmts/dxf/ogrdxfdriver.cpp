@@ -44,13 +44,13 @@ static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
         return TRUE;
     const char* pszIter = (const char*)poOpenInfo->pabyHeader;
     int bFoundZero = FALSE;
-    int i = 0;
-    for(i=0; pszIter[i]; i++)
+    int i = 0;  // Used after for.
+    for( ; pszIter[i]; i++ )
     {
         if( pszIter[i] == '0' )
         {
-            int j=i-1;
-            for(; j>=0; j--)
+            int j = i-1;  // Used after for.
+            for( ; j >= 0; j-- )
             {
                 if( pszIter[j] != ' ' )
                     break;
@@ -64,11 +64,11 @@ static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
     }
     if( !bFoundZero )
         return FALSE;
-    i ++;
+    i++;
     while( pszIter[i] == ' ' )
-        i ++;
+        i++;
     while( pszIter[i] == '\n' || pszIter[i] == '\r' )
-        i ++;
+        i++;
     if( !STARTS_WITH_CI(pszIter + i, "SECTION") )
         return FALSE;
     i += static_cast<int>(strlen("SECTION"));
@@ -85,7 +85,7 @@ static GDALDataset *OGRDXFDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRDXFDriverIdentify(poOpenInfo) )
         return NULL;
 
-    OGRDXFDataSource   *poDS = new OGRDXFDataSource();
+    OGRDXFDataSource *poDS = new OGRDXFDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {

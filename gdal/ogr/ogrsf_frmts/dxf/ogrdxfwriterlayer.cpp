@@ -222,7 +222,8 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
         CPLString osSanitizedLayer(pszLayer);
         // Replaced restricted characters with underscore
         // See http://docs.autodesk.com/ACD/2010/ENU/AutoCAD%202010%20User%20Documentation/index.html?url=WS1a9193826455f5ffa23ce210c4a30acaf-7345.htm,topicNumber=d0e41665
-        const char achForbiddenChars[] = { '<', '>', '/', '\\', '"', ':', ';', '?', '*', '|', '=', '\'' };
+        const char achForbiddenChars[] = {
+          '<', '>', '/', '\\', '"', ':', ';', '?', '*', '|', '=', '\'' };
         for( size_t i = 0; i < CPL_ARRAYSIZE(achForbiddenChars); ++i )
         {
             osSanitizedLayer.replaceAll( achForbiddenChars[i], '_' );
@@ -274,7 +275,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
     if( poTool && poTool->GetType() == OGRSTCSymbol )
     {
         OGRStyleSymbol *poSymbol = (OGRStyleSymbol *) poTool;
-        GBool  bDefault;
+        GBool bDefault;
 
         if( poSymbol->Color(bDefault) != NULL && !bDefault )
             WriteValue( 62, ColorStringToDXFColor( poSymbol->Color(bDefault) ) );
@@ -313,7 +314,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Write rotation.                                                 */
 /* -------------------------------------------------------------------- */
-    double dfAngle = poFeature->GetFieldAsDouble( "BlockAngle" );
+    const double dfAngle = poFeature->GetFieldAsDouble( "BlockAngle" );
 
     if( dfAngle != 0.0 )
     {
@@ -453,7 +454,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Angle                                                           */
 /* -------------------------------------------------------------------- */
-        double dfAngle = poLabel->Angle(bDefault);
+        const double dfAngle = poLabel->Angle(bDefault);
 
         // The DXF2000 reference says this is in radians, but in files
         // I see it seems to be in degrees. Perhaps this is version dependent?
@@ -465,7 +466,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /*      doubt the default translation mechanism will be much good.      */
 /* -------------------------------------------------------------------- */
         poTool->SetUnit( OGRSTUGround );
-        double dfHeight = poLabel->Size(bDefault);
+        const double dfHeight = poLabel->Size(bDefault);
 
         if( !bDefault )
             WriteValue( 40, dfHeight );
@@ -473,7 +474,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Anchor / Attachment Point                                       */
 /* -------------------------------------------------------------------- */
-        int nAnchor = poLabel->Anchor(bDefault);
+        const int nAnchor = poLabel->Anchor(bDefault);
 
         if( !bDefault )
         {
@@ -524,7 +525,6 @@ CPLString
 OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
                                               OGRStyleTool *poTool )
 {
-    CPLString osDef;
     OGRStylePen *poPen = (OGRStylePen *) poTool;
     GBool  bDefault;
 
@@ -540,6 +540,7 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
     char **papszTokens = CSLTokenizeString(pszPattern);
     double dfTotalLength = 0;
+    CPLString osDef;
 
     for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
     {
@@ -707,14 +708,14 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     if( poTool && poTool->GetType() == OGRSTCPen )
     {
         OGRStylePen *poPen = (OGRStylePen *) poTool;
-        GBool  bDefault;
+        GBool bDefault;
 
         if( poPen->Color(bDefault) != NULL && !bDefault )
             WriteValue( 62, ColorStringToDXFColor( poPen->Color(bDefault) ) );
 
         // we want to fetch the width in ground units.
         poPen->SetUnit( OGRSTUGround, 1.0 );
-        double dfWidth = poPen->Width(bDefault);
+        const double dfWidth = poPen->Width(bDefault);
 
         if( !bDefault )
             WriteValue( 370, (int) floor(dfWidth * 100 + 0.5) );
@@ -1018,12 +1019,9 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 
     for( int iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
     {
-        OGRLinearRing *poLR = NULL;
-
-        if( iRing == -1 )
-            poLR = poPoly->getExteriorRing();
-        else
-            poLR = poPoly->getInteriorRing( iRing );
+        OGRLinearRing *poLR = iRing == -1
+            ? poPoly->getExteriorRing()
+            : poPoly->getInteriorRing( iRing );
 
         WriteValue( 92, 2 ); // Polyline
         WriteValue( 72, 0 ); // has bulge
@@ -1183,10 +1181,13 @@ int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
     if( pszRGB == NULL )
         return -1;
 
-    int nRed, nGreen, nBlue, nTransparency = 255;
+    int nRed = 0;
+    int nGreen = 0;
+    int nBlue = 0;
+    int nTransparency = 255;
 
-    int nCount  = sscanf(pszRGB,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,
-                         &nTransparency);
+    const int nCount =
+        sscanf(pszRGB, "#%2x%2x%2x%2x", &nRed, &nGreen, &nBlue, &nTransparency);
 
     if (nCount < 3 )
         return -1;
@@ -1200,7 +1201,8 @@ int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
 
     for( int i = 1; i < 256; i++ )
     {
-        int nDist = ABS(nRed - pabyDXFColors[i*3+0])
+        const int nDist =
+            ABS(nRed - pabyDXFColors[i*3+0])
             + ABS(nGreen - pabyDXFColors[i*3+1])
             + ABS(nBlue  - pabyDXFColors[i*3+2]);
 
