@@ -218,8 +218,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
             }
         }
 
-        int i;
-        for(i=0; i<(int)aosGUID.size();i++)
+        for( size_t i = 0; i < aosGUID.size(); i++ )
         {
             apoSRS.push_back(GetGeomediaSRS(osGCoordSystemTable, aosGUID[i]));
         }
@@ -228,12 +227,12 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Create a layer for each spatial table.                          */
 /* -------------------------------------------------------------------- */
-    unsigned int iTable;
+
 
     papoLayers = (OGRGeomediaLayer **) CPLCalloc(apapszGeomColumns.size(),
                                              sizeof(void*));
 
-    for( iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
+    for( unsigned int iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
     {
         char **papszRecord = apapszGeomColumns[iTable];
         OGRGeomediaTableLayer *poLayer = new OGRGeomediaTableLayer( this );

@@ -1222,8 +1222,7 @@ void OGRGMLDataSource::BuildJointClassFromXSD()
         poJointClass->AddProperty(poNewProperty);
         }
 
-        int iField;
-        for( iField = 0; iField < poClass->GetPropertyCount(); iField++ )
+        for( int iField = 0; iField < poClass->GetPropertyCount(); iField++ )
         {
             GMLPropertyDefn *poProperty = poClass->GetProperty( iField );
             CPLString osPropertyName;
@@ -1242,7 +1241,9 @@ void OGRGMLDataSource::BuildJointClassFromXSD()
 
             poJointClass->AddProperty(poNewProperty);
         }
-        for( iField = 0; iField < poClass->GetGeometryPropertyCount(); iField++ )
+        for( int iField = 0;
+             iField < poClass->GetGeometryPropertyCount();
+             iField++ )
         {
             GMLGeometryPropertyDefn *poProperty = poClass->GetGeometryProperty( iField );
             CPLString osPropertyName;
@@ -1282,8 +1283,8 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
         size_t iPos = osPrefix.find('.');
         if( iPos != std::string::npos )
             osPrefix.resize(iPos);
-        int iSubClass;
-        for( iSubClass = 0; iSubClass < (int)aapoProps.size(); iSubClass ++ )
+        int iSubClass = 0;  // Used after for.
+        for( ; iSubClass < (int)aapoProps.size(); iSubClass ++ )
         {
             CPLString osPrefixClass(aapoProps[iSubClass][0]->GetName());
             iPos = osPrefixClass.find('.');
@@ -1328,15 +1329,16 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
         size_t iPos = osPrefix.find('.');
         if( iPos != std::string::npos )
             osPrefix.resize(iPos);
-        int iSubClass;
-        for( iSubClass = 0; iSubClass < (int)aapoGeomProps.size(); iSubClass ++ )
+        int iSubClass = 0;  // Used after for.
+        for( ; iSubClass < (int)aapoGeomProps.size(); iSubClass ++ )
         {
             if( osPrefix == aapoGeomProps[iSubClass].first )
                 break;
         }
         if( iSubClass == (int)aapoGeomProps.size() )
-            aapoGeomProps.push_back( std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> >
-                    (osPrefix, std::vector<GMLGeometryPropertyDefn*>()) );
+            aapoGeomProps.push_back(
+                std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> >(
+                    osPrefix, std::vector<GMLGeometryPropertyDefn*>()) );
         aapoGeomProps[iSubClass].second.push_back(poProp);
     }
     poClass->StealGeometryProperties();
@@ -1450,8 +1452,9 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
 
-    int iField;
-    for( iField = 0; iField < poClass->GetGeometryPropertyCount(); iField++ )
+    for( int iField = 0;
+         iField < poClass->GetGeometryPropertyCount();
+         iField++ )
     {
         GMLGeometryPropertyDefn *poProperty = poClass->GetGeometryProperty( iField );
         OGRGeomFieldDefn oField( poProperty->GetName(), (OGRwkbGeometryType)poProperty->GetType() );
@@ -1464,7 +1467,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         poLayer->GetLayerDefn()->AddGeomFieldDefn( &oField );
     }
 
-    for( iField = 0; iField < poClass->GetPropertyCount(); iField++ )
+    for( int iField = 0; iField < poClass->GetPropertyCount(); iField++ )
     {
         GMLPropertyDefn *poProperty = poClass->GetProperty( iField );
         OGRFieldType eFType;
@@ -1928,10 +1931,9 @@ void OGRGMLDataSource::InsertHeader()
 /* ==================================================================== */
 /*      Detect if there are fields of List types.                       */
 /* ==================================================================== */
-    int iLayer;
     bool bHasListFields = false;
 
-    for( iLayer = 0; !bHasListFields && iLayer < GetLayerCount(); iLayer++ )
+    for( int iLayer = 0; !bHasListFields && iLayer < GetLayerCount(); iLayer++ )
     {
         OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
         for( int iField = 0; !bHasListFields && iField < poFDefn->GetFieldCount(); iField++ )
@@ -2126,14 +2128,14 @@ void OGRGMLDataSource::InsertHeader()
 /*      Define the schema for each layer.                               */
 /* ==================================================================== */
 
-    for( iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
+    for( int iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
     {
         OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
 
 /* -------------------------------------------------------------------- */
 /*      Emit initial stuff for a feature type.                          */
 /* -------------------------------------------------------------------- */
-        if (IsGML32Output())
+        if( IsGML32Output() )
         {
             PrintLine(
                 fpSchema,
@@ -2255,12 +2257,9 @@ void OGRGMLDataSource::InsertHeader()
             if( poFieldDefn->GetType() == OFTInteger ||
                 poFieldDefn->GetType() == OFTIntegerList  )
             {
-                int nWidth;
-
-                if( poFieldDefn->GetWidth() > 0 )
-                    nWidth = poFieldDefn->GetWidth();
-                else
-                    nWidth = 16;
+                int nWidth = poFieldDefn->GetWidth() > 0
+                    ? poFieldDefn->GetWidth()
+                    : 16;
 
                 PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"%s\">",
                            poFieldDefn->GetNameRef(),
@@ -2287,12 +2286,9 @@ void OGRGMLDataSource::InsertHeader()
             else if( poFieldDefn->GetType() == OFTInteger64 ||
                      poFieldDefn->GetType() == OFTInteger64List  )
             {
-                int nWidth;
-
-                if( poFieldDefn->GetWidth() > 0 )
-                    nWidth = poFieldDefn->GetWidth();
-                else
-                    nWidth = 16;
+                int nWidth = poFieldDefn->GetWidth() > 0
+                    ? poFieldDefn->GetWidth()
+                    : 16;
 
                 PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"%s\">",
                            poFieldDefn->GetNameRef(),

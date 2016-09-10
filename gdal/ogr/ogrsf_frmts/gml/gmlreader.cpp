@@ -605,7 +605,7 @@ GMLFeature *GMLReader::NextFeatureExpat()
     nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
 
-    int nDone;
+    int nDone = 0;
     do
     {
         /* Reset counter that is used to detect billion laugh attacks */
@@ -671,7 +671,7 @@ void GMLReader::PushFeature( const char *pszElement,
                              int nClassIndex )
 
 {
-    int iClass;
+    int iClass = 0;
 
     if( nClassIndex != INT_MAX )
     {
@@ -682,7 +682,7 @@ void GMLReader::PushFeature( const char *pszElement,
     /* -------------------------------------------------------------------- */
     /*      Find the class of this element.                                 */
     /* -------------------------------------------------------------------- */
-        for( iClass = 0; iClass < m_nClassCount; iClass++ )
+        for( ; iClass < m_nClassCount; iClass++ )
         {
             if( EQUAL(pszElement,m_papoClass[iClass]->GetElementName()) )
                 break;
@@ -1068,7 +1068,7 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 /*      it.                                                             */
 /* -------------------------------------------------------------------- */
     GMLFeatureClass *poClass = poFeature->GetClass();
-    int      iProperty;
+    int iProperty = 0;
 
     int nPropertyCount = poClass->GetPropertyCount();
     if (iPropertyIn >= 0 && iPropertyIn < nPropertyCount)
@@ -1077,7 +1077,7 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
     }
     else
     {
-        for( iProperty=0; iProperty < nPropertyCount; iProperty++ )
+        for( ; iProperty < nPropertyCount; iProperty++ )
         {
             if( strcmp(poClass->GetProperty( iProperty )->GetSrcElement(),
                     pszElement ) == 0 )

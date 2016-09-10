@@ -92,7 +92,7 @@ static bool OGRGeoJSONIsPatchableArray( json_object* poJSonArray,
     if( nDepth == 0 )
         return OGRGeoJSONIsPatchablePosition(poJSonArray, poNativeArray);
 
-    int nLength;
+    int nLength = 0;
     if( json_object_get_type(poJSonArray) == json_type_array &&
         json_object_get_type(poNativeArray) == json_type_array &&
         (nLength = json_object_array_length(poJSonArray)) ==
@@ -182,7 +182,7 @@ static bool OGRGeoJSONIsPatchableGeometry( json_object* poJSonGeometry,
             json_object* poJSonGeometries =
                     CPL_json_object_object_get(poJSonGeometry, "geometries");
             json_object* poNativeGeometries = it.val;
-            int nLength;
+            int nLength = 0;
             if( json_object_get_type(poJSonGeometries) == json_type_array &&
                 json_object_get_type(poNativeGeometries) == json_type_array &&
                 (nLength = json_object_array_length(poJSonGeometries)) ==
@@ -991,7 +991,7 @@ static int OGR_json_double_with_significant_figures_to_string(struct json_object
                                                     CPL_UNUSED int flags)
 {
     char szBuffer[75];
-    int nSize;
+    int nSize = 0;
     if( CPLIsNan(jso->o.c_double))
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "NaN");
     else if(CPLIsInf(jso->o.c_double))

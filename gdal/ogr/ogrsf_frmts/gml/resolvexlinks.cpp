@@ -250,13 +250,13 @@ static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
         !( strstr( psChild->psChild->pszValue, pszURL ) == psChild->psChild->pszValue
         && psChild->psChild->pszValue[strlen(pszURL)] == '#' ) )
     {
-    //href has a different url
-        size_t nLen;
+        // href has a different url.
         if( psChild->psChild->pszValue[0] == '#' )
         {
         //empty URL: prepend the given URL
-            nLen = CPLStrnlen( pszURL, 1024 ) +
-                   CPLStrnlen( psChild->psChild->pszValue, 1024 ) + 1;
+            const size_t nLen =
+                CPLStrnlen( pszURL, 1024 ) +
+                CPLStrnlen( psChild->psChild->pszValue, 1024 ) + 1;
             char *pszNew = (char *)CPLMalloc( nLen * sizeof(char));
             CPLStrlcpy( pszNew, pszURL, nLen );
             CPLStrlcat( pszNew, psChild->psChild->pszValue, nLen );
@@ -265,11 +265,12 @@ static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
         }
         else
         {
-            size_t nPathLen;
-            for( nPathLen = strlen(pszURL);
-                 nPathLen > 0 && pszURL[nPathLen - 1] != '/'
-                              && pszURL[nPathLen - 1] != '\\';
-                 nPathLen--);
+            size_t nPathLen  = strlen(pszURL);  // Used after for.
+            for( ;
+                 nPathLen > 0 &&
+                 pszURL[nPathLen - 1] != '/' &&
+                 pszURL[nPathLen - 1] != '\\';
+                 nPathLen-- );
 
             const char* pszDash = strchr( psChild->psChild->pszValue, '#' );
             if( pszDash != NULL &&
@@ -285,8 +286,9 @@ static void CorrectURLs( CPLXMLNode * psRoot, const char *pszURL )
                     strstr( pszURLWithoutID, ":" ) == NULL )
                 {
                     //relative URL: prepend the path of pszURL
-                    nLen = nPathLen +
-                           CPLStrnlen( psChild->psChild->pszValue, 1024 ) + 1;
+                    const size_t nLen =
+                        nPathLen +
+                        CPLStrnlen( psChild->psChild->pszValue, 1024 ) + 1;
                     char *pszNew = (char *)CPLMalloc( nLen * sizeof(char));
                     for( size_t i = 0; i < nPathLen; i++ )
                         pszNew[i] = pszURL[i];

@@ -720,8 +720,6 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 CPLXMLNode *GMLFeatureClass::SerializeToXML()
 
 {
-    int         iProperty;
-
 /* -------------------------------------------------------------------- */
 /*      Set feature class and core information.                         */
 /* -------------------------------------------------------------------- */
@@ -842,7 +840,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
 /* -------------------------------------------------------------------- */
 /*      emit property information.                                      */
 /* -------------------------------------------------------------------- */
-    for( iProperty = 0; iProperty < GetPropertyCount(); iProperty++ )
+    for( int iProperty = 0; iProperty < GetPropertyCount(); iProperty++ )
     {
         GMLPropertyDefn *poPDefn = GetProperty( iProperty );
         const char *pszTypeName = "Unknown";

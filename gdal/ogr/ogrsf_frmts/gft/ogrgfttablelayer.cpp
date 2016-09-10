@@ -312,7 +312,7 @@ int OGRGFTTableLayer::FetchDescribe()
 
 static CPLString EscapeAndQuote(const char* pszStr)
 {
-    char ch;
+    char ch = '\0';
     CPLString osRes("'");
     while((ch = *pszStr) != 0)
     {
@@ -717,15 +717,13 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    CPLString      osCommand;
-
-    osCommand += "INSERT INTO ";
+    CPLString osCommand = "INSERT INTO ";
     osCommand += osTableId;
     osCommand += " (";
 
-    int iField;
-    int nFieldCount = poFeatureDefn->GetFieldCount();
-    for(iField = 0; iField < nFieldCount; iField++)
+    const int nFieldCount = poFeatureDefn->GetFieldCount();
+    int iField = 0;  // Used after for
+    for( ; iField < nFieldCount; iField++ )
     {
         if (iField > 0)
             osCommand += ", ";
@@ -906,15 +904,12 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    CPLString      osCommand;
-
-    osCommand += "UPDATE ";
+    CPLString osCommand = "UPDATE ";
     osCommand += osTableId;
     osCommand += " SET ";
 
-    int iField;
-    int nFieldCount = poFeatureDefn->GetFieldCount();
-    for(iField = 0; iField < nFieldCount + bHiddenGeometryField; iField++)
+    const int nFieldCount = poFeatureDefn->GetFieldCount();
+    for( int iField = 0; iField < nFieldCount + bHiddenGeometryField; iField++)
     {
         if (iField > 0)
             osCommand += ", ";

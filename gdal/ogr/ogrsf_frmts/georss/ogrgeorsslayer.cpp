@@ -937,7 +937,7 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
     nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
 
-    int nDone;
+    int nDone = 0;
     do
     {
         unsigned int nLen =
@@ -1723,7 +1723,7 @@ void OGRGeoRSSLayer::LoadSchema()
     setOfFoundFields = NULL;
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;

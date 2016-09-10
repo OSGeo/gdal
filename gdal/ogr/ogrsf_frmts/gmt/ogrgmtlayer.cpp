@@ -314,8 +314,8 @@ int OGRGmtLayer::ReadLine()
         {
             bool bInQuotes = false;
 
-            size_t iValEnd;
-            for( iValEnd = i+2; iValEnd < osLine.length(); iValEnd++ )
+            size_t iValEnd = i+2;  // Used after for.
+            for( ; iValEnd < osLine.length(); iValEnd++ )
             {
                 if( !bInQuotes && isspace((unsigned char)osLine[iValEnd]) )
                     break;
@@ -510,11 +510,11 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         else
         {
             // Parse point line.
-            double dfX;
-            double dfY;
+            double dfX = 0.0;
+            double dfY = 0.0;
             double dfZ = 0.0;
-            const int nDim
-                = CPLsscanf( osLine, "%lf %lf %lf", &dfX, &dfY, &dfZ );
+            const int nDim =
+                CPLsscanf( osLine, "%lf %lf %lf", &dfX, &dfY, &dfZ );
 
             if( nDim >= 2 )
             {
