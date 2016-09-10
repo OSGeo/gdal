@@ -691,8 +691,12 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
         (poFDefn != NULL &&
          (poFDefn->GetType() == OFTDate || poFDefn->GetType() == OFTDateTime || poFDefn->GetType() == OFTTime) ) )
     {
-        int nYear, nMonth, nDay, nHour, nMinute;
-        float fSecond;
+        int nYear = 0;
+        int nMonth = 0;
+        int nDay = 0;
+        int nHour = 0;
+        int nMinute = 0;
+        float fSecond = 0.0f;
         if( sscanf(json_object_get_string(poObj),
                    "%04d/%02d/%02d %02d:%02d",
                    &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 ||
@@ -1887,10 +1891,10 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                     break;
                 case OFTIntegerList:
                 {
-                    int nCount;
+                    int nCount = 0;
                     const int* panValues = poFeature->GetFieldAsIntegerList(i, &nCount);
                     json_object* poArray = json_object_new_array();
-                    for(int j=0;j<nCount;j++)
+                    for( int j = 0; j < nCount; j++ )
                         json_object_array_add(poArray, json_object_new_int(panValues[j]));
                     json_object_object_add(poContainer,
                             pszLastComponent, poArray);
@@ -1898,7 +1902,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 }
                 case OFTInteger64List:
                 {
-                    int nCount;
+                    int nCount = 0;
                     const GIntBig* panValues = poFeature->GetFieldAsInteger64List(i, &nCount);
                     json_object* poArray = json_object_new_array();
                     for(int j=0;j<nCount;j++)
@@ -1909,7 +1913,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 }
                 case OFTRealList:
                 {
-                    int nCount;
+                    int nCount = 0;
                     const double* padfValues = poFeature->GetFieldAsDoubleList(i, &nCount);
                     json_object* poArray = json_object_new_array();
                     for(int j=0;j<nCount;j++)
@@ -1930,7 +1934,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 }
                 case OFTBinary:
                 {
-                    int nCount;
+                    int nCount = 0;
                     GByte* pabyVal = poFeature->GetFieldAsBinary(i, &nCount);
                     char* pszVal = CPLBase64Encode(nCount, pabyVal);
                     json_object_object_add(poContainer,
@@ -1941,8 +1945,13 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 }
                 case OFTDateTime:
                 {
-                    int nYear, nMonth, nDay, nHour, nMin, nTZ;
-                    float fSec;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMin = 0;
+                    int nTZ = 0;
+                    float fSec = 0.0f;
                     poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
                                                   &nHour, &nMin, &fSec, &nTZ);
                     if( nTZ == 0 )
@@ -1955,9 +1964,9 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                     }
                     else
                     {
-                        int TZOffset = ABS(nTZ - 100) * 15;
-                        int TZHour = TZOffset / 60;
-                        int TZMinute = TZOffset - TZHour * 60;
+                        const int TZOffset = ABS(nTZ - 100) * 15;
+                        const int TZHour = TZOffset / 60;
+                        const int TZMinute = TZOffset - TZHour * 60;
                         json_object_object_add(poContainer,
                                 pszLastComponent,
                                 json_object_new_string(
