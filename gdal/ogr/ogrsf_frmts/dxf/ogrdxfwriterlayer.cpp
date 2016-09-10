@@ -299,7 +299,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Write scaling.                                                  */
 /* -------------------------------------------------------------------- */
-    int nScaleCount;
+    int nScaleCount = 0;
     const double *padfScale =
         poFeature->GetFieldAsDoubleList( "BlockScale", &nScaleCount );
 
@@ -386,10 +386,7 @@ CPLString OGRDXFWriterLayer::TextEscape( const char *pszInput )
     wchar_t *panInput = CPLRecodeToWChar( pszInput,
                                           CPL_ENC_UTF8,
                                           CPL_ENC_UCS2 );
-    int i;
-
-
-    for( i = 0; panInput[i] != 0; i++ )
+    for( int i = 0; panInput[i] != 0; i++ )
     {
         if( panInput[i] == '\n' )
             osResult += "\\P";
@@ -611,10 +608,9 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
-        int iGeom;
         OGRErr eErr = OGRERR_NONE;
 
-        for( iGeom = 0;
+        for( int iGeom = 0;
              eErr == OGRERR_NONE && iGeom < poGC->getNumGeometries();
              iGeom++ )
         {
@@ -630,11 +626,10 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
     {
         OGRPolygon *poPoly = (OGRPolygon *) poGeom;
-        int iGeom;
         OGRErr eErr;
 
         eErr = WritePOLYLINE( poFeature, poPoly->getExteriorRing() );
-        for( iGeom = 0;
+        for( int iGeom = 0;
              eErr == OGRERR_NONE && iGeom < poPoly->getNumInteriorRings();
              iGeom++ )
         {
@@ -788,9 +783,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
             return OGRERR_FAILURE;
     }
 
-    int iVert;
-
-    for( iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
+    for( int iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
     {
         if( bHasDifferentZ )
         {
@@ -837,9 +830,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         WriteValue( 70, 0 );
     WriteValue( 66, "1" );
 
-    int iVert;
-
-    for( iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
+    for( int iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
     {
         WriteValue( 0, "VERTEX" );
         WriteValue( 8, "0" );
@@ -884,10 +875,9 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
     if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
-        int iGeom;
         OGRErr eErr = OGRERR_NONE;
 
-        for( iGeom = 0;
+        for( int iGeom = 0;
              eErr == OGRERR_NONE && iGeom < poGC->getNumGeometries();
              iGeom++ )
         {
@@ -1069,9 +1059,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
         WriteValue( 70, 0 );
     WriteValue( 66, "1" );
 
-    int iVert;
-
-    for( iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
+    for( int iVert = 0; iVert < poLS->getNumPoints(); iVert++ )
     {
         WriteValue( 0, "VERTEX" );
         WriteValue( 8, "0" );
@@ -1160,9 +1148,7 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *)
             poFeature->StealGeometry();
-        int iGeom;
-
-        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             poFeature->SetGeometry( poGC->getGeometryRef(iGeom) );
 
@@ -1170,7 +1156,6 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
 
             if( eErr != OGRERR_NONE )
                 return eErr;
-
         }
 
         poFeature->SetGeometryDirectly( poGC );
@@ -1210,11 +1195,10 @@ int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
 /*      Find near color in DXF palette.                                 */
 /* -------------------------------------------------------------------- */
     const unsigned char *pabyDXFColors = ACGetColorTable();
-    int i;
     int nMinDist = 768;
     int nBestColor = -1;
 
-    for( i = 1; i < 256; i++ )
+    for( int i = 1; i < 256; i++ )
     {
         int nDist = ABS(nRed - pabyDXFColors[i*3+0])
             + ABS(nGreen - pabyDXFColors[i*3+1])

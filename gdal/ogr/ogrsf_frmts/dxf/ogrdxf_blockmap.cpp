@@ -42,7 +42,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
 
 {
     char szLineBuf[257];
-    int  nCode;
+    int nCode = 0;
     OGRDXFLayer *poReaderLayer = (OGRDXFLayer *) GetLayerByName( "Entities" );
     int bMergeBlockGeometries = CPLTestBool(
         CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
