@@ -556,11 +556,10 @@ void OGRGenSQLResultsLayer::ClearFilters()
 /*      Clear any attribute filter installed on the joined layers.      */
 /* -------------------------------------------------------------------- */
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
-    int iJoin;
 
     if( psSelectInfo != NULL )
     {
-        for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+        for( int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
         {
             swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
             OGRLayer *poJoinLayer =
@@ -891,11 +890,10 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /* -------------------------------------------------------------------- */
     const char *pszError = NULL;
     OGRFeature *poSrcFeature = NULL;
-    int iField;
 
     while( (poSrcFeature = poSrcLayer->GetNextFeature()) != NULL )
     {
-        for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
@@ -971,7 +969,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD )
     {
-        for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
             if (psSelectInfo->column_summary != NULL)
@@ -995,7 +993,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
             poSummaryFeature->SetFID( 0 );
         }
 
-        for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
             if (psSelectInfo->column_summary != NULL)
@@ -1283,9 +1281,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 /* -------------------------------------------------------------------- */
 /*      Fetch the corresponding features from any jointed tables.       */
 /* -------------------------------------------------------------------- */
-    int iJoin;
-
-    for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+    for( int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
     {
         CPLString osFilter;
 
@@ -1509,7 +1505,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 /* -------------------------------------------------------------------- */
 /*      Copy values from any joined tables.                             */
 /* -------------------------------------------------------------------- */
-    for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+    for( int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
     {
         CPLString osFilter;
 
@@ -2219,9 +2215,10 @@ void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
     {
         OGRLayer* poLayer = papoTableLayers[iTable];
         OGRFeatureDefn *poSrcFDefn = poLayer->GetLayerDefn();
-        int iSrcField;
         char** papszIgnoredFields = NULL;
-        for(iSrcField=0;iSrcField<poSrcFDefn->GetFieldCount();iSrcField++)
+        for( int iSrcField = 0;
+             iSrcField<poSrcFDefn->GetFieldCount();
+             iSrcField++ )
         {
             OGRFieldDefn* poFDefn = poSrcFDefn->GetFieldDefn(iSrcField);
             if (CPLHashSetLookup(hSet,poFDefn) == NULL)

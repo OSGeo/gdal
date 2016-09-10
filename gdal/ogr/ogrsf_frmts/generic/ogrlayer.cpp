@@ -782,27 +782,28 @@ OGRErr OGRLayer::ReorderField( int iOldFieldPos, int iNewFieldPos )
         return OGRERR_NONE;
 
     int* panMap = (int*) CPLMalloc(sizeof(int) * nFieldCount);
-    int i;
     if (iOldFieldPos < iNewFieldPos)
     {
         /* "0","1","2","3","4" (1,3) -> "0","2","3","1","4" */
-        for(i=0;i<iOldFieldPos;i++)
+        int i = 0;  // Used after for.
+        for( ; i < iOldFieldPos; i++ )
             panMap[i] = i;
-        for(;i<iNewFieldPos;i++)
+        for( ; i < iNewFieldPos; i++ )
             panMap[i] = i + 1;
         panMap[iNewFieldPos] = iOldFieldPos;
-        for(i=iNewFieldPos+1;i<nFieldCount;i++)
+        for( i = iNewFieldPos + 1; i < nFieldCount; i++ )
             panMap[i] = i;
     }
     else
     {
         /* "0","1","2","3","4" (3,1) -> "0","3","1","2","4" */
-        for(i=0;i<iNewFieldPos;i++)
+        for( int i = 0; i < iNewFieldPos; i++ )
             panMap[i] = i;
         panMap[iNewFieldPos] = iOldFieldPos;
-        for(i=iNewFieldPos+1;i<=iOldFieldPos;i++)
+        int i = iNewFieldPos+1;  // Used after for.
+        for( ; i <= iOldFieldPos; i++ )
             panMap[i] = i - 1;
-        for(;i<nFieldCount;i++)
+        for( ; i < nFieldCount; i++ )
             panMap[i] = i;
     }
 

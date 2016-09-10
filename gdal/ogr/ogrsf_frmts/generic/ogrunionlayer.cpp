@@ -270,19 +270,19 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
 
     if( eFieldStrategy == FIELD_SPECIFIED )
     {
-        int i;
-        for(i = 0; i < nFields; i++)
+        for( int i = 0; i < nFields; i++ )
             poFeatureDefn->AddFieldDefn(papoFields[i]);
-        for(i = 0; i < nGeomFields; i++)
+        for( int i = 0; i < nGeomFields; i++ )
         {
-            poFeatureDefn->AddGeomFieldDefn(new OGRUnionLayerGeomFieldDefn(papoGeomFields[i]), FALSE);
+            poFeatureDefn->AddGeomFieldDefn(
+                new OGRUnionLayerGeomFieldDefn(papoGeomFields[i]), FALSE);
             OGRUnionLayerGeomFieldDefn* poGeomFieldDefn =
                 (OGRUnionLayerGeomFieldDefn* ) poFeatureDefn->GetGeomFieldDefn(i);
 
             if( poGeomFieldDefn->bGeomTypeSet == FALSE ||
                 poGeomFieldDefn->bSRSSet == FALSE )
             {
-                for(int iLayer = 0; iLayer < nSrcLayers; iLayer++)
+                for( int iLayer = 0; iLayer < nSrcLayers; iLayer++ )
                 {
                     OGRFeatureDefn* poSrcFeatureDefn =
                                 papoSrcLayers[iLayer]->GetLayerDefn();
@@ -317,10 +317,11 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
     else if( eFieldStrategy == FIELD_FROM_FIRST_LAYER )
     {
         OGRFeatureDefn* poSrcFeatureDefn = papoSrcLayers[0]->GetLayerDefn();
-        int i;
-        for(i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
+        for( int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
             poFeatureDefn->AddFieldDefn(poSrcFeatureDefn->GetFieldDefn(i));
-        for(i = 0;  nGeomFields != - 1 && i < poSrcFeatureDefn->GetGeomFieldCount(); i++)
+        for( int i = 0;
+             nGeomFields != - 1 && i < poSrcFeatureDefn->GetGeomFieldCount();
+             i++ )
         {
             OGRGeomFieldDefn* poFldDefn = poSrcFeatureDefn->GetGeomFieldDefn(i);
             poFeatureDefn->AddGeomFieldDefn(
@@ -341,8 +342,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                                 papoSrcLayers[iLayer]->GetLayerDefn();
 
             /* Add any field that is found in the source layers */
-            int i;
-            for(i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
+            for( int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++ )
             {
                 OGRFieldDefn* poSrcFieldDefn = poSrcFeatureDefn->GetFieldDefn(i);
                 int nIndex =
@@ -357,7 +357,10 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                 }
             }
 
-            for(i = 0; nGeomFields != - 1 && i < poSrcFeatureDefn->GetGeomFieldCount(); i++)
+            for( int i = 0;
+                 nGeomFields != - 1 &&
+                 i < poSrcFeatureDefn->GetGeomFieldCount();
+                 i++)
             {
                 OGRGeomFieldDefn* poSrcFieldDefn = poSrcFeatureDefn->GetGeomFieldDefn(i);
                 int nIndex =
@@ -400,10 +403,9 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
     else if (eFieldStrategy == FIELD_INTERSECTION_ALL_LAYERS )
     {
         OGRFeatureDefn* poSrcFeatureDefn = papoSrcLayers[0]->GetLayerDefn();
-        int i;
-        for(i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
+        for( int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++ )
             poFeatureDefn->AddFieldDefn(poSrcFeatureDefn->GetFieldDefn(i));
-        for(i = 0; i < poSrcFeatureDefn->GetGeomFieldCount(); i++)
+        for( int i = 0; i < poSrcFeatureDefn->GetGeomFieldCount(); i++ )
         {
             OGRGeomFieldDefn* poFldDefn = poSrcFeatureDefn->GetGeomFieldDefn(i);
             poFeatureDefn->AddGeomFieldDefn(
@@ -411,11 +413,14 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
         }
 
         /* Remove any field that is not found in the source layers */
-        for(int iLayer = 1; iLayer < nSrcLayers; iLayer++)
+        for( int iLayer = 1; iLayer < nSrcLayers; iLayer++ )
         {
             OGRFeatureDefn* l_poSrcFeatureDefn =
                                         papoSrcLayers[iLayer]->GetLayerDefn();
-            for(i = iCompareFirstIndex; i < poFeatureDefn->GetFieldCount();)
+            for( int i = iCompareFirstIndex;
+                 i < poFeatureDefn->GetFieldCount();
+                 // No increment.
+                 )
             {
                 OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
                 int nSrcIndex = l_poSrcFeatureDefn->GetFieldIndex(
@@ -430,10 +435,13 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                         l_poSrcFeatureDefn->GetFieldDefn(nSrcIndex);
                     MergeFieldDefn(poFieldDefn, poSrcFieldDefn);
 
-                    i ++;
+                    i++;
                 }
             }
-            for(i = 0; i < poFeatureDefn->GetGeomFieldCount();)
+            for( int i = 0;
+                 i < poFeatureDefn->GetGeomFieldCount();
+                 // No increment.
+                 )
             {
                 OGRGeomFieldDefn* poFieldDefn = poFeatureDefn->GetGeomFieldDefn(i);
                 int nSrcIndex = l_poSrcFeatureDefn->GetGeomFieldIndex(
@@ -446,7 +454,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                 {
                     /* TODO: merge type, SRS, extent ? */
 
-                    i ++;
+                    i++;
                 }
             }
         }
