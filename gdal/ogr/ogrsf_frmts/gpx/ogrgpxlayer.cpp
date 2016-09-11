@@ -716,19 +716,25 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             {
                 for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
                 {
-                    int bMatch;
+                    bool bMatch = false;
                     if (iField >= nGPXFields)
                     {
                         char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
-                        bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                                        pszCompatibleName ) == 0);
+                        bMatch =
+                            strcmp(poFeatureDefn->
+                                   GetFieldDefn(iField)->GetNameRef(),
+                                   pszCompatibleName ) == 0;
                         CPLFree(pszCompatibleName);
                     }
                     else
-                        bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                                        pszName ) == 0);
+                    {
+                        bMatch =
+                            strcmp(poFeatureDefn->
+                                   GetFieldDefn(iField)->GetNameRef(),
+                                   pszName ) == 0;
+                    }
 
-                    if (bMatch)
+                    if( bMatch )
                     {
                         iCurrentField = iField;
                         pszSubElementName = CPLStrdup(pszName);
@@ -1080,7 +1086,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     nFeatureTabIndex = 0;
     nWithoutEventCounter = 0;
 
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1917,7 +1923,7 @@ void OGRGPXLayer::LoadExtensionsSchema()
     bStopParsing = false;
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -2007,18 +2013,26 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
             CPLFree(pszSubElementName);
             pszSubElementName = CPLStrdup(pszName);
 
-            int iField;
-            for(iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+            int iField = 0;  // Used after for.
+            for( ; iField < poFeatureDefn->GetFieldCount(); iField++ )
             {
-                int bMatch;
-                if (iField >= nGPXFields)
+                bool bMatch = false;
+                if( iField >= nGPXFields )
                 {
                     char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
-                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszCompatibleName ) == 0);
+                    bMatch =
+                        strcmp(poFeatureDefn->
+                               GetFieldDefn(iField)->GetNameRef(),
+                               pszCompatibleName ) == 0;
                     CPLFree(pszCompatibleName);
                 }
                 else
-                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszName ) == 0);
+                {
+                    bMatch =
+                        strcmp(poFeatureDefn->
+                               GetFieldDefn(iField)->GetNameRef(),
+                               pszName ) == 0;
+                }
 
                 if (bMatch)
                 {
