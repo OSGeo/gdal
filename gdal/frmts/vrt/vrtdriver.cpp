@@ -61,6 +61,7 @@ VRTDriver::~VRTDriver()
 
 {
     CSLDestroy( papszSourceParsers );
+    VRTDerivedRasterBand::Cleanup();
 #if 0
     if(  pDeserializerData )
     {

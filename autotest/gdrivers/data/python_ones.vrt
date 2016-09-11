@@ -1,0 +1,12 @@
+<VRTDataset rasterXSize="100" rasterYSize="100">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <PixelFunctionType>ones</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionCode><![CDATA[
+def ones(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, r, gt, **kwargs):
+    out_ar.fill(1)
+]]>
+    </PixelFunctionCode>
+  </VRTRasterBand>
+</VRTDataset>
