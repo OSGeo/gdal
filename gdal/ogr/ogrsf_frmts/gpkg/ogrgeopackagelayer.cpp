@@ -359,7 +359,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                 const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
                 GPkgHeader oHeader;
                 OGRGeometry* poGeom = NULL;
-                int nSRID;
+                int nSRID = 0;
                 if( GPkgHeaderFromWKB(pabyGpkg, nBytes, &oHeader) == OGRERR_NONE &&
                     (poGeom = GPkgGeometryToOGR(pabyGpkg, nBytes, NULL)) != NULL )
                 {
@@ -457,8 +457,9 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if (pszDeclType != NULL)
         {
             OGRFieldSubType eSubType;
-            int nMaxWidth;
-            OGRFieldType eFieldType = GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
+            int nMaxWidth = 0;
+            const OGRFieldType eFieldType =
+                GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
             if( (int)eFieldType <= OFTMaxType )
             {
                 oField.SetType(eFieldType);
