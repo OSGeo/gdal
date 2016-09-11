@@ -156,8 +156,8 @@ OGRErr GDALGeoPackageDataset::PragmaCheck(
     CPLAssert( nRowsExpected >= 0 );
 
     char **papszResult = NULL;
-    int nRowCount;
-    int nColCount;
+    int nRowCount = 0;
+    int nColCount = 0;
     char *pszErrMsg = NULL;
 
     int rc = sqlite3_get_table(
@@ -1171,10 +1171,10 @@ CPLErr GDALGeoPackageDataset::SetProjection( const char* pszProjection )
         return CE_Failure;
     }
 
-    int nSRID;
+    int nSRID = -1;
     if( pszProjection == NULL || pszProjection[0] == '\0' )
     {
-        nSRID = -1;
+      // nSRID = -1;
     }
     else
     {
@@ -1587,16 +1587,14 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
             return CE_Failure;
         }
 
-        int bFound = FALSE;
+        bool bFound = false;
         int jCandidate = -1;
         int nMaxOvFactor = 0;
-        for(int j=0;j<m_nOverviewCount;j++)
+        for( int j = 0; j < m_nOverviewCount; j++ )
         {
-            int    nOvFactor;
-
             GDALDataset* poODS = m_papoOverviewDS[j];
 
-            nOvFactor = (int)
+            const int nOvFactor = (int)
                 (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
             nMaxOvFactor = nOvFactor;
 
@@ -1605,7 +1603,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                                                     GetRasterXSize(),
                                                     GetRasterYSize() ) )
             {
-                bFound = TRUE;
+                bFound = true;
                 break;
             }
 
@@ -1621,12 +1619,10 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 CPLString osOvrList;
                 for(int j=0;j<m_nOverviewCount;j++)
                 {
-                    int    nOvFactor;
-
                     GDALDataset* poODS = m_papoOverviewDS[j];
 
                     /* Compute overview factor */
-                    nOvFactor = (int)
+                    int nOvFactor = (int)
                         (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
                     int nODSXSize = (int)(0.5 + GetRasterXSize() / (double) nOvFactor);
                     if( nODSXSize != poODS->GetRasterXSize() )
@@ -1772,16 +1768,16 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
         int iCurOverview = 0;
         for(int i=0;i<nOverviews;i++)
         {
-            int   j;
-            for( j = 0; j < m_nOverviewCount; j++ )
+            int j = 0;  // Used after for.
+            for( ; j < m_nOverviewCount; j++ )
             {
-                int    nOvFactor;
                 GDALDataset* poODS = m_papoOverviewDS[j];
 
-                nOvFactor = GDALComputeOvFactor(poODS->GetRasterXSize(),
-                                                GetRasterXSize(),
-                                                poODS->GetRasterYSize(),
-                                                GetRasterYSize());
+                const int nOvFactor =
+                    GDALComputeOvFactor(poODS->GetRasterXSize(),
+                                        GetRasterXSize(),
+                                        poODS->GetRasterYSize(),
+                                        GetRasterYSize());
 
                 if( nOvFactor == panOverviewList[i]
                     || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
@@ -3012,22 +3008,23 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                    "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
+                 "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or "
+                 "4 (RGBA) band dataset supported");
         CSLDestroy(papszUpdatedOptions);
         return NULL;
     }
 
-    int bFound = FALSE;
+    bool bFound = false;
     int nEPSGCode = 0;
-    size_t iScheme;
-    for(iScheme = 0;
-        iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
-        iScheme++ )
+    size_t iScheme = 0;  // Used after for.
+    for( ;
+         iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
+         iScheme++ )
     {
         if( EQUAL(pszTilingScheme, asTilingShemes[iScheme].pszName) )
         {
             nEPSGCode = asTilingShemes[iScheme].nEPSGCode;
-            bFound = TRUE;
+            bFound = true;
             break;
         }
     }
@@ -3117,10 +3114,11 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         }
     }
 
-    int nZoomLevel;
     double dfComputedRes = adfGeoTransform[1];
-    double dfPrevRes = 0, dfRes = 0;
-    for(nZoomLevel = 0; nZoomLevel < 25; nZoomLevel++)
+    double dfPrevRes = 0.0;
+    double dfRes = 0.0;
+    int nZoomLevel = 0;  // Used after for.
+    for( ; nZoomLevel < 25; nZoomLevel++ )
     {
         dfRes = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
         if( dfComputedRes > dfRes )
@@ -3405,8 +3403,6 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
                                       OGRwkbGeometryType eGType,
                                       char **papszOptions )
 {
-    int iLayer;
-
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
 /* -------------------------------------------------------------------- */
@@ -3460,7 +3456,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     }
 
     /* Check for any existing layers that already use this name */
-    for( iLayer = 0; iLayer < m_nLayers; iLayer++ )
+    for( int iLayer = 0; iLayer < m_nLayers; iLayer++ )
     {
         if( EQUAL(pszLayerName, m_papoLayers[iLayer]->GetName()) )
         {
@@ -3617,7 +3613,6 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Prepare statement.                                              */
 /* -------------------------------------------------------------------- */
-    int rc;
     sqlite3_stmt *hSQLStmt = NULL;
 
     CPLString osSQLCommand = pszSQLCommand;
@@ -3641,9 +3636,9 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         }
     }
 
-    rc = sqlite3_prepare( hDB, osSQLCommand.c_str(),
-                          static_cast<int>(osSQLCommand.size()),
-                          &hSQLStmt, NULL );
+    int rc = sqlite3_prepare( hDB, osSQLCommand.c_str(),
+                              static_cast<int>(osSQLCommand.size()),
+                              &hSQLStmt, NULL );
 
     if( rc != SQLITE_OK )
     {

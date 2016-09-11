@@ -100,8 +100,6 @@ GIntBig OGRGeoPackageSelectLayer::GetFeatureCount( int bForce )
 OGRErr OGRGeoPackageSelectLayer::ResetStatement()
 
 {
-    int rc;
-
     ClearStatement();
 
     iNextShapeId = 0;
@@ -111,9 +109,10 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     CPLDebug( "OGR_GPKG", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
-    rc = sqlite3_prepare( m_poDS->GetDB(), poBehaviour->osSQLCurrent,
-                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
-                          &m_poQueryStatement, NULL );
+    const int rc =
+        sqlite3_prepare( m_poDS->GetDB(), poBehaviour->osSQLCurrent,
+                         static_cast<int>(poBehaviour->osSQLCurrent.size()),
+                         &m_poQueryStatement, NULL );
 
     if( rc == SQLITE_OK )
     {

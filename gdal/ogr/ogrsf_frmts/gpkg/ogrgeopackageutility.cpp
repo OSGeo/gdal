@@ -554,7 +554,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHea
     }
 
     /* SrsId */
-    int iSrsId;
+    int iSrsId = 0;
     memcpy(&iSrsId, pabyGpkg+4, 4);
     if ( bSwap )
     {

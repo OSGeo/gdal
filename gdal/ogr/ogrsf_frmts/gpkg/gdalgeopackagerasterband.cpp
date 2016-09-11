@@ -653,8 +653,8 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
 GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile( int nRow, int nCol, GByte *pabyData,
                                         bool *pbIsLossyFormat)
 {
-    int nBlockXSize;
-    int nBlockYSize;
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
     IGetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     const int nBands = IGetRasterCount();
 
@@ -920,12 +920,9 @@ retry:
                 }
                 else
                 {
-                    int nSrcXOffset;
-                    int nSrcXSize;
-                    int nSrcYOffset;
-                    int nSrcYSize;
-                    int nDstXOffset;
-                    int nDstYOffset;
+                    int nSrcXOffset = 0;
+                    int nSrcXSize = 0;
+                    int nDstXOffset = 0;
                     if( nCol == nColMin )
                     {
                         nSrcXOffset = m_poTPD->m_nShiftXPixelsMod;
@@ -938,6 +935,9 @@ retry:
                         nSrcXSize = m_poTPD->m_nShiftXPixelsMod;
                         nDstXOffset = nBlockXSize - m_poTPD->m_nShiftXPixelsMod;
                     }
+                    int nSrcYOffset = 0;
+                    int nSrcYSize = 0;
+                    int nDstYOffset = 0;
                     if( nRow == nRowMin )
                     {
                         nSrcYOffset = m_poTPD->m_nShiftYPixelsMod;
@@ -1421,7 +1421,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
                 memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
             }
-            int i;  // TODO: Rename the variable to make it clean what it is.
+            int i = 0;  // TODO: Rename variable to make it clear what it is.
             for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
             {
                 if( iXOff > 0 )
@@ -1481,8 +1481,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         if( poOutDS )
         {
             GDALClose( poOutDS );
-            vsi_l_offset nBlobSize;
-            GByte* pabyBlob = VSIGetMemFileBuffer(osMemFileName, &nBlobSize, TRUE);
+            vsi_l_offset nBlobSize = 0;
+            GByte* pabyBlob =
+                VSIGetMemFileBuffer(osMemFileName, &nBlobSize, TRUE);
 
             /* Create or commit and recreate transaction */
             GDALGPKGMBTilesLikePseudoDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
@@ -1939,7 +1940,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
         VSIUnlink(m_osTempDBFilename);
         CPLPopErrorHandler();
         m_hTempDB = NULL;
-        int rc;
+        int rc = 0;
 #ifdef HAVE_SQLITE_VFS
         if (STARTS_WITH(m_osTempDBFilename, "/vsi"))
         {

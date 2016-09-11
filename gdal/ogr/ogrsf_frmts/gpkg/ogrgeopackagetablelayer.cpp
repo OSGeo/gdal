@@ -194,7 +194,6 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                                                        bool bBindNullFields )
 {
     int nColCount = 1;
-    int err;
 
     if ( ! (poFeature && poStmt && pnColCount) )
         return OGRERR_FAILURE;
@@ -203,7 +202,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
 
     if( bAddFID )
     {
-        err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
+        const int err =
+            sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
         if ( err != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -217,11 +217,12 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     {
         GByte *pabyWkb = NULL;
 
-        /* Non-NULL geometry */
+        int err = SQLITE_OK;
+        // Non-NULL geometry.
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(0);
         if ( poGeom )
         {
-            size_t szWkb;
+            size_t szWkb = 0;
             pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
             err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
                                     static_cast<int>(szWkb), CPLFree);
@@ -245,8 +246,10 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     }
 
     /* Bind the attributes using appropriate SQLite data types */
-    err = SQLITE_OK;
-    for( int i = 0; err == SQLITE_OK && i < poFeatureDefn->GetFieldCount(); i++ )
+    int err = SQLITE_OK;
+    for( int i = 0;
+         err == SQLITE_OK && i < poFeatureDefn->GetFieldCount();
+         i++ )
     {
         if( i == m_iFIDAsRegularColumnIndex )
             continue;
@@ -268,7 +271,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                 }
                 case SQLITE_BLOB:
                 {
-                    int szBlob;
+                    int szBlob = 0;
                     GByte *pabyBlob = poFeature->GetFieldAsBinary(i, &szBlob);
                     err = sqlite3_bind_blob(poStmt, nColCount++, pabyBlob, szBlob, NULL);
                     break;
@@ -289,8 +292,10 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                     }
                     else if( poFieldDefn->GetType() == OFTDateTime )
                     {
-                        float fSecond;
-                        poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond, &nTZFlag);
+                        float fSecond = 0.0f;
+                        poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
+                                                      &nHour, &nMinute,
+                                                      &fSecond, &nTZFlag);
                         if( nTZFlag == 0 || nTZFlag == 100 )
                         {
                             if( OGR_GET_MS(fSecond) )
@@ -374,13 +379,15 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
 OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt )
 {
 
-    int nColCount;
-    OGRErr err = FeatureBindParameters( poFeature, poStmt, &nColCount, false, true );
+    int nColCount = 0;
+    const OGRErr err =
+        FeatureBindParameters( poFeature, poStmt, &nColCount, false, true );
     if ( err != OGRERR_NONE )
         return err;
 
-    /* Bind the FID to the "WHERE" clause */
-    int sqlite_err = sqlite3_bind_int64(poStmt, nColCount, poFeature->GetFID());
+    // Bind the FID to the "WHERE" clause.
+    const int sqlite_err =
+        sqlite3_bind_int64(poStmt, nColCount, poFeature->GetFID());
     if ( sqlite_err != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -405,8 +412,10 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindInsertParameters( OGRFeature *poFeatu
                                                              bool bAddFID,
                                                              bool bBindNullFields )
 {
-    int nColCount;
-    return FeatureBindParameters( poFeature, poStmt, &nColCount, bAddFID, bBindNullFields );
+    int nColCount = 0;
+    return
+        FeatureBindParameters( poFeature, poStmt, &nColCount,
+                               bAddFID, bBindNullFields );
 }
 
 
@@ -694,10 +703,9 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
 
-    int iRecord;
     bool bFidFound = false;
 
-    for ( iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
+    for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
     {
         const char *pszName = SQLResultGetValue(&oResultTable, 1, iRecord);
         const char *pszType = SQLResultGetValue(&oResultTable, 2, iRecord);
@@ -705,8 +713,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         const char* pszDefault = SQLResultGetValue(&oResultTable, 4, iRecord);
         OGRBoolean bFid = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
         OGRFieldSubType eSubType;
-        int nMaxWidth;
-        OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
+        int nMaxWidth = 0;
+        const OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
 
         /* Not a standard field type... */
         if ( (oType > OFTMaxType && osGeomColsType.size()) || EQUAL(osGeomColumnName, pszName) )
@@ -789,8 +797,12 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                     oField.SetNullable(FALSE);
                 if( pszDefault != NULL )
                 {
-                    int nYear, nMonth, nDay, nHour, nMinute;
-                    float fSecond;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    float fSecond = 0.0f;
                     if( oField.GetType() == OFTString &&
                         !EQUAL(pszDefault, "NULL") &&
                         !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
@@ -1006,11 +1018,16 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
         if( poField->GetDefault() != NULL && !poField->IsDefaultDriverSpecific() )
         {
             osCommand += " DEFAULT ";
-            int nYear, nMonth, nDay, nHour, nMinute;
-            float fSecond;
+            int nYear = 0;
+            int nMonth = 0;
+            int nDay = 0;
+            int nHour = 0;
+            int nMinute = 0;
+            float fSecond = 0.0f;
             if( poField->GetType() == OFTDateTime &&
-                sscanf(poField->GetDefault(), "'%d/%d/%d %d:%d:%f'", &nYear, &nMonth, &nDay,
-                                        &nHour, &nMinute, &fSecond) == 6 )
+                sscanf(poField->GetDefault(), "'%d/%d/%d %d:%d:%f'",
+                       &nYear, &nMonth, &nDay,
+                       &nHour, &nMinute, &fSecond) == 6 )
             {
                 if( strchr(poField->GetDefault(), '.') == NULL )
                     osCommand += CPLSPrintf("'%04d-%02d-%02dT%02d:%02d:%02dZ'",
@@ -1020,7 +1037,9 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
                                             nYear, nMonth, nDay, nHour, nMinute, fSecond);
             }
             else
+            {
                 osCommand += poField->GetDefault();
+            }
         }
         else if( !poField->IsNullable() )
         {
@@ -1161,9 +1180,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     /* format of SQLite is not the one mandated by GeoPackage */
     poFeature->FillUnsetWithDefault(FALSE, NULL);
     bool bHasDefaultValue = false;
-    int iField;
-    int nFieldCount = m_poFeatureDefn->GetFieldCount();
-    for( iField = 0; iField < nFieldCount; iField++ )
+    const int nFieldCount = m_poFeatureDefn->GetFieldCount();
+    for( int iField = 0; iField < nFieldCount; iField++ )
     {
         if( poFeature->IsFieldSet( iField ) )
             continue;
