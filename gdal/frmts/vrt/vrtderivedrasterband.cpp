@@ -286,9 +286,9 @@ static bool LoadPythonAPI()
             // Otherwise probe a few known objects
             const char* const apszPythonSO[] = { "libpython2.7." SO_EXT,
                                                  "libpython2.6." SO_EXT,
-                                                 "libpython3.4." SO_EXT,
-                                                 "libpython3.5." SO_EXT,
-                                                 "libpython3.6." SO_EXT,
+                                                 "libpython3.4m." SO_EXT,
+                                                 "libpython3.5m." SO_EXT,
+                                                 "libpython3.6m." SO_EXT,
                                                  "libpython3.3." SO_EXT,
                                                  "libpython3.2." SO_EXT };
             for( size_t i = 0; libHandle == NULL &&
