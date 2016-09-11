@@ -4,7 +4,7 @@
     <PixelFunctionType>ones</PixelFunctionType>
     <PixelFunctionLanguage>Python</PixelFunctionLanguage>
     <PixelFunctionCode><![CDATA[
-def ones(in_ar, out_ar, xoff, yoff, xsize, ysize, r, gt, **kwargs):
+def ones(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, r, gt, **kwargs):
     out_ar.fill(1)
 ]]>
     </PixelFunctionCode>
