@@ -882,6 +882,7 @@ bool VRTDerivedRasterBand::InitializePython()
                                               "genfromtxt", // numpy.genfromtxt
                                               "getattr",
                                               "ctypeslib", // numpy.ctypeslib
+                                              "testing", // numpy.testing
                                              };
         for( size_t i = 0; i < CPL_ARRAYSIZE(apszUntrusted); ++i )
         {
