@@ -19,10 +19,11 @@
 # Copyright 2016, Even Rouault
 import math
 
-def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
-                  raster_ysize, radius, gt, z, scale):
-    ovr_scale_x = 1.0 * (out_ar.shape[1] - 2 * radius) / xsize
-    ovr_scale_y = 1.0 * (out_ar.shape[0] - 2 * radius) / ysize
+def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, radius, gt, z, scale):
+    raster_xsize = out_ar.shape[1] - 2 * radius
+    raster_ysize = out_ar.shape[0] - 2 * radius
+    ovr_scale_x = 1.0 * raster_xsize / xsize
+    ovr_scale_y = 1.0 * raster_ysize / ysize
     ewres = gt[1] / ovr_scale_x
     nsres = gt[5] / ovr_scale_y
     inv_nsres = 1.0 / nsres
@@ -61,12 +62,10 @@ def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
             else:
                 out_ar[j,i] = 1 + round(cang_mul_254)
 
-def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, 
-              raster_ysize, radius, gt, **kwargs):
+def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, radius, gt, **kwargs):
     z = float(kwargs['z_factor'])
     scale= float(kwargs['scale'])
-    hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
-                  raster_ysize, radius, gt, z, scale)
+    hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, radius, gt, z, scale)
 
 ]]>
     </PixelFunctionCode>
