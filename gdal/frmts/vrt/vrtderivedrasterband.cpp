@@ -1462,7 +1462,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
         VSIFree(pabyTmpBuffer);
     }
-    else if( eErr == CE_None ) {
+    else if( eErr == CE_None && pfnPixelFunc != NULL ) {
         eErr = pfnPixelFunc( reinterpret_cast<void **>( pBuffers ), nSources,
                              pData, nBufXSize, nBufYSize,
                              eSrcType, eBufType, static_cast<int>(nPixelSpace),
