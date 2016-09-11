@@ -662,6 +662,20 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
+    virtual double GetMinimum( int *pbSuccess = NULL );
+    virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual CPLErr ComputeRasterMinMax( int bApproxOK, double* adfMinMax );
+    virtual CPLErr ComputeStatistics( int bApproxOK,
+                                      double *pdfMin, double *pdfMax,
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc pfnProgress,
+                                      void *pProgressData );
+    virtual CPLErr  GetHistogram( double dfMin, double dfMax,
+                                  int nBuckets, GUIntBig * panHistogram,
+                                  int bIncludeOutOfRange, int bApproxOK,
+                                  GDALProgressFunc pfnProgress,
+                                  void *pProgressData );
+
     static void Cleanup();
 };
 

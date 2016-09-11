@@ -1646,4 +1646,66 @@ CPLXMLNode *VRTDerivedRasterBand::SerializeToXML( const char *pszVRTPath )
     return psTree;
 }
 
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double VRTDerivedRasterBand::GetMinimum( int *pbSuccess )
+{
+    return GDALRasterBand::GetMinimum(pbSuccess);
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double VRTDerivedRasterBand::GetMaximum( int *pbSuccess )
+{
+    return GDALRasterBand::GetMaximum(pbSuccess);
+}
+
+/************************************************************************/
+/*                       ComputeRasterMinMax()                          */
+/************************************************************************/
+
+CPLErr VRTDerivedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinMax )
+{
+    return GDALRasterBand::ComputeRasterMinMax( bApproxOK, adfMinMax );
+}
+
+/************************************************************************/
+/*                         ComputeStatistics()                          */
+/************************************************************************/
+
+CPLErr
+VRTDerivedRasterBand::ComputeStatistics( int bApproxOK,
+                                         double *pdfMin, double *pdfMax,
+                                         double *pdfMean, double *pdfStdDev,
+                                         GDALProgressFunc pfnProgress,
+                                         void *pProgressData )
+
+{
+    return GDALRasterBand::ComputeStatistics(  bApproxOK,
+                                            pdfMin, pdfMax,
+                                            pdfMean, pdfStdDev,
+                                            pfnProgress, pProgressData );
+}
+
+/************************************************************************/
+/*                            GetHistogram()                            */
+/************************************************************************/
+
+CPLErr VRTDerivedRasterBand::GetHistogram( double dfMin, double dfMax,
+                                           int nBuckets, GUIntBig *panHistogram,
+                                           int bIncludeOutOfRange, int bApproxOK,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pProgressData )
+
+{
+    return VRTRasterBand::GetHistogram( dfMin, dfMax,
+                                            nBuckets, panHistogram,
+                                            bIncludeOutOfRange, bApproxOK,
+                                            pfnProgress, pProgressData );
+}
+
 /*! @endcond */
