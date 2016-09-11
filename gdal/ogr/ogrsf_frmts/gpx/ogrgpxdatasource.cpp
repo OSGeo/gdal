@@ -310,8 +310,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
 
     char aBuf[BUFSIZ];
-    int nDone;
-    unsigned int nLen;
+    int nDone = 0;
+    unsigned int nLen = 0;
     int nCount = 0;
 
     /* Begin to parse the file and look for the <gpx> element */

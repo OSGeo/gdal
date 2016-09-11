@@ -513,8 +513,8 @@ Waypoint* GTM::fetchNextWaypoint()
 
     /* Trim string name */
     {
-    int i;
-        for (i = 9; i >= 0; --i)
+        int i = 9;  // Used after for.
+        for( ; i >= 0; --i)
         {
             if (name[i] != ' ')
             {
@@ -629,10 +629,11 @@ Track* GTM::fetchNextTrack()
     ++trackFetched;
 
     /* Now, We read all trackpoints for this track */
-    double latitude, longitude;
-    GIntBig datetime;
-    unsigned char start;
-    float altitude;
+    double latitude = 0.0;
+    double longitude = 0.0;
+    GIntBig datetime = 0;
+    unsigned char start = 0;
+    float altitude = 0.0f;
     /* NOTE: Parameters are passed by reference */
     if ( !readTrackPoints(latitude, longitude, datetime, start, altitude) )
     {
@@ -722,8 +723,6 @@ vsi_l_offset GTM::findFirstTrackpointOffset()
     if (VSIFSeekL(pGTMFile, firstWaypointOffset, SEEK_SET) != 0)
         return 0;
 
-    unsigned short stringSize;
-    int bSuccess;
     /* Skip waypoints */
     for (int i = 0; i < nwpts; ++i)
     {
@@ -731,7 +730,8 @@ vsi_l_offset GTM::findFirstTrackpointOffset()
         if (VSIFSeekL(pGTMFile, 26, SEEK_CUR) != 0)
             return 0;
         /* Read string comment size */
-        stringSize = readUShort(pGTMFile, &bSuccess);
+        int bSuccess = FALSE;
+        const unsigned short stringSize = readUShort(pGTMFile, &bSuccess);
 
         /* Skip to the next Waypoint */
         if (bSuccess == FALSE || VSIFSeekL(pGTMFile, stringSize + 15, SEEK_CUR) != 0)
@@ -750,7 +750,8 @@ vsi_l_offset GTM::findFirstTrackpointOffset()
                 return 0;
 
             /* Read string facename size */
-            stringSize = readUShort(pGTMFile, &bSuccess);
+            int bSuccess = FALSE;
+            const unsigned short stringSize = readUShort(pGTMFile, &bSuccess);
 
             /* Skip to the next Waypoint Style*/
             if (bSuccess == FALSE || VSIFSeekL(pGTMFile, stringSize + 24, SEEK_CUR) != 0)
