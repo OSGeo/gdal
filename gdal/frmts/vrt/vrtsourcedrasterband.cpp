@@ -935,19 +935,6 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Validate a bit.                                                 */
-/* -------------------------------------------------------------------- */
-    if( psTree == NULL || psTree->eType != CXT_Element
-        || (!EQUAL(psTree->pszValue,"VRTSourcedRasterBand")
-            && !EQUAL(psTree->pszValue,"VRTRasterBand")
-            && !EQUAL(psTree->pszValue,"VRTDerivedRasterBand")) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid node passed to VRTSourcedRasterBand::XMLInit()." );
-        return CE_Failure;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Process sources.                                                */
 /* -------------------------------------------------------------------- */
     VRTDriver * const poDriver = reinterpret_cast<VRTDriver *>(
@@ -972,9 +959,11 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Done.                                                           */
 /* -------------------------------------------------------------------- */
-    if( nSources == 0 )
-        CPLDebug( "VRT", "No valid sources found for band in VRT file:\n%s",
-                  pszVRTPath ? pszVRTPath : "(null)" );
+    const char* pszSubclass = CPLGetXMLValue( psTree, "subclass",
+                                              "VRTSourcedRasterBand" );
+    if( nSources == 0 && !EQUAL(pszSubclass,"VRTDerivedRasterBand") )
+        CPLDebug( "VRT", "No valid sources found for band in VRT file %s",
+                  GetDataset() ? GetDataset()->GetDescription() : "" );
 
     return CE_None;
 }

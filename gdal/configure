@@ -19003,6 +19003,17 @@ fi
 rm -f test_ws2_32*
 
 
+echo "#include <windows.h>" > test_psapi.c
+echo "#include <psapi.h>" >> test_psapi.c
+echo "void foo() {}" >> test_psapi.c
+
+if test -z "`${CC} -c test_psapi.c 2>&1`" ; then
+  LIBS="$LIBS -lpsapi"
+fi
+rm -f test_psapi*
+
+
+
 echo "#include <sys/types.h>" > test_getaddrinfo.c
 echo "#include <sys/socket.h>" >> test_getaddrinfo.c
 echo "#include <netdb.h>" >> test_getaddrinfo.c

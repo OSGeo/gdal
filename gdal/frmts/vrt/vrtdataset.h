@@ -626,8 +626,13 @@ class VRTPansharpenedRasterBand : public VRTRasterBand
 /*                         VRTDerivedRasterBand                         */
 /************************************************************************/
 
+class VRTDerivedRasterBandPrivateData;
+
 class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
 {
+    VRTDerivedRasterBandPrivateData* m_poPrivate;
+    bool InitializePython();
+
  public:
     char *pszFuncName;
     GDALDataType eSourceTransferType;
@@ -642,6 +647,11 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GDALRasterIOExtraArg* psExtraArg );
 
+    virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
+                                        int nXSize, int nYSize,
+                                        int nMaskFlagStop,
+                                        double* pdfDataPct);
+
     static CPLErr AddPixelFunction( const char *pszFuncName,
                                     GDALDerivedPixelFunc pfnPixelFunc );
     static GDALDerivedPixelFunc GetPixelFunction( const char *pszFuncName );
@@ -652,6 +662,7 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
+    static void Cleanup();
 };
 
 /************************************************************************/

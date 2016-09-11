@@ -671,7 +671,7 @@ AC_SUBST(CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
 AC_SUBST(CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT,$CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT)
 
 dnl ---------------------------------------------------------------------------
-dnl Check if we need -lws2_32
+dnl Check if we need -lws2_32 (mingw)
 dnl ---------------------------------------------------------------------------
 
 echo "#include <winsock2.h>" > test_ws2_32.c
@@ -682,6 +682,20 @@ if test -z "`${CC} -c test_ws2_32.c 2>&1`" ; then
   LIBS="$LIBS -lws2_32"
 fi
 rm -f test_ws2_32*
+
+dnl ---------------------------------------------------------------------------
+dnl Check if we need -lpsapi (mingw)
+dnl ---------------------------------------------------------------------------
+
+echo "#include <windows.h>" > test_psapi.c
+echo "#include <psapi.h>" >> test_psapi.c
+echo "void foo() {}" >> test_psapi.c
+
+if test -z "`${CC} -c test_psapi.c 2>&1`" ; then
+  LIBS="$LIBS -lpsapi"
+fi
+rm -f test_psapi*
+
 
 dnl ---------------------------------------------------------------------------
 dnl Check if we have getaddrinfo
