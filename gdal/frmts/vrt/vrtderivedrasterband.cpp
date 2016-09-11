@@ -880,7 +880,8 @@ bool VRTDerivedRasterBand::InitializePython()
                                               "memmap", // numpy.memmap
                                               "DataSource", // numpy.DataSource
                                               "genfromtxt", // numpy.genfromtxt
-                                              "getattr"
+                                              "getattr",
+                                              "ctypeslib", // numpy.ctypeslib
                                              };
         for( size_t i = 0; i < CPL_ARRAYSIZE(apszUntrusted); ++i )
         {
