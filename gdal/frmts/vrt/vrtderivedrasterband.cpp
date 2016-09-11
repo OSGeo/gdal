@@ -1387,16 +1387,14 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
 
         // Create arguments
-        PyObject* pyArgs = PyTuple_New(10);
+        PyObject* pyArgs = PyTuple_New(8);
         PyTuple_SetItem(pyArgs, 0, pyArgInputArray);
         PyTuple_SetItem(pyArgs, 1, poPyDstArray);
         PyTuple_SetItem(pyArgs, 2, PyInt_FromLong(nXOff));
         PyTuple_SetItem(pyArgs, 3, PyInt_FromLong(nYOff));
         PyTuple_SetItem(pyArgs, 4, PyInt_FromLong(nXSize));
         PyTuple_SetItem(pyArgs, 5, PyInt_FromLong(nYSize));
-        PyTuple_SetItem(pyArgs, 6, PyInt_FromLong(nRasterXSize));
-        PyTuple_SetItem(pyArgs, 7, PyInt_FromLong(nRasterYSize));
-        PyTuple_SetItem(pyArgs, 8, PyInt_FromLong(nBufferRadius));
+        PyTuple_SetItem(pyArgs, 6, PyInt_FromLong(nBufferRadius));
 
         double adfGeoTransform[6];
         adfGeoTransform[0] = 0;
@@ -1410,7 +1408,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         PyObject* pyGT = PyTuple_New(6);
         for(int i = 0; i < 6; i++ )
             PyTuple_SetItem(pyGT, i, PyFloat_FromDouble(adfGeoTransform[i]));
-        PyTuple_SetItem(pyArgs, 9, pyGT);
+        PyTuple_SetItem(pyArgs, 7, pyGT);
 
         // Prepare kwargs
         PyObject* pyKwargs = PyDict_New();
