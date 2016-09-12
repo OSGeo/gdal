@@ -381,7 +381,30 @@ syntax_error
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    # Error at run time
+    # Error at run time (in global code)
+    ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <PixelFunctionType>identity</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionCode><![CDATA[
+runtime_error
+def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, r, gt, **kwargs):
+    pass
+]]>
+    </PixelFunctionCode>
+  </VRTRasterBand>
+</VRTDataset>
+""")
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+    if cs != 0:
+        gdaltest.post_reason( 'invalid checksum' )
+        print(cs)
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    # Error at run time (in pixel function)
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <ColorInterp>Gray</ColorInterp>
@@ -434,6 +457,27 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
     <PixelFunctionCode><![CDATA[
 def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, r, gt, **kwargs):
     pass
+]]>
+    </PixelFunctionCode>
+  </VRTRasterBand>
+</VRTDataset>
+""")
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+    if cs != 0:
+        gdaltest.post_reason( 'invalid checksum' )
+        print(cs)
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    # uncallable object
+    ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <PixelFunctionType>uncallable_object</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionCode><![CDATA[
+uncallable_object = True
 ]]>
     </PixelFunctionCode>
   </VRTRasterBand>
@@ -513,7 +557,7 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <ColorInterp>Gray</ColorInterp>
-    <PixelFunctionType>vrtderived.unknown_function</PixelFunctionType>
+    <PixelFunctionType>unknown_module.unknown_function</PixelFunctionType>
     <PixelFunctionLanguage>Python</PixelFunctionLanguage>
   </VRTRasterBand>
 </VRTDataset>
