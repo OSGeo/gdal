@@ -1242,10 +1242,6 @@ int MITABLoadCoordSysTable(const char *pszFname)
         const char *pszLine = NULL;
         while( (pszLine = CPLReadLineL(fp)) != NULL)
         {
-            double dXMin;
-            double dYMin;
-            double dXMax;
-            double dYMax;
             int bHasProjIn = FALSE;
             TABProjInfo sProjIn;
             TABProjInfo sProj;
@@ -1292,7 +1288,13 @@ int MITABLoadCoordSysTable(const char *pszFname)
                 break;  // Abort and return
             }
 
-            if (!MITABExtractCoordSysBounds(pszLine, dXMin,dYMin,dXMax,dYMax))
+            double dXMin;
+            double dYMin;
+            double dXMax;
+            double dYMax;
+            if( !MITABExtractCoordSysBounds(pszLine,
+                                            dXMin, dYMin,
+                                            dXMax, dYMax) )
             {
                 CPLError(CE_Warning, CPLE_IllegalArg,
                          "Missing Bounds parameters in line %d of %s",

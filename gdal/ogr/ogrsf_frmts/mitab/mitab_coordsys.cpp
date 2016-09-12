@@ -170,17 +170,22 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     if( poSR == NULL )
         return NULL;
 
-    TABProjInfo     sTABProj;
-    int             nParmCount;
+    TABProjInfo sTABProj;
+    int nParmCount = 0;
     TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParmCount);
 
 /* -------------------------------------------------------------------- */
 /*      Do coordsys lookup                                              */
 /* -------------------------------------------------------------------- */
-    double dXMin = 0.0, dYMin = 0.0, dXMax = 0.0, dYMax = 0.0;
+    double dXMin = 0.0;
+    double dYMin = 0.0;
+    double dXMax = 0.0;
+    double dYMax = 0.0;
     int bHasBounds = FALSE;
-    if (sTABProj.nProjId > 1 &&
-        MITABLookupCoordSysBounds(&sTABProj, dXMin, dYMin, dXMax, dYMax, TRUE) == TRUE)
+    if( sTABProj.nProjId > 1 &&
+        MITABLookupCoordSysBounds(&sTABProj,
+                                  dXMin, dYMin,
+                                  dXMax, dYMax, TRUE) == TRUE )
     {
         bHasBounds = TRUE;
     }
@@ -437,10 +442,10 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     /*-----------------------------------------------------------------
      * Find the datum, and collect it's parameters if possible.
      *----------------------------------------------------------------*/
-        int         iDatum;
         const MapInfoDatumInfo *psDatumInfo = NULL;
 
-        for(iDatum=0; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++)
+        int iDatum = 0;  // Used after for.
+        for( ; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++ )
         {
             if( asDatumInfoList[iDatum].nMapInfoDatumID == nDatum )
             {
