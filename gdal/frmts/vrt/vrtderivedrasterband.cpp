@@ -862,10 +862,13 @@ bool VRTDerivedRasterBand::InitializePython()
         CPLString osCode(m_poPrivate->m_osCode);
 
         // Reject all imports except a few trusted modules
-        const char* const apszTrustedModules[] = { "math", "numpy" };
-        for( size_t i = 0; i < CPL_ARRAYSIZE(apszTrustedModules); ++i )
+        const char* const apszTrustedImports[] = {
+                "import math",
+                "import numpy", // caution: numpy has lots of I/O functions !
+                "from numba import jit" };
+        for( size_t i = 0; i < CPL_ARRAYSIZE(apszTrustedImports); ++i )
         {
-            osCode.replaceAll(CPLString("import ") + apszTrustedModules[i], "");
+            osCode.replaceAll(CPLString(apszTrustedImports[i]), "");
         }
 
         // Some dangerous built-in functions or numpy functions
