@@ -1288,10 +1288,10 @@ int MITABLoadCoordSysTable(const char *pszFname)
                 break;  // Abort and return
             }
 
-            double dXMin;
-            double dYMin;
-            double dXMax;
-            double dYMax;
+            double dXMin = 0.0;
+            double dYMin = 0.0;
+            double dXMax = 0.0;
+            double dYMax = 0.0;
             if( !MITABExtractCoordSysBounds(pszLine,
                                             dXMin, dYMin,
                                             dXMax, dYMax) )
