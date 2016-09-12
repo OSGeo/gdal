@@ -45,7 +45,7 @@ CPL_CVSID("$Id$");
 // #define PYTHONSO_DEFAULT "libpython2.7.so"
 
 #ifndef GDAL_VRT_ENABLE_PYTHON_DEFAULT
-#define GDAL_VRT_ENABLE_PYTHON_DEFAULT "IF_SAFE"
+#define GDAL_VRT_ENABLE_PYTHON_DEFAULT "NO"
 #endif
 
 static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
@@ -845,13 +845,17 @@ bool VRTDerivedRasterBand::InitializePython()
 
 #ifndef GDAL_VRT_DISABLE_PYTHON
     const char* pszPythonEnabled =
-                            CPLGetConfigOption("GDAL_VRT_ENABLE_PYTHON",
-                                               GDAL_VRT_ENABLE_PYTHON_DEFAULT);
+                            CPLGetConfigOption("GDAL_VRT_ENABLE_PYTHON", NULL);
 #else
-     const char* pszPythonEnabled = "NO";
+    const char* pszPythonEnabled = "NO";
 #endif
     CPLString osPythonFunction( pszFuncName ? pszFuncName : "" );
-    if( EQUAL(pszPythonEnabled, "IF_SAFE") )
+
+#ifdef disabled_because_this_is_probably_broken_by_design
+    // See https://lwn.net/Articles/574215/
+    // and http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
+    if( EQUAL(pszPythonEnabled ? pszPythonEnabled :
+                                GDAL_VRT_ENABLE_PYTHON_DEFAULT, "IF_SAFE") )
     {
         bool bSafe = true;
         // If the function comes from another module, then we don't know
@@ -871,7 +875,12 @@ bool VRTDerivedRasterBand::InitializePython()
                 "from numpy import",
                 // TODO: not sure if importing arbitrary stuff from numba is OK
                 // so let's just restrict to jit.
-                "from numba import jit" };
+                "from numba import jit",
+
+                // Not imports but still whitelisted, whereas other __ is banned
+                "__init__",
+                "__call__",
+        };
         for( size_t i = 0; i < CPL_ARRAYSIZE(apszTrustedImports); ++i )
         {
             osCode.replaceAll(CPLString(apszTrustedImports[i]), "");
@@ -894,6 +903,7 @@ bool VRTDerivedRasterBand::InitializePython()
                                               "testing", // numpy.testing
                                               "dump", // numpy.ndarray.dump
                                               "fromregex", // numpy.fromregex
+                                              "__"
                                              };
         for( size_t i = 0; i < CPL_ARRAYSIZE(apszUntrusted); ++i )
         {
@@ -917,11 +927,31 @@ bool VRTDerivedRasterBand::InitializePython()
             return false;
         }
     }
-    else if( !CPLTestBool(pszPythonEnabled) )
+    else
+#endif //disabled_because_this_is_probably_broken_by_design
+
+
+    if( !CPLTestBool(pszPythonEnabled ? pszPythonEnabled :
+                                            GDAL_VRT_ENABLE_PYTHON_DEFAULT) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Python code needs to be executed, but this has been "
-                 "explicitly disabled.");
+        if( pszPythonEnabled == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                 "Python code needs to be executed, but this is "
+                 "disabled by default. If you trust the code in %s, "
+                 "you can set the GDAL_VRT_ENABLE_PYTHON configuration "
+                 "option to YES.",
+                GetDataset() ? GetDataset()->GetDescription() :
+                                                    "(unknown VRT)");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Python code in %s needs to be executed, but this has been "
+                    "explicitly disabled.",
+                     GetDataset() ? GetDataset()->GetDescription() :
+                                                            "(unknown VRT)");
+        }
         return false;
     }
 
@@ -1383,7 +1413,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         {
         const bool bUseExclusiveLock = m_poPrivate->m_bExclusiveLock ||
-                    ( m_poPrivate->m_bFirstTime && m_poPrivate->m_osCode.find("@jit") != std::string::npos);
+                    ( m_poPrivate->m_bFirstTime &&
+                    m_poPrivate->m_osCode.find("@jit") != std::string::npos);
         m_poPrivate->m_bFirstTime = false;
         VRT_GIL_Holder oHolder(bUseExclusiveLock);
 
