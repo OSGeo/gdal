@@ -1469,7 +1469,7 @@ static bool IsValidPhoneNumber( const char* pszPhoneNumber )
 {
     if( STARTS_WITH(pszPhoneNumber, "tel:") )
         pszPhoneNumber += strlen("tel:");
-    char ch;
+    char ch = '\0';
     bool bDigitFound = false;
     if( *pszPhoneNumber == '+' )
         pszPhoneNumber ++;

@@ -1648,10 +1648,9 @@ void kml2FeatureDef(
     SchemaPtr poKmlSchema,
     OGRFeatureDefn * poOgrFeatureDefn )
 {
-    size_t nSimpleFields = poKmlSchema->get_simplefield_array_size();
-    size_t iSimpleField;
+    const size_t nSimpleFields = poKmlSchema->get_simplefield_array_size();
 
-    for( iSimpleField = 0; iSimpleField < nSimpleFields; iSimpleField++ )
+    for( size_t iSimpleField = 0; iSimpleField < nSimpleFields; iSimpleField++ )
     {
         SimpleFieldPtr poKmlSimpleField =
             poKmlSchema->get_simplefield_array_at( iSimpleField );

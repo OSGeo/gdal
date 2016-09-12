@@ -254,8 +254,9 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
         eType_ = Empty;
     else if(sName_.compare("coordinates") == 0)
     {
-        unsigned int nCountP;
-        for(nCountP = 0; nCountP < pvsContent_->size(); nCountP++)
+        for( unsigned int nCountP = 0;
+             nCountP < pvsContent_->size();
+             nCountP++ )
         {
             const char* pszCoord = (*pvsContent_)[nCountP].c_str();
             int nComma = 0;
@@ -727,15 +728,15 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
     if( nNum >= getNumFeatures() )
         return NULL;
 
-    unsigned int nCount;
+    unsigned int nCount = 0;
     unsigned int nCountP = 0;
     KMLNode* poFeat = NULL;
     KMLNode* poTemp = NULL;
 
     if (nLastAsked + 1 != static_cast<int>(nNum ))
     {
-        nCount = 0;
-        nCountP = 0;
+        // nCount = 0;
+        // nCountP = 0;
     }
     else
     {

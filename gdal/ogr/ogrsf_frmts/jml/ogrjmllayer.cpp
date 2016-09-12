@@ -322,9 +322,9 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
         /* Builds a style string from R_G_B if we don't already have a */
         /* style string */
         OGRGeometry* poGeom = poFeature->GetGeometryRef();
-        int R;
-        int G;
-        int B;
+        int R = 0;
+        int G = 0;
+        int B = 0;
         if( iRGBField >= 0 && poFeature->IsFieldSet(iRGBField) &&
             poFeature->GetStyleString() == NULL && poGeom != NULL &&
             sscanf(poFeature->GetFieldAsString(iRGBField),
@@ -459,7 +459,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
 
     nWithoutEventCounter = 0;
 
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -525,7 +525,7 @@ void OGRJMLLayer::LoadSchema()
     VSIFSeekL( fp, 0, SEEK_SET );
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;

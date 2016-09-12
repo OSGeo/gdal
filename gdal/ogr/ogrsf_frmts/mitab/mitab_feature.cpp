@@ -460,96 +460,127 @@ void TABFeature::GetIntMBR(GInt32 &nXMin, GInt32 &nYMin,
  **********************************************************************/
 int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
 {
-    int         iField, nValue;
-    double      dValue;
-#ifdef MITAB_USE_OFTDATETIME
-    int nYear, nMonth, nDay, nHour, nMin, nMS, status;
-    nYear = nMonth = nDay = nHour = nMin = nMS = 0;
-#endif
-
     CPLAssert(poDATFile);
 
     const int numFields = poDATFile->GetNumFields();
 
-    const char *pszValue = NULL;
-    for(iField=0; iField<numFields; iField++)
+    for( int iField=0; iField<numFields; iField++)
     {
         switch(poDATFile->GetFieldType(iField))
         {
           case TABFChar:
-            pszValue = poDATFile->ReadCharField(poDATFile->
-                                                GetFieldWidth(iField));
+          {
+            const char *pszValue =
+                poDATFile->ReadCharField(poDATFile->GetFieldWidth(iField));
             SetField(iField, pszValue);
             break;
+          }
           case TABFDecimal:
-            dValue = poDATFile->ReadDecimalField(poDATFile->
-                                                 GetFieldWidth(iField));
+          {
+            const double dValue =
+                poDATFile->ReadDecimalField(poDATFile->GetFieldWidth(iField));
             SetField(iField, dValue);
             break;
+          }
           case TABFInteger:
-            nValue = poDATFile->ReadIntegerField(poDATFile->
-                                                 GetFieldWidth(iField));
+          {
+            const int nValue =
+                poDATFile->ReadIntegerField(poDATFile->GetFieldWidth(iField));
             SetField(iField, nValue);
             break;
+          }
           case TABFSmallInt:
-            nValue = poDATFile->ReadSmallIntField(poDATFile->
-                                                 GetFieldWidth(iField));
+          {
+            const int nValue =
+                poDATFile->ReadSmallIntField(poDATFile->GetFieldWidth(iField));
             SetField(iField, nValue);
             break;
+          }
           case TABFFloat:
-            dValue = poDATFile->ReadFloatField(poDATFile->
-                                                 GetFieldWidth(iField));
+          {
+            const double dValue =
+                poDATFile->ReadFloatField(poDATFile->GetFieldWidth(iField));
             SetField(iField, dValue);
             break;
+          }
           case TABFLogical:
-            pszValue = poDATFile->ReadLogicalField(poDATFile->
-                                                 GetFieldWidth(iField));
+          {
+            const char *pszValue =
+                poDATFile->ReadLogicalField(poDATFile->GetFieldWidth(iField));
             SetField(iField, pszValue);
             break;
+          }
           case TABFDate:
+          {
 #ifdef MITAB_USE_OFTDATETIME
-             if ((status = poDATFile->ReadDateField(poDATFile->GetFieldWidth(iField),
-                                                    &nYear, &nMonth, &nDay)) == 0)
-             {
+            int nYear = 0;
+            int nMonth = 0;
+            int nDay = 0;
+            int status = 0;
+
+            if ((status = poDATFile->ReadDateField(poDATFile->GetFieldWidth(iField),
+                                                   &nYear, &nMonth, &nDay)) == 0)
+            {
                 SetField(iField, nYear, nMonth, nDay, 0, 0, 0, 0);
-             }
+            }
 #else
-            pszValue = poDATFile->ReadDateField(poDATFile->
-                                            GetFieldWidth(iField));
+            const char *pszValue =
+                poDATFile->ReadDateField(poDATFile->GetFieldWidth(iField));
             SetField(iField, pszValue);
 #endif
             break;
+          }
           case TABFTime:
           {
 #ifdef MITAB_USE_OFTDATETIME
-             int nSec;
-             if ((status = poDATFile->ReadTimeField(poDATFile->GetFieldWidth(iField),
-                                                    &nHour, &nMin, &nSec, &nMS)) == 0)
-             {
-                SetField(iField, nYear, nMonth, nDay, nHour, nMin, nSec + nMS / 1000.0f, 0);
-             }
+            int nHour = 0;
+            int nMin = 0;
+            int nMS = 0;
+            int nSec  = 0;
+            const int status =
+                poDATFile->ReadTimeField(poDATFile->GetFieldWidth(iField),
+                                         &nHour, &nMin, &nSec, &nMS);
+            if( status == 0 )
+            {
+                int nYear = 0;
+                int nMonth = 0;
+                int nDay = 0;
+                SetField(iField, nYear, nMonth, nDay, nHour, nMin,
+                         nSec + nMS / 1000.0f, 0);
+            }
 #else
-             pszValue = poDATFile->ReadTimeField(poDATFile->
-                                                     GetFieldWidth(iField));
+            const char *pszValue =
+                poDATFile->ReadTimeField(poDATFile->GetFieldWidth(iField));
              SetField(iField, pszValue);
 #endif
             break;
           }
           case TABFDateTime:
+          {
 #ifdef MITAB_USE_OFTDATETIME
-            int nSec;
-            if ((status = poDATFile->ReadDateTimeField(poDATFile->GetFieldWidth(iField),
-                                                       &nYear, &nMonth, &nDay,
-                                                       &nHour, &nMin, &nSec, &nMS)) == 0)
+            int nYear = 0;
+            int nMonth = 0;
+            int nDay = 0;
+            int nHour = 0;
+            int nMin = 0;
+            int nMS = 0;
+            int nSec  = 0;
+            const int status =
+                poDATFile->ReadDateTimeField(poDATFile->GetFieldWidth(iField),
+                                             &nYear, &nMonth, &nDay,
+                                             &nHour, &nMin, &nSec, &nMS);
+            if( status == 0 )
             {
-               SetField(iField, nYear, nMonth, nDay, nHour, nMin, nSec + nMS / 1000.0f, 0);
+               SetField(iField, nYear, nMonth, nDay, nHour, nMin,
+                        nSec + nMS / 1000.0f, 0);
             }
 #else
-            pszValue = poDATFile->ReadDateTimeField(poDATFile->
-                                                    GetFieldWidth(iField));
+            const char *pszValue =
+                poDATFile->ReadDateTimeField(poDATFile->GetFieldWidth(iField));
             SetField(iField, pszValue);
 #endif
             break;
+          }
           default:
             // Other type???  Impossible!
             CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -575,11 +606,17 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
 int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                                      TABINDFile *poINDFile, int *panIndexNo)
 {
-    int         iField, numFields, nStatus=0;
+    int iField;
+    int numFields;
+    int nStatus = 0;
 #ifdef MITAB_USE_OFTDATETIME
-    int         nYear, nMon, nDay, nHour, nMin, nTZFlag;
-    nYear = nMon = nDay = nHour = nMin = nTZFlag = 0;
-    float       fSec = 0;
+    int nYear = 0;
+    int nMon = 0;
+    int nDay = 0;
+    int nHour = 0;
+    int nMin = 0;
+    int nTZFlag = 0;
+    float fSec = 0.0f;
 #endif
 
     CPLAssert(poDATFile);
@@ -2123,7 +2160,8 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*=============================================================
          * PLINE ( > 2 vertices)
          *============================================================*/
-        int     i, numPoints, nStatus;
+        int numPoints;
+        int nStatus;
         GUInt32 nCoordDataSize;
         GInt32  nCoordBlockPtr;
 
@@ -2181,7 +2219,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         poLine->setNumPoints(numPoints);
 
         nStatus = 0;
-        for(i=0; nStatus == 0 && i<numPoints; i++)
+        for( int i = 0; nStatus == 0 && i<numPoints; i++ )
         {
             nStatus = poCoordBlock->ReadIntCoord(bComprCoord, nX, nY);
             if (nStatus != 0)
@@ -8142,7 +8180,7 @@ int     ITABFeaturePen::GetPenWidthMIF()
              (m_sPenDef.nPointWidth+10): m_sPenDef.nPixelWidth );
 }
 
-void  ITABFeaturePen::SetPenWidthMIF(int val)
+void ITABFeaturePen::SetPenWidthMIF( int val )
 {
     if (val > 10)
     {
@@ -8315,10 +8353,8 @@ const char *ITABFeaturePen::GetPenStyleString()
  **********************************************************************/
 void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
 {
-    int numParts, i;
+    int numParts;
     GBool bIsNull = 0;
-
-    double nPenWidth;
 
     GInt32 nPenColor;
 
@@ -8333,7 +8369,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
 
     // Retrieve the Pen info.
     numParts = poStyleMgr->GetPartCount();
-    for(i=0; i<numParts; i++)
+    for( int i = 0; i < numParts; i++ )
     {
         poStylePart = poStyleMgr->GetPart(i);
         if( poStylePart == NULL )
@@ -8376,7 +8412,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     // Set the width
     if(poPenStyle->Width(bIsNull) != 0.0)
     {
-        nPenWidth = poPenStyle->Width(bIsNull);
+        const double nPenWidth = poPenStyle->Width(bIsNull);
         // Width < 10 is a pixel
         if(nPenWidth > 10)
             SetPenWidthPoint(nPenWidth);
@@ -8396,13 +8432,12 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     }
 
     const char *pszPenPattern = NULL;
-    const char* pszPenId = NULL;
 
     // Set the Id of the Pen, use Pattern if necessary.
     if(pszPenName &&
        (strstr(pszPenName, "mapinfo-pen-") || strstr(pszPenName, "ogr-pen-")) )
     {
-        pszPenId = strstr(pszPenName, "mapinfo-pen-");
+        const char* pszPenId = strstr(pszPenName, "mapinfo-pen-");
         if( pszPenId != NULL )
         {
             nPenId = atoi(pszPenId+12);
@@ -8578,8 +8613,6 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     int numParts, i;
     GBool bIsNull = 0;
 
-    int nBrushId;
-
     int nBrushColor;
 
     // Use the Style Manager to retrieve all the information we need.
@@ -8627,12 +8660,12 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     {
         if(strstr(pszBrushId, "mapinfo-brush-"))
         {
-            nBrushId = atoi(pszBrushId+14);
+            const int nBrushId = atoi(pszBrushId+14);
             SetBrushPattern((GByte)nBrushId);
         }
         else if(strstr(pszBrushId, "ogr-brush-"))
         {
-            nBrushId = atoi(pszBrushId+10);
+            int nBrushId = atoi(pszBrushId+10);
             if(nBrushId > 1)
                 nBrushId++;
             SetBrushPattern((GByte)nBrushId);
@@ -8840,10 +8873,6 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     int numParts, i;
     GBool bIsNull = 0;
 
-    int nSymbolId;
-
-    int nSymbolColor;
-
     double dSymbolSize;
 
     // Use the Style Manager to retrieve all the information we need.
@@ -8900,12 +8929,12 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     {
         if(strstr(pszSymbolId, "mapinfo-sym-"))
         {
-            nSymbolId = atoi(pszSymbolId+12);
+            const int nSymbolId = atoi(pszSymbolId+12);
             SetSymbolNo((GByte)nSymbolId);
         }
         else if(strstr(pszSymbolId, "ogr-sym-"))
         {
-            nSymbolId = atoi(pszSymbolId+8);
+            const int nSymbolId = atoi(pszSymbolId+8);
 
             // The OGR symbol is not the MapInfo one
             // Here's some mapping
@@ -8961,7 +8990,7 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     {
         if(pszSymbolColor[0] == '#')
             pszSymbolColor++;
-        nSymbolColor = static_cast<int>(strtol(pszSymbolColor, NULL, 16));
+        int nSymbolColor = static_cast<int>(strtol(pszSymbolColor, NULL, 16));
         SetSymbolColor((GInt32)nSymbolColor);
     }
 

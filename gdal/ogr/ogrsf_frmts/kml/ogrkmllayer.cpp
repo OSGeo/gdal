@@ -417,8 +417,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         {
             oSM.InitFromFeature( poFeature );
 
-            int i;
-            for(i=0; i<oSM.GetPartCount();i++)
+            for( int i = 0; i < oSM.GetPartCount(); i++ )
             {
                 OGRStyleTool *poTool = oSM.GetPart(i);
                 if (poTool && poTool->GetType() == OGRSTCPen )
