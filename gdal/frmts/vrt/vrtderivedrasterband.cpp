@@ -998,6 +998,7 @@ bool VRTDerivedRasterBand::InitializePython()
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                  "%s", GetPyExceptionString().c_str());
+            Py_DecRef(poModule);
             return false;
         }
         m_poPrivate->m_poUserFunction = PyObject_GetAttrString(poUserModule,
@@ -1018,8 +1019,8 @@ bool VRTDerivedRasterBand::InitializePython()
     }
     if( !PyCallable_Check(m_poPrivate->m_poUserFunction) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "%s", GetPyExceptionString().c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "Object '%s' is not callable",
+                 osPythonFunction.c_str());
         Py_DecRef(poModule);
         return false;
     }
@@ -1029,6 +1030,7 @@ bool VRTDerivedRasterBand::InitializePython()
         PyObject_GetAttrString(poModule, "GDALCreateNumpyArray" );
     if (m_poPrivate->m_poGDALCreateNumpyArray == NULL || PyErr_Occurred())
     {
+        // Shouldn't happen normally...
         CPLError(CE_Failure, CPLE_AppDefined,
                  "%s", GetPyExceptionString().c_str());
         Py_DecRef(poModule);
