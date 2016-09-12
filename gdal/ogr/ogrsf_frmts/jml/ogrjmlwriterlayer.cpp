@@ -172,13 +172,13 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             }
             else if( eType == OFTDateTime )
             {
-                int nYear;
-                int nMonth;
-                int nDay;
-                int nHour;
-                int nMinute;
-                int nTZFlag;
-                float fSecond;
+                int nYear = 0;
+                int nMonth = 0;
+                int nDay = 0;
+                int nHour = 0;
+                int nMinute = 0;
+                int nTZFlag = 0;
+                float fSecond = 0.0f;
                 poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
                                               &nHour, &nMinute, &fSecond, &nTZFlag);
                 /* When writing time zone, OpenJUMP expects .XXX seconds */
