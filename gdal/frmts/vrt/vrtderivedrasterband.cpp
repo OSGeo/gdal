@@ -866,7 +866,11 @@ bool VRTDerivedRasterBand::InitializePython()
         // Reject all imports except a few trusted modules
         const char* const apszTrustedImports[] = {
                 "import math",
+                "from math import",
                 "import numpy", // caution: numpy has lots of I/O functions !
+                "from numpy import",
+                // TODO: not sure if importing arbitrary stuff from numba is OK
+                // so let's just restrict to jit.
                 "from numba import jit" };
         for( size_t i = 0; i < CPL_ARRAYSIZE(apszTrustedImports); ++i )
         {
