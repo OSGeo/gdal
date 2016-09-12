@@ -267,7 +267,7 @@ static bool LoadPythonAPI()
         }
         else
         {
-#ifdef MACOSX_FRAMEWORK
+#if defined(__MACH__) && defined(__APPLE__)
 #define SO_EXT "dylib"
 #else
 #define SO_EXT "so"
