@@ -259,13 +259,23 @@ def vrtderived_7():
         print(err)
         return 'fail'
 
-    #Must fail
+    # Invalid shared object name
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO foo')
     if ret.find('Checksum=0') < 0:
         gdaltest.post_reason( 'fail' )
         print(ret)
         print(err)
         return 'fail'
+
+    # Valid shared object name, but without Python symbos
+    libgdal_so = gdaltest.find_lib('gdal')
+    if libgdal_so is not None:
+        ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO "%s"' % libgdal_so)
+        if ret.find('Checksum=0') < 0:
+            gdaltest.post_reason( 'fail' )
+            print(ret)
+            print(err)
+            return 'fail'
 
     return 'success'
 
