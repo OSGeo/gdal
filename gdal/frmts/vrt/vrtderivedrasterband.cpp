@@ -568,6 +568,7 @@ class VRTDerivedRasterBandPrivateData
         bool      m_bPythonInitializationDone;
         bool      m_bPythonInitializationSuccess;
         bool      m_bExclusiveLock;
+        bool      m_bFirstTime;
         std::vector< std::pair<CPLString,CPLString> > m_oFunctionArgs;
 
         VRTDerivedRasterBandPrivateData():
@@ -577,7 +578,8 @@ class VRTDerivedRasterBandPrivateData
             m_poUserFunction(NULL),
             m_bPythonInitializationDone(false),
             m_bPythonInitializationSuccess(false),
-            m_bExclusiveLock(false)
+            m_bExclusiveLock(false),
+            m_bFirstTime(true)
         {
         }
 
@@ -938,11 +940,17 @@ bool VRTDerivedRasterBand::InitializePython()
     }
 
     // Whether we should just use our own global mutex, in addition to Python
-    // GIL locking. This may be useful when using numba @jit that doesn't
-    // seem to be thread-safe.
+    // GIL locking.
     m_poPrivate->m_bExclusiveLock =
         CPLTestBool(CPLGetConfigOption("GDAL_VRT_PYTHON_EXCLUSIVE_LOCK", "NO"));
-    VRT_GIL_Holder oHolder(m_poPrivate->m_bExclusiveLock);
+
+    // numba jit'ification doesn't seem to be thread-safe, so force use of
+    // lock now and at first execution of function. Later executions seem to
+    // be thread-safe. This problem doesn't seem to appear for code in
+    // regular files
+    const bool bUseExclusiveLock = m_poPrivate->m_bExclusiveLock ||
+                    m_poPrivate->m_osCode.find("@jit") != std::string::npos;
+    VRT_GIL_Holder oHolder(bUseExclusiveLock);
 
     // As we don't want to depend on numpy C API/ABI, we use a trick to build
     // a numpy array object. We define a Python function to which we pass a
@@ -1368,7 +1376,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             goto end;
 
         {
-        VRT_GIL_Holder oHolder(m_poPrivate->m_bExclusiveLock);
+        const bool bUseExclusiveLock = m_poPrivate->m_bExclusiveLock ||
+                    ( m_poPrivate->m_bFirstTime && m_poPrivate->m_osCode.find("@jit") != std::string::npos);
+        m_poPrivate->m_bFirstTime = false;
+        VRT_GIL_Holder oHolder(bUseExclusiveLock);
 
         // Prepare target numpy array
         PyObject* poPyDstArray = GDALCreateNumpyArray(
