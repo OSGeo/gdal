@@ -157,7 +157,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
 
     double skip = (oEnv.MaxY - oEnv.MinY)/NUM_SCANLINES;
 
-    double n = 0;
+    int n = 0;
     for( int j = 0; j < OGR_NUM_RINGS(poPoly); j++ )
     {
         /* count total number of points */
