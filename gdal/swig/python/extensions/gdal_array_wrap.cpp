@@ -9,6 +9,7 @@
  * ----------------------------------------------------------------------------- */
 
 #define SWIGPYTHON
+#define SWIG_PYTHON_THREADS
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
 
@@ -4273,7 +4274,11 @@ SWIGINTERN PyObject *_wrap_delete_VirtualMem(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_VirtualMem" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
   }
   arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
-  delete_CPLVirtualMemShadow(arg1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    delete_CPLVirtualMemShadow(arg1);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4309,7 +4314,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_GetAddr" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
   }
   arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
-  CPLVirtualMemShadow_GetAddr(arg1,arg2,arg3,arg4,arg5);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_GetAddr(arg1,arg2,arg3,arg4,arg5);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   {
 #if PY_VERSION_HEX >= 0x02070000
@@ -4410,7 +4419,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_0(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "VirtualMem_Pin" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast< int >(val4);
-  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3,arg4);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3,arg4);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4449,7 +4462,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_1(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VirtualMem_Pin" "', argument " "3"" of type '" "size_t""'");
   } 
   arg3 = static_cast< size_t >(val3);
-  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4479,7 +4496,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_2(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VirtualMem_Pin" "', argument " "2"" of type '" "size_t""'");
   } 
   arg2 = static_cast< size_t >(val2);
-  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4500,7 +4521,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_3(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_Pin" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
   }
   arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
-  CPLVirtualMemShadow_Pin__SWIG_0(arg1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_Pin__SWIG_0(arg1);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4647,7 +4672,11 @@ SWIGINTERN PyObject *_wrap_TermProgress_nocb(PyObject *SWIGUNUSEDPARM(self), PyO
       SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "TermProgress_nocb" "', argument " "3"" of type '" "void *""'"); 
     }
   }
-  result = (int)GDALTermProgress_nocb(arg1,(char const *)arg2,arg3);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (int)GDALTermProgress_nocb(arg1,(char const *)arg2,arg3);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -4676,7 +4705,11 @@ SWIGINTERN PyObject *_wrap_OpenNumPyArray(PyObject *SWIGUNUSEDPARM(self), PyObje
       SWIG_fail;
     }
   }
-  result = (GDALDatasetShadow *)OpenNumPyArray(arg1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (GDALDatasetShadow *)OpenNumPyArray(arg1);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -4703,7 +4736,11 @@ SWIGINTERN PyObject *_wrap_GetArrayFilename(PyObject *SWIGUNUSEDPARM(self), PyOb
       SWIG_fail;
     }
   }
-  result = (retStringAndCPLFree *)GetArrayFilename(arg1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (retStringAndCPLFree *)GetArrayFilename(arg1);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
     if(result)
@@ -4856,7 +4893,11 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
       psProgressInfo->psPyCallbackData = obj10 ;
     }
   }
-  result = (CPLErr)BandRasterIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (CPLErr)BandRasterIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -5014,7 +5055,11 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
       psProgressInfo->psPyCallbackData = obj10 ;
     }
   }
-  result = (CPLErr)DatasetIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (CPLErr)DatasetIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -5059,7 +5104,11 @@ SWIGINTERN PyObject *_wrap_VirtualMemGetArray(PyObject *SWIGUNUSEDPARM(self), Py
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
     }
   }
-  VirtualMemGetArray(arg1,arg2,arg3);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    VirtualMemGetArray(arg1,arg2,arg3);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   {
     CPLVirtualMemShadow* virtualmem = *(arg2);
@@ -5284,7 +5333,11 @@ SWIGINTERN PyObject *_wrap_RATValuesIONumPyWrite(PyObject *SWIGUNUSEDPARM(self),
       SWIG_fail;
     }
   }
-  result = (CPLErr)RATValuesIONumPyWrite(arg1,arg2,arg3,arg4);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (CPLErr)RATValuesIONumPyWrite(arg1,arg2,arg3,arg4);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -5336,7 +5389,11 @@ SWIGINTERN PyObject *_wrap_RATValuesIONumPyRead(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "RATValuesIONumPyRead" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast< int >(val4);
-  result = (PyObject *)RATValuesIONumPyRead(arg1,arg2,arg3,arg4);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (PyObject *)RATValuesIONumPyRead(arg1,arg2,arg3,arg4);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = result;
   return resultobj;
 fail:
@@ -6125,6 +6182,9 @@ SWIG_init(void) {
   GDALRegister_NUMPY();
   
   
+  
+  /* Initialize threading */
+  SWIG_PYTHON_INITIALIZE_THREADS;
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else
