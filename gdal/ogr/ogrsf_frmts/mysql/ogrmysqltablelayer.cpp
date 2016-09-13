@@ -137,16 +137,13 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
     while( (papszRow = mysql_fetch_row( hResult )) != NULL )
     {
-        const char      *pszType;
         OGRFieldDefn    oField( papszRow[0], OFTString);
-        int             nLenType;
 
-        pszType = papszRow[1];
-
+        const char *pszType = papszRow[1];
         if( pszType == NULL )
             continue;
 
-        nLenType = (int)strlen(pszType);
+        int nLenType = (int)strlen(pszType);
 
         if( EQUAL(pszType,"varbinary")
             || (nLenType>=4 && EQUAL(pszType+nLenType-4,"blob")))
@@ -332,8 +329,12 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
                 pszDefault[0] != '\'' &&
                 CPLGetValueType(pszDefault) == CPL_VALUE_STRING )
             {
-                int nYear, nMonth, nDay, nHour, nMinute;
-                float fSecond;
+                int nYear = 0;
+                int nMonth = 0;
+                int nDay = 0;
+                int nHour = 0;
+                int nMinute = 0;
+                float fSecond = 0.0f;
                 if( oField.GetType() == OFTDateTime &&
                     sscanf(pszDefault, "%d-%d-%d %d:%d:%f", &nYear, &nMonth, &nDay,
                                 &nHour, &nMinute, &fSecond) == 6 )
@@ -540,22 +541,17 @@ void OGRMySQLTableLayer::ResetReading()
 char *OGRMySQLTableLayer::BuildFields()
 
 {
-    int         i;
-    size_t      nSize;
-    char        *pszFieldList;
-
-    nSize = 25;
+    size_t nSize = 25;
     if( pszGeomColumn )
         nSize += strlen(pszGeomColumn);
 
     if( bHasFid )
         nSize += strlen(pszFIDColumn);
 
-
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 6;
 
-    pszFieldList = (char *) CPLMalloc(nSize);
+    char *pszFieldList = (char *) CPLMalloc(nSize);
     pszFieldList[0] = '\0';
 
     if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
@@ -575,7 +571,7 @@ char *OGRMySQLTableLayer::BuildFields()
                  "`%s` `%s`", pszGeomColumn, pszGeomColumn );
     }
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
@@ -735,9 +731,8 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( GIntBig nFID )
 OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
-    MYSQL_RES           *hResult=NULL;
-    CPLString           osCommand;
-    int                 i, bNeedComma = FALSE;
+    int bNeedComma = FALSE;
+    CPLString osCommand;
 
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
@@ -759,7 +754,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
             continue;
@@ -803,7 +798,6 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
             osCommand += "''";
     }
 
-
     // Set the FID
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
@@ -823,7 +817,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
             }
 
             // make sure to attempt to free results of successful queries
-            hResult = mysql_store_result( poDS->GetConn() );
+            MYSQL_RES *hResult = mysql_store_result( poDS->GetConn() );
             if( hResult != NULL )
                 mysql_free_result( hResult );
             hResult = NULL;
@@ -837,7 +831,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
             continue;
@@ -854,12 +848,10 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTBinary )
         {
-            int         iChar;
-
-            //We need to quote and escape string fields.
+            // We need to quote and escape string fields.
             osCommand += "'";
 
-            for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+            for( int iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
                 if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTIntegerList
                     && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger64List
@@ -926,7 +918,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
 
         // make sure to attempt to free results
-        hResult = mysql_store_result( poDS->GetConn() );
+        MYSQL_RES *hResult = mysql_store_result( poDS->GetConn() );
         if( hResult != NULL )
             mysql_free_result( hResult );
         hResult = NULL;
@@ -939,7 +931,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     // make sure to attempt to free results of successful queries
-    hResult = mysql_store_result( poDS->GetConn() );
+    MYSQL_RES *hResult = mysql_store_result( poDS->GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;
