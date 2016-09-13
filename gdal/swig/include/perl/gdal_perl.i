@@ -2040,6 +2040,7 @@ sub FromGCPs {
 
 sub Apply {
     my ($self, $columns, $rows) = @_;
+    return Geo::GDAL::ApplyGeoTransform($self, $columns, $rows) unless ref($columns) eq 'ARRAY';
     my (@x, @y);
     for my $i (0..$#$columns) {
         ($x[$i], $y[$i]) =
@@ -2051,7 +2052,7 @@ sub Apply {
 sub Inv {
     my $self = shift;
     my @inv = Geo::GDAL::InvGeoTransform($self);
-    return new(@inv) if defined wantarray;
+    return Geo::GDAL::GeoTransform->new(@inv) if defined wantarray;
     @$self = @inv;
 }
 

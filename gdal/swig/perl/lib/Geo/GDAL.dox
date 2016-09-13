@@ -1603,13 +1603,12 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @brief An array of affine transformation coefficients.
 # @details The geo transformation has the form
 # \code
-# x = a + column * b + row * c
-# y = d + column * e + row * f
+x = a + column * b + row * c
+y = d + column * e + row * f
 # \endcode
-# where<br/>
-# (column,row) is the location in cell coordinates<br/>
-# (x,y) is the location in projection coordinates<br/>
-# or vice versa.
+# where
+# (column,row) is the location in cell coordinates, and
+# (x,y) is the location in projection coordinates, or vice versa.
 # A Geo::GDAL::GeoTransform object is a reference to an anonymous array [a,b,c,d,e,f].
 # @isa = ( Geo::GDAL )
 
@@ -1623,9 +1622,11 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @param ApproxOK [optional] Minimize the error in the coefficient (integer, default is true).
 # @return a new Geo::GDAL::GeoTransform object.
 
-## @method Apply(array reference x, array reference y)
-# @return a list (x, y), where x and y are references to arrays of
-# transformed coordinates.
+## @method Apply($x, $y)
+# @param x Column or x, or a reference to an array of columns or x's
+# @param y Row or y, or a reference to an array of columns or y's
+# @return a list (x, y), where x and y are the transformed coordinates
+# or references to arrays of transformed coordinates.
 
 ## @method Inv
 # @return a new Geo::GDAL::GeoTransform object, which is the inverse
