@@ -116,7 +116,7 @@ uint16 SysVirtualFile::GetBlockSegment( int requested_block )
                               requested_block );
 
     if( requested_block >= blocks_loaded )
-        LoadBMEntrysTo( requested_block );
+        LoadBMEntriesTo( requested_block );
 
     if( regular_blocks )
         // regular blocks are all in one segment.
@@ -137,7 +137,7 @@ int SysVirtualFile::GetBlockIndexInSegment( int requested_block )
                               requested_block );
 
     if( requested_block >= blocks_loaded )
-        LoadBMEntrysTo( requested_block );
+        LoadBMEntriesTo( requested_block );
 
     if( regular_blocks )
         // regular blocks all follow the first block in order.
@@ -342,7 +342,7 @@ void SysVirtualFile::LoadBlock( int requested_block )
 /* -------------------------------------------------------------------- */
 /*      Load the requested block.                                       */
 /* -------------------------------------------------------------------- */
-    LoadBMEntrysTo( requested_block );
+    LoadBMEntriesTo( requested_block );
     PCIDSKSegment *data_seg_obj =
         file->GetSegment( GetBlockSegment( requested_block ) );
     if( data_seg_obj == NULL )
@@ -386,7 +386,7 @@ void SysVirtualFile::FlushDirtyBlock(void)
 /************************************************************************/
 void SysVirtualFile::GrowVirtualFile(std::ptrdiff_t requested_block)
 {
-    LoadBMEntrysTo( static_cast<int>(requested_block) );
+    LoadBMEntriesTo( static_cast<int>(requested_block) );
 
     if( requested_block == blocks_loaded )
     {
@@ -435,7 +435,7 @@ void SysVirtualFile::WriteBlocks(int first_block,
     std::size_t blocks_written = 0;
     std::size_t current_first_block = first_block;
     while (blocks_written < (std::size_t) block_count) {
-        LoadBMEntrysTo( static_cast<int>(current_first_block+1) );
+        LoadBMEntriesTo( static_cast<int>(current_first_block+1) );
 
         unsigned int cur_segment = GetBlockSegment( static_cast<int>(current_first_block) );
         unsigned int cur_block = static_cast<unsigned int>(current_first_block);
@@ -443,7 +443,7 @@ void SysVirtualFile::WriteBlocks(int first_block,
                (unsigned int) GetBlockSegment(cur_block + 1) == cur_segment)
         {
             cur_block++;
-            LoadBMEntrysTo( static_cast<int>(current_first_block+1) );
+            LoadBMEntriesTo( static_cast<int>(current_first_block+1) );
         }
         
         // Find largest span of contiguous blocks we can write
@@ -501,7 +501,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
     
     while (blocks_read < (unsigned int)requested_block_count) {
         // Coalesce blocks that are in the same segment
-        LoadBMEntrysTo( current_start+1 );
+        LoadBMEntriesTo( current_start+1 );
         unsigned int cur_segment = GetBlockSegment(current_start); // segment of current
                 // first block
         unsigned int cur_block = current_start; // starting block ID
@@ -510,7 +510,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
             // this block is in the same segment as the previous one we
             // wanted to read.
             cur_block++;
-            LoadBMEntrysTo( cur_block+1 );
+            LoadBMEntriesTo( cur_block+1 );
         }
         
         // now attempt to determine if the region of blocks (from current_start
@@ -568,7 +568,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
 /*      are available.                                                  */
 /************************************************************************/
 
-void SysVirtualFile::LoadBMEntrysTo( int target_index )
+void SysVirtualFile::LoadBMEntriesTo( int target_index )
 
 {
     if( target_index > 0 )

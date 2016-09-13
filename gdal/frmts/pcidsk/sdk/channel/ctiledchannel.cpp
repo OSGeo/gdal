@@ -385,7 +385,7 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
     }
 
 /* -------------------------------------------------------------------- */
-/*      The simpliest case it an uncompressed direct and complete       */
+/*      The simplest case it an uncompressed direct and complete       */
 /*      tile read into the destination buffer.                          */
 /* -------------------------------------------------------------------- */
     if( xoff == 0 && xsize == GetBlockWidth() 
@@ -537,7 +537,7 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
     GetTileInfo( block_index, tile_offset, tile_size );
 
 /* -------------------------------------------------------------------- */
-/*      The simpliest case it an uncompressed direct and complete       */
+/*      The simplest case it an uncompressed direct and complete       */
 /*      tile read into the destination buffer.                          */
 /* -------------------------------------------------------------------- */
     if( compression == "NONE" 

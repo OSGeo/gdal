@@ -488,7 +488,7 @@ static CPLString GetPyExceptionString()
         "    except:\n"
         "       return (str(etype) + ', ' + str(value)).encode('UTF-8')\n");
 
-    CPLString osRet("An exception occured in exception formatting code...");
+    CPLString osRet("An exception occurred in exception formatting code...");
 
     static int nCounter = 0;
     CPLString osModuleName( CPLSPrintf("gdal_exception_%d", nCounter));
@@ -529,7 +529,7 @@ static CPLString GetPyExceptionString()
 
         if( PyErr_Occurred() )
         {
-            osRet = "An exception occured in exception formatting code...";
+            osRet = "An exception occurred in exception formatting code...";
             PyErr_Print();
         }
         else

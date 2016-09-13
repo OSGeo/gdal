@@ -6178,7 +6178,7 @@ static void ExpandPacked8ToByte1( const GByte * const CPL_RESTRICT pabySrc,
 #if defined(__GNUC__) || defined(_MSC_VER)
 // Signedness of char implementation dependent, so be explicit.
 // Assumes 2-complement integer types and sign extension of right shifting
-// GCC garantees such:
+// GCC guarantees such:
 // https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html#Integers-implementation
 static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
 {

@@ -581,7 +581,7 @@ Another example, in this case a 400x300 RGB pixel interleaved image.
 </VRTDataset>
 \endcode
 
-\section gdal_vrttut_creation Programatic Creation of VRT Datasets
+\section gdal_vrttut_creation Programmatic Creation of VRT Datasets
 
 The VRT driver supports several methods of creating VRT datasets.  As of
 GDAL 1.2.0 the vrtdataset.h include file should be installed with the core

@@ -481,7 +481,7 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
  * is the relative path to the file inside the archive.
  *
  * Starting with GDAL 2.2, an alternate syntax is available so as to enable
- * chaining and not being dependant on .tar extension :
+ * chaining and not being dependent on .tar extension :
  * /vsitar/{/path/to/the/archive}/path/inside/the/tar/file. Note that /path/to/the/archive
  * may also itself this alternate syntax.
  *

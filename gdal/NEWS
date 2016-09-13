@@ -43,7 +43,7 @@ Port:
  * Add VSIFGetRangeStatusL() and VSISupportsSparseFiles()
  * GDAL_NO_HARDCODED_FIND compilation option (#6543,#6531) to block file open calls (for sandboxed systems)
  * Add VSIMallocAligned(), VSIMallocAlignedAuto() and VSIFreeAligned() APIs
- * /vsizip / /vsitar: support alternate syntax /vsitar/{/path/to/the/archive}/path/inside/the/tar/file so as not to be dependant on file extension and enable chaining
+ * /vsizip / /vsitar: support alternate syntax /vsitar/{/path/to/the/archive}/path/inside/the/tar/file so as not to be dependent on file extension and enable chaining
 
 Core:
  * RPC transformer: speed-up DEM extraction by requesting and caching a larger buffer, instead of doing many queries of just a few pixels that can be costly with VRT for example
@@ -239,7 +239,7 @@ VICAR driver:
 VRT driver:
  * VRT: add default pixel functions: real, imag, complex, mod, phase, conj, etc... for complex data types (github #141)
  * avoid useless floating point values in SrcRect / DstRect (#6568)
- * avoid buffer intialization in RasterIO() when possible (replace ancient and likely broken concept of bEqualAreas)
+ * avoid buffer initialization in RasterIO() when possible (replace ancient and likely broken concept of bEqualAreas)
  * make CheckCompatibleForDatasetIO() return FALSE on VRTDerivedRasterBands (fixes #6599)
  * VRT warp: fix issue with partial blocks at the right/bottom and dest nodata values that are different per band (#6581)
 

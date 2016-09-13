@@ -807,13 +807,13 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     char chByteOrder = 'M';  //default to MSB
     if( (EQUAL(osST,"LSB_INTEGER")) ||
-        (EQUAL(osST,"LSB")) || // just incase
+        (EQUAL(osST,"LSB")) || // just in case
         (EQUAL(osST,"LSB_UNSIGNED_INTEGER")) ||
         (EQUAL(osST,"LSB_SIGNED_INTEGER")) ||
         (EQUAL(osST,"UNSIGNED_INTEGER")) ||
         (EQUAL(osST,"VAX_REAL")) ||
         (EQUAL(osST,"VAX_INTEGER")) ||
-        (EQUAL(osST,"PC_INTEGER")) ||  //just incase
+        (EQUAL(osST,"PC_INTEGER")) ||  //just in case
         (EQUAL(osST,"PC_REAL")) ) {
         chByteOrder = 'I';
     }
