@@ -10,6 +10,7 @@
 
 #define SWIGPYTHON
 #define SED_HACKS
+#define SWIG_PYTHON_THREADS
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
 /* -----------------------------------------------------------------------------
@@ -3844,6 +3845,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GTO_TIP",SWIG_From_int((int)(GTO_TIP)));
   SWIG_Python_SetConstant(d, "GTO_BIT",SWIG_From_int((int)(GTO_BIT)));
   SWIG_Python_SetConstant(d, "GTO_BSQ",SWIG_From_int((int)(GTO_BSQ)));
+  
+  /* Initialize threading */
+  SWIG_PYTHON_INITIALIZE_THREADS;
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else
