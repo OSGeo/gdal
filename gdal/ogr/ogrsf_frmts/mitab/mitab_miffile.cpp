@@ -1031,7 +1031,6 @@ void MIFFile::PreParseFile()
  **********************************************************************/
 int MIFFile::WriteMIFHeader()
 {
-    int iField;
     GBool bFound;
 
     if (m_eAccessMode != TABWrite)
@@ -1061,7 +1060,8 @@ int MIFFile::WriteMIFHeader()
         m_poMIFFile->WriteLine("Delimiter \"%s\"\n", m_pszDelimiter);
 
     bFound = FALSE;
-    for(iField=0; iField<m_poDefn->GetFieldCount(); iField++)
+
+    for( int iField = 0; iField<m_poDefn->GetFieldCount(); iField++ )
     {
         if (m_pabFieldUnique[iField])
         {
@@ -1076,7 +1076,7 @@ int MIFFile::WriteMIFHeader()
         m_poMIFFile->WriteLine("\n");
 
     bFound = FALSE;
-    for(iField=0; iField<m_poDefn->GetFieldCount(); iField++)
+    for( int iField = 0; iField < m_poDefn->GetFieldCount(); iField++ )
     {
         if (m_pabFieldIndexed[iField])
         {
@@ -1109,7 +1109,7 @@ int MIFFile::WriteMIFHeader()
 
     m_poMIFFile->WriteLine("Columns %d\n", m_poDefn->GetFieldCount());
 
-    for(iField=0; iField<m_poDefn->GetFieldCount(); iField++)
+    for( int iField = 0; iField < m_poDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
 
@@ -1659,9 +1659,6 @@ OGRFeatureDefn *MIFFile::GetLayerDefn()
 int MIFFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                          TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
 {
-    int numFields;
-    int nStatus = 0;
-
     /*-----------------------------------------------------------------
      * Check that call happens at the right time in dataset's life.
      *----------------------------------------------------------------*/
@@ -1684,9 +1681,10 @@ int MIFFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
     /*-----------------------------------------------------------------
      * Copy field information
      *----------------------------------------------------------------*/
-    numFields = poFeatureDefn->GetFieldCount();
+    const int numFields = poFeatureDefn->GetFieldCount();
+    int nStatus = 0;
 
-    for(int iField=0; iField<numFields; iField++)
+    for( int iField = 0; iField<numFields; iField++ )
     {
         TABFieldType eMapInfoType;
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);

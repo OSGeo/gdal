@@ -499,9 +499,8 @@ char **OGRTABDataSource::GetFileList()
         static const char * const apszExtensions[] =
             { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
         char **papszDirEntries = VSIReadDir( m_pszName );
-        int  iFile;
 
-        for( iFile = 0;
+        for( int iFile = 0;
              papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
              iFile++ )
         {

@@ -137,8 +137,6 @@ TABINDFile::~TABINDFile()
 int TABINDFile::Open(const char *pszFname, const char *pszAccess,
                      GBool bTestOpenNoError /*=FALSE*/)
 {
-    int         nLen;
-
     if (m_fp)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -178,7 +176,7 @@ int TABINDFile::Open(const char *pszFname, const char *pszAccess,
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
 
-    nLen = static_cast<int>(strlen(m_pszFname));
+    const int nLen = static_cast<int>(strlen(m_pszFname));
     if (nLen > 4 && !EQUAL(m_pszFname+nLen-4, ".IND") )
         strcpy(m_pszFname+nLen-4, ".ind");
 
@@ -2144,12 +2142,12 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
               }
               else if (m_nKeyLength != 4)
               {
-                GInt32 nInt32;
-                GInt16 nInt16;
-                GUInt32 nUInt32;
                 nRecordPtr = ReadIndexEntry(i, aKeyValBuf);
+                GInt32 nInt32 = 0;
                 memcpy(&nInt32, aKeyValBuf, 4);
+                GInt16 nInt16 = 0;
                 memcpy(&nInt16, aKeyValBuf + 2, 2);
+                GUInt32 nUInt32 = 0;
                 memcpy(&nUInt32, aKeyValBuf, 4);
                 fprintf(fpOut, "   nRecordPtr = %d\n", nRecordPtr);
                 fprintf(fpOut, "   Int Value = %d\n", nInt32);

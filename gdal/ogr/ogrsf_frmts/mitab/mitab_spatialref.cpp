@@ -1292,11 +1292,9 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
      * we will use an epsilon in our scan instead of looking for equality.
      *----------------------------------------------------------------*/
 #define TAB_EQUAL(a, b) (((a)<(b) ? ((b)-(a)) : ((a)-(b))) < 1e-10)
-    char        szDatumName[160];
-    int         iDatumInfo;
     const MapInfoDatumInfo *psDatumInfo = NULL;
 
-    for( iDatumInfo = 0;
+    for( int iDatumInfo = 0;
          asDatumInfoList[iDatumInfo].nMapInfoDatumID != -1;
          iDatumInfo++ )
     {
@@ -1319,6 +1317,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         psDatumInfo = NULL;
     }
 
+    char szDatumName[160] = {};
     if( psDatumInfo == NULL )
     {
         if( sTABProj.adDatumParams[0] == 0.0
@@ -1536,8 +1535,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
 
     m_poSpatialRef = poSpatialRef->Clone();
 
-    TABProjInfo     sTABProj;
-    int             nParmCount;
+    TABProjInfo sTABProj;
+    int nParmCount = 0;
     GetTABProjFromSpatialRef(poSpatialRef, sTABProj, nParmCount);
 
     /*-----------------------------------------------------------------
@@ -2005,9 +2004,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
      *----------------------------------------------------------------*/
     else
     {
-        int     i;
-
-        for( i = 0; asDatumInfoList[i].nMapInfoDatumID != -1; i++ )
+        for( int i = 0; asDatumInfoList[i].nMapInfoDatumID != -1; i++ )
         {
             if ( (nDatumEPSGCode > 0 && asDatumInfoList[i].nDatumEPSGCode == nDatumEPSGCode) ||
                  EQUAL(pszWKTDatum,asDatumInfoList[i].pszOGCDatumName) )

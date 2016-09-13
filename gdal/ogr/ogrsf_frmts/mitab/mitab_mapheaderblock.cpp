@@ -286,16 +286,14 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
                                              VSILFILE *fpSrc /* = NULL */,
                                              int nOffset /* = 0 */)
 {
-    int i, nStatus;
-    GInt32 nMagicCookie;
-
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf,
-                                                nBlockSize, nSizeUsed,
-                                                bMakeCopy,
-                                                fpSrc, nOffset);
+    const int nStatus =
+        TABRawBinBlock::InitBlockFromData(pabyBuf,
+                                          nBlockSize, nSizeUsed,
+                                          bMakeCopy,
+                                          fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -304,7 +302,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
      * Header blocks have a magic cookie at byte 0x100
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x100);
-    nMagicCookie = ReadInt32();
+    const GInt32 nMagicCookie = ReadInt32();
     if (nMagicCookie != HDR_MAGIC_COOKIE)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -398,13 +396,13 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
         m_XDispl = m_YDispl = 0.0;
     }
 
-    for(i=0; i<6; i++)
+    for( int i = 0; i < 6; i++ )
         m_sProj.adProjParams[i] = ReadDouble();
 
     m_sProj.dDatumShiftX = ReadDouble();
     m_sProj.dDatumShiftY = ReadDouble();
     m_sProj.dDatumShiftZ = ReadDouble();
-    for(i=0; i<5; i++)
+    for( int i = 0; i < 5; i++ )
     {
         /* In V.200 files, the next 5 datum params are unused and they
          * sometimes contain junk bytes... in this case we set adDatumParams[]
@@ -1014,8 +1012,6 @@ void TABMAPHeaderBlock::UpdatePrecision()
 
 void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
 {
-    int i;
-
     if (fpOut == NULL)
         fpOut = stdout;
 
@@ -1069,7 +1065,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
                                                     (int)m_sProj.nEllipsoidId);
         fprintf(fpOut,"  m_sProj.nUnitsId      = %d\n", (int)m_sProj.nUnitsId);
         fprintf(fpOut,"  m_sProj.adProjParams  =");
-        for(i=0; i<6; i++)
+        for( int i = 0; i < 6; i++)
             fprintf(fpOut, " %g",  m_sProj.adProjParams[i]);
         fprintf(fpOut,"\n");
 
@@ -1077,7 +1073,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut,"  m_sProj.dDatumShiftY  = %.15g\n", m_sProj.dDatumShiftY);
         fprintf(fpOut,"  m_sProj.dDatumShiftZ  = %.15g\n", m_sProj.dDatumShiftZ);
         fprintf(fpOut,"  m_sProj.adDatumParams =");
-        for(i=0; i<5; i++)
+        for( int i = 0; i < 5; i++ )
             fprintf(fpOut, " %.15g",  m_sProj.adDatumParams[i]);
         fprintf(fpOut,"\n");
 
@@ -1085,7 +1081,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
         if (FALSE)
         {
             fprintf(fpOut, "-- Header bytes 00-FF: Array of map object lengths --\n");
-            for(i=0; i<256; i++)
+            for( int i = 0; i < 256; i++ )
             {
                 fprintf(fpOut, "0x%2.2x", (int)m_pabyBuf[i]);
                 if (i != 255)

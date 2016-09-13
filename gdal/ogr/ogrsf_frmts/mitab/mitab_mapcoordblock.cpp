@@ -151,15 +151,15 @@ int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf,
                                             VSILFILE *fpSrc /* = NULL */,
                                             int nOffset /* = 0 */)
 {
-    int nStatus;
 #ifdef DEBUG_VERBOSE
     CPLDebug("MITAB", "Instantiating COORD block to/from offset %d", nOffset);
 #endif
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf, nBlockSize, nSizeUsed,
-                                                bMakeCopy, fpSrc, nOffset);
+    const int nStatus =
+        TABRawBinBlock::InitBlockFromData(pabyBuf, nBlockSize, nSizeUsed,
+                                          bMakeCopy, fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -732,15 +732,15 @@ void TABMAPCoordBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
  **********************************************************************/
 int     TABMAPCoordBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
 {
-    int nStatus;
 
     if (m_pabyBuf &&
         m_nCurPos >= (m_numDataBytes+MAP_COORD_HEADER_SIZE) &&
         m_nNextCoordBlock > 0)
     {
         // We're at end of current block... advance to next block.
+        int nStatus = GotoByteInFile(m_nNextCoordBlock, TRUE);
 
-        if ( (nStatus=GotoByteInFile(m_nNextCoordBlock, TRUE)) != 0)
+        if( nStatus != 0 )
         {
             // Failed.... an error has already been reported.
             return nStatus;
@@ -760,8 +760,9 @@ int     TABMAPCoordBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
         // for the rest.
         int numBytesInThisBlock =
                       (m_numDataBytes+MAP_COORD_HEADER_SIZE)-m_nCurPos;
-        nStatus = TABRawBinBlock::ReadBytes(numBytesInThisBlock, pabyDstBuf);
-        if (nStatus == 0)
+        int nStatus =
+            TABRawBinBlock::ReadBytes(numBytesInThisBlock, pabyDstBuf);
+        if( nStatus == 0 )
             nStatus = TABMAPCoordBlock::ReadBytes(numBytes-numBytesInThisBlock,
                                                pabyDstBuf+numBytesInThisBlock);
         return nStatus;
