@@ -239,12 +239,6 @@ def vrtderived_6():
 
 def vrtderived_7():
 
-    # wine doesn't implement EnumProcessModulesEx API
-    if 'TRAVIS_BRANCH' in os.environ:
-        val = os.environ['TRAVIS_BRANCH']
-        if val.find('mingw_w64') >= 0:
-            return 'skip'
-
     import test_cli_utilities
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
