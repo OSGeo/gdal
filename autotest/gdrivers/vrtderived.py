@@ -116,6 +116,16 @@ def vrtderived_2():
     md['source_0'] = simpleSourceXML
 
     vrt_ds.GetRasterBand(1).SetMetadata(md, 'vrt_sources')
+    with gdaltest.error_handler():
+        cs = vrt_ds.GetRasterBand(1).Checksum()
+    if cs != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ret = vrt_ds.GetRasterBand(1).WriteRaster(0,0,1,1,' ')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
     vrt_ds = None
 
     xmlstring = open(filename).read()
@@ -261,7 +271,7 @@ def vrtderived_7():
         print(err)
         return 'fail'
 
-    # Valid shared object name, but without Python symbos
+    # Valid shared object name, but without Python symbols
     libgdal_so = gdaltest.find_lib('gdal')
     if libgdal_so is not None:
         ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO "%s"' % libgdal_so)
@@ -673,6 +683,69 @@ def vrtderived_11():
     return 'success'
 
 ###############################################################################
+# Test all data types with python code
+
+def vrtderived_12():
+
+    try:
+        import numpy
+        numpy.ones
+    except:
+        return 'skip'
+
+    for dt in [ "Byte", "UInt16", "Int16", "UInt32", "Int32",
+                "Float32", "Float64",
+                "CInt16", "CInt32", "CFloat32", "CFloat64" ]:
+        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+<VRTRasterBand dataType="%s" band="1" subClass="VRTDerivedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <PixelFunctionType>vrtderived.one_pix_func</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+</VRTRasterBand>
+</VRTDataset>""" % dt)
+
+        gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
+        with gdaltest.error_handler():
+            cs = ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
+        # CInt16/CInt32 do not map to native numpy types
+        if dt == 'CInt16' or dt == 'CInt32':
+            expected_cs = 0 # error
+        else:
+            expected_cs = 100
+        if cs != expected_cs:
+            gdaltest.post_reason( 'invalid checksum' )
+            print(dt)
+            print(cs)
+            print(gdal.GetLastErrorMsg())
+            return 'fail'
+
+    # Same for SourceTransferType
+    for dt in [ "CInt16", "CInt32" ]:
+        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+<VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <SourceTransferType>%s</SourceTransferType>
+    <ColorInterp>Gray</ColorInterp>
+    <PixelFunctionType>vrtderived.one_pix_func</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+</VRTRasterBand>
+</VRTDataset>""" % dt)
+
+        gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
+        with gdaltest.error_handler():
+            cs = ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
+        if cs != 0:
+            gdaltest.post_reason( 'invalid checksum' )
+            print(dt)
+            print(cs)
+            print(gdal.GetLastErrorMsg())
+            return 'fail'
+
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtderived_cleanup():
@@ -694,6 +767,7 @@ gdaltest_list = [
     vrtderived_9,
     vrtderived_10,
     vrtderived_11,
+    vrtderived_12,
     vrtderived_cleanup,
 ]
 

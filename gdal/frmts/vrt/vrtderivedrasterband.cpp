@@ -1397,10 +1397,11 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                      "CInt16/CInt32 data type not supported for SourceTransferType");
             goto end;
         }
-        GDALDataType eDataTypeModified = eDataType;
-        if( eBufType == GDT_CInt16 || eBufType == GDT_CInt32 )
+        if( eDataType == GDT_CInt16 || eDataType == GDT_CInt32 )
         {
-            eDataTypeModified = GDT_CFloat64;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CInt16/CInt32 data type not supported for data type");
+            goto end;
         }
 
         if( !InitializePython() )
@@ -1408,7 +1409,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         GByte* pabyTmpBuffer = reinterpret_cast<GByte*>(VSI_CALLOC_VERBOSE(
                         static_cast<size_t>(nExtBufXSize) * nExtBufYSize,
-                        GDALGetDataTypeSizeBytes(eDataTypeModified)));
+                        GDALGetDataTypeSizeBytes(eDataType)));
         if( !pabyTmpBuffer )
             goto end;
 
@@ -1423,7 +1424,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         PyObject* poPyDstArray = GDALCreateNumpyArray(
                                     m_poPrivate->m_poGDALCreateNumpyArray,
                                     pabyTmpBuffer,
-                                    eDataTypeModified,
+                                    eDataType,
                                     nExtBufYSize,
                                     nExtBufXSize);
         if( !poPyDstArray )
@@ -1512,10 +1513,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             size_t nSrcOffset = (static_cast<size_t>(iY + nBufferRadius) *
                 nExtBufXSize + nBufferRadius) *
-                GDALGetDataTypeSizeBytes(eDataTypeModified);
+                GDALGetDataTypeSizeBytes(eDataType);
             GDALCopyWords(pabyTmpBuffer + nSrcOffset,
-                          eDataTypeModified,
-                          GDALGetDataTypeSizeBytes(eDataTypeModified),
+                          eDataType,
+                          GDALGetDataTypeSizeBytes(eDataType),
                           reinterpret_cast<GByte*>(pData) + iY * nLineSpace,
                           eBufType,
                           static_cast<int>(nPixelSpace),
