@@ -69,25 +69,21 @@ OGRMySQLResultLayer::~OGRMySQLResultLayer()
 OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( "sql_statement" );
     SetDescription( poDefn->GetName() );
-    int            iRawField;
 
     poDefn->Reference();
-    int width;
-    int precision;
 
     mysql_field_seek( hResultSet, 0 );
-    for( iRawField = 0;
+    for( int iRawField = 0;
          iRawField < (int) mysql_num_fields(hResultSet);
          iRawField++ )
     {
         MYSQL_FIELD *psMSField = mysql_fetch_field( hResultSet );
-        OGRFieldDefn    oField( psMSField->name, OFTString);
+        OGRFieldDefn oField( psMSField->name, OFTString);
 
         switch( psMSField->type )
         {
@@ -96,22 +92,24 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
           case FIELD_TYPE_LONG:
           case FIELD_TYPE_INT24:
           case FIELD_TYPE_LONGLONG:
+          {
             oField.SetType( OFTInteger );
-            width = (int)psMSField->length;
+            const int width = (int)psMSField->length;
             oField.SetWidth(width);
             poDefn->AddFieldDefn( &oField );
             break;
-
+          }
           case FIELD_TYPE_DECIMAL:
 #ifdef FIELD_TYPE_NEWDECIMAL
           case FIELD_TYPE_NEWDECIMAL:
 #endif
+          {
             oField.SetType( OFTReal );
 
             // a bunch of hackery to munge the widths that MySQL gives
             // us into corresponding widths and precisions for OGR
-            precision =    (int)psMSField->decimals;
-            width = (int)psMSField->length;
+            const int precision = (int)psMSField->decimals;
+            int width = (int)psMSField->length;
             if (!precision)
                 width = width - 1;
             width = width - precision;
@@ -120,7 +118,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             oField.SetPrecision(precision);
             poDefn->AddFieldDefn( &oField );
             break;
-
+          }
           case FIELD_TYPE_FLOAT:
           case FIELD_TYPE_DOUBLE:
          /* MYSQL_FIELD is always reporting ->length = 22 and ->decimals = 31
@@ -130,8 +128,9 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             as 31. */
          /* Assuming that a length of 22 means no particular width and 31
             decimals means no particular precision. */
-            width = (int)psMSField->length;
-            precision = (int)psMSField->decimals;
+          {
+            const int width = (int)psMSField->length;
+            const int precision = (int)psMSField->decimals;
             oField.SetType( OFTReal );
             if( width != 22 )
                 oField.SetWidth(width);
@@ -139,38 +138,43 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
                 oField.SetPrecision(precision);
             poDefn->AddFieldDefn( &oField );
             break;
-
+          }
           case FIELD_TYPE_DATE:
+          {
             oField.SetType( OFTDate );
             oField.SetWidth(0);
             poDefn->AddFieldDefn( &oField );
             break;
-
+          }
           case FIELD_TYPE_TIME:
+          {
             oField.SetType( OFTTime );
             oField.SetWidth(0);
             poDefn->AddFieldDefn( &oField );
             break;
-
+          }
           case FIELD_TYPE_TIMESTAMP:
           case FIELD_TYPE_DATETIME:
+          {
             oField.SetType( OFTDateTime );
             oField.SetWidth(0);
             poDefn->AddFieldDefn( &oField );
             break;
-
+          }
           case FIELD_TYPE_YEAR:
           case FIELD_TYPE_STRING:
           case FIELD_TYPE_VAR_STRING:
+          {
             oField.SetType( OFTString );
             oField.SetWidth((int)psMSField->length);
             poDefn->AddFieldDefn( &oField );
             break;
-
+          }
           case FIELD_TYPE_TINY_BLOB:
           case FIELD_TYPE_MEDIUM_BLOB:
           case FIELD_TYPE_LONG_BLOB:
           case FIELD_TYPE_BLOB:
+          {
             if( psMSField->charsetnr == 63 )
                 oField.SetType( OFTBinary );
             else
@@ -178,15 +182,16 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             oField.SetWidth((int)psMSField->max_length);
             poDefn->AddFieldDefn( &oField );
             break;
-
+          }
           case FIELD_TYPE_GEOMETRY:
+          {
             if (pszGeomColumn == NULL)
             {
                 pszGeomColumnTable = CPLStrdup( psMSField->table);
                 pszGeomColumn = CPLStrdup( psMSField->name);
             }
             break;
-
+          }
           default:
             // any other field we ignore.
             break;

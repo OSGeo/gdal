@@ -140,7 +140,6 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
-    int         iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetFID( iNextShapeId );
@@ -149,11 +148,10 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 /* ==================================================================== */
 /*      Transfer all result fields we can.                              */
 /* ==================================================================== */
-    for( iField = 0;
+    for( int iField = 0;
          iField < (int) mysql_num_fields(hResultSet);
          iField++ )
     {
-        int     iOGRField;
         MYSQL_FIELD *psMSField = mysql_fetch_field(hResultSet);
 
 /* -------------------------------------------------------------------- */
@@ -204,7 +202,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 /* -------------------------------------------------------------------- */
 /*      Transfer regular data fields.                                   */
 /* -------------------------------------------------------------------- */
-        iOGRField = poFeatureDefn->GetFieldIndex(psMSField->name);
+        const int iOGRField = poFeatureDefn->GetFieldIndex(psMSField->name);
         if( iOGRField < 0 )
             continue;
 
