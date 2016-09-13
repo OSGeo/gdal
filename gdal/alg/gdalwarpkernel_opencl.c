@@ -1330,7 +1330,7 @@ cl_int set_coord_data (struct oclWarper *warper, cl_mem *xy)
     imgFmt.image_channel_order = warper->xyChOrder;
     imgFmt.image_channel_data_type = CL_FLOAT;
 
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
@@ -1340,7 +1340,7 @@ cl_int set_coord_data (struct oclWarper *warper, cl_mem *xy)
                             (size_t) warper->xyHeight,
                             (size_t) sizeof(float) * warper->xyChSize * warper->xyWidth,
                             warper->xyWork, &err);
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
     handleErr(err);
@@ -1380,7 +1380,7 @@ cl_int set_unified_data(struct oclWarper *warper,
     size_t sz = warper->srcWidth * warper->srcHeight;
     int useValid = warper->nBandSrcValidCL != NULL;
     //32 bits in the mask
-    int validSz = sizeof(int) * ((31 + sz) >> 5);
+    int validSz = (int)(sizeof(int) * ((31 + sz) >> 5));
 
     //Copy unifiedSrcDensity if it exists
     if (unifiedSrcDensity == NULL) {
@@ -1481,7 +1481,7 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
     imgFmt.image_channel_data_type = warper->imageFormat;
 
     //Create & copy the source image
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
@@ -1508,7 +1508,7 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
 
         handleErr(err);
     }
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 
@@ -2112,8 +2112,8 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     handleErrGoto(err, error_label);
 
     //Set coordinate image dimensions
-    warper->xyWidth  = ceil(((float)warper->dstWidth  + (float)warper->coordMult-1)/(float)warper->coordMult);
-    warper->xyHeight = ceil(((float)warper->dstHeight + (float)warper->coordMult-1)/(float)warper->coordMult);
+    warper->xyWidth  = (int)ceil(((float)warper->dstWidth  + (float)warper->coordMult-1)/(float)warper->coordMult);
+    warper->xyHeight = (int)ceil(((float)warper->dstHeight + (float)warper->coordMult-1)/(float)warper->coordMult);
 
     //Alloc coord memory
     sz = sizeof(float) * warper->xyChSize * warper->xyWidth * warper->xyHeight;
