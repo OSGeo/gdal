@@ -770,9 +770,12 @@ def vrtderived_13():
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
     # Will test the VRTDerivedRasterBand::IGetDataCoverageStatus() interface
-    ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.Open('data/python_ones.vrt'))
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrtderived_13.tif', gdal.Open('data/python_ones.vrt'))
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.Unlink('/vsimem/vrtderived_13.tif')
+
     if cs != 10000:
         gdaltest.post_reason( 'invalid checksum' )
         print(cs)
