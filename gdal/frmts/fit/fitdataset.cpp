@@ -131,7 +131,7 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
     nBlockYSize = poDSIn->info->yPageSize;
 
 /* -------------------------------------------------------------------- */
-/*      Caculate the values for record offset calculations.             */
+/*      Calculate the values for record offset calculations.             */
 /* -------------------------------------------------------------------- */
     bytesPerComponent = GDALGetDataTypeSizeBytes(eDataType);
     if( bytesPerComponent == 0 )

@@ -2029,7 +2029,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer( int iLayer )
             if( VSIUnlink( pszFilePath ) )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "ERROR Deleteing Layer %s from filesystem as %s",
+                          "ERROR Deleting Layer %s from filesystem as %s",
                           papoLayers[iLayer]->GetName(), pszFilePath );
             }
         }

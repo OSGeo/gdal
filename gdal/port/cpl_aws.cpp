@@ -526,7 +526,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
     CPLXMLNode* psTree = CPLParseXMLString(pszErrorMsg);
     if( psTree == NULL )
     {
-        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
+        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML response: %s", pszErrorMsg); }
         return false;
     }
 
@@ -534,7 +534,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
     if( pszCode == NULL )
     {
         CPLDestroyXMLNode(psTree);
-        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
+        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML response: %s", pszErrorMsg); }
         return false;
     }
 
@@ -544,7 +544,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
         if( pszRegion == NULL )
         {
             CPLDestroyXMLNode(psTree);
-            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
+            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML response: %s", pszErrorMsg); }
             return false;
         }
         SetAWSRegion(pszRegion);
@@ -561,7 +561,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
                                     pszEndpoint[m_osBucket.size()] != '.')) )
         {
             CPLDestroyXMLNode(psTree);
-            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
+            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML response: %s", pszErrorMsg); }
             return false;
         }
         if( !m_bUseVirtualHosting &&

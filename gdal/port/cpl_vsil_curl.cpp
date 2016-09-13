@@ -56,7 +56,7 @@ void VSIInstallS3FileHandler(void)
 int VSICurlInstallReadCbk ( VSILFILE* /* fp */,
                             VSICurlReadCbkFunc /* pfnReadCbk */,
                             void* /* pfnUserData */,
-                            int /* bStopOnInterrruptUntilUninstall */)
+                            int /* bStopOnInterruptUntilUninstall */)
 {
     return FALSE;
 }
@@ -341,7 +341,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     VSICurlReadCbkFunc  pfnReadCbk;
     void               *pReadCbkUserData;
-    bool                bStopOnInterrruptUntilUninstall;
+    bool                bStopOnInterruptUntilUninstall;
     bool                bInterrupted;
 
     bool                m_bS3Redirect;
@@ -380,7 +380,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     int                  InstallReadCbk(VSICurlReadCbkFunc pfnReadCbk,
                                         void* pfnUserData,
-                                        int bStopOnInterrruptUntilUninstall);
+                                        int bStopOnInterruptUntilUninstall);
     int                  UninstallReadCbk();
 };
 
@@ -396,7 +396,7 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFSIn, const char* pszUR
     bEOF(false),
     pfnReadCbk(NULL),
     pReadCbkUserData(NULL),
-    bStopOnInterrruptUntilUninstall(false),
+    bStopOnInterruptUntilUninstall(false),
     bInterrupted(false),
     m_bS3Redirect(false),
     m_nExpireTimestampLocal(0)
@@ -435,14 +435,14 @@ void VSICurlHandle::SetURL(const char* pszURLIn)
 
 int   VSICurlHandle::InstallReadCbk(VSICurlReadCbkFunc pfnReadCbkIn,
                                     void* pfnUserDataIn,
-                                    int bStopOnInterrruptUntilUninstallIn)
+                                    int bStopOnInterruptUntilUninstallIn)
 {
     if (pfnReadCbk != NULL)
         return FALSE;
 
     pfnReadCbk = pfnReadCbkIn;
     pReadCbkUserData = pfnUserDataIn;
-    bStopOnInterrruptUntilUninstall = CPL_TO_BOOL(bStopOnInterrruptUntilUninstallIn);
+    bStopOnInterruptUntilUninstall = CPL_TO_BOOL(bStopOnInterruptUntilUninstallIn);
     bInterrupted = false;
     return TRUE;
 }
@@ -458,7 +458,7 @@ int VSICurlHandle::UninstallReadCbk()
 
     pfnReadCbk = NULL;
     pReadCbkUserData = NULL;
-    bStopOnInterrruptUntilUninstall = false;
+    bStopOnInterruptUntilUninstall = false;
     bInterrupted = false;
     return TRUE;
 }
@@ -1001,7 +1001,7 @@ bool VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset, const int nBl
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
 
-    if (bInterrupted && bStopOnInterrruptUntilUninstall)
+    if (bInterrupted && bStopOnInterruptUntilUninstall)
         return false;
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
@@ -1365,7 +1365,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
 
-    if (bInterrupted && bStopOnInterrruptUntilUninstall)
+    if (bInterrupted && bStopOnInterruptUntilUninstall)
         return FALSE;
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
@@ -4064,12 +4064,12 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
         else
         {
             *pbGotFileList = true;
-            bool bIsTrucated;
+            bool bIsTruncated;
             AnalyseS3FileList( osBaseURL,
                                (const char*)sWriteFuncData.pBuffer,
                                osFileList,
                                nMaxFiles,
-                               bIsTrucated,
+                               bIsTruncated,
                                osNextMarker );
 
             CPLFree(sWriteFuncData.pBuffer);
@@ -4178,10 +4178,10 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
 int VSICurlInstallReadCbk (VSILFILE* fp,
                            VSICurlReadCbkFunc pfnReadCbk,
                            void* pfnUserData,
-                           int bStopOnInterrruptUntilUninstall)
+                           int bStopOnInterruptUntilUninstall)
 {
     return ((VSICurlHandle*)fp)->InstallReadCbk(pfnReadCbk, pfnUserData,
-                                                bStopOnInterrruptUntilUninstall);
+                                                bStopOnInterruptUntilUninstall);
 }
 
 

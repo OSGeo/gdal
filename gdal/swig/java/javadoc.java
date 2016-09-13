@@ -8305,7 +8305,7 @@ public class Geometry:public void AssignSpatialReference(SpatialReference srs)
  * <p>
  * Some buffer sections are properly described as curves, but are converted to
  * approximate polygons.  The nQuadSegs parameter can be used to control how many
- * segements should be used to define a 90 degree curve - a quadrant of a circle.
+ * segments should be used to define a 90 degree curve - a quadrant of a circle.
  * A value of 30 is a reasonable default.  Large values result in large numbers
  * of vertices in the resulting buffer geometry while small numbers reduce the
  * accuracy of the result.

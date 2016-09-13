@@ -321,7 +321,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*                 Set DataSet metadata informations                    */
+/*                 Set DataSet metadata information                    */
 /* -------------------------------------------------------------------- */
     CPLString metadataValue;
     metadataValue.Printf("%d", poDS->iCurrentSatellite);
@@ -473,7 +473,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
     m_rc = new ReflectanceCalculator(sTimeStamp, rRTOA[iChannel-1]);
 
 /* -------------------------------------------------------------------- */
-/*  Set DataSet metadata informations                                   */
+/*  Set DataSet metadata information                                   */
 /* -------------------------------------------------------------------- */
     CPLString metadataValue;
     metadataValue.Printf("%.10f", poDS->rCalibrationOffset[iChannel - 1]);

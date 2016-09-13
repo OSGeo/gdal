@@ -40,3 +40,4 @@ See COMMITERS file.
       addSimpleType(&oTypes, "GVAKT_PROS", "geoVernAktivProsess", OFTString);
       addSimpleType(&oTypes, "GVVKT_PROS", "geoVernViktigProsess", OFTString);
       addSimpleType(&oTypes, "PROSESS_HISTORIE", "prosesshistorie", OFTString);
+        ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
