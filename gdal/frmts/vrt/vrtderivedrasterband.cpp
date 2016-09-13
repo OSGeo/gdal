@@ -333,13 +333,10 @@ static bool LoadPythonAPI()
         HANDLE hProcess = GetCurrentProcess();
         HMODULE ahModules[100];
         DWORD nSizeNeeded = 0;
-#if defined(_M_X64)
-        EnumProcessModulesEx(hProcess, ahModules, sizeof(ahModules),
-                             &nSizeNeeded, LIST_MODULES_DEFAULT);
-#else
+
         EnumProcessModules(hProcess, ahModules, sizeof(ahModules),
                            &nSizeNeeded);
-#endif
+
         int nModules = MIN(100, nSizeNeeded / sizeof(HMODULE));
         for(int i=0;i<nModules;i++)
         {
