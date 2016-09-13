@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
 %include constraints.i
 
 #ifdef PERL_CPAN_NAMESPACE
@@ -1022,3 +1026,8 @@ public:
     return obj;
 }
 %}
+
+
+#ifdef SWIGPYTHON
+%thread;
+#endif

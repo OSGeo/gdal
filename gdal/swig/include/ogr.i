@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
 #ifndef FROM_GDAL_I
 %include "exception.i"
 #endif
@@ -617,6 +621,9 @@ public:
 %mutable;
 
 %newobject CreateDataSource;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CreateDataSource;
 #endif
@@ -625,8 +632,14 @@ public:
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, utf8_path, options);
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 %newobject CopyDataSource;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CopyDataSource;
 #endif
@@ -636,8 +649,14 @@ public:
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_path, options);
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 %newobject Open;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Open;
 #endif
@@ -657,6 +676,9 @@ public:
     }
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 #ifdef SWIGJAVA
   OGRErr DeleteDataSource( const char *utf8_path ) {
@@ -3196,6 +3218,9 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 
 #if !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON)))
 
+#ifdef SWIGPYTHON
+%thread;
+#endif
 %newobject Open;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Open;
@@ -3216,7 +3241,13 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     return ds;
   }
 %}
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
+#ifdef SWIGPYTHON
+%thread;
+#endif
 %newobject OpenShared;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) OpenShared;
@@ -3234,6 +3265,9 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     return ds;
   }
 %}
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 #endif /* !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON))) */
 
@@ -3363,4 +3397,9 @@ int GDALTermProgress( double, const char *, void * );
 
 #ifdef SWIGJAVA
 %include "ogr_java_extend.i"
+#endif
+
+
+#ifdef SWIGPYTHON
+%thread;
 #endif
