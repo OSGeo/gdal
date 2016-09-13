@@ -218,7 +218,26 @@ sub traverse {
 my $dataset = Geo::GDAL::Driver('MEM')->Create();
 my $transform = Geo::GDAL::GeoTransform->new;
 $dataset->GeoTransform($transform);
-$transform = $dataset->GeoTransform();
+my $transform2 = $dataset->GeoTransform();
+is_deeply($transform, $transform2, "Set and get geotransform.");
+
+my @t = (5,2,0,3,0,4);
+my @c = (2,3);
+$transform = Geo::GDAL::GeoTransform->new(@t);
+my @xy = $transform->Apply(@c);
+my @xy2 = $transform->Apply([$c[0]],[$c[1]]);
+ok((($xy[0] == $xy2[0][0]) and ($xy[1] == $xy2[1][0])), "Apply geotransform.");
+
+my $inv = $transform->Inv;
+@xy = $transform->Apply(@c);
+my @c2 = $inv->Apply(@xy);
+is_deeply(\@c, \@c2, "Inverse of geotransform.");
+
+$inv = Geo::GDAL::GeoTransform->new(@t);
+$inv->Inv;
+@xy = $transform->Apply(@c);
+@c2 = $inv->Apply(@xy);
+is_deeply(\@c, \@c2, "Inverse of geotransform (2).");
 
 # package Geo::GDAL::VSIF
 # sub Close ok
