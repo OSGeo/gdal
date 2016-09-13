@@ -116,10 +116,9 @@ TABToolDefTable::~TABToolDefTable()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
+int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
 {
     int nStatus = 0;
-    int nDefType;
 
     /*-----------------------------------------------------------------
      * Loop until we reach the end of the chain of blocks... we assume
@@ -127,7 +126,7 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
      *----------------------------------------------------------------*/
     while( ! poBlock->EndOfChain() )
     {
-        nDefType = poBlock->ReadByte();
+        const int nDefType = poBlock->ReadByte();
         switch(nDefType)
         {
           case TABMAP_TOOL_PEN:       // PEN
@@ -254,17 +253,18 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
+int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
 {
-    int i, nStatus = 0;
+    int nStatus = 0;
 
     /*-----------------------------------------------------------------
      * Write Pen Defs
      *----------------------------------------------------------------*/
-    for(i=0; nStatus == 0 && i< m_numPen; i++)
+    for( int i = 0; nStatus == 0 && i< m_numPen; i++ )
     {
         // The pen width is encoded over 2 bytes
-        GByte byPixelWidth=1, byPointWidth=0;
+        GByte byPixelWidth=1;
+        GByte byPointWidth = 0;
         if (m_papsPen[i]->nPointWidth > 0)
         {
             byPointWidth = (GByte)(m_papsPen[i]->nPointWidth & 0xff);
@@ -295,7 +295,7 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
     /*-----------------------------------------------------------------
      * Write Brush Defs
      *----------------------------------------------------------------*/
-    for(i=0; nStatus == 0 && i< m_numBrushes; i++)
+    for( int i = 0; nStatus == 0 && i< m_numBrushes; i++ )
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_BRUSH);
 
@@ -321,7 +321,7 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
     /*-----------------------------------------------------------------
      * Write Font Defs
      *----------------------------------------------------------------*/
-    for(i=0; nStatus == 0 && i< m_numFonts; i++)
+    for( int i = 0; nStatus == 0 && i< m_numFonts; i++ )
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_FONT);
 
@@ -340,7 +340,7 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
     /*-----------------------------------------------------------------
      * Write Symbol Defs
      *----------------------------------------------------------------*/
-    for(i=0; nStatus == 0 && i< m_numSymbols; i++)
+    for( int i = 0; nStatus == 0 && i< m_numSymbols; i++ )
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_SYMBOL);
 

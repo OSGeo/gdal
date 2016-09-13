@@ -390,11 +390,12 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
       case wkbMultiPoint:
       {
           OGRErr eStatus = OGRERR_NONE;
-          int i;
           OGRGeometryCollection *poColl = (OGRGeometryCollection*)poGeom;
           OGRFeature *poTmpFeature = poFeature->Clone();
 
-          for (i=0; eStatus==OGRERR_NONE && i<poColl->getNumGeometries(); i++)
+          for( int i = 0;
+               eStatus==OGRERR_NONE && i<poColl->getNumGeometries();
+               i++)
           {
               poTmpFeature->SetFID(OGRNullFID);
               poTmpFeature->SetGeometry(poColl->getGeometryRef(i));
@@ -402,7 +403,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
           }
           delete poTmpFeature;
           return NULL;
-        }
+      }
         break;
       /*-------------------------------------------------------------
        * Unsupported type.... convert to MapInfo geometry NONE
@@ -572,9 +573,9 @@ int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
 OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    TABFieldType        eTABType;
-    int                 nWidth;
-    int                 nPrecision;
+    TABFieldType eTABType;
+    int nWidth = 0;
+    int nPrecision = 0;
 
     if( GetTABType( poField, &eTABType, &nWidth, &nPrecision ) < 0 )
         return OGRERR_FAILURE;
@@ -582,8 +583,8 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     if( AddFieldNative( poField->GetNameRef(), eTABType,
                         nWidth, nPrecision, FALSE, FALSE, bApproxOK ) > -1 )
         return OGRERR_NONE;
-    else
-        return OGRERR_FAILURE;
+
+    return OGRERR_FAILURE;
 }
 
 

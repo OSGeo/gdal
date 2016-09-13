@@ -521,8 +521,8 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
             m_oBlockManager.PushGarbageBlockAsLast(nCurGarbBlock);
             while( true )
             {
-                GUInt16 nBlockType;
-                int     nNextGarbBlockPtr;
+                GUInt16 nBlockType = 0;
+                int nNextGarbBlockPtr = 0;
                 if( VSIFSeekL(fp, nCurGarbBlock, SEEK_SET) != 0 ||
                     VSIFReadL(&nBlockType, sizeof(nBlockType), 1, fp) != 1 ||
                     VSIFReadL(&nNextGarbBlockPtr, sizeof(nNextGarbBlockPtr), 1, fp) != 1 )
@@ -1150,10 +1150,8 @@ GInt32 TABMAPFile::GetMaxObjId()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int   TABMAPFile::MoveToObjId(int nObjId)
+int TABMAPFile::MoveToObjId(int nObjId)
 {
-    int nFileOffset;
-
     if( m_bLastOpWasWrite )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1195,10 +1193,9 @@ int   TABMAPFile::MoveToObjId(int nObjId)
      * Move map object pointer to the right location.  Fetch location
      * from the index file, unless we are already pointing at it.
      *----------------------------------------------------------------*/
-    if( m_nCurObjId == nObjId )
-        nFileOffset = m_nCurObjPtr;
-    else
-        nFileOffset = m_poIdIndex->GetObjPtr(nObjId);
+    int nFileOffset = m_nCurObjId == nObjId
+        ? m_nCurObjPtr
+        : m_poIdIndex->GetObjPtr(nObjId);
 
     if (nFileOffset != 0 && m_poCurObjBlock == NULL)
     {
@@ -1516,7 +1513,6 @@ int   TABMAPFile::PrepareNewObj(TABMAPObjHdr *poObjHdr)
  **********************************************************************/
 int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
 {
-    int nObjSize;
     GInt32 nObjBlockForInsert = -1;
 
     /*-----------------------------------------------------------------
@@ -1557,7 +1553,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         m_poHeader->m_nFirstIndexBlock = m_poSpIndex->GetNodeBlockPtr();
 
         /* We'll also need to create an object data block (later) */
-        nObjBlockForInsert = -1;
+        // nObjBlockForInsert = -1;
 
         CPLAssert(m_poCurObjBlock == NULL);
     }
@@ -1571,7 +1567,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
                                                             poObjHdr->m_nMinY,
                                                             poObjHdr->m_nMaxX,
                                                             poObjHdr->m_nMaxY);
-        if (nObjBlockForInsert == -1)
+        if( nObjBlockForInsert == -1 )
         {
             /* ChooseLeafForInsert() should not fail unless file is corrupt*/
             CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1581,7 +1577,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
     }
 
 
-    if (nObjBlockForInsert == -1)
+    if( nObjBlockForInsert == -1 )
     {
         /*-------------------------------------------------------------
          * Create a new object data block from scratch
@@ -1648,7 +1644,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
      * Fetch new object size, make sure there is enough room in obj.
      * block for new object, update spatial index and split if necessary.
      *----------------------------------------------------------------*/
-    nObjSize = m_poHeader->GetMapObjectSize(poObjHdr->m_nType);
+    int nObjSize = m_poHeader->GetMapObjectSize(poObjHdr->m_nType);
 
 
     /*-----------------------------------------------------------------

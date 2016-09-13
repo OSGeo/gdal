@@ -141,30 +141,27 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
                    double dXRadius, double dYRadius,
                    double dStartAngle, double dEndAngle)
 {
-    double dX, dY, dAngleStep, dAngle=0.0;
-    int i;
-
     // Adjust angles to go counterclockwise
     if (dEndAngle < dStartAngle)
         dEndAngle += 2.0*M_PI;
 
-    dAngleStep = (dEndAngle-dStartAngle)/(numPoints-1.0);
+    const double dAngleStep = (dEndAngle - dStartAngle) / (numPoints - 1.0);
 
-    for(i=0; i<numPoints; i++)
+    double dAngle = 0.0;
+    for( int i = 0; i<numPoints; i++ )
     {
-        dAngle = (dStartAngle + (double)i*dAngleStep);
-        dX = dCenterX + dXRadius*cos(dAngle);
-        dY = dCenterY + dYRadius*sin(dAngle);
+        dAngle = dStartAngle + (double)i*dAngleStep;
+        const double dX = dCenterX + dXRadius*cos(dAngle);
+        const double dY = dCenterY + dYRadius*sin(dAngle);
         poLine->addPoint(dX, dY);
     }
 
     // Complete the arc with the last EndAngle, to make sure that
     // the arc is correctly closed.
 
-    dX = dCenterX + dXRadius*cos(dAngle);
-    dY = dCenterY + dYRadius*sin(dAngle);
+    const double dX = dCenterX + dXRadius*cos(dAngle);
+    const double dY = dCenterY + dYRadius*sin(dAngle);
     poLine->addPoint(dX,dY);
-
 
     return 0;
 }
@@ -347,7 +344,6 @@ static GBool TABAdjustCaseSensitiveFilename(char *
 GBool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL  sStatBuf;
-    int         i;
 
     /*-----------------------------------------------------------------
      * First try using filename as provided
@@ -360,7 +356,9 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     /*-----------------------------------------------------------------
      * Try using uppercase extension (we assume that fname contains a '.')
      *----------------------------------------------------------------*/
-    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
+    for( int i = static_cast<int>(strlen(pszFname))-1;
+         i >= 0 && pszFname[i] != '.';
+         i-- )
     {
         pszFname[i] = (char)toupper(pszFname[i]);
     }
@@ -373,7 +371,9 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     /*-----------------------------------------------------------------
      * Try using lowercase extension
      *----------------------------------------------------------------*/
-    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
+    for( int i = static_cast<int>(strlen(pszFname))-1;
+         i >= 0 && pszFname[i] != '.';
+         i-- )
     {
         pszFname[i] = (char)tolower(pszFname[i]);
     }
@@ -420,8 +420,7 @@ char *TABGetBasename(const char *pszFname)
      * Now allocate our own copy and remove extension
      *----------------------------------------------------------------*/
     char *pszBasename = CPLStrdup(pszTmp);
-    int i;
-    for(i=static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
+    for( int i = static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
     {
         if (pszBasename[i] == '.')
         {

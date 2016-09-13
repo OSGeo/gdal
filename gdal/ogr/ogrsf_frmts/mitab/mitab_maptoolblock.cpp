@@ -122,13 +122,12 @@ int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
                                            VSILFILE *fpSrc /* = NULL */,
                                            int nOffset /* = 0 */)
 {
-    int nStatus;
-
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf, nBlockSize, nSizeUsed,
-                                                bMakeCopy, fpSrc, nOffset);
+    const int nStatus =
+        TABRawBinBlock::InitBlockFromData(pabyBuf, nBlockSize, nSizeUsed,
+                                          bMakeCopy, fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -332,13 +331,12 @@ void TABMAPToolBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
  **********************************************************************/
 int     TABMAPToolBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
 {
-    int nStatus;
-
     if (m_pabyBuf &&
         m_nCurPos >= (m_numDataBytes+MAP_TOOL_HEADER_SIZE) &&
         m_nNextToolBlock > 0)
     {
-        if ( (nStatus=GotoByteInFile(m_nNextToolBlock)) != 0)
+        int nStatus = GotoByteInFile(m_nNextToolBlock);
+        if( nStatus != 0 )
         {
             // Failed.... an error has already been reported.
             return nStatus;

@@ -567,8 +567,7 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
             /*---------------------------------------------------------
              * We found the list of table fields (comma-delimited list)
              *--------------------------------------------------------*/
-            int iTok;
-            for(iTok=1; papszTok[iTok] != NULL; iTok++)
+            for( int iTok = 1; papszTok[iTok] != NULL; iTok++ )
                 m_papszFieldNames = CSLAddString(m_papszFieldNames,
                                                  papszTok[iTok]);
 
@@ -1406,15 +1405,14 @@ int  TABRelation::Init(const char *pszViewName,
      * the field is not selected, and a value >=0 is the index of the
      * field in the view's FeatureDefn
      *----------------------------------------------------------------*/
-    int i;
-    int numFields1 = (poMainDefn?poMainDefn->GetFieldCount():0);
-    int numFields2 = (poRelDefn?poRelDefn->GetFieldCount():0);
+    const int numFields1 = poMainDefn ? poMainDefn->GetFieldCount() : 0;
+    const int numFields2 = poRelDefn ? poRelDefn->GetFieldCount() : 0;
 
     m_panMainTableFieldMap = (int*)CPLMalloc((numFields1+1)*sizeof(int));
-    for(i=0; i<numFields1; i++)
+    for( int i = 0; i < numFields1; i++ )
         m_panMainTableFieldMap[i] = -1;
     m_panRelTableFieldMap = (int*)CPLMalloc((numFields2+1)*sizeof(int));
-    for(i=0; i<numFields2; i++)
+    for( int i = 0; i<numFields2; i++ )
         m_panRelTableFieldMap[i] = -1;
 
     /*-----------------------------------------------------------------
@@ -1426,7 +1424,7 @@ int  TABRelation::Init(const char *pszViewName,
         CSLDestroy(papszSelectedFields);
         papszSelectedFields = NULL;
 
-        for(i=0; i<numFields1; i++)
+        for( int i = 0; i<numFields1; i++ )
         {
             OGRFieldDefn *poFieldDefn = poMainDefn->GetFieldDefn(i);
 
@@ -1434,7 +1432,7 @@ int  TABRelation::Init(const char *pszViewName,
                                                poFieldDefn->GetNameRef());
         }
 
-        for(i=0; i<numFields2; i++)
+        for( int i = 0; i < numFields2; i++)
         {
             OGRFieldDefn *poFieldDefn = poRelDefn->GetFieldDefn(i);
 
@@ -1459,7 +1457,9 @@ int  TABRelation::Init(const char *pszViewName,
     // Ref count defaults to 0... set it to 1
     m_poDefn->Reference();
 
-    for(i=0; papszSelectedFields != NULL && papszSelectedFields[i] != NULL ; i++)
+    for( int i = 0;
+         papszSelectedFields != NULL && papszSelectedFields[i] != NULL;
+         i++ )
     {
         if (poMainDefn &&
             (nIndex=poMainDefn->GetFieldIndex(papszSelectedFields[i])) >=0)
@@ -1507,8 +1507,6 @@ int  TABRelation::Init(const char *pszViewName,
  **********************************************************************/
 int  TABRelation::CreateRelFields()
 {
-    int i;
-
     /*-----------------------------------------------------------------
      * Create the field in each table.
      * The default name is "MI_refnum" but if a field with the same name
@@ -1517,7 +1515,7 @@ int  TABRelation::CreateRelFields()
     m_pszMainFieldName = CPLStrdup("MI_Refnum      ");
     const size_t nLen = strlen(m_pszMainFieldName) + 1;
     strcpy(m_pszMainFieldName, "MI_Refnum");
-    i = 1;
+    int i = 1;
     while(m_poDefn->GetFieldIndex(m_pszMainFieldName) >= 0)
     {
         snprintf(m_pszMainFieldName, nLen, "MI_Refnum_%d", i++);
@@ -1634,7 +1632,6 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
     GByte *pKey = BuildFieldKey(poMainFeature, m_nMainFieldNo,
                             m_poMainTable->GetNativeFieldType(m_nMainFieldNo),
                                 m_nRelFieldIndexNo);
-    int i;
     int nRelFeatureId = m_poRelINDFileRef->FindFirst(m_nRelFieldIndexNo, pKey);
 
     if (nRelFeatureId > 0)
@@ -1643,7 +1640,7 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
     /*-----------------------------------------------------------------
      * Copy fields from poMainFeature
      *----------------------------------------------------------------*/
-    for(i=0; i<poMainFeature->GetFieldCount(); i++)
+    for( int i = 0; i < poMainFeature->GetFieldCount(); i++ )
     {
         if (m_panMainTableFieldMap[i] != -1)
         {
@@ -1658,7 +1655,7 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
      * NOTE: For now, if no corresponding feature is found in RelTable
      *       then we will just leave the corresponding fields unset.
      *----------------------------------------------------------------*/
-    for(i=0; poRelFeature && i<poRelFeature->GetFieldCount(); i++)
+    for( int i = 0; poRelFeature && i < poRelFeature->GetFieldCount(); i++ )
     {
         if (m_panRelTableFieldMap[i] != -1)
         {

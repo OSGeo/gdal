@@ -1502,7 +1502,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
         return -1;
     }
 
-    int nFeatureId;
+    int nFeatureId = 0;
     if ( poFeature->GetFID() >= 0 )
     {
         nFeatureId = (int)poFeature->GetFID();
@@ -2243,12 +2243,14 @@ int TABFile::SetFieldIndexed( int nFieldId )
     /*-----------------------------------------------------------------
      * Init new index.
      *----------------------------------------------------------------*/
-    int nNewIndexNo;
     OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(nFieldId);
 
-    if (poFieldDefn == NULL ||
-        (nNewIndexNo = m_poINDFile->CreateIndex(GetNativeFieldType(nFieldId),
-                                                poFieldDefn->GetWidth()) ) < 1)
+    if( poFieldDefn == NULL )
+        return -1;
+    const int nNewIndexNo =
+        m_poINDFile->CreateIndex(GetNativeFieldType(nFieldId),
+                                 poFieldDefn->GetWidth());
+    if( nNewIndexNo < 1 )
     {
         // Failed... an error has already been reported.
         return -1;
