@@ -1601,7 +1601,7 @@ CPLErr VRTDerivedRasterBand::XMLInit( CPLXMLNode *psTree,
                         atoi(CPLGetXMLValue( psTree, "BufferRadius", "0" ));
     if( m_poPrivate->m_nBufferRadius < 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid Buffer");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for BufferRadius");
         return CE_Failure;
     }
     if( m_poPrivate->m_nBufferRadius != 0 &&
