@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::GDAL::Const"
 #elif defined(SWIGCSHARP)
@@ -252,3 +256,7 @@
 %constant GTO_BIT = GTO_BIT;
 %constant GTO_BSQ = GTO_BSQ;
 
+
+#ifdef SWIGPYTHON
+%thread;
+#endif
