@@ -4272,9 +4272,9 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         /*      Setup points to transform to source image space.            */
         /* ---------------------------------------------------------------- */
         memcpy( padfX, padfX + nDstXSize, sizeof(double) * nDstXSize );
-        const double dfY = iDstY + 0.5 + poWK->nDstYOff;
+        const double dfYConst = iDstY + 0.5 + poWK->nDstYOff;
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
-            padfY[iDstX] = dfY;
+            padfY[iDstX] = dfYConst;
         memset( padfZ, 0, sizeof(double) * nDstXSize );
 
         /* ---------------------------------------------------------------- */
