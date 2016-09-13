@@ -199,7 +199,11 @@ static void DeleteAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
 %}
 
 #if defined(SWIGPYTHON)
+
+%nothread;
+
 %{
+
 static GDALAsyncReaderWrapper* CreateAsyncReaderWrapper(GDALAsyncReaderH  hAsyncReader,
                                                         void             *pyObject)
 {
@@ -220,8 +224,10 @@ static void DisableAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
     psWrapper->pyObject = NULL;
     psWrapper->hAsyncReader = NULL;
 }
-
 %}
+
+%thread;
+
 #endif
 
 class GDALAsyncReaderShadow {

@@ -71,15 +71,21 @@ typedef char retStringAndCPLFree;
 
 #ifdef SWIGPYTHON
 
+%nothread;
+
 %{
 void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
 {
     void* user_data = CPLGetErrorHandlerUserData();
     PyObject *psArgs;
 
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
     PyEval_CallObject( (PyObject*)user_data, psArgs);
     Py_XDECREF(psArgs);
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
 }
 %}
 
@@ -103,6 +109,8 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
      CPLPopErrorHandler();
   }
 %}
+
+%thread;
 
 #else
 %inline %{

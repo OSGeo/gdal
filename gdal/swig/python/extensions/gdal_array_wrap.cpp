@@ -3497,7 +3497,13 @@ NUMPYDataset::~NUMPYDataset()
     }
 
     FlushCache();
+
+    // Although the module has thread disabled, we go here from GDALClose()
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     Py_DECREF( psArray );
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
 }
 
 /************************************************************************/
@@ -3929,6 +3935,8 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( pszMessage == NULL )
         pszMessage = "";
 
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     if( psInfo->psPyCallbackData == NULL )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
     else
@@ -3941,16 +3949,19 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( PyErr_Occurred() != NULL )
     {
         PyErr_Clear();
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return FALSE;
     }
 
     if( psResult == NULL )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
     if( psResult == Py_None )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
@@ -3959,10 +3970,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         PyErr_Clear();
         CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
         Py_XDECREF(psResult);
-	return FALSE;
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
     }
 
     Py_XDECREF(psResult);
+    SWIG_PYTHON_THREAD_END_BLOCK;
 
     return bContinue;
 }
@@ -4672,11 +4685,7 @@ SWIGINTERN PyObject *_wrap_TermProgress_nocb(PyObject *SWIGUNUSEDPARM(self), PyO
       SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "TermProgress_nocb" "', argument " "3"" of type '" "void *""'"); 
     }
   }
-  {
-    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    result = (int)GDALTermProgress_nocb(arg1,(char const *)arg2,arg3);
-    SWIG_PYTHON_THREAD_END_ALLOW;
-  }
+  result = (int)GDALTermProgress_nocb(arg1,(char const *)arg2,arg3);
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -4705,11 +4714,7 @@ SWIGINTERN PyObject *_wrap_OpenNumPyArray(PyObject *SWIGUNUSEDPARM(self), PyObje
       SWIG_fail;
     }
   }
-  {
-    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    result = (GDALDatasetShadow *)OpenNumPyArray(arg1);
-    SWIG_PYTHON_THREAD_END_ALLOW;
-  }
+  result = (GDALDatasetShadow *)OpenNumPyArray(arg1);
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -4736,11 +4741,7 @@ SWIGINTERN PyObject *_wrap_GetArrayFilename(PyObject *SWIGUNUSEDPARM(self), PyOb
       SWIG_fail;
     }
   }
-  {
-    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    result = (retStringAndCPLFree *)GetArrayFilename(arg1);
-    SWIG_PYTHON_THREAD_END_ALLOW;
-  }
+  result = (retStringAndCPLFree *)GetArrayFilename(arg1);
   {
     /* %typemap(out) (retStringAndCPLFree*) */
     if(result)
@@ -5104,11 +5105,7 @@ SWIGINTERN PyObject *_wrap_VirtualMemGetArray(PyObject *SWIGUNUSEDPARM(self), Py
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
     }
   }
-  {
-    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    VirtualMemGetArray(arg1,arg2,arg3);
-    SWIG_PYTHON_THREAD_END_ALLOW;
-  }
+  VirtualMemGetArray(arg1,arg2,arg3);
   resultobj = SWIG_Py_Void();
   {
     CPLVirtualMemShadow* virtualmem = *(arg2);
@@ -5333,11 +5330,7 @@ SWIGINTERN PyObject *_wrap_RATValuesIONumPyWrite(PyObject *SWIGUNUSEDPARM(self),
       SWIG_fail;
     }
   }
-  {
-    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    result = (CPLErr)RATValuesIONumPyWrite(arg1,arg2,arg3,arg4);
-    SWIG_PYTHON_THREAD_END_ALLOW;
-  }
+  result = (CPLErr)RATValuesIONumPyWrite(arg1,arg2,arg3,arg4);
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -5389,11 +5382,7 @@ SWIGINTERN PyObject *_wrap_RATValuesIONumPyRead(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "RATValuesIONumPyRead" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast< int >(val4);
-  {
-    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    result = (PyObject *)RATValuesIONumPyRead(arg1,arg2,arg3,arg4);
-    SWIG_PYTHON_THREAD_END_ALLOW;
-  }
+  result = (PyObject *)RATValuesIONumPyRead(arg1,arg2,arg3,arg4);
   resultobj = result;
   return resultobj;
 fail:
