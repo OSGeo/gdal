@@ -3501,6 +3501,8 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( pszMessage == NULL )
         pszMessage = "";
 
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     if( psInfo->psPyCallbackData == NULL )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
     else
@@ -3513,16 +3515,19 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( PyErr_Occurred() != NULL )
     {
         PyErr_Clear();
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return FALSE;
     }
 
     if( psResult == NULL )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
     if( psResult == Py_None )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
@@ -3531,10 +3536,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         PyErr_Clear();
         CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
         Py_XDECREF(psResult);
-	return FALSE;
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
     }
 
     Py_XDECREF(psResult);
+    SWIG_PYTHON_THREAD_END_BLOCK;
 
     return bContinue;
 }
@@ -3663,9 +3670,13 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
     void* user_data = CPLGetErrorHandlerUserData();
     PyObject *psArgs;
 
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
     PyEval_CallObject( (PyObject*)user_data, psArgs);
     Py_XDECREF(psArgs);
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
 }
 
 
@@ -4223,6 +4234,7 @@ static void DeleteAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
 
 
 
+
 static GDALAsyncReaderWrapper* CreateAsyncReaderWrapper(GDALAsyncReaderH  hAsyncReader,
                                                         void             *pyObject)
 {
@@ -4243,7 +4255,6 @@ static void DisableAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
     psWrapper->pyObject = NULL;
     psWrapper->hAsyncReader = NULL;
 }
-
 
 SWIGINTERN void delete_GDALAsyncReaderShadow(GDALAsyncReaderShadow *self){
         DeleteAsyncReaderWrapper(self);
@@ -6581,11 +6592,7 @@ SWIGINTERN PyObject *_wrap_PushErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    {
-      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      CPL_IGNORE_RET_VAL(result = (CPLErr)PushErrorHandler(arg1,arg2));
-      SWIG_PYTHON_THREAD_END_ALLOW;
-    }
+    CPL_IGNORE_RET_VAL(result = (CPLErr)PushErrorHandler(arg1,arg2));
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6611,11 +6618,7 @@ SWIGINTERN PyObject *_wrap_PopErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    {
-      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      PopErrorHandler();
-      SWIG_PYTHON_THREAD_END_ALLOW;
-    }
+    PopErrorHandler();
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
