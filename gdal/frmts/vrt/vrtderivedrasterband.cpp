@@ -233,12 +233,14 @@ static bool LoadPythonAPI()
         return true;
 
 #ifdef LOAD_NOCHECK_WITH_NAME
-    LibraryHandle libHandle = NULL;
+    // The static here is just to avoid Coverity warning about resource leak.
+    static LibraryHandle libHandle = NULL;
 
     const char* pszPythonSO = CPLGetConfigOption("PYTHONSO", NULL);
 #if defined(HAVE_DLFCN_H) && !defined(WIN32)
     if( pszPythonSO != NULL )
     {
+        // coverity[tainted_string]
         libHandle = dlopen(pszPythonSO, RTLD_NOW | RTLD_GLOBAL);
         if( libHandle == NULL )
         {
