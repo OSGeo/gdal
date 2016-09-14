@@ -32,6 +32,7 @@
 import os
 import shutil
 import sys
+import threading
 from osgeo import gdal
 
 sys.path.append( '../pymod' )
@@ -864,6 +865,57 @@ def vrtderived_14():
     return 'success'
 
 ###############################################################################
+# Test threading
+
+def vrtderived_15_worker(args_dict):
+
+    content = """<VRTDataset rasterXSize="2000" rasterYSize="2000">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <PixelFunctionType>vrtderived.one_pix_func</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+    ds = gdal.Open(content)
+    for j in range(5):
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 2304:
+            print(cs)
+            args_dict['ret'] = False
+        ds.FlushCache()
+
+def vrtderived_15():
+
+    try:
+        import numpy
+        numpy.ones
+    except:
+        return 'skip'
+
+    gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
+
+    threads = []
+    args_array = []
+    for i in range(4):
+        args_dict = { 'ret': True }
+        t = threading.Thread(target=vrtderived_15_worker, args = (args_dict,))
+        args_array.append(args_dict)
+        threads.append(t)
+        t.start()
+
+    ret = 'success'
+    for i in range(4):
+        threads[i].join()
+        if not args_array[i]:
+            ret = 'fail'
+
+    gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
+
+    return ret
+
+
+###############################################################################
 # Cleanup.
 
 def vrtderived_cleanup():
@@ -888,6 +940,7 @@ gdaltest_list = [
     vrtderived_12,
     vrtderived_13,
     vrtderived_14,
+    vrtderived_15,
     vrtderived_cleanup,
 ]
 
