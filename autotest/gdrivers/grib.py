@@ -114,7 +114,7 @@ def grib_5():
     shutil.copy('data/ds.mint.bin', 'tmp/ds.mint.bin')
     ds = gdal.Open('tmp/ds.mint.bin')
     md = ds.GetRasterBand(1).GetMetadata()
-    if md['GRIB_UNIT'] != '[C]' or md['GRIB_COMMENT'] != 'Minimum Temperature [C]':
+    if md['GRIB_UNIT'] != '[C]' or md['GRIB_COMMENT'] != 'Minimum temperature [C]':
         gdaltest.post_reason('fail')
         print(md)
         return 'success'
@@ -131,7 +131,7 @@ def grib_5():
     ds = gdal.Open('tmp/ds.mint.bin')
     gdal.SetConfigOption('GRIB_NORMALIZE_UNITS', None)
     md = ds.GetRasterBand(1).GetMetadata()
-    if md['GRIB_UNIT'] != '[K]' or md['GRIB_COMMENT'] != 'Minimum Temperature [K]':
+    if md['GRIB_UNIT'] != '[K]' or md['GRIB_COMMENT'] != 'Minimum temperature [K]':
         gdaltest.post_reason('fail')
         print(md)
         return 'success'
