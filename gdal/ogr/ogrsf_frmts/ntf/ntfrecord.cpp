@@ -56,7 +56,7 @@ NTFRecord::NTFRecord( FILE * fp ) :
 /*      Read lines until we get to one without a continuation mark.     */
 /* ==================================================================== */
     char szLine[MAX_RECORD_LEN+3] = {};
-    int nNewLength;
+    int nNewLength = 0;
 
     do {
         nNewLength = ReadPhysicalLine( fp, szLine );

@@ -135,8 +135,6 @@ void NTFFileReader::SetBaseFID( long nNewBase )
 void NTFFileReader::ClearDefs()
 
 {
-    int         i;
-
     Close();
 
     ClearCGroup();
@@ -147,7 +145,7 @@ void NTFFileReader::ClearDefs()
     papszFCName = NULL;
     nFCCount = 0;
 
-    for( i = 0; i < nAttCount; i++ )
+    for( int i = 0; i < nAttCount; i++ )
     {
         if( pasAttDesc[i].poCodeList != NULL )
             delete pasAttDesc[i].poCodeList;
@@ -622,12 +620,12 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
 /* -------------------------------------------------------------------- */
     else if( nGType == 5 && nNumCoord == 3 )
     {
-        double  adfX[3], adfY[3];
-        int     iCoord;
+        double adfX[3] = { 0.0, 0.0, 0.0 };
+        double adfY[3] = { 0.0, 0.0, 0.0 };
 
-        for( iCoord = 0; iCoord < nNumCoord; iCoord++ )
+        for( int iCoord = 0; iCoord < nNumCoord; iCoord++ )
         {
-            int            iStart = 14 + iCoord * (GetXYLen()*2+1);
+            const int iStart = 14 + iCoord * (GetXYLen()*2+1);
 
             adfX[iCoord] = atoi(poRecord->GetField(iStart+0,
                                                   iStart+GetXYLen()-1))
@@ -1104,9 +1102,7 @@ int NTFFileReader::ApplyAttributeValue( OGRFeature * poFeature, int iField,
 /*      provided.  If not found that's fine, just return with           */
 /*      notification.                                                   */
 /* -------------------------------------------------------------------- */
-    int         iValue;
-
-    iValue = CSLFindString( papszTypes, pszAttName );
+    const int iValue = CSLFindString( papszTypes, pszAttName );
     if( iValue < 0 )
         return FALSE;
 
@@ -1115,10 +1111,12 @@ int NTFFileReader::ApplyAttributeValue( OGRFeature * poFeature, int iField,
 /*      Process the attribute value ... this really only has a          */
 /*      useful effect for real numbers.                                 */
 /* -------------------------------------------------------------------- */
-    char        *pszAttLongName, *pszAttValue, *pszCodeDesc;
+    char *pszAttLongName = NULL;
+    char *pszAttValue = NULL;
+    char *pszCodeDesc = NULL;
 
     if( !ProcessAttValue( pszAttName, papszValues[iValue],
-                     &pszAttLongName, &pszAttValue, &pszCodeDesc ) )
+                          &pszAttLongName, &pszAttValue, &pszCodeDesc ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1333,8 +1331,8 @@ int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord ** papoGroup,
 /* -------------------------------------------------------------------- */
     if (poCandidate->GetType() != NRT_ATTREC )
     {
-        int     iRec;
-        for( iRec = 0; papoGroup[iRec] != NULL; iRec++ )
+        int iRec = 0;  // Used after for.
+        for( ; papoGroup[iRec] != NULL; iRec++ )
         {
             if( poCandidate->GetType() == papoGroup[iRec]->GetType() )
                 break;
@@ -1670,9 +1668,8 @@ NTFRecord * NTFFileReader::GetIndexedRecord( int iType, int iId )
 static void AddToIndexGroup( NTFRecord **papoGroup, NTFRecord * poRecord )
 
 {
-    int         i;
-
-    for( i = 1; papoGroup[i] != NULL; i++ ) {}
+    int i = 1;  // Used after for.
+    for( ; papoGroup[i] != NULL; i++ ) {}
 
     papoGroup[i] = poRecord;
     papoGroup[i+1] = NULL;
@@ -1799,13 +1796,12 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
         // records.
         for( int iRec = 1; apoCGroup[iRec] != NULL; iRec++ )
         {
-            int         nNumTEXR;
             NTFRecord  *poRecord = apoCGroup[iRec];
 
             if( poRecord->GetType() != NRT_TEXTPOS )
                 continue;
 
-            nNumTEXR = atoi(poRecord->GetField(9,10));
+            const int nNumTEXR = atoi(poRecord->GetField(9,10));
             for( int iTEXR = 0; iTEXR < nNumTEXR; iTEXR++ )
             {
                 AddToIndexGroup(

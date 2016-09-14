@@ -54,8 +54,8 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         if( !STARTS_WITH_CI(pszHeader, "01") )
             return NULL;
 
-        int j;
-        for( j = 0; j < 80; j++ )
+        int j = 0;  // Used afer for.
+        for( ; j < 80; j++ )
         {
             if( pszHeader[j] == 10 || pszHeader[j] == 13 )
                 break;
@@ -65,7 +65,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
             return NULL;
     }
 
-    OGRNTFDataSource    *poDS = new OGRNTFDataSource;
+    OGRNTFDataSource *poDS = new OGRNTFDataSource;
     if( !poDS->Open( poOpenInfo->pszFilename, TRUE ) )
     {
         delete poDS;
