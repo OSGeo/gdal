@@ -14,6 +14,8 @@
 <li> \ref gdal_vrttut_overviews
 <li> \ref gdal_vrttut_raw
 <li> \ref gdal_vrttut_creation
+<li> \ref gdal_vrttut_derived_c
+<li> \ref gdal_vrttut_derived_python
 <li> \ref gdal_vrttut_warped
 <li> \ref gdal_vrttut_pansharpen
 <li> \ref gdal_vrttut_mt
@@ -731,7 +733,7 @@ should be specified with the above SetMetadata() / SetMetadataItem() examples.
   delete poVRTDS;
 \endcode
 
-<h2>Using Derived Bands</h2>
+\section gdal_vrttut_derived_c Using Derived Bands (with pixel functions in C/C++)
 
 A specialized type of band is a 'derived' band which derives its pixel
 information from its source bands.  With this type of band you must also
@@ -806,7 +808,7 @@ calling the pixel function, and the imaginary portion would be lost.
     ...
 \endcode
 
-<h3> Default Pixel Functions </h3>
+\subsection gdal_vrttut_derived_default_c_pixel_functions Default Pixel Functions
 
 Starting with GDAL 2.2, GDAL provides a set of default pixel functions that can be used without writing new code:
 
@@ -831,7 +833,7 @@ Starting with GDAL 2.2, GDAL provides a set of default pixel functions that can 
 <li><b> "dB2pow":    </b> perform scale conversion from logarithmic to linear (power) (i.e. 10 ^ ( x / 10 ) ) of a single raster band (real only)
 </ul>
 
-<h3>Writing Pixel Functions</h3>
+\subsection gdal_vrttut_derived_c_pixel_functions Writing Pixel Functions
 
 To register this function with GDAL (prior to accessing any VRT datasets
 with derived bands that use this function), an application calls
@@ -926,6 +928,348 @@ CPLErr TestFunction(void **papoSources, int nSources, void *pData,
     // ---- Return success ----
     return CE_None;
 }
+\endcode
+
+\section gdal_vrttut_derived_python Using Derived Bands (with pixel functions in Python)
+
+Starting with GDAL 2.2, in addition to pixel functions written in C/C++ as
+documented in the \ref gdal_vrttut_derived_c section, it is possible to use
+pixel functions written in Python.
+
+The subelements for VRTRasterBand (whose subclass specification must be
+set to VRTDerivedRasterBand) are :
+<ul>
+
+<li> <i>PixelFunctionType</i> (required): Must be set to a function
+name that will be defined as a inline Python module in PixelFunctionCode
+element or as the form "module_name.function_name" to refer to a function in an
+external Python module</li>
+
+<li> <i>PixelFunctionLanguage</i> (required): Must be set to Python.</li>
+
+<li> <i>PixelFunctionArguments</i> (optional): It is possible to pass
+arguments to the Python pixel function by defining attributes in the
+PixelFunctionArguments element.</li>
+
+<li> <i>PixelFunctionCode</i> (required if PixelFunctionType is of the form
+"function_name", ignored otherwise). The in-lined code of a Python module, that
+must be at least have a function whose name is given by PixelFunctionType.</li>
+
+<li> <i>BufferRadius</i> (optional, defaults to 0): Amount of extra pixels, with
+respect to the original RasterIO() request to satisfy, that are fetched at the
+left, right, bottom and top of the input and output buffers passed to the pixel
+function. Note that the values of the output buffer in this buffer zone will
+be ignored.</li>
+
+</ul>
+
+The signature of the Python pixel function must have the following arguments:
+<ol>
+<li> <i>in_ar</i>: list of input numpy arrays (one numpy array for each
+source)</li>
+<li> <i>out_ar</i>: output numpy array to fill. The array is initialized at the
+right dimensions and with the VRTRasterBand.dataType.</li>
+<li> <i>xoff</i>: pixel offset to the top left corner of the accessed region
+of the band. Generally not needed except if the processing depends on the
+pixel position in the raster.</li>
+<li> <i>yoff</i> line offset to the top left corner of the accessed region of
+the band. Generally not needed.</li>
+<li> <i>xsize</i>: width of the region of the accessed region of the band.
+Can be used together with out_ar.shape[1] to determine the horizontal
+resampling ratio of the request.</li>
+<li> <i>ysize</i>: height of the region of the accessed region of the band.
+Can be used together with out_ar.shape[0] to determine the vertical
+resampling ratio of the request.</li>
+<li> <i>raster_xsize</i>: total with of the raster band. Generally not
+needed.</li>
+<li> <i>raster_ysize</i>: total with of the raster band. Generally not
+needed.</li>
+<li> <i>buf_radius</i>: radius of the buffer (in pixels) added to the left,
+right, top and bottom of in_ar / out_ar. This is the value of the optional
+BufferRadius element that can be set so that the original pixel request is
+extended by a given amount of pixels.</li>
+<li> <i>gt</i>: geotransform. Array of 6 double values.</li>
+<li> <i>kwargs</i>: dictionnary with user arguments defined in
+PixelFunctionArguments</li>
+</ol>
+
+\subsection gdal_vrttut_derived_python_examples Examples
+
+<ul>
+
+<li>VRT that multiplies the values of the source file by a factor of 1.5
+
+\code
+<VRTDataset rasterXSize="20" rasterYSize="20">
+  <SRS>EPSG:26711</SRS>
+  <GeoTransform>440720,60,0,3751320,0,-60</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionType>multiply</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionArguments factor="1.5"/>
+    <PixelFunctionCode><![CDATA[
+import numpy as np
+def multiply(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                   raster_ysize, buf_radius, gt, **kwargs):
+    factor = float(kwargs['factor'])
+    out_ar[:] = np.round_(np.clip(in_ar[0] * factor,0,255))
+]]>
+    </PixelFunctionCode>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+</li>
+
+<li>VRT that adds 2 (or more) rasters
+
+\code
+<VRTDataset rasterXSize="20" rasterYSize="20">
+  <SRS>EPSG:26711</SRS>
+  <GeoTransform>440720,60,0,3751320,0,-60</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionType>add</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionCode><![CDATA[
+import numpy as np
+def add(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                   raster_ysize, buf_radius, gt, **kwargs):
+    np.round_(np.clip(np.sum(in_ar, axis = 0, dtype = 'uint16'),0,255),
+              out = out_ar)
+]]>
+    </PixelFunctionCode>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte2.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+</li>
+
+<li>VRT that computes hillshading using an external library
+
+\code
+<VRTDataset rasterXSize="121" rasterYSize="121">
+  <SRS>EPSG:4326</SRS>
+  <GeoTransform>-80.004166666666663,0.008333333333333,0,
+44.004166666666663,0,-0.008333333333333</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">n43.dt0</SourceFilename>
+    </SimpleSource>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionType>hillshading.hillshade</PixelFunctionType>
+    <PixelFunctionArguments scale="111120" z_factor="30" />
+    <BufferRadius>1</BufferRadius>
+    <SourceTransferType>Int16</SourceTransferType>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+with hillshading.py:
+
+\code
+# Licence: X/MIT
+# Copyright 2016, Even Rouault
+import math
+
+def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                         raster_ysize, radius, gt, z, scale):
+    ovr_scale_x = float(out_ar.shape[1] - 2 * radius) / xsize
+    ovr_scale_y = float(out_ar.shape[0] - 2 * radius) / ysize
+    ewres = gt[1] / ovr_scale_x
+    nsres = gt[5] / ovr_scale_y
+    inv_nsres = 1.0 / nsres
+    inv_ewres = 1.0 / ewres
+
+    az = 315
+    alt = 45
+    degreesToRadians = math.pi / 180
+
+    sin_alt = math.sin(alt * degreesToRadians)
+    azRadians = az * degreesToRadians
+    z_scale_factor = z / (8 * scale)
+    cos_alt_mul_z_scale_factor = \
+              math.cos(alt * degreesToRadians) * z_scale_factor
+    cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
+                254 * math.cos(azRadians) * cos_alt_mul_z_scale_factor
+    sin_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
+                254 * math.sin(azRadians) * cos_alt_mul_z_scale_factor
+    square_z_scale_factor = z_scale_factor * z_scale_factor
+    sin_alt_mul_254 = 254.0 * sin_alt
+
+    for j in range(radius, out_ar.shape[0]-radius):
+        win_line = in_ar[0][j-radius:j+radius+1,:]
+        for i in range(radius, out_ar.shape[1]-radius):
+            win = win_line[:,i-radius:i+radius+1].tolist()
+            x = inv_ewres * ((win[0][0] + win[1][0] + win[1][0] + win[2][0])-\
+                             (win[0][2] + win[1][2] + win[1][2] + win[2][2])) 
+            y = inv_nsres * ((win[2][0] + win[2][1] + win[2][1] + win[2][2])-\
+                             (win[0][0] + win[0][1] + win[0][1] + win[0][2]))
+            xx_plus_yy = x * x + y * y
+            cang_mul_254 = (sin_alt_mul_254 - \
+                (y * cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 - \
+                    x * sin_az_mul_cos_alt_mul_z_scale_factor_mul_254)) / \
+                math.sqrt(1 + square_z_scale_factor * xx_plus_yy)
+            if cang_mul_254 < 0:
+                out_ar[j,i] = 1
+            else:
+                out_ar[j,i] = 1 + round(cang_mul_254)
+
+def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, 
+              raster_ysize, radius, gt, **kwargs):
+    z = float(kwargs['z_factor'])
+    scale= float(kwargs['scale'])
+    hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                  raster_ysize, radius, gt, z, scale)
+\endcode
+
+</li>
+
+
+\subsection gdal_vrttut_derived_python_security Security implications
+
+The ability to run Python code potentially opens the door to many potential
+vulnerabilities if the user of GDAL may process untrusted datasets. To avoid
+such issues, by default, execution of Python pixel function will be disabled.
+The execution policy can be controlled with the GDAL_VRT_ENABLE_PYTHON
+configuration option, which can accept 3 values:
+<ul>
+<li>YES: all VRT scripts are considered as trusted and their Python pixel
+functions will be run when pixel operations are involved.</li>
+<li>NO: all VRT scripts are considered untrusted, and none Python pixel
+function will be run.</li>
+<li>TRUSTED_MODULES (default setting): all VRT scripts with inline Python
+code in their PixelFunctionCode elements will be considered untrusted and will
+not be run. VRT scripts that use a PixelFunctionType of the form
+"module_name.function_name" will be considered as trusted, only if "module_name"
+is allowed in the GDAL_VRT_TRUSTED_MODULES configuration option. The value of
+this configuration option is a comma separated listed of trusted module names.
+The '*' wilcard can be used at the name of a string to match all strings beginning
+with the substring before the '*' character, ie 'every*' will make 'every.thing'
+or 'everything' module trusted.
+The ".*" wildcard can also be used to match exact modules or submodules names,
+ie 'every.*' will make 'every' and 'every.thing' modules trusted, but not
+'everything'.</li>
+</ul>
+
+\subsection gdal_vrttut_derived_python_interpreter Linking mechanism to a Python interpreter.
+
+Currently only CPython - 2.6, 2.7 and 3.x - is supported. The GDAL shared object
+is not explicitly linked at build time to any of the CPython library. When GDAL
+will need to run Python code, it will first determine if the Python interpreter
+is loaded in the current process (which is the case if the program is a Python
+interpreter itself, or if another program, e.g. QGIS, has already loaded the
+CPython library). Otherwise it will look if the PYTHONSO configuration option is
+defined. This option can be set to point to the name of the Python library to
+use, either as a shortname like "libpython2.7.so" if it is accessible through
+the Linux dynamic loader (so typically in one of the paths in /etc/ld.so.conf or
+LD_LIBRARY_PATH) or as a full path name like "/usr/lib/x86_64-linux-gnu/libpython2.7.so".
+The same holds on Windows will shortnames like "python27.dll" if accessible through
+the PATH or full path names like "c:\python27\python27.dll". If the PYTHONSO
+configuration option is not defined, then a predefined list of shared objects
+will be tried.
+
+\subsection gdal_vrttut_derived_python_jit Just-in-time compilation
+
+The use of a just-in-time compiler may significantly speed up execution times.
+<a href="http://numba.pydata.org/">Numba</a> has been successfully tested. For
+better performance, it is recommended to use a offline pixel function so that
+the just-in-time compiler may cache its compilation.
+
+Given the following mandelbrot.py file :
+
+\code
+# Trick for compatiblity with and without numba
+try:
+    from numba import jit
+    #print('Using numba')
+    g_max_iterations = 100
+except:
+    class jit(object):
+        def __init__(self, nopython = True, nogil = True):
+            pass
+
+        def __call__(self, f):
+            return f
+
+    #print('Using non-JIT version')
+    g_max_iterations = 25
+
+# Use a wrapper for the entry point regarding GDAL, since GDAL cannot access
+# the jit decorated function with the expected signature.
+def mandelbrot(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                        raster_ysize, r, gt, **kwargs):
+    mandelbrot_jit(out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, 
+g_max_iterations)
+
+# Will make sure that the code is compiled to pure native code without Python
+# fallback.
+@jit(nopython=True, nogil=True, cache=True)
+def mandelbrot_jit(out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                        raster_ysize, max_iterations):
+    ovr_factor_y = float(out_ar.shape[0]) / ysize
+    ovr_factor_x = float(out_ar.shape[1]) / xsize
+    for j in range( out_ar.shape[0]):
+        y0 = 2.0 * (yoff + j / ovr_factor_y) / raster_ysize - 1
+        for i in range(out_ar.shape[1]):
+            x0 = 3.5 * (xoff + i / ovr_factor_x) / raster_xsize - 2.5
+            x = 0.0
+            y = 0.0
+            x2 = 0.0
+            y2 = 0.0
+            iteration = 0
+            while x2 + y2 < 4 and iteration < max_iterations:
+                y = 2*x*y + y0
+                x = x2 - y2 + x0
+                x2 = x * x
+                y2 = y * y
+                iteration += 1
+
+            out_ar[j][i] = iteration * 255 / max_iterations
+\endcode
+
+the following VRT file can be used (to be opened with QGIS for example)
+
+\code
+
+<VRTDataset rasterXSize="100000000" rasterYSize="100000000">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionType>mandelbrot.mandelbrot</PixelFunctionType>
+    <Metadata>
+      <MDI key="STATISTICS_MAXIMUM">255</MDI>
+      <MDI key="STATISTICS_MEAN">127</MDI>
+      <MDI key="STATISTICS_MINIMUM">0</MDI>
+      <MDI key="STATISTICS_STDDEV">127</MDI>
+    </Metadata>
+    <ColorInterp>Gray</ColorInterp>
+    <Histograms>
+      <HistItem>
+        <HistMin>-0.5</HistMin>
+        <HistMax>255.5</HistMax>
+        <BucketCount>256</BucketCount>
+        <IncludeOutOfRange>0</IncludeOutOfRange>
+        <Approximate>1</Approximate>
+        <HistCounts>0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0</HistCounts>
+      </HistItem>
+    </Histograms>
+  </VRTRasterBand>
+</VRTDataset>
 \endcode
 
 \section gdal_vrttut_warped Warped VRT
