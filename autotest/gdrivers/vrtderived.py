@@ -690,6 +690,7 @@ def vrtderived_10():
 
     # GDAL_VRT_PYTHON_TRUSTED_MODULES matching our module
     for val in [ 'foo,vrtderived,bar',
+                  '*',
                  'foo,vrtderived*,bar',
                  'foo,vrtderived.*,bar',
                  'foo,vrtderi*,bar' ] :

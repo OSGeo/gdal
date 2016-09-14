@@ -1153,12 +1153,13 @@ not be run. VRT scripts that use a PixelFunctionType of the form
 "module_name.function_name" will be considered as trusted, only if "module_name"
 is allowed in the GDAL_VRT_TRUSTED_MODULES configuration option. The value of
 this configuration option is a comma separated listed of trusted module names.
-The '*' wilcard can be used at the name of a string to match all strings beginning
-with the substring before the '*' character, ie 'every*' will make 'every.thing'
-or 'everything' module trusted.
-The ".*" wildcard can also be used to match exact modules or submodules names,
-ie 'every.*' will make 'every' and 'every.thing' modules trusted, but not
-'everything'.</li>
+The '*' wildcard can be used at the name of a string to match all strings beginning
+with the substring before the '*' character. For example 'every*' will make
+'every.thing' or 'everything' module trusted. '*' can also be used to make all
+modules to be trusted.
+The ".*" wildcard can also be used to match exact modules or submodules names.
+For example 'every.*' will make 'every' and 'every.thing' modules trusted, but
+not 'everything'.</li>
 </ul>
 
 \subsection gdal_vrttut_derived_python_interpreter Linking mechanism to a Python interpreter.
