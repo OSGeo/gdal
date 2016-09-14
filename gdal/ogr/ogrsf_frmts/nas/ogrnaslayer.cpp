@@ -267,10 +267,10 @@ GIntBig OGRNASLayer::GetFeatureCount( int bForce )
 OGRErr OGRNASLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 
 {
-    double dfXMin;
-    double dfXMax;
-    double dfYMin;
-    double dfYMax;
+    double dfXMin = 0.0;
+    double dfXMax = 0.0;
+    double dfYMin = 0.0;
+    double dfYMax = 0.0;
 
     if( poFClass != NULL &&
         poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
@@ -295,13 +295,13 @@ int OGRNASLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCFastGetExtent) )
     {
-        double  dfXMin;
-        double  dfXMax;
-        double  dfYMin;
-        double  dfYMax;
-
         if( poFClass == NULL )
             return FALSE;
+
+        double dfXMin = 0.0;
+        double dfXMax = 0.0;
+        double dfYMin = 0.0;
+        double dfYMax = 0.0;
 
         return poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax );
     }
