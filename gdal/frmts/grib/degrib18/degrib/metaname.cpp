@@ -2583,7 +2583,7 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
          /* If NCEP/ARL (genID=6) then it is dust */
          if (genID == 6) {
             if (f_fstValue && f_sndValue) {
-               delt = fstSurfValue - sndSurfValue;
+               delt = static_cast<float>(fstSurfValue - sndSurfValue);
                if ((delt <= 100) && (delt >= -100)) {
                   *name = (char *) malloc (strlen ("dusts") + 1);
                   strcpy (*name, "dusts");
@@ -2606,7 +2606,7 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
             }
          } else {
             if (f_fstValue && f_sndValue) {
-               delt = fstSurfValue - sndSurfValue;
+               delt = static_cast<float>(fstSurfValue - sndSurfValue);
                if ((delt <= 100) && (delt >= -100)) {
                   *name = (char *) malloc (strlen ("smokes") + 1);
                   strcpy (*name, "smokes");
