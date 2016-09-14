@@ -331,7 +331,21 @@ static bool LoadPythonAPI()
         /* Avoid error boxes to pop up (#5211, #5525) */
         uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
                                      SEM_FAILCRITICALERRORS);
-        libHandle = LoadLibrary(pszPythonSO);
+
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+        if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+        {
+            wchar_t *pwszFilename =
+                CPLRecodeToWChar( pszPythonSO, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+            libHandle = LoadLibraryW(pwszFilename);
+            CPLFree( pwszFilename );
+        }
+        else
+#endif
+        {
+            libHandle = LoadLibrary(pszPythonSO);
+        }
+
         SetErrorMode(uOldErrorMode);
 
         if( libHandle == NULL )
