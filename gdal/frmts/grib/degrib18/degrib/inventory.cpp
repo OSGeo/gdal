@@ -486,10 +486,11 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        && (templat != GS4_PROBABIL_PNT) && (templat != GS4_STATISTIC)
        && (templat != GS4_PROBABIL_TIME) && (templat != GS4_PERCENTILE)
        && (templat != GS4_ENSEMBLE_STAT)
+       && (templat != GS4_STATISTIC_SPATIAL_AREA)
        && (templat != GS4_RADAR) && (templat != GS4_SATELLITE)
        && (templat != GS4_DERIVED_INTERVAL)) {
       errSprintf ("This was only designed for templates 0, 1, 2, 5, 8, 9, "
-                  "10, 11, 12, 20, 30\n");
+                  "10, 11, 12, 15, 20, 30. Template found = %d\n", templat);
       return -8;
    }
    cat = (*buffer)[10 - 5];
