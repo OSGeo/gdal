@@ -900,8 +900,12 @@ bool VRTDerivedRasterBand::InitializePython()
                 if( nIterModuleLen > 2 &&
                     strncmp(pszIterModule + nIterModuleLen - 2, ".*", 2) == 0 )
                 {
-                    bIsTrustedModule = (strncmp( osPythonModule, pszIterModule,
-                                                nIterModuleLen - 2 ) == 0);
+                    bIsTrustedModule =
+                        (strncmp( osPythonModule, pszIterModule,
+                                                  nIterModuleLen - 2 ) == 0) &&
+                        (osPythonModule.size() == nIterModuleLen - 2 ||
+                         (osPythonModule.size() >= nIterModuleLen &&
+                          osPythonModule[nIterModuleLen-1] == '.') );
                 }
                 else if( nIterModuleLen > 1 &&
                         pszIterModule[nIterModuleLen-1] == '*' )

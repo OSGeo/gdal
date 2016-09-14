@@ -671,50 +671,37 @@ def vrtderived_10():
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    # GDAL_VRT_PYTHON_TRUSTED_MODULES defined but not including our module
-    ds = gdal.Open(content)
-    gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', "foo")
-    with gdaltest.error_handler():
+    # GDAL_VRT_PYTHON_TRUSTED_MODULES *NOT* matching our module
+    for val in [ 'vrtderive',
+                 'vrtderivedX',
+                 'vrtderivedX*',
+                 'vrtderive.*'
+                 'vrtderivedX.*' ] :
+        ds = gdal.Open(content)
+        gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val )
+        with gdaltest.error_handler():
+            cs = ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', None)
+        if cs != 0:
+            gdaltest.post_reason( 'invalid checksum' )
+            print(cs)
+            print(gdal.GetLastErrorMsg())
+            return 'fail'
+
+    # GDAL_VRT_PYTHON_TRUSTED_MODULES matching our module
+    for val in [ 'foo,vrtderived,bar',
+                 'foo,vrtderived*,bar',
+                 'foo,vrtderived.*,bar',
+                 'foo,vrtderi*,bar' ] :
+        ds = gdal.Open(content)
+        gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', val )
         cs = ds.GetRasterBand(1).Checksum()
-    gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', None)
-    if cs != 0:
-        gdaltest.post_reason( 'invalid checksum' )
-        print(cs)
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-
-    # GDAL_VRT_PYTHON_TRUSTED_MODULES defined and including our module
-    ds = gdal.Open(content)
-    gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', "foo,vrtderived,bar")
-    cs = ds.GetRasterBand(1).Checksum()
-    gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', None)
-    if cs != 100:
-        gdaltest.post_reason( 'invalid checksum' )
-        print(cs)
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-
-    # GDAL_VRT_PYTHON_TRUSTED_MODULES defined and including our module with .*
-    ds = gdal.Open(content)
-    gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', "foo,vrtderived.*,bar")
-    cs = ds.GetRasterBand(1).Checksum()
-    gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', None)
-    if cs != 100:
-        gdaltest.post_reason( 'invalid checksum' )
-        print(cs)
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-
-    # GDAL_VRT_PYTHON_TRUSTED_MODULES defined and including our module with *
-    ds = gdal.Open(content)
-    gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', "foo,vrtderi*,bar")
-    cs = ds.GetRasterBand(1).Checksum()
-    gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', None)
-    if cs != 100:
-        gdaltest.post_reason( 'invalid checksum' )
-        print(cs)
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
+        gdal.SetConfigOption('GDAL_VRT_PYTHON_TRUSTED_MODULES', None)
+        if cs != 100:
+            gdaltest.post_reason( 'invalid checksum' )
+            print(cs)
+            print(gdal.GetLastErrorMsg())
+            return 'fail'
 
     return 'success'
 
