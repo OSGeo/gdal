@@ -205,8 +205,6 @@ OGRFeature *OGROSMLayer::GetNextFeature()
     {
         if ( poDS->IsInterleavedReading() )
         {
-            int i;
-
             OGRLayer* poCurrentLayer = poDS->GetCurrentLayer();
             if ( poCurrentLayer == NULL )
             {
@@ -220,7 +218,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
             /* If too many features have been accumulated in */
             /* another layer, we force */
             /* a switch to that layer, so that it gets emptied */
-            for(i=0;i<poDS->GetLayerCount();i++)
+            for( int i = 0; i < poDS->GetLayerCount(); i++ )
             {
                 if (poDS->papoLayers[i] != this &&
                     poDS->papoLayers[i]->nFeatureArraySize > SWITCH_THRESHOLD)
@@ -242,7 +240,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
                 /* If there are really no more features to read in the */
                 /* current layer, force a switch to another non-empty layer */
 
-                for(i=0;i<poDS->GetLayerCount();i++)
+                for( int i = 0; i < poDS->GetLayerCount(); i++ )
                 {
                     if (poDS->papoLayers[i] != this &&
                         poDS->papoLayers[i]->nFeatureArraySize > 0)
@@ -793,12 +791,16 @@ void OGROSMLayer::AddComputedAttribute(const char* pszName,
 {
     if( poDS->hDBForComputedAttributes == NULL )
     {
-        int rc;
 #ifdef HAVE_SQLITE_VFS
-        rc = sqlite3_open_v2( ":memory:", &(poDS->hDBForComputedAttributes),
-                              SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, NULL );
+        const int rc =
+            sqlite3_open_v2(
+                ":memory:", &(poDS->hDBForComputedAttributes),
+                SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+                SQLITE_OPEN_NOMUTEX,
+                NULL );
 #else
-        rc = sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes) );
+        const int rc =
+            sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes) );
 #endif
         if( rc != SQLITE_OK )
         {
