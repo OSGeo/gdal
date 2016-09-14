@@ -602,6 +602,9 @@ typedef struct
     double cos_azRadians_mul_cos_altRadians_mul_z_scale_factor;
     double sin_azRadians_mul_cos_altRadians_mul_z_scale_factor;
     double square_z_scale_factor;
+    double sin_altRadians_mul_254;
+    double cos_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254;
+    double sin_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254;
 } GDALHillshadeAlgData;
 
 /* Unoptimized formulas are :
@@ -682,15 +685,16 @@ float GDALHillshadeAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
     xx_plus_yy = x * x + y * y;
 
     // ... then the shade value
-    double cang = ApproxADivByInvSqrtB(psData->sin_altRadians -
-           (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor),
+    double cang_mul_254 = ApproxADivByInvSqrtB(psData->sin_altRadians_mul_254 -
+           (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254 -
+            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254),
            1 + psData->square_z_scale_factor * xx_plus_yy);
 
-    if (cang <= 0.0)
+    double cang;
+    if (cang_mul_254 <= 0.0)
         cang = 1.0;
     else
-        cang = 1.0 + (254.0 * cang);
+        cang = 1.0 + cang_mul_254;
 
     return static_cast<float>(cang);
 }
@@ -816,6 +820,14 @@ void*  GDALCreateHillshadeData(double* adfGeoTransform,
     pData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor =
         sin(pData->azRadians) * pData->cos_altRadians_mul_z_scale_factor;
     pData->square_z_scale_factor = z_scale_factor * z_scale_factor;
+
+    pData->sin_altRadians_mul_254 = 254.0 *
+                                    pData->sin_altRadians;
+    pData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254 = 254.0 *
+        pData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor;
+    pData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254 = 254.0 *
+        pData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor;
+
     return pData;
 }
 
