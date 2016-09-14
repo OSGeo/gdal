@@ -1858,7 +1858,7 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
    } else {
       fstSurfType = meta->pds2.sect4.fstSurfType;
       scale = meta->pds2.sect4.fstSurfScale;
-      value = meta->pds2.sect4.fstSurfValue;
+      value = static_cast<int>(meta->pds2.sect4.fstSurfValue);
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
           (fstSurfType == GRIB2MISSING_u1)) {
          fstSurfValue = 0;
@@ -1869,7 +1869,7 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
       }
       sndSurfType = meta->pds2.sect4.sndSurfType;
       scale = meta->pds2.sect4.sndSurfScale;
-      value = meta->pds2.sect4.sndSurfValue;
+      value = static_cast<int>(meta->pds2.sect4.sndSurfValue);
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
           (sndSurfType == GRIB2MISSING_u1)) {
          sndSurfValue = 0;
