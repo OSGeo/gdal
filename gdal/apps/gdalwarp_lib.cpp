@@ -1998,18 +1998,24 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     if( psOptions->bEnableDstAlpha )
         nDstBandCount++;
 
+    if( EQUAL(pszFormat, "GTiff") )
+    {
+
 /* -------------------------------------------------------------------- */
 /*      Automatically set PHOTOMETRIC=RGB for GTiff when appropriate    */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszFormat, "GTiff") &&
-        apeColorInterpretations.size() >= 3 &&
-        apeColorInterpretations[0] == GCI_RedBand &&
-        apeColorInterpretations[1] == GCI_GreenBand &&
-        apeColorInterpretations[2] == GCI_BlueBand &&
-        CSLFetchNameValue( *ppapszCreateOptions, "PHOTOMETRIC" ) == NULL )
-    {
-        *ppapszCreateOptions = CSLSetNameValue(*ppapszCreateOptions,
-                                               "PHOTOMETRIC", "RGB");
+        if ( apeColorInterpretations.size() >= 3 &&
+            apeColorInterpretations[0] == GCI_RedBand &&
+            apeColorInterpretations[1] == GCI_GreenBand &&
+            apeColorInterpretations[2] == GCI_BlueBand &&
+            CSLFetchNameValue( *ppapszCreateOptions, "PHOTOMETRIC" ) == NULL )
+        {
+            *ppapszCreateOptions = CSLSetNameValue(*ppapszCreateOptions,
+                                                "PHOTOMETRIC", "RGB");
+        }
+
+        /* The GTiff driver now supports writing band color interpretation */
+        /* in the TIFF_GDAL_METADATA tag */
         bSetColorInterpretation = true;
     }
 

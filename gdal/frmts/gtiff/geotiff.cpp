@@ -272,7 +272,6 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     bool        bTreatAsRGBA;
     bool        bCrystalized;
-    bool        bCheckIfColorInterpMustGoToPamAtCrystalization;
 
     void        Crystalize();  // TODO: Spelling.
 
@@ -4802,7 +4801,6 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                 CPLFree(pasNewExtraSamples);
             }
         }
-        poGDS->bCheckIfColorInterpMustGoToPamAtCrystalization = true;
         return CE_None;
     }
 
@@ -4848,8 +4846,6 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                 CPLFree(pasNewExtraSamples);
             }
         }
-
-        poGDS->bCheckIfColorInterpMustGoToPamAtCrystalization = true;
     }
 
     // Mark alpha band in extrasamples.
@@ -4920,7 +4916,6 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         TIFFSetField(poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, poGDS->nPhotometric);
     }
 
-    poGDS->bCheckIfColorInterpMustGoToPamAtCrystalization = true;
     return CE_None;
 }
 
@@ -6752,7 +6747,6 @@ GTiffDataset::GTiffDataset() :
     bGeoTransformValid(false),
     bTreatAsRGBA(false),
     bCrystalized(true),
-    bCheckIfColorInterpMustGoToPamAtCrystalization(false),
     poColorTable(NULL),
     nOverviewCount(0),
     papoOverviewDS(NULL),
@@ -8526,57 +8520,6 @@ void GTiffDataset::Crystalize()
 {
     if( bCrystalized )
         return;
-
-    if( bCheckIfColorInterpMustGoToPamAtCrystalization )
-    {
-        bool bColorInterpToPam = false;
-        if( nPhotometric == PHOTOMETRIC_MINISBLACK )
-        {
-            for( int i = 0; i < nBands; ++i )
-            {
-                GDALColorInterp eInterp =
-                    GetRasterBand(i+1)->GetColorInterpretation();
-                if( !(eInterp == GCI_GrayIndex || eInterp == GCI_Undefined ||
-                      (i > 0 && eInterp == GCI_AlphaBand)) )
-                {
-                    bColorInterpToPam = true;
-                    break;
-                }
-            }
-        }
-        else if( nPhotometric == PHOTOMETRIC_RGB )
-        {
-            for( int i = 0; i < nBands; ++i )
-            {
-                GDALColorInterp eInterp =
-                    GetRasterBand(i+1)->GetColorInterpretation();
-                if( !((i == 0 && eInterp == GCI_RedBand) ||
-                      (i == 1 && eInterp == GCI_GreenBand) ||
-                      (i == 2 && eInterp == GCI_BlueBand) ||
-                      (i >= 3 && (eInterp == GCI_Undefined ||
-                                  eInterp == GCI_AlphaBand))) )
-                {
-                    bColorInterpToPam = true;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            bColorInterpToPam = true;
-        }
-        if( bColorInterpToPam )
-        {
-            CPLDebug("GTiff", "Color interpretations have to go to PAM");
-            for( int i = 0; i < nBands; ++i )
-            {
-                static_cast<GDALPamRasterBand*>(GetRasterBand(i+1))->
-                    GDALPamRasterBand::SetColorInterpretation(
-                        GetRasterBand(i+1)->GetColorInterpretation() );
-            }
-        }
-        bCheckIfColorInterpMustGoToPamAtCrystalization = false;
-    }
 
     // TODO: libtiff writes extended tags in the order they are specified
     // and not in increasing order.
@@ -10371,6 +10314,52 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 }
 
 /************************************************************************/
+/*                  IsStandardColorInterpretation()                     */
+/************************************************************************/
+
+static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
+                                          uint nPhotometric)
+{
+    bool bStardardColorInterp = true;
+    if( nPhotometric == PHOTOMETRIC_MINISBLACK )
+    {
+        for( int i = 0; i < poSrcDS->GetRasterCount(); ++i )
+        {
+            GDALColorInterp eInterp =
+                poSrcDS->GetRasterBand(i+1)->GetColorInterpretation();
+            if( !(eInterp == GCI_GrayIndex || eInterp == GCI_Undefined ||
+                    (i > 0 && eInterp == GCI_AlphaBand)) )
+            {
+                bStardardColorInterp = false;
+                break;
+            }
+        }
+    }
+    else if( nPhotometric == PHOTOMETRIC_RGB )
+    {
+        for( int i = 0; i < poSrcDS->GetRasterCount(); ++i )
+        {
+            GDALColorInterp eInterp =
+                poSrcDS->GetRasterBand(i+1)->GetColorInterpretation();
+            if( !((i == 0 && eInterp == GCI_RedBand) ||
+                    (i == 1 && eInterp == GCI_GreenBand) ||
+                    (i == 2 && eInterp == GCI_BlueBand) ||
+                    (i >= 3 && (eInterp == GCI_Undefined ||
+                                eInterp == GCI_AlphaBand))) )
+            {
+                bStardardColorInterp = false;
+                break;
+            }
+        }
+    }
+    else
+    {
+        bStardardColorInterp = false;
+    }
+    return bStardardColorInterp;
+}
+
+/************************************************************************/
 /*                           WriteMetadata()                            */
 /************************************************************************/
 
@@ -10422,6 +10411,15 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
             GDALWriteIMDFile( pszTIFFFilename, papszIMDMD );
         }
     }
+
+
+    uint16 nPhotometric;
+    if( !TIFFGetField( l_hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
+        nPhotometric = PHOTOMETRIC_MINISBLACK;
+
+    const bool bStardardColorInterp = IsStandardColorInterpretation(poSrcDS,
+                                                                    nPhotometric);
+
 /* -------------------------------------------------------------------- */
 /*      We also need to address band specific metadata, and special     */
 /*      "role" metadata.                                                */
@@ -10478,6 +10476,15 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
             AppendMetadataItem( &psRoot, &psTail, "DESCRIPTION",
                                 poBand->GetDescription(), nBand,
                                 "description", "" );
+        }
+
+        if( !bStardardColorInterp )
+        {
+            AppendMetadataItem( &psRoot, &psTail, "COLORINTERP",
+                                GDALGetColorInterpretationName(
+                                    poBand->GetColorInterpretation()),
+                                nBand,
+                                "colorinterp", "" );
         }
     }
 
@@ -10569,6 +10576,9 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 void GTiffDataset::PushMetadataToPam()
 
 {
+    const bool bStardardColorInterp = IsStandardColorInterpretation(this,
+                                                                    nPhotometric);
+
     for( int nBand = 0; nBand <= GetRasterCount(); ++nBand )
     {
         GDALMultiDomainMetadata *poSrcMDMD = NULL;
@@ -10631,6 +10641,11 @@ void GTiffDataset::PushMetadataToPam()
             poBand->GDALPamRasterBand::SetUnitType( poBand->GetUnitType() );
             poBand->
                 GDALPamRasterBand::SetDescription( poBand->GetDescription() );
+            if( !bStardardColorInterp )
+            {
+                poBand->GDALPamRasterBand::SetColorInterpretation(
+                                        poBand->GetColorInterpretation() );
+            }
         }
     }
     MarkPamDirty();
@@ -13092,6 +13107,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                     else if( EQUAL(pszRole,"description") )
                     {
                         poBand->osDescription = pszUnescapedValue;
+                    }
+                    else if( EQUAL(pszRole, "colorinterp") )
+                    {
+                        poBand->eBandInterp =
+                            GDALGetColorInterpretationByName(pszUnescapedValue);
                     }
                     else
                     {
@@ -16663,6 +16683,16 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
              pszName != NULL && EQUAL(pszName, "TIFFTAG_PHOTOMETRIC") )
     {
         return CPLSPrintf("%d", nPhotometric);
+    }
+
+    else if( pszDomain != NULL && EQUAL(pszDomain, "_DEBUG_") &&
+             pszName != NULL && EQUAL( pszName, "TIFFTAG_GDAL_METADATA") )
+    {
+        char* pszText = NULL;
+        if( !TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
+            return NULL;
+
+        return CPLSPrintf("%s", pszText);
     }
 
     return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
