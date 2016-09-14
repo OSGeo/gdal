@@ -212,6 +212,30 @@ def grib_8():
         return 'fail'
     return 'success'
 
+###############################################################################
+# Test support for template 4.15 (#5768)
+
+def grib_9():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' data/template4_15.grib -checksum')
+    if ret.find('Checksum=12154') < 0:
+        gdaltest.post_reason('Wrong checksum')
+        print(ret)
+        return 'fail'
+
+    #ds = gdal.Open('data/template4_15.grib')
+    #if ds is None:
+    #    return 'fail'
+
+    return 'success' 
+
 gdaltest_list = [
     grib_1,
     grib_2,
@@ -220,7 +244,8 @@ gdaltest_list = [
     grib_5,
     grib_6,
     grib_7,
-    grib_8
+    grib_8,
+    grib_9
     ]
 
 if __name__ == '__main__':

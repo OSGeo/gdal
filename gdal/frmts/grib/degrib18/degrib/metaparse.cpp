@@ -1166,7 +1166,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
        (is4[7] != GS4_DERIVED) && (is4[7] != GS4_PROBABIL_PNT) &&
        (is4[7] != GS4_STATISTIC) && (is4[7] != GS4_PROBABIL_TIME) &&
        (is4[7] != GS4_PERCENTILE) && (is4[7] != GS4_ENSEMBLE_STAT) &&
-       (is4[7] != GS4_SATELLITE) && (is4[7] != GS4_DERIVED_INTERVAL)) {
+       (is4[7] != GS4_SATELLITE) && (is4[7] != GS4_DERIVED_INTERVAL) &&
+       (is4[7] != GS4_STATISTIC_SPATIAL_AREA)) {
 #ifdef DEBUG
       printf ("Un-supported Template. %d\n", is4[7]);
 #endif
@@ -1564,6 +1565,12 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             meta->pds2.sect4.Interval[i].timeIncr = (uChar) is4[67 + i * 12];
          }
          break;
+      case GS4_STATISTIC_SPATIAL_AREA: /* 4.15 */
+            // TODO. Need to fetch
+            // 35 Statistical process used within the spatial area defined by octet 36 (see Code Table 4.10)
+            // 36 Type of spatial processing used to arrive at given data value from source data (see Code Table 4.15)
+            // 37 Number of data points used in spatial processing defined in octet 36
+            break;
       default:
          errSprintf ("Un-supported Template. %ld\n", is4[7]);
          return -4;
