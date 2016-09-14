@@ -907,7 +907,7 @@ bool VRTDerivedRasterBand::InitializePython()
                          (osPythonModule.size() >= nIterModuleLen &&
                           osPythonModule[nIterModuleLen-1] == '.') );
                 }
-                else if( nIterModuleLen > 1 &&
+                else if( nIterModuleLen >= 1 &&
                         pszIterModule[nIterModuleLen-1] == '*' )
                 {
                     bIsTrustedModule = (strncmp( osPythonModule, pszIterModule,
