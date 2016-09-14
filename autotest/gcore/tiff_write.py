@@ -4876,6 +4876,9 @@ def tiff_write_123():
         gdaltest.post_reason('did not expect PAM file')
         return 'fail'
     src_ds = gdal.Open('/vsimem/tiff_write_123_src.tif')
+    if src_ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_' ) is not None:
+        gdaltest.post_reason('did not expect a TIFFTAG_GDAL_METADATA tag')
+        return 'fail'
     if src_ds.GetMetadataItem('TIFFTAG_PHOTOMETRIC', '_DEBUG_') != '2':
         gdaltest.post_reason('fail')
         print(src_ds.GetMetadataItem('TIFFTAG_PHOTOMETRIC', '_DEBUG_'))
@@ -4901,6 +4904,9 @@ def tiff_write_123():
         gdaltest.post_reason('did not expect PAM file')
         return 'fail'
     ds = gdal.Open('/vsimem/tiff_write_123.tif')
+    if ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_' ) is not None:
+        gdaltest.post_reason('did not expect a TIFFTAG_GDAL_METADATA tag')
+        return 'fail'
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4919,7 +4925,7 @@ def tiff_write_123():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123.tif')
 
-    # From implicit RGB to MINISBLACK
+    # From implicit RGB to BGR (with Photometric = MinIsBlack)
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_bgr.tif', 1,1,3,gdal.GDT_Byte)
     if ds.GetMetadataItem('TIFFTAG_PHOTOMETRIC', '_DEBUG_') != '2':
         gdaltest.post_reason('fail')
@@ -4935,6 +4941,13 @@ def tiff_write_123():
         return 'fail'
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
     ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_RedBand)
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_bgr.tif.aux.xml',
+        gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect a PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif')
     if ds.GetMetadataItem('TIFFTAG_PHOTOMETRIC', '_DEBUG_') != '1':
         gdaltest.post_reason('fail')
         print(ds.GetMetadataItem('TIFFTAG_PHOTOMETRIC', '_DEBUG_'))
@@ -4943,13 +4956,65 @@ def tiff_write_123():
         gdaltest.post_reason('fail')
         print(ds.GetMetadataItem('TIFFTAG_EXTRASAMPLES', '_DEBUG_'))
         return 'fail'
+    if ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_' ) is None:
+        gdaltest.post_reason('expected a TIFFTAG_GDAL_METADATA tag')
+        return 'fail'
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
     ds = None
-    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_bgr.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+
+    # Test overriding internal color interpretation with PAM one
+    ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif', gdal.GA_Update)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_bgr.tif.aux.xml',
+        gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     if statBuf is None:
-        gdaltest.post_reason('expected PAM file')
+        gdaltest.post_reason('expected a PAM file')
         return 'fail'
     ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_bgr.tif')
+
+    # Create a BGR with PROFILE=BASELINE --> no TIFFTAG_GDAL_METADATA tag, but .aux.xml instead
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_bgr.tif', 1,1,3,
+                                            options = ['PROFILE=BASELINE'])
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_BlueBand)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_RedBand)
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_bgr.tif.aux.xml',
+        gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is None:
+        gdaltest.post_reason('expected a PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif')
+    if ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_' ) is not None:
+        gdaltest.post_reason('did not expect a TIFFTAG_GDAL_METADATA tag')
+        return 'fail'
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_RedBand:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
@@ -5001,6 +5066,9 @@ def tiff_write_123():
         gdaltest.post_reason('did not expect PAM file')
         return 'fail'
     ds = gdal.Open('/vsimem/tiff_write_123_guua.tif')
+    if ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_' ) is not None:
+        gdaltest.post_reason('did not expect TIFFTAG_GDAL_METADATA tag')
+        return 'fail'
     if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -5420,7 +5488,7 @@ def tiff_write_128():
     # Try with more neutral colorspace in the case the source JPEG is not really CMYK (yes that happens !)
     old_val = gdal.GetConfigOption('GDAL_PAM_ENABLED')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=MINISBLACK' ] )
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_128.tif', src_ds, options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=MINISBLACK', 'PROFILE=BASELINE' ] )
     ds = None
     gdal.SetConfigOption('GDAL_PAM_ENABLED', old_val)
 
@@ -7325,7 +7393,7 @@ gdaltest_list = [
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_157 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_123, tiff_write_128 ]
 
 if __name__ == '__main__':
 

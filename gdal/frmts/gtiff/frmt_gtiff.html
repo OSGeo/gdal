@@ -239,12 +239,13 @@ The default is FALSE.</p></li>
 
 <p>GeoTIFF files can be created with any GDAL defined band type, including
 the complex types.  Created files may have any number of bands.  Files
-with exactly 3 bands will be
-given a photometric interpretation of RGB, files with exactly four bands
+of type Byte with exactly 3 bands will be given a photometric interpretation
+of RGB, files of type Byte with exactly four bands
 will have a photometric interpretation of RGBA, while all other combinations
-will have a photometric interpretation of MIN_IS_WHITE.  Files with
-pseudo-color tables, or GCPs can currently only be created when creating from
-an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).</p>
+will have a photometric interpretation of MIN_IS_BLACK. Starting with GDAL 2.2,
+non-standard (regarding to the intrinsics TIFF capabilities) band color
+interpretation, such as BGR ordering, will be handled in creation and reading,
+by storing them in the GDAL internal metadata TIFF tag.</p>
 
 <p>Note that the GeoTIFF format does not support parametric description of datums,
 so TOWGS84 parameters in coordinate systems are lost in GeoTIFF format.</p>
