@@ -10318,7 +10318,7 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 /************************************************************************/
 
 static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
-                                          uint nPhotometric)
+                                          uint16 nPhotometric)
 {
     bool bStardardColorInterp = true;
     if( nPhotometric == PHOTOMETRIC_MINISBLACK )
