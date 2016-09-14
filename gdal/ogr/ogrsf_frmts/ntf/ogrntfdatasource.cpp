@@ -212,10 +212,9 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
     }
     else
     {
-        char      **candidateFileList = VSIReadDir( pszFilename );
-        int         i;
+        char **candidateFileList = VSIReadDir( pszFilename );
 
-        for( i = 0;
+        for( int i = 0;
              candidateFileList != NULL && candidateFileList[i] != NULL;
              i++ )
         {
@@ -229,7 +228,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
             if( strlen(candidateFileList[i]) > 4
               && STARTS_WITH_CI(candidateFileList[i] + strlen(candidateFileList[i])-4, ".ntf") )
             {
-                char       fullFilename[2048];
+                char fullFilename[2048];
 
                 snprintf( fullFilename, sizeof(fullFilename), "%s%c%s",
                          pszFilename,
@@ -334,16 +333,17 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
     for( int iSrcFile = 0; iSrcFile < nNTFFileCount; iSrcFile++ )
     {
-        NTFFileReader   *poSrcReader = papoNTFFileReader[iSrcFile];
+        NTFFileReader *poSrcReader = papoNTFFileReader[iSrcFile];
 
         for( int iSrcFC = 0; iSrcFC < poSrcReader->GetFCCount(); iSrcFC++ )
         {
-            int         iDstFC;
-            char       *pszSrcFCName, *pszSrcFCNum;
+            char *pszSrcFCName = NULL;
+            char *pszSrcFCNum = NULL;
 
             poSrcReader->GetFeatureClass( iSrcFC, &pszSrcFCNum, &pszSrcFCName);
 
-            for( iDstFC = 0; iDstFC < nFCCount; iDstFC++ )
+            int iDstFC = 0;
+            for( ; iDstFC < nFCCount; iDstFC++ )
             {
                 if( EQUAL(pszSrcFCNum,papszFCNum[iDstFC]) )
                     break;
@@ -516,11 +516,10 @@ const char *OGRNTFDataSource::GetOption( const char * pszOption )
 void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
 
 {
-    int       iSequenceNumber = -1;
-    int       bIsUnique;
-    char      szCandidateName[11];
+    int iSequenceNumber = -1;
+    bool bIsUnique = false;
+    char szCandidateName[11] = {};
 
-    szCandidateName[10] = '\0';
     do
     {
         bIsUnique = TRUE;
@@ -545,5 +544,4 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
                   "to avoid conflict with other tiles in this data source.",
                   szCandidateName, poNewReader->GetFilename() );
     }
-
 }

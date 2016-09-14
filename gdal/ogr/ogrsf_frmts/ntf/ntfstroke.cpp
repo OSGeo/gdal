@@ -110,12 +110,10 @@ int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
 /*      Compute the intersection of the two lines through the center    */
 /*      of the circle, using Kramers rule.                              */
 /* -------------------------------------------------------------------- */
-    double      det_inv;
-
     if( a1*b2 - a2*b1 == 0.0 )
         return FALSE;
 
-    det_inv = 1 / (a1*b2 - a2*b1);
+    const double det_inv = 1 / (a1*b2 - a2*b1);
 
     *x_center = (b1*c2 - b2*c1) * det_inv;
     *y_center = (a2*c1 - a1*c2) * det_inv;
@@ -165,9 +163,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 #ifdef notdef
         if( dfStartAngle > dfAlongAngle && dfAlongAngle > dfEndAngle )
         {
-            double dfTempAngle;
-
-            dfTempAngle = dfStartAngle;
+            const double dfTempAngle = dfStartAngle;
             dfStartAngle = dfEndAngle;
             dfEndAngle = dfTempAngle;
         }
@@ -181,9 +177,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
         if( dfEndAngle - dfStartAngle > 360.0 )
         {
-            double dfTempAngle;
-
-            dfTempAngle = dfStartAngle;
+            const double dfTempAngle = dfStartAngle;
             dfStartAngle = dfEndAngle;
             dfEndAngle = dfTempAngle;
 
@@ -212,21 +206,19 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
                                   int nVertexCount )
 
 {
-    OGRLineString      *poLine = new OGRLineString;
-    double             dfArcX, dfArcY, dfSlice;
-    int                iPoint;
+    OGRLineString *poLine = new OGRLineString;
 
-    nVertexCount = MAX(2,nVertexCount);
-    dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+    nVertexCount = MAX(2, nVertexCount);
+    const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
     poLine->setNumPoints( nVertexCount );
 
-    for( iPoint=0; iPoint < nVertexCount; iPoint++ )
+    for( int iPoint = 0; iPoint < nVertexCount; iPoint++ )
     {
         double dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;
 
-        dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
-        dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
+        const double dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
+        const double dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
 
         poLine->setPoint( iPoint, dfArcX, dfArcY );
     }
