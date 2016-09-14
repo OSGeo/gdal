@@ -45,7 +45,8 @@ CPL_CVSID("$Id$");
 // #define PYTHONSO_DEFAULT "libpython2.7.so"
 
 #ifndef GDAL_VRT_ENABLE_PYTHON_DEFAULT
-#define GDAL_VRT_ENABLE_PYTHON_DEFAULT "NO"
+// Can be YES, NO or TRUSTED_MODULES
+#define GDAL_VRT_ENABLE_PYTHON_DEFAULT "TRUSTED_MODULES"
 #endif
 
 static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
@@ -858,23 +859,123 @@ bool VRTDerivedRasterBand::InitializePython()
     m_poPrivate->m_bPythonInitializationDone = true;
     m_poPrivate->m_bPythonInitializationSuccess = false;
 
+    const CPLString osPythonFullname( pszFuncName ? pszFuncName : "" );
+    const size_t nIdxDot = osPythonFullname.rfind(".");
+    CPLString osPythonModule;
+    CPLString osPythonFunction;
+    if( nIdxDot != std::string::npos )
+    {
+        osPythonModule = osPythonFullname.substr(0, nIdxDot);
+        osPythonFunction = osPythonFullname.substr(nIdxDot+1);
+    }
+    else
+    {
+        osPythonFunction = osPythonFullname;
+    }
+
 #ifndef GDAL_VRT_DISABLE_PYTHON
     const char* pszPythonEnabled =
                             CPLGetConfigOption("GDAL_VRT_ENABLE_PYTHON", NULL);
 #else
     const char* pszPythonEnabled = "NO";
 #endif
-    CPLString osPythonFunction( pszFuncName ? pszFuncName : "" );
+    const CPLString osPythonEnabled(pszPythonEnabled ? pszPythonEnabled :
+                                            GDAL_VRT_ENABLE_PYTHON_DEFAULT);
+
+    if( EQUAL(osPythonEnabled, "TRUSTED_MODULES") )
+    {
+        bool bIsTrustedModule = false;
+        const CPLString osVRTTrustedModules(
+                    CPLGetConfigOption( "GDAL_VRT_PYTHON_TRUSTED_MODULES", "") );
+        if( !osPythonModule.empty() )
+        {
+            char** papszTrustedModules = CSLTokenizeString2(
+                                                osVRTTrustedModules, ",", 0 );
+            for( char** papszIter = papszTrustedModules;
+                !bIsTrustedModule && papszIter && *papszIter;
+                ++papszIter )
+            {
+                const char* pszIterModule = *papszIter;
+                size_t nIterModuleLen = strlen(pszIterModule);
+                if( nIterModuleLen > 2 &&
+                    strncmp(pszIterModule + nIterModuleLen - 2, ".*", 2) == 0 )
+                {
+                    bIsTrustedModule = (strncmp( osPythonModule, pszIterModule,
+                                                nIterModuleLen - 2 ) == 0);
+                }
+                else if( nIterModuleLen > 1 &&
+                        pszIterModule[nIterModuleLen-1] == '*' )
+                {
+                    bIsTrustedModule = (strncmp( osPythonModule, pszIterModule,
+                                                nIterModuleLen - 1 ) == 0);
+                }
+                else
+                {
+                    bIsTrustedModule =
+                                (strcmp(osPythonModule, pszIterModule) == 0);
+                }
+            }
+            CSLDestroy(papszTrustedModules);
+        }
+
+        if( !bIsTrustedModule )
+        {
+            if( osPythonModule.empty() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Python code needs to be executed, but it uses online code "
+                         "in the VRT whereas the current policy is to trust only "
+                         "code from external trusted modules (defined in the "
+                         "GDAL_VRT_PYTHON_TRUSTED_MODULES configuration option). "
+                         "If you trust the code in %s, you can set the "
+                         "GDAL_VRT_ENABLE_PYTHON configuration option to YES.",
+                         GetDataset() ? GetDataset()->GetDescription() :
+                                    "(unknown VRT)");
+            }
+            else if( osVRTTrustedModules.empty() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Python code needs to be executed, but it uses code "
+                         "from module '%s', whereas the current policy is to "
+                         "trust only code from modules defined in the "
+                         "GDAL_VRT_PYTHON_TRUSTED_MODULES configuration option, "
+                         "which is currently unset. "
+                         "If you trust the code in '%s', you can add module '%s' "
+                         "to GDAL_VRT_PYTHON_TRUSTED_MODULES (or set the "
+                         "GDAL_VRT_ENABLE_PYTHON configuration option to YES).",
+                         osPythonModule.c_str(),
+                         GetDataset() ? GetDataset()->GetDescription() :
+                                    "(unknown VRT)",
+                         osPythonModule.c_str());
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Python code needs to be executed, but it uses code "
+                         "from module '%s', whereas the current policy is to "
+                         "trust only code from modules '%s' (defined in the "
+                         "GDAL_VRT_PYTHON_TRUSTED_MODULES configuration option). "
+                         "If you trust the code in '%s', you can add module '%s' "
+                         "to GDAL_VRT_PYTHON_TRUSTED_MODULES (or set the "
+                         "GDAL_VRT_ENABLE_PYTHON configuration option to YES).",
+                         osPythonModule.c_str(),
+                         osVRTTrustedModules.c_str(),
+                         GetDataset() ? GetDataset()->GetDescription() :
+                                    "(unknown VRT)",
+                         osPythonModule.c_str());
+            }
+            return false;
+        }
+    }
 
 #ifdef disabled_because_this_is_probably_broken_by_design
     // See https://lwn.net/Articles/574215/
     // and http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-    if( EQUAL(pszPythonEnabled ? pszPythonEnabled :
-                                GDAL_VRT_ENABLE_PYTHON_DEFAULT, "IF_SAFE") )
+    else if( EQUAL(osPythonEnabled, "IF_SAFE") )
     {
         bool bSafe = true;
         // If the function comes from another module, then we don't know
-        if( osPythonFunction.find('.') != std::string::npos )
+        if( !osPythonModule.empty() )
         {
             CPLDebug("VRT", "Python function is from another module");
             bSafe = false;
@@ -942,15 +1043,16 @@ bool VRTDerivedRasterBand::InitializePython()
             return false;
         }
     }
-    else
 #endif //disabled_because_this_is_probably_broken_by_design
 
-
-    if( !CPLTestBool(pszPythonEnabled ? pszPythonEnabled :
-                                            GDAL_VRT_ENABLE_PYTHON_DEFAULT) )
+    else if( !EQUAL(osPythonEnabled, "YES") &&
+             !EQUAL(osPythonEnabled, "ON") &&
+             !EQUAL(osPythonEnabled, "TRUE") )
     {
         if( pszPythonEnabled == NULL )
         {
+            // Note: this is dead code with our current default policy
+            // GDAL_VRT_ENABLE_PYTHON == "TRUSTED_MODULES"
             CPLError(CE_Failure, CPLE_AppDefined,
                  "Python code needs to be executed, but this is "
                  "disabled by default. If you trust the code in %s, "
@@ -1034,11 +1136,9 @@ bool VRTDerivedRasterBand::InitializePython()
     }
 
     // Fetch user computation function
-    size_t nIdxDot = osPythonFunction.rfind(".");
-    if( nIdxDot != std::string::npos )
+    if( !osPythonModule.empty() )
     {
-        CPLString osUserModule = osPythonFunction.substr(0, nIdxDot);
-        PyObject* poUserModule = PyImport_ImportModule(osUserModule);
+        PyObject* poUserModule = PyImport_ImportModule(osPythonModule);
         if (poUserModule == NULL || PyErr_Occurred())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1047,7 +1147,7 @@ bool VRTDerivedRasterBand::InitializePython()
             return false;
         }
         m_poPrivate->m_poUserFunction = PyObject_GetAttrString(poUserModule,
-                                osPythonFunction.substr(nIdxDot+1).c_str() );
+                                                            osPythonFunction );
         Py_DecRef(poUserModule);
     }
     else
