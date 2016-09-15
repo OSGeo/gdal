@@ -660,7 +660,7 @@ typedef enum
 static CaseType GetCase(const char* pszStr)
 {
     bool bInit = true;
-    char ch;
+    char ch = '\0';
     CaseType eCase = CASE_UNKNOWN;
     while((ch = *(pszStr++)) != '\0')
     {
@@ -1251,12 +1251,11 @@ int ods_formula_node::EvaluateListArgOp(IODSCellEvaluator* poEvaluator)
     CPLAssert(papoSubExpr[0]->eOp == ODS_LIST );
 
     std::vector<double> adfVal;
-    int i;
 
     int nCount = 0;
     int nCountA = 0;
 
-    for(i=0;i<papoSubExpr[0]->nSubExprCount;i++)
+    for( int i = 0; i < papoSubExpr[0]->nSubExprCount; i++ )
     {
         if (papoSubExpr[0]->papoSubExpr[i]->eNodeType == SNT_OPERATION &&
             papoSubExpr[0]->papoSubExpr[i]->eOp == ODS_CELL_RANGE)
@@ -1370,7 +1369,7 @@ int ods_formula_node::EvaluateListArgOp(IODSCellEvaluator* poEvaluator)
     {
         case ODS_SUM:
         {
-            for(i=0;i<(int)adfVal.size();i++)
+            for( int i = 0; i < (int)adfVal.size(); i++ )
             {
                 dfVal += adfVal[i];
             }
@@ -1379,7 +1378,7 @@ int ods_formula_node::EvaluateListArgOp(IODSCellEvaluator* poEvaluator)
 
         case ODS_AVERAGE:
         {
-            for(i=0;i<(int)adfVal.size();i++)
+            for( int i = 0; i < (int)adfVal.size(); i++ )
             {
                 dfVal += adfVal[i];
             }
@@ -1390,7 +1389,7 @@ int ods_formula_node::EvaluateListArgOp(IODSCellEvaluator* poEvaluator)
         case ODS_MIN:
         {
             dfVal = (adfVal.size() == 0) ? 0 :adfVal[0];
-            for(i=1;i<(int)adfVal.size();i++)
+            for( int i = 1; i < (int)adfVal.size(); i++ )
             {
                 if (adfVal[i] < dfVal) dfVal = adfVal[i];
             }
@@ -1400,7 +1399,7 @@ int ods_formula_node::EvaluateListArgOp(IODSCellEvaluator* poEvaluator)
         case ODS_MAX:
         {
             dfVal = (adfVal.size() == 0) ? 0 :adfVal[0];
-            for(i=1;i<(int)adfVal.size();i++)
+            for( int i = 1; i < (int)adfVal.size(); i++ )
             {
                 if (adfVal[i] > dfVal) dfVal = adfVal[i];
             }

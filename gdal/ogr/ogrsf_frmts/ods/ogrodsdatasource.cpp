@@ -470,7 +470,7 @@ static void SetField(OGRFeature* poFeature,
     if (eType == OFTTime)
     {
         int nHour, nHourRepeated, nMinute, nSecond;
-        char c;
+        char c = '\0';
         if (STARTS_WITH(pszValue, "PT") &&
             sscanf(pszValue + 2, "%02d%c%02d%c%02d%c",
                    &nHour, &c, &nMinute, &c, &nSecond, &c) == 6)
@@ -506,22 +506,22 @@ static void SetField(OGRFeature* poFeature,
 void OGRODSDataSource::DetectHeaderLine()
 
 {
-    int bHeaderLineCandidate = TRUE;
-    size_t i;
-    for(i = 0; i < apoFirstLineTypes.size(); i++)
+    bool bHeaderLineCandidate = true;
+
+    for( size_t i = 0; i < apoFirstLineTypes.size(); i++ )
     {
         if (apoFirstLineTypes[i] != "string")
         {
             /* If the values in the first line are not text, then it is */
             /* not a header line */
-            bHeaderLineCandidate = FALSE;
+            bHeaderLineCandidate = false;
             break;
         }
     }
 
     size_t nCountTextOnCurLine = 0;
     size_t nCountNonEmptyOnCurLine = 0;
-    for(i = 0; bHeaderLineCandidate && i < apoCurLineTypes.size(); i++)
+    for( size_t i = 0; bHeaderLineCandidate && i < apoCurLineTypes.size(); i++ )
     {
         if (apoCurLineTypes[i] == "string")
         {
@@ -546,11 +546,11 @@ void OGRODSDataSource::DetectHeaderLine()
     {
         bFirstLineIsHeaders = true;
     }
-    else if (bHeaderLineCandidate &&
+    else if( bHeaderLineCandidate &&
              apoFirstLineTypes.size() != 0 &&
              apoFirstLineTypes.size() == apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
-             nCountNonEmptyOnCurLine != 0)
+             nCountNonEmptyOnCurLine != 0 )
     {
         bFirstLineIsHeaders = true;
     }
@@ -632,8 +632,8 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
         else if (nCurLine == 1)
         {
             /* If we have only one single line in the sheet */
-            size_t i;
-            for(i = 0; i < apoFirstLineValues.size(); i++)
+
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
                 const char* pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
                 OGRFieldType eType = GetOGRFieldType(apoFirstLineValues[i].c_str(),
@@ -643,7 +643,7 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
             }
 
             OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-            for(i = 0; i < apoFirstLineValues.size(); i++)
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
                 SetField(poFeature, static_cast<int>(i), apoFirstLineValues[i].c_str());
             }
@@ -1021,7 +1021,7 @@ void OGRODSDataSource::AnalyseFile()
     VSIFSeekL( fpContent, 0, SEEK_SET );
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1204,7 +1204,7 @@ void OGRODSDataSource::AnalyseSettings()
     VSIFSeekL( fpSettings, 0, SEEK_SET );
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1471,13 +1471,13 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 }
                 else if (eType == OFTDateTime)
                 {
-                    int nYear;
-                    int  nMonth;
-                    int  nDay;
-                    int  nHour;
-                    int  nMinute;
-                    int  nTZFlag;
-                    float fSecond;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    int nTZFlag = 0;
+                    float fSecond = 0.0f;
                     poFeature->GetFieldAsDateTime(
                         j, &nYear, &nMonth, &nDay,
                         &nHour, &nMinute, &fSecond, &nTZFlag );
@@ -1518,13 +1518,13 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 }
                 else if (eType == OFTDate)
                 {
-                    int nYear;
-                    int  nMonth;
-                    int  nDay;
-                    int  nHour;
-                    int  nMinute;
-                    int  nSecond;
-                    int  nTZFlag;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    int nSecond = 0;
+                    int nTZFlag = 0;
                     poFeature->GetFieldAsDateTime(
                         j, &nYear, &nMonth, &nDay,
                         &nHour, &nMinute, &nSecond, &nTZFlag );
@@ -1539,13 +1539,13 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 }
                 else if (eType == OFTTime)
                 {
-                    int nYear;
-                    int  nMonth;
-                    int  nDay;
-                    int  nHour;
-                    int  nMinute;
-                    int  nSecond;
-                    int  nTZFlag;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    int nSecond = 0;
+                    int nTZFlag = 0;
                     poFeature->GetFieldAsDateTime(
                         j, &nYear, &nMonth, &nDay,
                         &nHour, &nMinute, &nSecond, &nTZFlag );
