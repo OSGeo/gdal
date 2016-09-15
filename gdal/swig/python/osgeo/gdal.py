@@ -2083,6 +2083,10 @@ class Band(MajorObject):
         """GetBlockSize(Band self)"""
         return _gdal.Band_GetBlockSize(self, *args)
 
+    def GetActualBlockSize(self, *args):
+        """GetActualBlockSize(Band self, int nXBlockOff, int nYBlockOff)"""
+        return _gdal.Band_GetActualBlockSize(self, *args)
+
     def GetColorInterpretation(self, *args):
         """GetColorInterpretation(Band self) -> GDALColorInterp"""
         return _gdal.Band_GetColorInterpretation(self, *args)

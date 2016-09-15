@@ -1905,3 +1905,29 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
 %#endif
 }
+
+
+
+%typemap(in,numinputs=0) (int *pnxvalid, int *pnyvalid, int* pisvalid) ( int nxvalid = 0, int nyvalid = 0, int isvalid = 0  )
+{
+  /* %typemap(in) (int *pnxvalid, int *pnyvalid, int* pisvalid) */
+  $1 = &nxvalid;
+  $2 = &nyvalid;
+  $3 = &isvalid;
+}
+
+%typemap(argout) (int *pnxvalid, int *pnyvalid, int* pisvalid)
+{
+   /* %typemap(argout) (int *pnxvalid, int *pnyvalid, int* pisvalid)  */
+  PyObject *r;
+  if ( !*$3 ) {
+    Py_INCREF(Py_None);
+    r = Py_None;
+  }
+  else {
+    r = PyTuple_New( 2 );
+    PyTuple_SetItem( r, 0, PyLong_FromLong(*$1) );
+    PyTuple_SetItem( r, 1, PyLong_FromLong(*$2) );
+  }
+  $result = t_output_helper($result,r);
+}

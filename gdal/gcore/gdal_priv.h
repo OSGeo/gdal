@@ -907,6 +907,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALDataType GetRasterDataType( void );
     void        GetBlockSize( int *, int * );
+    CPLErr      GetActualBlockSize ( int, int, int *, int * );
     GDALAccess  GetAccess();
 
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,

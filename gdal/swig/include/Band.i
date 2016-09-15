@@ -199,6 +199,13 @@ public:
       GDALGetBlockSize(self, pnBlockXSize, pnBlockYSize);
   }
 
+#if defined(SWIGPYTHON)
+  void GetActualBlockSize(int nXBlockOff, int nYBlockOff, int* pnxvalid, int* pnyvalid, int* pisvalid)
+  {
+    *pisvalid = (GDALGetActualBlockSize(self, nXBlockOff, nYBlockOff, pnxvalid, pnyvalid) == CE_None);
+  }
+#endif
+
   // Preferred name to match C++ API
   /* Interface method added for GDAL 1.7.0 */
   GDALColorInterp GetColorInterpretation() {
