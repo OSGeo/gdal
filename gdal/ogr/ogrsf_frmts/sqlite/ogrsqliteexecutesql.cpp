@@ -226,8 +226,7 @@ static const char* const apszKeywords[] =  {
 
 static int StartsAsSQLITEKeyWord(const char* pszStr)
 {
-    int i;
-    for(i=0;i<(int)(sizeof(apszKeywords) / sizeof(char*));i++)
+    for( int i = 0; i < (int)(sizeof(apszKeywords) / sizeof(char*)); i++ )
     {
         if( EQUALN(pszStr, apszKeywords[i], strlen(apszKeywords[i])) )
             return TRUE;
@@ -247,7 +246,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
 {
     const char *pszSQLCommand = *ppszSQLCommand;
     const char* pszStart = pszSQLCommand;
-    char ch;
+    char ch = '\0';
     int nParenthesisLevel = 0;
     int bLookforFTableName = FALSE;
 
@@ -731,7 +730,6 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     snprintf(pszTmpDBName, 256, "/vsimem/ogr2sqlite/temp_%p.db", pszTmpDBName);
 
     OGRSQLiteDataSource* poSQLiteDS = NULL;
-    int nRet;
     int bSpatialiteDB = FALSE;
 
     CPLString osOldVal;
@@ -769,7 +767,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                     pszCachedFilename);
             char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
             OGRSQLiteDataSource* poCachedDS = new OGRSQLiteDataSource();
-            nRet = poCachedDS->Create( pszCachedFilename, papszOptions );
+            const int nRet = poCachedDS->Create( pszCachedFilename, papszOptions );
             CSLDestroy(papszOptions);
             papszOptions = NULL;
             delete poCachedDS;
@@ -799,7 +797,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 
         poSQLiteDS = new OGRSQLiteDataSource();
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
-        nRet = poSQLiteDS->Open( pszTmpDBName, TRUE, NULL );
+        const int nRet = poSQLiteDS->Open( pszTmpDBName, TRUE, NULL );
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", pszOldVal);
         if( !nRet )
         {
@@ -816,7 +814,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     poSQLiteDS = new OGRSQLiteDataSource();
     char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
     CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
-    nRet = poSQLiteDS->Create( pszTmpDBName, papszOptions );
+    const int nRet = poSQLiteDS->Create( pszTmpDBName, papszOptions );
     CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", pszOldVal);
     CSLDestroy(papszOptions);
     papszOptions = NULL;
@@ -836,7 +834,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 #endif // HAVE_SPATIALITE
         poSQLiteDS = new OGRSQLiteDataSource();
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
-        nRet = poSQLiteDS->Create( pszTmpDBName, NULL );
+        const int nRet = poSQLiteDS->Create( pszTmpDBName, NULL );
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", pszOldVal);
         if( !nRet )
         {
@@ -885,7 +883,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         CPLString osSQL;
         OGRLayer* poLayer = NULL;
         CPLString osTableName;
-        int nExtraDS;
+        int nExtraDS = -1;
         if( oLayerDesc.osDSName.size() == 0 )
         {
             poLayer = poDS->GetLayerByName(oLayerDesc.osLayerName);
@@ -894,8 +892,6 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                 continue;
 
             osTableName = oLayerDesc.osLayerName;
-
-            nExtraDS = -1;
         }
         else
         {

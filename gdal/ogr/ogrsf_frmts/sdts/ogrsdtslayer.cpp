@@ -225,17 +225,15 @@ AssignAttrRecordToFeature( OGRFeature * poFeature,
 /* -------------------------------------------------------------------- */
     DDFFieldDefn        *poFDefn = poSR->GetFieldDefn();
 
-    for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
+    for( int iSF = 0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
     {
         DDFSubfieldDefn *poSFDefn = poFDefn->GetSubfield( iSF );
-        int                     iField;
-        int                     nMaxBytes;
-        const char *    pachData = poSR->GetSubfieldData(poSFDefn,
-                                                         &nMaxBytes);
+        int nMaxBytes = 0;
+        const char *pachData = poSR->GetSubfieldData(poSFDefn, &nMaxBytes);
 /* -------------------------------------------------------------------- */
 /*      Identify this field on the feature.                            */
 /* -------------------------------------------------------------------- */
-        iField = poFeature->GetFieldIndex( poSFDefn->GetName() );
+        const int iField = poFeature->GetFieldIndex( poSFDefn->GetName() );
 
 /* -------------------------------------------------------------------- */
 /*      Handle each of the types.                                       */
@@ -347,13 +345,11 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
           for( int iRing = 0; iRing < poPoly->nRings; iRing++ )
           {
               OGRLinearRing *poRing = new OGRLinearRing();
-              int           nVertices;
-
-              if( iRing == poPoly->nRings - 1 )
-                  nVertices = poPoly->nVertices - poPoly->panRingStart[iRing];
-              else
-                  nVertices = poPoly->panRingStart[iRing+1]
-                            - poPoly->panRingStart[iRing];
+              const int nVertices =
+                  iRing == poPoly->nRings - 1
+                  ? poPoly->nVertices - poPoly->panRingStart[iRing]
+                  : (poPoly->panRingStart[iRing+1]
+                     - poPoly->panRingStart[iRing]);
 
               poRing->setPoints( nVertices,
                                  poPoly->padfX + poPoly->panRingStart[iRing],

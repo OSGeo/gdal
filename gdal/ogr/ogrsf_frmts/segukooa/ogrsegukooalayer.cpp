@@ -204,8 +204,7 @@ void OGRUKOOAP190Layer::ParseHeaders()
         {
             char aszParams[6][6+1];
             char szZ[10+1];
-            int i;
-            for(i=0;i<6;i++)
+            for( int i = 0; i < 6; i++ )
             {
                 ExtractField(aszParams[i], pszLine, 33 - 1 + i * 6, 6);
             }

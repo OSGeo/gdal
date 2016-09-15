@@ -184,9 +184,8 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         /* If there's a unset field with a default value, then we must use */
         /* a specific INSERT statement to avoid unset fields to be bound to NULL */
         int bHasDefaultValue = FALSE;
-        int iField;
-        int nFieldCount = poFeatureDefn->GetFieldCount();
-        for( iField = 0; iField < nFieldCount; iField++ )
+        const int nFieldCount = poFeatureDefn->GetFieldCount();
+        for( int iField = 0; iField < nFieldCount; iField++ )
         {
             if( !poFeature->IsFieldSet( iField ) &&
                 poFeature->GetFieldDefnRef(iField)->GetDefault() != NULL )
@@ -405,11 +404,10 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
 OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 {
-    int                  i;
     CPLString            osCommand;
 
     /* First process geometry */
-    for( i = 0; i < poFeature->GetGeomFieldCount(); i++ )
+    for( int i = 0; i < poFeature->GetGeomFieldCount(); i++ )
     {
         OGRGeometry *poGeometry = poFeature->GetGeomFieldRef(i);
         char *pszGeom = NULL;
@@ -453,8 +451,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                                           NULL);
 
     /* Add end of line marker */
-    //osCommand += "\n";
-
+    // osCommand += "\n";
 
     /* ------------------------------------------------------------ */
     /*      Execute the copy.                                       */
@@ -478,7 +475,6 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
                                            OGRPGCommonEscapeStringCbk pfnEscapeString,
                                            void* userdata)
 {
-    int i;
     OGRFeatureDefn* poFeatureDefn = poFeature->GetDefnRef();
 
     /* Next process the field id column */
@@ -507,7 +503,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int bAddTab = osCommand.size() > 0;
 
-    for( i = 0; i < nFieldCount;  i++ )
+    for( int i = 0; i < nFieldCount;  i++ )
     {
         if (i == nFIDIndex)
             continue;
@@ -637,11 +633,10 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
             nOGRFieldType != OFTReal &&
             nOGRFieldType != OFTBinary )
         {
-            int         iChar;
-            int         iUTFChar = 0;
-            int         nMaxWidth = poFeatureDefn->GetFieldDefn(i)->GetWidth();
+            int iUTFChar = 0;
+            const int nMaxWidth = poFeatureDefn->GetFieldDefn(i)->GetWidth();
 
-            for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+            for( int iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
                 //count of utf chars
                 if (nOGRFieldType != OFTStringList && (pszStrValue[iChar] & 0xc0) != 0x80)
@@ -779,12 +774,10 @@ CPLString OGRPGDumpLayer::BuildCopyFields(int bSetFID)
 
 CPLString OGRPGDumpEscapeColumnName(const char* pszColumnName)
 {
-    CPLString osStr;
+    CPLString osStr = "\"";
 
-    osStr += "\"";
-
-    char ch;
-    for(int i=0; (ch = pszColumnName[i]) != '\0'; i++)
+    char ch = '\0';
+    for( int i = 0; (ch = pszColumnName[i]) != '\0'; i++ )
     {
         if (ch == '"')
             osStr.append(1, ch);
@@ -842,7 +835,7 @@ CPLString OGRPGDumpEscapeString(
     /*  so it is not set by default when building OGR for Win32             */
     /* -------------------------------------------------------------------- */
 #if defined(PG_HAS_PQESCAPESTRINGCONN)
-    int nError;
+    int nError = 0;
     PQescapeStringConn (hPGConn, pszDestStr, pszStrValue, nSrcLen, &nError);
     if (nError == 0)
         osCommand += pszDestStr;
@@ -856,8 +849,8 @@ CPLString OGRPGDumpEscapeString(
 #else
     //PQescapeString(pszDestStr, pszStrValue, nSrcLen);
 
-    int i, j;
-    for(i=0,j=0; i < nSrcLen; i++)
+    int j = 0;  // Used after for.
+    for( int i = 0; i < nSrcLen; i++)
     {
         if (pszStrValue[i] == '\'')
         {
@@ -1458,8 +1451,12 @@ void OGRPGCommonLayerNormalizeDefault(OGRFieldDefn* poFieldDefn,
                 osDefault.resize(nPos);
                 osDefault += "'";
             }
-            int nYear, nMonth, nDay, nHour, nMinute;
-            float fSecond;
+            int nYear = 0;
+            int nMonth = 0;
+            int nDay = 0;
+            int nHour = 0;
+            int nMinute = 0;
+            float fSecond = 0.0f;
             if( sscanf(osDefault, "'%d-%d-%d %d:%d:%f'", &nYear, &nMonth, &nDay,
                                 &nHour, &nMinute, &fSecond) == 6 ||
                 sscanf(osDefault, "'%d-%d-%d %d:%d:%f+00'", &nYear, &nMonth, &nDay,
@@ -1484,8 +1481,12 @@ void OGRPGCommonLayerNormalizeDefault(OGRFieldDefn* poFieldDefn,
 CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn* poFieldDefn)
 {
     CPLString osRet = poFieldDefn->GetDefault();
-    int nYear, nMonth, nDay, nHour, nMinute;
-    float fSecond;
+    int nYear = 0;
+    int nMonth = 0;
+    int nDay = 0;
+    int nHour = 0;
+    int nMinute = 0;
+    float fSecond = 0.0f;
     if( sscanf(osRet, "'%d/%d/%d %d:%d:%f'",
                 &nYear, &nMonth, &nDay,
                 &nHour, &nMinute, &fSecond) == 6 )

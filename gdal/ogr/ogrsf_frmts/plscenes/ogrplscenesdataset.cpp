@@ -130,9 +130,8 @@ OGRLayer* OGRPLScenesDataset::ExecuteSQL( const char *pszSQLCommand,
             oSelect.table_count == 1 && oSelect.order_specs == 1 &&
             strcmp(oSelect.order_defs[0].field_name, "acquired") == 0 )
         {
-            int idx;
             OGRPLScenesLayer* poLayer = NULL;
-            for(idx = 0; idx < nLayers; idx ++ )
+            for( int idx = 0; idx < nLayers; idx++ )
             {
                 if( strcmp( papoLayers[idx]->GetName(),
                             oSelect.table_defs[0].table_name) == 0 )
