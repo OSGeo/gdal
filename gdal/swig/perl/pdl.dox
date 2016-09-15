@@ -1,62 +1,62 @@
-/*! \page band_to_pdl Making a piddle from data in a band
+/*! \page band_to_pdl Using PDL to manipulate band data
 
 The code here does not have any warranty. It is recommended that
 before using any of this code, you look into it and try to understand
 what it does, what input it needs, etc. Do not blindly execute
 anything!
 
+The Piddle method of Band object can be used to read and write band
+data from a piddle or into a piddle. The PDL module provides ways
+to manipulate piddles.
+
 \code
-use Carp;
+use strict;
+use v5.10;
 use Geo::GDAL;
 use PDL;
 
-my $filename = 'xxx';
-my $update = undef;
+my $filename = 'some.tiff';
+my $update = 'UPDATE';
+my $band = Geo::GDAL::Open($filename, $update)->Band();
 
-my $dataset = Geo::GDAL::Open($filename, $update);
-my $band = $dataset->Band(1);
+my ($W,$H) = $band->Size;
+my ($w,$h) = $band->GetBlockSize;
+my ($xoff,$yoff) = (0,0);
+while (1) {
+    progress($yoff/$H);
+    if ($xoff >= $W) {
+        $xoff = 0;
+        $yoff += $h;
+        last if $yoff >= $H;
+    }
+    my $a = $band->Piddle($xoff, $yoff, my_min($W-$xoff,$w), my_min($H-$yoff,$h));
 
-my($xoff,$yoff) = (1000,4000);
-my($w,$h) = (1000,1000);
+    # do something with a
+    $a = ($a < 0) + ($a < -30) + ($a < -60);
 
-my $data = $band->ReadRaster($xoff,$yoff,$w,$h);
+    $band->Piddle($a, $xoff, $yoff);
+    $xoff += $w;
+}
+progress(1);
+say;
 
-my $pdl = PDL->new;
+sub progress {
+    state $s = -1; # requires 'use v5.10;'
+    my $p = int($_[0]*100);
+    return 1 if $p == $s;
+    $s = 0 if $s < 0;
+    while ($s < $p) {
+        print $s%10 == 0 ? $s : ($s%2 == 0 ? '.' : '');
+        ++$s;
+    }
+    return 1;
+}
 
-# PDL data types:
-# 0 = unsigned char
-# 1 = short
-# 2 = unsigned short
-# 3 = int
-# 4 = long long
-# 5 = float
-# 6 = double
+sub my_min {
+    return $_[0] < $_[1] ? $_[0] : $_[1];
+}
 
-# GDAL data types: Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64
-# obtained with $band->DataType
 
-my %map = (
-    Byte => 0,
-    UInt16 => 2,
-    Int16 => 1,
-    UInt32 => -1,
-    Int32 => 3,
-    Float32 => 5,
-    Float64 => 6,
-    CInt16 => -1,
-    CInt32 => -1,
-    CFloat32 => -1,
-    CFloat64 => -1
-    );
-
-my $datatype = $map{$band->DataType};
-croak "there is no direct mapping between the band datatype and PDL" if $datatype < 0;
-$pdl->set_datatype($datatype);
-$pdl->setdims([1,$w,$h]);
-my $dref = $pdl->get_dataref();
-# this is not optimal, but the best what we can do in Perl:
-$$dref = $data;
-$pdl->upd_data;
 \endcode
 
 */

@@ -568,7 +568,7 @@
 ## @method Geo::GDAL::Band Band($index)
 # Create a band object for the band within the dataset.
 # @note a.k.a. GetRasterBand
-# @param index 1...RasterCount
+# @param index 1...RasterCount, default is 1.
 # @return a new Geo::GDAL::Band object
 
 ## @method @Bands()
@@ -1091,7 +1091,22 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @param imag_part Imaginary component of fill value.
 #
 
+## @method Piddle($piddle, $xoff = 0, $yoff = 0, $xsize = <width>, $ysize = <height>)
+# Read or write band data from/into a piddle.
+#
+# \note The PDL module must be available for this method to work. Also, you
+# should 'use PDL' in the code that you use this method.
+#
+# @param piddle [optional, needed only when writing] The piddle from which to read or into which write.
+# @param xoff, yoff The offset for reading, default is 0,0.
+# @param xsize, ysize [optional and only when reading] The size of the read window.
+# @return A new piddle when reading.
+
 ## @method WriteTile($data, $xoff = 0, $yoff = 0)
+# Write band data from a Perl array.
+#
+# \note Accessing band data in this way is slow. Consider using PDL and Geo::GDAL::Band::Piddle.
+#
 # @param data A two-dimensional Perl array, organizes as data->[y][x], y =
 # 0..height-1, x = 0..width-1.
 # @param xoff
@@ -1099,6 +1114,9 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 #
 
 ## @method \@ReadTile($xoff = 0, $yoff = 0, $xsize = <width>, $ysize = <height>)
+# Read band data into a Perl array.
+#
+# \note Accessing band data in this way is slow. Consider using PDL and Geo::GDAL::Band::Piddle.
 #
 # Usage example (print the data from a band):
 # \code
@@ -1106,7 +1124,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # \endcode
 # Another usage example (process the data of a large dataset that has one band):
 # \code
-# my($W,$H) = $dataset->Band(1)->Size();
+# my($W,$H) = $dataset->Band()->Size();
 # my($xoff,$yoff,$w,$h) = (0,0,200,200);
 # while (1) {
 #     if ($xoff >= $W) {
