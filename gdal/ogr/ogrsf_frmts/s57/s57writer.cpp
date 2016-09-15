@@ -599,17 +599,15 @@ int S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
     if( padfZ != NULL )
         pszFieldName = "SG3D";
 
-    DDFField *poField
-        = poRec->AddField( poModule->FindFieldDefn( pszFieldName ) );
+    DDFField *poField =
+        poRec->AddField( poModule->FindFieldDefn( pszFieldName ) );
 
-    int nRawDataSize;
-    if( padfZ )
-        nRawDataSize = 12 * nVertCount;
-    else
-        nRawDataSize = 8 * nVertCount;
+    const int nRawDataSize = padfZ
+        ? 12 * nVertCount :
+        8 * nVertCount;
 
-    unsigned char *pabyRawData
-        = static_cast<unsigned char *>( CPLMalloc(nRawDataSize) );
+    unsigned char *pabyRawData =
+        static_cast<unsigned char *>( CPLMalloc(nRawDataSize) );
 
     for( int i = 0; i < nVertCount; i++ )
     {

@@ -84,7 +84,7 @@ OGRLayer *OGRSEGYDataSource::GetLayer( int iLayer )
 
 GInt16 SEGYReadMSBInt16(const GByte* pabyVal)
 {
-    GInt16 nVal;
+    GInt16 nVal = 0;
     memcpy(&nVal, pabyVal, 2);
     CPL_MSBPTR16(&nVal);
     return nVal;
@@ -96,7 +96,7 @@ GInt16 SEGYReadMSBInt16(const GByte* pabyVal)
 
 GInt32 SEGYReadMSBInt32(const GByte* pabyVal)
 {
-    GInt32 nVal;
+    GInt32 nVal = 0;
     memcpy(&nVal, pabyVal, 4);
     CPL_MSBPTR32(&nVal);
     return nVal;

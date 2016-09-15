@@ -160,13 +160,14 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
     if (nFID<0) return NULL;
     if (eType==POINTS) {
         if (nFID>=poHeader->nPoints) return NULL;
-        double nData;
         OGRFeature *poFeature=new OGRFeature(poFeatureDefn);
         poFeature->SetGeometryDirectly(new OGRPoint(poHeader->paadfCoords[0][nFID],poHeader->paadfCoords[1][nFID]));
         poFeature->SetFID(nFID);
         for (int i=0;i<poHeader->nVar;++i) {
             VSIFSeekL(poHeader->fp,poHeader->getPosition(nStepNumber,(int)nFID,i),SEEK_SET);
-            if (Selafin::read_float(poHeader->fp,nData)==1) poFeature->SetField(i,nData);
+            double nData = 0.0;
+            if( Selafin::read_float(poHeader->fp,nData) == 1 )
+                poFeature->SetField(i,nData);
         }
         return poFeature;
     } else {
@@ -175,7 +176,6 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
             VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nVar);
         if (poHeader->nVar>0 && anData==NULL) return NULL;
         for (int i=0;i<poHeader->nVar;++i) anData[i]=0;
-        double nData;
         OGRFeature *poFeature=new OGRFeature(poFeatureDefn);
         poFeature->SetFID(nFID);
         OGRPolygon *poPolygon=new OGRPolygon();
@@ -185,6 +185,7 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
             poLinearRing->addPoint(poHeader->paadfCoords[0][nPointNum],poHeader->paadfCoords[1][nPointNum]);
             for (int i=0;i<poHeader->nVar;++i) {
                 VSIFSeekL(poHeader->fp,poHeader->getPosition(nStepNumber,nPointNum,i),SEEK_SET);
+                double nData = 0.0;
                 if (Selafin::read_float(poHeader->fp,nData)==1) anData[i]+=nData;
             }
         }
@@ -387,9 +388,10 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
         VSIUnlink(pszTempfile);
         return OGRERR_FAILURE;
     }
-    int nLen;
-    double dfDate;
-    for (int i=0;i<poHeader->nSteps;++i) {
+    for (int i=0;i<poHeader->nSteps;++i)
+    {
+        int nLen = 0;
+        double dfDate = 0.0;
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
                 Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
@@ -400,7 +402,8 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
             VSIUnlink(pszTempfile);
             return OGRERR_FAILURE;
         }
-        for (int j=0;j<poHeader->nVar;++j) {
+        for( int j = 0; j < poHeader->nVar; ++j )
+        {
             double *padfValues = NULL;
             if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
                 VSIFCloseL(fpNew);
@@ -473,9 +476,9 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
         VSIUnlink(pszTempfile);
         return OGRERR_FAILURE;
     }
-    int nLen;
-    double dfDate;
     for (int i=0;i<poHeader->nSteps;++i) {
+        int nLen = 0;
+        double dfDate = 0.0;
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
                 Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
@@ -542,9 +545,9 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
         VSIUnlink(pszTempfile);
         return OGRERR_FAILURE;
     }
-    int nLen;
-    double dfDate;
     for (int i=0;i<poHeader->nSteps;++i) {
+        int nLen = 0;
+        double dfDate = 0.0;
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
                 Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
@@ -603,10 +606,10 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
         VSIUnlink(pszTempfile);
         return OGRERR_FAILURE;
     }
-    int nLen;
-    double dfDate;
     double *padfValues=NULL;
     for (int i=0;i<poHeader->nSteps;++i) {
+        int nLen = 0;
+        double dfDate = 0.0;
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
                 Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
@@ -690,9 +693,9 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
         VSIUnlink(pszTempfile);
         return OGRERR_FAILURE;
     }
-    int nLen;
-    double dfDate;
     for (int i=0;i<poHeader->nSteps;++i) {
+        int nLen = 0;
+        double dfDate = 0.0;
         if (Selafin::read_integer(poHeader->fp,nLen,true)==0 ||
                 Selafin::read_float(poHeader->fp,dfDate)==0 ||
                 Selafin::read_integer(poHeader->fp,nLen,true)==0 ||

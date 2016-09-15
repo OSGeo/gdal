@@ -212,7 +212,7 @@ static const FieldDesc SEGYFields10[] =
 
 static float SEGYReadMSBFloat32(const GByte* pabyVal)
 {
-    float fVal;
+    float fVal = 0.0f;
     memcpy(&fVal, pabyVal, 4);
     CPL_MSBPTR32(&fVal);
     return fVal;
@@ -333,7 +333,7 @@ OGRFeature *OGRSEGYLayer::GetNextFeature()
 
 static float GetIBMFloat(const GByte* pabyData)
 {
-    int nVal;
+    int nVal = 0;
     memcpy(&nVal, pabyData, 4);
     CPL_MSBPTR32(&nVal);
     int nSign = 1 - 2 * ((nVal >> 31) & 0x01);
@@ -343,7 +343,7 @@ static float GetIBMFloat(const GByte* pabyData)
     if (nExp == 0x7f)
     {
         nVal = (nVal & 0x80000000) | (0xff << 23) | (nMant >> 1);
-        float fVal;
+        float fVal = 0;
         memcpy(&fVal, &nVal, 4);
         return fVal;
     }
@@ -597,7 +597,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
 
                 case DT_4BYTES_INT:
                 {
-                    int nVal;
+                    int nVal = 0;
                     memcpy(&nVal, pabyData + i * 4, 4);
                     CPL_MSBPTR32(&nVal);
                     padfValues[i] = nVal;
@@ -606,7 +606,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
 
                 case DT_2BYTES_INT:
                 {
-                    GInt16 nVal;
+                    GInt16 nVal = 0;
                     memcpy(&nVal, pabyData + i * 2, 2);
                     CPL_MSBPTR16(&nVal);
                     padfValues[i] = nVal;
@@ -615,7 +615,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
 
                 case DT_IEEE_4BYTES_FP:
                 {
-                    float fVal;
+                    float fVal = 0.0f;
                     memcpy(&fVal, pabyData + i * 4, 4);
                     CPL_MSBPTR32(&fVal);
                     padfValues[i] = fVal;

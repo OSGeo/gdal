@@ -1606,14 +1606,13 @@ S57StrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                   int nVertexCount )
 
 {
-    double      dfStartAngle;
-    double      dfEndAngle;
-    double      dfRadius;
+    double dfStartAngle = 0.0;
+    double dfEndAngle = 360.0;
 
     if( dfStartX == dfEndX && dfStartY == dfEndY )
     {
-        dfStartAngle = 0.0;
-        dfEndAngle = 360.0;
+        // dfStartAngle = 0.0;
+        // dfEndAngle = 360.0;
     }
     else
     {
@@ -1656,8 +1655,9 @@ S57StrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
         }
     }
 
-    dfRadius = sqrt( (dfCenterX - dfStartX) * (dfCenterX - dfStartX)
-                     + (dfCenterY - dfStartY) * (dfCenterY - dfStartY) );
+    const double dfRadius =
+        sqrt( (dfCenterX - dfStartX) * (dfCenterX - dfStartX)
+              + (dfCenterY - dfStartY) * (dfCenterY - dfStartY) );
 
     return S57StrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY,
                                              dfRadius,
@@ -1765,12 +1765,12 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
         {
             int nBytesRemaining = 0;
 
-            const char *pachData
-                = poSG2D->GetSubfieldData( poYCOO,&nBytesRemaining, 0 );
+            const char *pachData =
+                poSG2D->GetSubfieldData( poYCOO, &nBytesRemaining, 0 );
 
             for( int i = 0; i < nVCount; i++ )
             {
-                GInt32      nYCOO;
+                GInt32 nYCOO = 0;
                 memcpy( &nYCOO, pachData, 4 );
                 pachData += 4;
 
@@ -1962,7 +1962,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 
     for( int i = 0; i < nPointCount; i++ )
     {
-        int nBytesConsumed;
+        int nBytesConsumed = 0;
 
         const double dfY = poYCOO->ExtractIntData( pachData, nBytesLeft,
                                                    &nBytesConsumed )
@@ -2373,8 +2373,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
             if( poVRPT != NULL && poVRPT->GetRepeatCount() > 1 )
             {
                 const int nVC_RCID = ParseName( poVRPT, 1 );
-                double dfX;
-                double dfY;
+                double dfX = 0.0;
+                double dfY = 0.0;
 
                 if( nVC_RCID != -1
                     && FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
@@ -2383,8 +2383,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
             else if( (poVRPT = poSRecord->FindField( "VRPT", 1 )) != NULL )
             {
                 const int nVC_RCID = ParseName( poVRPT );
-                double dfX;
-                double dfY;
+                double dfX = 0.0;
+                double dfY = 0.0;
 
                 if( nVC_RCID != -1
                     && FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
@@ -2503,7 +2503,7 @@ int S57Reader::ParseName( DDFField * poField, int nIndex, int * pnRCNM )
     if( poName == NULL )
         return -1;
 
-    int nMaxBytes;
+    int nMaxBytes = 0;
     unsigned char *pabyData = reinterpret_cast<unsigned char *>(
         const_cast<char *>(
             poField->GetSubfieldData( poName, &nMaxBytes, nIndex ) ) );
@@ -3066,9 +3066,9 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         {
             const int nATTL
                 = poUpdate->GetIntSubfield( "ATTF", 0, "ATTL", iAtt );
-            int iTAtt;
+            int iTAtt = poDstATTF->GetRepeatCount() - 1;  // Used after for.
 
-            for( iTAtt = poDstATTF->GetRepeatCount()-1; iTAtt >= 0; iTAtt-- )
+            for( ; iTAtt >= 0; iTAtt-- )
             {
                 if( poTarget->GetIntSubfield( "ATTF", 0, "ATTL", iTAtt )
                     == nATTL )
@@ -3077,9 +3077,9 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             if( iTAtt == -1 )
                 iTAtt = poDstATTF->GetRepeatCount();
 
-            int nDataBytes;
-            const char *pszRawData
-                = poSrcATTF->GetInstanceData( iAtt, &nDataBytes );
+            int nDataBytes = 0;
+            const char *pszRawData =
+                poSrcATTF->GetInstanceData( iAtt, &nDataBytes );
             if( pszRawData[2] == 0x7f /* delete marker */ )
             {
                 poTarget->SetFieldRaw( poDstATTF, iTAtt, NULL, 0 );

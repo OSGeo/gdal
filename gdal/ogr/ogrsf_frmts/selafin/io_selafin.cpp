@@ -171,21 +171,20 @@ namespace Selafin {
         poObj.maxx=dfx+dfMax;
         poObj.miny=dfy-dfMax;
         poObj.maxy=dfy+dfMax;
-        int nFeatureCount;
-        void **phResults=CPLQuadTreeSearch(poTree,&poObj,&nFeatureCount);
-        if (nFeatureCount<=0) return -1;
-        double dfa;
-        double dfb;
-        double dfc;
+        int nFeatureCount = 0;
+        void **phResults = CPLQuadTreeSearch(poTree, &poObj, &nFeatureCount);
+        if( nFeatureCount <=0 ) return -1;
         double dfMin = dfMax * dfMax;
         for( int i=0;i<nFeatureCount;++i )
         {
             Point *poPoint=(Point*)(phResults[i]);
-            dfa=dfx-poPoint->poHeader->paadfCoords[0][poPoint->nIndex];
-            dfa*=dfa;
+            double dfa =
+                dfx-poPoint->poHeader->paadfCoords[0][poPoint->nIndex];
+            dfa *= dfa;
             if (dfa>=dfMin) continue;
-            dfb=dfy-poPoint->poHeader->paadfCoords[1][poPoint->nIndex];
-            dfc=dfa+dfb*dfb;
+            const double dfb =
+                dfy-poPoint->poHeader->paadfCoords[1][poPoint->nIndex];
+            const double dfc = dfa + dfb * dfb;
             if (dfc<dfMin) {
                 dfMin=dfc;
                 nIndex=poPoint->nIndex;
@@ -407,7 +406,7 @@ namespace Selafin {
     }
 
     int read_float(VSILFILE *fp,double &dfData,bool bDiscard) {
-        float dfVal;
+        float dfVal = 0.0;
         if (VSIFReadL(&dfVal,1,4,fp)<4) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return 0;
@@ -475,18 +474,16 @@ namespace Selafin {
 
     Header *read_header(VSILFILE *fp,const char *pszFilename) {
         // Get the total file size (used later to estimate the number of time steps)
-        int nFileSize;
         VSIFSeekL(fp,0,SEEK_END);
-        nFileSize=(int)VSIFTellL(fp);
+        int nFileSize = (int)VSIFTellL(fp);
         VSIRewindL(fp);
         // Save the filename
-        int nLength;
         Header *poHeader=new Header();
         poHeader->fp=fp;
         poHeader->pszFilename=CPLStrdup(pszFilename);
         int *panTemp = NULL;
         // Read the title
-        nLength=read_string(fp,poHeader->pszTitle);
+        int nLength = read_string(fp,poHeader->pszTitle);
         if (nLength==0) {
             delete poHeader;
             return NULL;
@@ -634,7 +631,7 @@ namespace Selafin {
 #ifdef notdef
     int read_step(VSILFILE *fp,const Header *poHeader,TimeStep *&poStep) {
         poStep=new TimeStep(poHeader->nPoints,poHeader->nVar);
-        int nLength;
+        int nLength = 0;
         if (read_integer(fp,nLength)==0 || nLength!=1) {
             delete poStep;
             return 0;

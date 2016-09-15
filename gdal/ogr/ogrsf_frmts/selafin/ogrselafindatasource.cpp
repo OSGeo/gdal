@@ -442,9 +442,8 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     }
 
     // Create two layers for each selected time step: one for points, the other for elements
-    int nNewLayers;
     poRange.setMaxValue(poHeader->nSteps);
-    nNewLayers=static_cast<int>(poRange.getSize());
+    const int nNewLayers = static_cast<int>(poRange.getSize());
     if (EQUAL(pszFilename, "/vsistdin/")) osBaseLayerName = "layer";
     CPLString osLayerName;
     papoLayers = (OGRSelafinLayer **) CPLRealloc(papoLayers, sizeof(void*) * (nLayers+nNewLayers));
@@ -453,8 +452,10 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
         for (int i=0;i<poHeader->nSteps;++i) {
             if (poRange.contains(eType,i)) {
                 char szTemp[30];
-                double dfTime;
-                if (VSIFSeekL(fp,poHeader->getPosition(i)+4,SEEK_SET)!=0 || Selafin::read_float(fp,dfTime)==0) {
+                double dfTime = 0.0;
+                if( VSIFSeekL(fp, poHeader->getPosition(i)+4, SEEK_SET)!=0 ||
+                    Selafin::read_float(fp, dfTime)==0 )
+                {
                     VSIFCloseL(fp);
                     CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open %s, wrong format.\n", pszFilename);
                     return FALSE;
@@ -499,9 +500,8 @@ OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpati
         return NULL;
     }
     // Parse options
-    double dfDate;
     const char *pszTemp=CSLFetchNameValue(papszOptions,"DATE");
-    if (pszTemp!=NULL) dfDate=CPLAtof(pszTemp); else dfDate=0.0;
+    const double dfDate = pszTemp != NULL ? CPLAtof(pszTemp) : 0.0;
     // Set the SRS of the datasource if this is the first layer
     if (nLayers==0 && poSpatialRefP!=NULL) {
         poSpatialRef=poSpatialRefP;
@@ -566,19 +566,22 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
         return OGRERR_FAILURE;
     }
     // Delete layer in file. Here we don't need to create a copy of the file because we only update values and it can't get corrupted even if the system crashes during the operation
-    int nNum=papoLayers[iLayer]->GetStepNumber();
-    double dfTime;
+    const int nNum = papoLayers[iLayer]->GetStepNumber();
     double *dfValues=NULL;
-    int nTemp;
-    for (int i=nNum;i<poHeader->nSteps-1;++i) {
+    for( int i = nNum; i < poHeader->nSteps - 1; ++i )
+    {
+        double dfTime = 0.0;
         if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+4,SEEK_SET)!=0 ||
-            Selafin::read_float(poHeader->fp,dfTime)==0 ||
+            Selafin::read_float(poHeader->fp, dfTime) == 0 ||
             VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+4,SEEK_SET)!=0 ||
-            Selafin::write_float(poHeader->fp,dfTime)==0) {
+            Selafin::write_float(poHeader->fp, dfTime) == 0)
+        {
             CPLError( CE_Failure, CPLE_FileIO, "Could not update Selafin file %s.\n",pszName);
             return OGRERR_FAILURE;
         }
-        for (int j=0;j<poHeader->nVar;++j) {
+        for (int j=0;j<poHeader->nVar;++j)
+        {
+            int nTemp = 0;
             if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+12,SEEK_SET)!=0 ||
                 (nTemp=Selafin::read_floatarray(poHeader->fp,&dfValues)) !=poHeader->nPoints ||
                 VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+12,SEEK_SET)!=0 ||
