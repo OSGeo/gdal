@@ -163,7 +163,6 @@ OGRwkbGeometryType OGRSQLiteViewLayer::GetGeomType()
 
 CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 {
-    int rc;
     sqlite3 *hDB = poDS->GetDB();
     sqlite3_stmt *hColStmt = NULL;
 
@@ -206,7 +205,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
                     OGRSQLiteEscapeName(pszFIDColumn).c_str(),
                     pszEscapedTableName );
 
-    rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
+    int rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -261,7 +260,6 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 OGRErr OGRSQLiteViewLayer::ResetStatement()
 
 {
-    int rc;
     CPLString osSQL;
 
     ClearStatement();
@@ -273,21 +271,20 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
                   pszEscapedTableName,
                   osWHERE.c_str() );
 
-    rc = sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
-                          &hStmt, NULL );
+    const int rc =
+        sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
+                         &hStmt, NULL );
 
     if( rc == SQLITE_OK )
     {
         return OGRERR_NONE;
     }
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
-                  osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
-        hStmt = NULL;
-        return OGRERR_FAILURE;
-    }
+
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
+              osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
+    hStmt = NULL;
+    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -324,7 +321,6 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
 /*      Setup explicit query statement to fetch the record we want.     */
 /* -------------------------------------------------------------------- */
     CPLString osSQL;
-    int rc;
 
     ClearStatement();
 
@@ -338,8 +334,9 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
-    rc = sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
-                          &hStmt, NULL );
+    const int rc =
+        sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
+                         &hStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

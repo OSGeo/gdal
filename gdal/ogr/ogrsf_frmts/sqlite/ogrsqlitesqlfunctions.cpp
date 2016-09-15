@@ -377,9 +377,8 @@ void OGR2SQLITE_ogr_geocode(sqlite3_context* pContext,
         osField = (const char*)sqlite3_value_text(argv[1]);
     }
 
-    int i;
     char** papszOptions = NULL;
-    for(i = 2; i < argc; i++)
+    for( int i = 2; i < argc; i++ )
     {
         if( sqlite3_value_type (argv[i]) == SQLITE_TEXT )
         {
@@ -520,9 +519,8 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
 
     const char* pszField = (const char*)sqlite3_value_text(argv[iAfterGeomIdx]);
 
-    int i;
     char** papszOptions = NULL;
-    for(i = iAfterGeomIdx + 1; i < argc; i++)
+    for( int i = iAfterGeomIdx + 1; i < argc; i++ )
     {
         if( sqlite3_value_type (argv[i]) == SQLITE_TEXT )
         {
@@ -997,7 +995,7 @@ void OGR2SQLITE_ST_Buffer(sqlite3_context* pContext,
 {
     int nSRSId = -1;
     OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
-    int bGotVal;
+    int bGotVal = FALSE;
     double dfDist = OGR2SQLITE_GetValAsDouble(argv[1], &bGotVal);
     if( poGeom != NULL && bGotVal )
         OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom->Buffer(dfDist), nSRSId);
@@ -1014,9 +1012,9 @@ static
 void OGR2SQLITE_ST_MakePoint(sqlite3_context* pContext,
                              int argc, sqlite3_value** argv)
 {
-    double dfX, dfY = 0.0;
-    int bGotVal;
-    dfX = OGR2SQLITE_GetValAsDouble(argv[0], &bGotVal);
+    double dfY = 0.0;
+    int bGotVal = FALSE;
+    const double dfX = OGR2SQLITE_GetValAsDouble(argv[0], &bGotVal);
     if( bGotVal )
         dfY = OGR2SQLITE_GetValAsDouble(argv[1], &bGotVal);
     if( !bGotVal )

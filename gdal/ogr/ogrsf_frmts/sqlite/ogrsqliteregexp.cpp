@@ -209,8 +209,7 @@ void OGRSQLiteFreeRegExpCache(void*
         return;
 
     cache_entry *cache = (cache_entry*) hRegExpCache;
-    int i;
-    for (i = 0; i < CACHE_SIZE && cache[i].s; i++)
+    for( int i = 0; i < CACHE_SIZE && cache[i].s; i++ )
     {
         CPLFree(cache[i].s);
         CPLAssert(cache[i].p);
