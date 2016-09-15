@@ -32,6 +32,15 @@
 #include "cpl_string.h"
 #include "vrtdataset.h"
 #include "cpl_multiproc.h"
+#include "cpl_spawn.h"
+
+#if !defined(WIN32)
+  #include <sys/stat.h>
+  #include <sys/types.h>
+  #ifdef HAVE_UNISTD_H
+    #include <unistd.h>
+  #endif
+#endif
 
 #include <map>
 #include <vector>
@@ -249,8 +258,13 @@ static bool LoadPythonAPI()
     {
         CPLDebug("VRT", "Current process has python symbols loaded");
     }
+    else
+    {
+        libHandle = NULL;
+    }
+
     // Then try the user provided shared object name
-    else if( pszPythonSO != NULL )
+    if( libHandle == NULL && pszPythonSO != NULL )
     {
         // coverity[tainted_string]
         libHandle = dlopen(pszPythonSO, RTLD_NOW | RTLD_GLOBAL);
@@ -269,26 +283,157 @@ static bool LoadPythonAPI()
             return false;
         }
     }
-    else
+
+    // Then try the PYTHONSO_DEFAULT if defined at compile time
+#ifdef PYTHONSO_DEFAULT
+    if( libHandle == NULL )
+    {
+        libHandle = dlopen(PYTHONSO_DEFAULT, RTLD_NOW | RTLD_GLOBAL);
+        if( !libHandle )
+        {
+            CPLDebug("VRT", "%s found", PYTHONSO_DEFAULT);
+        }
+    }
+#endif
+
+    // Then try to find the libpython that corresponds to the python binary
+    // in the PATH
+    if( libHandle == NULL )
     {
 #if defined(__MACH__) && defined(__APPLE__)
 #define SO_EXT "dylib"
 #else
 #define SO_EXT "so"
 #endif
-
-#ifdef PYTHONSO_DEFAULT
-        libHandle = dlopen(PYTHONSO_DEFAULT, RTLD_NOW | RTLD_GLOBAL);
-        if( !libHandle )
-        {
-            CPLDebug("VRT", "%s found", PYTHONSO_DEFAULT);
-        }
-#else
-        libHandle = NULL;
+        CPLString osVersion;
+        char* pszPath = getenv("PATH");
+        if( pszPath != NULL 
+#ifdef DEBUG
+           // For testing purposes
+           && CPLTestBool( CPLGetConfigOption(
+                                    "VRT_ENABLE_PYTHON_PATH", "YES") )
 #endif
+          )
+        {
+            char** papszTokens = CSLTokenizeString2(pszPath, ":", 0);
+            for( int iTry = 0; iTry < 2; ++iTry )
+            {
+                for( char** papszIter = papszTokens;
+                        papszIter != NULL && *papszIter != NULL;
+                        ++papszIter )
+                {
+                    struct stat sStat;
+                    CPLString osPythonBinary(
+                        CPLFormFilename(*papszIter, "python", NULL));
+                    if( iTry == 1 )
+                        osPythonBinary += "3";
+                    if( lstat(osPythonBinary, &sStat) != 0 )
+                        continue;
 
-        // Otherwise probe a few known objects.
-        // Note: update vrt_tutorial.dox if change
+                    CPLDebug("VRT", "Found %s", osPythonBinary.c_str());
+
+                    if( S_ISLNK(sStat.st_mode)
+#ifdef DEBUG
+                        // For testing purposes
+                        && CPLTestBool( CPLGetConfigOption(
+                                    "VRT_ENABLE_PYTHON_SYMLINK", "YES") )
+#endif
+                        )
+                    {
+                        // If this is a symlink, hopefully the resolved
+                        // name will be like "python2.7"
+                        const int nBufSize = 2048;
+                        std::vector<char> oFilename(nBufSize);
+                        char *szPointerFilename = &oFilename[0];
+                        int nBytes = static_cast<int>(
+                            readlink( osPythonBinary, szPointerFilename,
+                                      nBufSize ) );
+                        if (nBytes != -1)
+                        {
+                            szPointerFilename[MIN(nBytes, nBufSize - 1)] = 0;
+                            CPLString osFilename(
+                                            CPLGetFilename(szPointerFilename));
+                            CPLDebug("VRT", "Which is an alias to: %s",
+                                     szPointerFilename);
+                            if( STARTS_WITH(osFilename, "python") )
+                            {
+                                osVersion = osFilename.substr(strlen("python"));
+                                CPLDebug("VRT",
+                                         "Python version from binary name: %s",
+                                         osVersion.c_str());
+                            }
+                        }
+                        else
+                        {
+                            CPLDebug("VRT", "realink(%s) failed",
+                                        osPythonBinary.c_str());
+                        }
+                    }
+
+                    // Otherwise, expensive way: start the binary and ask
+                    // it for its version...
+                    if( osVersion.empty() )
+                    {
+                        const char* const apszArgv[] = {
+                                osPythonBinary.c_str(), "-c",
+                                "import sys; print(str(sys.version_info[0]) +"
+                                "'.' + str(sys.version_info[1]))",
+                                NULL };
+                        const CPLString osTmpFilename(
+                                        "/vsimem/LoadPythonAPI/out.txt");
+                        VSILFILE* fout = VSIFOpenL( osTmpFilename, "wb+");
+                        if( CPLSpawn( apszArgv, NULL, fout, FALSE ) == 0 )
+                        {
+                            char* pszStr = reinterpret_cast<char*>(
+                                VSIGetMemFileBuffer( osTmpFilename,
+                                                        NULL, FALSE ));
+                            osVersion = pszStr;
+                            if( !osVersion.empty() &&
+                                osVersion[osVersion.size() - 1] == '\n' )
+                            {
+                                osVersion.resize(osVersion.size() - 1);
+                            }
+                            CPLDebug("VRT", "Python version from binary: %s",
+                                        osVersion.c_str());
+                        }
+                        VSIFCloseL(fout);
+                        VSIUnlink(osTmpFilename);
+                    }
+                    break;
+                }
+                if( !osVersion.empty() )
+                    break;
+            }
+            CSLDestroy(papszTokens);
+        }
+
+        if( !osVersion.empty() )
+        {
+            CPLString osPythonSO("libpython");
+            osPythonSO += osVersion + "." SO_EXT;
+            CPLDebug("VRT", "Trying %s", osPythonSO.c_str());
+            libHandle = dlopen(osPythonSO, RTLD_NOW | RTLD_GLOBAL);
+            if( libHandle != NULL )
+            {
+                CPLDebug("VRT", "... success");
+            }
+            else if( osVersion[0] == '3' )
+            {
+                osPythonSO = "libpython" + osVersion + "m." SO_EXT;
+                CPLDebug("VRT", "Trying %s", osPythonSO.c_str());
+                libHandle = dlopen(osPythonSO, RTLD_NOW | RTLD_GLOBAL);
+                if( libHandle != NULL )
+                {
+                    CPLDebug("VRT", "... success");
+                }
+            }
+        }
+    }
+
+    // Otherwise probe a few known objects.
+    // Note: update vrt_tutorial.dox if change
+    if( libHandle == NULL )
+    {
         const char* const apszPythonSO[] = { "libpython2.7." SO_EXT,
                                                 "libpython2.6." SO_EXT,
                                                 "libpython3.4m." SO_EXT,
@@ -305,6 +450,7 @@ static bool LoadPythonAPI()
                 CPLDebug("VRT", "... success");
         }
     }
+
 #elif defined(WIN32)
 
     // First try in the current process in case the python symbols would
@@ -366,9 +512,120 @@ static bool LoadPythonAPI()
             return false;
         }
     }
+
+    // Then try the PYTHONSO_DEFAULT if defined at compile time
+#ifdef PYTHONSO_DEFAULT
+    if( libHandle == NULL )
+    {
+        UINT        uOldErrorMode;
+        uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
+                                        SEM_FAILCRITICALERRORS);
+
+        libHandle = LoadLibrary(PYTHONSO_DEFAULT);
+        SetErrorMode(uOldErrorMode);
+        if( !libHandle )
+        {
+            CPLDebug("VRT", "%s found", PYTHONSO_DEFAULT);
+        }
+    }
+#endif
+
+    // Then try to find the pythonXY.dll that corresponds to the python binary
+    // in the PATH
+    if( libHandle == NULL )
+    {
+        CPLString osDLLName;
+        char* pszPath = getenv("PATH");
+        if( pszPath != NULL 
+#ifdef DEBUG
+           // For testing purposes
+           && CPLTestBool( CPLGetConfigOption(
+                                    "VRT_ENABLE_PYTHON_PATH", "YES") )
+#endif
+          )
+        {
+            char** papszTokens = CSLTokenizeString2(pszPath, ";", 0);
+            for( int iTry = 0; iTry < 2; ++iTry )
+            {
+                for( char** papszIter = papszTokens;
+                        papszIter != NULL && *papszIter != NULL;
+                        ++papszIter )
+                {
+                    VSIStatBufL sStat;
+                    CPLString osPythonBinary(
+                            CPLFormFilename(*papszIter, "python.exe", NULL));
+                    if( iTry == 1 )
+                        osPythonBinary += "3";
+                    if( VSIStatL(osPythonBinary, &sStat) != 0 )
+                        continue;
+
+                    CPLDebug("VRT", "Found %s", osPythonBinary.c_str());
+
+                    // In python2.7, the dll is in the same directory as the exe
+                    char** papszFiles = VSIReadDir(*papszIter);
+                    for( char** papszFileIter = papszFiles;
+                                papszFileIter != NULL && *papszFileIter != NULL;
+                                ++papszFileIter )
+                    {
+                        if( STARTS_WITH_CI(*papszFileIter, "python") &&
+                            EQUAL(CPLGetExtension(*papszFileIter), "dll") )
+                        {
+                            osDLLName = CPLFormFilename(*papszIter,
+                                                        *papszFileIter,
+                                                        NULL);
+                            break;
+                        }
+                    }
+                    CSLDestroy(papszFiles);
+
+                    // In python3.2, the dll is in the DLLs subdirectory
+                    if( osDLLName.empty() )
+                    {
+                        CPLString osDLLsDir(
+                                CPLFormFilename(*papszIter, "DLLs", NULL));
+                        papszFiles = VSIReadDir( osDLLsDir );
+                        for( char** papszFileIter = papszFiles;
+                                    papszFileIter != NULL && *papszFileIter != NULL;
+                                    ++papszFileIter )
+                        {
+                            if( STARTS_WITH_CI(*papszFileIter, "python") &&
+                                EQUAL(CPLGetExtension(*papszFileIter), "dll") )
+                            {
+                                osDLLName = CPLFormFilename(osDLLsDir,
+                                                            *papszFileIter,
+                                                            NULL);
+                                break;
+                            }
+                        }
+                        CSLDestroy(papszFiles);
+                    }
+
+                    break;
+                }
+                if( !osDLLName.empty() )
+                    break;
+            }
+            CSLDestroy(papszTokens);
+        }
+
+        if( !osDLLName.empty() )
+        {
+            //CPLDebug("VRT", "Trying %s", osDLLName.c_str());
+            UINT        uOldErrorMode;
+            uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
+                                            SEM_FAILCRITICALERRORS);
+            libHandle = LoadLibrary(osDLLName);
+            SetErrorMode(uOldErrorMode);
+            if( libHandle != NULL )
+            {
+                CPLDebug("VRT", "%s loaded", osDLLName.c_str());
+            }
+        }
+    }
+
     // Otherwise probe a few known objects
     // Note: update vrt_tutorial.dox if change
-    else if( libHandle == NULL )
+    if( libHandle == NULL )
     {
         const char* const apszPythonSO[] = { "python27.dll",
                                             "python26.dll",
@@ -380,13 +637,7 @@ static bool LoadPythonAPI()
         UINT        uOldErrorMode;
         uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
                                         SEM_FAILCRITICALERRORS);
-#ifdef PYTHONSO_DEFAULT
-        libHandle = LoadLibrary(PYTHONSO_DEFAULT);
-        if( !libHandle )
-        {
-            CPLDebug("VRT", "%s found", PYTHONSO_DEFAULT);
-        }
-#endif
+
         for( size_t i = 0; libHandle == NULL &&
                             i < CPL_ARRAYSIZE(apszPythonSO); ++i )
         {
