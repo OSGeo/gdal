@@ -255,7 +255,33 @@ def vrtderived_7():
         return 'skip'
 
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES')
+    if gdal.GetConfigOption('CPL_DEBUG') is not None:
+        print(err)
     # Either we cannot find a Python library, either it works
+    if ret.find('Checksum=0') >= 0:
+        print('Did not manage to find a Python library')
+    elif ret.find('Checksum=50577') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(ret)
+        print(err)
+        return 'fail'
+
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config VRT_ENABLE_PYTHON_PATH NO')
+    if gdal.GetConfigOption('CPL_DEBUG') is not None:
+        print(err)
+# Either we cannot find a Python library, either it works
+    if ret.find('Checksum=0') >= 0:
+        print('Did not manage to find a Python library')
+    elif ret.find('Checksum=50577') < 0:
+        gdaltest.post_reason( 'fail' )
+        print(ret)
+        print(err)
+        return 'fail'
+
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config VRT_ENABLE_PYTHON_SYMLINK NO')
+    if gdal.GetConfigOption('CPL_DEBUG') is not None:
+        print(err)
+# Either we cannot find a Python library, either it works
     if ret.find('Checksum=0') >= 0:
         print('Did not manage to find a Python library')
     elif ret.find('Checksum=50577') < 0:
@@ -266,6 +292,8 @@ def vrtderived_7():
 
     # Invalid shared object name
     ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO foo')
+    if gdal.GetConfigOption('CPL_DEBUG') is not None:
+        print(err)
     if ret.find('Checksum=0') < 0:
         gdaltest.post_reason( 'fail' )
         print(ret)
@@ -276,6 +304,8 @@ def vrtderived_7():
     libgdal_so = gdaltest.find_lib('gdal')
     if libgdal_so is not None:
         ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO "%s"' % libgdal_so)
+        if gdal.GetConfigOption('CPL_DEBUG') is not None:
+            print(err)
         if ret.find('Checksum=0') < 0:
             gdaltest.post_reason( 'fail' )
             print(ret)
