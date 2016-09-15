@@ -97,7 +97,7 @@ long XRITHeaderParser::parseInt32(unsigned char * num)
 
 void XRITHeaderParser::parseHeader(unsigned char * buf, long totalHeaderLength)
 {
-  int remainingHeaderLength = totalHeaderLength;
+  int remainingHeaderLength = static_cast<int>(totalHeaderLength);
 
   while (remainingHeaderLength > 0)
   {
