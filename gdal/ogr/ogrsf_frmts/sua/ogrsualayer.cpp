@@ -275,26 +275,34 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             pszTO += 3;
             if (strlen(pszTO) != 16)
                 continue;
-            double dfToLat, dfToLon;
+            double dfToLat = 0.0;
+            double dfToLon = 0.0;
             if (!GetLatLon(pszTO, dfToLat, dfToLon))
                 continue;
 
-            double dfStartDistance = OGRXPlane_Distance(dfCenterLat, dfCenterLon, dfLastLat, dfLastLon);
-            double dfEndDistance = OGRXPlane_Distance(dfCenterLat, dfCenterLon, dfToLat, dfToLon);
-            double dfStartAngle = OGRXPlane_Track(dfCenterLat, dfCenterLon, dfLastLat, dfLastLon);
-            double dfEndAngle = OGRXPlane_Track(dfCenterLat, dfCenterLon, dfToLat, dfToLon);
-            if (bClockWise && dfEndAngle < dfStartAngle)
+            const double dfStartDistance =
+                OGRXPlane_Distance(dfCenterLat, dfCenterLon, dfLastLat, dfLastLon);
+            const double dfEndDistance =
+                OGRXPlane_Distance(dfCenterLat, dfCenterLon, dfToLat, dfToLon);
+            const double dfStartAngle =
+                OGRXPlane_Track(dfCenterLat, dfCenterLon, dfLastLat, dfLastLon);
+            double dfEndAngle =
+                OGRXPlane_Track(dfCenterLat, dfCenterLon, dfToLat, dfToLon);
+
+            if( bClockWise && dfEndAngle < dfStartAngle )
                 dfEndAngle += 360;
             else if (!bClockWise && dfStartAngle < dfEndAngle)
                 dfEndAngle -= 360;
 
             int nSign = (bClockWise) ? 1 : -1;
-            double dfAngle;
-            for(dfAngle = dfStartAngle; (dfAngle - dfEndAngle) * nSign < 0; dfAngle += nSign)
+            for( double dfAngle = dfStartAngle;
+                 (dfAngle - dfEndAngle) * nSign < 0;
+                 dfAngle += nSign )
             {
-                double dfLat, dfLon;
-                double pct = (dfAngle - dfStartAngle) / (dfEndAngle - dfStartAngle);
-                double dfDist = dfStartDistance * (1-pct) + dfEndDistance * pct;
+                const double pct = (dfAngle - dfStartAngle) / (dfEndAngle - dfStartAngle);
+                const double dfDist = dfStartDistance * (1-pct) + dfEndDistance * pct;
+                double dfLat = 0.0;
+                double dfLon = 0.0;
                 OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon, dfDist, dfAngle, &dfLat, &dfLon);
                 oLR.addPoint(dfLon, dfLat);
             }
@@ -320,9 +328,9 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             if (!GetLatLon(pszCENTRE, dfCenterLat, dfCenterLon))
                 continue;
 
-            double dfAngle;
-            double dfLat, dfLon;
-            for(dfAngle = 0; dfAngle < 360; dfAngle += 1)
+            double dfLat = 0.0;
+            double dfLon = 0.0;
+            for( double dfAngle = 0; dfAngle < 360; dfAngle += 1 )
             {
                 OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon, dfRADIUS, dfAngle, &dfLat, &dfLon);
                 oLR.addPoint(dfLon, dfLat);
