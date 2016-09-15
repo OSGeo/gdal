@@ -125,8 +125,7 @@ OGRSVGLayer::~OGRSVGLayer()
 
     CPLFree(pszSubElementValue);
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i = nFeatureTabIndex;i<nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
 
@@ -184,8 +183,7 @@ void OGRSVGLayer::ResetReading()
     nSubElementValueLen = 0;
     iCurrentField = -1;
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i = nFeatureTabIndex; i < nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
@@ -227,15 +225,15 @@ static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
     char szBuffer[32];
     int iBuffer = 0;
     const char* pszIter = pszD;
-    char ch;
     int iNumber = 0;
-    double dfPrevNumber = 0;
+    double dfPrevNumber = 0.0;
     int bRelativeLineto = FALSE;
-    double dfX = 0, dfY = 0;
+    double dfX = 0.0;
+    double dfY = 0.0;
     int nPointCount = 0;
     while( true )
     {
-        ch = *(pszIter ++);
+        const char ch = *(pszIter ++);
 
         if (ch == 'M' || ch == 'm')
         {
@@ -318,8 +316,6 @@ static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
 
 void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 {
-    int i;
-
     if (bStopParsing) return;
 
     nWithoutEventCounter = 0;
@@ -328,18 +324,20 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         strcmp(pszName, "circle") == 0 &&
         strcmp(OGRSVGGetClass(ppszAttr), "point") == 0)
     {
-        int bHasFoundX = FALSE, bHasFoundY = FALSE;
-        double dfX = 0, dfY = 0;
-        for (i = 0; ppszAttr[i]; i += 2)
+        bool bHasFoundX = false;
+        bool bHasFoundY = false;
+        double dfX = 0.0;
+        double dfY = 0.0;
+        for( int i = 0; ppszAttr[i]; i += 2 )
         {
             if (strcmp(ppszAttr[i], "cx") == 0)
             {
-                bHasFoundX = TRUE;
+                bHasFoundX = true;
                 dfX = CPLAtof(ppszAttr[i + 1]);
             }
             else if (strcmp(ppszAttr[i], "cy") == 0)
             {
-                bHasFoundY = TRUE;
+                bHasFoundY = true;
                 /* Cloudmade --> negate y */
                 dfY = - CPLAtof(ppszAttr[i + 1]);
             }
@@ -365,7 +363,7 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
              strcmp(OGRSVGGetClass(ppszAttr), "line") == 0)
     {
         const char* pszD = NULL;
-        for (i = 0; ppszAttr[i]; i += 2)
+        for( int i = 0; ppszAttr[i]; i += 2 )
         {
             if (strcmp(ppszAttr[i], "d") == 0)
             {
@@ -395,7 +393,7 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
              strcmp(OGRSVGGetClass(ppszAttr), "polygon") == 0)
     {
         const char* pszD = NULL;
-        for (i = 0; ppszAttr[i]; i += 2)
+        for( int i = 0; ppszAttr[i]; i += 2 )
         {
             if (strcmp(ppszAttr[i], "d") == 0)
             {
@@ -559,7 +557,7 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
     nWithoutEventCounter = 0;
     iCurrentField = -1;
 
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -668,7 +666,7 @@ void OGRSVGLayer::LoadSchema()
     bStopParsing = FALSE;
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;

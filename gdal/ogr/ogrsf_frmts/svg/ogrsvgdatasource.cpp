@@ -87,9 +87,8 @@ void OGRSVGDataSource::startElementValidateCbk(const char *pszNameIn,
     {
         if (strcmp(pszNameIn, "svg") == 0)
         {
-            int i;
             eValidity = SVG_VALIDITY_VALID;
-            for(i=0; ppszAttr[i] != NULL; i+= 2)
+            for( int i = 0; ppszAttr[i] != NULL; i += 2 )
             {
                 if (strcmp(ppszAttr[i], "xmlns:cm") == 0 &&
                     strcmp(ppszAttr[i+1], "http://cloudmade.com/") == 0)
@@ -172,8 +171,8 @@ int OGRSVGDataSource::Open( const char * pszFilename )
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
 
     char aBuf[BUFSIZ];
-    int nDone;
-    unsigned int nLen;
+    int nDone = 0;
+    unsigned int nLen = 0;
     int nCount = 0;
 
     /* Begin to parse the file and look for the <svg> element */
