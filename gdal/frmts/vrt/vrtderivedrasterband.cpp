@@ -89,6 +89,7 @@ static void (*PyErr_Fetch)(PyObject **poPyType, PyObject **poPyValue,
                            PyObject **poPyTraceback) = NULL;
 static void (*PyErr_Clear)(void) = NULL;
 static const char* (*PyString_AsString)(PyObject*) = NULL;
+static const char* (*Py_GetVersion)(void) = NULL;
 
 typedef int PyGILState_STATE;
 static PyGILState_STATE (*PyGILState_Ensure)(void) = NULL;
@@ -286,7 +287,8 @@ static bool LoadPythonAPI()
         libHandle = NULL;
 #endif
 
-        // Otherwise probe a few known objects
+        // Otherwise probe a few known objects.
+        // Note: update vrt_tutorial.dox if change
         const char* const apszPythonSO[] = { "libpython2.7." SO_EXT,
                                                 "libpython2.6." SO_EXT,
                                                 "libpython3.4m." SO_EXT,
@@ -365,6 +367,7 @@ static bool LoadPythonAPI()
         }
     }
     // Otherwise probe a few known objects
+    // Note: update vrt_tutorial.dox if change
     else if( libHandle == NULL )
     {
         const char* const apszPythonSO[] = { "python27.dll",
@@ -456,6 +459,12 @@ static bool LoadPythonAPI()
     LOAD(libHandle, PyGILState_Release);
     LOAD(libHandle, PyErr_Fetch);
     LOAD(libHandle, PyErr_Clear);
+    LOAD(libHandle, Py_GetVersion);
+
+    CPLString osPythonVersion(Py_GetVersion());
+    osPythonVersion.replaceAll("\r\n", ' ');
+    osPythonVersion.replaceAll('\n', ' ');
+    CPLDebug("VRT", "Python version used: %s", osPythonVersion.c_str());
 
 #else // LOAD_NOCHECK_WITH_NAME
     CPLError(CE_Failure, CPLE_AppDefined,
