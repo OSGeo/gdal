@@ -4847,6 +4847,9 @@ SWIGINTERN int GDALRasterBandShadow_GetBand(GDALRasterBandShadow *self){
 SWIGINTERN void GDALRasterBandShadow_GetBlockSize(GDALRasterBandShadow *self,int *pnBlockXSize,int *pnBlockYSize){
       GDALGetBlockSize(self, pnBlockXSize, pnBlockYSize);
   }
+SWIGINTERN void GDALRasterBandShadow_GetActualBlockSize(GDALRasterBandShadow *self,int nXBlockOff,int nYBlockOff,int *pnxvalid,int *pnyvalid,int *pisvalid){
+    *pisvalid = (GDALGetActualBlockSize(self, nXBlockOff, nYBlockOff, pnxvalid, pnyvalid) == CE_None);
+  }
 SWIGINTERN GDALColorInterp GDALRasterBandShadow_GetColorInterpretation(GDALRasterBandShadow *self){
     return GDALGetRasterColorInterpretation( self );
   }
@@ -16844,6 +16847,89 @@ SWIGINTERN PyObject *_wrap_Band_GetBlockSize(PyObject *SWIGUNUSEDPARM(self), PyO
   } else {
     int new_flags = SWIG_IsNewObj(res3) ? (SWIG_POINTER_OWN |  0 ) :  0 ;
     resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg3), SWIGTYPE_p_int, new_flags));
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Band_GetActualBlockSize(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  int *arg4 = (int *) 0 ;
+  int *arg5 = (int *) 0 ;
+  int *arg6 = (int *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int nxvalid4 = 0 ;
+  int nyvalid4 = 0 ;
+  int isvalid4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  
+  {
+    /* %typemap(in) (int *pnxvalid, int *pnyvalid, int* pisvalid) */
+    arg4 = &nxvalid4;
+    arg5 = &nyvalid4;
+    arg6 = &isvalid4;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Band_GetActualBlockSize",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetActualBlockSize" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_GetActualBlockSize" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_GetActualBlockSize" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRasterBandShadow_GetActualBlockSize(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout) (int *pnxvalid, int *pnyvalid, int* pisvalid)  */
+    PyObject *r;
+    if ( !*arg6 ) {
+      Py_INCREF(Py_None);
+      r = Py_None;
+    }
+    else {
+      r = PyTuple_New( 2 );
+      PyTuple_SetItem( r, 0, PyLong_FromLong(*arg4) );
+      PyTuple_SetItem( r, 1, PyLong_FromLong(*arg5) );
+    }
+    resultobj = t_output_helper(resultobj,r);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -30881,6 +30967,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_GetDataset", _wrap_Band_GetDataset, METH_VARARGS, (char *)"Band_GetDataset(Band self) -> Dataset"},
 	 { (char *)"Band_GetBand", _wrap_Band_GetBand, METH_VARARGS, (char *)"Band_GetBand(Band self) -> int"},
 	 { (char *)"Band_GetBlockSize", _wrap_Band_GetBlockSize, METH_VARARGS, (char *)"Band_GetBlockSize(Band self)"},
+	 { (char *)"Band_GetActualBlockSize", _wrap_Band_GetActualBlockSize, METH_VARARGS, (char *)"Band_GetActualBlockSize(Band self, int nXBlockOff, int nYBlockOff)"},
 	 { (char *)"Band_GetColorInterpretation", _wrap_Band_GetColorInterpretation, METH_VARARGS, (char *)"Band_GetColorInterpretation(Band self) -> GDALColorInterp"},
 	 { (char *)"Band_GetRasterColorInterpretation", _wrap_Band_GetRasterColorInterpretation, METH_VARARGS, (char *)"Band_GetRasterColorInterpretation(Band self) -> GDALColorInterp"},
 	 { (char *)"Band_SetColorInterpretation", _wrap_Band_SetColorInterpretation, METH_VARARGS, (char *)"Band_SetColorInterpretation(Band self, GDALColorInterp val) -> CPLErr"},

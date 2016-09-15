@@ -717,6 +717,10 @@ GDALDataType CPL_DLL CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH );
 void CPL_DLL CPL_STDCALL
 GDALGetBlockSize( GDALRasterBandH, int * pnXSize, int * pnYSize );
 
+CPLErr CPL_DLL CPL_STDCALL
+GDALGetActualBlockSize( GDALRasterBandH, int nXBlockOff, int nYBlockOff,
+                        int *pnXValid, int *pnYValid );
+
 CPLErr CPL_DLL CPL_STDCALL GDALRasterAdviseRead( GDALRasterBandH hRB,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     int nBXSize, int nBYSize, GDALDataType eBDataType, char **papszOptions );

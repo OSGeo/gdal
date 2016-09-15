@@ -490,15 +490,7 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
              // Compute the portion of the block that is valid
              // for partial edge blocks.
-             if( (iXBlock+1) * nXBlockSize > poBand->GetXSize() )
-                 nXValid = poBand->GetXSize() - iXBlock * nXBlockSize;
-             else
-                 nXValid = nXBlockSize;
-
-             if( (iYBlock+1) * nYBlockSize > poBand->GetYSize() )
-                 nYValid = poBand->GetYSize() - iYBlock * nYBlockSize;
-             else
-                 nYValid = nYBlockSize;
+             poBand->GetActualBlockSize(iXBlock, iYBlock, &nXValid, &nYValid)
 
              // Collect the histogram counts.
              for( int iY = 0; iY < nYValid; iY++ )
@@ -732,6 +724,83 @@ CPLErr CPL_STDCALL GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
     return( poBand->WriteBlock( nXOff, nYOff, pData ) );
 }
 
+/************************************************************************/
+/*                         GetActualBlockSize()                         */
+/************************************************************************/
+/**
+* \brief Fetch the actual block size for a given block offset.
+*
+* Handles partial blocks at the edges of the raster and returns the true
+* number of pixels
+*
+* @param nXBlockOff the horizontal block offset for which to calculate the number of 
+* valid pixels, with zero indicating the left most block, 1 the next block and so forth.
+*
+* @param nYBlockOff the vertical block offset, with zero indicating
+* the left most block, 1 the next block and so forth.
+*
+* @param pnXValid pointer to an integer in which the number of valid pixels in the x 
+* direction will be stored
+*
+* @param pnYValid pointer to an integer in which the number of valid pixels in the y 
+* direction will be stored
+*
+* @return CE_None if the input parameter are valid, CE_Failure otherwise
+* 
+* @since GDAL 2.2
+*/
+CPLErr GDALRasterBand::GetActualBlockSize(int nXBlockOff, int nYBlockOff,
+                                          int *pnXValid, int *pnYValid)
+{
+    if( nXBlockOff < 0 || nBlockXSize == 0 ||
+        nXBlockOff >= nRasterXSize / nBlockXSize + ((nRasterXSize % nBlockXSize) ? 1 : 0) ||
+        nYBlockOff < 0 || nBlockYSize == 0 ||
+        nYBlockOff >= nRasterYSize / nBlockYSize + ((nRasterYSize % nBlockYSize) ? 1 : 0) )
+    {
+        return CE_Failure;
+    }
+
+    int nXPixelOff = nXBlockOff * nBlockXSize;
+    int nYPixelOff = nYBlockOff * nBlockYSize;
+
+    *pnXValid = nBlockXSize;
+    *pnYValid = nBlockYSize;
+
+    if( nXPixelOff + nBlockXSize >= nRasterXSize)
+    {
+        *pnXValid = nRasterXSize - nXPixelOff;
+    }
+
+    if( nYPixelOff + nBlockYSize >= nRasterYSize)
+    {
+        *pnYValid = nRasterYSize - nYPixelOff;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           GDALGetActualBlockSize()                   */
+/************************************************************************/
+
+/**
+ * \brief Retrieve the actual block size for a given block offset.
+ *
+ * @see GDALRasterBand::GetActualBlockSize()
+ */
+
+CPLErr CPL_STDCALL GDALGetActualBlockSize( GDALRasterBandH hBand,
+                                           int nXBlockOff,
+                                           int nYBlockOff,
+                                           int *pnXValid,
+                                           int *pnYValid )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALGetActualBlockSize", CE_Failure );
+
+    GDALRasterBand *poBand = static_cast<GDALRasterBand *>( hBand );
+    return( poBand->GetActualBlockSize( nXBlockOff, nYBlockOff, pnXValid, pnYValid ) );
+}
 
 /************************************************************************/
 /*                         GetRasterDataType()                          */

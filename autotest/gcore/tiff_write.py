@@ -7204,6 +7204,44 @@ def tiff_write_157():
     return 'success'
 
 ###############################################################################
+# Test GetActualBlockSize() (perhaps not the best place for that...)
+
+def tiff_write_158():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_158.tif', 20, 40, 1, options = ['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32'])
+    (w, h) = ds.GetRasterBand(1).GetActualBlockSize(0,0)
+    if (w, h) != (16,32):
+        gdaltest.post_reason('failure')
+        print(w, h)
+        return 'fail'
+    (w, h) = ds.GetRasterBand(1).GetActualBlockSize(1,1)
+    if (w, h) != (4,8):
+        gdaltest.post_reason('failure')
+        print(w, h)
+        return 'fail'
+    res = ds.GetRasterBand(1).GetActualBlockSize(2,0)
+    if res is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    res = ds.GetRasterBand(1).GetActualBlockSize(0,2)
+    if res is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    res = ds.GetRasterBand(1).GetActualBlockSize(-1,0)
+    if res is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    res = ds.GetRasterBand(1).GetActualBlockSize(0,-1)
+    if res is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_158.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7390,10 +7428,11 @@ gdaltest_list = [
     tiff_write_155,
     tiff_write_156,
     tiff_write_157,
+    tiff_write_158,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_123, tiff_write_128 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_158 ]
 
 if __name__ == '__main__':
 
