@@ -80,8 +80,24 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 {
     // First check if we have to do any work.
     size_t nLen = strlen(pszFilename);
-    if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
-          (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
+    if( nLen == 1 && pszFilename[0] == '.' )
+    {
+        char* pszCurrentDir = CPLGetCurrentDir();
+        if( pszCurrentDir )
+        {
+            size_t nLen2 = strlen(pszCurrentDir);
+            bool bOK = (nLen2 >= 4 && EQUAL(pszCurrentDir + nLen2 - 4, ".gdb"));
+            CPLFree(pszCurrentDir);
+            if( !bOK )
+                return NULL;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+    else if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
+               (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
         return NULL;
 
     long hr;

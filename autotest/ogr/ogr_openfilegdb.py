@@ -1484,6 +1484,19 @@ def ogr_openfilegdb_18():
     return 'success'
 
 ###############################################################################
+# Test opening '.'
+
+def ogr_openfilegdb_19():
+
+    os.chdir('data/curves.gdb')
+    ds = ogr.Open('.')
+    os.chdir('../..')
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_openfilegdb_cleanup():
@@ -1532,6 +1545,7 @@ gdaltest_list = [
     ogr_openfilegdb_16,
     ogr_openfilegdb_17,
     ogr_openfilegdb_18,
+    ogr_openfilegdb_19,
     ogr_openfilegdb_cleanup,
     ]
 
