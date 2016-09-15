@@ -265,8 +265,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         {
             pszLine += 3;
 
-            double dfLat;
-            double dfLon;
+            double dfLat = 0.0;
+            double dfLon = 0.0;
             if (!OGROpenAirGetLatLon(pszLine, dfLat, dfLon))
                 continue;
 
@@ -297,8 +297,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 const double dfStartDistance = dfRadius;
                 const double dfEndDistance = dfRadius;
                 const int nSign = (bClockWise) ? 1 : -1;
-                double dfLat;
-                double dfLon;
+                double dfLat = 0.0;
+                double dfLon = 0.0;
                 for(double dfAngle = dfStartAngle;
                     (dfAngle - dfEndAngle) * nSign < 0;
                     dfAngle += nSign)
@@ -328,10 +328,10 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             char* pszStar = strchr(const_cast<char *>(pszLine), '*');
             if (pszStar) *pszStar = 0;
             char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
-            double dfFirstLat;
-            double dfFirstLon;
-            double dfSecondLat;
-            double dfSecondLon;
+            double dfFirstLat = 0.0;
+            double dfFirstLon = 0.0;
+            double dfSecondLat = 0.0;
+            double dfSecondLon = 0.0;
             if (bHasCenter && CSLCount(papszTokens) == 2 &&
                 OGROpenAirGetLatLon(papszTokens[0], dfFirstLat, dfFirstLon) &&
                 OGROpenAirGetLatLon(papszTokens[1], dfSecondLat, dfSecondLon))
@@ -355,8 +355,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                     (dfAngle - dfEndAngle) * nSign < 0;
                     dfAngle += nSign)
                 {
-                    double dfLat;
-                    double dfLon;
+                    double dfLat = 0.0;
+                    double dfLon = 0.0;
                     const double pct = (dfAngle - dfStartAngle) /
                         (dfEndAngle - dfStartAngle);
                     const double dfDist = dfStartDistance * (1-pct) +
@@ -388,9 +388,9 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 pszLine += 3;
 
                 const double dfRADIUS = CPLAtof(pszLine) * 1852;
-                double dfLat;
-                double dfLon;
-                for(double dfAngle = 0; dfAngle < 360; dfAngle += 1)
+                double dfLat = 0.0;
+                double dfLon = 0.0;
+                for( double dfAngle = 0; dfAngle < 360; dfAngle += 1.0 )
                 {
                     OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon,
                                              dfRADIUS, dfAngle, &dfLat, &dfLon);

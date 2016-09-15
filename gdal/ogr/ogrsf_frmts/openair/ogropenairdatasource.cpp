@@ -127,7 +127,7 @@ bool OGROpenAirGetLatLon( const char* pszStr, double& dfLat, double& dfLon )
     double dfDegree = 0;
     double dfMinute = 0;
     double dfSecond = 0;
-    char c;
+    char c = '\0';
     bool bHasLat = false;
     bool bHasLon = false;
     while((c = *pszStr) != 0)
