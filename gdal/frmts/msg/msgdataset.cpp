@@ -538,7 +538,7 @@ CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
           unsigned short chunk_bpp = xhp.nrBitsPerPixel();
           unsigned short chunk_width = xhp.nrColumns();
           unsigned __int8 NR = (unsigned __int8)chunk_bpp;
-          unsigned int nb_ibytes = xhp.dataSize();
+          unsigned int nb_ibytes = static_cast<unsigned int>(xhp.dataSize());
           int iShift = 0;
           bool fSplitStrip = false; // in the split strip the "shift" only happens before the split "row"
           int iSplitRow = 0;

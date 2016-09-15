@@ -83,9 +83,9 @@ std::string MSGCommand::sTrimSpaces(std::string const& str)
 std::string MSGCommand::sNextTerm(std::string const& str, int & iPos)
 {
   std::string::size_type iOldPos = iPos;
-  iPos = str.find(',', iOldPos);
+  iPos = static_cast<int>(str.find(',', iOldPos));
   // FIXME: the int vs size_t is messy !
-  iPos = min(static_cast<size_t>(iPos), str.find(')', iOldPos));
+  iPos = static_cast<int>(min(static_cast<size_t>(iPos), str.find(')', iOldPos)));
   if (static_cast<size_t>(iPos) > iOldPos)
   {
     std::string sRet = str.substr(iOldPos, iPos - iOldPos);
@@ -214,7 +214,7 @@ std::string MSGCommand::parse(std::string const& command_line)
   }
   else if (command_line.find("H-000-MSG") != std::string::npos)
   {
-    int iPos = command_line.find("H-000-MSG");
+    const size_t iPos = command_line.find("H-000-MSG");
     if ((command_line.length() - iPos) == 61)
     {
       fUseTimestampFolder = false;
