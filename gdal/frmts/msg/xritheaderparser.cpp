@@ -126,10 +126,10 @@ void XRITHeaderParser::parseHeader(unsigned char * buf, long totalHeaderLength)
         break;
       case 2: // image navigation
         {
-          long cfac = parseInt32(&buf[35]); // column scaling factor
+          /*long cfac =*/ parseInt32(&buf[35]); // column scaling factor
           long lfac = parseInt32(&buf[39]); // line scaling factor
-          long coff = parseInt32(&buf[43]); // column offset
-          long loff = parseInt32(&buf[47]); // line offset
+          /*long coff =*/ parseInt32(&buf[43]); // column offset
+          /*long loff =*/ parseInt32(&buf[47]); // line offset
           if (lfac >= 0)
             m_scanNorth = true;
           else

@@ -84,8 +84,9 @@ std::string MSGCommand::sNextTerm(std::string const& str, int & iPos)
 {
   std::string::size_type iOldPos = iPos;
   iPos = str.find(',', iOldPos);
-  iPos = min(iPos, str.find(')', iOldPos));
-  if (iPos > iOldPos)
+  // FIXME: the int vs size_t is messy !
+  iPos = min(static_cast<size_t>(iPos), str.find(')', iOldPos));
+  if (static_cast<size_t>(iPos) > iOldPos)
   {
     std::string sRet = str.substr(iOldPos, iPos - iOldPos);
     if (str[iPos] != ')')
@@ -96,6 +97,7 @@ std::string MSGCommand::sNextTerm(std::string const& str, int & iPos)
     return "";
 }
 
+static
 bool fTimeStampCorrect(std::string const& sTimeStamp)
 {
   if (sTimeStamp.length() != 12)
@@ -135,38 +137,38 @@ std::string MSGCommand::parse(std::string const& command_line)
       {
         try // for eventual exceptions
         {
-          while ((iPos < command_line.length()) && (command_line[iPos] == ' '))
+          while ((iPos < static_cast<int>(command_line.length())) && (command_line[iPos] == ' '))
             ++iPos;
           if (command_line[iPos] == '(')
           {
             ++iPos; // skip the ( bracket
             int i = 1;
-            std::string sChannel = sNextTerm(command_line, iPos);
+            std::string l_sChannel = sNextTerm(command_line, iPos);
             while (command_line[iPos] != ')')
             {
-              int iChan = atoi(sChannel.c_str());
+              int iChan = atoi(l_sChannel.c_str());
               if (iChan >= 1 && iChan <= 12)
                 channel[iChan - 1] = i;
               else
                 sErr = "Channel numbers must be between 1 and 12";
-              sChannel = sNextTerm(command_line, iPos);
+              l_sChannel = sNextTerm(command_line, iPos);
               ++i;
             }
-            int iChan = atoi(sChannel.c_str());
+            int iChan = atoi(l_sChannel.c_str());
             if (iChan >= 1 && iChan <= 12)
               channel[iChan - 1] = i;
             else
               sErr = "Channel numbers must be between 1 and 12";
             ++iPos; // skip the ) bracket
-            while ((iPos < command_line.length()) && (command_line[iPos] == ' '))
+            while ((iPos < static_cast<int>(command_line.length())) && (command_line[iPos] == ' '))
               ++iPos;
             if (command_line[iPos] == ',')
               ++iPos;
           }
           else
           {
-            std::string sChannel = sNextTerm(command_line, iPos);
-            int iChan = atoi(sChannel.c_str());
+            std::string l_sChannel = sNextTerm(command_line, iPos);
+            int iChan = atoi(l_sChannel.c_str());
             if (iChan >= 1 && iChan <= 12)
               channel[iChan - 1] = 1;
             else
@@ -187,7 +189,7 @@ std::string MSGCommand::parse(std::string const& command_line)
           iStep = atoi(sStep.c_str());
           if (iStep < 1)
             iStep = 1;
-          while ((iPos < command_line.length()) && (command_line[iPos] == ' '))
+          while ((iPos < static_cast<int>(command_line.length())) && (command_line[iPos] == ' '))
             ++iPos;
           // additional correctness checks
           if (command_line[iPos] != ')')
@@ -210,7 +212,7 @@ std::string MSGCommand::parse(std::string const& command_line)
     else
       sErr = "A folder must be filled in indicating the root of the image data folders.";
   }
-  else if (command_line.find("H-000-MSG") >= 0)
+  else if (command_line.find("H-000-MSG") != std::string::npos)
   {
     int iPos = command_line.find("H-000-MSG");
     if ((command_line.length() - iPos) == 61)
