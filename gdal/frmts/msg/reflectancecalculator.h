@@ -44,9 +44,9 @@ public:
     double rGetReflectance(double rRadiance, double rLat, double rLon) const;
 private:
   double rZenithAngle(double phi, double rDeclin, double rHourAngle) const;
-    const double rDeclination() const;
+  double rDeclination() const;
   double rHourAngle(double lam) const;
-  const double rSunDistance() const;
+  double rSunDistance() const;
   int iDaysInYear(int iYear) const;
     int iDaysInMonth(int iMonth, int iYear) const;
 
