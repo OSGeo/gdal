@@ -123,6 +123,19 @@ static GDALIdentifyEnum OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOp
     }
 #endif
 
+    else if( EQUAL(pszFilename, ".") )
+    {
+        GDALIdentifyEnum eRet = GDAL_IDENTIFY_FALSE;
+        char* pszCurrentDir = CPLGetCurrentDir();
+        if( pszCurrentDir )
+        {
+            const char* pszTmp = pszCurrentDir;
+            eRet = OGROpenFileGDBDriverIdentifyInternal(poOpenInfo, pszTmp);
+            CPLFree(pszCurrentDir);
+        }
+        return eRet;
+    }
+
     else
     {
         return GDAL_IDENTIFY_FALSE;
