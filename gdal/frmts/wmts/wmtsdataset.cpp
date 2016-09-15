@@ -44,7 +44,7 @@ extern "C" void GDALRegister_WMTS();
 /* Set in stone by WMTS spec. In pixel/meter */
 #define WMTS_PITCH                      0.00028
 
-#define WMTS_METERS_FOR_ONE_DEG         (6378137 * 2 * M_PI / 360)
+#define WMTS_WGS84_DEG_PER_METER    (180 / M_PI / SRS_WGS84_SEMIMAJOR)
 
 CPL_CVSID("$Id$");
 
@@ -700,7 +700,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             oTM.dfScaleDenominator = CPLAtof(pszScaleDenominator);
             oTM.dfPixelSize = oTM.dfScaleDenominator * WMTS_PITCH;
             if( oTMS.oSRS.IsGeographic() )
-                oTM.dfPixelSize /= WMTS_METERS_FOR_ONE_DEG;
+                oTM.dfPixelSize *= WMTS_WGS84_DEG_PER_METER;
             double dfVal1 = CPLAtof(pszTopLeftCorner);
             double dfVal2 = CPLAtof(strchr(pszTopLeftCorner, ' ')+1);
             if( !bSwap ||
