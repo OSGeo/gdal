@@ -155,7 +155,7 @@ int OGRPDSDataSource::LoadTable( const char* pszFilename,
                                  CPLString osTableID )
 {
     CPLString osTableFilename;
-    int nStartBytes;
+    int nStartBytes = 0;
 
     CPLString osTableLink = "^";
     osTableLink += osTableID;
