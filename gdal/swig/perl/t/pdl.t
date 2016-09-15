@@ -1,9 +1,14 @@
 use strict;
 use warnings;
 use Scalar::Util 'blessed';
-use Test::More tests => 4;
+use Test::More tests => 5;
 BEGIN { use_ok('Geo::GDAL') };
-use PDL;
+
+eval 'require PDL';
+SKIP: {
+      skip "No PDL", 4 if $@;
+
+use_ok('PDL');
 
 my $band = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 23, Height => 45)->Band();
 my $t = $band->ReadTile;
@@ -24,3 +29,5 @@ $band->Piddle($pdl,1,2);
 $t = $band->ReadTile;
 print "$t->[5][3]\n";
 ok($t->[5][3] == 2, "Data from piddle into band.");
+
+}
