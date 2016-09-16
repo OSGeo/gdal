@@ -1104,6 +1104,16 @@ void OGR_G_SetMeasured( OGRGeometryH hGeom, int bIsMeasured )
  *
  * \brief Returns TRUE if two geometries are equivalent.
  *
+ * This operation implements the SQL/MM ST_OrderingEquals() operation.
+ *
+ * The comparison is done in a structural way, that is to say that the geometry
+ * types must be identical, as well as the number and ordering of sub-geometries
+ * and vertices.
+ * Or equivalently, two geometries are considered equal by this method if their
+ * WKT/WKB representation is equal.
+ * Note: this must be distinguished for equality in a spatial way (which is
+ * the purpose of the ST_Equals() operation).
+ *
  * This method is the same as the C function OGR_G_Equals().
  *
  * @return TRUE if equivalent or FALSE otherwise.
@@ -1125,6 +1135,16 @@ int OGRGeometry::Equal( OGRGeometry *poOtherGeom ) const
 
 /**
  * \brief Returns TRUE if two geometries are equivalent.
+ *
+ * This operation implements the SQL/MM ST_OrderingEquals() operation.
+ *
+ * The comparison is done in a structural way, that is to say that the geometry
+ * types must be identical, as well as the number and ordering of sub-geometries
+ * and vertices.
+ * Or equivalently, two geometries are considered equal by this method if their
+ * WKT/WKB representation is equal.
+ * Note: this must be distinguished for equality in a spatial way (which is
+ * the purpose of the ST_Equals() operation).
  *
  * This function is the same as the CPP method OGRGeometry::Equals() method.
  *
