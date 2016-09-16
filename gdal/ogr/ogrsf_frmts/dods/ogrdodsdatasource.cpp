@@ -122,10 +122,11 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     if( CPLGetConfigOption( "DODS_CONF", NULL ) != NULL
         && getenv("DODS_CONF") == NULL )
     {
-        static char szDODS_CONF[1000];
+        const int knBufSize = 1000;
+        static char szDODS_CONF[knBufSize];
 
-        sprintf( szDODS_CONF, "DODS_CONF=%.980s",
-                 CPLGetConfigOption( "DODS_CONF", "" ) );
+        snprintf( szDODS_CONF, knBufSize, "DODS_CONF=%.980s",
+                  CPLGetConfigOption( "DODS_CONF", "" ) );
         putenv( szDODS_CONF );
     }
 
@@ -273,10 +274,7 @@ void OGRDODSDataSource::AddLayer( OGRDODSLayer *poLayer )
 int OGRDODSDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
-    else
-        return FALSE;
+    return EQUAL(pszCap,ODsCCreateLayer);
 }
 
 /************************************************************************/

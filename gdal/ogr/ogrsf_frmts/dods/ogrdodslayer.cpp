@@ -46,12 +46,12 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
     pszFIDColumn (NULL),
     pszTarget(CPLStrdup( pszTargetIn )),
     papoFields(NULL),
-    bDataLoaded(FALSE),
+    bDataLoaded(false),
     poConnection(NULL),
     poDataDDS(new DataDDS( poDSIn->poBTF )),
     poTargetVar(NULL),
     poOGRLayerInfo(poOGRLayerInfoIn),
-    bKnowExtent(FALSE)
+    bKnowExtent(false)
 {
 /* ==================================================================== */
 /*      Harvest some metadata if available.                             */
@@ -83,7 +83,7 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
         AttrTable *poLayerExt=poOGRLayerInfo->find_container("layer_extents");
         if( poLayerExt != NULL )
         {
-            bKnowExtent = TRUE;
+            bKnowExtent = true;
             sExtent.MinX = CPLAtof(poLayerExt->get_attr("x_min").c_str());
             sExtent.MaxX = CPLAtof(poLayerExt->get_attr("x_max").c_str());
             sExtent.MinY = CPLAtof(poLayerExt->get_attr("y_min").c_str());
@@ -197,13 +197,13 @@ OGRSpatialReference *OGRDODSLayer::GetSpatialRef()
 /*                           ProvideDataDDS()                           */
 /************************************************************************/
 
-int OGRDODSLayer::ProvideDataDDS()
+bool OGRDODSLayer::ProvideDataDDS()
 
 {
     if( bDataLoaded )
         return poTargetVar != NULL;
 
-    bDataLoaded = TRUE;
+    bDataLoaded = true;
     try
     {
         poConnection = new AISConnect( poDS->oBaseURL );
@@ -220,7 +220,7 @@ int OGRDODSLayer::ProvideDataDDS()
         CPLError( CE_Failure, CPLE_AppDefined,
                   "DataDDS request failed:\n%s",
                   e.get_error_message().c_str() );
-        return FALSE;
+        return false;
     }
 
     poTargetVar = poDataDDS->var( pszTarget );
@@ -235,8 +235,6 @@ int OGRDODSLayer::ProvideDataDDS()
 OGRErr OGRDODSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 {
-    OGRErr eErr;
-
     if( bKnowExtent )
     {
         *psExtent = sExtent;
@@ -246,10 +244,10 @@ OGRErr OGRDODSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     if( !bForce )
         return OGRERR_FAILURE;
 
-    eErr = OGRLayer::GetExtent( &sExtent, bForce );
+    const OGRErr eErr = OGRLayer::GetExtent( &sExtent, bForce );
     if( eErr == OGRERR_NONE )
     {
-        bKnowExtent = TRUE;
+        bKnowExtent = true;
         *psExtent = sExtent;
     }
 
