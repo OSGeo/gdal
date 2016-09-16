@@ -2553,7 +2553,8 @@ OGRErr OGRShapeLayer::Repack()
 
         if( VSIUnlink( osDBFName ) != 0 )
         {
-            CPLDebug( "Shape", "Failed to delete DBF file: %s",
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Failed to delete old DBF file: %s",
                       VSIStrerror( errno ) );
             CPLFree( panRecordsToDelete );
 
@@ -2566,7 +2567,8 @@ OGRErr OGRShapeLayer::Repack()
 
         if( VSIRename( oTempFile, osDBFName ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename DBF file: %s",
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Can not rename new DBF file: %s",
                       VSIStrerror( errno ) );
             CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
@@ -2632,13 +2634,29 @@ OGRErr OGRShapeLayer::Repack()
         SHPClose( hNewSHP );
         hNewSHP = NULL;
 
-        VSIUnlink( osSHPName );
-        VSIUnlink( osSHXName );
+        if( VSIUnlink( osSHPName ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can not delete old SHP file: %s",
+                      VSIStrerror( errno ) );
+            CPLFree( panRecordsToDelete );
+            return OGRERR_FAILURE;
+        }
+
+        if( VSIUnlink( osSHXName ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can not delete old SHX file: %s",
+                      VSIStrerror( errno ) );
+            CPLFree( panRecordsToDelete );
+            return OGRERR_FAILURE;
+        }
 
         oTempFile = CPLResetExtension( oTempFile, "shp" );
         if( VSIRename( oTempFile, osSHPName ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename SHP file: %s",
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can not rename new SHP file: %s",
                       VSIStrerror( errno ) );
             CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
@@ -2647,7 +2665,8 @@ OGRErr OGRShapeLayer::Repack()
         oTempFile = CPLResetExtension( oTempFile, "shx" );
         if( VSIRename( oTempFile, osSHXName ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename SHX file: %s",
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can not rename new SHX file: %s",
                       VSIStrerror( errno ) );
             CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
