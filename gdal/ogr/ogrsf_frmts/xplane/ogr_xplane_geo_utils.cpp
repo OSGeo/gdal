@@ -51,21 +51,17 @@ double OGRXPlane_Safe_acos(double x)
 /*                         OGRXPlane_Distance()                         */
 /************************************************************************/
 
-double OGRXPlane_Distance(double LatA_deg, double LonA_deg,
-                          double LatB_deg, double LonB_deg)
+double OGRXPlane_Distance( double LatA_deg, double LonA_deg,
+                           double LatB_deg, double LonB_deg )
 {
-    double LatA_rad, LatB_rad;
-    double cosa, cosb, sina, sinb, cosP;
-    double cos_angle;
-
-    cosP = cos((LonB_deg - LonA_deg) * DEG2RAD);
-    LatA_rad = LatA_deg * DEG2RAD;
-    LatB_rad = LatB_deg * DEG2RAD;
-    cosa = cos(LatA_rad);
-    sina = sin(LatA_rad);
-    cosb = cos(LatB_rad);
-    sinb = sin(LatB_rad);
-    cos_angle = sina*sinb + cosa*cosb*cosP;
+    const double cosP = cos((LonB_deg - LonA_deg) * DEG2RAD);
+    const double LatA_rad = LatA_deg * DEG2RAD;
+    const double LatB_rad = LatB_deg * DEG2RAD;
+    const double cosa = cos(LatA_rad);
+    const double sina = sin(LatA_rad);
+    const double cosb = cos(LatB_rad);
+    const double sinb = sin(LatB_rad);
+    const double cos_angle = sina*sinb + cosa*cosb*cosP;
     return OGRXPlane_Safe_acos(cos_angle) * RAD2METER;
 }
 
@@ -73,35 +69,32 @@ double OGRXPlane_Distance(double LatA_deg, double LonA_deg,
 /*                           OGRXPlane_Track()                          */
 /************************************************************************/
 
-double OGRXPlane_Track(double LatA_deg, double LonA_deg,
-                       double LatB_deg, double LonB_deg)
+double OGRXPlane_Track( double LatA_deg, double LonA_deg,
+                        double LatB_deg, double LonB_deg )
 {
-    if (fabs (LatA_deg - 90) < 1e-10 || fabs (LatB_deg + 90) < 1e-10)
+    if( fabs (LatA_deg - 90) < 1e-10 || fabs (LatB_deg + 90) < 1e-10 )
     {
         return 180;
     }
-    else  if (fabs (LatA_deg + 90) < 1e-10 || fabs (LatB_deg - 90) < 1e-10)
+    else if( fabs (LatA_deg + 90) < 1e-10 || fabs (LatB_deg - 90) < 1e-10 )
     {
         return 0;
     }
     else
     {
-        double cos_LatA, sin_LatA, diffG, cos_diffG, sin_diffG;
-        double denom;
-        double track;
-        double LatA_rad = LatA_deg * DEG2RAD;
-        double LatB_rad = LatB_deg * DEG2RAD;
+        const double LatA_rad = LatA_deg * DEG2RAD;
+        const double LatB_rad = LatB_deg * DEG2RAD;
 
-        cos_LatA = cos(LatA_rad);
-        sin_LatA = sin(LatA_rad);
+        const double cos_LatA = cos(LatA_rad);
+        const double sin_LatA = sin(LatA_rad);
 
-        diffG = (LonA_deg - LonB_deg) * DEG2RAD;
-        cos_diffG = cos(diffG);
-        sin_diffG = sin(diffG);
+        const double diffG = (LonA_deg - LonB_deg) * DEG2RAD;
+        const double cos_diffG = cos(diffG);
+        const double sin_diffG = sin(diffG);
 
-        denom = sin_LatA * cos_diffG - cos_LatA * tan(LatB_rad);
+        const double denom = sin_LatA * cos_diffG - cos_LatA * tan(LatB_rad);
 
-        track = atan (sin_diffG / denom) * RAD2DEG;
+        double track = atan (sin_diffG / denom) * RAD2DEG;
 
         if (denom > 0.0)
         {
