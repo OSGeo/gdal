@@ -820,11 +820,10 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     if(strstr(pszContentType,"multipart")
         && CPLHTTPParseMultipartMime(psResult) )
     {
-        int i;
         bIsMultiPart = TRUE;
         OGRWFSRecursiveUnlink(osTmpDirName);
         VSIMkdir(osTmpDirName, 0);
-        for(i=0;i<psResult->nMimePartCount;i++)
+        for( int i = 0; i < psResult->nMimePartCount; i++ )
         {
             CPLString osTmpFileName = osTmpDirName + "/";
             pszAttachmentFilename =
@@ -995,11 +994,10 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     if (poPageDS == NULL && (bZIP || bIsMultiPart))
     {
         char** papszFileList = VSIReadDir(osTmpFileName);
-        int i;
-        for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
+        for( int i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
         {
             CPLString osFullFilename =
-                    CPLFormFilename( osTmpFileName, papszFileList[i], NULL );
+                CPLFormFilename( osTmpFileName, papszFileList[i], NULL );
             hDrv = GDALIdentifyDriver(osFullFilename, NULL);
             if( hDrv != NULL && hDrv == GDALGetDriverByName("GML") )
                 papszOpenOptions = apszGMLOpenOptions;
@@ -1085,11 +1083,10 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
     CPLString osPropertyName = CPLURLGetValue(pszBaseURL, "PROPERTYNAME");
     const char* pszPropertyName = osPropertyName.c_str();
 
-    int i;
     poFeatureDefn->SetGeomType(poSrcFDefn->GetGeomType());
     if( poSrcFDefn->GetGeomFieldCount() > 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetName(poSrcFDefn->GetGeomFieldDefn(0)->GetNameRef());
-    for(i=0;i<poSrcFDefn->GetFieldCount();i++)
+    for( int i = 0; i < poSrcFDefn->GetFieldCount(); i++ )
     {
         if (pszPropertyName[0] != 0)
         {
@@ -1194,8 +1191,9 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
                     bGotApproximateLayerDefn = TRUE;
                 else
                 {
-                    int iField;
-                    for(iField = 0;iField < poFeatureDefn->GetFieldCount(); iField++)
+                    for( int iField = 0;
+                         iField < poFeatureDefn->GetFieldCount();
+                         iField++)
                     {
                         OGRFieldDefn* poFDefn1 = poFeatureDefn->GetFieldDefn(iField);
                         OGRFieldDefn* poFDefn2 = poBaseLayer->GetLayerDefn()->GetFieldDefn(iField);
@@ -1255,9 +1253,13 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         }
         else
         {
-            int iField;
-            for(iField = 0;iField < poFeatureDefn->GetFieldCount(); iField++)
-                poNewFeature->SetField( iField, poSrcFeature->GetRawFieldRef(iField) );
+            for( int iField = 0;
+                 iField < poFeatureDefn->GetFieldCount();
+                 iField++ )
+            {
+                poNewFeature->SetField(
+                    iField, poSrcFeature->GetRawFieldRef(iField) );
+            }
             poNewFeature->SetStyleString(poSrcFeature->GetStyleString());
             poNewFeature->SetGeometryDirectly(poSrcFeature->StealGeometry());
         }
@@ -1816,8 +1818,7 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
     osPost += "    <feature:"; osPost += pszShortName; osPost += " xmlns:feature=\"";
     osPost += osTargetNamespace; osPost += "\">\n";
 
-    int i;
-    for(i=1; i <= poFeature->GetFieldCount(); i++)
+    for( int i = 1; i <= poFeature->GetFieldCount(); i++ )
     {
         if (poGMLFeatureClass->GetGeometryPropertyCount() == 1 &&
             poGMLFeatureClass->GetGeometryProperty(0)->GetAttributeIndex() == i - 1)
@@ -2085,8 +2086,7 @@ OGRErr OGRWFSLayer::ISetFeature( OGRFeature *poFeature )
         osPost += "    </wfs:Property>\n";
     }
 
-    int i;
-    for(i=1; i < poFeature->GetFieldCount(); i++)
+    for( int i = 1; i < poFeature->GetFieldCount(); i++ )
     {
         OGRFieldDefn* poFDefn = poFeature->GetFieldDefnRef(i);
 

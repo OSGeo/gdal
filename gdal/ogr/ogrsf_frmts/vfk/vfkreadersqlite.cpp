@@ -342,8 +342,6 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     if( bReadDb )
     {  /* read records from DB */
         /* read from  DB */
-        long iFID;
-        int  iRowId;
         VFKFeatureSQLite *poNewFeature = NULL;
 
         poDataBlockCurrent = NULL;
@@ -370,8 +368,8 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
             hStmt = PrepareStatement(osSQL.c_str());
             nDataRecords = 0;
             while (ExecuteSQL(hStmt) == OGRERR_NONE) {
-                iFID = sqlite3_column_int(hStmt, 0);
-                iRowId = sqlite3_column_int(hStmt, 1);
+                const long iFID = sqlite3_column_int(hStmt, 0);
+                int iRowId = sqlite3_column_int(hStmt, 1);
                 poNewFeature = new VFKFeatureSQLite(poDataBlockCurrent, iRowId, iFID);
                 poDataBlockCurrent->AddFeature(poNewFeature);
                 nDataRecords++;
@@ -382,9 +380,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
                          VFK_DB_TABLE, pszName);
             hStmt = PrepareStatement(osSQL.c_str());
             if (ExecuteSQL(hStmt) == OGRERR_NONE) {
-                int nFeatDB;
-
-                nFeatDB = sqlite3_column_int(hStmt, 0);
+                const int nFeatDB = sqlite3_column_int(hStmt, 0);
                 if (nFeatDB > 0 && nFeatDB != poDataBlockCurrent->GetFeatureCount())
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "%s: Invalid number of features " CPL_FRMT_GIB " (should be %d)",
@@ -587,15 +583,15 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
 */
 sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
 {
-    int rc;
-    sqlite3_stmt *hStmt = NULL;
-
     CPLDebug("OGR-VFK", "VFKReaderSQLite::PrepareStatement(): %s", pszSQLCommand);
 
-    rc = sqlite3_prepare(m_poDB, pszSQLCommand, -1,
-                         &hStmt, NULL);
+    sqlite3_stmt *hStmt = NULL;
+    const int rc = sqlite3_prepare(m_poDB, pszSQLCommand, -1,
+                                   &hStmt, NULL);
 
-    if (rc != SQLITE_OK) {
+    // TODO(schwehr): if( rc == SQLITE_OK ) return NULL;
+    if (rc != SQLITE_OK)
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "In PrepareStatement(): sqlite3_prepare(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(m_poDB));
@@ -619,11 +615,7 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
 */
 OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
 {
-    int rc;
-
-    // assert
-
-    rc = sqlite3_step(hStmt);
+    const int rc = sqlite3_step(hStmt);
     if (rc != SQLITE_ROW) {
         if (rc == SQLITE_DONE) {
             sqlite3_finalize(hStmt);

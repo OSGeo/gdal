@@ -82,7 +82,7 @@ OGRWFSJoinLayer::OGRWFSJoinLayer( OGRWFSDataSource* poDSIn,
     for( int i = 0; i < psSelectInfo->result_columns; i++ )
     {
         swq_col_def *def = psSelectInfo->column_defs + i;
-        int table_index;
+        int table_index = 0;
         if( def->table_index >= 0 )
             table_index = def->table_index;
         else
@@ -263,7 +263,7 @@ OGRWFSJoinLayer* OGRWFSJoinLayer::Build(OGRWFSDataSource* poDS,
     {
         OGRWFSRemoveReferenceToTableAlias(psSelectInfo->join_defs[i].poExpr,
                                           psSelectInfo);
-        int bOutNeedsNullCheck;
+        int bOutNeedsNullCheck = FALSE;
         CPLString osFilter = WFS_TurnSQLFilterToOGCFilter(
                                       psSelectInfo->join_defs[i].poExpr,
                                       poDS,
@@ -286,7 +286,7 @@ OGRWFSJoinLayer* OGRWFSJoinLayer::Build(OGRWFSDataSource* poDS,
     {
         OGRWFSRemoveReferenceToTableAlias(psSelectInfo->where_expr,
                                           psSelectInfo);
-        int bOutNeedsNullCheck;
+        int bOutNeedsNullCheck = FALSE;
         CPLString osFilter = WFS_TurnSQLFilterToOGCFilter(
                                       psSelectInfo->where_expr,
                                       poDS,
@@ -740,16 +740,14 @@ GIntBig OGRWFSJoinLayer::ExecuteGetFeatureResultTypeHits()
 
 GIntBig OGRWFSJoinLayer::GetFeatureCount( int bForce )
 {
-    GIntBig nFeatures;
-
     if( !bDistinct )
     {
-        nFeatures = ExecuteGetFeatureResultTypeHits();
+        const GIntBig nFeatures = ExecuteGetFeatureResultTypeHits();
         if (nFeatures >= 0)
             return nFeatures;
     }
 
-    nFeatures = OGRLayer::GetFeatureCount(bForce);
+    const GIntBig nFeatures = OGRLayer::GetFeatureCount(bForce);
     return nFeatures;
 }
 

@@ -121,13 +121,11 @@ VFKProperty& VFKProperty::operator=( VFKProperty const& other )
 */
 const char *VFKProperty::GetValueS(bool escape) const
 {
-    size_t ipos;
-
     if (!escape)
         return m_strValue.c_str();
 
     CPLString strValue(m_strValue);
-    ipos = 0;
+    size_t ipos = 0;
     while (std::string::npos != (ipos = strValue.find("'", ipos))) {
         strValue.replace(ipos, 1, "\'\'", 2);
         ipos += 2;

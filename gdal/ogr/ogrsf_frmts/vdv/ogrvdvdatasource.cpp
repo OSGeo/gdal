@@ -1609,7 +1609,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
             while( nOffset > 0 )
             {
                 VSIFSeekL(fpL, nOffset - 1, SEEK_SET);
-                char ch;
+                char ch = '\0';
                 VSIFReadL(&ch, 1, 1, fpL);
                 if( bTerminatingEOL )
                 {
@@ -1637,7 +1637,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
             {
                 // Otherwise make sure the file ends with an eol character
                 VSIFSeekL(fpL, nFileSize - 1, SEEK_SET);
-                char ch;
+                char ch = '\0';
                 VSIFReadL(&ch, 1, 1, fpL);
                 VSIFSeekL(fpL, nFileSize, SEEK_SET);
                 if( !(ch == '\r' || ch == '\n') )

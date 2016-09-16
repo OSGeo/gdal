@@ -643,7 +643,7 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
     const bool bRoughness = (-1 != iSecondFieldIdx) || bPolygon ;
 
 
-    double z1;
+    double z1 = 0.0;
     if ( -1 != iFirstFieldIdx )
     {
         if (!poFeature->IsFieldSet(iFirstFieldIdx))
@@ -666,7 +666,7 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
         z1 = AvgZ( geom );
     }
 
-    double z2;
+    double z2 = 0.0;
     if ( -1 != iSecondFieldIdx )
     {
         if (!poFeature->IsFieldSet(iSecondFieldIdx))
@@ -682,7 +682,9 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
         return OGRERR_FAILURE;
     }
 
-    return bRoughness ? WriteRoughness( geom, z1, z2 ) : WriteElevation( geom, z1 );
+    return bRoughness
+        ? WriteRoughness( geom, z1, z2 )
+        : WriteElevation( geom, z1 );
 }
 
 /************************************************************************/

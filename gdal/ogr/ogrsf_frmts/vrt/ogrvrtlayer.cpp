@@ -185,8 +185,9 @@ int OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn, const char *pszVRTDirect
          pszGType = CPLGetXMLValue( psGeometryFieldNode, "GeometryType", NULL );
      if( pszGType != NULL )
      {
-         int l_bError;
-         OGRwkbGeometryType eGeomType = OGRVRTGetGeometryType(pszGType, &l_bError);
+         int l_bError = FALSE;
+         OGRwkbGeometryType eGeomType =
+             OGRVRTGetGeometryType(pszGType, &l_bError);
          if( l_bError )
          {
              CPLError( CE_Failure, CPLE_AppDefined,
@@ -291,7 +292,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
         pszGType = CPLGetXMLValue( psNodeParent, "GeometryType", NULL );
     if( pszGType != NULL )
     {
-        int l_bError;
+        int l_bError = FALSE;
         poProps->eGeomType = OGRVRTGetGeometryType(pszGType, &l_bError);
         if( l_bError )
         {
@@ -889,9 +890,9 @@ try_again:
 
              if( pszArg != NULL )
              {
-                 int iType;
+                 int iType = 0;  // Used after for.
 
-                 for( iType = 0; iType <= (int) OFTMaxType; iType++ )
+                 for( ; iType <= (int) OFTMaxType; iType++ )
                  {
                      if( EQUAL(pszArg,OGRFieldDefn::GetFieldTypeName(
                                    (OGRFieldType)iType)) )
@@ -916,9 +917,9 @@ try_again:
              pszArg = CPLGetXMLValue( psChild, "subtype", NULL );
              if( pszArg != NULL )
              {
-                 int iType;
                  OGRFieldSubType eSubType = OFSTNone;
 
+                 int iType = 0;  // Used after for.
                  for( iType = 0; iType <= (int) OFSTMaxSubType; iType++ )
                  {
                      if( EQUAL(pszArg,OGRFieldDefn::GetFieldSubTypeName(
@@ -1030,12 +1031,11 @@ try_again:
 /* -------------------------------------------------------------------- */
      if( poFeatureDefn->GetFieldCount() == 0 )
      {
-         int iSrcField;
          int nSrcFieldCount = GetSrcLayerDefn()->GetFieldCount();
 
-         for( iSrcField = 0; iSrcField < nSrcFieldCount; iSrcField++ )
+         for( int iSrcField = 0; iSrcField < nSrcFieldCount; iSrcField++ )
          {
-             int bSkip = FALSE;
+             bool bSkip = false;
              for( size_t iGF = 0; iGF < apoGeomFieldProps.size(); iGF++ )
              {
                 if( apoGeomFieldProps[iGF]->bReportSrcColumn == FALSE &&
@@ -1046,7 +1046,7 @@ try_again:
                      (apoGeomFieldProps[iGF]->eGeometryStyle != VGS_Direct &&
                       iSrcField == apoGeomFieldProps[iGF]->iGeomField)) )
                 {
-                    bSkip = TRUE;
+                    bSkip = true;
                     break;
                 }
              }
@@ -1593,9 +1593,7 @@ retry:
 /* -------------------------------------------------------------------- */
 /*      Copy fields.                                                    */
 /* -------------------------------------------------------------------- */
-    int iVRTField;
-
-    for( iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount(); iVRTField++ )
+    for( int iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount(); iVRTField++ )
     {
         if( anSrcField[iVRTField] == -1 )
             continue;
@@ -1832,13 +1830,10 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
 /* -------------------------------------------------------------------- */
 /*      Copy fields.                                                    */
 /* -------------------------------------------------------------------- */
-
-    int iVRTField;
-
-    for( iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount(); iVRTField++ )
+    for( int iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount(); iVRTField++ )
     {
-        int bSkip = FALSE;
-        for(int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+        bool bSkip = false;
+        for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
         {
             /* Do not set source geometry columns. Have been set just above */
             if ((apoGeomFieldProps[i]->eGeometryStyle != VGS_Direct &&
@@ -1848,7 +1843,7 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
                 anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomZField ||
                 anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomMField)
             {
-                bSkip = TRUE;
+                bSkip = true;
                 break;
             }
         }

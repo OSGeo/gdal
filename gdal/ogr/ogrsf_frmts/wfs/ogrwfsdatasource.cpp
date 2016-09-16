@@ -194,9 +194,9 @@ OGRWFSDataSource::OGRWFSDataSource() :
 OGRWFSDataSource::~OGRWFSDataSource()
 
 {
-    if (psFileXML)
+    if( psFileXML )
     {
-        if (bRewriteFile)
+        if( bRewriteFile )
         {
             CPLSerializeXMLTreeToFile(psFileXML, pszName);
         }
@@ -204,8 +204,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
         CPLDestroyXMLNode(psFileXML);
     }
 
-    int i;
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
 
@@ -331,22 +330,21 @@ char** OGRWFSDataSource::GetMetadata( const char * pszDomain )
 
 int OGRWFSDataSource::GetLayerIndex(const char* pszNameIn)
 {
-    int i;
-    int  bHasFoundLayerWithColon = FALSE;
+    bool bHasFoundLayerWithColon = false;
 
     /* first a case sensitive check */
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
     {
         OGRWFSLayer *poLayer = papoLayers[i];
 
         if( strcmp( pszNameIn, poLayer->GetName() ) == 0 )
             return i;
 
-        bHasFoundLayerWithColon |= (strchr( poLayer->GetName(), ':') != NULL);
+        bHasFoundLayerWithColon |= strchr( poLayer->GetName(), ':') != NULL;
     }
 
     /* then case insensitive */
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
     {
         OGRWFSLayer *poLayer = papoLayers[i];
 
@@ -355,9 +353,11 @@ int OGRWFSDataSource::GetLayerIndex(const char* pszNameIn)
     }
 
     /* now try looking after the colon character */
-    if (!bKeepLayerNamePrefix && bHasFoundLayerWithColon && strchr(pszNameIn, ':') == NULL)
+    if( !bKeepLayerNamePrefix &&
+        bHasFoundLayerWithColon &&
+        strchr(pszNameIn, ':') == NULL )
     {
-        for( i = 0; i < nLayers; i++ )
+        for( int i = 0; i < nLayers; i++ )
         {
             OGRWFSLayer *poLayer = papoLayers[i];
 
@@ -765,9 +765,10 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
     if( fp == NULL )
         return NULL;
 
-    int nRead;
     char achHeader[1024] = {};
-    if( (nRead = static_cast<int>(VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp ))) == 0 )
+    const int nRead =
+        static_cast<int>(VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp ));
+    if( nRead == 0 )
     {
         VSIFCloseL( fp );
         return NULL;
@@ -785,10 +786,8 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      It is the right file, now load the full XML definition.         */
 /* -------------------------------------------------------------------- */
-    int nLen;
-
     VSIFSeekL( fp, 0, SEEK_END );
-    nLen = (int) VSIFTellL( fp );
+    const int nLen = (int) VSIFTellL( fp );
     VSIFSeekL( fp, 0, SEEK_SET );
 
     char* pszXML = (char *) VSI_MALLOC_VERBOSE(nLen+1);
@@ -2005,23 +2004,22 @@ CPLString WFS_EscapeURL(const char* pszURL)
 CPLString WFS_DecodeURL(const CPLString &osSrc)
 {
     CPLString ret;
-    char ch;
-    int ii;
-    for (size_t i=0; i<osSrc.length(); i++)
+    for( size_t i=0; i<osSrc.length(); i++ )
     {
         if (osSrc[i]=='%' && i+2 < osSrc.length())
         {
+            int ii = 0;
             sscanf(osSrc.substr(i+1,2).c_str(), "%x", &ii);
-            ch=static_cast<char>(ii);
-            ret+=ch;
-            i=i+2;
+            char ch = static_cast<char>(ii);
+            ret += ch;
+            i = i + 2;
         }
         else
         {
             ret+=osSrc[i];
         }
     }
-    return (ret);
+    return ret;
 }
 
 /************************************************************************/
@@ -2229,7 +2227,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             delete psSelectInfo;
             return NULL;
         }
-        int iLayer;
+        int iLayer = 0;
         if( strcmp(GetVersion(),"1.0.0") != 0 &&
             psSelectInfo->table_count == 1 &&
             psSelectInfo->table_defs[0].data_source == NULL &&
@@ -2240,8 +2238,8 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
         {
             OGRWFSLayer* poSrcLayer = papoLayers[iLayer];
             std::vector<OGRWFSSortDesc> aoSortColumns;
-            int i;
-            for(i=0;i<psSelectInfo->order_specs;i++)
+            int i = 0;  // Used after for.
+            for( ; i < psSelectInfo->order_specs; i++ )
             {
                 int nFieldIndex = poSrcLayer->GetLayerDefn()->GetFieldIndex(
                                         psSelectInfo->order_defs[i].field_name);

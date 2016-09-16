@@ -192,10 +192,11 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         }
 
         const char* pszFieldname = NULL;
-        int nIndex;
-        int bSameTable = psOptions->poFDefn != NULL &&
-                         ( poExpr->table_name == NULL ||
-                           EQUAL(poExpr->table_name, psOptions->poFDefn->GetName()) );
+        int nIndex = 0;
+        const bool bSameTable =
+            psOptions->poFDefn != NULL &&
+            ( poExpr->table_name == NULL ||
+              EQUAL(poExpr->table_name, psOptions->poFDefn->GetName()) );
         if( bSameTable )
         {
             if( (nIndex = psOptions->poFDefn->GetFieldIndex(poExpr->string_value)) >= 0 )
@@ -285,9 +286,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
     if( poExpr->nOperation == SWQ_LIKE )
     {
         CPLString osVal;
-        char ch;
         char firstCh = 0;
-        int i;
         if (psOptions->nVersion == 100)
             osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escape='!'>", psOptions->pszNSPrefix);
         else
@@ -301,8 +300,8 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
 
         // Escape value according to above special characters.  For URL
         // compatibility reason, we remap the OGR SQL '%' wildcard into '*'.
-        i = 0;
-        ch = poExpr->papoSubExpr[1]->string_value[i];
+        int i = 0;
+        char ch = poExpr->papoSubExpr[1]->string_value[i];
         if (ch == '\'' || ch == '"')
         {
             firstCh = ch;
@@ -515,8 +514,10 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                                 EQUAL(poExpr->papoSubExpr[0]->table_name, psOptions->poFDefn->GetName()) );
                 if( bSameTable )
                 {
-                    int nIndex;
-                    if( (nIndex = psOptions->poFDefn->GetGeomFieldIndex(poExpr->papoSubExpr[0]->string_value)) >= 0 )
+                    const int nIndex =
+                        psOptions->poFDefn->
+                        GetGeomFieldIndex(poExpr->papoSubExpr[0]->string_value);
+                    if( nIndex  >= 0 )
                     {
                         psOptions->poSRS = psOptions->poFDefn->GetGeomFieldDefn(nIndex)->GetSpatialRef();
                     }
@@ -527,8 +528,10 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                     if( poLayer )
                     {
                         OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
-                        int nIndex;
-                        if( (nIndex = poFDefn->GetGeomFieldIndex(poExpr->papoSubExpr[0]->string_value)) >= 0 )
+                        const int nIndex =
+                            poFDefn->GetGeomFieldIndex(
+                                poExpr->papoSubExpr[0]->string_value);
+                        if( nIndex >= 0 )
                         {
                             psOptions->poSRS = poFDefn->GetGeomFieldDefn(nIndex)->GetSpatialRef();
                         }

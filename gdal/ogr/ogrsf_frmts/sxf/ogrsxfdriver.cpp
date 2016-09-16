@@ -89,7 +89,6 @@ OGRDataSource *OGRSXFDriver::Open( const char * pszFilename, int bUpdate )
 
 OGRErr OGRSXFDriver::DeleteDataSource(const char* pszName)
 {
-    int iExt;
     //TODO: add more extensions if aplicable
     static const char * const apszExtensions[] = { "szf", "rsc", "SZF", "RSC", NULL };
 
@@ -103,7 +102,7 @@ OGRErr OGRSXFDriver::DeleteDataSource(const char* pszName)
         return OGRERR_FAILURE;
     }
 
-    for (iExt = 0; apszExtensions[iExt] != NULL; iExt++)
+    for( int iExt = 0; apszExtensions[iExt] != NULL; iExt++ )
     {
         const char *pszFile = CPLResetExtension(pszName,
             apszExtensions[iExt]);

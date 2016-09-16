@@ -138,12 +138,10 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Create a layer for each spatial table.                          */
 /* -------------------------------------------------------------------- */
-    unsigned int iTable;
-
     papoLayers = (OGRWalkLayer **) CPLCalloc(apapszGeomColumns.size(),
                                              sizeof( void * ));
 
-    for( iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
+    for( unsigned int iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
     {
         char **papszRecord = apapszGeomColumns[iTable];
 

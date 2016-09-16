@@ -461,9 +461,7 @@ IVFKDataBlock *VFKReader::GetDataBlock(const char *pszName) const
 */
 int VFKReader::LoadGeometry()
 {
-    long int nfeatures;
-
-    nfeatures = 0;
+    long int nfeatures = 0;
     for (int i = 0; i < m_nDataBlockCount; i++) {
         nfeatures += m_papoDataBlock[i]->LoadGeometry();
     }
@@ -480,11 +478,7 @@ int VFKReader::LoadGeometry()
 */
 void VFKReader::AddInfo(const char *pszLine)
 {
-    int         nOffset;
-    if (pszLine[1] == 'H')
-        nOffset = 2;
-    else
-        nOffset = 1; /* &DKATUZE */
+    const int nOffset = pszLine[1] == 'H' ? 2 : 1;  // &DKATUZE
 
     const char *poKey = pszLine + nOffset; /* &H */
     const char *poChar = poKey;
