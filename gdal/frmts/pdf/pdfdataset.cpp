@@ -1056,6 +1056,7 @@ int LoadPdfiumDocumentPage(
 
   TMapPdfiumDatasets::iterator it;
   it = g_mPdfiumDatasets.find((char*)pszFilename);
+  TPdfiumDocumentStruct *poDoc = NULL;
   // Load new document if missing
   if(it == g_mPdfiumDatasets.end() ) {
     // Try without password (if PDF not requires password it can fail)
@@ -1124,7 +1125,7 @@ int LoadPdfiumDocumentPage(
     } // ~ wrong PDF or password required
 
     // Create new poDoc
-    TPdfiumDocumentStruct *poDoc = new TPdfiumDocumentStruct;
+    poDoc = new TPdfiumDocumentStruct;
     if(!poDoc) {
       CPLError(CE_Failure, CPLE_AppDefined, "Not enough memory for Pdfium Document object");
 
