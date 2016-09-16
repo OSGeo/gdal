@@ -576,8 +576,8 @@ bool OGROSMDataSource::AllocMoreBuckets(int nNewBucketIdx, bool bAllocBucket)
     papsBuckets = papsNewBuckets;
 
     bool bOOM = false;
-    int i;
-    for(i = nBuckets; i < nNewBuckets && !bOOM; i++)
+    int i = nBuckets;  // Used after for.
+    for( ; i < nNewBuckets && !bOOM; i++)
     {
         papsBuckets[i].nOff = -1;
         if( bAllocBucket )
@@ -903,7 +903,7 @@ void OGROSMDataSource::LookupNodes( )
 #ifdef DEBUG_COLLISIONS
                 nCollisions ++;
 #endif
-                int iBucket;
+                int iBucket = 0;
                 if( nIdx >= 0 )
                 {
                     if(iNextFreeBucket == COLLISION_BUCKET_ARRAY_SIZE)
@@ -920,7 +920,9 @@ void OGROSMDataSource::LookupNodes( )
                     iNextFreeBucket ++;
                 }
                 else
+                {
                     iBucket = -nIdx - 2;
+                }
                 if(iNextFreeBucket == COLLISION_BUCKET_ARRAY_SIZE)
                 {
                     CPLDebug("OSM", "Too many collisions. Disabling hashed indexing");
@@ -1089,11 +1091,9 @@ void OGROSMDataSource::LookupNodesCustom( )
         nBucketOld = -1;
     }
 
-    unsigned int i;
-
     CPLAssert(nUnsortedReqIds <= MAX_ACCUMULATED_NODES);
 
-    for(i = 0; i < nUnsortedReqIds; i++)
+    for( unsigned int i = 0; i < nUnsortedReqIds; i++ )
     {
         GIntBig id = panUnsortedReqIds[i];
 
@@ -1129,8 +1129,8 @@ void OGROSMDataSource::LookupNodesCustom( )
     std::sort(panReqIds, panReqIds + nReqIds);
 
     /* Remove duplicates */
-    unsigned int j = 0;
-    for(i = 0; i < nReqIds; i++)
+    unsigned int j = 0;  // Used after for.
+    for( unsigned int i = 0; i < nReqIds; i++)
     {
         if (!(i > 0 && panReqIds[i] == panReqIds[i-1]))
             panReqIds[j++] = panReqIds[i];
@@ -1138,7 +1138,7 @@ void OGROSMDataSource::LookupNodesCustom( )
     nReqIds = j;
 
 #ifdef FAKE_LOOKUP_NODES
-    for(i = 0; i < nReqIds; i++)
+    for( unsigned int i = 0; i < nReqIds; i++)
     {
         pasLonLatArray[i].nLon = 0;
         pasLonLatArray[i].nLat = 0;
@@ -1157,7 +1157,6 @@ void OGROSMDataSource::LookupNodesCustom( )
 
 void OGROSMDataSource::LookupNodesCustomCompressedCase()
 {
-    unsigned int i;
     unsigned int j = 0;
 #define SECURITY_MARGIN     (8 + 8 + 2 * NODE_PER_SECTOR)
     GByte abyRawSector[SECTOR_SIZE + SECURITY_MARGIN];
@@ -1168,7 +1167,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
     int k = 0;
     int nOffFromBucketStart = 0;
 
-    for(i = 0; i < nReqIds; i++)
+    for( unsigned int i = 0; i < nReqIds; i++ )
     {
         GIntBig id = panReqIds[i];
 
@@ -1205,7 +1204,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
             /* If we stay in the same bucket, we can reuse the previously */
             /* computed offset, instead of starting from bucket start */
-            for(; k < nOffInBucketReduced; k++)
+            for( ; k < nOffInBucketReduced; k++ )
             {
                 if( psBucket->u.panSectorSize[k] )
                     nOffFromBucketStart += COMPRESS_SIZE_FROM_BYTE(psBucket->u.panSectorSize[k]);
@@ -1264,10 +1263,9 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
 void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 {
-    unsigned int i;
-    unsigned int j = 0;
+    unsigned int j = 0;  // Used after for.
 
-    for(i = 0; i < nReqIds; i++)
+    for( unsigned int i = 0; i < nReqIds; i++ )
     {
         GIntBig id = panReqIds[i];
 
@@ -1295,9 +1293,8 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
             // FIXME ?
         }
 
-        int k;
         int nSector = 0;
-        for(k = 0; k < nBitmapIndex; k++)
+        for( int k = 0; k < nBitmapIndex; k++ )
             nSector += abyBitsCount[psBucket->u.pabyBitmap[k]];
         if (nBitmapRemainer)
             nSector += abyBitsCount[psBucket->u.pabyBitmap[nBitmapIndex] & ((1 << nBitmapRemainer) - 1)];
@@ -1323,7 +1320,7 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 /*                            WriteVarInt()                             */
 /************************************************************************/
 
-static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
+static void WriteVarInt( unsigned int nVal, GByte** ppabyData )
 {
     GByte* pabyData = *ppabyData;
     while( true )
@@ -1345,7 +1342,7 @@ static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
 /*                           WriteVarInt64()                            */
 /************************************************************************/
 
-static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
+static void WriteVarInt64( GUIntBig nVal, GByte** ppabyData )
 {
     GByte* pabyData = *ppabyData;
     while( true )
@@ -1367,13 +1364,11 @@ static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
 /*                           WriteVarSInt64()                           */
 /************************************************************************/
 
-static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
+static void WriteVarSInt64( GIntBig nSVal, GByte** ppabyData )
 {
-    GIntBig nVal;
-    if( nSVal >= 0 )
-        nVal = nSVal << 1;
-    else
-        nVal = ((-1-nSVal) << 1) + 1;
+    GIntBig nVal = nSVal >= 0
+        ? nSVal << 1
+        : ((-1-nSVal) << 1) + 1;
 
     GByte* pabyData = *ppabyData;
     while( true )
@@ -1387,7 +1382,7 @@ static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
 
         *pabyData = 0x80 | (GByte)(nVal & 0x7f);
         nVal >>= 7;
-        pabyData ++;
+        pabyData++;
     }
 }
 
@@ -1472,9 +1467,8 @@ int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags, IndexedKVP
     pabyPtr += sizeof(LonLat);
     for(int i=1;i<nPoints;i++)
     {
-        GIntBig nDiff64;
-
-        nDiff64 = (GIntBig)pasLonLatPairs[i].nLon - (GIntBig)pasLonLatPairs[i-1].nLon;
+        GIntBig nDiff64 =
+            (GIntBig)pasLonLatPairs[i].nLon - (GIntBig)pasLonLatPairs[i-1].nLon;
         WriteVarSInt64(nDiff64, &pabyPtr);
 
         nDiff64 = pasLonLatPairs[i].nLat - pasLonLatPairs[i-1].nLat;
@@ -2022,7 +2016,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
             {
                 std::map<const char*, int, ConstCharComp>::iterator oIterV;
                 oIterV = psKD->anMapV.find(pszV);
-                int nValueIndex;
+                int nValueIndex = 0;
                 if (oIterV == psKD->anMapV.end())
                 {
                     char* pszVDup = CPLStrdup(pszV);
@@ -2102,12 +2096,12 @@ unsigned int OGROSMDataSource::LookupWays( std::map< GIntBig,
 {
     unsigned int nFound = 0;
     unsigned int iCur = 0;
-    unsigned int i;
 
     while( iCur < psRelation->nMembers )
     {
         unsigned int nToQuery = 0;
-        for(i=iCur;i<psRelation->nMembers;i++)
+        unsigned int i = iCur;  // Used after for.
+        for( ; i < psRelation->nMembers; i++ )
         {
             if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
                 strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0 )
@@ -2168,13 +2162,12 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                                                  unsigned int* pnTags,
                                                  OSMTag* pasTags)
 {
-
     std::map< GIntBig, std::pair<int,void*> > aoMapWays;
     LookupWays( aoMapWays, psRelation );
 
     bool bMissing = false;
-    unsigned int i;
-    for(i = 0; i < psRelation->nMembers; i ++ )
+
+    for( unsigned int i = 0; i < psRelation->nMembers; i++ )
     {
         if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
             strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0 )
@@ -2206,7 +2199,7 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
     if( pnTags != NULL )
         *pnTags = 0;
 
-    for(i = 0; i < psRelation->nMembers; i ++ )
+    for( unsigned int i = 0; i < psRelation->nMembers; i++ )
     {
         if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
             strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0  )
@@ -2214,7 +2207,7 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
 
             LonLat* pasCoords = (LonLat*) pasLonLatCache;
-            int nPoints;
+            int nPoints = 0;
 
             if( pnTags != NULL && *pnTags == 0 &&
                 strcmp(psRelation->pasMembers[i].pszRole, "outer") == 0 )
@@ -2279,7 +2272,9 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
         if( hPoly != NULL && OGR_G_GetGeometryType(hPoly) == wkbPolygon )
         {
             OGRPolygon* poSuperPoly = (OGRPolygon* ) hPoly;
-            for(i = 0; i < 1 + (unsigned int)poSuperPoly->getNumInteriorRings(); i++)
+            for( unsigned int i = 0;
+                 i < 1 + (unsigned int)poSuperPoly->getNumInteriorRings();
+                 i++ )
             {
                 OGRLinearRing* poRing =  (i == 0) ? poSuperPoly->getExteriorRing() :
                                                     poSuperPoly->getInteriorRing(i - 1);
@@ -3595,8 +3590,8 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
             {
                 CPLString osName(papszTokens[0]);
                 osName.resize(strlen(papszTokens[0]) - 4);
-                size_t i;
-                for(i = 0; i < oAttributes.size(); i++ )
+                size_t i = 0;  // Used after for.
+                for( ; i < oAttributes.size(); i++ )
                 {
                     if( oAttributes[i].osName == osName )
                     {
@@ -3919,7 +3914,6 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
             CloseDB();
 
             CPLString osNewTmpDBName;
-            int rc;
 
             osNewTmpDBName = CPLGenerateTempFilename("osm_tmp");
 
@@ -3941,11 +3935,12 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
             osTmpDBName = osNewTmpDBName;
 
 #ifdef HAVE_SQLITE_VFS
-            rc = sqlite3_open_v2( osTmpDBName.c_str(), &hDB,
-                                  SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX,
-                                  NULL );
+            const int rc =
+                sqlite3_open_v2( osTmpDBName.c_str(), &hDB,
+                                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX,
+                                 NULL );
 #else
-            rc = sqlite3_open( osTmpDBName.c_str(), &hDB );
+            const int rc = sqlite3_open( osTmpDBName.c_str(), &hDB );
 #endif
             if( rc != SQLITE_OK )
             {
