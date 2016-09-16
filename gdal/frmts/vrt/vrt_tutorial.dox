@@ -934,7 +934,9 @@ CPLErr TestFunction(void **papoSources, int nSources, void *pData,
 
 Starting with GDAL 2.2, in addition to pixel functions written in C/C++ as
 documented in the \ref gdal_vrttut_derived_c section, it is possible to use
-pixel functions written in Python.
+pixel functions written in Python. Both
+<a href="https://www.python.org/">CPython</a>
+and <a href="http://www.numpy.org/">NumPy</a> are requirements at run-time.
 
 The subelements for VRTRasterBand (whose subclass specification must be
 set to VRTDerivedRasterBand) are :
@@ -965,9 +967,9 @@ be ignored.</li>
 
 The signature of the Python pixel function must have the following arguments:
 <ol>
-<li> <i>in_ar</i>: list of input numpy arrays (one numpy array for each
+<li> <i>in_ar</i>: list of input NumPy arrays (one NumPy array for each
 source)</li>
-<li> <i>out_ar</i>: output numpy array to fill. The array is initialized at the
+<li> <i>out_ar</i>: output NumPy array to fill. The array is initialized at the
 right dimensions and with the VRTRasterBand.dataType.</li>
 <li> <i>xoff</i>: pixel offset to the top left corner of the accessed region
 of the band. Generally not needed except if the processing depends on the
