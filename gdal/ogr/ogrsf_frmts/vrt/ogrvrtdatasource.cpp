@@ -71,9 +71,9 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError)
         *pbError = FALSE;
 
     OGRwkbGeometryType eGeomType = wkbUnknown;
-    int iType;
+    int iType = 0;  // Used after for.
 
-    for( iType = 0; asGeomTypeNames[iType].pszName != NULL; iType++ )
+    for( ; asGeomTypeNames[iType].pszName != NULL; iType++ )
     {
         if( EQUALN(pszGType, asGeomTypeNames[iType].pszName,
                 strlen(asGeomTypeNames[iType].pszName)) )
@@ -332,12 +332,12 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
 /*      source layer.                                                   */
 /* -------------------------------------------------------------------- */
     const char* pszGType = CPLGetXMLValue( psLTree, "GeometryType", NULL );
-    int bGlobalGeomTypeSet = FALSE;
+    bool bGlobalGeomTypeSet = false;
     OGRwkbGeometryType eGlobalGeomType = wkbUnknown;
     if( pszGType != NULL )
     {
-        int bError;
-        bGlobalGeomTypeSet = TRUE;
+        bGlobalGeomTypeSet = true;
+        int bError = FALSE;
         eGlobalGeomType = OGRVRTGetGeometryType(pszGType, &bError);
         if( bError )
         {
@@ -408,9 +408,9 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
 
              if( pszArg != NULL )
              {
-                 int iType;
+                 int iType = 0;  // Used after for.
 
-                 for( iType = 0; iType <= (int) OFTMaxType; iType++ )
+                 for( ; iType <= (int) OFTMaxType; iType++ )
                  {
                      if( EQUAL(pszArg,OGRFieldDefn::GetFieldTypeName(
                                    (OGRFieldType)iType)) )
@@ -476,7 +476,7 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
              int bGeomTypeSet = FALSE;
              if( pszGType != NULL )
              {
-                int bError;
+                int bError = FALSE;
                 eGeomType = OGRVRTGetGeometryType(pszGType, &bError);
                 bGeomTypeSet = TRUE;
                 if( bError || eGeomType == wkbNone )
@@ -612,11 +612,10 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Cannot find source layers" );
-        int iField;
-        for(iField = 0; iField < nFields; iField++)
+        for( int iField = 0; iField < nFields; iField++ )
             delete papoFields[iField];
         CPLFree(papoFields);
-        for(iField = 0; iField < nGeomFields; iField++)
+        for( int iField = 0; iField < nGeomFields; iField++ )
             delete papoGeomFields[iField];
         CPLFree(papoGeomFields);
         return NULL;

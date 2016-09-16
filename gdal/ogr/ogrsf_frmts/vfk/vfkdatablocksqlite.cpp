@@ -46,41 +46,35 @@ CPL_CVSID("$Id$");
 */
 int VFKDataBlockSQLite::LoadGeometryPoint()
 {
-    int   nInvalid, rowId, nGeometries;
-    bool  bSkipInvalid;
-    /* long iFID; */
-    double x, y;
-
-    CPLString     osSQL;
-    sqlite3_stmt *hStmt;
-
-    VFKFeatureSQLite *poFeature;
-    VFKReaderSQLite  *poReader;
-
-    nInvalid  = nGeometries = 0;
-    poReader  = (VFKReaderSQLite*) m_poReader;
-
     if (LoadGeometryFromDB()) /* try to load geometry from DB */
         return 0;
 
-    bSkipInvalid = EQUAL(m_pszName, "OB") || EQUAL(m_pszName, "OP") || EQUAL(m_pszName, "OBBP");
+    const bool bSkipInvalid =
+        EQUAL(m_pszName, "OB") || EQUAL(m_pszName, "OP") ||
+        EQUAL(m_pszName, "OBBP");
+
+    CPLString osSQL;
     osSQL.Printf("SELECT SOURADNICE_Y,SOURADNICE_X,%s,rowid FROM %s",
                  FID_COLUMN, m_pszName);
-    hStmt = poReader->PrepareStatement(osSQL.c_str());
+
+    VFKReaderSQLite *poReader = (VFKReaderSQLite*) m_poReader;
+    sqlite3_stmt *hStmt = poReader->PrepareStatement(osSQL.c_str());
 
     if (poReader->IsSpatial())
         poReader->ExecuteSQL("BEGIN");
 
+    int nGeometries = 0;
+    int nInvalid = 0;
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
         /* read values */
-        x = -1.0 * sqlite3_column_double(hStmt, 0); /* S-JTSK coordinate system expected */
-        y = -1.0 * sqlite3_column_double(hStmt, 1);
+        const double x = -1.0 * sqlite3_column_double(hStmt, 0); /* S-JTSK coordinate system expected */
+        const double y = -1.0 * sqlite3_column_double(hStmt, 1);
 #ifdef DEBUG
         const GIntBig iFID = sqlite3_column_int64(hStmt, 2);
 #endif
-        rowId = sqlite3_column_int(hStmt, 3);
+        const int rowId = sqlite3_column_int(hStmt, 3);
 
-        poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
+        VFKFeatureSQLite *poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
         CPLAssert(NULL != poFeature && poFeature->GetFID() == iFID);
 
         /* create geometry */
@@ -604,19 +598,21 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         /* find exterior ring */
         if( poLinearRingList.size() > 1 )
         {
-            double dArea;
-            double dMaxArea;
             std::vector<OGRLinearRing *>::iterator exteriorRing;
 
             exteriorRing = poLinearRingList.begin();
-            dMaxArea = -1.;
-            for (std::vector<OGRLinearRing *>::iterator iRing = poLinearRingList.begin(),
-                     eRing = poLinearRingList.end(); iRing != eRing; ++iRing) {
+            double dMaxArea = -1.0;
+            for( std::vector<OGRLinearRing *>::iterator iRing =
+                     poLinearRingList.begin(),
+                     eRing = poLinearRingList.end();
+                 iRing != eRing;
+                 ++iRing )
+            {
                 poOgrRing = *iRing;
                 if (!IsRingClosed(poOgrRing))
                     continue; /* skip unclosed rings */
 
-                dArea = poOgrRing->get_Area();
+                const double dArea = poOgrRing->get_Area();
                 if (dArea > dMaxArea) {
                     dMaxArea = dArea;
                     exteriorRing = iRing;
@@ -902,34 +898,29 @@ OGRErr VFKDataBlockSQLite::SaveGeometryToDB(const OGRGeometry *poGeom, int iRowI
 */
 bool VFKDataBlockSQLite::LoadGeometryFromDB()
 {
-    int nInvalid, nGeometries, nGeometriesCount, nBytes, rowId;
-#ifdef DEBUG
-    GIntBig iFID;
-#endif
-    bool bSkipInvalid;
-
-    CPLString osSQL;
-
     VFKReaderSQLite *poReader = (VFKReaderSQLite*) m_poReader;
 
     if (!poReader->IsSpatial())   /* check if DB is spatial */
         return FALSE;
 
+    CPLString osSQL;
     osSQL.Printf("SELECT num_geometries FROM %s WHERE table_name = '%s'",
                  VFK_DB_TABLE, m_pszName);
     sqlite3_stmt *hStmt = poReader->PrepareStatement(osSQL.c_str());
     if (poReader->ExecuteSQL(hStmt) != OGRERR_NONE)
         return FALSE;
-    nGeometries = sqlite3_column_int(hStmt, 0);
+    const int nGeometries = sqlite3_column_int(hStmt, 0);
     sqlite3_finalize(hStmt);
 
-    if (nGeometries < 1)
+    if( nGeometries < 1 )
         return FALSE;
 
-    bSkipInvalid = EQUAL(m_pszName, "OB") || EQUAL(m_pszName, "OP") || EQUAL(m_pszName, "OBBP");
+    const bool bSkipInvalid =
+        EQUAL(m_pszName, "OB") ||
+        EQUAL(m_pszName, "OP") ||
+        EQUAL(m_pszName, "OBBP");
 
     /* load geometry from DB */
-    nInvalid = nGeometriesCount = 0;
     osSQL.Printf("SELECT %s,rowid,%s FROM %s ",
                  GEOM_COLUMN, FID_COLUMN, m_pszName);
     if (EQUAL(m_pszName, "SBP"))
@@ -938,19 +929,21 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
     osSQL += FID_COLUMN;
     hStmt = poReader->PrepareStatement(osSQL.c_str());
 
-    rowId = 0;
+    int rowId = 0;
+    int nInvalid = 0;
+    int nGeometriesCount = 0;
 
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
         rowId++; // =sqlite3_column_int(hStmt, 1);
 #ifdef DEBUG
-        iFID = sqlite3_column_int64(hStmt, 2);
+        const GIntBig iFID = sqlite3_column_int64(hStmt, 2);
 #endif
 
         VFKFeatureSQLite *poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
         CPLAssert(NULL != poFeature && poFeature->GetFID() == iFID);
 
         // read geometry from DB
-        nBytes = sqlite3_column_bytes(hStmt, 0);
+        const int nBytes = sqlite3_column_bytes(hStmt, 0);
         OGRGeometry *poGeometry = NULL;
         if (nBytes > 0 &&
             OGRGeometryFactory::createFromWkb((GByte*) sqlite3_column_blob(hStmt, 0),
@@ -990,13 +983,12 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
   \param nGeometries number of geometries to update
 */
 void VFKDataBlockSQLite::UpdateVfkBlocks(int nGeometries) {
-    int nFeatCount;
     CPLString osSQL;
 
     VFKReaderSQLite *poReader = (VFKReaderSQLite*) m_poReader;
 
     /* update number of features in VFK_DB_TABLE table */
-    nFeatCount = (int)GetFeatureCount();
+    const int nFeatCount = (int)GetFeatureCount();
     if (nFeatCount > 0) {
         osSQL.Printf("UPDATE %s SET num_features = %d WHERE table_name = '%s'",
                      VFK_DB_TABLE, nFeatCount, m_pszName);
@@ -1050,17 +1042,15 @@ void VFKDataBlockSQLite::UpdateFID(GIntBig iFID, std::vector<int> rowId)
 */
 bool VFKDataBlockSQLite::IsRingClosed(const OGRLinearRing *poRing)
 {
-    int nPoints;
-
-    nPoints = poRing->getNumPoints();
+    const int nPoints = poRing->getNumPoints();
     if (nPoints < 3)
-        return FALSE;
+        return false;
 
     if (poRing->getX(0) == poRing->getX(nPoints-1) &&
         poRing->getY(0) == poRing->getY(nPoints-1))
-        return TRUE;
+        return true;
 
-    return FALSE;
+    return false;
 }
 
 /*!

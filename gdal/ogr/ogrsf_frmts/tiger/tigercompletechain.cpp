@@ -482,9 +482,7 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
                                         OGRLineString * poLine,
                                         CPL_UNUSED int nSeqNum )
 {
-    int         nShapeRecId;
-
-    nShapeRecId = GetShapeRecordId( nRecordId, nTLID );
+    int nShapeRecId = GetShapeRecordId( nRecordId, nTLID );
 
     // -2 means an error occurred.
     if( nShapeRecId == -2 )
@@ -497,8 +495,9 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 /* -------------------------------------------------------------------- */
 /*      Read all the sequential records with the same TLID.             */
 /* -------------------------------------------------------------------- */
-    char        achShapeRec[OGR_TIGER_RECBUF_LEN];
-    int         nShapeRecLen = psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
+    char achShapeRec[OGR_TIGER_RECBUF_LEN];
+    const int nShapeRecLen =
+        psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
     for( ; true; nShapeRecId++ )
     {
@@ -540,13 +539,13 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 /* -------------------------------------------------------------------- */
 /*      Translate the locations into OGRLineString vertices.            */
 /* -------------------------------------------------------------------- */
-        int     iVertex;
+        int iVertex = 0;  // Used after for.
 
-        for( iVertex = 0; iVertex < 10; iVertex++ )
+        for( ; iVertex < 10; iVertex++ )
         {
-            int         iStart = 19 + 19*iVertex;
-            int         nX = atoi(GetField(achShapeRec,iStart,iStart+9));
-            int         nY = atoi(GetField(achShapeRec,iStart+10,iStart+18));
+            const int iStart = 19 + 19*iVertex;
+            const int nX = atoi(GetField(achShapeRec,iStart,iStart+9));
+            const int nY = atoi(GetField(achShapeRec,iStart+10,iStart+18));
 
             if( nX == 0 && nY == 0 )
                 break;
@@ -674,9 +673,8 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
                                         OGRFeature *poFeature )
 
 {
-    int bSuccess;
-
-    bSuccess = TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
+    const int bSuccess =
+        TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
     if( !bSuccess )
         return bSuccess;
 
@@ -765,13 +763,11 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
     /* -------------------------------------------------------------------- */
     if( poLine->getNumPoints() > 2 )
     {
-        int     nPoints = poLine->getNumPoints();
-        int     iPoint, nRTSQ = 1;
+        const int nPoints = poLine->getNumPoints();
 
-        for( iPoint = 1; iPoint < nPoints-1; )
+        for( int iPoint = 1, nRTSQ = 1; iPoint < nPoints-1; )
         {
-            int         i;
-            char        szTemp[5];
+            char szTemp[5] = {};
 
             memset( szRecord, ' ', psRT2Info->nRecordLength );
 
@@ -780,7 +776,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
             snprintf( szTemp, sizeof(szTemp), "%3d", nRTSQ );
             strncpy( ((char *)szRecord) + 15, szTemp, 4 );
 
-            for( i = 0; i < 10; i++ )
+            for( int i = 0; i < 10; i++ )
             {
                 if( iPoint < nPoints-1 )
                     WritePoint( szRecord, 19+19*i,

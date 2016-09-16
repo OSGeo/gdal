@@ -560,9 +560,8 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
                                   OGRFeature *poFeature )
 
 {
-    int bSuccess;
-
-    bSuccess = TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
+    const int bSuccess =
+        TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
     if( !bSuccess )
         return bSuccess;
 

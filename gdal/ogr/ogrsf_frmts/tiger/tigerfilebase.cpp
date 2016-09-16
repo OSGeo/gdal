@@ -149,16 +149,14 @@ void TigerFileBase::SetupVersion()
 int TigerFileBase::EstablishRecordLength( VSILFILE * fp )
 
 {
-    char        chCurrent;
-    int         nRecLen = 0;
-
     if( fp == NULL || VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
         return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Read through to the end of line.                                */
 /* -------------------------------------------------------------------- */
-    chCurrent = '\0';
+    int nRecLen = 0;
+    char chCurrent = '\0';
     while( VSIFReadL( &chCurrent, 1, 1, fp ) == 1
            && chCurrent != 10
            && chCurrent != 13 )
@@ -215,10 +213,9 @@ void TigerFileBase::EstablishFeatureCount()
 /*      (including line terminators).  Get the total file size, and     */
 /*      divide by this length to get the presumed number of records.    */
 /* -------------------------------------------------------------------- */
-    vsi_l_offset        nFileSize;
 
     VSIFSeekL( fpPrimary, 0, SEEK_END );
-    nFileSize = VSIFTellL( fpPrimary );
+    const vsi_l_offset nFileSize = VSIFTellL( fpPrimary );
 
     if( (nFileSize % (vsi_l_offset)nRecordLength) != 0 )
     {
@@ -494,8 +491,8 @@ void TigerFileBase::SetFields(const TigerRecordInfo *psRTInfoIn,
                               OGRFeature      *poFeature,
                               char            *achRecord)
 {
-  int i;
-  for (i=0; i<psRTInfoIn->nFieldCount; ++i) {
+  for( int i = 0; i < psRTInfoIn->nFieldCount; ++i )
+  {
     if (psRTInfoIn->pasFields[i].bSet) {
       SetField( poFeature,
                 psRTInfoIn->pasFields[i].pszFieldName,
@@ -513,8 +510,8 @@ void TigerFileBase::WriteFields(const TigerRecordInfo *psRTInfoIn,
                                 OGRFeature      *poFeature,
                                 char            *szRecord)
 {
-  int i;
-  for (i=0; i<psRTInfoIn->nFieldCount; ++i) {
+  for( int i = 0; i < psRTInfoIn->nFieldCount; ++i )
+  {
     if (psRTInfoIn->pasFields[i].bWrite) {
       WriteField( poFeature,
                   psRTInfoIn->pasFields[i].pszFieldName,

@@ -116,14 +116,10 @@ void VFKFeatureSQLite::FinalizeSQL()
 */
 OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
 {
-    int rc;
-
-    sqlite3  *poDB;
-
     VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
-    poDB = poReader->m_poDB;
+    sqlite3  *poDB = poReader->m_poDB;
 
-    rc = sqlite3_prepare(poDB, pszSQLCommand, -1,
+    int rc = sqlite3_prepare(poDB, pszSQLCommand, -1,
                          &m_hStmt, NULL);
     if (rc != SQLITE_OK) {
         CPLError(CE_Failure, CPLE_AppDefined,

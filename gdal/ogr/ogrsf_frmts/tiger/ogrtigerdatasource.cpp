@@ -492,9 +492,9 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
         if( STARTS_WITH_CI(pszRequestedVersion, "TIGER_") )
         {
-            int iCode;
+            int iCode = 1;  // Used after for.
 
-            for( iCode = 1; iCode < TIGER_Unknown; iCode++ )
+            for( ; iCode < TIGER_Unknown; iCode++ )
             {
                 if( EQUAL(TigerVersionString((TigerVersion)iCode),
                           pszRequestedVersion) )
@@ -681,9 +681,7 @@ const char *OGRTigerDataSource::GetModule( int iModule )
 int OGRTigerDataSource::CheckModule( const char *pszModule )
 
 {
-    int         i;
-
-    for( i = 0; i < nModules; i++ )
+    for( int i = 0; i < nModules; i++ )
     {
         if( EQUAL(pszModule,papszModules[i]) )
             return TRUE;

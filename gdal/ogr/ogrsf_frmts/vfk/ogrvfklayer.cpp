@@ -127,11 +127,10 @@ OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature * poVfkFeature)
 */
 GIntBig OGRVFKLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
-    int nfeatures;
-
     /* note that 'nfeatures' is 0 when data are not read from DB */
-    nfeatures = (int)poDataBlock->GetFeatureCount();
-    if (m_poFilterGeom || m_poAttrQuery || nfeatures < 1) {
+    int nfeatures = (int)poDataBlock->GetFeatureCount();
+    if( m_poFilterGeom || m_poAttrQuery || nfeatures < 1 )
+    {
         /* force real feature count */
         nfeatures = (int)OGRLayer::GetFeatureCount();
     }

@@ -149,7 +149,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
 
             OGRGeometry *poGeomCurved = NULL;
             if (EQUAL(ftype, "15") || EQUAL(ftype, "16")) {         /* -> circle or arc */
-                int npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                const int npoints = ((OGRLineString *) poGeom)->getNumPoints();
                 for (int i = 0; i < npoints; i++) {
                     ((OGRLineString *) poGeom)->getPoint(i, &pt);
                     poGeomString.addPoint(&pt);
@@ -170,28 +170,31 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                     /* compute center and radius of a circle */
                     double x[3] = { 0.0, 0.0, 0.0 };
                     double y[3] = { 0.0, 0.0, 0.0 };
-                    double m1, n1, m2, n2, c1, c2, mx;
-                    double c_x, c_y;
 
-                    for (int i = 0; i < npoints; i++) {
+                    for( int i = 0; i < npoints; i++ )
+                    {
                         ((OGRLineString *) poGeom)->getPoint(i, &pt);
                         x[i] = pt.getX();
                         y[i] = pt.getY();
                     }
 
-                    m1 = (x[0] + x[1]) / 2.0;
-                    n1 = (y[0] + y[1]) / 2.0;
+                    const double m1 = (x[0] + x[1]) / 2.0;
+                    const double n1 = (y[0] + y[1]) / 2.0;
 
-                    m2 = (x[0] + x[2]) / 2.0;
-                    n2 = (y[0] + y[2]) / 2.0;
+                    const double m2 = (x[0] + x[2]) / 2.0;
+                    const double n2 = (y[0] + y[2]) / 2.0;
 
-                    c1 = (x[1] - x[0]) * m1 + (y[1] - y[0]) * n1;
-                    c2 = (x[2] - x[0]) * m2 + (y[2] - y[0]) * n2;
+                    const double c1 = (x[1] - x[0]) * m1 + (y[1] - y[0]) * n1;
+                    const double c2 = (x[2] - x[0]) * m2 + (y[2] - y[0]) * n2;
 
-                    mx = (x[1] - x[0]) * (y[2] - y[0]) + (y[1] - y[0]) * (x[0] - x[2]);
+                    const double mx =
+                        (x[1] - x[0]) * (y[2] - y[0]) +
+                        (y[1] - y[0]) * (x[0] - x[2]);
 
-                    c_x = (c1 * (y[2] - y[0]) + c2 * (y[0] - y[1])) / mx;
-                    c_y = (c1 * (x[0] - x[2]) + c2 * (x[1] - x[0])) / mx;
+                    const double c_x =
+                        (c1 * (y[2] - y[0]) + c2 * (y[0] - y[1])) / mx;
+                    const double c_y =
+                        (c1 * (x[0] - x[2]) + c2 * (x[1] - x[0])) / mx;
 
                     /* compute a new intermediate point */
                     pt.setX(c_x - (x[1] - c_x));
@@ -205,21 +208,19 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                 }
             }
             else if (strlen(ftype) > 2 && STARTS_WITH_CI(ftype, "15")) { /* -> circle with radius */
-                float r;
-                char s[3]; /* 15 */
+                char s[3] = {}; /* 15 */
 
-                r = 0;
+                float r = 0.0f;
                 if (2 != sscanf(ftype, "%s %f", s, &r) || r < 0) {
                     CPLDebug("OGR-VFK", "%s: invalid circle (unknown or negative radius) "
                              "fid = " CPL_FRMT_GIB, m_poDataBlock->GetName(), m_nFID);
                     m_bValid = FALSE;
                 }
-                else {
-                    double c_x, c_y;
-
+                else
+                {
                     ((OGRLineString *) poGeom)->getPoint(0, &pt);
-                    c_x = pt.getX();
-                    c_y = pt.getY();
+                    const double c_x = pt.getX();
+                    const double c_y = pt.getY();
 
                     /* define first point on a circle */
                     pt.setX(c_x + r);
@@ -249,9 +250,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
 
             }
             else if (EQUAL(ftype, "11")) {                          /* curve */
-                int npoints;
-
-                npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                const int npoints = ((OGRLineString *) poGeom)->getNumPoints();
                 if (npoints > 2) { /* circular otherwise line string */
                     for (int i = 0; i < npoints; i++) {
                         ((OGRLineString *) poGeom)->getPoint(i, &pt);
@@ -264,9 +263,8 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                 poGeomCurved = poGeomString.CurveToLine();
 
             if (poGeomCurved) {
-                int npoints;
-
-                npoints = ((OGRLineString *) poGeomCurved)->getNumPoints();
+                const int npoints =
+                    ((OGRLineString *) poGeomCurved)->getNumPoints();
                 CPLDebug("OGR-VFK", "%s: curve (type=%s) to linestring (npoints=%d) fid = " CPL_FRMT_GIB,
                          m_poDataBlock->GetName(), ftype,
                          npoints, m_nFID);
@@ -279,9 +277,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
         if (!m_paGeom) {
             /* check degenerated linestrings */
             if (m_nGeometryType == wkbLineString) {
-                int npoints;
-
-                npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                const int npoints = ((OGRLineString *) poGeom)->getNumPoints();
                 if (npoints < 2) {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "%s: invalid linestring (%d vertices) fid = " CPL_FRMT_GIB,
@@ -451,11 +447,10 @@ bool VFKFeature::SetProperties(const char *pszLine)
     // TODO(martinl): Why was this block disabled?
     /* set fid
     if (EQUAL(m_poDataBlock->GetName(), "SBP")) {
-        GUIntBig id;
         const VFKProperty *poVfkProperty = GetProperty("PORADOVE_CISLO_BODU");
         if (poVfkProperty)
         {
-            id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
+            GUIntBig id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
             if (id == 1)
                 SetFID(0);
             else

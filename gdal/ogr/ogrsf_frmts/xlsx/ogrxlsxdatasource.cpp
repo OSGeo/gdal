@@ -514,22 +514,22 @@ static void SetField(OGRFeature* poFeature,
 void OGRXLSXDataSource::DetectHeaderLine()
 
 {
-    int bHeaderLineCandidate = TRUE;
-    size_t i;
-    for(i = 0; i < apoFirstLineTypes.size(); i++)
+    bool bHeaderLineCandidate = true;
+
+    for( size_t i = 0; i < apoFirstLineTypes.size(); i++ )
     {
         if (apoFirstLineTypes[i] != "string")
         {
             /* If the values in the first line are not text, then it is */
             /* not a header line */
-            bHeaderLineCandidate = FALSE;
+            bHeaderLineCandidate = false;
             break;
         }
     }
 
     size_t nCountTextOnCurLine = 0;
     size_t nCountNonEmptyOnCurLine = 0;
-    for(i = 0; bHeaderLineCandidate && i < apoCurLineTypes.size(); i++)
+    for( size_t i = 0; bHeaderLineCandidate && i < apoCurLineTypes.size(); i++ )
     {
         if (apoCurLineTypes[i] == "string")
         {
@@ -549,11 +549,11 @@ void OGRXLSXDataSource::DetectHeaderLine()
         bFirstLineIsHeaders = TRUE;
     else if (EQUAL(pszXLSXHeaders, "DISABLE"))
         bFirstLineIsHeaders = FALSE;
-    else if (bHeaderLineCandidate &&
+    else if( bHeaderLineCandidate &&
              apoFirstLineTypes.size() != 0 &&
              apoFirstLineTypes.size() == apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
-             nCountNonEmptyOnCurLine != 0)
+             nCountNonEmptyOnCurLine != 0 )
     {
         bFirstLineIsHeaders = TRUE;
     }
@@ -622,8 +622,7 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
         else if (nCurLine == 1)
         {
             /* If we have only one single line in the sheet */
-            size_t i;
-            for(i = 0; i < apoFirstLineValues.size(); i++)
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
                 const char* pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
                 OGRFieldType eType = GetOGRFieldType(apoFirstLineValues[i].c_str(),
@@ -633,7 +632,7 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
             }
 
             OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-            for(i = 0; i < apoFirstLineValues.size(); i++)
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
                 SetField(poFeature, static_cast<int>(i), apoFirstLineValues[i].c_str(),
                          apoFirstLineTypes[i].c_str());
@@ -729,8 +728,6 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
     {
         CPLAssert(strcmp(pszNameIn, "row") == 0);
 
-        size_t i;
-
         /* Backup first line values and types in special arrays */
         if (nCurLine == 0)
         {
@@ -756,7 +753,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 
             if (bFirstLineIsHeaders)
             {
-                for(i = 0; i < apoFirstLineValues.size(); i++)
+                for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
                 {
                     const char* pszFieldName = apoFirstLineValues[i].c_str();
                     if (pszFieldName[0] == '\0')
@@ -773,7 +770,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             }
             else
             {
-                for(i = 0; i < apoFirstLineValues.size(); i++)
+                for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", (int)i + 1);
@@ -785,7 +782,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                 }
 
                 OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-                for(i = 0; i < apoFirstLineValues.size(); i++)
+                for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
                 {
                     SetField(poFeature, static_cast<int>(i), apoFirstLineValues[i].c_str(),
                              apoFirstLineTypes[i].c_str());
@@ -801,9 +798,9 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             if (apoCurLineValues.size() >
                 (size_t)poCurLayer->GetLayerDefn()->GetFieldCount())
             {
-                for(i = (size_t)poCurLayer->GetLayerDefn()->GetFieldCount();
-                    i < apoCurLineValues.size();
-                    i++)
+                for( size_t i = (size_t)poCurLayer->GetLayerDefn()->GetFieldCount();
+                     i < apoCurLineValues.size();
+                     i++ )
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", (int)i + 1);
@@ -818,7 +815,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             /* Update field type if necessary */
             if (bAutodetectTypes)
             {
-                for(i = 0; i < apoCurLineValues.size(); i++)
+                for( size_t i = 0; i < apoCurLineValues.size(); i++ )
                 {
                     if (apoCurLineValues[i].size())
                     {
@@ -863,7 +860,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 
             /* Add feature for current line */
             OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-            for(i = 0; i < apoCurLineValues.size(); i++)
+            for( size_t i = 0; i < apoCurLineValues.size(); i++ )
             {
                 SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str(),
                          apoCurLineTypes[i].c_str());
@@ -962,7 +959,7 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer* poLayer, int nSheetId)
     stateStack[0].nBeginDepth = 0;
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1122,7 +1119,7 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE* fpSharedStrings)
     stateStack[0].nBeginDepth = 0;
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1204,7 +1201,7 @@ void OGRXLSXDataSource::AnalyseWorkbook(VSILFILE* fpWorkbook)
     nDataHandlerCounter = 0;
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1352,7 +1349,7 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE* fpStyles)
     bInCellXFS = FALSE;
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1413,9 +1410,7 @@ OGRXLSXDataSource::ICreateLayer( const char * pszLayerName,
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    int iLayer;
-
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
         {
@@ -1457,8 +1452,6 @@ OGRXLSXDataSource::ICreateLayer( const char * pszLayerName,
 void OGRXLSXDataSource::DeleteLayer( const char *pszLayerName )
 
 {
-    int iLayer;
-
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
 /* -------------------------------------------------------------------- */
@@ -1475,9 +1468,10 @@ void OGRXLSXDataSource::DeleteLayer( const char *pszLayerName )
 /* -------------------------------------------------------------------- */
 /*      Try to find layer.                                              */
 /* -------------------------------------------------------------------- */
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    int iLayer = 0;
+    for( ; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
+        if( EQUAL(pszLayerName, papoLayers[iLayer]->GetName()) )
             break;
     }
 
@@ -1716,7 +1710,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
         {
             const char* pszVal = poFDefn->GetFieldDefn(j)->GetNameRef();
             std::map<std::string,int>::iterator oIter = oStringMap.find(pszVal);
-            int nStringIndex;
+            int nStringIndex = 0;
             if (oIter != oStringMap.end())
                 nStringIndex = oIter->second;
             else
@@ -1770,8 +1764,13 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
                 }
                 else if (eType == OFTDate || eType == OFTDateTime || eType == OFTTime)
                 {
-                    int nYear, nMonth, nDay, nHour, nMinute, nTZFlag;
-                    float fSecond;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    int nTZFlag = 0;
+                    float fSecond = 0.0f;
                     poFeature->GetFieldAsDateTime(j, &nYear, &nMonth, &nDay,
                                                     &nHour, &nMinute, &fSecond, &nTZFlag );
                     struct tm brokendowntime;
@@ -1801,7 +1800,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
                 {
                     const char* pszVal = poFeature->GetFieldAsString(j);
                     std::map<std::string,int>::iterator oIter = oStringMap.find(pszVal);
-                    int nStringIndex;
+                    int nStringIndex = 0;
                     if (oIter != oStringMap.end())
                         nStringIndex = oIter->second;
                     else
