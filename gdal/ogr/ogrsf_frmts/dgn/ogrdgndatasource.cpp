@@ -162,14 +162,14 @@ OGRLayer *OGRDGNDataSource::GetLayer( int iLayer )
 /*      yet.  It will be created by theICreateLayer() call.             */
 /************************************************************************/
 
-int OGRDGNDataSource::PreCreate( const char *pszFilename,
-                                 char **papszOptionsIn )
+bool OGRDGNDataSource::PreCreate( const char *pszFilename,
+                                  char **papszOptionsIn )
 
 {
     papszOptions = CSLDuplicate( papszOptionsIn );
     pszName = CPLStrdup( pszFilename );
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
