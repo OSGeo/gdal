@@ -45,7 +45,7 @@ APPS_OBJ = apps\commonutils.obj apps\gdalinfo_lib.obj apps\gdal_translate_lib.ob
 
 LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj $(APPS_OBJ)
 
-LIB_DEPENDS = core_dir port_dir ogr_dir gnm_dir frmts_dir appslib-target
+LIB_DEPENDS = port_dir core_dir ogr_dir gnm_dir frmts_dir appslib-target
 
 DISTDIR	=	gdal_$(VERSION)
 
@@ -111,7 +111,7 @@ ogr_min:
 	$(MAKE) /f makefile.vc ogr.lib
 	cd ..
 
-core_dir:
+core_dir: port_dir
 	cd gcore
 	$(MAKE) /f makefile.vc
 	cd ..\alg
