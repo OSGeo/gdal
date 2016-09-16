@@ -143,7 +143,7 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 /* -------------------------------------------------------------------- */
 /*      Update the size information within the raw buffer.              */
 /* -------------------------------------------------------------------- */
-    int nWords = (nNewSize / 2) - 2;
+    const int nWords = (nNewSize / 2) - 2;
 
     psElement->raw_data[2] = (unsigned char) (nWords % 256);
     psElement->raw_data[3] = (unsigned char) (nWords / 256);
@@ -255,10 +255,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
     if( psDGN->next_element_id == psDGN->element_count )
     {
-        unsigned char abyEOF[2];
-
-        abyEOF[0] = 0xff;
-        abyEOF[1] = 0xff;
+        const unsigned char abyEOF[2] = { 0xff, 0xff };
 
         VSIFWrite( abyEOF, 2, 1, psDGN->fp );
         VSIFSeek( psDGN->fp, -2, SEEK_CUR );
@@ -376,13 +373,10 @@ DGNHandle
 /* -------------------------------------------------------------------- */
 /*      Write TCB and EOF to new file.                                  */
 /* -------------------------------------------------------------------- */
-    unsigned char abyEOF[2];
-
     VSIFWrite( pabyRawTCB, psSrcTCB->raw_bytes, 1, fpNew );
     CPLFree( pabyRawTCB );
 
-    abyEOF[0] = 0xff;
-    abyEOF[1] = 0xff;
+    unsigned char abyEOF[2] = { 0xff,  0xff };
 
     VSIFWrite( abyEOF, 2, 1, fpNew );
 
@@ -727,7 +721,7 @@ int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN,
                                DGNElemCore *psElement )
 {
     GByte *rd = psElement->raw_data;
-    int   nWords = (psElement->raw_bytes / 2) - 2;
+    const int nWords = (psElement->raw_bytes / 2) - 2;
 
     if( psElement->raw_data == NULL
         || psElement->raw_bytes < 36 )
@@ -756,7 +750,7 @@ int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN,
 /* -------------------------------------------------------------------- */
     if( psElement->raw_data[30] == 0 && psElement->raw_data[31] == 0 )
     {
-        int     nAttIndex = (psElement->raw_bytes - 32) / 2;
+        const int nAttIndex = (psElement->raw_bytes - 32) / 2;
 
         psElement->raw_data[30] = (GByte) (nAttIndex % 256);
         psElement->raw_data[31] = (GByte) (nAttIndex / 256);
@@ -1699,8 +1693,6 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
 
     for( i = 0; i < nNumElems; i++ )
     {
-        DGNPoint sThisMin, sThisMax;
-
         nTotalLength += papsElems[i]->raw_bytes / 2;
 
         papsElems[i]->complex = TRUE;
@@ -1711,6 +1703,9 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Not all level values matching in a complex set group!");
         }
+
+        DGNPoint sThisMin;
+        DGNPoint sThisMax;
 
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
@@ -1856,10 +1851,6 @@ DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
                                DGNElemCore **papsElems )
 
 {
-    int         nTotalLength = 6;
-    int         i, nLevel;
-    DGNPoint    sMin = {0.0,0.0,0.0}, sMax = {0.0,0.0,0.0};
-
     DGNLoadTCB( hDGN );
 
     if( nNumElems < 1 || papsElems == NULL )
@@ -1872,12 +1863,13 @@ DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
 /* -------------------------------------------------------------------- */
 /*      Collect the total size, and bounds.                             */
 /* -------------------------------------------------------------------- */
-    nLevel = papsElems[0]->level;
+    const int nLevel = papsElems[0]->level;
+    int nTotalLength = 6;
+    DGNPoint sMin = { 0.0, 0.0, 0.0 };
+    DGNPoint sMax = { 0.0, 0.0, 0.0 };
 
-    for( i = 0; i < nNumElems; i++ )
+    for( int i = 0; i < nNumElems; i++ )
     {
-        DGNPoint sThisMin, sThisMax;
-
         nTotalLength += papsElems[i]->raw_bytes / 2;
 
         papsElems[i]->complex = TRUE;
@@ -1889,6 +1881,8 @@ DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
                       "Not all level values matching in a complex set group!");
         }
 
+        DGNPoint sThisMin;
+        DGNPoint sThisMax;
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
         {

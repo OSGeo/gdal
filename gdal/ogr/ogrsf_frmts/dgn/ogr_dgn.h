@@ -107,7 +107,7 @@ class OGRDGNDataSource : public OGRDataSource
                         ~OGRDGNDataSource();
 
     int                 Open( const char *, int bTestOpen, int bUpdate );
-    int                 PreCreate( const char *, char ** );
+    bool                PreCreate( const char *, char ** );
 
     OGRLayer           *ICreateLayer( const char *,
                                      OGRSpatialReference * = NULL,

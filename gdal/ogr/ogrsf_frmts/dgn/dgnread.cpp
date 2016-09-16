@@ -210,9 +210,10 @@ int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement,
 
 {
     DGNInfo *psDGN = (DGNInfo *) hDGN;
-    GUInt32 anMin[3];
-    GUInt32 anMax[3];
     bool bResult = false;
+
+    GUInt32 anMin[3] = { 0, 0, 0 };
+    GUInt32 anMax[3] = { 0, 0, 0 };
 
 /* -------------------------------------------------------------------- */
 /*      Get the extents if we have raw data in the element, or          */
@@ -231,8 +232,8 @@ int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement,
     else
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "DGNGetElementExtents() fails because the requested element\n"
-                 " does not have raw data available." );
+                 "DGNGetElementExtents() fails because the requested element "
+                 "does not have raw data available." );
         return FALSE;
     }
 
