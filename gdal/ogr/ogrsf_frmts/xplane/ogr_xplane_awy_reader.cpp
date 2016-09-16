@@ -260,17 +260,20 @@ OGRFeature*
         OGRMultiLineString* multiLineString = new OGRMultiLineString();
         OGRLineString* lineString1 = new OGRLineString();
         OGRLineString* lineString2 = new OGRLineString();
-        double dfLatInt;
         lineString1->addPoint(dfLon1, dfLat1);
         if (dfLon1 < dfLon2)
         {
-            dfLatInt = dfLat1 + (dfLat2 - dfLat1) * (-180 - dfLon1) / ((dfLon2 - 360) - dfLon1);
+            const double dfLatInt =
+                dfLat1 +
+                (dfLat2 - dfLat1) * (-180 - dfLon1) / ((dfLon2 - 360) - dfLon1);
             lineString1->addPoint(-180, dfLatInt);
             lineString2->addPoint(180, dfLatInt);
         }
         else
         {
-            dfLatInt = dfLat1 + (dfLat2 - dfLat1) * (180 - dfLon1) / ((dfLon2 + 360) - dfLon1);
+            const double dfLatInt =
+                dfLat1 +
+                (dfLat2 - dfLat1) * (180 - dfLon1) / ((dfLon2 + 360) - dfLon1);
             lineString1->addPoint(180, dfLatInt);
             lineString2->addPoint(-180, dfLatInt);
         }

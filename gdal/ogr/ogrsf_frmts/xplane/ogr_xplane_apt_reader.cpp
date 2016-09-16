@@ -419,19 +419,19 @@ void    OGRXPlaneAptReader::ParseAptHeaderRecord()
 /*                    ParseRunwayTaxiwayV810Record()                    */
 /************************************************************************/
 
-void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
+void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
 {
-    // int aeVisualApproachLightingCode[2];
+    // int aeVisualApproachLightingCode[2] = { 0, 0 };
 
     RET_IF_FAIL(assertMinCol(15));
 
-    double dfLat;
-    double dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
     const char* pszRwyNum = papszTokens[3];
-    double dfTrueHeading;
+    double dfTrueHeading = 0.0;
     RET_IF_FAIL(readTrueHeading(&dfTrueHeading, 4));
-    double dfLength;
+    double dfLength = 0.0;
     RET_IF_FAIL(readDouble(&dfLength, 5, "length"));
     dfLength *= FEET_TO_METER;
     double adfDisplacedThresholdLength[2];
@@ -446,7 +446,7 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
         adfStopwayLength[1] = atoi(strchr(papszTokens[7], '.') + 1) * FEET_TO_METER;
     else
         adfStopwayLength[1] = 0;
-    double dfWidth;
+    double dfWidth = 0.0;
     RET_IF_FAIL(readDouble(&dfWidth, 8, "width"));
     dfWidth *= FEET_TO_METER;
     int aeRunwayLightingCode[2];
@@ -470,10 +470,10 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
     const int eSurfaceCode = atoi(papszTokens[10]);
     const int eShoulderCode = atoi(papszTokens[11]);
     const int eMarkings = atoi(papszTokens[12]);
-    double dfSmoothness;
+    double dfSmoothness = 0.0;
     RET_IF_FAIL(readDoubleWithBounds(&dfSmoothness, 13, "runway smoothness", 0., 1.));
     bool bHasDistanceRemainingSigns = CPL_TO_BOOL(atoi(papszTokens[14]));
-    double adfVisualGlidePathAngle[2];
+    double adfVisualGlidePathAngle[2] = { 0.0, 0.0 };
     if (nTokens == 16)
     {
         adfVisualGlidePathAngle[0] = atoi(papszTokens[15]) / 100.;
@@ -481,11 +481,6 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
             adfVisualGlidePathAngle[1] = atoi(strchr(papszTokens[15], '.') + 1) / 100.;
         else
             adfVisualGlidePathAngle[1] = 0;
-    }
-    else
-    {
-        adfVisualGlidePathAngle[0] = 0;
-        adfVisualGlidePathAngle[1] = 0;
     }
 
     if (strcmp(pszRwyNum, "xxx") == 000)
@@ -691,28 +686,28 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
 {
     RET_IF_FAIL(assertMinCol(8 + 9 + 9));
 
-    double dfWidth;
+    double dfWidth = 0.0;
     RET_IF_FAIL(readDouble(&dfWidth, 1, "runway width"));
 
     const int eSurfaceCode = atoi(papszTokens[2]);
     const int eShoulderCode = atoi(papszTokens[3]);
-    double dfSmoothness;
+    double dfSmoothness = 0.0;
     RET_IF_FAIL(readDoubleWithBounds(&dfSmoothness, 4, "runway smoothness", 0., 1.));
 
     const bool bHasCenterLineLights = CPL_TO_BOOL(atoi(papszTokens[5]));
     const int eEdgeLighting = atoi(papszTokens[6]);
     const bool bHasDistanceRemainingSigns = CPL_TO_BOOL(atoi(papszTokens[7]));
-    double adfLat[2];
-    double adfLon[2];
+    double adfLat[2] = { 0.0, 0.0 };
+    double adfLon[2] = { 0.0, 0.0 };
     CPLString aosRunwayId[2];
-    double adfDisplacedThresholdLength[2];
-    double adfStopwayLength[2];
+    double adfDisplacedThresholdLength[2] = { 0.0, 0.0 };
+    double adfStopwayLength[2] = { 0.0, 0.0 };
 
-    for( int nRwy=0; nRwy<=1 ; nRwy++ )
+    for( int nRwy = 0; nRwy <= 1 ; nRwy++ )
     {
         aosRunwayId[nRwy] = papszTokens[8 + 9*nRwy + 0]; /* for example : 08, 24R, or xxx */
-        double dfLat;
-        double dfLon;
+        double dfLat = 0.0;
+        double dfLon = 0.0;
         RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 8 + 9*nRwy + 1));
         adfLat[nRwy] = dfLat;
         adfLon[nRwy] = dfLon;
@@ -723,7 +718,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
                                  8 + 9*nRwy + 4,
                                  "stopway/blastpad/over-run length" ) );
 
-        if (!bRunwayFound)
+        if( !bRunwayFound )
         {
             dfLatFirstRwy = dfLat;
             dfLonFirstRwy = dfLon;
@@ -803,12 +798,12 @@ void OGRXPlaneAptReader::ParseWaterRunwayRecord()
 {
     RET_IF_FAIL(assertMinCol(9));
 
-    double dfWidth;
+    double dfWidth = 0.0;
     RET_IF_FAIL(readDouble(&dfWidth, 1, "runway width"));
 
     bool bBuoys = CPL_TO_BOOL(atoi(papszTokens[2]));
-    double adfLat[2];
-    double adfLon[2];
+    double adfLat[2] = { 0.0, 0.0 };
+    double adfLon[2] = { 0.0, 0.0 };
     CPLString aosRunwayId[2];
 
     for( int i=0; i < 2; i++ )
@@ -817,13 +812,13 @@ void OGRXPlaneAptReader::ParseWaterRunwayRecord()
         RET_IF_FAIL(readLatLon(&adfLat[i], &adfLon[i], 4 + 3*i));
     }
 
-    const double dfLength
-        = OGRXPlane_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
+    const double dfLength =
+        OGRXPlane_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
 
     if (poWaterRunwayThresholdLayer)
     {
         OGRFeature* apoWaterRunwayThreshold[2] = {NULL, NULL};
-        for( int i=0; i < 2; i++ )
+        for( int i = 0; i < 2; i++ )
         {
             apoWaterRunwayThreshold[i] =
                 poWaterRunwayThresholdLayer->AddFeature
@@ -853,23 +848,23 @@ void OGRXPlaneAptReader::ParseHelipadRecord()
     RET_IF_FAIL(assertMinCol(12));
 
     const char* pszHelipadName = papszTokens[1];
-    double dfLat;
-    double dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 2));
-    double dfTrueHeading;
+    double dfTrueHeading = 0.0;
     RET_IF_FAIL(readTrueHeading(&dfTrueHeading, 4));
-    double dfLength;
+    double dfLength = 0.0;
     RET_IF_FAIL(readDouble(&dfLength, 5, "length"));
-    double dfWidth;
+    double dfWidth = 0.0;
     RET_IF_FAIL(readDouble(&dfWidth, 6, "width"));
     const int eSurfaceCode = atoi(papszTokens[7]);
     const int eMarkings = atoi(papszTokens[8]);
     const int eShoulderCode = atoi(papszTokens[9]);
-    double dfSmoothness;
+    double dfSmoothness = 0.0;
     RET_IF_FAIL(readDoubleWithBounds(&dfSmoothness, 10, "helipad smoothness", 0., 1.));
     const int eEdgeLighting = atoi(papszTokens[11]);
 
-    if (poHelipadLayer)
+    if( poHelipadLayer )
     {
         poHelipadLayer->AddFeature(osAptICAO, pszHelipadName, dfLat, dfLon,
                                 dfTrueHeading, dfLength, dfWidth,
@@ -947,9 +942,9 @@ static OGRGeometry* OGRXPlaneAptReaderSplitPolygon(OGRPolygon& polygon)
         papoPolygons[i+1]->addRing(polygon.getInteriorRing(i));
     }
 
-    int bIsValid;
-    OGRGeometry* poGeom
-        = OGRGeometryFactory::organizePolygons(
+    int bIsValid = FALSE;
+    OGRGeometry* poGeom =
+        OGRGeometryFactory::organizePolygons(
             reinterpret_cast<OGRGeometry**>( papoPolygons ),
             1 + polygon.getNumInteriorRings(),
             &bIsValid, NULL);
@@ -1297,10 +1292,10 @@ void OGRXPlaneAptReader::ParsePavement()
 
     const int eSurfaceCode = atoi(papszTokens[1]);
 
-    double dfSmoothness;
+    double dfSmoothness = 0.0;
     RET_IF_FAIL(readDoubleWithBounds(&dfSmoothness, 2, "pavement smoothness", 0., 1.));
 
-    double dfTextureHeading;
+    double dfTextureHeading = 0.0;
     RET_IF_FAIL(readTrueHeading(&dfTextureHeading, 3, "texture heading"));
 
     const CPLString osPavementName = readStringUntilEnd(4);
@@ -1706,7 +1701,7 @@ void OGRXPlaneAptReader::ParseATCRecord(int nType)
 {
     RET_IF_FAIL(assertMinCol(2));
 
-    double dfFrequency;
+    double dfFrequency = 0.0;
     RET_IF_FAIL(readDouble(&dfFrequency, 1, "frequency"));
     dfFrequency /= 100.;
 
@@ -1793,9 +1788,10 @@ void OGRXPlaneAptReader::ParseTaxiwaySignRecord()
 {
     RET_IF_FAIL(assertMinCol(7));
 
-    double dfLat, dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
-    double dfTrueHeading;
+    double dfTrueHeading = 0.0;
     RET_IF_FAIL(readTrueHeading(&dfTrueHeading, 3, "heading"));
     /* papszTokens[4] : ignored. Taxiway sign style */
     const int nSize = atoi(papszTokens[5]);
@@ -1814,18 +1810,19 @@ void OGRXPlaneAptReader::ParseVasiPapiWigWagRecord()
 {
     RET_IF_FAIL(assertMinCol(7));
 
-    double dfLat, dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
 
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
     const int eType = atoi(papszTokens[3]);
-    double dfTrueHeading;
+    double dfTrueHeading = 0.0;
     RET_IF_FAIL(readTrueHeading(&dfTrueHeading, 4, "heading"));
-    double dfVisualGlidePathAngle;
+    double dfVisualGlidePathAngle = 0.0;
     RET_IF_FAIL(readDoubleWithBounds(&dfVisualGlidePathAngle, 5, "visual glidepath angle", 0, 90));
     const char* pszRwyNum = papszTokens[6];
     /* papszTokens[7] : ignored. Type of lighting object represented */
 
-    if (poVASI_PAPI_WIGWAG_Layer)
+    if( poVASI_PAPI_WIGWAG_Layer )
         poVASI_PAPI_WIGWAG_Layer->AddFeature(
             osAptICAO, pszRwyNum, VASI_PAPI_WIGWAG_Enumeration.GetText(eType),
             dfLat, dfLon,
@@ -1840,9 +1837,10 @@ void OGRXPlaneAptReader::ParseTaxiLocation()
 {
     RET_IF_FAIL(assertMinCol(7));
 
-    double dfLat, dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
-    double dfTrueHeading;
+    double dfTrueHeading = 0.0;
     RET_IF_FAIL(readTrueHeading(&dfTrueHeading, 3, "heading"));
     const CPLString osLocationType = papszTokens[4];
     const CPLString osAirplaneTypes = papszTokens[5];

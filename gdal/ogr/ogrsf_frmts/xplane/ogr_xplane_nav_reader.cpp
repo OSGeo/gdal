@@ -120,13 +120,12 @@ int OGRXPlaneNavReader::IsRecognizedVersion( const char* pszVersionString)
 void OGRXPlaneNavReader::Read()
 {
     const char* pszLine = NULL;
-    while((pszLine = CPLReadLineL(fp)) != NULL)
+    while( (pszLine = CPLReadLineL(fp)) != NULL )
     {
-        int nType;
         papszTokens = CSLTokenizeString(pszLine);
         nTokens = CSLCount(papszTokens);
 
-        nLineNumber ++;
+        nLineNumber++;
 
         if (nTokens == 1 && strcmp(papszTokens[0], "99") == 0)
         {
@@ -142,7 +141,7 @@ void OGRXPlaneNavReader::Read()
             continue;
         }
 
-        nType = atoi(papszTokens[0]);
+        int nType = atoi(papszTokens[0]);
         if (!((nType >= NAVAID_NDB && nType <= NAVAID_IM) ||
                nType == NAVAID_DME_COLOC || nType == NAVAID_DME_STANDALONE))
         {
