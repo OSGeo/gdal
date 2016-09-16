@@ -3,13 +3,13 @@ GDAL_ROOT	=	..
 
 XTRAOBJ =	$(SETARGV)
 
-LIBS	=	$(GDAL_ROOT)\gdal_i.lib
-
 XTRAFLAGS =	-I..\gcore -I..\port -I..\frmts\vrt -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts  $(GEOS_CFLAGS) -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson
 
 EXTRAFLAGS =    -I..\frmts\vrt -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson
 
 !INCLUDE ..\nmake.opt
+
+LIBS	=	$(GDALLIB)
 
 !IFDEF INCLUDE_OGR_FRMTS
 OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe \
