@@ -2564,13 +2564,29 @@ OGRErr OGRShapeLayer::Repack()
         SHPClose( hNewSHP );
         hSHP = hNewSHP = NULL;
 
-        VSIUnlink( osSHPName );
-        VSIUnlink( osSHXName );
+        if( VSIUnlink( osSHPName ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can not delete old SHP file: %s",
+                      VSIStrerror( errno ) );
+            CPLFree( panRecordsToDelete );
+            return OGRERR_FAILURE;
+        }
+
+        if( VSIUnlink( osSHXName ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can not delete old SHX file: %s",
+                      VSIStrerror( errno ) );
+            CPLFree( panRecordsToDelete );
+            return OGRERR_FAILURE;
+        }
 
         oTempFile = CPLResetExtension( oTempFile, "shp" );
         if( VSIRename( oTempFile, osSHPName ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename SHP file: %s",
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can not rename new SHP file: %s",
                       VSIStrerror( errno ) );
             CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
@@ -2579,7 +2595,8 @@ OGRErr OGRShapeLayer::Repack()
         oTempFile = CPLResetExtension( oTempFile, "shx" );
         if( VSIRename( oTempFile, osSHXName ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename SHX file: %s",
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Can not rename new SHX file: %s",
                       VSIStrerror( errno ) );
             CPLFree( panRecordsToDelete );
             return OGRERR_FAILURE;
