@@ -195,6 +195,7 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
                                             int bQuiet404Error)
 {
     char** papszOptions = CSLAddString(GetBaseHTTPOptions(), NULL);
+    papszOptions = CSLSetNameValue(papszOptions, "MAX_RETRY", "3");
     CPLHTTPResult * psResult;
     if( STARTS_WITH(osBaseURL, "/vsimem/") &&
         STARTS_WITH(pszURL, "/vsimem/") )
