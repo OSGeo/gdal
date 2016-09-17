@@ -1525,13 +1525,12 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    int typesize = GDALGetDataTypeSizeBytes(eBufType);
-    if( GDALGetDataTypeSize(eBufType) % 8 > 0 ) typesize++;
+    const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     GDALDataType eSrcType = eSourceTransferType;
     if( eSrcType == GDT_Unknown || eSrcType >= GDT_TypeCount ) {
         eSrcType = eBufType;
     }
-    const int sourcesize = GDALGetDataTypeSizeBytes(eSrcType);
+    const int nSrcTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the buffer to some background value. Use the         */
@@ -1541,7 +1540,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         // Do nothing
     }
-    else if( nPixelSpace == typesize &&
+    else if( nPixelSpace == nBufTypeSize &&
         (!m_bNoDataValueSet || m_dfNoDataValue == 0) ) {
         memset( pData, 0,
                 static_cast<size_t>(nBufXSize * nBufYSize * nPixelSpace) );
@@ -1611,7 +1610,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         = reinterpret_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
     for( int iSource = 0; iSource < nSources; iSource++ ) {
         pBuffers[iSource] =
-            VSI_MALLOC_VERBOSE(sourcesize * nExtBufXSize * nExtBufYSize);
+            VSI_MALLOC3_VERBOSE(nSrcTypeSize, nExtBufXSize, nExtBufYSize);
         if( pBuffers[iSource] == NULL )
         {
             for (int i = 0; i < iSource; i++) {
@@ -1629,13 +1628,14 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         /* ------------------------------------------------------------ */
         if( !m_bNoDataValueSet || m_dfNoDataValue == 0 )
         {
-            memset( pBuffers[iSource], 0, sourcesize * nExtBufXSize * nExtBufYSize );
+            memset( pBuffers[iSource], 0, static_cast<size_t>(nSrcTypeSize) *
+                    nExtBufXSize * nExtBufYSize );
         }
         else
         {
             GDALCopyWords( &m_dfNoDataValue, GDT_Float64, 0,
                            reinterpret_cast<GByte *>( pBuffers[iSource] ),
-                           eSrcType, sourcesize,
+                           eSrcType, nSrcTypeSize,
                            nExtBufXSize * nExtBufYSize );
         }
     }
@@ -1712,27 +1712,27 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         eErr = reinterpret_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
             nXOffExt, nYOffExt, nXSizeExt, nYSizeExt,
             pabyBuffer + (nYShiftInBuffer * nExtBufXSize +
-                                            nXShiftInBuffer) * sourcesize,
+                                            nXShiftInBuffer) * nSrcTypeSize,
             nExtBufXSizeReq, nExtBufYSizeReq,
             eSrcType,
-            sourcesize,
-            sourcesize * nExtBufXSize,
+            nSrcTypeSize,
+            nSrcTypeSize * nExtBufXSize,
             &sExtraArg );
 
         // Extend first lines
         for( int iY = 0; iY < nYShiftInBuffer; iY++ )
         {
-            memcpy( pabyBuffer + iY * nExtBufXSize * sourcesize,
-                    pabyBuffer + nYShiftInBuffer * nExtBufXSize * sourcesize,
-                    nExtBufXSize * sourcesize );
+            memcpy( pabyBuffer + iY * nExtBufXSize * nSrcTypeSize,
+                    pabyBuffer + nYShiftInBuffer * nExtBufXSize * nSrcTypeSize,
+                    nExtBufXSize * nSrcTypeSize );
         }
         // Extend last lines
         for( int iY = nYShiftInBuffer + nExtBufYSizeReq; iY < nExtBufYSize; iY++ )
         {
-            memcpy( pabyBuffer + iY * nExtBufXSize * sourcesize,
+            memcpy( pabyBuffer + iY * nExtBufXSize * nSrcTypeSize,
                     pabyBuffer + (nYShiftInBuffer + nExtBufYSizeReq - 1) *
-                                                    nExtBufXSize * sourcesize,
-                    nExtBufXSize * sourcesize );
+                                                    nExtBufXSize * nSrcTypeSize,
+                    nExtBufXSize * nSrcTypeSize );
         }
         // Extend first cols
         if( nXShiftInBuffer )
@@ -1741,10 +1741,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             {
                 for( int iX = 0; iX < nXShiftInBuffer; iX++ )
                 {
-                    memcpy( pabyBuffer + (iY * nExtBufXSize + iX) * sourcesize,
+                    memcpy( pabyBuffer + (iY * nExtBufXSize + iX) * nSrcTypeSize,
                             pabyBuffer + (iY * nExtBufXSize +
-                                                nXShiftInBuffer) * sourcesize,
-                            sourcesize );
+                                                nXShiftInBuffer) * nSrcTypeSize,
+                            nSrcTypeSize );
                 }
             }
         }
@@ -1756,10 +1756,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 for( int iX = nXShiftInBuffer + nExtBufXSizeReq;
                          iX < nExtBufXSize; iX++ )
                 {
-                    memcpy( pabyBuffer + (iY * nExtBufXSize + iX) * sourcesize,
+                    memcpy( pabyBuffer + (iY * nExtBufXSize + iX) * nSrcTypeSize,
                             pabyBuffer + (iY * nExtBufXSize + nXShiftInBuffer +
-                                            nExtBufXSizeReq - 1) * sourcesize,
-                            sourcesize );
+                                            nExtBufXSizeReq - 1) * nSrcTypeSize,
+                            nSrcTypeSize );
                 }
             }
         }
@@ -1787,11 +1787,20 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         if( !InitializePython() )
             goto end;
 
-        GByte* pabyTmpBuffer = reinterpret_cast<GByte*>(VSI_CALLOC_VERBOSE(
-                        static_cast<size_t>(nExtBufXSize) * nExtBufYSize,
-                        GDALGetDataTypeSizeBytes(eDataType)));
-        if( !pabyTmpBuffer )
-            goto end;
+        GByte* pabyTmpBuffer = NULL;
+        // Do we need a temporary buffer or can we use directly the output
+        // buffer ?
+        if( nBufferRadius != 0 ||
+            eDataType != eBufType ||
+            nPixelSpace != nBufTypeSize ||
+            nLineSpace != nBufTypeSize * nBufXSize )
+        {
+            pabyTmpBuffer = reinterpret_cast<GByte*>(VSI_CALLOC_VERBOSE(
+                            static_cast<size_t>(nExtBufXSize) * nExtBufYSize,
+                            GDALGetDataTypeSizeBytes(eDataType)));
+            if( !pabyTmpBuffer )
+                goto end;
+        }
 
         {
         const bool bUseExclusiveLock = m_poPrivate->m_bExclusiveLock ||
@@ -1803,7 +1812,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         // Prepare target numpy array
         PyObject* poPyDstArray = GDALCreateNumpyArray(
                                     m_poPrivate->m_poGDALCreateNumpyArray,
-                                    pabyTmpBuffer,
+                                    pabyTmpBuffer ? pabyTmpBuffer : pData,
                                     eDataType,
                                     nExtBufYSize,
                                     nExtBufXSize);
@@ -1888,21 +1897,25 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         } // End of GIL section
 
-        // Copy numpy destination array to user buffer
-        for( int iY = 0; iY < nBufYSize; iY++ )
+        if( pabyTmpBuffer )
         {
-            size_t nSrcOffset = (static_cast<size_t>(iY + nBufferRadius) *
-                nExtBufXSize + nBufferRadius) *
-                GDALGetDataTypeSizeBytes(eDataType);
-            GDALCopyWords(pabyTmpBuffer + nSrcOffset,
-                          eDataType,
-                          GDALGetDataTypeSizeBytes(eDataType),
-                          reinterpret_cast<GByte*>(pData) + iY * nLineSpace,
-                          eBufType,
-                          static_cast<int>(nPixelSpace),
-                          nBufXSize);
+            // Copy numpy destination array to user buffer
+            for( int iY = 0; iY < nBufYSize; iY++ )
+            {
+                size_t nSrcOffset = (static_cast<size_t>(iY + nBufferRadius) *
+                    nExtBufXSize + nBufferRadius) *
+                    GDALGetDataTypeSizeBytes(eDataType);
+                GDALCopyWords(pabyTmpBuffer + nSrcOffset,
+                              eDataType,
+                              GDALGetDataTypeSizeBytes(eDataType),
+                              reinterpret_cast<GByte*>(pData) + iY * nLineSpace,
+                              eBufType,
+                              static_cast<int>(nPixelSpace),
+                              nBufXSize);
+            }
+
+            VSIFree(pabyTmpBuffer);
         }
-        VSIFree(pabyTmpBuffer);
     }
     else if( eErr == CE_None && pfnPixelFunc != NULL ) {
         eErr = pfnPixelFunc( reinterpret_cast<void **>( pBuffers ), nSources,
