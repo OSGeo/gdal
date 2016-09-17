@@ -27,9 +27,6 @@ if needed.
 
 Master: http://www.gdal.org<br>
 Download: <a href="http://download.osgeo.org/gdal">http at download.osgeo.org</a>
-<!--
- <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
--->
 
 \section index_userdocs User Oriented Documentation
 
@@ -137,12 +134,8 @@ mailing list can be used for discussion of development and user issues related
 to GDAL and related technologies.  Subscriptions can be done, and archives
 reviewed <a href="http://lists.osgeo.org/mailman/listinfo/gdal-dev/">on
 the web</a>.  The mailing list is also available in read-only format by NNTP at
-<a href="news://news.gmane.org/gmane.comp.gis.gdal.devel">news://news.gmane.org/gmane.comp.gis.gdal.devel</a>
-<!--
-and by HTTP at
-<a href="http://news.gmane.org/gmane.comp.gis.gdal.devel">http://news.gmane.org/gmane.comp.gis.gdal.devel</a>
--->
-.
+<a href="news://news.gmane.org/gmane.comp.gis.gdal.devel">news://news.gmane.org/gmane.comp.gis.gdal.devel</a>.
+
 Archives since 2005 are searchable on <a href="http://osgeo-org.1560.n6.nabble.com/GDAL-Dev-f3742093.html">Nabble</a>.<p>
 
 Some GDAL/OGR users and developers can also often be found in the
