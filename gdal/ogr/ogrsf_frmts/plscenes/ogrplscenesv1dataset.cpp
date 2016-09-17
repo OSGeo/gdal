@@ -270,6 +270,7 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
         papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders);
         papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS", pszPostContent);
     }
+    papszOptions = CSLSetNameValue(papszOptions, "MAX_RETRY", "3");
     CPLHTTPResult *psResult = NULL;
     if( STARTS_WITH(m_osBaseURL, "/vsimem/") &&
         STARTS_WITH(pszURL, "/vsimem/") )
