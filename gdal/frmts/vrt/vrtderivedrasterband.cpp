@@ -374,10 +374,12 @@ static bool LoadPythonAPI()
                     // it for its version...
                     if( osVersion.empty() )
                     {
+                        const char* pszPrintVersion =
+                            "import sys; print(str(sys.version_info[0]) +"
+                            "'.' + str(sys.version_info[1]))";
                         const char* const apszArgv[] = {
                                 osPythonBinary.c_str(), "-c",
-                                "import sys; print(str(sys.version_info[0]) +"
-                                "'.' + str(sys.version_info[1]))",
+                                pszPrintVersion,
                                 NULL };
                         const CPLString osTmpFilename(
                                         "/vsimem/LoadPythonAPI/out.txt");
