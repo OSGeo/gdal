@@ -27,7 +27,6 @@ ok($pdl->at(2,3) == 1, "Data in piddle.");
 $pdl += 1;
 $band->Piddle($pdl,1,2);
 $t = $band->ReadTile;
-print "$t->[5][3]\n";
 ok($t->[5][3] == 2, "Data from piddle into band.");
 
 }

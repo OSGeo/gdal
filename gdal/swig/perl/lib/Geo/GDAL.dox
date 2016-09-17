@@ -1091,16 +1091,17 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @param imag_part Imaginary component of fill value.
 #
 
-## @method Piddle($piddle, $xoff = 0, $yoff = 0, $xsize = <width>, $ysize = <height>)
+## @method Piddle($piddle, $xoff = 0, $yoff = 0, $xsize = <width>, $ysize = <height>, $xdim, $ydim)
 # Read or write band data from/into a piddle.
 #
 # \note The PDL module must be available for this method to work. Also, you
 # should 'use PDL' in the code that you use this method.
 #
-# @param piddle [optional, needed only when writing] The piddle from which to read or into which write.
-# @param xoff, yoff The offset for reading, default is 0,0.
-# @param xsize, ysize [optional and only when reading] The size of the read window.
-# @return A new piddle when reading.
+# @param piddle [only when writing] The piddle from which to read the data to be written into the band.
+# @param xoff, yoff The offset for data in the band, default is top left (0, 0).
+# @param xsize, ysize [optional] The size of the window in the band.
+# @param xdim, ydim [optional, only when reading from a band] The size of the piddle to create.
+# @return A new piddle when reading from a band (no not use when writing into a band).
 
 ## @method WriteTile($data, $xoff = 0, $yoff = 0)
 # Write band data from a Perl array.

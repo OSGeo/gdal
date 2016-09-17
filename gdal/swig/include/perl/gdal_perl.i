@@ -1617,34 +1617,39 @@ sub Piddle {
     unless (defined wantarray) {
         my $pdl = shift;
         error("The datatype of the Piddle and the band do not match.") unless $PDL2DATATYPE{$pdl->get_datatype} == $t;
-        my ($xoff, $yoff) = @_;
+        my ($xoff, $yoff, $xsize, $ysize) = @_;
         $xoff //= 0;
         $yoff //= 0;
         my $data = $pdl->get_dataref();
-        my ($xsize, $ysize) = $pdl->dims();
-        if ($xsize > $self->{XSize} - $xoff) {
-            warn "Piddle XSize too large ($xsize) for this raster band (width = $self->{XSize}, offset = $xoff).";
-            $xsize = $self->{XSize} - $xoff;
+        my ($xdim, $ydim) = $pdl->dims();
+        if ($xdim > $self->{XSize} - $xoff) {
+            warn "Piddle XSize too large ($xdim) for this raster band (width = $self->{XSize}, offset = $xoff).";
+            $xdim = $self->{XSize} - $xoff;
         }
-        if ($ysize > $self->{YSize} - $yoff) {
-            $ysize = $self->{YSize} - $yoff;
-            warn "Piddle YSize too large ($ysize) for this raster band (height = $self->{YSize}, offset = $yoff).";
+        if ($ydim > $self->{YSize} - $yoff) {
+            $ydim = $self->{YSize} - $yoff;
+            warn "Piddle YSize too large ($ydim) for this raster band (height = $self->{YSize}, offset = $yoff).";
         }
-        $self->_WriteRaster($xoff, $yoff, $xsize, $ysize, $data, undef, undef, $t, 0, 0);
+        $xsize //= $xdim;
+        $ysize //= $ydim;
+        $self->_WriteRaster($xoff, $yoff, $xsize, $ysize, $data, $xdim, $ydim, $t, 0, 0);
         return;
     }
-    my ($xoff, $yoff, $xsize, $ysize) = @_;
+    my ($xoff, $yoff, $xsize, $ysize, $xdim, $ydim, $alg) = @_;
     $xoff //= 0;
     $yoff //= 0;
     $xsize //= $self->{XSize} - $xoff;
     $ysize //= $self->{YSize} - $yoff;
-    my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $xsize, $ysize, 
-                                 $t, 0, 0, $Geo::GDAL::Const::GRIORA_NearestNeighbour);
+    $xdim //= $xsize;
+    $ydim //= $ysize;
+    $alg //= 'NearestNeighbour';
+    $alg = Geo::GDAL::string2int($alg, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
+    my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $xdim, $ydim, $t, 0, 0, $alg);
     my $pdl = PDL->new;
     my $datatype = $DATATYPE2PDL{$t};
     error("The band datatype is not supported by PDL.") if $datatype < 0;
     $pdl->set_datatype($datatype);
-    $pdl->setdims([$xsize, $ysize]);
+    $pdl->setdims([$xdim, $ydim]);
     my $data = $pdl->get_dataref();
     $$data = $buf;
     $pdl->upd_data;
