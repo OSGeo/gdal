@@ -3473,6 +3473,44 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
         return GDALMajorObject::GetMetadata(pszDomain);
 }
 
+/**
+ * \fn GDALDataset::SetMetadata( char ** papszMetadata, const char * pszDomain)
+ * \brief Set metadata.
+ *
+ * CAUTION: depending on the format, older values of the updated information might
+ * still be found in the file in a "ghost" state, even if no longer accessible
+ * through the GDAL API. This is for example the case of the GTiff format (this is
+ * not a exhaustive list)
+ *
+ * The C function GDALSetMetadata() does the same thing as this method.
+ *
+ * @param papszMetadata the metadata in name=value string list format to
+ * apply.
+ * @param pszDomain the domain of interest.  Use "" or NULL for the default
+ * domain.
+ * @return CE_None on success, CE_Failure on failure and CE_Warning if the
+ * metadata has been accepted, but is likely not maintained persistently
+ * by the underlying object between sessions.
+ */
+
+/**
+ * \fn GDALDataset::SetMetadataItem( const char * pszName, const char * pszValue, const char * pszDomain)
+ * \brief Set single metadata item.
+ *
+ * CAUTION: depending on the format, older values of the updated information might
+ * still be found in the file in a "ghost" state, even if no longer accessible
+ * through the GDAL API. This is for example the case of the GTiff format (this is
+ * not a exhaustive list)
+ *
+ * The C function GDALSetMetadataItem() does the same thing as this method.
+ *
+ * @param pszName the key for the metadata item to fetch.
+ * @param pszValue the value to assign to the key.
+ * @param pszDomain the domain to set within, use NULL for the default domain.
+ *
+ * @return CE_None on success, or an error code on failure.
+ */
+
 /************************************************************************/
 /*                            GetMetadataDomainList()                   */
 /************************************************************************/
