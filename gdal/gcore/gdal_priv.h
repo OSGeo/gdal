@@ -523,6 +523,17 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual char ** GetMetadata(const char * pszDomain = "");
 
+// Only defined when Doxygen enabled
+#ifdef DOXYGEN_SKIP
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain );
+#endif
+
     virtual char ** GetMetadataDomainList();
 
 private:
@@ -962,6 +973,18 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                   double dfMean, double dfStdDev );
     virtual CPLErr ComputeRasterMinMax( int, double* );
+
+// Only defined when Doxygen enabled
+#ifdef DOXYGEN_SKIP
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain );
+#endif
 
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
