@@ -146,7 +146,8 @@ def ogr_plscenes_2():
                 },
                 "cloud_cover" : {
                     "estimated" : 0.25
-                }
+                },
+                "image_statistics": {"image_quality": "target" }
             }
         }
     ],
@@ -213,6 +214,58 @@ def ogr_plscenes_2():
 
     gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1&camera.color_mode.eq=RGB&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57&cloud_cover.estimated.gt=0.20000000&camera.bit_depth.lte=12&camera.bit_depth.gte=12&camera.bit_depth.lt=13',
                           my_id_only)
+
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1&image_statistics.image_quality.gte=target&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57',
+                          my_id_only)
+
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/?count=1000&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57',
+"""{
+    "type": "FeatureCollection",
+    "count": 2,
+    "features": [
+        {
+            "type": "Feature",
+            "id": "my_id",
+            "geometry": {
+                    "coordinates": [ [ [2,49],[2,50],[3,50],[3,49],[2,49] ] ],
+                    "type": "Polygon"
+            },
+            "properties": {
+                "acquired" : "2015-03-27T12:34:56.123+00",
+                "camera" : {
+                    "bit_depth" : 12,
+                    "color_mode": "RGB"
+                },
+                "cloud_cover" : {
+                    "estimated" : 0.25
+                },
+                "image_statistics": {"image_quality": "target" }
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "my_id2",
+            "geometry": {
+                    "coordinates": [ [ [2,49],[2,50],[3,50],[3,49],[2,49] ] ],
+                    "type": "Polygon"
+            },
+            "properties": {
+                "acquired" : "2015-03-27T12:34:56.123+00",
+                "camera" : {
+                    "bit_depth" : 12,
+                    "color_mode": "RGB"
+                },
+                "cloud_cover" : {
+                    "estimated" : 0.25
+                },
+                "image_statistics": {"image_quality": "standard" }
+            }
+        }
+    ],
+    "links": {
+        "next" : null
+    }
+}""")
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
     gdal.PushErrorHandler()
@@ -351,6 +404,19 @@ def ogr_plscenes_2():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Filters on image_statistics.image_quality that must be transformed
+    filterstring = "\"image_statistics.image_quality\" = 'target' AND acquired = '2015/03/27 12:34:56'"
+    lyr.SetAttributeFilter(filterstring)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    filterstring = "\"image_statistics.image_quality\" != 'standard' AND acquired = '2015/03/27 12:34:56'"
+    lyr.SetAttributeFilter(filterstring)
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -505,6 +571,8 @@ def ogr_plscenes_2():
     gdal.Unlink('/vsimem/root/ortho/?count=1000&intersects=POINT(2.5%2049.5)')
     gdal.Unlink('/vsimem/root/ortho/?count=1&camera.color_mode.eq=RGB&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57&cloud_cover.estimated.gt=0.20000000&camera.bit_depth.lte=12&camera.bit_depth.gte=12&camera.bit_depth.lt=13')
     gdal.Unlink('/vsimem/root/ortho/?count=1000&camera.color_mode.eq=RGB&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57&cloud_cover.estimated.gt=0.20000000&camera.bit_depth.lte=12&camera.bit_depth.gte=12&camera.bit_depth.lt=13')
+    gdal.Unlink('/vsimem/root/ortho/?count=1&image_statistics.image_quality.gte=target&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57')
+    gdal.Unlink('/vsimem/root/ortho/?count=1000&acquired.gte=2015-03-27T12:34:56&acquired.lt=2015-03-27T12:34:57')
     gdal.Unlink('/vsimem/root/ortho/?count=1000&order_by=acquired%20asc')
     gdal.Unlink('/vsimem/root/ortho/my_id')
 
