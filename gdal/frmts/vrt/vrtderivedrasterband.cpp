@@ -1793,7 +1793,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         if( nBufferRadius != 0 ||
             eDataType != eBufType ||
             nPixelSpace != nBufTypeSize ||
-            nLineSpace != nBufTypeSize * nBufXSize )
+            nLineSpace != static_cast<GSpacing>(nBufTypeSize) * nBufXSize )
         {
             pabyTmpBuffer = reinterpret_cast<GByte*>(VSI_CALLOC_VERBOSE(
                             static_cast<size_t>(nExtBufXSize) * nExtBufYSize,
