@@ -2861,7 +2861,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             return (GDALDatasetH) poDS;
         }
 
-        if( CPLGetLastErrorNo() != 0 )
+        if( CPLGetLastErrorNo() != 0 && CPLGetLastErrorType() > CE_Warning)
         {
             int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
             if( pnRecCount )
