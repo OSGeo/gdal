@@ -490,8 +490,10 @@ void OGRElasticDataSource::Delete(const CPLString &url) {
 /*                            UploadFile()                              */
 /************************************************************************/
 
-int OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data) {
-    int bRet = TRUE;
+bool OGRElasticDataSource::UploadFile( const CPLString &url,
+                                       const CPLString &data )
+{
+    bool bRet = true;
     char** papszOptions = NULL;
     papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", data.c_str());
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
@@ -499,15 +501,16 @@ int OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data
 
     CPLHTTPResult* psResult = CPLHTTPFetch(url, papszOptions);
     CSLDestroy(papszOptions);
-    if (psResult) {
+    if( psResult )
+    {
         if( psResult->pszErrBuf != NULL ||
             (psResult->pabyData && STARTS_WITH((const char*) psResult->pabyData, "{\"error\":")) ||
             (psResult->pabyData && strstr((const char*) psResult->pabyData, "\"errors\":true,") != NULL) )
         {
-            bRet = FALSE;
+            bRet = false;
             CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                        psResult->pabyData ? (const char*) psResult->pabyData :
-                        psResult->pszErrBuf);
+                     psResult->pabyData ? (const char*) psResult->pabyData :
+                     psResult->pszErrBuf);
         }
         CPLHTTPDestroyResult(psResult);
     }

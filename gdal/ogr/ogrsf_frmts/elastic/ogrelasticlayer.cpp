@@ -56,9 +56,9 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
     m_osIndexName(pszIndexName ? pszIndexName : ""),
     m_osMappingName(pszMappingName ? pszMappingName : ""),
     m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
-    m_bFeatureDefnFinalized(FALSE),
-    m_bManualMapping(FALSE),
-    m_bSerializeMapping(FALSE),
+    m_bFeatureDefnFinalized(false),
+    m_bManualMapping(false),
+    m_bSerializeMapping(false),
     m_osWriteMapFilename(
         CSLFetchNameValueDef(papszOptions, "WRITE_MAPPING",
                              poDS->m_pszWriteMap ? poDS->m_pszWriteMap : "")),
@@ -73,10 +73,10 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
     m_iCurID(0),
     m_nNextFID(-1),
     m_iCurFeatureInPage(0),
-    m_bEOF(FALSE),
+    m_bEOF(false),
     m_poSpatialFilter(NULL),
-    m_bIgnoreSourceID(FALSE),
-    m_bDotAsNestedField(TRUE),
+    m_bIgnoreSourceID(false),
+    m_bDotAsNestedField(true),
     // Undocumented. Only useful for developers.
     m_bAddPretty(CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE")))
 {
@@ -401,7 +401,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
     if( m_bFeatureDefnFinalized )
         return;
 
-    m_bFeatureDefnFinalized = TRUE;
+    m_bFeatureDefnFinalized = true;
 
     int nFeatureCountToEstablishFeatureDefn = m_poDS->m_nFeatureCountToEstablishFeatureDefn;
     if( m_osESSearch.size() && nFeatureCountToEstablishFeatureDefn <= 0 )
@@ -412,14 +412,15 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
     {
         //CPLDebug("ES", "Try to get %d features to establish feature definition",
         //         FeatureCountToEstablishFeatureDefn);
-        int bFirst = TRUE;
+        bool bFirst = true;
         int nAlreadyQueried = 0;
         while( true )
         {
-            CPLString osRequest, osPostData;
+            CPLString osRequest;
+            CPLString osPostData;
             if( bFirst )
             {
-                bFirst = FALSE;
+                bFirst = false;
                 if(  m_osESSearch.size() )
                 {
                     osRequest = CPLSPrintf("%s/_search?scroll=1m&size=%d",
@@ -791,7 +792,7 @@ void OGRElasticLayer::ResetReading()
     m_apoCachedFeatures.resize(0);
     m_iCurID = 0;
     m_iCurFeatureInPage = 0;
-    m_bEOF = FALSE;
+    m_bEOF = false;
 }
 
 /************************************************************************/
@@ -882,7 +883,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     poResponse = m_poDS->RunRequest(osRequest, osPostData);
     if( poResponse == NULL )
     {
-        m_bEOF = TRUE;
+        m_bEOF = true;
         return NULL;
     }
     json_object* poScrollID = CPL_json_object_object_get(poResponse, "_scroll_id");
@@ -896,14 +897,14 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     json_object* poHits = CPL_json_object_object_get(poResponse, "hits");
     if( poHits == NULL || json_object_get_type(poHits) != json_type_object )
     {
-        m_bEOF = TRUE;
+        m_bEOF = true;
         json_object_put(poResponse);
         return NULL;
     }
     poHits = CPL_json_object_object_get(poHits, "hits");
     if( poHits == NULL || json_object_get_type(poHits) != json_type_array )
     {
-        m_bEOF = TRUE;
+        m_bEOF = true;
         json_object_put(poResponse);
         return NULL;
     }
@@ -911,7 +912,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     if( nHits == 0 )
     {
         m_osScrollID = "";
-        m_bEOF = TRUE;
+        m_bEOF = true;
         json_object_put(poResponse);
         return NULL;
     }
@@ -1414,12 +1415,12 @@ CPLString OGRElasticLayer::BuildMap() {
     for(int i=0;i<m_poFeatureDefn->GetGeomFieldCount();i++)
     {
         std::vector<CPLString> aosPath = m_aaosGeomFieldPaths[i];
-        int bAddGeoJSONType = FALSE;
+        bool bAddGeoJSONType = false;
         if( m_abIsGeoPoint[i] &&
             aosPath.size() >= 2 &&
             aosPath[(int)aosPath.size()-1] == "coordinates" )
         {
-            bAddGeoJSONType = TRUE;
+            bAddGeoJSONType = true;
             aosPath.resize( (int)aosPath.size() - 1 );
         }
 
@@ -1698,8 +1699,9 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
     // Check to see if the user has elected to only write out the mapping file
     // This method will only write out one layer from the vector file in cases where there are multiple layers
     if (m_osWriteMapFilename.size()) {
-        if (m_bSerializeMapping) {
-            m_bSerializeMapping = FALSE;
+        if( m_bSerializeMapping )
+        {
+            m_bSerializeMapping = false;
             CPLString map = BuildMap();
 
             // Write the map to a file
@@ -1713,8 +1715,9 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
     }
 
     // Check to see if we have any fields to upload to this index
-    if (m_osWriteMapFilename.size() == 0 && m_bSerializeMapping ) {
-        m_bSerializeMapping = FALSE;
+    if( m_osWriteMapFilename.size() == 0 && m_bSerializeMapping )
+    {
+        m_bSerializeMapping = false;
         if( !m_poDS->UploadFile(CPLSPrintf("%s/%s/%s/_mapping", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()), BuildMap()) )
         {
             return OGRERR_FAILURE;
@@ -1792,10 +1795,10 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 else if( env.MinX < -180 || env.MinY < -90 ||
                          env.MaxX > 180 || env.MaxY > 90 )
                 {
-                    static int bHasWarned = FALSE;
+                    static bool bHasWarned = false;
                     if( !bHasWarned )
                     {
-                        bHasWarned = TRUE;
+                        bHasWarned = true;
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "At least one geometry has a bounding box outside "
                                  "of [-180,180] longitude range and/or [-90,90] latitude range. Undefined behaviour");
@@ -1803,12 +1806,12 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 }
 
                 std::vector<CPLString> aosPath = m_aaosGeomFieldPaths[i];
-                int bAddGeoJSONType = FALSE;
+                bool bAddGeoJSONType = false;
                 if( m_abIsGeoPoint[i] &&
                     aosPath.size() >= 2 &&
                     aosPath[(int)aosPath.size()-1] == "coordinates" )
                 {
-                    bAddGeoJSONType = TRUE;
+                    bAddGeoJSONType = true;
                     aosPath.resize( (int)aosPath.size() - 1 );
                 }
 
@@ -2105,12 +2108,16 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
 /*                             PushIndex()                              */
 /************************************************************************/
 
-int OGRElasticLayer::PushIndex() {
-    if (m_osBulkContent.empty()) {
-        return TRUE;
+bool OGRElasticLayer::PushIndex()
+{
+    if( m_osBulkContent.empty() )
+    {
+        return true;
     }
 
-    int bRet = m_poDS->UploadFile(CPLSPrintf("%s/_bulk", m_poDS->GetURL()), m_osBulkContent);
+    const bool bRet =
+      m_poDS->UploadFile(CPLSPrintf("%s/_bulk", m_poDS->GetURL()),
+                         m_osBulkContent);
     m_osBulkContent.clear();
 
     return bRet;
@@ -2157,7 +2164,7 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
                   aosPath,
                   poFieldDefn->GetSubType() );
 
-    m_bSerializeMapping = TRUE;
+    m_bSerializeMapping = true;
 
     return OGRERR_NONE;
 }
@@ -2248,7 +2255,7 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
 
     m_apoCT.push_back(poCT);
 
-    m_bSerializeMapping = TRUE;
+    m_bSerializeMapping = true;
 
     return OGRERR_NONE;
 }
