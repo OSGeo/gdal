@@ -1387,7 +1387,7 @@ def test_gdalwarp_42():
     return 'success'
 
 ###############################################################################
-# Test that NODATA_VALUES is not preserved when adding an alpha channel.
+# Test that NODATA_VALUES is honoured, but not transferred when adding an alpha channel.
 
 def test_gdalwarp_43():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -1395,7 +1395,7 @@ def test_gdalwarp_43():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world.tif -mo "FOO=BAR" -mo "NODATA_VALUES=0 0 0"')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world.tif -mo "FOO=BAR" -mo "NODATA_VALUES=62 93 23"')
 
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world.tif tmp/test_gdalwarp_43.tif -overwrite -dstalpha')
 
@@ -1405,6 +1405,12 @@ def test_gdalwarp_43():
         return 'fail'
     if ds.GetMetadataItem('FOO') != 'BAR':
         gdaltest.post_reason('failure')
+        return 'fail'
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
+    expected_cs = [ 30106, 32285, 40022, 64261 ]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(got_cs)
         return 'fail'
 
     return 'success'
