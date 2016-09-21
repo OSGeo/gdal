@@ -711,7 +711,7 @@ class CPL_DLL OGRCurveCollection
   public:
                 OGRCurveCollection();
                 OGRCurveCollection(const OGRCurveCollection& other);
-               ~OGRCurveCollection() noexcept;
+               ~OGRCurveCollection();
 
     OGRCurveCollection& operator=(const OGRCurveCollection& other);
 
@@ -917,7 +917,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
   public:
                 OGRCurvePolygon();
                 OGRCurvePolygon(const OGRCurvePolygon&);
-    virtual    ~OGRCurvePolygon() noexcept;
+    virtual    ~OGRCurvePolygon();
 
     OGRCurvePolygon& operator=(const OGRCurvePolygon& other);
 
