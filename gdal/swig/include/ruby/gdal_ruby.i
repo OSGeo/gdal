@@ -64,8 +64,8 @@ static VALUE XMLTreeToRubyArray( CPLXMLNode *psTree )
     int      nChildCount = 0, iChild;
     CPLXMLNode *psChild;
 
-    for( psChild = psTree->psChild; 
-         psChild != NULL; 
+    for( psChild = psTree->psChild;
+         psChild != NULL;
          psChild = psChild->psNext )
         nChildCount++;
 
@@ -74,14 +74,14 @@ static VALUE XMLTreeToRubyArray( CPLXMLNode *psTree )
 	 rb_ary_store(rubyArray, 0, INT2NUM((int) psTree->eType));
 	 rb_ary_store(rubyArray, 1, rb_str_new2(psTree->pszValue));
 
-    for( psChild = psTree->psChild, iChild = 2; 
-         psChild != NULL; 
+    for( psChild = psTree->psChild, iChild = 2;
+         psChild != NULL;
          psChild = psChild->psNext, iChild++ )
     {
         rb_ary_store(rubyArray, iChild, XMLTreeToRubyArray(psChild));
     }
 
-    return rubyArray; 
+    return rubyArray;
 }
 %}
 
@@ -96,7 +96,7 @@ static VALUE XMLTreeToRubyArray( CPLXMLNode *psTree )
     def serialize(self,with_Z=0):
         base = [CXT_Element,'GCP']
         base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
-        pixval = '%0.15E' % self.GCPPixel       
+        pixval = '%0.15E' % self.GCPPixel
         lineval = '%0.15E' % self.GCPLine
         xval = '%0.15E' % self.GCPX
         yval = '%0.15E' % self.GCPY
@@ -106,9 +106,9 @@ static VALUE XMLTreeToRubyArray( CPLXMLNode *psTree )
         base.append([CXT_Attribute,'X',[CXT_Text,xval]])
         base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
         if with_Z:
-            base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
+            base.append([CXT_Attribute,'Z',[CXT_Text,zval]])
         return base
-} 
+}
 }
 
 %extend GDALRasterBandShadow {
@@ -120,7 +120,7 @@ static VALUE XMLTreeToRubyArray( CPLXMLNode *psTree )
       return gdalnumeric.BandReadAsArray( self, xoff, yoff,
                                           win_xsize, win_ysize,
                                           buf_xsize, buf_ysize, buf_obj )
-    
+
   def WriteArray(self, array, xoff=0, yoff=0):
       import gdalnumeric
 

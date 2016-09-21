@@ -88,7 +88,7 @@ OGRXPlaneReader* OGRXPlaneFixReader::CloneForLayer(OGRXPlaneLayer* poLayer)
 
 int OGRXPlaneFixReader::IsRecognizedVersion( const char* pszVersionString)
 {
-    return EQUALN(pszVersionString, "600 Version", 11);
+    return STARTS_WITH_CI(pszVersionString, "600 Version");
 }
 
 /************************************************************************/

@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test aspects of EPSG code lookup.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -42,7 +42,7 @@ from osgeo import osr
 # 	file with the adjusted central_meridian.
 
 def osr_epsg_1():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 26591 )
 
@@ -50,7 +50,7 @@ def osr_epsg_1():
         gdaltest.post_reason( 'Wrong central meridian, override missed?' )
         print(srs.ExportToPrettyWkt())
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -58,7 +58,7 @@ def osr_epsg_1():
 #	from gcs.override.csv.
 
 def osr_epsg_2():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 4312 )
 
@@ -67,7 +67,7 @@ def osr_epsg_2():
         gdaltest.post_reason( 'Wrong TOWGS84, override missed?' )
         print(srs.ExportToPrettyWkt())
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -75,20 +75,20 @@ def osr_epsg_2():
 #       towgs84 values set properly (#3579)
 
 def osr_epsg_3():
-    
+
     for epsg in [3120,2172,2173,2174,2175,3333,3334,3335,3329,3330,3331,3332,3328,4179]:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG( epsg )
-    
+
         expected_towgs84 = [33.4,-146.6,-76.3,-0.359,-0.053,0.844,-0.84]
-    
+
         for i in range(6):
             if abs(float(srs.GetAttrValue( 'TOWGS84', i)) \
                 - expected_towgs84[i]) > 0.0005:
                 gdaltest.post_reason( 'For EPSG:%d. Wrong TOWGS84, override missed?' % epsg )
                 print(srs.ExportToPrettyWkt())
                 return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -186,7 +186,7 @@ def osr_epsg_9():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 3857 )
 
-    if srs.ExportToWkt() != 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"],AUTHORITY["EPSG","3857"]]':
+    if srs.ExportToWkt() != 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]':
         gdaltest.post_reason('fail')
         print(srs.ExportToWkt())
         return 'fail'
@@ -199,7 +199,7 @@ def osr_epsg_9():
 
 ###############################################################################
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_epsg_1,
     osr_epsg_2,
     osr_epsg_3,
@@ -218,4 +218,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

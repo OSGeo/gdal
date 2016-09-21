@@ -27,16 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "zlib.h"
 
 /* g++ -fPIC -g -Wall frmts/ozi/ozidataset.cpp -shared -o gdal_OZI.so -Iport -Igcore -Iogr -L. -lgdal  */
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_OZI(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -113,10 +110,10 @@ static const GByte abyKey[] =
 
 static void OZIDecrypt(void *pabyVal, int n, GByte nKeyInit)
 {
-    int i;
-    for(i = 0; i < n; i++)
+    for(int i = 0; i < n; i++)
     {
-        ((GByte*)pabyVal)[i] ^= abyKey[i % sizeof(abyKey)] + nKeyInit;
+        reinterpret_cast<GByte*>( pabyVal )[i]
+            ^= abyKey[i % sizeof(abyKey)] + nKeyInit;
     }
 }
 
@@ -142,7 +139,8 @@ static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 {
     int nVal;
     VSIFReadL(&nVal, 1, 4, fp);
-    if (bOzi3) OZIDecrypt(&nVal, 4, (GByte) nKeyInit);
+    if (bOzi3)
+        OZIDecrypt(&nVal, 4, static_cast<GByte>( nKeyInit ) );
     CPL_LSBPTR32(&nVal);
     return nVal;
 }
@@ -151,7 +149,8 @@ static short ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 {
     short nVal;
     VSIFReadL(&nVal, 1, 2, fp);
-    if (bOzi3) OZIDecrypt(&nVal, 2, (GByte) nKeyInit);
+    if (bOzi3)
+        OZIDecrypt(&nVal, 2, static_cast<GByte>( nKeyInit ) );
     CPL_LSBPTR16(&nVal);
     return nVal;
 }
@@ -160,13 +159,13 @@ static short ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
 /*                         OZIRasterBand()                             */
 /************************************************************************/
 
-OZIRasterBand::OZIRasterBand( OZIDataset *poDS, int nZoomLevel,
-                              int nRasterXSize, int nRasterYSize,
-                              int nXBlocks,
-                              GDALColorTable* poColorTable )
-
+OZIRasterBand::OZIRasterBand( OZIDataset *poDSIn, int nZoomLevelIn,
+                              int nRasterXSizeIn, int nRasterYSizeIn,
+                              int nXBlocksIn,
+                              GDALColorTable* poColorTableIn ) :
+    pabyTranslationTable(NULL)
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     this->nBand = 1;
 
     eDataType = GDT_Byte;
@@ -174,13 +173,11 @@ OZIRasterBand::OZIRasterBand( OZIDataset *poDS, int nZoomLevel,
     nBlockXSize = 64;
     nBlockYSize = 64;
 
-    this->nZoomLevel = nZoomLevel;
-    this->nRasterXSize = nRasterXSize;
-    this->nRasterYSize = nRasterYSize;
-    this->poColorTable = poColorTable;
-    this->nXBlocks = nXBlocks;
-
-    pabyTranslationTable = NULL;
+    this->nZoomLevel = nZoomLevelIn;
+    this->nRasterXSize = nRasterXSizeIn;
+    this->nRasterYSize = nRasterYSizeIn;
+    this->poColorTable = poColorTableIn;
+    this->nXBlocks = nXBlocksIn;
 }
 
 /************************************************************************/
@@ -220,13 +217,13 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    OZIDataset *poGDS = (OZIDataset *) poDS;
+    OZIDataset *poGDS = reinterpret_cast<OZIDataset *>( poDS );
 
-    int nBlock = nBlockYOff * nXBlocks + nBlockXOff;
+    const int nBlock = nBlockYOff * nXBlocks + nBlockXOff;
 
     VSIFSeekL(poGDS->fp, poGDS->panZoomLevelOffsets[nZoomLevel] +
                          12 + 1024 + 4 * nBlock, SEEK_SET);
-    int nPointer = ReadInt(poGDS->fp, poGDS->bOzi3, poGDS->nKeyInit);
+    const int nPointer = ReadInt(poGDS->fp, poGDS->bOzi3, poGDS->nKeyInit);
     if (nPointer < 0  || (vsi_l_offset)nPointer >= poGDS->nFileSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -247,8 +244,8 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     VSIFSeekL(poGDS->fp, nPointer, SEEK_SET);
 
-    int nToRead = nNextPointer - nPointer;
-    GByte* pabyZlibBuffer = (GByte*)CPLMalloc(nToRead);
+    const int nToRead = nNextPointer - nPointer;
+    GByte* pabyZlibBuffer = reinterpret_cast<GByte *>( CPLMalloc( nToRead ) );
     if (VSIFReadL(pabyZlibBuffer, nToRead, 1, poGDS->fp) != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -272,18 +269,17 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     z_stream      stream;
-    stream.zalloc = (alloc_func)0;
-    stream.zfree = (free_func)0;
-    stream.opaque = (voidpf)0;
+    stream.zalloc = (alloc_func)NULL;
+    stream.zfree = (free_func)NULL;
+    stream.opaque = (voidpf)NULL;
     stream.next_in = pabyZlibBuffer + 2;
     stream.avail_in = nToRead - 2;
 
     int err = inflateInit2(&(stream), -MAX_WBITS);
 
-    int i;
-    for(i=0;i<64 && err == Z_OK;i++)
+    for( int i = 0; i < 64 && err == Z_OK; i++ )
     {
-        stream.next_out = (Bytef*)pImage + (63 - i) * 64;
+        stream.next_out = reinterpret_cast<Bytef *>( pImage ) + (63 - i) * 64;
         stream.avail_out = 64;
         err = inflate(& (stream), Z_NO_FLUSH);
         if (err != Z_OK && err != Z_STREAM_END)
@@ -291,9 +287,8 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         if (pabyTranslationTable)
         {
-            int j;
-            GByte* ptr = ((GByte*)pImage) + (63 - i) * 64;
-            for(j=0;j<64;j++)
+            GByte* ptr = reinterpret_cast<GByte *>( pImage ) + (63 - i) * 64;
+            for( int j = 0; j < 64; j++ )
             {
                 *ptr = pabyTranslationTable[*ptr];
                 ptr ++;
@@ -317,7 +312,7 @@ int OZIRasterBand::GetOverviewCount()
     if (nZoomLevel != 0)
         return 0;
 
-    OZIDataset *poGDS = (OZIDataset *) poDS;
+    OZIDataset *poGDS = reinterpret_cast<OZIDataset *>( poDS );
     return poGDS->nZoomLevelCount - 1;
 }
 
@@ -330,7 +325,7 @@ GDALRasterBand* OZIRasterBand::GetOverview(int nLevel)
     if (nZoomLevel != 0)
         return NULL;
 
-    OZIDataset *poGDS = (OZIDataset *) poDS;
+    OZIDataset *poGDS = reinterpret_cast<OZIDataset *>( poDS );
     if (nLevel < 0 || nLevel >= poGDS->nZoomLevelCount - 1)
         return NULL;
 
@@ -341,15 +336,15 @@ GDALRasterBand* OZIRasterBand::GetOverview(int nLevel)
 /*                            ~OZIDataset()                            */
 /************************************************************************/
 
-OZIDataset::OZIDataset()
-{
-    fp = NULL;
-    nZoomLevelCount = 0;
-    panZoomLevelOffsets = NULL;
-    papoOvrBands = NULL;
-    bOzi3 = FALSE;
-    nKeyInit = 0;
-}
+OZIDataset::OZIDataset() :
+    fp(NULL),
+    nZoomLevelCount(0),
+    panZoomLevelOffsets(NULL),
+    papoOvrBands(NULL),
+    nFileSize(0),
+    bOzi3(FALSE),
+    nKeyInit(0)
+{}
 
 /************************************************************************/
 /*                            ~OZIDataset()                            */
@@ -405,12 +400,12 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     GByte abyHeader[14];
-    CPLString osImgFilename = poOpenInfo->pszFilename;
     memcpy(abyHeader, poOpenInfo->pabyHeader, 14);
 
     int bOzi3 = (abyHeader[0] == 0x80 &&
                  abyHeader[1] == 0x77);
 
+    const CPLString osImgFilename = poOpenInfo->pszFilename;
     VSILFILE* fp = VSIFOpenL(osImgFilename.c_str(), "rb");
     if (fp == NULL)
         return NULL;
@@ -418,11 +413,12 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     OZIDataset* poDS = new OZIDataset();
     poDS->fp = fp;
 
-    GByte nRandomNumber = 0;
     GByte nKeyInit = 0;
     if (bOzi3)
     {
         VSIFSeekL(fp, 14, SEEK_SET);
+
+        GByte nRandomNumber = 0;
         VSIFReadL(&nRandomNumber, 1, 1, fp);
         //printf("nRandomNumber = %d\n", nRandomNumber);
         if (nRandomNumber < 0x94)
@@ -450,7 +446,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         VSIFSeekL(fp, 14 + 1 + nRandomNumber, SEEK_SET);
-        int nMagic = ReadInt(fp, bOzi3, nKeyInit);
+        const int nMagic = ReadInt(fp, bOzi3, nKeyInit);
         CPLDebug("OZI", "OZI version code : 0x%08X", nMagic);
 
         poDS->bOzi3 = bOzi3;
@@ -468,19 +464,18 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     /* and the nKeyInit, but I'm too lazy to add switch/cases that might */
     /* be not exhaustive, so let's try the 'brute force' attack !!! */
     /* It is much so funny to be able to run one in a few microseconds :-) */
-    int i;
-    for(i = 0; i < 256; i ++)
+    for( int i = 0; i < 256; i++ )
     {
-        nKeyInit = (GByte)i;
+        nKeyInit = static_cast<GByte>( i );
         GByte* pabyHeader2 = abyHeader2;
         if (bOzi3)
             OZIDecrypt(abyHeader2, 40, nKeyInit);
 
-        int nHeaderSize = ReadInt(&pabyHeader2); /* should be 40 */
+        const int nHeaderSize = ReadInt(&pabyHeader2); /* should be 40 */
         poDS->nRasterXSize = ReadInt(&pabyHeader2);
         poDS->nRasterYSize = ReadInt(&pabyHeader2);
-        int nDepth = ReadShort(&pabyHeader2); /* should be 1 */
-        int nBPP = ReadShort(&pabyHeader2); /* should be 8 */
+        const int nDepth = ReadShort(&pabyHeader2); /* should be 1 */
+        const int nBPP = ReadShort(&pabyHeader2); /* should be 8 */
         ReadInt(&pabyHeader2); /* reserved */
         ReadInt(&pabyHeader2); /* pixel number (height * width) : unused */
         ReadInt(&pabyHeader2); /* reserved */
@@ -499,7 +494,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else
                 {
-                    CPLDebug("OZI", "Cannot decypher 2nd header. Sorry...");
+                  CPLDebug( "OZI", "Cannot decipher 2nd header. Sorry..." );
                     delete poDS;
                     return NULL;
                 }
@@ -526,7 +521,11 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     poDS->nZoomLevelCount = ReadShort(fp);
-    //CPLDebug("OZI", "nZoomLevelCount = %d", poDS->nZoomLevelCount);
+
+#ifdef DEBUG_VERBOSE
+    CPLDebug("OZI", "nZoomLevelCount = %d", poDS->nZoomLevelCount);
+#endif
+
     if (poDS->nZoomLevelCount < 0 || poDS->nZoomLevelCount >= 256)
     {
         CPLDebug("OZI", "nZoomLevelCount = %d", poDS->nZoomLevelCount);
@@ -543,7 +542,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         /* Some files have 8 extra bytes before the marker. I'm not sure */
         /* what they are used for. So just skeep them and hope that */
         /* we'll find the marker */
-        nSeparator = ReadInt(fp);
+        CPL_IGNORE_RET_VAL(ReadInt(fp));
         nSeparator = ReadInt(fp);
         if (nSeparator != 0x77777777)
         {
@@ -554,10 +553,10 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     VSIFSeekL(fp, 0, SEEK_END);
-    vsi_l_offset nFileSize = VSIFTellL(fp);
+    const vsi_l_offset nFileSize = VSIFTellL(fp);
     poDS->nFileSize = nFileSize;
     VSIFSeekL(fp, nFileSize - 4, SEEK_SET);
-    int nZoomLevelTableOffset = ReadInt(fp, bOzi3, nKeyInit);
+    const int nZoomLevelTableOffset = ReadInt(fp, bOzi3, nKeyInit);
     if (nZoomLevelTableOffset < 0 ||
         (vsi_l_offset)nZoomLevelTableOffset >= nFileSize)
     {
@@ -570,9 +569,10 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeekL(fp, nZoomLevelTableOffset, SEEK_SET);
 
     poDS->panZoomLevelOffsets =
-        (int*)CPLMalloc(sizeof(int) * poDS->nZoomLevelCount);
+        reinterpret_cast<int *>(
+            CPLMalloc( sizeof(int) * poDS->nZoomLevelCount ) );
 
-    for(i=0;i<poDS->nZoomLevelCount;i++)
+    for( int i = 0; i < poDS->nZoomLevelCount; i++ )
     {
         poDS->panZoomLevelOffsets[i] = ReadInt(fp, bOzi3, nKeyInit);
         if (poDS->panZoomLevelOffsets[i] < 0 ||
@@ -586,19 +586,23 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     poDS->papoOvrBands =
-        (OZIRasterBand**)CPLCalloc(sizeof(OZIRasterBand*), poDS->nZoomLevelCount);
+        reinterpret_cast<OZIRasterBand **>(
+            CPLCalloc( sizeof( OZIRasterBand * ), poDS->nZoomLevelCount ) );
 
-    for(i=0;i<poDS->nZoomLevelCount;i++)
+    for( int i = 0; i < poDS->nZoomLevelCount; i++ )
     {
         VSIFSeekL(fp, poDS->panZoomLevelOffsets[i], SEEK_SET);
-        int nW = ReadInt(fp, bOzi3, nKeyInit);
-        int nH = ReadInt(fp, bOzi3, nKeyInit);
-        short nTileX = ReadShort(fp, bOzi3, nKeyInit);
-        short nTileY = ReadShort(fp, bOzi3, nKeyInit);
+        const int nW = ReadInt(fp, bOzi3, nKeyInit);
+        const int nH = ReadInt(fp, bOzi3, nKeyInit);
+        const short nTileX = ReadShort(fp, bOzi3, nKeyInit);
+        const short nTileY = ReadShort(fp, bOzi3, nKeyInit);
         if (i == 0 && (nW != poDS->nRasterXSize || nH != poDS->nRasterYSize))
         {
-            CPLDebug("OZI", "zoom[%d] inconsistent dimensions for zoom level 0 : nW=%d, nH=%d, nTileX=%d, nTileY=%d, nRasterXSize=%d, nRasterYSize=%d",
-                     i, nW, nH, nTileX, nTileY, poDS->nRasterXSize, poDS->nRasterYSize);
+            CPLDebug("OZI", "zoom[%d] inconsistent dimensions for zoom level 0 "
+                     ": nW=%d, nH=%d, nTileX=%d, nTileY=%d, nRasterXSize=%d, "
+                     "nRasterYSize=%d",
+                     i, nW, nH, nTileX, nTileY, poDS->nRasterXSize,
+                     poDS->nRasterYSize);
             delete poDS;
             return NULL;
         }
@@ -611,7 +615,8 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         /* to work properly */
         if ((nW + 63) / 64 > nTileX || (nH + 63) / 64 > nTileY)
         {
-            CPLDebug("OZI", "zoom[%d] unexpected number of tiles : nW=%d, nH=%d, nTileX=%d, nTileY=%d",
+            CPLDebug("OZI", "zoom[%d] unexpected number of tiles : nW=%d, "
+                     "nH=%d, nTileX=%d, nTileY=%d",
                      i, nW, nH, nTileX, nTileY);
             delete poDS;
             return NULL;
@@ -622,8 +627,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFReadL(abyColorTable, 1, 1024, fp);
         if (bOzi3)
             OZIDecrypt(abyColorTable, 1024, nKeyInit);
-        int j;
-        for(j=0;j<256;j++)
+        for( int j = 0; j < 256; j++ )
         {
             GDALColorEntry sEntry;
             sEntry.c1 = abyColorTable[4*j + 2];
@@ -669,28 +673,22 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_OZI()
 
 {
-    GDALDriver  *poDriver;
-
-    if (! GDAL_CHECK_VERSION("OZI driver"))
+    if( !GDAL_CHECK_VERSION( "OZI driver" ) )
         return;
 
-    if( GDALGetDriverByName( "OZI" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "OZI" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "OZI" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "OziExplorer Image File" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_ozi.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "OZI" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OziExplorer Image File" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ozi.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OZIDataset::Open;
-        poDriver->pfnIdentify = OZIDataset::Identify;
+    poDriver->pfnOpen = OZIDataset::Open;
+    poDriver->pfnIdentify = OZIDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

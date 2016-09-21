@@ -14,7 +14,7 @@ functionality was introduced in GDAL/OGR 1.6.0. </p>
 <p>When opening a database, it's name should be specified in the form
 "@driver=ingres,[host=<i>host</i>, instance=<i>instance</i>],dbname=<i>[vnode::]dbname</i>
 [,options]". where the options can
-include comma seperated
+include comma separated
 items like "host=*ip_address*","instance=*instance*", "username=*userid*", "password=*password*",
 "effuser=*database_user*", "dbpwd=*database_passwd*", "timeout=*timeout*",
 "tables=table1/table2".</p>
@@ -26,7 +26,7 @@ is made to authenticate as the current OS user.</p>
 <p>If the host and instance options are both specified,
 the username and password *must* be supplied as it creates a temporary
 <a href=http://docs.actian.com/ingres/10.0/command-reference-guide/1207-dynamic-vnode-specificationconnect-to-remote-node>dynamic vnode connection</a>.
-The default protocal is TCP/IP. If any other protocal is expected to be used, a pre-built vnode is preferable.
+The default protocol is TCP/IP. If any other protocol is expected to be used, a pre-built vnode is preferable.
 If vnode and these two options are passed at the same time, an error will occur.
 </p>
 
@@ -36,17 +36,17 @@ username and password which are used for OS level authorization.</p>
 Examples:
 <pre>
   @driver=ingres,host=192.168.0.1, instance=II, dbname=test,userid=warmerda,password=test,effuser=frank, dbpwd=123, tables=usa/canada
-  
+
   @driver=ingres,host=192.168.0.1, instance=II, dbname=test,userid=warmerda,password=test,tables=usa/canada
-  
+
   @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
 
   @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
-  
+
   @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
-  
+
   @driver=ingres,dbname=server::mapping
-  
+
   @driver=ingres,dbname=mapping
 </pre>
 
@@ -64,7 +64,7 @@ on the spatial and attribute query filters in effect at a given time.</p>
 
 <p>By default, SQL statements are passed directly to the INGRES database
 engine. It's also possible to request the driver to handle SQL commands
-with <a href="/ogr/ogr_sql.html">OGR SQL</a> engine,
+with <a href="ogr_sql.html">OGR SQL</a> engine,
 by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL()
 method, as name of the SQL dialect.</p>
 
@@ -72,7 +72,7 @@ method, as name of the SQL dialect.</p>
 The INGRES driver supports OGC SFSQL 1.1 compliant spatial types and functions,
 including types: POINT, LINESTRING, POLYGON, MULTI* versions, and GEOMETRYCOLLECTION.
 </p>
- 
+
 <h2>Caveats</h2>
 <ul>
 <li> No fast spatial index is used when reading, so spatial filters are

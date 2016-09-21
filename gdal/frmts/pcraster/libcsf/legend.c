@@ -1,7 +1,3 @@
-
-/*
- * legend.c 
- */
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -10,10 +6,10 @@
  */
 static int NrLegendEntries(MAP *m)
 {
-	int size = CsfAttributeSize(m, ATTR_ID_LEGEND_V2);
+	int size = (int)CsfAttributeSize(m, ATTR_ID_LEGEND_V2);
 	if (size == 0)
 	{
-		if ( (size = -1 * CsfAttributeSize(m, ATTR_ID_LEGEND_V1)) != 0 )
+		if ( (size = -(int)CsfAttributeSize(m, ATTR_ID_LEGEND_V1)) != 0 )
 			size -= CSF_LEGEND_ENTRY_SIZE;
 	}
 	return size/CSF_LEGEND_ENTRY_SIZE;
@@ -70,7 +66,8 @@ int MgetLegend(
 	size_t i,nr,start = 0;
         if (pos == 0)
         	return 0;
-        fseek(m->fp, (long)pos, SEEK_SET);
+        if( fseek(m->fp, (long)pos, SEEK_SET) != 0 )
+                return 0;
         if (id == ATTR_ID_LEGEND_V1)
         { 
         	/* empty name */

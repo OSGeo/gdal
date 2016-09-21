@@ -119,7 +119,7 @@ Release 1.8
 Release 1.7
 -----------
 
- o Improved calcuation of bounding box in DGLCreateTextElem() based on code
+ o Improved calculation of bounding box in DGLCreateTextElem() based on code
    from Matt Kelder. 
 
  o Added preliminary 3D write support. 
@@ -172,15 +172,15 @@ Release 1.4
    This basically just reads the extents information at beginning of 
    geometric features to see if they should be returned. 
 
- o Actually extract the global origin from the TCB, and use it when 
-   transforming points.  Only a few files (ie. Brazos County roads.rds) use
+ o Actually extract the global origin from the TCB, and use it when
+   transforming points.  Only a few files (i.e. Brazos County roads.rds) use
    a non-zero origin.
 
  o Added experimental multi byte text support from Ason Kang
    (hiska@netian.com). 
 
- o Add experimental support for 3D files.  Somes 3d elements not supported. 
-   3d quaterion for ellipse and arc elements not utilized. 
+ o Add experimental support for 3D files.  Some 3D elements not supported.
+   3D quaternion for ellipse and arc elements not utilized.
 
  o Added preliminary support for reading cell header structures based
    on input from Mike Cane. 

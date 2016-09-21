@@ -43,12 +43,16 @@ using namespace PCIDSK;
 /*                           CPCIDSKBitmap()                            */
 /************************************************************************/
 
-CPCIDSKBitmap::CPCIDSKBitmap( PCIDSKFile *file, int segment,
+CPCIDSKBitmap::CPCIDSKBitmap( PCIDSKFile *fileIn, int segmentIn,
                               const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer )
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer )
 
 {
     loaded = false;
+    width = 0;
+    height = 0;
+    block_width = 0;
+    block_height = 0;
 }
 
 /************************************************************************/
@@ -233,12 +237,12 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
                               int win_xsize, int win_ysize )
 
 {
-    uint64 block_size = (block_width * block_height + 7) / 8;
+    uint64 block_size = (static_cast<uint64>(block_width) * block_height + 7) / 8;
     uint8 *wrk_buffer = (uint8 *) buffer;
 
     if( block_index < 0 || block_index >= GetBlockCount() )
     {
-        ThrowPCIDSKException( "Requested non-existant block (%d)", 
+        return ThrowPCIDSKException(0, "Requested non-existent block (%d)", 
                               block_index );
     }
 /* -------------------------------------------------------------------- */
@@ -253,14 +257,14 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
         if( win_xoff < 0 || win_xoff + win_xsize > GetBlockWidth()
             || win_yoff < 0 || win_yoff + win_ysize > GetBlockHeight() )
         {
-            ThrowPCIDSKException( 
+            return ThrowPCIDSKException( 0,
                 "Invalid window in CPCIDSKBitmap::ReadBlock(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
                 win_xoff, win_yoff, win_xsize, win_ysize );
         }
 
         wrk_buffer = (uint8 *) malloc((size_t) block_size);
         if( wrk_buffer == NULL )
-            ThrowPCIDSKException( "Out of memory allocating %d bytes in CPCIDSKBitmap::ReadBlock()", 
+            return ThrowPCIDSKException(0, "Out of memory allocating %d bytes in CPCIDSKBitmap::ReadBlock()", 
                                   (int) block_size );
     }
 
@@ -277,7 +281,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
         memset( buffer, 0, (size_t) block_size );
         
         short_block_size = 
-            ((height - block_index*block_height) * block_width + 7) / 8;
+            (static_cast<uint64>(height - block_index*block_height) * block_width + 7) / 8;
         
         ReadFromFile( wrk_buffer, block_size * block_index, short_block_size );
     }
@@ -310,7 +314,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
 int CPCIDSKBitmap::WriteBlock( int block_index, void *buffer )
 
 {
-    uint64 block_size = (block_width * block_height) / 8;
+    uint64 block_size = (static_cast<uint64>(block_width) * block_height) / 8;
 
     if( (block_index+1) * block_height <= height )
         WriteToFile( buffer, block_size * block_index, block_size );
@@ -319,7 +323,7 @@ int CPCIDSKBitmap::WriteBlock( int block_index, void *buffer )
         uint64 short_block_size;
 
         short_block_size =
-            ((height - block_index*block_height) * block_width + 7) / 8;
+            (static_cast<uint64>(height - block_index*block_height) * block_width + 7) / 8;
 
         WriteToFile( buffer, block_size * block_index, short_block_size );
     }
@@ -340,11 +344,9 @@ int CPCIDSKBitmap::GetOverviewCount()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-PCIDSKChannel *CPCIDSKBitmap::GetOverview( CPL_UNUSED int i )
+PCIDSKChannel *CPCIDSKBitmap::GetOverview( int i )
 {
-    // The %d is ignored in the exception.
-    ThrowPCIDSKException("Non-existant overview %d requested on bitmap segment.");
-    return NULL;
+    return (PCIDSKChannel*) ThrowPCIDSKExceptionPtr("Non-existent overview %d requested on bitmap segment.", i);
 }
 
 /************************************************************************/
@@ -500,7 +502,7 @@ void CPCIDSKBitmap::SetChanInfo( CPL_UNUSED std::string filename, CPL_UNUSED uin
                                  CPL_UNUSED uint64 pixel_offset, CPL_UNUSED uint64 line_offset,
                                  CPL_UNUSED bool little_endian )
 {
-    ThrowPCIDSKException( "Attempt to SetChanInfo() on a bitmap." );
+    return ThrowPCIDSKException( "Attempt to SetChanInfo() on a bitmap." );
 }
 
 /************************************************************************/
@@ -526,5 +528,5 @@ void CPCIDSKBitmap::SetEChanInfo( CPL_UNUSED std::string filename, CPL_UNUSED in
                                   CPL_UNUSED int exoff, CPL_UNUSED int eyoff,
                                   CPL_UNUSED int exsize, CPL_UNUSED int eysize )
 {
-    ThrowPCIDSKException( "Attempt to SetEChanInfo() on a bitmap." );
+    return ThrowPCIDSKException( "Attempt to SetEChanInfo() on a bitmap." );
 }

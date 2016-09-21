@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for PDS driver.
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 from osgeo import gdal
 
@@ -44,8 +45,13 @@ def pds_1():
     tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL "MARS"",GEOGCS["GCS_"MARS"",DATUM["D_"MARS"",SPHEROID[""MARS"",3396000,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["pseudo_standard_parallel_1",0]]"""
     expected_gt = (-10668384.903788566589355,926.115274429321289,0,3852176.483988761901855,0,-926.115274429321289)
-    return tst.testOpen( check_prj = expected_prj,
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_prj = expected_prj,
                          check_gt = expected_gt )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    return ret
 
 
 ###############################################################################
@@ -65,8 +71,13 @@ def pds_2():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
     expected_gt = (587861.55900404998, 75.000002980232239, 0.0, -7815243.4746123618, 0.0, -75.000002980232239)
-    if tst.testOpen( check_prj = expected_prj,
-                     check_gt = expected_gt ) != 'success':
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_prj = expected_prj,
+                     check_gt = expected_gt )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    if ret != 'success':
         return 'fail'
 
     ds = gdal.Open('data/fl73n003_truncated.img')
@@ -100,7 +111,7 @@ def pds_3():
         return 'fail'
 
     ds = gdal.Open('data/EN0001426030M_truncated.IMG')
-    if ds.GetRasterBand(1).GetNoDataValue() != -32768:
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
         return 'fail'
 
     gdal.PopErrorHandler()
@@ -114,7 +125,12 @@ def pds_4():
 
     tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 3418 )
     gt_expected = (6119184.3590369327, 1.0113804322107001, 0.0, -549696.39009125973, 0.0, -1.0113804322107001)
-    return tst.testOpen( check_gt = gt_expected )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_gt = gt_expected )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    return ret
 
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3355.
@@ -126,21 +142,30 @@ def pds_5():
 
 ###############################################################################
 # Read an image via the PDS label.  This is a distinct mode of the PDS
-# driver mostly intended to support jpeg2000 files with PDS labels. 
+# driver mostly intended to support jpeg2000 files with PDS labels.
 
 def pds_6():
+
+    if os.path.exists('data/byte.tif.aux.xml'):
+        os.unlink('data/byte.tif.aux.xml')
 
     tst = gdaltest.GDALTest( 'PDS', 'ESP_013951_1955_RED.LBL', 1, 4672 )
 
     gt_expected = (-6139197.5, 0.5, 0.0, 936003.0, 0.0, -0.5)
-    
-    if tst.testOpen( check_gt=gt_expected ) != 'success':
+
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_gt=gt_expected )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    if ret != 'success':
         return 'fail'
 
     ds = gdal.Open('data/ESP_013951_1955_RED.LBL')
 
     if len(ds.GetFileList()) != 2:
         gdaltest.post_reason( 'failed to get expected file list.' )
+        print(ds.GetFileList())
         return 'fail'
 
     expected_wkt = 'PROJCS["EQUIRECTANGULAR MARS",GEOGCS["GCS_MARS",DATUM["D_MARS",SPHEROID["MARS_localRadius",3394839.8133163,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",180],PARAMETER["standard_parallel_1",15],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
@@ -173,15 +198,20 @@ def pds_7():
     PARAMETER["standard_parallel_1",0],
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
-    
-    if tst.testOpen( check_prj=prj_expected,
-                     check_gt=gt_expected ) != 'success':
+
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_prj=prj_expected,
+                        check_gt=gt_expected )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    if ret != 'success':
         return 'fail'
 
     return 'success'
 
 ###############################################################################
-# Test applying adjument offsets via configuration variables for the
+# Test applying adjustment offsets via configuration variables for the
 # geotransform (#3940)
 
 def pds_8():
@@ -191,7 +221,7 @@ def pds_8():
     gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', '1.5' )
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', '1.0' )
     gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', '-1.0' )
-    
+
     tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
 
     expected_gt = (10670237.134337425, 926.11527442932129, 0.0, -3854028.7145376205, 0.0, -926.11527442932129)
@@ -202,7 +232,7 @@ def pds_8():
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Shift', None )
     gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
     gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', None )
-    gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
+    gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', None )
 
     return result
 

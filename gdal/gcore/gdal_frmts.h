@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL
- * Purpose:  Prototypes for all format specific driver initializations.
+ * Purpose:  Prototypes for all format specific driver initialization.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -34,7 +34,6 @@
 #include "cpl_port.h"
 
 CPL_C_START
-void CPL_DLL GDALRegister_GDB(void);
 void CPL_DLL GDALRegister_GTiff(void);
 void CPL_DLL GDALRegister_GXF(void);
 void CPL_DLL GDALRegister_OGDI(void);
@@ -42,7 +41,7 @@ void CPL_DLL GDALRegister_HFA(void);
 void CPL_DLL GDALRegister_AAIGrid(void);
 void CPL_DLL GDALRegister_GRASSASCIIGrid(void);
 void CPL_DLL GDALRegister_AIGrid(void);
-void CPL_DLL GDALRegister_AIGrid2(void);
+// void CPL_DLL GDALRegister_AIGrid2(void);
 void CPL_DLL GDALRegister_CEOS(void);
 void CPL_DLL GDALRegister_SAR_CEOS(void);
 void CPL_DLL GDALRegister_SDTS(void);
@@ -120,6 +119,7 @@ void CPL_DLL GDALRegister_DIPEx(void);
 void CPL_DLL GDALRegister_ISIS3(void);
 void CPL_DLL GDALRegister_ISIS2(void);
 void CPL_DLL GDALRegister_PDS(void);
+void CPL_DLL GDALRegister_VICAR(void);
 void CPL_DLL GDALRegister_IDRISI(void);
 void CPL_DLL GDALRegister_Terragen(void);
 void CPL_DLL GDALRegister_WCS(void);
@@ -142,7 +142,6 @@ void CPL_DLL GDALRegister_SRP(void);
 void CPL_DLL GDALRegister_COASP(void);
 void CPL_DLL GDALRegister_BLX(void);
 void CPL_DLL GDALRegister_LCP(void);
-void CPL_DLL GDALRegister_PGCHIP(void);
 void CPL_DLL GDALRegister_TMS(void);
 void CPL_DLL GDALRegister_EIR(void);
 void CPL_DLL GDALRegister_GEOR(void);
@@ -180,6 +179,13 @@ void CPL_DLL GDALRegister_IRIS(void);
 void CPL_DLL GDALRegister_KRO(void);
 void CPL_DLL GDALRegister_KEA(void);
 void CPL_DLL GDALRegister_ROIPAC(void);
+void CPL_DLL GDALRegister_PLMOSAIC(void);
+void CPL_DLL GDALRegister_CALS(void);
+void CPL_DLL GDALRegister_ISCE(void);
+void CPL_DLL GDALRegister_WMTS(void);
+void CPL_DLL GDALRegister_SAFE(void);
+void CPL_DLL GDALRegister_SENTINEL2(void);
+void CPL_DLL GDALRegister_mrf(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

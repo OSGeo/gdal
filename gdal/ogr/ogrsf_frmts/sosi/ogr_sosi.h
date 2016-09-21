@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SOSI_H_INCLUDED
-#define _OGR_SOSI_H_INCLUDED
+#ifndef OGR_SOSI_H_INCLUDED
+#define OGR_SOSI_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "fyba.h"
@@ -82,9 +82,9 @@ class OGRSOSIDataSource : public OGRDataSource {
     char                *pszName;
     OGRSOSILayer        **papoLayers;
     int                 nLayers;
-    
+
 #define MODE_READING 0
-#define MODE_WRITING 1    
+#define MODE_WRITING 1
     int                 nMode;
 
     void                buildOGRPoint(long nSerial);
@@ -123,4 +123,4 @@ public:
     int                 TestCapability( const char * );
 };
 
-#endif /* _OGR_SOSI_H_INCLUDED */
+#endif /* OGR_SOSI_H_INCLUDED */

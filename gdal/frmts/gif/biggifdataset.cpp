@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  BIGGIF Driver
- * Purpose:  Implement GDAL support for reading large GIF files in a 
+ * Purpose:  Implement GDAL support for reading large GIF files in a
  *           streaming fashion rather than the slurp-into-memory approach
  *           of the normal GIF driver.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -30,15 +30,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "gifabstractdataset.h"
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void	GDALRegister_BIGGIF(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -89,8 +86,8 @@ class BIGGifRasterBand : public GIFAbstractRasterBand
 /*                          BIGGifRasterBand()                          */
 /************************************************************************/
 
-BIGGifRasterBand::BIGGifRasterBand( BIGGIFDataset *poDS, int nBackground ) :
-    GIFAbstractRasterBand(poDS, 1, poDS->hGifFile->SavedImages, nBackground, TRUE)
+BIGGifRasterBand::BIGGifRasterBand( BIGGIFDataset *poDSIn, int nBackground ) :
+    GIFAbstractRasterBand(poDSIn, 1, poDSIn->hGifFile->SavedImages, nBackground, TRUE)
 
 {
 }
@@ -116,8 +113,8 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if( poGDS->poWorkDS != NULL && nBlockYOff <= poGDS->nLastLineRead )
     {
         return poGDS->poWorkDS->
-            RasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
-                      pImage, nBlockXSize, 1, GDT_Byte, 
+            RasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1,
+                      pImage, nBlockXSize, 1, GDT_Byte,
                       1, NULL, 0, 0, 0, NULL );
     }
 
@@ -133,9 +130,10 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Read till we get our target line.                               */
 /* -------------------------------------------------------------------- */
-    while( poGDS->nLastLineRead < nBlockYOff )
+    CPLErr eErr = CE_None;
+    while( poGDS->nLastLineRead < nBlockYOff && eErr == CE_None )
     {
-        if( DGifGetLine( poGDS->hGifFile, (GifPixelType*)pImage, 
+        if( DGifGetLine( poGDS->hGifFile, (GifPixelType*)pImage,
                          nBlockXSize ) == GIF_ERROR )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -147,14 +145,14 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         if( poGDS->poWorkDS != NULL )
         {
-            poGDS->poWorkDS->RasterIO( GF_Write, 
-                                       0, poGDS->nLastLineRead, nBlockXSize, 1, 
-                                       pImage, nBlockXSize, 1, GDT_Byte, 
+            eErr = poGDS->poWorkDS->RasterIO( GF_Write,
+                                       0, poGDS->nLastLineRead, nBlockXSize, 1,
+                                       pImage, nBlockXSize, 1, GDT_Byte,
                                        1, NULL, 0, 0, 0, NULL );
         }
     }
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -168,11 +166,10 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                            BIGGIFDataset()                            */
 /************************************************************************/
 
-BIGGIFDataset::BIGGIFDataset()
-
+BIGGIFDataset::BIGGIFDataset() :
+    nLastLineRead(-1),
+    poWorkDS(NULL)
 {
-    nLastLineRead = -1;
-    poWorkDS = NULL;
 }
 
 /************************************************************************/
@@ -240,7 +237,7 @@ CPLErr BIGGIFDataset::ReOpen()
     if( hGifFile != NULL )
     {
         GDALDriver *poGTiffDriver = (GDALDriver*) GDALGetDriverByName("GTiff");
-        
+
         if( poGTiffDriver != NULL )
         {
             /* Create as a sparse file to avoid filling up the whole file */
@@ -250,8 +247,8 @@ CPLErr BIGGIFDataset::ReOpen()
 
             osTempFilename += ".tif";
 
-            poWorkDS = poGTiffDriver->Create( osTempFilename, 
-                                              nRasterXSize, nRasterYSize, 1, 
+            poWorkDS = poGTiffDriver->Create( osTempFilename,
+                                              nRasterXSize, nRasterYSize, 1,
                                               GDT_Byte, const_cast<char**>(apszOptions));
         }
     }
@@ -265,7 +262,7 @@ CPLErr BIGGIFDataset::ReOpen()
     hGifFile = GIFAbstractDataset::myDGifOpen( fp, GIFAbstractDataset::ReadFunc );
     if( hGifFile == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "DGifOpen() failed.  Perhaps the gif file is corrupt?\n" );
 
         return CE_Failure;
@@ -274,47 +271,27 @@ CPLErr BIGGIFDataset::ReOpen()
 /* -------------------------------------------------------------------- */
 /*      Find the first image record.                                    */
 /* -------------------------------------------------------------------- */
-    GifRecordType RecordType = TERMINATE_RECORD_TYPE;
-
-    while( DGifGetRecordType(hGifFile, &RecordType) != GIF_ERROR
-           && RecordType != TERMINATE_RECORD_TYPE
-           && RecordType != IMAGE_DESC_RECORD_TYPE )
-    {
-        /* Skip extension records found before IMAGE_DESC_RECORD_TYPE */
-        if (RecordType == EXTENSION_RECORD_TYPE)
-        {
-            int nFunction;
-            GifByteType *pExtData;
-            if (DGifGetExtension(hGifFile, &nFunction, &pExtData) == GIF_ERROR)
-                break;
-            while (pExtData != NULL)
-            {
-                if (DGifGetExtensionNext(hGifFile, &pExtData) == GIF_ERROR)
-                    break;
-            }
-        }
-    }
-
+    GifRecordType RecordType = FindFirstImage(hGifFile);
     if( RecordType != IMAGE_DESC_RECORD_TYPE )
     {
         GIFAbstractDataset::myDGifCloseFile( hGifFile );
         hGifFile = NULL;
 
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to find image description record in GIF file." );
         return CE_Failure;
     }
-    
+
     if (DGifGetImageDesc(hGifFile) == GIF_ERROR)
     {
         GIFAbstractDataset::myDGifCloseFile( hGifFile );
         hGifFile = NULL;
 
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Image description reading failed in GIF file." );
         return CE_Failure;
     }
-    
+
     return CE_None;
 }
 
@@ -331,7 +308,7 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GIF driver does not support update access to existing"
                   " files.\n" );
         return NULL;
@@ -340,9 +317,7 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    BIGGIFDataset 	*poDS;
-
-    poDS = new BIGGIFDataset();
+    BIGGIFDataset *poDS = new BIGGIFDataset();
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
@@ -356,7 +331,7 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    
+
     poDS->nRasterXSize = poDS->hGifFile->SavedImages[0].ImageDesc.Width;
     poDS->nRasterYSize = poDS->hGifFile->SavedImages[0].ImageDesc.Height;
     if( poDS->hGifFile->SavedImages[0].ImageDesc.ColorMap == NULL &&
@@ -370,8 +345,8 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 1, 
-                   new BIGGifRasterBand( poDS, 
+    poDS->SetBand( 1,
+                   new BIGGifRasterBand( poDS,
                                          poDS->hGifFile->SBackGroundColor ));
 
 /* -------------------------------------------------------------------- */
@@ -401,25 +376,23 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_BIGGIF()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "BIGGIF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "BIGGIF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "BIGGIF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Graphics Interchange Format (.gif)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_gif.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+     GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = BIGGIFDataset::Open;
-        poDriver->pfnIdentify = GIFAbstractDataset::Identify;
+     poDriver->SetDescription( "BIGGIF" );
+     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                "Graphics Interchange Format (.gif)" );
+     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "frmt_gif.html" );
+     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
+     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
+     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+     poDriver->pfnOpen = BIGGIFDataset::Open;
+     poDriver->pfnIdentify = GIFAbstractDataset::Identify;
+
+     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

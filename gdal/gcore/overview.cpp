@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <limits>
+
 #include "gdal_priv.h"
 #include "gdalwarper.h"
 
@@ -58,13 +60,13 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
 /*      Allocate scanline buffer.                                       */
 /* -------------------------------------------------------------------- */
 
-    T* pDstScanline = (T *) VSIMalloc(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
-    int* panSrcXOff = (int*)VSIMalloc(nDstXWidth * sizeof(int));
+    T* pDstScanline = static_cast<T *>(
+        VSI_MALLOC_VERBOSE(
+            nDstXWidth * GDALGetDataTypeSizeBytes(eWrkDataType) ) );
+    int* panSrcXOff = (int*)VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(int));
 
     if( pDstScanline == NULL || panSrcXOff == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R: Out of memory for line buffer." );
         VSIFree(pDstScanline);
         VSIFree(panSrcXOff);
         return CE_Failure;
@@ -73,13 +75,9 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
 /* ==================================================================== */
 /*      Precompute inner loop constants.                                */
 /* ==================================================================== */
-    int iDstPixel;
-    for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
+    for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
     {
-        int   nSrcXOff;
-
-        nSrcXOff =
-            (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
+        int nSrcXOff = (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
         if ( nSrcXOff < nChunkXOff )
             nSrcXOff = nChunkXOff;
 
@@ -103,7 +101,7 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
-        for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
+        for( int iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
         {
             pDstScanline[iDstPixel] = pSrcScanline[panSrcXOff[iDstPixel]];
         }
@@ -178,23 +176,43 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
 /************************************************************************/
 
 static int GDALFindBestEntry(int nEntryCount, const GDALColorEntry* aEntries,
-                             int nR, int nG, int nB)
+                             int nR, int nG, int nB, int nNoDataIndex)
 {
-    int i;
-    int nMinDist = 0;
-    int iBestEntry = 0;
-    for(i=0;i<nEntryCount;i++)
+    int nMinDist = std::numeric_limits<int>::max();
+    int iBestEntry = (nNoDataIndex != 0 || nEntryCount == 1) ? 0 : 1;
+    for( int i=0; i < nEntryCount; i++ )
     {
+        if (i == nNoDataIndex || aEntries[i].c4 == 0)
+            continue;
         int nDist = (nR - aEntries[i].c1) *  (nR - aEntries[i].c1) +
             (nG - aEntries[i].c2) *  (nG - aEntries[i].c2) +
             (nB - aEntries[i].c3) *  (nB - aEntries[i].c3);
-        if (i == 0 || nDist < nMinDist)
+        if (nDist < nMinDist)
         {
             nMinDist = nDist;
             iBestEntry = i;
         }
     }
     return iBestEntry;
+}
+
+/************************************************************************/
+/*                      ReadColorTableAsArray()                        */
+/************************************************************************/
+
+static bool ReadColorTableAsArray(const GDALColorTable* poColorTable,
+                                  int& nEntryCount,
+                                  GDALColorEntry*& aEntries)
+{
+    nEntryCount = poColorTable->GetColorEntryCount();
+    aEntries = (GDALColorEntry* )VSI_MALLOC2_VERBOSE(sizeof(GDALColorEntry), nEntryCount);
+    if( aEntries == NULL )
+        return false;
+    for(int i=0;i<nEntryCount;i++)
+    {
+        poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -217,21 +235,19 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                  int bHasNoData, float fNoDataValue,
                                  GDALColorTable* poColorTable)
 {
-    CPLErr eErr = CE_None;
-
-    int bBit2Grayscale = EQUALN(pszResampling,"AVERAGE_BIT2GRAYSCALE",13);
+    int bBit2Grayscale = STARTS_WITH_CI(pszResampling,"AVERAGE_BIT2G" /* AVERAGE_BIT2GRAYSCALE */);
     if (bBit2Grayscale)
         poColorTable = NULL;
 
-    int nOXSize, nOYSize;
-    T    *pDstScanline;
 
-    T      tNoDataValue = (T)fNoDataValue;
+    T tNoDataValue;
     if (!bHasNoData)
         tNoDataValue = 0;
+    else
+        tNoDataValue = (T)fNoDataValue;
 
-    nOXSize = poOverview->GetXSize();
-    nOYSize = poOverview->GetYSize();
+    int nOXSize = poOverview->GetXSize();
+    int nOYSize = poOverview->GetYSize();
 
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
     int nChunkBottomYOff = nChunkYOff + nChunkYSize;
@@ -241,13 +257,13 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 /*      Allocate scanline buffer.                                       */
 /* -------------------------------------------------------------------- */
 
-    pDstScanline = (T *) VSIMalloc(nDstXWidth * (GDALGetDataTypeSize(eWrkDataType) / 8));
-    int* panSrcXOffShifted = (int*)VSIMalloc(2 * nDstXWidth * sizeof(int));
+    T *pDstScanline = static_cast<T *>(
+        VSI_MALLOC_VERBOSE(
+            nDstXWidth * GDALGetDataTypeSizeBytes(eWrkDataType) ) );
+    int* panSrcXOffShifted = (int*)VSI_MALLOC_VERBOSE(2 * nDstXWidth * sizeof(int));
 
     if( pDstScanline == NULL || panSrcXOffShifted == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R: Out of memory for line buffer." );
         VSIFree(pDstScanline);
         VSIFree(panSrcXOffShifted);
         return CE_Failure;
@@ -255,22 +271,18 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
-    if (poColorTable)
+    if(poColorTable && !ReadColorTableAsArray(poColorTable,nEntryCount,aEntries))
     {
-        int i;
-        nEntryCount = poColorTable->GetColorEntryCount();
-        aEntries = (GDALColorEntry* )CPLMalloc(sizeof(GDALColorEntry) * nEntryCount);
-        for(i=0;i<nEntryCount;i++)
-        {
-            poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
-        }
+        VSIFree(pDstScanline);
+        VSIFree(panSrcXOffShifted);
+        return CE_Failure;
     }
 
 /* ==================================================================== */
 /*      Precompute inner loop constants.                                */
 /* ==================================================================== */
     int iDstPixel;
-    int bSrcXSpacingIsTwo = TRUE;
+    bool bSrcXSpacingIsTwo = true;
     for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
     {
         int   nSrcXOff, nSrcXOff2;
@@ -294,21 +306,20 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         panSrcXOffShifted[2 * (iDstPixel - nDstXOff)] = nSrcXOff - nChunkXOff;
         panSrcXOffShifted[2 * (iDstPixel - nDstXOff) + 1] = nSrcXOff2 - nChunkXOff;
         if (nSrcXOff2 - nSrcXOff != 2)
-            bSrcXSpacingIsTwo = FALSE;
+            bSrcXSpacingIsTwo = false;
     }
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
+    CPLErr eErr = CE_None;
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-        int   nSrcYOff, nSrcYOff2 = 0;
-
-        nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
+        int nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
         if ( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        nSrcYOff2 =
+        int nSrcYOff2 =
             (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc);
         if( nSrcYOff2 == nSrcYOff )
             nSrcYOff2 ++;
@@ -389,16 +400,16 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
             for( iDstPixel = 0; iDstPixel < nDstXWidth; iDstPixel++ )
             {
-                int  nSrcXOff = panSrcXOffShifted[2 * iDstPixel],
-                     nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
+                const int nSrcXOff = panSrcXOffShifted[2 * iDstPixel];
+                const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
 
                 T val;
                 int    nTotalR = 0, nTotalG = 0, nTotalB = 0;
-                int    nCount = 0, iX, iY;
+                int    nCount = 0;
 
-                for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
+                for( int iY = nSrcYOff; iY < nSrcYOff2; iY++ )
                 {
-                    for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
+                    for( int iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
                         val = pChunk[iX + iY *nChunkXSize];
                         if (bHasNoData == FALSE || val != tNoDataValue)
@@ -423,7 +434,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         nG = (nTotalG + nCount / 2) / nCount,
                         nB = (nTotalB + nCount / 2) / nCount;
                     pDstScanline[iDstPixel] = (T)GDALFindBestEntry(
-                        nEntryCount, aEntries, nR, nG, nB);
+                        nEntryCount, aEntries, nR, nG, nB,
+                        bHasNoData ? static_cast<int>(tNoDataValue) : -1);
                 }
             }
         }
@@ -447,7 +459,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                         GDALDataType eWrkDataType,
                         void * pChunk,
                         GByte * pabyChunkNodataMask,
-                        int nChunkXOff, int nChunkXSize, 
+                        int nChunkXOff, int nChunkXSize,
                         int nChunkYOff, int nChunkYSize,
                         int nDstXOff, int nDstXOff2,
                         int nDstYOff, int nDstYOff2,
@@ -530,8 +542,6 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* -------------------------------------------------------------------- */
 /*      Create the filter kernel and allocate scanline buffer.          */
 /* -------------------------------------------------------------------- */
-    int nOXSize, nOYSize;
-    float    *pafDstScanline;
     int nGaussMatrixDim = 3;
     const int *panGaussMatrix;
     static const int anGaussMatrix3x3[] ={
@@ -554,8 +564,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         6,36,90,120,90,36,6,
         1,6,15,20,15,6,1};
 
-    nOXSize = poOverview->GetXSize();
-    nOYSize = poOverview->GetYSize();
+    int nOXSize = poOverview->GetXSize();
+    int nOYSize = poOverview->GetYSize();
     int nResYFactor = (int) (0.5 + dfYRatioDstToSrc);
 
     // matrix for gauss filter
@@ -575,25 +585,19 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         nGaussMatrixDim=7;
     }
 
-    pafDstScanline = (float *) VSIMalloc((nDstXOff2 - nDstXOff) * sizeof(float));
+    float *pafDstScanline
+        = (float *) VSI_MALLOC_VERBOSE((nDstXOff2 - nDstXOff) * sizeof(float));
     if( pafDstScanline == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R: Out of memory for line buffer." );
         return CE_Failure;
     }
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
-    if (poColorTable)
+    if(poColorTable && !ReadColorTableAsArray(poColorTable,nEntryCount,aEntries))
     {
-        int i;
-        nEntryCount = poColorTable->GetColorEntryCount();
-        aEntries = (GDALColorEntry* )CPLMalloc(sizeof(GDALColorEntry) * nEntryCount);
-        for(i=0;i<nEntryCount;i++)
-        {
-            poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
-        }
+        VSIFree(pafDstScanline);
+        return CE_Failure;
     }
 
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
@@ -604,12 +608,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* ==================================================================== */
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-        float *pafSrcScanline;
-        GByte *pabySrcScanlineNodataMask;
-        int   nSrcYOff, nSrcYOff2 = 0, iDstPixel;
-
-        nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
-        nSrcYOff2 = (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc) + 1;
+        int nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
+        int nSrcYOff2 = (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc) + 1;
 
         if( nSrcYOff < nChunkYOff )
         {
@@ -627,11 +627,11 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             nSrcYOff = 0;
         }
 
-
         if( nSrcYOff2 > nChunkBottomYOff || (dfYRatioDstToSrc > 1 && iDstLine == nOYSize-1) )
             nSrcYOff2 = nChunkBottomYOff;
 
-        pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+        float *pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+        GByte *pabySrcScanlineNodataMask;
         if (pabyChunkNodataMask != NULL)
             pabySrcScanlineNodataMask = pabyChunkNodataMask + ((nSrcYOff-nChunkYOff) * nChunkXSize);
         else
@@ -640,12 +640,11 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
+        int  iDstPixel;
         for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
         {
-            int   nSrcXOff, nSrcXOff2;
-
-            nSrcXOff = (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
-            nSrcXOff2 = (int)(0.5 + (iDstPixel+1) * dfXRatioDstToSrc) + 1;
+            int nSrcXOff = (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
+            int nSrcXOff2 = (int)(0.5 + (iDstPixel+1) * dfXRatioDstToSrc) + 1;
 
             int iSizeX = nSrcXOff2 - nSrcXOff;
             nSrcXOff = nSrcXOff + iSizeX/2 - nGaussMatrixDim/2;
@@ -663,15 +662,14 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             if (poColorTable == NULL)
             {
                 double dfTotal = 0.0, val;
-                int  nCount = 0, iX, iY;
-                int  i = 0,j = 0;
+                int nCount = 0;
                 const int *panLineWeight = panGaussMatrix +
                     nYShiftGaussMatrix * nGaussMatrixDim + nXShiftGaussMatrix;
 
-                for( j=0, iY = nSrcYOff; iY < nSrcYOff2;
+                for( int j=0, iY = nSrcYOff; iY < nSrcYOff2;
                         iY++, j++, panLineWeight += nGaussMatrixDim )
                 {
-                    for( i=0, iX = nSrcXOff; iX < nSrcXOff2; iX++,++i )
+                    for( int i=0, iX = nSrcXOff; iX < nSrcXOff2; iX++,++i )
                     {
                         val = pafSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize];
                         if (pabySrcScanlineNodataMask == NULL ||
@@ -700,15 +698,14 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             {
                 double val;
                 int  nTotalR = 0, nTotalG = 0, nTotalB = 0;
-                int  nTotalWeight = 0, iX, iY;
-                int  i = 0,j = 0;
+                int  nTotalWeight = 0;
                 const int *panLineWeight = panGaussMatrix +
                     nYShiftGaussMatrix * nGaussMatrixDim + nXShiftGaussMatrix;
 
-                for( j=0, iY = nSrcYOff; iY < nSrcYOff2;
+                for( int j=0, iY = nSrcYOff; iY < nSrcYOff2;
                         iY++, j++, panLineWeight += nGaussMatrixDim )
                 {
-                    for( i=0, iX = nSrcXOff; iX < nSrcXOff2; iX++,++i )
+                    for( int i=0, iX = nSrcXOff; iX < nSrcXOff2; iX++,++i )
                     {
                         val = pafSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)*nChunkXSize];
                         if (bHasNoData == FALSE || val != fNoDataValue)
@@ -741,7 +738,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             nB = (nTotalB + nTotalWeight / 2) / nTotalWeight;
                         pafDstScanline[iDstPixel - nDstXOff] =
                             (float) GDALFindBestEntry(
-                                    nEntryCount, aEntries, nR, nG, nB);
+                                    nEntryCount, aEntries, nR, nG, nB, bHasNoData ? (int)fNoDataValue : -1);
                     }
                 }
             }
@@ -781,8 +778,6 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                              GDALDataType eSrcDataType)
 
 {
-    CPLErr eErr = CE_None;
-
     float * pafChunk = (float*) pChunk;
 
 /* -------------------------------------------------------------------- */
@@ -794,25 +789,18 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
 
-    pafDstScanline = (float *) VSIMalloc((nDstXOff2 - nDstXOff) * sizeof(float));
+    pafDstScanline = (float *) VSI_MALLOC_VERBOSE((nDstXOff2 - nDstXOff) * sizeof(float));
     if( pafDstScanline == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R: Out of memory for line buffer." );
         return CE_Failure;
     }
 
     int nEntryCount = 0;
     GDALColorEntry* aEntries = NULL;
-    if (poColorTable)
+    if(poColorTable && !ReadColorTableAsArray(poColorTable,nEntryCount,aEntries))
     {
-        int i;
-        nEntryCount = poColorTable->GetColorEntryCount();
-        aEntries = (GDALColorEntry* )CPLMalloc(sizeof(GDALColorEntry) * nEntryCount);
-        for(i=0;i<nEntryCount;i++)
-        {
-            poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
-        }
+        VSIFree(pafDstScanline);
+        return CE_Failure;
     }
 
     int      nMaxNumPx = 0;
@@ -825,17 +813,16 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
+    CPLErr eErr = CE_None;
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-        float *pafSrcScanline;
-        GByte *pabySrcScanlineNodataMask;
-        int   nSrcYOff, nSrcYOff2 = 0, iDstPixel;
+        int iDstPixel;
 
-        nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
+        int nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
         if ( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        nSrcYOff2 =
+        int nSrcYOff2 =
             (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc);
         if( nSrcYOff2 == nSrcYOff )
             nSrcYOff2 ++;
@@ -847,7 +834,8 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             nSrcYOff2 = nChunkBottomYOff;
         }
 
-        pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+        float *pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+        GByte *pabySrcScanlineNodataMask;
         if (pabyChunkNodataMask != NULL)
             pabySrcScanlineNodataMask = pabyChunkNodataMask + ((nSrcYOff-nChunkYOff) * nChunkXSize);
         else
@@ -858,13 +846,11 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* -------------------------------------------------------------------- */
         for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
         {
-            int   nSrcXOff, nSrcXOff2;
-
-            nSrcXOff =
+            int nSrcXOff =
                 (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
             if ( nSrcXOff < nChunkXOff )
                 nSrcXOff = nChunkXOff;
-            nSrcXOff2 = (int)
+            int nSrcXOff2 = (int)
                 (0.5 + (iDstPixel+1) * dfXRatioDstToSrc);
             if( nSrcXOff2 == nSrcXOff )
                 nSrcXOff2 ++;
@@ -880,12 +866,12 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             {
                 /* I'm not sure how much sense it makes to run a majority
                     filter on floating point data, but here it is for the sake
-                    of compatability. It won't look right on RGB images by the
+                    of compatibility. It won't look right on RGB images by the
                     nature of the filter. */
                 int     nNumPx = (nSrcYOff2-nSrcYOff)*(nSrcXOff2-nSrcXOff);
                 int     iMaxInd = 0, iMaxVal = -1, iY, iX;
 
-                if (nNumPx > nMaxNumPx)
+                if (pafVals == NULL || nNumPx > nMaxNumPx)
                 {
                     pafVals = (float*) CPLRealloc(pafVals, nNumPx * sizeof(float));
                     panSums = (int*) CPLRealloc(panSums, nNumPx * sizeof(int));
@@ -936,14 +922,14 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             {
                 /* So we go here for a paletted or non-paletted byte band */
                 /* The input values are then between 0 and 255 */
-                int     anVals[256], nMaxVal = 0, iMaxInd = -1, iY, iX;
+                int     anVals[256], nMaxVal = 0, iMaxInd = -1;
 
                 memset(anVals, 0, 256*sizeof(int));
 
-                for( iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
                     int     iTotYOff = (iY-nSrcYOff)*nChunkXSize-nChunkXOff;
-                    for( iX = nSrcXOff; iX < nSrcXOff2; ++iX )
+                    for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         float  val = pafSrcScanline[iX+iTotYOff];
                         if (bHasNoData == FALSE || val != fNoDataValue)
@@ -1389,27 +1375,25 @@ template<> inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GU
 /*                   GDALResampleChunk32R_Convolution()                 */
 /************************************************************************/
 
-template<class T> static CPLErr
+template<class T, int bMultipleBands> static CPLErr
 GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                                      double dfSrcXDelta,
                                      double dfSrcYDelta,
-                                     T * pChunk,
+                                     const T * pChunk, int nBands,
                                      GByte * pabyChunkNodataMask,
                                      int nChunkXOff, int nChunkXSize,
                                      int nChunkYOff, int nChunkYSize,
                                      int nDstXOff, int nDstXOff2,
                                      int nDstYOff, int nDstYOff2,
-                                     GDALRasterBand * poOverview,
+                                     GDALRasterBand ** papoDstBands,
                                      int bHasNoData,
                                      float fNoDataValue,
                                      FilterFuncType pfnFilterFunc,
                                      FilterFunc4ValuesType pfnFilterFunc4Values,
-                                     int nKernelRadius )
+                                     int nKernelRadius,
+                                     float fMaxVal )
 
 {
-
-    CPLErr eErr = CE_None;
-
     if (!bHasNoData)
         fNoDataValue = 0.0f;
 
@@ -1425,23 +1409,21 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
     double dfYScaleWeight = ( dfYScale >= 1.0 ) ? 1.0 : dfYScale;
     double dfYScaledRadius = nKernelRadius / dfYScaleWeight;
 
-    float* pafDstScanline = (float *) VSIMalloc(nDstXSize * sizeof(float));
+    float* pafDstScanline = (float *) VSI_MALLOC_VERBOSE(nDstXSize * sizeof(float));
 
     /* Temporary array to store result of horizontal filter */
-    double* padfHorizontalFiltered = (double*) VSIMalloc(nChunkYSize * nDstXSize * sizeof(double));
+    double* padfHorizontalFiltered = (double*) VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize * sizeof(double) * nBands);
 
     /* To store convolution coefficients */
-    double* padfWeightsAlloc = (double*) CPLMalloc((int)(
+    double* padfWeightsAlloc = (double*) VSI_MALLOC_VERBOSE((int)(
         2 + 2 * MAX(dfXScaledRadius, dfYScaledRadius) + 0.5 + 1 /* for alignment*/) * sizeof(double));
 
     GByte* pabyChunkNodataMaskHorizontalFiltered = NULL;
     if( pabyChunkNodataMask )
-        pabyChunkNodataMaskHorizontalFiltered = (GByte*) VSIMalloc(nChunkYSize * nDstXSize);
+        pabyChunkNodataMaskHorizontalFiltered = (GByte*) VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize);
     if( pafDstScanline == NULL || padfHorizontalFiltered == NULL ||
         padfWeightsAlloc == NULL || (pabyChunkNodataMask != NULL && pabyChunkNodataMaskHorizontalFiltered == NULL) )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunk32R_ConvolutionT: Out of memory for work buffers." );
         VSIFree(pafDstScanline);
         VSIFree(padfHorizontalFiltered);
         VSIFree(padfWeightsAlloc);
@@ -1459,7 +1441,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
 /* ==================================================================== */
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
 #ifdef USE_SSE2
-    int bSrcPixelCountLess8 = dfXScaledRadius < 4;
+    bool bSrcPixelCountLess8 = dfXScaledRadius < 4;
 #endif
     for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
     {
@@ -1505,6 +1487,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
             dfWeightSum += dfWeight;
         }
 
+        int nHeight = nChunkYSize * nBands;
         if( pabyChunkNodataMask == NULL )
         {
             if( dfWeightSum != 0 )
@@ -1513,12 +1496,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
                 for(int i=0;i<nSrcPixelCount;i++)
                     padfWeights[i] *= dfInvWeightSum;
             }
-
             int iSrcLineOff = 0;
 #ifdef USE_SSE2
             if( bSrcPixelCountLess8 )
             {
-                for( ; iSrcLineOff+2 < nChunkYSize; iSrcLineOff +=3 )
+                for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
                     int j=iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
                     double dfVal1, dfVal2, dfVal3;
@@ -1533,7 +1515,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
             else
 #endif
             {
-                for( ; iSrcLineOff+2 < nChunkYSize; iSrcLineOff +=3 )
+                for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
                     int j=iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
                     double dfVal1, dfVal2, dfVal3;
@@ -1545,7 +1527,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
                     padfHorizontalFiltered[(iSrcLineOff+2) * nDstXSize + iDstPixel - nDstXOff] = dfVal3;
                 }
             }
-            for( ; iSrcLineOff < nChunkYSize; iSrcLineOff ++ )
+            for( ; iSrcLineOff < nHeight; iSrcLineOff ++ )
             {
                 int j=iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
                 double dfVal =
@@ -1556,7 +1538,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
         }
         else
         {
-            for( int iSrcLineOff = 0; iSrcLineOff < nChunkYSize; iSrcLineOff ++ )
+            for( int iSrcLineOff = 0; iSrcLineOff < nHeight; iSrcLineOff ++ )
             {
                 double dfVal;
                 int j=iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
@@ -1582,6 +1564,12 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
 /*      Second pass: vertical filter                                    */
 /* ==================================================================== */
     int nChunkBottomYOff = nChunkYOff + nChunkYSize;
+
+    CPLErr eErr = CE_None;
+
+  for(int iBand=0;iBand< ((bMultipleBands)?nBands:1);iBand++)
+  {
+    const double* padfHorizontalFilteredBand = padfHorizontalFiltered + iBand * nChunkYSize * nDstXSize;
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; iDstLine++ )
     {
         double dfSrcLine = (iDstLine+0.5)*dfYRatioDstToSrc + dfSrcYDelta;
@@ -1631,21 +1619,24 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
                 for(int i=0;i<nSrcLineCount;i++)
                     padfWeights[i] *= dfInvWeightSum;
             }
+        }
 
+        if( pabyChunkNodataMask == NULL )
+        {
             int iFilteredPixelOff = 0;
             int j=(nSrcLineStart - nChunkYOff) * nDstXSize;
             for( ; iFilteredPixelOff+1 < nDstXSize; iFilteredPixelOff += 2, j+=2 )
             {
                 double dfVal1, dfVal2;
                 GDALResampleConvolutionVertical_2cols(
-                    padfHorizontalFiltered + j, nDstXSize, padfWeights, nSrcLineCount, dfVal1, dfVal2);
+                    padfHorizontalFilteredBand + j, nDstXSize, padfWeights, nSrcLineCount, dfVal1, dfVal2);
                 pafDstScanline[iFilteredPixelOff] = (float)dfVal1;
                 pafDstScanline[iFilteredPixelOff+1] = (float)dfVal2;
             }
             if( iFilteredPixelOff < nDstXSize )
             {
                 double dfVal = GDALResampleConvolutionVertical(
-                    padfHorizontalFiltered + j, nDstXSize, padfWeights, nSrcLineCount);
+                    padfHorizontalFilteredBand + j, nDstXSize, padfWeights, nSrcLineCount);
                 pafDstScanline[iFilteredPixelOff] = (float)dfVal;
             }
         }
@@ -1659,7 +1650,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
                     i<nSrcLineCount; i++, j+=nDstXSize)
                 {
                     double dfWeight = padfWeights[i] * pabyChunkNodataMaskHorizontalFiltered[j];
-                    dfVal += padfHorizontalFiltered[j] * dfWeight;
+                    dfVal += padfHorizontalFilteredBand[j] * dfWeight;
                     dfWeightSum += dfWeight;
                 }
                 if( dfWeightSum > 0.0 )
@@ -1673,10 +1664,20 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
             }
         }
 
-        eErr = poOverview->RasterIO( GF_Write, nDstXOff, iDstLine, nDstXSize, 1,
+        if( fMaxVal )
+        {
+            for(int i=0;i<nDstXSize;i++)
+            {
+                if( pafDstScanline[i] > fMaxVal )
+                    pafDstScanline[i] = fMaxVal;
+            }
+        }
+
+        eErr = papoDstBands[iBand]->RasterIO( GF_Write, nDstXOff, iDstLine, nDstXSize, 1,
                                      pafDstScanline, nDstXSize, 1, GDT_Float32,
                                      0, 0, NULL );
     }
+  }
 
     VSIFree( padfWeightsAlloc );
     VSIFree( padfHorizontalFiltered );
@@ -1721,45 +1722,69 @@ static CPLErr GDALResampleChunk32R_Convolution(
     FilterFuncType pfnFilterFunc = GWKGetFilterFunc(eResample);
     FilterFunc4ValuesType pfnFilterFunc4Values = GWKGetFilterFunc4Values(eResample);
 
+    float fMaxVal = 0.f;
+    // Cubic, etc... can have overshoots, so make sure we clamp values to the
+    // maximum value if NBITS is set
+    const char* pszNBITS = poOverview->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    GDALDataType eBandDT = poOverview->GetRasterDataType();
+    if( eResample != GRA_Bilinear && pszNBITS != NULL &&
+        (eBandDT == GDT_Byte || eBandDT == GDT_UInt16 || eBandDT == GDT_UInt32) )
+    {
+        int nBits = atoi(pszNBITS);
+        if( nBits == GDALGetDataTypeSize(eBandDT) )
+            nBits = 0;
+        if( nBits )
+            fMaxVal = (float)((1 << nBits) -1);
+    }
+
     if (eWrkDataType == GDT_Byte)
-        return GDALResampleChunk32R_ConvolutionT(dfXRatioDstToSrc, dfYRatioDstToSrc,
+        return GDALResampleChunk32R_ConvolutionT<GByte, FALSE>
+                       (dfXRatioDstToSrc, dfYRatioDstToSrc,
                         dfSrcXDelta, dfSrcYDelta,
-                        (GByte *) pChunk, pabyChunkNodataMask,
-                        nChunkXOff, nChunkXSize, 
-                        nChunkYOff, nChunkYSize,
-                        nDstXOff, nDstXOff2,
-                        nDstYOff, nDstYOff2,
-                        poOverview,
-                        bHasNoData, fNoDataValue,
-                        pfnFilterFunc,
-                        pfnFilterFunc4Values,
-                        nKernelRadius);
-   else if (eWrkDataType == GDT_UInt16)
-        return GDALResampleChunk32R_ConvolutionT(dfXRatioDstToSrc, dfYRatioDstToSrc,
-                        dfSrcXDelta, dfSrcYDelta,
-                        (GUInt16 *) pChunk, pabyChunkNodataMask,
-                        nChunkXOff, nChunkXSize, 
-                        nChunkYOff, nChunkYSize,
-                        nDstXOff, nDstXOff2,
-                        nDstYOff, nDstYOff2,
-                        poOverview,
-                        bHasNoData, fNoDataValue,
-                        pfnFilterFunc,
-                        pfnFilterFunc4Values,
-                        nKernelRadius);
-    else if (eWrkDataType == GDT_Float32)
-        return GDALResampleChunk32R_ConvolutionT(dfXRatioDstToSrc, dfYRatioDstToSrc,
-                        dfSrcXDelta, dfSrcYDelta,
-                        (float *) pChunk, pabyChunkNodataMask,
+                        (GByte *) pChunk, 1,
+                        pabyChunkNodataMask,
                         nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
                         nDstXOff, nDstXOff2,
                         nDstYOff, nDstYOff2,
-                        poOverview,
+                        &poOverview,
                         bHasNoData, fNoDataValue,
                         pfnFilterFunc,
                         pfnFilterFunc4Values,
-                        nKernelRadius);
+                        nKernelRadius,
+                        fMaxVal);
+   else if (eWrkDataType == GDT_UInt16)
+        return GDALResampleChunk32R_ConvolutionT<GUInt16,FALSE>
+                       (dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta, dfSrcYDelta,
+                        (GUInt16 *) pChunk, 1,
+                        pabyChunkNodataMask,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        &poOverview,
+                        bHasNoData, fNoDataValue,
+                        pfnFilterFunc,
+                        pfnFilterFunc4Values,
+                        nKernelRadius,
+                        fMaxVal);
+    else if (eWrkDataType == GDT_Float32)
+        return GDALResampleChunk32R_ConvolutionT<float,FALSE>
+                       (dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta, dfSrcYDelta,
+                        (float *) pChunk, 1,
+                        pabyChunkNodataMask,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        &poOverview,
+                        bHasNoData, fNoDataValue,
+                        pfnFilterFunc,
+                        pfnFilterFunc4Values,
+                        nKernelRadius,
+                        fMaxVal);
 
     CPLAssert(0);
     return CE_Failure;
@@ -1770,27 +1795,24 @@ static CPLErr GDALResampleChunk32R_Convolution(
 /************************************************************************/
 
 static CPLErr
-GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight, 
+GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                          float * pafChunk, int nChunkYOff, int nChunkYSize,
                          int nDstYOff, int nDstYOff2,
                          GDALRasterBand * poOverview,
                          const char * pszResampling )
-    
+
 {
-    int      nOXSize, nOYSize;
-    float    *pafDstScanline;
     CPLErr   eErr = CE_None;
 
-    nOXSize = poOverview->GetXSize();
-    nOYSize = poOverview->GetYSize();
+    int nOXSize = poOverview->GetXSize();
+    int nOYSize = poOverview->GetYSize();
     double dfXRatioDstToSrc = (double)nSrcWidth / nOXSize;
     double dfYRatioDstToSrc = (double)nSrcHeight / nOYSize;
 
-    pafDstScanline = (float *) VSIMalloc(nOXSize * sizeof(float) * 2);
+    float *pafDstScanline
+        = (float *) VSI_MALLOC_VERBOSE(nOXSize * sizeof(float) * 2);
     if( pafDstScanline == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALResampleChunkC32R: Out of memory for line buffer." );
         return CE_Failure;
     }
 
@@ -1799,14 +1821,11 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
 /* ==================================================================== */
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-        float *pafSrcScanline;
-        int   nSrcYOff, nSrcYOff2, iDstPixel;
-
-        nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
+        int nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
         if( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
-        
-        nSrcYOff2 = (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc);
+
+        int nSrcYOff2 = (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc);
         if( nSrcYOff2 == nSrcYOff )
             nSrcYOff2 ++;
 
@@ -1819,17 +1838,17 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
         if( nSrcYOff2 > nChunkYOff + nChunkYSize )
             nSrcYOff2 = nChunkYOff + nChunkYSize;
 
-        pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nSrcWidth) * 2;
+        float *pafSrcScanline
+            = pafChunk + ((nSrcYOff-nChunkYOff) * nSrcWidth) * 2;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
+        int iDstPixel;
         for( iDstPixel = 0; iDstPixel < nOXSize; iDstPixel++ )
         {
-            int   nSrcXOff, nSrcXOff2;
-
-            nSrcXOff = (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
-            nSrcXOff2 = (int) 
+            int nSrcXOff = (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
+            int nSrcXOff2 = (int)
                 (0.5 + (iDstPixel+1) * dfXRatioDstToSrc);
             if( nSrcXOff2 == nSrcXOff )
                 nSrcXOff2 ++;
@@ -1840,7 +1859,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 nSrcXOff2 = nSrcWidth;
             }
 
-            if( EQUALN(pszResampling,"NEAR",4) )
+            if( STARTS_WITH_CI(pszResampling, "NEAR") )
             {
                 pafDstScanline[iDstPixel*2] = pafSrcScanline[nSrcXOff*2];
                 pafDstScanline[iDstPixel*2+1] = pafSrcScanline[nSrcXOff*2+1];
@@ -1848,23 +1867,21 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
             else if( EQUAL(pszResampling,"AVERAGE_MAGPHASE") )
             {
                 double dfTotalR = 0.0, dfTotalI = 0.0, dfTotalM = 0.0;
-                int    nCount = 0, iX, iY;
+                int    nCount = 0;
 
-                for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
+                for( int iY = nSrcYOff; iY < nSrcYOff2; iY++ )
                 {
-                    for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
+                    for( int iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
-                        double  dfR, dfI;
-
-                        dfR = pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
-                        dfI = pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
+                        double dfR = pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
+                        double dfI = pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
                         dfTotalR += dfR;
                         dfTotalI += dfI;
                         dfTotalM += sqrt( dfR*dfR + dfI*dfI );
                         nCount++;
                     }
                 }
-                
+
                 CPLAssert( nCount > 0 );
                 if( nCount == 0 )
                 {
@@ -1873,14 +1890,13 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 }
                 else
                 {
-                    double      dfM, dfDesiredM, dfRatio=1.0;
-
                     pafDstScanline[iDstPixel*2  ] = (float) (dfTotalR/nCount);
                     pafDstScanline[iDstPixel*2+1] = (float) (dfTotalI/nCount);
-                    
-                    dfM = sqrt(pafDstScanline[iDstPixel*2  ]*pafDstScanline[iDstPixel*2  ]
+
+                    const double dfM = sqrt(pafDstScanline[iDstPixel*2  ]*pafDstScanline[iDstPixel*2  ]
                              + pafDstScanline[iDstPixel*2+1]*pafDstScanline[iDstPixel*2+1]);
-                    dfDesiredM = dfTotalM / nCount;
+                    const double dfDesiredM = dfTotalM / nCount;
+                    double dfRatio=1.0;
                     if( dfM != 0.0 )
                         dfRatio = dfDesiredM / dfM;
 
@@ -1888,21 +1904,21 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                     pafDstScanline[iDstPixel*2+1] *= (float) dfRatio;
                 }
             }
-            else if( EQUALN(pszResampling,"AVER",4) )
+            else if( STARTS_WITH_CI(pszResampling, "AVER") )
             {
                 double dfTotalR = 0.0, dfTotalI = 0.0;
-                int    nCount = 0, iX, iY;
+                int nCount = 0;
 
-                for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
+                for( int iY = nSrcYOff; iY < nSrcYOff2; iY++ )
                 {
-                    for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
+                    for( int iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
                         dfTotalR += pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
                         dfTotalI += pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
                         nCount++;
                     }
                 }
-                
+
                 CPLAssert( nCount > 0 );
                 if( nCount == 0 )
                 {
@@ -1917,8 +1933,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
             }
         }
 
-        eErr = poOverview->RasterIO( GF_Write, 0, iDstLine, nOXSize, 1, 
-                                     pafDstScanline, nOXSize, 1, GDT_CFloat32, 
+        eErr = poOverview->RasterIO( GF_Write, 0, iDstLine, nOXSize, 1,
+                                     pafDstScanline, nOXSize, 1, GDT_CFloat32,
                                      0, 0, NULL );
     }
 
@@ -1935,9 +1951,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
 /************************************************************************/
 
 static CPLErr
-GDALRegenerateCascadingOverviews( 
-    GDALRasterBand *poSrcBand, int nOverviews, GDALRasterBand **papoOvrBands, 
-    const char * pszResampling, 
+GDALRegenerateCascadingOverviews(
+    GDALRasterBand *poSrcBand, int nOverviews, GDALRasterBand **papoOvrBands,
+    const char * pszResampling,
     GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
@@ -1945,21 +1961,16 @@ GDALRegenerateCascadingOverviews(
 /*      First, we must put the overviews in order from largest to       */
 /*      smallest.                                                       */
 /* -------------------------------------------------------------------- */
-    int   i, j;
-
-    for( i = 0; i < nOverviews-1; i++ )
+    for( int i = 0; i < nOverviews-1; i++ )
     {
-        for( j = 0; j < nOverviews - i - 1; j++ )
+        for( int j = 0; j < nOverviews - i - 1; j++ )
         {
-
-            if( papoOvrBands[j]->GetXSize() 
+            if( papoOvrBands[j]->GetXSize()
                 * (float) papoOvrBands[j]->GetYSize() <
                 papoOvrBands[j+1]->GetXSize()
                 * (float) papoOvrBands[j+1]->GetYSize() )
             {
-                GDALRasterBand * poTempBand;
-
-                poTempBand = papoOvrBands[j];
+                GDALRasterBand *poTempBand = papoOvrBands[j];
                 papoOvrBands[j] = papoOvrBands[j+1];
                 papoOvrBands[j+1] = poTempBand;
             }
@@ -1972,7 +1983,7 @@ GDALRegenerateCascadingOverviews(
 /* -------------------------------------------------------------------- */
     double       dfTotalPixels = 0.0;
 
-    for( i = 0; i < nOverviews; i++ )
+    for( int i = 0; i < nOverviews; i++ )
     {
         dfTotalPixels += papoOvrBands[i]->GetXSize()
             * (double) papoOvrBands[i]->GetYSize();
@@ -1983,30 +1994,30 @@ GDALRegenerateCascadingOverviews(
 /* -------------------------------------------------------------------- */
     double      dfPixelsProcessed = 0.0;
 
-    for( i = 0; i < nOverviews; i++ )
+    for( int i = 0; i < nOverviews; i++ )
     {
-        void    *pScaledProgressData;
-        double  dfPixels;
         GDALRasterBand *poBaseBand;
-        CPLErr  eErr;
 
         if( i == 0 )
             poBaseBand = poSrcBand;
         else
             poBaseBand = papoOvrBands[i-1];
 
-        dfPixels = papoOvrBands[i]->GetXSize() 
+        double  dfPixels
+            = papoOvrBands[i]->GetXSize()
             * (double) papoOvrBands[i]->GetYSize();
 
-        pScaledProgressData = GDALCreateScaledProgress( 
+        void *pScaledProgressData
+            = GDALCreateScaledProgress(
             dfPixelsProcessed / dfTotalPixels,
-            (dfPixelsProcessed + dfPixels) / dfTotalPixels, 
+            (dfPixelsProcessed + dfPixels) / dfTotalPixels,
             pfnProgress, pProgressData );
 
-        eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBaseBand, 
-                                        1, (GDALRasterBandH *) papoOvrBands+i, 
-                                        pszResampling, 
-                                        GDALScaledProgress, 
+        CPLErr eErr
+            = GDALRegenerateOverviews( (GDALRasterBandH) poBaseBand,
+                                        1, (GDALRasterBandH *) papoOvrBands+i,
+                                        pszResampling,
+                                        GDALScaledProgress,
                                         pScaledProgressData );
         GDALDestroyScaledProgress( pScaledProgressData );
 
@@ -2016,7 +2027,7 @@ GDALRegenerateCascadingOverviews(
         dfPixelsProcessed += dfPixels;
 
         /* we only do the bit2grayscale promotion on the base band */
-        if( EQUALN(pszResampling,"AVERAGE_BIT2GRAYSCALE",13) )
+        if( STARTS_WITH_CI(pszResampling,"AVERAGE_BIT2G" /* AVERAGE_BIT2GRAYSCALE */) )
             pszResampling = "AVERAGE";
     }
 
@@ -2031,16 +2042,16 @@ GDALResampleFunction GDALGetResampleFunction(const char* pszResampling,
                                                  int* pnRadius)
 {
     if( pnRadius ) *pnRadius = 0;
-    if( EQUALN(pszResampling,"NEAR",4) )
+    if( STARTS_WITH_CI(pszResampling, "NEAR") )
         return GDALResampleChunk32R_Near;
-    else if( EQUALN(pszResampling,"AVER",4) )
+    else if( STARTS_WITH_CI(pszResampling, "AVER") )
         return GDALResampleChunk32R_Average;
-    else if( EQUALN(pszResampling,"GAUSS",5) )
+    else if( STARTS_WITH_CI(pszResampling, "GAUSS") )
     {
         if( pnRadius ) *pnRadius = 1;
         return GDALResampleChunk32R_Gauss;
     }
-    else if( EQUALN(pszResampling,"MODE",4) )
+    else if( STARTS_WITH_CI(pszResampling, "MODE") )
         return GDALResampleChunk32R_Mode;
     else if( EQUAL(pszResampling,"CUBIC") )
     {
@@ -2071,6 +2082,154 @@ GDALResampleFunction GDALGetResampleFunction(const char* pszResampling,
     }
 }
 
+#ifdef GDAL_ENABLE_RESAMPLING_MULTIBAND
+
+// For some reason, this does not perform better, and sometimes it performs
+// worse that when operating band after band. Probably due to cache misses
+
+/************************************************************************/
+/*             GDALResampleChunk32RMultiBands_Convolution()             */
+/************************************************************************/
+
+static CPLErr GDALResampleChunk32RMultiBands_Convolution(
+                        double dfXRatioDstToSrc, double dfYRatioDstToSrc,
+                        double dfSrcXDelta,
+                        double dfSrcYDelta,
+                        GDALDataType eWrkDataType,
+                        void * pChunk, int nBands,
+                        GByte * pabyChunkNodataMask,
+                        int nChunkXOff, int nChunkXSize,
+                        int nChunkYOff, int nChunkYSize,
+                        int nDstXOff, int nDstXOff2,
+                        int nDstYOff, int nDstYOff2,
+                        GDALRasterBand **papoDstBands,
+                        const char * pszResampling,
+                        int bHasNoData, float fNoDataValue,
+                        CPL_UNUSED GDALColorTable* poColorTable_unused,
+                        CPL_UNUSED GDALDataType eSrcDataType)
+{
+    GDALResampleAlg eResample;
+    if( EQUAL(pszResampling, "BILINEAR") )
+        eResample = GRA_Bilinear;
+    else if( EQUAL(pszResampling, "CUBIC") )
+        eResample = GRA_Cubic;
+    else if( EQUAL(pszResampling, "CUBICSPLINE") )
+        eResample = GRA_CubicSpline;
+    else if( EQUAL(pszResampling, "LANCZOS") )
+        eResample = GRA_Lanczos;
+    else
+    {
+        CPLAssert(0);
+        return CE_Failure;
+    }
+    int nKernelRadius = GWKGetFilterRadius(eResample);
+    FilterFuncType pfnFilterFunc = GWKGetFilterFunc(eResample);
+    FilterFunc4ValuesType pfnFilterFunc4Values = GWKGetFilterFunc4Values(eResample);
+
+    float fMaxVal = 0.f;
+    // Cubic, etc... can have overshoots, so make sure we clamp values to the
+    // maximum value if NBITS is set
+    const char* pszNBITS = papoDstBands[0]->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    GDALDataType eBandDT = papoDstBands[0]->GetRasterDataType();
+    if( eResample != GRA_Bilinear && pszNBITS != NULL &&
+        (eBandDT == GDT_Byte || eBandDT == GDT_UInt16 || eBandDT == GDT_UInt32) )
+    {
+        int nBits = atoi(pszNBITS);
+        if( nBits == GDALGetDataTypeSize(eBandDT) )
+            nBits = 0;
+        if( nBits )
+            fMaxVal = (float)((1 << nBits) -1);
+    }
+
+    if (eWrkDataType == GDT_Byte)
+        return GDALResampleChunk32R_ConvolutionT<GByte, TRUE>
+                       (dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta, dfSrcYDelta,
+                        (GByte *) pChunk, nBands,
+                        pabyChunkNodataMask,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        papoDstBands,
+                        bHasNoData, fNoDataValue,
+                        pfnFilterFunc,
+                        pfnFilterFunc4Values,
+                        nKernelRadius,
+                        fMaxVal);
+   else if (eWrkDataType == GDT_UInt16)
+        return GDALResampleChunk32R_ConvolutionT<GUInt16,TRUE>
+                       (dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta, dfSrcYDelta,
+                        (GUInt16 *) pChunk, nBands,
+                        pabyChunkNodataMask,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        papoDstBands,
+                        bHasNoData, fNoDataValue,
+                        pfnFilterFunc,
+                        pfnFilterFunc4Values,
+                        nKernelRadius,
+                        fMaxVal);
+    else if (eWrkDataType == GDT_Float32)
+        return GDALResampleChunk32R_ConvolutionT<float,TRUE>
+                       (dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta, dfSrcYDelta,
+                        (float *) pChunk, nBands,
+                        pabyChunkNodataMask,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        papoDstBands,
+                        bHasNoData, fNoDataValue,
+                        pfnFilterFunc,
+                        pfnFilterFunc4Values,
+                        nKernelRadius,
+                        fMaxVal);
+
+    CPLAssert(0);
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                    GDALGetResampleFunctionMultiBands()               */
+/************************************************************************/
+
+GDALResampleFunctionMultiBands GDALGetResampleFunctionMultiBands(
+                                                 const char* pszResampling,
+                                                 int* pnRadius)
+{
+    if( pnRadius ) *pnRadius = 0;
+    if( EQUAL(pszResampling,"CUBIC") )
+    {
+        if( pnRadius ) *pnRadius = GWKGetFilterRadius(GRA_Cubic);
+        return GDALResampleChunk32RMultiBands_Convolution;
+    }
+    else if( EQUAL(pszResampling,"CUBICSPLINE") )
+    {
+        if( pnRadius ) *pnRadius = GWKGetFilterRadius(GRA_CubicSpline);
+        return GDALResampleChunk32RMultiBands_Convolution;
+    }
+    else if( EQUAL(pszResampling,"LANCZOS") )
+    {
+        if( pnRadius ) *pnRadius = GWKGetFilterRadius(GRA_Lanczos);
+        return GDALResampleChunk32RMultiBands_Convolution;
+    }
+    else if( EQUAL(pszResampling,"BILINEAR") )
+    {
+        if( pnRadius ) *pnRadius = GWKGetFilterRadius(GRA_Bilinear);
+        return GDALResampleChunk32RMultiBands_Convolution;
+    }
+    else
+    {
+        return NULL;
+    }
+}
+#endif
+
 /************************************************************************/
 /*                      GDALGetOvrWorkDataType()                        */
 /************************************************************************/
@@ -2078,16 +2237,16 @@ GDALResampleFunction GDALGetResampleFunction(const char* pszResampling,
 GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
                                         GDALDataType eSrcDataType)
 {
-    if( (EQUALN(pszResampling,"NEAR",4) ||
-         EQUALN(pszResampling,"AVER",4) ||
+    if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
+         STARTS_WITH_CI(pszResampling, "AVER") ||
          EQUAL(pszResampling,"CUBIC") ||
          EQUAL(pszResampling,"CUBICSPLINE") ||
          EQUAL(pszResampling,"LANCZOS") ||
          EQUAL(pszResampling,"BILINEAR")) &&
         eSrcDataType == GDT_Byte)
         return GDT_Byte;
-    else if( (EQUALN(pszResampling,"NEAR",4) ||
-         EQUALN(pszResampling,"AVER",4) ||
+    else if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
+         STARTS_WITH_CI(pszResampling, "AVER") ||
          EQUAL(pszResampling,"CUBIC") ||
          EQUAL(pszResampling,"CUBICSPLINE") ||
          EQUAL(pszResampling,"LANCZOS") ||
@@ -2111,38 +2270,32 @@ GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
  * can also be used to generate downsampled images in one file from another
  * outside the overview architecture.
  *
- * The output bands need to exist in advance. 
+ * The output bands need to exist in advance.
  *
- * The full set of resampling algorithms is documented in 
+ * The full set of resampling algorithms is documented in
  * GDALDataset::BuildOverviews().
  *
  * This function will honour properly NODATA_VALUES tuples (special dataset metadata) so
  * that only a given RGB triplet (in case of a RGB image) will be considered as the
- * nodata value and not each value of the triplet independantly per band.
+ * nodata value and not each value of the triplet independently per band.
  *
- * @param hSrcBand the source (base level) band. 
+ * @param hSrcBand the source (base level) band.
  * @param nOverviewCount the number of downsampled bands being generated.
  * @param pahOvrBands the list of downsampled bands to be generated.
- * @param pszResampling Resampling algorithm (eg. "AVERAGE"). 
+ * @param pszResampling Resampling algorithm (e.g. "AVERAGE").
  * @param pfnProgress progress report function.
  * @param pProgressData progress function callback data.
  * @return CE_None on success or CE_Failure on failure.
  */
-CPLErr 
+CPLErr
 GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
-                         int nOverviewCount, GDALRasterBandH *pahOvrBands, 
-                         const char * pszResampling, 
+                         int nOverviewCount, GDALRasterBandH *pahOvrBands,
+                         const char * pszResampling,
                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
     GDALRasterBand *poSrcBand = (GDALRasterBand *) hSrcBand;
     GDALRasterBand **papoOvrBands = (GDALRasterBand **) pahOvrBands;
-    int    nFullResYChunk, nWidth, nHeight;
-    int    nFRXBlockSize, nFRYBlockSize;
-    GDALDataType eType;
-    int    bHasNoData;
-    float  fNoDataValue;
-    GDALColorTable* poColorTable = NULL;
 
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
@@ -2151,17 +2304,20 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
         return CE_None;
 
     int nKernelRadius;
-    GDALResampleFunction pfnResampleFn = GDALGetResampleFunction(pszResampling,
-                                                                       &nKernelRadius);
+    GDALResampleFunction pfnResampleFn
+        = GDALGetResampleFunction(pszResampling, &nKernelRadius);
+
     if (pfnResampleFn == NULL)
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Check color tables...                                           */
 /* -------------------------------------------------------------------- */
-    if ((EQUALN(pszResampling,"AVER",4)
-         || EQUALN(pszResampling,"MODE",4)
-         || EQUALN(pszResampling,"GAUSS",5)) &&
+    GDALColorTable* poColorTable = NULL;
+
+    if ((STARTS_WITH_CI(pszResampling, "AVER")
+         || STARTS_WITH_CI(pszResampling, "MODE")
+         || STARTS_WITH_CI(pszResampling, "GAUSS")) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
     {
         poColorTable = poSrcBand->GetColorTable();
@@ -2171,16 +2327,17 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                         "Computing overviews on palette index raster bands "
-                        "with a palette whose color interpreation is not RGB "
+                        "with a palette whose color interpretation is not RGB "
                         "will probably lead to unexpected results.");
                 poColorTable = NULL;
             }
         }
         else
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                    "Computing overviews on palette index raster bands "
-                    "without a palette will probably lead to unexpected results.");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Computing overviews on palette index raster bands "
+                      "without a palette will probably lead to unexpected "
+                      "results." );
         }
     }
     // Not ready yet
@@ -2197,13 +2354,13 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
 
     /* If we have a nodata mask and we are doing something more complicated */
-    /* than nearest neighbouring, we have to fetch to nodata mask */ 
+    /* than nearest neighbouring, we have to fetch to nodata mask */
 
     GDALRasterBand* poMaskBand = NULL;
     int nMaskFlags = 0;
-    int bUseNoDataMask = FALSE;
+    bool bUseNoDataMask = false;
 
-    if( !EQUALN(pszResampling,"NEAR",4) )
+    if( !STARTS_WITH_CI(pszResampling, "NEAR") )
     {
         /* Special case if we are the alpha band. We want it to be considered */
         /* as the mask band to avoid alpha=0 to be taken into account in average */
@@ -2230,70 +2387,70 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     /* In case the mask made be computed from another band of the dataset, */
     /* we can't use cascaded generation, as the computation of the overviews */
-    /* of the band used for the mask band may not have yet occured (#3033) */
-    if( (EQUALN(pszResampling,"AVER",4) |
-         EQUALN(pszResampling,"GAUSS",5) ||
+    /* of the band used for the mask band may not have yet occurred (#3033) */
+    if( (STARTS_WITH_CI(pszResampling, "AVER") |
+         STARTS_WITH_CI(pszResampling, "GAUSS") ||
          EQUAL(pszResampling,"CUBIC") ||
          EQUAL(pszResampling,"CUBICSPLINE") ||
          EQUAL(pszResampling,"LANCZOS") ||
          EQUAL(pszResampling,"BILINEAR")) && nOverviewCount > 1
          && !(bUseNoDataMask && nMaskFlags != GMF_NODATA))
-        return GDALRegenerateCascadingOverviews( poSrcBand, 
+        return GDALRegenerateCascadingOverviews( poSrcBand,
                                                  nOverviewCount, papoOvrBands,
-                                                 pszResampling, 
+                                                 pszResampling,
                                                  pfnProgress,
                                                  pProgressData );
 
 /* -------------------------------------------------------------------- */
 /*      Setup one horizontal swath to read from the raw buffer.         */
 /* -------------------------------------------------------------------- */
-    void *pChunk;
-    GByte *pabyChunkNodataMask = NULL;
-
+    int nFRXBlockSize, nFRYBlockSize;
     poSrcBand->GetBlockSize( &nFRXBlockSize, &nFRYBlockSize );
-    
+
+    int nFullResYChunk;
     if( nFRYBlockSize < 16 || nFRYBlockSize > 256 )
         nFullResYChunk = 64;
     else
         nFullResYChunk = nFRYBlockSize;
 
+    GDALDataType eType;
     if( GDALDataTypeIsComplex( poSrcBand->GetRasterDataType() ) )
         eType = GDT_CFloat32;
     else
         eType = GDALGetOvrWorkDataType(pszResampling, poSrcBand->GetRasterDataType());
 
-    nWidth = poSrcBand->GetXSize();
-    nHeight = poSrcBand->GetYSize();
-    
+    const int nWidth = poSrcBand->GetXSize();
+    const int nHeight = poSrcBand->GetYSize();
+
     int nMaxOvrFactor = 1;
     for( int iOverview = 0; iOverview < nOverviewCount; iOverview ++ )
     {
-        int nDstWidth = papoOvrBands[iOverview]->GetXSize();
-        int nDstHeight = papoOvrBands[iOverview]->GetYSize();
+        const int nDstWidth = papoOvrBands[iOverview]->GetXSize();
+        const int nDstHeight = papoOvrBands[iOverview]->GetYSize();
         nMaxOvrFactor = MAX( nMaxOvrFactor, (int)((double)nWidth / nDstWidth + 0.5) );
         nMaxOvrFactor = MAX( nMaxOvrFactor, (int)((double)nHeight / nDstHeight + 0.5) );
     }
-    int nMaxChunkYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
+    const int nMaxChunkYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
 
-    pChunk = 
-        VSIMalloc3((GDALGetDataTypeSize(eType)/8), nMaxChunkYSizeQueried, nWidth );
+    GByte *pabyChunkNodataMask = NULL;
+    void *pChunk =
+        VSI_MALLOC3_VERBOSE(
+            GDALGetDataTypeSizeBytes(eType), nMaxChunkYSizeQueried, nWidth );
     if (bUseNoDataMask)
     {
-        pabyChunkNodataMask = (GByte *) 
-            (GByte*) VSIMalloc2( nMaxChunkYSizeQueried, nWidth );
+        pabyChunkNodataMask =
+            (GByte*) VSI_MALLOC2_VERBOSE( nMaxChunkYSizeQueried, nWidth );
     }
 
     if( pChunk == NULL || (bUseNoDataMask && pabyChunkNodataMask == NULL))
     {
         CPLFree(pChunk);
         CPLFree(pabyChunkNodataMask);
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory in GDALRegenerateOverviews()." );
-
         return CE_Failure;
     }
 
-    fNoDataValue = (float) poSrcBand->GetNoDataValue(&bHasNoData);
+    int bHasNoData;
+    const float fNoDataValue = (float) poSrcBand->GetNoDataValue(&bHasNoData);
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image operating on chunks.                            */
@@ -2301,11 +2458,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     int  nChunkYOff = 0;
     CPLErr eErr = CE_None;
 
-    for( nChunkYOff = 0; 
-         nChunkYOff < nHeight && eErr == CE_None; 
+    for( nChunkYOff = 0;
+         nChunkYOff < nHeight && eErr == CE_None;
          nChunkYOff += nFullResYChunk )
     {
-        if( !pfnProgress( nChunkYOff / (double) nHeight, 
+        if( !pfnProgress( nChunkYOff / (double) nHeight,
                           NULL, pProgressData ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -2314,7 +2471,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
         if( nFullResYChunk + nChunkYOff > nHeight )
             nFullResYChunk = nHeight - nChunkYOff;
-        
+
         int nChunkYOffQueried = nChunkYOff - nKernelRadius * nMaxOvrFactor;
         int nChunkYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
         if( nChunkYOffQueried < 0 )
@@ -2327,23 +2484,21 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
         /* read chunk */
         if (eErr == CE_None)
-            eErr = poSrcBand->RasterIO( GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried, 
+            eErr = poSrcBand->RasterIO( GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried,
                                 pChunk, nWidth, nChunkYSizeQueried, eType,
                                 0, 0, NULL );
         if (eErr == CE_None && bUseNoDataMask)
-            eErr = poMaskBand->RasterIO( GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried, 
+            eErr = poMaskBand->RasterIO( GF_Read, 0, nChunkYOffQueried, nWidth, nChunkYSizeQueried,
                                 pabyChunkNodataMask, nWidth, nChunkYSizeQueried, GDT_Byte,
                                 0, 0, NULL );
 
         /* special case to promote 1bit data to 8bit 0/255 values */
         if( EQUAL(pszResampling,"AVERAGE_BIT2GRAYSCALE") )
         {
-            int i;
-
             if (eType == GDT_Float32)
             {
                 float* pafChunk = (float*)pChunk;
-                for( i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
+                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
                 {
                     if( pafChunk[i] == 1.0 )
                         pafChunk[i] = 255.0;
@@ -2352,7 +2507,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             else if (eType == GDT_Byte)
             {
                 GByte* pabyChunk = (GByte*)pChunk;
-                for( i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
+                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
                 {
                     if( pabyChunk[i] == 1 )
                         pabyChunk[i] = 255;
@@ -2361,7 +2516,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             else if (eType == GDT_UInt16)
             {
                 GUInt16* pasChunk = (GUInt16*)pChunk;
-                for( i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
+                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
                 {
                     if( pasChunk[i] == 1 )
                         pasChunk[i] = 255;
@@ -2373,12 +2528,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
         }
         else if( EQUAL(pszResampling,"AVERAGE_BIT2GRAYSCALE_MINISWHITE") )
         {
-            int i;
-
             if (eType == GDT_Float32)
             {
                 float* pafChunk = (float*)pChunk;
-                for( i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
+                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
                 {
                     if( pafChunk[i] == 1.0 )
                         pafChunk[i] = 0.0;
@@ -2389,7 +2542,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             else if (eType == GDT_Byte)
             {
                 GByte* pabyChunk = (GByte*)pChunk;
-                for( i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
+                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
                 {
                     if( pabyChunk[i] == 1 )
                         pabyChunk[i] = 0;
@@ -2400,7 +2553,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             else if (eType == GDT_UInt16)
             {
                 GUInt16* pasChunk = (GUInt16*)pChunk;
-                for( i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
+                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
                 {
                     if( pasChunk[i] == 1 )
                         pasChunk[i] = 0;
@@ -2415,11 +2568,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
         for( int iOverview = 0; iOverview < nOverviewCount && eErr == CE_None; iOverview++ )
         {
-            int nDstWidth = papoOvrBands[iOverview]->GetXSize();
-            int nDstHeight = papoOvrBands[iOverview]->GetYSize();
+            const int nDstWidth = papoOvrBands[iOverview]->GetXSize();
+            const int nDstHeight = papoOvrBands[iOverview]->GetYSize();
 
-            double dfXRatioDstToSrc = (double)nWidth / nDstWidth;
-            double dfYRatioDstToSrc = (double)nHeight / nDstHeight;
+            const double dfXRatioDstToSrc = (double)nWidth / nDstWidth;
+            const double dfYRatioDstToSrc = (double)nHeight / nDstHeight;
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the line to start writing to, and the first line     */
@@ -2449,7 +2602,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                                               bHasNoData, fNoDataValue, poColorTable,
                                               poSrcBand->GetRasterDataType());
             else
-                eErr = GDALResampleChunkC32R(nWidth, nHeight, 
+                eErr = GDALResampleChunkC32R(nWidth, nHeight,
                                                (float*)pChunk,
                                                nChunkYOffQueried, nChunkYSizeQueried,
                                                nDstYOff, nDstYOff2,
@@ -2459,14 +2612,14 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     VSIFree( pChunk );
     VSIFree( pabyChunkNodataMask );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Renormalized overview mean / stddev if needed.                  */
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None && EQUAL(pszResampling,"AVERAGE_MP") )
     {
-        GDALOverviewMagnitudeCorrection( (GDALRasterBandH) poSrcBand, 
-                                         nOverviewCount, 
+        GDALOverviewMagnitudeCorrection( (GDALRasterBandH) poSrcBand,
+                                         nOverviewCount,
                                          (GDALRasterBandH *) papoOvrBands,
                                          GDALDummyProgress, NULL );
     }
@@ -2474,8 +2627,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      It can be important to flush out data to overviews.             */
 /* -------------------------------------------------------------------- */
-    for( int iOverview = 0; 
-         eErr == CE_None && iOverview < nOverviewCount; 
+    for( int iOverview = 0;
+         eErr == CE_None && iOverview < nOverviewCount;
          iOverview++ )
     {
         eErr = papoOvrBands[iOverview]->FlushCache();
@@ -2494,7 +2647,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /************************************************************************/
 
 /**
- * \brief Variant of GDALRegenerateOverviews, specialy dedicated for generating
+ * \brief Variant of GDALRegenerateOverviews, specially dedicated for generating
  * compressed pixel-interleaved overviews (JPEG-IN-TIFF for example)
  *
  * This function will generate one or more overview images from a base
@@ -2518,7 +2671,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  *
  * This function will honour properly NODATA_VALUES tuples (special dataset metadata) so
  * that only a given RGB triplet (in case of a RGB image) will be considered as the
- * nodata value and not each value of the triplet independantly per band.
+ * nodata value and not each value of the triplet independently per band.
  *
  * @param nBands the number of bands, size of papoSrcBands and size of
  *               first dimension of papapoOverviewBands
@@ -2526,22 +2679,19 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * @param nOverviews the number of downsampled overview levels being generated.
  * @param papapoOverviewBands bidimension array of bands. First dimension is indexed
  *                            by nBands. Second dimension is indexed by nOverviews.
- * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE" or "GAUSS"). 
+ * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE" or "GAUSS").
  * @param pfnProgress progress report function.
  * @param pProgressData progress function callback data.
  * @return CE_None on success or CE_Failure on failure.
  */
 
-CPLErr 
+CPLErr
 GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                                  int nOverviews,
                                  GDALRasterBand*** papapoOverviewBands,
-                                 const char * pszResampling, 
+                                 const char * pszResampling,
                                  GDALProgressFunc pfnProgress, void * pProgressData )
 {
-    CPLErr eErr = CE_None;
-    int iOverview, iBand;
-
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
@@ -2549,7 +2699,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         return CE_None;
 
     /* Sanity checks */
-    if (!EQUALN(pszResampling, "NEAR", 4) &&
+    if (!STARTS_WITH_CI(pszResampling, "NEAR") &&
         !EQUAL(pszResampling, "AVERAGE") &&
         !EQUAL(pszResampling, "GAUSS") &&
         !EQUAL(pszResampling, "CUBIC") &&
@@ -2571,7 +2721,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
     int nSrcWidth = papoSrcBands[0]->GetXSize();
     int nSrcHeight = papoSrcBands[0]->GetYSize();
     GDALDataType eDataType = papoSrcBands[0]->GetRasterDataType();
-    for(iBand=1;iBand<nBands;iBand++)
+    for(int iBand=1;iBand<nBands;iBand++)
     {
         if (papoSrcBands[iBand]->GetXSize() != nSrcWidth ||
             papoSrcBands[iBand]->GetYSize() != nSrcHeight)
@@ -2588,11 +2738,11 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         }
     }
 
-    for(iOverview=0;iOverview<nOverviews;iOverview++)
+    for(int iOverview=0;iOverview<nOverviews;iOverview++)
     {
         int nDstWidth = papapoOverviewBands[0][iOverview]->GetXSize();
         int nDstHeight = papapoOverviewBands[0][iOverview]->GetYSize();
-        for(iBand=1;iBand<nBands;iBand++)
+        for(int iBand=1;iBand<nBands;iBand++)
         {
             if (papapoOverviewBands[iBand][iOverview]->GetXSize() != nDstWidth ||
                 papapoOverviewBands[iBand][iOverview]->GetYSize() != nDstHeight)
@@ -2612,7 +2762,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
 
     /* First pass to compute the total number of pixels to read */
     double dfTotalPixelCount = 0;
-    for(iOverview=0;iOverview<nOverviews;iOverview++)
+    for(int iOverview=0;iOverview<nOverviews;iOverview++)
     {
         nSrcWidth = papoSrcBands[0]->GetXSize();
         nSrcHeight = papoSrcBands[0]->GetYSize();
@@ -2635,14 +2785,20 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
     GDALDataType eWrkDataType = GDALGetOvrWorkDataType(pszResampling, eDataType);
 
     /* If we have a nodata mask and we are doing something more complicated */
-    /* than nearest neighbouring, we have to fetch to nodata mask */ 
-    int bUseNoDataMask = (!EQUALN(pszResampling,"NEAR",4) &&
+    /* than nearest neighbouring, we have to fetch to nodata mask */
+    bool bUseNoDataMask = (!STARTS_WITH_CI(pszResampling, "NEAR") &&
                           (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0);
 
-    int* pabHasNoData = (int*)CPLMalloc(nBands * sizeof(int));
-    float* pafNoDataValue = (float*)CPLMalloc(nBands * sizeof(float));
+    int* pabHasNoData = (int*)VSI_MALLOC_VERBOSE(nBands * sizeof(int));
+    float* pafNoDataValue = (float*)VSI_MALLOC_VERBOSE(nBands * sizeof(float));
+    if( pabHasNoData == NULL || pafNoDataValue == NULL )
+    {
+        CPLFree(pabHasNoData);
+        CPLFree(pafNoDataValue);
+        return CE_Failure;
+    }
 
-    for(iBand=0;iBand<nBands;iBand++)
+    for(int iBand=0;iBand<nBands;iBand++)
     {
         pabHasNoData[iBand] = FALSE;
         pafNoDataValue[iBand] = (float) papoSrcBands[iBand]->GetNoDataValue(&pabHasNoData[iBand]);
@@ -2650,7 +2806,8 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
 
     /* Second pass to do the real job ! */
     double dfCurPixelCount = 0;
-    for(iOverview=0;iOverview<nOverviews && eErr == CE_None;iOverview++)
+    CPLErr eErr = CE_None;
+    for(int iOverview=0;iOverview<nOverviews && eErr == CE_None;iOverview++)
     {
         int iSrcOverview = -1; /* -1 means the source bands */
 
@@ -2672,8 +2829,8 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         double dfXRatioDstToSrc = (double)nSrcWidth / nDstWidth;
         double dfYRatioDstToSrc = (double)nSrcHeight / nDstHeight;
 
-        /* Compute the maximum chunck size of the source such as it will match the size of */
-        /* a block of the overview */
+        // Compute the maximum chunk size of the source such as it will match
+        // the size of a block of the overview.
         int nFullResXChunk = 1 + (int)(nDstBlockXSize * dfXRatioDstToSrc);
         int nFullResYChunk = 1 + (int)(nDstBlockYSize * dfYRatioDstToSrc);
 
@@ -2683,11 +2840,20 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         int nFullResXChunkQueried = nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
         int nFullResYChunkQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
 
-        void** papaChunk = (void**) CPLMalloc(nBands * sizeof(void*));
-        GByte* pabyChunkNoDataMask = NULL;
-        for(iBand=0;iBand<nBands;iBand++)
+        void** papaChunk = (void**) VSI_MALLOC_VERBOSE(nBands * sizeof(void*));
+        if( papaChunk == NULL )
         {
-            papaChunk[iBand] = VSIMalloc3(nFullResXChunkQueried, nFullResYChunkQueried, GDALGetDataTypeSize(eWrkDataType) / 8);
+            CPLFree(pabHasNoData);
+            CPLFree(pafNoDataValue);
+            return CE_Failure;
+        }
+        GByte* pabyChunkNoDataMask = NULL;
+        for(int iBand=0;iBand<nBands;iBand++)
+        {
+            papaChunk[iBand] = VSI_MALLOC3_VERBOSE(
+                nFullResXChunkQueried,
+                nFullResYChunkQueried,
+                GDALGetDataTypeSizeBytes(eWrkDataType) );
             if( papaChunk[iBand] == NULL )
             {
                 while ( --iBand >= 0)
@@ -2695,27 +2861,21 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                 CPLFree(papaChunk);
                 CPLFree(pabHasNoData);
                 CPLFree(pafNoDataValue);
-
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "GDALRegenerateOverviewsMultiBand: Out of memory." );
                 return CE_Failure;
             }
         }
         if (bUseNoDataMask)
         {
-            pabyChunkNoDataMask = (GByte*) VSIMalloc2(nFullResXChunkQueried, nFullResYChunkQueried);
+            pabyChunkNoDataMask = (GByte*) VSI_MALLOC2_VERBOSE(nFullResXChunkQueried, nFullResYChunkQueried);
             if( pabyChunkNoDataMask == NULL )
             {
-                for(iBand=0;iBand<nBands;iBand++)
+                for(int iBand=0;iBand<nBands;iBand++)
                 {
                     CPLFree(papaChunk[iBand]);
                 }
                 CPLFree(papaChunk);
                 CPLFree(pabHasNoData);
                 CPLFree(pafNoDataValue);
-
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "GDALRegenerateOverviewsMultiBand: Out of memory." );
                 return CE_Failure;
             }
         }
@@ -2748,7 +2908,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                 nChunkYSizeQueried = nSrcHeight - nChunkYOffQueried;
             CPLAssert(nChunkYSizeQueried <= nFullResYChunkQueried);
 
-            if( !pfnProgress( dfCurPixelCount / dfTotalPixelCount, 
+            if( !pfnProgress( dfCurPixelCount / dfTotalPixelCount,
                               NULL, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -2787,7 +2947,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                          nDstXOff, nDstYOff, nDstXCount, nDstYCount);*/
 
                 /* Read the source buffers for all the bands */
-                for(iBand=0;iBand<nBands && eErr == CE_None;iBand++)
+                for(int iBand=0;iBand<nBands && eErr == CE_None;iBand++)
                 {
                     GDALRasterBand* poSrcBand;
                     if (iSrcOverview == -1)
@@ -2796,7 +2956,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                         poSrcBand = papapoOverviewBands[iBand][iSrcOverview];
                     eErr = poSrcBand->RasterIO( GF_Read,
                                                 nChunkXOffQueried, nChunkYOffQueried,
-                                                nChunkXSizeQueried, nChunkYSizeQueried, 
+                                                nChunkXSizeQueried, nChunkYSizeQueried,
                                                 papaChunk[iBand],
                                                 nChunkXSizeQueried, nChunkYSizeQueried,
                                                 eWrkDataType, 0, 0, NULL );
@@ -2811,14 +2971,14 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                         poSrcBand = papapoOverviewBands[0][iSrcOverview];
                     eErr = poSrcBand->GetMaskBand()->RasterIO( GF_Read,
                                                                nChunkXOffQueried, nChunkYOffQueried,
-                                                               nChunkXSizeQueried, nChunkYSizeQueried, 
+                                                               nChunkXSizeQueried, nChunkYSizeQueried,
                                                                pabyChunkNoDataMask,
                                                                nChunkXSizeQueried, nChunkYSizeQueried,
                                                                GDT_Byte, 0, 0, NULL );
                 }
 
                 /* Compute the resulting overview block */
-                for(iBand=0;iBand<nBands && eErr == CE_None;iBand++)
+                for(int iBand=0;iBand<nBands && eErr == CE_None;iBand++)
                 {
                     eErr = pfnResampleFn(   dfXRatioDstToSrc, dfYRatioDstToSrc,
                                             0.0, 0.0,
@@ -2842,7 +3002,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
         }
 
         /* Flush the data to overviews */
-        for(iBand=0;iBand<nBands;iBand++)
+        for(int iBand=0;iBand<nBands;iBand++)
         {
             CPLFree(papaChunk[iBand]);
             papapoOverviewBands[iBand][iOverview]->FlushCache();
@@ -2866,60 +3026,58 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
 /*                        GDALComputeBandStats()                        */
 /************************************************************************/
 
-CPLErr CPL_STDCALL 
+CPLErr CPL_STDCALL
 GDALComputeBandStats( GDALRasterBandH hSrcBand,
                       int nSampleStep,
-                      double *pdfMean, double *pdfStdDev, 
-                      GDALProgressFunc pfnProgress, 
+                      double *pdfMean, double *pdfStdDev,
+                      GDALProgressFunc pfnProgress,
                       void *pProgressData )
 
 {
     VALIDATE_POINTER1( hSrcBand, "GDALComputeBandStats", CE_Failure );
 
     GDALRasterBand *poSrcBand = (GDALRasterBand *) hSrcBand;
-    int         iLine, nWidth, nHeight;
-    GDALDataType eType = poSrcBand->GetRasterDataType();
-    GDALDataType eWrkType;
-    int         bComplex;
-    float       *pafData;
-    double      dfSum=0.0, dfSum2=0.0;
-    int         nSamples = 0;
 
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
-    nWidth = poSrcBand->GetXSize();
-    nHeight = poSrcBand->GetYSize();
+    const int nWidth = poSrcBand->GetXSize();
+    const int nHeight = poSrcBand->GetYSize();
 
     if( nSampleStep >= nHeight || nSampleStep < 1 )
         nSampleStep = 1;
 
-    bComplex = GDALDataTypeIsComplex(eType);
+    GDALDataType eWrkType;
+    float *pafData;
+    GDALDataType eType = poSrcBand->GetRasterDataType();
+    const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eType));
     if( bComplex )
     {
-        pafData = (float *) VSIMalloc(nWidth * 2 * sizeof(float));
+        pafData = (float *) VSI_MALLOC_VERBOSE(nWidth * 2 * sizeof(float));
         eWrkType = GDT_CFloat32;
     }
     else
     {
-        pafData = (float *) VSIMalloc(nWidth * sizeof(float));
+        pafData = (float *) VSI_MALLOC_VERBOSE(nWidth * sizeof(float));
         eWrkType = GDT_Float32;
     }
 
-    if( pafData == NULL )
+    if( nWidth == 0 || pafData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALComputeBandStats: Out of memory for buffer." );
+        VSIFree(pafData);
         return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all sample lines.                                     */
 /* -------------------------------------------------------------------- */
-    for( iLine = 0; iLine < nHeight; iLine += nSampleStep )
-    {
-        int     iPixel;
+    double dfSum=0.0;
+    double dfSum2=0.0;
+    int iLine = 0;
+    int nSamples = 0;
 
+    do
+    {
         if( !pfnProgress( iLine / (double) nHeight,
                           NULL, pProgressData ) )
         {
@@ -2937,15 +3095,14 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
             return eErr;
         }
 
-        for( iPixel = 0; iPixel < nWidth; iPixel++ )
+        for( int iPixel = 0; iPixel < nWidth; iPixel++ )
         {
             float       fValue;
 
             if( bComplex )
             {
                 // Compute the magnitude of the complex value.
-
-                fValue = (float) 
+                fValue = (float)
                     sqrt(pafData[iPixel*2  ] * pafData[iPixel*2  ]
                          + pafData[iPixel*2+1] * pafData[iPixel*2+1]);
             }
@@ -2959,7 +3116,9 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
         }
 
         nSamples += nWidth;
-    }
+        iLine += nSampleStep;
+
+    } while( iLine < nHeight );
 
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
     {
@@ -2976,7 +3135,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 
     if( pdfStdDev != NULL )
     {
-        double  dfMean = dfSum / nSamples;
+        const double dfMean = dfSum / nSamples;
 
         *pdfStdDev = sqrt((dfSum2 / nSamples) - (dfMean * dfMean));
     }
@@ -2994,45 +3153,42 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 /************************************************************************/
 
 CPLErr
-GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand, 
+GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                                  int nOverviewCount,
                                  GDALRasterBandH *pahOverviews,
-                                 GDALProgressFunc pfnProgress, 
+                                 GDALProgressFunc pfnProgress,
                                  void *pProgressData )
 
 {
     VALIDATE_POINTER1( hBaseBand, "GDALOverviewMagnitudeCorrection", CE_Failure );
 
-    CPLErr      eErr;
-    double      dfOrigMean, dfOrigStdDev;
-
 /* -------------------------------------------------------------------- */
 /*      Compute mean/stddev for source raster.                          */
 /* -------------------------------------------------------------------- */
-    eErr = GDALComputeBandStats( hBaseBand, 2, &dfOrigMean, &dfOrigStdDev, 
-                                 pfnProgress, pProgressData );
+    double dfOrigMean, dfOrigStdDev;
+    CPLErr eErr
+        = GDALComputeBandStats( hBaseBand, 2, &dfOrigMean, &dfOrigStdDev,
+                                pfnProgress, pProgressData );
 
     if( eErr != CE_None )
         return eErr;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Loop on overview bands.                                         */
 /* -------------------------------------------------------------------- */
-    int         iOverview;
-
-    for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
+    for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
     {
         GDALRasterBand *poOverview = (GDALRasterBand *)pahOverviews[iOverview];
         double  dfOverviewMean, dfOverviewStdDev;
-        double  dfGain;
 
-        eErr = GDALComputeBandStats( pahOverviews[iOverview], 1, 
-                                     &dfOverviewMean, &dfOverviewStdDev, 
+        eErr = GDALComputeBandStats( pahOverviews[iOverview], 1,
+                                     &dfOverviewMean, &dfOverviewStdDev,
                                      pfnProgress, pProgressData );
 
         if( eErr != CE_None )
             return eErr;
 
+        double dfGain;
         if( dfOrigStdDev < 0.0001 )
             dfGain = 1.0;
         else
@@ -3041,36 +3197,31 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 /* -------------------------------------------------------------------- */
 /*      Apply gain and offset.                                          */
 /* -------------------------------------------------------------------- */
-        GDALDataType    eWrkType, eType = poOverview->GetRasterDataType();
-        int             iLine, nWidth, nHeight, bComplex;
-        float           *pafData;
+        const int nWidth = poOverview->GetXSize();
+        const int nHeight = poOverview->GetYSize();
 
-        nWidth = poOverview->GetXSize();
-        nHeight = poOverview->GetYSize();
-
-        bComplex = GDALDataTypeIsComplex(eType);
+        GDALDataType eWrkType;
+        float *pafData;
+        const GDALDataType eType = poOverview->GetRasterDataType();
+        const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eType));
         if( bComplex )
         {
-            pafData = (float *) VSIMalloc2(nWidth, 2 * sizeof(float));
+            pafData = (float *) VSI_MALLOC2_VERBOSE(nWidth, 2 * sizeof(float));
             eWrkType = GDT_CFloat32;
         }
         else
         {
-            pafData = (float *) VSIMalloc2(nWidth, sizeof(float));
+            pafData = (float *) VSI_MALLOC2_VERBOSE(nWidth, sizeof(float));
             eWrkType = GDT_Float32;
         }
 
         if( pafData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "GDALOverviewMagnitudeCorrection: Out of memory for buffer." );
             return CE_Failure;
         }
 
-        for( iLine = 0; iLine < nHeight; iLine++ )
+        for( int iLine = 0; iLine < nHeight; iLine++ )
         {
-            int iPixel;
-            
             if( !pfnProgress( iLine / (double) nHeight,
                               NULL, pProgressData ) )
             {
@@ -3079,11 +3230,15 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                 return CE_Failure;
             }
 
-            poOverview->RasterIO( GF_Read, 0, iLine, nWidth, 1,
+            if( poOverview->RasterIO( GF_Read, 0, iLine, nWidth, 1,
                                   pafData, nWidth, 1, eWrkType,
-                                  0, 0, NULL );
-            
-            for( iPixel = 0; iPixel < nWidth; iPixel++ )
+                                  0, 0, NULL ) != CE_None )
+            {
+                CPLFree( pafData );
+                return CE_Failure;
+            }
+
+            for( int iPixel = 0; iPixel < nWidth; iPixel++ )
             {
                 if( bComplex )
                 {
@@ -3098,9 +3253,13 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                 }
             }
 
-            poOverview->RasterIO( GF_Write, 0, iLine, nWidth, 1,
+            if( poOverview->RasterIO( GF_Write, 0, iLine, nWidth, 1,
                                   pafData, nWidth, 1, eWrkType,
-                                  0, 0, NULL );
+                                  0, 0, NULL ) != CE_None )
+            {
+                CPLFree( pafData );
+                return CE_Failure;
+            }
         }
 
         if( !pfnProgress( 1.0, NULL, pProgressData ) )
@@ -3109,7 +3268,7 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
             CPLFree( pafData );
             return CE_Failure;
         }
-        
+
         CPLFree( pafData );
     }
 

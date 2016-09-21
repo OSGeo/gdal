@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test gdal_polygonize.py script
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -49,7 +49,7 @@ def test_gdal_polygonize_1():
     if script_path is None:
         return 'skip'
 
-    # Create a OGR datasource to put results in. 
+    # Create a OGR datasource to put results in.
     shp_drv = ogr.GetDriverByName( 'ESRI Shapefile' )
     try:
         os.stat('tmp/poly.shp')
@@ -81,7 +81,7 @@ def test_gdal_polygonize_1():
 
     expect = [ 107, 123, 115, 115, 140, 148, 123, 140, 156,
                100, 101, 102, 103]
-    
+
     tr = ogrtest.check_features_against_list( shp_lyr, 'DN', expect )
 
     # check at least one geometry.
@@ -132,7 +132,7 @@ def test_gdal_polygonize_2():
 
     expect = [ 107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
                132, 156, 100, 101, 102, 103 ]
-    
+
     tr = ogrtest.check_features_against_list( shp_lyr, 'DN', expect )
 
     shp_ds.Destroy()
@@ -145,9 +145,45 @@ def test_gdal_polygonize_2():
     else:
         return 'fail'
 
+def test_gdal_polygonize_3():
+
+    script_path = test_py_scripts.get_py_script('gdal_polygonize')
+    if script_path is None:
+        return 'skip'
+
+    drv = ogr.GetDriverByName( 'GPKG' )
+    if drv is None:
+        return 'skip'
+    try:
+        os.stat('tmp/out.gpkg')
+        drv.DeleteDataSource( 'tmp/out.gpkg' )
+    except:
+        pass
+
+    # run the algorithm.
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "GPKG" -q -nomask ../alg/data/polygonize_in.grd tmp/out.gpkg' )
+
+    # Confirm we get the set of expected features in the output layer.
+    gpkg_ds = ogr.Open( 'tmp/out.gpkg' )
+    gpkg_lyr = gpkg_ds.GetLayerByName('out')
+    geom_type = gpkg_lyr.GetGeomType()
+    geom_is_polygon = geom_type in (ogr.wkbPolygon, ogr.wkbMultiPolygon)
+
+    gpkg_ds.Destroy()
+    # Reload drv because of side effects of run_py_script()
+    drv = ogr.GetDriverByName( 'GPKG' )
+    drv.DeleteDataSource( 'tmp/out.gpkg' )
+
+    if geom_is_polygon:
+        return 'success'
+    else:
+        gdaltest.post_reason( 'GetGeomType() returned %d instead of %d or %d (ogr.wkbPolygon or ogr.wkbMultiPolygon)' % (geom_type, ogr.wkbPolygon, ogr.wkbMultiPolygon ))
+        return 'fail'
+
 gdaltest_list = [
     test_gdal_polygonize_1,
     test_gdal_polygonize_2,
+    test_gdal_polygonize_3
     ]
 
 if __name__ == '__main__':

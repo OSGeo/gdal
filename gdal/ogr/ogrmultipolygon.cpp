@@ -47,11 +47,51 @@ OGRMultiPolygon::OGRMultiPolygon()
 }
 
 /************************************************************************/
+/*              OGRMultiPolygon( const OGRMultiPolygon& )               */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ *
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ *
+ * @since GDAL 2.1
+ */
+
+OGRMultiPolygon::OGRMultiPolygon( const OGRMultiPolygon& other ) :
+    OGRMultiSurface(other)
+{
+}
+
+/************************************************************************/
 /*                         ~OGRMultiPolygon()                           */
 /************************************************************************/
 
 OGRMultiPolygon::~OGRMultiPolygon()
 {
+}
+
+/************************************************************************/
+/*                  operator=( const OGRMultiPolygon&)                    */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ *
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ *
+ * @since GDAL 2.1
+ */
+
+OGRMultiPolygon& OGRMultiPolygon::operator=( const OGRMultiPolygon& other )
+{
+    if( this != &other)
+    {
+        OGRMultiSurface::operator=( other );
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -61,7 +101,11 @@ OGRMultiPolygon::~OGRMultiPolygon()
 OGRwkbGeometryType OGRMultiPolygon::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbMultiPolygonZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbMultiPolygonM;
+    else if( flags & OGR_G_3D )
         return wkbMultiPolygon25D;
     else
         return wkbMultiPolygon;
@@ -112,23 +156,7 @@ OGRBoolean OGRMultiPolygon::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) c
 
 OGRErr OGRMultiPolygon::PointOnSurface( OGRPoint * poPoint ) const
 {
-    if( poPoint == NULL || poPoint->IsEmpty() )
-        return OGRERR_FAILURE;
-
-    OGRGeometryH hInsidePoint = OGR_G_PointOnSurface( (OGRGeometryH) this );
-    if( hInsidePoint == NULL )
-        return OGRERR_FAILURE;
-
-    OGRPoint *poInsidePoint = (OGRPoint *) hInsidePoint;
-    if( poInsidePoint->IsEmpty() )
-        poPoint->empty();
-    else
-    {
-        poPoint->setX( poInsidePoint->getX() );
-        poPoint->setY( poInsidePoint->getY() );
-    }
-
-    return OGRERR_NONE;
+    return PointOnSurfaceInternal(poPoint);
 }
 
 /************************************************************************/
@@ -139,7 +167,7 @@ OGRErr OGRMultiPolygon::PointOnSurface( OGRPoint * poPoint ) const
  * \brief Cast to multisurface.
  *
  * The passed in geometry is consumed and a new one returned .
- * 
+ *
  * @param poMP the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

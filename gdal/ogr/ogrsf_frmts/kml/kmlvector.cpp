@@ -30,68 +30,46 @@
 #include "kmlvector.h"
 #include "kmlnode.h"
 #include "cpl_conv.h"
-// std
+
 #include <string>
 
-KMLVector::~KMLVector()
-{
-}
+KMLVector::~KMLVector() {}
 
 bool KMLVector::isLeaf(std::string const& sIn) const
 {
-    if( sIn.compare("name") == 0
+    return sIn.compare("name") == 0
         || sIn.compare("coordinates") == 0
         || sIn.compare("altitudeMode") == 0
-        || sIn.compare("description") == 0 )
-    {
-        return true;
-    }
-    return false;
+        || sIn.compare("description") == 0;
 }
 
 // Container - FeatureContainer - Feature
 
 bool KMLVector::isContainer(std::string const& sIn) const
 {
-    if( sIn.compare("Folder") == 0
+    return sIn.compare("Folder") == 0
         || sIn.compare("Document") == 0
-        || sIn.compare("kml") == 0 )
-    {
-        return true;
-    }
-    return false;
+        || sIn.compare("kml") == 0;
 }
 
 bool KMLVector::isFeatureContainer(std::string const& sIn) const
 {
-    if( sIn.compare("MultiGeometry") == 0
-        || sIn.compare("Placemark") == 0 )
-    {
-        return true;
-    }
-    return false;
+    return sIn.compare("MultiGeometry") == 0
+        || sIn.compare("Placemark") == 0;
 }
 
 bool KMLVector::isFeature(std::string const& sIn) const
 {
-    if( sIn.compare("Polygon") == 0
+    return sIn.compare("Polygon") == 0
         || sIn.compare("LineString") == 0
-        || sIn.compare("Point") == 0 )
-    {
-        return true;
-    }
-    return false;
+        || sIn.compare("Point") == 0;
 }
 
 bool KMLVector::isRest(std::string const& sIn) const
 {
-    if( sIn.compare("outerBoundaryIs") == 0
+    return sIn.compare("outerBoundaryIs") == 0
         || sIn.compare("innerBoundaryIs") == 0
-        || sIn.compare("LinearRing") == 0 )
-    {
-        return true;
-    }
-    return false;
+        || sIn.compare("LinearRing") == 0;
 }
 
 void KMLVector::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
@@ -135,7 +113,7 @@ void KMLVector::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
         {
             return;
         }
-        
+
         Nodetype nodeType = poNode->getType();
         if( bKeepEmptyContainers ||
             isFeature(Nodetype2String(nodeType)) ||
@@ -144,19 +122,22 @@ void KMLVector::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
             nodeType == MultiLineString || nodeType == MultiPolygon)
         {
             poNode->setLayerNumber(nNumLayers_++);
-            papoLayers_ = (KMLNode**)CPLRealloc(papoLayers_, nNumLayers_ * sizeof(KMLNode*));
+            papoLayers_ = static_cast<KMLNode**>(
+                CPLRealloc(papoLayers_, nNumLayers_ * sizeof(KMLNode*)) );
             papoLayers_[nNumLayers_ - 1] = poNode;
         }
         else
         {
             CPLDebug( "KML", "We have a strange type here for node %s: %s",
-                      poNode->getName().c_str(), Nodetype2String(poNode->getType()).c_str() );
+                      poNode->getName().c_str(),
+                      Nodetype2String(poNode->getType()).c_str() );
         }
     }
     else
     {
-        CPLDebug("KML", "There is something wrong!  Define KML_DEBUG to see details");
-        if( CPLGetConfigOption("KML_DEBUG",NULL) != NULL )
+        CPLDebug( "KML",
+                  "There is something wrong!  Define KML_DEBUG to see details");
+        if( CPLGetConfigOption("KML_DEBUG", NULL) != NULL )
             print();
     }
 }

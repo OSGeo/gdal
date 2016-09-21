@@ -179,7 +179,7 @@ private:
  * @brief Integral image class (summed area table).
  * @details Integral image is a table for fast computing the sum of
  * values in rectangular subarea. In more detail, for 2-dimensional array
- * of numbers this class provides capabilty to get sum of values in
+ * of numbers this class provides capability to get sum of values in
  * rectangular arbitrary area with any size in constant time.
  * Integral image is constructed from grayscale picture.
  */
@@ -215,7 +215,7 @@ public:
      * @param nRow Row of left top point of rectangle
      * @param nCol Column of left top point of rectangle
      * @param nWidth Width of rectangular area (number of columns)
-     * @param nHeight Heigth of rectangular area (number of rows)
+     * @param nHeight Height of rectangular area (number of rows)
      *
      * @return Sum of values in specified grid.
      */
@@ -288,7 +288,7 @@ public:
     virtual ~GDALOctaveLayer();
 
     /**
-     * Perform calculation of Hessian determinats and their signs
+     * Perform calculation of Hessian determinants and their signs
      * for specified integral image. Result is stored internally.
      *
      * @param poImg Integral image object, which provides all necessary

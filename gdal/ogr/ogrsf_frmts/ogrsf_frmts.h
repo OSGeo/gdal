@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRSF_FRMTS_H_INCLUDED
-#define _OGRSF_FRMTS_H_INCLUDED
+#ifndef OGRSF_FRMTS_H_INCLUDED
+#define OGRSF_FRMTS_H_INCLUDED
 
 #include "cpl_progress.h"
 #include "ogr_feature.h"
@@ -41,6 +41,12 @@
  *
  * Classes related to registration of format support, and opening datasets.
  */
+
+#if !defined(GDAL_COMPILATION) && !defined(SUPPRESS_DEPRECATION_WARNINGS)
+#define OGR_DEPRECATED(x) CPL_WARN_DEPRECATED(x)
+#else
+#define OGR_DEPRECATED(x)
+#endif
 
 class OGRLayerAttrIndex;
 class OGRSFDriver;
@@ -60,7 +66,7 @@ class OGRSFDriver;
 class CPL_DLL OGRLayer : public GDALMajorObject
 {
   private:
-    void         ConvertNonLinearGeomsIfNecessary( OGRFeature *poFeature );
+    void         ConvertGeomsIfNecessary( OGRFeature *poFeature );
 
   protected:
     int          m_bFilterIsEnvelope;
@@ -69,15 +75,15 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     OGREnvelope  m_sFilterEnvelope;
     int          m_iGeomFieldFilter; // specify the index on which the spatial
                                      // filter is active.
-    
+
     int          FilterGeometry( OGRGeometry * );
     //int          FilterGeometry( OGRGeometry *, OGREnvelope* psGeometryEnvelope);
     int          InstallFilter( OGRGeometry * );
-    
+
     OGRErr       GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce );
 
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
 
   public:
     OGRLayer();
@@ -96,14 +102,14 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual void        ResetReading() = 0;
-    virtual OGRFeature *GetNextFeature() = 0;
+    virtual OGRFeature *GetNextFeature() CPL_WARN_UNUSED_RESULT = 0;
     virtual OGRErr      SetNextByIndex( GIntBig nIndex );
-    virtual OGRFeature *GetFeature( GIntBig nFID );
+    virtual OGRFeature *GetFeature( GIntBig nFID )  CPL_WARN_UNUSED_RESULT;
 
-    OGRErr      SetFeature( OGRFeature *poFeature );
-    OGRErr      CreateFeature( OGRFeature *poFeature );
+    OGRErr      SetFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
+    OGRErr      CreateFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
 
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID )  CPL_WARN_UNUSED_RESULT;
 
     virtual const char *GetName();
     virtual OGRwkbGeometryType GetGeomType();
@@ -113,9 +119,9 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual GIntBig     GetFeatureCount( int bForce = TRUE );
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE)  CPL_WARN_UNUSED_RESULT;
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce = TRUE);
+                                  int bForce = TRUE)  CPL_WARN_UNUSED_RESULT;
 
     virtual int         TestCapability( const char * ) = 0;
 
@@ -132,11 +138,11 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRStyleTable *GetStyleTable();
     virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
-                            
+
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
 
-    virtual OGRErr      StartTransaction();
-    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      StartTransaction() CPL_WARN_UNUSED_RESULT;
+    virtual OGRErr      CommitTransaction() CPL_WARN_UNUSED_RESULT;
     virtual OGRErr      RollbackTransaction();
 
     virtual const char *GetFIDColumn();
@@ -144,49 +150,49 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 
-    OGRErr              Intersection( OGRLayer *pLayerMethod, 
-                                      OGRLayer *pLayerResult, 
-                                      char** papszOptions = NULL, 
-                                      GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Intersection( OGRLayer *pLayerMethod,
+                                      OGRLayer *pLayerResult,
+                                      char** papszOptions = NULL,
+                                      GDALProgressFunc pfnProgress = NULL,
                                       void * pProgressArg = NULL );
-    OGRErr              Union( OGRLayer *pLayerMethod, 
-                               OGRLayer *pLayerResult, 
-                               char** papszOptions = NULL, 
-                               GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Union( OGRLayer *pLayerMethod,
+                               OGRLayer *pLayerResult,
+                               char** papszOptions = NULL,
+                               GDALProgressFunc pfnProgress = NULL,
                                void * pProgressArg = NULL );
-    OGRErr              SymDifference( OGRLayer *pLayerMethod, 
-                                       OGRLayer *pLayerResult, 
-                                       char** papszOptions, 
-                                       GDALProgressFunc pfnProgress, 
+    OGRErr              SymDifference( OGRLayer *pLayerMethod,
+                                       OGRLayer *pLayerResult,
+                                       char** papszOptions,
+                                       GDALProgressFunc pfnProgress,
                                        void * pProgressArg );
-    OGRErr              Identity( OGRLayer *pLayerMethod, 
-                                  OGRLayer *pLayerResult, 
-                                  char** papszOptions = NULL, 
-                                  GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Identity( OGRLayer *pLayerMethod,
+                                  OGRLayer *pLayerResult,
+                                  char** papszOptions = NULL,
+                                  GDALProgressFunc pfnProgress = NULL,
                                   void * pProgressArg = NULL );
-    OGRErr              Update( OGRLayer *pLayerMethod, 
-                                OGRLayer *pLayerResult, 
-                                char** papszOptions = NULL, 
-                                GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Update( OGRLayer *pLayerMethod,
+                                OGRLayer *pLayerResult,
+                                char** papszOptions = NULL,
+                                GDALProgressFunc pfnProgress = NULL,
                                 void * pProgressArg = NULL );
-    OGRErr              Clip( OGRLayer *pLayerMethod, 
-                              OGRLayer *pLayerResult, 
-                              char** papszOptions = NULL, 
-                              GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Clip( OGRLayer *pLayerMethod,
+                              OGRLayer *pLayerResult,
+                              char** papszOptions = NULL,
+                              GDALProgressFunc pfnProgress = NULL,
                               void * pProgressArg = NULL );
-    OGRErr              Erase( OGRLayer *pLayerMethod, 
-                               OGRLayer *pLayerResult, 
-                               char** papszOptions = NULL, 
-                               GDALProgressFunc pfnProgress = NULL, 
+    OGRErr              Erase( OGRLayer *pLayerMethod,
+                               OGRLayer *pLayerResult,
+                               char** papszOptions = NULL,
+                               GDALProgressFunc pfnProgress = NULL,
                                void * pProgressArg = NULL );
-    
+
     int                 Reference();
     int                 Dereference();
     int                 GetRefCount() const;
 
     GIntBig             GetFeaturesRead();
 
-    /* non virtual : conveniency wrapper for ReorderFields() */
+    /* non virtual : convenience wrapper for ReorderFields() */
     OGRErr              ReorderField( int iOldFieldPos, int iNewFieldPos );
 
     int                 AttributeFilterEvaluationNeedsGeometry();
@@ -206,14 +212,14 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     GIntBig              m_nFeaturesRead;
 };
 
-
 /************************************************************************/
 /*                            OGRDataSource                             */
 /************************************************************************/
 
 /**
- * LEGACY class. Use GDALDataset in your new code !
- * 
+ * LEGACY class. Use GDALDataset in your new code ! This class may be
+ * removed in a later release.
+ *
  * This class represents a data source.  A data source potentially
  * consists of many layers (OGRLayer).  A data source normally consists
  * of one, or a related set of files, though the name doesn't have to be
@@ -222,17 +228,21 @@ class CPL_DLL OGRLayer : public GDALMajorObject
  * When an OGRDataSource is destroyed, all it's associated OGRLayers objects
  * are also destroyed.
  *
+ * NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the handle of
+ * a C function that returns a OGRDataSourceH to a OGRDataSource*. If a C++ object
+ * is needed, the handle should be cast to GDALDataset*.
+ *
  * @deprecated
- */ 
+ */
 
 class CPL_DLL OGRDataSource : public GDALDataset
 {
 public:
                         OGRDataSource();
 
-    virtual const char  *GetName() = 0;
+    virtual const char  *GetName() OGR_DEPRECATED("Use GDALDataset class instead") = 0;
 
-    static void         DestroyDataSource( OGRDataSource * );
+    static void         DestroyDataSource( OGRDataSource * ) OGR_DEPRECATED("Use GDALDataset class instead");
 };
 
 /************************************************************************/
@@ -240,7 +250,8 @@ public:
 /************************************************************************/
 
 /**
- * LEGACY class. Use GDALDriver in your new code !
+ * LEGACY class. Use GDALDriver in your new code ! This class may be
+ * removed in a later release.
  *
  * Represents an operational format driver.
  *
@@ -248,6 +259,10 @@ public:
  * registered for use, regardless of whether a file has or will be opened.
  * The list of available drivers is normally managed by the
  * OGRSFDriverRegistrar.
+ *
+ * NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the handle of
+ * a C function that returns a OGRSFDriverH to a OGRSFDriver*. If a C++ object
+ * is needed, the handle should be cast to GDALDriver*.
  *
  * @deprecated
  */
@@ -257,15 +272,15 @@ class CPL_DLL OGRSFDriver : public GDALDriver
   public:
     virtual     ~OGRSFDriver();
 
-    virtual const char  *GetName() = 0;
+    virtual const char  *GetName() OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
-    virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) = 0;
-    
-    virtual int            TestCapability( const char *pszCap ) = 0;
+    virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) OGR_DEPRECATED("Use GDALDriver class instead") = 0;
+
+    virtual int            TestCapability( const char *pszCap ) OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    virtual OGRErr      DeleteDataSource( const char *pszName );
+                                             char ** = NULL ) OGR_DEPRECATED("Use GDALDriver class instead");
+    virtual OGRErr      DeleteDataSource( const char *pszName ) OGR_DEPRECATED("Use GDALDriver class instead");
 };
 
 
@@ -274,10 +289,11 @@ class CPL_DLL OGRSFDriver : public GDALDriver
 /************************************************************************/
 
 /**
- * LEGACY class. Use GDALDriverManager in your new code !
+ * LEGACY class. Use GDALDriverManager in your new code ! This class may be
+ * removed in a later release.
  *
  * Singleton manager for OGRSFDriver instances that will be used to try
- * and open datasources.  Normally the registrar is populated with 
+ * and open datasources.  Normally the registrar is populated with
  * standard drivers using the OGRRegisterAll() function and does not need
  * to be directly accessed.  The driver registrar and all registered drivers
  * may be cleaned up on shutdown using OGRCleanupAll().
@@ -301,16 +317,16 @@ class CPL_DLL OGRSFDriverRegistrar
 
   public:
 
-    static OGRSFDriverRegistrar *GetRegistrar();
+    static OGRSFDriverRegistrar *GetRegistrar() OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    void        RegisterDriver( OGRSFDriver * poDriver );
+    void        RegisterDriver( OGRSFDriver * poDriver ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    int         GetDriverCount( void );
-    GDALDriver *GetDriver( int iDriver );
-    GDALDriver *GetDriverByName( const char * );
+    int         GetDriverCount( void ) OGR_DEPRECATED("Use GDALDriverManager class instead");
+    GDALDriver *GetDriver( int iDriver ) OGR_DEPRECATED("Use GDALDriverManager class instead");
+    GDALDriver *GetDriverByName( const char * ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    int         GetOpenDSCount();
-    OGRDataSource *GetOpenDS( int );
+    int         GetOpenDSCount() OGR_DEPRECATED("Use GDALDriverManager class instead");
+    OGRDataSource *GetOpenDS( int ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 };
 
 /* -------------------------------------------------------------------- */
@@ -322,6 +338,7 @@ void OGRRegisterAllInternal();
 
 void CPL_DLL RegisterOGRFileGDB();
 void CPL_DLL RegisterOGRShape();
+void CPL_DLL RegisterOGRDB2();
 void CPL_DLL RegisterOGRNTF();
 void CPL_DLL RegisterOGRFME();
 void CPL_DLL RegisterOGRSDTS();
@@ -382,7 +399,6 @@ void CPL_DLL RegisterOGRGeomedia();
 void CPL_DLL RegisterOGRMDB();
 void CPL_DLL RegisterOGREDIGEO();
 void CPL_DLL RegisterOGRGFT();
-void CPL_DLL RegisterOGRGME();
 void CPL_DLL RegisterOGRSVG();
 void CPL_DLL RegisterOGRCouchDB();
 void CPL_DLL RegisterOGRCloudant();
@@ -397,11 +413,15 @@ void CPL_DLL RegisterOGRElastic();
 void CPL_DLL RegisterOGRGeoPackage();
 void CPL_DLL RegisterOGRWalk();
 void CPL_DLL RegisterOGRCartoDB();
+void CPL_DLL RegisterOGRAmigoCloud();
 void CPL_DLL RegisterOGRSXF();
 void CPL_DLL RegisterOGROpenFileGDB();
 void CPL_DLL RegisterOGRSelafin();
 void CPL_DLL RegisterOGRJML();
+void CPL_DLL RegisterOGRPLSCENES();
+void CPL_DLL RegisterOGRCSW();
+void CPL_DLL RegisterOGRMongoDB();
+void CPL_DLL RegisterOGRVDV();
 CPL_C_END
 
-
-#endif /* ndef _OGRSF_FRMTS_H_INCLUDED */
+#endif /* ndef OGRSF_FRMTS_H_INCLUDED */

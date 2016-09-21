@@ -10,10 +10,10 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -24,10 +24,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _BLX_H_INCLUDED
-#define _BLX_H_INCLUDED
+#ifndef BLX_H_INCLUDED
+#define BLX_H_INCLUDED
 
 #include <stdio.h>
+
+#ifdef GDALDRIVER
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
+#endif
 
 /* Constants */
 #define BLX_UNDEF -32768
@@ -42,7 +47,7 @@
 typedef short int blxdata;
 
 struct cellindex_s {
-    int offset;	
+    int offset;
     unsigned int datasize;       /* Uncompressed size */
     unsigned int compdatasize;   /* Compressed data size */
 };
@@ -61,14 +66,18 @@ struct blxcontext_s {
     int endian;
 
     struct cellindex_s *cellindex;
-    
+
     int debug;
 
     int fillundef;     /* If non-zero, fillundefval will be used instead of -32768 for undefined values in non-empty cells when
-			a cell is written */ 
-    int fillundefval; 
+                        a cell is written */
+    int fillundefval;
 
+#ifdef GDALDRIVER
+    VSILFILE* fh;
+#else
     FILE *fh;
+#endif
     int write;
     int open;
 };
@@ -91,13 +100,12 @@ struct component_s {
 
 /* Define memory allocation and I/O function macros */
 #ifdef GDALDRIVER
-#include "cpl_conv.h"
-#define BLXfopen VSIFOpen
-#define BLXfclose VSIFClose
-#define BLXfread VSIFRead
-#define BLXfwrite VSIFWrite
-#define BLXfseek VSIFSeek
-#define BLXftell VSIFTell
+#define BLXfopen VSIFOpenL
+#define BLXfclose VSIFCloseL
+#define BLXfread VSIFReadL
+#define BLXfwrite VSIFWriteL
+#define BLXfseek VSIFSeekL
+#define BLXftell VSIFTellL
 #define BLXmalloc VSIMalloc
 #define BLXfree CPLFree
 #define BLXdebug0(text)              CPLDebug("BLX", text)
@@ -141,7 +149,7 @@ int blxclose(blxcontext_t *ctx);
 void blxprintinfo(blxcontext_t *ctx);
 short *blx_readcell(blxcontext_t *ctx, int row, int col, short *buffer, int bufsize, int overviewlevel);
 int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned char *outbuf, int outbufsize);
-int blx_checkheader(char *header);
+int blx_checkheader(const char *header);
 int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol);
 
 #endif

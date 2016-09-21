@@ -33,10 +33,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef M_PI
-# define M_PI  3.1415926535897932384626433832795
-#endif
-
 /************************************************************************/
 /*                        OGREDIGEODataSource()                         */
 /************************************************************************/
@@ -56,7 +52,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
     fpTHF = NULL;
     bHasReadEDIGEO = FALSE;
 
-    bIncludeFontFamily = CSLTestBoolean(CPLGetConfigOption(
+    bIncludeFontFamily = CPLTestBool(CPLGetConfigOption(
                                  "OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES"));
 
     iATR = iDI3 = iDI4 = iHEI = iFON = -1;
@@ -65,7 +61,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
     if (dfSizeFactor <= 0 || dfSizeFactor >= 100)
         dfSizeFactor = 2;
 
-    bRecodeToUTF8 = CSLTestBoolean(CPLGetConfigOption(
+    bRecodeToUTF8 = CPLTestBool(CPLGetConfigOption(
                                         "OGR_EDIGEO_RECODE_TO_UTF8", "YES"));
     bHasUTF8ContentOnly = TRUE;
 }
@@ -137,7 +133,7 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
 
         /* Cf Z 52000 tableau 56 for field list*/
 
-        if (strncmp(pszLine, "LONSA", 5) == 0)
+        if (STARTS_WITH(pszLine, "LONSA"))
         {
             if (osLON.size() != 0)
             {
@@ -146,17 +142,17 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
             }
             osLON = pszLine + 8;
         }
-        else if (strncmp(pszLine, "GNNSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "GNNSA"))
             osGNN = pszLine + 8;
-        else if (strncmp(pszLine, "GONSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "GONSA"))
             osGON = pszLine + 8;
-        else if (strncmp(pszLine, "QANSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "QANSA"))
             osQAN = pszLine + 8;
-        else if (strncmp(pszLine, "DINSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "DINSA"))
             osDIN = pszLine + 8;
-        else if (strncmp(pszLine, "SCNSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "SCNSA"))
             osSCN = pszLine + 8;
-        else if (strncmp(pszLine, "GDNSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "GDNSA"))
             aosGDN.push_back(pszLine + 8);
     }
     if (osLON.size() == 0)
@@ -188,7 +184,7 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
     CPLDebug("EDIGEO", "SCN = %s", osSCN.c_str());
     for(int i=0;i<(int)aosGDN.size();i++)
         CPLDebug("EDIGEO", "GDN[%d] = %s", i, aosGDN[i].c_str());
-    
+
     return TRUE;
 }
 
@@ -236,7 +232,7 @@ int OGREDIGEODataSource::ReadGEO()
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
 
-        if (strncmp(pszLine, "RELSA", 5) == 0)
+        if (STARTS_WITH(pszLine, "RELSA"))
         {
             osREL = pszLine + 8;
             CPLDebug("EDIGEO", "REL = %s", osREL.c_str());
@@ -252,7 +248,7 @@ int OGREDIGEODataSource::ReadGEO()
         return FALSE;
     }
 
-    /* All the SRS names mentionned in B.8.2.3 and B.8.3.1 are in the IGN file */
+    /* All the SRS names mentioned in B.8.2.3 and B.8.3.1 are in the IGN file */
     poSRS = new OGRSpatialReference();
     CPLString osProj4Str = "+init=IGNF:" + osREL;
     if (poSRS->SetFromUserInput(osProj4Str.c_str()) != OGRERR_NONE)
@@ -275,7 +271,7 @@ int OGREDIGEODataSource::ReadGEO()
             poSRS = NULL;
         }
     }
-    
+
     return TRUE;
 }
 
@@ -296,11 +292,11 @@ int OGREDIGEODataSource::ReadGEN()
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
 
-        if (strncmp(pszLine, "CM1CC", 5) == 0)
+        if (STARTS_WITH(pszLine, "CM1CC"))
         {
             osCM1 = pszLine + 8;
         }
-        else if (strncmp(pszLine, "CM2CC", 5) == 0)
+        else if (STARTS_WITH(pszLine, "CM2CC"))
         {
             osCM2 = pszLine + 8;
         }
@@ -339,7 +335,7 @@ int OGREDIGEODataSource::ReadDIC()
 
     const char* pszLine;
     CPLString osRTY, osRID, osLAB, osTYP;
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
         if (pszLine != NULL)
@@ -348,7 +344,7 @@ int OGREDIGEODataSource::ReadDIC()
                 continue;
         }
 
-        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "DID")
             {
@@ -372,11 +368,11 @@ int OGREDIGEODataSource::ReadDIC()
             osLAB = "";
             osTYP = "";
         }
-        if (strncmp(pszLine, "RIDSA", 5) == 0)
+        if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
-        else if (strncmp(pszLine, "LABSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "LABSA"))
             osLAB = pszLine + 8;
-        else if (strncmp(pszLine, "TYPSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "TYPSA"))
             osTYP = pszLine + 8;
     }
 
@@ -400,7 +396,7 @@ int OGREDIGEODataSource::ReadSCD()
     CPLString osRTY, osRID, osNameRID, osKND;
     strListType aosAttrRID;
     int nWidth = 0;
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
         if (pszLine != NULL)
@@ -409,7 +405,7 @@ int OGREDIGEODataSource::ReadSCD()
                 continue;
         }
 
-        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "OBJ")
             {
@@ -460,9 +456,9 @@ int OGREDIGEODataSource::ReadSCD()
             aosAttrRID.resize(0);
             nWidth = 0;
         }
-        if (strncmp(pszLine, "RIDSA", 5) == 0)
+        if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
-        else if (strncmp(pszLine, "DIPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "DIPCP"))
         {
             const char* pszDIP = pszLine + 8;
             char** papszTokens = CSLTokenizeString2(pszDIP, ";", 0);
@@ -472,9 +468,9 @@ int OGREDIGEODataSource::ReadSCD()
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "KNDSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "KNDSA"))
             osKND = pszLine + 8;
-        else if (strncmp(pszLine, "AAPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "AAPCP"))
         {
             const char* pszAAP = pszLine + 8;
             char** papszTokens = CSLTokenizeString2(pszAAP, ";", 0);
@@ -485,7 +481,7 @@ int OGREDIGEODataSource::ReadSCD()
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "CANSN", 5) == 0)
+        else if (STARTS_WITH(pszLine, "CANSN"))
             nWidth = atoi(pszLine + 8);
     }
 
@@ -508,7 +504,7 @@ int OGREDIGEODataSource::ReadQAL()
     const char* pszLine;
     CPLString osRTY, osRID;
     int nODA = 0, nUDA = 0;
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
         if (pszLine != NULL)
@@ -517,7 +513,7 @@ int OGREDIGEODataSource::ReadQAL()
                 continue;
         }
 
-        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "QUP")
             {
@@ -530,11 +526,11 @@ int OGREDIGEODataSource::ReadQAL()
             nODA = 0;
             nUDA = 0;
         }
-        else if (strncmp(pszLine, "RIDSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
-        else if (strncmp(pszLine, "ODASD", 5) == 0)
+        else if (STARTS_WITH(pszLine, "ODASD"))
             nODA = atoi(pszLine + 8);
-        else if (strncmp(pszLine, "UDASD", 5) == 0)
+        else if (STARTS_WITH(pszLine, "UDASD"))
             nUDA = atoi(pszLine + 8);
     }
 
@@ -578,13 +574,13 @@ int OGREDIGEODataSource::CreateLayerFromObjectDesc(const OGREDIGEOObjectDescript
             const OGREDIGEOAttributeDescriptor& attrDesc = it->second;
             const OGREDIGEOAttributeDef& attrDef =
                                     mapAttributes[attrDesc.osNameRID];
-            OGRFieldType eType = OFTString;
+            OGRFieldType eFieldType = OFTString;
             if (attrDef.osTYP == "R" || attrDef.osTYP == "E")
-                eType = OFTReal;
+                eFieldType = OFTReal;
             else if (attrDef.osTYP == "I" || attrDef.osTYP == "N")
-                eType = OFTInteger;
+                eFieldType = OFTInteger;
 
-            poLayer->AddFieldDefn(attrDef.osLAB, eType, objDesc.aosAttrRID[j]);
+            poLayer->AddFieldDefn(attrDef.osLAB, eFieldType, objDesc.aosAttrRID[j]);
         }
     }
 
@@ -651,7 +647,7 @@ int OGREDIGEODataSource::ReadVEC(const char* pszVECName)
     CPLString osQUP_RID;
     int bIso8859_1 = FALSE;
 
-    while(TRUE)
+    while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
 skip_read_next_line:
@@ -661,7 +657,7 @@ skip_read_next_line:
                 continue;
         }
 
-        if (pszLine == NULL || strncmp(pszLine, "RTYSA", 5) == 0)
+        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "PAR")
             {
@@ -764,9 +760,9 @@ skip_read_next_line:
             osQUP_RID = "";
             bIso8859_1 = FALSE;
         }
-        else if (strncmp(pszLine, "RIDSA", 5) == 0)
+        else if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
-        else if (strncmp(pszLine, "CORCC", 5) == 0)
+        else if (STARTS_WITH(pszLine, "CORCC"))
         {
             const char* pszY = strchr(pszLine+8, ';');
             if (pszY)
@@ -776,7 +772,7 @@ skip_read_next_line:
                 aXY.push_back(xyPairType (dfX, dfY));
             }
         }
-        else if (strncmp(pszLine, "FTPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "FTPCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -795,7 +791,7 @@ skip_read_next_line:
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "SCPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "SCPCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -810,7 +806,7 @@ skip_read_next_line:
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "ATPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "ATPCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -824,23 +820,21 @@ skip_read_next_line:
         {
             bIso8859_1 = TRUE;
         }
-        else if (strncmp(pszLine, "ATVS", 4) == 0)
+        else if (STARTS_WITH(pszLine, "ATVS"))
         {
             CPLString osAttVal = pszLine + 8;
-            int bSkipReadNextLine = FALSE;
-            while(TRUE)
+            while( true )
             {
                 pszLine = CPLReadLine2L(fp, 81, NULL);
                 if (pszLine != NULL &&
                     strlen(pszLine) >= 8 &&
                     pszLine[7] == ':' &&
-                    strncmp(pszLine, "NEXT ", 5) == 0)
+                    STARTS_WITH(pszLine, "NEXT "))
                 {
                     osAttVal += pszLine + 8;
                 }
                 else
                 {
-                    bSkipReadNextLine = TRUE;
                     break;
                 }
             }
@@ -859,10 +853,9 @@ skip_read_next_line:
                 aosAttIdVal.push_back( strstrType (osAttId, osAttVal) );
             osAttId = "";
             bIso8859_1 = FALSE;
-            if (bSkipReadNextLine)
-                goto skip_read_next_line;
+            goto skip_read_next_line;
         }
-        else if (strncmp(pszLine, "ATVCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "ATVCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -877,7 +870,7 @@ skip_read_next_line:
             }
             CSLDestroy(papszTokens);
         }
-        else if (strncmp(pszLine, "QAPCP", 5) == 0)
+        else if (STARTS_WITH(pszLine, "QAPCP"))
         {
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
@@ -1095,6 +1088,7 @@ int OGREDIGEODataSource::BuildLineStrings()
         OGRFeature* poFeature = CreateFeature(osFEA);
         if (poFeature)
         {
+            OGRGeometry* poGeom = NULL;
             OGRMultiLineString* poMulti = NULL;
             for(int k=0;k<(int)aosPAR.size();k++)
             {
@@ -1111,27 +1105,28 @@ int OGREDIGEODataSource::BuildLineStrings()
                         poLS->setPoint(i, arc[i].first, arc[i].second);
                     }
 
-                    if (poFeature->GetGeometryRef() != NULL)
+                    if (poGeom != NULL)
                     {
                         if (poMulti == NULL)
                         {
-                            OGRLineString* poPrevLS =
-                                (OGRLineString*) poFeature->StealGeometry();
                             poMulti = new OGRMultiLineString();
-                            poMulti->addGeometryDirectly(poPrevLS);
-                            poFeature->SetGeometryDirectly(poMulti);
+                            poMulti->addGeometryDirectly(poGeom);
+                            poGeom = poMulti;
                         }
                         poMulti->addGeometryDirectly(poLS);
                     }
                     else
-                        poFeature->SetGeometryDirectly(poLS);
+                        poGeom = poLS;
                 }
                 else
                     CPLDebug("EDIGEO",
                              "ERROR: Cannot find ARC %s", aosPAR[k].c_str());
             }
-            if (poFeature->GetGeometryRef())
-                poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
+            if( poGeom != NULL )
+            {
+                poGeom->assignSpatialReference(poSRS);
+                poFeature->SetGeometryDirectly(poGeom);
+            }
         }
     }
 
@@ -1329,7 +1324,7 @@ static int OGREDIGEOSortForQGIS(const void* a, const void* b)
         if (nCmp == 0)
             return 0;
 
-        static const char* apszPolyOrder[] =
+        static const char* const apszPolyOrder[] =
             { "COMMUNE_id", "LIEUDIT_id", "SECTION_id", "SUBDSECT_id",
               "SUBDFISC_id", "PARCELLE_id", "BATIMENT_id" };
         for(int i=0;i<(int)(sizeof(apszPolyOrder)/sizeof(char*));i++)
@@ -1491,13 +1486,13 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /*      When added from QGIS, the layers must be ordered from           */
 /*      bottom (Polygon) to top (Point) to get nice visual effect       */
 /* -------------------------------------------------------------------- */
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_EDIGEO_SORT_FOR_QGIS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_EDIGEO_SORT_FOR_QGIS", "YES")))
         qsort(papoLayers, nLayers, sizeof(OGREDIGEOLayer*), OGREDIGEOSortForQGIS);
 
 /* -------------------------------------------------------------------- */
 /*      Create a label layer for each feature layer                     */
 /* -------------------------------------------------------------------- */
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_EDIGEO_CREATE_LABEL_LAYERS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_EDIGEO_CREATE_LABEL_LAYERS", "YES")))
         CreateLabelLayers();
 
     return;

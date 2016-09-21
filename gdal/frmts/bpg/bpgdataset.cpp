@@ -28,8 +28,10 @@
  ****************************************************************************/
 
 #include <stdint.h>
-#include "gdal_pam.h"
+
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 // NOTE: build instructions
 // bpg Makefile needs to be modified to have -fPIC on CFLAGS:= at line 49 and LDFLAGS at line 54 before building bpg
@@ -40,10 +42,6 @@ CPL_C_START
 CPL_C_END
 
 CPL_CVSID("$Id$");
-
-CPL_C_START
-void    GDALRegister_BPG(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -221,7 +219,7 @@ CPLErr BPGDataset::Uncompress()
         return CE_Failure;
     }
     BPGDecoderOutputFormat eOutputFormat;
-    
+
     if( GetRasterBand(1)->GetRasterDataType() == GDT_Byte )
         eOutputFormat = (nBands == 1 || nBands == 3) ? BPG_OUTPUT_FORMAT_RGB24 :
                                                        BPG_OUTPUT_FORMAT_RGBA32;
@@ -336,26 +334,24 @@ GDALDataset *BPGDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_BPG()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "BPG" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "BPG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "BPG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Better Portable Graphics" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_bpg.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bpg" );
-        //poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/bpg" );
+    poDriver->SetDescription( "BPG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Better Portable Graphics" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_bpg.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bpg" );
+    // poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/bpg" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = BPGDataset::Identify;
-        poDriver->pfnOpen = BPGDataset::Open;
+    poDriver->pfnIdentify = BPGDataset::Identify;
+    poDriver->pfnOpen = BPGDataset::Open;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

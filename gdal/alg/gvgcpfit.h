@@ -1,5 +1,5 @@
-#ifndef _GVGCPFIT_H_INCLUDED
-#define _GVGCPFIT_H_INCLUDED
+#ifndef GVGCPFIT_H_INCLUDED
+#define GVGCPFIT_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_conv.h"
@@ -51,8 +51,8 @@ EXTERNAL int svdcmp(double **a, int m, int n, double *w, double **v);
 
 
 /*----------------------------- FILE polyfit.h ----------------------------*/
-#ifndef __POLYFIT_H
-#define __POLYFIT_H
+#ifndef POLYFIT_H
+#define POLYFIT_H
 
 EXTERNAL int OneDPolyFit( double *rms_err, double *coeffs_array,
     int fit_order, int no_samples, double *f_array, double *x_array );
@@ -86,7 +86,7 @@ EXTERNAL double ThreeDPolyEval( double *coeff, int order, double x, double y, do
 
 
 
-#endif /* __POLYFIT_H */
+#endif /* POLYFIT_H */
 
 
 /*---------------------- End of FILE polyfit.h ----------------------------*/

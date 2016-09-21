@@ -5,7 +5,7 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test SVG driver functionality.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
 #
@@ -64,7 +64,7 @@ def ogr_svg_init():
 def ogr_svg_1():
     if not gdaltest.have_svg:
         return 'skip'
-    
+
     if gdaltest.svg_ds is None:
         return 'fail'
 
@@ -111,16 +111,14 @@ def ogr_svg_1():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_svg_cleanup():
 
-    if gdaltest.svg_ds is not None:
-        gdaltest.svg_ds.Destroy()
     gdaltest.svg_ds = None
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_svg_init,
     ogr_svg_1,
     ogr_svg_cleanup ]
@@ -132,4 +130,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -30,8 +30,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SXF_H_INCLUDED
-#define _OGR_SXF_H_INCLUDED
+#ifndef OGR_SXF_H_INCLUDED
+#define OGR_SXF_H_INCLUDED
 
 #include <set>
 #include <vector>
@@ -40,7 +40,7 @@
 #include "ogrsf_frmts.h"
 #include "org_sxf_defs.h"
 
-#define CHECK_BIT(var,pos) ((var) & (1<<(pos)))
+#define CHECK_BIT(var,pos) (((var) & (1<<(pos))) != 0)
 #define TO_DEGREES 57.2957795130823208766
 #define TO_RADIANS 0.017453292519943295769
 
@@ -88,6 +88,8 @@ public:
 
     virtual GIntBig     GetFeatureCount(int bForce = TRUE);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
     virtual OGRSpatialReference *GetSpatialRef();
     virtual const char* GetFIDColumn();
 
@@ -110,7 +112,7 @@ class OGRSXFDataSource : public OGRDataSource
     OGRLayer**          papoLayers;
     size_t              nLayers;
 
-    VSILFILE* fpSXF;    
+    VSILFILE* fpSXF;
     CPLMutex  *hIOMutex;
     void FillLayers(void);
     void CreateLayers();
@@ -129,11 +131,11 @@ public:
 
     virtual const char*     GetName() { return pszName; }
 
-    virtual int             GetLayerCount() { return nLayers; }
+    virtual int             GetLayerCount() { return static_cast<int>(nLayers); }
     virtual OGRLayer*       GetLayer( int );
 
     virtual int             TestCapability( const char * );
-    void                    CloseFile(); 
+    void                    CloseFile();
 };
 
 /************************************************************************/
@@ -151,4 +153,4 @@ class OGRSXFDriver : public OGRSFDriver
     int             TestCapability(const char *);
 };
 
-#endif 
+#endif

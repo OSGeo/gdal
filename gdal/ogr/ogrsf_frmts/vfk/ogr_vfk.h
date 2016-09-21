@@ -61,11 +61,11 @@ private:
 
     /* get next feature */
     int                  m_iNextFeature;
-    
+
     /* private methods */
     OGRGeometry         *CreateGeometry(IVFKFeature *);
     OGRFeature          *GetFeature(IVFKFeature *);
-    
+
 public:
     OGRVFKLayer(const char *, OGRSpatialReference *,
                 OGRwkbGeometryType, OGRVFKDataSource *);
@@ -77,7 +77,7 @@ public:
     OGRFeatureDefn      *GetLayerDefn() { return poFeatureDefn; }
 
     void                 ResetReading();
-    
+
     int                  TestCapability(const char *);
 
     GIntBig              GetFeatureCount(int = TRUE);
@@ -92,9 +92,9 @@ private:
     /* list of available layers */
     OGRVFKLayer  **papoLayers;
     int            nLayers;
-    
+
     char *         pszName;
-    
+
     /* input related parameters */
     IVFKReader    *poReader;
 
@@ -106,9 +106,9 @@ public:
     ~OGRVFKDataSource();
 
     int            Open(const char *, int);
-    
+
     const char    *GetName() { return pszName; }
-    
+
     int            GetLayerCount() { return nLayers; }
     OGRLayer      *GetLayer(int);
 

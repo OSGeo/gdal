@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_gmt.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_gmt.h"
 
 CPL_CVSID("$Id: ogrgmtdatasource.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 
@@ -37,15 +37,12 @@ CPL_CVSID("$Id: ogrgmtdatasource.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 /*                          OGRGmtDataSource()                          */
 /************************************************************************/
 
-OGRGmtDataSource::OGRGmtDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-
-    bUpdate = FALSE;
-}
+OGRGmtDataSource::OGRGmtDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    bUpdate(false)
+{}
 
 /************************************************************************/
 /*                         ~OGRGmtDataSource()                          */
@@ -54,22 +51,20 @@ OGRGmtDataSource::OGRGmtDataSource()
 OGRGmtDataSource::~OGRGmtDataSource()
 
 {
-    CPLFree( pszName );
-
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
     CPLFree( papoLayers );
+    CPLFree( pszName );
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGmtDataSource::Open( const char *pszFilename, int bUpdate )
+int OGRGmtDataSource::Open( const char *pszFilename, int bUpdateIn )
 
 {
-    this->bUpdate = bUpdate;
+    bUpdate = CPL_TO_BOOL( bUpdateIn );
 
     OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, bUpdate );
     if( !poLayer->bValidFile )
@@ -79,7 +74,7 @@ int OGRGmtDataSource::Open( const char *pszFilename, int bUpdate )
     }
 
     nLayers = 1;
-    papoLayers = (OGRGmtLayer **) CPLMalloc(sizeof(void*));
+    papoLayers = static_cast<OGRGmtLayer **>( CPLMalloc(sizeof(void*)) );
     papoLayers[0] = poLayer;
 
     CPLFree (pszName);
@@ -91,15 +86,13 @@ int OGRGmtDataSource::Open( const char *pszFilename, int bUpdate )
 /************************************************************************/
 /*                               Create()                               */
 /*                                                                      */
-/*      Create a new datasource.  This doesn't really do anything       */
+/*      Create a new datasource.  This does not really do anything      */
 /*      currently but save the name.                                    */
 /************************************************************************/
 
-int OGRGmtDataSource::Create( const char *pszDSName, char **papszOptions )
+int OGRGmtDataSource::Create( const char *pszDSName, char ** /* papszOptions */)
 
 {
-    (void) papszOptions;
-
     pszName = CPLStrdup( pszDSName );
 
     return TRUE;
@@ -164,8 +157,8 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
     VSILFILE *fp = VSIFOpenL( osFilename, "w" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "open(%s) failed: %s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "open(%s) failed: %s",
                   osFilename.c_str(), VSIStrerror(errno) );
         return NULL;
     }
@@ -174,30 +167,30 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
 /*      Write out header.                                               */
 /* -------------------------------------------------------------------- */
     VSIFPrintfL( fp, "# @VGMT1.0%s\n", pszGeom );
-    VSIFPrintfL( fp, "# REGION_STUB                                                             \n" );
+    VSIFPrintfL( fp, "# REGION_STUB                                      "
+                 "                       \n" );
 
 /* -------------------------------------------------------------------- */
 /*      Write the projection, if possible.                              */
 /* -------------------------------------------------------------------- */
     if( poSRS != NULL )
     {
-        char *pszValue = NULL;
-
-        if( poSRS->IsProjected() 
+        if( poSRS->IsProjected()
             && poSRS->GetAuthorityName("PROJCS")
             && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG") )
         {
-            VSIFPrintfL( fp, "# @Je%s\n", 
+            VSIFPrintfL( fp, "# @Je%s\n",
                          poSRS->GetAuthorityCode("PROJCS") );
         }
-        else if( poSRS->IsGeographic() 
+        else if( poSRS->IsGeographic()
                  && poSRS->GetAuthorityName("GEOGCS")
                  && EQUAL(poSRS->GetAuthorityName("GEOGCS"),"EPSG") )
         {
-            VSIFPrintfL( fp, "# @Je%s\n", 
+            VSIFPrintfL( fp, "# @Je%s\n",
                          poSRS->GetAuthorityCode("GEOGCS") );
         }
 
+        char *pszValue = NULL;
         if( poSRS->exportToProj4( &pszValue ) == OGRERR_NONE )
         {
             VSIFPrintfL( fp, "# @Jp\"%s\"\n", pszValue );
@@ -209,7 +202,7 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
         {
             char *pszEscapedWkt = CPLEscapeString( pszValue, -1,
                                                    CPLES_BackslashQuotable );
-                                                   
+
             VSIFPrintfL( fp, "# @Jw\"%s\"\n", pszEscapedWkt );
             CPLFree( pszValue );
             CPLFree( pszEscapedWkt );
@@ -227,8 +220,8 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     if( Open( osFilename, TRUE ) )
         return papoLayers[nLayers-1];
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -240,8 +233,8 @@ int OGRGmtDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -253,6 +246,6 @@ OGRLayer *OGRGmtDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }

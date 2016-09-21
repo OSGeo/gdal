@@ -1,4 +1,4 @@
-%inline %{
+%header %{
     #ifndef SWIG
     typedef struct
     {
@@ -30,5 +30,22 @@
         FREETMPS;
         LEAVE;
         return ret;
+    }
+    #ifndef SWIG
+    static SV *VSIStdoutSetRedirectionFct = &PL_sv_undef;
+    #endif
+    size_t callback_fwrite(const void *ptr, size_t size, size_t nmemb,
+                           FILE *stream)
+    {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        PUSHMARK(SP);
+        XPUSHs(sv_2mortal(newSVpv((const char*)ptr, size*nmemb)));
+        PUTBACK;
+        call_sv(VSIStdoutSetRedirectionFct, G_DISCARD);
+        FREETMPS;
+        LEAVE;
+        return size*nmemb;
     }
 %}

@@ -35,9 +35,9 @@ CPL_CVSID("$Id$");
 /*                         OGRCouchDBRowsLayer()                        */
 /************************************************************************/
 
-OGRCouchDBRowsLayer::OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDS) :
-                                                    OGRCouchDBLayer(poDS)
-
+OGRCouchDBRowsLayer::OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDSIn) :
+    OGRCouchDBLayer(poDSIn),
+    bAllInOne(FALSE)
 {
     poFeatureDefn = new OGRFeatureDefn( "rows" );
     poFeatureDefn->Reference();
@@ -49,18 +49,13 @@ OGRCouchDBRowsLayer::OGRCouchDBRowsLayer(OGRCouchDBDataSource* poDS) :
     poFeatureDefn->AddFieldDefn(&oFieldRev);
 
     SetDescription( poFeatureDefn->GetName() );
-
-    bAllInOne = FALSE;
 }
 
 /************************************************************************/
 /*                        ~OGRCouchDBRowsLayer()                        */
 /************************************************************************/
 
-OGRCouchDBRowsLayer::~OGRCouchDBRowsLayer()
-
-{
-}
+OGRCouchDBRowsLayer::~OGRCouchDBRowsLayer() {}
 
 /************************************************************************/
 /*                            ResetReading()                            */
@@ -111,7 +106,7 @@ int OGRCouchDBRowsLayer::FetchNextRows()
     {
         if (!bHasEsperluet)
         {
-            bHasEsperluet = TRUE;
+            /*bHasEsperluet = TRUE;*/
             osURI += "?";
         }
 

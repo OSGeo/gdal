@@ -48,7 +48,7 @@
 #define DAYSPERLYEAR    366
 
 #define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
-#define LEAPS_THRU_END_OF(y)    ((y) / 4 - (y) / 100 + (y) / 400)
+#define LEAPS_THROUGH_END_OF(y)    ((y) / 4 - (y) / 100 + (y) / 400)
 
 static const int mon_lengths[2][MONSPERYEAR] = {
   {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
@@ -107,8 +107,8 @@ struct tm * myCPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
         if (days < 0)
             --newy;
         days -= (newy - y) * DAYSPERNYEAR +
-            LEAPS_THRU_END_OF(newy - 1) -
-            LEAPS_THRU_END_OF(y - 1);
+            LEAPS_THROUGH_END_OF(newy - 1) -
+            LEAPS_THROUGH_END_OF(y - 1);
         y = newy;
     }
     pRet->tm_year = (int) (y - TM_YEAR_BASE);

@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
- * 
+ *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  The OGRFeature class implementation. 
+ * Purpose:  The OGRFeature class implementation.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -34,6 +34,7 @@
 #include "cpl_time.h"
 #include <vector>
 #include <errno.h>
+#include <new>
 
 CPL_CVSID("$Id$");
 
@@ -47,7 +48,7 @@ CPL_CVSID("$Id$");
  * Note that the OGRFeature will increment the reference count of it's
  * defining OGRFeatureDefn.  Destruction of the OGRFeatureDefn before
  * destruction of all OGRFeatures that depend on it is likely to result in
- * a crash. 
+ * a crash.
  *
  * This method is the same as the C function OGR_F_Create().
  *
@@ -55,28 +56,31 @@ CPL_CVSID("$Id$");
  * adhere.
  */
 
-OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
-
+OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
+            nFID(OGRNullFID),
+            poDefn(poDefnIn),
+            m_pszNativeData(NULL),
+            m_pszNativeMediaType(NULL),
+            m_pszStyleString(NULL),
+            m_poStyleTable(NULL),
+            m_pszTmpFieldValue(NULL)
 {
-    m_pszStyleString = NULL;
-    m_poStyleTable = NULL;
-    m_pszTmpFieldValue = NULL;
     poDefnIn->Reference();
-    poDefn = poDefnIn;
-
-    nFID = OGRNullFID;
 
     // Allocate array of fields and initialize them to the unset special value
-    pauFields = (OGRField *) CPLMalloc( poDefn->GetFieldCount() *
+    pauFields = (OGRField *) VSI_MALLOC_VERBOSE( poDefn->GetFieldCount() *
                                         sizeof(OGRField) );
 
-    papoGeometries = (OGRGeometry **) CPLCalloc( poDefn->GetGeomFieldCount(),
+    papoGeometries = (OGRGeometry **) VSI_CALLOC_VERBOSE( poDefn->GetGeomFieldCount(),
                                         sizeof(OGRGeometry*) );
 
-    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+    if( pauFields != NULL )
     {
-        pauFields[i].Set.nMarker1 = OGRUnsetMarker;
-        pauFields[i].Set.nMarker2 = OGRUnsetMarker;
+        for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+        {
+            pauFields[i].Set.nMarker1 = OGRUnsetMarker;
+            pauFields[i].Set.nMarker2 = OGRUnsetMarker;
+        }
     }
 }
 
@@ -89,23 +93,22 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
  * Note that the OGRFeature will increment the reference count of it's
  * defining OGRFeatureDefn.  Destruction of the OGRFeatureDefn before
  * destruction of all OGRFeatures that depend on it is likely to result in
- * a crash. 
+ * a crash.
  *
  * This function is the same as the C++ method OGRFeature::OGRFeature().
- * 
- * @param hDefn handle to the feature class (layer) definition to 
+ *
+ * @param hDefn handle to the feature class (layer) definition to
  * which the feature will adhere.
- * 
- * @return an handle to the new feature object with null fields and 
- * no geometry.
+ *
+ * @return an handle to the new feature object with null fields and
+ * no geometry, or, starting with GDAL 2.1, NULL in case out of memory situation.
  */
 
 OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 
 {
     VALIDATE_POINTER1( hDefn, "OGR_F_Create", NULL );
-
-    return (OGRFeatureH) new OGRFeature( (OGRFeatureDefn *) hDefn );
+    return (OGRFeatureH) OGRFeature::CreateFeature( (OGRFeatureDefn*) hDefn );
 }
 
 /************************************************************************/
@@ -117,14 +120,14 @@ OGRFeature::~OGRFeature()
 {
     int i;
 
-    int nFieldcount = poDefn->GetFieldCount();
+    int nFieldcount = ( pauFields != NULL ) ? poDefn->GetFieldCount() : 0;
     for( i = 0; i < nFieldcount; i++ )
     {
         OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(i);
-        
+
         if( !IsFieldSet(i) )
             continue;
-    
+
         switch( poFDefn->GetType() )
         {
           case OFTString:
@@ -152,19 +155,21 @@ OGRFeature::~OGRFeature()
             break;
         }
     }
-    
-    int nGeomFieldCount = poDefn->GetGeomFieldCount();
+
+    int nGeomFieldCount = (papoGeometries != NULL) ? poDefn->GetGeomFieldCount() : 0;
     for( i = 0; i < nGeomFieldCount; i++ )
     {
         delete papoGeometries[i];
     }
-    
+
     poDefn->Release();
 
     CPLFree( pauFields );
     CPLFree( papoGeometries );
     CPLFree(m_pszStyleString);
     CPLFree(m_pszTmpFieldValue);
+    CPLFree( m_pszNativeData );
+    CPLFree( m_pszNativeMediaType );
 }
 
 /************************************************************************/
@@ -174,13 +179,13 @@ OGRFeature::~OGRFeature()
  * \brief Destroy feature
  *
  * The feature is deleted, but within the context of the GDAL/OGR heap.
- * This is necessary when higher level applications use GDAL/OGR from a 
+ * This is necessary when higher level applications use GDAL/OGR from a
  * DLL and they want to delete a feature created within the DLL.  If the
  * delete is done in the calling application the memory will be freed onto
- * the application heap which is inappropriate. 
+ * the application heap which is inappropriate.
  *
  * This function is the same as the C++ method OGRFeature::DestroyFeature().
- * 
+ *
  * @param hFeat handle to the feature to destroy.
  */
 
@@ -197,22 +202,32 @@ void OGR_F_Destroy( OGRFeatureH hFeat )
 /**
  * \brief Feature factory.
  *
- * This is essentially a feature factory, useful for               
- * applications creating features but wanting to ensure they       
- * are created out of the OGR/GDAL heap.                           
- * 
+ * This is essentially a feature factory, useful for
+ * applications creating features but wanting to ensure they
+ * are created out of the OGR/GDAL heap.
+ *
  * This method is the same as the C function OGR_F_Create().
  *
  * @param poDefn Feature definition defining schema.
- * 
- * @return new feature object with null fields and no geometry.  May be
- * deleted with delete. 
+ *
+ * @return new feature object with null fields and no geometry, or, starting with
+ * GDAL 2.1, NULL in case of out of memory situation.  May be
+ * deleted with DestroyFeature().
  */
 
 OGRFeature *OGRFeature::CreateFeature( OGRFeatureDefn *poDefn )
 
 {
-    return new OGRFeature( poDefn );
+    OGRFeature* poFeature = new (std::nothrow) OGRFeature( poDefn );
+    if( poFeature == NULL )
+        return NULL;
+    if( (poFeature->pauFields == NULL && poDefn->GetFieldCount() != 0) ||
+        (poFeature->papoGeometries == NULL && poDefn->GetGeomFieldCount() != 0) )
+    {
+        delete poFeature;
+        return NULL;
+    }
+    return poFeature;
 }
 
 /************************************************************************/
@@ -223,13 +238,13 @@ OGRFeature *OGRFeature::CreateFeature( OGRFeatureDefn *poDefn )
  * \brief Destroy feature
  *
  * The feature is deleted, but within the context of the GDAL/OGR heap.
- * This is necessary when higher level applications use GDAL/OGR from a 
+ * This is necessary when higher level applications use GDAL/OGR from a
  * DLL and they want to delete a feature created within the DLL.  If the
  * delete is done in the calling application the memory will be freed onto
- * the application heap which is inappropriate. 
+ * the application heap which is inappropriate.
  *
  * This method is the same as the C function OGR_F_Destroy().
- * 
+ *
  * @param poFeature the feature to delete.
  */
 
@@ -295,8 +310,8 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
  *
  * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the OGRFeatureDefn (checking not yet
- * implemented). 
- */ 
+ * implemented).
+ */
 
 OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 
@@ -321,7 +336,7 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
  * SetGeometry(), except that this function assumes ownership of the
  * passed geometry (even in case of failure of that function).
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeature::SetGeometryDirectly.
  *
  * @param hFeat handle to the feature on which to apply the geometry.
@@ -329,13 +344,13 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
  *
  * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the OGRFeatureDefn (checking not yet
- * implemented). 
- */ 
+ * implemented).
+ */
 
 OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometryDirectly", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometryDirectly", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetGeometryDirectly((OGRGeometry *) hGeom);
 }
@@ -349,7 +364,7 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
  *
  * This method updates the features geometry, and operate exactly as
  * SetGeometryDirectly(), except that this method does not assume ownership
- * of the passed geometry, but instead makes a copy of it. 
+ * of the passed geometry, but instead makes a copy of it.
  *
  * This method is the same as the C function OGR_F_SetGeometry().
  *
@@ -359,8 +374,8 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
  *
  * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the OGRFeatureDefn (checking not yet
- * implemented). 
- */ 
+ * implemented).
+ */
 
 OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
 
@@ -380,7 +395,7 @@ OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
  *
  * This function updates the features geometry, and operate exactly as
  * SetGeometryDirectly(), except that this function does not assume ownership
- * of the passed geometry, but instead makes a copy of it. 
+ * of the passed geometry, but instead makes a copy of it.
  *
  * This function is the same as the C++ OGRFeature::SetGeometry().
  *
@@ -389,13 +404,13 @@ OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
  *
  * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the OGRFeatureDefn (checking not yet
- * implemented). 
- */ 
+ * implemented).
+ */
 
 OGRErr OGR_F_SetGeometry( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometry", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometry", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetGeometry((OGRGeometry *) hGeom);
 }
@@ -409,7 +424,7 @@ OGRErr OGR_F_SetGeometry( OGRFeatureH hFeat, OGRGeometryH hGeom )
  *
  * Fetch the geometry from this feature, and clear the reference to the
  * geometry on the feature.  This is a mechanism for the application to
- * take over ownship of the geometry from the feature without copying. 
+ * take over ownership of the geometry from the feature without copying.
  * Sort of an inverse to SetGeometryDirectly().
  *
  * After this call the OGRFeature will have a NULL geometry.
@@ -452,7 +467,7 @@ OGRGeometry *OGRFeature::StealGeometry(int iGeomField)
  *
  * Fetch the geometry from this feature, and clear the reference to the
  * geometry on the feature.  This is a mechanism for the application to
- * take over ownship of the geometry from the feature without copying. 
+ * take over ownership of the geometry from the feature without copying.
  * Sort of an inverse to OGR_FSetGeometryDirectly().
  *
  * After this call the OGRFeature will have a NULL geometry.
@@ -478,7 +493,7 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
  * \brief Fetch pointer to feature geometry.
  *
  * This method is the same as the C function OGR_F_GetGeometryRef().
- * 
+ *
  * Starting with GDAL 1.11, this is equivalent to calling
  * OGRFeature::GetGeomFieldRef(0).
  *
@@ -513,7 +528,7 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeometryRef", NULL );
 
-    OGRFeature* poFeature = (OGRFeature *) hFeat; 
+    OGRFeature* poFeature = (OGRFeature *) hFeat;
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
 
     if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != NULL &&
@@ -522,6 +537,7 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
         OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(poGeom->getGeometryType());
         poGeom = OGRGeometryFactory::forceTo(poFeature->StealGeometry(), eTargetType);
         poFeature->SetGeomFieldDirectly(0, poGeom);
+        poGeom = poFeature->GetGeometryRef();
     }
 
     return (OGRGeometryH)poGeom;
@@ -599,7 +615,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldRef", NULL );
 
-    OGRFeature* poFeature = (OGRFeature *) hFeat; 
+    OGRFeature* poFeature = (OGRFeature *) hFeat;
     OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iField);
 
     if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != NULL &&
@@ -608,6 +624,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
         OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(poGeom->getGeometryType());
         poGeom = OGRGeometryFactory::forceTo(poFeature->StealGeometry(iField), eTargetType);
         poFeature->SetGeomFieldDirectly(iField, poGeom);
+        poGeom = poFeature->GetGeomFieldRef(iField);
     }
 
     return (OGRGeometryH)poGeom;
@@ -632,11 +649,11 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
  * without assigning new one.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is invalid,
- * or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for the
+ * or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for the
  * OGRFeatureDefn (checking not yet implemented).
  *
  * @since GDAL 1.11
- */ 
+ */
 
 OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
 
@@ -647,11 +664,46 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
         return OGRERR_FAILURE;
     }
 
-    delete papoGeometries[iField];
-    papoGeometries[iField] = poGeomIn;
+    /*
+    // (Verify the type) and set/unset flags.
+    OGRwkbGeometryType eMyGeomType = poDefn->GetGeomFieldDefn(iField)->GetType();
 
-    // I should be verifying that the geometry matches the defn's type.
-    
+    if( eMyGeomType != wkbUnknown )
+    {
+        OGRwkbGeometryType eGeomInType = poGeomIn->getGeometryType();
+
+          This leads to segfaults in tests probably because issues with simple vs multi geometries
+          if( wkbFlatten(eGeomInType) != wkbFlatten(eMyGeomType) )
+          {
+          delete poGeomIn;
+          return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+          }
+
+        if( wkbHasZ(eMyGeomType) && !wkbHasZ(eGeomInType) )
+        {
+            poGeomIn->set3D(TRUE);
+        }
+        else if( !wkbHasZ(eMyGeomType) && wkbHasZ(eGeomInType) )
+        {
+            poGeomIn->set3D(FALSE);
+        }
+        if( wkbHasM(eMyGeomType) && !wkbHasM(eGeomInType) )
+        {
+            poGeomIn->setMeasured(TRUE);
+        }
+        else if( !wkbHasM(eMyGeomType) && wkbHasM(eGeomInType) )
+        {
+            poGeomIn->setMeasured(FALSE);
+        }
+    }
+    */
+
+    if( papoGeometries[iField] != poGeomIn )
+    {
+        delete papoGeometries[iField];
+        papoGeometries[iField] = poGeomIn;
+    }
+
     return OGRERR_NONE;
 }
 
@@ -666,7 +718,7 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
  * SetGeomField(), except that this function assumes ownership of the
  * passed geometry (even in case of failure of that function).
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeature::SetGeomFieldDirectly.
  *
  * @param hFeat handle to the feature on which to apply the geometry.
@@ -678,13 +730,13 @@ OGRErr OGRFeature::SetGeomFieldDirectly( int iField, OGRGeometry * poGeomIn )
  * OGRFeatureDefn (checking not yet implemented).
  *
  * @since GDAL 1.11
- */ 
+ */
 
 OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
                                    OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomFieldDirectly", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomFieldDirectly", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetGeomFieldDirectly(iField,
                                                         (OGRGeometry *) hGeom);
@@ -699,7 +751,7 @@ OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
  *
  * This method updates the features geometry, and operate exactly as
  * SetGeomFieldDirectly(), except that this method does not assume ownership
- * of the passed geometry, but instead makes a copy of it. 
+ * of the passed geometry, but instead makes a copy of it.
  *
  * This method is the same as the C function OGR_F_SetGeomField().
  *
@@ -713,7 +765,7 @@ OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
  * OGRFeatureDefn (checking not yet implemented).
  *
  * @since GDAL 1.11
- */ 
+ */
 
 OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
 
@@ -721,15 +773,18 @@ OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
     if( iField < 0 || iField >= GetGeomFieldCount() )
         return OGRERR_FAILURE;
 
-    delete papoGeometries[iField];
+    if( papoGeometries[iField] != poGeomIn )
+    {
+        delete papoGeometries[iField];
 
-    if( poGeomIn != NULL )
-        papoGeometries[iField] = poGeomIn->clone();
-    else
-        papoGeometries[iField] = NULL;
+        if( poGeomIn != NULL )
+            papoGeometries[iField] = poGeomIn->clone();
+        else
+            papoGeometries[iField] = NULL;
+    }
 
     // I should be verifying that the geometry matches the defn's type.
-    
+
     return OGRERR_NONE;
 }
 
@@ -742,7 +797,7 @@ OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
  *
  * This function updates the features geometry, and operate exactly as
  * SetGeometryDirectly(), except that this function does not assume ownership
- * of the passed geometry, but instead makes a copy of it. 
+ * of the passed geometry, but instead makes a copy of it.
  *
  * This function is the same as the C++ OGRFeature::SetGeomField().
  *
@@ -752,13 +807,13 @@ OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
  *
  * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the OGRFeatureDefn (checking not yet
- * implemented). 
- */ 
+ * implemented).
+ */
 
 OGRErr OGR_F_SetGeomField( OGRFeatureH hFeat, int iField, OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomField", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomField", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetGeomField(iField, (OGRGeometry *) hGeom);
 }
@@ -775,28 +830,70 @@ OGRErr OGR_F_SetGeomField( OGRFeatureH hFeat, int iField, OGRGeometryH hGeom )
  *
  * This method is the same as the C function OGR_F_Clone().
  *
- * @return new feature, exactly matching this feature.
+ * @return new feature, exactly matching this feature. Or, starting with GDAL 2.1,
+ *         NULL in case of out of memory situation.
  */
 
 OGRFeature *OGRFeature::Clone()
 
 {
     int i;
-    OGRFeature  *poNew = new OGRFeature( poDefn );
+    OGRFeature  *poNew = CreateFeature( poDefn );
+    if( poNew == NULL )
+        return NULL;
 
     for( i = 0; i < poDefn->GetFieldCount(); i++ )
     {
-        poNew->SetField( i, pauFields + i );
+        if( !poNew->SetFieldInternal( i, pauFields + i ) )
+        {
+            delete poNew;
+            return NULL;
+        }
     }
     for( i = 0; i < poDefn->GetGeomFieldCount(); i++ )
     {
-        poNew->SetGeomField( i, papoGeometries[i] );
+        if( papoGeometries[i] != NULL )
+        {
+            poNew->papoGeometries[i] = papoGeometries[i]->clone();
+            if( poNew->papoGeometries[i] == NULL )
+            {
+                delete poNew;
+                return NULL;
+            }
+        }
     }
 
-    if( GetStyleString() != NULL )
-        poNew->SetStyleString(GetStyleString());
+    if( m_pszStyleString != NULL )
+    {
+        poNew->m_pszStyleString = VSI_STRDUP_VERBOSE(m_pszStyleString);
+        if( poNew->m_pszStyleString == NULL )
+        {
+            delete poNew;
+            return NULL;
+        }
+    }
 
     poNew->SetFID( GetFID() );
+
+    if( m_pszNativeData != NULL )
+    {
+        poNew->m_pszNativeData = VSI_STRDUP_VERBOSE(m_pszNativeData);
+        if( poNew->m_pszNativeData == NULL )
+        {
+            delete poNew;
+            return NULL;
+        }
+    }
+
+    if( m_pszNativeMediaType != NULL )
+    {
+        poNew->m_pszNativeMediaType = VSI_STRDUP_VERBOSE(m_pszNativeMediaType);
+        if( poNew->m_pszNativeMediaType == NULL )
+        {
+            delete poNew;
+            return NULL;
+        }
+    }
 
     return poNew;
 }
@@ -902,6 +999,12 @@ OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldDefnRef", NULL );
 
+    if( i < 0 || i >= ((OGRFeature *) hFeat)->GetFieldCount() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", i);
+        return NULL;
+    }
+
     return (OGRFieldDefnH) ((OGRFeature *) hFeat)->GetFieldDefnRef(i);
 }
 
@@ -911,14 +1014,14 @@ OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 
 /**
  * \fn int OGRFeature::GetFieldIndex( const char * pszName );
- * 
+ *
  * \brief Fetch the field index given field name.
  *
- * This is a cover for the OGRFeatureDefn::GetFieldIndex() method. 
+ * This is a cover for the OGRFeatureDefn::GetFieldIndex() method.
  *
  * This method is the same as the C function OGR_F_GetFieldIndex().
  *
- * @param pszName the name of the field to search for. 
+ * @param pszName the name of the field to search for.
  *
  * @return the field index, or -1 if no matching field is found.
  */
@@ -930,12 +1033,12 @@ OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 /**
  * \brief Fetch the field index given field name.
  *
- * This is a cover for the OGRFeatureDefn::GetFieldIndex() method. 
+ * This is a cover for the OGRFeatureDefn::GetFieldIndex() method.
  *
  * This function is the same as the C++ method OGRFeature::GetFieldIndex().
  *
  * @param hFeat handle to the feature on which the field is found.
- * @param pszName the name of the field to search for. 
+ * @param pszName the name of the field to search for.
  *
  * @return the field index, or -1 if no matching field is found.
  */
@@ -1043,14 +1146,14 @@ OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef( OGRFeatureH hFeat, int i )
 
 /**
  * \fn int OGRFeature::GetGeomFieldIndex( const char * pszName );
- * 
+ *
  * \brief Fetch the geometry field index given geometry field name.
  *
- * This is a cover for the OGRFeatureDefn::GetGeomFieldIndex() method. 
+ * This is a cover for the OGRFeatureDefn::GetGeomFieldIndex() method.
  *
  * This method is the same as the C function OGR_F_GetGeomFieldIndex().
  *
- * @param pszName the name of the geometry field to search for. 
+ * @param pszName the name of the geometry field to search for.
  *
  * @return the geometry field index, or -1 if no matching geometry field is found.
  *
@@ -1064,12 +1167,12 @@ OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef( OGRFeatureH hFeat, int i )
 /**
  * \brief Fetch the geometry field index given geometry field name.
  *
- * This is a cover for the OGRFeatureDefn::GetGeomFieldIndex() method. 
+ * This is a cover for the OGRFeatureDefn::GetGeomFieldIndex() method.
  *
  * This function is the same as the C++ method OGRFeature::GetGeomFieldIndex().
  *
  * @param hFeat handle to the feature on which the geometry field is found.
- * @param pszName the name of the geometry field to search for. 
+ * @param pszName the name of the geometry field to search for.
  *
  * @return the geometry field index, or -1 if no matching geometry field is found.
  *
@@ -1131,7 +1234,7 @@ int OGRFeature::IsFieldSet( int iField )
         }
     }
     else
-    { 
+    {
         return pauFields[iField].Set.nMarker1 != OGRUnsetMarker
             || pauFields[iField].Set.nMarker2 != OGRUnsetMarker;
     }
@@ -1156,9 +1259,9 @@ int OGR_F_IsFieldSet( OGRFeatureH hFeat, int iField )
 
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_IsFieldSet", 0 );
-    
+
     OGRFeature* poFeature = (OGRFeature* )hFeat;
-    
+
     if (iField < 0 || iField >= poFeature->GetFieldCount())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", iField);
@@ -1187,7 +1290,7 @@ void OGRFeature::UnsetField( int iField )
 
     if( poFDefn == NULL || !IsFieldSet(iField) )
         return;
-    
+
     switch( poFDefn->GetType() )
     {
       case OFTRealList:
@@ -1244,14 +1347,14 @@ void OGR_F_UnsetField( OGRFeatureH hFeat, int iField )
 /**
  * \fn OGRField *OGRFeature::GetRawFieldRef( int iField );
  *
- * \brief Fetch a pointer to the internal field value given the index.  
+ * \brief Fetch a pointer to the internal field value given the index.
  *
  * This method is the same as the C function OGR_F_GetRawFieldRef().
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the returned pointer is to an internal data structure, and should
- * not be freed, or modified. 
+ * not be freed, or modified.
  */
 
 /************************************************************************/
@@ -1259,7 +1362,7 @@ void OGR_F_UnsetField( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 
 /**
- * \brief Fetch an handle to the internal field value given the index.  
+ * \brief Fetch an handle to the internal field value given the index.
  *
  * This function is the same as the C++ method OGRFeature::GetRawFieldRef().
  *
@@ -1267,7 +1370,7 @@ void OGR_F_UnsetField( OGRFeatureH hFeat, int iField )
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the returned handle is to an internal data structure, and should
- * not be freed, or modified. 
+ * not be freed, or modified.
  */
 
 OGRField *OGR_F_GetRawFieldRef( OGRFeatureH hFeat, int iField )
@@ -1308,12 +1411,14 @@ int OGRFeature::GetFieldAsInteger( int iField )
         {
         case SPF_FID:
         {
-            int nVal = (nFID > INT_MAX) ? INT_MAX : (nFID < INT_MIN) ? INT_MIN : (int) nFID;
+            int nVal = (nFID > INT_MAX) ? INT_MAX :
+                (nFID < INT_MIN) ? INT_MIN : (int) nFID;
+
             if( (GIntBig)nVal != nFID )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                 "Integer overflow occured when trying to return 64bit integer. "
-                 "Use GetFieldAsInteger64() instead");
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Integer overflow occurred when trying to return "
+                          "64bit integer. Use GetFieldAsInteger64() instead" );
             }
             return nVal;
         }
@@ -1327,27 +1432,29 @@ int OGRFeature::GetFieldAsInteger( int iField )
             return 0;
         }
     }
-    
+
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
-    
+
     if( poFDefn == NULL )
         return 0;
-    
+
     if( !IsFieldSet(iField) )
         return 0;
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTInteger )
         return pauFields[iField].Integer;
     else if( eType == OFTInteger64 )
     {
         GIntBig nVal64 = pauFields[iField].Integer64;
-        int nVal = (nVal64 > INT_MAX) ? INT_MAX : (nVal64 < INT_MIN) ? INT_MIN : (int) nVal64;
+        int nVal = (nVal64 > INT_MAX) ? INT_MAX :
+            (nVal64 < INT_MIN) ? INT_MIN : (int) nVal64;
+
         if( (GIntBig)nVal != nVal64 )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                 "Integer overflow occured when trying to return 64bit integer. "
-                 "Use GetFieldAsInteger64() instead");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Integer overflow occurred when trying to return 64bit "
+                      "integer. Use GetFieldAsInteger64() instead");
         }
         return nVal;
     }
@@ -1422,7 +1529,7 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
         {
         case SPF_FID:
             return nFID;
-        
+
         case SPF_OGR_GEOM_AREA:
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
                 return 0;
@@ -1432,15 +1539,15 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
             return 0;
         }
     }
-    
+
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
-    
+
     if( poFDefn == NULL )
         return 0;
-    
+
     if( !IsFieldSet(iField) )
         return 0;
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTInteger )
         return (GIntBig) pauFields[iField].Integer;
@@ -1529,15 +1636,15 @@ double OGRFeature::GetFieldAsDouble( int iField )
             return 0.0;
         }
     }
-    
+
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
-    
+
     if( poFDefn == NULL )
         return 0.0;
 
     if( !IsFieldSet(iField) )
         return 0.0;
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTReal )
         return pauFields[iField].Real;
@@ -1584,6 +1691,60 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 }
 
 /************************************************************************/
+/*                      OGRFeatureFormatDateTimeBuffer()                */
+/************************************************************************/
+
+#define TEMP_BUFFER_SIZE 80
+static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
+                                           int nYear, int nMonth, int nDay,
+                                           int nHour, int nMinute, float fSecond,
+                                           int nTZFlag )
+{
+    int ms = OGR_GET_MS(fSecond);
+    if( ms != 0 )
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                "%04d/%02d/%02d %02d:%02d:%06.3f",
+                nYear,
+                nMonth,
+                nDay,
+                nHour,
+                nMinute,
+                fSecond );
+    else /* default format */
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                "%04d/%02d/%02d %02d:%02d:%02d",
+                nYear,
+                nMonth,
+                nDay,
+                nHour,
+                nMinute,
+                (int)fSecond );
+
+
+    if( nTZFlag > 1 )
+    {
+        int nOffset = (nTZFlag - 100) * 15;
+        int nHours = (int) (nOffset / 60);  // round towards zero
+        int nMinutes = ABS(nOffset - nHours * 60);
+
+        if( nOffset < 0 )
+        {
+            strcat( szTempBuffer, "-" );
+            nHours = ABS(nHours);
+        }
+        else
+            strcat( szTempBuffer, "+" );
+
+        if( nMinutes == 0 )
+            snprintf( szTempBuffer+strlen(szTempBuffer),
+                    TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
+        else
+            snprintf( szTempBuffer+strlen(szTempBuffer),
+                    TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d%02d", nHours, nMinutes );
+    }
+}
+
+/************************************************************************/
 /*                          GetFieldAsString()                          */
 /************************************************************************/
 
@@ -1599,17 +1760,16 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.  This string is internal, and should not be
- * modified, or freed.  Its lifetime may be very brief. 
+ * modified, or freed.  Its lifetime may be very brief.
  */
 
 const char *OGRFeature::GetFieldAsString( int iField )
 
 {
-#define TEMP_BUFFER_SIZE 80
     char         szTempBuffer[TEMP_BUFFER_SIZE];
 
     CPLFree(m_pszTmpFieldValue);
-    m_pszTmpFieldValue = NULL;            
+    m_pszTmpFieldValue = NULL;
 
     int iSpecialField = iField - poDefn->GetFieldCount();
     if (iSpecialField >= 0)
@@ -1619,7 +1779,10 @@ const char *OGRFeature::GetFieldAsString( int iField )
         {
           case SPF_FID:
             snprintf( szTempBuffer, TEMP_BUFFER_SIZE, CPL_FRMT_GIB, GetFID() );
-            return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+            m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+            if( m_pszTmpFieldValue == NULL )
+                return "";
+            return m_pszTmpFieldValue;
 
           case SPF_OGR_GEOMETRY:
             if( GetGeomFieldCount() > 0 && papoGeometries[0] != NULL )
@@ -1648,23 +1811,26 @@ const char *OGRFeature::GetFieldAsString( int iField )
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
                 return "";
 
-            CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%.16g", 
+            CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%.16g",
                       OGR_G_Area((OGRGeometryH)papoGeometries[0]) );
-            return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+            m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+            if( m_pszTmpFieldValue == NULL )
+                return "";
+            return m_pszTmpFieldValue;
 
           default:
             return "";
         }
     }
-    
+
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
-    
+
     if( poFDefn == NULL )
         return "";
-    
+
     if( !IsFieldSet(iField) )
         return "";
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTString )
     {
@@ -1677,13 +1843,19 @@ const char *OGRFeature::GetFieldAsString( int iField )
     {
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   "%d", pauFields[iField].Integer );
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTInteger64 )
     {
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   CPL_FRMT_GIB, pauFields[iField].Integer64 );
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTReal )
     {
@@ -1696,46 +1868,30 @@ const char *OGRFeature::GetFieldAsString( int iField )
         }
         else
             strcpy( szFormat, "%.15g" );
-        
+
         CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   szFormat, pauFields[iField].Real );
-        
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTDateTime )
     {
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
-                  "%04d/%02d/%02d %02d:%02d:%02d", 
-                  pauFields[iField].Date.Year,
-                  pauFields[iField].Date.Month,
-                  pauFields[iField].Date.Day,
-                  pauFields[iField].Date.Hour,
-                  pauFields[iField].Date.Minute,
-                  pauFields[iField].Date.Second );
-        
-        if( pauFields[iField].Date.TZFlag > 1 )
-        {
-            int nOffset = (pauFields[iField].Date.TZFlag - 100) * 15;
-            int nHours = (int) (nOffset / 60);  // round towards zero
-            int nMinutes = ABS(nOffset - nHours * 60);
+        OGRFeatureFormatDateTimeBuffer(szTempBuffer,
+                                       pauFields[iField].Date.Year,
+                                       pauFields[iField].Date.Month,
+                                       pauFields[iField].Date.Day,
+                                       pauFields[iField].Date.Hour,
+                                       pauFields[iField].Date.Minute,
+                                       pauFields[iField].Date.Second,
+                                       pauFields[iField].Date.TZFlag );
 
-            if( nOffset < 0 )
-            {
-                strcat( szTempBuffer, "-" );
-                nHours = ABS(nHours);
-            }
-            else
-                strcat( szTempBuffer, "+" );
-
-            if( nMinutes == 0 )
-                snprintf( szTempBuffer+strlen(szTempBuffer), 
-                          TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
-            else
-                snprintf( szTempBuffer+strlen(szTempBuffer), 
-                          TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d%02d", nHours, nMinutes );
-        }
-
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTDate )
     {
@@ -1744,16 +1900,29 @@ const char *OGRFeature::GetFieldAsString( int iField )
                   pauFields[iField].Date.Month,
                   pauFields[iField].Date.Day );
 
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTTime )
     {
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%2d:%02d:%02d", 
+        int ms = OGR_GET_MS(pauFields[iField].Date.Second);
+        if( ms != 0 )
+            snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%06.3f",
                   pauFields[iField].Date.Hour,
                   pauFields[iField].Date.Minute,
                   pauFields[iField].Date.Second );
-        
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+        else
+            snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%02d",
+                  pauFields[iField].Date.Hour,
+                  pauFields[iField].Date.Minute,
+                  (int)pauFields[iField].Date.Second );
+
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTIntegerList )
     {
@@ -1770,10 +1939,10 @@ const char *OGRFeature::GetFieldAsString( int iField )
             {
                 break;
             }
-            
+
             if( i > 0 )
                 strcat( szTempBuffer, "," );
-            
+
             strcat( szTempBuffer, szItem );
         }
 
@@ -1781,8 +1950,11 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcat( szTempBuffer, ",...)" );
         else
             strcat( szTempBuffer, ")" );
-        
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTInteger64List )
     {
@@ -1799,10 +1971,10 @@ const char *OGRFeature::GetFieldAsString( int iField )
             {
                 break;
             }
-            
+
             if( i > 0 )
                 strcat( szTempBuffer, "," );
-            
+
             strcat( szTempBuffer, szItem );
         }
 
@@ -1810,8 +1982,11 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcat( szTempBuffer, ",...)" );
         else
             strcat( szTempBuffer, ")" );
-        
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTRealList )
     {
@@ -1826,7 +2001,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         }
         else
             strcpy( szFormat, "%.16g" );
-        
+
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
         {
@@ -1837,10 +2012,10 @@ const char *OGRFeature::GetFieldAsString( int iField )
             {
                 break;
             }
-            
+
             if( i > 0 )
                 strcat( szTempBuffer, "," );
-            
+
             strcat( szTempBuffer, szItem );
         }
 
@@ -1848,8 +2023,11 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcat( szTempBuffer, ",...)" );
         else
             strcat( szTempBuffer, ")" );
-        
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTStringList )
     {
@@ -1859,7 +2037,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         for( i = 0; i < nCount; i++ )
         {
             const char  *pszItem = pauFields[iField].StringList.paList[i];
-            
+
             if( strlen(szTempBuffer) + strlen(pszItem)  + 6
                 >= sizeof(szTempBuffer) )
             {
@@ -1868,7 +2046,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
             if( i > 0 )
                 strcat( szTempBuffer, "," );
-            
+
             strcat( szTempBuffer, pszItem );
         }
 
@@ -1876,14 +2054,17 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcat( szTempBuffer, ",...)" );
         else
             strcat( szTempBuffer, ")" );
-        
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else if( eType == OFTBinary )
     {
         int     nCount = pauFields[iField].Binary.nCount;
         char    *pszHex;
-        
+
         if( nCount > (int) sizeof(szTempBuffer) / 2 - 4 )
             nCount = sizeof(szTempBuffer) / 2 - 4;
 
@@ -1896,11 +2077,13 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
         CPLFree( pszHex );
 
-        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( m_pszTmpFieldValue == NULL )
+            return "";
+        return m_pszTmpFieldValue;
     }
     else
         return "";
-#undef TEMP_BUFFER_SIZE
 }
 
 /************************************************************************/
@@ -1920,7 +2103,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.  This string is internal, and should not be
- * modified, or freed.  Its lifetime may be very brief. 
+ * modified, or freed.  Its lifetime may be very brief.
  */
 
 const char *OGR_F_GetFieldAsString( OGRFeatureH hFeat, int iField )
@@ -1967,7 +2150,7 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
     {
         if( pnCount != NULL )
             *pnCount = 0;
-        
+
         return NULL;
     }
 }
@@ -1981,7 +2164,7 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
  *
  * Currently this function only works for OFTIntegerList fields.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeature::GetFieldAsIntegerList().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -1993,7 +2176,7 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
  * on return the returned pointer may be NULL or non-NULL.
  */
 
-const int *OGR_F_GetFieldAsIntegerList( OGRFeatureH hFeat, int iField, 
+const int *OGR_F_GetFieldAsIntegerList( OGRFeatureH hFeat, int iField,
                                   int *pnCount )
 
 {
@@ -2039,7 +2222,7 @@ const GIntBig *OGRFeature::GetFieldAsInteger64List( int iField, int *pnCount )
     {
         if( pnCount != NULL )
             *pnCount = 0;
-        
+
         return NULL;
     }
 }
@@ -2053,7 +2236,7 @@ const GIntBig *OGRFeature::GetFieldAsInteger64List( int iField, int *pnCount )
  *
  * Currently this function only works for OFTInteger64List fields.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeature::GetFieldAsInteger64List().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -2066,7 +2249,7 @@ const GIntBig *OGRFeature::GetFieldAsInteger64List( int iField, int *pnCount )
  * @since GDAL 2.0
  */
 
-const GIntBig *OGR_F_GetFieldAsInteger64List( OGRFeatureH hFeat, int iField, 
+const GIntBig *OGR_F_GetFieldAsInteger64List( OGRFeatureH hFeat, int iField,
                                   int *pnCount )
 
 {
@@ -2111,7 +2294,7 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
     {
         if( pnCount != NULL )
             *pnCount = 0;
-        
+
         return NULL;
     }
 }
@@ -2125,7 +2308,7 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
  *
  * Currently this function only works for OFTRealList fields.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeature::GetFieldAsDoubleList().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -2137,7 +2320,7 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
  * on return the returned pointer may be NULL or non-NULL.
  */
 
-const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField, 
+const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
                                           int *pnCount )
 
 {
@@ -2173,10 +2356,10 @@ char **OGRFeature::GetFieldAsStringList( int iField )
 
     if( poFDefn == NULL )
         return NULL;
-    
+
     if( !IsFieldSet(iField) )
         return NULL;
-    
+
     if( poFDefn->GetType() == OFTStringList )
     {
         return pauFields[iField].StringList.paList;
@@ -2199,7 +2382,7 @@ char **OGRFeature::GetFieldAsStringList( int iField )
  * The returned list is terminated by a NULL pointer. The number of
  * elements can also be calculated using CSLCount().
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeature::GetFieldAsStringList().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -2244,10 +2427,10 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
 
     if( poFDefn == NULL )
         return NULL;
-    
+
     if( !IsFieldSet(iField) )
         return NULL;
-    
+
     if( poFDefn->GetType() == OFTBinary )
     {
         *pnBytes = pauFields[iField].Binary.nCount;
@@ -2273,7 +2456,7 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
  *
  * This method only works for OFTBinary and OFTString fields.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeature::GetFieldAsBinary().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -2310,7 +2493,7 @@ GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
  * @param pnDay (1-31)
  * @param pnHour (0-23)
  * @param pnMinute (0-59)
- * @param pnSecond (0-59)
+ * @param pfSecond (0-59 with millisecond accuracy)
  * @param pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  *
  * @return TRUE on success or FALSE on failure.
@@ -2318,7 +2501,7 @@ GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
 
 int OGRFeature::GetFieldAsDateTime( int iField,
                                     int *pnYear, int *pnMonth, int *pnDay,
-                                    int *pnHour, int *pnMinute, int *pnSecond,
+                                    int *pnHour, int *pnMinute, float *pfSecond,
                                     int *pnTZFlag )
 
 {
@@ -2326,10 +2509,10 @@ int OGRFeature::GetFieldAsDateTime( int iField,
 
     if( poFDefn == NULL )
         return FALSE;
-    
+
     if( !IsFieldSet(iField) )
         return FALSE;
-    
+
     if( poFDefn->GetType() == OFTDate
         || poFDefn->GetType() == OFTTime
         || poFDefn->GetType() == OFTDateTime )
@@ -2345,17 +2528,29 @@ int OGRFeature::GetFieldAsDateTime( int iField,
             *pnHour = pauFields[iField].Date.Hour;
         if( pnMinute )
             *pnMinute = pauFields[iField].Date.Minute;
-        if( pnSecond )
-            *pnSecond = pauFields[iField].Date.Second;
+        if( pfSecond )
+            *pfSecond = pauFields[iField].Date.Second;
         if( pnTZFlag )
             *pnTZFlag = pauFields[iField].Date.TZFlag;
-        
+
         return TRUE;
     }
     else
     {
         return FALSE;
     }
+}
+
+int OGRFeature::GetFieldAsDateTime( int iField,
+                                    int *pnYear, int *pnMonth, int *pnDay,
+                                    int *pnHour, int *pnMinute, int *pnSecond,
+                                    int *pnTZFlag )
+{
+    float fSecond;
+    int bRet = GetFieldAsDateTime( iField, pnYear, pnMonth, pnDay, pnHour, pnMinute,
+                                   &fSecond, pnTZFlag);
+    if( bRet && pnSecond ) *pnSecond = (int)fSecond;
+    return bRet;
 }
 
 /************************************************************************/
@@ -2367,7 +2562,7 @@ int OGRFeature::GetFieldAsDateTime( int iField,
  *
  * Currently this method only works for OFTDate, OFTTime and OFTDateTime fields.
  *
- * This function is the same as the C++ method 
+ * This function is the same as the C++ method
  * OGRFeature::GetFieldAsDateTime().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -2381,19 +2576,64 @@ int OGRFeature::GetFieldAsDateTime( int iField,
  * @param pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  *
  * @return TRUE on success or FALSE on failure.
+ *
+ * @see Use OGR_F_GetFieldAsDateTimeEx() for second with millisecond accuracy.
  */
 
 int OGR_F_GetFieldAsDateTime( OGRFeatureH hFeat, int iField,
                               int *pnYear, int *pnMonth, int *pnDay,
                               int *pnHour, int *pnMinute, int *pnSecond,
                               int *pnTZFlag )
-    
+
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTime", 0 );
 
+    float fSecond;
+    int bRet =((OGRFeature *)hFeat)->GetFieldAsDateTime( iField,
+                                                      pnYear, pnMonth, pnDay,
+                                                      pnHour, pnMinute,&fSecond,
+                                                      pnTZFlag );
+    if( bRet && pnSecond ) *pnSecond = (int)fSecond;
+    return bRet;
+}
+
+/************************************************************************/
+/*                     OGR_F_GetFieldAsDateTimeEx()                     */
+/************************************************************************/
+
+/**
+ * \brief Fetch field value as date and time.
+ *
+ * Currently this method only works for OFTDate, OFTTime and OFTDateTime fields.
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::GetFieldAsDateTime().
+ *
+ * @param hFeat handle to the feature that owned the field.
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pnYear (including century)
+ * @param pnMonth (1-12)
+ * @param pnDay (1-31)
+ * @param pnHour (0-23)
+ * @param pnMinute (0-59)
+ * @param pfSecond (0-59 with millisecond accuracy)
+ * @param pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ *
+ * @return TRUE on success or FALSE on failure.
+ * @since GDAL 2.0
+ */
+
+int OGR_F_GetFieldAsDateTimeEx( OGRFeatureH hFeat, int iField,
+                                int *pnYear, int *pnMonth, int *pnDay,
+                                int *pnHour, int *pnMinute, float *pfSecond,
+                                int *pnTZFlag )
+
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTimeEx", 0 );
+
     return ((OGRFeature *)hFeat)->GetFieldAsDateTime( iField,
                                                       pnYear, pnMonth, pnDay,
-                                                      pnHour, pnMinute,pnSecond,
+                                                      pnHour, pnMinute,pfSecond,
                                                       pnTZFlag );
 }
 
@@ -2435,7 +2675,7 @@ static int OGRFeatureGetIntegerValue(OGRFieldDefn *poFDefn, int nValue)
 /************************************************************************/
 
 /**
- * \brief Set field to integer value. 
+ * \brief Set field to integer value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
  * will be assigned a string representation of the value, but not necessarily
@@ -2488,12 +2728,27 @@ void OGRFeature::SetField( int iField, int nValue )
     {
         char    szTempBuffer[64];
 
-        sprintf( szTempBuffer, "%d", nValue );
+        snprintf( szTempBuffer, sizeof(szTempBuffer), "%d", nValue );
 
         if( IsFieldSet( iField) )
             CPLFree( pauFields[iField].String );
 
-        pauFields[iField].String = CPLStrdup( szTempBuffer );
+        pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( pauFields[iField].String == NULL )
+        {
+            pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+            pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+        }
+    }
+    else if( eType == OFTStringList )
+    {
+        char    szTempBuffer[64];
+
+        snprintf( szTempBuffer, sizeof(szTempBuffer), "%d", nValue );
+        char   *apszValues[2];
+        apszValues[0] = szTempBuffer;
+        apszValues[1] = NULL;
+        SetField( iField, apszValues);
     }
     else
     {
@@ -2506,7 +2761,7 @@ void OGRFeature::SetField( int iField, int nValue )
 /************************************************************************/
 
 /**
- * \brief Set field to integer value. 
+ * \brief Set field to integer value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
  * will be assigned a string representation of the value, but not necessarily
@@ -2533,7 +2788,7 @@ void OGR_F_SetFieldInteger( OGRFeatureH hFeat, int iField, int nValue )
 /************************************************************************/
 
 /**
- * \brief Set field to 64 bit integer value. 
+ * \brief Set field to 64 bit integer value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
  * will be assigned a string representation of the value, but not necessarily
@@ -2558,11 +2813,14 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTInteger )
     {
-        int nVal32 = (nValue < INT_MIN ) ? INT_MIN : (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+        int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
+            (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+
         if( (GIntBig)nVal32 != nValue )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                 "Integer overflow occured when trying to set 32bit field.");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Integer overflow occurred when trying to set "
+                      "32bit field." );
         }
         SetField(iField, nVal32);
     }
@@ -2576,11 +2834,14 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     }
     else if( eType == OFTIntegerList )
     {
-        int nVal32 = (nValue < INT_MIN ) ? INT_MIN : (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+        int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
+            (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+
         if( (GIntBig)nVal32 != nValue )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                 "Integer overflow occured when trying to set 32bit field.");
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Integer overflow occurred when trying to set "
+                      "32bit field." );
         }
         SetField( iField, 1, &nVal32 );
     }
@@ -2597,12 +2858,27 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     {
         char    szTempBuffer[64];
 
-        sprintf( szTempBuffer, CPL_FRMT_GIB, nValue );
+        snprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue );
 
         if( IsFieldSet( iField) )
             CPLFree( pauFields[iField].String );
 
-        pauFields[iField].String = CPLStrdup( szTempBuffer );
+        pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( pauFields[iField].String == NULL )
+        {
+            pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+            pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+        }
+    }
+    else if( eType == OFTStringList )
+    {
+        char    szTempBuffer[64];
+
+        snprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue );
+        char   *apszValues[2];
+        apszValues[0] = szTempBuffer;
+        apszValues[1] = NULL;
+        SetField( iField, apszValues);
     }
     else
     {
@@ -2615,7 +2891,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
 /************************************************************************/
 
 /**
- * \brief Set field to 64 bit integer value. 
+ * \brief Set field to 64 bit integer value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
  * will be assigned a string representation of the value, but not necessarily
@@ -2643,7 +2919,7 @@ void OGR_F_SetFieldInteger64( OGRFeatureH hFeat, int iField, GIntBig nValue )
 /************************************************************************/
 
 /**
- * \brief Set field to double value. 
+ * \brief Set field to double value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
  * will be assigned a string representation of the value, but not necessarily
@@ -2659,11 +2935,11 @@ void OGR_F_SetFieldInteger64( OGRFeatureH hFeat, int iField, GIntBig nValue )
 void OGRFeature::SetField( int iField, double dfValue )
 
 {
-    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
     if( poFDefn == NULL )
         return;
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTReal )
     {
@@ -2702,12 +2978,25 @@ void OGRFeature::SetField( int iField, double dfValue )
     {
         char    szTempBuffer[128];
 
-        CPLsprintf( szTempBuffer, "%.16g", dfValue );
+        CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), "%.16g", dfValue );
 
         if( IsFieldSet( iField) )
             CPLFree( pauFields[iField].String );
 
-        pauFields[iField].String = CPLStrdup( szTempBuffer );
+        pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
+        if( pauFields[iField].String == NULL )
+        {
+            pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+            pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+        }
+    }
+    else if( eType == OFTStringList )
+    {
+        char    szTempBuffer[64];
+
+        CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), "%.16g", dfValue );
+        char   *apszValues[2] = {szTempBuffer, NULL};
+        SetField( iField, apszValues);
     }
     else
     {
@@ -2720,7 +3009,7 @@ void OGRFeature::SetField( int iField, double dfValue )
 /************************************************************************/
 
 /**
- * \brief Set field to double value. 
+ * \brief Set field to double value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
  * will be assigned a string representation of the value, but not necessarily
@@ -2747,7 +3036,7 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
 /************************************************************************/
 
 /**
- * \brief Set field to string value. 
+ * \brief Set field to string value.
  *
  * OFTInteger fields will be set based on an atoi() conversion of the string.
  * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the string.
@@ -2772,20 +3061,25 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 
     if( poFDefn == NULL )
         return;
-    
+
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTString )
     {
         if( IsFieldSet(iField) )
             CPLFree( pauFields[iField].String );
-            
-        pauFields[iField].String = CPLStrdup( pszValue );
+
+        pauFields[iField].String = VSI_STRDUP_VERBOSE( pszValue ? pszValue : "" );
+        if( pauFields[iField].String == NULL )
+        {
+            pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+            pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+        }
     }
     else if( eType == OFTInteger )
     {
         errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
         long nVal = strtol(pszValue, &pszLast, 10);
-        nVal = OGRFeatureGetIntegerValue(poFDefn, nVal);
+        nVal = OGRFeatureGetIntegerValue(poFDefn, (int)nVal);
         pauFields[iField].Integer = (nVal > INT_MAX) ? INT_MAX : (nVal < INT_MIN) ? INT_MIN : (int) nVal;
         if( bWarn && (errno == ERANGE || nVal != (long)pauFields[iField].Integer || !pszLast || *pszLast ) )
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -2805,7 +3099,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                       "Value '%s' of field %s.%s parsed incompletely to real %.16g.",
                       pszValue, poDefn->GetName(), poFDefn->GetNameRef(), pauFields[iField].Real );
     }
-    else if( eType == OFTDate 
+    else if( eType == OFTDate
              || eType == OFTTime
              || eType == OFTDateTime )
     {
@@ -2814,19 +3108,19 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         if( OGRParseDate( pszValue, &sWrkField, 0 ) )
             memcpy( pauFields+iField, &sWrkField, sizeof(sWrkField));
     }
-    else if( eType == OFTIntegerList 
-             || eType == OFTInteger64List 
+    else if( eType == OFTIntegerList
+             || eType == OFTInteger64List
              || eType == OFTRealList )
     {
         char **papszValueList = NULL;
 
         if( pszValue[0] == '(' && strchr(pszValue,':') != NULL )
         {
-            papszValueList = CSLTokenizeString2( 
+            papszValueList = CSLTokenizeString2(
                 pszValue, ",:()", 0 );
         }
 
-        if( CSLCount(papszValueList) == 0
+        if( papszValueList == NULL || *papszValueList == NULL
             || atoi(papszValueList[0]) != CSLCount(papszValueList)-1 )
         {
             /* do nothing - the count does not match entries */
@@ -2884,9 +3178,10 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     {
         if( pszValue && *pszValue )
         {
-            if( pszValue[0] == '(' && strchr(pszValue,':') != NULL )
+            if( pszValue[0] == '(' && strchr(pszValue,':') != NULL &&
+                pszValue[strlen(pszValue)-1] == ')' )
             {
-                char** papszValueList = CSLTokenizeString2( 
+                char** papszValueList = CSLTokenizeString2(
                                                         pszValue, ",:()", 0 );
                 int i, nCount = atoi(papszValueList[0]);
                 std::vector<char*> aosValues;
@@ -2901,7 +3196,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             }
             else
             {
-                const char *papszValues[2] = { pszValue, 0 };
+                const char *papszValues[2] = { pszValue, NULL };
                 SetField( iField, (char **) papszValues );
             }
         }
@@ -2917,7 +3212,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 /************************************************************************/
 
 /**
- * \brief Set field to string value. 
+ * \brief Set field to string value.
  *
  * OFTInteger fields will be set based on an atoi() conversion of the string.
  * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the string.
@@ -2944,7 +3239,7 @@ void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
 /************************************************************************/
 
 /**
- * \brief Set field to list of integers value. 
+ * \brief Set field to list of integers value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
  * and OFTRealList fields.
@@ -2963,8 +3258,9 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
     if( poFDefn == NULL )
         return;
-    
-    if( poFDefn->GetType() == OFTIntegerList )
+
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTIntegerList )
     {
         OGRField        uField;
         int            *panValuesMod = NULL;
@@ -2978,7 +3274,9 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
                 {
                     if( panValuesMod == NULL )
                     {
-                        panValuesMod = (int*)CPLMalloc(nCount * sizeof(int));
+                        panValuesMod = (int*)VSI_MALLOC_VERBOSE(nCount * sizeof(int));
+                        if( panValuesMod == NULL )
+                            return;
                         memcpy(panValuesMod, panValues, nCount * sizeof(int));
                     }
                     panValuesMod[i] = nVal;
@@ -2993,7 +3291,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
         SetField( iField, &uField );
         CPLFree(panValuesMod);
     }
-    else if( poFDefn->GetType() == OFTInteger64List )
+    else if( eType == OFTInteger64List )
     {
         std::vector<GIntBig> anValues;
 
@@ -3002,7 +3300,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
         SetField( iField, nCount, &anValues[0] );
     }
-    else if( poFDefn->GetType() == OFTRealList )
+    else if( eType == OFTRealList )
     {
         std::vector<double> adfValues;
 
@@ -3011,12 +3309,23 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
         SetField( iField, nCount, &adfValues[0] );
     }
-    else if( (poFDefn->GetType() == OFTInteger ||
-              poFDefn->GetType() == OFTInteger64 || 
-              poFDefn->GetType() == OFTReal)
+    else if( (eType == OFTInteger ||
+              eType == OFTInteger64 ||
+              eType == OFTReal)
              && nCount == 1 )
     {
         SetField( iField, panValues[0] );
+    }
+    else if( eType == OFTStringList )
+    {
+        char** papszValues = (char**)VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*));
+        if( papszValues == NULL )
+            return;
+        for( int i=0; i < nCount; i++ )
+            papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf("%d", panValues[i]));
+        papszValues[nCount] = NULL;
+        SetField( iField, papszValues);
+        CSLDestroy(papszValues);
     }
 }
 
@@ -3025,7 +3334,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 /************************************************************************/
 
 /**
- * \brief Set field to list of integers value. 
+ * \brief Set field to list of integers value.
  *
  * This function currently on has an effect of OFTIntegerList, OFTInteger64List
  * and OFTRealList fields.
@@ -3038,7 +3347,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
  * @param panValues the values to assign.
  */
 
-void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField, 
+void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
                                 int nCount, int *panValues )
 
 {
@@ -3052,7 +3361,7 @@ void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \brief Set field to list of 64 bit integers value. 
+ * \brief Set field to list of 64 bit integers value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
  * and OFTRealList fields.
@@ -3072,26 +3381,30 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
 
     if( poFDefn == NULL )
         return;
-    
-    if( poFDefn->GetType() == OFTIntegerList )
+
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTIntegerList )
     {
         std::vector<int> anValues;
 
         for( int i=0; i < nCount; i++ )
         {
             GIntBig nValue = panValues[i];
-            int nVal32 = (nValue < INT_MIN ) ? INT_MIN : (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+            int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
+                (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+
             if( (GIntBig)nVal32 != nValue )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                     "Integer overflow occured when trying to set 32bit field.");
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Integer overflow occurred when trying to set "
+                          "32bit field." );
             }
             anValues.push_back( nVal32 );
         }
 
         SetField( iField, nCount, &anValues[0] );
     }
-    else if( poFDefn->GetType() == OFTInteger64List )
+    else if( eType == OFTInteger64List )
     {
         OGRField uField;
         uField.Integer64List.nCount = nCount;
@@ -3100,7 +3413,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
 
         SetField( iField, &uField );
     }
-    else if( poFDefn->GetType() == OFTRealList )
+    else if( eType == OFTRealList )
     {
         std::vector<double> adfValues;
 
@@ -3109,12 +3422,23 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
 
         SetField( iField, nCount, &adfValues[0] );
     }
-    else if( (poFDefn->GetType() == OFTInteger ||
-              poFDefn->GetType() == OFTInteger64 ||
-              poFDefn->GetType() == OFTReal)
+    else if( (eType == OFTInteger ||
+              eType == OFTInteger64 ||
+              eType == OFTReal)
              && nCount == 1 )
     {
         SetField( iField, panValues[0] );
+    }
+    else if( eType == OFTStringList )
+    {
+        char** papszValues = (char**)VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*));
+        if( papszValues == NULL )
+            return;
+        for( int i=0; i < nCount; i++ )
+            papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf(CPL_FRMT_GIB, panValues[i]));
+        papszValues[nCount] = NULL;
+        SetField( iField, papszValues);
+        CSLDestroy(papszValues);
     }
 }
 
@@ -3123,7 +3447,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
 /************************************************************************/
 
 /**
- * \brief Set field to list of 64 bit integers value. 
+ * \brief Set field to list of 64 bit integers value.
  *
  * This function currently on has an effect of OFTIntegerList, OFTInteger64List
  * and OFTRealList fields.
@@ -3137,7 +3461,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
  * @since GDAL 2.0
  */
 
-void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField, 
+void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
                                 int nCount, const GIntBig *panValues )
 
 {
@@ -3151,7 +3475,7 @@ void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \brief Set field to list of doubles value. 
+ * \brief Set field to list of doubles value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List,
  * OFTRealList fields.
@@ -3170,18 +3494,19 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 
     if( poFDefn == NULL )
         return;
-    
-    if( poFDefn->GetType() == OFTRealList )
+
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTRealList )
     {
         OGRField        uField;
-        
+
         uField.RealList.nCount = nCount;
         uField.Set.nMarker2 = 0;
         uField.RealList.paList = padfValues;
-        
+
         SetField( iField, &uField );
     }
-    else if( poFDefn->GetType() == OFTIntegerList )
+    else if( eType == OFTIntegerList )
     {
         std::vector<int> anValues;
 
@@ -3190,7 +3515,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 
         SetField( iField, nCount, &anValues[0] );
     }
-    else if( poFDefn->GetType() == OFTInteger64List )
+    else if( eType == OFTInteger64List )
     {
         std::vector<GIntBig> anValues;
 
@@ -3199,12 +3524,23 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 
         SetField( iField, nCount, &anValues[0] );
     }
-    else if( (poFDefn->GetType() == OFTInteger ||
-              poFDefn->GetType() == OFTInteger64 || 
-              poFDefn->GetType() == OFTReal)
+    else if( (eType == OFTInteger ||
+              eType == OFTInteger64 ||
+              eType == OFTReal)
              && nCount == 1 )
     {
         SetField( iField, padfValues[0] );
+    }
+    else if( eType == OFTStringList )
+    {
+        char** papszValues = (char**)VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*));
+        if( papszValues == NULL )
+            return;
+        for( int i=0; i < nCount; i++ )
+            papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf("%.16g", padfValues[i]));
+        papszValues[nCount] = NULL;
+        SetField( iField, papszValues);
+        CSLDestroy(papszValues);
     }
 }
 
@@ -3213,7 +3549,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 /************************************************************************/
 
 /**
- * \brief Set field to list of doubles value. 
+ * \brief Set field to list of doubles value.
  *
  * This function currently on has an effect of OFTIntegerList, OFTInteger64List,
  * OFTRealList fields.
@@ -3226,7 +3562,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
  * @param padfValues the values to assign.
  */
 
-void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField, 
+void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
                                int nCount, double *padfValues )
 
 {
@@ -3240,7 +3576,7 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \brief Set field to list of strings value. 
+ * \brief Set field to list of strings value.
  *
  * This method currently on has an effect of OFTStringList fields.
  *
@@ -3257,16 +3593,68 @@ void OGRFeature::SetField( int iField, char ** papszValues )
 
     if( poFDefn == NULL )
         return;
-    
-    if( poFDefn->GetType() == OFTStringList )
+
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTStringList )
     {
         OGRField        uField;
-        
+
         uField.StringList.nCount = CSLCount(papszValues);
         uField.Set.nMarker2 = 0;
         uField.StringList.paList = papszValues;
 
         SetField( iField, &uField );
+    }
+    else if( eType == OFTIntegerList )
+    {
+        int nValues = CSLCount(papszValues);
+        int* panValues = (int*)VSI_MALLOC_VERBOSE(nValues * sizeof(int));
+        if( panValues == NULL )
+            return;
+        for(int i=0;i<nValues;i++)
+        {
+            errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
+            int nVal = atoi(papszValues[i]);
+            if( errno == ERANGE )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "32 bit integer overflow when converting %s",
+                         papszValues[i]);
+                if( papszValues[i][0] == '-' )
+                    nVal = INT_MIN;
+                else
+                    nVal = INT_MAX;
+            }
+            panValues[i] = nVal;
+        }
+        SetField( iField, nValues, panValues );
+        CPLFree(panValues);
+    }
+    else if( eType == OFTInteger64List )
+    {
+        int nValues = CSLCount(papszValues);
+        GIntBig* panValues = (GIntBig*)VSI_MALLOC_VERBOSE(nValues * sizeof(GIntBig));
+        if( panValues == NULL )
+            return;
+        for(int i=0;i<nValues;i++)
+        {
+            panValues[i] = CPLAtoGIntBigEx(papszValues[i], TRUE, NULL);
+        }
+        SetField( iField, nValues, panValues );
+        CPLFree(panValues);
+    }
+    else if( eType == OFTRealList )
+    {
+        int nValues = CSLCount(papszValues);
+        double* padfValues = (double*)VSI_MALLOC_VERBOSE(nValues * sizeof(double));
+        if( padfValues == NULL )
+            return;
+        for(int i=0;i<nValues;i++)
+        {
+            padfValues[i] = CPLAtof(papszValues[i]);
+        }
+        SetField( iField, nValues, padfValues );
+        CPLFree(padfValues);
     }
 }
 
@@ -3275,7 +3663,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
 /************************************************************************/
 
 /**
- * \brief Set field to list of strings value. 
+ * \brief Set field to list of strings value.
  *
  * This function currently on has an effect of OFTStringList fields.
  *
@@ -3286,7 +3674,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
  * @param papszValues the values to assign.
  */
 
-void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField, 
+void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
                                char ** papszValues )
 
 {
@@ -3308,7 +3696,7 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
  *
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nBytes bytes of data being set.
- * @param pabyData the raw data being applied. 
+ * @param pabyData the raw data being applied.
  */
 
 void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
@@ -3318,8 +3706,9 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
 
     if( poFDefn == NULL )
         return;
-    
-    if( poFDefn->GetType() == OFTBinary )
+
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTBinary )
     {
         OGRField        uField;
 
@@ -3329,9 +3718,11 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
 
         SetField( iField, &uField );
     }
-    else if( poFDefn->GetType() == OFTString )
+    else if( eType == OFTString || eType == OFTStringList )
     {
-        char* pszStr = (char*)CPLMalloc(nBytes + 1);
+        char* pszStr = (char*)VSI_MALLOC_VERBOSE(nBytes + 1);
+        if( pszStr == NULL )
+            return;
         memcpy(pszStr, pabyData, nBytes);
         pszStr[nBytes] = 0;
         SetField( iField, pszStr );
@@ -3356,7 +3747,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
  * @param pabyData the data to apply.
  */
 
-void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField, 
+void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
                            int nBytes, GByte *pabyData )
 
 {
@@ -3383,12 +3774,12 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
  * @param nDay (1-31)
  * @param nHour (0-23)
  * @param nMinute (0-59)
- * @param nSecond (0-59)
+ * @param fSecond (0-59, with millisecond accuracy)
  * @param nTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  */
 
 void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
-                           int nHour, int nMinute, int nSecond, 
+                           int nHour, int nMinute, float fSecond,
                            int nTZFlag )
 
 {
@@ -3396,10 +3787,11 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
 
     if( poFDefn == NULL )
         return;
-    
-    if( poFDefn->GetType() == OFTDate 
-        || poFDefn->GetType() == OFTTime 
-        || poFDefn->GetType() == OFTDateTime )
+
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTDate
+        || eType == OFTTime
+        || eType == OFTDateTime )
     {
         if( (GInt16)nYear != nYear )
         {
@@ -3413,8 +3805,21 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
         pauFields[iField].Date.Day = (GByte)nDay;
         pauFields[iField].Date.Hour = (GByte)nHour;
         pauFields[iField].Date.Minute = (GByte)nMinute;
-        pauFields[iField].Date.Second = (GByte)nSecond;
+        pauFields[iField].Date.Second = fSecond;
         pauFields[iField].Date.TZFlag = (GByte)nTZFlag;
+    }
+    else if( eType == OFTString || eType == OFTStringList )
+    {
+        char szTempBuffer[TEMP_BUFFER_SIZE];
+        OGRFeatureFormatDateTimeBuffer(szTempBuffer,
+                                       nYear,
+                                       nMonth,
+                                       nDay,
+                                       nHour,
+                                       nMinute,
+                                       fSecond,
+                                       nTZFlag);
+        SetField( iField, szTempBuffer );
     }
 }
 
@@ -3437,11 +3842,13 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
  * @param nMinute (0-59)
  * @param nSecond (0-59)
  * @param nTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ *
+ * @see Use OGR_F_SetFieldDateTimeEx() for second with millisecond accuracy.
  */
 
-void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField, 
+void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
                              int nYear, int nMonth, int nDay,
-                             int nHour, int nMinute, int nSecond, 
+                             int nHour, int nMinute, int nSecond,
                              int nTZFlag )
 
 
@@ -3449,7 +3856,43 @@ void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDateTime" );
 
     ((OGRFeature *)hFeat)->SetField( iField, nYear, nMonth, nDay,
-                                     nHour, nMinute, nSecond, nTZFlag );
+                                     nHour, nMinute, static_cast<float>(nSecond), nTZFlag );
+}
+
+/************************************************************************/
+/*                      OGR_F_SetFieldDateTimeEx()                      */
+/************************************************************************/
+
+/**
+ * \brief Set field to datetime.
+ *
+ * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
+ * fields.
+ *
+ * @param hFeat handle to the feature that owned the field.
+ * @param iField the field to set, from 0 to GetFieldCount()-1.
+ * @param nYear (including century)
+ * @param nMonth (1-12)
+ * @param nDay (1-31)
+ * @param nHour (0-23)
+ * @param nMinute (0-59)
+ * @param fSecond (0-59, with millisecond accuracy)
+ * @param nTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ *
+ * @since GDAL 2.0
+ */
+
+void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
+                             int nYear, int nMonth, int nDay,
+                             int nHour, int nMinute, float fSecond,
+                             int nTZFlag )
+
+
+{
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDateTimeEx" );
+
+    ((OGRFeature *)hFeat)->SetField( iField, nYear, nMonth, nDay,
+                                     nHour, nMinute, fSecond, nTZFlag );
 }
 
 /************************************************************************/
@@ -3462,7 +3905,7 @@ void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
  * The passed value OGRField must be of exactly the same type as the
  * target field, or an application crash may occur.  The passed value
  * is copied, and will not be affected.  It remains the responsibility of
- * the caller. 
+ * the caller.
  *
  * This method is the same as the C function OGR_F_SetFieldRaw().
  *
@@ -3473,11 +3916,16 @@ void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
 void OGRFeature::SetField( int iField, OGRField * puValue )
 
 {
-    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+    SetFieldInternal( iField, puValue );
+}
 
+bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
+
+{
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
     if( poFDefn == NULL )
-        return;
-    
+        return false;
+
     if( poFDefn->GetType() == OFTInteger )
     {
         pauFields[iField] = *puValue;
@@ -3498,14 +3946,22 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     {
         if( IsFieldSet( iField ) )
             CPLFree( pauFields[iField].String );
-        
+
         if( puValue->String == NULL )
             pauFields[iField].String = NULL;
         else if( puValue->Set.nMarker1 == OGRUnsetMarker
                  && puValue->Set.nMarker2 == OGRUnsetMarker )
             pauFields[iField] = *puValue;
         else
-            pauFields[iField].String = CPLStrdup( puValue->String );
+        {
+            pauFields[iField].String = VSI_STRDUP_VERBOSE( puValue->String );
+            if( pauFields[iField].String == NULL )
+            {
+                pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+                pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+                return false;
+            }
+        }
     }
     else if( poFDefn->GetType() == OFTDate
              || poFDefn->GetType() == OFTTime
@@ -3516,10 +3972,10 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     else if( poFDefn->GetType() == OFTIntegerList )
     {
         int     nCount = puValue->IntegerList.nCount;
-        
+
         if( IsFieldSet( iField ) )
             CPLFree( pauFields[iField].IntegerList.paList );
-        
+
         if( puValue->Set.nMarker1 == OGRUnsetMarker
             && puValue->Set.nMarker2 == OGRUnsetMarker )
         {
@@ -3528,7 +3984,13 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
         else
         {
             pauFields[iField].IntegerList.paList =
-                (int *) CPLMalloc(sizeof(int) * nCount);
+                (int *) VSI_MALLOC_VERBOSE(sizeof(int) * nCount);
+            if( pauFields[iField].IntegerList.paList == NULL )
+            {
+                pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+                pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+                return false;
+            }
             memcpy( pauFields[iField].IntegerList.paList,
                     puValue->IntegerList.paList,
                     sizeof(int) * nCount );
@@ -3538,10 +4000,10 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     else if( poFDefn->GetType() == OFTInteger64List )
     {
         int     nCount = puValue->Integer64List.nCount;
-        
+
         if( IsFieldSet( iField ) )
             CPLFree( pauFields[iField].Integer64List.paList );
-        
+
         if( puValue->Set.nMarker1 == OGRUnsetMarker
             && puValue->Set.nMarker2 == OGRUnsetMarker )
         {
@@ -3550,7 +4012,13 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
         else
         {
             pauFields[iField].Integer64List.paList =
-                (GIntBig *) CPLMalloc(sizeof(GIntBig) * nCount);
+                (GIntBig *) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * nCount);
+            if( pauFields[iField].Integer64List.paList == NULL )
+            {
+                pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+                pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+                return false;
+            }
             memcpy( pauFields[iField].Integer64List.paList,
                     puValue->Integer64List.paList,
                     sizeof(GIntBig) * nCount );
@@ -3572,7 +4040,13 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
         else
         {
             pauFields[iField].RealList.paList =
-                (double *) CPLMalloc(sizeof(double) * nCount);
+                (double *) VSI_MALLOC_VERBOSE(sizeof(double) * nCount);
+            if( pauFields[iField].RealList.paList == NULL )
+            {
+                pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+                pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+                return false;
+            }
             memcpy( pauFields[iField].RealList.paList,
                     puValue->RealList.paList,
                     sizeof(double) * nCount );
@@ -3583,7 +4057,7 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     {
         if( IsFieldSet( iField ) )
             CSLDestroy( pauFields[iField].StringList.paList );
-        
+
         if( puValue->Set.nMarker1 == OGRUnsetMarker
             && puValue->Set.nMarker2 == OGRUnsetMarker )
         {
@@ -3591,9 +4065,21 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
         }
         else
         {
-            pauFields[iField].StringList.paList =
-                CSLDuplicate( puValue->StringList.paList );
-            
+            char** papszNewList = NULL;
+            char** papszIter = puValue->StringList.paList;
+            for(; papszIter != NULL && *papszIter != NULL; ++papszIter )
+            {
+                char** papszNewList2 = CSLAddStringMayFail(papszNewList, *papszIter);
+                if( papszNewList2 == NULL )
+                {
+                    CSLDestroy(papszNewList);
+                    pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+                    pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+                    return false;
+                }
+                papszNewList = papszNewList2;
+            }
+            pauFields[iField].StringList.paList = papszNewList;
             pauFields[iField].StringList.nCount = puValue->StringList.nCount;
             CPLAssert( CSLCount(puValue->StringList.paList)
                        == puValue->StringList.nCount );
@@ -3603,7 +4089,7 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     {
         if( IsFieldSet( iField ) )
             CPLFree( pauFields[iField].Binary.paData );
-        
+
         if( puValue->Set.nMarker1 == OGRUnsetMarker
             && puValue->Set.nMarker2 == OGRUnsetMarker )
         {
@@ -3611,18 +4097,25 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
         }
         else
         {
-            pauFields[iField].Binary.nCount = puValue->Binary.nCount;
             pauFields[iField].Binary.paData =
-                (GByte *) CPLMalloc(puValue->Binary.nCount);
+                (GByte *) VSI_MALLOC_VERBOSE(puValue->Binary.nCount);
+            if( pauFields[iField].Binary.paData == NULL )
+            {
+                pauFields[iField].Set.nMarker1 = OGRUnsetMarker;
+                pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
+                return false;
+            }
             memcpy( pauFields[iField].Binary.paData,
                     puValue->Binary.paData,
                     puValue->Binary.nCount );
+            pauFields[iField].Binary.nCount = puValue->Binary.nCount;
         }
     }
     else
     {
         /* do nothing for other field types */
     }
+    return true;
 }
 
 /************************************************************************/
@@ -3635,7 +4128,7 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
  * The passed value OGRField must be of exactly the same type as the
  * target field, or an application crash may occur.  The passed value
  * is copied, and will not be affected.  It remains the responsibility of
- * the caller. 
+ * the caller.
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
@@ -3674,7 +4167,7 @@ void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, OGRField *psValue )
  * This method is the same as the C function OGR_F_DumpReadable().
  *
  * @param fpOut the stream to write to, such as stdout.  If NULL stdout will
- * be used. 
+ * be used.
  * @param papszOptions NULL terminated list of options (may be NULL)
  */
 
@@ -3825,16 +4318,16 @@ GIntBig OGR_F_GetFID( OGRFeatureH hFeat )
  *
  * This method is the same as the C function OGR_F_SetFID().
  *
- * @param nFID the new feature identifier value to assign.
+ * @param nFIDIn the new feature identifier value to assign.
  *
- * @return On success OGRERR_NONE, or on failure some other value. 
+ * @return On success OGRERR_NONE, or on failure some other value.
  */
 
-OGRErr OGRFeature::SetFID( GIntBig nFID )
+OGRErr OGRFeature::SetFID( GIntBig nFIDIn )
 
 {
-    this->nFID = nFID;
-    
+    nFID = nFIDIn;
+
     return OGRERR_NONE;
 }
 
@@ -3855,13 +4348,13 @@ OGRErr OGRFeature::SetFID( GIntBig nFID )
  * @param hFeat handle to the feature to set the feature id to.
  * @param nFID the new feature identifier value to assign.
  *
- * @return On success OGRERR_NONE, or on failure some other value. 
+ * @return On success OGRERR_NONE, or on failure some other value.
  */
 
 OGRErr OGR_F_SetFID( OGRFeatureH hFeat, GIntBig nFID )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetFID", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFID", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetFID(nFID);
 }
@@ -3892,7 +4385,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
 
     if( GetFID() != poFeature->GetFID() )
         return FALSE;
-    
+
     if( GetDefnRef() != poFeature->GetDefnRef() )
         return FALSE;
 
@@ -3913,7 +4406,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
                        poFeature->GetFieldAsInteger(i) )
                     return FALSE;
                 break;
-                
+
             case OFTInteger64:
                 if( GetFieldAsInteger64(i) !=
                        poFeature->GetFieldAsInteger64(i) )
@@ -3927,7 +4420,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
                 break;
 
             case OFTString:
-                if ( strcmp(GetFieldAsString(i), 
+                if ( strcmp(GetFieldAsString(i),
                             poFeature->GetFieldAsString(i)) != 0 )
                     return FALSE;
                 break;
@@ -3965,7 +4458,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
                 }
                 break;
             }
-            
+
             case OFTRealList:
             {
                 int nCount1, nCount2;
@@ -4007,17 +4500,18 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
             case OFTDateTime:
             {
                 int nYear1, nMonth1, nDay1, nHour1,
-                    nMinute1, nSecond1, nTZFlag1;
+                    nMinute1, nTZFlag1;
                 int nYear2, nMonth2, nDay2, nHour2,
-                    nMinute2, nSecond2, nTZFlag2;
+                    nMinute2, nTZFlag2;
+                float fSecond1, fSecond2;
                 GetFieldAsDateTime(i, &nYear1, &nMonth1, &nDay1,
-                              &nHour1, &nMinute1, &nSecond1, &nTZFlag1);
+                              &nHour1, &nMinute1, &fSecond1, &nTZFlag1);
                 poFeature->GetFieldAsDateTime(i, &nYear2, &nMonth2, &nDay2,
-                              &nHour2, &nMinute2, &nSecond2, &nTZFlag2);
+                              &nHour2, &nMinute2, &fSecond2, &nTZFlag2);
 
                 if( !(nYear1 == nYear2 && nMonth1 == nMonth2 &&
                       nDay1 == nDay2 && nHour1 == nHour2 &&
-                      nMinute1 == nMinute2 && nSecond1 == nSecond2 &&
+                      nMinute1 == nMinute2 && fSecond1 == fSecond2 &&
                       nTZFlag1 == nTZFlag2) )
                     return FALSE;
                 break;
@@ -4036,7 +4530,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
             }
 
             default:
-                if( strcmp(GetFieldAsString(i), 
+                if( strcmp(GetFieldAsString(i),
                            poFeature->GetFieldAsString(i)) != 0 )
                     return FALSE;
                 break;
@@ -4055,7 +4549,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
         if( poThisGeom != NULL && poOtherGeom == NULL )
             return FALSE;
 
-        if( poThisGeom != NULL && poOtherGeom != NULL 
+        if( poThisGeom != NULL && poOtherGeom != NULL
             && (!poThisGeom->Equals( poOtherGeom ) ) )
             return FALSE;
     }
@@ -4126,7 +4620,9 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
     int         iField, *panMap;
     OGRErr      eErr;
 
-    panMap = (int *) VSIMalloc( sizeof(int) * poSrcFeature->GetFieldCount() );
+    panMap = (int *) VSI_MALLOC_VERBOSE( sizeof(int) * poSrcFeature->GetFieldCount() );
+    if( panMap == NULL )
+        return OGRERR_FAILURE;
     for( iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {
         panMap[iField] = GetFieldIndex(
@@ -4145,9 +4641,9 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
     }
 
     eErr = SetFrom( poSrcFeature, panMap, bForgiving );
-    
+
     VSIFree(panMap);
-    
+
     return eErr;
 }
 
@@ -4161,7 +4657,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
  * Overwrite the contents of this feature from the geometry and attributes
  * of another.  The hOtherFeature does not need to have the same
  * OGRFeatureDefn.  Field values are copied by corresponding field names.
- * Field types do not have to exactly match.  OGR_F_SetField*() function 
+ * Field types do not have to exactly match.  OGR_F_SetField*() function
  * conversion rules will be applied as needed.
  *
  * This function is the same as the C++ method OGRFeature::SetFrom().
@@ -4177,14 +4673,14 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
  * not transferred, otherwise an error code.
  */
 
-OGRErr OGR_F_SetFrom( OGRFeatureH hFeat, OGRFeatureH hOtherFeat, 
+OGRErr OGR_F_SetFrom( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
                       int bForgiving )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", CE_Failure );
-    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
 
-    return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat, 
+    return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat,
                                            bForgiving );
 }
 
@@ -4212,7 +4708,7 @@ OGRErr OGR_F_SetFrom( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
  * stored at the corresponding index of the source feature's fields. A value of
  * -1 should be used to ignore the source's field. The array should not be NULL
  * and be as long as the number of fields in the source feature.
- * 
+ *
  * @param bForgiving TRUE if the operation should continue despite lacking
  * output fields matching some of the source fields.
  *
@@ -4268,6 +4764,12 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
     SetStyleString( poSrcFeature->GetStyleString() );
 
 /* -------------------------------------------------------------------- */
+/*      Copy native data.                                               */
+/* -------------------------------------------------------------------- */
+    SetNativeData( poSrcFeature->GetNativeData() );
+    SetNativeMediaType( poSrcFeature->GetNativeMediaType() );
+
+/* -------------------------------------------------------------------- */
 /*      Set the fields by name.                                         */
 /* -------------------------------------------------------------------- */
 
@@ -4288,7 +4790,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
  * Overwrite the contents of this feature from the geometry and attributes
  * of another.  The hOtherFeature does not need to have the same
  * OGRFeatureDefn.  Field values are copied according to the provided indices
- * map. Field types do not have to exactly match.  OGR_F_SetField*() function 
+ * map. Field types do not have to exactly match.  OGR_F_SetField*() function
  * conversion rules will be applied as needed. This is more efficient than
  * OGR_F_SetFrom() in that this doesn't lookup the fields by their names.
  * Particularly useful when the field names don't match.
@@ -4303,7 +4805,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
  * stored at the corresponding index of the source feature's fields. A value of
  * -1 should be used to ignore the source's field. The array should not be NULL
  * and be as long as the number of fields in the source feature.
- * 
+ *
  * @param bForgiving TRUE if the operation should continue despite lacking
  * output fields matching some of the source fields.
  *
@@ -4311,15 +4813,15 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
  * not transferred, otherwise an error code.
  */
 
-OGRErr OGR_F_SetFromWithMap( OGRFeatureH hFeat, OGRFeatureH hOtherFeat, 
+OGRErr OGR_F_SetFromWithMap( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
                       int bForgiving, int *panMap )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", CE_Failure );
-    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", CE_Failure );
-    VALIDATE_POINTER1( panMap, "OGR_F_SetFrom", CE_Failure);
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
+    VALIDATE_POINTER1( panMap, "OGR_F_SetFrom", OGRERR_FAILURE);
 
-    return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat, 
+    return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat,
                                            panMap, bForgiving );
 }
 
@@ -4346,7 +4848,7 @@ OGRErr OGR_F_SetFromWithMap( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
  * stored at the corresponding index of the source feature's fields. A value of
  * -1 should be used to ignore the source's field. The array should not be NULL
  * and be as long as the number of fields in the source feature.
- * 
+ *
  * @param bForgiving TRUE if the operation should continue despite lacking
  * output fields matching some of the source fields.
  *
@@ -4385,7 +4887,7 @@ OGRErr OGRFeature::SetFieldsFrom( OGRFeature * poSrcFeature, int *panMap ,
           case OFTInteger64:
             SetField( iDstField, poSrcFeature->GetFieldAsInteger64( iField ) );
             break;
-            
+
           case OFTReal:
             SetField( iDstField, poSrcFeature->GetFieldAsDouble( iField ) );
             break;
@@ -4442,33 +4944,40 @@ OGRErr OGRFeature::SetFieldsFrom( OGRFeature * poSrcFeature, int *panMap ,
           case OFTDate:
           case OFTDateTime:
           case OFTTime:
-            if (GetFieldDefnRef(iDstField)->GetType() == OFTDate ||
-                GetFieldDefnRef(iDstField)->GetType() == OFTTime ||
-                GetFieldDefnRef(iDstField)->GetType() == OFTDateTime)
+          {
+            OGRFieldType eDstFieldType = GetFieldDefnRef(iDstField)->GetType();
+            if (eDstFieldType == OFTDate ||
+                eDstFieldType == OFTTime ||
+                eDstFieldType == OFTDateTime )
             {
                 SetField( iDstField, poSrcFeature->GetRawFieldRef( iField ) );
             }
-            else if (GetFieldDefnRef(iDstField)->GetType() == OFTString)
+            else if( eDstFieldType == OFTString ||
+                     eDstFieldType == OFTStringList )
             {
                 SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             }
             else if( !bForgiving )
                 return OGRERR_FAILURE;
             break;
+          }
 
           default:
-            if( poSrcFeature->GetFieldDefnRef(iField)->GetType()
-                == GetFieldDefnRef(iDstField)->GetType() )
+          {
+            OGRFieldType eDstFieldType = GetFieldDefnRef(iDstField)->GetType();
+            if( poSrcFeature->GetFieldDefnRef(iField)->GetType() == eDstFieldType )
             {
                 SetField( iDstField, poSrcFeature->GetRawFieldRef(iField) );
             }
-            else if (GetFieldDefnRef(iDstField)->GetType() == OFTString)
+            else if (eDstFieldType == OFTString ||
+                     eDstFieldType == OFTStringList )
             {
                 SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             }
             else if( !bForgiving )
                 return OGRERR_FAILURE;
             break;
+          }
         }
     }
 
@@ -4486,9 +4995,9 @@ OGRErr OGRFeature::SetFieldsFrom( OGRFeature * poSrcFeature, int *panMap ,
  * this string, and ogr_featurestyle.h for services available to parse it.
  *
  * This method is the same as the C function OGR_F_GetStyleString().
- * 
- * @return a reference to a representation in string format, or NULL if 
- * there isn't one. 
+ *
+ * @return a reference to a representation in string format, or NULL if
+ * there isn't one.
  */
 
 const char *OGRFeature::GetStyleString()
@@ -4516,10 +5025,10 @@ const char *OGRFeature::GetStyleString()
  * this string, and ogr_featurestyle.h for services available to parse it.
  *
  * This function is the same as the C++ method OGRFeature::GetStyleString().
- * 
+ *
  * @param hFeat handle to the feature to get the style from.
- * @return a reference to a representation in string format, or NULL if 
- * there isn't one. 
+ * @return a reference to a representation in string format, or NULL if
+ * there isn't one.
  */
 
 const char *OGR_F_GetStyleString( OGRFeatureH hFeat )
@@ -4551,9 +5060,9 @@ void OGRFeature::SetStyleString(const char *pszString)
         CPLFree(m_pszStyleString);
         m_pszStyleString = NULL;
     }
-    
+
     if( pszString )
-        m_pszStyleString = CPLStrdup(pszString);
+        m_pszStyleString = VSI_STRDUP_VERBOSE(pszString);
 }
 
 /************************************************************************/
@@ -4655,7 +5164,7 @@ void OGRFeature::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 /*      feature defn to another with minimum work.                      */
 /************************************************************************/
 
-OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn, 
+OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
                                 int *panRemapSource )
 
 {
@@ -4665,7 +5174,7 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
     if( poNewDefn == NULL )
         poNewDefn = poDefn;
 
-    pauNewFields = (OGRField *) CPLCalloc( poNewDefn->GetFieldCount(), 
+    pauNewFields = (OGRField *) CPLCalloc( poNewDefn->GetFieldCount(),
                                            sizeof(OGRField) );
 
     for( iDstField = 0; iDstField < poDefn->GetFieldCount(); iDstField++ )
@@ -4677,16 +5186,16 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
         }
         else
         {
-            memcpy( pauNewFields + iDstField, 
+            memcpy( pauNewFields + iDstField,
                     pauFields + panRemapSource[iDstField],
                     sizeof(OGRField) );
         }
     }
 
-    /* 
+    /*
     ** We really should be freeing memory for old columns that
     ** are no longer present.  We don't for now because it is a bit messy
-    ** and would take too long to test.  
+    ** and would take too long to test.
     */
 
 /* -------------------------------------------------------------------- */
@@ -4707,7 +5216,7 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
 /*      feature defn to another with minimum work.                      */
 /************************************************************************/
 
-OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn, 
+OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                     int *panRemapSource )
 
 {
@@ -4717,7 +5226,7 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
     if( poNewDefn == NULL )
         poNewDefn = poDefn;
 
-    papoNewGeomFields = (OGRGeometry **) CPLCalloc( poNewDefn->GetGeomFieldCount(), 
+    papoNewGeomFields = (OGRGeometry **) CPLCalloc( poNewDefn->GetGeomFieldCount(),
                                            sizeof(OGRGeometry*) );
 
     for( iDstField = 0; iDstField < poDefn->GetGeomFieldCount(); iDstField++ )
@@ -4733,10 +5242,10 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
         }
     }
 
-    /* 
+    /*
     ** We really should be freeing memory for old columns that
     ** are no longer present.  We don't for now because it is a bit messy
-    ** and would take too long to test.  
+    ** and would take too long to test.
     */
 
 /* -------------------------------------------------------------------- */
@@ -4758,7 +5267,7 @@ OGRStyleTableH OGR_F_GetStyleTable( OGRFeatureH hFeat )
 
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleTable", NULL );
-    
+
     return (OGRStyleTableH) ((OGRFeature *) hFeat)->GetStyleTable( );
 }
 
@@ -4771,7 +5280,7 @@ void OGR_F_SetStyleTableDirectly( OGRFeatureH hFeat,
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleTableDirectly" );
-    
+
     ((OGRFeature *) hFeat)->SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
 }
 
@@ -4785,7 +5294,7 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleTable" );
     VALIDATE_POINTER0( hStyleTable, "OGR_F_SetStyleTable" );
-    
+
     ((OGRFeature *) hFeat)->SetStyleTable( (OGRStyleTable *) hStyleTable);
 }
 
@@ -4805,7 +5314,7 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
  */
 
 void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
-                                      char** papszOptions)
+                                      CPL_UNUSED char** papszOptions)
 {
     int nFieldCount = poDefn->GetFieldCount();
     for(int i = 0; i < nFieldCount; i ++ )
@@ -4820,7 +5329,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
         {
             if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
             {
-                if( EQUALN(pszDefault, "CURRENT", strlen("CURRENT")) )
+                if( STARTS_WITH_CI(pszDefault, "CURRENT") )
                 {
                     time_t t = time(NULL);
                     struct tm brokendown;
@@ -4830,7 +5339,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
                                 brokendown.tm_mday,
                                 brokendown.tm_hour,
                                 brokendown.tm_min,
-                                brokendown.tm_sec,
+                                static_cast<float>(brokendown.tm_sec),
                                 100 );
                 }
                 else
@@ -4842,7 +5351,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
                                &nHour, &nMinute, &fSecond) == 6 )
                     {
                         SetField(i, nYear, nMonth, nDay, nHour, nMinute,
-                                 (int)(fSecond + 0.5), 100);
+                                 fSecond, 100 );
                     }
                 }
             }
@@ -4905,7 +5414,8 @@ void OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
  * This method is the same as the C function OGR_F_Validate().
  *
  * @param nValidateFlags OGR_F_VAL_ALL or combination of OGR_F_VAL_NULL,
- *                       OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT
+ *                       OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT,
+ *                       OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM
  *                       with '|' operator
  * @param bEmitError TRUE if a CPLError() must be emitted when a check fails
  * @return TRUE if all enabled validation tests pass.
@@ -4941,8 +5451,14 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             {
                 OGRwkbGeometryType eType = poDefn->GetGeomFieldDefn(i)->GetType();
                 OGRwkbGeometryType eFType = poGeom->getGeometryType();
-                if( (eType == wkbSetZ(wkbUnknown) && !wkbHasZ(eFType)) ||
-                    (eType != wkbSetZ(wkbUnknown) && eFType != eType) )
+                if( (nValidateFlags & OGR_F_VAL_ALLOW_DIFFERENT_GEOM_DIM) &&
+                    (wkbFlatten(eFType) == wkbFlatten(eType) ||
+                     wkbFlatten(eType) == wkbUnknown) )
+                {
+                    /* ok */
+                }
+                else if( (eType == wkbSetZ(wkbUnknown) && !wkbHasZ(eFType)) ||
+                         (eType != wkbSetZ(wkbUnknown) && eFType != eType) )
                 {
                     bRet = FALSE;
                     if( bEmitError )
@@ -5028,4 +5544,235 @@ int OGR_F_Validate( OGRFeatureH hFeat, int nValidateFlags, int bEmitError )
     VALIDATE_POINTER1( hFeat, "OGR_F_Validate", FALSE );
 
     return ((OGRFeature *) hFeat)->Validate( nValidateFlags, bEmitError );
+}
+
+/************************************************************************/
+/*                          GetNativeData()                             */
+/************************************************************************/
+
+/**
+ * \fn const char* OGRFeature::GetNativeData() const;
+ *
+ * \brief Returns the native data for the feature.
+ *
+ * The native data is the representation in a "natural" form that comes from
+ * the driver that created this feature, or that is aimed at an output driver.
+ * The native data may be in different format, which is indicated by
+ * GetNativeMediaType().
+ *
+ * Note that most drivers do not support storing the native data in the feature
+ * object, and if they do, generally the NATIVE_DATA open option must be passed
+ * at dataset opening.
+ *
+ * The "native data" does not imply it is something more performant or powerful than
+ * what can be obtained with the rest of the API, but it may be useful in
+ * round-tripping scenarios where some characteristics of the underlying format
+ * are not captured otherwise by the OGR abstraction.
+ *
+ * This function is the same as the C function
+ * OGR_F_GetNativeData().
+ *
+ * @return a string with the native data, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+/************************************************************************/
+/*                      ,  OGR_F_GetNativeData()                        */
+/************************************************************************/
+
+/**
+ * \brief Returns the native data for the feature.
+ *
+ * The native data is the representation in a "natural" form that comes from
+ * the driver that created this feature, or that is aimed at an output driver.
+ * The native data may be in different format, which is indicated by
+ * OGR_F_GetNativeMediaType().
+ *
+ * Note that most drivers do not support storing the native data in the feature
+ * object, and if they do, generally the NATIVE_DATA open option must be passed
+ * at dataset opening.
+ *
+ * The "native data" does not imply it is something more performant or powerful than
+ * what can be obtained with the rest of the API, but it may be useful in
+ * round-tripping scenarios where some characteristics of the underlying format
+ * are not captured otherwise by the OGR abstraction.
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::GetNativeData().
+ *
+ * @param hFeat handle to the feature.
+ * @return a string with the native data, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+const char *OGR_F_GetNativeData( OGRFeatureH hFeat )
+
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeData", NULL );
+
+    return ((const OGRFeature *) hFeat)->GetNativeData();
+}
+
+/************************************************************************/
+/*                        GetNativeMediaType()                          */
+/************************************************************************/
+
+/**
+ * \fn const char* OGRFeature::GetNativeMediaType() const;
+ *
+ * \brief Returns the native media type for the feature.
+ *
+ * The native media type is the identifier for the format of the native data.
+ * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
+ * e.g. "application/vnd.geo+json" for JSon.
+ *
+ * This function is the same as the C function
+ * OGR_F_GetNativeMediaType().
+ *
+ * @return a string with the native media type, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+/************************************************************************/
+/*                       OGR_F_GetNativeMediaType()                     */
+/************************************************************************/
+
+/**
+ * \brief Returns the native media type for the feature.
+ *
+ * The native media type is the identifier for the format of the native data.
+ * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
+ * e.g. "application/vnd.geo+json" for JSon.
+ *
+ * This function is the same as the C function
+ * OGR_F_GetNativeMediaType().
+ *
+ * @param hFeat handle to the feature.
+ * @return a string with the native media type, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+const char *OGR_F_GetNativeMediaType( OGRFeatureH hFeat )
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeMediaType", NULL );
+
+    return ((const OGRFeature *) hFeat)->GetNativeMediaType();
+}
+
+/************************************************************************/
+/*                      ,    SetNativeData()                            */
+/************************************************************************/
+
+/**
+ * \brief Sets the native data for the feature.
+ *
+ * The native data is the representation in a "natural" form that comes from
+ * the driver that created this feature, or that is aimed at an output driver.
+ * The native data may be in different format, which is indicated by
+ * GetNativeMediaType().
+ *
+ * This function is the same as the C function
+ * OGR_F_SetNativeData().
+ *
+ * @param pszNativeData a string with the native data, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+void OGRFeature::SetNativeData( const char* pszNativeData )
+{
+    CPLFree( m_pszNativeData );
+    m_pszNativeData = ( pszNativeData ) ? VSI_STRDUP_VERBOSE( pszNativeData ) : NULL;
+}
+
+/************************************************************************/
+/*                      ,   OGR_F_SetNativeData()                       */
+/************************************************************************/
+
+/**
+ * \brief Sets the native data for the feature.
+ *
+ * The native data is the representation in a "natural" form that comes from
+ * the driver that created this feature, or that is aimed at an output driver.
+ * The native data may be in different format, which is indicated by
+ * OGR_F_GetNativeMediaType().
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::SetNativeData().
+ *
+ * @param hFeat handle to the feature.
+ * @param pszNativeData a string with the native data, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+void OGR_F_SetNativeData( OGRFeatureH hFeat, const char* pszNativeData )
+{
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetNativeData" );
+
+    ((OGRFeature *) hFeat)->SetNativeData(pszNativeData);
+}
+
+/************************************************************************/
+/*                      ,  SetNativeMediaType()                         */
+/************************************************************************/
+
+/**
+ * \brief Sets the native media type for the feature.
+ *
+ * The native media type is the identifier for the format of the native data.
+ * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
+ * e.g. "application/vnd.geo+json" for JSon.
+ *
+ * This function is the same as the C function
+ * OGR_F_SetNativeMediaType().
+ *
+ * @param pszNativeMediaType a string with the native media type, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+void OGRFeature::SetNativeMediaType( const char* pszNativeMediaType )
+{
+    CPLFree( m_pszNativeMediaType );
+    m_pszNativeMediaType = ( pszNativeMediaType ) ? VSI_STRDUP_VERBOSE( pszNativeMediaType ) : NULL;
+}
+
+/************************************************************************/
+/*                        , OGR_F_SetNativeMediaType()                  */
+/************************************************************************/
+
+/**
+ * \brief Sets the native media type for the feature.
+ *
+ * The native media type is the identifier for the format of the native data.
+ * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
+ * e.g. "application/vnd.geo+json" for JSon.
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::SetNativeMediaType().
+ *
+ * @param hFeat handle to the feature.
+ * @param pszNativeMediaType a string with the native media type, or NULL if there is none.
+ * @since GDAL 2.1
+ *
+ * @see https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr
+ */
+
+void OGR_F_SetNativeMediaType( OGRFeatureH hFeat, const char* pszNativeMediaType )
+{
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetNativeMediaType" );
+
+    ((OGRFeature *) hFeat)->SetNativeMediaType(pszNativeMediaType);
 }

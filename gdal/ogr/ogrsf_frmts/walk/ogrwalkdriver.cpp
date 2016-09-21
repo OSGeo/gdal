@@ -56,13 +56,13 @@ const char *OGRWalkDriver::GetName()
 OGRDataSource *OGRWalkDriver::Open( const char * pszFilename, int bUpdate )
 {
 
-    if( EQUALN(pszFilename, "PGEO:", strlen("PGEO:")) )
+    if( STARTS_WITH_CI(pszFilename, "PGEO:") )
         return NULL;
 
-    if( EQUALN(pszFilename, "GEOMEDIA:", strlen("GEOMEDIA:")) )
+    if( STARTS_WITH_CI(pszFilename, "GEOMEDIA:") )
         return NULL;
 
-    if( !EQUALN(pszFilename,"WALK:", strlen("WALK:"))
+    if( !STARTS_WITH_CI(pszFilename, "WALK:")
         && !EQUAL(CPLGetExtension(pszFilename), "MDB") )
         return NULL;
 
@@ -81,7 +81,7 @@ OGRDataSource *OGRWalkDriver::Open( const char * pszFilename, int bUpdate )
     //
     if ( !InstallMdbDriver() )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
     }
     else
@@ -115,7 +115,7 @@ OGRDataSource *OGRWalkDriver::CreateDataSource( const char * pszName,
     if( !poDS->Open( pszName, TRUE ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
          "Walk driver doesn't currently support database creation.\n"
                   "Please create database with the `createdb' command." );
         return NULL;

@@ -53,7 +53,7 @@ ogr2ogr -f "GPSTrackMaker" output.gtm input.shp -sql "SELECT field1 AS name, fie
 <pre>
 ogr2ogr -f "GPSTrackMaker" output.gtm PG:"host=hostaddress user=username dbname=db password=mypassword" -sql "select filed1 as name, field2 as color, field3 as type, wkb_geometry from input" -nlt MULTILINESTRING
 </pre>
-<br> 
+<br>
 Note : You need to specify the layer type as POINT, LINESTRING, or MULTILINESTRING.
 </li>
 

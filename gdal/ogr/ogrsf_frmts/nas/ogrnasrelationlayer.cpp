@@ -28,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_nas.h"
 #include "cpl_conv.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "ogr_nas.h"
 
 CPL_CVSID("$Id$");
 
@@ -39,23 +39,20 @@ CPL_CVSID("$Id$");
 /*                        OGRNASRelationLayer()                         */
 /************************************************************************/
 
-OGRNASRelationLayer::OGRNASRelationLayer( OGRNASDataSource *poDSIn )
-
+OGRNASRelationLayer::OGRNASRelationLayer( OGRNASDataSource *poDSIn ) :
+    poFeatureDefn(new OGRFeatureDefn( "ALKIS_beziehungen" )),
+    poDS(poDSIn),
+    bPopulated(false),
+    iNextFeature(0)
 {
-    poDS = poDSIn;
-
-    iNextFeature = 0;
-    bPopulated = FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      Establish the layer fields.                                     */
 /* -------------------------------------------------------------------- */
-    poFeatureDefn = new OGRFeatureDefn( "ALKIS_beziehungen" );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
-    OGRFieldDefn  oFD( "", OFTString );
+    OGRFieldDefn oFD( "", OFTString );
 
     oFD.SetName( "beziehung_von" );
     poFeatureDefn->AddFieldDefn( &oFD );
@@ -102,21 +99,19 @@ OGRFeature *OGRNASRelationLayer::GetNextFeature()
 /*      Loop till we find and translate a feature meeting all our       */
 /*      requirements.                                                   */
 /* ==================================================================== */
-    while( TRUE )
+    while( true )
     {
         // out of features?
-        if( iNextFeature >= (int) aoRelationCollection.size() )
+        if( iNextFeature >= static_cast<int>(aoRelationCollection.size()) )
             return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      The from/type/to values are stored in a packed string with      */
 /*      \0 separators for compactness.  Split out components.           */
 /* -------------------------------------------------------------------- */
-        const char *pszFromID, *pszType, *pszToID;
-
-        pszFromID = aoRelationCollection[iNextFeature].c_str();
-        pszType = pszFromID + strlen(pszFromID) + 1;
-        pszToID = pszType + strlen(pszType) + 1;
+        const char *pszFromID = aoRelationCollection[iNextFeature].c_str();
+        const char *pszType = pszFromID + strlen(pszFromID) + 1;
+        const char *pszToID = pszType + strlen(pszType) + 1;
 
         m_nFeaturesRead++;
 
@@ -156,8 +151,8 @@ GIntBig OGRNASRelationLayer::GetFeatureCount( int bForce )
 
     if( m_poAttrQuery == NULL )
         return aoRelationCollection.size();
-    else
-        return OGRLayer::GetFeatureCount( bForce );
+
+    return OGRLayer::GetFeatureCount( bForce );
 }
 
 /************************************************************************/
@@ -170,14 +165,13 @@ int OGRNASRelationLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    if( EQUAL(pszCap,OLCFastFeatureCount) )
         return bPopulated && m_poAttrQuery == NULL;
 
-    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
 
-    else
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/
@@ -189,7 +183,8 @@ void OGRNASRelationLayer::AddRelation( const char *pszFromID,
                                        const char *pszToID )
 
 {
-    int nMergedLen = strlen(pszFromID) + strlen(pszType) + strlen(pszToID) + 3;
+    const size_t nMergedLen =
+        strlen(pszFromID) + strlen(pszType) + strlen(pszToID) + 3;
     char *pszMerged = (char *) CPLMalloc(nMergedLen);
 
     strcpy( pszMerged, pszFromID );

@@ -28,6 +28,10 @@
 #ifndef PCIDSK_CONFIG_H_INCLUDED
 #define PCIDSK_CONFIG_H_INCLUDED
 
+#if defined(DEBUG_BOOL) || defined(NULL_AS_NULLPTR)
+#include "cpl_port.h"
+#endif
+
 namespace PCIDSK {
 
     typedef unsigned char  uint8;
@@ -82,17 +86,27 @@ namespace PCIDSK {
 #define PCIDSK_SDK_MAJOR_VERSION    0
 #define PCIDSK_SDK_MINOR_VERSION    1
 
+#if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
+#define PCIDSK_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#else
+#define PCIDSK_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#endif
+
 #ifndef GDAL_PCIDSK_DRIVER
 #ifdef PCIDSK_INTERNAL
 #include <stdlib.h>
 extern "C" double CPLAtof(const char*);
-extern "C" int CPLsprintf(char *str, const char* fmt, ...);
-extern "C" int CPLsnprintf(char *str, size_t size, const char* fmt, ...);
+extern "C" int CPLsprintf(char *str, const char* fmt, ...) PCIDSK_PRINT_FUNC_FORMAT(2,3);
+extern "C" int CPLsnprintf(char *str, size_t size, const char* fmt, ...) PCIDSK_PRINT_FUNC_FORMAT(3,4);
 #else
 #define CPLAtof atof
 #define CPLsprintf sprintf
 #define CPLsnprintf snprintf
 #endif
+#endif
+
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#  define snprintf _snprintf
 #endif
 
 #endif // PCIDSK_CONFIG_H_INCLUDED

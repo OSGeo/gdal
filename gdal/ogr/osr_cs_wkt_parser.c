@@ -926,7 +926,7 @@ static YYSIZE_T
 yystrlen (const char *yystr)
 {
   YYSIZE_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
+  for (yylen = 0; yystr != YY_NULL && yystr[yylen]; yylen++)
     continue;
   return yylen;
 }
@@ -1243,7 +1243,7 @@ YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
   yyssp++;
 
  yysetstate:
-  *yyssp = yystate;
+  *yyssp = (yytype_int16)yystate;
 
   if (yyss + yystacksize - 1 <= yyssp)
     {
@@ -1410,8 +1410,6 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-      
-
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1525,6 +1523,7 @@ yyerrlab:
 /*---------------------------------------------------.
 | yyerrorlab -- error raised explicitly by YYERROR.  |
 `---------------------------------------------------*/
+#if 0
 yyerrorlab:
 
   /* Pacify compilers like GCC when the user code never invokes
@@ -1545,6 +1544,7 @@ yyerrorlab:
 /*-------------------------------------------------------------.
 | yyerrlab1 -- common code for both syntax error and YYERROR.  |
 `-------------------------------------------------------------*/
+#endif
 yyerrlab1:
   yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 

@@ -8,13 +8,13 @@
 <h1>Comma Separated Value (.csv)</h1>
 
 <p>OGR supports reading and writing primarily non-spatial tabular data stored in
-text CSV files.  CSV files are a common interchange format between 
+text CSV files.  CSV files are a common interchange format between
 software packages supporting tabular data and are also easily produced
 manually with a text editor or with end-user written scripts or programs.</p>
 
 <p>While in theory .csv files could have any extension, in order to
 auto-recognise the format OGR only supports CSV files ending with the
-extention ".csv".  The datasource name may be either a single CSV file
+extension ".csv".  The datasource name may be either a single CSV file
 or point to a directory.  For a directory to be recognised as a .csv datasource
 at least half the files in the directory need to have the extension .csv.
 One layer (table) is produced from each .csv file accessed.</p>
@@ -23,16 +23,16 @@ One layer (table) is produced from each .csv file accessed.</p>
 .CSV extension, the 'CSV:' prefix can be added before the filename to force
 loading by the CSV driver.</p>
 
-<p>The OGR CSV driver supports reading and writing. Because the CSV format 
-has variable length text lines, reading is done sequentially. Reading 
-features in random order will generally be very slow. OGR CSV layer never
-have any coordinate system.  When reading a field named "WKT" is assumed
+<p>The OGR CSV driver supports reading and writing. Because the CSV format
+has variable length text lines, reading is done sequentially. Reading
+features in random order will generally be very slow. OGR CSV layer might
+have a coordinate system stored in a .prj file (see GeoCSV specification).  When reading a field named "WKT" is assumed
 to contain WKT geometry, but also is treated as a regular field.
 The OGR CSV driver returns all attribute columns as string data types
 if no field type information file (with .csvt extension) is
 available.</p>
 
-<p>Limited type recognition can be done for Integer, Real, String, Date 
+<p>Limited type recognition can be done for Integer, Real, String, Date
 (YYYY-MM-DD), Time (HH:MM:SS+nn), DateTime (YYYY-MM-DD HH:MM:SS+nn) columns
 through a descriptive file with the same name as the CSV file, but a .csvt extension.
 In a single line the types for each column have to be listed with double quotes and
@@ -40,37 +40,41 @@ be comma separated (e.g., "Integer","String"). It is also possible to specify
 explicitly the width and precision of each column, e.g. "Integer(5)","Real(10.7)","String(15)".
 The driver will then use these types as specified for the csv columns.
 Starting with GDAL 2.0, subtypes can be passed between parenthesis, such as
-"Integer(Boolean)", "Integer(Int16)" and "Real(Float32)"</p>
+"Integer(Boolean)", "Integer(Int16)" and "Real(Float32)". Starting with GDAL 2.1,
+accordingly with the <a href="http://giswiki.hsr.ch/GeoCSV">GeoCSV specification</a>,
+the "CoordX" or "Point(X)" type can be used to specify a column with longitude/easting values,
+"CoordY" or "Point(Y)" for latitude/northing values and "WKT" for geometries encoded in WKT </p>
 
 <p>Starting with GDAL 2.0, automatic field type guessing can also be done if
 specifying the open options described in the below "Open options" section.</p>
 
 <h2>Format</h2>
 
-<p>CSV files have one line for each feature (record) in the layer (table).  
+<p>CSV files have one line for each feature (record) in the layer (table).
 The attribute field values are separated by commas. At least two fields
 per line must be present. Lines may be terminated by a DOS (CR/LF) or
 Unix (LF) style line terminators. Each record should have the same number
-of fields. Starting with GDAL 1.7.0, the driver will also accept a semicolon
-or a tabulation character as field separator . This autodetection will work only
+of fields. The driver will also accept a semicolon, a tabulation or a space
+(GDAL &gt;= 2.0 for the later) character as field separator . This autodetection will work only
 if there's no other potential separator on the first line of the CSV file.
 Otherwise it will default to comma as separator.</p>
 
-<p>Complex attribute values (such as those containing commas, quotes or newlines) 
-may be placed in double quotes. Any occurances of double quotes within 
+<p>Complex attribute values (such as those containing commas, quotes or newlines)
+may be placed in double quotes. Any occurrences of double quotes within
 the quoted string should be doubled up to "escape" them.</p>
 
-<p>The driver attempts to treat the first line of the file as a list of field 
-names for all the fields. However, if one or more of the names is all 
+<p>By default, the driver attempts to treat the first line of the file as a list of field
+names for all the fields. However, if one or more of the names is all
 numeric it is assumed that the first line is actually data values and
 dummy field names are generated internally (field_1 through field_n) and
-the first record is treated as a feature. Starting with GDAL 1.9.0 
-numeric values are treated as field names if they are enclosed in double quotes. 
+the first record is treated as a feature. Starting with GDAL 1.9.0
+numeric values are treated as field names if they are enclosed in double quotes.
+Starting with GDAL 2.1, this behaviour can be modified via the HEADERS open option.
 </p>
 
 <p>All CSV files are treated as UTF-8 encoded. Starting with GDAL 1.9.0, a Byte
 Order Mark (BOM) at the beginning of the file will be parsed correctly. From 1.9.2,
-The option WRITE_BOM can be used to create a file with a Byte Order Mark, which can 
+The option WRITE_BOM can be used to create a file with a Byte Order Mark, which can
 improve compatibility with some software (particularly Excel).
 </p>
 
@@ -81,7 +85,7 @@ ID,Salary,Name,Comments
 133,11000.0,Jane Lake,Cleaning Staff
 </pre>
 
-<p>Note that the Comments value for the first data record is placed in 
+<p>Note that the Comments value for the first data record is placed in
 double quotes because the value contains quotes, and those quotes have
 to be doubled up so we know we haven't reached the end of the quoted string
 yet.</p>
@@ -89,16 +93,14 @@ yet.</p>
 <p>Many variations of textual input are sometimes called Comma Separated
 Value files, including files without commas, but fixed column widths,
 those using tabs as separators or those with other auxiliary data defining
-field types or structure. This driver does not attempt to support all 
-such files, but instead to support simple .csv files that can be 
+field types or structure. This driver does not attempt to support all
+such files, but instead to support simple .csv files that can be
 auto-recognised. Scripts or other mechanisms can generally be used to convert
 other variations into a form that is compatible with the OGR CSV driver.</p>
 
 <h2>Reading CSV containing spatial information</h2>
 
-<p>It is possible to extract spatial information (points) from a CSV file
-which has columns for the X and Y coordinates, through the use of the
-<a href="drv_vrt.html">VRT</a> driver.</p>
+<h3>Building point geometries</h3>
 
 <p>Consider the following CSV file (test.csv):
 <pre>
@@ -107,6 +109,34 @@ Latitude,Longitude,Name
 49.2,1.1,"Second point"
 47.5,0.75,"Third point"
 </pre>
+</p>
+
+<p>Starting with GDAL 2.1, it is possible to directly specify the potential
+names of the columns that can contain X/longitude and Y/latitude with the
+X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES open option.</p>
+
+<p><i>ogrinfo -ro -al test.csv -oo X_POSSIBLE_NAMES=Lon* -oo Y_POSSIBLE_NAMES=Lat* -oo KEEP_GEOM_COLUMNS=NO</i> will return :</p>
+<pre>
+OGRFeature(test):1
+  Name (String) = First point
+  POINT (0.25 48.1)
+
+OGRFeature(test):2
+  Name (String) = Second point
+  POINT (1.1 49.2)
+
+OGRFeature(test):3
+  Name (String) = Third point
+  POINT (0.75 47.5)
+</pre>
+
+<p>Otherwise, if one
+or several columns contain a geometry definition encoded as WKT, WKB (encoded
+in hexadecimal) or GeoJSON, the name of such column(s) the GEOM_POSSIBLE_NAMES open option.</p>
+
+<p>For older versions, it is possible to extract spatial information (points) from a CSV file
+which has columns for the X and Y coordinates, through the use of the
+<a href="drv_vrt.html">VRT</a> driver.</p>
 
 You can write the associated VRT file (test.vrt):
 <pre>
@@ -142,11 +172,40 @@ OGRFeature(test):3
   POINT (0.75 47.5 0)
 </pre>
 
+<h3>Building line geometries</h3>
+
+<p>Consider the following CSV file (test.csv):
+<pre>
+way_id,pt_id,x,y
+1,1,2,49
+1,2,3,50
+2,1,-2,49
+2,2,-3,50
+</pre>
+</p>
+
+With a GDAL build with Spatialite enabled,
+
+<i>ogrinfo test.csv -dialect SQLite -sql "SELECT way_id, MakeLine(MakePoint(CAST(x AS float),CAST(y AS float))) FROM test GROUP BY way_id"</i> will return :
+<pre>
+OGRFeature(SELECT):0
+  way_id (String) = 1
+  LINESTRING (2 49,3 50)
+
+OGRFeature(SELECT):1
+  way_id (String) = 2
+  LINESTRING (-2 49,-3 50)
+</pre>
+
+
 <h2>Open options</h2>
 
 Starting with GDAL 2.0, the following open options can be specified
 (typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
 <ul>
+<li><b>MERGE_SEPARATOR</b>=YES/NO (defaults to NO). Setting it to YES will
+enable merging consecutive separators. Mostly useful when it is the space
+character.</li>
 <li><b>AUTODETECT_TYPE</b>=YES/NO (defaults to NO). Setting it to YES will
 enable auto-detection of field data types. If while reading the records
 (beyond the records used for autodetection), a value is found to not correspond
@@ -171,20 +230,51 @@ Setting 0 means inspecting the whole file.  Note : specifying a value over 1 MB
 Whether to enforce quoted fields as string fields when set to YES. Otherwise,
 by default, the content of quoted fields will be tested for real, integer, etc...
 data types.</li>
+<li><b>X_POSSIBLE_NAMES</b>=list_of_names. (GDAL &gt;= 2.1) Comma separated list of
+possible names for X/longitude coordinate of a point. Each name might be a pattern
+using the star character in starting and/or ending position. E.g.: prefix*, *suffix or *middle*.
+The values in the column must be floating point values.
+X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES must be both specified and a matching for
+each must be found in the columns of the CSV file. Only one geometry column per
+layer might be built when using X_POSSIBLE_NAMES/Y_POSSIBLE_NAMES.</li>
+<li><b>Y_POSSIBLE_NAMES</b>=list_of_names. (GDAL &gt;= 2.1) Comma separated list of
+possible names for Y/latitude coordinate of a point. Each name might be a pattern
+using the star character in starting and/or ending position. E.g.: prefix*, *suffix or *middle*.
+The values in the column must be floating point values.
+X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES must be both specified and a matching for
+each must be found in the columns of the CSV file.</li>
+<li><b>Z_POSSIBLE_NAMES</b>=list_of_names. (GDAL &gt;= 2.1) Comma separated list of
+possible names for Z/elevation coordinate of a point. Each name might be a pattern
+using the star character in starting and/or ending position. E.g.: prefix*, *suffix or *middle*.
+The values in the column must be floating point values.
+Only taken into account in combination with X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES.</li>
+<li><b>GEOM_POSSIBLE_NAMES</b>=list_of_names. (GDAL &gt;= 2.1) Comma separated list of
+possible names for geometry columns that contain geometry definitions encoded as
+WKT, WKB (in hexadecimal form, potentially in PostGIS 2.0 extended WKB) or GeoJSON. Each name might be a pattern
+using the star character in starting and/or ending position. E.g.: prefix*, *suffix or *middle*</li>
+<li><b>KEEP_GEOM_COLUMNS</b>=YES/NO (default YES) Expose the detected X,Y,Z or geometry columns
+as regular attribute fields.</li>
+<li><b>HEADERS</b>=YES/NO/AUTO (default AUTO) (GDAL &gt;= 2.1) Whether the first line of the file
+contains column names or not. When set to AUTO, GDAL will assume the first line is column names if none
+of the values are strictly numeric.
+<li><b>EMPTY_STRING_AS_NULL</b>=YES/NO (default NO) (GDAL &gt;= 2.1)
+Whether to consider empty strings as null fields on reading'.</li>
 </ul>
 
 <h2>Creation Issues</h2>
 
 <p>The driver supports creating new databases (as a directory
 of .csv files), adding new .csv files to an existing directory or .csv
-files or appending features to an existing .csv table. Deleting or
-replacing existing features is not supported.</p>
+files or appending features to an existing .csv table. Starting with GDAL 2.1,
+deleting or replacing existing features, or adding/modifying/deleting fields is
+supported, provided the modifications done are small enough to be stored in RAM
+temporarily before flushing to disk.</p>
 
 <p>Layer Creation options:
 
 <ul>
 <li><b>LINEFORMAT</b>: By default when creating new .csv files they are created with the line
-termination conventions of the local platform (CR/LF on win32 or 
+termination conventions of the local platform (CR/LF on win32 or
 LF on all other systems).  This may be overridden through use of the
 LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
 (DOS format) or <b>LF</b> (Unix format).</li><p>
@@ -195,8 +285,9 @@ columns in the csv file) by specifying GEOMETRY=<b>AS_XYZ</b>, GEOMETRY=<b>AS_XY
 The geometry column(s) will be prepended to the columns with the attributes values.</li><p>
 <li><b>CREATE_CSVT</b>=YES/NO (Starting with GDAL 1.7.0): Create the associated .csvt file (see above paragraph)
 to describe the type of each column of the layer and its optional width and precision. Default value : NO</li><p>
-<li><b>SEPARATOR</b>=COMMA/SEMICOLON/TAB (Starting with GDAL 1.7.0): Field separator character. Default value : COMMA</li><p>
-<li><b>WRITE_BOM</b>=YES/NO (Starting with GDAL >1.9.2): Write a UTF-8 Byte Order Mark (BOM) at the start of the file. Default value : NO</li><p>
+<li><b>SEPARATOR</b>=COMMA/SEMICOLON/TAB/SPACE (Starting with GDAL 1.7.0): Field separator character. Default value : COMMA</li><p>
+<li><b>WRITE_BOM</b>=YES/NO (Starting with GDAL 1.9.2): Write a UTF-8 Byte Order Mark (BOM) at the start of the file. Default value : NO</li><p>
+<lib><b>GEOMETRY_NAME</b>=name (Starting with GDAL 2.1): Name of geometry column. Only used if GEOMETRY=AS_WKT. Defaults to WKT</li><p>
 </ul>
 </p>
 
@@ -232,10 +323,11 @@ The CSV driver can also read files whose structure is close to CSV files :
 
 <p>
 <ul>
-<li>Initial development of the OGR CSV driver was supported by 
-<a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
+<li><a href="http://giswiki.hsr.ch/GeoCSV">GeoCSV specification</a> (supported by GDAL &gt;= 2.1)</li>
+<li>Initial development of the OGR CSV driver was supported by
+<a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and
 <a href="http://www.gomoos.org/">GoMOOS</a>.
-<li><a href="https://cartodb.com/">CartoDB</a> funded field type auto-detection.</li>
+<li><a href="https://cartodb.com/">CartoDB</a> funded field type auto-detection and open options related to geometry columns.</li>
 </ul>
 </p>
 

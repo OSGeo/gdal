@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OCI_WRAPPER_H_INCLUDED
-#define _OCI_WRAPPER_H_INCLUDED
+#ifndef OCI_WRAPPER_H_INCLUDED
+#define OCI_WRAPPER_H_INCLUDED
 
 // GDAL supporting types
 
@@ -56,10 +56,10 @@ struct OW_CellDepth {
 bool CheckError( sword nStatus, OCIError* hError );
 
 /***************************************************************************/
-/*                            Auxiliar functions                           */
+/*                            Auxiliary functions                          */
 /***************************************************************************/
 
-const GDALDataType  OWGetDataType( const char* pszCellDepth );
+GDALDataType        OWGetDataType( const char* pszCellDepth );
 const char*         OWSetDataType( const GDALDataType eType );
 int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );
@@ -89,7 +89,7 @@ const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
 #define OW_XMLNS        "xmlns=\"http://xmlns.oracle.com/spatial/georaster\""
 
 /***************************************************************************/
-/*                   USER DEFINED (actualy Oracle's) types                 */
+/*                   USER DEFINED (actually Oracle's) types                 */
 /***************************************************************************/
 
 typedef OCIRef SDO_GEORASTER_ref;
@@ -341,7 +341,7 @@ class OWStatement
 
 public:
 
-                        OWStatement( OWConnection* poConnect, 
+                        OWStatement( OWConnection* poConnect,
                             const char* pszStatement );
     virtual            ~OWStatement();
 

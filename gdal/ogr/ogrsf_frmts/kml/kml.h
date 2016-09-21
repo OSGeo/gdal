@@ -89,6 +89,8 @@ public:
     int getNumFeatures();
     Feature* getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount);
 
+    void unregisterLayerIfMatchingThisNode(KMLNode* poNode);
+
 protected:
 	void checkValidity();
 
@@ -117,7 +119,7 @@ private:
 	std::string sError_;
 	// current KMLNode
 	KMLNode *poCurrent_;
-        
+
         XML_Parser oCurrentParser;
         int nDataHandlerCounter;
         int nWithoutEventCounter;

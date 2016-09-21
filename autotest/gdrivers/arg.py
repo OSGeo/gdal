@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  ARG Testing.
 # Author:   David Zwarg <dzwarg@azavea.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2012, David Zwarg <dzwarg@azavea.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -49,7 +49,7 @@ def encode(fmt, nodata, values):
     return ''.encode('ascii').join(chunks)
 
 ###############################################################################
-# 
+#
 def arg_init():
     try:
         gdaltest.argDriver = gdal.GetDriverByName('ARG')
@@ -58,7 +58,7 @@ def arg_init():
 
     if gdaltest.argDriver is None:
         return 'skip'
-        
+
     gdaltest.argJsontpl = """{
     "layer": "%(fmt)s",
     "type": "arg",
@@ -130,7 +130,8 @@ def arg_unsupported():
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
             if name == 'int64' or name == 'uint64':
-                ds = gdal.Open('data/arg-'+name+'.arg')
+                with gdaltest.error_handler('CPLQuietErrorHandler'):
+                    ds = gdal.Open('data/arg-'+name+'.arg')
                 if not ds is None:
                     return 'fail'
             else:
@@ -146,7 +147,8 @@ def arg_getrastercount():
 
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
-            ds = gdal.Open('data/arg-'+name+'.arg')
+            with gdaltest.error_handler('CPLQuietErrorHandler'):
+              ds = gdal.Open('data/arg-'+name+'.arg')
             if ds is None:
                 continue
 
@@ -161,7 +163,8 @@ def arg_getgeotransform():
 
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
-            ds = gdal.Open('data/arg-'+name+'.arg')
+            with gdaltest.error_handler('CPLQuietErrorHandler'):
+                ds = gdal.Open('data/arg-'+name+'.arg')
             if ds is None:
                 continue
 
@@ -189,7 +192,7 @@ def arg_blocksize():
     xsize = ds.RasterXSize
     ysize = ds.RasterYSize
 
-    # create a blocked tiff, where blocks don't line up evenly 
+    # create a blocked tiff, where blocks don't line up evenly
     # with the image boundary
     ds2 = tifDriver.CreateCopy('data/utm-uneven-blocks.tif', ds, False, ['BLOCKXSIZE=25', 'BLOCKYSIZE=25', 'TILED=NO'])
 
@@ -202,7 +205,7 @@ def arg_blocksize():
     stat = os.stat('data/utm.arg')
 
     os.remove('data/utm-uneven-blocks.tif')
-    os.remove('data/utm.arg')
+    gdal.GetDriverByName('ARG').Delete('data/utm.arg')
 
     if stat.st_size != (xsize*ysize):
         return 'fail'
@@ -218,7 +221,7 @@ def arg_layername():
     if gdaltest.argDriver is None:
         return 'skip'
 
-    ds = gdal.Open('data/arg-int16.arg');
+    ds = gdal.Open('data/arg-int16.arg')
 
     lyr = 'ARG FTW'
 
@@ -241,11 +244,13 @@ def arg_layername():
     lyr2 = ds.GetMetadata()['LAYER']
 
     ds = None
-    os.remove('data/arg-int16-2.arg')
+    gdal.GetDriverByName('ARG').Delete('data/arg-int16-2.arg')
 
     # does the new dataset's layer match the layer set before copying
     if lyr2 != lyr:
         return 'fail'
+
+    os.unlink('data/arg-int16.arg.aux.xml')
 
     return 'success'
 
@@ -283,7 +288,8 @@ def arg_byteorder():
         for (name, fmt, nodata) in d['formats']:
 
             basename = 'data/arg-'+name
-            orig = gdal.Open(basename+'.arg')
+            with gdaltest.error_handler('CPLQuietErrorHandler'):
+                orig = gdal.Open(basename+'.arg')
             if orig is None:
                 continue
 
@@ -308,9 +314,8 @@ def arg_byteorder():
             tmp1.close()
             tmp2.close()
 
-            os.remove(basename+'.tif')
-            os.remove(basename+'2.arg')
-            os.remove(basename+'2.json')
+            gdal.GetDriverByName('GTiff').Delete(basename+'.tif')
+            gdal.GetDriverByName('ARG').Delete(basename+'2.arg')
 
             if data1 != data2:
                 return 'fail'
@@ -327,7 +332,7 @@ def arg_destroy():
             os.remove('data/arg-'+name+'.json')
 
     return 'success'
-    
+
 
 gdaltest_list = [
     arg_init,

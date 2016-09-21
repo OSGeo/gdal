@@ -92,7 +92,7 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, char bFoll)
         nNext = nLocal;
     else
     {
-        // If collision has occured
+        // If collision has occurred
         while ( (nNext = poCodeTab[nLocal].iNext) != 0 )
             nLocal = nNext;
 
@@ -127,8 +127,8 @@ int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
     LZWStringTab    *poCodeTab;
     int             bBitsleft;
 
-    if ( pabyIn == 0 ||
-         pabyOut == 0 ||
+    if ( pabyIn == NULL ||
+         pabyOut == NULL ||
          nSizeOut < nSizeIn ||
          nSizeIn < 2 )
         return 0;

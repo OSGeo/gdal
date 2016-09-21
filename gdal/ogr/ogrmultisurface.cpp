@@ -54,13 +54,57 @@ OGRMultiSurface::~OGRMultiSurface()
 }
 
 /************************************************************************/
+/*              OGRMultiSurface( const OGRMultiSurface& )               */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ *
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ *
+ * @since GDAL 2.1
+ */
+
+OGRMultiSurface::OGRMultiSurface( const OGRMultiSurface& other ) :
+    OGRGeometryCollection(other)
+{
+}
+
+/************************************************************************/
+/*                  operator=( const OGRMultiCurve&)                    */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ *
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ *
+ * @since GDAL 2.1
+ */
+
+OGRMultiSurface& OGRMultiSurface::operator=( const OGRMultiSurface& other )
+{
+    if( this != &other)
+    {
+        OGRGeometryCollection::operator=( other );
+    }
+    return *this;
+}
+
+/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 
 OGRwkbGeometryType OGRMultiSurface::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbMultiSurfaceZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbMultiSurfaceM;
+    else if( flags & OGR_G_3D )
         return wkbMultiSurfaceZ;
     else
         return wkbMultiSurface;
@@ -105,14 +149,15 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 
 {
     int bHasZ = FALSE, bHasM = FALSE;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM);
-    if( eErr >= 0 )
+    bool bIsEmpty = false;
+    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    flags = 0;
+    if( eErr != OGRERR_NONE )
         return eErr;
-
-    if( bHasZ )
-        setCoordinateDimension(3);
-
-    int bIsMultiSurface = (wkbFlatten(getGeometryType()) == wkbMultiSurface);
+    if( bHasZ ) flags |= OGR_G_3D;
+    if( bHasM ) flags |= OGR_G_MEASURED;
+    if( bIsEmpty )
+        return OGRERR_NONE;
 
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
@@ -158,8 +203,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
         }
         /* We accept POLYGON() but this is an extension to the BNF, also */
         /* accepted by PostGIS */
-        else if (bIsMultiSurface &&
-                 (EQUAL(szToken,"POLYGON") ||
+        else if ((EQUAL(szToken,"POLYGON") ||
                   EQUAL(szToken,"CURVEPOLYGON")))
         {
             OGRGeometry* poGeom = NULL;
@@ -184,7 +228,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
         }
 
 /* -------------------------------------------------------------------- */
-/*      Read the delimeter following the surface.                       */
+/*      Read the delimiter following the surface.                       */
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadToken( pszInput, szToken );
 
@@ -202,7 +246,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
-    
+
     *ppszInput = (char *) pszInput;
     return OGRERR_NONE;
 }
@@ -237,17 +281,14 @@ OGRBoolean OGRMultiSurface::hasCurveGeometry(int bLookForNonLinear) const
  *
  * NOTE: Only implemented when GEOS included in build.
  *
- * @param poPoint point to be set with an internal point. 
+ * @param poPoint point to be set with an internal point.
  *
- * @return OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise. 
+ * @return OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise.
  */
 
 OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
 {
-    OGRMultiPolygon* poMPoly = (OGRMultiPolygon*) getLinearGeometry();
-    OGRErr ret = poMPoly->PointOnSurface(poPoint);
-    delete poMPoly;
-    return ret;
+    return PointOnSurfaceInternal(poPoint);
 }
 
 /************************************************************************/
@@ -261,10 +302,10 @@ OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
  * instances of OGRPolygon. This can be verified if hasCurveGeometry(TRUE)
  * returns FALSE. It is not intended to approximate curve polygons. For that
  * use getLinearGeometry().
- * 
+ *
  * The passed in geometry is consumed and a new one returned (or NULL in case
- * of failure). 
- * 
+ * of failure).
+ *
  * @param poMS the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

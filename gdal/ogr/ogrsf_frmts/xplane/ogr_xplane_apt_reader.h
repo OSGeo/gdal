@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_XPLANE_APT_READER_H_INCLUDED
-#define _OGR_XPLANE_APT_READER_H_INCLUDED
+#ifndef OGR_XPLANE_APT_READER_H_INCLUDED
+#define OGR_XPLANE_APT_READER_H_INCLUDED
 
 #include "ogr_xplane.h"
 #include "ogr_xplane_reader.h"
@@ -142,7 +142,7 @@ static const sEnumerationElement runwayREILType[] =
     { 2, "Unidirectional" }
 };
 
-static const sEnumerationElement runwayVisualApproachPathIndicatorTypeV810[] = 
+static const sEnumerationElement runwayVisualApproachPathIndicatorTypeV810[] =
 {
     { 1, "None" },
     { 2, "VASI" },
@@ -290,7 +290,7 @@ class OGRXPlaneWaterRunwayLayer : public OGRXPlaneLayer
 static const sEnumerationElement helipadEdgeLigthingType[] =
 {
     { 0, "None" },
-    { 1, "Yellow" }, 
+    { 1, "Yellow" },
     { 2, "White" }, /* proposed for V90x */
     { 3, "Red" } /* proposed for V90x */
 };
@@ -537,14 +537,38 @@ class OGRXPlane_VASI_PAPI_WIGWAG_Layer : public OGRXPlaneLayer
                                    double dfVisualGlidePathAngle);
 };
 
+/************************************************************************/
+/*                       OGRXPlaneTaxiLocationLayer                     */
+/************************************************************************/
 
+class OGRXPlaneTaxiLocationLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneTaxiLocationLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   double dfLat,
+                                   double dfLon,
+                                   double dfHeading,
+                                   const char* pszLocationType,
+                                   const char* pszAirplaneTypes,
+                                   const char* pszName);
+};
+
+typedef enum
+{
+    APT_V_UNKNOWN = 0,
+    APT_V_810 = 810,
+    APT_V_850 = 850,
+    APT_V_1000 = 1000,
+} AptVersion;
 
 enum
 {
     APT_AIRPORT_HEADER         = 1,
     APT_RUNWAY_TAXIWAY_V_810   = 10,
     APT_TOWER                  = 14,
-    APT_STARTUP_LOCATION       = 15,
+    APT_STARTUP_LOCATION       = 15, /* deprecated in V_1000 */
     APT_SEAPLANE_HEADER        = 16,
     APT_HELIPORT_HEADER        = 17,
     APT_LIGHT_BEACONS          = 18,
@@ -570,6 +594,7 @@ enum
     APT_NODE_END_WITH_BEZIER   = 116,
     APT_LINEAR_HEADER          = 120,
     APT_BOUNDARY_HEADER        = 130,
+    APT_TAXI_LOCATION          = 1300, /* added in V_1000 */
 };
 
 
@@ -581,6 +606,8 @@ enum
 class OGRXPlaneAptReader : public OGRXPlaneReader
 {
     private:
+        OGRXPlaneDataSource*                poDataSource;
+
         OGRXPlaneAPTLayer*                  poAPTLayer;
         OGRXPlaneRunwayLayer*               poRunwayLayer;
         OGRXPlaneStopwayLayer*              poStopwayLayer;
@@ -599,6 +626,9 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         OGRXPlaneAPTWindsockLayer*          poAPTWindsockLayer;
         OGRXPlaneTaxiwaySignLayer*          poTaxiwaySignLayer;
         OGRXPlane_VASI_PAPI_WIGWAG_Layer*   poVASI_PAPI_WIGWAG_Layer;
+        OGRXPlaneTaxiLocationLayer*         poTaxiLocationLayer;
+
+        AptVersion nVersion;
 
         int       bAptHeaderFound;
         double    dfElevation;
@@ -635,6 +665,7 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         void    ParseWindsockRecord();
         void    ParseTaxiwaySignRecord();
         void    ParseVasiPapiWigWagRecord();
+        void    ParseTaxiLocation();
 
         OGRGeometry* FixPolygonTopology(OGRPolygon& polygon);
         int     ParsePolygonalGeometry(OGRGeometry** ppoGeom);

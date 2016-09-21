@@ -14,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
@@ -33,10 +33,8 @@
 int main( int argc, char **argv )
 
 {
-    CPLXMLNode *poTree;
     static char  szXML[20000000];
     FILE       *fp;
-    int        nLen;
 
     if( argc == 1 )
         fp = stdin;
@@ -55,9 +53,9 @@ int main( int argc, char **argv )
         }
     }
 
-    nLen = fread( szXML, 1, sizeof(szXML), fp );
+    int nLen = fread( szXML, 1, sizeof(szXML), fp );
     if( nLen >= (int) sizeof(szXML)-2 ) {
-        fprintf( stderr, 
+        fprintf( stderr,
                  "xmlreformat fixed sized buffer (%d bytes) exceeded.\n",
                  (int) sizeof(szXML) );
         exit(1);
@@ -68,7 +66,7 @@ int main( int argc, char **argv )
 
     szXML[nLen] = '\0';
 
-    poTree = CPLParseXMLString( szXML );
+    CPLXMLNode *poTree = CPLParseXMLString( szXML );
     if( poTree != NULL )
     {
         char *pszRawXML = CPLSerializeXMLTree( poTree );

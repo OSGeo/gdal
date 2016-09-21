@@ -60,7 +60,7 @@ OGRDataSource *OGRMSSQLSpatialDriver::Open( const char * pszFilename, int bUpdat
 {
     OGRMSSQLSpatialDataSource     *poDS;
 
-    if( !EQUALN(pszFilename,"MSSQL:",6) )
+    if( !STARTS_WITH_CI(pszFilename, "MSSQL:") )
         return NULL;
 
     poDS = new OGRMSSQLSpatialDataSource();
@@ -81,11 +81,10 @@ OGRDataSource *OGRMSSQLSpatialDriver::Open( const char * pszFilename, int bUpdat
 OGRDataSource *OGRMSSQLSpatialDriver::CreateDataSource( const char * pszName,
                                                         CPL_UNUSED char **papszOptions )
 {
-    OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
-
-    if( !EQUALN(pszName,"MSSQL:",6) )
+    if( !STARTS_WITH_CI(pszName, "MSSQL:") )
         return NULL;
 
+    OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
     if( !poDS->Open( pszName, TRUE, TRUE ) )
     {
         delete poDS;
@@ -121,12 +120,14 @@ void RegisterOGRMSSQLSpatial()
 {
     if (! GDAL_CHECK_VERSION("OGR/MSSQLSpatial driver"))
         return;
+
     OGRSFDriver* poDriver = new OGRMSSQLSpatialDriver;
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Microsoft SQL Server Spatial Database" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_mssqlspatial.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+                               "Microsoft SQL Server Spatial Database" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mssqlspatial.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
@@ -146,8 +147,17 @@ void RegisterOGRMSSQLSpatial()
 "    <Value>wkb</Value>"
 "    <Value>wkt</Value>"
 "  </Option>"
+"  <Option name='FID' type='string' description='Name of the FID column to create' default='ogr_fid'/>"
+"  <Option name='FID64' type='boolean' description='Whether to create the FID column with bigint type to handle 64bit wide ids' default='NO'/>"
+"  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
 "</LayerCreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date Time DateTime Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date Time "
+                               "DateTime Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

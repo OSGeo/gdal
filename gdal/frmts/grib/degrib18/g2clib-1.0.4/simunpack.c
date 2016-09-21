@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "grib2.h"
 
+g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld);
 
 g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld)
 ////$$$  SUBPROGRAM DOCUMENTATION BLOCK
@@ -10,7 +11,7 @@ g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld)
 //   PRGMMR: Gilbert          ORG: W/NP11    DATE: 2002-10-29
 //
 // ABSTRACT: This subroutine unpacks a data field that was packed using a 
-//   simple packing algorithm as defined in the GRIB2 documention,
+//   simple packing algorithm as defined in the GRIB2 documentation,
 //   using info from the GRIB2 Data Representation Template 5.0.
 //
 // PROGRAM HISTORY LOG:
@@ -50,7 +51,8 @@ g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld)
 
       ifld=(g2int *)calloc(ndpts,sizeof(g2int));
       if ( ifld == 0 ) {
-         fprintf(stderr,"Could not allocate space in simunpack.\n  Data field NOT upacked.\n");
+         fprintf(stderr,"Could not allocate space in simunpack.\n"
+                 "Data field NOT unpacked.\n");
          return(1);
       }
 

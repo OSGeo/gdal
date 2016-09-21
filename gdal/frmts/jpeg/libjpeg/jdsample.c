@@ -180,7 +180,7 @@ noop_upsample (CPL_UNUSED j_decompress_ptr cinfo, CPL_UNUSED jpeg_component_info
  * This is not used for typical JPEG files, so it need not be fast.
  * Nor, for that matter, is it particularly accurate: the algorithm is
  * simple replication of the input pixel onto the corresponding output
- * pixels.  The hi-falutin sampling literature refers to this as a
+ * pixels.  The highfalutin sampling literature refers to this as a
  * "box filter".  A box filter tends to introduce visible artifacts,
  * so if you are actually going to use 3:1 or 4:1 sampling ratios
  * you would be well advised to improve this code.

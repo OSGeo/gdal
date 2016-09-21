@@ -37,7 +37,7 @@
 /************************************************************************/
 AOLayer::AOLayer():
 OGRLayer(),m_pFeatureDefn(NULL),m_pSRS(NULL), m_ipQF(CLSID_QueryFilter),
-m_pBuffer(NULL), m_bufferSize(0), m_supressColumnMappingError(false),m_forceMulti(false)
+m_pBuffer(NULL), m_bufferSize(0), m_suppressColumnMappingError(false),m_forceMulti(false)
 {
 }
 
@@ -419,7 +419,7 @@ bool AOLayer::OGRFeatureFromAORow(IRow* pRow, OGRFeature** ppFeature)
       */
     default:
       {
-        if (!m_supressColumnMappingError)
+        if (!m_suppressColumnMappingError)
         {
           foundBadColumn = true;
           CPLError( CE_Warning, CPLE_AppDefined, "Row id: %d col:%d has unhandled col type (%d). Setting to NULL.", oid, i, m_pFeatureDefn->GetFieldDefn(i)->GetType());
@@ -429,7 +429,7 @@ bool AOLayer::OGRFeatureFromAORow(IRow* pRow, OGRFeature** ppFeature)
   }
   
   if (foundBadColumn)
-    m_supressColumnMappingError = true;
+    m_suppressColumnMappingError = true;
   
 
   *ppFeature = pOutFeature;

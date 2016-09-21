@@ -17,22 +17,23 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
  * Revision 1.15  2010-10-12 19:02:40  aboudreault
- * Fixed incomplet patch to handle differently indented lines in mif files (gdal #3694)
+ * Fixed incomplete patch to handle differently indented lines in MIF
+ * files (gdal #3694).
  *
  * Revision 1.14  2006-01-27 13:54:06  fwarmerdam
  * fixed memory leak
@@ -71,7 +72,7 @@
  * Add ifdef to remove CPLError if OGR is define
  *
  * Revision 1.2  1999/11/11 01:22:05  stephane
- * Remove DebugFeature call, Point Reading error, add IsValidFeature() to 
+ * Remove DebugFeature call, Point Reading error, add IsValidFeature() to
  * test correctly if we are on a feature
  *
  * Revision 1.1  1999/11/08 04:16:07  stephane
@@ -93,12 +94,14 @@ MIDDATAFile::MIDDATAFile()
     m_szLastRead[0] = '\0';
     m_szSavedLine[0] = '\0';
     m_pszDelimiter = "\t"; // Encom 2003 (was NULL)
-    
+
     m_dfXMultiplier = 1.0;
     m_dfYMultiplier = 1.0;
     m_dfXDisplacement = 0.0;
     m_dfYDisplacement = 0.0;
-
+    m_pszFname = NULL;
+    m_eAccessMode = TABRead;
+    m_bEof = FALSE;
 }
 
 MIDDATAFile::~MIDDATAFile()
@@ -114,7 +117,7 @@ void MIDDATAFile::SaveLine(const char *pszLine)
     }
     else
     {
-        strncpy(m_szSavedLine,pszLine,MIDMAXCHAR);
+        CPLStrlcpy(m_szSavedLine,pszLine,MIDMAXCHAR);
     }
 }
 
@@ -133,12 +136,12 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
     /*-----------------------------------------------------------------
      * Validate access mode and make sure we use Text access.
      *----------------------------------------------------------------*/
-    if (EQUALN(pszAccess, "r", 1))
+    if (STARTS_WITH_CI(pszAccess, "r"))
     {
         m_eAccessMode = TABRead;
         pszAccess = "rt";
     }
-    else if (EQUALN(pszAccess, "w", 1))
+    else if (STARTS_WITH_CI(pszAccess, "w"))
     {
         m_eAccessMode = TABWrite;
         pszAccess = "wt";
@@ -167,7 +170,7 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 
 int MIDDATAFile::Rewind()
 {
-    if (m_fp == NULL || m_eAccessMode == TABWrite) 
+    if (m_fp == NULL || m_eAccessMode == TABWrite)
         return -1;
 
     else
@@ -182,7 +185,7 @@ int MIDDATAFile::Close()
 {
     if (m_fp == NULL)
         return 0;
-   
+
     // Close file
     VSIFCloseL(m_fp);
     m_fp = NULL;
@@ -200,10 +203,10 @@ int MIDDATAFile::Close()
 const char *MIDDATAFile::GetLine()
 {
     const char *pszLine;
-    
+
     if (m_eAccessMode == TABRead)
     {
-        
+
         pszLine = CPLReadLineL(m_fp);
 
         if (pszLine == NULL)
@@ -213,11 +216,11 @@ const char *MIDDATAFile::GetLine()
         }
         else
         {
-            // skip leading spaces
-            while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
-                pszLine++;
+            // skip leading spaces and tabs (except is the delimiter is tab)
+            while(pszLine && (*pszLine == ' ' || (*m_pszDelimiter != '\t' && *pszLine == '\t')) )
+                    pszLine++;
 
-            strncpy(m_szLastRead,pszLine,MIDMAXCHAR);
+            CPLStrlcpy(m_szLastRead,pszLine,MIDMAXCHAR);
         }
         //if (pszLine)
         //  printf("%s\n",pszLine);
@@ -259,7 +262,7 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
         osStr.vPrintf( pszFormat, args );
         VSIFWriteL( osStr.c_str(), 1, osStr.size(), m_fp);
         va_end(args);
-    } 
+    }
     else
     {
         CPLAssert(FALSE);
@@ -267,7 +270,7 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
 }
 
 
-void MIDDATAFile::SetTranslation(double dfXMul,double dfYMul, 
+void MIDDATAFile::SetTranslation(double dfXMul,double dfYMul,
                                  double dfXTran,
                                  double dfYTran)
 {
@@ -293,7 +296,7 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
     char **papszToken ;
 
     papszToken = CSLTokenizeString(pszString);
-    
+
     //   printf("%s\n",pszString);
 
     if (CSLCount(papszToken) == 0)

@@ -46,6 +46,24 @@ OGRMultiLineString::OGRMultiLineString()
 }
 
 /************************************************************************/
+/*           OGRMultiLineString( const OGRMultiLineString& )            */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ *
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ *
+ * @since GDAL 2.1
+ */
+
+OGRMultiLineString::OGRMultiLineString( const OGRMultiLineString& other ) :
+    OGRMultiCurve(other)
+{
+}
+
+/************************************************************************/
 /*                       ~OGRMultiLineString()                          */
 /************************************************************************/
 
@@ -54,13 +72,40 @@ OGRMultiLineString::~OGRMultiLineString()
 }
 
 /************************************************************************/
+/*                  operator=( const OGRMultiCurve&)                    */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ *
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ *
+ * @since GDAL 2.1
+ */
+
+OGRMultiLineString& OGRMultiLineString::operator=( const OGRMultiLineString& other )
+{
+    if( this != &other)
+    {
+        OGRMultiCurve::operator=( other );
+    }
+    return *this;
+}
+
+
+/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 
 OGRwkbGeometryType OGRMultiLineString::getGeometryType() const
 
 {
-    if( getCoordinateDimension() == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbMultiLineStringZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbMultiLineStringM;
+    else if( flags & OGR_G_3D )
         return wkbMultiLineString25D;
     else
         return wkbMultiLineString;
@@ -113,7 +158,7 @@ OGRBoolean OGRMultiLineString::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear
  * \brief Cast to multicurve.
  *
  * The passed in geometry is consumed and a new one returned .
- * 
+ *
  * @param poMLS the input geometry - ownership is passed to the method.
  * @return new geometry.
  */

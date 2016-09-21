@@ -49,6 +49,7 @@ protected:
     char **m_requests;
     CPLString m_base_url;
     CPLString m_end_url;
-    int m_bsx,m_bsy;
+    int m_bsx;
+    int m_bsy;
     CPLString m_projection_wkt;
 };

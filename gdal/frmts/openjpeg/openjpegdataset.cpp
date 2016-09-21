@@ -3,10 +3,11 @@
  *
  * Project:  JPEG2000 driver based on OpenJPEG library
  * Purpose:  JPEG2000 driver based on OpenJPEG library
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys dot com>
+ * Copyright (c) 2015, European Union (European Environment Agency)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,11 +38,13 @@
 #endif
 #include <vector>
 
-#include "gdaljp2abstractdataset.h"
-#include "cpl_string.h"
-#include "gdaljp2metadata.h"
-#include "cpl_multiproc.h"
 #include "cpl_atomic_ops.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdaljp2abstractdataset.h"
+#include "gdaljp2metadata.h"
+#include "vrt/vrtdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -77,7 +80,9 @@ static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, CPL_UNUSED vo
 
 static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
-    char* pszMsgTmp = CPLStrdup(pszMsg);
+    char* pszMsgTmp = VSIStrdup(pszMsg);
+    if( pszMsgTmp == NULL )
+        return;
     int nLen = (int)strlen(pszMsgTmp);
     while( nLen > 0 && pszMsgTmp[nLen-1] == '\n' )
     {
@@ -88,6 +93,12 @@ static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void 
     CPLFree(pszMsgTmp);
 }
 
+typedef struct
+{
+    VSILFILE*    fp;
+    vsi_l_offset nBaseOffset;
+} JP2OpenJPEGFile;
+
 /************************************************************************/
 /*                      JP2OpenJPEGDataset_Read()                       */
 /************************************************************************/
@@ -95,27 +106,14 @@ static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void 
 static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
-    vsi_l_offset nOffsetBefore =  VSIFTellL((VSILFILE*)pUserData);
-    int nRet = VSIFReadL(pBuffer, 1, nBytes, (VSILFILE*)pUserData);
+    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
+    int nRet = static_cast<int>(VSIFReadL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Read(%d) = %d", (int)nBytes, nRet);
 #endif
     if (nRet == 0)
         nRet = -1;
-    else if( nOffsetBefore == 0 && nBytes >= 4 )
-    {
-        /* Nasty hack : opj_get_decoded_tile() currently ignores
-          OPJ_DPARAMETERS_IGNORE_PCLR_CMAP_CDEF_FLAG, so we "hide" the jp2 boxes
-          that advertize a color table... */
-        for(OPJ_SIZE_T i=0;i<nBytes-4;i++)
-        {
-            if( memcmp((GByte*)pBuffer + i, "pclr", 4)==0 ||
-                memcmp((GByte*)pBuffer + i, "cmap", 4)==0 )
-            {
-                memcpy((GByte*)pBuffer +i, "XXXX", 4);
-            }
-        }
-    }
+
     return nRet;
 }
 
@@ -126,7 +124,8 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
 static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
-    int nRet = VSIFWriteL(pBuffer, 1, nBytes, (VSILFILE*)pUserData);
+    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
+    int nRet = static_cast<int>(VSIFWriteL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Write(%d) = %d", (int)nBytes, nRet);
 #endif
@@ -139,10 +138,12 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
 
 static OPJ_BOOL JP2OpenJPEGDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
 {
+    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(%d)", (int)nBytes);
 #endif
-    return VSIFSeekL((VSILFILE*)pUserData, nBytes, SEEK_SET) == 0;
+    return VSIFSeekL(psJP2OpenJPEGFile->fp, psJP2OpenJPEGFile->nBaseOffset +nBytes,
+                     SEEK_SET) == 0;
 }
 
 /************************************************************************/
@@ -151,13 +152,14 @@ static OPJ_BOOL JP2OpenJPEGDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
 
 static OPJ_OFF_T JP2OpenJPEGDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
 {
-    vsi_l_offset nOffset = VSIFTellL((VSILFILE*)pUserData);
+    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
+    vsi_l_offset nOffset = VSIFTellL(psJP2OpenJPEGFile->fp);
     nOffset += nBytes;
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Skip(%d -> " CPL_FRMT_GUIB ")",
              (int)nBytes, (GUIntBig)nOffset);
 #endif
-    VSIFSeekL((VSILFILE*)pUserData, nOffset, SEEK_SET);
+    VSIFSeekL(psJP2OpenJPEGFile->fp, nOffset, SEEK_SET);
     return nBytes;
 }
 
@@ -174,9 +176,14 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     friend class JP2OpenJPEGRasterBand;
 
     VSILFILE   *fp; /* Large FILE API */
+    vsi_l_offset nCodeStreamStart;
+    vsi_l_offset nCodeStreamLength;
 
-    OPJ_CODEC_FORMAT eCodecFormat;
     OPJ_COLOR_SPACE eColorSpace;
+    int         nRedIndex;
+    int         nGreenIndex;
+    int         nBlueIndex;
+    int         nAlphaIndex;
 
     int         bIs420;
 
@@ -188,6 +195,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     int         nThreads;
     int         GetNumThreads();
     int         bEnoughMemoryToLoadOtherBands;
+    int         bRewrite;
+    int         bHasGeoreferencingAtOpening;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -195,25 +204,43 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
   public:
                 JP2OpenJPEGDataset();
                 ~JP2OpenJPEGDataset();
-    
+
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *CreateCopy( const char * pszFilename,
-                                           GDALDataset *poSrcDS, 
-                                           int bStrict, char ** papszOptions, 
+                                           GDALDataset *poSrcDS,
+                                           int bStrict, char ** papszOptions,
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData );
+
+    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr SetGeoTransform( double* );
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                             const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                 const char * pszValue,
+                                 const char * pszDomain = "" );
 
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg);
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
+    static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
+                                       char** papszOptions );
+    static void         WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
+                                       char** papszOptions );
+    static void         WriteXMPBox( VSILFILE* fp, GDALDataset* poSrcDS,
+                                     char** papszOptions );
+    static void         WriteIPRBox( VSILFILE* fp, GDALDataset* poSrcDS,
+                                     char** papszOptions );
 
     CPLErr      ReadBlock( int nBand, VSILFILE* fp,
                            int nBlockXOff, int nBlockYOff, void * pImage,
@@ -222,6 +249,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     int         PreloadBlocks( JP2OpenJPEGRasterBand* poBand,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBandCount, int *panBandMap );
+
+    static void JP2OpenJPEGReadBlockInThread(void* userdata);
 };
 
 /************************************************************************/
@@ -257,8 +286,8 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
 
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int iOvrLevel);
-    
-    virtual int HasArbitraryOverviews() { return TRUE; }
+
+    virtual int HasArbitraryOverviews() { return poCT == NULL; }
 };
 
 
@@ -266,24 +295,26 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
 /*                        JP2OpenJPEGRasterBand()                       */
 /************************************************************************/
 
-JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBand,
-                                              GDALDataType eDataType, int nBits,
-                                              int bPromoteTo8Bit,
-                                              int nBlockXSize, int nBlockYSize )
+JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDSIn, int nBandIn,
+                                              GDALDataType eDataTypeIn, int nBits,
+                                              int bPromoteTo8BitIn,
+                                              int nBlockXSizeIn, int nBlockYSizeIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = eDataType;
-    this->nBlockXSize = nBlockXSize;
-    this->nBlockYSize = nBlockYSize;
-    this->bPromoteTo8Bit = bPromoteTo8Bit;
+    this->eDataType = eDataTypeIn;
+    this->nBlockXSize = nBlockXSizeIn;
+    this->nBlockYSize = nBlockYSizeIn;
+    this->bPromoteTo8Bit = bPromoteTo8BitIn;
     poCT = NULL;
 
     if( (nBits % 8) != 0 )
-        SetMetadataItem("NBITS",
+        GDALRasterBand::SetMetadataItem("NBITS",
                         CPLString().Printf("%d",nBits),
                         "IMAGE_STRUCTURE" );
+    GDALRasterBand::SetMetadataItem("COMPRESSION", "JPEG2000",
+                    "IMAGE_STRUCTURE" );
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 }
 
 /************************************************************************/
@@ -348,27 +379,22 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     if( (nBufXSize < nXSize || nBufYSize < nYSize)
         && GetOverviewCount() > 0 && eRWFlag == GF_Read )
     {
-        int         nOverview;
-        GDALRasterIOExtraArg sExtraArg;
-    
-        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
-
-        nOverview =
-            GDALBandGetBestOverviewLevel2(this, nXOff, nYOff, nXSize, nYSize,
-                                        nBufXSize, nBufYSize, &sExtraArg);
-        if (nOverview >= 0)
-        {
-            GDALRasterBand* poOverviewBand = GetOverview(nOverview);
-            if (poOverviewBand == NULL)
-                return CE_Failure;
-
-            return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                            pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace, &sExtraArg );
-        }
+        int bTried;
+        CPLErr eErr = TryOverviewRasterIO( eRWFlag,
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nPixelSpace, nLineSpace,
+                                    psExtraArg,
+                                    &bTried );
+        if( bTried )
+            return eErr;
     }
 
-    poGDS->bEnoughMemoryToLoadOtherBands = poGDS->PreloadBlocks(this, nXOff, nYOff, nXSize, nYSize, 0, NULL);
+    int nRet = poGDS->PreloadBlocks(this, nXOff, nYOff, nXSize, nYSize, 0, NULL);
+    if( nRet < 0 )
+        return CE_Failure;
+    poGDS->bEnoughMemoryToLoadOtherBands = nRet;
 
     CPLErr eErr = GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
@@ -413,12 +439,22 @@ public:
     volatile int        nCurPair;
     int                 nBandCount;
     int                *panBandMap;
+    VOLATILE_BOOL       bSuccess;
 };
 
-static void JP2OpenJPEGReadBlockInThread(void* userdata)
+void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
 {
     int nPair;
     JobStruct* poJob = (JobStruct*) userdata;
+
+    /*void* pDummy = VSIMalloc(128*1024);
+    if( pDummy == NULL )
+    {
+        fprintf(stderr, "Out of memory in thread\n");
+        poJob->bSuccess = false;
+        return;
+    }*/
+
     JP2OpenJPEGDataset* poGDS = poJob->poGDS;
     int nBand = poJob->nBand;
     int nPairs = (int)poJob->oPairs.size();
@@ -428,32 +464,38 @@ static void JP2OpenJPEGReadBlockInThread(void* userdata)
     if( fp == NULL )
     {
         CPLDebug("OPENJPEG", "Cannot open %s", poGDS->GetDescription());
+        poJob->bSuccess = false;
+        //VSIFree(pDummy);
         return;
     }
 
-    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs )
+    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs ||
+           !poJob->bSuccess )
     {
         int nBlockXOff = poJob->oPairs[nPair].first;
         int nBlockYOff = poJob->oPairs[nPair].second;
+        poGDS->AcquireMutex();
         GDALRasterBlock* poBlock = poGDS->GetRasterBand(nBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
+        poGDS->ReleaseMutex();
         if (poBlock == NULL)
-            break;
-
-        void* pDstBuffer = poBlock->GetDataRef();
-        if (!pDstBuffer)
         {
-            poBlock->DropLock();
+            poJob->bSuccess = false;
             break;
         }
 
-        poGDS->ReadBlock(nBand, fp, nBlockXOff, nBlockYOff, pDstBuffer,
-                         nBandCount, panBandMap);
+        void* pDstBuffer = poBlock->GetDataRef();
+        if( poGDS->ReadBlock(nBand, fp, nBlockXOff, nBlockYOff, pDstBuffer,
+                             nBandCount, panBandMap) != CE_None )
+        {
+            poJob->bSuccess = false;
+        }
 
         poBlock->DropLock();
     }
 
     VSIFCloseL(fp);
+    //VSIFree(pDummy);
 }
 
 /************************************************************************/
@@ -478,35 +520,45 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
         if( nReqMem > GDALGetCacheMax64() / (nBandCount == 0 ? 1 : nBandCount) )
             return FALSE;
 
+        JobStruct oJob;
         int nBlocksToLoad = 0;
-        std::vector< std::pair<int,int> > oPairs;
-        for(int nBlockXOff = nXStart; nBlockXOff <= nXEnd; ++nBlockXOff)
+        try
         {
-            for(int nBlockYOff = nYStart; nBlockYOff <= nYEnd; ++nBlockYOff)
+            for(int nBlockXOff = nXStart; nBlockXOff <= nXEnd; ++nBlockXOff)
             {
-                GDALRasterBlock* poBlock = poBand->TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
-                if (poBlock != NULL)
+                for(int nBlockYOff = nYStart; nBlockYOff <= nYEnd; ++nBlockYOff)
                 {
-                    poBlock->DropLock();
-                    continue;
+                    GDALRasterBlock* poBlock = poBand->TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
+                    if (poBlock != NULL)
+                    {
+                        poBlock->DropLock();
+                        continue;
+                    }
+                    oJob.oPairs.push_back( std::pair<int,int>(nBlockXOff, nBlockYOff) );
+                    nBlocksToLoad ++;
                 }
-                oPairs.push_back( std::pair<int,int>(nBlockXOff, nBlockYOff) );
-                nBlocksToLoad ++;
             }
+        }
+        catch( const std::bad_alloc& )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory error");
+            return -1;
         }
 
         if( nBlocksToLoad > 1 )
         {
-            int nThreads = MIN(nBlocksToLoad, nMaxThreads);
-            CPLJoinableThread** pahThreads = (CPLJoinableThread**) CPLMalloc( sizeof(CPLJoinableThread*) * nThreads );
+            int l_nThreads = MIN(nBlocksToLoad, nMaxThreads);
+            CPLJoinableThread** pahThreads = (CPLJoinableThread**) VSI_CALLOC_VERBOSE( sizeof(CPLJoinableThread*), l_nThreads );
+            if( pahThreads == NULL )
+            {
+                return -1;
+            }
             int i;
 
-            CPLDebug("OPENJPEG", "%d blocks to load", nBlocksToLoad);
+            CPLDebug("OPENJPEG", "%d blocks to load (%d threads)", nBlocksToLoad, l_nThreads);
 
-            JobStruct oJob;
             oJob.poGDS = this;
             oJob.nBand = poBand->GetBand();
-            oJob.oPairs = oPairs;
             oJob.nCurPair = -1;
             if( nBandCount > 0 )
             {
@@ -527,12 +579,25 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
                     oJob.panBandMap = &oJob.nBand;
                 }
             }
+            oJob.bSuccess = true;
 
-            for(i=0;i<nThreads;i++)
+            /* Flushes all dirty blocks from cache to disk to avoid them */
+            /* to be flushed randomly, and simultaneously, from our worker threads, */
+            /* which might cause races in the output driver. */
+            /* This is a workaround to a design defect of the block cache */
+            GDALRasterBlock::FlushDirtyBlocks();
+
+            for(i=0;i<l_nThreads;i++)
+            {
                 pahThreads[i] = CPLCreateJoinableThread(JP2OpenJPEGReadBlockInThread, &oJob);
-            for(i=0;i<nThreads;i++)
+                if( pahThreads[i] == NULL )
+                    oJob.bSuccess = false;
+            }
+            for(i=0;i<l_nThreads;i++)
                 CPLJoinThread( pahThreads[i] );
             CPLFree(pahThreads);
+            if( !oJob.bSuccess )
+                return -1;
         }
     }
 
@@ -546,7 +611,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
 CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -568,22 +633,18 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( (nBufXSize < nXSize || nBufYSize < nYSize)
         && poBand->GetOverviewCount() > 0 && eRWFlag == GF_Read )
     {
-        int         nOverview;
-        GDALRasterIOExtraArg sExtraArg;
-    
-        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
-
-        nOverview =
-            GDALBandGetBestOverviewLevel2(poBand, nXOff, nYOff, nXSize, nYSize,
-                                          nBufXSize, nBufYSize, &sExtraArg);
-        if (nOverview >= 0)
-        {
-            return papoOverviewDS[nOverview]->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                                        pData, nBufXSize, nBufYSize, eBufType,
-                                                        nBandCount, panBandMap,
-                                                        nPixelSpace, nLineSpace, nBandSpace,
-                                                        &sExtraArg);
-        }
+        int bTried;
+        CPLErr eErr = TryOverviewRasterIO( eRWFlag,
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace,
+                                    nBandSpace,
+                                    psExtraArg,
+                                    &bTried );
+        if( bTried )
+            return eErr;
     }
 
     bEnoughMemoryToLoadOtherBands = PreloadBlocks(poBand, nXOff, nYOff, nXSize, nYSize, nBandCount, panBandMap);
@@ -591,7 +652,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
     CPLErr eErr = GDALPamDataset::IRasterIO(   eRWFlag,
                                         nXOff, nYOff, nXSize, nYSize,
                                         pData, nBufXSize, nBufYSize,
-                                        eBufType, 
+                                        eBufType,
                                         nBandCount, panBandMap,
                                         nPixelSpace, nLineSpace, nBandSpace,
                                         psExtraArg );
@@ -601,18 +662,45 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                    JP2OpenJPEGCreateReadStream()                     */
+/************************************************************************/
+
+static opj_stream_t* JP2OpenJPEGCreateReadStream(JP2OpenJPEGFile* psJP2OpenJPEGFile,
+                                                 vsi_l_offset nSize)
+{
+    opj_stream_t *pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
+    if( pStream == NULL )
+        return NULL;
+
+    VSIFSeekL(psJP2OpenJPEGFile->fp, psJP2OpenJPEGFile->nBaseOffset, SEEK_SET);
+    opj_stream_set_user_data_length(pStream, nSize);
+
+    opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
+    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
+    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
+#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
+    opj_stream_set_user_data(pStream, psJP2OpenJPEGFile, NULL);
+#else
+    opj_stream_set_user_data(pStream, psJP2OpenJPEGFile);
+#endif
+
+    return pStream;
+}
+
+/************************************************************************/
 /*                             ReadBlock()                              */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
+CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
                                       int nBlockXOff, int nBlockYOff, void * pImage,
                                       int nBandCount, int* panBandMap )
 {
     CPLErr          eErr = CE_None;
-    opj_codec_t*    pCodec;
-    opj_stream_t *  pStream;
-    opj_image_t *   psImage;
-    
+    opj_codec_t*    pCodec = NULL;
+    opj_stream_t *  pStream = NULL;
+    opj_image_t *   psImage = NULL;
+    JP2OpenJPEGFile sJP2OpenJPEGFile;
+
     JP2OpenJPEGRasterBand* poBand = (JP2OpenJPEGRasterBand*) GetRasterBand(nBand);
     int nBlockXSize = poBand->nBlockXSize;
     int nBlockYSize = poBand->nBlockYSize;
@@ -624,7 +712,13 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     int nWidthToRead = MIN(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
     int nHeightToRead = MIN(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
-    pCodec = opj_create_decompress(eCodecFormat);
+    pCodec = opj_create_decompress(OPJ_CODEC_J2K);
+    if( pCodec == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "opj_create_decompress() failed");
+        eErr = CE_Failure;
+        goto end;
+    }
 
     opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,NULL);
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, NULL);
@@ -636,29 +730,28 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     if (! opj_setup_decoder(pCodec,&parameters))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "opj_setup_decoder() failed");
-        return CE_Failure;
+        eErr = CE_Failure;
+        goto end;
     }
 
-    pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
-
-    VSIFSeekL(fp, 0, SEEK_END);
-    opj_stream_set_user_data_length(pStream, VSIFTellL(fp));
-    /* Reseek to file beginning */
-    VSIFSeekL(fp, 0, SEEK_SET);
-
-    opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
-    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
-    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
-#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
-    opj_stream_set_user_data(pStream, fp, NULL);
-#else
-    opj_stream_set_user_data(pStream, fp);
-#endif
+    sJP2OpenJPEGFile.fp = fpIn;
+    sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
+    pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile, nCodeStreamLength);
+    if( pStream == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "JP2OpenJPEGCreateReadStream() failed");
+        eErr = CE_Failure;
+        goto end;
+    }
 
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed (psImage=%p)", psImage);
+        // We may leak objects, but the cleanup of openjpeg can cause
+        // double frees sometimes...
         return CE_Failure;
+        //eErr = CE_Failure;
+        //goto end;
     }
 
     if (!opj_set_decoded_resolution_factor( pCodec, iLevel ))
@@ -697,6 +790,17 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         }
     }
 
+    for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
+    {
+        if( psImage->comps[iBand].data == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "psImage->comps[%d].data == NULL", iBand);
+            eErr = CE_Failure;
+            goto end;
+        }
+    }
+
     for(int xBand = 0; xBand < nBandCount; xBand ++)
     {
         void* pDstBuffer;
@@ -708,63 +812,106 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
             pDstBuffer = pImage;
         else
         {
+            AcquireMutex();
             poBlock = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->
                 TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
             if (poBlock != NULL)
             {
+                ReleaseMutex();
                 poBlock->DropLock();
                 continue;
             }
 
             poBlock = GetRasterBand(iBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
+            ReleaseMutex();
             if (poBlock == NULL)
             {
                 continue;
             }
 
             pDstBuffer = poBlock->GetDataRef();
-            if (!pDstBuffer)
-            {
-                poBlock->DropLock();
-                continue;
-            }
         }
 
         if (bIs420)
         {
-            CPLAssert((int)psImage->comps[0].w >= nWidthToRead);
-            CPLAssert((int)psImage->comps[0].h >= nHeightToRead);
-            CPLAssert(psImage->comps[1].w == (psImage->comps[0].w + 1) / 2);
-            CPLAssert(psImage->comps[1].h == (psImage->comps[0].h + 1) / 2);
-            CPLAssert(psImage->comps[2].w == (psImage->comps[0].w + 1) / 2);
-            CPLAssert(psImage->comps[2].h == (psImage->comps[0].h + 1) / 2);
-
-            OPJ_INT32* pSrcY = psImage->comps[0].data;
-            OPJ_INT32* pSrcCb = psImage->comps[1].data;
-            OPJ_INT32* pSrcCr = psImage->comps[2].data;
-            GByte* pDst = (GByte*)pDstBuffer;
-            for(int j=0;j<nHeightToRead;j++)
+            if( (int)psImage->comps[0].w < nWidthToRead ||
+                (int)psImage->comps[0].h < nHeightToRead ||
+                psImage->comps[1].w != (psImage->comps[0].w + 1) / 2 ||
+                psImage->comps[1].h != (psImage->comps[0].h + 1) / 2 ||
+                psImage->comps[2].w != (psImage->comps[0].w + 1) / 2 ||
+                psImage->comps[2].h != (psImage->comps[0].h + 1) / 2 ||
+                (nBands == 4 && (
+                    (int)psImage->comps[3].w < nWidthToRead ||
+                    (int)psImage->comps[3].h < nHeightToRead)) )
             {
-                for(int i=0;i<nWidthToRead;i++)
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Assertion at line %d of %s failed",
+                         __LINE__, __FILE__);
+                if (poBlock != NULL)
+                    poBlock->DropLock();
+                eErr = CE_Failure;
+                goto end;
+            }
+
+            GByte* pDst = (GByte*)pDstBuffer;
+            if( iBand == 4 )
+            {
+                const OPJ_INT32* pSrcA = psImage->comps[3].data;
+                for(int j=0;j<nHeightToRead;j++)
                 {
-                    int Y = pSrcY[j * psImage->comps[0].w + i];
-                    int Cb = pSrcCb[(j/2) * psImage->comps[1].w + (i/2)];
-                    int Cr = pSrcCr[(j/2) * psImage->comps[2].w + (i/2)];
-                    if (iBand == 1)
-                        pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
-                    else if (iBand == 2)
-                        pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
-                    else
-                        pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
+                    memcpy(pDst + j*nBlockXSize,
+                            pSrcA + j * psImage->comps[0].w,
+                            nWidthToRead);
+                }
+            }
+            else
+            {
+                const OPJ_INT32* pSrcY = psImage->comps[0].data;
+                const OPJ_INT32* pSrcCb = psImage->comps[1].data;
+                const OPJ_INT32* pSrcCr = psImage->comps[2].data;
+                for(int j=0;j<nHeightToRead;j++)
+                {
+                    for(int i=0;i<nWidthToRead;i++)
+                    {
+                        int Y = pSrcY[j * psImage->comps[0].w + i];
+                        int Cb = pSrcCb[(j/2) * psImage->comps[1].w + (i/2)];
+                        int Cr = pSrcCr[(j/2) * psImage->comps[2].w + (i/2)];
+                        if (iBand == 1)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
+                        else if (iBand == 2)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
+                        else if (iBand == 3)
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
+                    }
+                }
+            }
+
+            if( bPromoteTo8Bit )
+            {
+                for(int j=0;j<nHeightToRead;j++)
+                {
+                    for(int i=0;i<nWidthToRead;i++)
+                    {
+                        pDst[j * nBlockXSize + i] *= 255;
+                    }
                 }
             }
         }
         else
         {
-            CPLAssert((int)psImage->comps[iBand-1].w >= nWidthToRead);
-            CPLAssert((int)psImage->comps[iBand-1].h >= nHeightToRead);
-            
+            if( (int)psImage->comps[iBand-1].w < nWidthToRead ||
+                (int)psImage->comps[iBand-1].h < nHeightToRead )
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Assertion at line %d of %s failed",
+                         __LINE__, __FILE__);
+                if (poBlock != NULL)
+                    poBlock->DropLock();
+                eErr = CE_Failure;
+                goto end;
+            }
+
             if( bPromoteTo8Bit )
             {
                 for(int j=0;j<nHeightToRead;j++)
@@ -798,10 +945,14 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     }
 
 end:
-    opj_end_decompress(pCodec,pStream);
-    opj_stream_destroy(pStream);
-    opj_destroy_codec(pCodec);
-    opj_image_destroy(psImage);
+    if( pCodec && pStream )
+        opj_end_decompress(pCodec,pStream);
+    if( pStream )
+        opj_stream_destroy(pStream);
+    if( pCodec )
+        opj_destroy_codec(pCodec);
+    if( psImage )
+        opj_image_destroy(psImage);
 
     return eErr;
 }
@@ -841,23 +992,20 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
     if( poCT )
         return GCI_PaletteIndex;
 
-    if (poGDS->eColorSpace == OPJ_CLRSPC_GRAY)
+    if( nBand == poGDS->nAlphaIndex + 1 )
+        return GCI_AlphaBand;
+
+    if (poGDS->nBands <= 2 && poGDS->eColorSpace == OPJ_CLRSPC_GRAY)
         return GCI_GrayIndex;
-    else if (poGDS->nBands == 3 || poGDS->nBands == 4)
+    else if (poGDS->eColorSpace == OPJ_CLRSPC_SRGB ||
+             poGDS->eColorSpace == OPJ_CLRSPC_SYCC)
     {
-        switch(nBand)
-        {
-            case 1:
-                return GCI_RedBand;
-            case 2:
-                return GCI_GreenBand;
-            case 3:
-                return GCI_BlueBand;
-            case 4:
-                return GCI_AlphaBand;
-            default:
-                return GCI_Undefined;
-        }
+        if( nBand == poGDS->nRedIndex + 1 )
+            return GCI_RedBand;
+        if( nBand == poGDS->nGreenIndex + 1 )
+            return GCI_GreenBand;
+        if( nBand == poGDS->nBlueIndex + 1 )
+            return GCI_BlueBand;
     }
 
     return GCI_Undefined;
@@ -876,9 +1024,14 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
 JP2OpenJPEGDataset::JP2OpenJPEGDataset()
 {
     fp = NULL;
+    nCodeStreamStart = 0;
+    nCodeStreamLength = 0;
     nBands = 0;
-    eCodecFormat = OPJ_CODEC_UNKNOWN;
     eColorSpace = OPJ_CLRSPC_UNKNOWN;
+    nRedIndex = 0;
+    nGreenIndex = 1;
+    nBlueIndex = 2;
+    nAlphaIndex = -1;
     bIs420 = FALSE;
     iLevel = 0;
     nOverviewCount = 0;
@@ -886,6 +1039,8 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     bUseSetDecodeArea = FALSE;
     nThreads = -1;
     bEnoughMemoryToLoadOtherBands = TRUE;
+    bRewrite = FALSE;
+    bHasGeoreferencingAtOpening = FALSE;
 }
 
 /************************************************************************/
@@ -897,8 +1052,233 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 {
     FlushCache();
 
-    if( fp != NULL )
-        VSIFCloseL( fp );
+    if( iLevel == 0 && fp != NULL )
+    {
+        if( bRewrite )
+        {
+            GDALJP2Box oBox( fp );
+            vsi_l_offset nOffsetJP2C = 0, nLengthJP2C = 0,
+                         nOffsetXML = 0, nOffsetASOC = 0, nOffsetUUID = 0,
+                         nOffsetIHDR = 0, nLengthIHDR = 0;
+            int bMSIBox = FALSE, bGMLData = FALSE;
+            int bUnsupportedConfiguration = FALSE;
+            if( oBox.ReadFirst() )
+            {
+                while( strlen(oBox.GetType()) > 0 )
+                {
+                    if( EQUAL(oBox.GetType(),"jp2c") )
+                    {
+                        if( nOffsetJP2C == 0 )
+                        {
+                            nOffsetJP2C = VSIFTellL(fp);
+                            nLengthJP2C = oBox.GetDataLength();
+                        }
+                        else
+                            bUnsupportedConfiguration = TRUE;
+                    }
+                    else if( EQUAL(oBox.GetType(),"jp2h") )
+                    {
+                        GDALJP2Box oSubBox( fp );
+                        if( oSubBox.ReadFirstChild( &oBox ) &&
+                            EQUAL(oSubBox.GetType(),"ihdr") )
+                        {
+                            nOffsetIHDR = VSIFTellL(fp);
+                            nLengthIHDR = oSubBox.GetDataLength();
+                        }
+                    }
+                    else if( EQUAL(oBox.GetType(),"xml ") )
+                    {
+                        if( nOffsetXML == 0 )
+                            nOffsetXML = VSIFTellL(fp);
+                    }
+                    else if( EQUAL(oBox.GetType(),"asoc") )
+                    {
+                        if( nOffsetASOC == 0 )
+                            nOffsetASOC = VSIFTellL(fp);
+
+                        GDALJP2Box oSubBox( fp );
+                        if( oSubBox.ReadFirstChild( &oBox ) &&
+                            EQUAL(oSubBox.GetType(),"lbl ") )
+                        {
+                            char *pszLabel = (char *) oSubBox.ReadBoxData();
+                            if( pszLabel != NULL && EQUAL(pszLabel,"gml.data") )
+                            {
+                                bGMLData = TRUE;
+                            }
+                            else
+                                bUnsupportedConfiguration = TRUE;
+                            CPLFree( pszLabel );
+                        }
+                        else
+                            bUnsupportedConfiguration = TRUE;
+                    }
+                    else if( EQUAL(oBox.GetType(),"uuid") )
+                    {
+                        if( nOffsetUUID == 0 )
+                            nOffsetUUID = VSIFTellL(fp);
+                        if( GDALJP2Metadata::IsUUID_MSI(oBox.GetUUID()) )
+                            bMSIBox = TRUE;
+                        else if( !GDALJP2Metadata::IsUUID_XMP(oBox.GetUUID()) )
+                            bUnsupportedConfiguration = TRUE;
+                    }
+                    else if( !EQUAL(oBox.GetType(),"jP  ") &&
+                             !EQUAL(oBox.GetType(),"ftyp") &&
+                             !EQUAL(oBox.GetType(),"rreq") &&
+                             !EQUAL(oBox.GetType(),"jp2h") &&
+                             !EQUAL(oBox.GetType(),"jp2i") )
+                    {
+                        bUnsupportedConfiguration = TRUE;
+                    }
+
+                    if (bUnsupportedConfiguration || !oBox.ReadNext())
+                        break;
+                }
+            }
+
+            const char* pszGMLJP2;
+            int bGeoreferencingCompatOfGMLJP2 =
+                       ((pszProjection != NULL && pszProjection[0] != '\0' ) &&
+                        bGeoTransformValid && nGCPCount == 0);
+            if( bGeoreferencingCompatOfGMLJP2 &&
+                ((bHasGeoreferencingAtOpening && bGMLData) ||
+                 (!bHasGeoreferencingAtOpening)) )
+                pszGMLJP2 = "GMLJP2=YES";
+            else
+                pszGMLJP2 = "GMLJP2=NO";
+
+            const char* pszGeoJP2;
+            int bGeoreferencingCompatOfGeoJP2 =
+                    ((pszProjection != NULL && pszProjection[0] != '\0' ) ||
+                    nGCPCount != 0 || bGeoTransformValid);
+            if( bGeoreferencingCompatOfGeoJP2 &&
+                ((bHasGeoreferencingAtOpening && bMSIBox) ||
+                 (!bHasGeoreferencingAtOpening) || nGCPCount > 0) )
+                pszGeoJP2 = "GeoJP2=YES";
+            else
+                pszGeoJP2 = "GeoJP2=NO";
+
+            /* Test that the length of the JP2C box is not 0 */
+            int bJP2CBoxOKForRewriteInPlace = TRUE;
+            if( nOffsetJP2C > 16 && !bUnsupportedConfiguration )
+            {
+                VSIFSeekL(fp, nOffsetJP2C - 8, SEEK_SET);
+                GByte abyBuffer[8];
+                VSIFReadL(abyBuffer, 1, 8, fp);
+                if( STARTS_WITH_CI((const char*)abyBuffer + 4, "jp2c") &&
+                    abyBuffer[0] == 0 && abyBuffer[1] == 0 &&
+                    abyBuffer[2] == 0 && abyBuffer[3] == 0 )
+                {
+                    if( (vsi_l_offset)(GUInt32)(nLengthJP2C + 8) == (nLengthJP2C + 8) )
+                    {
+                        CPLDebug("OPENJPEG", "Patching length of JP2C box with real length");
+                        VSIFSeekL(fp, nOffsetJP2C - 8, SEEK_SET);
+                        GUInt32 nLength = (GUInt32)nLengthJP2C + 8;
+                        CPL_MSBPTR32(&nLength);
+                        VSIFWriteL(&nLength, 1, 4, fp);
+                    }
+                    else
+                        bJP2CBoxOKForRewriteInPlace = FALSE;
+                }
+            }
+
+            if( nOffsetJP2C == 0 || bUnsupportedConfiguration )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot rewrite file due to unsupported JP2 box configuration");
+                VSIFCloseL( fp );
+            }
+            else if( bJP2CBoxOKForRewriteInPlace &&
+                     (nOffsetXML == 0 || nOffsetXML > nOffsetJP2C) &&
+                     (nOffsetASOC == 0 || nOffsetASOC > nOffsetJP2C) &&
+                     (nOffsetUUID == 0 || nOffsetUUID > nOffsetJP2C) )
+            {
+                CPLDebug("OPENJPEG", "Rewriting boxes after codestream");
+
+                /* Update IPR flag */
+                if( nLengthIHDR == 14 )
+                {
+                    VSIFSeekL( fp, nOffsetIHDR + nLengthIHDR - 1, SEEK_SET );
+                    GByte bIPR = GetMetadata("xml:IPR") != NULL;
+                    VSIFWriteL( &bIPR, 1, 1, fp );
+                }
+
+                VSIFSeekL( fp, nOffsetJP2C + nLengthJP2C, SEEK_SET );
+
+                GDALJP2Metadata oJP2MD;
+                if( GetGCPCount() > 0 )
+                {
+                    oJP2MD.SetGCPs( GetGCPCount(),
+                                    GetGCPs() );
+                    oJP2MD.SetProjection( GetGCPProjection() );
+                }
+                else
+                {
+                    const char* pszWKT = GetProjectionRef();
+                    if( pszWKT != NULL && pszWKT[0] != '\0' )
+                    {
+                        oJP2MD.SetProjection( pszWKT );
+                    }
+                    if( bGeoTransformValid )
+                    {
+                        oJP2MD.SetGeoTransform( adfGeoTransform );
+                    }
+                }
+
+                const char* pszAreaOrPoint = GetMetadataItem(GDALMD_AREA_OR_POINT);
+                oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
+
+                WriteIPRBox(fp, this, NULL);
+
+                if( bGeoreferencingCompatOfGMLJP2 && EQUAL(pszGMLJP2, "GMLJP2=YES") )
+                {
+                    GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nRasterXSize,nRasterYSize);
+                    WriteBox(fp, poBox);
+                    delete poBox;
+                }
+
+                WriteXMLBoxes(fp, this, NULL);
+                WriteGDALMetadataBox(fp, this, NULL);
+
+                if( bGeoreferencingCompatOfGeoJP2 && EQUAL(pszGeoJP2, "GeoJP2=YES") )
+                {
+                    GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
+                    WriteBox(fp, poBox);
+                    delete poBox;
+                }
+
+                WriteXMPBox(fp, this, NULL);
+
+                VSIFTruncateL( fp, VSIFTellL(fp) );
+
+                VSIFCloseL( fp );
+            }
+            else
+            {
+                VSIFCloseL( fp );
+
+                CPLDebug("OPENJPEG", "Rewriting whole file");
+
+                const char* apszOptions[] = {
+                    "USE_SRC_CODESTREAM=YES", "CODEC=JP2", "WRITE_METADATA=YES",
+                    NULL, NULL, NULL };
+                apszOptions[3] = pszGMLJP2;
+                apszOptions[4] = pszGeoJP2;
+                CPLString osTmpFilename(CPLSPrintf("%s.tmp", GetDescription()));
+                GDALDataset* poOutDS = CreateCopy( osTmpFilename, this, FALSE,
+                                                (char**)apszOptions, GDALDummyProgress, NULL );
+                if( poOutDS )
+                {
+                    GDALClose(poOutDS);
+                    VSIRename(osTmpFilename, GetDescription());
+                }
+                else
+                    VSIUnlink(osTmpFilename);
+                VSIUnlink(CPLSPrintf("%s.tmp.aux.xml", GetDescription()));
+            }
+        }
+        else
+            VSIFCloseL( fp );
+    }
 
     CloseDependentDatasets();
 }
@@ -909,7 +1289,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 
 int JP2OpenJPEGDataset::CloseDependentDatasets()
 {
-    int bRet = GDALPamDataset::CloseDependentDatasets();
+    int bRet = GDALJP2AbstractDataset::CloseDependentDatasets();
     if ( papoOverviewDS )
     {
         for( int i = 0; i < nOverviewCount; i++ )
@@ -922,26 +1302,166 @@ int JP2OpenJPEGDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetProjection( const char * pszProjectionIn )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        CPLFree(pszProjection);
+        pszProjection = (pszProjectionIn) ? CPLStrdup(pszProjectionIn) : CPLStrdup("");
+        return CE_None;
+    }
+    else
+        return GDALJP2AbstractDataset::SetProjection(pszProjectionIn);
+}
+
+/************************************************************************/
+/*                           SetGeoTransform()                          */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetGeoTransform( double *padfGeoTransform )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        memcpy(adfGeoTransform, padfGeoTransform, 6* sizeof(double));
+        bGeoTransformValid = !(
+            adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0 &&
+            adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0 &&
+            adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == 1.0);
+        return CE_None;
+    }
+    else
+        return GDALJP2AbstractDataset::SetGeoTransform(padfGeoTransform);
+}
+
+/************************************************************************/
+/*                           SetGCPs()                                  */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                                    const char *pszGCPProjectionIn )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        CPLFree( pszProjection );
+        if( nGCPCount > 0 )
+        {
+            GDALDeinitGCPs( nGCPCount, pasGCPList );
+            CPLFree( pasGCPList );
+        }
+
+        pszProjection = (pszGCPProjectionIn) ? CPLStrdup(pszGCPProjectionIn) : CPLStrdup("");
+        nGCPCount = nGCPCountIn;
+        pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPListIn );
+
+        return CE_None;
+    }
+    else
+        return GDALJP2AbstractDataset::SetGCPs(nGCPCountIn, pasGCPListIn,
+                                               pszGCPProjectionIn);
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetMetadata( char ** papszMetadata,
+                                        const char * pszDomain )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        return GDALDataset::SetMetadata(papszMetadata, pszDomain);
+    }
+    return GDALJP2AbstractDataset::SetMetadata(papszMetadata, pszDomain);
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetMetadataItem( const char * pszName,
+                                            const char * pszValue,
+                                            const char * pszDomain )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        return GDALDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+    }
+    return GDALJP2AbstractDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
 /*                            Identify()                                */
 /************************************************************************/
+
+static const unsigned char jpc_header[] = {0xff,0x4f};
+static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
 int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    static const unsigned char jpc_header[] = {0xff,0x4f};
-    static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
-        
-    if( poOpenInfo->nHeaderBytes >= 16 
-        && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
+    if( poOpenInfo->nHeaderBytes >= 16
+        && (memcmp( poOpenInfo->pabyHeader, jpc_header,
                     sizeof(jpc_header) ) == 0
-            || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp, 
+            || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp,
                     sizeof(jp2_box_jp) ) == 0
            ) )
         return TRUE;
-    
+
     else
         return FALSE;
 }
+
+/************************************************************************/
+/*                        JP2OpenJPEGFindCodeStream()                   */
+/************************************************************************/
+
+static vsi_l_offset JP2OpenJPEGFindCodeStream( VSILFILE* fp,
+                                               vsi_l_offset* pnLength )
+{
+    vsi_l_offset nCodeStreamStart = 0;
+    vsi_l_offset nCodeStreamLength = 0;
+
+    VSIFSeekL(fp, 0, SEEK_SET);
+    GByte abyHeader[16];
+    VSIFReadL(abyHeader, 1, 16, fp);
+
+    if (memcmp( abyHeader, jpc_header, sizeof(jpc_header) ) == 0)
+    {
+        VSIFSeekL(fp, 0, SEEK_END);
+        nCodeStreamLength = VSIFTellL(fp);
+    }
+    else if (memcmp( abyHeader + 4, jp2_box_jp, sizeof(jp2_box_jp) ) == 0)
+    {
+        /* Find offset of first jp2c box */
+        GDALJP2Box oBox( fp );
+        if( oBox.ReadFirst() )
+        {
+            while( strlen(oBox.GetType()) > 0 )
+            {
+                if( EQUAL(oBox.GetType(),"jp2c") )
+                {
+                    nCodeStreamStart = VSIFTellL(fp);
+                    nCodeStreamLength = oBox.GetDataLength();
+                    break;
+                }
+
+                if (!oBox.ReadNext())
+                    break;
+            }
+        }
+    }
+    *pnLength = nCodeStreamLength;
+    return nCodeStreamStart;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -949,26 +1469,28 @@ int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if (!Identify(poOpenInfo))
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == NULL)
         return NULL;
-
-    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (!fp)
-        return NULL;
-
-    OPJ_CODEC_FORMAT eCodecFormat;
 
     /* Detect which codec to use : J2K or JP2 ? */
-    static const unsigned char jpc_header[] = {0xff,0x4f};
-    if (memcmp( poOpenInfo->pabyHeader, jpc_header, 
-                    sizeof(jpc_header) ) == 0)
-        eCodecFormat = OPJ_CODEC_J2K;
-    else
-        eCodecFormat = OPJ_CODEC_JP2;
+    vsi_l_offset nCodeStreamLength = 0;
+    vsi_l_offset nCodeStreamStart = JP2OpenJPEGFindCodeStream(poOpenInfo->fpL,
+                                                              &nCodeStreamLength);
+
+    if( nCodeStreamStart == 0 && nCodeStreamLength == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "No code-stream in JP2 file");
+        return NULL;
+    }
+
+    OPJ_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? OPJ_CODEC_J2K : OPJ_CODEC_JP2;
+
 
     opj_codec_t* pCodec;
 
-    pCodec = opj_create_decompress(eCodecFormat);
+    pCodec = opj_create_decompress(OPJ_CODEC_J2K);
+    if( pCodec == NULL )
+        return NULL;
 
     opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,NULL);
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, NULL);
@@ -979,53 +1501,48 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (! opj_setup_decoder(pCodec,&parameters))
     {
-        VSIFCloseL(fp);
+        opj_destroy_codec(pCodec);
         return NULL;
     }
 
-    opj_stream_t * pStream;
-    pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
-
-    VSIFSeekL(fp, 0, SEEK_END);
-    opj_stream_set_user_data_length(pStream, VSIFTellL(fp));
-    /* Reseek to file beginning */
-    VSIFSeekL(fp, 0, SEEK_SET);
-
-    opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
-    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
-    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
-#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
-    opj_stream_set_user_data(pStream, fp, NULL);
-#else
-    opj_stream_set_user_data(pStream, fp);
-#endif
+    JP2OpenJPEGFile sJP2OpenJPEGFile;
+    sJP2OpenJPEGFile.fp = poOpenInfo->fpL;
+    sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
+    opj_stream_t * pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile,
+                                                         nCodeStreamLength);
 
     opj_image_t * psImage = NULL;
-    OPJ_INT32  nX0,nY0;
-    OPJ_UINT32 nTileW,nTileH;
-#ifdef DEBUG
-    OPJ_UINT32 nTilesX,nTilesY;
-#endif
+
+    if( pStream == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "JP2OpenJPEGCreateReadStream() failed");
+        opj_stream_destroy(pStream);
+        opj_destroy_codec(pCodec);
+        return NULL;
+    }
+
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        VSIFCloseL(fp);
         return NULL;
     }
 
     opj_codestream_info_v2_t* pCodeStreamInfo = opj_get_cstr_info(pCodec);
-    nX0 = pCodeStreamInfo->tx0;
-    nY0 = pCodeStreamInfo->ty0;
+    OPJ_UINT32 nTileW,nTileH;
     nTileW = pCodeStreamInfo->tdx;
     nTileH = pCodeStreamInfo->tdy;
 #ifdef DEBUG
+    OPJ_UINT32  nX0,nY0;
+    OPJ_UINT32 nTilesX,nTilesY;
+    nX0 = pCodeStreamInfo->tx0;
+    nY0 = pCodeStreamInfo->ty0;
     nTilesX = pCodeStreamInfo->tw;
     nTilesY = pCodeStreamInfo->th;
-#endif
     int mct = pCodeStreamInfo->m_default_tile_info.mct;
+#endif
     int numResolutions = pCodeStreamInfo->m_default_tile_info.tccp_info[0].numresolutions;
     opj_destroy_cstr_info(&pCodeStreamInfo);
 
@@ -1034,34 +1551,32 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        VSIFCloseL(fp);
         return NULL;
     }
 
 #ifdef DEBUG
-    int i;
-    CPLDebug("OPENJPEG", "nX0 = %d", nX0);
-    CPLDebug("OPENJPEG", "nY0 = %d", nY0);
-    CPLDebug("OPENJPEG", "nTileW = %d", nTileW);
-    CPLDebug("OPENJPEG", "nTileH = %d", nTileH);
-    CPLDebug("OPENJPEG", "nTilesX = %d", nTilesX);
-    CPLDebug("OPENJPEG", "nTilesY = %d", nTilesY);
+    CPLDebug("OPENJPEG", "nX0 = %u", nX0);
+    CPLDebug("OPENJPEG", "nY0 = %u", nY0);
+    CPLDebug("OPENJPEG", "nTileW = %u", nTileW);
+    CPLDebug("OPENJPEG", "nTileH = %u", nTileH);
+    CPLDebug("OPENJPEG", "nTilesX = %u", nTilesX);
+    CPLDebug("OPENJPEG", "nTilesY = %u", nTilesY);
     CPLDebug("OPENJPEG", "mct = %d", mct);
-    CPLDebug("OPENJPEG", "psImage->x0 = %d", psImage->x0);
-    CPLDebug("OPENJPEG", "psImage->y0 = %d", psImage->y0);
-    CPLDebug("OPENJPEG", "psImage->x1 = %d", psImage->x1);
-    CPLDebug("OPENJPEG", "psImage->y1 = %d", psImage->y1);
+    CPLDebug("OPENJPEG", "psImage->x0 = %u", psImage->x0);
+    CPLDebug("OPENJPEG", "psImage->y0 = %u", psImage->y0);
+    CPLDebug("OPENJPEG", "psImage->x1 = %u", psImage->x1);
+    CPLDebug("OPENJPEG", "psImage->y1 = %u", psImage->y1);
     CPLDebug("OPENJPEG", "psImage->numcomps = %d", psImage->numcomps);
-    CPLDebug("OPENJPEG", "psImage->color_space = %d", psImage->color_space);
+    //CPLDebug("OPENJPEG", "psImage->color_space = %d", psImage->color_space);
     CPLDebug("OPENJPEG", "numResolutions = %d", numResolutions);
-    for(i=0;i<(int)psImage->numcomps;i++)
+    for(int i=0;i<(int)psImage->numcomps;i++)
     {
-        CPLDebug("OPENJPEG", "psImage->comps[%d].dx = %d", i, psImage->comps[i].dx);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].dy = %d", i, psImage->comps[i].dy);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].x0 = %d", i, psImage->comps[i].x0);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].y0 = %d", i, psImage->comps[i].y0);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].w = %d", i, psImage->comps[i].w);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].h = %d", i, psImage->comps[i].h);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].dx = %u", i, psImage->comps[i].dx);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].dy = %u", i, psImage->comps[i].dy);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].x0 = %u", i, psImage->comps[i].x0);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].y0 = %u", i, psImage->comps[i].y0);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].w = %u", i, psImage->comps[i].w);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].h = %u", i, psImage->comps[i].h);
         CPLDebug("OPENJPEG", "psImage->comps[%d].resno_decoded = %d", i, psImage->comps[i].resno_decoded);
         CPLDebug("OPENJPEG", "psImage->comps[%d].factor = %d", i, psImage->comps[i].factor);
         CPLDebug("OPENJPEG", "psImage->comps[%d].prec = %d", i, psImage->comps[i].prec);
@@ -1072,6 +1587,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     if (psImage->x1 <= psImage->x0 ||
         psImage->y1 <= psImage->y0 ||
         psImage->numcomps == 0 ||
+        (psImage->comps[0].w >> 31) != 0 ||
+        (psImage->comps[0].h >> 31) != 0 ||
+        (nTileW >> 31) != 0 ||
+        (nTileH >> 31) != 0 ||
         psImage->comps[0].w != psImage->x1 - psImage->x0 ||
         psImage->comps[0].h != psImage->y1 - psImage->y0)
     {
@@ -1079,7 +1598,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -1101,11 +1619,15 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int bIs420  =  (psImage->color_space != OPJ_CLRSPC_SRGB &&
                     eDataType == GDT_Byte &&
-                    psImage->numcomps == 3 &&
+                    (psImage->numcomps == 3 || psImage->numcomps == 4) &&
                     psImage->comps[1].w == psImage->comps[0].w / 2 &&
                     psImage->comps[1].h == psImage->comps[0].h / 2 &&
                     psImage->comps[2].w == psImage->comps[0].w / 2 &&
-                    psImage->comps[2].h == psImage->comps[0].h / 2);
+                    psImage->comps[2].h == psImage->comps[0].h / 2) &&
+                    (psImage->numcomps == 3 ||
+                     (psImage->numcomps == 4 &&
+                      psImage->comps[3].w == psImage->comps[0].w &&
+                      psImage->comps[3].h == psImage->comps[0].h));
 
     if (bIs420)
     {
@@ -1123,7 +1645,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                 opj_destroy_codec(pCodec);
                 opj_stream_destroy(pStream);
                 opj_image_destroy(psImage);
-                VSIFCloseL(fp);
                 return NULL;
             }
         }
@@ -1137,73 +1658,67 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     int                 iBand;
 
     poDS = new JP2OpenJPEGDataset();
-    poDS->eCodecFormat = eCodecFormat;
+    if( eCodecFormat == OPJ_CODEC_JP2 )
+        poDS->eAccess = poOpenInfo->eAccess;
     poDS->eColorSpace = psImage->color_space;
     poDS->nRasterXSize = psImage->x1 - psImage->x0;
     poDS->nRasterYSize = psImage->y1 - psImage->y0;
     poDS->nBands = psImage->numcomps;
-    poDS->fp = fp;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
+    poDS->nCodeStreamStart = nCodeStreamStart;
+    poDS->nCodeStreamLength = nCodeStreamLength;
     poDS->bIs420 = bIs420;
 
-    poDS->bUseSetDecodeArea = 
+    poDS->bUseSetDecodeArea =
         (poDS->nRasterXSize == (int)nTileW &&
          poDS->nRasterYSize == (int)nTileH &&
          (poDS->nRasterXSize > 1024 ||
           poDS->nRasterYSize > 1024));
 
-    if (poDS->bUseSetDecodeArea)
+    /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+    /* are tiled with tile dimensions 2048x2048. It would be a waste of */
+    /* memory to allocate such big blocks */
+    if( poDS->nRasterXSize < (int)nTileW &&
+        poDS->nRasterYSize < (int)nTileH )
+    {
+        poDS->bUseSetDecodeArea = TRUE;
+        nTileW = poDS->nRasterXSize;
+        nTileH = poDS->nRasterYSize;
+        if (nTileW > 2048) nTileW = 2048;
+        if (nTileH > 2048) nTileH = 2048;
+    }
+    else if (poDS->bUseSetDecodeArea)
     {
         if (nTileW > 1024) nTileW = 1024;
         if (nTileH > 1024) nTileH = 1024;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    JP2OpenJPEGRasterBand* poFirstBand = NULL;
+    GDALColorTable* poCT = NULL;
 
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+/* -------------------------------------------------------------------- */
+/*      Look for color table or cdef box                                */
+/* -------------------------------------------------------------------- */
+    if( eCodecFormat == OPJ_CODEC_JP2 )
     {
-        int bPromoteTo8Bit = (
-            iBand == 4 && poDS->nBands == 4 &&
-            psImage->comps[0].prec == 8 &&
-            psImage->comps[1].prec == 8 &&
-            psImage->comps[2].prec == 8 &&
-            psImage->comps[3].prec == 1 && 
-            CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")) );
-
-        JP2OpenJPEGRasterBand* poBand =
-            new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
-                                        bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
-                                        bPromoteTo8Bit,
-                                        nTileW, nTileH);
-        if( iBand == 1 )
-            poFirstBand = poBand;
-        poDS->SetBand( iBand, poBand );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Look for color table.                                           */
-/* -------------------------------------------------------------------- */
-    if( eDataType == GDT_Byte && poDS->nBands == 1 )
-    {
-        GDALJP2Box oBox( fp );
+        GDALJP2Box oBox( poDS->fp );
         if( oBox.ReadFirst() )
         {
             while( strlen(oBox.GetType()) > 0 )
             {
                 if( EQUAL(oBox.GetType(),"jp2h") )
                 {
-                    GDALJP2Box oSubBox( fp );
+                    GDALJP2Box oSubBox( poDS->fp );
 
                     for( oSubBox.ReadFirstChild( &oBox );
                          strlen(oSubBox.GetType()) > 0;
                          oSubBox.ReadNextChild( &oBox ) )
                     {
                         GIntBig nDataLength = oSubBox.GetDataLength();
-                        if( EQUAL(oSubBox.GetType(),"pclr") &&
+                        if( poCT == NULL &&
+                            EQUAL(oSubBox.GetType(),"pclr") &&
                             nDataLength >= 3 &&
-                            nDataLength <= 2 + 1 + 3 + 3 * 256 )
+                            nDataLength <= 2 + 1 + 4 + 4 * 256 )
                         {
                             GByte* pabyCT = oSubBox.ReadBoxData();
                             if( pabyCT != NULL )
@@ -1219,7 +1734,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                     if( pabyCT[3] == 7 && pabyCT[4] == 7 && pabyCT[5] == 7 &&
                                         nDataLength == 2 + 1 + 3 + 3 * nEntries )
                                     {
-                                        GDALColorTable* poCT = new GDALColorTable();
+                                        poCT = new GDALColorTable();
                                         for(int i=0;i<nEntries;i++)
                                         {
                                             GDALColorEntry sEntry;
@@ -1229,12 +1744,130 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                             sEntry.c4 = 255;
                                             poCT->SetColorEntry(i, &sEntry);
                                         }
-                                        poFirstBand->poCT = poCT;
+                                    }
+                                }
+                                else if ( nEntries <= 256 && nComponents == 4 )
+                                {
+                                    if( pabyCT[3] == 7 && pabyCT[4] == 7 &&
+                                        pabyCT[5] == 7 && pabyCT[6] == 7 &&
+                                        nDataLength == 2 + 1 + 4 + 4 * nEntries )
+                                    {
+                                        poCT = new GDALColorTable();
+                                        for(int i=0;i<nEntries;i++)
+                                        {
+                                            GDALColorEntry sEntry;
+                                            sEntry.c1 = pabyCT[7 + 4 * i];
+                                            sEntry.c2 = pabyCT[7 + 4 * i + 1];
+                                            sEntry.c3 = pabyCT[7 + 4 * i + 2];
+                                            sEntry.c4 = pabyCT[7 + 4 * i + 3];
+                                            poCT->SetColorEntry(i, &sEntry);
+                                        }
                                     }
                                 }
                                 CPLFree(pabyCT);
                             }
-                            break;
+                        }
+                        /* There's a bug/misfeature in openjpeg: the color_space
+                           only gets set at read tile time */
+                        else if( EQUAL(oSubBox.GetType(),"colr") &&
+                                 nDataLength == 7 )
+                        {
+                            GByte* pabyContent = oSubBox.ReadBoxData();
+                            if( pabyContent != NULL )
+                            {
+                                if( pabyContent[0] == 1 /* enumerated colourspace */ )
+                                {
+                                    GUInt32 enumcs = (pabyContent[3] << 24) |
+                                                     (pabyContent[4] << 16) |
+                                                     (pabyContent[5] << 8) |
+                                                     (pabyContent[6]);
+                                    if( enumcs == 16 )
+                                    {
+                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        CPLDebug("OPENJPEG", "SRGB color space");
+                                    }
+                                    else if( enumcs == 17 )
+                                    {
+                                        poDS->eColorSpace = OPJ_CLRSPC_GRAY;
+                                        CPLDebug("OPENJPEG", "Grayscale color space");
+                                    }
+                                    else if( enumcs == 18 )
+                                    {
+                                        poDS->eColorSpace = OPJ_CLRSPC_SYCC;
+                                        CPLDebug("OPENJPEG", "SYCC color space");
+                                    }
+                                    else if( enumcs == 20 )
+                                    {
+                                        /* Used by J2KP4files/testfiles_jp2/file7.jp2 */
+                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        CPLDebug("OPENJPEG", "e-sRGB color space");
+                                    }
+                                    else if( enumcs == 21 )
+                                    {
+                                        /* Used by J2KP4files/testfiles_jp2/file5.jp2 */
+                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        CPLDebug("OPENJPEG", "ROMM-RGB color space");
+                                    }
+                                    else
+                                    {
+                                        poDS->eColorSpace = OPJ_CLRSPC_UNKNOWN;
+                                        CPLDebug("OPENJPEG", "Unknown color space");
+                                    }
+                                }
+                                CPLFree(pabyContent);
+                            }
+                        }
+                        /* Check if there's an alpha channel or odd channel attribution */
+                        else if( EQUAL(oSubBox.GetType(),"cdef") &&
+                                 nDataLength == 2 + poDS->nBands * 6 )
+                        {
+                            GByte* pabyContent = oSubBox.ReadBoxData();
+                            if( pabyContent != NULL )
+                            {
+                                int nEntries = (pabyContent[0] << 8) | pabyContent[1];
+                                if( nEntries == poDS->nBands )
+                                {
+                                    poDS->nRedIndex = -1;
+                                    poDS->nGreenIndex = -1;
+                                    poDS->nBlueIndex = -1;
+                                    for(int i=0;i<poDS->nBands;i++)
+                                    {
+                                        int CNi = (pabyContent[2+6*i] << 8) | pabyContent[2+6*i+1];
+                                        int Typi = (pabyContent[2+6*i+2] << 8) | pabyContent[2+6*i+3];
+                                        int Asoci = (pabyContent[2+6*i+4] << 8) | pabyContent[2+6*i+5];
+                                        if( CNi < 0 || CNi >= poDS->nBands )
+                                        {
+                                            CPLError(CE_Failure, CPLE_AppDefined,
+                                                     "Wrong value of CN%d=%d", i, CNi);
+                                            break;
+                                        }
+                                        if( Typi == 0 )
+                                        {
+                                            if( Asoci == 1 )
+                                                poDS->nRedIndex = CNi;
+                                            else if( Asoci == 2 )
+                                                poDS->nGreenIndex = CNi;
+                                            else if( Asoci == 3 )
+                                                poDS->nBlueIndex = CNi;
+                                            else if( Asoci < 0 || (Asoci > poDS->nBands && Asoci != 65535) )
+                                            {
+                                                CPLError(CE_Failure, CPLE_AppDefined,
+                                                     "Wrong value of Asoc%d=%d", i, Asoci);
+                                                break;
+                                            }
+                                        }
+                                        else if( Typi == 1 )
+                                        {
+                                            poDS->nAlphaIndex = CNi;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    CPLDebug("OPENJPEG", "Unsupported cdef content");
+                                }
+                                CPLFree(pabyContent);
+                            }
                         }
                     }
                 }
@@ -1246,20 +1879,45 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    {
+        int bPromoteTo8Bit = (
+            iBand == poDS->nAlphaIndex + 1 &&
+            psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
+            psImage->comps[poDS->nAlphaIndex ].prec == 1 &&
+            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+                    CPLTestBool(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
+        if( bPromoteTo8Bit )
+            CPLDebug("JP2OpenJPEG", "Alpha band is promoted from 1 bit to 8 bit");
+
+        JP2OpenJPEGRasterBand* poBand =
+            new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
+                                        bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
+                                        bPromoteTo8Bit,
+                                        nTileW, nTileH);
+        if( iBand == 1 && poCT != NULL )
+            poBand->poCT = poCT;
+        poDS->SetBand( iBand, poBand );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create overview datasets.                                       */
 /* -------------------------------------------------------------------- */
     int nW = poDS->nRasterXSize;
     int nH = poDS->nRasterYSize;
+
+    /* Lower resolutions are not compatible with a color-table */
+    if( poCT != NULL )
+        numResolutions = 0;
+
     while (poDS->nOverviewCount+1 < numResolutions &&
-           (nW > 256 || nH > 256) &&
+           (nW > 128 || nH > 128) &&
            (poDS->bUseSetDecodeArea || ((nTileW % 2) == 0 && (nTileH % 2) == 0)))
     {
         nW /= 2;
         nH /= 2;
-
-        VSILFILE* fpOvr = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-        if (!fpOvr)
-            break;
 
         poDS->papoOverviewDS = (JP2OpenJPEGDataset**) CPLRealloc(
                     poDS->papoOverviewDS,
@@ -1268,6 +1926,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poODS->SetDescription( poOpenInfo->pszFilename );
         poODS->iLevel = poDS->nOverviewCount + 1;
         poODS->bUseSetDecodeArea = poDS->bUseSetDecodeArea;
+        poODS->nRedIndex = poDS->nRedIndex;
+        poODS->nGreenIndex = poDS->nGreenIndex;
+        poODS->nBlueIndex = poDS->nBlueIndex;
+        poODS->nAlphaIndex = poDS->nAlphaIndex;
         if (!poDS->bUseSetDecodeArea)
         {
             nTileW /= 2;
@@ -1283,22 +1945,22 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        poODS->eCodecFormat = poDS->eCodecFormat;
         poODS->eColorSpace = poDS->eColorSpace;
         poODS->nRasterXSize = nW;
         poODS->nRasterYSize = nH;
         poODS->nBands = poDS->nBands;
-        poODS->fp = fpOvr;
+        poODS->fp = poDS->fp;
+        poODS->nCodeStreamStart = nCodeStreamStart;
+        poODS->nCodeStreamLength = nCodeStreamLength;
         poODS->bIs420 = bIs420;
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
             int bPromoteTo8Bit = (
-                iBand == 4 && poDS->nBands == 4 &&
-                psImage->comps[0].prec == 8 &&
-                psImage->comps[1].prec == 8 &&
-                psImage->comps[2].prec == 8 &&
-                psImage->comps[3].prec == 1 && 
-                CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")) );
+                iBand == poDS->nAlphaIndex + 1 &&
+                psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
+                psImage->comps[poDS->nAlphaIndex].prec == 1 &&
+                CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+                        CPLTestBool(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
 
             poODS->SetBand( iBand, new JP2OpenJPEGRasterBand( poODS, iBand, eDataType,
                                                               bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
@@ -1322,10 +1984,34 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poDS->nBands > 1 )
     {
-        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+        poDS->GDALDataset::SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 
+    poOpenInfo->fpL = poDS->fp;
     poDS->LoadJP2Metadata(poOpenInfo);
+    poOpenInfo->fpL = NULL;
+
+    poDS->bHasGeoreferencingAtOpening =
+        ((poDS->pszProjection != NULL && poDS->pszProjection[0] != '\0' )||
+         poDS->nGCPCount != 0 || poDS->bGeoTransformValid);
+
+/* -------------------------------------------------------------------- */
+/*      Vector layers                                                   */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+    {
+        poDS->LoadVectorLayers(
+            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML", FALSE));
+
+        // If file opened in vector-only mode and there's no vector,
+        // return
+        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDS->GetLayerCount() == 0 )
+        {
+            delete poDS;
+            return NULL;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1364,12 +2050,84 @@ void JP2OpenJPEGDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
 }
 
 /************************************************************************/
+/*                         WriteGDALMetadataBox()                       */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteGDALMetadataBox( VSILFILE* fp,
+                                               GDALDataset* poSrcDS,
+                                               char** papszOptions )
+{
+    GDALJP2Box* poBox = GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
+        poSrcDS, CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE));
+    if( poBox )
+        WriteBox(fp, poBox);
+    delete poBox;
+}
+
+/************************************************************************/
+/*                         WriteXMLBoxes()                              */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
+                                         CPL_UNUSED char** papszOptions )
+{
+    int nBoxes = 0;
+    GDALJP2Box** papoBoxes = GDALJP2Metadata::CreateXMLBoxes(poSrcDS, &nBoxes);
+    for(int i=0;i<nBoxes;i++)
+    {
+        WriteBox(fp, papoBoxes[i]);
+        delete papoBoxes[i];
+    }
+    CPLFree(papoBoxes);
+}
+
+/************************************************************************/
+/*                           WriteXMPBox()                              */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteXMPBox ( VSILFILE* fp, GDALDataset* poSrcDS,
+                                       CPL_UNUSED char** papszOptions )
+{
+    GDALJP2Box* poBox = GDALJP2Metadata::CreateXMPBox(poSrcDS);
+    if( poBox )
+        WriteBox(fp, poBox);
+    delete poBox;
+}
+
+/************************************************************************/
+/*                           WriteIPRBox()                              */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteIPRBox ( VSILFILE* fp, GDALDataset* poSrcDS,
+                                       CPL_UNUSED char** papszOptions )
+{
+    GDALJP2Box* poBox = GDALJP2Metadata::CreateIPRBox(poSrcDS);
+    if( poBox )
+        WriteBox(fp, poBox);
+    delete poBox;
+}
+/************************************************************************/
+/*                         FloorPowerOfTwo()                            */
+/************************************************************************/
+
+static int FloorPowerOfTwo(int nVal)
+{
+    int nBits = 0;
+    while( nVal > 1 )
+    {
+        nBits ++;
+        nVal >>= 1;
+    }
+    return 1 << nBits;
+}
+
+/************************************************************************/
 /*                          CreateCopy()                                */
 /************************************************************************/
 
 GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
-                                           GDALDataset *poSrcDS, 
-                                           int bStrict, char ** papszOptions, 
+                                           GDALDataset *poSrcDS,
+                                           CPL_UNUSED int bStrict, char ** papszOptions,
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData )
 
@@ -1378,21 +2136,19 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
 
-    if( nBands != 1 && nBands != 3 /* && nBands != 4 */ )
+    if( nBands == 0 || nBands > 16384 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Unable to export files with %d bands.", nBands );
+                  "Unable to export files with %d bands. Must be >= 1 and <= 16384", nBands );
         return NULL;
     }
 
-    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    GDALColorTable* poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+    if (poCT != NULL && nBands != 1)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
-                  "JP2OpenJPEG driver ignores color table. "
-                  "The source raster band will be considered as grey level.\n"
-                  "Consider using color table expansion (-expand option in gdal_translate)\n");
-        if (bStrict)
-            return NULL;
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "JP2OpenJPEG driver only supports a color table for a single-band dataset");
+        return NULL;
     }
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -1404,6 +2160,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                   "JP2OpenJPEG driver only supports creating Byte, GDT_Int16, GDT_UInt16, GDT_Int32, GDT_UInt32");
         return NULL;
     }
+
+    int bInspireTG = CSLFetchBoolean(papszOptions, "INSPIRE_TG", FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      Analyze creation options.                                       */
@@ -1431,6 +2189,12 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             eCodecFormat = OPJ_CODEC_JP2;
         }
     }
+    if( eCodecFormat != OPJ_CODEC_JP2 && bInspireTG )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                  "INSPIRE_TG=YES mandates CODEC=JP2 (TG requirement 21)");
+        return NULL;
+    }
 
     int nBlockXSize =
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "1024"));
@@ -1442,10 +2206,23 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
 
-    if (nXSize < nBlockXSize)
-        nBlockXSize = nXSize;
-    if (nYSize < nBlockYSize)
-        nBlockYSize = nYSize;
+    // By default do not generate tile sizes larger than the dataset
+    // dimensions
+    if( !CSLFetchBoolean(papszOptions, "BLOCKSIZE_STRICT", FALSE) )
+    {
+        if (nXSize < nBlockXSize)
+        {
+            CPLDebug("OPENJPEG", "Adjusting block width from %d to %d",
+                     nBlockXSize, nXSize);
+            nBlockXSize = nXSize;
+        }
+        if (nYSize < nBlockYSize)
+        {
+            CPLDebug("OPENJPEG", "Adjusting block width from %d to %d",
+                     nBlockYSize, nYSize);
+            nBlockYSize = nYSize;
+        }
+    }
 
     OPJ_PROG_ORDER eProgOrder = OPJ_LRCP;
     const char* pszPROGORDER =
@@ -1468,55 +2245,138 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
     int bIsIrreversible =
-            ! (CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "REVERSIBLE", "NO")));
+            ! (CSLFetchBoolean(papszOptions, "REVERSIBLE", poCT != NULL));
 
-    double dfRate = 100. / 25;
+    std::vector<double> adfRates;
     const char* pszQuality = CSLFetchNameValueDef(papszOptions, "QUALITY", NULL);
+    double dfDefaultQuality = ( poCT != NULL ) ? 100.0 : 25.0;
     if (pszQuality)
     {
-        double dfQuality = CPLAtof(pszQuality);
-        if (dfQuality > 0 && dfQuality <= 100)
+        char **papszTokens = CSLTokenizeStringComplex( pszQuality, ",", FALSE, FALSE );
+        for(int i=0; papszTokens[i] != NULL; i++ )
         {
-            dfRate = 100 / dfQuality;
+            double dfQuality = CPLAtof(papszTokens[i]);
+            if (dfQuality > 0 && dfQuality <= 100)
+            {
+                double dfRate = 100 / dfQuality;
+                adfRates.push_back(dfRate);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=%.0f",
+                         papszTokens[i], dfDefaultQuality);
+                adfRates.resize(0);
+                break;
+            }
         }
-        else
+        if( papszTokens[0] == NULL )
         {
             CPLError(CE_Warning, CPLE_NotSupported,
-                 "Unsupported value for QUALITY : %s. Defaulting to 25",
-                 pszQuality);
+                     "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=%.0f",
+                     pszQuality, dfDefaultQuality);
         }
+        CSLDestroy(papszTokens);
+    }
+    if( adfRates.size() == 0 )
+    {
+        adfRates.push_back(100. / dfDefaultQuality);
     }
 
-    int nNumResolutions = 6;
+    if( poCT != NULL && (bIsIrreversible || adfRates[adfRates.size()-1] != 100.0 / 100.0) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Encoding a dataset with a color table with REVERSIBLE != YES "
+                 "or QUALITY != 100 will likely lead to bad visual results");
+    }
+
+    int nMaxTileDim = MAX(nBlockXSize, nBlockYSize);
+    int nNumResolutions = 1;
+    /* Pickup a reasonable value compatible with PROFILE_1 requirements */
+    while( (nMaxTileDim >> (nNumResolutions-1)) > 128 )
+        nNumResolutions ++;
+    int nMinProfile1Resolutions = nNumResolutions;
     const char* pszResolutions = CSLFetchNameValueDef(papszOptions, "RESOLUTIONS", NULL);
     if (pszResolutions)
     {
         nNumResolutions = atoi(pszResolutions);
-        if (nNumResolutions < 1 || nNumResolutions > 7)
+        if (nNumResolutions <= 0 || nNumResolutions >= 32 ||
+            (nMaxTileDim >> nNumResolutions) == 0 )
         {
-            nNumResolutions = 6;
             CPLError(CE_Warning, CPLE_NotSupported,
-                 "Unsupported value for RESOLUTIONS : %s. Defaulting to 6",
-                 pszResolutions);
+                 "Unsupported value for RESOLUTIONS : %s. Defaulting to %d",
+                 pszResolutions, nMinProfile1Resolutions);
+            nNumResolutions = nMinProfile1Resolutions;
         }
     }
-    
-    int bSOP = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SOP", "FALSE"));
-    int bEPH = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "EPH", "FALSE"));
 
-    int bResample = (nBands == 3 && eDataType == GDT_Byte &&
-            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCBCR420", "FALSE")));
-    if (bResample && !((nXSize % 2) == 0 && (nYSize % 2) == 0 && (nBlockXSize % 2) == 0 && (nBlockYSize % 2) == 0))
+    int bSOP = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SOP", "FALSE"));
+    int bEPH = CPLTestBool(CSLFetchNameValueDef(papszOptions, "EPH", "FALSE"));
+
+    int nRedBandIndex = -1, nGreenBandIndex = -1, nBlueBandIndex = -1;
+    int nAlphaBandIndex = -1;
+    for(int i=0;i<nBands;i++)
     {
-        CPLError(CE_Warning, CPLE_NotSupported,
-                 "YCBCR420 unsupported when image size and/or tile size are not multiple of 2");
-        bResample = FALSE;
+        GDALColorInterp eInterp = poSrcDS->GetRasterBand(i+1)->GetColorInterpretation();
+        if( eInterp == GCI_RedBand )
+            nRedBandIndex = i;
+        else if( eInterp == GCI_GreenBand )
+            nGreenBandIndex = i;
+        else if( eInterp == GCI_BlueBand )
+            nBlueBandIndex = i;
+        else if( eInterp == GCI_AlphaBand )
+            nAlphaBandIndex = i;
+    }
+    const char* pszAlpha = CSLFetchNameValue(papszOptions, "ALPHA");
+    if( nAlphaBandIndex < 0 && nBands > 1 && pszAlpha != NULL && CPLTestBool(pszAlpha) )
+    {
+        nAlphaBandIndex = nBands - 1;
+    }
+
+    const char* pszYCBCR420 = CSLFetchNameValue(papszOptions, "YCBCR420");
+    int bYCBCR420 = FALSE;
+    if( pszYCBCR420 && CPLTestBool(pszYCBCR420) )
+    {
+        if ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
+            nRedBandIndex == 0 && nGreenBandIndex == 1 && nBlueBandIndex == 2)
+        {
+            if( ((nXSize % 2) == 0 && (nYSize % 2) == 0 && (nBlockXSize % 2) == 0 && (nBlockYSize % 2) == 0) )
+            {
+                bYCBCR420 = TRUE;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                    "YCBCR420 unsupported when image size and/or tile size are not multiple of 2");
+            }
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                    "YCBCR420 unsupported with this image band count and/or data byte");
+        }
     }
 
     const char* pszYCC = CSLFetchNameValue(papszOptions, "YCC");
-    int bYCC = (nBands == 3 && eDataType == GDT_Byte &&
-            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
-    if( bResample && bYCC )
+    int bYCC = ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
+            CPLTestBool(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
+
+    /* TODO: when OpenJPEG 2.2 is released, make this conditional */
+    /* Depending on the way OpenJPEG <= r2950 is built, YCC with 4 bands might work on
+     * Debug mode, but this relies on unreliable stack buffer overflows, so
+     * better err on the safe side */
+    if( bYCC && nBands > 3 )
+    {
+        if( pszYCC != NULL )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "OpenJPEG r2950 and below can generate invalid output with "
+                     "MCT YCC transform and more than 3 bands. Disabling YCC");
+        }
+        bYCC = FALSE;
+    }
+
+    if( bYCBCR420 && bYCC )
     {
         if( pszYCC != NULL )
         {
@@ -1524,6 +2384,250 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                     "YCC unsupported when YCbCr requesting");
         }
         bYCC = FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Deal with codeblocks size                                       */
+/* -------------------------------------------------------------------- */
+
+    int nCblockW = atoi(CSLFetchNameValueDef( papszOptions, "CODEBLOCK_WIDTH", "64" ));
+    int nCblockH = atoi(CSLFetchNameValueDef( papszOptions, "CODEBLOCK_HEIGHT", "64" ));
+    if( nCblockW < 4 || nCblockW > 1024 || nCblockH < 4 || nCblockH > 1024 )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Invalid values for codeblock size. Defaulting to 64x64");
+        nCblockW = 64;
+        nCblockH = 64;
+    }
+    else if( nCblockW * nCblockH > 4096 )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Invalid values for codeblock size. "
+                 "CODEBLOCK_WIDTH * CODEBLOCK_HEIGHT should be <= 4096. "
+                 "Defaulting to 64x64");
+        nCblockW = 64;
+        nCblockH = 64;
+    }
+    int nCblockW_po2 = FloorPowerOfTwo(nCblockW);
+    int nCblockH_po2 = FloorPowerOfTwo(nCblockH);
+    if( nCblockW_po2 != nCblockW || nCblockH_po2 != nCblockH )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Non power of two values used for codeblock size. "
+                 "Using to %dx%d",
+                 nCblockW_po2, nCblockH_po2);
+    }
+    nCblockW = nCblockW_po2;
+    nCblockH = nCblockH_po2;
+
+/* -------------------------------------------------------------------- */
+/*      Deal with codestream PROFILE                                    */
+/* -------------------------------------------------------------------- */
+    const char* pszProfile = CSLFetchNameValueDef( papszOptions, "PROFILE", "AUTO" );
+    int bProfile1 = FALSE;
+    if( EQUAL(pszProfile, "UNRESTRICTED") )
+    {
+        bProfile1 = FALSE;
+        if( bInspireTG )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "INSPIRE_TG=YES mandates PROFILE=PROFILE_1 (TG requirement 21)");
+            return NULL;
+        }
+    }
+    else if( EQUAL(pszProfile, "UNRESTRICTED_FORCED") )
+    {
+        bProfile1 = FALSE;
+    }
+    else if( EQUAL(pszProfile, "PROFILE_1_FORCED") ) /* For debug only: can produce inconsistent codestream */
+    {
+        bProfile1 = TRUE;
+    }
+    else
+    {
+        if( !(EQUAL(pszProfile, "PROFILE_1") || EQUAL(pszProfile, "AUTO")) )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unsupported value for PROFILE : %s. Defaulting to AUTO",
+                     pszProfile);
+            pszProfile = "AUTO";
+        }
+
+        bProfile1 = TRUE;
+        const char* pszReq21OrEmpty = (bInspireTG) ? " (TG requirement 21)" : "";
+        if( (nBlockXSize != nXSize || nBlockYSize != nYSize) &&
+            (nBlockXSize != nBlockYSize || nBlockXSize > 1024 || nBlockYSize > 1024 ) )
+        {
+            bProfile1 = FALSE;
+            if( bInspireTG || EQUAL(pszProfile, "PROFILE_1") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Tile dimensions incompatible with PROFILE_1%s. "
+                         "Should be whole image or square with dimension <= 1024.",
+                         pszReq21OrEmpty);
+                return NULL;
+            }
+        }
+        if( (nMaxTileDim >> (nNumResolutions-1)) > 128 )
+        {
+            bProfile1 = FALSE;
+            if( bInspireTG || EQUAL(pszProfile, "PROFILE_1") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Number of resolutions incompatible with PROFILE_1%s. "
+                         "Should be at least %d.",
+                         pszReq21OrEmpty,
+                         nMinProfile1Resolutions);
+                return NULL;
+            }
+        }
+        if( nCblockW > 64 || nCblockH > 64 )
+        {
+            bProfile1 = FALSE;
+            if( bInspireTG || EQUAL(pszProfile, "PROFILE_1") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Codeblock width incompatible with PROFILE_1%s. "
+                         "Codeblock width or height should be <= 64.",
+                         pszReq21OrEmpty);
+                return NULL;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out the precision.                                         */
+/* -------------------------------------------------------------------- */
+    int nBits;
+    if( CSLFetchNameValue( papszOptions, "NBITS" ) != NULL )
+    {
+        nBits = atoi(CSLFetchNameValue(papszOptions,"NBITS"));
+        if( bInspireTG &&
+            !(nBits == 1 || nBits == 8 || nBits == 16 || nBits == 32) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "INSPIRE_TG=YES mandates NBITS=1,8,16 or 32 (TG requirement 24)");
+            return NULL;
+        }
+    }
+    else if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )
+             != NULL )
+    {
+        nBits = atoi(poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS",
+                                                       "IMAGE_STRUCTURE" ));
+        if( bInspireTG &&
+            !(nBits == 1 || nBits == 8 || nBits == 16 || nBits == 32) )
+        {
+            /* Implements "NOTE If the original data do not satisfy this "
+               "requirement, they will be converted in a representation using "
+               "the next higher power of 2" */
+            nBits = GDALGetDataTypeSize(eDataType);
+        }
+    }
+    else
+    {
+        nBits = GDALGetDataTypeSize(eDataType);
+    }
+
+    if( (GDALGetDataTypeSize(eDataType) == 8 && nBits > 8) ||
+        (GDALGetDataTypeSize(eDataType) == 16 && (nBits <= 8 || nBits > 16)) ||
+        (GDALGetDataTypeSize(eDataType) == 32 && (nBits <= 16 || nBits > 32)) )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Inconsistent NBITS value with data type. Using %d",
+                 GDALGetDataTypeSize(eDataType));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Georeferencing options                                          */
+/* -------------------------------------------------------------------- */
+
+    int bGMLJP2Option = CSLFetchBoolean( papszOptions, "GMLJP2", TRUE );
+    int nGMLJP2Version = 1;
+    const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
+    if( pszGMLJP2V2Def != NULL )
+    {
+        bGMLJP2Option = TRUE;
+        nGMLJP2Version = 2;
+        if( bInspireTG )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                    "INSPIRE_TG=YES is only compatible with GMLJP2 v1");
+            return NULL;
+        }
+    }
+    int bGeoJP2Option = CSLFetchBoolean( papszOptions, "GeoJP2", TRUE );
+
+    GDALJP2Metadata oJP2MD;
+
+    int bGeoreferencingCompatOfGeoJP2 = FALSE;
+    int bGeoreferencingCompatOfGMLJP2 = FALSE;
+    if( eCodecFormat == OPJ_CODEC_JP2 && (bGMLJP2Option || bGeoJP2Option) )
+    {
+        if( poSrcDS->GetGCPCount() > 0 )
+        {
+            bGeoreferencingCompatOfGeoJP2 = TRUE;
+            oJP2MD.SetGCPs( poSrcDS->GetGCPCount(),
+                            poSrcDS->GetGCPs() );
+            oJP2MD.SetProjection( poSrcDS->GetGCPProjection() );
+        }
+        else
+        {
+            const char* pszWKT = poSrcDS->GetProjectionRef();
+            if( pszWKT != NULL && pszWKT[0] != '\0' )
+            {
+                bGeoreferencingCompatOfGeoJP2 = TRUE;
+                oJP2MD.SetProjection( pszWKT );
+            }
+            double adfGeoTransform[6];
+            if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+            {
+                bGeoreferencingCompatOfGeoJP2 = TRUE;
+                oJP2MD.SetGeoTransform( adfGeoTransform );
+            }
+            bGeoreferencingCompatOfGMLJP2 =
+                        ( pszWKT != NULL && pszWKT[0] != '\0' ) &&
+                          poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None;
+        }
+        if( poSrcDS->GetMetadata("RPC") != NULL )
+        {
+            oJP2MD.SetRPCMD(  poSrcDS->GetMetadata("RPC") );
+            bGeoreferencingCompatOfGeoJP2 = TRUE;
+        }
+
+        const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
+        oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
+
+        if( bGMLJP2Option && CPLGetConfigOption("GMLJP2OVERRIDE", NULL) != NULL )
+            bGeoreferencingCompatOfGMLJP2 = TRUE;
+    }
+
+    if( CSLFetchNameValue( papszOptions, "GMLJP2" ) != NULL && bGMLJP2Option &&
+        !bGeoreferencingCompatOfGMLJP2 && nGMLJP2Version == 1 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "GMLJP2 box was explicitly required but cannot be written due "
+                 "to lack of georeferencing and/or unsupported georeferencing for GMLJP2");
+    }
+
+    if( CSLFetchNameValue( papszOptions, "GeoJP2" ) != NULL && bGeoJP2Option &&
+        !bGeoreferencingCompatOfGeoJP2 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "GeoJP2 box was explicitly required but cannot be written due "
+                 "to lack of georeferencing");
+    }
+    int bGeoBoxesAfter = CSLFetchBoolean(papszOptions, "GEOBOXES_AFTER_JP2C",
+                                         bInspireTG);
+    GDALJP2Box* poGMLJP2Box = NULL;
+    if( eCodecFormat == OPJ_CODEC_JP2 && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
+    {
+        if( nGMLJP2Version == 1)
+            poGMLJP2Box = oJP2MD.CreateGMLJP2(nXSize,nYSize);
+        else
+            poGMLJP2Box = oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def,poSrcDS);
+        if( poGMLJP2Box == NULL )
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1537,8 +2641,9 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     if (bEPH)
         parameters.csty |= 0x04;
     parameters.cp_disto_alloc = 1;
-    parameters.tcp_numlayers = 1;
-    parameters.tcp_rates[0] = (float) dfRate;
+    parameters.tcp_numlayers = (int)adfRates.size();
+    for(int i=0;i<(int)adfRates.size();i++)
+        parameters.tcp_rates[i] = (float) adfRates[i];
     parameters.cp_tx0 = 0;
     parameters.cp_ty0 = 0;
     parameters.tile_size_on = TRUE;
@@ -1547,16 +2652,76 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     parameters.irreversible = bIsIrreversible;
     parameters.numresolution = nNumResolutions;
     parameters.prog_order = eProgOrder;
-    parameters.tcp_mct = bYCC;
+    parameters.tcp_mct = static_cast<char>(bYCC);
+    parameters.cblockw_init = nCblockW;
+    parameters.cblockh_init = nCblockH;
+
+    /* Add precincts */
+    const char* pszPrecincts = CSLFetchNameValueDef(papszOptions, "PRECINCTS",
+        "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}");
+    char **papszTokens = CSLTokenizeStringComplex( pszPrecincts, "{},", FALSE, FALSE );
+    int nPrecincts = CSLCount(papszTokens) / 2;
+    for(int i=0;i<nPrecincts && i < OPJ_J2K_MAXRLVLS;i++)
+    {
+        int nPCRW = atoi(papszTokens[2*i]);
+        int nPCRH = atoi(papszTokens[2*i+1]);
+        if( nPCRW < 1 || nPCRH < 1 )
+            break;
+        parameters.csty |= 0x01;
+        parameters.res_spec ++;
+        parameters.prcw_init[i] = nPCRW;
+        parameters.prch_init[i] = nPCRH;
+    }
+    CSLDestroy(papszTokens);
+
+    /* Add tileparts setting */
+    const char* pszTileParts = CSLFetchNameValueDef(papszOptions, "TILEPARTS", "DISABLED");
+    if( EQUAL(pszTileParts, "RESOLUTIONS") )
+    {
+        parameters.tp_on = 1;
+        parameters.tp_flag = 'R';
+    }
+    else if( EQUAL(pszTileParts, "LAYERS") )
+    {
+        if( parameters.tcp_numlayers == 1 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "TILEPARTS=LAYERS has no real interest with single-layer codestream");
+        }
+        parameters.tp_on = 1;
+        parameters.tp_flag = 'L';
+    }
+    else if( EQUAL(pszTileParts, "COMPONENTS") )
+    {
+        parameters.tp_on = 1;
+        parameters.tp_flag = 'C';
+    }
+    else if( !EQUAL(pszTileParts, "DISABLED") )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Invalid value for TILEPARTS");
+    }
+
+    if( bProfile1 )
+    {
+#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
+        parameters.rsiz = OPJ_PROFILE_1;
+#else
+        /* This is a hack but this works */
+        parameters.cp_rsiz = (OPJ_RSIZ_CAPABILITIES) 2; /* Profile 1 */
+#endif
+    }
 
     opj_image_cmptparm_t* pasBandParams =
             (opj_image_cmptparm_t*)CPLMalloc(nBands * sizeof(opj_image_cmptparm_t));
     int iBand;
+    int bSamePrecision = TRUE;
+    int b1BitAlpha = FALSE;
     for(iBand=0;iBand<nBands;iBand++)
     {
         pasBandParams[iBand].x0 = 0;
         pasBandParams[iBand].y0 = 0;
-        if (bResample && iBand > 0)
+        if (bYCBCR420 && (iBand == 1 || iBand == 2))
         {
             pasBandParams[iBand].dx = 2;
             pasBandParams[iBand].dy = 2;
@@ -1570,16 +2735,50 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             pasBandParams[iBand].w = nXSize;
             pasBandParams[iBand].h = nYSize;
         }
+
         pasBandParams[iBand].sgnd = (eDataType == GDT_Int16 || eDataType == GDT_Int32);
-        pasBandParams[iBand].prec = 8 * nDataTypeSize;
+        pasBandParams[iBand].prec = nBits;
+
+        const char* pszNBits = poSrcDS->GetRasterBand(iBand+1)->GetMetadataItem(
+            "NBITS", "IMAGE_STRUCTURE");
+        /* Recommendation 38 In the case of an opacity channel, the bit depth should be 1-bit. */
+        if( iBand == nAlphaBandIndex &&
+            ((pszNBits != NULL && EQUAL(pszNBits, "1")) ||
+              CSLFetchBoolean(papszOptions, "1BIT_ALPHA", bInspireTG)) )
+        {
+            if( iBand != nBands - 1 && nBits != 1 )
+            {
+                /* Might be a bug in openjpeg, but it seems that if the alpha */
+                /* band is the first one, it would select 1-bit for all channels... */
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Cannot output 1-bit alpha channel if it is not the last one");
+            }
+            else
+            {
+                CPLDebug("OPENJPEG", "Using 1-bit alpha channel");
+                pasBandParams[iBand].sgnd = 0;
+                pasBandParams[iBand].prec = 1;
+                bSamePrecision = FALSE;
+                b1BitAlpha = TRUE;
+            }
+        }
     }
 
-    opj_codec_t* pCodec = opj_create_compress(eCodecFormat);
+    if( bInspireTG && nAlphaBandIndex >= 0 && !b1BitAlpha )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                  "INSPIRE_TG=YES recommends 1BIT_ALPHA=YES (Recommendation 38)");
+    }
+
+    /* Always ask OpenJPEG to do codestream only. We will take care */
+    /* of JP2 boxes */
+    opj_codec_t* pCodec = opj_create_compress(OPJ_CODEC_J2K);
     if (pCodec == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "opj_create_compress() failed");
         CPLFree(pasBandParams);
+        delete poGMLJP2Box;
         return NULL;
     }
 
@@ -1587,19 +2786,33 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback,NULL);
     opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,NULL);
 
-    OPJ_COLOR_SPACE eColorSpace = (bResample) ? OPJ_CLRSPC_SYCC : (nBands == 3 || nBands == 4) ? OPJ_CLRSPC_SRGB : OPJ_CLRSPC_GRAY;
+    OPJ_COLOR_SPACE eColorSpace = OPJ_CLRSPC_GRAY;
+
+    if( bYCBCR420 )
+    {
+        eColorSpace = OPJ_CLRSPC_SYCC;
+    }
+    else if( (nBands == 3 || nBands == 4) &&
+             nRedBandIndex >= 0 && nGreenBandIndex >= 0 && nBlueBandIndex >= 0 )
+    {
+        eColorSpace = OPJ_CLRSPC_SRGB;
+    }
+    else if (poCT != NULL)
+    {
+        eColorSpace = OPJ_CLRSPC_SRGB;
+    }
 
     opj_image_t* psImage = opj_image_tile_create(nBands,pasBandParams,
                                                  eColorSpace);
 
-
-    CPLFree(pasBandParams);
-    pasBandParams = NULL;
     if (psImage == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "opj_image_tile_create() failed");
         opj_destroy_codec(pCodec);
+        CPLFree(pasBandParams);
+        pasBandParams = NULL;
+        delete poGMLJP2Box;
         return NULL;
     }
 
@@ -1616,6 +2829,9 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                  "opj_setup_encoder() failed");
         opj_image_destroy(psImage);
         opj_destroy_codec(pCodec);
+        CPLFree(pasBandParams);
+        pasBandParams = NULL;
+        delete poGMLJP2Box;
         return NULL;
     }
 
@@ -1623,377 +2839,768 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
 
-    const char* pszAccess = EQUALN(pszFilename, "/vsisubfile/", 12) ? "r+b" : "w+b";
+    const char* pszAccess = STARTS_WITH_CI(pszFilename, "/vsisubfile/") ? "r+b" : "w+b";
     VSILFILE* fp = VSIFOpenL(pszFilename, pszAccess);
     if (fp == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create file");
         opj_image_destroy(psImage);
         opj_destroy_codec(pCodec);
+        CPLFree(pasBandParams);
+        pasBandParams = NULL;
+        delete poGMLJP2Box;
         return NULL;
     }
 
-    opj_stream_t * pStream;
-    pStream = opj_stream_create(1024*1024, FALSE);
-    opj_stream_set_write_function(pStream, JP2OpenJPEGDataset_Write);
-    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
-    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
+/* -------------------------------------------------------------------- */
+/*      Add JP2 boxes.                                                  */
+/* -------------------------------------------------------------------- */
+    vsi_l_offset nStartJP2C = 0;
+    int bUseXLBoxes = FALSE;
+
+    if( eCodecFormat == OPJ_CODEC_JP2  )
+    {
+        GDALJP2Box jPBox(fp);
+        jPBox.SetType("jP  ");
+        jPBox.AppendWritableData(4, "\x0D\x0A\x87\x0A");
+        WriteBox(fp, &jPBox);
+
+        GDALJP2Box ftypBox(fp);
+        ftypBox.SetType("ftyp");
+        ftypBox.AppendWritableData(4, "jp2 "); /* Branding */
+        ftypBox.AppendUInt32(0); /* minimum version */
+        ftypBox.AppendWritableData(4, "jp2 "); /* Compatibility list: first value */
+
+        int bJPXOption = CSLFetchBoolean( papszOptions, "JPX", TRUE );
+        if( bInspireTG && poGMLJP2Box != NULL && !bJPXOption )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "INSPIRE_TG=YES implies following GMLJP2 specification which "
+                     "recommends advertize reader requirement 67 feature, and thus JPX capability");
+        }
+        else if( poGMLJP2Box != NULL && bJPXOption )
+        {
+            /* GMLJP2 uses lbl and asoc boxes, which are JPEG2000 Part II spec */
+            /* advertizing jpx is required per 8.1 of 05-047r3 GMLJP2 */
+            ftypBox.AppendWritableData(4, "jpx "); /* Compatibility list: second value */
+        }
+        WriteBox(fp, &ftypBox);
+
+        const bool bIPR = poSrcDS->GetMetadata("xml:IPR") != NULL &&
+                   CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE);
+
+        /* Reader requirement box */
+        if( poGMLJP2Box != NULL && bJPXOption )
+        {
+            GDALJP2Box rreqBox(fp);
+            rreqBox.SetType("rreq");
+            rreqBox.AppendUInt8(1); /* ML = 1 byte for mask length */
+
+            rreqBox.AppendUInt8(0x80 | 0x40 | (bIPR ? 0x20 : 0)); /* FUAM */
+            rreqBox.AppendUInt8(0x80); /* DCM */
+
+            rreqBox.AppendUInt16(2 + (bIPR ? 1 : 0)); /* NSF: Number of standard features */
+
+            rreqBox.AppendUInt16((bProfile1) ? 4 : 5); /* SF0 : PROFILE 1 or PROFILE 2 */
+            rreqBox.AppendUInt8(0x80); /* SM0 */
+
+            rreqBox.AppendUInt16(67); /* SF1 : GMLJP2 box */
+            rreqBox.AppendUInt8(0x40); /* SM1 */
+
+            if( bIPR )
+            {
+                rreqBox.AppendUInt16(35); /* SF2 : IPR metadata */
+                rreqBox.AppendUInt8(0x20); /* SM2 */
+            }
+            rreqBox.AppendUInt16(0); /* NVF */
+            WriteBox(fp, &rreqBox);
+        }
+
+        GDALJP2Box ihdrBox(fp);
+        ihdrBox.SetType("ihdr");
+        ihdrBox.AppendUInt32(nYSize);
+        ihdrBox.AppendUInt32(nXSize);
+        ihdrBox.AppendUInt16(static_cast<GUInt16>(nBands));
+        GByte BPC;
+        if( bSamePrecision )
+            BPC = static_cast<GByte>((pasBandParams[0].prec-1) | (pasBandParams[0].sgnd << 7));
+        else
+            BPC = 255;
+        ihdrBox.AppendUInt8(BPC);
+        ihdrBox.AppendUInt8(7); /* C=Compression type: fixed value */
+        ihdrBox.AppendUInt8(0); /* UnkC: 0= colourspace of the image is known */
+                                /*and correctly specified in the Colourspace Specification boxes within the file */
+        ihdrBox.AppendUInt8(bIPR ? 1 : 0); /* IPR: 0=no intellectual property, 1=IPR box */
+
+        GDALJP2Box bpccBox(fp);
+        if( !bSamePrecision )
+        {
+            bpccBox.SetType("bpcc");
+            for(int i=0;i<nBands;i++)
+                bpccBox.AppendUInt8(static_cast<GByte>((pasBandParams[i].prec-1) | (pasBandParams[i].sgnd << 7)));
+        }
+
+        GDALJP2Box colrBox(fp);
+        colrBox.SetType("colr");
+        colrBox.AppendUInt8(1); /* METHOD: 1=Enumerated Colourspace */
+        colrBox.AppendUInt8(0); /* PREC: Precedence. 0=(field reserved for ISO use) */
+        colrBox.AppendUInt8(0); /* APPROX: Colourspace approximation. */
+        GUInt32 enumcs = 16;
+        if( eColorSpace == OPJ_CLRSPC_SRGB )
+            enumcs = 16;
+        else if(  eColorSpace == OPJ_CLRSPC_GRAY )
+            enumcs = 17;
+        else if(  eColorSpace == OPJ_CLRSPC_SYCC )
+            enumcs = 18;
+        colrBox.AppendUInt32(enumcs); /* EnumCS: Enumerated colourspace */
+
+        GDALJP2Box pclrBox(fp);
+        GDALJP2Box cmapBox(fp);
+        int nCTComponentCount = 0;
+        if (poCT != NULL)
+        {
+            pclrBox.SetType("pclr");
+            int nEntries = MIN(256, poCT->GetColorEntryCount());
+            nCTComponentCount = atoi(CSLFetchNameValueDef(papszOptions, "CT_COMPONENTS", "0"));
+            if( bInspireTG )
+            {
+                if( nCTComponentCount != 0 && nCTComponentCount != 3 )
+                    CPLError(CE_Warning, CPLE_AppDefined, "Inspire TG mandates 3 components for color table");
+                else
+                    nCTComponentCount = 3;
+            }
+            else if( nCTComponentCount != 3 && nCTComponentCount != 4 )
+            {
+                nCTComponentCount = 3;
+                for(int i=0;i<nEntries;i++)
+                {
+                    const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
+                    if( psEntry->c4 != 255 )
+                    {
+                        CPLDebug("OPENJPEG", "Color table has at least one non-opaque value. "
+                                "This may cause compatibility problems with some readers. "
+                                "In which case use CT_COMPONENTS=3 creation option");
+                        nCTComponentCount = 4;
+                        break;
+                    }
+                }
+            }
+            nRedBandIndex = 0;
+            nGreenBandIndex = 1;
+            nBlueBandIndex = 2;
+            nAlphaBandIndex = (nCTComponentCount == 4) ? 3 : -1;
+
+            pclrBox.AppendUInt16(static_cast<GUInt16>(nEntries));
+            pclrBox.AppendUInt8(static_cast<GByte>(nCTComponentCount)); /* NPC: Number of components */
+            for(int i=0;i<nCTComponentCount;i++)
+            {
+                pclrBox.AppendUInt8(7); /* Bi: unsigned 8 bits */
+            }
+            for(int i=0;i<nEntries;i++)
+            {
+                const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
+                pclrBox.AppendUInt8((GByte)psEntry->c1);
+                pclrBox.AppendUInt8((GByte)psEntry->c2);
+                pclrBox.AppendUInt8((GByte)psEntry->c3);
+                if( nCTComponentCount == 4 )
+                    pclrBox.AppendUInt8((GByte)psEntry->c4);
+            }
+
+            cmapBox.SetType("cmap");
+            for(int i=0;i<nCTComponentCount;i++)
+            {
+                cmapBox.AppendUInt16(0); /* CMPi: code stream component index */
+                cmapBox.AppendUInt8(1); /* MYTPi: 1=palette mapping */
+                cmapBox.AppendUInt8(static_cast<GByte>(i)); /* PCOLi: index component from the map */
+            }
+        }
+
+        GDALJP2Box cdefBox(fp);
+        if( ((nBands == 3 || nBands == 4) &&
+             (eColorSpace == OPJ_CLRSPC_SRGB || eColorSpace == OPJ_CLRSPC_SYCC) &&
+             (nRedBandIndex != 0 || nGreenBandIndex != 1 || nBlueBandIndex != 2)) ||
+            nAlphaBandIndex >= 0)
+        {
+            cdefBox.SetType("cdef");
+            int nComponents = (nCTComponentCount == 4) ? 4 : nBands;
+            cdefBox.AppendUInt16(static_cast<GUInt16>(nComponents));
+            for(int i=0;i<nComponents;i++)
+            {
+                cdefBox.AppendUInt16(static_cast<GUInt16>(i));   /* Component number */
+                if( i != nAlphaBandIndex )
+                {
+                    cdefBox.AppendUInt16(0);   /* Signification: This channel is the colour image data for the associated colour */
+                    if( eColorSpace == OPJ_CLRSPC_GRAY && nComponents == 2)
+                        cdefBox.AppendUInt16(1); /* Colour of the component: associated with a particular colour */
+                    else if ((eColorSpace == OPJ_CLRSPC_SRGB ||
+                            eColorSpace == OPJ_CLRSPC_SYCC) &&
+                            (nComponents == 3 || nComponents == 4) )
+                    {
+                        if( i == nRedBandIndex )
+                            cdefBox.AppendUInt16(1);
+                        else if( i == nGreenBandIndex )
+                            cdefBox.AppendUInt16(2);
+                        else if( i == nBlueBandIndex )
+                            cdefBox.AppendUInt16(3);
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                    "Could not associate band %d with a red/green/blue channel",
+                                    i+1);
+                            cdefBox.AppendUInt16(65535);
+                        }
+                    }
+                    else
+                        cdefBox.AppendUInt16(65535); /* Colour of the component: not associated with any particular colour */
+                }
+                else
+                {
+                    cdefBox.AppendUInt16(1);        /* Signification: Non pre-multiplied alpha */
+                    cdefBox.AppendUInt16(0);        /* Colour of the component: This channel is associated as the image as a whole */
+                }
+            }
+        }
+
+        // Add res box if needed
+        double dfXRes = 0, dfYRes = 0;
+        int nResUnit = 0;
+        GDALJP2Box* poRes = NULL;
+        if( poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != NULL
+            && poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") != NULL
+            && poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") != NULL )
+        {
+            dfXRes =
+                CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
+            dfYRes =
+                CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION"));
+            nResUnit = atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT"));
+#define PIXELS_PER_INCH 2
+#define PIXELS_PER_CM   3
+
+            if( nResUnit == PIXELS_PER_INCH )
+            {
+                // convert pixels per inch to pixels per cm.
+                dfXRes = dfXRes * 39.37 / 100.0;
+                dfYRes = dfYRes * 39.37 / 100.0;
+                nResUnit = PIXELS_PER_CM;
+            }
+
+            if( nResUnit == PIXELS_PER_CM &&
+                dfXRes > 0 && dfYRes > 0 &&
+                dfXRes < 65535 && dfYRes < 65535 )
+            {
+                /* Format a resd box and embed it inside a res box */
+                GDALJP2Box oResd;
+                oResd.SetType("resd");
+
+                int nYDenom = 1;
+                while (nYDenom < 32767 && dfYRes < 32767)
+                {
+                    dfYRes *= 2;
+                    nYDenom *= 2;
+                }
+                int nXDenom = 1;
+                while (nXDenom < 32767 && dfXRes < 32767)
+                {
+                    dfXRes *= 2;
+                    nXDenom *= 2;
+                }
+
+                oResd.AppendUInt16((GUInt16)dfYRes);
+                oResd.AppendUInt16((GUInt16)nYDenom);
+                oResd.AppendUInt16((GUInt16)dfXRes);
+                oResd.AppendUInt16((GUInt16)nXDenom);
+                oResd.AppendUInt8(2); /* vertical exponent */
+                oResd.AppendUInt8(2); /* horizontal exponent */
+
+                GDALJP2Box* poResd = &oResd;
+                poRes = GDALJP2Box::CreateAsocBox( 1, &poResd );
+                poRes->SetType("res ");
+            }
+        }
+
+        /* Build and write jp2h super box now */
+        GDALJP2Box* apoBoxes[7];
+        int nBoxes = 1;
+        apoBoxes[0] = &ihdrBox;
+        if( bpccBox.GetDataLength() )
+            apoBoxes[nBoxes++] = &bpccBox;
+        apoBoxes[nBoxes++] = &colrBox;
+        if( pclrBox.GetDataLength() )
+            apoBoxes[nBoxes++] = &pclrBox;
+        if( cmapBox.GetDataLength() )
+            apoBoxes[nBoxes++] = &cmapBox;
+        if( cdefBox.GetDataLength() )
+            apoBoxes[nBoxes++] = &cdefBox;
+        if( poRes )
+            apoBoxes[nBoxes++] = poRes;
+        GDALJP2Box* psJP2HBox = GDALJP2Box::CreateSuperBox( "jp2h",
+                                                            nBoxes,
+                                                            apoBoxes );
+        WriteBox(fp, psJP2HBox);
+        delete psJP2HBox;
+        delete poRes;
+
+        if( !bGeoBoxesAfter )
+        {
+            if( bGeoJP2Option && bGeoreferencingCompatOfGeoJP2 )
+            {
+                GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
+                WriteBox(fp, poBox);
+                delete poBox;
+            }
+
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) &&
+                !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+            {
+                WriteXMPBox(fp, poSrcDS, papszOptions);
+            }
+
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+            {
+                if( !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+                    WriteXMLBoxes(fp, poSrcDS, papszOptions);
+                WriteGDALMetadataBox(fp, poSrcDS, papszOptions);
+            }
+
+            if( poGMLJP2Box != NULL )
+            {
+                WriteBox(fp, poGMLJP2Box);
+            }
+        }
+    }
+    CPLFree(pasBandParams);
+    pasBandParams = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Try lossless reuse of an existing JPEG2000 codestream           */
+/* -------------------------------------------------------------------- */
+    vsi_l_offset nCodeStreamLength = 0;
+    vsi_l_offset nCodeStreamStart = 0;
+    VSILFILE* fpSrc = NULL;
+    if( CSLFetchBoolean(papszOptions, "USE_SRC_CODESTREAM", FALSE) )
+    {
+        CPLString osSrcFilename( poSrcDS->GetDescription() );
+        if( poSrcDS->GetDriver() != NULL &&
+            poSrcDS->GetDriver() == GDALGetDriverByName("VRT") )
+        {
+            VRTDataset* poVRTDS = (VRTDataset* )poSrcDS;
+            GDALDataset* poSimpleSourceDS = poVRTDS->GetSingleSimpleSource();
+            if( poSimpleSourceDS )
+                osSrcFilename = poSimpleSourceDS->GetDescription();
+        }
+
+        fpSrc = VSIFOpenL( osSrcFilename, "rb" );
+        if( fpSrc )
+        {
+            nCodeStreamStart = JP2OpenJPEGFindCodeStream(fpSrc,
+                                                         &nCodeStreamLength);
+        }
+        if( nCodeStreamLength == 0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "USE_SRC_CODESTREAM=YES specified, but no codestream found");
+        }
+    }
+
+    if( eCodecFormat == OPJ_CODEC_JP2  )
+    {
+        // Start codestream box
+        nStartJP2C = VSIFTellL(fp);
+        if( nCodeStreamLength )
+            bUseXLBoxes = ((vsi_l_offset)(GUInt32)nCodeStreamLength != nCodeStreamLength);
+        else
+            bUseXLBoxes = CSLFetchBoolean(papszOptions, "JP2C_XLBOX", FALSE) || /* For debugging */
+                (GIntBig)nXSize * nYSize * nBands * nDataTypeSize / adfRates[adfRates.size()-1] > 4e9;
+        GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
+        CPL_MSBPTR32(&nLBox);
+        VSIFWriteL(&nLBox, 1, 4, fp);
+        VSIFWriteL("jp2c", 1, 4, fp);
+        if( bUseXLBoxes )
+        {
+            GUIntBig nXLBox = 0;
+            VSIFWriteL(&nXLBox, 1, 8, fp);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do lossless reuse of an existing JPEG2000 codestream            */
+/* -------------------------------------------------------------------- */
+    if( fpSrc )
+    {
+        const char* apszIgnoredOptions[] = {
+            "BLOCKXSIZE", "BLOCKYSIZE", "QUALITY", "REVERSIBLE",
+            "RESOLUTIONS", "PROGRESSION", "SOP", "EPH",
+            "YCBCR420", "YCC", "NBITS", "1BIT_ALPHA", "PRECINCTS",
+            "TILEPARTS", "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", NULL };
+        for( int i = 0; apszIgnoredOptions[i]; i ++)
+        {
+            if( CSLFetchNameValue(papszOptions, apszIgnoredOptions[i]) )
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                            "Option %s ignored when USE_SRC_CODESTREAM=YES",
+                            apszIgnoredOptions[i]);
+            }
+        }
+        GByte abyBuffer[4096];
+        VSIFSeekL( fpSrc, nCodeStreamStart, SEEK_SET );
+        vsi_l_offset nRead = 0;
+        /* coverity[tainted_data] */
+        while( nRead < nCodeStreamLength )
+        {
+            int nToRead = ( nCodeStreamLength-nRead > 4096 ) ? 4049 :
+                                        (int)(nCodeStreamLength-nRead);
+            if( (int)VSIFReadL(abyBuffer, 1, nToRead, fpSrc) != nToRead )
+            {
+                VSIFCloseL(fp);
+                VSIFCloseL(fpSrc);
+                opj_image_destroy(psImage);
+                opj_destroy_codec(pCodec);
+                delete poGMLJP2Box;
+                return NULL;
+            }
+            if( nRead == 0 && (pszProfile || bInspireTG) &&
+                abyBuffer[2] == 0xFF && abyBuffer[3] == 0x51 )
+            {
+                if( EQUAL(pszProfile, "UNRESTRICTED") )
+                {
+                    abyBuffer[6] = 0;
+                    abyBuffer[7] = 0;
+                }
+                else if( EQUAL(pszProfile, "PROFILE_1") || bInspireTG )
+                {
+                    // TODO: ultimately we should check that we can really set Profile 1
+                    abyBuffer[6] = 0;
+                    abyBuffer[7] = 2;
+                }
+            }
+            if( (int)VSIFWriteL(abyBuffer, 1, nToRead, fp) != nToRead ||
+                !pfnProgress( (nRead + nToRead) * 1.0 / nCodeStreamLength,
+                                NULL, pProgressData ) )
+            {
+                VSIFCloseL(fp);
+                VSIFCloseL(fpSrc);
+                opj_image_destroy(psImage);
+                opj_destroy_codec(pCodec);
+                delete poGMLJP2Box;
+                return NULL;
+            }
+            nRead += nToRead;
+        }
+
+        VSIFCloseL(fpSrc);
+    }
+    else
+    {
+        opj_stream_t * pStream;
+        JP2OpenJPEGFile sJP2OpenJPEGFile;
+        sJP2OpenJPEGFile.fp = fp;
+        sJP2OpenJPEGFile.nBaseOffset = VSIFTellL(fp);
+        pStream = opj_stream_create(1024*1024, FALSE);
+        opj_stream_set_write_function(pStream, JP2OpenJPEGDataset_Write);
+        opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
+        opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
 #if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
-    opj_stream_set_user_data(pStream, fp, NULL);
+        opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile, NULL);
 #else
-    opj_stream_set_user_data(pStream, fp);
+        opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile);
 #endif
 
-    if (!opj_start_compress(pCodec,psImage,pStream))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "opj_start_compress() failed");
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
-        VSIFCloseL(fp);
-        return NULL;
-    }
+        if (!opj_start_compress(pCodec,psImage,pStream))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "opj_start_compress() failed");
+            opj_stream_destroy(pStream);
+            opj_image_destroy(psImage);
+            opj_destroy_codec(pCodec);
+            VSIFCloseL(fp);
+            delete poGMLJP2Box;
+            return NULL;
+        }
 
-    int nTilesX = (nXSize + nBlockXSize - 1) / nBlockXSize;
-    int nTilesY = (nYSize + nBlockYSize - 1) / nBlockYSize;
+        int nTilesX = (nXSize + nBlockXSize - 1) / nBlockXSize;
+        int nTilesY = (nYSize + nBlockYSize - 1) / nBlockYSize;
 
-    GByte* pTempBuffer =(GByte*)VSIMalloc(nBlockXSize * nBlockYSize *
-                                          nBands * nDataTypeSize);
-    if (pTempBuffer == NULL)
-    {
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
-        VSIFCloseL(fp);
-        return NULL;
-    }
-
-    GByte* pYUV420Buffer = NULL;
-    if (bResample)
-    {
-        pYUV420Buffer =(GByte*)VSIMalloc(3 * nBlockXSize * nBlockYSize / 2);
-        if (pYUV420Buffer == NULL)
+        GUIntBig nTileSize = (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
+        GByte* pTempBuffer;
+        if( nTileSize > UINT_MAX )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Tile size exceeds 4GB");
+            pTempBuffer = NULL;
+        }
+        else
+        {
+            pTempBuffer = (GByte*)VSIMalloc((size_t)nTileSize);
+        }
+        if (pTempBuffer == NULL)
         {
             opj_stream_destroy(pStream);
             opj_image_destroy(psImage);
             opj_destroy_codec(pCodec);
-            CPLFree(pTempBuffer);
             VSIFCloseL(fp);
+            delete poGMLJP2Box;
             return NULL;
         }
-    }
 
-/* -------------------------------------------------------------------- */
-/*      Setup GML and GeoTIFF information.                              */
-/* -------------------------------------------------------------------- */
-    GDALJP2Metadata oJP2MD;
-
-    int bWriteExtraBoxes = FALSE;
-    int bHasGeoreferencing = FALSE;
-    int bGeoreferencingCompatOfGMLJP2 = FALSE;
-    if( eCodecFormat == OPJ_CODEC_JP2 &&
-        (CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) ||
-         CSLFetchBoolean( papszOptions, "GeoJP2", TRUE )) )
-    {
-        if( poSrcDS->GetGCPCount() > 0 )
+        GByte* pYUV420Buffer = NULL;
+        if (bYCBCR420)
         {
-            bWriteExtraBoxes = TRUE;
-            bHasGeoreferencing = TRUE;
-            oJP2MD.SetGCPs( poSrcDS->GetGCPCount(),
-                            poSrcDS->GetGCPs() );
-            oJP2MD.SetProjection( poSrcDS->GetGCPProjection() );
-        }
-        else
-        {
-            const char* pszWKT = poSrcDS->GetProjectionRef();
-            if( pszWKT != NULL && pszWKT[0] != '\0' )
+            pYUV420Buffer =(GByte*)VSIMalloc(3 * nBlockXSize * nBlockYSize / 2 +
+                                            ((nBands == 4) ? nBlockXSize * nBlockYSize : 0));
+            if (pYUV420Buffer == NULL)
             {
-                bGeoreferencingCompatOfGMLJP2 = TRUE;
-                bHasGeoreferencing = TRUE;
-                bWriteExtraBoxes = TRUE;
-                oJP2MD.SetProjection( pszWKT );
-            }
-            double adfGeoTransform[6];
-            if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
-            {
-                bGeoreferencingCompatOfGMLJP2 = TRUE;
-                bHasGeoreferencing = TRUE;
-                bWriteExtraBoxes = TRUE;
-                oJP2MD.SetGeoTransform( adfGeoTransform );
+                opj_stream_destroy(pStream);
+                opj_image_destroy(psImage);
+                opj_destroy_codec(pCodec);
+                CPLFree(pTempBuffer);
+                VSIFCloseL(fp);
+                delete poGMLJP2Box;
+                return NULL;
             }
         }
-
-        const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
-        oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
-    }
-
-#define PIXELS_PER_INCH 2
-#define PIXELS_PER_CM   3
-
-    // Resolution
-    double dfXRes = 0, dfYRes = 0;
-    int nResUnit = 0;
-    if( eCodecFormat == OPJ_CODEC_JP2
-        && poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != NULL
-        && poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") != NULL
-        && poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") != NULL )
-    {
-        dfXRes =
-            CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
-        dfYRes =
-            CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION"));
-        nResUnit = atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT"));
-
-        if( nResUnit == PIXELS_PER_INCH )
-        {
-            // convert pixels per inch to pixels per cm.
-            dfXRes = dfXRes * 39.37 / 100.0;
-            dfYRes = dfYRes * 39.37 / 100.0;
-            nResUnit = PIXELS_PER_CM;
-        }
-
-        if( nResUnit == PIXELS_PER_CM &&
-            dfXRes > 0 && dfYRes > 0 &&
-            dfXRes < 65535 && dfYRes < 65535 )
-        {
-            bWriteExtraBoxes = TRUE;
-        }
-    }
-
-    /* The file pointer should have been set 8 bytes after the */
-    /* last written bytes, because openjpeg has reserved it */
-    /* for the jp2c header, but still not written. */
-    vsi_l_offset nPosOriginalJP2C = 0;
-    vsi_l_offset nPosRealJP2C = 0;
-    GByte abyBackupWhatShouldHaveBeenTheJP2CBoxHeader[8];
-
-    if( bWriteExtraBoxes )
-    {
-        nPosOriginalJP2C = VSIFTellL(fp) - 8;
-
-        char szBoxName[4+1];
-        int nLBoxJP2H = 0;
-
-        /* If we must write a Res/Resd box, */
-        /* read the box header at offset 32 */
-        if ( nResUnit == PIXELS_PER_CM )
-        {
-            VSIFSeekL(fp, 32, SEEK_SET);
-            VSIFReadL(&nLBoxJP2H, 1, 4, fp);
-            nLBoxJP2H = CPL_MSBWORD32( nLBoxJP2H );
-            VSIFReadL(szBoxName, 1, 4, fp);
-            szBoxName[4] = '\0';
-        }
-
-        VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
-
-        /* And check that it is the jp2h box before */
-        /* writing the res box */
-        if ( nResUnit == PIXELS_PER_CM && EQUAL(szBoxName, "jp2h") )
-        {
-            /* Format a resd box and embed it inside a res box */
-            GDALJP2Box oResd;
-            oResd.SetType("resd");
-            GByte aby[10];
-
-            int nYDenom = 1;
-            while (nYDenom < 32767 && dfYRes < 32767)
-            {
-                dfYRes *= 2;
-                nYDenom *= 2;
-            }
-            int nXDenom = 1;
-            while (nXDenom < 32767 && dfXRes < 32767)
-            {
-                dfXRes *= 2;
-                nXDenom *= 2;
-            }
-
-            aby[0] = (GByte) (((int)dfYRes) / 256);
-            aby[1] = ((int)dfYRes) % 256;
-            aby[2] = (GByte) (nYDenom / 256);
-            aby[3] = nYDenom % 256;
-            aby[4] = (GByte) (((int)dfXRes) / 256);
-            aby[5] = ((int)dfXRes) % 256;
-            aby[6] = (GByte) (nXDenom / 256);
-            aby[7] = nXDenom % 256;
-            aby[8] = 2;
-            aby[9] = 2;
-            oResd.SetWritableData(10, aby);
-            GDALJP2Box* poResd = &oResd;
-            GDALJP2Box* poRes = GDALJP2Box::CreateAsocBox( 1, &poResd );
-            poRes->SetType("res ");
-
-            /* Now let's extend the jp2c box header so that the */
-            /* res box becomes a sub-box of it */
-            nLBoxJP2H += (int)poRes->GetDataLength() + 8;
-            nLBoxJP2H = CPL_MSBWORD32( nLBoxJP2H );
-            VSIFSeekL(fp, 32, SEEK_SET);
-            VSIFWriteL(&nLBoxJP2H, 1, 4, fp);
-
-            /* Write the box at the end of the file */
-            VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
-            WriteBox(fp, poRes);
-
-            delete poRes;
-        }
-
-        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) &&
-            bGeoreferencingCompatOfGMLJP2 )
-        {
-            GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
-            WriteBox(fp, poBox);
-            delete poBox;
-        }
-        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) &&
-            bHasGeoreferencing )
-        {
-            GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
-            WriteBox(fp, poBox);
-            delete poBox;
-        }
-
-        nPosRealJP2C = VSIFTellL(fp);
-
-        /* Backup the res, GMLJP2 or GeoJP2 box header */
-        /* that will be overwritten by opj_end_compress() */
-        VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
-        VSIFReadL(abyBackupWhatShouldHaveBeenTheJP2CBoxHeader, 1, 8, fp);
-
-        VSIFSeekL(fp, nPosRealJP2C + 8, SEEK_SET);
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Iterate over the tiles                                          */
 /* -------------------------------------------------------------------- */
-    pfnProgress( 0.0, NULL, pProgressData );
+        pfnProgress( 0.0, NULL, pProgressData );
 
-    CPLErr eErr = CE_None;
-    int nBlockXOff, nBlockYOff;
-    int iTile = 0;
-    for(nBlockYOff=0;eErr == CE_None && nBlockYOff<nTilesY;nBlockYOff++)
-    {
-        for(nBlockXOff=0;eErr == CE_None && nBlockXOff<nTilesX;nBlockXOff++)
+        CPLErr eErr = CE_None;
+        int nBlockXOff, nBlockYOff;
+        int iTile = 0;
+        for(nBlockYOff=0;eErr == CE_None && nBlockYOff<nTilesY;nBlockYOff++)
         {
-            int nWidthToRead = MIN(nBlockXSize, nXSize - nBlockXOff * nBlockXSize);
-            int nHeightToRead = MIN(nBlockYSize, nYSize - nBlockYOff * nBlockYSize);
-            eErr = poSrcDS->RasterIO(GF_Read,
-                                     nBlockXOff * nBlockXSize,
-                                     nBlockYOff * nBlockYSize,
-                                     nWidthToRead, nHeightToRead,
-                                     pTempBuffer, nWidthToRead, nHeightToRead,
-                                     eDataType,
-                                     nBands, NULL,
-                                     0,0,0,NULL);
-            if (eErr == CE_None)
+            for(nBlockXOff=0;eErr == CE_None && nBlockXOff<nTilesX;nBlockXOff++)
             {
-                if (bResample)
+                int nWidthToRead = MIN(nBlockXSize, nXSize - nBlockXOff * nBlockXSize);
+                int nHeightToRead = MIN(nBlockYSize, nYSize - nBlockYOff * nBlockYSize);
+                eErr = poSrcDS->RasterIO(GF_Read,
+                                        nBlockXOff * nBlockXSize,
+                                        nBlockYOff * nBlockYSize,
+                                        nWidthToRead, nHeightToRead,
+                                        pTempBuffer, nWidthToRead, nHeightToRead,
+                                        eDataType,
+                                        nBands, NULL,
+                                        0,0,0,NULL);
+                if( b1BitAlpha )
                 {
-                    int j, i;
-                    for(j=0;j<nHeightToRead;j++)
+                    for(int i=0;i<nWidthToRead*nHeightToRead;i++)
                     {
-                        for(i=0;i<nWidthToRead;i++)
+                        if( pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] )
+                            pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] = 1;
+                        else
+                            pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] = 0;
+                    }
+                }
+                if (eErr == CE_None)
+                {
+                    if (bYCBCR420)
+                    {
+                        int j, i;
+                        for(j=0;j<nHeightToRead;j++)
                         {
-                            int R = pTempBuffer[j*nWidthToRead+i];
-                            int G = pTempBuffer[nHeightToRead*nWidthToRead + j*nWidthToRead+i];
-                            int B = pTempBuffer[2*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
-                            int Y = (int) (0.299 * R + 0.587 * G + 0.114 * B);
-                            int Cb = CLAMP_0_255((int) (-0.1687 * R - 0.3313 * G + 0.5 * B  + 128));
-                            int Cr = CLAMP_0_255((int) (0.5 * R - 0.4187 * G - 0.0813 * B  + 128));
-                            pYUV420Buffer[j*nWidthToRead+i] = (GByte) Y;
-                            pYUV420Buffer[nHeightToRead * nWidthToRead + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cb;
-                            pYUV420Buffer[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cr;
+                            for(i=0;i<nWidthToRead;i++)
+                            {
+                                int R = pTempBuffer[j*nWidthToRead+i];
+                                int G = pTempBuffer[nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                                int B = pTempBuffer[2*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                                int Y = (int) (0.299 * R + 0.587 * G + 0.114 * B);
+                                int Cb = CLAMP_0_255((int) (-0.1687 * R - 0.3313 * G + 0.5 * B  + 128));
+                                int Cr = CLAMP_0_255((int) (0.5 * R - 0.4187 * G - 0.0813 * B  + 128));
+                                pYUV420Buffer[j*nWidthToRead+i] = (GByte) Y;
+                                pYUV420Buffer[nHeightToRead * nWidthToRead + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cb;
+                                pYUV420Buffer[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cr;
+                                if( nBands == 4 )
+                                {
+                                    pYUV420Buffer[3 * nHeightToRead * nWidthToRead / 2 + j*nWidthToRead+i ] =
+                                        (GByte) pTempBuffer[3*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                                }
+                            }
+                        }
+
+                        int nBytesToWrite = 3 * nWidthToRead * nHeightToRead / 2;
+                        if (nBands == 4)
+                            nBytesToWrite += nBlockXSize * nBlockYSize;
+
+                        if (!opj_write_tile(pCodec,
+                                            iTile,
+                                            pYUV420Buffer,
+                                            nBytesToWrite,
+                                            pStream))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "opj_write_tile() failed");
+                            eErr = CE_Failure;
                         }
                     }
+                    else
+                    {
+                        if (!opj_write_tile(pCodec,
+                                            iTile,
+                                            pTempBuffer,
+                                            nWidthToRead * nHeightToRead * nBands * nDataTypeSize,
+                                            pStream))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "opj_write_tile() failed");
+                            eErr = CE_Failure;
+                        }
+                    }
+                }
 
-                    if (!opj_write_tile(pCodec,
-                                        iTile,
-                                        pYUV420Buffer,
-                                        3 * nWidthToRead * nHeightToRead / 2,
-                                        pStream))
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "opj_write_tile() failed");
-                        eErr = CE_Failure;
-                    }
-                }
-                else
-                {
-                    if (!opj_write_tile(pCodec,
-                                        iTile,
-                                        pTempBuffer,
-                                        nWidthToRead * nHeightToRead * nBands * nDataTypeSize,
-                                        pStream))
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "opj_write_tile() failed");
-                        eErr = CE_Failure;
-                    }
-                }
+                if( !pfnProgress( (iTile + 1) * 1.0 / (nTilesX * nTilesY), NULL, pProgressData ) )
+                    eErr = CE_Failure;
+
+                iTile ++;
             }
-
-            if( !pfnProgress( (iTile + 1) * 1.0 / (nTilesX * nTilesY), NULL, pProgressData ) )
-                eErr = CE_Failure;
-
-            iTile ++;
         }
-    }
 
-    VSIFree(pTempBuffer);
-    VSIFree(pYUV420Buffer);
+        VSIFree(pTempBuffer);
+        VSIFree(pYUV420Buffer);
 
-    if (eErr != CE_None)
-    {
+        if (eErr != CE_None)
+        {
+            opj_stream_destroy(pStream);
+            opj_image_destroy(psImage);
+            opj_destroy_codec(pCodec);
+            VSIFCloseL(fp);
+            delete poGMLJP2Box;
+            return NULL;
+        }
+
+        if (!opj_end_compress(pCodec,pStream))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "opj_end_compress() failed");
+            opj_stream_destroy(pStream);
+            opj_image_destroy(psImage);
+            opj_destroy_codec(pCodec);
+            VSIFCloseL(fp);
+            delete poGMLJP2Box;
+            return NULL;
+        }
         opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
-        VSIFCloseL(fp);
-        return NULL;
     }
 
-    if (!opj_end_compress(pCodec,pStream))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "opj_end_compress() failed");
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
-        VSIFCloseL(fp);
-        return NULL;
-    }
-
-    opj_stream_destroy(pStream);
     opj_image_destroy(psImage);
     opj_destroy_codec(pCodec);
 
-    /* Move the jp2c box header at its real position */
-    /* and restore the res, GMLJP2 or GeoJP2 box header that */
-    /* has been overwritten */
-    if( bWriteExtraBoxes )
+/* -------------------------------------------------------------------- */
+/*      Patch JP2C box length and add trailing JP2 boxes                */
+/* -------------------------------------------------------------------- */
+    if( eCodecFormat == OPJ_CODEC_JP2 &&
+        !CSLFetchBoolean(papszOptions, "JP2C_LENGTH_ZERO", FALSE) /* debug option */ )
     {
-        GByte abyJP2CHeader[8];
+        vsi_l_offset nEndJP2C = VSIFTellL(fp);
+        GUIntBig nBoxSize = nEndJP2C -nStartJP2C;
+        if( bUseXLBoxes )
+        {
+            VSIFSeekL(fp, nStartJP2C + 8, SEEK_SET);
+            CPL_MSBPTR64(&nBoxSize);
+            VSIFWriteL(&nBoxSize, 8, 1, fp);
+        }
+        else
+        {
+            GUInt32 nBoxSize32 = (GUInt32)nBoxSize;
+            if( (vsi_l_offset)nBoxSize32 != nBoxSize )
+            {
+                /*  Should not happen hopefully */
+                if( (bGeoreferencingCompatOfGeoJP2 || poGMLJP2Box) && bGeoBoxesAfter )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Cannot write GMLJP2/GeoJP2 boxes as codestream is unexpectedly > 4GB");
+                    bGeoreferencingCompatOfGeoJP2 = FALSE;
+                    delete poGMLJP2Box;
+                    poGMLJP2Box = NULL;
+                }
+            }
+            else
+            {
+                VSIFSeekL(fp, nStartJP2C, SEEK_SET);
+                CPL_MSBPTR32(&nBoxSize32);
+                VSIFWriteL(&nBoxSize32, 4, 1, fp);
+            }
+        }
+        VSIFSeekL(fp, 0, SEEK_END);
 
-        VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
-        VSIFReadL(abyJP2CHeader, 1, 8, fp);
+        if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+        {
+            WriteIPRBox(fp, poSrcDS, papszOptions);
+        }
 
-        VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
-        VSIFWriteL(abyBackupWhatShouldHaveBeenTheJP2CBoxHeader, 1, 8, fp);
+        if( bGeoBoxesAfter )
+        {
+            if( poGMLJP2Box != NULL )
+            {
+                WriteBox(fp, poGMLJP2Box);
+            }
 
-        VSIFSeekL(fp, nPosRealJP2C, SEEK_SET);
-        VSIFWriteL(abyJP2CHeader, 1, 8, fp);
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+            {
+                if( !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+                    WriteXMLBoxes(fp, poSrcDS, papszOptions);
+                WriteGDALMetadataBox(fp, poSrcDS, papszOptions);
+            }
+
+            if( bGeoJP2Option && bGeoreferencingCompatOfGeoJP2 )
+            {
+                GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
+                WriteBox(fp, poBox);
+                delete poBox;
+            }
+
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) &&
+                !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+            {
+                WriteXMPBox(fp, poSrcDS, papszOptions);
+            }
+        }
     }
 
     VSIFCloseL(fp);
+    delete poGMLJP2Box;
+
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
     JP2OpenJPEGDataset *poDS = (JP2OpenJPEGDataset*) JP2OpenJPEGDataset::Open(&oOpenInfo);
 
     if( poDS )
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    {
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT & (~GCIF_METADATA) );
+
+        /* Only write relevant metadata to PAM, and if needed */
+        if( !CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+        {
+            char** papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
+            papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
+            papszSrcMD = CSLSetNameValue(papszSrcMD, "Corder", NULL);
+            for(char** papszSrcMDIter = papszSrcMD;
+                    papszSrcMDIter && *papszSrcMDIter; )
+            {
+                /* Remove entries like KEY= (without value) */
+                if( (*papszSrcMDIter)[0] &&
+                    (*papszSrcMDIter)[strlen((*papszSrcMDIter))-1] == '=' )
+                {
+                    CPLFree(*papszSrcMDIter);
+                    memmove(papszSrcMDIter, papszSrcMDIter + 1,
+                            sizeof(char*) * (CSLCount(papszSrcMDIter + 1) + 1));
+                }
+                else
+                    ++papszSrcMDIter;
+            }
+            char** papszMD = CSLDuplicate(poDS->GetMetadata());
+            papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
+            if( papszSrcMD && papszSrcMD[0] != NULL &&
+                CSLCount(papszSrcMD) != CSLCount(papszMD) )
+            {
+                poDS->SetMetadata(papszSrcMD);
+            }
+            CSLDestroy(papszSrcMD);
+            CSLDestroy(papszMD);
+        }
+    }
 
     return poDS;
 }
@@ -2005,37 +3612,44 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 void GDALRegister_JP2OpenJPEG()
 
 {
-    GDALDriver  *poDriver;
-    
-    if (! GDAL_CHECK_VERSION("JP2OpenJPEG driver"))
+    if( !GDAL_CHECK_VERSION( "JP2OpenJPEG driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JP2OpenJPEG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "JP2OpenJPEG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "JPEG-2000 driver based on OpenJPEG library" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_jp2openjpeg.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32" );
+    if( GDALGetDriverByName( "JP2OpenJPEG" ) != NULL )
+        return;
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "JP2OpenJPEG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "JPEG-2000 driver based on OpenJPEG library" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2openjpeg.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jp2 j2k" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16 Int32 UInt32" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
+"   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
+"</OpenOptionList>" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='CODEC' type='string-select' default='according to file extension. If unknown, default to J2K'>"
 "       <Value>JP2</Value>"
 "       <Value>J2K</Value>"
 "   </Option>"
-"   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
-"   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
-"   <Option name='QUALITY' type='float' description='Quality. 0-100' default='25'/>"
+"   <Option name='GeoJP2' type='boolean' description='Whether to emit a GeoJP2 box' default='YES'/>"
+"   <Option name='GMLJP2' type='boolean' description='Whether to emit a GMLJP2 v1 box' default='YES'/>"
+"   <Option name='GMLJP2V2_DEF' type='string' description='Definition file to describe how a GMLJP2 v2 box should be generated. If set to YES, a minimal instance will be created'/>"
+"   <Option name='QUALITY' type='string' description='Single quality value or comma separated list of increasing quality values for several layers, each in the 0-100 range' default='25'/>"
 "   <Option name='REVERSIBLE' type='boolean' description='True if the compression is reversible' default='false'/>"
-"   <Option name='RESOLUTIONS' type='int' description='Number of resolutions. 1-7' default='6'/>"
+"   <Option name='RESOLUTIONS' type='int' description='Number of resolutions.' min='1' max='30'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width' default='1024'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile Height' default='1024'/>"
 "   <Option name='PROGRESSION' type='string-select' default='LRCP'>"
@@ -2048,15 +3662,38 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='SOP' type='boolean' description='True to insert SOP markers' default='false'/>"
 "   <Option name='EPH' type='boolean' description='True to insert EPH markers' default='false'/>"
 "   <Option name='YCBCR420' type='boolean' description='if RGB must be resampled to YCbCr 4:2:0' default='false'/>"
-"   <Option name='YCC' type='boolean' description='if RGB must be transformed to YCC color space' default='true'/>"
+"   <Option name='YCC' type='boolean' description='if RGB must be transformed to YCC color space (lossless MCT transform)' default='YES'/>"
+"   <Option name='NBITS' type='int' description='Bits (precision) for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
+"   <Option name='1BIT_ALPHA' type='boolean' description='Whether to encode the alpha channel as a 1-bit channel' default='NO'/>"
+"   <Option name='ALPHA' type='boolean' description='Whether to force encoding last channel as alpha channel' default='NO'/>"
+"   <Option name='PROFILE' type='string-select' description='Which codestream profile to use' default='AUTO'>"
+"       <Value>AUTO</Value>"
+"       <Value>UNRESTRICTED</Value>"
+"       <Value>PROFILE_1</Value>"
+"   </Option>"
+"   <Option name='INSPIRE_TG' type='boolean' description='Whether to use features that comply with Inspire Orthoimagery Technical Guidelines' default='NO'/>"
+"   <Option name='JPX' type='boolean' description='Whether to advertize JPX features when a GMLJP2 box is written' default='YES'/>"
+"   <Option name='GEOBOXES_AFTER_JP2C' type='boolean' description='Whether to place GeoJP2/GMLJP2 boxes after the code-stream' default='NO'/>"
+"   <Option name='PRECINCTS' type='string' description='Precincts size as a string of the form {w,h},{w,h},... with power-of-two values'/>"
+"   <Option name='TILEPARTS' type='string-select' description='Whether to generate tile-parts and according to which criterion' default='DISABLED'>"
+"       <Value>DISABLED</Value>"
+"       <Value>RESOLUTIONS</Value>"
+"       <Value>LAYERS</Value>"
+"       <Value>COMPONENTS</Value>"
+"   </Option>"
+"   <Option name='CODEBLOCK_WIDTH' type='int' description='Codeblock width' default='64' min='4' max='1024'/>"
+"   <Option name='CODEBLOCK_HEIGHT' type='int' description='Codeblock height' default='64' min='4' max='1024'/>"
+"   <Option name='CT_COMPONENTS' type='int' min='3' max='4' description='If there is one color table, number of color table components to write. Autodetected if not specified.'/>"
+"   <Option name='WRITE_METADATA' type='boolean' description='Whether metadata should be written, in a dedicated JP2 XML box' default='NO'/>"
+"   <Option name='MAIN_MD_DOMAIN_ONLY' type='boolean' description='(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should be written' default='NO'/>"
+"   <Option name='USE_SRC_CODESTREAM' type='boolean' description='When source dataset is JPEG2000, whether to reuse the codestream of the source dataset unmodified' default='NO'/>"
 "</CreationOptionList>"  );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = JP2OpenJPEGDataset::Identify;
-        poDriver->pfnOpen = JP2OpenJPEGDataset::Open;
-        poDriver->pfnCreateCopy = JP2OpenJPEGDataset::CreateCopy;
+    poDriver->pfnIdentify = JP2OpenJPEGDataset::Identify;
+    poDriver->pfnOpen = JP2OpenJPEGDataset::Open;
+    poDriver->pfnCreateCopy = JP2OpenJPEGDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

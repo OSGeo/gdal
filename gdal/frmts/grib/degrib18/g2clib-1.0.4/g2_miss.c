@@ -35,7 +35,7 @@ void g2_miss( gribfield *gfld, float *rmiss, int *nmiss )
     g2int     itype;    
 
     /*
-     *  Missing value management currnetly only used in
+     *  Missing value management currently only used in
      *  DRT's 5.2 and 5.3.
      */
     if ( gfld->idrtnum != 2  &&  gfld->idrtnum != 3 ) {

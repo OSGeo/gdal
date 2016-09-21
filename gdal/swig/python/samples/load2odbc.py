@@ -3,14 +3,14 @@
 # $Id$
 #
 # Project:  OGR Python samples
-# Purpose:  Load ODBC table to an ODBC datastore.  Uses direct SQL 
+# Purpose:  Load ODBC table to an ODBC datastore.  Uses direct SQL
 #           since the ODBC driver is read-only for OGR.
 # Author:   Frank Warmerdam, warmerdam@pobox.com
 #
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -30,12 +30,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import ogr
-except ImportError:
-    import ogr
-
 import sys
+
+from osgeo import ogr
 
 #############################################################################
 def Usage():
@@ -97,7 +94,7 @@ else:
     out_ds = ogr.Open( odbc_dsn )
 
     if out_ds is None:
-        print('Unable to connect to ' + odbc_dsn) 
+        print('Unable to connect to ' + odbc_dsn)
         sys.exit(1)
 
 #############################################################################
@@ -114,7 +111,7 @@ except:
 
 defn = in_layer.GetLayerDefn()
 
-cmd = 'CREATE TABLE ' + layername + '( OGC_FID INTEGER, WKT_GEOMETRY MEMO' 
+cmd = 'CREATE TABLE ' + layername + '( OGC_FID INTEGER, WKT_GEOMETRY MEMO'
 
 if extents_flag:
     cmd = cmd + ', XMIN NUMBER, YMIN NUMBER, XMAX NUMBER, YMAX NUMBER'
@@ -123,13 +120,13 @@ for iField in range(defn.GetFieldCount()):
     fielddef = defn.GetFieldDefn(iField)
     cmd = cmd + ', ' + fielddef.GetName()
     if fielddef.GetType() == ogr.OFTInteger:
-        cmd = cmd + ' INTEGER' 
+        cmd = cmd + ' INTEGER'
     elif fielddef.GetType() == ogr.OFTString:
-        cmd = cmd + ' TEXT' 
+        cmd = cmd + ' TEXT'
     elif fielddef.GetType() == ogr.OFTReal:
         cmd = cmd + ' NUMBER'
     else:
-        cmd = cmd + ' TEXT' 
+        cmd = cmd + ' TEXT'
 
 cmd = cmd + ')'
 

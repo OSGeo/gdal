@@ -45,7 +45,7 @@ if "%1"=="" (
 )
 
 ::  *********************
-::  Get plataform 32 or 64
+::  Get platform 32 or 64
 ::  *********************
 
 set _plat_=%2
@@ -171,7 +171,7 @@ goto :end
     ::  stop folders
     ::  *********************
     
-    for %%d in (data debian dist_docs docs html m4 pymod swig vb6) do (
+    for %%d in (data debian docs html m4 pymod swig vb6) do (
         if "%_name_%"=="%%d" (
             goto :end
         )

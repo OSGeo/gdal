@@ -28,33 +28,30 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_srs_api.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
-#ifndef M_PI
-#define M_PI		3.14159265358979323846
-#endif
-
 /************************************************************************/
 /* ==================================================================== */
-/*				CTable2Dataset				*/
+/*                              CTable2Dataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
 class CTable2Dataset : public RawDataset
 {
   public:
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     double      adfGeoTransform[6];
 
   public:
-    		CTable2Dataset();
-    	        ~CTable2Dataset();
-    
+                CTable2Dataset();
+    virtual ~CTable2Dataset();
+
     virtual CPLErr SetGeoTransform( double * padfTransform );
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef();
@@ -69,7 +66,7 @@ class CTable2Dataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*				CTable2Dataset				*/
+/*                              CTable2Dataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -77,10 +74,9 @@ class CTable2Dataset : public RawDataset
 /*                             CTable2Dataset()                          */
 /************************************************************************/
 
-CTable2Dataset::CTable2Dataset()
-{
-    fpImage = NULL;
-}
+CTable2Dataset::CTable2Dataset() :
+    fpImage(NULL)
+{}
 
 /************************************************************************/
 /*                            ~CTable2Dataset()                          */
@@ -92,7 +88,12 @@ CTable2Dataset::~CTable2Dataset()
     FlushCache();
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 }
 
 /************************************************************************/
@@ -115,7 +116,9 @@ int CTable2Dataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 64 )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader + 0, "CTABLE V2", 9 ) )
+    if( !STARTS_WITH_CI(
+           reinterpret_cast<const char *>( poOpenInfo->pabyHeader + 0 ),
+           "CTABLE V2") )
         return FALSE;
 
     return TRUE;
@@ -130,21 +133,18 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify( poOpenInfo ) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    CTable2Dataset 	*poDS;
-
-    poDS = new CTable2Dataset();
+    CTable2Dataset *poDS = new CTable2Dataset();
     poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    CPLString osFilename;
-    osFilename = poOpenInfo->pszFilename;
-    
+    CPLString osFilename = poOpenInfo->pszFilename;
+
     if( poOpenInfo->eAccess == GA_ReadOnly )
         poDS->fpImage = VSIFOpenL( osFilename, "rb" );
     else
@@ -159,14 +159,14 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the file header.                                           */
 /* -------------------------------------------------------------------- */
-    char  achHeader[160];
-    CPLString osDescription;
 
-    VSIFSeekL( poDS->fpImage, 0, SEEK_SET );
-    VSIFReadL( achHeader, 1, 160, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fpImage, 0, SEEK_SET ));
 
+    char achHeader[160] = { '\0' };
+    CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 1, 160, poDS->fpImage ));
     achHeader[16+79] = '\0';
-    osDescription = (const char *) achHeader+16;
+
+    CPLString osDescription = reinterpret_cast<const char *>( achHeader + 16 );
     osDescription.Trim();
     poDS->SetMetadataItem( "DESCRIPTION", osDescription );
 
@@ -183,20 +183,23 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Extract size, and geotransform.                                 */
 /* -------------------------------------------------------------------- */
-    GUInt32 nRasterXSize, nRasterYSize;
-    
+    int nRasterXSize, nRasterYSize;
     memcpy( &nRasterXSize, achHeader + 128, 4 );
     memcpy( &nRasterYSize, achHeader + 132, 4 );
+    if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
+    {
+        delete poDS;
+        return NULL;
+    }
+
     poDS->nRasterXSize = nRasterXSize;
     poDS->nRasterYSize = nRasterYSize;
 
-    int i;
     double adfValues[4];
     memcpy( adfValues, achHeader + 96, sizeof(double)*4 );
 
-    for( i = 0; i < 4; i++ )
+    for( int i = 0; i < 4; i++ )
         adfValues[i] *= 180/M_PI; // Radians to degrees.
-    
 
     poDS->adfGeoTransform[0] = adfValues[0] - adfValues[2]*0.5;
     poDS->adfGeoTransform[1] = adfValues[2];
@@ -208,18 +211,18 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Setup the bands.                                                */
 /* -------------------------------------------------------------------- */
-    RawRasterBand *poBand = 
-        new RawRasterBand( poDS, 1, poDS->fpImage, 
+    RawRasterBand *poBand =
+        new RawRasterBand( poDS, 1, poDS->fpImage,
                            160 + 4 + nRasterXSize * (nRasterYSize-1) * 2 * 4,
-                           8, -8 * nRasterXSize, 
+                           8, -8 * nRasterXSize,
                            GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
     poBand->SetDescription( "Latitude Offset (radians)" );
     poDS->SetBand( 1, poBand );
-    
-    poBand = 
-        new RawRasterBand( poDS, 2, poDS->fpImage, 
+
+    poBand =
+        new RawRasterBand( poDS, 2, poDS->fpImage,
                            160 + nRasterXSize * (nRasterYSize-1) * 2 * 4,
-                           8, -8 * nRasterXSize, 
+                           8, -8 * nRasterXSize,
                            GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
     poBand->SetDescription( "Longitude Offset (radians)" );
     poDS->SetBand( 2, poBand );
@@ -235,7 +238,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -259,14 +262,15 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
     if( eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
-                  "Unable to update geotransform on readonly file." ); 
+                  "Unable to update geotransform on readonly file." );
         return CE_Failure;
     }
 
     if( padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Rotated and sheared geotransforms not supported for CTable2."); 
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Rotated and sheared geotransforms not supported for CTable2." );
         return CE_Failure;
     }
 
@@ -275,21 +279,22 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
 /* -------------------------------------------------------------------- */
 /*      Update grid header.                                             */
 /* -------------------------------------------------------------------- */
-    double dfValue;
-    char   achHeader[160];
-    double dfDegToRad = M_PI / 180.0;
+    const double dfDegToRad = M_PI / 180.0;
 
     // read grid header
-    VSIFSeekL( fpImage, 0, SEEK_SET );
-    VSIFReadL( achHeader, 1, sizeof(achHeader), fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
+
+    char achHeader[160] = { '\0' };
+    CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 1, sizeof(achHeader), fpImage ));
 
     // lower left origin (longitude, center of pixel, radians)
-    dfValue = (adfGeoTransform[0] + adfGeoTransform[1]*0.5) * dfDegToRad;
+    double dfValue = (adfGeoTransform[0] + adfGeoTransform[1]*0.5) * dfDegToRad;
     CPL_LSBPTR64( &dfValue );
     memcpy( achHeader + 96, &dfValue, 8 );
 
     // lower left origin (latitude, center of pixel, radians)
-    dfValue = (adfGeoTransform[3] + adfGeoTransform[5] * (nRasterYSize-0.5)) * dfDegToRad;
+    dfValue = (adfGeoTransform[3] + adfGeoTransform[5] * (nRasterYSize-0.5))
+        * dfDegToRad;
     CPL_LSBPTR64( &dfValue );
     memcpy( achHeader + 104, &dfValue, 8 );
 
@@ -304,8 +309,8 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
     memcpy( achHeader + 120, &dfValue, 8 );
 
     // write grid header.
-    VSIFSeekL( fpImage, 0, SEEK_SET );
-    VSIFWriteL( achHeader, 11, 16, fpImage );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 11, 16, fpImage ));
 
     return CE_None;
 }
@@ -334,19 +339,18 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 {
     if( eType != GDT_Float32 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to create CTable2 file with unsupported data type '%s'.",
-                 GDALGetDataTypeName( eType ) );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Attempt to create CTable2 file with unsupported data type '%s'.",
+            GDALGetDataTypeName( eType ) );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Try to open or create file.                                     */
 /* -------------------------------------------------------------------- */
-    VSILFILE	*fp;
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
 
-    fp = VSIFOpenL( pszFilename, "wb" );
-    
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -358,21 +362,19 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create a file header, with a defaulted georeferencing.          */
 /* -------------------------------------------------------------------- */
-    char achHeader[160];
-    int nValue32;
-    double dfValue;
+    char achHeader[160] = { '\0' };
 
     memset( achHeader, 0, sizeof(achHeader));
 
     memcpy( achHeader+0, "CTABLE V2.0     ", 16 );
-    
+
     if( CSLFetchNameValue( papszOptions, "DESCRIPTION" ) != NULL )
-        strncpy( achHeader + 16, 
-                 CSLFetchNameValue( papszOptions, "DESCRIPTION" ), 
+        strncpy( achHeader + 16,
+                 CSLFetchNameValue( papszOptions, "DESCRIPTION" ),
                  80 );
-    
+
     // lower left origin (longitude, center of pixel, radians)
-    dfValue = 0;
+    double dfValue = 0;
     CPL_LSBPTR64( &dfValue );
     memcpy( achHeader + 96, &dfValue, 8 );
 
@@ -392,7 +394,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
     memcpy( achHeader + 120, &dfValue, 8 );
 
     // raster width in pixels
-    nValue32 = nXSize;
+    int nValue32 = nXSize;
     CPL_LSBPTR32( &nValue32 );
     memcpy( achHeader + 128, &nValue32, 4 );
 
@@ -401,61 +403,61 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
     CPL_LSBPTR32( &nValue32 );
     memcpy( achHeader + 132, &nValue32, 4 );
 
-    VSIFWriteL( achHeader, 1, sizeof(achHeader), fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, sizeof(achHeader), fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Write zeroed grid data.                                         */
 /* -------------------------------------------------------------------- */
     float *pafLine = (float *) CPLCalloc(sizeof(float)*2,nXSize);
-    int i;
 
-    for( i = 0; i < nYSize; i++ )
+    for( int i = 0; i < nYSize; i++ )
     {
-        if( (int)VSIFWriteL( pafLine, sizeof(float)*2, nXSize, fp ) != nXSize ) 
+        if( static_cast<int>( VSIFWriteL(
+               pafLine, sizeof(float)*2, nXSize, fp ) ) != nXSize )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Write failed at line %d, perhaps the disk is full?",
                       i );
             return NULL;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return.                                             */
 /* -------------------------------------------------------------------- */
     CPLFree( pafLine );
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        return NULL;
+    }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
 /************************************************************************/
-/*                         GDALRegister_CTable2()                          */
+/*                         GDALRegister_CTable2()                       */
 /************************************************************************/
 
 void GDALRegister_CTable2()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "CTable2" ) != NULL )
+      return;
 
-    if( GDALGetDriverByName( "CTable2" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "CTable2" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "CTable2 Datum Grid Shift" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Float32" );
+    poDriver->SetDescription( "CTable2" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "CTable2 Datum Grid Shift" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = CTable2Dataset::Open;
-        poDriver->pfnIdentify = CTable2Dataset::Identify;
-        poDriver->pfnCreate = CTable2Dataset::Create;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Float32" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = CTable2Dataset::Open;
+    poDriver->pfnIdentify = CTable2Dataset::Identify;
+    poDriver->pfnCreate = CTable2Dataset::Create;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

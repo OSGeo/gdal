@@ -14,7 +14,7 @@ typedef struct {
 /*                          PyProgressProxy()                           */
 /************************************************************************/
 
-int CPL_STDCALL
+static int CPL_STDCALL
 PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 {
@@ -29,18 +29,24 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         return TRUE;
 
     psInfo->nLastReported = (int) (100.0 * dfComplete);
-    
+
     if( pszMessage == NULL )
         pszMessage = "";
 
     if( psInfo->psPyCallbackData == NULL )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
     else
-        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, 
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage,
 	                       psInfo->psPyCallbackData );
 
     psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
     Py_XDECREF(psArgs);
+
+    if( PyErr_Occurred() != NULL )
+    {
+        PyErr_Clear();
+        return FALSE;
+    }
 
     if( psResult == NULL )
     {
@@ -49,19 +55,20 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
     if( psResult == Py_None )
     {
-	Py_XDECREF(Py_None);
         return TRUE;
     }
 
     if( !PyArg_Parse( psResult, "i", &bContinue ) )
     {
-        PyErr_SetString(PyExc_ValueError, "bad progress return value");
+        PyErr_Clear();
+        CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
+        Py_XDECREF(psResult);
 	return FALSE;
     }
 
     Py_XDECREF(psResult);
 
-    return bContinue;    
+    return bContinue;
 }
 %}
 

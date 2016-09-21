@@ -40,7 +40,7 @@ typedef int (*VSICurlReadCbkFunc) (VSILFILE* fp, void *pabyBuffer, size_t nBuffe
 
 /* fp must be a VSICurl file handle, otherwise bad things will happen ! */
 /* bStopOnInterrruptUntilUninstall must be set to TRUE if all downloads */
-/* must be cancelled after a first one has been stopped by the callback function. */
+/* must be canceled after a first one has been stopped by the callback function. */
 /* In that case, downloads will restart after uninstalling the callback. */
 int VSICurlInstallReadCbk(VSILFILE* fp, VSICurlReadCbkFunc pfnReadCbk, void* pfnUserData,
                           int bStopOnInterrruptUntilUninstall);

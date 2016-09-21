@@ -27,23 +27,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ods.h"
 #include "cpl_conv.h"
+#include "ogr_ods.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 
-extern "C" void RegisterOGRODS();
+using namespace OGRODS;
 
-// g++ -DHAVE_EXPAT -g -Wall -fPIC ogr/ogrsf_frmts/ods/*.cpp -shared -o ogr_ODS.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/mem -Iogr/ogrsf_frmts/ods -L. -lgdal
+// g++ -DHAVE_EXPAT -g -Wall -fPIC ogr/ogrsf_frmts/ods/*.cpp -shared
+// -o ogr_ODS.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts
+// -Iogr/ogrsf_frmts/mem -Iogr/ogrsf_frmts/ods -L. -lgdal
 
 /************************************************************************/
 /*                           ~OGRODSDriver()                            */
 /************************************************************************/
 
-OGRODSDriver::~OGRODSDriver()
-
-{
-}
+OGRODSDriver::~OGRODSDriver() {}
 
 /************************************************************************/
 /*                              GetName()                               */
@@ -74,12 +74,12 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
         if (fp == NULL)
             return NULL;
 
-        int bOK = FALSE;
+        bool bOK = false;
         char szBuffer[1024];
-        if (VSIFReadL(szBuffer, sizeof(szBuffer), 1, fp) == 1 &&
-            memcmp(szBuffer, "PK", 2) == 0)
+        if( VSIFReadL(szBuffer, sizeof(szBuffer), 1, fp) == 1 &&
+            memcmp(szBuffer, "PK", 2) == 0 )
         {
-            bOK = TRUE;
+            bOK = true;
         }
 
         VSIFCloseL(fp);
@@ -95,10 +95,10 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
         return NULL;
     }
 
-    if (EQUALN(pszContentFilename, "ODS:", 4) ||
+    if (STARTS_WITH_CI(pszContentFilename, "ODS:") ||
         EQUAL(CPLGetFilename(pszContentFilename), "content.xml"))
     {
-        if (EQUALN(pszContentFilename, "ODS:", 4))
+        if (STARTS_WITH_CI(pszContentFilename, "ODS:"))
             pszContentFilename += 4;
 
         fpContent = VSIFOpenL(pszContentFilename, "rb");
@@ -125,10 +125,11 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
 
     if (EQUAL(CPLGetExtension(pszFilename), "ODS"))
     {
-        fpSettings = VSIFOpenL(CPLSPrintf("/vsizip/%s/settings.xml", pszFilename), "rb");
+        fpSettings =
+            VSIFOpenL(CPLSPrintf("/vsizip/%s/settings.xml", pszFilename), "rb");
     }
 
-    OGRODSDataSource   *poDS = new OGRODSDataSource();
+    OGRODSDataSource *poDS = new OGRODSDataSource();
 
     if( !poDS->Open( pszFilename, fpContent, fpSettings, bUpdate ) )
     {
@@ -144,7 +145,7 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
 /************************************************************************/
 
 OGRDataSource *OGRODSDriver::CreateDataSource( const char * pszName,
-                                                char **papszOptions )
+                                               char **papszOptions )
 
 {
     if (!EQUAL(CPLGetExtension(pszName), "ODS"))
@@ -170,17 +171,15 @@ OGRDataSource *OGRODSDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Try to create datasource.                                       */
 /* -------------------------------------------------------------------- */
-    OGRODSDataSource     *poDS;
-
-    poDS = new OGRODSDataSource();
+    OGRODSDataSource *poDS = new OGRODSDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -191,23 +190,23 @@ OGRErr OGRODSDriver::DeleteDataSource( const char *pszName )
 {
     if (VSIUnlink( pszName ) == 0)
         return OGRERR_NONE;
-    else
-        return OGRERR_FAILURE;
+
+    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODSDriver::TestCapability( const char * pszCap )
+int OGRODSDriver::TestCapability( const char *pszCap )
 
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
         return TRUE;
-    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
+    if( EQUAL(pszCap,ODrCDeleteDataSource) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -218,13 +217,17 @@ void RegisterOGRODS()
 
 {
     OGRSFDriver* poDriver = new OGRODSDriver;
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "Open Document/ LibreOffice / OpenOffice Spreadsheet " );
+                                "Open Document/ LibreOffice / "
+                               "OpenOffice Spreadsheet " );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ods" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_ods.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ods.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time Binary" );
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time Binary" );
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
 

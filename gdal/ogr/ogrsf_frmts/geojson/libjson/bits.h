@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _bits_h_
-#define _bits_h_
+#ifndef bits_h_
+#define bits_h_
 
 #ifndef json_min
 #define json_min(a,b) ((a) < (b) ? (a) : (b))

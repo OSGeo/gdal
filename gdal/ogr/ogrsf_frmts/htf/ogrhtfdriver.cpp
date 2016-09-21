@@ -27,12 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_htf.h"
 #include "cpl_conv.h"
+#include "ogr_htf.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
-
-extern "C" void RegisterOGRHTF();
 
 /************************************************************************/
 /*                                Open()                                */
@@ -45,10 +44,11 @@ static GDALDataset *OGRHTFDriverOpen( GDALOpenInfo* poOpenInfo )
         poOpenInfo->fpL == NULL )
         return NULL;
 
-    if( strncmp((const char*)poOpenInfo->pabyHeader,  "HTF HEADER", strlen("HTF HEADER")) != 0 )
+    if( !STARTS_WITH( reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                      "HTF HEADER") )
         return NULL;
 
-    OGRHTFDataSource   *poDS = new OGRHTFDataSource();
+    OGRHTFDataSource *poDS = new OGRHTFDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
@@ -66,24 +66,20 @@ static GDALDataset *OGRHTFDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRHTF()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "HTF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "HTF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "HTF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+    poDriver->SetDescription( "HTF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Hydrographic Transfer Vector" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_htf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_htf.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRHTFDriverOpen;
 
-        poDriver->pfnOpen = OGRHTFDriverOpen;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

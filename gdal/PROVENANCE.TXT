@@ -127,7 +127,7 @@ Note: all the following are build options, not required.
 * cubewerx_extra.wkt: derived from definitions distributed by Cubewerx, rights unclear. See http://trac.osgeo.org/gdal/ticket/2165
 * ecw_cs.wkt: Derived via much processing from ERMapper GDT definitions, rights unclear. See http://trac.osgeo.org/gdal/ticket/2162
 * esri_extra.wkt: Derived with some processing from projections definitions in ArcGIS, rights unclear. See http://trac.osgeo.org/gdal/ticket/2163
-* ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Modifications to EPSG data violate the EPSG use agreement (if we are to still attribute it to EPSG) so I have segregated changes into override files (ie. gcs.override.csv). 
+* ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Modifications to EPSG data violate the EPSG use agreement (if we are to still attribute it to EPSG) so I have segregated changes into override files (i.e. gcs.override.csv). 
 * seed_2d.dgn, seed_3d.dgn: Exact source of these files is unclear.  The files contain no substantial creative content since all but the header elements were stripped.  Judged to acceptable use. 
 * NTS-50kindex.csv: Provided by Matt Wilkie, derived from NRCan dataset, rights unclear.  See http://trac.osgeo.org/gdal/ticket/2164 (closed - this file isn't actually in the source tree - it is separately distributed as part of FWTools!)
 
@@ -148,10 +148,6 @@ Note: all the following are build options, not required.
 
 * copyright somewhat unclear, not actually part of software. 
 
-=== gdal/dist_docs ===
-
-* All written by me, not used any more.  
-
 === gdal/doc ===
 
 * no copyright messages in .dox files.
@@ -170,10 +166,6 @@ Note: all the following are build options, not required.
 * gdal_vrtmerge.py: Under LGPL (derived from gdal_merge.py), several contributors.
 * histrep.py: corrected copyright message (Atlantis to FrankW), change license to MIT/X.
 * various contributors, all under proper and compatible copyright headers.
-
-=== gdal/wince ===
-
-* all written by Mateusz Loskot.
 
 === gdal/vb6 ===
 
@@ -232,7 +224,7 @@ Note: all the following are build options, not required.
 === gdal/ogr/ogrsf_frmts/mitab ===
 
 * Copyright Daniel Morissette, Stepane Villeneuve, Frank Warmerdam (MIT/X). 
-* Some code derived from MapServer with credit in headers, no problem forseen.
+* Some code derived from MapServer with credit in headers, no problem foreseen.
 * All clean.
 
 === gdal/ogr/ogrsf_frmts/mysql ===
@@ -308,7 +300,7 @@ Note: all the following are build options, not required.
 * SpatialReferenceIdl.idl, GeometryIdl.idl, CoverageIdl.idl: From OGC spec package I believe.  (removed)
 * ogr_capi_test.c: no copyright message, written by Daniel Morissette. Added copyright.
 * oledbgis.h: No copyright message, mostly OGC spec constants. 
-* swq.h, swq.c: Has alternate form of MIT/X license.  On review this license is functionally equililent to the general GDAL license.
+* swq.h, swq.c: Has alternate form of MIT/X license.  On review this license is functionally equivalent to the general GDAL license.
 * Copyright holders include Frank Warmerdam, Daniel Morissette, Softmap Inc., Stephane Villeneuve., Andrey Kiselev, Information Interoperability Institute
 
 
@@ -530,7 +522,7 @@ I have added this license to LICENSE.TXT to satisfy the credit requirement.
 === gdal/frmts/pcraster ===
 
 * Kor de Jong holds copyright.
-* Some missing headers (pcrasterdataset.h, pcrastermisc.cpp, pcrasterrasterband.cpp, pcpcrasterutil.cpp, pcrasterutil.h (#1822).
+* Some missing headers (pcrasterdataset.h, pcrastermisc.cpp, pcrasterrasterband.cpp, pcrasterutil.cpp, pcrasterutil.h (#1822).
 * libcsf: license and copyright implicit in AUTHORS and COPYING documents. 
 * libcsf COPYING indicates an MIT-like agreement but with more explicit requirements for notice in binaries.  Added to gdal/LICENSE.TXT
 

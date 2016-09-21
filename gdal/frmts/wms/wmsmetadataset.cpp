@@ -58,11 +58,11 @@ void GDALWMSMetaDataset::AddSubDataset(const char* pszName,
     char    szName[80];
     int     nCount = CSLCount(papszSubDatasets ) / 2;
 
-    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszName );
 
-    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszDesc);
 }
@@ -74,7 +74,7 @@ void GDALWMSMetaDataset::AddSubDataset(const char* pszName,
 GDALDataset *GDALWMSMetaDataset::DownloadGetCapabilities(GDALOpenInfo *poOpenInfo)
 {
     const char* pszURL = poOpenInfo->pszFilename;
-    if (EQUALN(pszURL, "WMS:", 4))
+    if (STARTS_WITH_CI(pszURL, "WMS:"))
         pszURL += 4;
 
     CPLString osFormat = CPLURLGetValue(pszURL, "FORMAT");
@@ -149,7 +149,7 @@ GDALDataset *GDALWMSMetaDataset::DownloadGetCapabilities(GDALOpenInfo *poOpenInf
 GDALDataset *GDALWMSMetaDataset::DownloadGetTileService(GDALOpenInfo *poOpenInfo)
 {
     const char* pszURL = poOpenInfo->pszFilename;
-    if (EQUALN(pszURL, "WMS:", 4))
+    if (STARTS_WITH_CI(pszURL, "WMS:"))
         pszURL += 4;
 
     CPLString osURL(pszURL);

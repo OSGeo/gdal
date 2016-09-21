@@ -2,7 +2,7 @@
  * $Id: ogrdwg_blockmap.cpp 22011 2011-03-22 20:13:38Z warmerdam $
  *
  * Project:  DWG Translator
- * Purpose:  Implements BlockMap reading and management portion of 
+ * Purpose:  Implements BlockMap reading and management portion of
  *           OGRDWGDataSource class
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -43,7 +43,7 @@ void OGRDWGDataSource::ReadBlocksSection()
 
 {
     OGRDWGLayer *poReaderLayer = (OGRDWGLayer *) GetLayerByName( "Entities" );
-    int bMergeBlockGeometries = CSLTestBoolean(
+    int bMergeBlockGeometries = CPLTestBool(
         CPLGetConfigOption( "DWG_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
 
 /* -------------------------------------------------------------------- */
@@ -53,7 +53,7 @@ void OGRDWGDataSource::ReadBlocksSection()
     OdDbBlockTableRecordPtr  poModelSpace, poBlock;
     OdDbBlockTablePtr pTable = GetDB()->getBlockTableId().safeOpenObject();
     OdDbSymbolTableIteratorPtr pBlkIter = pTable->newIterator();
-    
+
     for (pBlkIter->start(); ! pBlkIter->done(); pBlkIter->step())
     {
         poBlock = pBlkIter->getRecordId().safeOpenObject();
@@ -99,7 +99,7 @@ void OGRDWGDataSource::ReadBlocksSection()
             oBlockMap[osBlockName].apoFeatures = apoFeatures;
     }
 
-    CPLDebug( "DWG", "Read %d blocks with meaningful geometry.", 
+    CPLDebug( "DWG", "Read %d blocks with meaningful geometry.",
               (int) oBlockMap.size() );
 
     poReaderLayer->SetBlockTable( poModelSpace );
@@ -109,7 +109,7 @@ void OGRDWGDataSource::ReadBlocksSection()
 /*                       SimplifyBlockGeometry()                        */
 /************************************************************************/
 
-OGRGeometry *OGRDWGDataSource::SimplifyBlockGeometry( 
+OGRGeometry *OGRDWGDataSource::SimplifyBlockGeometry(
     OGRGeometryCollection *poCollection )
 
 {
@@ -130,7 +130,7 @@ OGRGeometry *OGRDWGDataSource::SimplifyBlockGeometry(
 /*      polygon, multipolygon, multilinestring or multipoint but        */
 /*      I'll put that off till it would be meaningful.                  */
 /* -------------------------------------------------------------------- */
-    
+
     return poCollection;
 }
 

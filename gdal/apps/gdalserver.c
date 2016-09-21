@@ -27,13 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#if defined(__STDC_VERSION__)
-#define _XOPEN_SOURCE
+// So that __USE_XOPEN2K is defined to have getaddrinfo
+#ifndef __sun__
+#define _XOPEN_SOURCE 600
 #endif
 
 #include "cpl_port.h"
 
 #ifdef WIN32
+
+  /* To disable 'warning C4996: 'WSADuplicateSocketA': Use WSADuplicateSocketW()' and 'WSASocketA': Use WSASocketW() instead */
+  #define _WINSOCK_DEPRECATED_NO_WARNINGS
+
   #ifdef _WIN32_WINNT
     #undef _WIN32_WINNT
   #endif
@@ -45,12 +50,14 @@
     #define HAVE_GETADDRINFO 1
   #endif
 #else
+  #include <sys/select.h>
   #include <sys/time.h>
   #include <sys/types.h>
   #include <sys/wait.h>
   #include <sys/socket.h>
   #include <sys/un.h>
   #include <netinet/in.h>
+  #include <signal.h>
   #include <unistd.h>
   #ifdef HAVE_GETADDRINFO
     #include <netdb.h>
@@ -64,7 +71,7 @@
   #define closesocket(s) close(s)
   #ifndef SOMAXCONN
   #define SOMAXCONN 128
-  #endif 
+  #endif
 #endif
 
 
@@ -75,21 +82,30 @@
 CPL_C_START
 int CPL_DLL GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout);
 int CPL_DLL GDALServerLoopSocket(CPL_SOCKET nSocket);
+void CPL_DLL* GDALServerLoopInstanceCreateFromSocket(CPL_SOCKET nSocket);
+int  CPL_DLL  GDALServerLoopInstanceRunIteration(void* pInstance);
+void CPL_DLL  GDALServerLoopInstanceDestroy(void* pInstance);
 CPL_C_END
 
 CPL_CVSID("$Id$");
+
+static int bVerbose = FALSE;
 
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage(const char* pszErrorMsg)
+static void Usage(const char* pszErrorMsg)
 
 {
 #ifdef WIN32
-    printf( "Usage: gdalserver [--help-general] [--help] [-tcpserver port | -stdinout]\n");
+    printf( "Usage: gdalserver [--help-general] [--help] [-v]\n");
+    printf( "                  [-tcpserver port | -stdinout]\n");
 #else
-    printf( "Usage: gdalserver [--help-general] [--help] [-tcpserver port | -unixserver filename | -stdinout | [-pipe_in fdin,fdtoclose -pipe_out fdout,fdtoclose]]\n");
+    printf( "Usage: gdalserver [--help-general] [--help] [-v]\n");
+    printf( "                  [-tcpserver port | -unixserver filename | -stdinout | \n");
+    printf( "                  [-pipe_in fdin,fdtoclose -pipe_out fdout,fdtoclose]]\n");
+    printf( "                  [-nofork]\n");
 #endif
     printf( "\n" );
     printf( "-tcpserver : Launch a TCP server on the specified port that can accept.\n");
@@ -99,7 +115,11 @@ void Usage(const char* pszErrorMsg)
 #ifndef WIN32
     printf( "-pipe_in/out:This mode is not meant at being directly used by a user.\n");
     printf( "             It is a helper utility for the client/server working of GDAL.\n");
+    printf( "-nofork     :This mode enables sharing of datasets among several clients,\n");
+    printf( "             for example in concurrent write scenarios. But in that mode,\n");
+    printf( "             only one thread is used, reducing scalability and client isolation.\n");
 #endif
+    printf("\n");
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -112,7 +132,7 @@ void Usage(const char* pszErrorMsg)
 /*                CreateSocketAndBindAndListen()                        */
 /************************************************************************/
 
-int CreateSocketAndBindAndListen(const char* pszService,
+static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
                                  int *pnFamily,
                                  int *pnSockType,
                                  int *pnProtocol)
@@ -147,7 +167,7 @@ int CreateSocketAndBindAndListen(const char* pszService,
             continue;
 
         if (bind(nListenSocket, psResultsIter->ai_addr,
-                 psResultsIter->ai_addrlen) != SOCKET_ERROR)
+                 (int)psResultsIter->ai_addrlen) != (int)SOCKET_ERROR)
         {
             if( pnFamily )   *pnFamily =   psResultsIter->ai_family;
             if( pnSockType ) *pnSockType = psResultsIter->ai_socktype;
@@ -211,9 +231,11 @@ int CreateSocketAndBindAndListen(const char* pszService,
 /*                             RunServer()                              */
 /************************************************************************/
 
+static
 int RunServer(const char* pszApplication,
               const char* pszService,
-              const char* unused_pszUnixSocketFilename)
+              CPL_UNUSED const char* unused_pszUnixSocketFilename,
+              CPL_UNUSED int bFork)
 {
     int nRet;
     WSADATA wsaData;
@@ -242,14 +264,14 @@ int RunServer(const char* pszApplication,
         CPLSpawnedProcess* psProcess;
         CPL_FILE_HANDLE fin, fout;
         CPL_PID nPid;
-        SOCKET nConnSocket;
+        CPL_SOCKET nConnSocket;
         char szReady[5];
         int bOK = TRUE;
         const char* apszArgs[] = { NULL, "-newconnection", NULL };
 
         apszArgs[0] = pszApplication;
         nConnSocket = accept(nListenSocket, &sockAddr, &nLen);
-        if( nConnSocket == SOCKET_ERROR )
+        if( nConnSocket == (CPL_SOCKET)SOCKET_ERROR )
         {
             fprintf(stderr, "accept() function failed with error: %d\n", WSAGetLastError());
             closesocket(nListenSocket);
@@ -323,6 +345,7 @@ int RunServer(const char* pszApplication,
 /*                          RunNewConnection()                          */
 /************************************************************************/
 
+static
 int RunNewConnection()
 {
     int nRet;
@@ -372,7 +395,7 @@ int RunNewConnection()
 #endif
     nRet = GDALServerLoopSocket(nConnSocket);
 #ifdef _MSC_VER
-    } __except(1) 
+    } __except(1)
     {
         fprintf(stderr, "gdalserver exited with a fatal error.\n");
         nRet = 1;
@@ -391,11 +414,28 @@ int RunNewConnection()
 /*                             RunServer()                              */
 /************************************************************************/
 
-int RunServer(CPL_UNUSED const char* pszApplication,
+typedef struct
+{
+    int nSocket;
+    void* hSrvLoopInstance;
+} ClientInfo;
+
+#define MAX_CLIENTS 100
+
+static int RunServer(CPL_UNUSED const char* pszApplication,
               const char* pszService,
-              const char* pszUnixSocketFilename)
+              const char* pszUnixSocketFilename,
+              int bFork)
 {
     int nListenSocket;
+    int i;
+    int nClients = 0;
+    ClientInfo asClientInfos[MAX_CLIENTS];
+
+    memset( asClientInfos, 0, sizeof(asClientInfos) );
+
+    if( !bFork )
+        signal(SIGPIPE, SIG_IGN);
 
     if( pszUnixSocketFilename != NULL )
     {
@@ -412,7 +452,7 @@ int RunServer(CPL_UNUSED const char* pszApplication,
         sockAddrUnix.sun_family = AF_UNIX;
         CPLStrlcpy(sockAddrUnix.sun_path, pszUnixSocketFilename, sizeof(sockAddrUnix.sun_path));
         unlink(sockAddrUnix.sun_path);
-        len = strlen(sockAddrUnix.sun_path) + sizeof(sockAddrUnix.sun_family);
+        len = (int)(strlen(sockAddrUnix.sun_path) + sizeof(sockAddrUnix.sun_family));
         if (bind(nListenSocket, (struct sockaddr *)&sockAddrUnix, len) == -1)
         {
             perror("bind");
@@ -439,50 +479,111 @@ int RunServer(CPL_UNUSED const char* pszApplication,
     {
         struct sockaddr sockAddr;
         socklen_t nLen = sizeof(sockAddr);
-        int nConnSocket;
         pid_t pid;
         int nStatus;
         struct timeval tv;
         fd_set read_fds;
+        int nMaxSocket;
 
         /* Select on the listen socket, and rip zombie children every second */
         do
         {
+            nMaxSocket = nListenSocket;
             FD_ZERO(&read_fds);
             FD_SET(nListenSocket, &read_fds);
+            for(i=0;i<nClients;i++)
+            {
+                FD_SET(asClientInfos[i].nSocket, &read_fds);
+                if(asClientInfos[i].nSocket > nMaxSocket )
+                    nMaxSocket = asClientInfos[i].nSocket;
+            }
             tv.tv_sec = 1;
             tv.tv_usec = 0;
             waitpid(-1, &nStatus, WNOHANG);
         }
-        while( select(nListenSocket + 1, &read_fds, NULL, NULL, &tv) != 1 );
+        while( select(nMaxSocket + 1, &read_fds, NULL, NULL, &tv) < 1 );
 
-        nConnSocket = accept(nListenSocket, &sockAddr, &nLen);
-        if( nConnSocket < 0 )
+        if( bFork )
         {
-            fprintf(stderr, "accept() function failed with error: %d\n", errno);
-            close(nListenSocket);
-            return 1;
-        }
+            int nConnSocket = accept(nListenSocket, &sockAddr, &nLen);
+            if( nConnSocket < 0 )
+            {
+                fprintf(stderr, "accept() function failed with error: %d\n", errno);
+                close(nListenSocket);
+                return 1;
+            }
 
-        pid = fork();
-        if( pid < 0 )
-        {
-            fprintf(stderr, "fork() failed: %d\n", errno);
-            close(nListenSocket);
-            close(nConnSocket);
-            return 1;
-        }
-        else if( pid == 0 )
-        {
-            int nRet;
-            close(nListenSocket);
-            nRet = GDALServerLoopSocket(nConnSocket);
-            close(nConnSocket);
-            return nRet;
+            pid = fork();
+            if( pid < 0 )
+            {
+                fprintf(stderr, "fork() failed: %d\n", errno);
+                close(nListenSocket);
+                close(nConnSocket);
+                return 1;
+            }
+            else if( pid == 0 )
+            {
+                int nRet;
+                close(nListenSocket);
+                nRet = GDALServerLoopSocket(nConnSocket);
+                close(nConnSocket);
+                return nRet;
+            }
+            else
+            {
+                close(nConnSocket);
+            }
         }
         else
         {
-            close(nConnSocket);
+            if( FD_ISSET(nListenSocket, &read_fds) )
+            {
+                int nConnSocket;
+                nConnSocket = accept(nListenSocket, &sockAddr, &nLen);
+                if( nConnSocket < 0 )
+                {
+                    fprintf(stderr, "accept() function failed with error: %d\n", errno);
+                }
+                else
+                {
+                    if( nClients == MAX_CLIENTS  )
+                    {
+                        fprintf(stderr, "Refusing new connection: too many clients (%d)\n",
+                                MAX_CLIENTS);
+                        close(nConnSocket);
+                    }
+                    else
+                    {
+                        void* hSrvLoopInstance = GDALServerLoopInstanceCreateFromSocket(nConnSocket);
+                        asClientInfos[nClients].nSocket = nConnSocket;
+                        asClientInfos[nClients].hSrvLoopInstance = hSrvLoopInstance;
+                        if( bVerbose )
+                            fprintf(stderr, "Accepting new client %d\n", nClients);
+                        nClients ++;
+                    }
+                }
+            }
+            for(i=0;i<nClients;)
+            {
+                if( FD_ISSET(asClientInfos[i].nSocket, &read_fds) )
+                {
+                    //fprintf(stderr, "receiving info from client %d\n", i);
+                    if( !GDALServerLoopInstanceRunIteration(asClientInfos[i].hSrvLoopInstance) )
+                    {
+                        if( bVerbose )
+                            fprintf(stderr, "Removing client %d\n", i);
+                        GDALServerLoopInstanceDestroy(asClientInfos[i].hSrvLoopInstance);
+                        close(asClientInfos[i].nSocket);
+                        memmove(asClientInfos + i, asClientInfos + i + 1,
+                                (nClients - 1 - i) * sizeof(ClientInfo));
+                        nClients --;
+                        if( nClients == 0 && bVerbose )
+                            fprintf(stderr, "No more clients. Server can be safely shut down\n");
+                        continue;
+                    }
+                }
+                i++;
+            }
         }
     }
 }
@@ -505,6 +606,7 @@ int main(int argc, char* argv[])
     int pipe_in = fileno(stdin);
     int pipe_out = fileno(stdout);
 #endif
+    int bFork = TRUE;
     /*for( i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i], "-daemonize") )
@@ -575,9 +677,15 @@ int main(int argc, char* argv[])
             if( pszComma )
                 close(atoi(pszComma + 1));
         }
+        else if( EQUAL(argv[i],"-nofork") )
+        {
+            bFork = FALSE;
+        }
 #endif
         else if( EQUAL(argv[i], "-daemonize") )
             ;
+        else if( EQUAL(argv[i], "-v") )
+            bVerbose = TRUE;
         else if( argv[i][0] == '-' )
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
         else
@@ -588,7 +696,7 @@ int main(int argc, char* argv[])
         Usage(NULL);
 
     if( pszService != NULL || pszUnixSocketFilename != NULL )
-        nRet = RunServer(argv[0], pszService, pszUnixSocketFilename);
+        nRet = RunServer(argv[0], pszService, pszUnixSocketFilename, bFork);
 #ifdef WIN32
     else if( bNewConnection )
         nRet = RunNewConnection();
@@ -598,20 +706,22 @@ int main(int argc, char* argv[])
     {
 #ifdef WIN32
 #ifdef _MSC_VER
-    __try 
+    __try
 #endif
-    { 
+    {
         nRet = GDALServerLoop(GetStdHandle(STD_INPUT_HANDLE),
                               GetStdHandle(STD_OUTPUT_HANDLE));
     }
 #ifdef _MSC_VER
-    __except(1) 
+    __except(1)
     {
         fprintf(stderr, "gdalserver exited with a fatal error.\n");
         nRet = 1;
     }
 #endif
 #else
+    if( !bFork )
+        fprintf(stderr, "-nofork option incompatible with direct pipe specification.\n");
     nRet = GDALServerLoop(pipe_in, pipe_out);
 #endif
     }

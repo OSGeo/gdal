@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for Jasper/JP2ECW driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -35,6 +35,31 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+gdaltest.buggy_jasper = None
+
+def is_buggy_jasper():
+  
+    if gdaltest.buggy_jasper is not None:
+        return gdaltest.buggy_jasper
+  
+    gdaltest.buggy_jasper = False
+    if gdal.GetDriverByName( 'JPEG2000' ) is None:
+        return False
+
+    # This test will cause a crash with an unpatched version of Jasper, such as the one of Ubuntu 8.04 LTS
+    # --> "jpc_dec.c:1072: jpc_dec_tiledecode: Assertion `dec->numcomps == 3' failed."
+    # Recent Debian/Ubuntu have the appropriate patch.
+    # So we try to run in a subprocess first
+    import test_cli_utilities
+    if test_cli_utilities.get_gdalinfo_path() is not None:
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --config GDAL_SKIP "JP2ECW JP2MRSID JP2KAK JP2OpenJPEG" data/3_13bit_and_1bit.jp2')
+        if ret.find('Band 1') == -1:
+            gdaltest.post_reason('Jasper library would need patches')
+            gdaltest.buggy_jasper = True
+            return True
+          
+    return False
+
 ###############################################################################
 # Verify we have the driver.
 
@@ -49,7 +74,7 @@ def jpeg2000_1():
     gdaltest.deregister_all_jpeg2000_drivers_but('JPEG2000')
 
     return 'success'
-	
+
 ###############################################################################
 # Open byte.jp2
 
@@ -155,7 +180,7 @@ def jpeg2000_6():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
@@ -163,33 +188,22 @@ def jpeg2000_7():
 
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
-    
+
     tst = gdaltest.GDALTest( 'JPEG2000', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
     return tst.testOpen()
-    
+
 ###############################################################################
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
 
 def jpeg2000_8():
 
-    if gdaltest.jpeg2000_drv is None:
+    if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
         return 'skip'
-    
-    # This test will cause a crash with an unpatched version of Jasper, such as the one of Ubuntu 8.04 LTS
-    # --> "jpc_dec.c:1072: jpc_dec_tiledecode: Assertion `dec->numcomps == 3' failed."
-    # Recent Debian/Ubuntu have the appropriate patch.
-    # So we try to run in a subprocess first
-    import test_cli_utilities
-    if test_cli_utilities.get_gdalinfo_path() is not None:
-        ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --config GDAL_SKIP "JP2ECW JP2MRSID JP2KAK" data/3_13bit_and_1bit.jp2')
-        if ret.find('Band 1') == -1:
-            gdaltest.post_reason('Jasper library would need patches')
-            return 'fail'
-    
+
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
-    
+
     expected_checksums = [ 64570, 57277, 56048, 61292]
-    
+
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
             gdaltest.post_reason('unexpected checksum (%d) for band %d' % (expected_checksums[i], i+1))
@@ -198,7 +212,7 @@ def jpeg2000_8():
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         gdaltest.post_reason('unexpected data type')
         return 'fail'
-            
+
     return 'success'
 
 ###############################################################################
@@ -255,6 +269,56 @@ def jpeg2000_10():
 
     gdal.Unlink('/vsimem/jpeg2000_10_src.tif')
     gdal.Unlink('/vsimem/jpeg2000_10_dst.tif')
+
+    return 'success'
+
+###############################################################################
+# Test auto-promotion of 1bit alpha band to 8bit
+
+def jpeg2000_11():
+
+    if gdaltest.jpeg2000_drv is None or is_buggy_jasper():
+        return 'skip'
+
+    ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
+    fourth_band = ds.GetRasterBand(4)
+    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
+        return 'fail'
+    got_cs = fourth_band.Checksum()
+    if got_cs != 8527:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        return 'fail'
+    jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+
+    tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jpeg2000_11.tif', ds)
+    fourth_band = tmp_ds.GetRasterBand(4)
+    got_cs = fourth_band.Checksum()
+    gtiff_bands_data = tmp_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    gtiff_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    #gtiff_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
+    tmp_ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/jpeg2000_11.tif')
+    if got_cs != 8527:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        return 'fail'
+
+    if jp2_bands_data != gtiff_bands_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if jp2_fourth_band_data != gtiff_fourth_band_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options = ['1BIT_ALPHA_PROMOTION=NO'])
+    fourth_band = ds.GetRasterBand(4)
+    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
@@ -396,7 +460,7 @@ def jpeg2000_online_5():
         print(cs1, cs2, cs3)
         gdaltest.post_reason('Did not get expected checksums')
         return 'fail'
-        
+
     ds = None
 
     return 'success'
@@ -420,7 +484,7 @@ def jpeg2000_online_6():
         print(cs1, cs2, cs3)
         gdaltest.post_reason('Did not get expected checksums')
         return 'fail'
-        
+
     ds = None
 
     return 'success'
@@ -443,6 +507,7 @@ gdaltest_list = [
     jpeg2000_8,
     jpeg2000_9,
     jpeg2000_10,
+    jpeg2000_11,
     jpeg2000_online_1,
     jpeg2000_online_2,
     jpeg2000_online_3,

@@ -41,7 +41,7 @@
 /*                              utility methods                         */
 /************************************************************************/
 
-int epsg2sosi (int nEPSG) {
+static int epsg2sosi (int nEPSG) {
     int nSOSI = 23;
     switch (nEPSG) {
         case 27391: /* NGO 1984 Axis I-VIII */
@@ -78,14 +78,15 @@ int epsg2sosi (int nEPSG) {
             break;
         }
         default: {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "(Yet) unsupported coodinate system writing to SOSI file: %i. Defaulting to EPSG:4326/SOSI 84.", nEPSG);
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "(Yet) unsupported coordinate system writing to SOSI "
+                      "file: %i. Defaulting to EPSG:4326/SOSI 84.", nEPSG);
             }
     }
     return nSOSI;
 }
 
-int sosi2epsg (int nSOSI) {
+static int sosi2epsg (int nSOSI) {
     int nEPSG = 4326;
     switch (nSOSI) {
         case 1: /* NGO 1984 Axis I-VIII */
@@ -122,8 +123,9 @@ int sosi2epsg (int nSOSI) {
             break;
         }
         default: {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "(Yet) unsupported coodinate system in SOSI-file: %i. Defaulting to EPSG:4326.", nSOSI);
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "(Yet) unsupported coordinate system in SOSI-file: %i. "
+                      "Defaulting to EPSG:4326.", nSOSI);
         }
     }
     return nEPSG;
@@ -135,19 +137,19 @@ int sosi2epsg (int nSOSI) {
 
 OGRSOSIDataSource::OGRSOSIDataSource() {
     nLayers = 0;
-    
+
     poFileadm = NULL;
     poBaseadm = NULL;
     papoBuiltGeometries = NULL;
     papoLayers = NULL;
     pszName = NULL;
     poSRS = NULL;
-    
+
     poPolyHeaders = NULL;
     poTextHeaders = NULL;
     poPointHeaders = NULL;
     poCurveHeaders = NULL;
-    
+
     pszEncoding = CPL_ENC_UTF8;
     nMode = MODE_READING;
 }
@@ -169,9 +171,9 @@ OGRSOSIDataSource::~OGRSOSIDataSource() {
     }
 
     if (poPolyHeaders  != NULL) delete poPolyHeaders;
-    if (poTextHeaders  != NULL) delete poTextHeaders; 
+    if (poTextHeaders  != NULL) delete poTextHeaders;
     if (poPointHeaders != NULL) delete poPointHeaders;
-    if (poCurveHeaders != NULL) delete poCurveHeaders; 
+    if (poCurveHeaders != NULL) delete poCurveHeaders;
 
     if (nMode == MODE_WRITING) {
         if (poFileadm != NULL) LC_CloseSos  (poFileadm, RESET_IDX );
@@ -189,7 +191,7 @@ OGRSOSIDataSource::~OGRSOSIDataSource() {
         }
         CPLFree(papoLayers);
     }
-    
+
     if (poSRS != NULL) poSRS->Release();
     if (pszName != NULL) CPLFree(pszName);
 }
@@ -198,7 +200,7 @@ static
 OGRFeatureDefn *defineLayer(const char *szName, OGRwkbGeometryType szType, S2I *poHeaders) {
     OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn( szName );
     poFeatureDefn->SetGeomType( szType );
-    
+
     for (unsigned int n=0; n<poHeaders->size(); n++) { /* adding headers in the correct order again */
         for (S2I::iterator i=poHeaders->begin(); i!=poHeaders->end(); i++) {
             if (n==i->second) {
@@ -266,11 +268,9 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
      * --------------------------------------------------------------------*/
 
     /* allocate room for one pointer per feature */
-    nNumFeatures = poFileadm->lAntGr;
-    void* mem = VSIMalloc2(nNumFeatures, sizeof(void*));
+    nNumFeatures = static_cast<unsigned int>(poFileadm->lAntGr);
+    void* mem = VSI_MALLOC2_VERBOSE(nNumFeatures, sizeof(void*));
     if (mem == NULL) {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Memory allocation for SOSI features failed." );
         return FALSE;
     } else {
         papoBuiltGeometries = (OGRGeometry**)mem;
@@ -311,42 +311,41 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             char *pszLine = LC_GetGi(i);      /* Get one header line */
             if ((pszLine[0] == ':')||(pszLine[0] == '(')) continue;  /* If we have a continued REF line, skip it. */
             if (pszLine[0] == '!') continue;  /* If we have a comment line, skip it. */
-            
+
             char *pszUTFLine = CPLRecode(pszLine, pszEncoding, CPL_ENC_UTF8); /* switch to UTF encoding here, if it is known. */
             char *pszUTFLineIter = pszUTFLine;
-			
             while (pszUTFLineIter[0] == '.') pszUTFLineIter++; /* Skipping the dots at the beginning of a SOSI line */
-            char *pszPos = strstr(pszUTFLineIter, " "); /* Split header and value */
-            if (pszPos != NULL) {
-                CPLString osKey = CPLString(std::string(pszUTFLineIter,pszPos)); /* FIXME: clean instantiation of CPLString? */
-                CPLString osValue = CPLString(pszPos+1);
-                
+            char *pszPos2 = strstr(pszUTFLineIter, " "); /* Split header and value */
+            if (pszPos2 != NULL) {
+                CPLString osKey = CPLString(std::string(pszUTFLineIter,pszPos2)); /* FIXME: clean instantiation of CPLString? */
+                CPLString osValue = CPLString(pszPos2+1);
+
                 oHeaders[osKey]=osValue;          /* Add to header map */
                 switch (nName) {             /* Add to header list for the corresponding layer, if it is not */
                 case L_FLATE: {            /* in there already */
                     if (poPolyHeaders->find(osKey) == poPolyHeaders->end()) {
-                        iH = poPolyHeaders->size();
+                        iH = static_cast<int>(poPolyHeaders->size());
                         (*poPolyHeaders)[osKey] = iH;
                     }
                     break;
                 }
                 case L_KURVE: {
                     if (poCurveHeaders->find(osKey) == poCurveHeaders->end()) {
-                        iH = poCurveHeaders->size();
+                        iH = static_cast<int>(poCurveHeaders->size());
                         (*poCurveHeaders)[osKey] = iH;
                     }
                     break;
                 }
                 case L_PUNKT: {
                     if (poPointHeaders->find(osKey) == poPointHeaders->end()) {
-                        iH = poPointHeaders->size();
+                        iH = static_cast<int>(poPointHeaders->size());
                         (*poPointHeaders)[osKey] = iH;
                     }
                     break;
                 }
                 case L_TEKST: {
                     if (poTextHeaders->find(osKey) == poTextHeaders->end()) {
-                        iH = poTextHeaders->size();
+                        iH = static_cast<int>(poTextHeaders->size());
                         (*poTextHeaders)[osKey] = iH;
                     }
                     break;
@@ -373,14 +372,14 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
         case L_KURVE: {
             /* Pre-build a line feature. Activate line/curve layer. */
             bCurveLayer = TRUE;
-            buildOGRLineString(nNumCoo, oNextSerial.lNr);
+            buildOGRLineString(static_cast<int>(nNumCoo), oNextSerial.lNr);
             break;
         }
         case L_TEKST: {
             /* Pre-build a text line contour feature. Activate text layer. */
             /* Todo: observe only points 2ff if more than one point is given for follow mode */
             bTextLayer = TRUE;
-            buildOGRMultiPoint(nNumCoo, oNextSerial.lNr);
+            buildOGRMultiPoint(static_cast<int>(nNumCoo), oNextSerial.lNr);
             break;
         }
         case L_HODE: {
@@ -388,18 +387,18 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             unsigned short nMask = LC_TR_ALLT;
             LC_TRANSPAR oTrans;
             if (LC_GetTransEx(&nMask,&oTrans) == UT_FALSE) {
-                CPLError( CE_Failure, CPLE_OpenFailed, 
+                CPLError( CE_Failure, CPLE_OpenFailed,
                           "TRANSPAR section not found - No reference system information available.");
-                return NULL;
+                return FALSE;
             }
             poSRS = new OGRSpatialReference();
 
             /* Get coordinate system from SOSI header. */
             int nEPSG = sosi2epsg(oTrans.sKoordsys);
             if (poSRS->importFromEPSG(nEPSG) != OGRERR_NONE) {
-				CPLError( CE_Failure, CPLE_OpenFailed, 
+				CPLError( CE_Failure, CPLE_OpenFailed,
                           "OGR could not load coordinate system definition EPSG:%i.", nEPSG);
-                return NULL;
+                return FALSE;
             }
 
             /* Get character encoding from SOSI header. */
@@ -426,14 +425,19 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     /* -------------------------------------------------------------------- *
      *      Create a corresponding layers. One per geometry type            *
      * -------------------------------------------------------------------- */
-    int nLayers = 0;
-    if (bPolyLayer)  nLayers++;
-    if (bCurveLayer) nLayers++;
-    if (bPointLayer) nLayers++;
-    if (bTextLayer) nLayers++;
-    this->nLayers = nLayers;
+    int l_nLayers = 0;
+    if (bPolyLayer)  l_nLayers++;
+    if (bCurveLayer) l_nLayers++;
+    if (bPointLayer) l_nLayers++;
+    if (bTextLayer) l_nLayers++;
+    this->nLayers = l_nLayers;
     /* allocate some memory for up to three layers */
-    papoLayers = (OGRSOSILayer **) VSIMalloc2(sizeof(void*), nLayers);
+    papoLayers = (OGRSOSILayer **) VSI_MALLOC2_VERBOSE(sizeof(void*), l_nLayers);
+    if( papoLayers == NULL )
+    {
+        this->nLayers = 0;
+        return FALSE;
+    }
 
     /* Define each layer, using a proper feature definition, geometry type,
      * and adding every SOSI header encountered in the file as field. */
@@ -441,7 +445,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bPolyLayer) {
 		OGRFeatureDefn *poFeatureDefn = defineLayer("polygons", wkbPolygon, poPolyHeaders);
         poFeatureDefn->Reference();
-        papoLayers[--nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poPolyHeaders );
+        papoLayers[--l_nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poPolyHeaders );
     } else {
         delete poPolyHeaders;
         poPolyHeaders = NULL;
@@ -449,7 +453,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bCurveLayer) {
         OGRFeatureDefn *poFeatureDefn = defineLayer("lines", wkbLineString, poCurveHeaders);
         poFeatureDefn->Reference();
-        papoLayers[--nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poCurveHeaders );
+        papoLayers[--l_nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poCurveHeaders );
     } else {
         delete poCurveHeaders;
         poCurveHeaders = NULL;
@@ -457,7 +461,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bPointLayer) {
         OGRFeatureDefn *poFeatureDefn = defineLayer("points", wkbPoint, poPointHeaders);
         poFeatureDefn->Reference();
-        papoLayers[--nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poPointHeaders );
+        papoLayers[--l_nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poPointHeaders );
     } else {
         delete poPointHeaders;
         poPointHeaders = NULL;
@@ -465,7 +469,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
     if (bTextLayer) {
         OGRFeatureDefn *poFeatureDefn = defineLayer("text", wkbMultiPoint, poTextHeaders);
         poFeatureDefn->Reference();
-        papoLayers[--nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poTextHeaders );
+        papoLayers[--l_nLayers] = new OGRSOSILayer( this, poFeatureDefn, poFileadm, poTextHeaders );
     } else {
         delete poTextHeaders;
         poTextHeaders = NULL;
@@ -481,7 +485,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
 int  OGRSOSIDataSource::Create( const char *pszFilename ) {
 	short nStatus;
 	short nDetStatus;
-	
+
     poBaseadm = LC_OpenBase(LC_KLADD);
     nStatus   = LC_OpenSos(pszFilename, LC_SEKV_SKRIV, LC_NY_IDX, LC_INGEN_STATUS,
                            &poFileadm, &nDetStatus);
@@ -489,11 +493,11 @@ int  OGRSOSIDataSource::Create( const char *pszFilename ) {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Could not open SOSI file for writing (Status %i).", nDetStatus );
         return FALSE;
-	}
+    }
 
-    LC_NyttHode(); /* Create new file header, will be written to file when all 
+    LC_NyttHode(); /* Create new file header, will be written to file when all
                       header information elements are set. */
-                      
+
     return TRUE;
 }
 
@@ -501,7 +505,7 @@ int  OGRSOSIDataSource::Create( const char *pszFilename ) {
 /*                             ICreateLayer()                           */
 /************************************************************************/
 
-OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszName,
+OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszNameIn,
                                            OGRSpatialReference  *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            CPL_UNUSED char **papszOptions ) {
@@ -510,7 +514,7 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszName,
         if (poSpatialRef!=NULL) {
             poSRS = poSpatialRef;
             poSRS->Reference();
-        
+
             const char *pszKoosys = poSRS->GetAuthorityCode("PROJCS");
             if (pszKoosys == NULL) {
                 OGRErr err = poSRS->AutoIdentifyEPSG();
@@ -521,7 +525,7 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszName,
                 }
                 pszKoosys = poSRS->GetAuthorityCode("PROJCS");
             }
-            
+
             if (pszKoosys != NULL) {
                 int nKoosys = epsg2sosi(atoi(pszKoosys));
                 CPLDebug( "[CreateLayer]","Projection set to SOSI %i", nKoosys);
@@ -537,17 +541,17 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszName,
                     return NULL;
                 }
             }
-        } 
+        }
         LC_WsGr(poFileadm); /* Writing the header here! */
-    
+
     } else {
         if (!poSRS->IsSame(poSpatialRef)) {
           CPLError( CE_Failure, CPLE_AppDefined,
                     "SOSI driver does not support different spatial reference systems in one file.");
         }
     }
-    
-    OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn( pszName );
+
+    OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn( pszNameIn );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eGType );
     OGRSOSILayer *poLayer = new OGRSOSILayer( this, poFeatureDefn, poFileadm, NULL /*poHeaderDefn*/);
@@ -591,7 +595,7 @@ void OGRSOSIDataSource::buildOGRLineString(int nNumCoo, long iSerial) {
     OGRLineString *poLS = new OGRLineString();
     poLS->setNumPoints(nNumCoo);
 
-    long i;
+    int i;
     double dfEast = 0, dfNorth = 0;
     for (i=1; i<=nNumCoo; i++) {
         LC_GetTK(i, &dfEast, &dfNorth);
@@ -611,7 +615,7 @@ void OGRSOSIDataSource::buildOGRPoint(long iSerial) {
 
 int OGRSOSIDataSource::TestCapability( const char * pszCap ) {
     if (strcmp("CreateLayer",pszCap) == 0) {
-        return TRUE; 
+        return TRUE;
     } else {
         CPLDebug( "[TestCapability]","Capability %s not supported by SOSI data source", pszCap);
     }

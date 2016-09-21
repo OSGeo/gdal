@@ -4,13 +4,13 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Tests Raster Attribute Table support in the HFA driver and in particular,
-#           changes related to RFC40.
+# Purpose:  Tests Raster Attribute Table support in the HFA driver and in
+#           particular, changes related to RFC40.
 # Author:   Sam Gillingham <gillingham.sam@gmail.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2013,  Sam Gillingham <gillingham.sam@gmail.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -40,13 +40,13 @@ import gdaltest
 
 INT_DATA = numpy.array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
 DOUBLE_DATA = numpy.array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])
-STRING_DATA = numpy.array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw", 
+STRING_DATA = numpy.array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw",
                             "gbfgbf", "wwqw3", "e", ""])
-STRING_DATA_INTS = numpy.array(["197", "83", "46", "29", "1", "78", 
+STRING_DATA_INTS = numpy.array(["197", "83", "46", "29", "1", "78",
                             "23", "90", "12", "45"])
-STRING_DATA_DOUBLES = numpy.array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92", 
+STRING_DATA_DOUBLES = numpy.array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92",
                             "82.5", "0.0", "1.0", "99.0"])
-LONG_STRING_DATA = numpy.array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd", 
+LONG_STRING_DATA = numpy.array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd",
                             "jkejjjdjd", "edcdcdcdc", "fcdkmk4m534m", "edwededdd",
                             "dedwedew", "wdedefrfrfrf"])
 
@@ -172,15 +172,15 @@ def ReadAndCheckValues(fname, numrows):
 
     data = rat.ReadAsArray(0, 0, 10)
     if not (data == INT_DATA).all():
-        raise HFATestError("Int colunm does not match")
+        raise HFATestError("Int column does not match")
 
     data = rat.ReadAsArray(1, 0, 10)
     if not (data == DOUBLE_DATA).all():
-        raise HFATestError("double colunm does not match")
+        raise HFATestError("double column does not match")
 
     data = rat.ReadAsArray(2, 0, 10)
     if not (data == STRING_DATA.astype(numpy.character)).all():
-        raise HFATestError("string colunm does not match")
+        raise HFATestError("string column does not match")
 
     data = rat.ReadAsArray(3, 0, 10)
     if not (data == DOUBLE_DATA.astype(int)).all():
@@ -189,7 +189,7 @@ def ReadAndCheckValues(fname, numrows):
     data = rat.ReadAsArray(4, 0, 10)
     if not (data == STRING_DATA_INTS.astype(numpy.int)).all():
         raise HFATestError("int as string column does not match")
-                
+
     data = rat.ReadAsArray(5, 0, 10)
     if not (data == INT_DATA).all():
         raise HFATestError("double as int column does not match")
@@ -197,7 +197,7 @@ def ReadAndCheckValues(fname, numrows):
     data = rat.ReadAsArray(6, 0, 10)
     if not (data == STRING_DATA_DOUBLES.astype(numpy.double)).all():
         raise HFATestError("double as string column does not match")
-                
+
     data = rat.ReadAsArray(7, 0, 10)
     if not (data.astype(numpy.int) == INT_DATA).all():
         raise HFATestError("string as int column does not match")
@@ -206,7 +206,7 @@ def ReadAndCheckValues(fname, numrows):
     if not (data.astype(numpy.double) == DOUBLE_DATA).all():
         raise HFATestError("string as int column does not match")
 
-    #print('suceeded reading')
+    # print('succeeded reading')
     ds = None
 
     return 'success'
@@ -302,7 +302,7 @@ def CheckExtension(fname):
     return 'success'
 
 def WriteLongStrings(fname):
-    # this will force the string column to be re-written to accomodate
+    # this will force the string column to be re-written to accommodate
     # a longer string size
     ds = gdal.Open(fname, gdal.GA_Update)
     band = ds.GetRasterBand(1)
@@ -371,7 +371,7 @@ def CheckClone(fname):
     rat = band.GetDefaultRAT()
 
     cloned = rat.Clone()
-    
+
     if cloned.GetValueAsInt(0, 0) != 197:
         raise HFATestError("Cloned info wrong int")
     if cloned.GetValueAsDouble(5, 1) != 0.92:
@@ -411,7 +411,7 @@ def hfa_rfc40_6():
 def hfa_rfc40_7():
     return CheckExtension("tmp/test.img")
 
-# write some longer strings - string column will 
+# write some longer strings - string column will
 # have to be re-written
 def hfa_rfc40_8():
     return WriteLongStrings("tmp/test.img")

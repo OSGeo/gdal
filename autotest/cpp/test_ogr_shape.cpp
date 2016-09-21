@@ -147,7 +147,7 @@ namespace tut
         while (NULL != (featSrc = OGR_L_GetNextFeature(lyrSrc)))
         {
             err = OGR_F_SetFrom(featDst, featSrc, true);
-            ensure_equals("Can't set festure from source", OGRERR_NONE, err);
+            ensure_equals("Cannot set feature from source", OGRERR_NONE, err);
 
             err = OGR_L_CreateFeature(lyr, featDst);
             ensure_equals("Can't write feature to layer", OGRERR_NONE, err);
@@ -296,11 +296,11 @@ namespace tut
 
         // Fetch feature without geometry
         OGRFeatureH featNonSpatial = OGR_L_GetNextFeature(lyr);
-        ensure("Didnt get feature with null geometry back", NULL != featNonSpatial);
+        ensure("Didn't get feature with null geometry back", NULL != featNonSpatial);
 
         // Null geometry is expected
         OGRGeometryH nonGeom = OGR_F_GetGeometryRef(featNonSpatial);
-        ensure("Didnt get null geometry as expected", NULL == nonGeom);
+        ensure("Didn't get null geometry as expected", NULL == nonGeom);
 
         OGR_F_Destroy(featNonSpatial);
         OGR_DS_Destroy(ds);
@@ -348,7 +348,7 @@ namespace tut
         // Prepare tester collection
         std::vector<std::string> list;
         list.push_back("35043413");
-       
+
         // Test attributes
         ensure_equal_attributes(lyr, "prfedea", list);
 
@@ -363,7 +363,7 @@ namespace tut
 
         OGR_L_ResetReading(lyr);
         OGRFeatureH feat = OGR_L_GetNextFeature(lyr);
-        ensure("Can't featch feature", NULL != feat);
+        ensure("Cannot fetch feature", NULL != feat);
 
         ensure_equal_geometries(OGR_F_GetGeometryRef(feat), testGeom, 0.001);
 

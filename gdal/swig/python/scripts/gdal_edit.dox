@@ -7,10 +7,10 @@ Edit in place various information of an existing GDAL dataset
 
 \verbatim
 gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
-          [-tr xres yres] [-unsetgt] [-a_nodata value]
+          [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]
           [-unsetstats] [-stats] [-approx_stats]
           [-gcp pixel line easting northing [elevation]]*
-          [-unsetmd] [-mo "META-TAG=VALUE"]*  datasetname
+          [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname
 \endverbatim
 
 \section gdal_edit_description DESCRIPTION
@@ -59,6 +59,9 @@ Calculate and store approximate band statistics.</dd>
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd>
 Assign a specified nodata value to output bands.</dd>
 
+<dt> <b>-unsetnodata</b></dt>:<dd> (GDAL >= 2.1)
+Remove existing nodata values.</dd>
+
 <dt> <b>-gcp</b> <i>pixel line easting northing [elevation]</i>:</dt><dd>
 Add the indicated ground control point to the dataset.  This option 
 may be provided multiple times to provide a set of GCPs. 
@@ -71,6 +74,9 @@ with -mo.</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
 value to set on the output dataset if possible. This metadata is added to
 the existing metadata items, unless -unsetmd is also specified.</dd>
+
+<dt> <b>-oo</b> <i>"NAME=VALUE"</i>:</dt><dd> 
+(GDAL >= 2.0) Open option (format specific).</dd>
 
 </dl>
 

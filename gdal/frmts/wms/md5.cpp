@@ -58,10 +58,10 @@ putu32 (
         cvs_uint32 data,
         unsigned char *addr)
 {
-    addr[0] = (unsigned char)data;
-    addr[1] = (unsigned char)(data >> 8);
-    addr[2] = (unsigned char)(data >> 16);
-    addr[3] = (unsigned char)(data >> 24);
+    addr[0] = (unsigned char)(data & 0xff);
+    addr[1] = (unsigned char)((data >> 8) & 0xff);
+    addr[2] = (unsigned char)((data >> 16) & 0xff);
+    addr[3] = (unsigned char)((data >> 24) & 0xff); /* cvs_uint32 might be 64bit wide */
 }
 
 /*
@@ -115,7 +115,7 @@ struct cvs_MD5Context *ctx,
         memcpy(p, buf, t);
         cvs_MD5Transform (ctx->buf, ctx->in);
         buf += t;
-        len -= t;
+        len -= (unsigned)t;
     }
 
     /* Process data in 64-byte chunks */
@@ -133,7 +133,7 @@ struct cvs_MD5Context *ctx,
 }
 
 /*
-* Final wrapup - pad to 64-byte boundary with the bit pattern 
+* Final wrapup - pad to 64-byte boundary with the bit pattern
 * 1 0* (64-bit count of bits processed, MSB-first)
 */
 void
@@ -145,7 +145,7 @@ struct cvs_MD5Context *ctx)
     unsigned char *p;
 
     /* Compute number of bytes mod 64 */
-    count = (ctx->bits[0] >> 3) & 0x3F;
+    count = (unsigned)((ctx->bits[0] >> 3) & 0x3F);
 
     /* Set the first char of padding to 0x80.  This is safe since there is
     always at least one byte free */
@@ -204,7 +204,7 @@ cvs_MD5Transform (
                   cvs_uint32 buf[4],
                   const unsigned char inraw[64])
 {
-    register cvs_uint32 a, b, c, d;
+    cvs_uint32 a, b, c, d;
     cvs_uint32 in[16];
     int i;
 

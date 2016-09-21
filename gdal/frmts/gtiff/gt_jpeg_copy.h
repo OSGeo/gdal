@@ -30,10 +30,11 @@
 #ifndef GT_JPEG_COPY_H_INCLUDED
 #define GT_JPEG_COPY_H_INCLUDED
 
-#ifdef JPEG_DIRECT_COPY
-
-#include "gdal_priv.h"
+#include "cpl_error.h"
 #include "cpl_vsi.h"
+#include "gdal_priv.h"
+
+#ifdef JPEG_DIRECT_COPY
 
 int GTIFF_CanDirectCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions);
 
@@ -45,8 +46,6 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 
 #ifdef HAVE_LIBJPEG
 
-#include "gdal_priv.h"
-#include "cpl_error.h"
 #include "tiffio.h"
 
 int GTIFF_CanCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions);

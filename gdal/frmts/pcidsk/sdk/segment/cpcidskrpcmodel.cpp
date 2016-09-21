@@ -25,6 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "pcidsk_config.h"
 #include "pcidsk_rpc.h"
 #include "segment/cpcidsksegment.h"
 #include "core/pcidsk_utils.h"
@@ -44,31 +45,31 @@ struct CPCIDSKRPCModelSegment::PCIDSKRPCInfo
     bool userrpc; // whether or not the RPC was generated from GCPs
     bool adjusted; // Whether or not the RPC has been adjusted
     int downsample; // Epipolar Downsample factor
-    
+
     unsigned int pixels; // pixels in the image
     unsigned int lines; // lines in the image
-    
+
     unsigned int num_coeffs; // number of coefficientsg
-    
+
     std::vector<double> pixel_num; // numerator, pixel direction
     std::vector<double> pixel_denom; // denominator, pixel direction
     std::vector<double> line_num; // numerator, line direction
     std::vector<double> line_denom; // denominator, line direction
-    
+
     // Scale/offset coefficients in the ground domain
     double x_off;
     double x_scale;
-    
+
     double y_off;
     double y_scale;
-    
+
     double z_off;
     double z_scale;
-    
+
     // Scale/offset coefficients in the raster domain
     double pix_off;
     double pix_scale;
-    
+
     double line_off;
     double line_scale;
     
@@ -85,8 +86,8 @@ struct CPCIDSKRPCModelSegment::PCIDSKRPCInfo
     PCIDSKBuffer seg_data;
 };
 
-CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer) :
-    CPCIDSKSegment(file, segment, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo), 
+CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *fileIn, int segmentIn,const char *segment_pointer) :
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo), 
     loaded_(false),mbModified(false)
 {
     Load();
@@ -124,7 +125,7 @@ void CPCIDSKRPCModelSegment::Load()
     // Bytes 30-35: 'SENSOR'
     // Bytes    36: Sensor Name (NULL terminated)
     
-    if (std::strncmp(pimpl_->seg_data.buffer, "RFMODEL ", 8)) 
+    if (!STARTS_WITH(pimpl_->seg_data.buffer, "RFMODEL ")) 
     {
         pimpl_->seg_data.Put("RFMODEL",0,8);
         pimpl_->userrpc = false;
@@ -146,23 +147,23 @@ void CPCIDSKRPCModelSegment::Load()
     
     // Check for the DS characters
     pimpl_->downsample = 1;
-    if (!std::strncmp(&pimpl_->seg_data.buffer[22], "DS", 2)) 
+    if (STARTS_WITH(&pimpl_->seg_data.buffer[22], "DS")) 
     {
         // Read the downsample factor
         pimpl_->downsample = pimpl_->seg_data.GetInt(24, 3);
     }
     
-    //This is requiered if writting with PCIDSKIO 
+    //This is required if writing with PCIDSKIO
     //and reading with GDBIO (probably because of legacy issue)
     // see Bugzilla 255 and 254.
     bool bSecond = false;
-    if (!std::strncmp(&pimpl_->seg_data.buffer[27], "2ND", 3)) 
+    if (STARTS_WITH(&pimpl_->seg_data.buffer[27], "2ND")) 
     {
         bSecond = true;
     }
     
     // Sensor name:
-    if (!std::strncmp(&pimpl_->seg_data.buffer[30], "SENSOR", 6)) {
+    if (STARTS_WITH(&pimpl_->seg_data.buffer[30], "SENSOR")) {
         pimpl_->sensor_name = std::string(&pimpl_->seg_data.buffer[36]);
     } else {
         pimpl_->sensor_name = "";
@@ -194,7 +195,7 @@ void CPCIDSKRPCModelSegment::Load()
 
         if (pimpl_->num_coeffs * 22 > 512) {
             // this segment is malformed. Throw an exception.
-            throw PCIDSKException("RFMODEL segment coefficient count requires more "
+            return ThrowPCIDSKException("RFMODEL segment coefficient count requires more "
                 "than one block to store. There is an error in this segment. The "
                 "number of coefficients according to the segment is %d.", pimpl_->num_coeffs);
         }
@@ -241,7 +242,7 @@ void CPCIDSKRPCModelSegment::Load()
 
         if (pimpl_->num_coeffs * 22 > 512) {
             // this segment is malformed. Throw an exception.
-            throw PCIDSKException("RFMODEL segment coefficient count requires more "
+            return ThrowPCIDSKException("RFMODEL segment coefficient count requires more "
                 "than one block to store. There is an error in this segment. The "
                 "number of coefficients according to the segment is %d.", pimpl_->num_coeffs);
         }
@@ -355,14 +356,14 @@ void CPCIDSKRPCModelSegment::Write(void)
     pimpl_->seg_data.Put("DS",22,2);
     pimpl_->seg_data.Put(pimpl_->downsample,24,3);
 
-    //This is requiered if writting with PCIDSKIO 
+    //This is required if writing with PCIDSKIO 
     //and reading with GDBIO (probably because of legacy issue)
     // see Bugzilla 255 and 254.
     pimpl_->seg_data.Put("2ND",27,3);
 
     // Sensor name:
     pimpl_->seg_data.Put("SENSOR",30,6);
-    pimpl_->seg_data.Put(pimpl_->sensor_name.c_str(),36,pimpl_->sensor_name.size());
+    pimpl_->seg_data.Put(pimpl_->sensor_name.c_str(),36,static_cast<int>(pimpl_->sensor_name.size()));
   
     // Block 2:
     // Bytes     0-3: Number of coefficients
@@ -383,7 +384,7 @@ void CPCIDSKRPCModelSegment::Write(void)
 
     if (pimpl_->num_coeffs * 22 > 512) {
         // this segment is malformed. Throw an exception.
-        throw PCIDSKException("RFMODEL segment coefficient count requires more "
+        return ThrowPCIDSKException("RFMODEL segment coefficient count requires more "
             "than one block to store. There is an error in this segment. The "
             "number of coefficients according to the segment is %d.", pimpl_->num_coeffs);
     }
@@ -491,7 +492,7 @@ void CPCIDSKRPCModelSegment::SetCoefficients(
 {
     if (xnum.size() != xdenom.size() || ynum.size() != ydenom.size() ||
         xnum.size() != ynum.size() || xdenom.size() != ydenom.size()) {
-        throw PCIDSKException("All RPC coefficient vectors must be the "
+        return ThrowPCIDSKException("All RPC coefficient vectors must be the "
             "same size.");
     }
     
@@ -566,7 +567,7 @@ void CPCIDSKRPCModelSegment::SetAdjCoordValues(const std::vector<double>& xcoord
     const std::vector<double>& ycoord)
 {
     if (xcoord.size() != 6 || ycoord.size() != 6) {
-        throw PCIDSKException("X and Y adjusted coordinates must have "
+        return ThrowPCIDSKException("X and Y adjusted coordinates must have "
             "length 6.");
     }
     
@@ -626,7 +627,7 @@ std::string CPCIDSKRPCModelSegment::GetGeosysString(void) const
 void CPCIDSKRPCModelSegment::SetGeosysString(const std::string& geosys)
 {
     if (geosys.size() > 16) {
-        throw PCIDSKException("GeoSys/MapUnits string must be no more than "
+        return ThrowPCIDSKException("GeoSys/MapUnits string must be no more than "
             "16 characters to be valid.");
     }
     pimpl_->map_units = geosys;
@@ -647,9 +648,10 @@ unsigned int CPCIDSKRPCModelSegment::GetPixels(void) const
 void CPCIDSKRPCModelSegment::SetRasterSize(const unsigned int lines, const unsigned int pixels)
 {
     if (lines == 0 || pixels == 0) {
-        throw PCIDSKException("Non-sensical raster dimensions provided: %ux%u", lines, pixels);
+        return ThrowPCIDSKException("Nonsensical raster dimensions provided: %ux%u",
+                              lines, pixels);
     }
-    
+
     pimpl_->lines = lines;
     pimpl_->pixels = pixels;
     mbModified = true;
@@ -658,9 +660,9 @@ void CPCIDSKRPCModelSegment::SetRasterSize(const unsigned int lines, const unsig
 void CPCIDSKRPCModelSegment::SetDownsample(const unsigned int downsample)
 {
     if (downsample == 0) {
-        throw PCIDSKException("Invalid downsample factor provided: %u", downsample);
+        return ThrowPCIDSKException("Invalid downsample factor provided: %u", downsample);
     }
-    
+
     pimpl_->downsample = downsample;
     mbModified = true;
 }
@@ -677,4 +679,3 @@ void CPCIDSKRPCModelSegment::Synchronize()
         this->Write();
     }
 }
-

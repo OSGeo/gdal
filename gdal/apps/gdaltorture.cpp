@@ -2,7 +2,7 @@
  * $Id: gdaltorture.cpp  $
  *
  * Project:  GDAL Utilities
- * Purpose:  Commandline utility to torture GDAL API on datasets
+ * Purpose:  Command line utility to torture GDAL API on datasets
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -67,7 +67,7 @@ static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations, int nRe
     GDALGetBlockSize(hBand, &nBlockXSize, &nBlockYSize);
     //GDALRasterAdviseRead
     //GDALRasterIO
-    //GDALReadBlock 
+    //GDALReadBlock
     //GDALWriteBlock
     nRasterXSize = GDALGetRasterBandXSize(hBand);
     nRasterYSize = GDALGetRasterBandYSize(hBand);
@@ -89,14 +89,14 @@ static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations, int nRe
     }
 
     GDALGetRasterNoDataValue(hBand, &bHasNoData);
-    //GDALSetRasterNoDataValue 
+    //GDALSetRasterNoDataValue
     GDALGetRasterCategoryNames(hBand);
     //GDALSetRasterCategoryNames
     GDALGetRasterMinimum(hBand, &bSuccess);
     GDALGetRasterMaximum(hBand, &bSuccess);
     GDALGetRasterStatistics(hBand, TRUE, FALSE, &dfMin, &dfMax, &dfMean, &dfStdDev);
     //GDALComputeRasterStatistics
-    //GDALSetRasterStatistics 
+    //GDALSetRasterStatistics
     GDALGetRasterUnitType(hBand);
     GDALGetRasterOffset(hBand, &bSuccess);
     //GDALSetRasterOffset
@@ -110,7 +110,7 @@ static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations, int nRe
     GDALGetRasterSampleOverview(hBand, 0); // returns a hBand
     //GDALFillRaster
     //GDALComputeBandStats
-    //GDALOverviewMagnitudeCorrection 
+    //GDALOverviewMagnitudeCorrection
     GDALGetDefaultRAT(hBand);
     //GDALSetDefaultRAT
     //GDALAddDerivedBandPixelFunc
@@ -119,7 +119,6 @@ static void TortureBand(GDALRasterBandH hBand, int bReadWriteOperations, int nRe
         TortureBand(hMaskBand, FALSE, nRecurse + 1);
     GDALGetMaskFlags(hBand);
     //GDALCreateMaskBand
-    
 }
 
 /************************************************************************/
@@ -172,7 +171,7 @@ static void TortureDS(const char *pszTarget, int bReadWriteOperations)
     // GDALFlushCache
     // GDALCreateDatasetMaskBand
     // GDALDatasetCopyWholeRaster
-    
+
     for(iBand=0;iBand<nBands;iBand++)
     {
         hBand = GDALGetRasterBand(hDS, iBand + 1);
@@ -190,8 +189,8 @@ static void TortureDS(const char *pszTarget, int bReadWriteOperations)
 /*                       ProcessTortureTarget()                         */
 /************************************************************************/
 
-static void ProcessTortureTarget( const char *pszTarget, 
-                                  char **papszSiblingList, 
+static void ProcessTortureTarget( const char *pszTarget,
+                                  char **papszSiblingList,
                                   int bRecursive, int bReportFailures,
                                   int bReadWriteOperations)
 
@@ -208,26 +207,26 @@ static void ProcessTortureTarget( const char *pszTarget,
         TortureDS(pszTarget, bReadWriteOperations);
     }
     else if( bReportFailures )
-        printf( "%s: unrecognised\n", pszTarget );
+        printf( "%s: unrecognized\n", pszTarget );
 
     if( !bRecursive || hDriver != NULL )
         return;
 
-    if( VSIStatL( pszTarget, &sStatBuf ) != 0 
+    if( VSIStatL( pszTarget, &sStatBuf ) != 0
         || !VSI_ISDIR( sStatBuf.st_mode ) )
         return;
 
     papszSiblingList = VSIReadDir( pszTarget );
     for( i = 0; papszSiblingList && papszSiblingList[i]; i++ )
     {
-        if( EQUAL(papszSiblingList[i],"..") 
+        if( EQUAL(papszSiblingList[i],"..")
             || EQUAL(papszSiblingList[i],".") )
             continue;
 
-        CPLString osSubTarget = 
+        CPLString osSubTarget =
             CPLFormFilename( pszTarget, papszSiblingList[i], NULL );
 
-        ProcessTortureTarget( osSubTarget, papszSiblingList, 
+        ProcessTortureTarget( osSubTarget, papszSiblingList,
                                bRecursive, bReportFailures, bReadWriteOperations );
     }
     CSLDestroy(papszSiblingList);
@@ -253,7 +252,7 @@ int main( int argc, char ** argv )
         Usage();
 
 /* -------------------------------------------------------------------- */
-/*      Scan for commandline switches                                   */
+/*      Scan for command line switches                                   */
 /* -------------------------------------------------------------------- */
     papszArgv = argv + 1;
     argc --;
@@ -278,7 +277,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     while( argc > 0 )
     {
-        ProcessTortureTarget( papszArgv[0], NULL, 
+        ProcessTortureTarget( papszArgv[0], NULL,
                               bRecursive, bReportFailures, bReadWriteOperations );
         argc--;
         papszArgv++;
@@ -292,4 +291,3 @@ int main( int argc, char ** argv )
 
     return 0;
 }
-

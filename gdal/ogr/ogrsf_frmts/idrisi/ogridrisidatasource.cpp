@@ -27,10 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_idrisi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "idrisi.h"
+#include "ogr_idrisi.h"
 
 CPL_CVSID("$Id$");
 
@@ -38,14 +38,11 @@ CPL_CVSID("$Id$");
 /*                        OGRIdrisiDataSource()                         */
 /************************************************************************/
 
-OGRIdrisiDataSource::OGRIdrisiDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-}
+OGRIdrisiDataSource::OGRIdrisiDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                       ~OGRIdrisiDataSource()                         */
@@ -54,18 +51,17 @@ OGRIdrisiDataSource::OGRIdrisiDataSource()
 OGRIdrisiDataSource::~OGRIdrisiDataSource()
 
 {
+    CPLFree( pszName );
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
-
-    CPLFree( pszName );
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIdrisiDataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRIdrisiDataSource::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
@@ -79,8 +75,8 @@ OGRLayer *OGRIdrisiDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -136,11 +132,13 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
             return FALSE;
         }
 
-        const char *pszRefSystem  = CSLFetchNameValue( papszVDC, "ref. system " );
-        const char *pszRefUnits   = CSLFetchNameValue( papszVDC, "ref. units  " );
+        const char *pszRefSystem
+            = CSLFetchNameValue( papszVDC, "ref. system " );
+        const char *pszRefUnits = CSLFetchNameValue( papszVDC, "ref. units  " );
 
         if (pszRefSystem != NULL && pszRefUnits != NULL)
-            IdrisiGeoReference2Wkt( pszFilename, pszRefSystem, pszRefUnits, &pszWTKString);
+            IdrisiGeoReference2Wkt( pszFilename, pszRefSystem, pszRefUnits,
+                                    &pszWTKString);
     }
 
     GByte chType;
@@ -159,27 +157,30 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
         eType = wkbPolygon;
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Unsupport geometry type : %d",
-                    (int)chType);
+        CPLError( CE_Failure, CPLE_AppDefined, "Unsupport geometry type : %d",
+                  static_cast<int>(chType) );
         VSIFCloseL(fpVCT);
         CSLDestroy( papszVDC );
         return FALSE;
     }
 
-    const char *pszMinX       = CSLFetchNameValue( papszVDC, "min. X      " );
-    const char *pszMaxX       = CSLFetchNameValue( papszVDC, "max. X      " );
-    const char *pszMinY       = CSLFetchNameValue( papszVDC, "min. Y      " );
-    const char *pszMaxY       = CSLFetchNameValue( papszVDC, "max. Y      " );
+    const char *pszMinX = CSLFetchNameValue( papszVDC, "min. X      " );
+    const char *pszMaxX = CSLFetchNameValue( papszVDC, "max. X      " );
+    const char *pszMinY = CSLFetchNameValue( papszVDC, "min. Y      " );
+    const char *pszMaxY = CSLFetchNameValue( papszVDC, "max. Y      " );
 
     OGRIdrisiLayer* poLayer = new OGRIdrisiLayer(pszFilename,
                                                  CPLGetBasename(pszFilename),
                                                  fpVCT, eType, pszWTKString);
-    papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
+    papoLayers = static_cast<OGRLayer**>( CPLMalloc(sizeof(OGRLayer*)) );
     papoLayers[nLayers ++] = poLayer;
 
-    if (pszMinX != NULL && pszMaxX != NULL && pszMinY != NULL && pszMaxY != NULL)
+    if( pszMinX != NULL && pszMaxX != NULL && pszMinY != NULL &&
+        pszMaxY != NULL)
     {
-        poLayer->SetExtent(CPLAtof(pszMinX), CPLAtof(pszMinY), CPLAtof(pszMaxX), CPLAtof(pszMaxY));
+        poLayer->SetExtent(
+            CPLAtof(pszMinX), CPLAtof(pszMinY), CPLAtof(pszMaxX),
+            CPLAtof(pszMaxY) );
     }
 
     CPLFree(pszWTKString);

@@ -7,8 +7,8 @@
 * 14 Jun 89 - Version 1.0 by Gershon Elber.				      *
 ******************************************************************************/
 
-#ifndef _GIF_HASH_H_
-#define _GIF_HASH_H_
+#ifndef GIF_HASH_H_
+#define GIF_HASH_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -59,4 +59,4 @@ void _ClearHashTable(GifHashTableType *HashTable);
 void _InsertHashTable(GifHashTableType *HashTable, UINT32 Key, int Code);
 int _ExistsHashTable(GifHashTableType *HashTable, UINT32 Key);
 
-#endif /* _GIF_HASH_H_ */
+#endif /* GIF_HASH_H_ */

@@ -37,37 +37,30 @@ CPL_CVSID("$Id$");
 /*                          OGRNTFDataSource()                          */
 /************************************************************************/
 
-OGRNTFDataSource::OGRNTFDataSource()
-
+OGRNTFDataSource::OGRNTFDataSource() :
+    pszName(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    poFCLayer(NULL),
+    iCurrentFC(0),
+    iCurrentReader(-1),
+    nCurrentPos(0),
+    nCurrentFID(0),
+    nNTFFileCount(0),
+    papoNTFFileReader(NULL),
+    nFCCount(0),
+    papszFCNum(NULL),
+    papszFCName(NULL),
+    papszOptions(NULL)
 {
-    nLayers = 0;
-    papoLayers = NULL;
-
-    nNTFFileCount = 0;
-    papoNTFFileReader = NULL;
-
-    pszName = NULL;
-
-    iCurrentReader = -1;
-    iCurrentFC = 0;
-
-    nFCCount = 0;
-    papszFCNum = NULL;
-    papszFCName = NULL;
-
-    poFCLayer = NULL;
-
-    papszOptions = NULL;
-
     poSpatialRef = new OGRSpatialReference( "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646,AUTHORITY[\"EPSG\",\"7001\"]],AUTHORITY[\"EPSG\",\"6277\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4277\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"27700\"]]" );
-
 
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
 /* -------------------------------------------------------------------- */
     if( getenv("OGR_NTF_OPTIONS") != NULL )
     {
-        papszOptions = 
+        papszOptions =
             CSLTokenizeStringComplex( getenv("OGR_NTF_OPTIONS"), ",",
                                       FALSE, FALSE );
     }
@@ -80,19 +73,17 @@ OGRNTFDataSource::OGRNTFDataSource()
 OGRNTFDataSource::~OGRNTFDataSource()
 
 {
-    int         i;
-
-    for( i = 0; i < nNTFFileCount; i++ )
+    for( int i = 0; i < nNTFFileCount; i++ )
         delete papoNTFFileReader[i];
 
     CPLFree( papoNTFFileReader );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     if( poFCLayer != NULL )
         delete poFCLayer;
-    
+
     CPLFree( papoLayers );
 
     CPLFree( pszName );
@@ -120,12 +111,12 @@ int OGRNTFDataSource::TestCapability( const char * )
 /*                           GetNamedLayer()                            */
 /************************************************************************/
 
-OGRNTFLayer * OGRNTFDataSource::GetNamedLayer( const char * pszName )
+OGRNTFLayer * OGRNTFDataSource::GetNamedLayer( const char * pszNameIn )
 
 {
     for( int i = 0; i < nLayers; i++ )
     {
-        if( EQUAL(papoLayers[i]->GetLayerDefn()->GetName(),pszName) )
+        if( EQUAL(papoLayers[i]->GetLayerDefn()->GetName(),pszNameIn) )
             return (OGRNTFLayer *) papoLayers[i];
     }
 
@@ -141,7 +132,7 @@ void OGRNTFDataSource::AddLayer( OGRLayer * poNewLayer )
 {
     papoLayers = (OGRLayer **)
         CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
-    
+
     papoLayers[nLayers-1] = poNewLayer;
 }
 
@@ -190,7 +181,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszFilename, &stat ) != 0 
+    if( CPLStat( pszFilename, &stat ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
@@ -200,7 +191,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build a list of filenames we figure are NTF files.              */
 /* -------------------------------------------------------------------- */
@@ -210,12 +201,12 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
     }
     else
     {
-        char      **candidateFileList = CPLReadDir( pszFilename );
+        char      **candidateFileList = VSIReadDir( pszFilename );
         int         i;
 
-        for( i = 0; 
-             candidateFileList != NULL && candidateFileList[i] != NULL; 
-             i++ ) 
+        for( i = 0;
+             candidateFileList != NULL && candidateFileList[i] != NULL;
+             i++ )
         {
             if( papszLimitedFileList != NULL
                 && CSLFindString(papszLimitedFileList,
@@ -223,14 +214,13 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
             {
                 continue;
             }
-            
+
             if( strlen(candidateFileList[i]) > 4
-              && EQUALN(candidateFileList[i] + strlen(candidateFileList[i])-4,
-                       ".ntf",4) )
+              && STARTS_WITH_CI(candidateFileList[i] + strlen(candidateFileList[i])-4, ".ntf") )
             {
                 char       fullFilename[2048];
 
-                sprintf( fullFilename, "%s%c%s", 
+                snprintf( fullFilename, sizeof(fullFilename), "%s%c%s",
                          pszFilename,
 #ifdef WIN32
                          '\\',
@@ -252,7 +242,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
                           "No candidate NTF files (.ntf) found in\n"
                           "directory: %s",
                           pszFilename );
-
+            CSLDestroy(papszFileList);
             return FALSE;
         }
     }
@@ -261,15 +251,15 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /*      Loop over all these files trying to open them.  In testopen     */
 /*      mode we first read the first 80 characters, to verify that      */
 /*      it looks like an NTF file.  Note that we don't keep the file    */
-/*      open ... we don't want to occupy alot of file handles when      */
+/*      open ... we don't want to occupy a lot of file handles when      */
 /*      handling a whole directory.                                     */
 /* -------------------------------------------------------------------- */
     int         i;
 
     papoNTFFileReader = (NTFFileReader **)
         CPLCalloc(sizeof(void*), CSLCount(papszFileList));
-    
-    for( i = 0; papszFileList[i] != NULL; i++ )
+
+    for( i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
     {
         if( bTestOpen )
         {
@@ -280,7 +270,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
             fp = VSIFOpen( papszFileList[i], "rb" );
             if( fp == NULL )
                 continue;
-            
+
             if( VSIFRead( szHeader, 80, 1, fp ) < 1 )
             {
                 VSIFClose( fp );
@@ -288,8 +278,8 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
             }
 
             VSIFClose( fp );
-            
-            if( !EQUALN(szHeader,"01",2) )
+
+            if( !STARTS_WITH_CI(szHeader, "01") )
                 continue;
 
             for( j = 0; j < 80; j++ )
@@ -311,7 +301,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
         {
             delete poFR;
             CSLDestroy( papszFileList );
-            
+
             return FALSE;
         }
 
@@ -332,7 +322,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /*      Establish generic layers.                                       */
 /* -------------------------------------------------------------------- */
     EstablishGenericLayers();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Loop over all the files, collecting a unique feature class      */
 /*      listing.                                                        */
@@ -340,14 +330,14 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
     for( int iSrcFile = 0; iSrcFile < nNTFFileCount; iSrcFile++ )
     {
         NTFFileReader   *poSrcReader = papoNTFFileReader[iSrcFile];
-        
+
         for( int iSrcFC = 0; iSrcFC < poSrcReader->GetFCCount(); iSrcFC++ )
         {
             int         iDstFC;
             char       *pszSrcFCName, *pszSrcFCNum;
 
             poSrcReader->GetFeatureClass( iSrcFC, &pszSrcFCNum, &pszSrcFCName);
-            
+
             for( iDstFC = 0; iDstFC < nFCCount; iDstFC++ )
             {
                 if( EQUAL(pszSrcFCNum,papszFCNum[iDstFC]) )
@@ -370,7 +360,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
         poFCLayer = new OGRNTFFeatureClassLayer( this );
     else
         poFCLayer = NULL;
-    
+
     return TRUE;
 }
 
@@ -403,7 +393,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature()
 
 /* -------------------------------------------------------------------- */
 /*      If we have already read all the conventional features, we       */
-/*      should try and return feature class features.                   */    
+/*      should try and return feature class features.                   */
 /* -------------------------------------------------------------------- */
     if( iCurrentReader == nNTFFileCount )
     {
@@ -435,7 +425,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature()
     if( nCurrentPos != -1 )
         papoNTFFileReader[iCurrentReader]->SetFPPos( nCurrentPos,
                                                      nCurrentFID );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Read a feature.  If we get NULL the file must be all            */
 /*      consumed, advance to the next file.                             */
@@ -514,7 +504,7 @@ const char *OGRNTFDataSource::GetOption( const char * pszOption )
 /*      it's tilename is unique relative to all the readers already     */
 /*      assigned to this data source.  If not, a unique name is         */
 /*      selected for it and assigned.  This method should not be        */
-/*      called with readers that are allready attached to the data      */
+/*      called with readers that are already attached to the data      */
 /*      source.                                                         */
 /************************************************************************/
 
@@ -532,11 +522,11 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
         if( iSequenceNumber++ == -1 )
             strncpy( szCandidateName, poNewReader->GetTileName(), 10 );
         else
-            sprintf( szCandidateName, "%010d", iSequenceNumber );
+            snprintf( szCandidateName, sizeof(szCandidateName), "%010d", iSequenceNumber );
 
         for( int iReader = 0; iReader < nNTFFileCount && bIsUnique; iReader++ )
         {
-            if( strcmp( szCandidateName, 
+            if( strcmp( szCandidateName,
                         GetFileReader( iReader )->GetTileName() ) == 0 )
                 bIsUnique = FALSE;
         }
@@ -545,7 +535,7 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
     if( iSequenceNumber > 0 )
     {
         poNewReader->OverrideTileName( szCandidateName );
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Forcing TILE_REF to `%s' on file %s\n"
                   "to avoid conflict with other tiles in this data source.",
                   szCandidateName, poNewReader->GetFilename() );

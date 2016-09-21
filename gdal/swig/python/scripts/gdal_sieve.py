@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 #******************************************************************************
 #  $Id$
-# 
+#
 #  Project:  GDAL Python Interface
 #  Purpose:  Application for applying sieve filter to raster data.
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
-# 
+#
 #******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
 #  to deal in the Software without restriction, including without limitation
 #  the rights to use, copy, modify, merge, publish, distribute, sublicense,
 #  and/or sell copies of the Software, and to permit persons to whom the
 #  Software is furnished to do so, subject to the following conditions:
-# 
+#
 #  The above copyright notice and this permission notice shall be included
 #  in all copies or substantial portions of the Software.
-# 
+#
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 #  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,12 +29,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
 import sys
+
+from osgeo import gdal
+
 
 def Usage():
     print("""
@@ -42,7 +40,7 @@ gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
            srcfile [-nomask] [-mask filename] [-of format] [dstfile]
 """)
     sys.exit(1)
-    
+
 # =============================================================================
 # 	Mainline
 # =============================================================================
@@ -74,31 +72,31 @@ while i < len(argv):
 
     elif arg == '-4':
         connectedness = 4
-        
+
     elif arg == '-8':
         connectedness = 8
-        
+
     elif arg == '-q' or arg == '-quiet':
         quiet_flag = 1
-        
+
     elif arg == '-st':
         i = i + 1
         threshold = int(argv[i])
-        
+
     elif arg == '-nomask':
         mask = 'none'
-        
+
     elif arg == '-mask':
         i = i + 1
         mask = argv[i]
-        
+
     elif arg == '-mask':
         i = i + 1
         mask = argv[i]
-        
+
     elif arg[:2] == '-h':
         Usage()
-        
+
     elif src_filename is None:
         src_filename = argv[i]
 
@@ -112,7 +110,7 @@ while i < len(argv):
 
 if src_filename is None:
     Usage()
-    
+
 # =============================================================================
 # 	Verify we have next gen bindings with the sievefilter method.
 # =============================================================================
@@ -133,7 +131,7 @@ if dst_filename is None:
     src_ds = gdal.Open( src_filename, gdal.GA_Update )
 else:
     src_ds = gdal.Open( src_filename, gdal.GA_ReadOnly )
-    
+
 if src_ds is None:
     print('Unable to open %s ' % src_filename)
     sys.exit(1)
@@ -161,7 +159,7 @@ if dst_filename is not None:
     if wkt != '':
         dst_ds.SetProjection( wkt )
     dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
-    
+
     dstband = dst_ds.GetRasterBand(1)
 else:
     dstband = srcband
@@ -174,17 +172,11 @@ if quiet_flag:
     prog_func = None
 else:
     prog_func = gdal.TermProgress
-    
+
 result = gdal.SieveFilter( srcband, maskband, dstband,
-                           threshold, connectedness, 
+                           threshold, connectedness,
                            callback = prog_func )
-    
+
 src_ds = None
 dst_ds = None
 mask_ds = None
-
-
-
-
-
-

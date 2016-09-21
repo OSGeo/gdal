@@ -10,7 +10,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
 //   PRGMMR: Gilbert          ORG: W/NP11    DATE: 2002-10-29
 //
 // ABSTRACT: This subroutine unpacks a data field that was packed using a
-//   complex packing algorithm as defined in the GRIB2 documention,
+//   complex packing algorithm as defined in the GRIB2 documentation,
 //   using info from the GRIB2 Data Representation Template 5.2 or 5.3.
 //   Supports GRIB2 complex packing templates with or without
 //   spatial differences (i.e. DRTs 5.2 and 5.3).
@@ -104,7 +104,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
       
       //printf("RMISSs: %f %f %f \n",rmiss1,rmiss2,ref);
 // 
-//  Extract Spatial differencing values, if using DRS Template 5.3
+//  Extract spatial differencing values, if using DRS Template 5.3
 //
       if (idrsnum == 3) {
          if (nbitsd != 0) {

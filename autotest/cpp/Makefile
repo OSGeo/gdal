@@ -1,8 +1,24 @@
-CXX = g++
-CXXFLAGS =`gdal-config --cflags` -Wall -I. -Itut $(CPPFLAGS)
-LDFLAGS = `gdal-config --libs`
+# This Makefile requires GNU Make.
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem testblockcache
+CXX = g++
+CXXFLAGS := $(shell gdal-config --cflags) -I. -Itut $(CPPFLAGS)
+CXXFLAGS += -Wall
+CXXFLAGS += -Wextra
+# CXXFLAGS += -Werror
+
+ifdef HARDEN
+CXXFLAGS += -O2 -g
+CXXFLAGS += -D_FORTIFY_SOURCE=2
+CXXFLAGS += -fstack-protector-all
+CXXFLAGS += -Wformat -Werror=format-security
+CXXFLAGS += -ftrapv -fwrapv
+# Clashes with current build strategy.
+# CXXFLAGS += -fPIE -pie
+endif
+
+LDFLAGS = $(shell gdal-config --libs)
+
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy
 
 all: $(PROGS)
 
@@ -20,13 +36,22 @@ quick_test:
 	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
 	./testblockcache -check -co TILED=YES -migrate
 	./testblockcache -check -memdriver
+	./testblockcachewrite --debug ON
+	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
+	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
+	./testblockcachelimits --debug ON
+	./testdestroy
 
 OBJ = \
     gdal_unit_test.o \
+    test_alg.o \
     test_cpl.o \
+    test_gdal.o \
     test_gdal_aaigrid.o \
     test_gdal_dted.o \
     test_gdal_gtiff.o \
+    test_triangulation.o \
+    test_ogr.o \
     test_ogr_geos.o \
     test_ogr_shape.o \
     test_osr.o \
@@ -40,20 +65,29 @@ gdal_unit_test: $(OBJ)
 
 testperfcopywords: testperfcopywords.cpp
 	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
-	
+
 testcopywords: testcopywords.cpp
 	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
-testclosedondestroydm: testclosedondestroydm.c
+testclosedondestroydm: testclosedondestroydm.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
-testthreadcond: testthreadcond.c
+testthreadcond: testthreadcond.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 test_virtualmem: test_virtualmem.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 testblockcache: testblockcache.cpp
+	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+testblockcachewrite: testblockcachewrite.cpp
+	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+testblockcachelimits: testblockcachelimits.cpp
+	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+testdestroy: testdestroy.cpp
 	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 vsipreload.so: ../../gdal/port/vsipreload.cpp

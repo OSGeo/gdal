@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Various test of GDAL core.
 # Author:   Even Rouault <even dot rouault at mines dash parid dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -60,8 +60,8 @@ def misc_1():
 
 ###############################################################################
 # Test that OpenShared() works as expected by opening a big number of times
-# the same dataset with it. If it didn't work, that would exhaust the system limit
-# of maximum file descriptors opened at the same time
+# the same dataset with it. If it did not work, that would exhaust the system
+# limit of maximum file descriptors opened at the same time
 
 def misc_2():
 
@@ -81,11 +81,13 @@ def misc_2():
 
 def misc_3():
 
-    ds = gdal.OpenShared('../gdrivers/data/small16.aux')
+    with gdaltest.error_handler():
+        ds = gdal.OpenShared('../gdrivers/data/small16.aux')
     ds.GetRasterBand(1).Checksum()
     cache_size = gdal.GetCacheUsed()
 
-    ds2 = gdal.OpenShared('../gdrivers/data/small16.aux')
+    with gdaltest.error_handler():
+        ds2 = gdal.OpenShared('../gdrivers/data/small16.aux')
     ds2.GetRasterBand(1).Checksum()
     cache_size2 = gdal.GetCacheUsed()
 
@@ -162,14 +164,16 @@ def misc_5_internal(drv, datatype, nBands):
                     print('Did not get expected GT for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
                     print(got_gt)
                     return -1
-        
+
         #if ds.RasterCount > 0:
         #    ds.GetRasterBand(1).Fill(255)
     ds = None
     ds = gdal.Open(filename)
     if ds is None:
-        reason = 'Cannot reopen %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-        gdaltest.post_reason(reason)
+        # reason = 'Cannot reopen %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+        # gdaltest.post_reason(reason)
+        # TODO: Why not return -1?
+        pass
     #else:
     #    if ds.RasterCount > 0:
     #        print ds.GetRasterBand(1).Checksum()
@@ -192,7 +196,7 @@ def misc_5():
         shutil.rmtree('tmp/tmp')
     except:
         pass
-        
+
     try:
         os.mkdir('tmp/tmp')
     except:
@@ -216,6 +220,9 @@ def misc_5():
         md = drv.GetMetadata()
         if drv.ShortName == 'PDF':
             # PDF Create() is vector-only
+            continue
+        if drv.ShortName == 'MBTiles':
+            # MBTiles only support some precise resolutions
             continue
         if 'DCAP_CREATE' in md and 'DCAP_RASTER' in md:
             datatype = gdal.GDT_Byte
@@ -412,13 +419,9 @@ def misc_7():
 
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.InvGeoTransform(gt)
-    if res[0] != 1:
-        print(res)
-        return 'fail'
-
     expected_inv_gt = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0)
     for i in range(6):
-        if abs(res[1][i] - expected_inv_gt[i]) > 1e-6:
+        if abs(res[i] - expected_inv_gt[i]) > 1e-6:
             print(res)
             return 'fail'
 
@@ -464,6 +467,11 @@ def misc_9():
 
 def misc_10():
 
+    try:
+        os.remove('data/byte.tif.gz.properties')
+    except:
+        pass
+
     f = gdal.VSIFOpenL('/vsigzip/./data/byte.tif.gz', 'rb')
     gdal.VSIFReadL(1, 1, f)
     gdal.VSIFSeekL(f, 0, 2)
@@ -475,6 +483,11 @@ def misc_10():
     ar = struct.unpack('B' * 4, data)
     if ar != (73, 73, 42, 0):
         return 'fail'
+
+    try:
+        os.remove('data/byte.tif.gz.properties')
+    except:
+        pass
 
     return 'success'
 
@@ -568,6 +581,10 @@ def misc_12():
             gdal.PushErrorHandler('CPLQuietErrorHandler')
             ds = drv.CreateCopy('/nonexistingpath/nonexistingfile' + ext, src_ds)
             gdal.PopErrorHandler()
+            if ds is None and gdal.GetLastErrorMsg() == '':
+                gdaltest.post_reason('failure')
+                print('CreateCopy() into non existing dir fails without error message for driver %s' % drv.ShortName)
+                return 'fail'
             ds = None
 
             if gdal_translate_path is not None:
@@ -593,6 +610,31 @@ def misc_12():
     return 'success'
 
 ###############################################################################
+# Test CreateCopy() with incompatible driver types (#5912)
+
+def misc_13():
+
+    # Raster-only -> vector-only
+    ds = gdal.Open('data/byte.tif')
+    gdal.PushErrorHandler()
+    out_ds = gdal.GetDriverByName('ESRI Shapefile').CreateCopy('/vsimem/out.shp', ds)
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Raster-only -> vector-only
+    ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_VECTOR)
+    gdal.PushErrorHandler()
+    out_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', ds)
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def misc_cleanup():
 
     try:
@@ -601,7 +643,7 @@ def misc_cleanup():
         pass
 
     return 'success'
-    
+
 gdaltest_list = [ misc_1,
                   misc_2,
                   misc_3,
@@ -614,6 +656,7 @@ gdaltest_list = [ misc_1,
                   misc_10,
                   misc_11,
                   misc_12,
+                  misc_13,
                   misc_cleanup ]
 
 if __name__ == '__main__':
@@ -623,4 +666,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -1,0 +1,83 @@
+Version 300
+Charset "Neutral"
+Delimiter ","
+Columns 0
+Data
+
+Point 0 1
+
+Point 2 3
+  Symbol("bla",0,1,2)
+
+Point 4 5
+  Symbol(99,1,2,"foo",1,30.0)
+
+Line 0 1 2 3
+
+Pline
+  2
+  0 1
+  2 3
+
+Pline 2
+  0 1
+  2 3
+
+PLINE MULTIPLE 2
+  2
+  0 1
+  2 3
+  2
+  3 4
+  5 6
+  Pen(1,2,3)
+  Smooth
+
+Rect -1 -1 1 1
+  Pen(1,2,3)
+  Brush(1,2,3)
+
+RoundRect -1 -1 1 1 1
+  Pen(1,2,3)
+  Brush(1,2,3)
+
+Ellipse -1 -1 1 1
+  Pen(1,2,3)
+  Brush(1,2,3)
+
+Arc -1 -1 1 1
+  0 360
+  Pen(1,2,3)
+
+Arc -1 -1 1 1 0 360
+
+Text "text"
+  0 1 2 3
+  Font("bla",1,2,65535,65535)
+  Spacing 2.0
+  Justify Center
+  Angle 30.0
+  Label Line Simple 10.0 20.0
+
+MultiPoint 2
+  0 1
+  2 3
+
+Region 1
+  4
+  0 1
+  1 1
+  1 0
+  0 1
+
+COLLECTION 3
+  Region 1
+    4
+    0 1
+    1 1
+    1 0
+    0 1
+  Line 0 1 2 3
+  MultiPoint 2
+    0 1
+    2 3

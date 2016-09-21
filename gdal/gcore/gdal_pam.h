@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Declaration for Peristable Auxilary Metadata classes.
+ * Purpose:  Declaration for Peristable Auxiliary Metadata classes.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -64,20 +64,20 @@ class GDALPamRasterBand;
                                  GCIF_COLORINTERP | GCIF_BAND_METADATA |   \
                                  GCIF_RAT | GCIF_MASK |                    \
                                  GCIF_ONLY_IF_MISSING | GCIF_PROCESS_BANDS|\
-                                 GCIF_BAND_DESCRIPTION) 
+                                 GCIF_BAND_DESCRIPTION)
 
 /* GDAL PAM Flags */
 /* ERO 2011/04/13 : GPF_AUXMODE seems to be unimplemented */
 #define GPF_DIRTY		0x01  // .pam file needs to be written on close
 #define GPF_TRIED_READ_FAILED   0x02  // no need to keep trying to read .pam.
-#define GPF_DISABLED            0x04  // do not try any PAM stuff. 
+#define GPF_DISABLED            0x04  // do not try any PAM stuff.
 #define GPF_AUXMODE             0x08  // store info in .aux (HFA) file.
 #define GPF_NOSAVE              0x10  // do not try to save pam info.
 
 /* ==================================================================== */
 /*      GDALDatasetPamInfo                                              */
 /*                                                                      */
-/*      We make these things a seperate structure of information        */
+/*      We make these things a separate structure of information        */
 /*      primarily so we can modify it without altering the size of      */
 /*      the GDALPamDataset.  It is an effort to reduce ABI churn for    */
 /*      driver plugins.                                                 */
@@ -122,7 +122,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     virtual CPLXMLNode *SerializeToXML( const char *);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
-    
+
     virtual CPLErr TryLoadXML(char **papszSiblingFiles = NULL);
     virtual CPLErr TrySaveXML();
 
@@ -169,10 +169,10 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
 
-    virtual CPLErr IBuildOverviews( const char *pszResampling, 
-                                    int nOverviews, int *panOverviewList, 
+    virtual CPLErr IBuildOverviews( const char *pszResampling,
+                                    int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList,
-                                    GDALProgressFunc pfnProgress, 
+                                    GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
 
@@ -181,12 +181,15 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     GDALDatasetPamInfo *GetPamInfo() { return psPam; }
     int    GetPamFlags() { return nPamFlags; }
     void   SetPamFlags(int nValue ) { nPamFlags = nValue; }
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALPamDataset);
 };
 
 /* ==================================================================== */
 /*      GDALRasterBandPamInfo                                           */
 /*                                                                      */
-/*      We make these things a seperate structure of information        */
+/*      We make these things a separate structure of information        */
 /*      primarily so we can modify it without altering the size of      */
 /*      the GDALPamDataset.  It is an effort to reduce ABI churn for    */
 /*      driver plugins.                                                 */
@@ -203,7 +206,7 @@ typedef struct {
 
     char           *pszUnitType;
     char           **papszCategoryNames;
-    
+
     double         dfOffset;
     double         dfScale;
 
@@ -232,7 +235,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
-    
+
     void   PamInitialize();
     void   PamClear();
 
@@ -240,21 +243,23 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 
   public:
                 GDALPamRasterBand();
+                GDALPamRasterBand(int bForceCachedIO);
     virtual     ~GDALPamRasterBand();
 
     virtual void        SetDescription( const char * );
 
     virtual CPLErr SetNoDataValue( double );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr DeleteNoDataValue();
 
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorTable( GDALColorTable * );
     virtual GDALColorTable *GetColorTable();
 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
     virtual GDALColorInterp GetColorInterpretation();
 
     virtual const char *GetUnitType();
-    CPLErr SetUnitType( const char * ); 
+    CPLErr SetUnitType( const char * );
 
     virtual char **GetCategoryNames();
     virtual CPLErr SetCategoryNames( char ** );
@@ -265,17 +270,17 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     CPLErr SetScale( double );
 
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,
-                          int nBuckets, int * panHistogram,
+                          int nBuckets, GUIntBig * panHistogram,
                           int bIncludeOutOfRange, int bApproxOK,
                           GDALProgressFunc, void *pProgressData );
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                        int *pnBuckets, int ** ppanHistogram,
+                                        int *pnBuckets, GUIntBig ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc, void *pProgressData);
 
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                        int nBuckets, int *panHistogram );
+                                        int nBuckets, GUIntBig *panHistogram );
 
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
@@ -286,25 +291,28 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     virtual GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
-    // new in GDALPamRasterBand. 
+    // new in GDALPamRasterBand.
     virtual CPLErr CloneInfo( GDALRasterBand *poSrcBand, int nCloneInfoFlags );
 
     // "semi private" methods.
     GDALRasterBandPamInfo *GetPamInfo() { return psPam; }
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALPamRasterBand);
 };
 
 // These are mainly helper functions for internal use.
-int CPL_DLL PamParseHistogram( CPLXMLNode *psHistItem, 
-                               double *pdfMin, double *pdfMax, 
-                               int *pnBuckets, int **ppanHistogram, 
+int CPL_DLL PamParseHistogram( CPLXMLNode *psHistItem,
+                               double *pdfMin, double *pdfMax,
+                               int *pnBuckets, GUIntBig **ppanHistogram,
                                int *pbIncludeOutOfRange, int *pbApproxOK );
 CPLXMLNode CPL_DLL *
 PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
-                          double dfMin, double dfMax, int nBuckets, 
+                          double dfMin, double dfMax, int nBuckets,
                           int bIncludeOutOfRange, int bApproxOK );
 CPLXMLNode CPL_DLL *
 PamHistogramToXMLTree( double dfMin, double dfMax,
-                       int nBuckets, int * panHistogram,
+                       int nBuckets, GUIntBig * panHistogram,
                        int bIncludeOutOfRange, int bApprox );
 
 // For managing the proxy file database.

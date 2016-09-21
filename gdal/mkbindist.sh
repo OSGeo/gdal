@@ -52,10 +52,6 @@ fi
 mkdir $DIST_DIR/html
 cp html/* $DIST_DIR/html
 
-cp dist_docs/README_UNX_BIN.TXT $DIST_DIR
-cp dist_docs/install_unx.sh $DIST_DIR
-cc -o $DIST_DIR/bin/burnpath dist_docs/burnpath.c
-
 #
 # Clean anything we don't want for non-developer releases.
 #

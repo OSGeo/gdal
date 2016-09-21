@@ -4,7 +4,6 @@
  * python specific code for ogr bindings.
  */
 
-
 %feature("autodoc");
 
 #ifndef FROM_GDAL_I
@@ -13,14 +12,14 @@
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
-  
+
 %}
 #endif
 
 /*%{
-    
-#if PY_MINOR_VERSION >= 4 
-#include "datetime.h" 
+
+#if PY_MINOR_VERSION >= 4
+#include "datetime.h"
 #define USE_PYTHONDATETIME 1
 #endif
 %}
@@ -48,19 +47,19 @@
 %extend OGRDataSourceShadow {
   %pythoncode {
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Release(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Reference(self):
       "For backwards compatibility only."
       return self.Reference()
-  
+
     def Dereference(self):
       "For backwards compatibility only."
       self.Dereference()
@@ -71,9 +70,9 @@
 
     def __getitem__(self, value):
         """Support dictionary, list, and slice -like access to the datasource.
-ds[0] would return the first layer on the datasource.
-ds['aname'] would return the layer named "aname".
-ds[0:4] would return a list of the first four layers."""
+        ds[0] would return the first layer on the datasource.
+        ds['aname'] would return the layer named "aname".
+        ds[0:4] would return a list of the first four layers."""
         if isinstance(value, slice):
             output = []
             for i in xrange(value.start,value.stop,value.step):
@@ -123,7 +122,7 @@ ds[0:4] would return a list of the first four layers."""
     def Reference(self):
       "For backwards compatibility only."
       pass
-  
+
     def Dereference(self):
       "For backwards compatibility only."
       pass
@@ -142,8 +141,8 @@ ds[0:4] would return a list of the first four layers."""
 
     def __getitem__(self, value):
         """Support list and slice -like access to the layer.
-layer[0] would return the first feature on the layer.
-layer[0:4] would return a list of the first four features."""
+        layer[0] would return the first feature on the layer.
+        layer[0:4] would return a list of the first four features."""
         if isinstance(value, slice):
             import sys
             output = []
@@ -202,7 +201,7 @@ layer[0:4] would return a list of the first four features."""
     OGR_F_SetFieldString(self, id, value);
   }
   %clear (const char* value );
-  
+
   %pythoncode %{
     def Reference(self):
       pass
@@ -211,7 +210,7 @@ layer[0:4] would return a list of the first four features."""
       pass
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_Feature( self )
       self.thisown = 0
 
@@ -222,7 +221,7 @@ layer[0:4] would return a list of the first four features."""
     def __copy__(self):
         return self.Clone()
 
-    # This makes it possible to fetch fields in the form "feature.area". 
+    # This makes it possible to fetch fields in the form "feature.area".
     # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
@@ -239,7 +238,7 @@ layer[0:4] would return a list of the first four features."""
         else:
             return self.GetField(idx)
 
-    # This makes it possible to set fields in the form "feature.area". 
+    # This makes it possible to set fields in the form "feature.area".
     # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
@@ -256,7 +255,7 @@ layer[0:4] would return a list of the first four features."""
                 else:
                     self.__dict__[key] = value
 
-    # This makes it possible to fetch fields in the form "feature['area']". 
+    # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, str):
@@ -271,7 +270,7 @@ layer[0:4] would return a list of the first four features."""
         else:
             return self.GetField(fld_index)
 
-    # This makes it possible to set fields in the form "feature['area'] = 123". 
+    # This makes it possible to set fields in the form "feature['area'] = 123".
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
         if isinstance(key, str):
@@ -327,9 +326,9 @@ layer[0:4] would return a list of the first four features."""
         SetField(self, char name, int value)
         SetField(self, int id, double value)
         SetField(self, char name, double value)
-        SetField(self, int id, int year, int month, int day, int hour, int minute, 
+        SetField(self, int id, int year, int month, int day, int hour, int minute,
             int second, int tzflag)
-        SetField(self, char name, int year, int month, int day, int hour, 
+        SetField(self, char name, int year, int month, int day, int hour,
             int minute, int second, int tzflag)
         """
 
@@ -386,7 +385,7 @@ layer[0:4] would return a list of the first four features."""
             fieldname = self.GetFieldDefnRef(i).GetName()
             names.append(fieldname)
         return names
-    
+
     def items(self):
         keys = self.keys()
         output = {}
@@ -398,7 +397,7 @@ layer[0:4] would return a list of the first four features."""
 
     def ExportToJson(self, as_object = False, options = None):
         """Exports a GeoJSON object which represents the Feature. The
-           as_object parameter determines whether the returned value 
+           as_object parameter determines whether the returned value
            should be a Python object instead of a string. Defaults to False.
            The options parameter is passed to Geometry.ExportToJson()"""
 
@@ -422,15 +421,22 @@ layer[0:4] would return a list of the first four features."""
         output = {'type':'Feature',
                    'geometry': geom_json_object,
                    'properties': {}
-                  } 
-        
+                  }
+
         fid = self.GetFID()
         if fid != NullFID:
             output['id'] = fid
-            
+
         for key in self.keys():
-            output['properties'][key] = self.GetField(key)
-        
+            fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
+            if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
+                if self.GetField(key):
+                    output['properties'][key] = True
+                else:
+                    output['properties'][key] = False
+            else:
+                output['properties'][key] = self.GetField(key)
+
         if not as_object:
             output = simplejson.dumps(output)
 
@@ -444,25 +450,25 @@ layer[0:4] would return a list of the first four features."""
 %extend OGRGeometryShadow {
 %pythoncode %{
   def Destroy(self):
-    self.__swig_destroy__(self) 
+    self.__swig_destroy__(self)
     self.__del__()
     self.thisown = 0
 
   def __str__(self):
     return self.ExportToWkt()
-    
+
 
   def __reduce__(self):
     return (self.__class__, (), self.ExportToWkb())
- 	
+
   def __setstate__(self, state):
       result = CreateGeometryFromWkb(state)
       self.this = result.this
-        
+
   def __iter__(self):
       self.iter_subgeom = 0
       return self
-      
+
   def next(self):
       if self.iter_subgeom < self.GetGeometryCount():
           subgeom = self.GetGeometryRef(self.iter_subgeom)
@@ -495,7 +501,7 @@ layer[0:4] would return a list of the first four features."""
 %extend OGRFeatureDefnShadow {
 %pythoncode {
   def Destroy(self):
-    "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+    "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
     _ogr.delete_FeatureDefn( self )
     self.thisown = 0
 
@@ -505,7 +511,7 @@ layer[0:4] would return a list of the first four features."""
 %extend OGRFieldDefnShadow {
 %pythoncode %{
   def Destroy(self):
-    "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+    "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
     _ogr.delete_FieldDefn( self )
     self.thisown = 0
 %}
@@ -527,10 +533,10 @@ layer[0:4] would return a list of the first four features."""
 }
 #endif
 
-
+#ifdef no_longer_defined_since_it_breaks_py2exe_pyinstaller_ticket_6364
 %pythoncode %{
 
-# Backup original dictionnary before doing anything else
+# Backup original dictionary before doing anything else
 _initial_dict = globals().copy()
 
 @property
@@ -586,7 +592,7 @@ class _MyHelper(object):
             import sys
 
             # Restore original module before calling help() otherwise
-            # we don't get methods or classes mentionned
+            # we don't get methods or classes mentioned
             sys.modules[self.module.__name__] = self.module._original_module
 
             ret = self.original_help(self.module._original_module, **kwds)
@@ -605,3 +611,4 @@ del _MyHelper
 del _Module
 
 %}
+#endif

@@ -36,14 +36,12 @@ CPL_CVSID("$Id: ogrdxflayer.cpp 19643 2010-05-08 21:56:18Z rouault $");
 /*                         OGRDXFBlocksLayer()                          */
 /************************************************************************/
 
-OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDS )
-
+OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
-    this->poDS = poDS;
-
     ResetReading();
 
-    poFeatureDefn = new OGRFeatureDefn( "blocks" );
     poFeatureDefn->Reference();
 
     poDS->AddStandardFields( poFeatureDefn );
@@ -59,7 +57,7 @@ OGRDXFBlocksLayer::~OGRDXFBlocksLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "DXF", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
@@ -98,7 +96,7 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 /*      Are we done reading the current blocks features?                */
 /* -------------------------------------------------------------------- */
     DXFBlockDefinition *psBlock = &(oIt->second);
-    unsigned int nSubFeatureCount = psBlock->apoFeatures.size();
+    size_t nSubFeatureCount = psBlock->apoFeatures.size();
 
     if( psBlock->poGeometry != NULL )
         nSubFeatureCount++;
@@ -114,7 +112,7 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 
         psBlock = &(oIt->second);
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Is this a geometry based block?                                 */
 /* -------------------------------------------------------------------- */
@@ -155,7 +153,7 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 OGRFeature *OGRDXFBlocksLayer::GetNextFeature()
 
 {
-    while( TRUE )
+    while( true )
     {
         OGRFeature *poFeature = GetNextUnfilteredFeature();
 
@@ -186,4 +184,3 @@ int OGRDXFBlocksLayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-

@@ -1,10 +1,3 @@
-/********/
-/* USES */
-/********/
-
-/* libs ext. <>, our ""  */
-
-/* global header (opt.) and vsis's prototypes "" */
 #include "csf.h" 
 #include "csfimpl.h" 
 

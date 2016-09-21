@@ -35,12 +35,12 @@ CPL_CVSID("$Id$");
 /*                      OGRAbstractProxiedLayer()                       */
 /************************************************************************/
 
-OGRAbstractProxiedLayer::OGRAbstractProxiedLayer(OGRLayerPool* poPool)
+OGRAbstractProxiedLayer::OGRAbstractProxiedLayer(OGRLayerPool* poPoolIn) :
+    poPrevLayer(NULL),
+    poNextLayer(NULL)
 {
-    CPLAssert(poPool != NULL);
-    this->poPool = poPool;
-    poPrevLayer = NULL;
-    poNextLayer = NULL;
+    CPLAssert(poPoolIn != NULL);
+    poPool = poPoolIn;
 }
 
 /************************************************************************/
@@ -59,12 +59,12 @@ OGRAbstractProxiedLayer::~OGRAbstractProxiedLayer()
 /*                            OGRLayerPool()                            */
 /************************************************************************/
 
-OGRLayerPool::OGRLayerPool(int nMaxSimultaneouslyOpened)
+OGRLayerPool::OGRLayerPool(int nMaxSimultaneouslyOpenedIn) :
+    poMRULayer(NULL),
+    poLRULayer(NULL),
+    nMRUListSize(0)
 {
-    poMRULayer = NULL;
-    poLRULayer = NULL;
-    nMRUListSize = 0;
-    this->nMaxSimultaneouslyOpened = nMaxSimultaneouslyOpened;
+    nMaxSimultaneouslyOpened = nMaxSimultaneouslyOpenedIn;
 }
 
 /************************************************************************/
@@ -154,16 +154,16 @@ void OGRLayerPool::UnchainLayer(OGRAbstractProxiedLayer* poLayer)
 /*                          OGRProxiedLayer()                           */
 /************************************************************************/
 
-OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool* poPool,
-                                 OpenLayerFunc pfnOpenLayer,
-                                 FreeUserDataFunc pfnFreeUserData,
-                                 void* pUserData) : OGRAbstractProxiedLayer(poPool)
+OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool* poPoolIn,
+                                 OpenLayerFunc pfnOpenLayerIn,
+                                 FreeUserDataFunc pfnFreeUserDataIn,
+                                 void* pUserDataIn) : OGRAbstractProxiedLayer(poPoolIn)
 {
-    CPLAssert(pfnOpenLayer != NULL);
+    CPLAssert(pfnOpenLayerIn != NULL);
 
-    this->pfnOpenLayer = pfnOpenLayer;
-    this->pfnFreeUserData = pfnFreeUserData;
-    this->pUserData = pUserData;
+    pfnOpenLayer = pfnOpenLayerIn;
+    pfnFreeUserData = pfnFreeUserDataIn;
+    pUserData = pUserDataIn;
     poUnderlyingLayer = NULL;
     poFeatureDefn = NULL;
     poSRS = NULL;
@@ -223,7 +223,12 @@ void OGRProxiedLayer::CloseUnderlyingLayer()
 OGRLayer* OGRProxiedLayer::GetUnderlyingLayer()
 {
     if( poUnderlyingLayer == NULL )
+    {
+        //  If the open fails, poUnderlyingLayer will still be a nullptr
+        // and the user will be warned by the open call.
+        // coverity[check_return]
         OpenUnderlyingLayer();
+    }
     return poUnderlyingLayer;
 }
 
@@ -472,10 +477,10 @@ OGRErr      OGRProxiedLayer::ReorderFields( int* panMap )
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr      OGRProxiedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr      OGRProxiedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
-    return poUnderlyingLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlags);
+    return poUnderlyingLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
 }
 
 /************************************************************************/
@@ -577,4 +582,3 @@ OGRErr      OGRProxiedLayer::SetIgnoredFields( const char **papszFields )
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
     return poUnderlyingLayer->SetIgnoredFields(papszFields);
 }
-

@@ -5,13 +5,13 @@
  * Purpose:  Implementation of CPLKeywordParser - a class for parsing
  *           the keyword format used for files like QuickBird .RPB files.
  *           This is a slight variation on the NASAKeywordParser used for
- *           the PDS/ISIS2/ISIS3 formats. 
+ *           the PDS/ISIS2/ISIS3 formats.
  * Author:   Frank Warmerdam <warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -31,7 +31,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h" 
+#include "cpl_string.h"
 #include "cplkeywordparser.h"
 
 CPL_CVSID("$Id");
@@ -46,11 +46,9 @@ CPL_CVSID("$Id");
 /*                         CPLKeywordParser()                          */
 /************************************************************************/
 
-CPLKeywordParser::CPLKeywordParser()
-
-{
-    papszKeywordList = NULL;
-}
+CPLKeywordParser::CPLKeywordParser() :
+    papszKeywordList(NULL), pszHeaderNext(NULL)
+{ }
 
 /************************************************************************/
 /*                        ~CPLKeywordParser()                          */
@@ -73,12 +71,10 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 /* -------------------------------------------------------------------- */
 /*      Read in buffer till we find END all on it's own line.           */
 /* -------------------------------------------------------------------- */
-    for( ; TRUE; ) 
+    for( ; true; )
     {
-        const char *pszCheck;
         char szChunk[513];
-
-        int nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
+        const size_t nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
 
         szChunk[nBytesRead] = '\0';
         osHeaderText += szChunk;
@@ -86,12 +82,13 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
         if( nBytesRead < 512 )
             break;
 
+        const char *pszCheck;
         if( osHeaderText.size() > 520 )
             pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
         else
             pszCheck = szChunk;
 
-        if( strstr(pszCheck,"\r\nEND;\r\n") != NULL 
+        if( strstr(pszCheck,"\r\nEND;\r\n") != NULL
             || strstr(pszCheck,"\nEND;\n") != NULL )
             break;
     }
@@ -113,24 +110,24 @@ int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
 {
     CPLString osName, osValue;
 
-    for( ; TRUE; )
+    for( ; true; )
     {
         if( !ReadPair( osName, osValue ) )
             return FALSE;
 
-        if( EQUAL(osName,"BEGIN_GROUP") )
+        if( EQUAL(osName,"BEGIN_GROUP") || EQUAL(osName,"GROUP") )
         {
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str() ) )
                 return FALSE;
         }
-        else if( EQUALN(osName,"END",3) )
+        else if( STARTS_WITH_CI(osName, "END") )
         {
             return TRUE;
         }
         else
         {
             osName = pszPathPrefix + osName;
-            papszKeywordList = CSLSetNameValue( papszKeywordList, 
+            papszKeywordList = CSLSetNameValue( papszKeywordList,
                                                 osName, osValue );
         }
     }
@@ -159,17 +156,17 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
 
     if( *pszHeaderNext != '=' )
     {
-        // ISIS3 does not have anything after the end group/object keyword. 
+        // ISIS3 does not have anything after the end group/object keyword.
         if( EQUAL(osName,"End_Group") || EQUAL(osName,"End_Object") )
             return TRUE;
         else
             return FALSE;
     }
-    
+
     pszHeaderNext++;
-    
+
     SkipWhite();
-    
+
     osValue = "";
 
     // Handle value lists like:     Name   = (Red, Red)
@@ -187,7 +184,7 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
 
             osValue += osWord;
             const char* pszIter = osWord.c_str();
-            int bInQuote = FALSE;
+            bool bInQuote = false;
             while(*pszIter != '\0')
             {
                 if (*pszIter == '"')
@@ -210,35 +207,35 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
         }
     }
 
-    else // Handle more normal "single word" values. 
+    else // Handle more normal "single word" values.
     {
         if( !ReadWord( osValue ) )
             return FALSE;
 
     }
-        
+
     SkipWhite();
 
-    // No units keyword?   
+    // No units keyword?
     if( *pszHeaderNext != '<' )
         return TRUE;
 
     // Append units keyword.  For lines that like like this:
     //  MAP_RESOLUTION               = 4.0 <PIXEL/DEGREE>
-    
+
     CPLString osWord;
-    
+
     osValue += " ";
-    
+
     while( ReadWord( osWord ) )
     {
         SkipWhite();
-        
+
         osValue += osWord;
         if( osWord[strlen(osWord)-1] == '>' )
             break;
     }
-    
+
     return TRUE;
 }
 
@@ -256,8 +253,8 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
     if( *pszHeaderNext == '\0' )
         return FALSE;
 
-    while( *pszHeaderNext != '\0' 
-           && *pszHeaderNext != '=' 
+    while( *pszHeaderNext != '\0'
+           && *pszHeaderNext != '='
            && *pszHeaderNext != ';'
            && !isspace((unsigned char)*pszHeaderNext) )
     {
@@ -294,7 +291,7 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
 
     if( *pszHeaderNext == ';' )
         pszHeaderNext++;
-    
+
     return TRUE;
 }
 
@@ -305,22 +302,22 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
 void CPLKeywordParser::SkipWhite()
 
 {
-    for( ; TRUE; )
+    for( ; true; )
     {
         // Skip white space (newline, space, tab, etc )
         if( isspace( (unsigned char)*pszHeaderNext ) )
         {
-            pszHeaderNext++; 
+            pszHeaderNext++;
             continue;
         }
-        
-        // Skip C style comments 
+
+        // Skip C style comments
         if( *pszHeaderNext == '/' && pszHeaderNext[1] == '*' )
         {
             pszHeaderNext += 2;
-            
-            while( *pszHeaderNext != '\0' 
-                   && (*pszHeaderNext != '*' 
+
+            while( *pszHeaderNext != '\0'
+                   && (*pszHeaderNext != '*'
                        || pszHeaderNext[1] != '/' ) )
             {
                 pszHeaderNext++;
@@ -330,13 +327,13 @@ void CPLKeywordParser::SkipWhite()
             continue;
         }
 
-        // Skip # style comments 
+        // Skip # style comments
         if( *pszHeaderNext == '#'  )
         {
             pszHeaderNext += 1;
 
             // consume till end of line.
-            while( *pszHeaderNext != '\0' 
+            while( *pszHeaderNext != '\0'
                    && *pszHeaderNext != 10
                    && *pszHeaderNext != 13 )
             {
@@ -345,7 +342,7 @@ void CPLKeywordParser::SkipWhite()
             continue;
         }
 
-        // not white space, return. 
+        // not white space, return.
         return;
     }
 }
@@ -358,11 +355,9 @@ const char *CPLKeywordParser::GetKeyword( const char *pszPath,
                                             const char *pszDefault )
 
 {
-    const char *pszResult;
-
-    pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
+    const char *pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
     if( pszResult == NULL )
         return pszDefault;
-    else
-        return pszResult;
+
+    return pszResult;
 }

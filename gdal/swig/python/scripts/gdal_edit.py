@@ -30,15 +30,16 @@
 ###############################################################################
 
 import sys
+
 from osgeo import gdal
 from osgeo import osr
 
 def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
-    print('                 [-tr xres yres] [-unsetgt] [-a_nodata value]')
+    print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
-    print('                 [-unsetmd] [-mo "META-TAG=VALUE"]*  datasetname')
+    print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
     print('Edit in place various information of an existing GDAL dataset.')
     return -1
@@ -67,6 +68,7 @@ def gdal_edit(argv):
     lrx = None
     lry = None
     nodata = None
+    unsetnodata = False
     xres = None
     yres = None
     unsetgt = False
@@ -77,6 +79,7 @@ def gdal_edit(argv):
     ro = False
     molist = []
     gcp_list = []
+    open_options = []
 
     i = 1
     argc = len(argv)
@@ -133,6 +136,11 @@ def gdal_edit(argv):
             stats = True
         elif argv[i] == '-unsetmd':
             unsetmd = True
+        elif argv[i] == '-unsetnodata':
+            unsetnodata = True
+        elif argv[i] == '-oo' and i < len(argv)-1:
+            open_options.append(argv[i+1])
+            i = i + 1
         elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
             return Usage()
@@ -149,7 +157,7 @@ def gdal_edit(argv):
 
     if (srs is None and lry is None and yres is None and not unsetgt
             and not unsetstats and not stats and nodata is None
-            and len(molist) == 0 and not unsetmd):
+            and len(molist) == 0 and not unsetmd and len(gcp_list) == 0 and not unsetnodata):
         print('No option specified')
         print('')
         return Usage()
@@ -171,7 +179,18 @@ def gdal_edit(argv):
         print('')
         return Usage()
 
-    if ro:
+    if unsetnodata and nodata:
+        print('-unsetnodata and -nodata options are exclusive.')
+        print('')
+        return Usage()
+
+    if open_options is not None:
+        if ro:
+            ds = gdal.OpenEx(datasetname, gdal.OF_RASTER, open_options = open_options)
+        else:
+            ds = gdal.OpenEx(datasetname, gdal.OF_RASTER | gdal.OF_UPDATE, open_options = open_options)
+    # GDAL 1.X compat
+    elif ro:
         ds = gdal.Open(datasetname)
     else:
         ds = gdal.Open(datasetname, gdal.GA_Update)
@@ -216,6 +235,9 @@ def gdal_edit(argv):
     if nodata is not None:
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i+1).SetNoDataValue(nodata)
+    elif unsetnodata:
+        for i in range(ds.RasterCount):
+            ds.GetRasterBand(i+1).DeleteNoDataValue()
 
     if unsetstats:
         for i in range(ds.RasterCount):

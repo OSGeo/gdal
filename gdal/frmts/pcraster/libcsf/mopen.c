@@ -1,17 +1,10 @@
-
-/*******************************************************/
-/*	FUNCTIE   MOPEN.C	                       */
-/*******************************************************/
-/*******************************************************/
-
-
 #include <string.h>
 
 #include "csf.h"
 #include "csfimpl.h"
 
 
-static const char *openModes[3] = {
+static const char * const openModes[3] = {
 	S_READ,
 	S_WRITE,
 	S_READ_WRITE
@@ -105,6 +98,11 @@ MAP  *Mopen(
      fprintf(stderr, "WARNING: Unable to read ORD_OK in CSF.\n");
  }
  if (s != ORD_OK) {
+    if( s != ORD_SWAB )
+    {
+        M_ERROR(NOT_CSF);
+        goto error_open;
+    }
 	m->write = CsfWriteSwapped;
 	m->read  = CsfReadSwapped;
  }
@@ -133,11 +131,11 @@ MAP  *Mopen(
  m->read((void *)&(m->raster.valueScale), sizeof(UINT2),(size_t)1,m->fp);
  m->read((void *)&(m->raster.cellRepr), sizeof(UINT2),(size_t)1,m->fp);
 
- if (0 != fread((void *)&(m->raster.minVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
+ if (1 != fread((void *)&(m->raster.minVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
  {
      fprintf(stderr, "WARNING: Unable to read min val in CSF.\n");
  }
- if (0 != fread((void *)&(m->raster.maxVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
+ if (1 != fread((void *)&(m->raster.maxVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
  {
      fprintf(stderr, "WARNING: Unable to read max val in CSF.\n");
  }

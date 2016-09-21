@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test BNA driver functionality.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -58,14 +58,12 @@ def ogr_bna_1():
     if ogrtest.check_feature_geometry( feat, 'POINT (573.736 476.563)',
                                        max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'POINT (532.991 429.121)',
                                        max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################
@@ -87,8 +85,7 @@ def ogr_bna_2():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (224.598 307.425,333.043 341.461,396.629 304.952)', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################
@@ -107,21 +104,16 @@ def ogr_bna_3():
         return 'fail'
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    feat.Destroy()
     feat = lyr.GetNextFeature()
-    feat.Destroy()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
     feat = lyr.GetFeature(2)
     if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
     feat = lyr.GetFeature(3)
     if ogrtest.check_feature_geometry( feat, 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2))', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
 
     return 'success'
 
@@ -141,8 +133,7 @@ def ogr_bna_4():
         return 'fail'
 
     lyr.ResetReading()
-    feat = lyr.GetNextFeature()
-    feat.Destroy()
+    lyr.GetNextFeature()
 
     return 'success'
 
@@ -197,9 +188,7 @@ def ogr_bna_write(creation_options):
 
             feat = src_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-
-    output_ds.Destroy()
+    output_ds = None
 
     # Check features
     output_ds = ogr.Open( 'tmp/out.bna' )
@@ -208,8 +197,6 @@ def ogr_bna_write(creation_options):
         dst_lyr = output_ds.GetLayerByName('out_' + layer_name)
         if ogr_bna_check_content(src_lyr, dst_lyr) != 'success':
             return 'fail'
-
-    output_ds.Destroy()
 
     return 'success'
 
@@ -227,31 +214,30 @@ def ogr_bna_6():
     ret = ogr_bna_write( ['LINEFORMAT=LF','MULTILINE=NO', 'COORDINATE_PRECISION=3'] )
     if ret != 'success':
         return ret
-        
+
     size = os.stat('tmp/out.bna').st_size
     if size != 1479:
         gdaltest.post_reason('Got size %d. Expected %d' % (size, 1479))
         return 'fail'
 
     os.remove( 'tmp/out.bna' )
-    
+
     ret = ogr_bna_write( ['LINEFORMAT=CRLF','MULTILINE=NO', 'COORDINATE_PRECISION=3'] )
     if ret != 'success':
         return ret
-        
+
     size = os.stat('tmp/out.bna').st_size
     if size != 1487:
         gdaltest.post_reason('Got size %d. Expected %d' % (size, 1487))
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_bna_cleanup():
 
-    gdaltest.bna_ds.Destroy()
     gdaltest.bna_ds = None
 
     try:
@@ -261,7 +247,7 @@ def ogr_bna_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_bna_1,
     ogr_bna_2,
     ogr_bna_3,
@@ -277,4 +263,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

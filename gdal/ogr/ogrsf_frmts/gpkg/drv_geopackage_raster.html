@@ -9,7 +9,7 @@
 <h1>GeoPackage raster</h1>
 
 <p>Starting with GDAL 2.0, this driver implements full read/creation/update of
-tables containing raster tiles in the 
+tables containing raster tiles in the
 <a href="http://www.geopackage.org/spec/">OGC GeoPackage format standard</a>.
 The GeoPackage standard uses a SQLite database file as a generic container, and the standard defines:
 </p>
@@ -124,8 +124,8 @@ recompression of tiles to be done, which might cause unnecessary quality loss wh
 lossy compression (JPEG, WebP). To avoid that, the driver will create a temporary
 database next to the main GeoPackage file to store partial GeoPackage tiles in a
 lossless (and uncompressed) way. Once a tile has received data for its four quadrants
-and for all the bands (or the dataset is closed or explicitely flushed with FlushCache()),
-those uncompressed tiles are definitely transfered to the GeoPackage file with
+and for all the bands (or the dataset is closed or explicitly flushed with FlushCache()),
+those uncompressed tiles are definitely transferred to the GeoPackage file with
 the appropriate compression. All of this is transparent to the user of GDAL API/utilities</p>
 
 <h3><a id="tile_formats">Tile formats</a></h3>
@@ -249,7 +249,7 @@ See <a href="#tiling_schemes">Tiling schemes</a> section. Defaults to CUSTOM.</l
 <li><b>ZOOM_LEVEL_STRATEGY</b>=AUTO/LOWER/UPPER. Strategy to determine zoom level.
 Only used for TILING_SCHEME is different from CUSTOM. LOWER will select the
 zoom level immediately below the theoretical computed non-integral zoom level,
-leading to subsampling. On the contrary, UPPER will select the immedately above
+leading to subsampling. On the contrary, UPPER will select the immediately above
 zoom level, leading to oversampling. Defaults to AUTO which selects the closest
 zoom level.</li>
 <li><b>RESAMPLING</b>=NEAREST/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/AVERAGE.

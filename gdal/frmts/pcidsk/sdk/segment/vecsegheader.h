@@ -28,8 +28,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_SEGMENT_VECSEGHEADER_H
-#define __INCLUDE_SEGMENT_VECSEGHEADER_H
+#ifndef INCLUDE_SEGMENT_VECSEGHEADER_H
+#define INCLUDE_SEGMENT_VECSEGHEADER_H
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"

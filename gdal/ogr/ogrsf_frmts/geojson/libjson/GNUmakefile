@@ -1,6 +1,6 @@
 # $Id$
 #
-# Makefile building jcon-c library (http://oss.metaparadigm.com/json-c/)
+# Makefile building json-c library (http://oss.metaparadigm.com/json-c/)
 # 
 include ../../../../GDALmake.opt
 
@@ -20,6 +20,9 @@ O_OBJ = $(foreach file,$(OBJ),../../o/$(file))
 CPPFLAGS := $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
+
+# -D_XOPEN_SOURCE=500 to enable strdup() definition in C11 mode
+CPPFLAGS := -D_XOPEN_SOURCE=500 $(CPPFLAGS)
 
 ../../o/%.$(OBJ_EXT):	%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<

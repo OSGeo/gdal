@@ -85,7 +85,7 @@ int PCIDSK::DataTypeSize( eChanType chan_type )
  * Return name for the data type.
  *
  * The returned values are suitable for display to people, and matches
- * the portion of the name after the underscore (ie. "8U" for CHN_8U.
+ * the portion of the name after the underscore (i.e. "8U" for CHN_8U.
  *
  * @param chan_type the channel type enumeration value to be translated.
  *
@@ -184,9 +184,9 @@ bool PCIDSK::IsDataTypeComplex(eChanType type)
  * Return name for segment type.
  *
  * Returns a short name for the segment type code passed in.  This is normally
- * the portion of the enumeration name that comes after the underscore - ie. 
- * "BIT" for SEG_BIT. 
- * 
+ * the portion of the enumeration name that comes after the underscore - i.e.
+ * "BIT" for SEG_BIT.
+ *
  * @param type the segment type code.
  *
  * @return the string for the segment type.

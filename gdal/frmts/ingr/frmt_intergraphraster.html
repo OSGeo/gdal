@@ -33,14 +33,15 @@ Those are the data formats that the INGR driver supports for reading:<p>
   <li>29 - Adaptive Gray Scale</li>
   <li>30 - JPEG GRAY</li>
   <li>31 - JPEG RGB </li>
-  <li>32 - JPEG CYMK</li>
+  <li>32 - JPEG CMYK</li>
   <li>65 - Tiled</li>
   <li>67 - Continuous Tone&nbsp;</li>
 </ul>
 
-The format "65 - Tiled" is not a format; it is just an indication that the file 
-is tiled. In this case the tile header contains the real data format code that could be any of the above formats. The INGR driver can read tiled and untilled 
-instance of any of the supported data formats.<p>
+The format "65 - Tiled" is not a format; it is just an indication that the
+file is tiled. In this case the tile header contains the real data format code
+that could be any of the above formats. The INGR driver can read tiled and
+untiled instance of any of the supported data formats.<p>
 
 <h2>Writing INGR Files</h2>
 
@@ -61,7 +62,7 @@ Note that writing in that format is not encouraged.<p>
 <h2>File Extension</h2>
 
 The following is a partial listing of INGR file extensions:<p>
-  
+
 <table style="width: 501px; height: 394px; text-align: left; margin-left: 0px; margin-right: auto;" border="1">
   <tbody>
     <tr>
@@ -199,7 +200,7 @@ extension in order to identify or create an INGR file.<p>
 The INGR driver does not support reading or writing
 georeference information. The reason for that is because there is no universal
 way of storing georeferencing in INGR files. It could have georeference stored
-in a companying .dgn file or in application specific data storage inside the
+in a accompanying .dgn file or in application specific data storage inside the
 file itself.<p>
 
 <h2>Metadata</h2>

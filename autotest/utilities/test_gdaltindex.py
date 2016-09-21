@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdaltindex testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -92,13 +92,22 @@ def test_gdaltindex_1():
         gdaltest.post_reason('got error/warning')
         print(err)
         return 'fail'
-    gdaltest.runexternal(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
+
+    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif')
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
+        gdaltest.post_reason('fail')
+        print(ret_stdout)
+        print(ret_stderr)
+        print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
     tileindex_wkt = ds.GetLayer(0).GetSpatialRef().ExportToWkt()
     if tileindex_wkt.find('GCS_WGS_1984') == -1:
+        gdaltest.post_reason('fail')
+        print(ret_stdout)
+        print(ret_stderr)
+        print(tileindex_wkt)
         return 'fail'
 
     expected_wkts =['POLYGON ((49 2,50 2,50 1,49 1,49 2))',
@@ -160,10 +169,10 @@ def test_gdaltindex_3():
 
     (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif')
 
-    expected = 'Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex.\nThis may cause problems when using it in MapServer for example.\nUse -t_srs option to set target projection system (not supported by MapServer).'
-    if ret_stderr.find(expected) == -1:
+    if ret_stderr.find('Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex.') == -1 or \
+       ret_stderr.find('Use -t_srs option to set target projection system (not supported by MapServer).') == -1:
         print(ret_stderr)
-        gdaltest.post_reason( 'got unexpected error message \n[%s]\nexpecting\n[%s]' % (ret_stderr,expected))
+        gdaltest.post_reason( 'got unexpected error message \n[%s]' % (ret_stderr))
         return 'fail'
 
     ds = ogr.Open('tmp/tileindex.shp')

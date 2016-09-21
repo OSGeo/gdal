@@ -29,10 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_kml.h"
-#include "ogr_api.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
+#include "ogr_kml.h"
 #include "ogr_p.h"
 
 /* Function utility to dump OGRGeometry to KML text. */
@@ -43,16 +43,26 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char* pszAltitudeMode );
 /************************************************************************/
 
 OGRKMLLayer::OGRKMLLayer( const char * pszName,
-                          OGRSpatialReference *poSRSIn, int bWriterIn,
+                          OGRSpatialReference *poSRSIn, bool bWriterIn,
                           OGRwkbGeometryType eReqType,
-                          OGRKMLDataSource *poDSIn )
-{    	
-    poCT_ = NULL;
+                          OGRKMLDataSource *poDSIn ) :
+    poDS_(NULL),
+    poSRS_(NULL),
+    poCT_(NULL),
+    iNextKMLId_(0),
+    nTotalKMLCount_(-1),
+    bWriter_(bWriterIn),
+    nLayerNumber_(0),
+    nWroteFeatureCount_(0),
+    bSchemaWritten_(FALSE),
+    nLastAsked(-1),
+    nLastCount(-1)
+{
 
     /* KML should be created as WGS84. */
     if( poSRSIn != NULL )
     {
-        poSRS_ = new OGRSpatialReference(NULL);   
+        poSRS_ = new OGRSpatialReference(NULL);
         poSRS_->SetWellKnownGeogCS( "WGS84" );
         if (!poSRS_->IsSame(poSRSIn))
         {
@@ -68,29 +78,20 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
                         "Failed to create coordinate transformation between the\n"
                         "input coordinate system and WGS84.  This may be because they\n"
                         "are not transformable, or because projection services\n"
-                        "(PROJ.4 DLL/.so) could not be loaded.\n" 
+                        "(PROJ.4 DLL/.so) could not be loaded.\n"
                         "KML geometries may not render correctly.\n"
                         "This message will not be issued any more. \n"
-                        "\nSource:\n%s\n", 
+                        "\nSource:\n%s\n",
                         pszWKT );
 
                 CPLFree( pszWKT );
-                poDSIn->IssuedFirstCTError(); 
+                poDSIn->IssuedFirstCTError();
             }
         }
     }
-    else
-    {
-        poSRS_ = NULL;
-    }
-
-    iNextKMLId_ = 0;
-    nTotalKMLCount_ = -1;
-    nLastAsked = -1;
-    nLastCount = -1;
 
     poDS_ = poDSIn;
-    
+
     poFeatureDefn_ = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn_->GetName() );
     poFeatureDefn_->Reference();
@@ -100,14 +101,11 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
 
     OGRFieldDefn oFieldName( "Name", OFTString );
     poFeatureDefn_->AddFieldDefn( &oFieldName );
-    
+
     OGRFieldDefn oFieldDesc( "Description", OFTString );
     poFeatureDefn_->AddFieldDefn( &oFieldDesc );
 
-    bWriter_ = bWriterIn;
-    nWroteFeatureCount_ = 0;
     bClosedForWriting = (bWriterIn == FALSE);
-    bSchemaWritten_ = FALSE;
 
     pszName_ = CPLStrdup(pszName);
 }
@@ -123,10 +121,10 @@ OGRKMLLayer::~OGRKMLLayer()
 
     if( NULL != poSRS_ )
         poSRS_->Release();
-	
+
     if( NULL != poCT_ )
         delete poCT_;
-	
+
     CPLFree( pszName_ );
 }
 
@@ -145,7 +143,7 @@ OGRFeatureDefn* OGRKMLLayer::GetLayerDefn()
 
 void OGRKMLLayer::ResetReading()
 {
-    iNextKMLId_ = 0;    
+    iNextKMLId_ = 0;
     nLastAsked = -1;
     nLastCount = -1;
 }
@@ -167,37 +165,37 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
         return NULL;
     poKMLFile->selectLayer(nLayerNumber_);
 
-    while(TRUE)
+    while( true )
     {
         Feature *poFeatureKML = NULL;
         poFeatureKML = poKMLFile->getFeature(iNextKMLId_++, nLastAsked, nLastCount);
-    
+
         if(poFeatureKML == NULL)
             return NULL;
-    
+
         CPLAssert( poFeatureKML != NULL );
-    
+
         OGRFeature *poFeature = new OGRFeature( poFeatureDefn_ );
-        
+
         if(poFeatureKML->poGeom)
         {
             poFeature->SetGeometryDirectly(poFeatureKML->poGeom);
             poFeatureKML->poGeom = NULL;
         }
-    
+
         // Add fields
         poFeature->SetField( poFeatureDefn_->GetFieldIndex("Name"), poFeatureKML->sName.c_str() );
         poFeature->SetField( poFeatureDefn_->GetFieldIndex("Description"), poFeatureKML->sDescription.c_str() );
         poFeature->SetFID( iNextKMLId_ - 1 );
-    
+
         // Clean up
         delete poFeatureKML;
-    
+
         if( poFeature->GetGeometryRef() != NULL && poSRS_ != NULL)
         {
             poFeature->GetGeometryRef()->assignSpatialReference( poSRS_ );
         }
-    
+
         /* Check spatial/attribute filters */
         if ((m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) ) &&
             (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) )
@@ -301,11 +299,11 @@ CPLString OGRKMLLayer::WriteSchema()
                 pszKMLEltName = "SimpleArrayField";
                 break;
                 //TODO: KML doesn't handle these data types yet...
-              case OFTDate:                
-              case OFTTime:                
+              case OFTDate:
+              case OFTTime:
               case OFTDateTime:
                 pszKMLType = "string";
-                pszKMLEltName = "SimpleField";                
+                pszKMLEltName = "SimpleField";
                 break;
 
               default:
@@ -313,7 +311,7 @@ CPLString OGRKMLLayer::WriteSchema()
                 pszKMLEltName = "SimpleField";
                 break;
             }
-            osRet += CPLSPrintf( "\t<%s name=\"%s\" type=\"%s\"></%s>\n", 
+            osRet += CPLSPrintf( "\t<%s name=\"%s\" type=\"%s\"></%s>\n",
                         pszKMLEltName, fieldDefinition->GetNameRef() ,pszKMLType, pszKMLEltName );
         }
         if( osRet.size() )
@@ -363,12 +361,12 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     if (NULL != poDS_->GetNameField())
     {
         for( int iField = 0; iField < poFeatureDefn_->GetFieldCount(); iField++ )
-        {        
+        {
             OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
             if( poFeature->IsFieldSet( iField )
                 && EQUAL(poField->GetNameRef(), poDS_->GetNameField()) )
-            {           
+            {
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
                 while( *pszRaw == ' ' )
                     pszRaw++;
@@ -384,12 +382,12 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     if (NULL != poDS_->GetDescriptionField())
     {
         for( int iField = 0; iField < poFeatureDefn_->GetFieldCount(); iField++ )
-        {        
+        {
             OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
             if( poFeature->IsFieldSet( iField )
                 && EQUAL(poField->GetNameRef(), poDS_->GetDescriptionField()) )
-            {           
+            {
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
                 while( *pszRaw == ' ' )
                     pszRaw++;
@@ -444,7 +442,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
             else
                 bHasWidth = TRUE;
             const char* pszColor = poPen->Color(bDefault);
-            int nColorLen = CPLStrnlen(pszColor, 10);
+            int nColorLen = static_cast<int>(CPLStrnlen(pszColor, 10));
             if( pszColor != NULL && pszColor[0] == '#' && !bDefault && nColorLen >= 7)
             {
                 char acColor[9] = {0};
@@ -498,7 +496,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
                 continue;
 
             if (!bHasFoundOtherField)
-            {                
+            {
                 VSIFPrintfL( fp, "\t<ExtendedData><SchemaData schemaUrl=\"#%s\">\n", pszName_ );
                 bHasFoundOtherField = TRUE;
             }
@@ -517,7 +515,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
                 pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
             }
 
-            VSIFPrintfL( fp, "\t\t<SimpleData name=\"%s\">%s</SimpleData>\n", 
+            VSIFPrintfL( fp, "\t\t<SimpleData name=\"%s\">%s</SimpleData>\n",
                         poField->GetNameRef(), pszEscaped);
 
             CPLFree( pszEscaped );
@@ -534,7 +532,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     {
         char* pszGeometry = NULL;
         OGREnvelope sGeomBounds;
-        OGRGeometry* poWGS84Geom;	
+        OGRGeometry* poWGS84Geom;
 
         if (NULL != poCT_)
         {
@@ -545,13 +543,13 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         {
             poWGS84Geom = poFeature->GetGeometryRef();
         }
-	
+
         // TODO - porting
         // pszGeometry = poFeature->GetGeometryRef()->exportToKML();
-        pszGeometry = 
+        pszGeometry =
             OGR_G_ExportToKML( (OGRGeometryH)poWGS84Geom,
                                poDS_->GetAltitudeMode());
-        
+
         VSIFPrintfL( fp, "      %s\n", pszGeometry );
         CPLFree( pszGeometry );
 
@@ -563,7 +561,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
             delete poWGS84Geom;
         }
     }
-    
+
     VSIFPrintfL( fp, "  </Placemark>\n" );
     nWroteFeatureCount_++;
     return OGRERR_NONE;
@@ -585,8 +583,8 @@ int OGRKMLLayer::TestCapability( const char * pszCap )
     }
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
     {
-//        if( poFClass == NULL 
-//            || m_poFilterGeom != NULL 
+//        if( poFClass == NULL
+//            || m_poFilterGeom != NULL
 //            || m_poAttrQuery != NULL )
             return FALSE;
 
@@ -609,7 +607,7 @@ OGRErr OGRKMLLayer::CreateField( OGRFieldDefn *poField,
     if( !bWriter_ || iNextKMLId_ != 0 )
         return OGRERR_FAILURE;
 
-	OGRFieldDefn oCleanCopy( poField );
+    OGRFieldDefn oCleanCopy( poField );
     poFeatureDefn_->AddFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;

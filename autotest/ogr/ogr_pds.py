@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR PDS driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -55,7 +55,8 @@ def ogr_pds_1():
         gdaltest.post_reason('did not get expected feature count')
         return 'fail'
 
-    feat = lyr.GetNextFeature()
+    with gdaltest.error_handler():
+        feat = lyr.GetNextFeature()
     if feat.GetField('NOISE_COUNTS_1') != 96:
         feat.DumpReadable()
         return 'fail'
@@ -66,14 +67,15 @@ def ogr_pds_1():
         print(geom.ExportToWkt())
         return 'fail'
 
-    feat = lyr.GetFeature(1)
+    with gdaltest.error_handler():
+        feat = lyr.GetFeature(1)
     if feat.GetField('MARS_RADIUS') != 3385310.2:
         feat.DumpReadable()
         return 'fail'
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_pds_1 ]
 
 
@@ -84,4 +86,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

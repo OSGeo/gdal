@@ -34,13 +34,13 @@
 
 #define GDAL_PCIDSK_DRIVER
 
+#include "cpl_string.h"
+#include "gdal_pam.h"
+#include "ogrsf_frmts.h"
+#include "ogr_spatialref.h"
 #include "pcidsk.h"
 #include "pcidsk_pct.h"
-#include "ogrsf_frmts.h"
 #include "pcidsk_vectorsegment.h"
-#include "gdal_pam.h"
-#include "cpl_string.h"
-#include "ogr_spatialref.h"
 
 using namespace PCIDSK;
 
@@ -58,11 +58,11 @@ class PCIDSK2Dataset : public GDALPamDataset
     CPLString   osLastMDValue;
     char      **papszLastMDListValue;
 
-    PCIDSKFile  *poFile;
+    PCIDSK::PCIDSKFile  *poFile;
 
     std::vector<OGRPCIDSKLayer*> apoLayers;
 
-    static GDALDataType  PCIDSKTypeToGDAL( eChanType eType );
+    static GDALDataType  PCIDSKTypeToGDAL( PCIDSK::eChanType eType );
     void                 ProcessRPC();
 
   public:
@@ -113,12 +113,12 @@ class PCIDSK2Band : public GDALPamRasterBand
 {
     friend class PCIDSK2Dataset;
 
-    PCIDSKChannel *poChannel;
-    PCIDSKFile    *poFile;
+    PCIDSK::PCIDSKChannel *poChannel;
+    PCIDSK::PCIDSKFile *poFile;
 
     void        RefreshOverviewList();
     std::vector<PCIDSK2Band*> apoOverviews;
-    
+
     CPLString   osLastMDValue;
     char      **papszLastMDListValue;
 
@@ -132,8 +132,8 @@ class PCIDSK2Band : public GDALPamRasterBand
     void        Initialize();
 
   public:
-                PCIDSK2Band( PCIDSK2Dataset *, PCIDSKFile *, int );
-                PCIDSK2Band( PCIDSKChannel * );
+                PCIDSK2Band( PCIDSK2Dataset *, PCIDSK::PCIDSKFile *, int );
+                PCIDSK2Band( PCIDSK::PCIDSKChannel * );
                 ~PCIDSK2Band();
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -144,7 +144,7 @@ class PCIDSK2Band : public GDALPamRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorTable( GDALColorTable * );
 
     virtual void        SetDescription( const char * );
 
@@ -178,7 +178,7 @@ class OGRPCIDSKLayer : public OGRLayer
     OGRSpatialReference *poSRS;
 
   public:
-    OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, bool bUpdate );
+    OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, PCIDSK::PCIDSKVectorSegment *, bool bUpdate );
     ~OGRPCIDSKLayer();
 
     void                ResetReading();
@@ -197,6 +197,8 @@ class OGRPCIDSKLayer : public OGRLayer
 
     GIntBig             GetFeatureCount( int );
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
 #endif /*  PCIDSKDATASET2_H_INCLUDED */

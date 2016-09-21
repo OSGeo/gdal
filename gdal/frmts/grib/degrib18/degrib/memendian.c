@@ -194,7 +194,7 @@ void *revmemcpyRay (void *Dst, void *Src, const size_t elem_size,
  *
  * NOTES
  * 1) Assumes binary bit stream is "big endian". Resulting in no byte
- *    boundaries ie 00100110101101 => 001001 | 10101101
+ *    boundaries i.e. 00100110101101 => 001001 | 10101101
  *****************************************************************************
  */
 char memBitRead (void *Dst, size_t dstLen, void *Src, size_t numBits,
@@ -329,7 +329,7 @@ char memBitRead (void *Dst, size_t dstLen, void *Src, size_t numBits,
  *
  * NOTES
  * 1) Assumes binary bit stream should be "big endian". Resulting in no byte
- *    boundaries ie 00100110101101 => 001001 | 1010110
+ *    boundaries i.e. 00100110101101 => 001001 | 1010110
  * 2) Assumes that Dst is already zero'ed out.
  *****************************************************************************
  */

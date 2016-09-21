@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_SEGMENT_CPCIDSKGCP2SEGMENT_H
-#define __INCLUDE_SEGMENT_CPCIDSKGCP2SEGMENT_H
+#ifndef INCLUDE_SEGMENT_CPCIDSKGCP2SEGMENT_H
+#define INCLUDE_SEGMENT_CPCIDSKGCP2SEGMENT_H
 
 #include "pcidsk_gcp.h"
 #include "pcidsk_gcpsegment.h"
@@ -60,5 +60,5 @@ namespace PCIDSK {
     };
 }
 
-#endif // __INCLUDE_SEGMENT_CPCIDSKGCP2SEGMENT_H
+#endif // INCLUDE_SEGMENT_CPCIDSKGCP2SEGMENT_H
 

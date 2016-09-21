@@ -48,7 +48,7 @@ OGROGDIDataSource::OGROGDIDataSource()
     m_poSpatialRef = NULL;
     m_poCurrentLayer = NULL;
     m_bLaunderLayerNames =
-            CSLTestBoolean(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO"));
+            CPLTestBool(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO"));
 }
 
 /************************************************************************/
@@ -88,7 +88,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
     char *pszWorkingName;
 
     CPLAssert( m_nLayers == 0 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Parse the dataset name.                                         */
 /*      i.e.                                                            */
@@ -96,7 +96,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 /*                                                                      */
 /*      Where <Family> is one of: Line, Area, Point, and Text           */
 /* -------------------------------------------------------------------- */
-        if( !EQUALN(pszNewName,"gltp:",5) )
+        if( !STARTS_WITH_CI(pszNewName, "gltp:") )
             return FALSE;
 
         pszWorkingName = CPLStrdup( pszNewName );
@@ -104,13 +104,13 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         pszFamily = strrchr(pszWorkingName, ':');
 
         // Don't treat drive name colon as family separator.  It is assumed
-        // that drive names are on character long, and preceeded by a 
+        // that drive names are on character long, and preceded by a
         // forward or backward slash.
-        if( pszFamily < pszWorkingName+2 
+        if( pszFamily < pszWorkingName+2
             || pszFamily[-2] == '/'
             || pszFamily[-2] == '\\' )
             pszFamily = NULL;
-        
+
         if (pszFamily && pszFamily != pszWorkingName + 4)
         {
             *pszFamily = '\0';
@@ -172,7 +172,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
         {
             CPLError( CE_Warning, CPLE_NotSupported,
-                      "untranslatable PROJ.4 projection: %s\n", 
+                      "untranslatable PROJ.4 projection: %s\n",
                       ECSTEXT(psResult) );
             delete m_poSpatialRef;
             m_poSpatialRef = NULL;
@@ -188,7 +188,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
                       "%s", psResult->message );
             return FALSE;
         }
-    
+
 /* -------------------------------------------------------------------- */
 /*      If an explicit layer was selected, just create that layer.      */
 /* -------------------------------------------------------------------- */
@@ -228,7 +228,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
             int         i;
             const ecs_LayerCapabilities *psLayerCap;
 
-            for( i = 0; 
+            for( i = 0;
                 (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != NULL;
                  i++ )
             {
@@ -253,13 +253,13 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      the datasource.                                                 */
 /************************************************************************/
 
-void OGROGDIDataSource::IAddLayer( const char *pszLayerName, 
+void OGROGDIDataSource::IAddLayer( const char *pszLayerName,
                                    ecs_Family eFamily )
 
 {
     m_papoLayers = (OGROGDILayer**)
         CPLRealloc( m_papoLayers, (m_nLayers+1) * sizeof(OGROGDILayer*));
-    
+
     m_papoLayers[m_nLayers++] = new OGROGDILayer(this, pszLayerName, eFamily);
 }
 

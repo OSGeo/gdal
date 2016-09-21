@@ -1,8 +1,3 @@
-/********/
-/* USES */
-/********/
-
-/* libs ext. <>, our ""  */
 #include "csf.h"
 
 /* global header (opt.) and swapio's prototypes "" */
@@ -52,9 +47,12 @@ int CsfValidSize(size_t size)
 #endif
 
 /* ARGSUSED */
-static void Swap1(CPL_UNUSED unsigned char * buf,  CPL_UNUSED size_t n)
+static void Swap1(unsigned char *buf,  size_t n)
 {
 	/* do nothing */
+  /* Shut up C compiler. */
+  (void)buf;
+  (void)n;
 }
 
 static void Swap2(unsigned char *b,  size_t n)

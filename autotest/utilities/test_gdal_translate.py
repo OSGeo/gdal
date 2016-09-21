@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_translate testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -361,7 +361,7 @@ def test_gdal_translate_13():
     if ds is None:
         return 'fail'
 
-    md = ds.GetMetadata() 
+    md = ds.GetMetadata()
     if 'TIFFTAG_DOCUMENTNAME' not in md:
         gdaltest.post_reason('Did not get TIFFTAG_DOCUMENTNAME')
         return 'fail'
@@ -383,7 +383,7 @@ def test_gdal_translate_14():
     if ds is None:
         return 'fail'
 
-    md = ds.GetMetadata('IMAGE_STRUCTURE') 
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
     if 'COMPRESSION' not in md or md['COMPRESSION'] != 'LZW':
         gdaltest.post_reason('Did not get COMPRESSION')
         return 'fail'
@@ -517,7 +517,7 @@ def test_gdal_translate_19():
         return 'skip'
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_translate_19_src.tif',1,1,2)
-    ct = gdal.ColorTable() 
+    ct = gdal.ColorTable()
     ct.SetColorEntry( 127, (1,2,3,255) )
     ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
     ds.GetRasterBand( 1 ).Fill(127)
@@ -546,7 +546,7 @@ def test_gdal_translate_19():
     ds = None
 
     return 'success'
-    
+
 ###############################################################################
 # Test -a_nodata None
 
@@ -860,6 +860,137 @@ def test_gdal_translate_30():
     return 'success'
 
 ###############################################################################
+# Test -projwin_srs option
+
+def test_gdal_translate_31():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -projwin_srs EPSG:4267 -projwin -117.641168620797 33.9023526904262 -117.628110837847 33.8915970129613 ../gcore/data/byte.tif tmp/test_gdal_translate_31.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_31.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-6) :
+        gdaltest.post_reason('Bad geotransform')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test subsetting a file with a RPC
+
+def test_gdal_translate_32():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte_rpc.tif tmp/test_gdal_translate_32.tif -srcwin 1 2 13 14 -outsize 150% 300%')
+    ds = gdal.Open('tmp/test_gdal_translate_32.tif')
+    md = ds.GetMetadata('RPC')
+    if abs(float(md['LINE_OFF']) - 47496) > 1e-5 or \
+       abs(float(md['LINE_SCALE']) - 47502) > 1e-5 or \
+       abs(float(md['SAMP_OFF']) - 19676.6923076923) > 1e-5 or \
+       abs(float(md['SAMP_SCALE']) - 19678.1538461538) > 1e-5:
+           gdaltest.post_reason('fail')
+           print(md)
+           return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -outsize option in auto mode
+
+def test_gdal_translate_33():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 100 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_33.tif')
+    if ds.RasterYSize != 50:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 100 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_33.tif')
+    if ds.RasterXSize != 200:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/test_gdal_translate_33.tif')
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+    if err.find('-outsize 0 0 invalid') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test NBITS is preserved
+
+def test_gdal_translate_34():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/oddsize1bit.tif tmp/test_gdal_translate_34.vrt -of VRT -mo FOO=BAR')
+
+    ds = gdal.Open('tmp/test_gdal_translate_34.vrt')
+    if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/test_gdal_translate_34.vrt')
+
+    return 'success'
+
+###############################################################################
+# Test various errors (missing source or dest...)
+
+def test_gdal_translate_35():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path())
+    if err.find('No source dataset specified') < 0:
+        gdaltest.post_reason('fail')
+        print(err)
+        return 'fail'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif')
+    if err.find('No target dataset specified') < 0:
+        gdaltest.post_reason('fail')
+        print(err)
+        return 'fail'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' /non_existing_path/non_existing.tif /vsimem/out.tif')
+    if err.find('does not exist in the file system') < 0 and err.find('No such file or directory') < 0:
+        gdaltest.post_reason('fail')
+        print(err)
+        return 'fail'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif /non_existing_path/non_existing.tif')
+    if err.find('Attempt to create new tiff file') < 0:
+        gdaltest.post_reason('fail')
+        print(err)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_cleanup():
@@ -958,6 +1089,14 @@ def test_gdal_translate_cleanup():
         os.remove('tmp/test_gdal_translate_30.tif')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdal_translate_31.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/test_gdal_translate_32.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -991,6 +1130,11 @@ gdaltest_list = [
     test_gdal_translate_28,
     test_gdal_translate_29,
     test_gdal_translate_30,
+    test_gdal_translate_31,
+    test_gdal_translate_32,
+    test_gdal_translate_33,
+    test_gdal_translate_34,
+    test_gdal_translate_35,
     test_gdal_translate_cleanup
     ]
 

@@ -32,6 +32,8 @@
 
 CPL_CVSID("$Id$");
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 /************************************************************************/
 /*                            CEOSScanInt()                             */
 /*                                                                      */
@@ -39,7 +41,7 @@ CPL_CVSID("$Id$");
 /*      as an integer.                                                  */
 /************************************************************************/
 
-static long CEOSScanInt( const char * pszString, int nMaxChars )
+static int CEOSScanInt( const char * pszString, int nMaxChars )
 
 {
     char	szWorking[33];
@@ -69,6 +71,7 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 {
     GByte	abyHeader[12];
     CEOSRecord  *psRecord;
+    GUInt32 nRecordNumUInt32, nLengthUInt32;
 
 /* -------------------------------------------------------------------- */
 /*      Read the standard CEOS header.                                  */
@@ -93,54 +96,53 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
         CPL_SWAP32PTR( abyHeader + 8 );
     }
 
-    psRecord->nRecordNum = abyHeader[0] * 256 * 256 * 256
-                         + abyHeader[1] * 256 * 256
-                         + abyHeader[2] * 256
+    nRecordNumUInt32 = (abyHeader[0] << 24)
+                         + (abyHeader[1] << 16)
+                         + (abyHeader[2] << 8)
                          + abyHeader[3];
 
-    psRecord->nRecordType = abyHeader[4] * 256 * 256 * 256
-                          + abyHeader[5] * 256 * 256
-                          + abyHeader[6] * 256
-                          + abyHeader[7];
+    psRecord->nRecordType = (abyHeader[4] << 24)
+                         + (abyHeader[5] << 16)
+                         + (abyHeader[6] << 8)
+                         + abyHeader[7];
 
-    psRecord->nLength = abyHeader[8]  * 256 * 256 * 256
-                      + abyHeader[9]  * 256 * 256
-                      + abyHeader[10] * 256
-                      + abyHeader[11];
+    nLengthUInt32 = (abyHeader[8] << 24)
+                         + (abyHeader[9] << 16)
+                         + (abyHeader[10] << 8)
+                         + abyHeader[11];
 
 /* -------------------------------------------------------------------- */
 /*      Does it look reasonable?  We assume there can't be too many     */
 /*      records and that the length must be between 12 and 200000.      */
 /* -------------------------------------------------------------------- */
-    if( psRecord->nRecordNum < 0 || psRecord->nRecordNum > 200000
-        || psRecord->nLength < 12 || psRecord->nLength > 200000 )
+    if( nRecordNumUInt32 > 200000
+        || nLengthUInt32 < 12 || nLengthUInt32 > 200000 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CEOS record leader appears to be corrupt.\n"
-                  "Record Number = %d, Record Length = %d\n",
-                  psRecord->nRecordNum, psRecord->nLength );
+                  "Record Number = %u, Record Length = %u\n",
+                  nRecordNumUInt32, nLengthUInt32 );
         CPLFree( psRecord );
         return NULL;
     }
+
+    psRecord->nRecordNum = (int)nRecordNumUInt32;
+    psRecord->nLength = (int)nLengthUInt32;
 
 /* -------------------------------------------------------------------- */
 /*      Read the remainder of the record into a buffer.  Ensure that    */
 /*      the first 12 bytes gets moved into this buffer as well.         */
 /* -------------------------------------------------------------------- */
-    psRecord->pachData = (char *) VSIMalloc(psRecord->nLength );
+    psRecord->pachData = (char *) VSI_MALLOC_VERBOSE(psRecord->nLength );
     if( psRecord->pachData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Out of memory allocated %d bytes for CEOS record data.\n"
-                  "Are you sure you aren't leaking CEOSRecords?\n",
-                  psRecord->nLength );
         CPLFree( psRecord );
         return NULL;
     }
 
     memcpy( psRecord->pachData, abyHeader, 12 );
 
-    if( (int)VSIFReadL( psRecord->pachData + 12, 1, psRecord->nLength-12, 
+    if( (int)VSIFReadL( psRecord->pachData + 12, 1, psRecord->nLength-12,
                        psImage->fpImage )
         != psRecord->nLength - 12 )
     {
@@ -173,7 +175,7 @@ void CEOSDestroyRecord( CEOSRecord * psRecord )
 /**
  * Open a CEOS transfer.
  *
- * @param pszFilename The name of the CEOS imagery file (ie. imag_01.dat).
+ * @param pszFilename The name of the CEOS imagery file (i.e. imag_01.dat).
  * @param pszAccess An fopen() style access string.  Should be either "rb" for
  * read-only access, or "r+b" for read, and update access.
  *
@@ -216,12 +218,16 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
 /*      Preread info on the first record, to establish if it is         */
 /*      little endian.                                                  */
 /* -------------------------------------------------------------------- */
-    VSIFReadL( abyHeader, 16, 1, fp );
-    VSIFSeekL( fp, 0, SEEK_SET );
-    
+    if( VSIFReadL( abyHeader, 16, 1, fp ) != 1 ||
+        VSIFSeekL( fp, 0, SEEK_SET ) < 0 )
+    {
+        CEOSClose( psImage );
+        return NULL;
+    }
+
     if( abyHeader[0] != 0 || abyHeader[1] != 0 )
         psImage->bLittleEndian = TRUE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try to read the header record.                                  */
 /* -------------------------------------------------------------------- */
@@ -254,10 +260,10 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Got a %d file sequence number, instead of the expected\n"
                   "2 indicating imagery on file %s.\n"
-                  "Continuing to access anyways.\n", 
+                  "Continuing to access anyways.\n",
                   nSeqNum, pszFilename );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Extract various information.                                    */
 /* -------------------------------------------------------------------- */
@@ -301,7 +307,7 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
             psRecord->nLength + i * psImage->nImageRecLength
 	            + 12 + psImage->nPrefixBytes;
     }
-    
+
     CEOSDestroyRecord( psRecord );
 
     return psImage;
@@ -315,7 +321,7 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
  * Read a scanline of image.
  *
  * @param psCEOS The CEOS dataset handle returned by CEOSOpen().
- * @param nBand The band number (ie. 1, 2, 3).
+ * @param nBand The band number (i.e. 1, 2, 3).
  * @param nScanline The scanline requested, one based.
  * @param pData The data buffer to read into.  Must be at least nPixels *
  * nBitesPerPixel bits long.
@@ -328,7 +334,7 @@ CPLErr CEOSReadScanline( CEOSImage * psCEOS, int nBand, int nScanline,
 
 {
     int		nOffset, nBytes;
-    
+
     /*
      * As a short cut, I currently just seek to the data, and read it
      * raw, rather than trying to read ceos records properly.
@@ -374,6 +380,6 @@ void CEOSClose( CEOSImage * psCEOS )
 
 {
     CPLFree( psCEOS->panDataStart );
-    VSIFCloseL( psCEOS->fpImage );
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( psCEOS->fpImage ));
     CPLFree( psCEOS );
 }

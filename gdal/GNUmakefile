@@ -4,9 +4,23 @@ include GDALmake.opt
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
-			$(GDAL_ROOT)/alg/*.o
+			$(GDAL_ROOT)/alg/*.o \
+			$(GDAL_ROOT)/apps/commonutils.o \
+			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
+			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
+			$(GDAL_ROOT)/apps/gdalwarp_lib.o \
+			$(GDAL_ROOT)/apps/ogr2ogr_lib.o \
+			$(GDAL_ROOT)/apps/gdaldem_lib.o \
+			$(GDAL_ROOT)/apps/nearblack_lib.o \
+			$(GDAL_ROOT)/apps/gdal_grid_lib.o \
+			$(GDAL_ROOT)/apps/gdal_rasterize_lib.o \
+			$(GDAL_ROOT)/apps/gdalbuildvrt_lib.o
 
 GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
+
+ifeq ($(GNM_ENABLED),yes)
+   GDAL_OBJ += $(GDAL_ROOT)/gnm/*.o $(GDAL_ROOT)/gnm/gnm_frmts/o/*.o
+endif
 
 include ./ogr/file.lst
 GDAL_OBJ += $(addprefix ./ogr/,$(OBJ))
@@ -17,6 +31,9 @@ LIBGDAL-$(HAVE_LD_SHARED)	+=	$(GDAL_SLIB)
 LIBGDAL-$(HAVE_LIBTOOL)	:= $(LIBGDAL)
 
 default:	lib-target apps-target swig-target gdal.pc
+ifeq ($(PDF_PLUGIN),yes)
+	(cd frmts/pdf; $(MAKE) plugin)
+endif
 
 lib-target:	check-lib;
 
@@ -44,14 +61,24 @@ ifeq ($(MACOSX_FRAMEWORK),yes)
 	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL .libs/libgdal.dylib
 endif
 
-check-lib:	port-target core-target frmts-target ogr-target
+check-lib:	port-target core-target frmts-target ogr-target gnm-target appslib-target
 	$(MAKE) $(LIBGDAL-yes)
+
+appslib-target:
+	(cd apps; $(MAKE) appslib)
 
 port-target:
 	(cd port; $(MAKE))
 
 ogr-target:
 	(cd ogr; $(MAKE) lib )
+
+ifeq ($(GNM_ENABLED),yes)
+gnm-target:
+	(cd gnm; $(MAKE) lib )
+else
+gnm-target:	;
+endif
 
 core-target:
 	(cd gcore; $(MAKE))
@@ -79,6 +106,7 @@ swig-modules:	apps-target
 clean:	lclean
 	(cd port; $(MAKE) clean)
 	(cd ogr; $(MAKE) clean)
+	(cd gnm; $(MAKE) clean)
 	(cd gcore; $(MAKE) clean)
 	(cd frmts; $(MAKE) clean)
 	(cd alg; $(MAKE) clean)
@@ -86,7 +114,9 @@ clean:	lclean
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) clean)
 endif
-
+ifeq ($(PDF_PLUGIN),yes)
+	(cd frmts/pdf; $(MAKE) clean)
+endif
 
 
 lclean:
@@ -124,8 +154,8 @@ docs:
 	cp doc/images/*.* html
 	cp doc/grid/*.png html
 	cp frmts/*.html frmts/*/frmt_*.html html
-	cp frmts/wms/frmt_wms_*.xml html
-	cp frmts/wms/frmt_twms_*.xml html
+	cp frmts/openjpeg/*.xml html
+	cp frmts/wms/frmt_*.xml html
 	cp ogr/ogrsf_frmts/*/drv_*.html html
 	cp ogr/ogrsf_frmts/ogr_formats.html html
 	cp ogr/ogr_feature_style.html html
@@ -137,6 +167,8 @@ docs:
 man:
 # Generate man pages
 	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
+# Remove "Directory reference" file. Not sure if there's a better way of doing it.
+	 @find man -name '_home_*_gdal_apps_.1' -exec rm {} \;
 
 all:	default ogr-all
 
@@ -176,10 +208,12 @@ endif
 	(cd frmts; $(MAKE) install)
 	(cd alg; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
+	(cd gnm; $(MAKE) install)
 	(cd apps; $(MAKE) install)
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)
 endif
+	(cd scripts; $(MAKE) install)
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig

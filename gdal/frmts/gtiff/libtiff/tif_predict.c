@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.32 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tif_predict.c,v 1.37 2016-01-23 21:20:34 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -42,6 +42,8 @@ static void swabHorAcc32(TIFF* tif, uint8* cp0, tmsize_t cc);
 static void horDiff8(TIFF* tif, uint8* cp0, tmsize_t cc);
 static void horDiff16(TIFF* tif, uint8* cp0, tmsize_t cc);
 static void horDiff32(TIFF* tif, uint8* cp0, tmsize_t cc);
+static void swabHorDiff16(TIFF* tif, uint8* cp0, tmsize_t cc);
+static void swabHorDiff32(TIFF* tif, uint8* cp0, tmsize_t cc);
 static void fpAcc(TIFF* tif, uint8* cp0, tmsize_t cc);
 static void fpDiff(TIFF* tif, uint8* cp0, tmsize_t cc);
 static int PredictorDecodeRow(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s);
@@ -207,7 +209,24 @@ PredictorSetupEncode(TIFF* tif)
                     sp->encodetile = tif->tif_encodetile;
                     tif->tif_encodetile = PredictorEncodeTile;
                 }
-	}
+
+                /*
+                 * If the data is horizontally differenced 16-bit data that
+                 * requires byte-swapping, then it must be byte swapped after
+                 * the differentiation step.  We do this with a special-purpose
+                 * routine and override the normal post decoding logic that
+                 * the library setup when the directory was read.
+                 */
+                if (tif->tif_flags & TIFF_SWAB) {
+                    if (sp->encodepfunc == horDiff16) {
+                            sp->encodepfunc = swabHorDiff16;
+                            tif->tif_postdecode = _TIFFNoPostDecode;
+                    } else if (sp->encodepfunc == horDiff32) {
+                            sp->encodepfunc = swabHorDiff32;
+                            tif->tif_postdecode = _TIFFNoPostDecode;
+                    }
+                }
+        }
 
 	else if (sp->predictor == 3) {
 		sp->encodepfunc = fpDiff;
@@ -239,12 +258,18 @@ PredictorSetupEncode(TIFF* tif)
     case 0:  ;			\
     }
 
+/* Remarks related to C standard compliance in all below functions : */
+/* - to avoid any undefined behaviour, we only operate on unsigned types */
+/*   since the behaviour of "overflows" is defined (wrap over) */
+/* - when storing into the byte stream, we explicitly mask with 0xff so */
+/*   as to make icc -check=conversions happy (not necessary by the standard) */
+
 static void
 horAcc8(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
 	tmsize_t stride = PredictorState(tif)->stride;
 
-	char* cp = (char*) cp0;
+	unsigned char* cp = (unsigned char*) cp0;
 	assert((cc%stride)==0);
 	if (cc > stride) {
 		/*
@@ -257,9 +282,9 @@ horAcc8(TIFF* tif, uint8* cp0, tmsize_t cc)
 			cc -= 3;
 			cp += 3;
 			while (cc>0) {
-				cp[0] = (char) (cr += cp[0]);
-				cp[1] = (char) (cg += cp[1]);
-				cp[2] = (char) (cb += cp[2]);
+				cp[0] = (unsigned char) ((cr += cp[0]) & 0xff);
+				cp[1] = (unsigned char) ((cg += cp[1]) & 0xff);
+				cp[2] = (unsigned char) ((cb += cp[2]) & 0xff);
 				cc -= 3;
 				cp += 3;
 			}
@@ -271,10 +296,10 @@ horAcc8(TIFF* tif, uint8* cp0, tmsize_t cc)
 			cc -= 4;
 			cp += 4;
 			while (cc>0) {
-				cp[0] = (char) (cr += cp[0]);
-				cp[1] = (char) (cg += cp[1]);
-				cp[2] = (char) (cb += cp[2]);
-				cp[3] = (char) (ca += cp[3]);
+				cp[0] = (unsigned char) ((cr += cp[0]) & 0xff);
+				cp[1] = (unsigned char) ((cg += cp[1]) & 0xff);
+				cp[2] = (unsigned char) ((cb += cp[2]) & 0xff);
+				cp[3] = (unsigned char) ((ca += cp[3]) & 0xff);
 				cc -= 4;
 				cp += 4;
 			}
@@ -282,7 +307,7 @@ horAcc8(TIFF* tif, uint8* cp0, tmsize_t cc)
 			cc -= stride;
 			do {
 				REPEAT4(stride, cp[stride] =
-					(char) (cp[stride] + *cp); cp++)
+					(unsigned char) ((cp[stride] + *cp) & 0xff); cp++)
 				cc -= stride;
 			} while (cc>0);
 		}
@@ -292,20 +317,11 @@ horAcc8(TIFF* tif, uint8* cp0, tmsize_t cc)
 static void
 swabHorAcc16(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
-	tmsize_t stride = PredictorState(tif)->stride;
 	uint16* wp = (uint16*) cp0;
 	tmsize_t wc = cc / 2;
 
-	assert((cc%(2*stride))==0);
-
-	if (wc > stride) {
-		TIFFSwabArrayOfShort(wp, wc);
-		wc -= stride;
-		do {
-			REPEAT4(stride, wp[stride] += wp[0]; wp++)
-			wc -= stride;
-		} while (wc > 0);
-	}
+        TIFFSwabArrayOfShort(wp, wc);
+        horAcc16(tif, cp0, cc);
 }
 
 static void
@@ -320,7 +336,7 @@ horAcc16(TIFF* tif, uint8* cp0, tmsize_t cc)
 	if (wc > stride) {
 		wc -= stride;
 		do {
-			REPEAT4(stride, wp[stride] += wp[0]; wp++)
+			REPEAT4(stride, wp[stride] = (uint16)(((unsigned int)wp[stride] + (unsigned int)wp[0]) & 0xffff); wp++)
 			wc -= stride;
 		} while (wc > 0);
 	}
@@ -329,20 +345,11 @@ horAcc16(TIFF* tif, uint8* cp0, tmsize_t cc)
 static void
 swabHorAcc32(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
-	tmsize_t stride = PredictorState(tif)->stride;
 	uint32* wp = (uint32*) cp0;
 	tmsize_t wc = cc / 4;
 
-	assert((cc%(4*stride))==0);
-
-	if (wc > stride) {
-		TIFFSwabArrayOfLong(wp, wc);
-		wc -= stride;
-		do {
-			REPEAT4(stride, wp[stride] += wp[0]; wp++)
-			wc -= stride;
-		} while (wc > 0);
-	}
+        TIFFSwabArrayOfLong(wp, wc);
+	horAcc32(tif, cp0, cc);
 }
 
 static void
@@ -382,7 +389,8 @@ fpAcc(TIFF* tif, uint8* cp0, tmsize_t cc)
 		return;
 
 	while (count > stride) {
-		REPEAT4(stride, cp[stride] += cp[0]; cp++)
+		REPEAT4(stride, cp[stride] =
+                        (unsigned char) ((cp[stride] + cp[0]) & 0xff); cp++)
 		count -= stride;
 	}
 
@@ -456,7 +464,7 @@ horDiff8(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
 	TIFFPredictorState* sp = PredictorState(tif);
 	tmsize_t stride = sp->stride;
-	char* cp = (char*) cp0;
+	unsigned char* cp = (unsigned char*) cp0;
 
 	assert((cc%stride)==0);
 
@@ -466,33 +474,33 @@ horDiff8(TIFF* tif, uint8* cp0, tmsize_t cc)
 		 * Pipeline the most common cases.
 		 */
 		if (stride == 3) {
-			int r1, g1, b1;
-			int r2 = cp[0];
-			int g2 = cp[1];
-			int b2 = cp[2];
+			unsigned int r1, g1, b1;
+			unsigned int r2 = cp[0];
+			unsigned int g2 = cp[1];
+			unsigned  int b2 = cp[2];
 			do {
-				r1 = cp[3]; cp[3] = r1-r2; r2 = r1;
-				g1 = cp[4]; cp[4] = g1-g2; g2 = g1;
-				b1 = cp[5]; cp[5] = b1-b2; b2 = b1;
+				r1 = cp[3]; cp[3] = (unsigned char)((r1-r2)&0xff); r2 = r1;
+				g1 = cp[4]; cp[4] = (unsigned char)((g1-g2)&0xff); g2 = g1;
+				b1 = cp[5]; cp[5] = (unsigned char)((b1-b2)&0xff); b2 = b1;
 				cp += 3;
 			} while ((cc -= 3) > 0);
 		} else if (stride == 4) {
-			int r1, g1, b1, a1;
-			int r2 = cp[0];
-			int g2 = cp[1];
-			int b2 = cp[2];
-			int a2 = cp[3];
+			unsigned int r1, g1, b1, a1;
+			unsigned int r2 = cp[0];
+			unsigned int g2 = cp[1];
+			unsigned int b2 = cp[2];
+			unsigned int a2 = cp[3];
 			do {
-				r1 = cp[4]; cp[4] = r1-r2; r2 = r1;
-				g1 = cp[5]; cp[5] = g1-g2; g2 = g1;
-				b1 = cp[6]; cp[6] = b1-b2; b2 = b1;
-				a1 = cp[7]; cp[7] = a1-a2; a2 = a1;
+				r1 = cp[4]; cp[4] = (unsigned char)((r1-r2)&0xff); r2 = r1;
+				g1 = cp[5]; cp[5] = (unsigned char)((g1-g2)&0xff); g2 = g1;
+				b1 = cp[6]; cp[6] = (unsigned char)((b1-b2)&0xff); b2 = b1;
+				a1 = cp[7]; cp[7] = (unsigned char)((a1-a2)&0xff); a2 = a1;
 				cp += 4;
 			} while ((cc -= 4) > 0);
 		} else {
 			cp += cc - 1;
 			do {
-				REPEAT4(stride, cp[stride] -= cp[0]; cp--)
+				REPEAT4(stride, cp[stride] = (unsigned char)((cp[stride] - cp[0])&0xff); cp--)
 			} while ((cc -= stride) > 0);
 		}
 	}
@@ -503,7 +511,7 @@ horDiff16(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
 	TIFFPredictorState* sp = PredictorState(tif);
 	tmsize_t stride = sp->stride;
-	int16 *wp = (int16*) cp0;
+	uint16 *wp = (uint16*) cp0;
 	tmsize_t wc = cc/2;
 
 	assert((cc%(2*stride))==0);
@@ -512,10 +520,21 @@ horDiff16(TIFF* tif, uint8* cp0, tmsize_t cc)
 		wc -= stride;
 		wp += wc - 1;
 		do {
-			REPEAT4(stride, wp[stride] -= wp[0]; wp--)
+			REPEAT4(stride, wp[stride] = (uint16)(((unsigned int)wp[stride] - (unsigned int)wp[0]) & 0xffff); wp--)
 			wc -= stride;
 		} while (wc > 0);
 	}
+}
+
+static void
+swabHorDiff16(TIFF* tif, uint8* cp0, tmsize_t cc)
+{
+    uint16* wp = (uint16*) cp0;
+    tmsize_t wc = cc / 2;
+
+    horDiff16(tif, cp0, cc);
+
+    TIFFSwabArrayOfShort(wp, wc);
 }
 
 static void
@@ -523,7 +542,7 @@ horDiff32(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
 	TIFFPredictorState* sp = PredictorState(tif);
 	tmsize_t stride = sp->stride;
-	int32 *wp = (int32*) cp0;
+	uint32 *wp = (uint32*) cp0;
 	tmsize_t wc = cc/4;
 
 	assert((cc%(4*stride))==0);
@@ -536,6 +555,17 @@ horDiff32(TIFF* tif, uint8* cp0, tmsize_t cc)
 			wc -= stride;
 		} while (wc > 0);
 	}
+}
+
+static void
+swabHorDiff32(TIFF* tif, uint8* cp0, tmsize_t cc)
+{
+    uint32* wp = (uint32*) cp0;
+    tmsize_t wc = cc / 4;
+
+    horDiff32(tif, cp0, cc);
+
+    TIFFSwabArrayOfLong(wp, wc);
 }
 
 /*
@@ -573,7 +603,7 @@ fpDiff(TIFF* tif, uint8* cp0, tmsize_t cc)
 	cp = (uint8 *) cp0;
 	cp += cc - stride - 1;
 	for (count = cc; count > stride; count -= stride)
-		REPEAT4(stride, cp[stride] -= cp[0]; cp--)
+		REPEAT4(stride, cp[stride] = (unsigned char)((cp[stride] - cp[0])&0xff); cp--)
 }
 
 static int
@@ -670,7 +700,7 @@ PredictorVGetField(TIFF* tif, uint32 tag, va_list ap)
 
 	switch (tag) {
 	case TIFFTAG_PREDICTOR:
-		*va_arg(ap, uint16*) = sp->predictor;
+		*va_arg(ap, uint16*) = (uint16)sp->predictor;
 		break;
 	default:
 		return (*sp->vgetparent)(tif, tag, ap);

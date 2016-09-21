@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_rec.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_rec.h"
 
 CPL_CVSID("$Id$");
 
@@ -40,34 +40,27 @@ CPL_CVSID("$Id$");
 /*      file pointer.                                                   */
 /************************************************************************/
 
-OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn, 
-                          FILE * fp, int nFieldCountIn )
-
+OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
+                          FILE * fp, int nFieldCountIn ) :
+  poFeatureDefn(new OGRFeatureDefn( pszLayerNameIn )),
+    fpREC(fp),
+    nStartOfData(0),
+    bIsValid(FALSE),
+    nFieldCount(0),
+    panFieldOffset(static_cast<int *>(CPLCalloc(sizeof(int),nFieldCountIn))),
+    panFieldWidth(static_cast<int *>(CPLCalloc(sizeof(int),nFieldCountIn))),
+    nRecordLength(0),
+    nNextFID(1)
 {
-    fpREC = fp;
-    bIsValid = FALSE;
-    nStartOfData = 0;
-
-    nNextFID = 1;
-
-    poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-
-    nFieldCount = 0;
-    panFieldOffset = (int *) CPLCalloc(sizeof(int),nFieldCountIn);
-    panFieldWidth = (int *) CPLCalloc(sizeof(int),nFieldCountIn);
 
 /* -------------------------------------------------------------------- */
 /*      Read field definition lines.                                    */
 /* -------------------------------------------------------------------- */
-    int         iField;
-
-    for( nFieldCount=0, iField = 0; iField < nFieldCountIn; iField++ )
+    for( int iField = 0; iField < nFieldCountIn; iField++ )
     {
         const char *pszLine = CPLReadLine( fp );
-        int         nTypeCode;
-        OGRFieldType eFType = OFTString;
 
         if( pszLine == NULL )
             return;
@@ -75,13 +68,14 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
         if( strlen(pszLine) < 44 )
             return;
 
-        // Extract field width. 
+        // Extract field width.
         panFieldWidth[nFieldCount] = atoi( RECGetField( pszLine, 37, 4 ) );
         if( panFieldWidth[nFieldCount] < 0 )
             return;
 
         // Is this an real, integer or string field?  Default to string.
-        nTypeCode = atoi(RECGetField(pszLine,33,4));
+        int nTypeCode = atoi(RECGetField(pszLine,33,4));
+        OGRFieldType eFType = OFTString;
         if( nTypeCode == 12 )
             eFType = OFTInteger;
         else if( nTypeCode > 100 && nTypeCode < 120 )
@@ -100,7 +94,7 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
 
         OGRFieldDefn oField( RECGetField( pszLine, 2, 10 ), eFType );
 
-        // Establish field offset. 
+        // Establish field offset.
         if( nFieldCount > 0 )
             panFieldOffset[nFieldCount]
                 = panFieldOffset[nFieldCount-1] + panFieldWidth[nFieldCount-1];
@@ -132,7 +126,7 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
     nRecordLength = panFieldOffset[nFieldCount-1]+panFieldWidth[nFieldCount-1];
     bIsValid = TRUE;
 
-    nStartOfData = VSIFTell( fp );
+    nStartOfData = static_cast<int>(VSIFTell( fp ));
 }
 
 /************************************************************************/
@@ -145,10 +139,10 @@ OGRRECLayer::~OGRRECLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "REC", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  static_cast<int>(m_nFeaturesRead),
                   poFeatureDefn->GetName() );
     }
-    
+
     if( fpREC != NULL )
         VSIFClose( fpREC );
 
@@ -166,7 +160,7 @@ OGRRECLayer::~OGRRECLayer()
 void OGRRECLayer::ResetReading()
 
 {
-    VSIFSeek( fpREC, nStartOfData, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeek( fpREC, nStartOfData, SEEK_SET ));
     nNextFID = 1;
 }
 
@@ -181,12 +175,11 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 /*      Read and assemble the source data record.                       */
 /* -------------------------------------------------------------------- */
     int        nDataLen = 0;
-    char       *pszRecord = (char *) CPLMalloc(nRecordLength + 2 );
+    char       *pszRecord = static_cast<char *>(CPLMalloc(nRecordLength + 2 ));
 
     while( nDataLen < nRecordLength )
     {
         const char *pszLine = CPLReadLine( fpREC );
-        int         iSegLen;
 
         if( pszLine == NULL )
         {
@@ -201,7 +194,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
         }
 
         // If the end-of-line markers is '?' the record is deleted.
-        iSegLen = strlen(pszLine);
+        int iSegLen = static_cast<int>(strlen(pszLine));
         if( pszLine[iSegLen-1] == '?' )
         {
             pszRecord[0] = '\0';
@@ -209,12 +202,12 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
             continue;
         }
 
-        // Strip off end-of-line '!' marker. 
-        if( pszLine[iSegLen-1] != '!' 
+        // Strip off end-of-line '!' marker.
+        if( pszLine[iSegLen-1] != '!'
             && pszLine[iSegLen-1] != '^' )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Apparent corrupt data line .. record FID=%d", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Apparent corrupt data line .. record FID=%d",
                       nNextFID );
             CPLFree( pszRecord );
             return NULL;
@@ -223,8 +216,8 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
         iSegLen--;
         if( nDataLen + iSegLen > nRecordLength )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Too much data for record %d.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Too much data for record %d.",
                       nNextFID );
             CPLFree( pszRecord );
             return NULL;
@@ -238,26 +231,25 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Create the OGR feature.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
-
-    poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
 /* -------------------------------------------------------------------- */
 /*      Set attributes for any indicated attribute records.             */
 /* -------------------------------------------------------------------- */
-    int         iAttr;
-    
-    for( iAttr = 0; iAttr < nFieldCount; iAttr++)
+    for( int iAttr = 0; iAttr < nFieldCount; iAttr++)
     {
-        const char *pszFieldText = 
-            RECGetField( pszRecord, 
+        const char *pszFieldText =
+            RECGetField( pszRecord,
                          panFieldOffset[iAttr] + 1,
                          panFieldWidth[iAttr] );
 
         if( strlen(pszFieldText) != 0 )
+        {
+            /* coverity[tainted_data] */
             poFeature->SetField( iAttr, pszFieldText );
+        }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Translate the record id.                                        */
 /* -------------------------------------------------------------------- */
@@ -278,12 +270,12 @@ OGRFeature *OGRRECLayer::GetNextFeature()
 
 {
     OGRFeature  *poFeature = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */
 /*      spatial criteria.                                               */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         poFeature = GetNextUnfilteredFeature();
         if( poFeature == NULL )
@@ -302,7 +294,7 @@ OGRFeature *OGRRECLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRRECLayer::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRRECLayer::TestCapability( const char * /* pszCap */)
 {
     return FALSE;
 }

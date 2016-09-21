@@ -25,8 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SELAFIN_H_INCLUDED
-#define _OGR_SELAFIN_H_INCLUDED
+#ifndef OGR_SELAFIN_H_INCLUDED
+#define OGR_SELAFIN_H_INCLUDED
 
 #include "io_selafin.h"
 #include "ogrsf_frmts.h"
@@ -42,21 +42,21 @@ class Range {
     private:
         typedef struct List {
             SelafinTypeDef eType;
-            long nMin,nMax;
+            int nMin,nMax;
             List *poNext;
-            List():poNext(0) {}
-            List(SelafinTypeDef eTypeP,long nMinP,long nMaxP,List *poNextP):eType(eTypeP),nMin(nMinP),nMax(nMaxP),poNext(poNextP) {}
+            List():poNext(NULL) {}
+            List(SelafinTypeDef eTypeP,int nMinP,int nMaxP,List *poNextP):eType(eTypeP),nMin(nMinP),nMax(nMaxP),poNext(poNextP) {}
         } List;
         List *poVals,*poActual;
-        long nMaxValue;
-        static void sortList(List *&poList,List *poEnd=0);
+        int nMaxValue;
+        static void sortList(List *&poList,List *poEnd=NULL);
         static void deleteList(List *poList);
     public:
-        Range():poVals(0),poActual(0),nMaxValue(0) {}
+        Range():poVals(NULL),poActual(NULL),nMaxValue(0) {}
         void setRange(const char *pszStr);
         ~Range();
-        void setMaxValue(long nMaxValueP);
-        bool contains(SelafinTypeDef eType,long nValue) const;
+        void setMaxValue(int nMaxValueP);
+        bool contains(SelafinTypeDef eType,int nValue) const;
         size_t getSize() const;
 };
 
@@ -69,7 +69,7 @@ class OGRSelafinLayer : public OGRLayer {
     private:
         SelafinTypeDef eType;
         int bUpdate;
-        long nStepNumber;
+        int nStepNumber;
         Selafin::Header *poHeader;
         OGRFeatureDefn *poFeatureDefn;
         OGRSpatialReference *poSpatialRef;
@@ -78,7 +78,7 @@ class OGRSelafinLayer : public OGRLayer {
         OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,OGRSpatialReference *poSpatialRefP,Selafin::Header *poHeaderP,int nStepNumberP,SelafinTypeDef eTypeP);
         ~OGRSelafinLayer();
         OGRSpatialReference *GetSpatialRef() {return poSpatialRef;}
-        long GetStepNumber() {return nStepNumber;}
+        int GetStepNumber() {return nStepNumber;}
         OGRFeature *GetNextFeature();
         OGRFeature *GetFeature(GIntBig nFID);
         void ResetReading();
@@ -87,6 +87,8 @@ class OGRSelafinLayer : public OGRLayer {
         int TestCapability(const char *pszCap);
         GIntBig GetFeatureCount(int bForce=TRUE);
         OGRErr GetExtent(OGREnvelope *psExtent,int bForce=TRUE);
+        virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
         OGRErr ISetFeature(OGRFeature *poFeature);
         OGRErr ICreateFeature(OGRFeature *poFeature);
         OGRErr CreateField(OGRFieldDefn *poField,int bApproxOK=TRUE);
@@ -122,9 +124,9 @@ class OGRSelafinDataSource : public OGRDataSource {
         int GetLayerCount() { return nLayers; }
         OGRLayer *GetLayer( int );
         virtual OGRLayer *ICreateLayer( const char *pszName, OGRSpatialReference *poSpatialRefP = NULL, OGRwkbGeometryType eGType = wkbUnknown, char ** papszOptions = NULL );
-        virtual OGRErr DeleteLayer(int); 
+        virtual OGRErr DeleteLayer(int);
         int TestCapability( const char * );
-        void SetDefaultSelafinName( const char *pszName ) { osDefaultSelafinName = pszName; }
+        void SetDefaultSelafinName( const char *pszNameIn ) { osDefaultSelafinName = pszNameIn; }
 };
 
-#endif /* ndef _OGR_SELAFIN_H_INCLUDED */
+#endif /* ndef OGR_SELAFIN_H_INCLUDED */

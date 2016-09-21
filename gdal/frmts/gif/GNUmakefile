@@ -20,7 +20,7 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 ../o/%.$(OBJ_EXT):	giflib/%.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(NO_UNUSED_PARAMETER_FLAG) $(NO_SIGN_COMPARE) $< -o $@
 
 
 all:	$(OBJ:.o=.$(OBJ_EXT))

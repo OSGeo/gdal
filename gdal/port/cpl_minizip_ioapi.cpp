@@ -20,55 +20,12 @@
 
 #include "cpl_vsi.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include "zlib.h"
 #include "cpl_minizip_ioapi.h"
-
-
-static
-voidpf ZCALLBACK fopen_file_func OF((
-   voidpf opaque,
-   const char* filename,
-   int mode));
-
-static
-uLong ZCALLBACK fread_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   void* buf,
-   uLong size));
-
-static
-uLong ZCALLBACK fwrite_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   const void* buf,
-   uLong size));
-
-static
-uLong64 ZCALLBACK ftell_file_func OF((
-   voidpf opaque,
-   voidpf stream));
-
-static
-long ZCALLBACK fseek_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   uLong64 offset,
-   int origin));
-
-static
-int ZCALLBACK fclose_file_func OF((
-   voidpf opaque,
-   voidpf stream));
-
-static
-int ZCALLBACK ferror_file_func OF((
-   voidpf opaque,
-   voidpf stream));
 
 static
 voidpf ZCALLBACK fopen_file_func (CPL_UNUSED voidpf opaque, const char* filename, int mode)
@@ -117,7 +74,6 @@ static
 long ZCALLBACK fseek_file_func (CPL_UNUSED voidpf  opaque, voidpf stream, uLong64 offset, int origin)
 {
     int fseek_origin=0;
-    long ret;
     switch (origin)
     {
     case ZLIB_FILEFUNC_SEEK_CUR :
@@ -131,27 +87,23 @@ long ZCALLBACK fseek_file_func (CPL_UNUSED voidpf  opaque, voidpf stream, uLong6
         break;
     default: return -1;
     }
-    ret = 0;
-    VSIFSeekL((VSILFILE *)stream, offset, fseek_origin);
-    return ret;
+    return VSIFSeekL((VSILFILE *)stream, offset, fseek_origin);
 }
 
 static
 int ZCALLBACK fclose_file_func (CPL_UNUSED voidpf opaque, voidpf stream)
 {
-    int ret;
-    ret = VSIFCloseL((VSILFILE *)stream);
-    return ret;
+    return VSIFCloseL((VSILFILE *)stream);
 }
 
 static
 int ZCALLBACK ferror_file_func (CPL_UNUSED voidpf opaque,
                                 CPL_UNUSED voidpf stream)
 {
-    int ret;
-    ret = 0; // FIXME
+    // int ret;
+    // ret = 0; // FIXME
     //ret = ferror((FILE *)stream);
-    return ret;
+    return 0;
 }
 
 void cpl_fill_fopen_filefunc (zlib_filefunc_def*  pzlib_filefunc_def)

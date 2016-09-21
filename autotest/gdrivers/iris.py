@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test IRIS driver
 # Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -45,7 +45,7 @@ def iris_1():
     return tst.testOpen()
 
 ###############################################################################
-# Test reading a real world IRIS dataset
+# Test reading a real world IRIS dataset.
 
 def iris_2():
 
@@ -55,13 +55,14 @@ def iris_2():
         return 'fail'
 
     ds.GetProjectionRef()
-    #expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
-    #got_srs = osr.SpatialReference(got_wkt)
-    #expected_srs = osr.SpatialReference(expected_wkt)
+    # expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    # got_srs = osr.SpatialReference(got_wkt)
+    # expected_srs = osr.SpatialReference(expected_wkt)
 
-    # There are some differences in the values of the parameters between Linux and Windows
-    # not sure if it is only due to rounding differences, different proj versions, etc...
-    #if got_srs.IsSame(expected_srs) != 1:
+    # There are some differences in the values of the parameters between Linux
+    # and Windows not sure if it is only due to rounding differences,
+    # different proj versions, etc...
+    # if got_srs.IsSame(expected_srs) != 1:
     #    gdaltest.post_reason('fail')
     #    print('')
     #    print(expected_wkt)

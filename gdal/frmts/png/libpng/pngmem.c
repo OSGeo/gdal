@@ -2,7 +2,7 @@
 /* pngmem.c - stub functions for memory allocation
  *
  * Last changed in libpng 1.2.41 [February 25, 2010]
- * Copyright (c) 1998-2010 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2002,2004,2006-2010 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -343,7 +343,7 @@ png_free_default(png_structp png_ptr, png_voidp ptr)
 
 /* Allocate memory for a png_struct or a png_info.  The malloc and
    memset can be replaced by a single call to calloc() if this is thought
-   to improve performance noticably. */
+   to improve performance noticeably. */
 png_voidp /* PRIVATE */
 png_create_struct(int type)
 {
@@ -353,7 +353,7 @@ png_create_struct(int type)
 
 /* Allocate memory for a png_struct or a png_info.  The malloc and
    memset can be replaced by a single call to calloc() if this is thought
-   to improve performance noticably. */
+   to improve performance noticeably. */
 png_voidp /* PRIVATE */
 png_create_struct_2(int type, png_malloc_ptr malloc_fn, png_voidp mem_ptr)
 {

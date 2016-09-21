@@ -29,17 +29,13 @@
  ****************************************************************************/
 
 
-#ifndef __OGRDXF_SMOOTH_POLYLINE_H__
-#define __OGRDXF_SMOOTH_POLYLINE_H__
+#ifndef OGRDXF_SMOOTH_POLYLINE_H_INCLUDED
+#define OGRDXF_SMOOTH_POLYLINE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include <vector>
 #include "assert.h"
-
-#ifndef M_PI
-    #define M_PI        3.14159265358979323846  /* pi */
-#endif
 
 
 class DXFSmoothPolylineVertex
@@ -75,7 +71,7 @@ public:
             y *= s;
         }
 
-          
+
     double length() const
         {
             return (sqrt(x*x + y*y));
@@ -114,15 +110,11 @@ private:
     bool                                    m_bClosed;
     int										m_dim;
 
-       
 public:
-    DXFSmoothPolyline()
-        {
-            m_bClosed = false;
-            m_dim = 2;
-        }
+    DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),
+                          m_dim(2) { }
 
-    OGRGeometry* Tesselate() const;
+    OGRGeometry* Tesselate() const;  // TODO: Spelling.
 
     size_t size() { return m_vertices.size(); }
 
@@ -145,12 +137,11 @@ public:
 
 private:
     void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
-                 double radius, double len, double saggita, 
+                 double radius, double len, double saggita,
                  OGRLineString*, double dfZ = 0.0) const;
 
-    void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&, 
+    void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
                   OGRLineString*, bool bConstantZ, double dfZ) const;
 };
 
-#endif  /* __OGRDXF_SMOOTH_POLYLINE_H__ */
-
+#endif  /* OGRDXF_SMOOTH_POLYLINE_H_INCLUDED */

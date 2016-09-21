@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_ATTRIND_H_INCLUDED
-#define _OGR_ATTRIND_H_INCLUDED
+#ifndef OGR_ATTRIND_H_INCLUDED
+#define OGR_ATTRIND_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -49,7 +49,7 @@ public:
     virtual GIntBig   GetFirstMatch( OGRField *psKey ) = 0;
     virtual GIntBig  *GetAllMatches( OGRField *psKey ) = 0;
     virtual GIntBig  *GetAllMatches( OGRField *psKey, GIntBig* panFIDList, int* nFIDCount, int* nLength ) = 0;
-    
+
     virtual OGRErr AddEntry( OGRField *psKey, GIntBig nFID ) = 0;
     virtual OGRErr RemoveEntry( OGRField *psKey, GIntBig nFID ) = 0;
 
@@ -89,5 +89,5 @@ public:
 OGRLayerAttrIndex CPL_DLL *OGRCreateDefaultLayerIndex();
 
 
-#endif /* ndef _OGR_ATTRIND_H_INCLUDED */
+#endif /* ndef OGR_ATTRIND_H_INCLUDED */
 

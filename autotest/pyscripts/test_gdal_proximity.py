@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test gdal_proximity.py script
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -47,7 +47,7 @@ def test_gdal_proximity_1():
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
         return 'skip'
-    
+
     drv = gdal.GetDriverByName( 'GTiff' )
     dst_ds = drv.Create('tmp/proximity_1.tif', 25, 25, 1, gdal.GDT_Byte )
     dst_ds = None
@@ -59,7 +59,7 @@ def test_gdal_proximity_1():
 
     cs_expected = 1941
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
@@ -68,7 +68,7 @@ def test_gdal_proximity_1():
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
 
 ###############################################################################
 # Try several options
@@ -78,15 +78,15 @@ def test_gdal_proximity_2():
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
         return 'skip'
-    
+
     test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata -1 -fixed-buf-val 255 ../alg/data/pat.tif tmp/proximity_2.tif' )
 
     dst_ds = gdal.Open('tmp/proximity_2.tif')
     dst_band = dst_ds.GetRasterBand(1)
-    
+
     cs_expected = 3256
     cs = dst_band.Checksum()
-    
+
     dst_band = None
     dst_ds = None
 
@@ -95,7 +95,34 @@ def test_gdal_proximity_2():
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
+
+###############################################################################
+# Try input nodata option
+
+def test_gdal_proximity_3():
+
+    script_path = test_py_scripts.get_py_script('gdal_proximity')
+    if script_path is None:
+        return 'skip'
+
+    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata 0 -use_input_nodata yes ../alg/data/pat.tif tmp/proximity_3.tif' )
+
+    dst_ds = gdal.Open('tmp/proximity_3.tif')
+    dst_band = dst_ds.GetRasterBand(1)
+
+    cs_expected = 1465
+    cs = dst_band.Checksum()
+
+    dst_band = None
+    dst_ds = None
+
+    if cs != cs_expected:
+        print('Got: ', cs)
+        gdaltest.post_reason( 'got wrong checksum' )
+        return 'fail'
+    else:
+        return 'success'
 
 ###############################################################################
 # Cleanup
@@ -103,7 +130,8 @@ def test_gdal_proximity_2():
 def test_gdal_proximity_cleanup():
 
     lst = [ 'tmp/proximity_1.tif',
-            'tmp/proximity_2.tif' ]
+            'tmp/proximity_2.tif',
+            'tmp/proximity_3.tif' ]
     for filename in lst:
         try:
             os.remove(filename)
@@ -115,6 +143,7 @@ def test_gdal_proximity_cleanup():
 gdaltest_list = [
     test_gdal_proximity_1,
     test_gdal_proximity_2,
+    test_gdal_proximity_3,
     test_gdal_proximity_cleanup,
     ]
 

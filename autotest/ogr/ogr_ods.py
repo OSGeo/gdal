@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR ODS driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -41,7 +41,7 @@ from osgeo import ogr
 ###############################################################################
 # Check
 
-def ogr_ods_check(ds, variant = False):
+def ogr_ods_check(ds):
 
     if ds.TestCapability("foo") != 0:
         gdaltest.post_reason('fail')
@@ -87,7 +87,7 @@ def ogr_ods_check(ds, variant = False):
                    ogr.OFTInteger,
                    ogr.OFTReal,
                    ogr.OFTReal,
-                   variant and ogr.OFTString or ogr.OFTDate,
+                   ogr.OFTDate,
                    ogr.OFTDateTime,
                    ogr.OFTReal,
                    ogr.OFTTime,
@@ -321,7 +321,7 @@ def ogr_ods_5():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f ODS tmp/test.ods data/test.ods')
 
     ds = ogr.Open('tmp/test.ods')
-    ret = ogr_ods_check(ds, variant = True)
+    ret = ogr_ods_check(ds)
     ds = None
 
     os.unlink('tmp/test.ods')
@@ -338,8 +338,13 @@ def ogr_ods_6():
         return 'skip'
 
     src_ds = ogr.Open('ODS:data/content_formulas.xml')
-    out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, '/vsimem/content_formulas.csv')
-    del out_ds
+    filepath = '/vsimem/content_formulas.csv'
+    with gdaltest.error_handler():
+      out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, filepath)
+    if out_ds is None:
+        gdaltest.post_reason('Unable to create %s.' % filepath)
+        return 'fail'
+    out_ds = None
     src_ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/content_formulas.csv', 'rb')
@@ -364,8 +369,7 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 """.split()
 
     if res != expected_res:
-        gdaltest.post_reason('did not get expected result')
-        print(res)
+        gdaltest.post_reason('did not get expected result: %s' % res)
         return 'fail'
 
     return 'success'
@@ -379,18 +383,17 @@ def ogr_ods_7():
     if drv is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/ogr_ods_7.ods')
-    except:
-        pass
-    shutil.copy('data/test.ods', 'tmp/ogr_ods_7.ods')
+    filepath = 'tmp/ogr_ods_7.ods'
+    if os.path.exists(filepath):
+        os.unlink(filepath)
+    shutil.copy('data/test.ods', filepath)
 
-    ds = ogr.Open('tmp/ogr_ods_7.ods', update = 1)
+    ds = ogr.Open(filepath, update = 1)
     lyr = ds.GetLayerByName('Feuille7')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
         gdaltest.post_reason('did not get expected FID')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     feat.SetField(0, 'modified_value')
     lyr.SetFeature(feat)
@@ -402,16 +405,16 @@ def ogr_ods_7():
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
         gdaltest.post_reason('did not get expected FID')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     if feat.GetField(0) != 'modified_value':
         gdaltest.post_reason('did not get expected value')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     feat = None
     ds = None
 
-    os.unlink('tmp/ogr_ods_7.ods')
+    os.unlink(filepath)
 
     return 'success'
 
@@ -455,7 +458,54 @@ def ogr_ods_8():
 
     return 'success'
 
-gdaltest_list = [ 
+###############################################################################
+# Test DateTime with milliseconds
+
+def ogr_ods_9():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    ds = drv.CreateDataSource('/vsimem/ogr_ods_9.ods')
+    lyr = ds.CreateLayer('foo')
+    lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('Field2', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('Field3', ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, '2015/12/23 12:34:56.789')
+    f.SetField(1, '2015/12/23 12:34:56.000')
+    f.SetField(2, '2015/12/23 12:34:56')
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_ods_9.ods')
+    lyr = ds.GetLayer(0)
+    for i in range(3):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
+            gdaltest.post_reason('failure')
+            return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != '2015/12/23 12:34:56.789':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField(1) != '2015/12/23 12:34:56':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField(2) != '2015/12/23 12:34:56':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_ods_9.ods')
+
+    return 'success'
+
+gdaltest_list = [
     ogr_ods_1,
     ogr_ods_kspread_1,
     ogr_ods_2,
@@ -464,7 +514,8 @@ gdaltest_list = [
     ogr_ods_5,
     ogr_ods_6,
     ogr_ods_7,
-    ogr_ods_8
+    ogr_ods_8,
+    ogr_ods_9
 ]
 
 if __name__ == '__main__':
@@ -474,4 +525,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

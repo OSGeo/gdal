@@ -66,7 +66,7 @@ Routine g2_addlocal can be used to add a Local Use Section ( Section 2 ).
 Note that this section is optional and need not appear in a GRIB2 message.
 
 Function g2_addgrid is used to encode a grid definition into Section 3.
-This grid definition defines the geometry of the the data values in the
+This grid definition defines the geometry of the data values in the
 fields that follow it.  g2_addgrid can be called again to change the grid 
 definition describing subsequent data fields.
 
@@ -230,11 +230,11 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //        gfld->igdtmpl  = Contains the data values for the specified Grid
 //                         Definition Template ( NN=gfld->igdtnum ).  Each
 //                         element of this integer array contains an entry (in
-//                         the order specified) of Grid Defintion Template 3.NN
+//                         the order specified) of Grid Definition Template 3.NN
 //                         This element is a pointer to an array
 //                         that holds the data.
 //        gfld->igdtlen = Number of elements in gfld->igdtmpl[].  i.e. number of
-//                       entries in Grid Defintion Template 3.NN
+//                       entries in Grid Definition Template 3.NN
 //                       ( NN=gfld->igdtnum ).
 //        gfld->list_opt  = (Used if gfld->numoct_opt .ne. 0)  This array
 //                          contains the number of grid points contained in
@@ -251,11 +251,11 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //        gfld->ipdtmpl  = Contains the data values for the specified Product
 //                         Definition Template ( N=gfdl->ipdtnum ). Each element
 //                         of this integer array contains an entry (in the
-//                         order specified) of Product Defintion Template 4.N.
+//                         order specified) of Product Definition Template 4.N.
 //                         This element is a pointer to an array
 //                         that holds the data.
 //        gfld->ipdtlen = Number of elements in gfld->ipdtmpl[].  i.e. number of
-//                       entries in Product Defintion Template 4.N
+//                       entries in Product Definition Template 4.N
 //                       ( N=gfdl->ipdtnum ).
 //        gfld->coord_list  = Real array containing floating point values
 //                            intended to document the vertical discretisation
@@ -270,7 +270,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //        gfld->idrtmpl  = Contains the data values for the specified Data
 //                         Representation Template ( N=gfld->idrtnum ).  Each
 //                         element of this integer array contains an entry
-//                         (in the order specified) of Product Defintion
+//                         (in the order specified) of Product Definition
 //                         Template 5.N.
 //                         This element is a pointer to an array
 //                         that holds the data.
@@ -328,7 +328,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //     iseek      - number of bytes in the file to skip before search
 //     mseek      - number of bytes to search at a time
 //   OUTPUT ARGUMENTS:
-//     lskip      - number of bytes to skip from the beggining of the file
+//     lskip      - number of bytes to skip from the beginning of the file
 //                  to where the GRIB message starts
 //     lgrib      - number of bytes in message (set to 0, if no message found)
 //
@@ -369,8 +369,8 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //     listsec1 - pointer to an array containing information read from GRIB 
 //                Identification Section 1.
 //                Must be allocated with >= 13 elements.
-//                listsec1[0]=Id of orginating centre (Common Code Table C-1)
-//                listsec1[1]=Id of orginating sub-centre (local table)
+//                listsec1[0]=Id of originating centre (Common Code Table C-1)
+//                listsec1[1]=Id of originating sub-centre (local table)
 //                listsec1[2]=GRIB Master Tables Version Number (Code Table 1.0)
 //                listsec1[3]=GRIB Local Tables Version Number 
 //                listsec1[4]=Significance of Reference Time (Code Table 1.1)
@@ -383,7 +383,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                listsec1[11]=Production status of data (Code Table 1.2)
 //                listsec1[12]=Type of processed data (Code Table 1.3)
 //     numfields- The number of gridded fields found in the GRIB message.
-//                That is, the number of occurences of Sections 4 - 7.
+//                That is, the number of occurrences of Sections 4 - 7.
 //     numlocal - The number of Local Use Sections ( Section 2 ) found in 
 //                the GRIB message.
 //
@@ -515,11 +515,11 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //        gfld->igdtmpl  = Contains the data values for the specified Grid
 //                         Definition Template ( NN=gfld->igdtnum ).  Each
 //                         element of this integer array contains an entry (in
-//                         the order specified) of Grid Defintion Template 3.NN
+//                         the order specified) of Grid Definition Template 3.NN
 //                         This element is a pointer to an array
 //                         that holds the data.
 //        gfld->igdtlen = Number of elements in gfld->igdtmpl[].  i.e. number of
-//                       entries in Grid Defintion Template 3.NN
+//                       entries in Grid Definition Template 3.NN
 //                       ( NN=gfld->igdtnum ).
 //        gfld->list_opt  = (Used if gfld->numoct_opt .ne. 0)  This array
 //                          contains the number of grid points contained in
@@ -536,11 +536,11 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //        gfld->ipdtmpl  = Contains the data values for the specified Product
 //                         Definition Template ( N=gfdl->ipdtnum ). Each element
 //                         of this integer array contains an entry (in the
-//                         order specified) of Product Defintion Template 4.N.
+//                         order specified) of Product Definition Template 4.N.
 //                         This element is a pointer to an array
 //                         that holds the data.
 //        gfld->ipdtlen = Number of elements in gfld->ipdtmpl[].  i.e. number of
-//                       entries in Product Defintion Template 4.N
+//                       entries in Product Definition Template 4.N
 //                       ( N=gfdl->ipdtnum ).
 //        gfld->coord_list  = Real array containing floating point values
 //                            intended to document the vertical discretisation
@@ -555,7 +555,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //        gfld->idrtmpl  = Contains the data values for the specified Data
 //                         Representation Template ( N=gfld->idrtnum ).  Each
 //                         element of this integer array contains an entry
-//                         (in the order specified) of Product Defintion
+//                         (in the order specified) of Product Definition
 //                         Template 5.N.
 //                         This element is a pointer to an array
 //                         that holds the data.
@@ -783,7 +783,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //     igdstmpl - Contains the data values for the specified Grid Definition
 //                Template ( NN=igds[4] ).  Each element of this integer 
 //                array contains an entry (in the order specified) of Grid
-//                Defintion Template 3.NN
+//                Definition Template 3.NN
 //     ideflist - (Used if igds[2] != 0)  This array contains the
 //                number of grid points contained in each row ( or column )
 //      idefnum - (Used if igds[2] != 0)  The number of entries
@@ -846,8 +846,8 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //     ipdstmpl - Contains the data values for the specified Product Definition
 //                Template ( N=ipdsnum ).  Each element of this integer 
 //                array contains an entry (in the order specified) of Product
-//                Defintion Template 4.N
-//     coordlist- Array containg floating point values intended to document
+//                Definition Template 4.N
+//     coordlist- Array containing floating point values intended to document
 //                the vertical discretisation associated to model data
 //                on hybrid coordinate vertical levels.
 //     numcoord - number of values in array coordlist.

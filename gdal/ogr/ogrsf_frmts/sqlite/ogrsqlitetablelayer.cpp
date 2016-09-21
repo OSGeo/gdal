@@ -71,7 +71,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     bStatisticsNeedsToBeFlushed = FALSE;
     nFeatureCount = -1;
 
-    int bDisableInsertTriggers = CSLTestBoolean(CPLGetConfigOption(
+    int bDisableInsertTriggers = CPLTestBool(CPLGetConfigOption(
                             "OGR_SQLITE_DISABLE_INSERT_TRIGGERS", "YES"));
     bHasCheckedTriggers = !bDisableInsertTriggers;
     bDeferredCreation = FALSE;
@@ -89,7 +89,6 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
     ClearStatement();
     ClearInsertStmt();
 
-    char* pszErrMsg = NULL;
     int nGeomFieldCount = (poFeatureDefn) ? poFeatureDefn->GetGeomFieldCount() : 0;
     for(int i=0;i<nGeomFieldCount; i++)
     {
@@ -101,14 +100,11 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
                      poGeomFieldDefn->aosDisabledTriggers[j].first.c_str());
             // This may fail since CreateSpatialIndex() reinstalls triggers, so
             // don't check result
-            sqlite3_exec( poDS->GetDB(),
+            CPL_IGNORE_RET_VAL(sqlite3_exec( poDS->GetDB(),
                           poGeomFieldDefn->aosDisabledTriggers[j].second.c_str(),
-                          NULL, NULL, &pszErrMsg );
-            if( pszErrMsg )
-                sqlite3_free( pszErrMsg );
-            pszErrMsg = NULL;
+                          NULL, NULL, NULL ));
         }
-    
+
         // Update geometry_columns_time
         if( poGeomFieldDefn->aosDisabledTriggers.size() != 0 )
         {
@@ -116,10 +112,8 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
                 "UPDATE geometry_columns_time SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
                 "WHERE Lower(f_table_name) = Lower('%q') AND Lower(f_geometry_column) = Lower('%q')",
                 pszTableName, poGeomFieldDefn->GetNameRef());
-            sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, &pszErrMsg );
-            if( pszErrMsg )
-                sqlite3_free( pszErrMsg );
-            pszErrMsg = NULL;
+            CPL_IGNORE_RET_VAL(sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, NULL ));
+            sqlite3_free( pszSQL3 );
         }
     }
 
@@ -138,6 +132,7 @@ void OGRSQLiteTableLayer::CreateSpatialIndexIfNecessary()
     {
         for(int iGeomCol = 0; iGeomCol < poFeatureDefn->GetGeomFieldCount(); iGeomCol ++)
             CreateSpatialIndex(iGeomCol);
+        bDeferredSpatialIndexCreation = FALSE;
     }
 }
 
@@ -159,15 +154,15 @@ void OGRSQLiteTableLayer::ClearInsertStmt()
 /*                             Initialize()                             */
 /************************************************************************/
 
-CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName, 
+CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableNameIn,
                                         int bIsVirtualShapeIn,
-                                        int bDeferredCreation )
+                                        int bDeferredCreationIn )
 {
-    SetDescription( pszTableName );
+    SetDescription( pszTableNameIn );
 
     this->bIsVirtualShape = bIsVirtualShapeIn;
-    this->pszTableName = CPLStrdup(pszTableName);
-    this->bDeferredCreation = bDeferredCreation;
+    this->pszTableName = CPLStrdup(pszTableNameIn);
+    this->bDeferredCreation = bDeferredCreationIn;
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
 
     if( strchr(pszTableName, '(') != NULL &&
@@ -180,7 +175,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                                         pszEscapedTableName);
         int rc = sqlite3_get_table( poDS->GetDB(),
                                 pszSQL,
-                                &papszResult, &nRowCount, 
+                                &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
         int bFound = ( rc == SQLITE_OK && nRowCount == 1 );
         sqlite3_free_table(papszResult);
@@ -191,12 +186,11 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
             char* pszGeomCol = CPLStrdup(strchr(pszTableName, '(')+1);
             pszGeomCol[strlen(pszGeomCol)-1] = 0;
             *strchr(this->pszTableName, '(') = 0;
-            pszTableName = this->pszTableName;
             CPLFree(pszEscapedTableName),
             pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
             EstablishFeatureDefn(pszGeomCol);
             CPLFree(pszGeomCol);
-            if( poFeatureDefn->GetGeomFieldCount() == 0 )
+            if( poFeatureDefn == NULL || poFeatureDefn->GetGeomFieldCount() == 0 )
                 return CE_Failure;
         }
     }
@@ -305,21 +299,21 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
     pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM '%s' LIMIT 1",
                                      pszEscapedTableName );
 
-    rc = sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL ); 
+    rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to query table %s for column definitions : %s.",
                   pszTableName, sqlite3_errmsg(hDB) );
-        
+
         return CE_Failure;
     }
 
     rc = sqlite3_step( hColStmt );
     if ( rc != SQLITE_DONE && rc != SQLITE_ROW )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In Initialize(): sqlite3_step(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In Initialize(): sqlite3_step(%s):\n  %s",
                   pszSQL, sqlite3_errmsg(hDB) );
         sqlite3_finalize( hColStmt );
         return CE_Failure;
@@ -364,7 +358,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                         OGRSQLiteEscape(pszFIDColumn).c_str(),
                         pszEscapedTableName);
     hColStmt = NULL;
-    rc = sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL ); 
+    rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc == SQLITE_OK )
     {
         rc = sqlite3_step( hColStmt );
@@ -376,7 +370,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         }
     }
     sqlite3_finalize( hColStmt );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Set the properties of the geometry column.                      */
 /* -------------------------------------------------------------------- */
@@ -413,7 +407,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         char** papszResult = NULL;
         rc = sqlite3_get_table( hDB,
                                 pszSQL,
-                                &papszResult, &nRowCount, 
+                                &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
         OGRwkbGeometryType eGeomType = wkbUnknown;
         OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
@@ -429,7 +423,6 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                 poGeomFieldDefn->nSRSId = atoi(papszRow[0]);
             if( poDS->IsSpatialiteDB() )
             {
-                int bHasM = FALSE;
                 if( papszRow[3] != NULL )
                     poGeomFieldDefn->bHasSpatialIndex = atoi(papszRow[3]);
                 if( poDS->HasSpatialite4Layout() )
@@ -439,32 +432,24 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                     if( nGeomType >= 0 && nGeomType <= 7 ) /* XY */
                         eGeomType = (OGRwkbGeometryType) nGeomType;
                     else if( nGeomType >= 1000 && nGeomType <= 1007 ) /* XYZ */
-                        eGeomType = wkbSetZ(eGeomType);
+                        eGeomType = wkbSetZ(wkbFlatten(nGeomType));
                     else if( nGeomType >= 2000 && nGeomType <= 2007 ) /* XYM */
-                    {
-                        eGeomType = wkbFlatten(nGeomType);
-                        bHasM = TRUE;
-                    }
+                        eGeomType = wkbSetM(wkbFlatten(nGeomType));
                     else if( nGeomType >= 3000 && nGeomType <= 3007 ) /* XYZM */
-                    {
-                        eGeomType = wkbSetZ(eGeomType);
-                        bHasM = TRUE;
-                    }
+                        eGeomType = wkbSetM(wkbSetZ(wkbFlatten(nGeomType)));
                 }
                 else
                 {
                     eGeomType = OGRFromOGCGeomType(papszRow[1]);
 
                     if( strcmp ( papszRow[2], "XYZ" ) == 0 ||
-                        strcmp ( papszRow[2], "XYZM" ) == 0 ||
                         strcmp ( papszRow[2], "3" ) == 0) // SpatiaLite's own 3D geometries
                         eGeomType = wkbSetZ(eGeomType);
-
-                    if( strcmp ( papszRow[2], "XYM" ) == 0 ||
-                        strcmp ( papszRow[2], "XYZM" ) == 0 ) // M coordinate declared
-                        bHasM = TRUE;
+                    else if( strcmp ( papszRow[2], "XYM" ) == 0 )
+                        eGeomType = wkbSetM(eGeomType);
+                    else if( strcmp ( papszRow[2], "XYZM" ) == 0 ) // M coordinate declared
+                        eGeomType = wkbSetM(wkbSetZ(eGeomType));
                 }
-                poGeomFieldDefn->bHasM = bHasM;
                 eGeomFormat = OSGF_SpatiaLite;
             }
             else
@@ -492,7 +477,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
     {
         // we need to test version required by Spatialite TRIGGERs
         // hColStmt = NULL;
-        const char *pszSQL = CPLSPrintf( "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND tbl_name = '%s' AND sql LIKE '%%RTreeAlign%%'",
+        pszSQL = CPLSPrintf( "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND tbl_name = '%s' AND sql LIKE '%%RTreeAlign%%'",
             pszEscapedTableName );
 
         int nRowTriggerCount, nColTriggerCount;
@@ -543,7 +528,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                         OGRFieldDefn* poFieldDefn =  poFeatureDefn->GetFieldDefn(idx);
                         if( poFieldDefn->GetType() == OFTString &&
                             !EQUAL(pszDefault, "NULL") &&
-                            !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                            !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
                             pszDefault[0] != '(' &&
                             pszDefault[0] != '\'' &&
                             CPLGetValueType(pszDefault) == CPL_VALUE_STRING )
@@ -557,7 +542,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                         }
                         else if( (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) &&
                              !EQUAL(pszDefault, "NULL") &&
-                             !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                             !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
                              pszDefault[0] != '(' &&
                              pszDefault[0] != '\'' &&
                              !(pszDefault[0] >= '0' && pszDefault[0] <= '9') &&
@@ -610,24 +595,24 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
     pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM '%s' LIMIT 1",
                                      pszEscapedTableName );
 
-    rc = sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL ); 
+    rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to query table %s for column definitions : %s.",
                   pszTableName, sqlite3_errmsg(hDB) );
-        
-        return CE_Failure;
+
+        return OGRERR_FAILURE;
     }
 
     rc = sqlite3_step( hColStmt );
     if ( rc != SQLITE_DONE && rc != SQLITE_ROW )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In Initialize(): sqlite3_step(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In Initialize(): sqlite3_step(%s):\n  %s",
                   pszSQL, sqlite3_errmsg(hDB) );
         sqlite3_finalize( hColStmt );
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
 
     int    nRawColumns = sqlite3_column_count( hColStmt );
@@ -713,7 +698,7 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
 {
     int rc;
     CPLString osSQL;
-    
+
     if( bDeferredCreation ) RunDeferredCreationIfNecessary();
 
     ClearStatement();
@@ -721,7 +706,7 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     iNextShapeId = 0;
 
     osSQL.Printf( "SELECT _rowid_, * FROM '%s' %s",
-                    pszEscapedTableName, 
+                    pszEscapedTableName,
                     osWHERE.c_str() );
 
 
@@ -729,8 +714,7 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
 //    rc = sqlite3_prepare_v2( poDS->GetDB(), osSQL, osSQL.size(),
 //                  &hStmt, NULL );
 //#else
-    rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
-		          &hStmt, NULL );
+    rc = sqlite3_prepare( poDS->GetDB(), osSQL, -1, &hStmt, NULL );
 //#endif
 
     if( rc == SQLITE_OK )
@@ -739,8 +723,8 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
                   osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
         return OGRERR_FAILURE;
@@ -799,17 +783,18 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( GIntBig nFeatureId )
     iNextShapeId = nFeatureId;
 
     osSQL.Printf( "SELECT _rowid_, * FROM '%s' WHERE \"%s\" = " CPL_FRMT_GIB,
-                  pszEscapedTableName, 
+                  pszEscapedTableName,
                   OGRSQLiteEscape(pszFIDColumn).c_str(), nFeatureId );
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
-    rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(), 
+    rc = sqlite3_prepare( poDS->GetDB(), osSQL,
+                          static_cast<int>(osSQL.size()),
                           &hStmt, NULL );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In GetFeature(): sqlite3_prepare(%s):\n  %s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In GetFeature(): sqlite3_prepare(%s):\n  %s",
                   osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
 
         return NULL;
@@ -997,7 +982,7 @@ void OGRSQLiteTableLayer::BuildWhere()
             osWHERE = "WHERE ";
             osWHERE += osQuery;
         }
-        else	
+        else
         {
             osWHERE += " AND (";
             osWHERE += osQuery;
@@ -1028,7 +1013,7 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCRandomRead) )
         return pszFIDColumn != NULL;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
+    else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
     {
         return poDS->GetUpdate();
@@ -1055,7 +1040,9 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCurveGeometries) )
         return poDS->TestCapability(ODsCCurveGeometries);
 
-    else 
+    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+        return poDS->TestCapability(ODsCMeasuredGeometries);
+    else
         return OGRSQLiteLayer::TestCapability( pszCap );
 }
 
@@ -1113,7 +1100,7 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount( int bForce )
     int nRowCount, nColCount;
     GIntBig nResult = -1;
 
-    if( sqlite3_get_table( poDS->GetDB(), pszSQL, &papszResult, 
+    if( sqlite3_get_table( poDS->GetDB(), pszSQL, &papszResult,
                            &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
         return -1;
 
@@ -1170,7 +1157,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
     }
 
     if (CheckSpatialIndexTable(iGeomField) &&
-        !CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_EXACT_EXTENT", "NO")))
+        !CPLTestBool(CPLGetConfigOption("OGR_SQLITE_EXACT_EXTENT", "NO")))
     {
         const char* pszSQL;
 
@@ -1241,9 +1228,9 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn,
     switch( poFieldDefn->GetType() )
     {
         case OFTInteger:
-            if (poFieldDefn->GetSubType() == OFSTBoolean) 
+            if (poFieldDefn->GetSubType() == OFSTBoolean)
                 return "INTEGER_BOOLEAN";
-            else if (poFieldDefn->GetSubType() == OFSTInt16 ) 
+            else if (poFieldDefn->GetSubType() == OFSTInt16 )
                 return "INTEGER_INT16";
             else
                 return "INTEGER";
@@ -1251,7 +1238,7 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn,
         case OFTInteger64:
             return "BIGINT";
         case OFTReal:
-            if (bSQLiteDialectInternalUse && poFieldDefn->GetSubType() == OFSTFloat32) 
+            if (bSQLiteDialectInternalUse && poFieldDefn->GetSubType() == OFSTFloat32)
                 return "FLOAT_FLOAT32";
             else
                 return "FLOAT";
@@ -1329,7 +1316,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
                   "CreateField");
         return OGRERR_FAILURE;
     }
-    
+
     if( pszFIDColumn != NULL &&
         EQUAL( oField.GetNameRef(), pszFIDColumn ) &&
         oField.GetType() != OFTInteger &&
@@ -1337,11 +1324,11 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
                  oField.GetNameRef());
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
 
     ClearInsertStmt();
-    
+
     if( poDS->IsSpatialiteDB() && EQUAL( oField.GetNameRef(), "ROWID") )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -1365,7 +1352,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     if( (oField.GetType() == OFTTime || oField.GetType() == OFTDate ||
          oField.GetType() == OFTDateTime) &&
-        !(CSLTestBoolean(
+        !(CPLTestBool(
             CPLGetConfigOption("OGR_SQLITE_ENABLE_DATETIME", "YES"))) )
     {
         oField.SetType(OFTString);
@@ -1373,8 +1360,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     if( !bDeferredCreation )
     {
-        /* ADD COLUMN only avaliable since sqlite 3.1.3 */
-        if (CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_USE_ADD_COLUMN", "YES")) &&
+        /* ADD COLUMN only available since SQLite 3.1.3 */
+        if (CPLTestBool(CPLGetConfigOption("OGR_SQLITE_USE_ADD_COLUMN", "YES")) &&
             sqlite3_libversion_number() > 3 * 1000000 + 1 * 1000 + 3)
         {
             int rc;
@@ -1414,7 +1401,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Failed to add field %s to table %s:\n %s",
-                        oField.GetNameRef(), poFeatureDefn->GetName(), 
+                        oField.GetNameRef(), poFeatureDefn->GetName(),
                         pszErrMsg );
                 sqlite3_free( pszErrMsg );
                 return OGRERR_FAILURE;
@@ -1459,7 +1446,7 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                  "Cannot create geometry field of type wkbNone");
         return OGRERR_FAILURE;
     }
-    
+
     OGRSQLiteGeomFieldDefn *poGeomField =
         new OGRSQLiteGeomFieldDefn( poGeomFieldIn->GetNameRef(), -1 );
     if( EQUAL(poGeomField->GetNameRef(), "") )
@@ -1545,12 +1532,12 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
                                pszEscapedTableName );
         if( poGeomFieldDefn->eGeomFormat == OSGF_WKT )
         {
-            osCommand += CPLSPrintf(" '%s' VARCHAR", 
+            osCommand += CPLSPrintf(" '%s' VARCHAR",
                 OGRSQLiteEscape(poGeomFieldDefn->GetNameRef()).c_str() );
         }
         else
         {
-            osCommand += CPLSPrintf(" '%s' BLOB", 
+            osCommand += CPLSPrintf(" '%s' BLOB",
                 OGRSQLiteEscape(poGeomFieldDefn->GetNameRef()).c_str() );
         }
         if( !poGeomFieldDefn->IsNullable() )
@@ -1563,7 +1550,7 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
         int rc = sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to geometry field:\n%s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
@@ -1591,17 +1578,24 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
         / is found we'll unconditionally activate 2D casting mode
         */
         int iSpatialiteVersion = poDS->GetSpatialiteVersionNumber();
+        const char* pszCoordDim = "2";
         if ( iSpatialiteVersion < 24 && nCoordDim == 3 )
         {
             CPLDebug("SQLITE", "Spatialite < 2.4.0 --> 2.5D geometry not supported. Casting to 2D");
-            nCoordDim = 2;
         }
-
+        else if( OGR_GT_HasM( eType ) )
+        {
+            pszCoordDim = ( OGR_GT_HasZ( eType ) ) ? "'XYZM'" : "'XYM'";
+        }
+        else if( OGR_GT_HasZ( eType ) )
+        {
+            pszCoordDim = "3";
+        }
         osCommand.Printf( "SELECT AddGeometryColumn("
-                        "'%s', '%s', %d, '%s', %d",
+                        "'%s', '%s', %d, '%s', %s",
                         pszEscapedTableName,
                         OGRSQLiteEscape(pszGeomCol).c_str(), nSRSId,
-                        pszType, nCoordDim );
+                        pszType, pszCoordDim );
         if( iSpatialiteVersion >= 30 && !poGeomFieldDefn->IsNullable() )
             osCommand += ", 1";
         osCommand += ")";
@@ -1619,7 +1613,7 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
                 "INSERT INTO geometry_columns "
                 "(f_table_name, f_geometry_column, geometry_format, "
                 "geometry_type, coord_dimension, srid) VALUES "
-                "('%s','%s','%s', %d, %d, %d)", 
+                "('%s','%s','%s', %d, %d, %d)",
                 pszEscapedTableName,
                 OGRSQLiteEscape(pszGeomCol).c_str(), pszGeomFormat,
                 (int) wkbFlatten(eType), nCoordDim, nSRSId );
@@ -1644,13 +1638,13 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
     int rc = sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to geometry field:\n%s",
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
         return OGRERR_FAILURE;
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -1660,9 +1654,11 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
 
 void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
                                                     char* & pszFieldListForSelect,
+                                                    size_t& nBufLenOut,
                                                     int nExtraSpace)
 {
-    int iField, nFieldListLen = 100 + 2 * nExtraSpace;
+    int iField;
+    size_t nFieldListLen = 100 + 2 * nExtraSpace;
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
@@ -1679,14 +1675,15 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
         nFieldListLen += 70 + 2 * strlen(poFeatureDefn->GetGeomFieldDefn(iField)->GetNameRef());
     }
 
+    nBufLenOut = nFieldListLen;
     pszFieldListForSelect = (char *) CPLCalloc(1,nFieldListLen);
     pszNewFieldList = (char *) CPLCalloc(1,nFieldListLen);
 
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
-    sprintf( pszFieldListForSelect, "\"%s\"", pszFIDColumn ? OGRSQLiteEscapeName(pszFIDColumn).c_str() : "OGC_FID" );
-    sprintf( pszNewFieldList, "\"%s\" INTEGER PRIMARY KEY",pszFIDColumn ? OGRSQLiteEscapeName(pszFIDColumn).c_str() : "OGC_FID" );
+    snprintf( pszFieldListForSelect, nFieldListLen, "\"%s\"", pszFIDColumn ? OGRSQLiteEscapeName(pszFIDColumn).c_str() : "OGC_FID" );
+    snprintf( pszNewFieldList, nFieldListLen, "\"%s\" INTEGER PRIMARY KEY",pszFIDColumn ? OGRSQLiteEscapeName(pszFIDColumn).c_str() : "OGC_FID" );
 
     for( iField = 0; iField < poFeatureDefn->GetGeomFieldCount(); iField++ )
     {
@@ -1697,7 +1694,7 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
         strcat( pszFieldListForSelect, "\"");
         strcat( pszFieldListForSelect, OGRSQLiteEscapeName(poGeomFieldDefn->GetNameRef()) );
         strcat( pszFieldListForSelect, "\"");
-        
+
         strcat( pszNewFieldList, "\"");
         strcat( pszNewFieldList, OGRSQLiteEscapeName(poGeomFieldDefn->GetNameRef()) );
         strcat( pszNewFieldList, "\"");
@@ -1715,17 +1712,19 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
 /*                         AddColumnDef()                               */
 /************************************************************************/
 
-void OGRSQLiteTableLayer::AddColumnDef(char* pszNewFieldList,
+void OGRSQLiteTableLayer::AddColumnDef(char* pszNewFieldList, size_t nBufLen,
                                        OGRFieldDefn* poFldDefn)
 {
-    sprintf( pszNewFieldList+strlen(pszNewFieldList), 
+    snprintf( pszNewFieldList+strlen(pszNewFieldList), nBufLen-strlen(pszNewFieldList),
              ", '%s' %s", OGRSQLiteEscape(poFldDefn->GetNameRef()).c_str(),
              FieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
     if( !poFldDefn->IsNullable() )
-        sprintf( pszNewFieldList+strlen(pszNewFieldList), " NOT NULL" );
+        snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                 nBufLen-strlen(pszNewFieldList), " NOT NULL" );
     if( poFldDefn->GetDefault() != NULL && !poFldDefn->IsDefaultDriverSpecific() )
     {
-        sprintf( pszNewFieldList+strlen(pszNewFieldList), " DEFAULT %s",
+        snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                 nBufLen-strlen(pszNewFieldList), " DEFAULT %s",
                  poFldDefn->GetDefault() );
     }
 }
@@ -1736,15 +1735,16 @@ void OGRSQLiteTableLayer::AddColumnDef(char* pszNewFieldList,
 
 OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 {
-    
+
 /* -------------------------------------------------------------------- */
 /*      How much space do we need for the list of fields.               */
 /* -------------------------------------------------------------------- */
     int iField;
     char *pszOldFieldList, *pszNewFieldList;
+    size_t nBufLen = 0;
 
-    InitFieldListForRecrerate(pszNewFieldList, pszOldFieldList,
-                              strlen( oField.GetNameRef() ));
+    InitFieldListForRecrerate(pszNewFieldList, pszOldFieldList,nBufLen,
+                              static_cast<int>(strlen( oField.GetNameRef() )));
 
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
@@ -1762,10 +1762,10 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
         if( EQUAL(poFldDefn->GetNameRef(),pszFIDColumn ? pszFIDColumn : "OGC_FID") )
             continue;
 
-        sprintf( pszOldFieldList+strlen(pszOldFieldList), 
+        snprintf( pszOldFieldList+strlen(pszOldFieldList), nBufLen-strlen(pszOldFieldList),
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
-        AddColumnDef(pszNewFieldList, poFldDefn);
+        AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
 
         iNextOrdinal++;
     }
@@ -1773,7 +1773,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /* -------------------------------------------------------------------- */
 /*      Add the new field.                                              */
 /* -------------------------------------------------------------------- */
-    AddColumnDef(pszNewFieldList, &oField);
+    AddColumnDef(pszNewFieldList, nBufLen, &oField);
 
 /* ==================================================================== */
 /*      Backup, destroy, recreate and repopulate the table.  SQLite     */
@@ -1799,7 +1799,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 
     int nRowTriggerIndexCount, nColTriggerIndexCount;
     char **papszTriggerIndexResult = NULL;
-    rc = sqlite3_get_table( hDB, osSQL.c_str(), &papszTriggerIndexResult, 
+    rc = sqlite3_get_table( hDB, osSQL.c_str(), &papszTriggerIndexResult,
                             &nRowTriggerIndexCount, &nColTriggerIndexCount, &pszErrMsg );
 
 /* -------------------------------------------------------------------- */
@@ -1807,15 +1807,15 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /* -------------------------------------------------------------------- */
 
     if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB, 
+        rc = sqlite3_exec( hDB,
                        CPLSPrintf( "CREATE TEMPORARY TABLE t1_back(%s)",
                                    pszOldFieldList ),
                        NULL, NULL, &pszErrMsg );
 
     if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB, 
+        rc = sqlite3_exec( hDB,
                            CPLSPrintf( "INSERT INTO t1_back SELECT %s FROM '%s'",
-                                       pszOldFieldList, 
+                                       pszOldFieldList,
                                        pszEscapedTableName ),
                            NULL, NULL, &pszErrMsg );
 
@@ -1824,18 +1824,18 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /*      Drop the original table, and recreate with new field.           */
 /* -------------------------------------------------------------------- */
     if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB, 
-                           CPLSPrintf( "DROP TABLE '%s'", 
+        rc = sqlite3_exec( hDB,
+                           CPLSPrintf( "DROP TABLE '%s'",
                                        pszEscapedTableName ),
                            NULL, NULL, &pszErrMsg );
 
     if( rc == SQLITE_OK )
     {
-        const char *pszCmd = 
-            CPLSPrintf( "CREATE TABLE '%s' (%s)", 
+        const char *pszCmd =
+            CPLSPrintf( "CREATE TABLE '%s' (%s)",
                         pszEscapedTableName,
                         pszNewFieldList );
-        rc = sqlite3_exec( hDB, pszCmd, 
+        rc = sqlite3_exec( hDB, pszCmd,
                            NULL, NULL, &pszErrMsg );
 
         CPLDebug( "OGR_SQLITE", "exec(%s)", pszCmd );
@@ -1844,9 +1844,9 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /* -------------------------------------------------------------------- */
 /*      Copy backup field values into new table.                        */
 /* -------------------------------------------------------------------- */
-    
+
     if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB, 
+        rc = sqlite3_exec( hDB,
                            CPLSPrintf( "INSERT INTO '%s' SELECT %s, NULL FROM t1_back",
                                        pszEscapedTableName,
                                        pszOldFieldList ),
@@ -1858,9 +1858,9 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /* -------------------------------------------------------------------- */
 /*      Cleanup backup table.                                           */
 /* -------------------------------------------------------------------- */
-    
+
     if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB, 
+        rc = sqlite3_exec( hDB,
                            CPLSPrintf( "DROP TABLE t1_back" ),
                            NULL, NULL, &pszErrMsg );
 
@@ -1875,31 +1875,31 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
         for(i = 1; i <= nRowTriggerIndexCount && nColTriggerIndexCount == 1 && rc == SQLITE_OK; i++)
         {
             if (papszTriggerIndexResult[i] != NULL && papszTriggerIndexResult[i][0] != '\0')
-                rc = sqlite3_exec( hDB, 
+                rc = sqlite3_exec( hDB,
                             papszTriggerIndexResult[i],
                             NULL, NULL, &pszErrMsg );
         }
     }
 
 /* -------------------------------------------------------------------- */
-/*      COMMIT on success or ROLLBACK on failuire.                      */
+/*      COMMIT on success or ROLLBACK on failure.                       */
 /* -------------------------------------------------------------------- */
 
     sqlite3_free_table( papszTriggerIndexResult );
 
     if( rc == SQLITE_OK )
     {
-        poDS->SoftCommit();
+        poDS->SoftCommitTransaction();
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to add field %s to table %s:\n %s",
-                  oField.GetNameRef(), poFeatureDefn->GetName(), 
+                  oField.GetNameRef(), poFeatureDefn->GetName(),
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
 
-        poDS->SoftRollback();
+        poDS->SoftRollbackTransaction();
 
         return OGRERR_FAILURE;
     }
@@ -1993,14 +1993,14 @@ OGRErr OGRSQLiteTableLayer::RecreateTable(const char* pszFieldListForSelect,
     }
 
 /* -------------------------------------------------------------------- */
-/*      COMMIT on success or ROLLBACK on failuire.                      */
+/*      COMMIT on success or ROLLBACK on failure.                       */
 /* -------------------------------------------------------------------- */
 
     sqlite3_free_table( papszTriggerIndexResult );
 
     if( rc == SQLITE_OK )
     {
-        poDS->SoftCommit();
+        poDS->SoftCommitTransaction();
 
         return OGRERR_NONE;
     }
@@ -2012,7 +2012,7 @@ OGRErr OGRSQLiteTableLayer::RecreateTable(const char* pszFieldListForSelect,
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
 
-        poDS->SoftRollback();
+        poDS->SoftRollbackTransaction();
 
         return OGRERR_FAILURE;
     }
@@ -2049,7 +2049,9 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 /* -------------------------------------------------------------------- */
     int iField;
     char *pszNewFieldList, *pszFieldListForSelect;
-    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect);
+    size_t nBufLen = 0;
+
+    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect, nBufLen);
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
@@ -2058,10 +2060,11 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
         if (iField == iFieldToDelete)
             continue;
 
-        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+        snprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                  nBufLen-strlen(pszFieldListForSelect),
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
-        AddColumnDef(pszNewFieldList, poFldDefn);
+        AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2096,7 +2099,7 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlags )
+OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
 {
     if (HasLayerDefnError())
         return OGRERR_FAILURE;
@@ -2124,61 +2127,69 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
 /* -------------------------------------------------------------------- */
     int iField;
     char *pszNewFieldList, *pszFieldListForSelect;
+    size_t nBufLen = 0;
+
     InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect,
-                              strlen(poNewFieldDefn->GetNameRef()) +
+                              nBufLen,
+                              static_cast<int>(strlen(poNewFieldDefn->GetNameRef())) +
                               50 +
-                              (poNewFieldDefn->GetDefault() ? strlen(poNewFieldDefn->GetDefault()) : 0)
+                              (poNewFieldDefn->GetDefault() ? static_cast<int>(strlen(poNewFieldDefn->GetDefault())) : 0)
                               );
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
 
-        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+        snprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                 nBufLen-strlen(pszFieldListForSelect),
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
         if (iField == iFieldToAlter)
         {
             OGRFieldDefn oTmpFieldDefn(poFldDefn);
-            if( (nFlags & ALTER_NAME_FLAG) )
+            if( (nFlagsIn & ALTER_NAME_FLAG) )
                 oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
-            if( (nFlags & ALTER_TYPE_FLAG) )
+            if( (nFlagsIn & ALTER_TYPE_FLAG) )
                 oTmpFieldDefn.SetType(poNewFieldDefn->GetType());
-            if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+            if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
             {
                 oTmpFieldDefn.SetWidth(poNewFieldDefn->GetWidth());
                 oTmpFieldDefn.SetPrecision(poNewFieldDefn->GetPrecision());
             }
-            if( (nFlags & ALTER_NULLABLE_FLAG) )
+            if( (nFlagsIn & ALTER_NULLABLE_FLAG) )
             {
                 oTmpFieldDefn.SetNullable(poNewFieldDefn->IsNullable());
             }
-            if( (nFlags & ALTER_DEFAULT_FLAG) )
+            if( (nFlagsIn & ALTER_DEFAULT_FLAG) )
             {
                 oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
             }
 
-            sprintf( pszNewFieldList+strlen(pszNewFieldList),
+            snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                      nBufLen-strlen(pszNewFieldList),
                     ", '%s' %s",
                     OGRSQLiteEscape(oTmpFieldDefn.GetNameRef()).c_str(),
                     FieldDefnToSQliteFieldDefn(&oTmpFieldDefn).c_str() );
-            if ( (nFlags & ALTER_NAME_FLAG) &&
+            if ( (nFlagsIn & ALTER_NAME_FLAG) &&
                  oTmpFieldDefn.GetType() == OFTString &&
                  CSLFindString(papszCompressedColumns, poFldDefn->GetNameRef()) >= 0 )
             {
-                sprintf( pszNewFieldList+strlen(pszNewFieldList), "_deflate");
+                snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                         nBufLen-strlen(pszNewFieldList), "_deflate");
             }
             if( !oTmpFieldDefn.IsNullable() )
-                sprintf( pszNewFieldList+strlen(pszNewFieldList), " NOT NULL" );
+                snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                          nBufLen-strlen(pszNewFieldList)," NOT NULL" );
             if( oTmpFieldDefn.GetDefault() )
             {
-                sprintf( pszNewFieldList+strlen(pszNewFieldList), " DEFAULT %s",
+                snprintf( pszNewFieldList+strlen(pszNewFieldList),
+                         nBufLen-strlen(pszNewFieldList)," DEFAULT %s",
                          oTmpFieldDefn.GetDefault());
             }
         }
         else
         {
-            AddColumnDef(pszNewFieldList, poFldDefn);
+            AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
         }
     }
 
@@ -2206,7 +2217,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
 
     OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldToAlter);
 
-    if (nFlags & ALTER_TYPE_FLAG)
+    if (nFlagsIn & ALTER_TYPE_FLAG)
     {
         int iIdx;
         if( poNewFieldDefn->GetType() != OFTString &&
@@ -2218,7 +2229,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
         }
         poFieldDefn->SetType(poNewFieldDefn->GetType());
     }
-    if (nFlags & ALTER_NAME_FLAG)
+    if (nFlagsIn & ALTER_NAME_FLAG)
     {
         int iIdx;
         if( (iIdx = CSLFindString(papszCompressedColumns,
@@ -2230,14 +2241,14 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
         }
         poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
     }
-    if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+    if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
         poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
         poFieldDefn->SetPrecision(poNewFieldDefn->GetPrecision());
     }
-    if (nFlags & ALTER_NULLABLE_FLAG)
+    if (nFlagsIn & ALTER_NULLABLE_FLAG)
         poFieldDefn->SetNullable(poNewFieldDefn->IsNullable());
-    if (nFlags & ALTER_DEFAULT_FLAG)
+    if (nFlagsIn & ALTER_DEFAULT_FLAG)
         poFieldDefn->SetDefault(poNewFieldDefn->GetDefault());
 
     return OGRERR_NONE;
@@ -2275,16 +2286,19 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
 /* -------------------------------------------------------------------- */
     int iField;
     char *pszNewFieldList, *pszFieldListForSelect;
-    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect);
+    size_t nBufLen;
+
+    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect, nBufLen);
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(panMap[iField]);
 
-        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+        snprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                  nBufLen - strlen(pszFieldListForSelect),
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
-        AddColumnDef(pszNewFieldList, poFldDefn);
+        AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2323,7 +2337,7 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
 /* and to FALSE by CreateFeature() for INSERT statements; */
 
 OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
-                                        sqlite3_stmt* hStmt,
+                                        sqlite3_stmt* hStmtIn,
                                         int bBindNullValues )
 {
     int rc;
@@ -2349,7 +2363,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
             {
                 char *pszWKT = NULL;
                 poGeom->exportToWkt( &pszWKT );
-                rc = sqlite3_bind_text( hStmt, nBindField++, pszWKT, -1, CPLFree );
+                rc = sqlite3_bind_text( hStmtIn, nBindField++, pszWKT, -1, CPLFree );
             }
             else if( eGeomFormat == OSGF_WKB )
             {
@@ -2357,7 +2371,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                 GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
 
                 poGeom->exportToWkb( wkbNDR, pabyWKB );
-                rc = sqlite3_bind_blob( hStmt, nBindField++, pabyWKB, nWKBLen, CPLFree );
+                rc = sqlite3_bind_blob( hStmtIn, nBindField++, pabyWKB, nWKBLen, CPLFree );
             }
             else if ( eGeomFormat == OSGF_SpatiaLite )
             {
@@ -2365,22 +2379,22 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                 GByte   *pabySLBLOB;
 
                 int nSRSId = poGeomFieldDefn->nSRSId;
-                int bHasM = poGeomFieldDefn->bHasM;
-                ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR, bHasM,
-                                        bSpatialite2D, bUseComprGeom, &pabySLBLOB, &nBLOBLen );
-                rc = sqlite3_bind_blob( hStmt, nBindField++, pabySLBLOB,
+                CPL_IGNORE_RET_VAL(ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR,
+                                        bSpatialite2D, bUseComprGeom, &pabySLBLOB, &nBLOBLen ));
+                rc = sqlite3_bind_blob( hStmtIn, nBindField++, pabySLBLOB,
                                         nBLOBLen, CPLFree );
             }
             else
             {
                 rc = SQLITE_OK;
+                CPL_IGNORE_RET_VAL(rc);
                 CPLAssert(0);
             }
         }
         else
         {
             if (bBindNullValues)
-                rc = sqlite3_bind_null( hStmt, nBindField++ );
+                rc = sqlite3_bind_null( hStmtIn, nBindField++ );
             else
                 rc = SQLITE_OK;
         }
@@ -2407,7 +2421,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
         if( !poFeature->IsFieldSet( iField ) )
         {
             if (bBindNullValues)
-                rc = sqlite3_bind_null( hStmt, nBindField++ );
+                rc = sqlite3_bind_null( hStmtIn, nBindField++ );
             else
                 rc = SQLITE_OK;
         }
@@ -2419,21 +2433,21 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                 case OFTInteger:
                 {
                     int nFieldVal = poFeature->GetFieldAsInteger( iField );
-                    rc = sqlite3_bind_int(hStmt, nBindField++, nFieldVal);
+                    rc = sqlite3_bind_int(hStmtIn, nBindField++, nFieldVal);
                     break;
                 }
-                
+
                 case OFTInteger64:
                 {
                     GIntBig nFieldVal = poFeature->GetFieldAsInteger64( iField );
-                    rc = sqlite3_bind_int64(hStmt, nBindField++, nFieldVal);
+                    rc = sqlite3_bind_int64(hStmtIn, nBindField++, nFieldVal);
                     break;
                 }
 
                 case OFTReal:
                 {
                     double dfFieldVal = poFeature->GetFieldAsDouble( iField );
-                    rc = sqlite3_bind_double(hStmt, nBindField++, dfFieldVal);
+                    rc = sqlite3_bind_double(hStmtIn, nBindField++, dfFieldVal);
                     break;
                 }
 
@@ -2442,21 +2456,17 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                     int nDataLength = 0;
                     GByte* pabyData =
                         poFeature->GetFieldAsBinary( iField, &nDataLength );
-                    rc = sqlite3_bind_blob(hStmt, nBindField++,
+                    rc = sqlite3_bind_blob(hStmtIn, nBindField++,
                                         pabyData, nDataLength, SQLITE_TRANSIENT);
                     break;
                 }
 
                 case OFTDateTime:
                 {
-                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
-                    poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
-                                                &nHour, &nMinute, &nSecond, &nTZ);
-                    char szBuffer[64];
-                    sprintf(szBuffer, "%04d-%02d-%02dT%02d:%02d:%02d",
-                            nYear, nMonth, nDay, nHour, nMinute, nSecond);
-                    rc = sqlite3_bind_text(hStmt, nBindField++,
-                                           szBuffer, -1, SQLITE_TRANSIENT);
+                    char* pszStr = OGRGetXMLDateTime(poFeature->GetRawFieldRef(iField));
+                    rc = sqlite3_bind_text(hStmtIn, nBindField++,
+                                           pszStr, -1, SQLITE_TRANSIENT);
+                    CPLFree(pszStr);
                     break;
                 }
 
@@ -2466,20 +2476,24 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                     poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
                                                 &nHour, &nMinute, &nSecond, &nTZ);
                     char szBuffer[64];
-                    sprintf(szBuffer, "%04d-%02d-%02d", nYear, nMonth, nDay);
-                    rc = sqlite3_bind_text(hStmt, nBindField++,
+                    snprintf(szBuffer, sizeof(szBuffer), "%04d-%02d-%02d", nYear, nMonth, nDay);
+                    rc = sqlite3_bind_text(hStmtIn, nBindField++,
                                            szBuffer, -1, SQLITE_TRANSIENT);
                     break;
                 }
 
                 case OFTTime:
                 {
-                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
+                    int nYear, nMonth, nDay, nHour, nMinute, nTZ;
+                    float fSecond;
                     poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
-                                                &nHour, &nMinute, &nSecond, &nTZ);
+                                                &nHour, &nMinute, &fSecond, &nTZ );
                     char szBuffer[64];
-                    sprintf(szBuffer, "%02d:%02d:%02d", nHour, nMinute, nSecond);
-                    rc = sqlite3_bind_text(hStmt, nBindField++,
+                    if( OGR_GET_MS(fSecond) != 0 )
+                        snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%06.3f", nHour, nMinute, fSecond);
+                    else
+                        snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%02d", nHour, nMinute, (int)fSecond);
+                    rc = sqlite3_bind_text(hStmtIn, nBindField++,
                                            szBuffer, -1, SQLITE_TRANSIENT);
                     break;
                 }
@@ -2496,7 +2510,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                         osValue += papszValues[i];
                     }
                     osValue += ")";
-                    rc = sqlite3_bind_text(hStmt, nBindField++,
+                    rc = sqlite3_bind_text(hStmtIn, nBindField++,
                                                osValue.c_str(), -1, SQLITE_TRANSIENT);
                     break;
                 }
@@ -2514,9 +2528,9 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                                                      &nBytesOut );
                         if( pOut != NULL )
                         {
-                            rc = sqlite3_bind_blob(hStmt, nBindField++,
+                            rc = sqlite3_bind_blob(hStmtIn, nBindField++,
                                                    pOut,
-                                                   nBytesOut,
+                                                   static_cast<int>(nBytesOut),
                                                    CPLFree);
                         }
                         else
@@ -2524,7 +2538,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                     }
                     else
                     {
-                        rc = sqlite3_bind_text(hStmt, nBindField++,
+                        rc = sqlite3_bind_text(hStmtIn, nBindField++,
                                                pszRawValue, -1, SQLITE_TRANSIENT);
                     }
                     break;
@@ -2557,14 +2571,14 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
 
     if( pszFIDColumn == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "SetFeature() without any FID column." );
         return OGRERR_FAILURE;
     }
-    
+
     if( poFeature->GetFID() == OGRNullFID )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "SetFeature() with unset FID fails." );
         return OGRERR_FAILURE;
     }
@@ -2584,8 +2598,8 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
             poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                        "Inconsistant values of FID and field of same name");
-            return CE_Failure;
+                        "Inconsistent values of FID and field of same name");
+            return OGRERR_FAILURE;
         }
     }
 
@@ -2697,23 +2711,27 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
 
     sqlite3_finalize( hUpdateStmt );
 
-    nFieldCount = poFeatureDefn->GetGeomFieldCount();
-    for( iField = 0; iField < nFieldCount; iField++ )
+    eErr = (sqlite3_changes(hDB) > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
+    if( eErr == OGRERR_NONE )
     {
-        OGRSQLiteGeomFieldDefn* poGeomFieldDefn = 
-            poFeatureDefn->myGetGeomFieldDefn(iField);
-        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iField);
-        if( poGeomFieldDefn->bCachedExtentIsValid &&
-            poGeom != NULL && !poGeom->IsEmpty() )
+        nFieldCount = poFeatureDefn->GetGeomFieldCount();
+        for( iField = 0; iField < nFieldCount; iField++ )
         {
-            OGREnvelope sGeomEnvelope;
-            poGeom->getEnvelope(&sGeomEnvelope);
-            poGeomFieldDefn->oCachedExtent.Merge(sGeomEnvelope);
+            OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
+                poFeatureDefn->myGetGeomFieldDefn(iField);
+            OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iField);
+            if( poGeomFieldDefn->bCachedExtentIsValid &&
+                poGeom != NULL && !poGeom->IsEmpty() )
+            {
+                OGREnvelope sGeomEnvelope;
+                poGeom->getEnvelope(&sGeomEnvelope);
+                poGeomFieldDefn->oCachedExtent.Merge(sGeomEnvelope);
+            }
         }
+        bStatisticsNeedsToBeFlushed = TRUE;
     }
-    bStatisticsNeedsToBeFlushed = TRUE;
 
-    return OGRERR_NONE;
+    return eErr;
 }
 
 /************************************************************************/
@@ -2795,8 +2813,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
                                         poFeatureDefn->myGetGeomFieldDefn(j);
-            if( !((bDeferredSpatialIndexCreation || !poGeomFieldDefn->bHasSpatialIndex) &&
-                  !poGeomFieldDefn->bHasM) )
+            if( !((bDeferredSpatialIndexCreation || !poGeomFieldDefn->bHasSpatialIndex)) )
                 continue;
             const char* pszGeomCol = poGeomFieldDefn->GetNameRef();
 
@@ -2807,8 +2824,8 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                 if( pszTriggerName!= NULL && pszTriggerSQL != NULL &&
                     CPLString(pszTriggerName).tolower().find(CPLString(pszGeomCol).tolower()) != std::string::npos )
                 {
-                    const char* pszExpectedTrigger = 0;
-                    if( strncmp(pszTriggerName, "ggi_", 4) == 0 )
+                    const char* pszExpectedTrigger = NULL;
+                    if( STARTS_WITH(pszTriggerName, "ggi_") )
                     {
                         pszExpectedTrigger = CPLSPrintf(
                         "CREATE TRIGGER \"ggi_%s_%s\" BEFORE INSERT ON \"%s\" "
@@ -2823,7 +2840,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                         pszTableName, pszGeomCol,
                         pszGeomCol);
                     }
-                    else if( strncmp(pszTriggerName, "tmi_", 4) == 0 )
+                    else if( STARTS_WITH(pszTriggerName, "tmi_") )
                     {
                         pszExpectedTrigger = CPLSPrintf(
                         "CREATE TRIGGER \"tmi_%s_%s\" AFTER INSERT ON \"%s\" "
@@ -2838,7 +2855,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                     /* that check there's no spatial index active */
                     /* A further potential optimization would be to rebuild the spatial index */
                     /* afterwards... */
-                    /*else if( strncmp(pszTriggerName, "gii_", 4) == 0 )
+                    /*else if( STARTS_WITH(pszTriggerName, "gii_") )
                     {
                         pszExpectedTrigger = CPLSPrintf(
                         "CREATE TRIGGER \"gii_%s_%s\" AFTER INSERT ON \"%s\" "
@@ -2854,7 +2871,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                         pszTableName, pszGeomCol, pszGeomCol);
                     }*/
 
-                    if( AreTriggersSimilar(pszExpectedTrigger, pszTriggerSQL) )
+                    if( pszExpectedTrigger != NULL && AreTriggersSimilar(pszExpectedTrigger, pszTriggerSQL) )
                     {
                         // And drop them
                         pszSQL3 = sqlite3_mprintf("DROP TRIGGER %s", pszTriggerName);
@@ -2941,8 +2958,8 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Inconsistant values of FID and field of same name");
-                return CE_Failure;
+                            "Inconsistent values of FID and field of same name");
+                return OGRERR_FAILURE;
             }
         }
     }
@@ -3085,8 +3102,8 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( rc != SQLITE_OK && rc != SQLITE_DONE )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "sqlite3_step() failed:\n  %s (%d)", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "sqlite3_step() failed:\n  %s (%d)",
                   sqlite3_errmsg(hDB), rc );
         sqlite3_reset( hInsertStmt );
         ClearInsertStmt();
@@ -3105,17 +3122,17 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     sqlite3_reset( hInsertStmt );
-    
+
     if( bTemporaryStatement )
         ClearInsertStmt();
 
     nFieldCount = poFeatureDefn->GetGeomFieldCount();
     for( iField = 0; iField < nFieldCount; iField++ )
     {
-        OGRSQLiteGeomFieldDefn* poGeomFieldDefn = 
+        OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
             poFeatureDefn->myGetGeomFieldDefn(iField);
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iField);
-        
+
         if( (poGeomFieldDefn->bCachedExtentIsValid || nFeatureCount == 0) &&
             poGeom != NULL && !poGeom->IsEmpty() )
         {
@@ -3186,14 +3203,13 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( GIntBig nFID )
         return OGRERR_FAILURE;
     }
 
-    int nChanged = sqlite3_changes( poDS->GetDB() );
-
-    if( nChanged == 1 )
+    OGRErr eErr = (sqlite3_changes(poDS->GetDB()) > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
+    if( eErr == OGRERR_NONE )
     {
         int nFieldCount = poFeatureDefn->GetGeomFieldCount();
         for( int iField = 0; iField < nFieldCount; iField++ )
         {
-            OGRSQLiteGeomFieldDefn* poGeomFieldDefn = 
+            OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
                 poFeatureDefn->myGetGeomFieldDefn(iField);
             poGeomFieldDefn->bCachedExtentIsValid = FALSE;
         }
@@ -3201,7 +3217,7 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( GIntBig nFID )
         bStatisticsNeedsToBeFlushed = TRUE;
     }
 
-    return OGRERR_NONE;
+    return eErr;
 }
 
 /************************************************************************/
@@ -3255,8 +3271,8 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
     int rc;
     char *pszErrMsg;
     CPLString osCommand;
-    
-    osCommand.Printf( "CREATE TABLE '%s' ( %s INTEGER PRIMARY KEY", 
+
+    osCommand.Printf( "CREATE TABLE '%s' ( %s INTEGER PRIMARY KEY",
                       pszEscapedTableName,
                       pszFIDColumn );
 
@@ -3270,12 +3286,12 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
 
             if( poGeomFieldDefn->eGeomFormat == OSGF_WKT )
             {
-                osCommand += CPLSPrintf(", '%s' VARCHAR", 
+                osCommand += CPLSPrintf(", '%s' VARCHAR",
                     OGRSQLiteEscape(poGeomFieldDefn->GetNameRef()).c_str() );
             }
             else
             {
-                osCommand += CPLSPrintf(", '%s' BLOB", 
+                osCommand += CPLSPrintf(", '%s' BLOB",
                     OGRSQLiteEscape(poGeomFieldDefn->GetNameRef()).c_str() );
             }
             if( !poGeomFieldDefn->IsNullable() )
@@ -3302,8 +3318,8 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
         if( pszDefault != NULL &&
             (!poFieldDefn->IsDefaultDriverSpecific() ||
              (pszDefault[0] == '(' && pszDefault[strlen(pszDefault)-1] == ')' &&
-             (EQUALN(pszDefault+1, "strftime", strlen("strftime")) ||
-              EQUALN(pszDefault+1, " strftime", strlen(" strftime"))))) )
+             (STARTS_WITH_CI(pszDefault+1, "strftime") ||
+              STARTS_WITH_CI(pszDefault+1, " strftime")))) )
         {
             osCommand += " DEFAULT ";
             osCommand += poFieldDefn->GetDefault();
@@ -3318,7 +3334,7 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
     rc = sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to create table %s: %s",
                   pszLayerName, pszErrMsg );
         sqlite3_free( pszErrMsg );
@@ -3337,7 +3353,7 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
         * an effort to clean out such cruft.
         */
         osCommand.Printf(
-            "DELETE FROM geometry_columns WHERE f_table_name = '%s'", 
+            "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
             pszEscapedTableName );
 
 #ifdef DEBUG
@@ -3347,8 +3363,11 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
         rc = sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to run %s: %s",
+                  osCommand.c_str(), pszErrMsg );
             sqlite3_free( pszErrMsg );
-            return FALSE;
+            return OGRERR_FAILURE;
         }
 
         for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
@@ -3365,7 +3384,15 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
     if( poDS->IsSpatialiteDB() && poDS->GetLayerCount() == 1)
     {
         /* To create the layer_statistics and spatialite_history tables */
-        sqlite3_exec( poDS->GetDB(), "SELECT UpdateLayerStatistics()", NULL, NULL, NULL );
+        rc = sqlite3_exec( poDS->GetDB(), "SELECT UpdateLayerStatistics()", NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to run %s: %s",
+                  osCommand.c_str(), pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return OGRERR_FAILURE;
+        }
     }
 
     return OGRERR_NONE;
@@ -3380,12 +3407,9 @@ int OGRSQLiteTableLayer::HasSpatialIndex(int iGeomCol)
     GetLayerDefn();
     if( iGeomCol < 0 || iGeomCol >= poFeatureDefn->GetGeomFieldCount() )
         return FALSE;
-    OGRSQLiteGeomFieldDefn* poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(iGeomCol);    
-    if( bDeferredSpatialIndexCreation )
-    {
-        bDeferredSpatialIndexCreation = FALSE;
-        poGeomFieldDefn->bHasSpatialIndex = CreateSpatialIndex(iGeomCol);
-    }
+    OGRSQLiteGeomFieldDefn* poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(iGeomCol);
+
+    CreateSpatialIndexIfNecessary();
 
     return poGeomFieldDefn->bHasSpatialIndex;
 }
@@ -3455,8 +3479,11 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
         CPLString osSQL;
         CPLString osLastEvtDate;
         osSQL.Printf("SELECT MAX(last_insert, last_update, last_delete) FROM geometry_columns_time WHERE "
-                    "f_table_name = '%s' AND f_geometry_column = '%s'",
-                    pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str());
+                    "(f_table_name = '%s' AND f_geometry_column = '%s')"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                    " OR 0"
+#endif
+                    ,pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str());
 
         sqlite3 *hDB = poDS->GetDB();
         int nRowCount = 0, nColCount = 0;
@@ -3483,8 +3510,11 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
 
         osSQL.Printf("SELECT last_verified, row_count, extent_min_x, extent_min_y, "
                     "extent_max_x, extent_max_y FROM geometry_columns_statistics WHERE "
-                    "f_table_name = '%s' AND f_geometry_column = '%s'",
-                    pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str());
+                    "(f_table_name = '%s' AND f_geometry_column = '%s')"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                    " OR 0"
+#endif
+                    ,pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str());
 
         nRowCount = 0;
         nColCount = 0;

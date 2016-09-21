@@ -81,6 +81,6 @@ OGRFeature *TigerOverUnder::GetFeature( int nRecordId )
 
 OGRErr TigerOverUnder::CreateFeature( OGRFeature *poFeature )
 {
-  return TigerPoint::CreateFeature( poFeature, 
+  return TigerPoint::CreateFeature( poFeature,
                                     62 );
 }

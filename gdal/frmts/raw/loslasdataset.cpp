@@ -28,9 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_srs_api.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -67,23 +68,23 @@ even the header record is this length though it means some waste.
 
 /************************************************************************/
 /* ==================================================================== */
-/*				LOSLASDataset				*/
+/*                              LOSLASDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 
 class LOSLASDataset : public RawDataset
 {
   public:
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     int         nRecordLength;
-    
+
     double      adfGeoTransform[6];
 
   public:
-    		LOSLASDataset();
-    	        ~LOSLASDataset();
-    
+                LOSLASDataset();
+    virtual ~LOSLASDataset();
+
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef();
 
@@ -93,7 +94,7 @@ class LOSLASDataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*				LOSLASDataset				*/
+/*                              LOSLASDataset                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -101,10 +102,7 @@ class LOSLASDataset : public RawDataset
 /*                             LOSLASDataset()                          */
 /************************************************************************/
 
-LOSLASDataset::LOSLASDataset()
-{
-    fpImage = NULL;
-}
+LOSLASDataset::LOSLASDataset() : fpImage(NULL), nRecordLength(0) { }
 
 /************************************************************************/
 /*                            ~LOSLASDataset()                          */
@@ -116,7 +114,7 @@ LOSLASDataset::~LOSLASDataset()
     FlushCache();
 
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }
 
 /************************************************************************/
@@ -129,11 +127,11 @@ int LOSLASDataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 64 )
         return FALSE;
 
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"las") 
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"las")
         && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"los") )
         return FALSE;
 
-    if( !EQUALN((const char *)poOpenInfo->pabyHeader + 56, "NADGRD", 6 ) )
+    if( !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + 56, "NADGRD") )
         return FALSE;
 
     return TRUE;
@@ -148,13 +146,11 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify( poOpenInfo ) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    LOSLASDataset 	*poDS;
-
-    poDS = new LOSLASDataset();
+    LOSLASDataset *poDS = new LOSLASDataset();
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -170,10 +166,10 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( poDS->fpImage, 64, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fpImage, 64, SEEK_SET ));
 
-    VSIFReadL( &(poDS->nRasterXSize), 4, 1, poDS->fpImage );
-    VSIFReadL( &(poDS->nRasterYSize), 4, 1, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFReadL( &(poDS->nRasterXSize), 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &(poDS->nRasterYSize), 4, 1, poDS->fpImage ));
 
     CPL_LSBPTR32( &(poDS->nRasterXSize) );
     CPL_LSBPTR32( &(poDS->nRasterYSize) );
@@ -184,14 +180,14 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    VSIFSeekL( poDS->fpImage, 76, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fpImage, 76, SEEK_SET ));
 
     float min_lon, min_lat, delta_lon, delta_lat;
 
-    VSIFReadL( &min_lon, 4, 1, poDS->fpImage );
-    VSIFReadL( &delta_lon, 4, 1, poDS->fpImage );
-    VSIFReadL( &min_lat, 4, 1, poDS->fpImage );
-    VSIFReadL( &delta_lat, 4, 1, poDS->fpImage );
+    CPL_IGNORE_RET_VAL(VSIFReadL( &min_lon, 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &delta_lon, 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &min_lat, 4, 1, poDS->fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFReadL( &delta_lat, 4, 1, poDS->fpImage ));
 
     CPL_LSBPTR32( &min_lon );
     CPL_LSBPTR32( &delta_lon );
@@ -207,8 +203,8 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      the first since the data comes with the southern most record    */
 /*      first, not the northernmost like we would want.                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 
-        1, new RawRasterBand( poDS, 1, poDS->fpImage, 
+    poDS->SetBand(
+        1, new RawRasterBand( poDS, 1, poDS->fpImage,
                               poDS->nRasterYSize * poDS->nRecordLength + 4,
                               4, -1 * poDS->nRecordLength,
                               GDT_Float32,
@@ -266,22 +262,19 @@ const char *LOSLASDataset::GetProjectionRef()
 void GDALRegister_LOSLAS()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "LOSLAS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "LOSLAS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "LOSLAS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "NADCON .los/.las Datum Grid Shift" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = LOSLASDataset::Open;
-        poDriver->pfnIdentify = LOSLASDataset::Identify;
+    poDriver->SetDescription( "LOSLAS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "NADCON .los/.las Datum Grid Shift" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = LOSLASDataset::Open;
+    poDriver->pfnIdentify = LOSLASDataset::Identify;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

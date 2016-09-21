@@ -42,8 +42,6 @@ CPL_CVSID("$Id$");
 static void Usage()
 
 {
-    int	iDr;
-        
     printf( "Usage: gdalasyncread [--help-general]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}]\n"
@@ -56,10 +54,10 @@ static void Usage()
 
     printf( "%s\n\n", GDALVersionInfo( "--version" ) );
     printf( "The following format drivers are configured and support output:\n" );
-    for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+    for( int iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
     {
         GDALDriverH hDriver = GDALGetDriver(iDr);
-        
+
         if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
             || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY,
                                     NULL ) != NULL )
@@ -137,9 +135,7 @@ int main( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-ot") && i < argc-1 )
         {
-            int	iType;
-            
-            for( iType = 1; iType < GDT_TypeCount; iType++ )
+            for( int iType = 1; iType < GDT_TypeCount; iType++ )
             {
                 if( GDALGetDataTypeName((GDALDataType)iType) != NULL
                     && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
@@ -170,7 +166,7 @@ int main( int argc, char ** argv )
             }
 
             nBandCount++;
-            panBandList = (int *) 
+            panBandList = (int *)
                 CPLRealloc(panBandList, sizeof(int) * nBandCount);
             panBandList[nBandCount-1] = atoi(argv[++i]);
 
@@ -180,23 +176,23 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-co") && i < argc-1 )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
-        }   
+        }
 
         else if( EQUAL(argv[i],"-ao") && i < argc-1 )
         {
             papszAsyncOptions = CSLAddString( papszAsyncOptions, argv[++i] );
-        }   
+        }
 
         else if( EQUAL(argv[i],"-to") && i < argc-1 )
         {
             dfTimeout = CPLAtof(argv[++i] );
-        }   
+        }
 
         else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
         {
             pszOXSize = argv[++i];
             pszOYSize = argv[++i];
-        }   
+        }
 
         else if( EQUAL(argv[i],"-srcwin") && i < argc-4 )
         {
@@ -204,15 +200,15 @@ int main( int argc, char ** argv )
             anSrcWin[1] = atoi(argv[++i]);
             anSrcWin[2] = atoi(argv[++i]);
             anSrcWin[3] = atoi(argv[++i]);
-        }   
+        }
 
         else if( EQUAL(argv[i],"-multi") )
         {
             bMulti = TRUE;
-        }   
+        }
         else if( argv[i][0] == '-' )
         {
-            printf( "Option %s incomplete, or not recognised.\n\n", 
+            printf( "Option %s incomplete, or not recognised.\n\n",
                     argv[i] );
             Usage();
             GDALDestroyDriverManager();
@@ -258,7 +254,7 @@ int main( int argc, char ** argv )
 
     hSrcDS = GDALOpenShared( pszSource, GA_ReadOnly );
     poSrcDS = (GDALDataset *) hSrcDS;
-    
+
     if( hSrcDS == NULL )
     {
         fprintf( stderr,
@@ -293,9 +289,9 @@ int main( int argc, char ** argv )
     }
     else
     {
-        nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
+        nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%'
                           ? CPLAtof(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
-        nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
+        nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%'
                           ? CPLAtof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
     }
 
@@ -322,7 +318,7 @@ int main( int argc, char ** argv )
         {
             if( panBandList[i] < 1 || panBandList[i] > GDALGetRasterCount(hSrcDS) )
             {
-                fprintf( stderr, 
+                fprintf( stderr,
                          "Band %d requested, but only bands 1 to %d available.\n",
                          panBandList[i], GDALGetRasterCount(hSrcDS) );
                 GDALDestroyDriverManager();
@@ -337,19 +333,19 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Verify source window.                                           */
 /* -------------------------------------------------------------------- */
-    if( anSrcWin[0] < 0 || anSrcWin[1] < 0 
+    if( anSrcWin[0] < 0 || anSrcWin[1] < 0
         || anSrcWin[2] <= 0 || anSrcWin[3] <= 0
-        || anSrcWin[0] + anSrcWin[2] > GDALGetRasterXSize(hSrcDS) 
+        || anSrcWin[0] + anSrcWin[2] > GDALGetRasterXSize(hSrcDS)
         || anSrcWin[1] + anSrcWin[3] > GDALGetRasterYSize(hSrcDS) )
     {
-        fprintf( stderr, 
+        fprintf( stderr,
                  "-srcwin %d %d %d %d falls outside raster size of %dx%d\n"
                  "or is otherwise illegal.\n",
                  anSrcWin[0],
                  anSrcWin[1],
                  anSrcWin[2],
                  anSrcWin[3],
-                 GDALGetRasterXSize(hSrcDS), 
+                 GDALGetRasterXSize(hSrcDS),
                  GDALGetRasterYSize(hSrcDS) );
         exit( 1 );
     }
@@ -372,10 +368,8 @@ int main( int argc, char ** argv )
 
     if( hDriver == NULL )
     {
-        int	iDr;
-        
         printf( "The following format drivers are configured and support output:\n" );
-        for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+        for( int iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
             GDALDriverH hDriver = GDALGetDriver(iDr);
 
@@ -388,7 +382,7 @@ int main( int argc, char ** argv )
         }
         printf( "\n" );
         Usage();
-        
+
         GDALClose( hSrcDS );
         CPLFree( panBandList );
         GDALDestroyDriverManager();
@@ -407,7 +401,8 @@ int main( int argc, char ** argv )
 /*      Allocate one big buffer for the whole imagery area to           */
 /*      transfer.                                                       */
 /* -------------------------------------------------------------------- */
-    int nBytesPerPixel = nBandCount * (GDALGetDataTypeSize(eOutputType) / 8);
+    const int nBytesPerPixel =
+        nBandCount * GDALGetDataTypeSizeBytes(eOutputType);
     void *pImage = VSIMalloc3( nOXSize, nOYSize, nBytesPerPixel );
 
     if( pImage == NULL )
@@ -420,15 +415,15 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Establish view window                                           */
 /* -------------------------------------------------------------------- */
-    GDALAsyncReader *poAsyncReq;
     int nPixelSpace = nBytesPerPixel;
     int nLineSpace = nBytesPerPixel * nOXSize;
     int nBandSpace = nBytesPerPixel / nBandCount;
 
-    poAsyncReq = poSrcDS->BeginAsyncReader( 
+    GDALAsyncReader *poAsyncReq
+        = poSrcDS->BeginAsyncReader(
         anSrcWin[0], anSrcWin[1], anSrcWin[2], anSrcWin[3],
-        pImage, nOXSize, nOYSize, eOutputType, 
-        nBandCount, panBandList, 
+        pImage, nOXSize, nOYSize, eOutputType,
+        nBandCount, panBandList,
         nPixelSpace, nLineSpace, nBandSpace, papszAsyncOptions );
 
     if( poAsyncReq == NULL )
@@ -444,7 +439,7 @@ int main( int argc, char ** argv )
     hDstDS = NULL;
 
     do
-    {  
+    {
 /* ==================================================================== */
 /*      Create the output file, and initialize if needed.               */
 /* ==================================================================== */
@@ -455,38 +450,38 @@ int main( int argc, char ** argv )
             if( bMulti )
                 osOutFilename.Printf( "%s_%d", pszDest, iMultiCounter++ );
 
-            hDstDS = GDALCreate( hDriver, osOutFilename, nOXSize, nOYSize, 
-                                 nBandCount, eOutputType, 
+            hDstDS = GDALCreate( hDriver, osOutFilename, nOXSize, nOYSize,
+                                 nBandCount, eOutputType,
                                  papszCreateOptions );
             if (hDstDS == NULL)
             {
                 exit(1);
             }
-            
+
             poDstDS = (GDALDataset *) hDstDS;
-                                      
+
 /* -------------------------------------------------------------------- */
 /*      Copy georeferencing.                                            */
 /* -------------------------------------------------------------------- */
             double adfGeoTransform[6];
-    
+
             if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
             {
                 adfGeoTransform[0] += anSrcWin[0] * adfGeoTransform[1]
                     + anSrcWin[1] * adfGeoTransform[2];
                 adfGeoTransform[3] += anSrcWin[0] * adfGeoTransform[4]
                     + anSrcWin[1] * adfGeoTransform[5];
-                
+
                 adfGeoTransform[1] *= anSrcWin[2] / (double) nOXSize;
                 adfGeoTransform[2] *= anSrcWin[3] / (double) nOYSize;
                 adfGeoTransform[4] *= anSrcWin[2] / (double) nOXSize;
                 adfGeoTransform[5] *= anSrcWin[3] / (double) nOYSize;
-                
+
                 poDstDS->SetGeoTransform( adfGeoTransform );
             }
 
             poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Transfer generally applicable metadata.                         */
 /* -------------------------------------------------------------------- */
@@ -501,7 +496,7 @@ int main( int argc, char ** argv )
         int nUpXOff, nUpYOff, nUpXSize, nUpYSize;
 
         eAStatus = poAsyncReq->GetNextUpdatedRegion( dfTimeout,
-                                                     &nUpXOff, &nUpYOff, 
+                                                     &nUpXOff, &nUpYOff,
                                                      &nUpXSize, &nUpYSize );
 
         if( eAStatus != GARIO_UPDATE && eAStatus != GARIO_COMPLETE )
@@ -509,18 +504,18 @@ int main( int argc, char ** argv )
 
         if( !bQuiet )
         {
-            printf( "Got %dx%d @ (%d,%d)\n", 
+            printf( "Got %dx%d @ (%d,%d)\n",
                     nUpXSize, nUpYSize, nUpXOff, nUpYOff );
         }
 
         poAsyncReq->LockBuffer();
-        eErr = 
+        eErr =
             poDstDS->RasterIO( GF_Write, nUpXOff, nUpYOff, nUpXSize, nUpYSize,
-                               ((GByte *) pImage) 
-                               + nUpXOff * nPixelSpace 
-                               + nUpYOff * nLineSpace, 
+                               ((GByte *) pImage)
+                               + nUpXOff * nPixelSpace
+                               + nUpYOff * nLineSpace,
                                nUpXSize, nUpYSize, eOutputType,
-                               nBandCount, NULL, 
+                               nBandCount, NULL,
                                nPixelSpace, nLineSpace, nBandSpace, NULL );
         poAsyncReq->UnlockBuffer();
 
@@ -538,7 +533,7 @@ int main( int argc, char ** argv )
 
     } while( eAStatus != GARIO_ERROR && eAStatus != GARIO_COMPLETE
              && eErr == CE_None );
-                                             
+
     poSrcDS->EndAsyncReader( poAsyncReq );
 
 /* -------------------------------------------------------------------- */
@@ -552,7 +547,7 @@ int main( int argc, char ** argv )
     GDALClose( hSrcDS );
 
     CPLFree( panBandList );
-    
+
     CSLDestroy( argv );
     CSLDestroy( papszCreateOptions );
     CSLDestroy( papszAsyncOptions );

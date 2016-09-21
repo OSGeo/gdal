@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL
- * Purpose:  Commandline raster query tool.
+ * Purpose:  Command line raster query tool.
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
@@ -44,14 +44,14 @@ raster query tool
 \section gdallocationinfo_synopsis SYNOPSIS
 
 \htmlonly
-Usage: 
+Usage:
 \endhtmlonly
 
 \verbatim
 Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]
                         [-b band]* [-overview overview_level]
                         [-l_srs srs_def] [-geoloc] [-wgs84]
-                        srcfile [x y]
+                        [-oo NAME=VALUE]* srcfile [x y]
 \endverbatim
 
 \section gdallocationinfo_description DESCRIPTION
@@ -66,15 +66,15 @@ reporting options are provided.
 <dt> <b>-xml</b>:</dt>
 <dd> The output report will be XML formatted for convenient post processing.</dd>
 
-<dt> <b>-lifonly</b>:</dt> 
+<dt> <b>-lifonly</b>:</dt>
 <dd>The only output is filenames production from the LocationInfo request
-against the database (ie. for identifying impacted file from VRT).</dd>
+against the database (i.e. for identifying impacted file from VRT).</dd>
 
-<dt> <b>-valonly</b>:</dt> 
+<dt> <b>-valonly</b>:</dt>
 <dd>The only output is the pixel values of the selected pixel on each of
 the selected bands.</dd>
 
-<dt> <b>-b</b> <em>band</em>:</dt> 
+<dt> <b>-b</b> <em>band</em>:</dt>
 <dd>Selects a band to query.  Multiple bands can be listed.  By default all
 bands are queried.</dd>
 
@@ -92,43 +92,46 @@ pixel/line) must still be given with respect to the base band.</dd>
 <dt> <b>-wgs84</b>:</dt>
 <dd> Indicates input x,y points are WGS84 long, lat.</dd>
 
+<dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt>
+<dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
+
 <dt> <em>srcfile</em>:</dt><dd> The source GDAL raster datasource name.</dd>
 
-<dt> <em>x</em>:</dt><dd> X location of target pixel.  By default the 
+<dt> <em>x</em>:</dt><dd> X location of target pixel.  By default the
 coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied. </dd>
 
-<dt> <em>y</em>:</dt><dd> Y location of target pixel.  By default the 
+<dt> <em>y</em>:</dt><dd> Y location of target pixel.  By default the
 coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied. </dd>
 
 </dl>
 
-This utility is intended to provide a variety of information about a 
+This utility is intended to provide a variety of information about a
 pixel.  Currently it reports three things:
 
 <ul>
 <li> The location of the pixel in pixel/line space.
-<li> The result of a LocationInfo metadata query against the datasource - 
+<li> The result of a LocationInfo metadata query against the datasource -
 currently this is only implemented for VRT files which will report the
 file(s) used to satisfy requests for that pixel.
 <li> The raster pixel value of that pixel for all or a subset of the bands.
 <li> The unscaled pixel value if a Scale and/or Offset apply to the band.
 </ul>
 
-The pixel selected is requested by x/y coordinate on the commandline, or read
+The pixel selected is requested by x/y coordinate on the command line, or read
 from stdin. More than one coordinate pair can be supplied when reading
-coordinatesis from stdin. By default pixel/line coordinates are expected.
+coordinates from stdin. By default pixel/line coordinates are expected.
 However with use of the -geoloc, -wgs84, or -l_srs switches it is possible
 to specify the location in other coordinate systems.
 
-The default report is in a human readable text format.  It is possible to 
+The default report is in a human readable text format.  It is possible to
 instead request xml output with the -xml switch.
 
 For scripting purposes, the -valonly and -lifonly switches are provided to
-restrict output to the actual pixel values, or the LocationInfo files 
+restrict output to the actual pixel values, or the LocationInfo files
 identified for the pixel.
 
-It is anticipated that additional reporting capabilities will be added to 
-gdallocationinfo in the future. 
+It is anticipated that additional reporting capabilities will be added to
+gdallocationinfo in the future.
 
 <p>
 \section gdallocationinfo_example EXAMPLE
@@ -173,7 +176,7 @@ static void Usage()
     printf( "Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]\n"
             "                        [-b band]* [-overview overview_level]\n"
             "                        [-l_srs srs_def] [-geoloc] [-wgs84]\n"
-            "                        srcfile x y\n" 
+            "                        [-oo NAME=VALUE]* srcfile x y\n"
             "\n" );
     exit( 1 );
 }
@@ -182,15 +185,14 @@ static void Usage()
 /*                             SanitizeSRS                              */
 /************************************************************************/
 
-char *SanitizeSRS( const char *pszUserInput )
+static char *SanitizeSRS( const char *pszUserInput )
 
 {
-    OGRSpatialReferenceH hSRS;
-    char *pszResult = NULL;
-
     CPLErrorReset();
-    
-    hSRS = OSRNewSpatialReference( NULL );
+
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference( NULL );
+
+    char *pszResult = NULL;
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
         OSRExportToWkt( hSRS, &pszResult );
     else
@@ -200,7 +202,7 @@ char *SanitizeSRS( const char *pszUserInput )
                   pszUserInput );
         exit( 1 );
     }
-    
+
     OSRDestroySpatialReference( hSRS );
 
     return pszResult;
@@ -220,6 +222,7 @@ int main( int argc, char ** argv )
     bool               bAsXML = false, bLIFOnly = false;
     bool               bQuiet = false, bValOnly = false;
     int                nOverview = -1;
+    char             **papszOpenOptions = NULL;
 
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -229,14 +232,14 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
-    int i;
-
-    for( i = 1; i < argc; i++ )
+    for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            GDALDestroyDriverManager();
+            CSLDestroy(argv);
             return 0;
         }
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
@@ -276,6 +279,11 @@ int main( int argc, char ** argv )
             bValOnly = true;
             bQuiet = true;
         }
+        else if( EQUAL(argv[i], "-oo") && i < argc-1 )
+        {
+            papszOpenOptions = CSLAddString( papszOpenOptions,
+                                                argv[++i] );
+        }
         else if( argv[i][0] == '-' && !isdigit(argv[i][1]) )
             Usage();
 
@@ -298,9 +306,9 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open source file.                                               */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS = NULL;
-
-    hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
+    GDALDatasetH hSrcDS
+        = GDALOpenEx( pszSrcFilename, GDAL_OF_RASTER, NULL,
+                      (const char* const* )papszOpenOptions, NULL );
     if( hSrcDS == NULL )
         exit( 1 );
 
@@ -325,10 +333,10 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( anBandList.size() == 0 )
     {
-        for( i = 0; i < GDALGetRasterCount( hSrcDS ); i++ )
+        for( int i = 0; i < GDALGetRasterCount( hSrcDS ); i++ )
             anBandList.push_back( i+1 );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Turn the location into a pixel and line location.               */
 /* -------------------------------------------------------------------- */
@@ -359,29 +367,29 @@ int main( int argc, char ** argv )
             if( !OCTTransform( hCT, 1, &dfGeoX, &dfGeoY, NULL ) )
                 exit( 1 );
         }
-    
+
         if( pszSourceSRS != NULL )
         {
             double adfGeoTransform[6], adfInvGeoTransform[6];
-    
+
             if( GDALGetGeoTransform( hSrcDS, adfGeoTransform ) != CE_None )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot get geotransform");
                 exit( 1 );
             }
-    
+
             if( !GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform ) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
                 exit( 1 );
             }
-    
+
             iPixel = (int) floor(
-                adfInvGeoTransform[0] 
+                adfInvGeoTransform[0]
                 + adfInvGeoTransform[1] * dfGeoX
                 + adfInvGeoTransform[2] * dfGeoY );
             iLine = (int) floor(
-                adfInvGeoTransform[3] 
+                adfInvGeoTransform[3]
                 + adfInvGeoTransform[4] * dfGeoX
                 + adfInvGeoTransform[5] * dfGeoY );
         }
@@ -395,10 +403,10 @@ int main( int argc, char ** argv )
     /*      Prepare report.                                                 */
     /* -------------------------------------------------------------------- */
         CPLString osLine;
-    
+
         if( bAsXML )
         {
-            osLine.Printf( "<Report pixel=\"%d\" line=\"%d\">", 
+            osLine.Printf( "<Report pixel=\"%d\" line=\"%d\">",
                           iPixel, iLine );
             osXML += osLine;
         }
@@ -408,9 +416,9 @@ int main( int argc, char ** argv )
             printf( "  Location: (%dP,%dL)\n", iPixel, iLine );
         }
 
-        int bPixelReport = TRUE;
+        bool bPixelReport = true;
 
-        if( iPixel < 0 || iLine < 0 
+        if( iPixel < 0 || iLine < 0
             || iPixel >= GDALGetRasterXSize( hSrcDS )
             || iLine  >= GDALGetRasterYSize( hSrcDS ) )
         {
@@ -420,13 +428,13 @@ int main( int argc, char ** argv )
                 printf("\n");
             else if( !bQuiet )
                 printf( "\nLocation is off this file! No further details to report.\n");
-            bPixelReport = FALSE;
+            bPixelReport = false;
         }
 
     /* -------------------------------------------------------------------- */
     /*      Process each band.                                              */
     /* -------------------------------------------------------------------- */
-        for( i = 0; bPixelReport && i < (int) anBandList.size(); i++ )
+        for( int i = 0; bPixelReport && i < (int) anBandList.size(); i++ )
         {
             GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, anBandList[i] );
 
@@ -468,17 +476,17 @@ int main( int argc, char ** argv )
             {
                 printf( "  Band %d:\n", anBandList[i] );
             }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Request location info for this location.  It is possible        */
     /*      only the VRT driver actually supports this.                     */
     /* -------------------------------------------------------------------- */
             CPLString osItem;
-            
+
             osItem.Printf( "Pixel_%d_%d", iPixelToQuery, iLineToQuery );
-            
+
             const char *pszLI = GDALGetMetadataItem( hBand, osItem, "LocationInfo");
-    
+
             if( pszLI != NULL )
             {
                 if( bAsXML )
@@ -488,22 +496,20 @@ int main( int argc, char ** argv )
                 else if( bLIFOnly )
                 {
                     /* Extract all files, if any. */
-                 
+
                     CPLXMLNode *psRoot = CPLParseXMLString( pszLI );
-                    
-                    if( psRoot != NULL 
+
+                    if( psRoot != NULL
                         && psRoot->psChild != NULL
                         && psRoot->eType == CXT_Element
                         && EQUAL(psRoot->pszValue,"LocationInfo") )
                     {
-                        CPLXMLNode *psNode;
-    
-                        for( psNode = psRoot->psChild;
+                        for( CPLXMLNode *psNode = psRoot->psChild;
                              psNode != NULL;
                              psNode = psNode->psNext )
                         {
                             if( psNode->eType == CXT_Element
-                                && EQUAL(psNode->pszValue,"File") 
+                                && EQUAL(psNode->pszValue,"File")
                                 && psNode->psChild != NULL )
                             {
                                 char* pszUnescaped = CPLUnescapeString(
@@ -516,22 +522,22 @@ int main( int argc, char ** argv )
                     CPLDestroyXMLNode( psRoot );
                 }
             }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Report the pixel value of this band.                            */
     /* -------------------------------------------------------------------- */
             double adfPixel[2];
-    
-            if( GDALRasterIO( hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1, 
+
+            if( GDALRasterIO( hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1,
                               adfPixel, 1, 1, GDT_CFloat64, 0, 0) == CE_None )
             {
                 CPLString osValue;
-    
+
                 if( GDALDataTypeIsComplex( GDALGetRasterDataType( hBand ) ) )
                     osValue.Printf( "%.15g+%.15gi", adfPixel[0], adfPixel[1] );
                 else
                     osValue.Printf( "%.15g", adfPixel[0] );
-    
+
                 if( bAsXML )
                 {
                     osXML += "<Value>";
@@ -542,23 +548,39 @@ int main( int argc, char ** argv )
                     printf( "    Value: %s\n", osValue.c_str() );
                 else if( bValOnly )
                     printf( "%s\n", osValue.c_str() );
-    
+
                 // Report unscaled if we have scale/offset values.
                 int bSuccess;
-                
+
                 double dfOffset = GDALGetRasterOffset( hBand, &bSuccess );
+                // TODO: Should we turn on checking of bSuccess?
+                // Alternatively, delete these checks and put a comment as to
+                // why checking bSuccess does not matter.
+#if 0
+                if (bSuccess == FALSE)
+                {
+                    CPLError( CE_Debug, CPLE_AppDefined,
+                              "Unable to get raster offset." );
+                }
+#endif
                 double dfScale  = GDALGetRasterScale( hBand, &bSuccess );
-    
+#if 0
+                if (bSuccess == FALSE)
+                {
+                    CPLError( CE_Debug, CPLE_AppDefined,
+                              "Unable to get raster scale." );
+                }
+#endif
                 if( dfOffset != 0.0 || dfScale != 1.0 )
                 {
                     adfPixel[0] = adfPixel[0] * dfScale + dfOffset;
                     adfPixel[1] = adfPixel[1] * dfScale + dfOffset;
-    
+
                     if( GDALDataTypeIsComplex( GDALGetRasterDataType( hBand ) ) )
                         osValue.Printf( "%.15g+%.15gi", adfPixel[0], adfPixel[1] );
                     else
                         osValue.Printf( "%.15g", adfPixel[0] );
-    
+
                     if( bAsXML )
                     {
                         osXML += "<DescaledValue>";
@@ -569,19 +591,19 @@ int main( int argc, char ** argv )
                         printf( "    Descaled Value: %s\n", osValue.c_str() );
                 }
             }
-    
+
             if( bAsXML )
                 osXML += "</BandReport>";
         }
 
         osXML += "</Report>";
-    
+
         if( (pszLocX != NULL && pszLocY != NULL)  ||
             (fscanf(stdin, "%lf %lf", &dfGeoX, &dfGeoY) != 2) )
         {
             inputAvailable = 0;
         }
-            
+
     }
 
 /* -------------------------------------------------------------------- */
@@ -589,12 +611,8 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( bAsXML )
     {
-        CPLXMLNode *psRoot;
-        char *pszFormattedXML;
-
-
-        psRoot = CPLParseXMLString( osXML );
-        pszFormattedXML = CPLSerializeXMLTree( psRoot );
+        CPLXMLNode *psRoot = CPLParseXMLString( osXML );
+        char *pszFormattedXML = CPLSerializeXMLTree( psRoot );
         CPLDestroyXMLNode( psRoot );
 
         printf( "%s", pszFormattedXML );
@@ -616,6 +634,7 @@ int main( int argc, char ** argv )
     GDALDumpOpenDatasets( stderr );
     GDALDestroyDriverManager();
     CPLFree(pszSourceSRS);
+    CSLDestroy(papszOpenOptions);
 
     CSLDestroy( argv );
 

@@ -33,7 +33,9 @@
 #include <tut.h>
 #include <gdal.h>
 #include <gdal_priv.h>
+#include <gdal_utils.h>
 #include <string>
+#include <limits>
 
 namespace tut
 {
@@ -95,6 +97,7 @@ namespace tut
 #ifdef FRMT_aaigrid
         ensure("AAIGrid driver is not registered", NULL != drv);
 #else
+        (void)drv;
         ensure(true); // Skip
 #endif
     }
@@ -109,6 +112,7 @@ namespace tut
 #ifdef FRMT_dted
         ensure("DTED driver is not registered", NULL != drv);
 #else
+        (void)drv;
         ensure(true); // Skip
 #endif
     }
@@ -123,8 +127,159 @@ namespace tut
 #ifdef FRMT_gtiff
         ensure("GTiff driver is not registered", NULL != drv);
 #else
+        (void)drv;
         ensure(true); // Skip
 #endif
     }
 
+    // Test GDALDataTypeUnion()
+    template<> template<> void object::test<6>()
+    {
+        for(int i=GDT_Byte;i<GDT_TypeCount;i++)
+        {
+            for(int j=GDT_Byte;j<GDT_TypeCount;j++)
+            {
+                GDALDataType eDT1 = static_cast<GDALDataType>(i);
+                GDALDataType eDT2 = static_cast<GDALDataType>(j);
+                GDALDataType eDT = GDALDataTypeUnion(eDT1,eDT2 );
+                ensure( eDT == GDALDataTypeUnion(eDT2,eDT1) );
+                ensure( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT1) );
+                ensure( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT2) );
+                ensure( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
+                        (!(GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2))) );
+            }
+        }
+    }
+
+    // Test GDALAdjustValueToDataType()
+    template<> template<> void object::test<7>()
+    {
+        int bClamped, bRounded;
+
+        ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,NULL,NULL) == 255.0);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,&bClamped,&bRounded) == 255.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,254.4,&bClamped,&bRounded) == 254.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,256.0,&bClamped,&bRounded) == 255.0 && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_UInt16,65535.0,&bClamped,&bRounded) == 65535.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt16,65534.4,&bClamped,&bRounded) == 65534.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt16,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt16,65536.0,&bClamped,&bRounded) == 65535.0 && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_Int16,-32768.0,&bClamped,&bRounded) == -32768.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,32767.0,&bClamped,&bRounded) == 32767.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,-32767.4,&bClamped,&bRounded) == -32767.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,32766.4,&bClamped,&bRounded) == 32766.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,-32769.0,&bClamped,&bRounded) == -32768.0 && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int16,32768.0,&bClamped,&bRounded) == 32767.0 && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_UInt32,10000000.0,&bClamped,&bRounded) == 10000000.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt32,10000000.4,&bClamped,&bRounded) == 10000000.0 && !bClamped && bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_UInt32,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_Int32,-10000000.0,&bClamped,&bRounded) == -10000000.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Int32,10000000.0,&bClamped,&bRounded) == 10000000.0 && !bClamped && !bRounded);
+        
+        ensure( GDALAdjustValueToDataType(GDT_Float32, 0.0,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, 1e-50,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, 1.23,&bClamped,&bRounded) == static_cast<double>(1.23f) && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, -1e300,&bClamped,&bRounded) == -std::numeric_limits<float>::max() && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, 1e300,&bClamped,&bRounded) == std::numeric_limits<float>::max() && bClamped && !bRounded);
+
+        ensure( GDALAdjustValueToDataType(GDT_Float64, 0.0,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float64, 1e-50,&bClamped,&bRounded) == 1e-50 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float64, -1e40,&bClamped,&bRounded) == -1e40 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float64, 1e40,&bClamped,&bRounded) == 1e40 && !bClamped && !bRounded);
+    }
+
+    class FakeBand: public GDALRasterBand
+    {
+        protected:
+            virtual CPLErr IReadBlock(int, int, void*) { return CE_None; }
+            virtual CPLErr IWriteBlock( int, int, void * ) { return CE_None; }
+
+        public:
+                    FakeBand(int nXSize, int nYSize) { nBlockXSize = nXSize;
+                                                       nBlockYSize = nYSize; }
+    };
+
+    class DatasetWithErrorInFlushCache: public GDALDataset
+    {
+            bool bHasFlushCache;
+        public:
+            DatasetWithErrorInFlushCache() : bHasFlushCache(false) { }
+           ~DatasetWithErrorInFlushCache() { FlushCache(); }
+            virtual void FlushCache(void)
+            {
+                if( !bHasFlushCache)
+                    CPLError(CE_Failure, CPLE_AppDefined, "some error");
+                GDALDataset::FlushCache();
+                bHasFlushCache = true;
+            }
+            virtual CPLErr SetProjection(const char*) { return CE_None; }
+            virtual CPLErr SetGeoTransform(double*) { return CE_None; }
+
+            static GDALDataset* CreateCopy(const char*, GDALDataset*,
+                                    int, char **,
+                                    GDALProgressFunc, 
+                                    void *)
+            {
+                return new DatasetWithErrorInFlushCache();
+            }
+
+            static GDALDataset* Create(const char*, int nXSize, int nYSize, int, GDALDataType, char ** )
+            {
+                DatasetWithErrorInFlushCache* poDS = new DatasetWithErrorInFlushCache();
+                poDS->eAccess = GA_Update;
+                poDS->nRasterXSize = nXSize;
+                poDS->nRasterYSize = nYSize;
+                poDS->SetBand(1, new FakeBand(nXSize, nYSize));
+                return poDS;
+            }
+    };
+
+    // Test that GDALTranslate() detects error in flush cache
+    template<> template<> void object::test<8>()
+    {
+        GDALDriver* poDriver = new GDALDriver();
+        poDriver->SetDescription("DatasetWithErrorInFlushCache");
+        poDriver->pfnCreateCopy = DatasetWithErrorInFlushCache::CreateCopy;
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+        const char* args[] = { "-of", "DatasetWithErrorInFlushCache", NULL };
+        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew((char**)args, NULL);
+        GDALDatasetH hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        GDALDatasetH hOutDS = GDALTranslate("", hSrcDS, psOptions, NULL);
+        CPLPopErrorHandler();
+        GDALClose(hSrcDS);
+        GDALTranslateOptionsFree(psOptions);
+        ensure(hOutDS == NULL);
+        ensure(CPLGetLastErrorType() != CE_None);
+        GetGDALDriverManager()->DeregisterDriver( poDriver );
+        delete poDriver;
+    }
+
+    // Test that GDALWarp() detects error in flush cache
+    template<> template<> void object::test<9>()
+    {
+        GDALDriver* poDriver = new GDALDriver();
+        poDriver->SetDescription("DatasetWithErrorInFlushCache");
+        poDriver->pfnCreate = DatasetWithErrorInFlushCache::Create;
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+        const char* args[] = { "-of", "DatasetWithErrorInFlushCache", NULL };
+        GDALWarpAppOptions* psOptions = GDALWarpAppOptionsNew((char**)args, NULL);
+        GDALDatasetH hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        GDALDatasetH hOutDS = GDALWarp("/", NULL, 1, &hSrcDS, psOptions, NULL);
+        CPLPopErrorHandler();
+        GDALClose(hSrcDS);
+        GDALWarpAppOptionsFree(psOptions);
+        ensure(hOutDS == NULL);
+        ensure(CPLGetLastErrorType() != CE_None);
+        GetGDALDriverManager()->DeregisterDriver( poDriver );
+        delete poDriver;
+    }
 } // namespace tut

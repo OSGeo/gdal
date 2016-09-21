@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for BAG driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
 #                     Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -64,12 +64,12 @@ def bag_2():
     if cs != 1072:
         gdaltest.post_reason( 'Wrong checksum on band 1, got %d.' % cs )
         return 'fail'
-    
+
     cs = ds.GetRasterBand(2).Checksum()
     if cs != 150:
         gdaltest.post_reason( 'Wrong checksum on band 2, got %d.' % cs )
         return 'fail'
-    
+
     cs = ds.GetRasterBand(3).Checksum()
     if cs != 1315:
         gdaltest.post_reason( 'Wrong checksum on band 3, got %d.' % cs )
@@ -79,11 +79,11 @@ def bag_2():
     if abs(b1.GetMinimum()-10) > 0.01:
         gdaltest.post_reason( 'band 1 minimum wrong.' )
         return 'fail'
-    
+
     if abs(b1.GetMaximum()-19.8) > 0.01:
         gdaltest.post_reason( 'band 1 maximum wrong.' )
         return 'fail'
-    
+
     if abs(b1.GetNoDataValue()-1000000.0) > 0.1:
         gdaltest.post_reason( 'band 1 nodata wrong.' )
         return 'fail'
@@ -97,7 +97,7 @@ def bag_2():
     if abs(b3.GetNoDataValue()-1000000.0) > 0.1:
         gdaltest.post_reason( 'band 3 nodata wrong.' )
         return 'fail'
-    
+
     # It would be nice to test srs and geotransform but they are
     # pretty much worthless on this dataset.
 
@@ -131,7 +131,7 @@ def bag_3():
     if nr != 2:
         gdaltest.post_reason( 'Expected 2 bands, got %d.' % nr )
         return 'fail'
-    
+
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 21402:
         gdaltest.post_reason( 'Wrong checksum on band 1, got %d.' % cs )
@@ -149,7 +149,7 @@ def bag_3():
     if 'PARAMETER["false_northing",10000000]' not in pj:
         gdaltest.post_reason( 'Did not find false_northing of 10000000')
         return 'fail'
-    
+
     return 'success'
 
 gdaltest_list = [ bag_1,

@@ -1,8 +1,8 @@
 
 /* pngset.c - storage of image information into info struct
  *
- * Last changed in libpng 1.2.51 [February 6, 2014]
- * Copyright (c) 1998-2014 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.56 [%RDATE%]
+ * Copyright (c) 1998-2002,2004,2006-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -263,7 +263,10 @@ png_set_IHDR(png_structp png_ptr, png_infop info_ptr,
                  - 1        /* filter byte */
                  - 7*8      /* rounding of width to multiple of 8 pixels */
                  - 8)       /* extra max_pixel_depth pad */
+   {
       info_ptr->rowbytes = (png_size_t)0;
+      png_error(png_ptr, "Image width is too large for this architecture");
+   }
    else
       info_ptr->rowbytes = PNG_ROWBYTES(info_ptr->pixel_depth, width);
 }
@@ -446,12 +449,17 @@ png_set_PLTE(png_structp png_ptr, png_infop info_ptr,
    png_colorp palette, int num_palette)
 {
 
+   png_uint_32 max_palette_length;
+
    png_debug1(1, "in %s storage function", "PLTE");
 
    if (png_ptr == NULL || info_ptr == NULL)
       return;
 
-   if (num_palette < 0 || num_palette > PNG_MAX_PALETTE_LENGTH)
+   max_palette_length = (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE) ?
+      (1 << info_ptr->bit_depth) : PNG_MAX_PALETTE_LENGTH;
+
+   if (num_palette < 0 || num_palette > (int) max_palette_length)
    {
       if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
          png_error(png_ptr, "Invalid palette length");
@@ -471,8 +479,8 @@ png_set_PLTE(png_structp png_ptr, png_infop info_ptr,
 #endif
 
    /* Changed in libpng-1.2.1 to allocate PNG_MAX_PALETTE_LENGTH instead
-    * of num_palette entries, in case of an invalid PNG file that has
-    * too-large sample values.
+    * of num_palette entries, in case of an invalid PNG file or incorrect
+    * call to png_set_PLTE() with too-large sample values.
     */
    png_ptr->palette = (png_colorp)png_calloc(png_ptr,
       PNG_MAX_PALETTE_LENGTH * png_sizeof(png_color));
@@ -770,10 +778,10 @@ png_set_text_2(png_structp png_ptr, png_infop info_ptr, png_textp text_ptr,
          (key_len + text_length + lang_len + lang_key_len + 4));
       if (textp->key == NULL)
          return(1);
-      png_debug2(2, "Allocated %lu bytes at %x in png_set_text",
+      png_debug2(2, "Allocated %lu bytes at %p in png_set_text",
                  (png_uint_32)
                  (key_len + lang_len + lang_key_len + text_length + 4),
-                 (int)textp->key);
+                 textp->key);
 
       png_memcpy(textp->key, text_ptr[i].key,(png_size_t)(key_len));
       *(textp->key + key_len) = '\0';
@@ -833,6 +841,15 @@ png_set_tIME(png_structp png_ptr, png_infop info_ptr, png_timep mod_time)
    if (png_ptr == NULL || info_ptr == NULL ||
        (png_ptr->mode & PNG_WROTE_tIME))
       return;
+
+   if (mod_time->month == 0   || mod_time->month > 12  ||
+       mod_time->day   == 0   || mod_time->day   > 31  ||
+       mod_time->hour  > 23   || mod_time->minute > 59 ||
+       mod_time->second > 60)
+   {
+      png_warning(png_ptr, "Ignoring invalid time value");
+      return;
+   }
 
    png_memcpy(&(info_ptr->mod_time), mod_time, png_sizeof(png_time));
    info_ptr->valid |= PNG_INFO_tIME;
@@ -1215,7 +1232,7 @@ png_set_user_limits (png_structp png_ptr, png_uint_32 user_width_max,
 {
    /* Images with dimensions larger than these limits will be
     * rejected by png_set_IHDR().  To accept any PNG datastream
-    * regardless of dimensions, set both limits to 0x7ffffffL.
+    * regardless of dimensions, set both limits to 0x7fffffffL.
     */
    if (png_ptr == NULL)
       return;
@@ -1238,4 +1255,136 @@ png_set_benign_errors(png_structp png_ptr, int allowed)
 }
 #endif /* PNG_BENIGN_ERRORS_SUPPORTED */
 #endif /* ?PNG_1_0_X */
+
+#if defined(PNG_WRITE_TEXT_SUPPORTED) || defined(PNG_WRITE_pCAL_SUPPORTED) || \
+    defined(PNG_WRITE_iCCP_SUPPORTED) || defined(PNG_WRITE_sPLT_SUPPORTED)
+/* Check that the tEXt or zTXt keyword is valid per PNG 1.0 specification,
+ * and if invalid, correct the keyword rather than discarding the entire
+ * chunk.  The PNG 1.0 specification requires keywords 1-79 characters in
+ * length, forbids leading or trailing whitespace, multiple internal spaces,
+ * and the non-break space (0x80) from ISO 8859-1.  Returns keyword length.
+ *
+ * The new_key is allocated to hold the corrected keyword and must be freed
+ * by the calling routine.  This avoids problems with trying to write to
+ * static keywords without having to have duplicate copies of the strings.
+ */
+png_size_t /* PRIVATE */
+png_check_keyword(png_structp png_ptr, png_charp key, png_charpp new_key)
+{
+   png_size_t key_len;
+   png_charp kp, dp;
+   int kflag;
+   int kwarn=0;
+
+   png_debug(1, "in png_check_keyword");
+
+   *new_key = NULL;
+
+   if (key == NULL || (key_len = png_strlen(key)) == 0)
+   {
+      png_warning(png_ptr, "zero length keyword");
+      return ((png_size_t)0);
+   }
+
+   png_debug1(2, "Keyword to be checked is '%s'", key);
+
+   *new_key = (png_charp)png_malloc_warn(png_ptr, (png_uint_32)(key_len + 2));
+   if (*new_key == NULL)
+   {
+      png_warning(png_ptr, "Out of memory while procesing keyword");
+      return ((png_size_t)0);
+   }
+
+   /* Replace non-printing characters with a blank and print a warning */
+   for (kp = key, dp = *new_key; *kp != '\0'; kp++, dp++)
+   {
+      if ((png_byte)*kp < 0x20 ||
+         ((png_byte)*kp > 0x7E && (png_byte)*kp < 0xA1))
+      {
+#if defined(PNG_STDIO_SUPPORTED) && !defined(_WIN32_WCE)
+         char msg[40];
+
+         png_snprintf(msg, 40,
+           "invalid keyword character 0x%02X", (png_byte)*kp);
+         png_warning(png_ptr, msg);
+#else
+         png_warning(png_ptr, "invalid character in keyword");
+#endif
+         *dp = ' ';
+      }
+      else
+      {
+         *dp = *kp;
+      }
+   }
+   *dp = '\0';
+
+   /* Remove any trailing white space. */
+   kp = *new_key + key_len - 1;
+   if (*kp == ' ')
+   {
+      png_warning(png_ptr, "trailing spaces removed from keyword");
+
+      while (key_len && *kp == ' ')
+      {
+         *(kp--) = '\0';
+         key_len--;
+      }
+   }
+
+   /* Remove any leading white space. */
+   kp = *new_key;
+   if (*kp == ' ')
+   {
+      png_warning(png_ptr, "leading spaces removed from keyword");
+
+      while (*kp == ' ')
+      {
+         kp++;
+         key_len--;
+      }
+   }
+
+   png_debug1(2, "Checking for multiple internal spaces in '%s'", kp);
+
+   /* Remove multiple internal spaces. */
+   for (kflag = 0, dp = *new_key; *kp != '\0'; kp++)
+   {
+      if (*kp == ' ' && kflag == 0)
+      {
+         *(dp++) = *kp;
+         kflag = 1;
+      }
+      else if (*kp == ' ')
+      {
+         key_len--;
+         kwarn=1;
+      }
+      else
+      {
+         *(dp++) = *kp;
+         kflag = 0;
+      }
+   }
+   *dp = '\0';
+   if (kwarn)
+      png_warning(png_ptr, "extra interior spaces removed from keyword");
+
+   if (key_len == 0)
+   {
+      png_free(png_ptr, *new_key);
+       *new_key=NULL;
+      png_warning(png_ptr, "Zero length keyword");
+   }
+
+   if (key_len > 79)
+   {
+      png_warning(png_ptr, "keyword length must be 1 - 79 characters");
+      (*new_key)[79] = '\0';
+      key_len = 79;
+   }
+
+   return (key_len);
+}
+#endif /* WRITE_TEXT || WRITE_pCAL) || WRITE_iCCP || WRITE_sPLT */
 #endif /* PNG_READ_SUPPORTED || PNG_WRITE_SUPPORTED */

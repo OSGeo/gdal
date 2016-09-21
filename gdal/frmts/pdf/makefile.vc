@@ -11,7 +11,7 @@ GDAL_ROOT	=	..\..
 OBJ = $(OBJ) ..\..\ogr\ogrsf_frmts\mem\ogrmemdatasource.obj ..\..\ogr\ogrsf_frmts\mem\ogrmemdriver.obj ..\..\ogr\ogrsf_frmts\mem\ogrmemlayer.obj
 !ENDIF
 
-EXTRAFLAGS =  -I..\vrt -I..\mem -I..\..\ogr\ogrsf_frmts\mem $(POPPLER_EXTRAFLAGS) $(PODOFO_EXTRAFLAGS)
+EXTRAFLAGS =  -I..\vrt -I..\mem -I..\..\ogr\ogrsf_frmts\mem $(POPPLER_EXTRAFLAGS) $(PODOFO_EXTRAFLAGS) $(PDFIUM_EXTRAFLAGS)
 
 !IFDEF POPPLER_ENABLED
 POPPLER_EXTRAFLAGS = $(POPPLER_CFLAGS) $(POPPLER_HAS_OPTCONTENT_FLAGS) $(POPPLER_BASE_STREAM_HAS_TWO_ARGS_FLAGS) $(POPPLER_0_20_OR_LATER_FLAGS) $(POPPLER_0_23_OR_LATER_FLAGS) -DHAVE_POPPLER
@@ -38,6 +38,10 @@ POPPLER_0_23_OR_LATER_FLAGS = -DPOPPLER_0_23_OR_LATER
 PODOFO_EXTRAFLAGS = $(PODOFO_CFLAGS) -DHAVE_PODOFO
 !ENDIF
 
+!IFDEF PDFIUM_ENABLED
+PDFIUM_EXTRAFLAGS = $(PDFIUM_CFLAGS) -DHAVE_PDFIUM -DNOMINMAX /wd4512
+!ENDIF
+
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
 
@@ -47,7 +51,7 @@ clean:
 plugin:	$(PLUGIN_DLL)
 
 $(PLUGIN_DLL): $(OBJ)
-	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(POPPLER_LIBS) $(PODOFO_LIBS)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(POPPLER_LIBS) $(PODOFO_LIBS) $(PDFIUM_LIBS)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 plugin-install:

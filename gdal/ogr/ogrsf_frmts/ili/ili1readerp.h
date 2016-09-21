@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_ILI1READERP_H_INCLUDED
-#define _CPL_ILI1READERP_H_INCLUDED
+#ifndef CPL_ILI1READERP_H_INCLUDED
+#define CPL_ILI1READERP_H_INCLUDED
 
 #include "ili1reader.h"
 #include "ogr_ili1.h"
@@ -48,7 +48,6 @@ private:
     int          nLayers;
     OGRILI1Layer **papoLayers;
     OGRILI1Layer *curLayer;
-    double       arcIncr;
     char         codeBlank;
     char         codeUndefined;
     char         codeContinue;
@@ -57,7 +56,6 @@ public:
                  ILI1Reader();
                 ~ILI1Reader();
 
-    void         SetArcDegrees(double arcDegrees);
     int          OpenFile( const char *pszFilename );
     int          ReadModel( ImdReader *poImdReader, const char *pszModelFilename, OGRILI1DataSource *poDS );
     int          ReadFeatures();
@@ -66,7 +64,6 @@ public:
     char         **ReadParseLine();
 
     void         AddLayer( OGRILI1Layer * poNewLayer );
-    int          AddIliGeom(OGRFeature *feature, int iField, long fpos);
     OGRILI1Layer *GetLayer( int );
     OGRILI1Layer *GetLayerByName( const char* );
     int          GetLayerCount();

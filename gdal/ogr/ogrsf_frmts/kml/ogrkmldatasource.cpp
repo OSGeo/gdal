@@ -47,11 +47,11 @@ OGRKMLDataSource::OGRKMLDataSource()
     pszAltitudeMode_ = NULL;
     papoLayers_ = NULL;
     nLayers_ = 0;
-    
+
     fpOutput_ = NULL;
 
     papszCreateOptions_ = NULL;
-	
+
 	bIssuedCTError_ = false;
 
 #ifdef HAVE_EXPAT
@@ -104,7 +104,7 @@ OGRKMLDataSource::~OGRKMLDataSource()
 
     CPLFree( papoLayers_ );
 
-#ifdef HAVE_EXPAT    
+#ifdef HAVE_EXPAT
     delete poKMLFile_;
 #endif
 }
@@ -230,7 +230,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
             poGeotype = wkbGeometryCollection;
         else
             poGeotype = wkbUnknown;
-        
+
         if (poGeotype != wkbUnknown && poKMLFile_->is25D())
             poGeotype = wkbSetZ(poGeotype);
 
@@ -244,7 +244,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
             sName.Printf( "Layer #%d", nCount );
         }
 
-        poLayer = new OGRKMLLayer( sName.c_str(), poSRS, FALSE, poGeotype, this );
+        poLayer = new OGRKMLLayer( sName.c_str(), poSRS, false, poGeotype, this );
 
         poLayer->SetLayerNumber( nCount );
 
@@ -253,10 +253,10 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
         papoLayers_[nCount] = poLayer;
     }
-    
+
     poSRS->Release();
-    
-    return TRUE;	
+
+    return TRUE;
 }
 #endif /* HAVE_EXPAT */
 
@@ -278,48 +278,48 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
         pszNameField_ = CPLStrdup(CSLFetchNameValue(papszOptions, "NameField"));
     else
         pszNameField_ = CPLStrdup("Name");
-    
+
     if (CSLFetchNameValue(papszOptions, "DescriptionField"))
         pszDescriptionField_ = CPLStrdup(CSLFetchNameValue(papszOptions, "DescriptionField"));
     else
         pszDescriptionField_ = CPLStrdup("Description");
 
-    pszAltitudeMode_ = CPLStrdup(CSLFetchNameValue(papszOptions, "AltitudeMode")); 
-    if( (NULL != pszAltitudeMode_) && strlen(pszAltitudeMode_) > 0) 
+    pszAltitudeMode_ = CPLStrdup(CSLFetchNameValue(papszOptions, "AltitudeMode"));
+    if( (NULL != pszAltitudeMode_) && strlen(pszAltitudeMode_) > 0)
     {
-        //Check to see that the specified AltitudeMode is valid 
+        //Check to see that the specified AltitudeMode is valid
         if ( EQUAL(pszAltitudeMode_, "clampToGround")
              || EQUAL(pszAltitudeMode_, "relativeToGround")
-             || EQUAL(pszAltitudeMode_, "absolute")) 
-        { 
-            CPLDebug("KML", "Using '%s' for AltitudeMode", pszAltitudeMode_); 
-        } 
-        else 
-        { 
-            CPLFree( pszAltitudeMode_ ); 
-            pszAltitudeMode_ = NULL; 
-            CPLError( CE_Warning, CPLE_AppDefined, "Invalide AltitideMode specified, ignoring" );  
-        } 
-    } 
-    else 
-    { 
-        CPLFree( pszAltitudeMode_ ); 
-        pszAltitudeMode_ = NULL; 
-    } 
-    
+             || EQUAL(pszAltitudeMode_, "absolute"))
+        {
+            CPLDebug("KML", "Using '%s' for AltitudeMode", pszAltitudeMode_);
+        }
+        else
+        {
+            CPLFree( pszAltitudeMode_ );
+            pszAltitudeMode_ = NULL;
+            CPLError( CE_Warning, CPLE_AppDefined, "Invalide AltitideMode specified, ignoring" );
+        }
+    }
+    else
+    {
+        CPLFree( pszAltitudeMode_ );
+        pszAltitudeMode_ = NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
 
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
-    
+
     pszName_ = CPLStrdup( pszName );
 
     fpOutput_ = VSIFOpenL( pszName, "wb" );
     if( fpOutput_ == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create KML file %s.", pszName );
         return FALSE;
     }
@@ -327,8 +327,8 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Write out "standard" header.                                    */
 /* -------------------------------------------------------------------- */
-    VSIFPrintfL( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
-    
+    VSIFPrintfL( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );
+
     VSIFPrintfL( fpOutput_, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n<Document id=\"root_doc\">\n" );
 
     return TRUE;
@@ -370,9 +370,9 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
         }
 
         VSIFPrintfL( fpOutput_, "</Folder>\n");
-        ((OGRKMLLayer*)GetLayer(GetLayerCount()-1))->SetClosedForWriting();
+        ((OGRKMLLayer*)papoLayers_[GetLayerCount()-1])->SetClosedForWriting();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Ensure name is safe as an element name.                         */
 /* -------------------------------------------------------------------- */
@@ -381,22 +381,22 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
     CPLCleanXMLElementName( pszCleanLayerName );
     if( strcmp(pszCleanLayerName, pszLayerName) != 0 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Layer name '%s' adjusted to '%s' for XML validity.",
                   pszLayerName, pszCleanLayerName );
     }
-    
+
     if (GetLayerCount() > 0)
     {
         VSIFPrintfL( fpOutput_, "<Folder><name>%s</name>\n", pszCleanLayerName);
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRKMLLayer *poLayer;
-    poLayer = new OGRKMLLayer( pszCleanLayerName, poSRS, TRUE, eType, this );
-    
+    poLayer = new OGRKMLLayer( pszCleanLayerName, poSRS, true, eType, this );
+
     CPLFree( pszCleanLayerName );
 
 /* -------------------------------------------------------------------- */
@@ -404,7 +404,7 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     papoLayers_ = (OGRKMLLayer **)
         CPLRealloc( papoLayers_,  sizeof(OGRKMLLayer *) * (nLayers_+1) );
-    
+
     papoLayers_[nLayers_++] = poLayer;
 
     return poLayer;

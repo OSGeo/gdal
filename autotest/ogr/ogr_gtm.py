@@ -5,7 +5,7 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GTM driver functionality.
 # Author:   Leonardo de Paula Rosa Piga <leonardo dot piga at gmail dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2009, Leonardo de P. R. Piga <leonardo dot piga at gmail dot com>
 # Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
@@ -66,7 +66,7 @@ def ogr_gtm_init():
 def ogr_gtm_read_1():
     if not gdaltest.have_gtm:
         return 'skip'
-    
+
     if gdaltest.gtm_ds is None:
         return 'fail'
 
@@ -75,7 +75,7 @@ def ogr_gtm_read_1():
     if lyr.GetFeatureCount() != 3:
         gdaltest.post_reason( 'wrong number of features' )
         return 'fail'
-    
+
     # Test 1st feature
     feat = lyr.GetNextFeature()
 
@@ -99,7 +99,7 @@ def ogr_gtm_read_1():
     if ogrtest.check_feature_geometry( feat, wkt):
         gdaltest.post_reason( 'Unexpected geometry' )
         return 'fail'
-    
+
     # Test 2nd feature
     feat = lyr.GetNextFeature()
 
@@ -156,7 +156,7 @@ def ogr_gtm_read_1():
 def ogr_gtm_read_2():
     if not gdaltest.have_gtm:
         return 'skip'
-    
+
     if gdaltest.gtm_ds is None:
         return 'fail'
 
@@ -165,7 +165,7 @@ def ogr_gtm_read_2():
     if lyr.GetFeatureCount() != 3:
         gdaltest.post_reason( 'wrong number of features' )
         return 'fail'
-    
+
     # Test 1st feature
     feat = lyr.GetNextFeature()
 
@@ -218,7 +218,7 @@ def ogr_gtm_read_2():
                        '-47.806959118447779 -21.175900153727685)'
     if ogrtest.check_feature_geometry( feat, wkt):
         return 'fail'
-    
+
     # Test 3rd feature
     feat = lyr.GetNextFeature()
 
@@ -249,7 +249,7 @@ def ogr_gtm_read_2():
     if ogrtest.check_feature_geometry( feat, wkt):
         gdaltest.post_reason( 'Unexpected geometry' )
         return 'fail'
-    
+
     return 'success'
 
 
@@ -272,7 +272,6 @@ def ogr_gtm_write_1():
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetField('name', 'WAY0000001')
@@ -282,7 +281,6 @@ def ogr_gtm_write_1():
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     lyr = ds.CreateLayer('gtm_tracks', geom_type = ogr.wkbLineString)
 
@@ -294,7 +292,6 @@ def ogr_gtm_write_1():
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetField('name', '2nd Street')
@@ -304,7 +301,6 @@ def ogr_gtm_write_1():
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetField('name', '3rd Street')
@@ -315,9 +311,8 @@ def ogr_gtm_write_1():
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
-    ds.Destroy()
+    ds = None
 
     return 'success'
 
@@ -326,7 +321,7 @@ def ogr_gtm_write_1():
 def ogr_gtm_check_write_1():
     if not gdaltest.have_gtm:
         return 'skip'
-    
+
     ds = ogr.Open('tmp/gtm.gtm')
     lyr = ds.GetLayerByName('gtm_waypoints')
     if lyr.GetFeatureCount() != 2:
@@ -356,8 +351,7 @@ def ogr_gtm_check_write_1():
     if ogrtest.check_feature_geometry( feat, wkt):
         gdaltest.post_reason( 'Unexpected geometry' )
         return 'fail'
-    feat.Destroy()
-    
+
     # Test 2nd waypoint
     feat = lyr.GetNextFeature()
 
@@ -381,7 +375,6 @@ def ogr_gtm_check_write_1():
     if ogrtest.check_feature_geometry( feat, wkt):
         gdaltest.post_reason( 'Unexpected geometry' )
         return 'fail'
-    feat.Destroy()
 
     # Test tracks
     lyr = ds.GetLayerByName('gtm_tracks')
@@ -410,7 +403,6 @@ def ogr_gtm_check_write_1():
     if ogrtest.check_feature_geometry( feat, wkt):
         gdaltest.post_reason( 'Unexpected geometry' )
         return 'fail'
-    feat.Destroy()
 
     # Test 2nd track
     feat = lyr.GetNextFeature()
@@ -431,7 +423,6 @@ def ogr_gtm_check_write_1():
     if ogrtest.check_feature_geometry( feat, wkt):
         gdaltest.post_reason( 'Unexpected geometry' )
         return 'fail'
-    feat.Destroy()
 
     # Test 3rd track
     feat = lyr.GetNextFeature()
@@ -452,7 +443,6 @@ def ogr_gtm_check_write_1():
     if ogrtest.check_feature_geometry( feat, wkt):
         gdaltest.post_reason( 'Unexpected geometry' )
         return 'fail'
-    feat.Destroy()
 
     # Test 4th track
     feat = lyr.GetNextFeature()
@@ -473,23 +463,20 @@ def ogr_gtm_check_write_1():
     if ogrtest.check_feature_geometry( feat, wkt):
         gdaltest.post_reason( 'Unexpected geometry' )
         return 'fail'
-    feat.Destroy()
 
     return 'success'
 
-    
+
 ###############################################################################
-# 
+#
 
 def ogr_gtm_cleanup():
 
-    if gdaltest.gtm_ds is not None:
-        gdaltest.gtm_ds.Destroy()
     gdaltest.gtm_ds = None
     os.remove('tmp/gtm.gtm')
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gtm_init,
     ogr_gtm_read_1,
     ogr_gtm_read_2,
@@ -504,4 +491,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

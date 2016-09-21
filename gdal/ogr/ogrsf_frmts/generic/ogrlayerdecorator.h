@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRLAYERDECORATOR_H_INCLUDED
-#define _OGRLAYERDECORATOR_H_INCLUDED
+#ifndef OGRLAYERDECORATOR_H_INCLUDED
+#define OGRLAYERDECORATOR_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -80,6 +80,9 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
 
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
+                                         int bApproxOK = TRUE );
+
     virtual OGRErr      SyncToDisk();
 
     virtual OGRStyleTable *GetStyleTable();
@@ -96,7 +99,16 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" );
+
     OGRLayer* GetBaseLayer()    { return m_poDecoratedLayer; }
 };
 
-#endif // _OGRLAYERDECORATOR_H_INCLUDED
+#endif // OGRLAYERDECORATOR_H_INCLUDED

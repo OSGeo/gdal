@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRGMT_H_INCLUDED
-#define _OGRGMT_H_INCLUDED
+#ifndef OGRGMT_H_INCLUDED
+#define OGRGMT_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "ogr_api.h"
@@ -42,15 +42,13 @@ class OGRGmtLayer : public OGRLayer
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
-    
+
     int                 iNextFID;
 
-    OGRwkbGeometryType  eWkbType;
+    bool                bUpdate;
+    bool                bHeaderComplete;
 
-    int                 bUpdate;
-    int                 bHeaderComplete;
-
-    int                 bRegionComplete;
+    bool                bRegionComplete;
     OGREnvelope         sRegion;
     vsi_l_offset        nRegionOffset;
 
@@ -80,9 +78,11 @@ class OGRGmtLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     OGRErr              ICreateFeature( OGRFeature *poFeature );
-    
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
@@ -97,10 +97,10 @@ class OGRGmtDataSource : public OGRDataSource
 {
     OGRGmtLayer       **papoLayers;
     int                 nLayers;
-    
+
     char                *pszName;
 
-    int                 bUpdate;
+    bool                bUpdate;
 
   public:
                         OGRGmtDataSource();
@@ -113,7 +113,7 @@ class OGRGmtDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *ICreateLayer( const char *, 
+    virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -128,16 +128,15 @@ class OGRGmtDriver : public OGRSFDriver
 {
   public:
                 ~OGRGmtDriver();
-                
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
-    
+
     int                 TestCapability( const char * );
 };
 
 
-#endif /* ndef _OGRGMT_H_INCLUDED */
-
+#endif /* ndef OGRGMT_H_INCLUDED */

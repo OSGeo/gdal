@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  LIBKML Driver testing.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -43,7 +43,7 @@ from osgeo import gdal
 # Test basic open operation for KML datastore.
 #
 def ogr_libkml_datastore():
-    
+
     ogrtest.kml_ds = None
     ogrtest.have_read_libkml = 0
     ogrtest.kml_drv = None
@@ -90,13 +90,13 @@ def ogr_libkml_datastore():
 # Test reading attributes for first layer (point).
 #
 def ogr_libkml_attributes_1():
-    
+
     if not ogrtest.have_read_libkml:
         return 'skip'
 
     if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'libkml_ds is none' )
-        return 'faii'
+        return 'fail'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
     feat = lyr.GetNextFeature()
@@ -123,7 +123,7 @@ def ogr_libkml_attributes_1():
         gdaltest.post_reason( 'Wrong description field value' )
         print('got: ', feat.GetField('description')[:25])
         return 'fail'
-    
+
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
@@ -144,13 +144,13 @@ def ogr_libkml_attributes_1():
 # Test reading attributes for another layer (point).
 #
 def ogr_libkml_attributes_2():
-    
+
     if not ogrtest.have_read_libkml:
         return 'skip'
 
     if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'libkml_ds is none' )
-        return 'faii'
+        return 'fail'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Highlighted Icon')
     feat = lyr.GetNextFeature()
@@ -175,13 +175,13 @@ def ogr_libkml_attributes_2():
 # Test reading attributes for another layer (linestring).
 #
 def ogr_libkml_attributes_3():
-    
+
     if not ogrtest.have_read_libkml:
         return 'skip'
 
     if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'libkml_ds is none' )
-        return 'faii'
+        return 'fail'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Paths')
     feat = lyr.GetNextFeature()
@@ -198,7 +198,7 @@ def ogr_libkml_attributes_3():
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
-    
+
     if feat.GetField('Name') != 'Untessellated':
         gdaltest.post_reason( 'Wrong name field value' )
         return 'fail'
@@ -206,25 +206,25 @@ def ogr_libkml_attributes_3():
     if feat.GetField('description') != 'If the <tessellate> tag has a value of 0, the line follow a simple straight-line path from point to point':
         gdaltest.post_reason( 'Wrong description field value' )
         return 'fail'
-    
+
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
- 
+
     return 'success'
 
 ###############################################################################
 # Test reading attributes for another layer (polygon).
 #
 def ogr_libkml_attributes_4():
-    
+
     if not ogrtest.have_read_libkml:
         return 'skip'
 
     if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'libkml_ds is none' )
-        return 'faii'
+        return 'fail'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
     feat = lyr.GetNextFeature()
@@ -245,25 +245,25 @@ def ogr_libkml_attributes_4():
         feat = lyr.GetNextFeature()
 
     return 'success'
- 
+
 ###############################################################################
 # Test reading of KML point geometry
 #
 def ogr_libkml_point_read():
-    
+
     if not ogrtest.have_read_libkml:
         return 'skip'
 
     if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'libkml_ds is none' )
-        return 'faii'
+        return 'fail'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
     wkt = 'POINT(-122.0822035425683 37.42228990140251)'
-    
+
     if ogrtest.check_feature_geometry( feat, wkt):
         return 'fail'
 
@@ -271,19 +271,19 @@ def ogr_libkml_point_read():
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
-    
+
     wkt = 'POINT(-122.084075 37.4220033612141 50)'
-    
+
     if ogrtest.check_feature_geometry( feat, wkt):
         return 'fail'
-    
+
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
-    
+
     wkt = 'POINT(-122.0857667006183 37.42156927867553 50)'
-    
+
     if ogrtest.check_feature_geometry( feat, wkt):
         return 'fail'
 
@@ -293,13 +293,13 @@ def ogr_libkml_point_read():
 # Test reading of KML linestring geometry
 #
 def ogr_libkml_linestring_read():
-    
+
     if not ogrtest.have_read_libkml:
         return 'skip'
 
     if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'libkml_ds is none' )
-        return 'faii'
+        return 'fail'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Paths')
     lyr.ResetReading()
@@ -308,38 +308,38 @@ def ogr_libkml_linestring_read():
     wkt = 'LINESTRING (-112.081423783034495 36.106778704771372 0, -112.087026775269294 36.0905099328766 0)'
     if ogrtest.check_feature_geometry(feat, wkt):
         return 'fail'
-    
+
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
- 
+
     wkt = 'LINESTRING (-112.080622229594994 36.106734600079953 0,-112.085242575314993 36.090495986124218 0)'
     if ogrtest.check_feature_geometry(feat, wkt):
         return 'fail'
-    
+
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
- 
+
     wkt = 'LINESTRING (-112.265654928602004 36.094476726025462 2357,-112.266038452823807 36.093426088386707 2357,-112.266813901345301 36.092510587768807 2357,-112.267782683444494 36.091898273579957 2357,-112.268855751095202 36.091313794118697 2357,-112.269481071721899 36.090367720752099 2357,-112.269526855561097 36.089321714872852 2357,-112.269014456727604 36.088509160604723 2357,-112.268152881533894 36.087538135979557 2357,-112.2670588176031 36.086826852625677 2357,-112.265737458732104 36.086463123013033 2357)'
     if ogrtest.check_feature_geometry(feat, wkt):
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
 # Test reading of KML polygon geometry
 #
 def ogr_libkml_polygon_read():
-    
+
     if not ogrtest.have_read_libkml:
         return 'skip'
 
     if ogrtest.kml_ds is None:
         gdaltest.post_reason( 'libkml_ds is none' )
-        return 'faii'
+        return 'fail'
 
     lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
     lyr.ResetReading()
@@ -348,34 +348,34 @@ def ogr_libkml_polygon_read():
     wkt = 'POLYGON ((-122.084893845961204 37.422571240447859 17,-122.084958097919795 37.422119226268563 17,-122.084746957304702 37.42207183952619 17,-122.084572538096197 37.422090067296757 17,-122.084595488672306 37.422159327008949 17,-122.0838521118269 37.422272785643713 17,-122.083792243334997 37.422035391120843 17,-122.0835076656616 37.422090069571063 17,-122.083470946415204 37.422009873951609 17,-122.083122108574798 37.422104649494599 17,-122.082924737457205 37.422265039903863 17,-122.082933916938501 37.422312428430942 17,-122.083383735973698 37.422250460876178 17,-122.083360785424802 37.422341592287452 17,-122.083420455164202 37.42237075460644 17,-122.083659133885007 37.422512920110009 17,-122.083975843895203 37.422658730937812 17,-122.084237474333094 37.422651439725207 17,-122.0845036949503 37.422651438643499 17,-122.0848020460801 37.422611339163147 17,-122.084788275051494 37.422563950551208 17,-122.084893845961204 37.422571240447859 17))'
     if ogrtest.check_feature_geometry( feat, wkt):
         return 'fail'
-    
+
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
- 
+
     wkt = 'POLYGON ((-122.085741277148301 37.422270331552568 17,-122.085816976848093 37.422314088323461 17,-122.085852582875006 37.422303374697442 17,-122.085879994563896 37.422256861387893 17,-122.085886010140896 37.422231107613797 17,-122.085806915728796 37.422202501738553 17,-122.085837954265301 37.42214027058678 17,-122.085673264051906 37.422086902144081 17,-122.085602292640701 37.42214885429042 17,-122.085590277843593 37.422128290487002 17,-122.085584167223701 37.422081719672462 17,-122.085485206574106 37.42210455874995 17,-122.085506726435199 37.422142679498243 17,-122.085443071291493 37.422127838461719 17,-122.085099071490404 37.42251282407603 17,-122.085676981863202 37.422818153236513 17,-122.086016227378295 37.422449188587223 17,-122.085726032700407 37.422292396042529 17,-122.085741277148301 37.422270331552568 17))'
     if ogrtest.check_feature_geometry(feat, wkt):
         return 'fail'
-    
+
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
- 
+
     wkt = 'POLYGON ((-122.085786228724203 37.421362088869692 25,-122.085731299060299 37.421369359894811 25,-122.085731299291794 37.421409349109027 25,-122.085607707367899 37.421383901665649 25,-122.085580242651602 37.42137299550869 25,-122.085218622197104 37.421372995043157 25,-122.085227776563897 37.421616565082651 25,-122.085259818934702 37.421605658944031 25,-122.085259818549901 37.421682001560001 25,-122.085236931147804 37.421700178603459 25,-122.085264395782801 37.421761979825753 25,-122.085323903274599 37.421761980139067 25,-122.085355945432397 37.421852864451999 25,-122.085410875246296 37.421889218237339 25,-122.085479537935697 37.42189285337048 25,-122.085543622981902 37.421889217975462 25,-122.085626017804202 37.421860134999257 25,-122.085937287963006 37.421860134536047 25,-122.085942871866607 37.42160898590042 25,-122.085965546986102 37.421579927591438 25,-122.085864046234093 37.421471150029568 25,-122.0858548911215 37.421405713261841 25,-122.085809116276806 37.4214057134039 25,-122.085786228724203 37.421362088869692 25))'
     if ogrtest.check_feature_geometry(feat, wkt):
         return 'fail'
-    
+
     feat = lyr.GetNextFeature()
     if feat is None:
         gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
- 
+
     wkt = 'POLYGON ((-122.084437112828397 37.421772530030907 19,-122.084511885574599 37.421911115428962 19,-122.0850470999805 37.421787551215353 19,-122.085071991339106 37.421436630231611 19,-122.084916406231997 37.421372378221157 19,-122.084219386816699 37.421372378016258 19,-122.084219386589993 37.421476171614962 19,-122.083808641999099 37.4214613409357 19,-122.083789972856394 37.421313064107963 19,-122.083279653469802 37.421293288405927 19,-122.083260981920702 37.421392139442979 19,-122.082937362173695 37.421372363998763 19,-122.082906242566693 37.421515697788713 19,-122.082850226966499 37.421762825764652 19,-122.082943578863507 37.421767769696352 19,-122.083217411188002 37.421792485526858 19,-122.0835970430103 37.421748007445601 19,-122.083945555677104 37.421693642376027 19,-122.084007789463698 37.421762838158529 19,-122.084113587521003 37.421748011043917 19,-122.084076247378405 37.421713412923751 19,-122.084144704773905 37.421678815345693 19,-122.084144704222993 37.421817206601972 19,-122.084250333307395 37.421817070044597 19,-122.084437112828397 37.421772530030907 19))'
     if ogrtest.check_feature_geometry(feat, wkt):
         return 'fail'
- 
+
     return 'success'
 
 ###############################################################################
@@ -402,16 +402,15 @@ def ogr_libkml_write(filename):
             print(dst_feat.GetGeometryRef().ExportToWkt())
             gdaltest.post_reason('CreateFeature changed the geometry.')
             return 'fail'
-        dst_feat.Destroy()
 
     lyr = ds.CreateLayer('test_wgs84')
 
-    fieldefn = ogr.FieldDefn ( 'name', ogr.OFTString)
-    lyr.CreateField(fieldefn)
-    fieldefn = ogr.FieldDefn ( 'description', ogr.OFTString)
-    lyr.CreateField(fieldefn)
-    fieldefn = ogr.FieldDefn ( 'foo', ogr.OFTString)
-    lyr.CreateField(fieldefn)
+    fielddefn = ogr.FieldDefn ( 'name', ogr.OFTString)
+    lyr.CreateField(fielddefn)
+    fielddefn = ogr.FieldDefn ( 'description', ogr.OFTString)
+    lyr.CreateField(fielddefn)
+    fielddefn = ogr.FieldDefn ( 'foo', ogr.OFTString)
+    lyr.CreateField(fielddefn)
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetField('name', 'my_name')
@@ -421,58 +420,50 @@ def ogr_libkml_write(filename):
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49 1)'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (0 1,2 3)'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0))'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOINT (2 49,2 49)'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING ((0 1,2 3),(0 1,2 3))'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON (((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0)),((-0.25 0.25 0,-0.25 0.75 0,-0.75 0.75 0,-0.75 0.25 0,-0.25 0.25 0)))'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1,2 3))'))
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-    dst_feat.Destroy()
 
-    ds.Destroy()
+    ds = None
 
     return 'success'
 
@@ -510,58 +501,50 @@ def ogr_libkml_check_write(filename):
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49 1)':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1 0,2 3 0)':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0))':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOINT (2 49 0,2 49 0)':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'MULTILINESTRING ((0 1 0,2 3 0),(0 1 0,2 3 0))':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'MULTIPOLYGON (((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0),(0.25 0.25 0,0.25 0.75 0,0.75 0.75 0,0.75 0.25 0,0.25 0.25 0)),((-0.25 0.25 0,-0.25 0.75 0,-0.75 0.75 0,-0.75 0.25 0,-0.25 0.25 0)))':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'GEOMETRYCOLLECTION (POINT (2 49 1),LINESTRING (0 1 0,2 3 0))':
         print(feat.GetGeometryRef().ExportToWkt())
         gdaltest.post_reason('Unexpected geometry.')
         return 'fail'
-    feat.Destroy()
 
-    ds.Destroy()
+    ds = None
 
     return 'success'
 
@@ -593,7 +576,7 @@ def ogr_libkml_write_dir():
 def ogr_libkml_check_write_dir():
     if not ogrtest.have_read_libkml:
         return 'skip'
-        
+
     ret = ogr_libkml_check_write('/vsimem/libkmldir')
     files = gdal.ReadDir('/vsimem/libkmldir')
     for filename in files:
@@ -605,7 +588,7 @@ def ogr_libkml_check_write_dir():
 # Test reading attributes with XML content in them
 #
 def ogr_libkml_xml_attributes():
-    
+
     if not ogrtest.have_read_libkml:
         return 'skip'
 
@@ -619,8 +602,7 @@ def ogr_libkml_xml_attributes():
         print('got: %s ' % feat.GetField('description'))
         return 'fail'
 
-    feat.Destroy()
-    ds.Destroy()
+    ds = None
 
     return 'success'
 
@@ -637,10 +619,9 @@ def ogr_libkml_read_geometries():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     while feat is not None:
-        feat.Destroy()
         feat = lyr.GetNextFeature()
 
-    ds.Destroy()
+    ds = None
 
     return 'success'
 
@@ -731,6 +712,33 @@ def ogr_libkml_read_emptylayers():
 
 ###############################################################################
 # Test reading KML with empty layers
+
+###############################################################################
+# Test reading KML with empty layers without folder
+
+def ogr_libkml_read_emptylayers_without_folder():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/emptylayers_without_folder.kml')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    # --> One difference with the old KML driver
+    if ds.GetLayer(0).GetName() != 'Test':
+        gdaltest.post_reason('failed')
+        print("Layer name must be '" + ds.GetLayer(0).GetName() + "'.")
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with empty layers without_folder
 
 def ogr_libkml_read_schema():
 
@@ -869,8 +877,9 @@ def ogr_libkml_camera():
     dst_feat.SetField("heading", 70)
     dst_feat.SetField("tilt", 75)
     dst_feat.SetField("roll", 10)
-    lyr.CreateFeature( dst_feat )
-    
+    with gdaltest.error_handler():
+        lyr.CreateFeature( dst_feat )
+
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 50 1)'))
     dst_feat.SetField("heading", -70)
@@ -899,20 +908,20 @@ def ogr_libkml_camera():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49 0)' or \
-       feat.GetField("heading") != 70.0 or \
-       feat.GetField("tilt") != 75.0 or \
-       feat.GetField("roll") != 10.0:
+    if (feat.GetGeometryRef().ExportToWkt() != 'POINT (2 49 0)' or
+        feat.GetField("heading") != 70.0 or
+        feat.GetField("tilt") != 75.0 or
+        feat.GetField("roll") != 10.0):
         feat.DumpReadable()
         gdaltest.post_reason('failure')
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if feat.GetGeometryRef().ExportToWkt() != 'POINT (3 50 1)' or \
-       feat.GetField("heading") != -70.0 or \
-       feat.IsFieldSet("tilt") or \
-       feat.IsFieldSet("roll") or \
-       feat.GetField("altitudeMode") != 'relativeToGround':
+    if (feat.GetGeometryRef().ExportToWkt() != 'POINT (3 50 1)' or
+        feat.GetField("heading") != -70.0 or
+        feat.IsFieldSet("tilt") or
+        feat.IsFieldSet("roll") or
+        feat.GetField("altitudeMode") != 'relativeToGround'):
         feat.DumpReadable()
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1014,10 +1023,11 @@ def ogr_libkml_write_multigeometry():
     feat = ogr.Feature(lyr.GetLayerDefn())
     # Warning emitted per ATC 66
     feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY'))
-    lyr.CreateFeature(feat)
+    with gdaltest.error_handler():
+        lyr.CreateFeature(feat)
 
     ds = None
-    
+
     ds = ogr.Open("/vsimem/ogr_libkml_write_multigeometry.kml")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -1082,11 +1092,15 @@ def ogr_libkml_write_atom_author():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_atom_author.kml",
+    filepath = '/vsimem/ogr_libkml_write_atom_author.kml'
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options = ['author_name=name', 'author_uri=http://foo', 'author_email=foo@bar.com'])
-    del ds
+    if ds is None:
+        gdaltest.post_reason('Unable to create %s.' % filepath)
+        return 'fail'
+    ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_author.kml', 'rb')
+    f = gdal.VSIFOpenL(filepath, 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
@@ -1096,7 +1110,7 @@ def ogr_libkml_write_atom_author():
        data.find('<atom:uri>http://foo</atom:uri>') == -1 or \
        data.find('<atom:email>foo@bar.com</atom:email>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
+        gdaltest.post_reason('failure to find an atom string')
         return 'fail'
 
     return 'success'
@@ -1109,11 +1123,15 @@ def ogr_libkml_write_atom_link():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_atom_link.kml",
+    filepath = '/vsimem/ogr_libkml_write_atom_link.kml'
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options = ['link=http://foo'])
-    del ds
+    if ds is None:
+        gdaltest.post_reason('Unable to create %s.' % filepath)
+        return 'fail'
+    ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_link.kml', 'rb')
+    f = gdal.VSIFOpenL(filepath, 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
@@ -1134,11 +1152,15 @@ def ogr_libkml_write_phonenumber():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_phonenumber.kml",
+    filepath = '/vsimem/ogr_libkml_write_phonenumber.kml'
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options = ['phonenumber=tel:911'])
-    del ds
+    if ds is None:
+        gdaltest.post_reason('Unable to create %s.' % filepath)
+        return 'fail'
+    ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_phonenumber.kml', 'rb')
+    f = gdal.VSIFOpenL(filepath, 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
@@ -1167,7 +1189,7 @@ def ogr_libkml_write_region():
         'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', \
         'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
         'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2' ])
-    del ds
+    ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_region.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1195,7 +1217,7 @@ def ogr_libkml_write_region():
         print(data)
         gdaltest.post_reason('failure')
         return 'fail'
-        
+
     return 'success'
 
 ###############################################################################
@@ -1309,9 +1331,10 @@ def ogr_libkml_write_model():
         gdaltest.post_reason('failure')
         return 'fail'
 
-    # This can only appear if HTTP ressource is available
-    if data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
-       data.find('<sourceHref>cube.gif</sourceHref>') == -1:
+    # This can only appear if HTTP resource is available and GDAL is built with curl/http support
+    if gdal.GetDriverByName('HTTP') is not None and \
+       (data.find('<targetHref>http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.gif</targetHref>') == -1 or \
+       data.find('<sourceHref>cube.gif</sourceHref>') == -1):
 
         if gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is not None:
             print(data)
@@ -1380,7 +1403,7 @@ def ogr_libkml_read_write_style():
         </StyleMap>
     </Document>
     </kml>""" % styles
-    
+
     resolved_stylemap = """<Style id="styleMapExample">
       <IconStyle>
         <Icon>
@@ -1471,7 +1494,7 @@ def ogr_libkml_read_write_style():
     lyr.CreateFeature(feat)
     feat = None
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_libkml_read_write_style_write.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -1594,7 +1617,8 @@ def ogr_libkml_write_update():
                                                             options = [ 'UPDATE_TARGETHREF=http://foo'] )
         lyr = ds.CreateLayer('layer_to_edit')
         feat = ogr.Feature(lyr.GetLayerDefn())
-        lyr.CreateFeature(feat)
+        with gdaltest.error_handler():
+            lyr.CreateFeature(feat)
         feat.SetFID(10)
         lyr.CreateFeature(feat)
         feat.SetFID(2)
@@ -1609,7 +1633,7 @@ def ogr_libkml_write_update():
         else:
             f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_update_dir/doc.kml', 'rb')
         if f is None:
-            gdaltest.post_reason('failure')
+            gdaltest.post_reason('Unable to open the write_update file.')
             return 'fail'
         data = gdal.VSIFReadL(1, 2048, f)
         data = data.decode('ascii')
@@ -1659,7 +1683,10 @@ def ogr_libkml_write_networklinkcontrol():
             name = "/vsimem/ogr_libkml_write_networklinkcontrol_dir"
 
         ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name, options = options)
-        del ds
+        if ds is None:
+            gdaltest.post_reason('Unable to create %s.' % name)
+            return 'fail'
+        ds = None
 
         if i == 0:
             f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklinkcontrol.kml', 'rb')
@@ -1703,8 +1730,9 @@ def ogr_libkml_write_liststyle():
     ds.CreateLayer('test_radioFolder', options = [ 'LISTSTYLE_TYPE=radioFolder'] )
     ds.CreateLayer('test_checkOffOnly', options = [ 'LISTSTYLE_TYPE=checkOffOnly'] )
     ds.CreateLayer('test_checkHideChildren', options = [ 'LISTSTYLE_TYPE=checkHideChildren'] )
-    ds.CreateLayer('test_error', options = [ 'LISTSTYLE_TYPE=error'] )
-    del ds
+    with gdaltest.error_handler():
+        ds.CreateLayer('test_error', options = [ 'LISTSTYLE_TYPE=error'] )
+        ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_liststyle.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1935,7 +1963,7 @@ def ogr_libkml_write_folder():
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_folder.kml")
     ds.CreateLayer('test', options = [ 'LISTSTYLE_ICON_HREF=http://foo', 'FOLDER=YES' ] )
     ds.CreateLayer('test2', options = [ 'FOLDER=YES' ] )
-    del ds
+    ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_folder.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1952,7 +1980,7 @@ def ogr_libkml_write_folder():
         return 'fail'
 
     return 'success'
-    
+
 ###############################################################################
 # Test writing datasource and layer container propreties
 
@@ -1964,7 +1992,7 @@ def ogr_libkml_write_container_properties():
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_container_properties.kml",
                                  options = [ 'NAME=ds_name', 'DESCRIPTION=ds_description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=ds_snippet'])
     ds.CreateLayer('test', options = [ 'NAME=lyr_name', 'DESCRIPTION=lyr_description', 'OPEN=0', 'VISIBILITY=0', 'SNIPPET=lyr_snippet'] )
-    del ds
+    ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_container_properties.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1988,6 +2016,29 @@ def ogr_libkml_write_container_properties():
     return 'success'
 
 ###############################################################################
+# Test reading gx:TimeStamp and gx:TimeSpan
+
+def ogr_libkml_read_gx_timestamp():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/gxtimestamp.kml')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['timestamp'] != '2016/02/13 12:34:56+00':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['begin'] != '2016/02/13 00:00:00+00' or f['end'] != '2016/02/14 00:00:00+00':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -1995,7 +2046,7 @@ def ogr_libkml_cleanup():
         return 'skip'
 
     if ogrtest.kml_ds is not None:
-        ogrtest.kml_ds.Destroy()
+        ogrtest.kml_ds = None
 
     gdal.Unlink('/vsimem/libkml.kml')
     gdal.Unlink('/vsimem/libkml.kmz')
@@ -2038,7 +2089,7 @@ def ogr_libkml_cleanup():
 ###############################################################################
 # Build tests runner
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_libkml_datastore,
     ogr_libkml_attributes_1,
     ogr_libkml_attributes_2,
@@ -2061,6 +2112,7 @@ gdaltest_list = [
     ogr_libkml_read_placemark,
     ogr_libkml_read_empty,
     ogr_libkml_read_emptylayers,
+    ogr_libkml_read_emptylayers_without_folder,
     ogr_libkml_read_schema,
     ogr_libkml_extended_data_without_schema_data,
     ogr_libkml_gxtrack,
@@ -2085,6 +2137,7 @@ gdaltest_list = [
     ogr_libkml_read_write_data,
     ogr_libkml_write_folder,
     ogr_libkml_write_container_properties,
+    ogr_libkml_read_gx_timestamp,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
@@ -2094,4 +2147,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

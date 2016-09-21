@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
 #include "msg_reader_core.h"
 #include "msg_basic_types.h"
 #include <stdio.h>
@@ -45,8 +47,8 @@
 CPL_CVSID("$Id$");
 
 #else
-#define VSIFSeek(fp, pos, ref)    fseek(fp, pos, ref)
-#define VSIFRead(p, bs, nb, fp)   fread(p, bs, nb, fp)
+#define VSIFSeek(fp, pos, ref)    CPL_IGNORE_RET_VAL(fseek(fp, pos, ref))
+#define VSIFRead(p, bs, nb, fp)   CPL_IGNORE_RET_VAL(fread(p, bs, nb, fp))
 #endif
 
 namespace msg_native_format {
@@ -67,8 +69,61 @@ const Blackbody_lut_type Msg_reader_core::Blackbody_LUT[MSG_NUM_CHANNELS+1] = {
     {0,0,0}   // N/A
 };
 
+static
+void PhDataInit(PH_DATA *data)
+{
+  data->name[0] = '\0';
+  data->value[0] = '\0';
+}
 
-Msg_reader_core::Msg_reader_core(const char* fname) {
+static
+void SecondaryProdHeaderInit(SECONDARY_PROD_HEADER *header)
+{
+  PhDataInit(&header->abid);
+  PhDataInit(&header->smod);
+  PhDataInit(&header->apxs);
+  PhDataInit(&header->avpa);
+  PhDataInit(&header->lscd);
+  PhDataInit(&header->lmap);
+  PhDataInit(&header->qdlc);
+  PhDataInit(&header->qdlp);
+  PhDataInit(&header->qqai);
+  PhDataInit(&header->selectedBandIds);
+  PhDataInit(&header->southLineSelectedRectangle);
+  PhDataInit(&header->northLineSelectedRectangle);
+  PhDataInit(&header->eastColumnSelectedRectangle);
+  PhDataInit(&header->westColumnSelectedRectangle);
+}
+
+Msg_reader_core::Msg_reader_core(const char* fname) :
+    _lines(0),
+    _columns(0),
+    _line_start(0),
+    _col_start(0),
+    _col_dir_step(0.0f),
+    _line_dir_step(0.0f),
+    _f_data_offset(0),
+    _f_data_size(0),
+    _f_header_offset(0),
+    _f_header_size(0),
+    _visir_bytes_per_line(0),
+    _visir_packet_size(0),
+    _hrv_bytes_per_line(0),
+    _hrv_packet_size(0),
+    _interline_spacing(0),
+    _year(0),
+    _month(0),
+    _day(0),
+    _hour(0),
+    _minute(0),
+    _open_success(false)
+{
+    memset(&_main_header, 0, sizeof(_main_header));
+    SecondaryProdHeaderInit(&_sec_header);
+    for (size_t i=0; i < MSG_NUM_CHANNELS; ++i) {
+      _calibration[i].cal_slope = 0.0;
+      _calibration[i].cal_offset = 0.0;
+    }
 
     FILE* fin = fopen(fname, "rb");
     if (!fin) {
@@ -76,9 +131,40 @@ Msg_reader_core::Msg_reader_core(const char* fname) {
         return;
     }
     read_metadata_block(fin);
+    fclose(fin);
 }
 
-Msg_reader_core::Msg_reader_core(FILE* fp) {
+Msg_reader_core::Msg_reader_core(FILE* fp) :
+    _lines(0),
+    _columns(0),
+    _line_start(0),
+    _col_start(0),
+    _col_dir_step(0.0f),
+    _line_dir_step(0.0f),
+    _f_data_offset(0),
+    _f_data_size(0),
+    _f_header_offset(0),
+    _f_header_size(0),
+    _visir_bytes_per_line(0),
+    _visir_packet_size(0),
+    _hrv_bytes_per_line(0),
+    _hrv_packet_size(0),
+    _interline_spacing(0),
+    _year(0),
+    _month(0),
+    _day(0),
+    _hour(0),
+    _minute(0),
+    _open_success(false)
+{
+    memset(&_main_header, 0, sizeof(_main_header));
+
+    SecondaryProdHeaderInit(&_sec_header);
+    for (size_t i=0; i < MSG_NUM_CHANNELS; ++i) {
+      _calibration[i].cal_slope = 0.0;
+      _calibration[i].cal_offset = 0.0;
+    }
+
     read_metadata_block(fp);
 }
 
@@ -88,8 +174,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 
     unsigned int i;
 
-    VSIFRead(&_main_header, sizeof(_main_header), 1, fin);
-    VSIFRead(&_sec_header, sizeof(_sec_header), 1, fin);
+    CPL_IGNORE_RET_VAL(VSIFRead(&_main_header, sizeof(_main_header), 1, fin));
+    CPL_IGNORE_RET_VAL(VSIFRead(&_sec_header, sizeof(_sec_header), 1, fin));
 
 #ifdef DEBUG
     // print out all the fields in the header
@@ -117,13 +203,13 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 
     for (i=0; i < 5; i++) {
         PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification[i];
-        if (strncmp(hdi->name, "15Header", strlen("15Header")) == 0) {
-            sscanf(hdi->size, "%d", &_f_header_size);
-            sscanf(hdi->address, "%d", &_f_header_offset);
+        if (STARTS_WITH(hdi->name, "15Header")) {
+            sscanf(hdi->size, "%u", &_f_header_size);
+            sscanf(hdi->address, "%u", &_f_header_offset);
         } else
-            if (strncmp(hdi->name, "15Data", strlen("15Data")) == 0) {
-            sscanf(hdi->size, "%d", &_f_data_size);
-            sscanf(hdi->address, "%d", &_f_data_offset);
+            if (STARTS_WITH(hdi->name, "15Data")) {
+            sscanf(hdi->size, "%u", &_f_data_size);
+            sscanf(hdi->address, "%u", &_f_data_offset);
         }
     }
 #ifdef DEBUG
@@ -132,14 +218,14 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 #endif // DEBUG
 
     unsigned int lines;
-    sscanf(_sec_header.northLineSelectedRectangle.value, "%d", &_lines);
-    sscanf(_sec_header.southLineSelectedRectangle.value, "%d", &lines);
+    sscanf(_sec_header.northLineSelectedRectangle.value, "%u", &_lines);
+    sscanf(_sec_header.southLineSelectedRectangle.value, "%u", &lines);
     _line_start = lines;
     _lines -= lines - 1;
 
     unsigned int cols;
-    sscanf(_sec_header.westColumnSelectedRectangle.value, "%d", &_columns);
-    sscanf(_sec_header.eastColumnSelectedRectangle.value, "%d", &cols);
+    sscanf(_sec_header.westColumnSelectedRectangle.value, "%u", &_columns);
+    sscanf(_sec_header.eastColumnSelectedRectangle.value, "%u", &cols);
     _col_start = cols;
     _columns -= cols - 1;
 
@@ -162,17 +248,17 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 #endif // DEBUG
 
     // extract time fields, assume that SNIT is the correct field:
-    sscanf(_main_header.snit.value +  0, "%04d", &_year);
-    sscanf(_main_header.snit.value +  4, "%02d", &_month);
-    sscanf(_main_header.snit.value +  6, "%02d", &_day);
-    sscanf(_main_header.snit.value +  8, "%02d", &_hour);
-    sscanf(_main_header.snit.value + 10, "%02d", &_minute);
+    sscanf(_main_header.snit.value +  0, "%04u", &_year);
+    sscanf(_main_header.snit.value +  4, "%02u", &_month);
+    sscanf(_main_header.snit.value +  6, "%02u", &_day);
+    sscanf(_main_header.snit.value +  8, "%02u", &_hour);
+    sscanf(_main_header.snit.value + 10, "%02u", &_minute);
 
     // read radiometric block
-    RADIOMETRIC_PROCCESSING_RECORD rad;
+    RADIOMETRIC_PROCESSING_RECORD rad;
     off_t offset = RADIOMETRICPROCESSING_RECORD_OFFSET + _f_header_offset + sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
-    VSIFSeek(fin, offset, SEEK_SET);
-    VSIFRead(&rad, sizeof(RADIOMETRIC_PROCCESSING_RECORD), 1, fin);
+    CPL_IGNORE_RET_VAL(VSIFSeek(fin, offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(VSIFRead(&rad, sizeof(RADIOMETRIC_PROCESSING_RECORD), 1, fin));
     to_native(rad);
     memcpy((void*)_calibration, (void*)&rad.level1_5ImageCalibration,sizeof(_calibration));
 
@@ -191,8 +277,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     // read image description block
     IMAGE_DESCRIPTION_RECORD idr;
     offset = RADIOMETRICPROCESSING_RECORD_OFFSET  - IMAGEDESCRIPTION_RECORD_LENGTH + _f_header_offset + sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
-    VSIFSeek(fin, offset, SEEK_SET);
-    VSIFRead(&idr, sizeof(IMAGE_DESCRIPTION_RECORD), 1, fin);
+    CPL_IGNORE_RET_VAL(VSIFSeek(fin, offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(VSIFRead(&idr, sizeof(IMAGE_DESCRIPTION_RECORD), 1, fin));
     to_native(idr);
     _line_dir_step = idr.referencegrid_visir.lineDirGridStep;
     _col_dir_step = idr.referencegrid_visir.columnDirGridStep;
@@ -204,7 +290,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     GP_PK_SH1    sub_header;
     SUB_VISIRLINE visir_line;
 
-    VSIFSeek(fin, _f_data_offset, SEEK_SET);
+    CPL_IGNORE_RET_VAL(VSIFSeek(fin, _f_data_offset, SEEK_SET));
 
     _hrv_packet_size = 0;
     _interline_spacing = 0;
@@ -218,17 +304,17 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     }
 
     do {
-        VSIFRead(&gp_header, sizeof(GP_PK_HEADER), 1, fin);
-        VSIFRead(&sub_header, sizeof(GP_PK_SH1), 1, fin);
-        VSIFRead(&visir_line, sizeof(SUB_VISIRLINE), 1, fin);
+        CPL_IGNORE_RET_VAL(VSIFRead(&gp_header, sizeof(GP_PK_HEADER), 1, fin));
+        CPL_IGNORE_RET_VAL(VSIFRead(&sub_header, sizeof(GP_PK_SH1), 1, fin));
+        CPL_IGNORE_RET_VAL(VSIFRead(&visir_line, sizeof(SUB_VISIRLINE), 1, fin));
         to_native(visir_line);
         to_native(gp_header);
 
         // skip over the actual line data
-        VSIFSeek(fin,
+        CPL_IGNORE_RET_VAL(VSIFSeek(fin,
             gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1),
             SEEK_CUR
-        );
+        ));
 
         if (visir_line.channelId == 0 || visir_line.channelId > MSG_NUM_CHANNELS) {
             _open_success = false;
@@ -240,14 +326,14 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
             band_count--;
 
             if (visir_line.channelId != 12) { // not the HRV channel
-                _visir_bytes_per_line = gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
-                _visir_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;
+                _visir_bytes_per_line = gp_header.packetLength - (unsigned int)(sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
+                _visir_packet_size = gp_header.packetLength + (unsigned int)sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing += _visir_packet_size;
             } else {
-                _hrv_bytes_per_line = gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
-                _hrv_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;
+                _hrv_bytes_per_line = gp_header.packetLength - (unsigned int)(sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
+                _hrv_packet_size = gp_header.packetLength + (unsigned int)sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing +=  3*_hrv_packet_size;
-                VSIFSeek(fin, 2*gp_header.packetLength, SEEK_CUR );
+                CPL_IGNORE_RET_VAL(VSIFSeek(fin, 2*gp_header.packetLength, SEEK_CUR ));
             }
         }
     } while (band_count > 0);
@@ -281,4 +367,3 @@ double Msg_reader_core::compute_pixel_area_sqkm(double line, double column) {
 #endif // GDAL_SUPPORT
 
 } // namespace msg_native_format
-

@@ -35,11 +35,11 @@ CPL_CVSID("$Id$");
 /*                            DGNTestOpen()                             */
 /************************************************************************/
 
-/** 
+/**
  * Test if header is DGN.
  *
  * @param pabyHeader block of header data from beginning of file.
- * @param nByteCount number of bytes in pabyHeader. 
+ * @param nByteCount number of bytes in pabyHeader.
  *
  * @return TRUE if the header appears to be from a DGN file, otherwise FALSE.
  */
@@ -58,7 +58,7 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
         return TRUE;
 
     // Is it not a regular 2D or 3D file?
-    if( (pabyHeader[0] != 0x08 && pabyHeader[0] != 0xC8) 
+    if( (pabyHeader[0] != 0x08 && pabyHeader[0] != 0xC8)
         || pabyHeader[1] != 0x09
         || pabyHeader[2] != 0xFE || pabyHeader[3] != 0x02 )
         return FALSE;
@@ -71,20 +71,20 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
 /************************************************************************/
 
 /**
- * Open a DGN file. 
+ * Open a DGN file.
  *
  * The file is opened, and minimally verified to ensure it is a DGN (ISFF)
  * file.  If the file cannot be opened for read access an error with code
- * CPLE_OpenFailed with be reported via CPLError() and NULL returned.  
+ * CPLE_OpenFailed with be reported via CPLError() and NULL returned.
  * If the file header does
  * not appear to be a DGN file, an error with code CPLE_AppDefined will be
  * reported via CPLError(), and NULL returned.
  *
  * If successful a handle for further access is returned.  This should be
- * closed with DGNClose() when no longer needed.  
+ * closed with DGNClose() when no longer needed.
  *
  * DGNOpen() does not scan the file on open, and should be very fast even for
- * large files.  
+ * large files.
  *
  * @param pszFilename name of file to try opening.
  * @param bUpdate should the file be opened with read+update (r+) mode?
@@ -96,20 +96,20 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
 DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 
 {
-    DGNInfo     *psDGN;
-    FILE        *fp;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
+    FILE *fp;
+
     if( bUpdate )
         fp = VSIFOpen( pszFilename, "rb+" );
     else
         fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to open `%s' for read access.\n", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to open `%s' for read access.\n",
                   pszFilename );
         return NULL;
     }
@@ -117,13 +117,12 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Verify the format ... add later.                                */
 /* -------------------------------------------------------------------- */
-    GByte       abyHeader[512];
-
-    VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
-    if( !DGNTestOpen( abyHeader, sizeof(abyHeader) ) )
+    GByte abyHeader[512];
+    const int nHeaderBytes = static_cast<int>(VSIFRead( abyHeader, 1, sizeof(abyHeader), fp ));
+    if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "File `%s' does not have expected DGN header.\n", 
+                  "File `%s' does not have expected DGN header.\n",
                   pszFilename );
         VSIFClose( fp );
         return NULL;
@@ -134,7 +133,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Create the info structure.                                      */
 /* -------------------------------------------------------------------- */
-    psDGN = (DGNInfo *) CPLCalloc(sizeof(DGNInfo),1);
+    DGNInfo *psDGN = (DGNInfo *) CPLCalloc(sizeof(DGNInfo),1);
     psDGN->fp = fp;
     psDGN->next_element_id = 0;
 
@@ -142,7 +141,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
     psDGN->scale = 1.0;
     psDGN->origin_x = 0.0;
     psDGN->origin_y = 0.0;
-    psDGN->origin_z = 0.0;                                             
+    psDGN->origin_z = 0.0;
 
     psDGN->index_built = FALSE;
     psDGN->element_count = 0;
@@ -176,12 +175,12 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
  * DGNO_CAPTURE_RAW_DATA: If this is enabled (it is off by default),
  * then the raw binary data associated with elements will be kept in
  * the raw_data field within the DGNElemCore when they are read.  This
- * is required if the application needs to interprete the raw data itself.
+ * is required if the application needs to interpret the raw data itself.
  * It is also necessary if the element is to be written back to this file,
  * or another file using DGNWriteElement().  Off by default (to conserve
- * memory). 
+ * memory).
  *
- * @param hDGN handle to file returned by DGNOpen(). 
+ * @param hDGN handle to file returned by DGNOpen().
  * @param nOptions ORed option flags.
  */
 
@@ -203,23 +202,23 @@ void DGNSetOptions( DGNHandle hDGN, int nOptions )
  * If a spatial filter is set with this function, DGNReadElement() will
  * only return spatial elements (elements with a known bounding box) and
  * only those elements for which this bounding box overlaps the requested
- * region. 
+ * region.
  *
  * If all four values (dfXMin, dfXMax, dfYMin and dfYMax) are zero, the
  * spatial filter is disabled.   Note that installing a spatial filter
  * won't reduce the amount of data read from disk.  All elements are still
- * scanned, but the amount of processing work for elements outside the 
- * spatial filter is minimized.  
+ * scanned, but the amount of processing work for elements outside the
+ * spatial filter is minimized.
  *
  * @param hDGN Handle from DGNOpen() for file to update.
  * @param dfXMin minimum x coordinate for extents (georeferenced coordinates).
  * @param dfYMin minimum y coordinate for extents (georeferenced coordinates).
  * @param dfXMax maximum x coordinate for extents (georeferenced coordinates).
  * @param dfYMax maximum y coordinate for extents (georeferenced coordinates).
- */ 
+ */
 
-void DGNSetSpatialFilter( DGNHandle hDGN, 
-                          double dfXMin, double dfYMin, 
+void DGNSetSpatialFilter( DGNHandle hDGN,
+                          double dfXMin, double dfYMin,
                           double dfXMax, double dfYMax )
 
 {
@@ -253,15 +252,15 @@ void DGNSpatialFilterToUOR( DGNInfo *psDGN )
 {
     DGNPoint    sMin, sMax;
 
-    if( psDGN->sf_converted_to_uor 
-        || !psDGN->has_spatial_filter 
+    if( psDGN->sf_converted_to_uor
+        || !psDGN->has_spatial_filter
         || !psDGN->got_tcb )
         return;
 
     sMin.x = psDGN->sf_min_x_geo;
     sMin.y = psDGN->sf_min_y_geo;
     sMin.z = 0;
-    
+
     sMax.x = psDGN->sf_max_x_geo;
     sMax.y = psDGN->sf_max_y_geo;
     sMax.z = 0;
@@ -282,7 +281,7 @@ void DGNSpatialFilterToUOR( DGNInfo *psDGN )
 /************************************************************************/
 
 /**
- * Close DGN file. 
+ * Close DGN file.
  *
  * @param hDGN Handle from DGNOpen() for file to close.
  */

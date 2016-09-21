@@ -38,10 +38,10 @@ CPL_CVSID("$Id$");
 /*                         OGROCILoaderLayer()                          */
 /************************************************************************/
 
-OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn, 
+OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
                                       const char * pszTableName,
                                       const char * pszGeomColIn,
-                                      int nSRIDIn, 
+                                      int nSRIDIn,
                                       const char *pszLoaderFilenameIn )
 
 {
@@ -56,10 +56,10 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
     poFeatureDefn = new OGRFeatureDefn( pszTableName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    
+
     pszGeomName = CPLStrdup( pszGeomColIn );
     pszFIDName = (char*)CPLGetConfigOption( "OCI_FID", "OGR_FID" );
-    
+
 
     nSRID = nSRIDIn;
     poSRS = poDSIn->FetchSRS( nSRID );
@@ -76,8 +76,8 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
     fpLoader = VSIFOpen( pszLoaderFilename, "wt" );
     if( fpLoader == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open SQL*Loader control file:%s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open SQL*Loader control file:%s",
                   pszLoaderFilename );
         return;
     }
@@ -119,7 +119,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
 /* -------------------------------------------------------------------- */
 /*      Determine name of geometry column to use.                       */
 /* -------------------------------------------------------------------- */
-    const char *pszGeometryName = 
+    const char *pszGeometryName =
         CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryName == NULL )
         pszGeometryName = "ORA_GEOMETRY";
@@ -128,7 +128,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
 /*      Dermine our operation mode.                                     */
 /* -------------------------------------------------------------------- */
     const char *pszLDRMode = CSLFetchNameValue( papszOptions, "LOADER_MODE" );
-    
+
     if( pszLDRMode != NULL && EQUAL(pszLDRMode,"VARIABLE") )
         nLDRMode = LDRM_VARIABLE;
     else if( pszLDRMode != NULL && EQUAL(pszLDRMode,"BINARY") )
@@ -147,23 +147,23 @@ void OGROCILoaderLayer::WriteLoaderHeader()
     }
     else if( nLDRMode == LDRM_VARIABLE )
     {
-        const char *pszDataFilename = CPLResetExtension( pszLoaderFilename, 
+        const char *pszDataFilename = CPLResetExtension( pszLoaderFilename,
                                                          "dat" );
         fpData = VSIFOpen( pszDataFilename, "wb" );
         if( fpData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Unable to open data output file `%s'.", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Unable to open data output file `%s'.",
                       pszDataFilename );
             return;
         }
-            
+
         VSIFPrintf( fpLoader, "INFILE %s \"var 8\"\n", pszDataFilename );
     }
-    const char *pszExpectedFIDName = 
+    const char *pszExpectedFIDName =
         CPLGetConfigOption( "OCI_FID", "OGR_FID" );
 
-    VSIFPrintf( fpLoader, "INTO TABLE \"%s\" REPLACE\n", 
+    VSIFPrintf( fpLoader, "INTO TABLE \"%s\" REPLACE\n",
                 poFeatureDefn->GetName() );
     VSIFPrintf( fpLoader, "FIELDS TERMINATED BY '|'\n" );
     VSIFPrintf( fpLoader, "TRAILING NULLCOLS (\n" );
@@ -188,27 +188,27 @@ void OGROCILoaderLayer::WriteLoaderHeader()
 
         if( poFldDefn->GetType() == OFTInteger )
         {
-            VSIFPrintf( fpLoader, "    \"%s\" INTEGER EXTERNAL", 
+            VSIFPrintf( fpLoader, "    \"%s\" INTEGER EXTERNAL",
                         poFldDefn->GetNameRef() );
         }
         else if( poFldDefn->GetType() == OFTInteger )
         {
-            VSIFPrintf( fpLoader, "    \"%s\" LONGINTEGER EXTERNAL", 
+            VSIFPrintf( fpLoader, "    \"%s\" LONGINTEGER EXTERNAL",
                         poFldDefn->GetNameRef() );
         }
         else if( poFldDefn->GetType() == OFTReal )
         {
-            VSIFPrintf( fpLoader, "    \"%s\" FLOAT EXTERNAL", 
+            VSIFPrintf( fpLoader, "    \"%s\" FLOAT EXTERNAL",
                         poFldDefn->GetNameRef() );
         }
         else if( poFldDefn->GetType() == OFTString )
         {
-            VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)", 
+            VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)",
                         poFldDefn->GetNameRef() );
         }
         else
         {
-            VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)", 
+            VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)",
                         poFldDefn->GetNameRef() );
         }
 
@@ -237,7 +237,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
 OGRFeature *OGROCILoaderLayer::GetNextFeature()
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported, 
+    CPLError( CE_Failure, CPLE_NotSupported,
               "GetNextFeature() not supported for an OGROCILoaderLayer." );
     return NULL;
 }
@@ -277,7 +277,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
         if( nSRID == -1 )
             strcpy( szSRID, "NULL" );
         else
-            sprintf( szSRID, "%d", nSRID );
+            snprintf( szSRID, sizeof(szSRID), "%d", nSRID );
 
         if( TranslateToSDOGeometry( poFeature->GetGeometryRef(), &nGType )
             == OGRERR_NONE )
@@ -329,7 +329,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
 
         if( !poFeature->IsFieldSet( i ) )
         {
-            if( poFldDefn->GetType() != OFTInteger 
+            if( poFldDefn->GetType() != OFTInteger
                 && poFldDefn->GetType() != OFTInteger64
                 && poFldDefn->GetType() != OFTReal )
                 VSIFPrintf( fpLoader, "%04d", 0 );
@@ -344,9 +344,9 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
             nLineLen = 0;
         }
 
-        nLineLen += strlen(pszStrValue);
+        nLineLen += static_cast<int>(strlen(pszStrValue));
 
-        if( poFldDefn->GetType() == OFTInteger 
+        if( poFldDefn->GetType() == OFTInteger
             || poFldDefn->GetType() == OFTInteger64
             || poFldDefn->GetType() == OFTReal )
         {
@@ -359,9 +359,9 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
             else
                 VSIFPrintf( fpLoader, "%s|", pszStrValue );
         }
-        else 
+        else
         {
-            int nLength = strlen(pszStrValue);
+            int nLength = static_cast<int>(strlen(pszStrValue));
 
             if( poFldDefn->GetWidth() > 0 && nLength > poFldDefn->GetWidth() )
             {
@@ -376,7 +376,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
 
     if( VSIFPrintf( fpLoader, "\n" ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Write to loader file failed, likely out of disk space." );
         return OGRERR_FAILURE;
     }
@@ -414,7 +414,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
         if( nSRID == -1 )
             strcpy( szSRID, "NULL" );
         else
-            sprintf( szSRID, "%d", nSRID );
+            snprintf( szSRID, sizeof(szSRID), "%d", nSRID );
 
         if( TranslateToSDOGeometry( poFeature->GetGeometryRef(), &nGType )
             == OGRERR_NONE )
@@ -453,7 +453,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 
         if( !poFeature->IsFieldSet( i ) )
         {
-            if( poFldDefn->GetType() != OFTInteger 
+            if( poFldDefn->GetType() != OFTInteger
                 && poFldDefn->GetType() != OFTInteger64
                 && poFldDefn->GetType() != OFTReal )
                 oLine.Append( "0000" );
@@ -464,7 +464,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 
         const char *pszStrValue = poFeature->GetFieldAsString(i);
 
-        if( poFldDefn->GetType() == OFTInteger 
+        if( poFldDefn->GetType() == OFTInteger
             || poFldDefn->GetType() == OFTInteger64
             || poFldDefn->GetType() == OFTReal )
         {
@@ -480,9 +480,9 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
                 oLine.Append( "|" );
             }
         }
-        else 
+        else
         {
-            int nLength = strlen(pszStrValue);
+            int nLength = static_cast<int>(strlen(pszStrValue));
 
             if( poFldDefn->GetWidth() > 0 && nLength > poFldDefn->GetWidth() )
             {
@@ -501,15 +501,15 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Update the line's length, and write to disk.                    */
 /* -------------------------------------------------------------------- */
-    char szLength[9]; 
+    char szLength[9];
     size_t  nStringLen = strlen(oLine.GetString());
 
-    sprintf( szLength, "%08d", (int) (nStringLen-8) );
+    snprintf( szLength, sizeof(szLength), "%08d", (int) (nStringLen-8) );
     strncpy( oLine.GetString(), szLength, 8 );
 
     if( VSIFWrite( oLine.GetString(), 1, nStringLen, fpData ) != nStringLen )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Write to loader file failed, likely out of disk space." );
         return OGRERR_FAILURE;
     }
@@ -521,7 +521,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 /*                       WriteFeatureBinaryMode()                       */
 /************************************************************************/
 
-OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode( OGRFeature *poFeature )
+OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode( OGRFeature * /*poFeature*/ )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -548,7 +548,7 @@ OGRErr OGROCILoaderLayer::ICreateFeature( OGRFeature *poFeature )
     if( poFeature->GetGeometryRef() != NULL )
     {
         OGREnvelope  sThisExtent;
-        
+
         poFeature->GetGeometryRef()->getEnvelope( &sThisExtent );
         sExtent.Merge( sThisExtent );
     }
@@ -579,7 +579,7 @@ int OGROCILoaderLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
 
-    else 
+    else
         return OGROCILayer::TestCapability( pszCap );
 }
 
@@ -592,7 +592,7 @@ int OGROCILoaderLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGROCILoaderLayer::GetFeatureCount( int bForce )
+GIntBig OGROCILoaderLayer::GetFeatureCount( int /* bForce */ )
 
 {
     return iNextFIDToWrite - 1;
@@ -620,11 +620,10 @@ void OGROCILoaderLayer::FinalizeNewLayer()
     if( sExtent.MaxX == 0 && sExtent.MinX == 0
         && sExtent.MaxY == 0 && sExtent.MinY == 0 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Layer %s appears to have no geometry ... not setting SDO DIMINFO metadata.", 
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Layer %s appears to have no geometry ... not setting SDO DIMINFO metadata.",
                   poFeatureDefn->GetName() );
         return;
-                  
     }
 
 /* -------------------------------------------------------------------- */
@@ -644,17 +643,17 @@ void OGROCILoaderLayer::FinalizeNewLayer()
     dfXMax = sExtent.MaxX + dfResSize * 3;
     dfXRes = dfResSize;
     ParseDIMINFO( "DIMINFO_X", &dfXMin, &dfXMax, &dfXRes );
-    
+
     dfYMin = sExtent.MinY - dfResSize * 3;
     dfYMax = sExtent.MaxY + dfResSize * 3;
     dfYRes = dfResSize;
     ParseDIMINFO( "DIMINFO_Y", &dfYMin, &dfYMax, &dfYRes );
-    
+
     dfZMin = -100000.0;
     dfZMax = 100000.0;
     dfZRes = 0.002;
     ParseDIMINFO( "DIMINFO_Z", &dfZMin, &dfZMax, &dfZRes );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Prepare dimension update statement.                             */
 /* -------------------------------------------------------------------- */
@@ -677,7 +676,7 @@ void OGROCILoaderLayer::FinalizeNewLayer()
 
     sDimUpdate.Append( ")" );
 
-    sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
+    sDimUpdate.Appendf( static_cast<int>(strlen(poFeatureDefn->GetName()) + 100),
                         " WHERE table_name = UPPER('%s')",
                         poFeatureDefn->GetName() );
 

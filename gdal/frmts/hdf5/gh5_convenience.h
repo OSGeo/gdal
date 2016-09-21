@@ -27,12 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GH5_CONVENIENCE_H_INCLUDED_
-#define _GH5_CONVENIENCE_H_INCLUDED_
+#ifndef GH5_CONVENIENCE_H_INCLUDED_
+#define GH5_CONVENIENCE_H_INCLUDED_
 
 #define H5_USE_16_API
 
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4005 ) /* warning C4005: '_HDF5USEDLL_' : macro redefinition */
+#endif
 #include "hdf5.h"
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 #include "cpl_string.h"
 #include "gdal.h"
@@ -46,10 +53,10 @@
 #  define H5OFFSET_TYPE  hsize_t
 #endif
 
-bool GH5_FetchAttribute( hid_t loc_id, const char *pszName, 
+bool GH5_FetchAttribute( hid_t loc_id, const char *pszName,
                          CPLString &osResult, bool bReportError = false );
 bool GH5_FetchAttribute( hid_t loc_id, const char *pszName,
                          double &dfResult, bool bReportError = false );
 GDALDataType GH5_GetDataType(hid_t TypeID);
 
-#endif /* ndef _GH5_CONVENIENCE_H_INCLUDED_ */
+#endif /* ndef GH5_CONVENIENCE_H_INCLUDED_ */

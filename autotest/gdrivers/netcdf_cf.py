@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test NetCDF driver support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -102,14 +102,14 @@ def netcdf_cf_setup():
             return 'success'
 
     #skip http method if GDAL_DOWNLOAD_TEST_DATA and GDAL_RUN_SLOW_TESTS are not defined
-    if not 'GDAL_DOWNLOAD_TEST_DATA' in os.environ: 
+    if not 'GDAL_DOWNLOAD_TEST_DATA' in os.environ:
         print('NOTICE: skipping netcdf CF compliance checks')
         print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA')
-        return 'success' 
+        return 'success'
 
-    if not gdaltest.run_slow_tests(): 
+    if not gdaltest.run_slow_tests():
         print('NOTICE: skipping netcdf CF compliance checks')
-        return 'success' 
+        return 'success'
 
     #http method with curl, should use python module but easier for now
     success = False
@@ -126,13 +126,14 @@ def netcdf_cf_setup():
             print('script not responding')
     if success:
         gdaltest.netcdf_cf_method = 'http'
-        print('NOTICE: netcdf CF compliance ckecks: using remote http checker script, consider installing cdms2 locally')
+        print('NOTICE: netcdf CF compliance checks: using remote HTTP '
+              'checker script, consider installing cdms2 locally')
         return 'success'
 
     if gdaltest.netcdf_cf_method is None:
         print('NOTICE: skipping netcdf CF compliance checks')
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 #build a command used to check ifile
@@ -147,7 +148,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
             command = './netcdf_cfchecks.py -a ' + gdaltest.netcdf_cf_files['a'] \
                 + ' -s ' + gdaltest.netcdf_cf_files['s'] \
                 + ' -u ' + gdaltest.netcdf_cf_files['u'] \
-                + ' -v ' + version +' ' + ifile 
+                + ' -v ' + version +' ' + ifile
         elif method is 'http':
             #command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
             #switch to 1.5 as driver now supports, and auto when it becomes available
@@ -155,7 +156,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
             command = 'curl --form cfversion=' + version + ' --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"'
 
     return command
-        
+
 
 ###############################################################################
 # Check a file for CF compliance
@@ -182,7 +183,14 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
     except :
         gdaltest.post_reason('ERROR with command - ' + command)
         return 'fail'
-        
+
+    # There should be a ERRORS detected summary
+    if not 'ERRORS detected' in ret:
+        gdaltest.post_reason('ERROR with command - ' + command)
+        print(ret)
+        print(err)
+        return 'fail'
+
     output_all = ret
     output_err = ''
     output_warn = ''
@@ -201,7 +209,7 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
     if output_err != '':
         gdaltest.netcdf_cf_check_error += output_err.strip()
         if not silent:
-            print('=> CF check ERRORS for file ' + ifile + ' : ' + output_err) 
+            print('=> CF check ERRORS for file ' + ifile + ' : ' + output_err)
 
     if output_warn != '':
         if not silent:
@@ -218,7 +226,7 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
 # Definitions to test projections that are supported by CF
 
 # Tuple structure:
-#  0: Short code (eg AEA) - (no GDAL significance, just for filenames etc)
+#  0: Short code (e.g. AEA) - (no GDAL significance, just for filenames etc.)
 #  1: official name from CF-1 conventions
 #  2: EPSG code, or WKT, to tell GDAL to do reprojection
 #  3: Actual attribute official name of grid mapping
@@ -238,7 +246,7 @@ netcdf_cfproj_tuples = [
          'latitude_of_projection_origin', 'false_easting', 'false_northing'],
          ['projection_x_coordinate','projection_y_coordinate']),
     ("LAZEA", "Lambert azimuthal equal area",
-        #Specify proj4 since no approp LAZEA for AU
+        # Specify proj4 since no appropriate LAZEA for AU.
         #"+proj=laea +lat_0=0 +lon_0=134 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
         "+proj=laea +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "lambert_azimuthal_equal_area",
@@ -255,7 +263,7 @@ netcdf_cfproj_tuples = [
         "+proj=cea +lat_ts=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         "lambert_cylindrical_equal_area",
         ['longitude_of_central_meridian',
-         'standard_parallel', # TODO: OR 'scale_factor_at_projection_origin' 
+         'standard_parallel', # TODO: OR 'scale_factor_at_projection_origin'
          'false_easting', 'false_northing'],
          ['projection_x_coordinate','projection_y_coordinate']),
     # 2 entries for Mercator, since attribs different for 1SP or 2SP
@@ -284,7 +292,7 @@ netcdf_cfproj_tuples = [
          'latitude_of_projection_origin',
          'false_easting', 'false_northing'],
          ['projection_x_coordinate', 'projection_y_coordinate']),
-    # Seems GDAL may have problems with Polar stereographic, as it 
+    # Seems GDAL may have problems with Polar stereographic, as it
     #  considers these "local coordinate systems"
     ("PSt", "Polar stereographic",
         "+proj=stere +lat_ts=-37 +lat_0=-90 +lon_0=145 +k_0=1.0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
@@ -311,16 +319,24 @@ netcdf_cfproj_tuples = [
         'longitude_of_central_meridian',
         'latitude_of_projection_origin',
          'false_easting', 'false_northing'],
-         ['projection_x_coordinate','projection_y_coordinate'])
+         ['projection_x_coordinate','projection_y_coordinate']),
+    ("GEOS", "Geostationary_satellite",
+        "+proj=geos +h=35785831 +lon_0=145 +datum=WGS84 +sweep=y +units=m",
+        "geostationary",
+        [ 'longitude_of_projection_origin',
+          'perspective_point_height',
+          'sweep_angle_axis',
+         'false_easting', 'false_northing'],
+        ['projection_x_coordinate','projection_y_coordinate'])
     ]
 
-#By default, we will use GeoTiff as the 'intermediate' raster format
+# By default, we will use GeoTIFF as the 'intermediate' raster format
 # for gdalwarp'ing into before gdal_translate to NetCDF.
-# But since GeoTiff can't act as a storage format for certain projections
-# (eg Mercator-2SP), we will choose other intermediate formats for certain
-#  projection.
-#  The following array maps projection short code, to driver format to use
- 
+# But since Gratify can't act as a storage format for certain projections
+# (e.g. Mercator-2SP), we will choose other intermediate formats for certain
+# projection.
+# The following array maps projection short code, to driver format to use
+
 netcdf_cfproj_def_int_format = "GTiff"
 
 netcdf_cfproj_int_fmt_maps = {
@@ -331,15 +347,15 @@ netcdf_cfproj_format_fnames = {"HFA":"img", "GTiff":"tif", "NITF":"nitf",
     "ERS":"ers"}
 
 ###############################################################################
-# Check support for given projection tuple definitions 
+# Check support for given projection tuple definitions
 # For each projection, warp the original file and then create a netcdf
 
 def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         resFilename):
- 
-    """Test a Geotiff file can be converted to NetCDF, and projection in 
+
+    """Test a Geotiff file can be converted to NetCDF, and projection in
     CF-1 conventions can be successfully maintained. Save results to file.
-    
+
     :arg: projTuples - list of tuples
     :arg: interFormats - dict of intermediate format overrides
     :arg: outPath - path to save output
@@ -431,14 +447,13 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         if not silent:
             print("About to translate to NetCDF")
         dst = drv_netcdf.CreateCopy(projNc, dsw, 0, [ 'WRITE_GDAL_TAGS='+bWriteGdalTags ])
-        #For drivers like HFA, line below ESSENTIAL so that all info is 
+        #For drivers like HFA, line below ESSENTIAL so that all info is
         # saved to new raster file - which we'll reopen later and want
         # to be fully updated.
         dsw = None
         del dst
         if not silent:
             print("Translated to %s" % (projNc))
-        
 
         transWorked, resDetails = netcdf_cfproj_test_cf(proj, projNc)
         resPerProj[proj[0]] = resDetails
@@ -494,7 +509,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 ###############################################################################
 # Test an NC file has valid conventions according to passed-in proj tuple
 # Note: current testing strategy is a fairly simple attribute search.
-# this could use gdal netcdf driver for getting attribs instead...
+# this could use GDAL NetCDF driver for getting attribs instead.
 
 def netcdf_cfproj_test_cf(proj, projNc):
 
@@ -505,30 +520,30 @@ def netcdf_cfproj_test_cf(proj, projNc):
     if err != '':
         print(err)
     dumpStr = ret
-    
+
     resDetails = {}
     resDetails['missingAttrs'] = []
     resDetails['missingCoordVarStdNames'] = []
     if (':grid_mapping_name = "%s"' % (proj[3])) not in dumpStr:
         transWorked = False
         resDetails['missingProjName'] = proj[3]
-    # Check attributes in the projection are included
+    # Check attributes in the projection are included.
     for attrib in proj[4]:
         # The ':' prefix and ' ' suffix is to help check for exact name,
-        # eg to catch the standard_parallel_1 and 2 issue.
+        # e.g. to catch the standard_parallel_1 and 2 issue.
         if (":"+attrib+" ") not in dumpStr:
             transWorked = False
             resDetails['missingAttrs'].append(attrib)
-#            print "**Error for proj '%s': CF-1 attrib '%s' not found.**" % \
-#                (proj[0], attrib)
-    # Now we check the required X and Y attributes are included (e.g. Rotated Pole
-    #  has special names required here.
+    #        print "**Error for proj '%s': CF-1 attrib '%s' not found.**" % \
+    #           (proj[0], attrib)
+    # Now we check the required X and Y attributes are included (e.g. Rotated
+    # Pole has special names required here.
     for coordVarStdName in proj[5]:
         if coordVarStdName not in dumpStr:
             transWorked = False
             resDetails['missingCoordVarStdNames'].append(coordVarStdName)
 
-    #Final check use the cf-checker
+    # Final check use the cf-checker.
     result_cf = netcdf_cf_check_file( projNc,'auto',True )
     if result_cf == 'fail':
         resDetails['cfcheck_error'] = gdaltest.netcdf_cf_check_error
@@ -547,7 +562,7 @@ def netcdf_cf_1():
 
     #setup netcdf and netcdf_cf environment
     netcdf_setup()
-    netcdf_cf_setup() 
+    netcdf_cf_setup()
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -556,7 +571,7 @@ def netcdf_cf_1():
     #result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
     result = netcdf_test_copy( 'data/trmm.nc', 1, 14, 'tmp/netcdf_cf_1.nc' )
     if result != 'fail':
-        #tst2 = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_1.nc', 1, 14 )       
+        #tst2 = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_1.nc', 1, 14 )
         #result = tst2.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.tiff', delete_copy = 0)
         result = netcdf_test_copy( 'tmp/netcdf_cf_1.nc', 1, 14, 'tmp/netcdf_cf_1.tif', [], 'GTIFF' )
 
@@ -591,7 +606,7 @@ def netcdf_cf_2():
 
 ###############################################################################
 #test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
-# note: this test fails in trunk (before r23246) 
+# note: this test fails in trunk (before r23246)
 def netcdf_cf_3():
 
     if gdaltest.netcdf_drv is None:
@@ -620,14 +635,14 @@ def netcdf_cf_3():
 #test support for various CF projections
 def netcdf_cf_4():
 
-    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif', 
+    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif',
                                     netcdf_cfproj_int_fmt_maps,
                                     'data', 'tmp', 'translate_results.txt')
 #    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples1, 'melb-small.tif', \
 #                                    'data', 'tmp', 'translate_results.txt')
 
     return result
-     
+
 ###############################################################################
 #test support for PS variants (bug #2893)
 def netcdf_cf_5():
@@ -638,11 +653,11 @@ def netcdf_cf_5():
     ifiles = [ 'NETCDF:data/orog_CRCM1.nc:orog', 'NETCDF:data/orog_CRCM2.nc:orog' ]
     for ifile in ifiles:
         ds = gdal.Open( ifile )
-        prj = ds.GetProjection()    
+        prj = ds.GetProjection()
         sr = osr.SpatialReference( )
         sr.ImportFromWkt( prj )
         lat_origin = sr.GetProjParm( 'latitude_of_origin' )
-    
+
         if lat_origin != 60:
             gdaltest.post_reason( 'Latitude of origin in %s does not match expected: %f'
                                   % (ifile, lat_origin) )

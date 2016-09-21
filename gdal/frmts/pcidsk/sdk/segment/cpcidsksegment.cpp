@@ -43,12 +43,12 @@ using namespace PCIDSK;
 /*                           PCIDSKSegment()                            */
 /************************************************************************/
 
-CPCIDSKSegment::CPCIDSKSegment( PCIDSKFile *file, int segment,
+CPCIDSKSegment::CPCIDSKSegment( PCIDSKFile *fileIn, int segmentIn,
                               const char *segment_pointer )
 
 {
-    this->file = file;
-    this->segment = segment;
+    this->file = fileIn;
+    this->segment = segmentIn;
 
     LoadSegmentPointer( segment_pointer );
     LoadSegmentHeader(); // eventually we might want to defer this.
@@ -166,9 +166,9 @@ void CPCIDSKSegment::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
 {
     if( offset+size+1024 > data_size )
-        ThrowPCIDSKException( 
-            "Attempt to read past end of segment %d (%d bytes at offset %d)",
-            segment, (int) offset, (int) size );
+        return ThrowPCIDSKException( 
+            "Attempt to read past end of segment %d (%u bytes at offset %u)",
+            segment, (unsigned int) offset, (unsigned int) size );
     file->ReadFromFile( buffer, offset + data_offset + 1024, size );
 }
 
@@ -183,7 +183,7 @@ void CPCIDSKSegment::WriteToFile( const void *buffer, uint64 offset, uint64 size
         CPCIDSKFile *poFile = dynamic_cast<CPCIDSKFile *>(file);
         
         if (poFile == NULL) {
-            ThrowPCIDSKException("Attempt to dynamic_cast the file interface "
+            return ThrowPCIDSKException("Attempt to dynamic_cast the file interface "
                 "to a CPCIDSKFile failed. This is a programmer error, and should "
                 "be reported to your software provider.");
         }

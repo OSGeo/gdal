@@ -2,7 +2,7 @@
  * $Id:  $
  *
  * Project:  Project:  Creates a jpeg header
- * Purpose:  Abreviated JPEG support
+ * Purpose:  Abbreviated JPEG support
  * Author:   Ivan Lucena, [lucena_ivan at hotmail.com]
  *
  ******************************************************************************
@@ -33,8 +33,8 @@
 #include "cpl_port.h"
 
 int JPGHLP_HeaderMaker( GByte *pabyBuffer,
-                        const int nCols, 
-                        const int nRows, 
-                        const int nComponents, 
+                        const int nCols,
+                        const int nRows,
+                        const int nComponents,
                         const int nRestart,
                         const int nQuality );

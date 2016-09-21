@@ -27,8 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* NOTE: this driver is only useful for debugging and is not included in the build process */
-/* To compile it as a pluing under Linux :
+/* NOTE: this driver is only useful for debugging and is not included
+   in the build process */
+
+/* To compile it as a plugin under Linux :
     g++ -Wall -DDEBUG -fPIC -g ogr/ogrsf_frmts/null/ogrnulldriver.cpp  -shared -o ogr_NULL.so -L. -lgdal -Iport -Igcore -Iogr -Iogr/ogrsf_frmts
 */
 
@@ -259,7 +261,7 @@ int OGRNULLDriver::TestCapability( const char * pszCap )
 
 void RegisterOGRNULL()
 {
-    if (! GDAL_CHECK_VERSION("OGR/NULL driver"))
+    if( !GDAL_CHECK_VERSION("OGR/NULL driver") )
         return;
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRNULLDriver );

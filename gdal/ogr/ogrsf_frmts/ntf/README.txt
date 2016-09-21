@@ -95,7 +95,7 @@ generally contain features of many different feature codes (FEAT_CODE
 attribute).  Different features within a given layer may have a variety of
 attributes in the file; however, the schema is established based on the
 union of all attributes possible within features of a particular type
-(ie. POINT) of that product family (ie. OSCAR Network).
+(i.e. POINT) of that product family (i.e. OSCAR Network).
 
 If an NTF product is read that doesn't match one of the known schema's
 it will go through a different generic handler which has only 
@@ -151,8 +151,8 @@ Adding a New Product
 --------------------
 
 It is anticipated that over time the UK Ordnance Survey will define new 
-product formats, and to get decent milage out of them this library should
-be updated to support them.  While I will endevour to do this myself, it
+product formats, and to get decent mileage out of them this library should
+be updated to support them.  While I will endeavor to do this myself, it
 seems prudent to define how it is done in case I am not available to do it,
 or am unwilling to do it on a timely basis.  To add a new product type the 
 following steps are required:
@@ -166,10 +166,10 @@ following steps are required:
    be cloned from an existing translate function, and the attribute mapping
    in the NTFReader::ApplyAttributeValues() call can be modified. 
 
-Occationally existing products will change slightly.  This may result in a
+Occasionally existing products will change slightly.  This may result in a
 slight change to the detection logic in NTFFileReader::Open() and changes
 in the list of user attributes associated with the layer.  If the differences
-are signifiant it may be necessary to define a whole new product family 
+are significant it may be necessary to define a whole new product family 
 type (as is done for Code Point Plus vs. Code Point). 
 
 Generic Products
@@ -178,7 +178,7 @@ Generic Products
 In situations where a file is not identified as being part of an existing
 known product it will be treated generically.  In this case the entire dataset
 is scanned to establish what features have what attributes.  Because of this,
-opening a generic dataset can be much slower than opening a recognised dataset.
+opening a generic dataset can be much slower than opening a recognized dataset.
 Based on this scan a list of generic features (layers) are defined from the 
 following set:
 

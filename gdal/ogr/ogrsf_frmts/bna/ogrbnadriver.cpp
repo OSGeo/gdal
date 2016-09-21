@@ -37,22 +37,27 @@
 static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-// -------------------------------------------------------------------- 
+// --------------------------------------------------------------------
 //      Does this appear to be a .bna file?
 // --------------------------------------------------------------------
-    if( poOpenInfo->fpL == NULL ||
-        !(EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "bna" )
-           || ((EQUALN( poOpenInfo->pszFilename, "/vsigzip/", 9) ||
-                EQUALN( poOpenInfo->pszFilename, "/vsizip/", 8)) &&
-               (strstr( poOpenInfo->pszFilename, ".bna") ||
-                strstr( poOpenInfo->pszFilename, ".BNA")))) )
+    const char* pszFilename = poOpenInfo->pszFilename;
+    if( STARTS_WITH_CI(pszFilename, "BNA:") )
+    {
+        pszFilename += 4;
+    }
+    else if( poOpenInfo->fpL == NULL ||
+        !(EQUAL( CPLGetExtension(pszFilename), "bna" )
+           || ((STARTS_WITH_CI(pszFilename, "/vsigzip/") ||
+                STARTS_WITH_CI(pszFilename, "/vsizip/")) &&
+               (strstr( pszFilename, ".bna") ||
+                strstr( pszFilename, ".BNA")))) )
     {
         return NULL;
     }
 
     OGRBNADataSource   *poDS = new OGRBNADataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = NULL;
@@ -66,13 +71,13 @@ static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRBNADriverCreate( const char * pszName,
-                                        CPL_UNUSED int nBands,
-                                        CPL_UNUSED int nXSize,
-                                        CPL_UNUSED int nYSize,
-                                        CPL_UNUSED GDALDataType eDT,
+                                        int /* nBands */,
+                                        int /* nXSize */,
+                                        int /* nYSize */,
+                                        GDALDataType /* eDT */,
                                         char **papszOptions )
 {
-    OGRBNADataSource   *poDS = new OGRBNADataSource();
+    OGRBNADataSource *poDS = new OGRBNADataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
@@ -92,8 +97,8 @@ static CPLErr OGRBNADriverDelete( const char *pszFilename )
 {
     if( VSIUnlink( pszFilename ) == 0 )
         return CE_None;
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -103,23 +108,18 @@ static CPLErr OGRBNADriverDelete( const char *pszFilename )
 void RegisterOGRBNA()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "BNA" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "BNA" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "BNA" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Atlas BNA" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bna" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_bna.html" );
-
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "BNA" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Atlas BNA" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bna" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_bna.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 #ifdef WIN32
 "  <Option name='LINEFORMAT' type='string-select' description='end-of-line sequence' default='CRLF'>"
@@ -140,12 +140,12 @@ void RegisterOGRBNA()
 "  <Option name='NB_PAIRS_PER_LINE' type='int' description='Maximum number of coordinate pair per line in multiline format'/>"
 "  <Option name='COORDINATE_PRECISION' type='int' description='Number of decimal for coordinates' default='10'/>"
 "</CreationOptionList>");
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>");
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                               "<LayerCreationOptionList/>");
 
-        poDriver->pfnOpen = OGRBNADriverOpen;
-        poDriver->pfnCreate = OGRBNADriverCreate;
-        poDriver->pfnDelete = OGRBNADriverDelete;
+    poDriver->pfnOpen = OGRBNADriverOpen;
+    poDriver->pfnCreate = OGRBNADriverCreate;
+    poDriver->pfnDelete = OGRBNADriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

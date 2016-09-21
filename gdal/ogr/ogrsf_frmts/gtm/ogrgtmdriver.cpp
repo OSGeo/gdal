@@ -46,7 +46,7 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
 /*      try opening with the /vsigzip/ prefix                           */
 /* -------------------------------------------------------------------- */
     if (poOpenInfo->pabyHeader[0] == 0x1f && ((unsigned char*)poOpenInfo->pabyHeader)[1] == 0x8b &&
-        strncmp(poOpenInfo->pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0)
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsigzip/"))
     {
         /* ok */
     }
@@ -54,7 +54,7 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         short version = CPL_LSBINT16PTR(poOpenInfo->pabyHeader);
         if (version != 211 ||
-            strncmp((const char*)poOpenInfo->pabyHeader + 2, "TrackMaker", strlen("TrackMaker")) != 0 )
+            !STARTS_WITH((const char*)poOpenInfo->pabyHeader + 2, "TrackMaker") )
         {
             return NULL;
         }
@@ -101,25 +101,20 @@ static GDALDataset *OGRGTMDriverCreate( const char * pszName,
 
 void RegisterOGRGTM()
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "GPSTrackMaker" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GPSTrackMaker" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GPSTrackMaker" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "GPSTrackMaker" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gtm gtz" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_gtm.html" );
+    poDriver->SetDescription( "GPSTrackMaker" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPSTrackMaker" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gtm gtz" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gtm.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRGTMDriverOpen;
+    poDriver->pfnCreate = OGRGTMDriverCreate;
 
-        poDriver->pfnOpen = OGRGTMDriverOpen;
-        poDriver->pfnCreate = OGRGTMDriverCreate;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

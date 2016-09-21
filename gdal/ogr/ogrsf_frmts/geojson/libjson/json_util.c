@@ -46,13 +46,6 @@
 # define open _open
 #endif
 
-#if !defined(HAVE_SNPRINTF) && defined(_MSC_VER)
-  /* MSC has the version as _snprintf */
-# define snprintf _snprintf
-#elif !defined(HAVE_SNPRINTF)
-# error You do not have snprintf on your system.
-#endif /* HAVE_SNPRINTF */
-
 #include "bits.h"
 #include "debug.h"
 #include "printbuf.h"
@@ -61,7 +54,10 @@
 #include "json_tokener.h"
 #include "json_util.h"
 
-#include "cpl_conv.h"
+#include "cpl_string.h"
+#undef snprintf
+#define snprintf CPLsnprintf
+
 static int sscanf_is_broken = 0;
 static int sscanf_is_broken_testdone = 0;
 static void sscanf_is_broken_test(void);
@@ -83,7 +79,7 @@ struct json_object* json_object_from_file(const char *filename)
     MC_ERROR("json_object_from_file: printbuf_new failed\n");
     return NULL;
   }
-  while((ret = read(fd, buf, JSON_FILE_BUF_SIZE)) > 0) {
+  while((ret = (int)read(fd, buf, JSON_FILE_BUF_SIZE)) > 0) {
     printbuf_memappend(pb, buf, ret);
   }
   close(fd);
@@ -125,7 +121,7 @@ int json_object_to_file_ext(char *filename, struct json_object *obj, int flags)
   wsize = (unsigned int)(strlen(json_str) & UINT_MAX); /* CAW: probably unnecessary, but the most 64bit safe */
   wpos = 0;
   while(wpos < wsize) {
-    if((ret = write(fd, json_str + wpos, wsize-wpos)) < 0) {
+    if((ret = (int)write(fd, json_str + wpos, wsize-wpos)) < 0) {
       close(fd);
       MC_ERROR("json_object_to_file: error writing file %s: %s\n",
 	     filename, strerror(errno));
@@ -237,7 +233,7 @@ int json_parse_int64(const char *buf, int64_t *retval)
 		}
 		// No need to skip leading spaces or zeros here.
 
-		buf_cmp_len = strlen(buf_cmp_start);
+		buf_cmp_len = (int)strlen(buf_cmp_start);
 		/**
 		 * If the sign is different, or
 		 * some of the digits are different, or

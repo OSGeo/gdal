@@ -36,9 +36,10 @@ CPL_CVSID("$Id$");
 /*                        GDALRescaledAlphaBand()                       */
 /************************************************************************/
 
-GDALRescaledAlphaBand::GDALRescaledAlphaBand( GDALRasterBand *poParent )
+GDALRescaledAlphaBand::GDALRescaledAlphaBand( GDALRasterBand *poParentIn )
 
 {
+    poParent = poParentIn;
     CPLAssert(poParent->GetRasterDataType() == GDT_UInt16);
 
     poDS = NULL;
@@ -49,8 +50,6 @@ GDALRescaledAlphaBand::GDALRescaledAlphaBand( GDALRasterBand *poParent )
 
     eDataType = GDT_Byte;
     poParent->GetBlockSize( &nBlockXSize, &nBlockYSize );
-
-    this->poParent = poParent;
 
     pTemp = NULL;
 }
@@ -109,11 +108,9 @@ CPLErr GDALRescaledAlphaBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         if( pTemp == NULL )
         {
-            pTemp = VSIMalloc2( sizeof(GUInt16), nRasterXSize );
+            pTemp = VSI_MALLOC2_VERBOSE( sizeof(GUInt16), nRasterXSize );
             if (pTemp == NULL)
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "GDALRescaledAlphaBand::IReadBlock: Out of memory for buffer." );
                 return CE_Failure;
             }
         }
@@ -136,7 +133,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( pSrc[i] > 0 && pSrc[i] < 257 )
                     pabyImage[i] = 1;
                 else
-                    pabyImage[i] = (pSrc[i] * 255) / 65535;
+                    pabyImage[i] = static_cast<GByte>((pSrc[i] * 255) / 65535);
             }
         }
         return CE_None;

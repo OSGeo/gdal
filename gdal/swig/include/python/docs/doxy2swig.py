@@ -43,14 +43,13 @@ def my_open_write(dest):
         return open(dest, 'w')
 
 
-class Doxy2SWIG:    
+class Doxy2SWIG:
     """Converts Doxygen generated XML files into a file containing
     docstrings that can be used by SWIG-1.3.x that have support for
     feature("docstring").  Once the data is parsed it is stored in
     self.pieces.
+    """
 
-    """    
-    
     def __init__(self, src):
         """Initialize the instance given a source object (file or
         filename).
@@ -76,14 +75,14 @@ class Doxy2SWIG:
                         'reimplementedby', 'derivedcompoundref',
                         'basecompoundref')
         #self.generics = []
-        
+
     def generate(self):
         """Parses the file set in the initialization.  The resulting
         data is stored in `self.pieces`.
 
         """
         self.parse(self.xmldoc)
-    
+
     def parse(self, node):
         """Parse a given node.  This function in turn calls the
         `parse_<nodeType>` functions which handle the respective
@@ -109,10 +108,9 @@ class Doxy2SWIG:
 
     def parse_Element(self, node):
         """Parse an `ELEMENT_NODE`.  This calls specific
-        `do_<tagName>` handers for different elements.  If no handler
+        `do_<tagName>` handlers for different elements.  If no handler
         is available the `generic_parse` method is called.  All
         tagNames specified in `self.ignores` are simply ignored.
-        
         """
         name = node.tagName
         ignores = self.ignores

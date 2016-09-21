@@ -33,34 +33,34 @@ CPL_CVSID("$Id$");
 
 /* Array of Datatypes and their names/values */
 
-typedef struct { 
-    char *String;
+typedef struct {
+    const char *String;
     int Type;
 } CeosStringType_t;
 
-typedef struct { 
-    int (*function)(CeosSARVolume_t *volume, void *token);
-    void *token;
+typedef struct {
+    int (*function)(CeosSARVolume_t *volume, const void *token);
+    const void *token;
     const char *name;
 } RecipeFunctionData_t;
 
 
-CeosStringType_t CeosDataType[] = { { "IU1", __CEOS_TYP_UCHAR },
-				    { "IU2", __CEOS_TYP_USHORT },
-				    { "UI1", __CEOS_TYP_UCHAR },
-				    { "UI2", __CEOS_TYP_USHORT },
-				    { "CI*2", __CEOS_TYP_COMPLEX_CHAR },
-				    { "CI*4", __CEOS_TYP_COMPLEX_SHORT },
-				    { "CIS4", __CEOS_TYP_COMPLEX_SHORT },
-				    { "CI*8", __CEOS_TYP_COMPLEX_LONG },
-				    { "C*8", __CEOS_TYP_COMPLEX_FLOAT },
-				    { "R*4", __CEOS_TYP_FLOAT },
+static const CeosStringType_t CeosDataType[] = { { "IU1", CEOS_TYP_UCHAR },
+				    { "IU2", CEOS_TYP_USHORT },
+				    { "UI1", CEOS_TYP_UCHAR },
+				    { "UI2", CEOS_TYP_USHORT },
+				    { "CI*2", CEOS_TYP_COMPLEX_CHAR },
+				    { "CI*4", CEOS_TYP_COMPLEX_SHORT },
+				    { "CIS4", CEOS_TYP_COMPLEX_SHORT },
+				    { "CI*8", CEOS_TYP_COMPLEX_LONG },
+				    { "C*8", CEOS_TYP_COMPLEX_FLOAT },
+				    { "R*4", CEOS_TYP_FLOAT },
 				    { NULL, 0 } };
 
-CeosStringType_t CeosInterleaveType[] = { { "BSQ", __CEOS_IL_BAND },
-					  { " BSQ", __CEOS_IL_BAND },
-					  { "BIL", __CEOS_IL_LINE },
-					  { " BIL", __CEOS_IL_LINE },
+static const CeosStringType_t CeosInterleaveType[] = { { "BSQ", CEOS_IL_BAND },
+					  { " BSQ", CEOS_IL_BAND },
+					  { "BIL", CEOS_IL_LINE },
+					  { " BIL", CEOS_IL_LINE },
 					  { NULL, 0 } };
 
 #define IMAGE_OPT { 63, 192, 18, 18 }
@@ -71,172 +71,172 @@ CeosStringType_t CeosInterleaveType[] = { { "BSQ", __CEOS_IL_BAND },
 #define DATA_SET_SUMMARY { 18, 10, 18, 20 }
 
 /* NOTE: This seems to be the generic recipe used for most things */
-CeosRecipeType_t RadarSatRecipe[] =
+static const CeosRecipeType_t RadarSatRecipe[] =
 {
-    { __CEOS_REC_NUMCHANS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      233, 4, __CEOS_REC_TYP_I }, /* Number of channels */
-    { __CEOS_REC_INTERLEAVE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      269, 4, __CEOS_REC_TYP_A }, /* Interleaving type */
-    { __CEOS_REC_DATATYPE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      429, 4, __CEOS_REC_TYP_A }, /* Data type */
-    { __CEOS_REC_BPR, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      0, 0, __CEOS_REC_TYP_A }, /* For Defeault CEOS, this is done using other vals */
-    { __CEOS_REC_LINES, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      237, 8, __CEOS_REC_TYP_I }, /* How many lines */
-    { __CEOS_REC_TBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      261, 4, __CEOS_REC_TYP_I },
-    { __CEOS_REC_BBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      265, 4, __CEOS_REC_TYP_I }, /* Bottom border pixels */
-    { __CEOS_REC_PPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      249, 8, __CEOS_REC_TYP_I }, /* Pixels per line */
-    { __CEOS_REC_LBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      245, 4, __CEOS_REC_TYP_I }, /* Left Border Pixels */
-    { __CEOS_REC_RBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      257, 4, __CEOS_REC_TYP_I }, /* Isn't available for RadarSAT */
-    { __CEOS_REC_BPP, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      225, 4, __CEOS_REC_TYP_I }, /* Bytes Per Pixel */
-    { __CEOS_REC_RPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      273, 2, __CEOS_REC_TYP_I }, /* Records per line */
-    { __CEOS_REC_PPR, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      0, 0, __CEOS_REC_TYP_I }, /* Pixels Per Record -- need to fill record type */
-    { __CEOS_REC_PDBPR, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      281, 8, __CEOS_REC_TYP_I }, /* pixel data bytes per record */
-    { __CEOS_REC_IDS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      277, 4, __CEOS_REC_TYP_I }, /* Prefix data per record */
-    { __CEOS_REC_FDL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      9, 4, __CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
-    { __CEOS_REC_PIXORD, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      0, 0, __CEOS_REC_TYP_I }, /* Must be calculated */
-    { __CEOS_REC_LINORD, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      0, 0, __CEOS_REC_TYP_I }, /* Must be calculated */
-    { __CEOS_REC_PRODTYPE, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      0, 0, __CEOS_REC_TYP_I },
+    { CEOS_REC_NUMCHANS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      233, 4, CEOS_REC_TYP_I }, /* Number of channels */
+    { CEOS_REC_INTERLEAVE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      269, 4, CEOS_REC_TYP_A }, /* Interleaving type */
+    { CEOS_REC_DATATYPE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      429, 4, CEOS_REC_TYP_A }, /* Data type */
+    { CEOS_REC_BPR, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      0, 0, CEOS_REC_TYP_A }, /* For Defeault CEOS, this is done using other vals */
+    { CEOS_REC_LINES, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      237, 8, CEOS_REC_TYP_I }, /* How many lines */
+    { CEOS_REC_TBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      261, 4, CEOS_REC_TYP_I },
+    { CEOS_REC_BBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      265, 4, CEOS_REC_TYP_I }, /* Bottom border pixels */
+    { CEOS_REC_PPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      249, 8, CEOS_REC_TYP_I }, /* Pixels per line */
+    { CEOS_REC_LBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      245, 4, CEOS_REC_TYP_I }, /* Left Border Pixels */
+    { CEOS_REC_RBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      257, 4, CEOS_REC_TYP_I }, /* Isn't available for RadarSAT */
+    { CEOS_REC_BPP, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      225, 4, CEOS_REC_TYP_I }, /* Bytes Per Pixel */
+    { CEOS_REC_RPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      273, 2, CEOS_REC_TYP_I }, /* Records per line */
+    { CEOS_REC_PPR, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      0, 0, CEOS_REC_TYP_I }, /* Pixels Per Record -- need to fill record type */
+    { CEOS_REC_PDBPR, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      281, 8, CEOS_REC_TYP_I }, /* pixel data bytes per record */
+    { CEOS_REC_IDS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      277, 4, CEOS_REC_TYP_I }, /* Prefix data per record */
+    { CEOS_REC_FDL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      9, 4, CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
+    { CEOS_REC_PIXORD, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      0, 0, CEOS_REC_TYP_I }, /* Must be calculated */
+    { CEOS_REC_LINORD, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      0, 0, CEOS_REC_TYP_I }, /* Must be calculated */
+    { CEOS_REC_PRODTYPE, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      0, 0, CEOS_REC_TYP_I },
 
-    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
-      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+    { CEOS_REC_RECORDSIZE, 1, CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
+      9, 4, CEOS_REC_TYP_B }, /* The processed image record size */
 
     /* Some ERS-1 products use an alternate data record subtype2. */
-    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC_ALT,
-      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+    { CEOS_REC_RECORDSIZE, 1, CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC_ALT,
+      9, 4, CEOS_REC_TYP_B }, /* The processed image record size */
 
     /* Yet another ERS-1 and ERS-2 alternate data record subtype2. */
-    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC_ALT2,
-      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+    { CEOS_REC_RECORDSIZE, 1, CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC_ALT2,
+      9, 4, CEOS_REC_TYP_B }, /* The processed image record size */
 
-    { __CEOS_REC_SUFFIX_SIZE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      289, 4, __CEOS_REC_TYP_I }, /* Suffix data per record */
+    { CEOS_REC_SUFFIX_SIZE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      289, 4, CEOS_REC_TYP_I }, /* Suffix data per record */
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
 
 
-CeosRecipeType_t JersRecipe[] =
+static const CeosRecipeType_t JersRecipe[] =
 {
-    { __CEOS_REC_NUMCHANS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      233, 4, __CEOS_REC_TYP_I }, /* Number of channels */
-    { __CEOS_REC_INTERLEAVE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      269, 4, __CEOS_REC_TYP_A }, /* Interleaving type */
-    { __CEOS_REC_DATATYPE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      429, 4, __CEOS_REC_TYP_A }, /* Data type */
-    { __CEOS_REC_BPR, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      0, 0, __CEOS_REC_TYP_A }, /* For Defeault CEOS, this is done using other vals */
-    { __CEOS_REC_LINES, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      237, 8, __CEOS_REC_TYP_I }, /* How many lines */
-    { __CEOS_REC_TBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      261, 4, __CEOS_REC_TYP_I },
-    { __CEOS_REC_BBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      265, 4, __CEOS_REC_TYP_I }, /* Bottom border pixels */
-    { __CEOS_REC_PPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      249, 8, __CEOS_REC_TYP_I }, /* Pixels per line */
-    { __CEOS_REC_LBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      245, 4, __CEOS_REC_TYP_I }, /* Left Border Pixels */
-    { __CEOS_REC_RBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      257, 4, __CEOS_REC_TYP_I }, /* Isn't available for RadarSAT */
-    { __CEOS_REC_BPP, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      225, 4, __CEOS_REC_TYP_I }, /* Bytes Per Pixel */
-    { __CEOS_REC_RPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      273, 2, __CEOS_REC_TYP_I }, /* Records per line */
-    { __CEOS_REC_PPR, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      0, 0, __CEOS_REC_TYP_I }, /* Pixels Per Record -- need to fill record type */
-    { __CEOS_REC_PDBPR, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      281, 8, __CEOS_REC_TYP_I }, /* pixel data bytes per record */
-    { __CEOS_REC_IDS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      277, 4, __CEOS_REC_TYP_I }, /* Prefix data per record */
-    { __CEOS_REC_FDL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      9, 4, __CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
-    { __CEOS_REC_PIXORD, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      0, 0, __CEOS_REC_TYP_I }, /* Must be calculated */
-    { __CEOS_REC_LINORD, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      0, 0, __CEOS_REC_TYP_I }, /* Must be calculated */
-    { __CEOS_REC_PRODTYPE, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      0, 0, __CEOS_REC_TYP_I },
+    { CEOS_REC_NUMCHANS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      233, 4, CEOS_REC_TYP_I }, /* Number of channels */
+    { CEOS_REC_INTERLEAVE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      269, 4, CEOS_REC_TYP_A }, /* Interleaving type */
+    { CEOS_REC_DATATYPE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      429, 4, CEOS_REC_TYP_A }, /* Data type */
+    { CEOS_REC_BPR, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, CEOS_REC_TYP_A }, /* For Defeault CEOS, this is done using other vals */
+    { CEOS_REC_LINES, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      237, 8, CEOS_REC_TYP_I }, /* How many lines */
+    { CEOS_REC_TBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      261, 4, CEOS_REC_TYP_I },
+    { CEOS_REC_BBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      265, 4, CEOS_REC_TYP_I }, /* Bottom border pixels */
+    { CEOS_REC_PPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      249, 8, CEOS_REC_TYP_I }, /* Pixels per line */
+    { CEOS_REC_LBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      245, 4, CEOS_REC_TYP_I }, /* Left Border Pixels */
+    { CEOS_REC_RBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      257, 4, CEOS_REC_TYP_I }, /* Isn't available for RadarSAT */
+    { CEOS_REC_BPP, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      225, 4, CEOS_REC_TYP_I }, /* Bytes Per Pixel */
+    { CEOS_REC_RPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      273, 2, CEOS_REC_TYP_I }, /* Records per line */
+    { CEOS_REC_PPR, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, CEOS_REC_TYP_I }, /* Pixels Per Record -- need to fill record type */
+    { CEOS_REC_PDBPR, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      281, 8, CEOS_REC_TYP_I }, /* pixel data bytes per record */
+    { CEOS_REC_IDS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      277, 4, CEOS_REC_TYP_I }, /* Prefix data per record */
+    { CEOS_REC_FDL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      9, 4, CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
+    { CEOS_REC_PIXORD, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, CEOS_REC_TYP_I }, /* Must be calculated */
+    { CEOS_REC_LINORD, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, CEOS_REC_TYP_I }, /* Must be calculated */
+    { CEOS_REC_PRODTYPE, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      0, 0, CEOS_REC_TYP_I },
 
-    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
-      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
+    { CEOS_REC_RECORDSIZE, 1, CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
+      9, 4, CEOS_REC_TYP_B }, /* The processed image record size */
 
-    { __CEOS_REC_SUFFIX_SIZE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
-      289, 4, __CEOS_REC_TYP_I }, /* Suffix data per record */
+    { CEOS_REC_SUFFIX_SIZE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT,
+      289, 4, CEOS_REC_TYP_I }, /* Suffix data per record */
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
 
-CeosRecipeType_t ScanSARRecipe[] =
+static const CeosRecipeType_t ScanSARRecipe[] =
 {
-    { __CEOS_REC_NUMCHANS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      233, 4, __CEOS_REC_TYP_I }, /* Number of channels */
-    { __CEOS_REC_INTERLEAVE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      269, 4, __CEOS_REC_TYP_A }, /* Interleaving type */
-    { __CEOS_REC_DATATYPE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      429, 4, __CEOS_REC_TYP_A }, /* Data type */
-    { __CEOS_REC_LINES, 1, __CEOS_ANY_FILE, DATA_SET_SUMMARY,
-      325, 8, __CEOS_REC_TYP_I }, /* How many lines */
-    { __CEOS_REC_PPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      249, 8, __CEOS_REC_TYP_I }, /* Pixels per line */
-    { __CEOS_REC_BPP, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      225, 4, __CEOS_REC_TYP_I }, /* Bytes Per Pixel */
-    { __CEOS_REC_RPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      273, 2, __CEOS_REC_TYP_I }, /* Records per line */
-    { __CEOS_REC_IDS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      277, 4, __CEOS_REC_TYP_I }, /* Prefix data per record */
-    { __CEOS_REC_FDL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      9, 4, __CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
-    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
-      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
-    { __CEOS_REC_SUFFIX_SIZE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      289, 4, __CEOS_REC_TYP_I }, /* Suffix data per record */
+    { CEOS_REC_NUMCHANS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      233, 4, CEOS_REC_TYP_I }, /* Number of channels */
+    { CEOS_REC_INTERLEAVE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      269, 4, CEOS_REC_TYP_A }, /* Interleaving type */
+    { CEOS_REC_DATATYPE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      429, 4, CEOS_REC_TYP_A }, /* Data type */
+    { CEOS_REC_LINES, 1, CEOS_ANY_FILE, DATA_SET_SUMMARY,
+      325, 8, CEOS_REC_TYP_I }, /* How many lines */
+    { CEOS_REC_PPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      249, 8, CEOS_REC_TYP_I }, /* Pixels per line */
+    { CEOS_REC_BPP, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      225, 4, CEOS_REC_TYP_I }, /* Bytes Per Pixel */
+    { CEOS_REC_RPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      273, 2, CEOS_REC_TYP_I }, /* Records per line */
+    { CEOS_REC_IDS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      277, 4, CEOS_REC_TYP_I }, /* Prefix data per record */
+    { CEOS_REC_FDL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      9, 4, CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
+    { CEOS_REC_RECORDSIZE, 1, CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
+      9, 4, CEOS_REC_TYP_B }, /* The processed image record size */
+    { CEOS_REC_SUFFIX_SIZE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      289, 4, CEOS_REC_TYP_I }, /* Suffix data per record */
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
 
-CeosRecipeType_t SIRCRecipe[] =
+static const CeosRecipeType_t SIRCRecipe[] =
 {
-    { __CEOS_REC_NUMCHANS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      233, 4, __CEOS_REC_TYP_I }, /* Number of channels */
-    { __CEOS_REC_INTERLEAVE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      269, 4, __CEOS_REC_TYP_A }, /* Interleaving type */
-    { __CEOS_REC_DATATYPE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      429, 4, __CEOS_REC_TYP_A }, /* Data type */
-    { __CEOS_REC_LINES, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      237, 8, __CEOS_REC_TYP_I }, /* How many lines */
-    { __CEOS_REC_TBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      261, 4, __CEOS_REC_TYP_I },
-    { __CEOS_REC_BBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      265, 4, __CEOS_REC_TYP_I }, /* Bottom border pixels */
-    { __CEOS_REC_PPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      249, 8, __CEOS_REC_TYP_I }, /* Pixels per line */
-    { __CEOS_REC_LBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      245, 4, __CEOS_REC_TYP_I }, /* Left Border Pixels */
-    { __CEOS_REC_RBP, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      257, 4, __CEOS_REC_TYP_I }, /* Right Border Pixels */
-    { __CEOS_REC_BPP, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      225, 4, __CEOS_REC_TYP_I }, /* Bytes Per Pixel */
-    { __CEOS_REC_RPL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      273, 2, __CEOS_REC_TYP_I }, /* Records per line */
-    { __CEOS_REC_IDS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      277, 4, __CEOS_REC_TYP_I }, /* Prefix data per record */
-    { __CEOS_REC_FDL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      9, 4, __CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
-    { __CEOS_REC_RECORDSIZE, 1, __CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
-      9, 4, __CEOS_REC_TYP_B }, /* The processed image record size */
-    { __CEOS_REC_SUFFIX_SIZE, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      289, 4, __CEOS_REC_TYP_I }, /* Suffix data per record */
+    { CEOS_REC_NUMCHANS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      233, 4, CEOS_REC_TYP_I }, /* Number of channels */
+    { CEOS_REC_INTERLEAVE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      269, 4, CEOS_REC_TYP_A }, /* Interleaving type */
+    { CEOS_REC_DATATYPE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      429, 4, CEOS_REC_TYP_A }, /* Data type */
+    { CEOS_REC_LINES, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      237, 8, CEOS_REC_TYP_I }, /* How many lines */
+    { CEOS_REC_TBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      261, 4, CEOS_REC_TYP_I },
+    { CEOS_REC_BBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      265, 4, CEOS_REC_TYP_I }, /* Bottom border pixels */
+    { CEOS_REC_PPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      249, 8, CEOS_REC_TYP_I }, /* Pixels per line */
+    { CEOS_REC_LBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      245, 4, CEOS_REC_TYP_I }, /* Left Border Pixels */
+    { CEOS_REC_RBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      257, 4, CEOS_REC_TYP_I }, /* Right Border Pixels */
+    { CEOS_REC_BPP, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      225, 4, CEOS_REC_TYP_I }, /* Bytes Per Pixel */
+    { CEOS_REC_RPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      273, 2, CEOS_REC_TYP_I }, /* Records per line */
+    { CEOS_REC_IDS, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      277, 4, CEOS_REC_TYP_I }, /* Prefix data per record */
+    { CEOS_REC_FDL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      9, 4, CEOS_REC_TYP_B }, /* Length of Imagry Options Header */
+    { CEOS_REC_RECORDSIZE, 1, CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC,
+      9, 4, CEOS_REC_TYP_B }, /* The processed image record size */
+    { CEOS_REC_SUFFIX_SIZE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      289, 4, CEOS_REC_TYP_I }, /* Suffix data per record */
 
     { 0, 0, 0, { 0, 0, 0, 0 }, 0, 0, 0 } /* Last record is Zero */
 } ;
@@ -249,8 +249,8 @@ static char *ExtractString( CeosRecord_t *record, unsigned int offset, unsigned 
 
 static int GetCeosStringType(const CeosStringType_t *CeosType, const char *string);
 
-static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token );
-static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token );
+static int SIRCRecipeFCN( CeosSARVolume_t *volume, const void *token );
+static int PALSARRecipeFCN( CeosSARVolume_t *volume, const void *token );
 
 Link_t *RecipeFunctions = NULL;
 
@@ -268,18 +268,18 @@ void RegisterRecipes( void )
 void FreeRecipes( void )
 
 {
-    Link_t *link;
+    Link_t *l_link;
 
-    for( link = RecipeFunctions; link != NULL; link = link->next )
-        HFree( link->object );
+    for( l_link = RecipeFunctions; l_link != NULL; l_link = l_link->next )
+        HFree( l_link->object );
 
     DestroyList( RecipeFunctions );
     RecipeFunctions = NULL;
 }
 
 void AddRecipe( int (*function)(CeosSARVolume_t *volume,
-				void *token),
-		void *token,
+				const void *token),
+		const void *token,
                 const char *name )
 {
 
@@ -303,9 +303,9 @@ void AddRecipe( int (*function)(CeosSARVolume_t *volume,
     }
 }
 
-int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
+int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token )
 {
-    CeosRecipeType_t *recipe;
+    const CeosRecipeType_t *recipe;
     CeosRecord_t *record;
     CeosTypeCode_t TypeCode;
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
@@ -344,27 +344,27 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 
 		switch( recipe[i].ImageDescValue )
 		{
-		case __CEOS_REC_NUMCHANS:
+		case CEOS_REC_NUMCHANS:
 		   DoExtractInt( ImageDesc->NumChannels );
 		   break;
-		case __CEOS_REC_LINES:
+		case CEOS_REC_LINES:
 		    DoExtractInt( ImageDesc->Lines );
 		    break;
-		case __CEOS_REC_BPP:
+		case CEOS_REC_BPP:
 		    DoExtractInt( ImageDesc->BytesPerPixel );
 		    break;
-		case __CEOS_REC_RPL:
+		case CEOS_REC_RPL:
 		    DoExtractInt( ImageDesc->RecordsPerLine );
 		    break;
-		case __CEOS_REC_PDBPR:
+		case CEOS_REC_PDBPR:
 		    DoExtractInt( ImageDesc->PixelDataBytesPerRecord );
 		    break;
-		case __CEOS_REC_FDL:
+		case CEOS_REC_FDL:
 		    DoExtractInt( ImageDesc->FileDescriptorLength );
 		    break;
-		case __CEOS_REC_IDS:
+		case CEOS_REC_IDS:
 		    DoExtractInt( ImageDesc->ImageDataStart );
-                    /* 
+                    /*
                     ** This is really reading the quantity of prefix data
                     ** per data record.  We want the offset from the very
                     ** beginning of the record to the data, so we add another
@@ -376,39 +376,38 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 		    if( ImageDesc->ImageDataStart != 192 )
                         ImageDesc->ImageDataStart += 12;
 		    break;
-		case __CEOS_REC_SUFFIX_SIZE:
+		case CEOS_REC_SUFFIX_SIZE:
 		    DoExtractInt( ImageDesc->ImageSuffixData );
 		    break;
-		case __CEOS_REC_RECORDSIZE:
+		case CEOS_REC_RECORDSIZE:
 		    DoExtractInt( ImageDesc->BytesPerRecord );
 		    break;
-		case __CEOS_REC_PPL:
+		case CEOS_REC_PPL:
 		    DoExtractInt( ImageDesc->PixelsPerLine );
 		    break;
-		case __CEOS_REC_TBP:
+		case CEOS_REC_TBP:
 		    DoExtractInt( ImageDesc->TopBorderPixels );
 		    break;
-		case __CEOS_REC_BBP:
+		case CEOS_REC_BBP:
 		    DoExtractInt( ImageDesc->BottomBorderPixels );
 		    break;
-		case __CEOS_REC_LBP:
+		case CEOS_REC_LBP:
 		    DoExtractInt( ImageDesc->LeftBorderPixels );
 		    break;
-		case __CEOS_REC_RBP:
+		case CEOS_REC_RBP:
 		    DoExtractInt( ImageDesc->RightBorderPixels );
 		    break;
-		case __CEOS_REC_INTERLEAVE:
+		case CEOS_REC_INTERLEAVE:
 		    ExtractString( record, recipe[i].Offset, recipe[i].Length, temp_str );
 
 		    ImageDesc->ChannelInterleaving = GetCeosStringType( CeosInterleaveType, temp_str );
 		    break;
-		case __CEOS_REC_DATATYPE:
+		case CEOS_REC_DATATYPE:
 		    ExtractString( record, recipe[i].Offset, recipe[i].Length, temp_str );
 
 		    ImageDesc->DataType = GetCeosStringType( CeosDataType, temp_str );
 		    break;
 		}
-		
 	    }
 	}
     }
@@ -418,13 +417,13 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
      * bytes of pixel data if necessary.
      */
 
-    if( ImageDesc->PixelsPerLine == 0 
-        && ImageDesc->PixelDataBytesPerRecord != 0 
+    if( ImageDesc->PixelsPerLine == 0
+        && ImageDesc->PixelDataBytesPerRecord != 0
         && ImageDesc->BytesPerPixel != 0 )
     {
-        ImageDesc->PixelsPerLine = 
+        ImageDesc->PixelsPerLine =
             ImageDesc->PixelDataBytesPerRecord / ImageDesc->BytesPerPixel;
-        CPLDebug( "SAR_CEOS", "Guessing PixelPerLine to be %d\n", 
+        CPLDebug( "SAR_CEOS", "Guessing PixelPerLine to be %d\n",
                   ImageDesc->PixelsPerLine );
     }
 
@@ -443,27 +442,27 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
         TypeCode.UCharCode.Type = 0xed;
         TypeCode.UCharCode.Subtype2 = 0x12;
         TypeCode.UCharCode.Subtype3 = 0x12;
-        
-        img_rec = FindCeosRecord( volume->RecordList, TypeCode, 
-                                  __CEOS_IMAGRY_OPT_FILE, -1, -1 );
+
+        img_rec = FindCeosRecord( volume->RecordList, TypeCode,
+                                  CEOS_IMAGRY_OPT_FILE, -1, -1 );
         if( img_rec == NULL )
         {
-            CPLDebug( "SAR_CEOS", 
+            CPLDebug( "SAR_CEOS",
                       "Unable to find imagery rec to check record length." );
             return 0;
         }
 
         if( img_rec->Length != ImageDesc->BytesPerRecord )
         {
-            CPLDebug( "SAR_CEOS", 
+            CPLDebug( "SAR_CEOS",
                       "Guessed record length (%d) did not match\n"
-                      "actual imagery record length (%d), recipe fails.", 
+                      "actual imagery record length (%d), recipe fails.",
                       ImageDesc->BytesPerRecord, img_rec->Length );
             return 0;
         }
     }
-    
-    if( ImageDesc->PixelsPerRecord == 0 && 
+
+    if( ImageDesc->PixelsPerRecord == 0 &&
 	ImageDesc->BytesPerRecord != 0 && ImageDesc->BytesPerPixel != 0 )
     {
 	ImageDesc->PixelsPerRecord = ( ( ImageDesc->BytesPerRecord -
@@ -483,13 +482,13 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
         int  nDataTypeSize = ImageDesc->BytesPerPixel / ImageDesc->NumChannels;
 
         if( nDataTypeSize == 1 )
-            ImageDesc->DataType = __CEOS_TYP_UCHAR;
+            ImageDesc->DataType = CEOS_TYP_UCHAR;
         else if( nDataTypeSize == 2 )
-            ImageDesc->DataType = __CEOS_TYP_USHORT;
+            ImageDesc->DataType = CEOS_TYP_USHORT;
     }
 
     /* Sanity checking */
-    
+
     if( ImageDesc->PixelsPerLine == 0 || ImageDesc->Lines == 0 ||
 	ImageDesc->RecordsPerLine == 0 || ImageDesc->ImageDataStart == 0 ||
 	ImageDesc->FileDescriptorLength == 0 || ImageDesc->DataType == 0 ||
@@ -498,13 +497,13 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
     {
 	return 0;
     } else {
-	
+
 	ImageDesc->ImageDescValid = TRUE;
 	return 1;
     }
 }
 
-int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token )
+int ScanSARRecipeFCN( CeosSARVolume_t *volume, const void *token )
 {
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
 
@@ -517,9 +516,9 @@ int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token )
     }
 
     return 0;
-}    
+}
 
-static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
+static int SIRCRecipeFCN( CeosSARVolume_t *volume, const void *token )
 {
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
     CeosTypeCode_t TypeCode;
@@ -540,13 +539,13 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
     TypeCode.UCharCode.Subtype2 = 18;
     TypeCode.UCharCode.Subtype3 = 18;
 
-    record = FindCeosRecord( volume->RecordList, TypeCode, 
-                             __CEOS_IMAGRY_OPT_FILE, -1, -1 );
+    record = FindCeosRecord( volume->RecordList, TypeCode,
+                             CEOS_IMAGRY_OPT_FILE, -1, -1 );
     if( record == NULL )
         return 0;
 
     ExtractString( record, 401, 28, szSARDataFormat );
-    if( !EQUALN( szSARDataFormat, "COMPRESSED CROSS-PRODUCTS", 25) )
+    if( !STARTS_WITH_CI(szSARDataFormat, "COMPRESSED CROSS-PRODUCTS") )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -564,10 +563,10 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
 /*      Then fix up a few values.                                       */
 /* -------------------------------------------------------------------- */
     /* It seems the bytes of pixel data per record is just wrong.  Fix. */
-    ImageDesc->PixelDataBytesPerRecord = 
+    ImageDesc->PixelDataBytesPerRecord =
         ImageDesc->BytesPerPixel * ImageDesc->PixelsPerLine;
-    
-    ImageDesc->DataType = __CEOS_TYP_CCP_COMPLEX_FLOAT;
+
+    ImageDesc->DataType = CEOS_TYP_CCP_COMPLEX_FLOAT;
 
 /* -------------------------------------------------------------------- */
 /*      Sanity checking                                                 */
@@ -580,13 +579,13 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
     {
 	return 0;
     } else {
-	
+
 	ImageDesc->ImageDescValid = TRUE;
 	return 1;
     }
-}    
+}
 
-static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
+static int PALSARRecipeFCN( CeosSARVolume_t *volume, const void *token )
 {
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
     CeosTypeCode_t TypeCode;
@@ -607,17 +606,17 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
     TypeCode.UCharCode.Subtype2 = 18;
     TypeCode.UCharCode.Subtype3 = 18;
 
-    record = FindCeosRecord( volume->RecordList, TypeCode, 
-                             __CEOS_IMAGRY_OPT_FILE, -1, -1 );
+    record = FindCeosRecord( volume->RecordList, TypeCode,
+                             CEOS_IMAGRY_OPT_FILE, -1, -1 );
     if( record == NULL )
         return 0;
 
     ExtractString( record, 401, 28, szSARDataFormat );
-    if( !EQUALN( szSARDataFormat, "INTEGER*18                 ", 25) )
+    if( !STARTS_WITH_CI( szSARDataFormat, "INTEGER*18                 ") )
         return 0;
 
     ExtractString( record, 49, 16, szProduct );
-    if( !EQUALN( szProduct, "ALOS-", 5 ) )
+    if( !STARTS_WITH_CI(szProduct, "ALOS-") )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -634,7 +633,7 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
 /* -------------------------------------------------------------------- */
 /*      Then fix up a few values.                                       */
 /* -------------------------------------------------------------------- */
-    ImageDesc->DataType = __CEOS_TYP_PALSAR_COMPLEX_SHORT;
+    ImageDesc->DataType = CEOS_TYP_PALSAR_COMPLEX_SHORT;
     ImageDesc->NumChannels = 6;
 
 /* -------------------------------------------------------------------- */
@@ -648,17 +647,17 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
     {
 	return 0;
     } else {
-	
+
 	ImageDesc->ImageDescValid = TRUE;
 	return 1;
     }
-}    
+}
 
 void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 {
-    Link_t *link;
+    Link_t *l_link;
     RecipeFunctionData_t *rec_data;
-    int (*function)(CeosSARVolume_t *volume, void *token);
+    int (*function)(CeosSARVolume_t *volume, const void *token);
 
     if( RecipeFunctions == NULL )
     {
@@ -670,15 +669,15 @@ void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 	return ;
     }
 
-    for(link = RecipeFunctions; link != NULL; link = link->next)
+    for(l_link = RecipeFunctions; l_link != NULL; l_link = l_link->next)
     {
-	if(link->object)
+	if(l_link->object)
 	{
-	    rec_data = link->object;
+	    rec_data = l_link->object;
             function = rec_data->function;
 	    if(( *function )( volume, rec_data->token ) )
             {
-                CPLDebug( "CEOS", "Using recipe '%s'.", 
+                CPLDebug( "CEOS", "Using recipe '%s'.",
                           rec_data->name );
 		return;
             }
@@ -699,13 +698,13 @@ static void ExtractInt(CeosRecord_t *record, int type, unsigned int offset, unsi
 
     switch(type)
     {
-    case __CEOS_REC_TYP_A:
-	sprintf( format, "A%u", length );
+    case CEOS_REC_TYP_A:
+	snprintf( format, sizeof(format), "A%u", length );
 	GetCeosField( record, offset, format,  buffer );
 	*value = atoi( buffer );
 	break;
-    case __CEOS_REC_TYP_B:
-	sprintf( format, "B%u", length );
+    case CEOS_REC_TYP_B:
+	snprintf( format, sizeof(format), "B%u", length );
 #ifdef notdef
 	GetCeosField( record, offset, format, buffer );
 	if( length <= 4 )
@@ -716,8 +715,8 @@ static void ExtractInt(CeosRecord_t *record, int type, unsigned int offset, unsi
 	GetCeosField( record, offset, format, value );
 #endif
 	break;
-    case __CEOS_REC_TYP_I:
-	sprintf( format, "I%u", length );
+    case CEOS_REC_TYP_I:
+	snprintf( format, sizeof(format), "I%u", length );
 	GetCeosField( record, offset, format, value );
 	break;
     }
@@ -735,7 +734,7 @@ static char *ExtractString( CeosRecord_t *record, unsigned int offset, unsigned 
 	string = HMalloc( length + 1 );
     }
 
-    sprintf( format, "A%u", length );
+    snprintf( format, sizeof(format), "A%u", length );
 
     GetCeosField( record, offset, format, string );
 

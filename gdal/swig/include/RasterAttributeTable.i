@@ -39,14 +39,14 @@ typedef int GDALRATFieldUsage;
 #else
 %rename (RATFieldType) GDALRATFieldType;
 typedef enum {
-    /*! Integer field */	   	   GFT_Integer , 
+    /*! Integer field */	   	   GFT_Integer ,
     /*! Floating point (double) field */   GFT_Real,
     /*! String field */                    GFT_String
 } GDALRATFieldType;
 
 %rename (RATFieldUsage) GDALRATFieldUsage;
 typedef enum {
-    /*! General purpose field. */          GFU_Generic = 0,  
+    /*! General purpose field. */          GFU_Generic = 0,
     /*! Histogram pixel count */           GFU_PixelCount = 1,
     /*! Class name */                      GFU_Name = 2,
     /*! Class range minimum */             GFU_Min = 3,
@@ -78,24 +78,24 @@ public:
 %extend {
 
     GDALRasterAttributeTableShadow() {
-        return (GDALRasterAttributeTableShadow*) 
+        return (GDALRasterAttributeTableShadow*)
 		GDALCreateRasterAttributeTable();
     }
 
     ~GDALRasterAttributeTableShadow() {
         GDALDestroyRasterAttributeTable(self);
     }
-  
+
     %newobject Clone();
     GDALRasterAttributeTableShadow* Clone() {
         return (GDALRasterAttributeTableShadow*) GDALRATClone(self);
     }
-  
-    int GetColumnCount() { 
+
+    int GetColumnCount() {
         return GDALRATGetColumnCount( self );
     }
 
-    const char *GetNameOfCol(int iCol) { 
+    const char *GetNameOfCol(int iCol) {
         return GDALRATGetNameOfCol( self, iCol );
     }
 
@@ -110,34 +110,34 @@ public:
     int GetColOfUsage( GDALRATFieldUsage eUsage ) {
         return GDALRATGetColOfUsage( self, eUsage );
     }
-   
-    int GetRowCount() { 
+
+    int GetRowCount() {
         return GDALRATGetRowCount( self );
     }
 
-    const char *GetValueAsString( int iRow, int iCol ) { 
+    const char *GetValueAsString( int iRow, int iCol ) {
         return GDALRATGetValueAsString( self, iRow, iCol );
     }
 
-    int GetValueAsInt( int iRow, int iCol ) { 
+    int GetValueAsInt( int iRow, int iCol ) {
         return GDALRATGetValueAsInt( self, iRow, iCol );
     }
 
-    double GetValueAsDouble( int iRow, int iCol ) { 
+    double GetValueAsDouble( int iRow, int iCol ) {
         return GDALRATGetValueAsDouble( self, iRow, iCol );
     }
 
     %apply ( tostring argin ) { (const char* pszValue) };
-    void SetValueAsString( int iRow, int iCol, const char *pszValue ) { 
+    void SetValueAsString( int iRow, int iCol, const char *pszValue ) {
         GDALRATSetValueAsString( self, iRow, iCol, pszValue );
     }
     %clear (const char* pszValue );
 
-    void SetValueAsInt( int iRow, int iCol, int nValue ) { 
+    void SetValueAsInt( int iRow, int iCol, int nValue ) {
         GDALRATSetValueAsInt( self, iRow, iCol, nValue );
     }
 
-    void SetValueAsDouble( int iRow, int iCol, double dfValue ) { 
+    void SetValueAsDouble( int iRow, int iCol, double dfValue ) {
         GDALRATSetValueAsDouble( self, iRow, iCol, dfValue );
     }
 
@@ -145,7 +145,7 @@ public:
         GDALRATSetRowCount( self, nCount );
     }
 
-    int CreateColumn( const char *pszName, GDALRATFieldType eType, 
+    int CreateColumn( const char *pszName, GDALRATFieldType eType,
                       GDALRATFieldUsage eUsage ) {
         return GDALRATCreateColumn( self, pszName, eType, eUsage );
     }
@@ -164,7 +164,7 @@ public:
         return GDALRATSetLinearBinning(self, dfRow0Min, dfBinSize);
     }
 
-    /* TODO: omit color table translation,and dump readable */
+    /* TODO: omit color table translation */
 
     int GetRowOfValue( double dfValue ) {
         return GDALRATGetRowOfValue( self, dfValue );
@@ -172,6 +172,10 @@ public:
 
     int ChangesAreWrittenToFile() {
         return GDALRATChangesAreWrittenToFile( self );
+    }
+
+    void DumpReadable() {
+        GDALRATDumpReadable( self, NULL );
     }
 }
 

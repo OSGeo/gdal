@@ -46,7 +46,7 @@ OGRCouchDBDataSource::OGRCouchDBDataSource()
 
     bReadWrite = FALSE;
 
-    bMustCleanPersistant = FALSE;
+    bMustCleanPersistent = FALSE;
 }
 
 /************************************************************************/
@@ -60,11 +60,11 @@ OGRCouchDBDataSource::~OGRCouchDBDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (bMustCleanPersistant)
+    if (bMustCleanPersistent)
     {
-        char** papszOptions = CSLAddString(NULL,
-                          CPLSPrintf("CLOSE_PERSISTENT=CouchDB:%p", this));
-        CPLHTTPFetch( osURL, papszOptions);
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CouchDB:%p", this));
+        CPLHTTPDestroyResult( CPLHTTPFetch( osURL, papszOptions ) );
         CSLDestroy(papszOptions);
     }
 
@@ -135,9 +135,9 @@ OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
         if (pszLastSlash)
         {
             osEscapedName = pszLastSlash + 1;
-            char* pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
-            osTableName = pszName;
-            CPLFree(pszName);
+            char* l_pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
+            osTableName = l_pszName;
+            CPLFree(l_pszName);
             *pszLastSlash = 0;
         }
         osURL = pszURL;
@@ -207,16 +207,16 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
     int bHTTP = FALSE;
-    if (strncmp(pszFilename, "http://", 7) == 0 ||
-        strncmp(pszFilename, "https://", 8) == 0)
+    if (STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://"))
         bHTTP = TRUE;
-    else if (!EQUALN(pszFilename, "CouchDB:", 8))
+    else if (!STARTS_WITH_CI(pszFilename, "CouchDB:"))
         return FALSE;
 
     bReadWrite = bUpdateIn;
 
     pszName = CPLStrdup( pszFilename );
- 
+
     if (bHTTP)
         osURL = pszFilename;
     else
@@ -254,7 +254,11 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
     json_object* poAnswerObj = GET("/_all_dbs");
 
     if (poAnswerObj == NULL)
+    {
+        if (!STARTS_WITH_CI(pszFilename, "CouchDB:"))
+            CPLErrorReset();
         return FALSE;
+    }
 
     if ( !json_object_is_type(poAnswerObj, json_type_array) )
     {
@@ -312,7 +316,7 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszNameIn,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
@@ -331,12 +335,12 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszName,papoLayers[iLayer]->GetName()) )
+        if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
-                DeleteLayer( pszName );
+                DeleteLayer( pszNameIn );
                 break;
             }
             else
@@ -345,13 +349,13 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
-                          pszName );
+                          pszNameIn );
                 return NULL;
             }
         }
     }
 
-    char* pszEscapedName = CPLEscapeString(pszName, -1, CPLES_URL);
+    char* pszEscapedName = CPLEscapeString(pszNameIn, -1, CPLES_URL);
     CPLString osEscapedName = pszEscapedName;
     CPLFree(pszEscapedName);
 
@@ -412,7 +416,7 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
     {
         osValidation = "{\"validate_doc_update\": \"function(new_doc, old_doc, userCtx) {if (userCtx.roles.indexOf('_admin') === -1) { throw({forbidden: \\\"No changes allowed except by admin.\\\"}); } }\" }";
     }
-    else if (strncmp(pszUpdatePermissions, "function(", 9) == 0)
+    else if (STARTS_WITH(pszUpdatePermissions, "function("))
     {
         osValidation = "{\"validate_doc_update\": \"";
         osValidation += pszUpdatePermissions;
@@ -433,10 +437,10 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszName,
         json_object_put(poAnswerObj);
     }
 
-    int bGeoJSONDocument = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
+    int bGeoJSONDocument = CPLTestBool(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
     int nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 
-    OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, pszName);
+    OGRCouchDBTableLayer* poLayer = new OGRCouchDBTableLayer(this, pszNameIn);
     if (nCoordPrecision != -1)
         poLayer->SetCoordinatePrecision(nCoordPrecision);
     poLayer->SetInfoAfterCreation(eGType, poSpatialRef, nUpdateSeq, bGeoJSONDocument);
@@ -555,7 +559,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 
@@ -569,7 +573,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case 'COMPACT ON ' command.                             */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"COMPACT ON ",11) )
+    if( STARTS_WITH_CI(pszSQLCommand, "COMPACT ON ") )
     {
         const char *pszLayerName = pszSQLCommand + 11;
 
@@ -590,7 +594,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case 'VIEW CLEANUP ON ' command.                        */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"VIEW CLEANUP ON ",16) )
+    if( STARTS_WITH_CI(pszSQLCommand, "VIEW CLEANUP ON ") )
     {
         const char *pszLayerName = pszSQLCommand + 16;
 
@@ -611,7 +615,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Deal with "DELETE FROM layer_name WHERE expression" statement   */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand, "DELETE FROM ", 12) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELETE FROM ") )
     {
         const char* pszIter = pszSQLCommand + 12;
         while(*pszIter && *pszIter != ' ')
@@ -637,7 +641,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         while(*pszIter && *pszIter == ' ')
             pszIter ++;
-        if (!EQUALN(pszIter, "WHERE ", 5))
+        if (!STARTS_WITH_CI(pszIter, "WHERE "))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "WHERE clause missing");
             return NULL;
@@ -654,13 +658,13 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         }
 
-        swq_expr_node * pNode = (swq_expr_node *) oQuery.GetSWGExpr();
+        swq_expr_node * pNode = (swq_expr_node *) oQuery.GetSWQExpr();
         if (pNode->eNodeType == SNT_OPERATION &&
             pNode->nOperation == SWQ_EQ &&
             pNode->nSubExprCount == 2 &&
             pNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
             pNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
-            pNode->papoSubExpr[0]->field_index == _ID_FIELD &&
+            pNode->papoSubExpr[0]->field_index == COUCHDB_ID_FIELD &&
             pNode->papoSubExpr[1]->field_type == SWQ_STRING)
         {
             poTableLayer->DeleteFeature(pNode->papoSubExpr[1]->string_value);
@@ -679,7 +683,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Try an optimized implementation when doing only stats           */
 /* -------------------------------------------------------------------- */
-    if (poSpatialFilter == NULL && EQUALN(pszSQLCommand, "SELECT", 6))
+    if (poSpatialFilter == NULL && STARTS_WITH_CI(pszSQLCommand, "SELECT"))
     {
         OGRLayer* poRet = ExecuteSQLStats(pszSQLCommand);
         if (poRet)
@@ -732,7 +736,7 @@ class OGRCouchDBOneLineLayer : public OGRLayer
 OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
 {
     swq_select sSelectInfo;
-    if( sSelectInfo.preparse( pszSQLCommand ) != CPLE_None )
+    if( sSelectInfo.preparse( pszSQLCommand ) != CE_None )
     {
         return NULL;
     }
@@ -841,7 +845,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
 
-    if( sSelectInfo.parse( &sFieldList, 0 ) != CE_None )
+    if( sSelectInfo.parse( &sFieldList, NULL ) != CE_None )
     {
         return NULL;
     }
@@ -1028,12 +1032,12 @@ char* OGRCouchDBDataSource::GetETag(const char* pszURI)
     char **papszTokens;
     char** papszOptions = NULL;
 
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=CouchDB:%p", this));
     papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/json");
     papszOptions = CSLAddString(papszOptions, "NO_BODY=1");
-    
+
     if (osUserPwd.size())
     {
         CPLString osUserPwdOption("USERPWD=");
@@ -1055,9 +1059,9 @@ char* OGRCouchDBDataSource::GetETag(const char* pszURI)
 
     if (CSLFetchNameValue(psResult->papszHeaders, "Etag") != NULL)
     {
-        papszTokens = 
+        papszTokens =
             CSLTokenizeString2( CSLFetchNameValue(psResult->papszHeaders, "Etag"), "\"\r\n", 0 );
-        
+
         pszEtag = CPLStrdup(papszTokens[0]);
 
         CSLDestroy( papszTokens );
@@ -1075,7 +1079,7 @@ json_object* OGRCouchDBDataSource::REQUEST(const char* pszVerb,
                                            const char* pszURI,
                                            const char* pszData)
 {
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     char** papszOptions = NULL;
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=CouchDB:%p", this));
@@ -1110,7 +1114,7 @@ json_object* OGRCouchDBDataSource::REQUEST(const char* pszVerb,
         return NULL;
 
     const char* pszServer = CSLFetchNameValue(psResult->papszHeaders, "Server");
-    if (pszServer == NULL || !EQUALN(pszServer, "CouchDB", 7))
+    if (pszServer == NULL || !STARTS_WITH_CI(pszServer, "CouchDB"))
     {
         CPLHTTPDestroyResult(psResult);
         return NULL;
@@ -1203,7 +1207,7 @@ int OGRCouchDBDataSource::IsError(json_object* poAnswerObj,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "%s : %s, %s",
                  pszErrorMsg,
-                 pszError ? pszError : "",
+                 pszError,
                  pszReason ? pszReason : "");
 
         return TRUE;
@@ -1237,7 +1241,7 @@ int OGRCouchDBDataSource::IsOK(json_object* poAnswerObj,
     }
 
     const char* pszOK = json_object_get_string(poOK);
-    if ( !pszOK || !CSLTestBoolean(pszOK) )
+    if ( !pszOK || !CPLTestBool(pszOK) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMsg);
 

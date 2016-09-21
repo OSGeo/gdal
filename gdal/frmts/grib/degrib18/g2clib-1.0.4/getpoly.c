@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include "grib2.h"
 
-g2int g2_unpack3(unsigned char *,g2int *,g2int **,g2int **,
-                         g2int *,g2int **,g2int *);
-
 g2int getpoly(unsigned char *csec3,g2int *jj,g2int *kk,g2int *mm)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .

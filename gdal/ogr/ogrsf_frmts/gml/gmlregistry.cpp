@@ -14,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -35,15 +35,15 @@
 
 int GMLRegistry::Parse()
 {
-    const char* pszFilename;
-    pszFilename = CPLGetConfigOption("GML_REGISTRY", NULL);
-    if( pszFilename == NULL )
+    if( osRegistryPath.size() == 0 )
     {
-        pszFilename = CPLFindFile( "gdal", "gml_registry.xml" );
+        const char* pszFilename = CPLFindFile( "gdal", "gml_registry.xml" );
+        if( pszFilename )
+            osRegistryPath = pszFilename;
     }
-    if( pszFilename == NULL )
+    if( osRegistryPath.size() == 0 )
         return FALSE;
-    CPLXMLNode* psRootNode = CPLParseXMLFile(pszFilename);
+    CPLXMLNode* psRootNode = CPLParseXMLFile(osRegistryPath);
     if( psRootNode == NULL )
         return FALSE;
     CPLXMLNode *psRegistryNode = CPLGetXMLNode( psRootNode, "=gml_registry" );
@@ -59,7 +59,7 @@ int GMLRegistry::Parse()
             strcmp(psIter->pszValue, "namespace") == 0 )
         {
             GMLRegistryNamespace oNameSpace;
-            if( oNameSpace.Parse(pszFilename, psIter) )
+            if( oNameSpace.Parse(osRegistryPath, psIter) )
             {
                 aoNamespaces.push_back(oNameSpace);
             }
@@ -119,8 +119,8 @@ int GMLRegistryFeatureType::Parse(const char* pszRegistryFilename, CPLXMLNode* p
 
     if( pszSchemaLocation != NULL )
     {
-        if( strncmp(pszSchemaLocation, "http://", 7) != 0 &&
-            strncmp(pszSchemaLocation, "https://", 8) != 0 &&
+        if( !STARTS_WITH(pszSchemaLocation, "http://") &&
+            !STARTS_WITH(pszSchemaLocation, "https://") &&
             CPLIsFilenameRelative(pszSchemaLocation ) )
         {
             pszSchemaLocation = CPLFormFilename(
@@ -130,8 +130,8 @@ int GMLRegistryFeatureType::Parse(const char* pszRegistryFilename, CPLXMLNode* p
     }
     else if( pszGFSSchemaLocation != NULL )
     {
-        if( strncmp(pszGFSSchemaLocation, "http://", 7) != 0 &&
-            strncmp(pszGFSSchemaLocation, "https://", 8) != 0 &&
+        if( !STARTS_WITH(pszGFSSchemaLocation, "http://") &&
+            !STARTS_WITH(pszGFSSchemaLocation, "https://") &&
             CPLIsFilenameRelative(pszGFSSchemaLocation ) )
         {
             pszGFSSchemaLocation = CPLFormFilename(
@@ -142,7 +142,7 @@ int GMLRegistryFeatureType::Parse(const char* pszRegistryFilename, CPLXMLNode* p
 
     if ( pszElementValue != NULL )
     {
-        osElementValue = pszElementValue; 
+        osElementValue = pszElementValue;
     }
 
     return TRUE;

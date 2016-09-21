@@ -63,12 +63,12 @@ MetadataSet::~MetadataSet()
 /*                             Initialize()                             */
 /************************************************************************/
 
-void MetadataSet::Initialize( PCIDSKFile *file, const std::string& group, int id )
+void MetadataSet::Initialize( PCIDSKFile *fileIn, const std::string& groupIn, int idIn )
 
 {
-    this->file = file;
-    this->group = group;
-    this->id = id;
+    this->file = fileIn;
+    this->group = groupIn;
+    this->id = idIn;
 }
 
 /************************************************************************/
@@ -98,8 +98,8 @@ void MetadataSet::Load()
     }
 
     MetadataSegment *md_seg = dynamic_cast<MetadataSegment *>( seg );
-
-    md_seg->FetchGroupMetadata( group.c_str(), id, md_set );
+    if( md_seg )
+        md_seg->FetchGroupMetadata( group.c_str(), id, md_set );
     loaded = true;
 }
 
@@ -130,7 +130,7 @@ void MetadataSet::SetMetadataValue( const std::string& key, const std::string& v
 
     if( file == NULL )
     {
-        ThrowPCIDSKException( "Attempt to set metadata on an unassociated MetadataSet, likely an overview channel." );
+        return ThrowPCIDSKException( "Attempt to set metadata on an unassociated MetadataSet, likely an overview channel." );
     }
 
     md_set[key] = value;
@@ -146,8 +146,8 @@ void MetadataSet::SetMetadataValue( const std::string& key, const std::string& v
     }
 
     MetadataSegment *md_seg = dynamic_cast<MetadataSegment *>( seg );
-
-    md_seg->SetGroupMetadataValue( group.c_str(), id, key, value );
+    if( md_seg )
+        md_seg->SetGroupMetadataValue( group.c_str(), id, key, value );
 }
 
 /************************************************************************/

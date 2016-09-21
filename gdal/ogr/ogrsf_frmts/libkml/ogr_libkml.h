@@ -32,9 +32,7 @@
 
 #include "ogrsf_frmts.h"
 
-#include <kml/engine.h>
-#include <kml/dom.h>
-
+#include "libkml_headers.h"
 
 using kmldom::KmlFactory;
 using kmldom::KmlPtr;
@@ -94,7 +92,7 @@ class OGRLIBKMLLayer:public OGRLayer
 
     CPLString                 osListStyleType;
     CPLString                 osListStyleIconHref;
-    
+
     int                       m_bUpdateIsFolder;
 
   public:
@@ -122,7 +120,8 @@ class OGRLIBKMLLayer:public OGRLayer
     GIntBig                   GetFeatureCount ( int bForce = TRUE );
     OGRErr                    GetExtent ( OGREnvelope * psExtent,
                                           int bForce = TRUE );
-
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     //const char               *GetInfo ( const char * );
 
@@ -157,7 +156,7 @@ class OGRLIBKMLLayer:public OGRLayer
                                         const char* pszCameraAltitudeMode);
 
     static CPLString          LaunderFieldNames(CPLString osName);
-    
+
     void                      SetWriteRegion(double dfMinLodPixels,
                                              double dfMaxLodPixels,
                                              double dfMinFadeExtent,
@@ -197,11 +196,10 @@ class OGRLIBKMLDataSource:public OGRDataSource
     char                     *pszName;
 
     /***** layers *****/
-    
+
     OGRLIBKMLLayer          **papoLayers;
     int                       nLayers;
     int                       nAlloced;
-    
 
     int                       bUpdate;
     int                       bUpdated;
@@ -226,13 +224,13 @@ class OGRLIBKMLDataSource:public OGRDataSource
     /***** for dir *****/
 
     int                       m_isDir;
-    
+
     /***** the kml factory *****/
-    
+
     KmlFactory               *m_poKmlFactory;
-    
+
     /***** style table pointer *****/
-    
+
     void                      SetCommonOptions(ContainerPtr poKmlContainer,
                                                char** papszOptions);
 
@@ -267,25 +265,25 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
     void                      FlushCache (  );
     int                       TestCapability (const char * );
-    
+
     KmlFactory               *GetKmlFactory() { return m_poKmlFactory; };
-        
+
     const char               *GetStylePath() {return pszStylePath; };
     int                       ParseIntoStyleTable ( std::string * oKmlStyleKml,
                                                     const char *pszStylePath);
-        
+
     //KmzFile                  *GetKmz() { return m_poKmlKmzfile; };
-        
+
     int                       IsKml() {return m_isKml;};
     int                       IsKmz() {return m_isKmz;};
     int                       IsDir() {return m_isDir;};
-    
+
     void                      Updated() {bUpdated = TRUE;};
 
     int                       ParseLayers ( ContainerPtr poKmlContainer,
                                             OGRSpatialReference *poOgrSRS );
     SchemaPtr                 FindSchema ( const char *pszSchemaUrl);
-        
+
   private:
 
     /***** methods to write out various datasource types at destroy *****/
@@ -293,9 +291,9 @@ class OGRLIBKMLDataSource:public OGRDataSource
     void                      WriteKml();
     void                      WriteKmz();
     void                      WriteDir();
-    
+
     /***** methods to open various datasource types *****/
-        
+
     int                       OpenKmz ( const char *pszFilename,
                                         int bUpdate );
     int                       OpenKml ( const char *pszFilename,
@@ -304,7 +302,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
                                         int bUpdate );
 
     /***** methods to create various datasource types *****/
-    
+
     int                       CreateKml ( const char *pszFilename,
                                           char **papszOptions );
     int                       CreateKmz ( const char *pszFilename,
@@ -313,7 +311,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
                                           char **papszOptions );
 
     /***** methods to create layers on various datasource types *****/
-    
+
     OGRLIBKMLLayer           *CreateLayerKml ( const char *pszLayerName,
                                                OGRSpatialReference * poOgrSRS,
                                                OGRwkbGeometryType eGType,
@@ -322,19 +320,16 @@ class OGRLIBKMLDataSource:public OGRDataSource
                                                OGRSpatialReference * poOgrSRS,
                                                OGRwkbGeometryType eGType,
                                                char **papszOptions );
-        
+
     /***** methods to delete layers on various datasource types *****/
-    
+
     OGRErr                    DeleteLayerKml ( int );
     OGRErr                    DeleteLayerKmz ( int );
-    
+
     /***** methods to write a styletable to various datasource types *****/
 
     void                      SetStyleTable2Kml ( OGRStyleTable * poStyleTable );
     void                      SetStyleTable2Kmz ( OGRStyleTable * poStyleTable );
-    
-
-    
 
     OGRLIBKMLLayer           *AddLayer ( const char *pszLayerName,
                                          OGRSpatialReference * poSpatialRef,

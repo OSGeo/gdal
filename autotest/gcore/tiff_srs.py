@@ -81,6 +81,9 @@ class TestTiffSRS:
             print(sr)
             print(sr2)
             return 'fail'
+        else:
+            if self.expected_fail:
+                print('Succeeded but expected fail...')
 
         return 'success'
 
@@ -163,7 +166,7 @@ def tiff_srs_compd_cs():
 # Test reading a GeoTIFF with both StdParallel1 and ScaleAtNatOrigin defined (#5791)
 
 def tiff_srs_weird_mercator_2sp():
-    
+
     ds = gdal.Open('data/weird_mercator_2sp.tif')
     gdal.PushErrorHandler()
     wkt = ds.GetProjectionRef()
@@ -204,6 +207,188 @@ def tiff_srs_weird_mercator_2sp():
 
     return 'success'
 
+###############################################################################
+# Test reading ESRI WGS_1984_Web_Mercator_Auxiliary_Sphere
+
+def tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
+
+    ds = gdal.Open('data/WGS_1984_Web_Mercator_Auxiliary_Sphere.tif')
+    wkt = ds.GetProjectionRef()
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput(wkt)
+    wkt = sr.ExportToPrettyWkt()
+    ds = None
+
+    if wkt != """PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",
+    GEOGCS["GCS_WGS_1984",
+        DATUM["D_WGS_1984",
+            SPHEROID["WGS_1984",6378137.0,298.257223563]],
+        PRIMEM["Greenwich",0.0],
+        UNIT["Degree",0.0174532925199433]],
+    PROJECTION["Mercator_Auxiliary_Sphere"],
+    PARAMETER["False_Easting",0.0],
+    PARAMETER["False_Northing",0.0],
+    PARAMETER["Central_Meridian",0.0],
+    PARAMETER["Standard_Parallel_1",0.0],
+    PARAMETER["Auxiliary_Sphere_Type",0.0],
+    UNIT["Meter",1.0],
+    EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"]]""":
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test writing and reading various angular units
+
+def tiff_srs_angular_units():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
+    ds.SetProjection("""GEOGCS["WGS 84 (arc-second)",
+    DATUM["WGS_1984 (arc-second)",
+        SPHEROID["WGS 84",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["arc-second",4.848136811095361e-06]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt.find('UNIT["arc-second",4.848136811095361e-06]') < 0 and \
+       wkt.find('UNIT["arc-second",4.848136811095361e-006]') < 0 : # wine variant
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
+    ds.SetProjection("""GEOGCS["WGS 84 (arc-minute)",
+    DATUM["WGS_1984 (arc-minute)",
+        SPHEROID["WGS 84",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["arc-minute",0.0002908882086657216]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt.find('UNIT["arc-minute",0.0002908882086657216]') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
+    ds.SetProjection("""GEOGCS["WGS 84 (grad)",
+    DATUM["WGS_1984 (grad)",
+        SPHEROID["WGS 84",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["grad",0.01570796326794897]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt.find('UNIT["grad",0.01570796326794897]') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
+    ds.SetProjection("""GEOGCS["WGS 84 (gon)",
+    DATUM["WGS_1984 (gon)",
+        SPHEROID["WGS 84",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["gon",0.01570796326794897]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt.find('UNIT["gon",0.01570796326794897]') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
+    ds.SetProjection("""GEOGCS["WGS 84 (radian)",
+    DATUM["WGS_1984 (radian)",
+        SPHEROID["WGS 84",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["radian",1]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt.find('UNIT["radian",1]') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_angular_units.tif', 1, 1)
+    ds.SetProjection("""GEOGCS["WGS 84 (custom)",
+    DATUM["WGS_1984 (custom)",
+        SPHEROID["WGS 84",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["custom",1.23]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_srs_angular_units.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt.find('UNIT["custom",1.23]') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_srs_angular_units.tif')
+
+    return 'success'
+
+###############################################################################
+# Test writing and reading a unknown datum but with a known ellipsoid
+
+def tiff_custom_datum_known_ellipsoid():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_custom_datum_known_ellipsoid.tif', 1, 1)
+    ds.SetProjection("""GEOGCS["WGS 84 based",
+    DATUM["WGS_1984_based",
+        SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",1]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_custom_datum_known_ellipsoid.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt != 'GEOGCS["WGS 84 based",DATUM["WGS_1984_based",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_custom_datum_known_ellipsoid.tif')
+
+    return 'success'
+
+###############################################################################
+# Test reading a GeoTIFF file with only PCS set, but with a ProjLinearUnitsGeoKey
+# override to another unit (us-feet) ... (#6210)
+
+def tiff_srs_epsg_2853_with_us_feet():
+
+    old_val = gdal.GetConfigOption('GTIFF_IMPORT_FROM_EPSG')
+    gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', 'YES')
+    ds = gdal.Open('data/epsg_2853_with_us_feet.tif')
+    gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
+    wkt = ds.GetProjectionRef()
+    if wkt.find('PARAMETER["false_easting",11482916.66') < 0 or wkt.find('UNIT["us_survey_feet",0.3048006') < 0 or wkt.find('2853') >= 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', 'NO')
+    ds = gdal.Open('data/epsg_2853_with_us_feet.tif')
+    gdal.SetConfigOption('GTIFF_IMPORT_FROM_EPSG', old_val)
+    wkt = ds.GetProjectionRef()
+    if wkt.find('PARAMETER["false_easting",11482916.66') < 0 or wkt.find('UNIT["us_survey_feet",0.3048006') < 0 or wkt.find('2853') >= 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = []
 
@@ -215,8 +400,8 @@ tiff_srs_list = [ 2758, #tmerc
                   32661, #stere
                   3035, #laea
                   2062, #lcc 1SP
-                  [2065, True, True], #krovak
-                  [2066, False, True], #cass
+                  [2065, False, True], #krovak
+                  2066, #cass
                   2964, #aea
                   3410, #cea
                   3786, #eqc spherical, method=9823
@@ -238,6 +423,10 @@ tiff_srs_list = [ 2758, #tmerc
                   26720, # UTM NAD27 special case
                   32630, # UTM WGS84 north special case
                   32730, # UTM WGS84 south special case
+                  22700, # unknown datum 'Deir_ez_Zor'
+                  31491, # Germany Zone projection
+                  3857, # Web Mercator
+                  102113, # ESRI WGS_1984_Web_Mercator
 ]
 
 for item in tiff_srs_list:
@@ -268,7 +457,10 @@ for (title, proj4) in tiff_srs_list_proj4:
 gdaltest_list.append( tiff_srs_without_linear_units )
 gdaltest_list.append( tiff_srs_compd_cs )
 gdaltest_list.append( tiff_srs_weird_mercator_2sp )
-
+gdaltest_list.append( tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere )
+gdaltest_list.append( tiff_srs_angular_units )
+gdaltest_list.append( tiff_custom_datum_known_ellipsoid )
+gdaltest_list.append( tiff_srs_epsg_2853_with_us_feet )
 
 if __name__ == '__main__':
 

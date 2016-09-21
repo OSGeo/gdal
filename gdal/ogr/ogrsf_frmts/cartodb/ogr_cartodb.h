@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_CARTODB_H_INCLUDED
-#define _OGR_CARTODB_H_INCLUDED
+#ifndef OGR_CARTODB_H_INCLUDED
+#define OGR_CARTODB_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
@@ -49,8 +49,8 @@ class OGRCartoDBGeomFieldDefn: public OGRGeomFieldDefn
     public:
         int nSRID;
 
-        OGRCartoDBGeomFieldDefn(const char* pszName, OGRwkbGeometryType eType) :
-                OGRGeomFieldDefn(pszName, eType), nSRID(0)
+        OGRCartoDBGeomFieldDefn(const char* pszNameIn, OGRwkbGeometryType eType) :
+                OGRGeomFieldDefn(pszNameIn, eType), nSRID(0)
         {
         }
 };
@@ -66,14 +66,13 @@ protected:
     OGRCARTODBDataSource* poDS;
 
     OGRFeatureDefn      *poFeatureDefn;
-    OGRSpatialReference *poSRS;
     CPLString            osBaseSQL;
     CPLString            osFIDColName;
 
     int                  bEOF;
     int                  nFetchedObjects;
     int                  iNextInFetchedObjects;
-    int                  iNext;
+    GIntBig              iNext;
     json_object         *poCachedObj;
 
     virtual OGRFeature  *GetNextRawFeature();
@@ -93,7 +92,8 @@ protected:
 
     virtual OGRFeatureDefn *    GetLayerDefn();
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) = 0;
-    
+    virtual json_object*        FetchNewFeatures(GIntBig iNext);
+
     virtual const char*         GetFIDColumn() { return osFIDColName.c_str(); }
 
     virtual int                 TestCapability( const char * );
@@ -101,6 +101,12 @@ protected:
     int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("CARTODB_PAGE_SIZE", "500")); }
 };
 
+typedef enum
+{
+    INSERT_UNINIT,
+    INSERT_SINGLE_FEATURE,
+    INSERT_MULTIPLE_FEATURE
+} InsertState;
 
 /************************************************************************/
 /*                        OGRCARTODBTableLayer                          */
@@ -111,12 +117,18 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     CPLString           osName;
     CPLString           osQuery;
     CPLString           osWHERE;
+    CPLString           osSELECTWithoutWHERE;
 
-    int                 bInTransaction;
-    CPLString           osTransactionSQL;
+    int                 bLaunderColumnNames;
+
+    int                 bInDeferredInsert;
+    InsertState         eDeferredInsertState;
+    CPLString           osDeferredInsertSQL;
     GIntBig             nNextFID;
-    
-    int                 bDifferedCreation;
+
+    int                 bDeferredCreation;
+    int                 bCartoDBify;
+    int                 nMaxChunkSize;
 
     void                BuildWhere();
 
@@ -128,6 +140,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual const char*         GetName() { return osName.c_str(); }
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn);
+    virtual json_object*        FetchNewFeatures(GIntBig iNext);
 
     virtual GIntBig             GetFeatureCount( int bForce = TRUE );
     virtual OGRFeature         *GetFeature( GIntBig nFeatureId );
@@ -136,6 +149,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
+
+    virtual OGRErr		DeleteField( int iField );
 
     virtual OGRFeature  *GetNextRawFeature();
 
@@ -149,17 +164,19 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
-    
-    virtual OGRErr      StartTransaction();
-    virtual OGRErr      CommitTransaction();
-    virtual OGRErr      RollbackTransaction();
-    
-    void                SetDifferedCreation(OGRwkbGeometryType eGType,
+
+    void                SetLaunderFlag( int bFlag )
+                                { bLaunderColumnNames = bFlag; }
+    void                SetDeferredCreation( OGRwkbGeometryType eGType,
                                             OGRSpatialReference* poSRS,
-                                            int bGeomNullable);
-    OGRErr              RunDifferedCreationIfNecessary();
-    int                 GetDifferedCreation() const { return bDifferedCreation; }
-    void                CancelDifferedCreation() { bDifferedCreation = FALSE; }
+                                            int bGeomNullable,
+                                            int bCartoDBify);
+    OGRErr              RunDeferredCreationIfNecessary();
+    int                 GetDeferredCreation() const { return bDeferredCreation; }
+    void                CancelDeferredCreation() { bDeferredCreation = FALSE; bCartoDBify = FALSE; }
+
+    OGRErr              FlushDeferredInsert(bool bReset = true);
+    void                RunDeferredCartoDBfy();
 };
 
 /************************************************************************/
@@ -179,7 +196,7 @@ class OGRCARTODBResultLayer : public OGRCARTODBLayer
 
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object* poObjIn);
     virtual OGRFeature  *GetNextRawFeature();
-    
+
     int                 IsOK();
 };
 
@@ -196,20 +213,27 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                 nLayers;
 
     int                 bReadWrite;
+    int                 bBatchInsert;
 
     int                 bUseHTTPS;
 
     CPLString           osAPIKey;
 
-    int                 bMustCleanPersistant;
-    
+    int                 bMustCleanPersistent;
+
     CPLString           osCurrentSchema;
+
+    int                 bHasOGRMetadataFunction;
+
+    int                 nPostGISMajor;
+    int                 nPostGISMinor;
 
   public:
                         OGRCARTODBDataSource();
                         ~OGRCARTODBDataSource();
 
     int                 Open( const char * pszFilename,
+                              char** papszOpenOptions,
                               int bUpdate );
 
     virtual const char* GetName() { return pszName; }
@@ -233,29 +257,23 @@ class OGRCARTODBDataSource : public OGRDataSource
 
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
-    char**                      AddHTTPOptions(char** papszOptions = NULL);
+    int                         DoBatchInsert() const { return bBatchInsert; }
+    char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
     int                         FetchSRSId( OGRSpatialReference * poSRS );
 
     int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
+    int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
+    void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
+
+    OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
+                                                    OGRGeometry *poSpatialFilter = NULL,
+                                                    const char *pszDialect = NULL,
+                                                    int bRunDeferredActions = FALSE );
+
+    int                         GetPostGISMajor() const { return nPostGISMajor; }
+    int                         GetPostGISMinor() const { return nPostGISMinor; }
 };
 
-/************************************************************************/
-/*                           OGRCARTODBDriver                           */
-/************************************************************************/
-
-class OGRCARTODBDriver : public OGRSFDriver
-{
-  public:
-                ~OGRCARTODBDriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual OGRDataSource*      CreateDataSource( const char * pszName,
-                                                  char ** /* papszOptions */ );
-
-    virtual int                 TestCapability( const char * );
-};
-
-#endif /* ndef _OGR_CARTODB_H_INCLUDED */
+#endif /* ndef OGR_CARTODB_H_INCLUDED */

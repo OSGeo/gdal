@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GIFABSTRACTDATASET_H_INCLUDED
-#define _GIFABSTRACTDATASET_H_INCLUDED
+#ifndef GIFABSTRACTDATASET_H_INCLUDED
+#define GIFABSTRACTDATASET_H_INCLUDED
 
 #include "gdal_pam.h"
 
@@ -61,6 +61,8 @@ class GIFAbstractDataset : public GDALPamDataset
     int         bHasReadXMPMetadata;
     void        CollectXMPMetadata();
 
+    CPLString   osWldFilename;
+
     void        DetectGeoreferencing( GDALOpenInfo * poOpenInfo );
 
   public:
@@ -76,13 +78,16 @@ class GIFAbstractDataset : public GDALPamDataset
     virtual char      **GetMetadataDomainList();
     virtual char  **GetMetadata( const char * pszDomain = "" );
 
+    virtual char **GetFileList(void);
+
     static int          Identify( GDALOpenInfo * );
 
     static GifFileType* myDGifOpen( void *userPtr, InputFunc readFunc );
     static int          myDGifCloseFile( GifFileType *hGifFile );
     static int          myEGifCloseFile( GifFileType *hGifFile );
-    static int          ReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer, 
+    static int          ReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer,
                                   int nBytesToRead );
+    static GifRecordType FindFirstImage( GifFileType* hGifFile );
 };
 
 /************************************************************************/
@@ -97,14 +102,14 @@ class GIFAbstractRasterBand : public GDALPamRasterBand
     SavedImage  *psImage;
 
     int         *panInterlaceMap;
-    
+
     GDALColorTable *poColorTable;
 
     int         nTransparentColor;
 
   public:
 
-                   GIFAbstractRasterBand(GIFAbstractDataset *poDS, int nBand, 
+                   GIFAbstractRasterBand(GIFAbstractDataset *poDS, int nBand,
                                          SavedImage *psSavedImage, int nBackground,
                                          int bAdvertizeInterlacedMDI );
     virtual       ~GIFAbstractRasterBand();

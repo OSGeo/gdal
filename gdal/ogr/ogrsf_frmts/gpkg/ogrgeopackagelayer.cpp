@@ -30,21 +30,23 @@
 
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
+#include "ogr_p.h"
 
 /************************************************************************/
 /*                      OGRGeoPackageLayer()                            */
 /************************************************************************/
 
-OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) : m_poDS(poDS)
+OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) :
+    m_poDS(poDS),
+    m_poFeatureDefn(NULL),
+    iNextShapeId(0),
+    m_poQueryStatement(NULL),
+    bDoStep(TRUE),
+    m_pszFidColumn(NULL),
+    iFIDCol(-1),
+    iGeomCol(-1),
+    panFieldOrdinals(NULL)
 {
-    m_poFeatureDefn = NULL;
-    iNextShapeId = 0;
-    m_poQueryStatement = NULL;
-    bDoStep = TRUE;
-    m_pszFidColumn = NULL;
-    iFIDCol = -1;
-    iGeomCol = -1;
-    panFieldOrdinals = NULL;
 }
 
 /************************************************************************/
@@ -99,7 +101,7 @@ void OGRGeoPackageLayer::ClearStatement()
 OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    for( ; true; )
     {
         OGRFeature      *poFeature;
 
@@ -161,7 +163,6 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
-    int         iField;
     OGRFeature *poFeature = new OGRFeature( m_poFeatureDefn );
 
 /* -------------------------------------------------------------------- */
@@ -191,22 +192,27 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, poSrs);
             if ( ! poGeom )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
+                // Try also spatialite geometry blobs
+                if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
+                                                              &poGeom ) != OGRERR_NONE )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
+                }
             }
             poFeature->SetGeometryDirectly( poGeom );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      set the fields.                                                 */
 /* -------------------------------------------------------------------- */
-    for( iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn( iField );
         if ( poFieldDefn->IsIgnored() )
             continue;
 
-        int iRawField = panFieldOrdinals[iField];
+        const int iRawField = panFieldOrdinals[iField];
 
         if( sqlite3_column_type( hStmt, iRawField ) == SQLITE_NULL )
             continue;
@@ -214,17 +220,17 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         switch( poFieldDefn->GetType() )
         {
             case OFTInteger:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_int( hStmt, iRawField ) );
                 break;
 
             case OFTInteger64:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_int64( hStmt, iRawField ) );
                 break;
 
             case OFTReal:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                     sqlite3_column_double( hStmt, iRawField ) );
                 break;
 
@@ -249,17 +255,14 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             case OFTDateTime:
             {
                 const char* pszTxt = (const char*)sqlite3_column_text( hStmt, iRawField );
-                int nYear, nMonth, nDay, nHour, nMinute;
-                float fSecond;
-                if( sscanf(pszTxt, "%d-%d-%dT%d:%d:%fZ", &nYear, &nMonth, &nDay,
-                                            &nHour, &nMinute, &fSecond) == 6 )
-                    poFeature->SetField(iField, nYear, nMonth, nDay,
-                                        nHour, nMinute, (int)(fSecond + 0.5), 0);
+                OGRField sField;
+                if( OGRParseXMLDateTime(pszTxt, &sField) )
+                    poFeature->SetField(iField, &sField);
                 break;
             }
 
             case OFTString:
-                poFeature->SetField( iField, 
+                poFeature->SetField( iField,
                         (const char *) sqlite3_column_text( hStmt, iRawField ) );
                 break;
 
@@ -290,7 +293,7 @@ const char* OGRGeoPackageLayer::GetFIDColumn()
 int OGRGeoPackageLayer::TestCapability ( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCIgnoreFields) )
-        return TRUE; 
+        return TRUE;
     else if ( EQUAL(pszCap, OLCStringsAsUTF8) )
         return m_poDS->GetUTF8();
     else
@@ -317,8 +320,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
-    int iCol;
-    for( iCol = 0; iCol < nRawColumns; iCol++ )
+    for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
         OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
                                 OFTString );
@@ -343,19 +345,28 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if( EQUAL(oField.GetNameRef(),"_rowid_") )
             continue;
 
+        // this will avoid the old geom field to appear when running something
+        // like "select st_buffer(geom,5) as geom, * from my_layer"
+        if( m_poFeatureDefn->GetGeomFieldCount() &&
+            EQUAL(oField.GetNameRef(), m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) )
+            continue;
+
         int nColType = sqlite3_column_type( hStmt, iCol );
         const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
 
         // Recognize a geometry column from trying to build the geometry
-        // Usefull for OGRSQLiteSelectLayer
+        // Useful for OGRSQLiteSelectLayer
         if( nColType == SQLITE_BLOB && m_poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );
-            if( nBytes > 4 )
+            if( nBytes >= 8 )
             {
                 const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
                 GPkgHeader oHeader;
-                if( GPkgHeaderFromWKB(pabyGpkg, &oHeader) == OGRERR_NONE )
+                OGRGeometry* poGeom = NULL;
+                int nSRID;
+                if( GPkgHeaderFromWKB(pabyGpkg, nBytes, &oHeader) == OGRERR_NONE &&
+                    (poGeom = GPkgGeometryToOGR(pabyGpkg, nBytes, NULL)) != NULL )
                 {
                     OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
 
@@ -370,10 +381,11 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                     OGRwkbGeometryType eGeomType = wkbUnknown;
                     if( pszDeclType != NULL )
                     {
-                        eGeomType = GPkgGeometryTypeToWKB(pszDeclType, (oHeader.iDims == 3));
-                        if( eGeomType != wkbNone )
-                            oGeomField.SetType( eGeomType );
+                        eGeomType = poGeom->getGeometryType();
+                        oGeomField.SetType( eGeomType );
                     }
+                    delete poGeom;
+                    poGeom = NULL;
 
 #ifdef SQLITE_HAS_COLUMN_METADATA
                     const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
@@ -392,18 +404,43 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                     iGeomCol = iCol;
                     continue;
                 }
+
+                // Try also spatialite geometry blobs
+                else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, nBytes,
+                                                                   &poGeom, &nSRID ) == OGRERR_NONE )
+                {
+                    OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
+
+                    /* Read the SRS */
+                    OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(nSRID);
+                    if ( poSRS )
+                    {
+                        oGeomField.SetSpatialRef(poSRS);
+                        poSRS->Dereference();
+                    }
+                    delete poGeom;
+                    poGeom = NULL;
+
+                    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+                    iGeomCol = iCol;
+                    continue;
+                }
+                // Unlikely to have poGeom be valid, but just in case, check
+                // if we need to delete it.
+                if (poGeom != NULL)
+                    delete poGeom;
             }
         }
 
         switch( nColType )
         {
           case SQLITE_INTEGER:
-            if( CSLTestBoolean(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
+            if( CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
                 oField.SetType( OFTInteger64 );
             else
             {
                 GIntBig nVal = sqlite3_column_int64(hStmt, iCol);
-                if( (GIntBig)(int)nVal == nVal )
+                if( CPL_INT64_FITS_ON_INT32(nVal) )
                     oField.SetType( OFTInteger );
                 else
                     oField.SetType( OFTInteger64 );

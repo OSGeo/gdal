@@ -3,7 +3,7 @@
  *
  * Project:  DTED Translator
  * Purpose:  Implementation of DTEDCreate() portion of DTED API.
- * Author:   Frank Warmerdam, warmerdamm@pobox.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 /*                           DTEDFormatDMS()                            */
 /************************************************************************/
 
-static void DTEDFormatDMS( unsigned char *achField, double dfAngle, 
+static void DTEDFormatDMS( unsigned char *achField, double dfAngle,
                            const char *pszLatLong, const char *pszFormat )
 
 {
@@ -48,12 +48,12 @@ static void DTEDFormatDMS( unsigned char *achField, double dfAngle,
     char        szWork[128];
     int         nDegrees, nMinutes, nSeconds;
     double      dfRemainder;
-    
+
     if( pszFormat == NULL )
         pszFormat = "%03d%02d%02d%c";
 
     assert( EQUAL(pszLatLong,"LAT") || EQUAL(pszLatLong,"LONG") );
-    
+
     if( EQUAL(pszLatLong,"LAT") )
     {
         if( dfAngle < 0.0 )
@@ -77,7 +77,7 @@ static void DTEDFormatDMS( unsigned char *achField, double dfAngle,
     dfRemainder = dfRemainder - nMinutes / 60.0;
     nSeconds = (int) floor(dfRemainder * 3600.0 + 0.5);
 
-    sprintf( szWork, pszFormat,
+    snprintf( szWork, sizeof(szWork),pszFormat,
              nDegrees, nMinutes, nSeconds, chHemisphere );
 
     strncpy( (char *) achField, szWork, strlen(szWork) );
@@ -94,9 +94,11 @@ static void DTEDFormat( unsigned char *pszTarget, const char *pszFormat, ... )
 {
     va_list args;
     char    szWork[512];
+    // Quiet coverity by staring off nul terminated.
+    szWork[0] = '\0';
 
     va_start(args, pszFormat);
-    vsprintf( szWork, pszFormat, args );
+    CPLvsnprintf( szWork, sizeof(szWork), pszFormat, args );
     va_end(args);
 
     strncpy( (char *) pszTarget, szWork, strlen(szWork) );
@@ -106,7 +108,7 @@ static void DTEDFormat( unsigned char *pszTarget, const char *pszFormat, ... )
 /*                             DTEDCreate()                             */
 /************************************************************************/
 
-const char *DTEDCreate( const char *pszFilename, int nLevel, 
+const char *DTEDCreate( const char *pszFilename, int nLevel,
                         int nLLOriginLat, int nLLOriginLong )
 
 {
@@ -127,7 +129,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     {
         nXSize = 1201;
         nYSize = 1201;
-    } 
+    }
     else if( nLevel == 2 )
     {
         nXSize = 3601;
@@ -135,7 +137,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     }
     else
     {
-        sprintf( szError, "Illegal DTED Level value %d, only 0-2 allowed.",
+        snprintf( szError, sizeof(szError), "Illegal DTED Level value %d, only 0-2 allowed.",
                  nLevel );
         return szError;
     }
@@ -156,7 +158,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
 
     if( fp == NULL )
     {
-        sprintf( szError, "Unable to create file `%s'.", pszFilename );
+        snprintf( szError, sizeof(szError), "Unable to create file `%s'.", pszFilename );
         return szError;
     }
 
@@ -166,7 +168,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     memset( achRecord, ' ', DTED_UHL_SIZE );
 
     DTEDFormat( achRecord + 0, "UHL1" );
-    
+
     DTEDFormatDMS( achRecord + 4, nLLOriginLong, "LONG", NULL );
     DTEDFormatDMS( achRecord + 12, nLLOriginLat, "LAT", NULL );
 
@@ -204,9 +206,9 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 144, "WGS84" );
 
     /* origin */
-    DTEDFormatDMS( achRecord + 185, nLLOriginLat, "LAT", 
+    DTEDFormatDMS( achRecord + 185, nLLOriginLat, "LAT",
                    "%02d%02d%02d.0%c" );
-    DTEDFormatDMS( achRecord + 194, nLLOriginLong, "LONG", 
+    DTEDFormatDMS( achRecord + 194, nLLOriginLong, "LONG",
                    "%03d%02d%02d.0%c" );
 
     /* SW */
@@ -251,7 +253,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 15, "NA" );
 
     DTEDFormat( achRecord + 55, "00" );
-    
+
     if( VSIFWriteL( achRecord, DTED_ACC_SIZE, 1, fp ) != 1 )
         return "ACC record write failed.";
 
@@ -262,13 +264,13 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     memset( achRecord + 8, 0xff, nYSize*2 );
 
     achRecord[0] = 0252;
-    
+
     for( iProfile = 0; iProfile < nXSize; iProfile++ )
     {
         achRecord[1] = 0;
         achRecord[2] = (GByte) (iProfile / 256);
         achRecord[3] = (GByte) (iProfile % 256);
-        
+
         achRecord[4] = (GByte) (iProfile / 256);
         achRecord[5] = (GByte) (iProfile % 256);
 
@@ -276,7 +278,8 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
             return "Data record write failed.";
     }
 
-    VSIFCloseL( fp );
+    if( VSIFCloseL( fp ) != 0 )
+        return "I/O error";
 
     return NULL;
 }

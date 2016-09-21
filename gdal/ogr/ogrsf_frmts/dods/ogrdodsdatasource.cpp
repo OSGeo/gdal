@@ -37,15 +37,14 @@ CPL_CVSID("$Id$");
 /*                         OGRDODSDataSource()                          */
 /************************************************************************/
 
-OGRDODSDataSource::OGRDODSDataSource()
-
+OGRDODSDataSource::OGRDODSDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    poConnection(NULL),
+    poBTF(new BaseTypeFactory())
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    poConnection = NULL;
-
-    poBTF = new BaseTypeFactory();
+    // TODO: This implies that the order in the class declaration is wrong.
     poDDS = new DDS( poBTF );
 }
 
@@ -56,13 +55,11 @@ OGRDODSDataSource::OGRDODSDataSource()
 OGRDODSDataSource::~OGRDODSDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     if( poConnection != NULL )
@@ -79,7 +76,7 @@ OGRDODSDataSource::~OGRDODSDataSource()
 int OGRDODSDataSource::Open( const char * pszNewName )
 
 {
-    CPLAssert( nLayers == 0 );					     
+    CPLAssert( nLayers == 0 );
 
     pszName = CPLStrdup( pszNewName );
 
@@ -96,7 +93,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         oConstraints = pszFound;
         *pszFound = '\0';
     }
-        
+
     pszFound = strstr(pszWrkURL,"?");
     if( pszFound )
     {
@@ -116,7 +113,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         pszWrkURL[nLen-5] = '\0';
     else if( strcmp(pszWrkURL+nLen-5,".html") == 0 )
         pszWrkURL[nLen-5] = '\0';
-        
+
     oBaseURL = pszWrkURL;
     CPLFree( pszWrkURL );
 
@@ -125,12 +122,12 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 /*      the putenv() if there isn't already a DODS_CONF in the          */
 /*      environment.                                                    */
 /* -------------------------------------------------------------------- */
-    if( CPLGetConfigOption( "DODS_CONF", NULL ) != NULL 
+    if( CPLGetConfigOption( "DODS_CONF", NULL ) != NULL
         && getenv("DODS_CONF") == NULL )
     {
         static char szDODS_CONF[1000];
 
-        sprintf( szDODS_CONF, "DODS_CONF=%.980s", 
+        sprintf( szDODS_CONF, "DODS_CONF=%.980s",
                  CPLGetConfigOption( "DODS_CONF", "" ) );
         putenv( szDODS_CONF );
     }
@@ -149,14 +146,14 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
     string version;
 
-    try 
+    try
     {
         poConnection = new AISConnect( oBaseURL );
         version = poConnection->request_version();
-    } 
-    catch (Error &e) 
+    }
+    catch (Error &e)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, 
+        CPLError(CE_Failure, CPLE_OpenFailed,
                  "%s", e.get_error_message().c_str() );
         return FALSE;
     }
@@ -167,7 +164,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
     if (version.empty() || version.find("/3.") == string::npos)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "I connected to the URL but could not get a DAP 3.x version string\n"
                   "from the server.  I will continue to connect but access may fail.");
     }
@@ -180,10 +177,10 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         poConnection->request_das( oDAS );
         poConnection->request_dds( *poDDS, oProjection + oConstraints );
     }
-    catch (Error &e) 
+    catch (Error &e)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error fetching DAS or DDS:\n%s", 
+                 "Error fetching DAS or DDS:\n%s",
                  e.get_error_message().c_str() );
         return FALSE;
     }
@@ -207,36 +204,36 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
     for( dv_i = poTable->attr_begin(); dv_i != poTable->attr_end(); dv_i++ )
     {
-        if( EQUALN(poTable->get_name(dv_i).c_str(),"ogr_layer_info",14) 
+        if( STARTS_WITH_CI(poTable->get_name(dv_i).c_str(), "ogr_layer_info")
             && poTable->is_container( dv_i ) )
         {
             AttrTable *poAttr = poTable->get_attr_table( dv_i );
             string target_container = poAttr->get_attr( "target_container" );
             BaseType *poVar = poDDS->var( target_container.c_str() );
-            
+
             if( poVar == NULL )
             {
-                CPLError( CE_Warning, CPLE_AppDefined, 
+                CPLError( CE_Warning, CPLE_AppDefined,
                           "Unable to find variable '%s' named in\n"
-                          "ogr_layer_info.target_container, skipping.", 
+                          "ogr_layer_info.target_container, skipping.",
                           target_container.c_str() );
                 continue;
             }
 
             if( poVar->type() == dods_sequence_c )
-                AddLayer( 
+                AddLayer(
                     new OGRDODSSequenceLayer(this,
                                              target_container.c_str(),
                                              poAttr) );
-            else if( poVar->type() == dods_grid_c 
+            else if( poVar->type() == dods_grid_c
                      || poVar->type() == dods_array_c )
                 AddLayer( new OGRDODSGridLayer(this,target_container.c_str(),
                                                poAttr) );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
-/*      Walk through the DODS variables looking for easily targetted    */
+/*      Walk through the DODS variables looking for easily targeted     */
 /*      ones.  Eventually this will need to be driven by the AIS info.  */
 /* -------------------------------------------------------------------- */
     if( nLayers == 0 )
@@ -246,11 +243,11 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         for( v_i = poDDS->var_begin(); v_i != poDDS->var_end(); v_i++ )
         {
             BaseType *poVar = *v_i;
-            
+
             if( poVar->type() == dods_sequence_c )
                 AddLayer( new OGRDODSSequenceLayer(this,poVar->name().c_str(),
                                                    NULL) );
-            else if( poVar->type() == dods_grid_c 
+            else if( poVar->type() == dods_grid_c
                      || poVar->type() == dods_array_c )
                 AddLayer( new OGRDODSGridLayer(this,poVar->name().c_str(),
                                                NULL) );

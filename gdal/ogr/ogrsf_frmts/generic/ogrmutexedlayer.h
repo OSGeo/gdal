@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRMUTEXEDLAYER_H_INCLUDED
-#define _OGRMUTEXEDLAYER_H_INCLUDED
+#ifndef OGRMUTEXEDLAYER_H_INCLUDED
+#define OGRMUTEXEDLAYER_H_INCLUDED
 
 #include "ogrlayerdecorator.h"
 #include "cpl_multiproc.h"
@@ -37,7 +37,7 @@
  *
  *  If the passed mutex is NULL, then no locking will be done.
  *
- *  Note that the constructors and destructors are not explictely protected
+ *  Note that the constructors and destructors are not explicitly protected
  *  by the mutex.
  */
 class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
@@ -106,6 +106,15 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual const char *GetGeometryColumn();
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
+
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" );
 };
 
-#endif // _OGRMUTEXEDLAYER_H_INCLUDED
+#endif // OGRMUTEXEDLAYER_H_INCLUDED

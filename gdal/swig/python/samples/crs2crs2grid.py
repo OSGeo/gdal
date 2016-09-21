@@ -34,7 +34,8 @@ import os
 import numpy
 import sys
 
-from osgeo import gdal, gdal_array
+from osgeo import gdal
+from osgeo import gdal_array
 
 # Input looks like this:
 """
@@ -140,7 +141,6 @@ def write_grid(grid,out_filename):
             fd_out.write('%f %f 0 "PNT_%d_%d"\n' % (grid[1,j,i],grid[0,j,i],i,j))
     fd_out.close()
 
-    
 ##############################################################################
 # Write the resulting grid out in GeoTIFF format.
 def write_gdal_grid(filename, grid, griddef ):
@@ -161,7 +161,7 @@ def write_control( control_fn, out_grid_fn, in_grid_fn,
                    dst_crs_id, dst_crs_date ):
 
     # start_date, end_date should be something like "2011.0"
-    
+
     control_template = """
 4
 %s
@@ -178,7 +178,7 @@ def write_control( control_fn, out_grid_fn, in_grid_fn,
 """
 
     control_filled = control_template % ( out_grid_fn,
-                                          src_crs_id, 
+                                          src_crs_id,
                                           dst_crs_id,
                                           src_crs_date,
                                           dst_crs_date,
@@ -208,57 +208,57 @@ eg.
         print("""
 The output file will be in CTable2 format suitable for use with PROJ.4
 +nadgrids= directive.
- 
+
 Format dates like 2002.0 (for the start of 2002)
 
 CRS Ids
 -------
-  1...NAD_83(2011) (North America tectonic plate fixed) 
-  29...NAD_83(CORS96)  (NAD_83(2011) will be used) 
-  30...NAD_83(2007)    (NAD_83(2011) will be used) 
-  2...NAD_83(PA11) (Pacific tectonic plate fixed) 
-  31...NAD_83(PACP00)  (NAD 83(PA11) will be used) 
-  3...NAD_83(MA11) (Mariana tectonic plate fixed) 
-  32...NAD_83(MARP00)  (NAD_83(MA11) will be used) 
-                                                   
-  4...WGS_72                             16...ITRF92 
-  5...WGS_84(transit) = NAD_83(2011)     17...ITRF93 
-  6...WGS_84(G730) = ITRF92              18...ITRF94 = ITRF96 
-  7...WGS_84(G873) = ITRF96              19...ITRF96 
-  8...WGS_84(G1150) = ITRF2000           20...ITRF97 
-  9...PNEOS_90 = ITRF90                  21...IGS97 = ITRF97 
- 10...NEOS_90 = ITRF90                   22...ITRF2000 
- 11...SIO/MIT_92 = ITRF91                23...IGS00 = ITRF2000 
- 12...ITRF88                             24...IGb00 = ITRF2000 
- 13...ITRF89                             25...ITRF2005 
- 14...ITRF90                             26...IGS05 = ITRF2005 
- 15...ITRF91                             27...ITRF2008 
-                                         28...IGS08 = ITRF2008 
+  1...NAD_83(2011) (North America tectonic plate fixed)
+  29...NAD_83(CORS96)  (NAD_83(2011) will be used)
+  30...NAD_83(2007)    (NAD_83(2011) will be used)
+  2...NAD_83(PA11) (Pacific tectonic plate fixed)
+  31...NAD_83(PACP00)  (NAD 83(PA11) will be used)
+  3...NAD_83(MA11) (Mariana tectonic plate fixed)
+  32...NAD_83(MARP00)  (NAD_83(MA11) will be used)
+
+  4...WGS_72                             16...ITRF92
+  5...WGS_84(transit) = NAD_83(2011)     17...ITRF93
+  6...WGS_84(G730) = ITRF92              18...ITRF94 = ITRF96
+  7...WGS_84(G873) = ITRF96              19...ITRF96
+  8...WGS_84(G1150) = ITRF2000           20...ITRF97
+  9...PNEOS_90 = ITRF90                  21...IGS97 = ITRF97
+ 10...NEOS_90 = ITRF90                   22...ITRF2000
+ 11...SIO/MIT_92 = ITRF91                23...IGS00 = ITRF2000
+ 12...ITRF88                             24...IGb00 = ITRF2000
+ 13...ITRF89                             25...ITRF2005
+ 14...ITRF90                             26...IGS05 = ITRF2005
+ 15...ITRF91                             27...ITRF2008
+                                         28...IGS08 = ITRF2008
 """)
 
     sys.exit(1)
-    
+
 #############################################################################
 # Main
 
 if __name__ == '__main__':
 
     # Default GDAL argument parsing.
-    
+
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
     if argv is None:
         sys.exit( 0 )
 
     if len(argv) == 1:
         Usage(brief=0)
-        
+
     # Script argument defaults
     src_crs_id = None
     src_crs_date = None
     dst_crs_id = None
     dst_crs_date = None
 
-    # Decent representation of continental US 
+    # Decent representation of continental US
     griddef = (-127.0, 50.0, -66.0, 25.0, 611, 251 )
 
     htdp_path = 'htdp'
@@ -321,19 +321,19 @@ if __name__ == '__main__':
         i = i + 1
         # next argument
 
-
     if output_grid_name is None:
         print('Missing output grid name (-o)')
         Usage()
 
     if dst_crs_date is None:
-        print('Source and Destination CRS Ids and Dates are manditory, not all provided.')
+        print('Source and Destination CRS Ids and Dates are mandatory, '
+              'not all provided.')
         Usage()
 
     # Do a bit of validation of parameters.
     if src_crs_id < 1 or src_crs_id > 32 \
        or dst_crs_id < 1 or dst_crs_id > 32:
-        print('Invalid source or destination CRS Id %d and %d.' \
+        print('Invalid source or destination CRS Id %d and %d.'
               % (src_crs_id, dst_crs_id))
         Usage(brief=0)
 

@@ -3,8 +3,8 @@
  *
  * Project:  VSI Virtual File System
  * Purpose:  Declarations for classes related to the virtual filesystem.
- *           These would only be normally required by applications implmenting
- *           their own virtual file system classes which should be rare.  
+ *           These would only be normally required by applications implementing
+ *           their own virtual file system classes which should be rare.
  *           The class interface may be fragile through versions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -35,14 +35,9 @@
 #define CPL_VSI_VIRTUAL_H_INCLUDED
 
 #include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
-
-#if defined(WIN32CE)
-#  include "cpl_wince.h"
-#  include <wce_errno.h>
-#  pragma warning(disable:4786) /* Remove annoying warnings in eVC++ and VC++ 6.0 */
-#endif
 
 #include <map>
 #include <vector>
@@ -52,7 +47,7 @@
 /*                           VSIVirtualHandle                           */
 /************************************************************************/
 
-class CPL_DLL VSIVirtualHandle { 
+class CPL_DLL VSIVirtualHandle {
   public:
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) = 0;
     virtual vsi_l_offset Tell() = 0;
@@ -77,28 +72,35 @@ public:
 
     virtual ~VSIFilesystemHandler() {}
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
-                                    const char *pszAccess) = 0;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess );
+
+    virtual VSIVirtualHandle *Open( const char *pszFilename,
+                                    const char *pszAccess,
+                                    bool bSetError ) = 0;
     virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
     virtual int Unlink( const char *pszFilename )
                       { (void) pszFilename; errno=ENOENT; return -1; }
-    virtual int Mkdir( const char *pszDirname, long nMode ) 
+    virtual int Mkdir( const char *pszDirname, long nMode )
                       {(void)pszDirname; (void)nMode; errno=ENOENT; return -1;}
-    virtual int Rmdir( const char *pszDirname ) 
+    virtual int Rmdir( const char *pszDirname )
                       { (void) pszDirname; errno=ENOENT; return -1; }
-    virtual char **ReadDir( const char *pszDirname ) 
+    virtual char **ReadDir( const char *pszDirname )
                       { (void) pszDirname; return NULL; }
+    virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ )
+                      { return ReadDir(pszDirname); }
     virtual int Rename( const char *oldpath, const char *newpath )
                       { (void) oldpath; (void)newpath; errno=ENOENT; return -1; }
     virtual int IsCaseSensitive( const char* pszFilename )
                       { (void) pszFilename; return TRUE; }
+    virtual GIntBig GetDiskFreeSpace( const char* /* pszDirname */ ) { return -1; }
 };
 
 /************************************************************************/
 /*                            VSIFileManager                            */
 /************************************************************************/
 
-class CPL_DLL VSIFileManager 
+class CPL_DLL VSIFileManager
 {
 private:
     VSIFilesystemHandler *poDefaultHandler;
@@ -112,7 +114,7 @@ public:
     ~VSIFileManager();
 
     static VSIFilesystemHandler *GetHandler( const char * );
-    static void InstallHandler( const std::string& osPrefix, 
+    static void InstallHandler( const std::string& osPrefix,
                                 VSIFilesystemHandler * );
     /* RemoveHandler is never defined. */
     /* static void RemoveHandler( const std::string& osPrefix ); */
@@ -140,11 +142,17 @@ typedef struct
     GIntBig       nModifiedTime;
 } VSIArchiveEntry;
 
-typedef struct
+class VSIArchiveContent
 {
+public:
+    time_t       mTime;
+    vsi_l_offset nFileSize;
     int nEntries;
     VSIArchiveEntry* entries;
-} VSIArchiveContent;
+
+    VSIArchiveContent() : mTime(0), nFileSize(0), nEntries(0), entries(NULL) {}
+    ~VSIArchiveContent();
+};
 
 class VSIArchiveReader
 {
@@ -160,11 +168,11 @@ class VSIArchiveReader
         virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset) = 0;
 };
 
-class VSIArchiveFilesystemHandler : public VSIFilesystemHandler 
+class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 {
 protected:
     CPLMutex* hMutex;
-    /* We use a cache that contains the list of files containes in a VSIArchive file as */
+    /* We use a cache that contains the list of files contained in a VSIArchive file as */
     /* unarchive.c is quite inefficient in listing them. This speeds up access to VSIArchive files */
     /* containing ~1000 files like a CADRG product */
     std::map<CPLString,VSIArchiveContent*>   oFileList;
@@ -182,7 +190,7 @@ public:
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDir( const char *pszDirname );
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
 
     virtual const VSIArchiveContent* GetContentOfArchive(const char* archiveFilename, VSIArchiveReader* poReader = NULL);
     virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive, int bCheckMainFileExists);
@@ -193,8 +201,8 @@ public:
 VSIVirtualHandle CPL_DLL *VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
 VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                                                 const GByte* pabyBeginningContent,
-                                                vsi_l_offset nSheatFileSize);
-VSIVirtualHandle* VSICreateCachedFile( VSIVirtualHandle* poBaseHandle, size_t nChunkSize = 32768, size_t nCacheSize = 0 );
+                                                vsi_l_offset nCheatFileSize);
+VSIVirtualHandle CPL_DLL *VSICreateCachedFile( VSIVirtualHandle* poBaseHandle, size_t nChunkSize = 32768, size_t nCacheSize = 0 );
 VSIVirtualHandle CPL_DLL *VSICreateGZipWritable( VSIVirtualHandle* poBaseHandle, int bRegularZLibIn, int bAutoCloseBaseHandle );
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */

@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  GDALJP2Box Implementation - Low level JP2 box reader.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdaljp2metadata.h"
 #include "cpl_string.h"
+#include "gdaljp2metadata.h"
 
 CPL_CVSID("$Id$");
 
@@ -37,16 +37,14 @@ CPL_CVSID("$Id$");
 /*                             GDALJP2Box()                             */
 /************************************************************************/
 
-GDALJP2Box::GDALJP2Box( VSILFILE *fpIn )
-
+GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
+    fpVSIL(fpIn),
+    nBoxOffset(-1),
+    nBoxLength(0),
+    nDataOffset(-1),
+    pabyData(NULL)
 {
-    fpVSIL = fpIn;
     szBoxType[0] = '\0';
-    nBoxOffset = -1;
-    nDataOffset = -1;
-    nBoxLength = 0;
-    
-    pabyData = NULL;
 }
 
 /************************************************************************/
@@ -56,6 +54,7 @@ GDALJP2Box::GDALJP2Box( VSILFILE *fpIn )
 GDALJP2Box::~GDALJP2Box()
 
 {
+    // TODO(schwher): Need to close fpVSIL?
     CPLFree( pabyData );
 }
 
@@ -63,7 +62,7 @@ GDALJP2Box::~GDALJP2Box()
 /*                             SetOffset()                              */
 /************************************************************************/
 
-int  GDALJP2Box::SetOffset( GIntBig nNewOffset )
+int GDALJP2Box::SetOffset( GIntBig nNewOffset )
 
 {
     szBoxType[0] = '\0';
@@ -97,6 +96,9 @@ int GDALJP2Box::ReadNext()
 int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 
 {
+    if( poSuperBox == NULL )
+        return ReadFirst();
+
     szBoxType[0] = '\0';
     if( !poSuperBox->IsSuperBox() )
         return FALSE;
@@ -111,6 +113,9 @@ int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 int GDALJP2Box::ReadNextChild( GDALJP2Box *poSuperBox )
 
 {
+    if( poSuperBox == NULL )
+        return ReadNext();
+
     if( !ReadNext() )
         return FALSE;
 
@@ -130,8 +135,8 @@ int GDALJP2Box::ReadNextChild( GDALJP2Box *poSuperBox )
 int GDALJP2Box::ReadBox()
 
 {
-    GUInt32   nLBox;
-    GUInt32   nTBox;
+    GUInt32 nLBox = 0;
+    GUInt32 nTBox = 0;
 
     nBoxOffset = VSIFTellL( fpVSIL );
 
@@ -153,11 +158,10 @@ int GDALJP2Box::ReadBox()
     }
     else
     {
-        GByte abyXLBox[8];
+        GByte abyXLBox[8] = { 0 };
         if( VSIFReadL( abyXLBox, 8, 1, fpVSIL ) != 1 )
             return FALSE;
 
-        
         if( sizeof(nBoxLength) == 8 )
         {
             CPL_MSBPTR64( abyXLBox );
@@ -168,19 +172,27 @@ int GDALJP2Box::ReadBox()
             CPL_MSBPTR32( abyXLBox+4 );
             memcpy( &nBoxLength, abyXLBox+4, 4 );
         }
-
+        if( nBoxLength < 0 )
+        {
+            CPLDebug("GDALJP2", "Invalid length for box %s", szBoxType);
+            return FALSE;
+        }
         nDataOffset = nBoxOffset + 16;
     }
 
     if( nBoxLength == 0 )
     {
-        VSIFSeekL( fpVSIL, 0, SEEK_END );
+        if( VSIFSeekL( fpVSIL, 0, SEEK_END ) != 0 )
+            return FALSE;
         nBoxLength = VSIFTellL( fpVSIL ) - nBoxOffset;
+        if( VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET ) != 0 )
+            return FALSE;
     }
 
     if( EQUAL(szBoxType,"uuid") )
     {
-        VSIFReadL( abyUUID, 16, 1, fpVSIL );
+        if( VSIFReadL( abyUUID, 16, 1, fpVSIL ) != 1 )
+            return FALSE;
         nDataOffset += 16;
     }
 
@@ -203,8 +215,8 @@ int GDALJP2Box::IsSuperBox()
     if( EQUAL(GetType(),"asoc") || EQUAL(GetType(),"jp2h")
         || EQUAL(GetType(),"res ") )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -214,21 +226,35 @@ int GDALJP2Box::IsSuperBox()
 GByte *GDALJP2Box::ReadBoxData()
 
 {
-    if( GetDataLength() > 100 * 1024 * 1024 )
-        return FALSE;
-
-    char *pszData = (char *) CPLMalloc((int)GetDataLength() + 1);
-
-    if( (GIntBig) VSIFReadL( pszData, 1, (int)GetDataLength(), fpVSIL ) 
-        != GetDataLength() )
+    GIntBig nDataLength = GetDataLength();
+    if( nDataLength > 100 * 1024 * 1024 )
     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Too big box : " CPL_FRMT_GIB " bytes",
+                  nDataLength );
+        return NULL;
+    }
+
+    if( VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET ) != 0 )
+        return NULL;
+
+    char *pszData = static_cast<char *>(
+        VSI_MALLOC_VERBOSE( static_cast<int>(nDataLength) + 1) );
+    if( pszData == NULL )
+        return NULL;
+
+    if( static_cast<GIntBig>( VSIFReadL(
+           pszData, 1, static_cast<int>(nDataLength), fpVSIL ) )
+        != nDataLength )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read box content");
         CPLFree( pszData );
         return NULL;
     }
 
-    pszData[GetDataLength()] = '\0';
+    pszData[nDataLength] = '\0';
 
-    return (GByte *) pszData;
+    return reinterpret_cast<GByte *>( pszData );
 }
 
 /************************************************************************/
@@ -250,13 +276,14 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
     if( fpOut == NULL )
         fpOut = stdout;
 
-    int i;
-    for(i=0;i<nIndentLevel;i++)
+    for( int i=0; i < nIndentLevel; i++)
         fprintf( fpOut, "  " );
 
-    fprintf( fpOut, "  Type=%s, Offset=%d/%d, Data Size=%d",
-             szBoxType, (int) nBoxOffset, (int) nDataOffset, 
-             (int)(nBoxLength - (nDataOffset - nBoxOffset)) );
+    fprintf( fpOut,
+             "  Type=%s, Offset=" CPL_FRMT_GIB "/" CPL_FRMT_GIB
+             ", Data Size=" CPL_FRMT_GIB,
+             szBoxType, nBoxOffset, nDataOffset,
+             GetDataLength() );
 
     if( IsSuperBox() )
     {
@@ -264,8 +291,8 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
     }
 
     fprintf( fpOut, "\n" );
-    
-    if( IsSuperBox() ) 
+
+    if( IsSuperBox() )
     {
         GDALJP2Box oSubBox( GetFILE() );
 
@@ -280,7 +307,7 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
     if( EQUAL(GetType(),"uuid") )
     {
         char *pszHex = CPLBinaryToHex( 16, GetUUID() );
-        for(i=0;i<nIndentLevel;i++)
+        for( int i=0; i < nIndentLevel; i++ )
             fprintf( fpOut, "  " );
 
         fprintf( fpOut, "    UUID=%s", pszHex );
@@ -289,6 +316,8 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
             fprintf( fpOut, " (GeoTIFF)" );
         if( EQUAL(pszHex,"96A9F1F1DC98402DA7AED68E34451809") )
             fprintf( fpOut, " (MSI Worldfile)" );
+        if( EQUAL(pszHex,"BE7ACFCB97A942E89C71999491E3AFAC") )
+            fprintf( fpOut, " (XMP)" );
         CPLFree( pszHex );
 
         fprintf( fpOut, "\n" );
@@ -318,37 +347,78 @@ void GDALJP2Box::SetWritableData( int nLength, const GByte *pabyDataIn )
 
 {
     CPLFree( pabyData );
-    
+
     pabyData = (GByte *) CPLMalloc(nLength);
     memcpy( pabyData, pabyDataIn, nLength );
 
     nBoxOffset = -9; // virtual offsets for data length computation.
     nDataOffset = -1;
-    
+
     nBoxLength = 8 + nLength;
+}
+
+/************************************************************************/
+/*                          AppendWritableData()                        */
+/************************************************************************/
+
+void GDALJP2Box::AppendWritableData( int nLength, const void *pabyDataIn )
+
+{
+    if( pabyData == NULL )
+    {
+        nBoxOffset = -9; // virtual offsets for data length computation.
+        nDataOffset = -1;
+        nBoxLength = 8;
+    }
+
+    pabyData = static_cast<GByte *>(
+        CPLRealloc(pabyData, static_cast<size_t>(GetDataLength() + nLength)) );
+    memcpy( pabyData + GetDataLength(), pabyDataIn, nLength );
+
+    nBoxLength += nLength;
+}
+
+/************************************************************************/
+/*                              AppendUInt32()                          */
+/************************************************************************/
+
+void GDALJP2Box::AppendUInt32( GUInt32 nVal )
+{
+    CPL_MSBPTR32(&nVal);
+    AppendWritableData(4, &nVal);
+}
+
+/************************************************************************/
+/*                              AppendUInt16()                          */
+/************************************************************************/
+
+void GDALJP2Box::AppendUInt16( GUInt16 nVal )
+{
+    CPL_MSBPTR16(&nVal);
+    AppendWritableData(2, &nVal);
+}
+/************************************************************************/
+/*                              AppendUInt8()                           */
+/************************************************************************/
+
+void GDALJP2Box::AppendUInt8( GByte nVal )
+{
+    AppendWritableData(1, &nVal);
 }
 
 /************************************************************************/
 /*                           CreateUUIDBox()                            */
 /************************************************************************/
 
-GDALJP2Box *GDALJP2Box::CreateUUIDBox( 
-    const GByte *pabyUUID, int nDataSize, GByte *pabyData )
+GDALJP2Box *GDALJP2Box::CreateUUIDBox(
+    const GByte *pabyUUID, int nDataSize, const GByte *pabyDataIn )
 
 {
-    GDALJP2Box *poBox;
-
-    poBox = new GDALJP2Box();
+    GDALJP2Box *poBox = new GDALJP2Box();
     poBox->SetType( "uuid" );
-    memcpy( poBox->abyUUID, pabyUUID, 16 );
 
-    GByte *pabyMergedData = (GByte *) CPLMalloc(16+nDataSize);
-    memcpy( pabyMergedData, pabyUUID, 16 );
-    memcpy( pabyMergedData+16, pabyData, nDataSize );
-    
-    poBox->SetWritableData( 16 + nDataSize, pabyMergedData );
-    
-    CPLFree( pabyMergedData );
+    poBox->AppendWritableData( 16, pabyUUID );
+    poBox->AppendWritableData( nDataSize, pabyDataIn );
 
     return poBox;
 }
@@ -358,47 +428,55 @@ GDALJP2Box *GDALJP2Box::CreateUUIDBox(
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
-
-
 {
-    int nDataSize=0, iBox;
-    GByte *pabyCompositeData, *pabyNext;
+    return CreateSuperBox("asoc", nCount, papoBoxes);
+}
+
+
+/************************************************************************/
+/*                           CreateAsocBox()                            */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Box::CreateSuperBox( const char* pszType,
+                                        int nCount, GDALJP2Box **papoBoxes )
+{
+    int nDataSize=0;
 
 /* -------------------------------------------------------------------- */
 /*      Compute size of data area of asoc box.                          */
 /* -------------------------------------------------------------------- */
-    for( iBox = 0; iBox < nCount; iBox++ )
-        nDataSize += 8 + (int) papoBoxes[iBox]->GetDataLength();
+    for( int iBox = 0; iBox < nCount; iBox++ )
+        nDataSize += 8 + static_cast<int>( papoBoxes[iBox]->GetDataLength() );
 
-    pabyNext = pabyCompositeData = (GByte *) CPLMalloc(nDataSize);
+    GByte *pabyNext = static_cast<GByte *>( CPLMalloc(nDataSize) );
+    GByte *pabyCompositeData = pabyNext;
 
 /* -------------------------------------------------------------------- */
 /*      Copy subboxes headers and data into buffer.                     */
 /* -------------------------------------------------------------------- */
-    for( iBox = 0; iBox < nCount; iBox++ )
+    for( int iBox = 0; iBox < nCount; iBox++ )
     {
-        GUInt32   nLBox;
-
-        nLBox = CPL_MSBWORD32(papoBoxes[iBox]->nBoxLength);
+        GUInt32   nLBox = CPL_MSBWORD32(
+            static_cast<GUInt32>(papoBoxes[iBox]->nBoxLength));
         memcpy( pabyNext, &nLBox, 4 );
         pabyNext += 4;
 
         memcpy( pabyNext, papoBoxes[iBox]->szBoxType, 4 );
         pabyNext += 4;
 
-        memcpy( pabyNext, papoBoxes[iBox]->pabyData, 
+        memcpy( pabyNext, papoBoxes[iBox]->pabyData,
                 (int) papoBoxes[iBox]->GetDataLength() );
         pabyNext += papoBoxes[iBox]->GetDataLength();
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create asoc box.                                                */
 /* -------------------------------------------------------------------- */
     GDALJP2Box *poAsoc = new GDALJP2Box();
 
-    poAsoc->SetType( "asoc" );
+    poAsoc->SetType( pszType );
     poAsoc->SetWritableData( nDataSize, pabyCompositeData );
-    
+
     CPLFree( pabyCompositeData );
 
     return poAsoc;
@@ -411,11 +489,10 @@ GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
 GDALJP2Box *GDALJP2Box::CreateLblBox( const char *pszLabel )
 
 {
-    GDALJP2Box *poBox;
-
-    poBox = new GDALJP2Box();
+    GDALJP2Box *poBox = new GDALJP2Box();
     poBox->SetType( "lbl " );
-    poBox->SetWritableData( strlen(pszLabel)+1, (const GByte *) pszLabel );
+    poBox->SetWritableData( static_cast<int>(strlen(pszLabel)+1),
+                            reinterpret_cast<const GByte *>( pszLabel ) );
 
     return poBox;
 }
@@ -428,18 +505,17 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc( const char *pszLabel,
                                                 const char *pszXML )
 
 {
-    GDALJP2Box oLabel, oXML;
-    GDALJP2Box *aoList[2];
-
+    GDALJP2Box oLabel;
     oLabel.SetType( "lbl " );
-    oLabel.SetWritableData( strlen(pszLabel)+1, (const GByte *) pszLabel );
+    oLabel.SetWritableData( static_cast<int>(strlen(pszLabel)+1),
+                            reinterpret_cast<const GByte *>(pszLabel) );
 
+    GDALJP2Box oXML;
     oXML.SetType( "xml " );
-    oXML.SetWritableData( strlen(pszXML)+1, (const GByte *) pszXML );
+    oXML.SetWritableData( static_cast<int>(strlen(pszXML)+1),
+                          reinterpret_cast<const GByte *>(pszXML) );
 
-    aoList[0] = &oLabel;
-    aoList[1] = &oXML;
-    
+    GDALJP2Box *aoList[2] = { &oLabel, &oXML };
+
     return CreateAsocBox( 2, aoList );
 }
-

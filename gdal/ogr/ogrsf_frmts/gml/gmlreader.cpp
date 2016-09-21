@@ -15,24 +15,24 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gmlreaderp.h"
 #include "gmlreader.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "gmlutils.h"
-#include "gmlreaderp.h"
 #include "cpl_conv.h"
 #include <map>
 #include "cpl_multiproc.h"
@@ -63,10 +63,10 @@ IGMLReader::~IGMLReader()
 /*                          CreateGMLReader()                           */
 /************************************************************************/
 
-IGMLReader *CreateGMLReader(CPL_UNUSED int bUseExpatParserPreferably,
-                            CPL_UNUSED int bInvertAxisOrderIfLatLong,
-                            CPL_UNUSED int bConsiderEPSGAsURN,
-                            CPL_UNUSED int bGetSecondaryGeometryOption)
+IGMLReader *CreateGMLReader(bool /*bUseExpatParserPreferably*/,
+                            bool /*bInvertAxisOrderIfLatLong*/,
+                            bool /*bConsiderEPSGAsURN*/,
+                            bool /*bGetSecondaryGeometryOption*/)
 {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Unable to create Xerces C++ or Expat based GML reader, Xerces or Expat support\n"
@@ -85,10 +85,10 @@ IGMLReader *CreateGMLReader(CPL_UNUSED int bUseExpatParserPreferably,
 /*                          CreateGMLReader()                           */
 /************************************************************************/
 
-IGMLReader *CreateGMLReader(int bUseExpatParserPreferably,
-                            int bInvertAxisOrderIfLatLong,
-                            int bConsiderEPSGAsURN,
-                            int bGetSecondaryGeometryOption)
+IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
+                            bool bInvertAxisOrderIfLatLong,
+                            bool bConsiderEPSGAsURN,
+                            bool bGetSecondaryGeometryOption)
 
 {
     return new GMLReader(bUseExpatParserPreferably,
@@ -108,21 +108,21 @@ CPLMutex *GMLReader::hMutex = NULL;
 /************************************************************************/
 
 GMLReader::GMLReader(
-#ifndef HAVE_EXPAT
+#if !defined(HAVE_EXPAT) || !defined(HAVE_XERCES)
 CPL_UNUSED
 #endif
-                     int bUseExpatParserPreferably,
-                     int bInvertAxisOrderIfLatLong,
-                     int bConsiderEPSGAsURN,
-                     int bGetSecondaryGeometryOption)
+                     bool bUseExpatParserPreferably,
+                     bool bInvertAxisOrderIfLatLong,
+                     bool bConsiderEPSGAsURN,
+                     bool bGetSecondaryGeometryOption)
 {
 #ifndef HAVE_XERCES
-    bUseExpatReader = TRUE;
+    bUseExpatReader = true;
 #else
-    bUseExpatReader = FALSE;
+    bUseExpatReader = false;
 #ifdef HAVE_EXPAT
     if(bUseExpatParserPreferably)
-        bUseExpatReader = TRUE;
+        bUseExpatReader = true;
 #endif
 #endif
 
@@ -135,16 +135,16 @@ CPL_UNUSED
 
     m_nClassCount = 0;
     m_papoClass = NULL;
-    m_bLookForClassAtAnyLevel = FALSE;
+    m_bLookForClassAtAnyLevel = false;
 
-    m_bClassListLocked = FALSE;
+    m_bClassListLocked = false;
 
     m_poGMLHandler = NULL;
 #ifdef HAVE_XERCES
     m_poSAXReader = NULL;
     m_poCompleteFeature = NULL;
     m_GMLInputSource = NULL;
-    m_bEOF = FALSE;
+    m_bEOF = false;
 #endif
 #ifdef HAVE_EXPAT
     oParser = NULL;
@@ -155,38 +155,39 @@ CPL_UNUSED
     pabyBuf = NULL;
 #endif
     fpGML = NULL;
-    m_bReadStarted = FALSE;
-    
+    m_bReadStarted = false;
+
     m_poState = NULL;
     m_poRecycledState = NULL;
 
     m_pszFilename = NULL;
 
-    m_bStopParsing = FALSE;
+    m_bStopParsing = false;
 
     /* A bit experimental. Not publicly advertized. See commented doc in drv_gml.html */
-    m_bFetchAllGeometries = CSLTestBoolean(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"));
+    m_bFetchAllGeometries = CPLTestBool(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"));
 
     m_bInvertAxisOrderIfLatLong = bInvertAxisOrderIfLatLong;
     m_bConsiderEPSGAsURN = bConsiderEPSGAsURN;
     m_bGetSecondaryGeometryOption = bGetSecondaryGeometryOption;
 
     m_pszGlobalSRSName = NULL;
-    m_bCanUseGlobalSRSName = FALSE;
+    m_bCanUseGlobalSRSName = false;
 
     m_pszFilteredClassName = NULL;
     m_nFilteredClassIndex = -1;
 
-    m_bSequentialLayers = -1;
-	
+    m_nHasSequentialLayers = -1;
+
     /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
-    m_bFaceHoleNegative = CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
+    m_bFaceHoleNegative = CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
 
-    m_bSetWidthFlag = TRUE;
+    m_bSetWidthFlag = true;
 
-    m_bReportAllAttributes = CSLTestBoolean(
-                    CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"));
+    m_bReportAllAttributes = false;
 
+    m_bIsWFSJointLayer = false;
+    m_bEmptyAsNull = true;
 }
 
 /************************************************************************/
@@ -262,7 +263,7 @@ void GMLReader::SetFP( VSILFILE* fp )
 /*                            SetupParser()                             */
 /************************************************************************/
 
-int GMLReader::SetupParser()
+bool GMLReader::SetupParser()
 
 {
     if (fpGML == NULL)
@@ -282,20 +283,21 @@ int GMLReader::SetupParser()
 #endif
     if (bRet < 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SetupParser(): shouldn't happen");
-        return FALSE;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SetupParser(): should not happen");
+        return false;
     }
 
     if (!bRet)
-        return FALSE;
+        return false;
 
-    m_bReadStarted = FALSE;
+    m_bReadStarted = false;
 
     // Push an empty state.
     PushState( m_poRecycledState ? m_poRecycledState : new GMLReadState() );
     m_poRecycledState = NULL;
 
-    return TRUE;
+    return true;
 }
 
 #ifdef HAVE_XERCES
@@ -303,7 +305,7 @@ int GMLReader::SetupParser()
 /*                        SetupParserXerces()                           */
 /************************************************************************/
 
-int GMLReader::SetupParserXerces()
+bool GMLReader::SetupParserXerces()
 {
     {
     CPLMutexHolderD(&hMutex);
@@ -314,19 +316,19 @@ int GMLReader::SetupParserXerces()
         {
             XMLPlatformUtils::Initialize();
         }
-        
+
         catch (const XMLException& toCatch)
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Exception initializing Xerces based GML reader.\n%s", 
+                      "Exception initializing Xerces based GML reader.\n%s",
                       tr_strdup(toCatch.getMessage()) );
             m_eXercesInitState = OGRGML_XERCES_INIT_FAILED;
-            return FALSE;
+            return false;
         }
         m_eXercesInitState = OGRGML_XERCES_INIT_SUCCESSFUL;
     }
     if( m_eXercesInitState != OGRGML_XERCES_INIT_SUCCESSFUL )
-        return FALSE;
+        return false;
     }
 
     // Cleanup any old parser.
@@ -339,7 +341,7 @@ int GMLReader::SetupParserXerces()
 
     try{
         m_poSAXReader = XMLReaderFactory::createXMLReader();
-    
+
         GMLXercesHandler* poXercesHandler = new GMLXercesHandler( this );
         m_poGMLHandler = poXercesHandler;
 
@@ -381,13 +383,13 @@ int GMLReader::SetupParserXerces()
 
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Exception initializing Xerces based GML reader.\n" );
-        return FALSE;
+        return false;
     }
 
     if (m_GMLInputSource == NULL && fpGML != NULL)
         m_GMLInputSource = new GMLInputSource(fpGML);
 
-    return TRUE;
+    return true;
 }
 #endif
 
@@ -396,7 +398,7 @@ int GMLReader::SetupParserXerces()
 /************************************************************************/
 
 #ifdef HAVE_EXPAT
-int GMLReader::SetupParserExpat()
+bool GMLReader::SetupParserExpat()
 {
     // Cleanup any old parser.
     if( oParser != NULL )
@@ -410,11 +412,11 @@ int GMLReader::SetupParserExpat()
     XML_SetUserData(oParser, m_poGMLHandler);
 
     if (pabyBuf == NULL)
-        pabyBuf = (char*)VSIMalloc(PARSER_BUF_SIZE);
+        pabyBuf = (char*)VSI_MALLOC_VERBOSE(PARSER_BUF_SIZE);
     if (pabyBuf == NULL)
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 #endif
 
@@ -445,7 +447,7 @@ void GMLReader::CleanupParser()
     m_GMLInputSource = NULL;
     delete m_poCompleteFeature;
     m_poCompleteFeature = NULL;
-    m_bEOF = FALSE;
+    m_bEOF = false;
 #endif
 
 #ifdef HAVE_EXPAT
@@ -453,8 +455,7 @@ void GMLReader::CleanupParser()
         XML_ParserFree(oParser);
     oParser = NULL;
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i=nFeatureTabIndex; i < nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
@@ -467,14 +468,14 @@ void GMLReader::CleanupParser()
     delete m_poGMLHandler;
     m_poGMLHandler = NULL;
 
-    m_bReadStarted = FALSE;
+    m_bReadStarted = false;
 }
 
 #ifdef HAVE_XERCES
 
-GMLBinInputStream::GMLBinInputStream(VSILFILE* fp)
+GMLBinInputStream::GMLBinInputStream(VSILFILE* fpIn)
 {
-    this->fp = fp;
+    this->fp = fpIn;
     emptyString = 0;
 }
 
@@ -545,21 +546,21 @@ GMLFeature *GMLReader::NextFeatureXerces()
             if( m_poSAXReader == NULL )
                 SetupParser();
 
-            m_bReadStarted = TRUE;
+            m_bReadStarted = true;
 
-            if (m_GMLInputSource == NULL)
+            if (m_poSAXReader == NULL || m_GMLInputSource == NULL)
                 return NULL;
 
             if( !m_poSAXReader->parseFirst( *m_GMLInputSource, m_oToFill ) )
                 return NULL;
         }
 
-        while( m_poCompleteFeature == NULL 
+        while( m_poCompleteFeature == NULL
                && !m_bStopParsing
                && m_poSAXReader->parseNext( m_oToFill ) ) {}
 
         if (m_poCompleteFeature == NULL)
-            m_bEOF = TRUE;
+            m_bEOF = true;
 
         poReturn = m_poCompleteFeature;
         m_poCompleteFeature = NULL;
@@ -568,18 +569,18 @@ GMLFeature *GMLReader::NextFeatureXerces()
     catch (const XMLException& toCatch)
     {
         char *pszErrorMessage = tr_strdup( toCatch.getMessage() );
-        CPLDebug( "GML", 
-                  "Error during NextFeature()! Message:\n%s", 
+        CPLDebug( "GML",
+                  "Error during NextFeature()! Message:\n%s",
                   pszErrorMessage );
         CPLFree(pszErrorMessage);
-        m_bStopParsing = TRUE;
+        m_bStopParsing = true;
     }
     catch (const SAXException& toCatch)
     {
         char *pszErrorMessage = tr_strdup( toCatch.getMessage() );
         CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMessage);
         CPLFree(pszErrorMessage);
-        m_bStopParsing = TRUE;
+        m_bStopParsing = true;
     }
 
     return poReturn;
@@ -595,7 +596,7 @@ GMLFeature *GMLReader::NextFeatureExpat()
         if (oParser == NULL)
             SetupParser();
 
-        m_bReadStarted = TRUE;
+        m_bReadStarted = true;
     }
 
     if (fpGML == NULL || m_bStopParsing)
@@ -621,6 +622,13 @@ GMLFeature *GMLReader::NextFeatureExpat()
         unsigned int nLen =
                 (unsigned int)VSIFReadL( pabyBuf, 1, PARSER_BUF_SIZE, fpGML );
         nDone = VSIFEofL(fpGML);
+
+        /* Some files, such as APT_AIXM.xml from https://nfdc.faa.gov/webContent/56DaySub/2015-03-05/aixm5.1.zip */
+        /* end with trailing nul characters. This test is not fully bullet-proof in case */
+        /* the nul characters would occur at a buffer boundary */
+        while( nDone && nLen > 0 && pabyBuf[nLen-1] == '\0' )
+            nLen --;
+
         if (XML_Parse(oParser, pabyBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -629,7 +637,7 @@ GMLFeature *GMLReader::NextFeatureExpat()
                      XML_ErrorString(XML_GetErrorCode(oParser)),
                      (int)XML_GetCurrentLineNumber(oParser),
                      (int)XML_GetCurrentColumnNumber(oParser));
-            m_bStopParsing = TRUE;
+            m_bStopParsing = true;
         }
         if (!m_bStopParsing)
             m_bStopParsing = ((GMLExpatHandler*)m_poGMLHandler)->HasStoppedParsing();
@@ -666,7 +674,7 @@ GMLFeature *GMLReader::NextFeature()
 /*      pushed onto the readstate stack.                                */
 /************************************************************************/
 
-void GMLReader::PushFeature( const char *pszElement, 
+void GMLReader::PushFeature( const char *pszElement,
                              const char *pszFID,
                              int nClassIndex )
 
@@ -781,6 +789,28 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement, int nElementLengt
         {
             /* GML answer of MapServer WMS GetFeatureInfo request */
         }
+
+        /* Begin of CSW SearchResults */
+        else if (nElementLength == (int)strlen("BriefRecord") &&
+                 nLenLast == (int)strlen("SearchResults") &&
+                 strcmp(pszElement, "BriefRecord") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        else if (nElementLength == (int)strlen("SummaryRecord") &&
+                 nLenLast == (int)strlen("SearchResults") &&
+                 strcmp(pszElement, "SummaryRecord") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        else if (nElementLength == (int)strlen("Record") &&
+                 nLenLast == (int)strlen("SearchResults") &&
+                 strcmp(pszElement, "Record") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        /* End of CSW SearchResults */
+
         else
         {
             if( m_bClassListLocked )
@@ -801,7 +831,7 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement, int nElementLengt
     }
 
     // If the class list isn't locked, any element that is a featureMember
-    // will do. 
+    // will do.
     if( !m_bClassListLocked )
         return INT_MAX;
 
@@ -820,17 +850,17 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement, int nElementLengt
 /*                IsCityGMLGenericAttributeElement()                    */
 /************************************************************************/
 
-int GMLReader::IsCityGMLGenericAttributeElement( const char *pszElement, void* attr )
+bool GMLReader::IsCityGMLGenericAttributeElement( const char *pszElement, void* attr )
 
 {
     if( strcmp(pszElement, "stringAttribute") != 0 &&
         strcmp(pszElement, "intAttribute") != 0 &&
         strcmp(pszElement, "doubleAttribute") != 0 )
-        return FALSE;
+        return false;
 
     char* pszVal = m_poGMLHandler->GetAttributeValue(attr, "name");
     if (pszVal == NULL)
-        return FALSE;
+        return false;
 
     GMLFeatureClass *poClass = m_poState->m_poFeature->GetClass();
 
@@ -839,7 +869,7 @@ int GMLReader::IsCityGMLGenericAttributeElement( const char *pszElement, void* a
     if( !poClass->IsSchemaLocked() )
     {
         CPLFree(pszVal);
-        return TRUE;
+        return true;
     }
 
     for( int i = 0; i < poClass->GetPropertyCount(); i++ )
@@ -847,12 +877,12 @@ int GMLReader::IsCityGMLGenericAttributeElement( const char *pszElement, void* a
         if( strcmp(poClass->GetProperty(i)->GetSrcElement(),pszVal) == 0 )
         {
             CPLFree(pszVal);
-            return TRUE;
+            return true;
         }
     }
 
     CPLFree(pszVal);
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -878,7 +908,7 @@ int GMLReader::GetAttributeElementIndex( const char *pszElement, int nLen,
             return poClass->GetPropertyIndexBySrcElement(pszElement, nLen);
         else
         {
-            int nFullLen = nLen + 1 + strlen(pszAttrKey);
+            int nFullLen = nLen + 1 + static_cast<int>(strlen(pszAttrKey));
             osElemPath.reserve(nFullLen);
             osElemPath.assign(pszElement, nLen);
             osElemPath.append(1, '@');
@@ -888,9 +918,9 @@ int GMLReader::GetAttributeElementIndex( const char *pszElement, int nLen,
     }
     else
     {
-        int nFullLen = nLen + m_poState->osPath.size() + 1;
+        int nFullLen = nLen + static_cast<int>(m_poState->osPath.size()) + 1;
         if( pszAttrKey != NULL )
-            nFullLen += 1 + strlen(pszAttrKey);
+            nFullLen += 1 + static_cast<int>(strlen(pszAttrKey));
         osElemPath.reserve(nFullLen);
         osElemPath.assign(m_poState->osPath);
         osElemPath.append(1, '|');
@@ -942,7 +972,7 @@ void GMLReader::PopState()
         GMLReadState *poParent;
 
         poParent = m_poState->m_poParentState;
-        
+
         delete m_poRecycledState;
         m_poRecycledState = m_poState;
         m_poRecycledState->Reset();
@@ -1000,12 +1030,12 @@ int GMLReader::AddClass( GMLFeatureClass *poNewClass )
     CPLAssert( GetClass( poNewClass->GetName() ) == NULL );
 
     m_nClassCount++;
-    m_papoClass = (GMLFeatureClass **) 
+    m_papoClass = (GMLFeatureClass **)
         CPLRealloc( m_papoClass, sizeof(void*) * m_nClassCount );
     m_papoClass[m_nClassCount-1] = poNewClass;
 
     if( poNewClass->HasFeatureProperties() )
-        m_bLookForClassAtAnyLevel = TRUE;
+        m_bLookForClassAtAnyLevel = true;
 
     return m_nClassCount-1;
 }
@@ -1023,7 +1053,7 @@ void GMLReader::ClearClasses()
 
     m_nClassCount = 0;
     m_papoClass = NULL;
-    m_bLookForClassAtAnyLevel = FALSE;
+    m_bLookForClassAtAnyLevel = false;
 }
 
 /************************************************************************/
@@ -1034,7 +1064,7 @@ void GMLReader::ClearClasses()
 /*      The pszValue ownership is passed to this function.              */
 /************************************************************************/
 
-void GMLReader::SetFeaturePropertyDirectly( const char *pszElement, 
+void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
                                             char *pszValue,
                                             int iPropertyIn,
                                             GMLPropertyType eType )
@@ -1077,7 +1107,28 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 
             CPLString osFieldName;
 
-            if( strchr(pszElement,'|') == NULL )
+            if( IsWFSJointLayer() )
+            {
+                /* At that point the element path should be member|layer|property */
+
+                /* Strip member| prefix. Should always be true normally */
+                if( STARTS_WITH(pszElement, "member|") )
+                    osFieldName = pszElement + strlen("member|");
+
+                /* Replace layer|property by layer_property */
+                size_t iPos = osFieldName.find('|');
+                if( iPos != std::string::npos )
+                    osFieldName[iPos] = '.';
+
+                /* Special case for gml:id on layer */
+                iPos = osFieldName.find("@id");
+                if( iPos != std::string::npos )
+                {
+                    osFieldName.resize(iPos);
+                    osFieldName += ".gml_id";
+                }
+            }
+            else if( strchr(pszElement,'|') == NULL )
                 osFieldName = pszElement;
             else
             {
@@ -1131,12 +1182,12 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 /*                            LoadClasses()                             */
 /************************************************************************/
 
-int GMLReader::LoadClasses( const char *pszFile )
+bool GMLReader::LoadClasses( const char *pszFile )
 
 {
-    // Add logic later to determine reasonable default schema file. 
+    // Add logic later to determine reasonable default schema file.
     if( pszFile == NULL )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Load the raw XML file.                                          */
@@ -1149,9 +1200,9 @@ int GMLReader::LoadClasses( const char *pszFile )
 
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open file %s.", pszFile );
-        return FALSE;
+        return false;
     }
 
     VSIFSeekL( fp, 0, SEEK_END );
@@ -1161,21 +1212,21 @@ int GMLReader::LoadClasses( const char *pszFile )
     pszWholeText = (char *) VSIMalloc(nLength+1);
     if( pszWholeText == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to allocate %d byte buffer for %s,\n"
                   "is this really a GMLFeatureClassList file?",
                   nLength, pszFile );
         VSIFCloseL( fp );
-        return FALSE;
+        return false;
     }
-    
+
     if( VSIFReadL( pszWholeText, nLength, 1, fp ) != 1 )
     {
         VSIFree( pszWholeText );
         VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Read failed on %s.", pszFile );
-        return FALSE;
+        return false;
     }
     pszWholeText[nLength] = '\0';
 
@@ -1184,10 +1235,10 @@ int GMLReader::LoadClasses( const char *pszFile )
     if( strstr( pszWholeText, "<GMLFeatureClassList" ) == NULL )
     {
         VSIFree( pszWholeText );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s does not contain a GMLFeatureClassList tree.",
                   pszFile );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1200,21 +1251,21 @@ int GMLReader::LoadClasses( const char *pszFile )
 
     // We assume parser will report errors via CPL.
     if( psRoot == NULL )
-        return FALSE;
+        return false;
 
-    if( psRoot->eType != CXT_Element 
+    if( psRoot->eType != CXT_Element
         || !EQUAL(psRoot->pszValue,"GMLFeatureClassList") )
     {
         CPLDestroyXMLNode(psRoot);
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s is not a GMLFeatureClassList document.",
                   pszFile );
-        return FALSE;
+        return false;
     }
 
     const char* pszSequentialLayers = CPLGetXMLValue(psRoot, "SequentialLayers", NULL);
     if (pszSequentialLayers)
-        m_bSequentialLayers = CSLTestBoolean(pszSequentialLayers);
+        m_nHasSequentialLayers = CPLTestBool(pszSequentialLayers);
 
 /* -------------------------------------------------------------------- */
 /*      Extract feature classes for all definitions found.              */
@@ -1223,7 +1274,7 @@ int GMLReader::LoadClasses( const char *pszFile )
 
     for( psThis = psRoot->psChild; psThis != NULL; psThis = psThis->psNext )
     {
-        if( psThis->eType == CXT_Element 
+        if( psThis->eType == CXT_Element
             && EQUAL(psThis->pszValue,"GMLFeatureClass") )
         {
             GMLFeatureClass   *poClass;
@@ -1234,32 +1285,32 @@ int GMLReader::LoadClasses( const char *pszFile )
             {
                 delete poClass;
                 CPLDestroyXMLNode( psRoot );
-                return FALSE;
+                return false;
             }
 
-            poClass->SetSchemaLocked( TRUE );
+            poClass->SetSchemaLocked( true );
 
             AddClass( poClass );
         }
     }
 
     CPLDestroyXMLNode( psRoot );
-    
-    SetClassListLocked( TRUE );
 
-    return TRUE;
+    SetClassListLocked( true );
+
+    return true;
 }
 
 /************************************************************************/
 /*                            SaveClasses()                             */
 /************************************************************************/
 
-int GMLReader::SaveClasses( const char *pszFile )
+bool GMLReader::SaveClasses( const char *pszFile )
 
 {
-    // Add logic later to determine reasonable default schema file. 
+    // Add logic later to determine reasonable default schema file.
     if( pszFile == NULL )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Create in memory schema tree.                                   */
@@ -1268,10 +1319,10 @@ int GMLReader::SaveClasses( const char *pszFile )
 
     psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GMLFeatureClassList" );
 
-    if (m_bSequentialLayers != -1 && m_nClassCount > 1)
+    if (m_nHasSequentialLayers != -1 && m_nClassCount > 1)
     {
         CPLCreateXMLElementAndValue( psRoot, "SequentialLayers",
-                                     m_bSequentialLayers ? "true" : "false" );
+                                     m_nHasSequentialLayers ? "true" : "false" );
     }
 
     for( int iClass = 0; iClass < m_nClassCount; iClass++ )
@@ -1283,17 +1334,17 @@ int GMLReader::SaveClasses( const char *pszFile )
 /*      Serialize to disk.                                              */
 /* -------------------------------------------------------------------- */
     VSILFILE        *fp;
-    int         bSuccess = TRUE;
+    bool         bSuccess = true;
     char        *pszWholeText = CPLSerializeXMLTree( psRoot );
-    
+
     CPLDestroyXMLNode( psRoot );
- 
+
     fp = VSIFOpenL( pszFile, "wb" );
-    
+
     if( fp == NULL )
-        bSuccess = FALSE;
+        bSuccess = false;
     else if( VSIFWriteL( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
-        bSuccess = FALSE;
+        bSuccess = false;
     else
         VSIFCloseL( fp );
 
@@ -1311,25 +1362,30 @@ int GMLReader::SaveClasses( const char *pszFile )
 /*      looking for schema information.                                 */
 /************************************************************************/
 
-int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
+bool GMLReader::PrescanForSchema( bool bGetExtents,
+                                 bool bAnalyzeSRSPerFeature,
+                                 bool bOnlyDetectSRS )
 
 {
     GMLFeature  *poFeature;
 
     if( m_pszFilename == NULL )
-        return FALSE;
+        return false;
 
-    SetClassListLocked( FALSE );
+    if( !bOnlyDetectSRS )
+    {
+        SetClassListLocked( false );
+        ClearClasses();
+    }
 
-    ClearClasses();
     if( !SetupParser() )
-        return FALSE;
+        return false;
 
-    m_bCanUseGlobalSRSName = TRUE;
+    m_bCanUseGlobalSRSName = true;
 
     GMLFeatureClass *poLastClass = NULL;
 
-    m_bSequentialLayers = TRUE;
+    m_nHasSequentialLayers = TRUE;
 
     void* hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
 
@@ -1341,7 +1397,7 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
 
         if (poLastClass != NULL && poClass != poLastClass &&
             poClass->GetFeatureCount() != -1)
-            m_bSequentialLayers = FALSE;
+            m_nHasSequentialLayers = false;
         poLastClass = poClass;
 
         if( poClass->GetFeatureCount() == -1 )
@@ -1350,26 +1406,26 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
             poClass->SetFeatureCount( poClass->GetFeatureCount() + 1 );
 
         const CPLXMLNode* const * papsGeometry = poFeature->GetGeometryList();
-        if( papsGeometry != NULL && papsGeometry[0] != NULL )
+        if( !bOnlyDetectSRS && papsGeometry != NULL && papsGeometry[0] != NULL )
         {
             if( poClass->GetGeometryPropertyCount() == 0 )
-                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown, -1, TRUE ) );
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown, -1, true ) );
         }
 
 #ifdef SUPPORT_GEOMETRY
-        if( bGetExtents )
+        if( bGetExtents && papsGeometry != NULL )
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
-                papsGeometry, TRUE, m_bInvertAxisOrderIfLatLong,
-                NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption, 
+                papsGeometry, true, m_bInvertAxisOrderIfLatLong,
+                NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption,
                 hCacheSRS, m_bFaceHoleNegative );
 
-            if( poGeometry != NULL )
+            if( poGeometry != NULL && poClass->GetGeometryPropertyCount() > 0 )
             {
                 double  dfXMin, dfXMax, dfYMin, dfYMax;
                 OGREnvelope sEnvelope;
 
-                OGRwkbGeometryType eGType = (OGRwkbGeometryType) 
+                OGRwkbGeometryType eGType = (OGRwkbGeometryType)
                     poClass->GetGeometryProperty(0)->GetType();
 
                 if( bAnalyzeSRSPerFeature )
@@ -1378,7 +1434,7 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
                                                                             osWork,
                                                                             m_bConsiderEPSGAsURN);
                     if (pszSRSName != NULL)
-                        m_bCanUseGlobalSRSName = FALSE;
+                        m_bCanUseGlobalSRSName = false;
                     poClass->MergeSRSName(pszSRSName);
                 }
 
@@ -1386,9 +1442,9 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
                 if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
                     eGType = wkbNone;
 
-                poClass->GetGeometryProperty(0)->SetType( 
+                poClass->GetGeometryProperty(0)->SetType(
                     (int) OGRMergeGeometryTypesEx(
-                        eGType, poGeometry->getGeometryType(), TRUE ) );
+                        eGType, poGeometry->getGeometryType(), true ) );
 
                 // merge extents.
                 if (!poGeometry->IsEmpty())
@@ -1416,7 +1472,7 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
             }
 #endif /* def SUPPORT_GEOMETRY */
         }
-        
+
         delete poFeature;
     }
 
@@ -1471,7 +1527,7 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
 
     CleanupParser();
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -1494,14 +1550,14 @@ void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
     if (m_pszGlobalSRSName == NULL && pszGlobalSRSName != NULL)
     {
         const char* pszVertCS_EPSG;
-        if( strncmp(pszGlobalSRSName, "EPSG:", 5) == 0 &&
+        if( STARTS_WITH(pszGlobalSRSName, "EPSG:") &&
             (pszVertCS_EPSG = strstr(pszGlobalSRSName, ", EPSG:")) != NULL )
         {
             m_pszGlobalSRSName = CPLStrdup(CPLSPrintf("EPSG:%d+%d",
                     atoi(pszGlobalSRSName + 5),
                     atoi(pszVertCS_EPSG + 7)));
         }
-        else if (strncmp(pszGlobalSRSName, "EPSG:", 5) == 0 &&
+        else if (STARTS_WITH(pszGlobalSRSName, "EPSG:") &&
             m_bConsiderEPSGAsURN)
         {
             m_pszGlobalSRSName = CPLStrdup(CPLSPrintf("urn:ogc:def:crs:EPSG::%s",
@@ -1518,7 +1574,7 @@ void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
 /*                       SetFilteredClassName()                         */
 /************************************************************************/
 
-int GMLReader::SetFilteredClassName(const char* pszClassName)
+bool GMLReader::SetFilteredClassName(const char* pszClassName)
 {
     CPLFree(m_pszFilteredClassName);
     m_pszFilteredClassName = (pszClassName) ? CPLStrdup(pszClassName) : NULL;
@@ -1536,5 +1592,5 @@ int GMLReader::SetFilteredClassName(const char* pszClassName)
         }
     }
 
-    return TRUE;
+    return true;
 }

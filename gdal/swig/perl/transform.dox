@@ -17,13 +17,13 @@ $lname = shift @ARGV;
 
 $datasource = Geo::OGR::Open($dsname) or die;
 $layer1 = $datasource->Layer($lname) or die;
-$sr1 = Geo::OSR::SpatialReference->create(EPSG => 2392);
+$sr1 = Geo::OSR::SpatialReference->new(EPSG => 2392);
 
 $dsname = shift @ARGV;
 $lname = shift @ARGV;
 
 $datasource = Geo::OGR::Driver('ESRI Shapefile')->Create($dsname) or die;
-$sr2 = Geo::OSR::SpatialReference->create(EPSG => 2393);
+$sr2 = Geo::OSR::SpatialReference->new(EPSG => 2393);
 $layer2 = $datasource->CreateLayer
     ({ Name => $lname, SRS => $sr2, GeometryType => $layer1->GetLayerDefn->GeometryType});
 $layer2->Schema( $layer1->Schema );

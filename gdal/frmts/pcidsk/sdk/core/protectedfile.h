@@ -24,8 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_CORE_PROTECTEDFILE_H
-#define __INCLUDE_CORE_PROTECTEDFILE_H
+#ifndef INCLUDE_CORE_PROTECTEDFILE_H
+#define INCLUDE_CORE_PROTECTEDFILE_H
 
 namespace PCIDSK
 {
@@ -54,4 +54,4 @@ namespace PCIDSK
 
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_CORE_PROTECTEDFILE_H
+#endif // INCLUDE_CORE_PROTECTEDFILE_H

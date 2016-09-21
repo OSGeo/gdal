@@ -53,20 +53,20 @@ static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE* f)
 /*                         VSIPDFFileStream()                           */
 /************************************************************************/
 
-VSIPDFFileStream::VSIPDFFileStream(VSILFILE* f, const char* pszFilename, Object *dictA):
+VSIPDFFileStream::VSIPDFFileStream(VSILFILE* fIn, const char* pszFilename, Object *dictA):
 #ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
-                                                        BaseStream(dictA, (setPos_offset_type)VSIPDFFileStreamGetSize(f))
+                                                        BaseStream(dictA, (setPos_offset_type)VSIPDFFileStreamGetSize(fIn))
 #else
                                                         BaseStream(dictA)
 #endif
 {
     poParent = NULL;
     poFilename = new GooString(pszFilename);
-    this->f = f;
+    this->f = fIn;
     nStart = 0;
     bLimited = gFalse;
     nLength = 0;
-    nCurrentPos = -1;
+    nCurrentPos = VSI_L_OFFSET_MAX;
     bHasSavedPos = FALSE;
     nSavedPos = 0;
     nPosInBuffer = nBufferLength = -1;
@@ -76,22 +76,22 @@ VSIPDFFileStream::VSIPDFFileStream(VSILFILE* f, const char* pszFilename, Object 
 /*                         VSIPDFFileStream()                           */
 /************************************************************************/
 
-VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream* poParent,
+VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream* poParentIn,
                                    vsi_l_offset startA, GBool limitedA,
                                    vsi_l_offset lengthA, Object *dictA):
 #ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
-                                                        BaseStream(dictA, lengthA)
+                                                        BaseStream(dictA, (makeSubStream_offset_type)lengthA)
 #else
                                                         BaseStream(dictA)
 #endif
 {
-    this->poParent = poParent;
+    this->poParent = poParentIn;
     poFilename = poParent->poFilename;
     f = poParent->f;
     nStart = startA;
     bLimited = limitedA;
     nLength = lengthA;
-    nCurrentPos = -1;
+    nCurrentPos = VSI_L_OFFSET_MAX;
     bHasSavedPos = FALSE;
     nSavedPos = 0;
     nPosInBuffer = nBufferLength = -1;
@@ -197,6 +197,27 @@ int VSIPDFFileStream::FillBuffer()
     nBufferLength = (int) VSIFReadL(abyBuffer, 1, nToRead, f);
     if (nBufferLength == 0)
         return FALSE;
+
+    // Since we now report a non-zero length (as BaseStream::length member),
+    // PDFDoc::getPage() can go to the linearized mode if the file is linearized,
+    // and thus create a pageCache. If so, in PDFDoc::~PDFDoc(),
+    // if pageCache is not null, it would try to access the stream (str) through
+    // getPageCount(), but we have just freed and nullify str before in PDFFreeDoc().
+    // So make as if the file is not linearized to avoid those issues...
+    // All this is due to our attempt of avoiding cross-heap issues with allocation
+    // and liberation of VSIPDFFileStream as PDFDoc::str member.
+    if( nCurrentPos == 0 || nCurrentPos == VSI_L_OFFSET_MAX )
+    {
+        for(int i=0;i<nToRead-(int)strlen("/Linearized ");i++)
+        {
+            if( memcmp(abyBuffer + i, "/Linearized ",
+                       strlen("/Linearized ")) == 0 )
+            {
+                memcpy(abyBuffer + i, "/XXXXXXXXXX ", strlen("/Linearized "));
+                break;
+            }
+        }
+    }
 
     return TRUE;
 }

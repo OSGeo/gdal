@@ -9,16 +9,16 @@
 
 Most variants of the AIRSAR Polarimetric Format produced by the AIRSAR
 Integrated Processor are supported for reading by GDAL. AIRSAR products
-normally include various associated data files, but only the imagery 
+normally include various associated data files, but only the imagery
 data themselves is supported.  Normally these are named <i>mission</i>_l.dat
 (L-Band) or <i>mission</i>_c.dat (C-Band).<p>
 
-AIRSAR format contains a polarimetric image in compressed stokes matrix form. 
+AIRSAR format contains a polarimetric image in compressed stokes matrix form.
 Internally GDAL decompresses the data into a stokes matrix, and then converts
 that form into a covariance matrix.  The returned six bands are the six values
 needed to define the 3x3 Hermitian covariance matrix.  The convention used
 to represent the covariance matrix in terms of the scattering matrix
-elements HH, HV (=VH), and VV is indicated below.  Note that the 
+elements HH, HV (=VH), and VV is indicated below.  Note that the
 non-diagonal elements of the matrix are complex values, while the diagonal
 values are real (though represented as complex bands).<p>
 
@@ -35,16 +35,16 @@ values are real (though represented as complex bands).<p>
 The identities of the bands are also reflected in metadata and in the band
 descriptions.  <p>
 
-The AIRSAR product format includes (potentially) several headers of 
+The AIRSAR product format includes (potentially) several headers of
 information.  This information is captured and represented as metadata on the
-file as a whole.  Information items from the main header are prefixed with 
+file as a whole.  Information items from the main header are prefixed with
 "MH_", items from the parameter header are prefixed with "PH_" and
-information from the calibration header are prefixed with "CH_". 
+information from the calibration header are prefixed with "CH_".
 The metadata item names are derived automatically from the names of the
 fields within the header itself. <p>
 
 No effort is made to read files associated with the AIRSAR product such as
-<i>mission</i>_l.mocomp, <i>mission</i>_meta.airsar or 
+<i>mission</i>_l.mocomp, <i>mission</i>_meta.airsar or
 <i>mission</i>_meta.podaac.<p>
 
 See Also:<p>

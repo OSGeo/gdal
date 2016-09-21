@@ -29,22 +29,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void    GDALRegister_LCP(void);
-CPL_C_END
-
-#define LCP_HEADER_SIZE 7316
-#define LCP_MAX_BANDS   10
-#define LCP_MAX_PATH    256
-#define LCP_MAX_DESC    512
-#define LCP_MAX_CLASSES 100
+static const size_t LCP_HEADER_SIZE = 7316;
+static const int LCP_MAX_BANDS = 10;
+static const int LCP_MAX_PATH = 256;
+static const int LCP_MAX_DESC = 512;
+static const int LCP_MAX_CLASSES = 100;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -55,7 +52,7 @@ CPL_C_END
 class LCPDataset : public RawDataset
 {
     VSILFILE    *fpImage;       // image data file.
-    char	pachHeader[LCP_HEADER_SIZE];
+    char        pachHeader[LCP_HEADER_SIZE];
 
     CPLString   osPrjFilename;
     char        *pszProjection;
@@ -66,7 +63,7 @@ class LCPDataset : public RawDataset
 
   public:
                 LCPDataset();
-                ~LCPDataset();
+    virtual ~LCPDataset();
 
     virtual char **GetFileList(void);
 
@@ -88,10 +85,10 @@ class LCPDataset : public RawDataset
 /*                            LCPDataset()                             */
 /************************************************************************/
 
-LCPDataset::LCPDataset()
+LCPDataset::LCPDataset() :
+    fpImage(NULL),
+    pszProjection(CPLStrdup( "" ))
 {
-    fpImage = NULL;
-    pszProjection = CPLStrdup( "" );
     bHaveProjection = FALSE;
 }
 
@@ -104,7 +101,12 @@ LCPDataset::~LCPDataset()
 {
     FlushCache();
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     CPLFree(pszProjection);
 }
 
@@ -196,7 +198,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( !Identify( poOpenInfo ) )
         return NULL;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -210,36 +212,26 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    LCPDataset  *poDS;
-    VSILFILE        *fpImage;
-
-    fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    VSILFILE *fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
     if (fpImage == NULL)
         return NULL;
 
-    poDS = new LCPDataset();
+    LCPDataset  *poDS = new LCPDataset();
     poDS->fpImage = fpImage;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header and extract some information.                   */
 /* -------------------------------------------------------------------- */
-   int bHaveCrownFuels, bHaveGroundFuels;
-   int nBands, i;
-   long nWidth = -1, nHeight = -1;
-   int nTemp, nTemp2;
-   char szTemp[32];
-   char* pszList;
-
-   VSIFSeekL( poDS->fpImage, 0, SEEK_SET );
-   if (VSIFReadL( poDS->pachHeader, 1, LCP_HEADER_SIZE, poDS->fpImage ) != LCP_HEADER_SIZE)
+   if (VSIFSeekL( poDS->fpImage, 0, SEEK_SET ) < 0 ||
+       VSIFReadL( poDS->pachHeader, 1, LCP_HEADER_SIZE, poDS->fpImage ) != LCP_HEADER_SIZE)
    {
        CPLError(CE_Failure, CPLE_FileIO, "File too short");
        delete poDS;
        return NULL;
    }
 
-   nWidth = CPL_LSBINT32PTR (poDS->pachHeader + 4164);
-   nHeight = CPL_LSBINT32PTR (poDS->pachHeader + 4168);
+   int nWidth = CPL_LSBINT32PTR (poDS->pachHeader + 4164);
+   int nHeight = CPL_LSBINT32PTR (poDS->pachHeader + 4168);
 
    poDS->nRasterXSize = nWidth;
    poDS->nRasterYSize = nHeight;
@@ -252,10 +244,11 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
    // crown fuels = canopy height, canopy base height, canopy bulk density
    // 21 = have them, 20 = don't have them
-   bHaveCrownFuels = ( CPL_LSBINT32PTR (poDS->pachHeader + 0) - 20 );
+   const bool bHaveCrownFuels = CPL_TO_BOOL( CPL_LSBINT32PTR (poDS->pachHeader + 0) - 20 );
    // ground fuels = duff loading, coarse woody
-   bHaveGroundFuels = ( CPL_LSBINT32PTR (poDS->pachHeader + 4) - 20 );
+   const bool bHaveGroundFuels = CPL_TO_BOOL( CPL_LSBINT32PTR (poDS->pachHeader + 4) - 20 );
 
+   int nBands;
    if( bHaveCrownFuels )
    {
        if( bHaveGroundFuels )
@@ -273,8 +266,9 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
    // add dataset-level metadata
 
-   nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 8);
-   sprintf(szTemp, "%d", nTemp);
+   int nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 8);
+   char szTemp[32];
+   snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
    poDS->SetMetadataItem( "LATITUDE", szTemp );
 
    nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 4204);
@@ -297,7 +291,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
    if (nWidth > INT_MAX / iPixelSize)
    {
-       CPLError( CE_Failure, CPLE_AppDefined,  "Int overflow occured");
+       CPLError( CE_Failure, CPLE_AppDefined,  "Int overflow occurred");
        delete poDS;
        return NULL;
    }
@@ -308,16 +302,14 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
    bNativeOrder = FALSE;
 #endif
 
-   pszList = (char*)CPLMalloc(2048);
+   char* pszList = reinterpret_cast<char *>( CPLMalloc(2048) );
    pszList[0] = '\0';
 
    for( int iBand = 1; iBand <= nBands; iBand++ )
    {
-        GDALRasterBand  *poBand = NULL;
-
-        poBand = new RawRasterBand(
-                     poDS, iBand, poDS->fpImage, LCP_HEADER_SIZE + ((iBand-1)*2),
-                     iPixelSize, iPixelSize * nWidth, GDT_Int16, bNativeOrder, TRUE );
+        GDALRasterBand  *poBand = new RawRasterBand(
+            poDS, iBand, poDS->fpImage, LCP_HEADER_SIZE + ((iBand-1)*2),
+            iPixelSize, iPixelSize * nWidth, GDT_Int16, bNativeOrder, TRUE );
 
         poDS->SetBand(iBand, poBand);
 
@@ -326,7 +318,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            poBand->SetDescription("Elevation");
 
            nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4224);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ELEVATION_UNIT", szTemp );
 
            if ( nTemp == 0 )
@@ -335,15 +327,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetMetadataItem( "ELEVATION_UNIT_NAME", "Feet" );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 44);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ELEVATION_MIN", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 48);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ELEVATION_MAX", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 52);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ELEVATION_NUM_CLASSES", szTemp );
 
            *(poDS->pachHeader + 4244 + 255) = '\0';
@@ -355,7 +347,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            poBand->SetDescription("Slope");
 
            nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4226);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "SLOPE_UNIT", szTemp );
 
            if ( nTemp == 0 )
@@ -364,15 +356,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetMetadataItem( "SLOPE_UNIT_NAME", "Percent" );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 456);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "SLOPE_MIN", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 460);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "SLOPE_MAX", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 464);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "SLOPE_NUM_CLASSES", szTemp );
 
            *(poDS->pachHeader + 4500 + 255) = '\0';
@@ -384,7 +376,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            poBand->SetDescription("Aspect");
 
            nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4228);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ASPECT_UNIT", szTemp );
 
            if ( nTemp == 0 )
@@ -395,15 +387,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetMetadataItem( "ASPECT_UNIT_NAME", "Azimuth degrees" );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 868);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ASPECT_MIN", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 872);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ASPECT_MAX", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 876);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ASPECT_NUM_CLASSES", szTemp );
 
            *(poDS->pachHeader + 4756 + 255) = '\0';
@@ -412,12 +404,11 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            break;
 
         case 4:
-           int nMinFM, nMaxFM;
-
+        {
            poBand->SetDescription("Fuel models");
 
            nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4230);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "FUEL_MODEL_OPTION", szTemp );
 
            if ( nTemp == 0 )
@@ -429,24 +420,24 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if ( nTemp == 3 )
               poBand->SetMetadataItem( "FUEL_MODEL_OPTION_DESC", "custom models AND conversion file needed" );
 
-           nMinFM = CPL_LSBINT32PTR (poDS->pachHeader + 1280);
-           sprintf(szTemp, "%d", nMinFM);
+           const int nMinFM = CPL_LSBINT32PTR (poDS->pachHeader + 1280);
+           snprintf( szTemp, sizeof(szTemp), "%d", nMinFM);
            poBand->SetMetadataItem( "FUEL_MODEL_MIN", szTemp );
 
-           nMaxFM = CPL_LSBINT32PTR (poDS->pachHeader + 1284);
-           sprintf(szTemp, "%d", nMaxFM);
+           const int nMaxFM = CPL_LSBINT32PTR (poDS->pachHeader + 1284);
+           snprintf( szTemp, sizeof(szTemp), "%d", nMaxFM);
            poBand->SetMetadataItem( "FUEL_MODEL_MAX", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 1288);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "FUEL_MODEL_NUM_CLASSES", szTemp );
 
            if (nTemp > 0 && nTemp <= 100) {
               strcpy(pszList, "");
-              for ( i = 0; i <= nTemp; i++ ) {
-                  nTemp2 = CPL_LSBINT32PTR (poDS->pachHeader + (1292+(i*4))) ;
+              for ( int i = 0; i <= nTemp; i++ ) {
+                  const int nTemp2 = CPL_LSBINT32PTR (poDS->pachHeader + (1292+(i*4))) ;
                   if ( nTemp2 >= nMinFM && nTemp2 <= nMaxFM ) {
-                     sprintf(szTemp, "%d", nTemp2);
+                     snprintf( szTemp, sizeof(szTemp), "%d", nTemp2);
                      strcat(pszList, szTemp);
                      if (i < (nTemp) )
                         strcat(pszList, ",");
@@ -459,12 +450,12 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            poBand->SetMetadataItem( "FUEL_MODEL_FILE", poDS->pachHeader + 5012 );
 
            break;
-
+        }
         case 5:
            poBand->SetDescription("Canopy cover");
 
            nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4232);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CANOPY_COV_UNIT", szTemp );
 
            if ( nTemp == 0 )
@@ -473,15 +464,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetMetadataItem( "CANOPY_COV_UNIT_NAME", "Percent" );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 1692);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CANOPY_COV_MIN", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 1696);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CANOPY_COV_MAX", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 1700);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CANOPY_COV_NUM_CLASSES", szTemp );
 
            *(poDS->pachHeader + 5268 + 255) = '\0';
@@ -494,7 +485,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetDescription("Canopy height");
 
               nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4234);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CANOPY_HT_UNIT", szTemp );
 
               if ( nTemp == 1 )
@@ -507,15 +498,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
                  poBand->SetMetadataItem( "CANOPY_HT_UNIT_NAME", "Feet x 10" );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2104);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CANOPY_HT_MIN", szTemp );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2108);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CANOPY_HT_MAX", szTemp );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2112);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CANOPY_HT_NUM_CLASSES", szTemp );
 
               *(poDS->pachHeader + 5524 + 255) = '\0';
@@ -525,7 +516,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetDescription("Duff");
 
               nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4240);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "DUFF_UNIT", szTemp );
 
               if ( nTemp == 1 )
@@ -534,15 +525,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
                  poBand->SetMetadataItem( "DUFF_UNIT_NAME", "t/ac" );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3340);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "DUFF_MIN", szTemp );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3344);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "DUFF_MAX", szTemp );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3348);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "DUFF_NUM_CLASSES", szTemp );
 
               *(poDS->pachHeader + 6292 + 255) = '\0';
@@ -555,7 +546,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetDescription("Canopy base height");
 
               nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4236);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CBH_UNIT", szTemp );
 
               if ( nTemp == 1 )
@@ -568,15 +559,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
                  poBand->SetMetadataItem( "CBH_UNIT_NAME", "Feet x 10" );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2516);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CBH_MIN", szTemp );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2520);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CBH_MAX", szTemp );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2524);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CBH_NUM_CLASSES", szTemp );
 
               *(poDS->pachHeader + 5780 + 255) = '\0';
@@ -586,7 +577,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetDescription("Coarse woody debris");
 
               nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4242);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CWD_OPTION", szTemp );
 
               //if ( nTemp == 1 )
@@ -595,15 +586,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               //   poBand->SetMetadataItem( "CWD_UNIT_DESC", "?" );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3752);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CWD_MIN", szTemp );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3756);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CWD_MAX", szTemp );
 
               nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3760);
-              sprintf(szTemp, "%d", nTemp);
+              snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CWD_NUM_CLASSES", szTemp );
 
               *(poDS->pachHeader + 6548 + 255) = '\0';
@@ -615,7 +606,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            poBand->SetDescription("Canopy bulk density");
 
            nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4238);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CBD_UNIT", szTemp );
 
            if ( nTemp == 1 )
@@ -628,15 +619,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetMetadataItem( "CBD_UNIT_NAME", "lb/ft^3 x 1000" );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2928);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CBD_MIN", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2932);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CBD_MAX", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2936);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CBD_NUM_CLASSES", szTemp );
 
            *(poDS->pachHeader + 6036 + 255) = '\0';
@@ -648,7 +639,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            poBand->SetDescription("Duff");
 
            nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4240);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "DUFF_UNIT", szTemp );
 
            if ( nTemp == 1 )
@@ -657,15 +648,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               poBand->SetMetadataItem( "DUFF_UNIT_NAME", "t/ac" );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3340);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "DUFF_MIN", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3344);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "DUFF_MAX", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3348);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "DUFF_NUM_CLASSES", szTemp );
 
            *(poDS->pachHeader + 6292 + 255) = '\0';
@@ -677,7 +668,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            poBand->SetDescription("Coarse woody debris");
 
            nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4242);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CWD_OPTION", szTemp );
 
            //if ( nTemp == 1 )
@@ -686,15 +677,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            //   poBand->SetMetadataItem( "CWD_UNIT_DESC", "?" );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3752);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CWD_MIN", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3756);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CWD_MAX", szTemp );
 
            nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3760);
-           sprintf(szTemp, "%d", nTemp);
+           snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CWD_NUM_CLASSES", szTemp );
 
            *(poDS->pachHeader + 6548 + 255) = '\0';
@@ -703,17 +694,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            break;
         }
    }
-   
+
 /* -------------------------------------------------------------------- */
 /*      Try to read projection file.                                    */
 /* -------------------------------------------------------------------- */
-    char        *pszDirname, *pszBasename;
-    VSIStatBufL   sStatBuf;
-
-    pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
-    pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
+    char *pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
 
     poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
+    VSIStatBufL   sStatBuf;
     int nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
 
     if( nRet != 0 && VSIIsCaseSensitiveFS(poDS->osPrjFilename))
@@ -724,13 +713,11 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nRet == 0 )
     {
-        OGRSpatialReference     oSRS;
-
         char** papszPrj = CSLLoad( poDS->osPrjFilename );
 
-        CPLDebug( "LCP", "Loaded SRS from %s", 
-                  poDS->osPrjFilename.c_str() );
+        CPLDebug( "LCP", "Loaded SRS from %s", poDS->osPrjFilename.c_str() );
 
+        OGRSpatialReference oSRS;
         if( oSRS.importFromESRI( papszPrj ) == OGRERR_NONE )
         {
             CPLFree( poDS->pszProjection );
@@ -797,18 +784,18 @@ CPLErr LCPDataset::ClassifyBandData( GDALRasterBand *poBand,
         return CE_Failure;
     }
 
-    int nXSize = poBand->GetXSize();
-    int nYSize = poBand->GetYSize();
+    const int nXSize = poBand->GetXSize();
+    const int nYSize = poBand->GetYSize();
     double dfMax, dfDummy;
     poBand->GetStatistics( FALSE, TRUE, &dfDummy, &dfMax, &dfDummy, &dfDummy );
 
-    int nSpan = (int)dfMax;
+    const int nSpan = static_cast<int>( dfMax );
     GInt16 *panValues = (GInt16*)CPLMalloc( sizeof( GInt16 ) * nXSize );
     GByte *pabyFlags = (GByte*)CPLMalloc( sizeof( GByte ) * nSpan + 1 );
     memset( pabyFlags, 0, nSpan + 1 );
 
     int nFound = 0;
-    int bTooMany = FALSE;
+    bool bTooMany = false;
     CPLErr eErr = CE_None;
     for( int iLine = 0; iLine < nYSize; iLine++ )
     {
@@ -827,7 +814,7 @@ CPLErr LCPDataset::ClassifyBandData( GDALRasterBand *poBand,
                                  "band %d.  Not 'classifying' the data.",
                                  poBand->GetBand() );
                 nFound = -1;
-                bTooMany = TRUE;
+                bTooMany = true;
                 break;
             }
             if( bTooMany )
@@ -847,8 +834,7 @@ CPLErr LCPDataset::ClassifyBandData( GDALRasterBand *poBand,
     ** offsets, or making it a 1-based array instead of 0-based.
     */
     panClasses[0] = 0;
-    int nIndex = 1;
-    for( int j = 0; j < nSpan + 1; j++ )
+    for( int j = 0, nIndex = 1; j < nSpan + 1; j++ )
     {
         if( pabyFlags[j] == 1 )
         {
@@ -856,8 +842,8 @@ CPLErr LCPDataset::ClassifyBandData( GDALRasterBand *poBand,
         }
     }
     *pnNumClasses = nFound;
-    CPLFree( (void*)pabyFlags );
-    CPLFree( (void*)panValues );
+    CPLFree( reinterpret_cast<void *>( pabyFlags ) );
+    CPLFree( reinterpret_cast<void *>( panValues ) );
 
     return eErr;
 }
@@ -873,14 +859,10 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
                                      void * pProgressData )
 
 {
-
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
+    const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 5 && nBands != 7 && nBands != 8 && nBands != 10 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -924,10 +906,6 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     ** default units every chance we get.
     */
     GInt16 panMetadata[LCP_MAX_BANDS];
-    int i;
-    GInt32 nTemp;
-    double dfTemp;
-    const char *pszTemp;
 
     panMetadata[0] = 0; /* ELEVATION_UNIT */
     panMetadata[1] = 0; /* SLOPE_UNIT */
@@ -939,9 +917,11 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     panMetadata[7] = 3; /* CBD_UNIT */
     panMetadata[8] = 1; /* DUFF_UNIT */
     panMetadata[9] = 0; /* CWD_OPTION */
+
     /* Check the units/options for user overrides */
-    pszTemp = CSLFetchNameValueDef( papszOptions, "ELEVATION_UNIT", "METERS" );
-    if( EQUALN( pszTemp, "METER", 5 ) )
+    const char *pszTemp
+        = CSLFetchNameValueDef( papszOptions, "ELEVATION_UNIT", "METERS" );
+    if( STARTS_WITH_CI(pszTemp, "METER") )
     {
         panMetadata[0] = 0;
     }
@@ -1143,24 +1123,17 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             return NULL;
         }
 
-        if( bHaveGroundFuels )
-        {
-            panMetadata[9] = 1;
-        }
-        else
-        {
-            panMetadata[9] = 0;
-        }
+        panMetadata[9] = 1;
     }
 
     /*
     ** Calculate the stats for each band.  The binary file carries along
     ** these metadata for display purposes(?).
     */
-    int bCalculateStats = CSLFetchBoolean( papszOptions, "CALCULATE_STATS",
-                                           TRUE );
-    int bClassifyData = CSLFetchBoolean( papszOptions, "CLASSIFY_DATA",
-                                         TRUE );
+    bool bCalculateStats = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "CALCULATE_STATS",
+                                            TRUE ));
+    const bool bClassifyData = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "CLASSIFY_DATA",
+                                                TRUE ));
     /*
     ** We should have stats if we classify, we'll get them anyway.
     */
@@ -1169,18 +1142,18 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Ignoring request to not calculate statistics, " \
                   "because CLASSIFY_DATA was set to ON" );
-        bCalculateStats = TRUE;
+        bCalculateStats = true;
     }
 
     pszTemp = CSLFetchNameValueDef( papszOptions, "LINEAR_UNIT",
                                     "SET_FROM_SRS" );
     int nLinearUnits = 0;
-    int bSetLinearUnits = FALSE;
+    bool bSetLinearUnits = false;
     if( EQUAL( pszTemp, "SET_FROM_SRS" ) )
     {
-        bSetLinearUnits = TRUE;
+        bSetLinearUnits = true;
     }
-    else if( EQUALN( pszTemp, "METER", 5 ) )
+    else if( STARTS_WITH_CI(pszTemp, "METER") )
     {
         nLinearUnits = 0;
     }
@@ -1188,15 +1161,15 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     {
         nLinearUnits = 1;
     }
-    else if( EQUALN( pszTemp, "KILOMETER", 9 ) )
+    else if( STARTS_WITH_CI(pszTemp, "KILOMETER") )
     {
         nLinearUnits = 2;
     }
-    int bCalculateLatitude = TRUE;
-    int nLatitude;
+    bool bCalculateLatitude = true;
+    int nLatitude = 0;
     if( CSLFetchNameValue( papszOptions, "LATITUDE" ) != NULL )
     {
-        bCalculateLatitude = FALSE;
+        bCalculateLatitude = false;
         nLatitude = atoi( CSLFetchNameValue( papszOptions, "LATITUDE" ) );
         if( nLatitude > 90 || nLatitude < -90 )
         {
@@ -1212,10 +1185,13 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     */
     double adfSrcGeoTransform[6];
     poSrcDS->GetGeoTransform( adfSrcGeoTransform );
-    OGRSpatialReference oSrcSRS, oDstSRS;
+    OGRSpatialReference oSrcSRS;
     const char *pszWkt = poSrcDS->GetProjectionRef();
     double dfLongitude = 0.0;
     double dfLatitude = 0.0;
+
+    const int nYSize = poSrcDS->GetRasterYSize();
+
     if( !bCalculateLatitude )
     {
         dfLatitude = nLatitude;
@@ -1223,15 +1199,16 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     else if( !EQUAL( pszWkt, "" ) )
     {
         oSrcSRS.importFromWkt( (char**)&pszWkt );
+        OGRSpatialReference oDstSRS;
         oDstSRS.importFromEPSG( 4269 );
-        OGRCoordinateTransformation *poCT;
-        poCT = (OGRCoordinateTransformation*)
-            OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
-        int nErr;
+        OGRCoordinateTransformation *poCT
+            = reinterpret_cast<OGRCoordinateTransformation *>(
+                OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS ) );
         if( poCT != NULL )
         {
             dfLatitude = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize / 2;
-            nErr = (int)poCT->Transform( 1, &dfLongitude, &dfLatitude );
+            const int nErr = static_cast<int>(
+                poCT->Transform( 1, &dfLongitude, &dfLatitude ) );
             if( !nErr )
             {
                 dfLatitude = 0.0;
@@ -1259,13 +1236,12 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
     /*
-    ** Set the linear units if the metadata item wasn't already set, and we
+    ** Set the linear units if the metadata item was not already set, and we
     ** have an SRS.
     */
     if( bSetLinearUnits && !EQUAL( pszWkt, "" ) )
     {
-        const char *pszUnit;
-        pszUnit = oSrcSRS.GetAttrValue( "UNIT", 0 );
+        const char *pszUnit = oSrcSRS.GetAttrValue( "UNIT", 0 );
         if( pszUnit == NULL )
         {
             if( bStrict )
@@ -1292,7 +1268,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             {
                 nLinearUnits = 1;
             }
-            else if( EQUALN( pszUnit, "kilomet", 7 ) )
+            else if( STARTS_WITH_CI(pszUnit, "kilomet") )
             {
                 nLinearUnits = 2;
             }
@@ -1359,29 +1335,29 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     ** how these data are used though, so we will implement that at some point
     ** if need be.
     */
-    GDALRasterBand *poBand;
-    double *padfMin = (double*)CPLMalloc( sizeof( double ) * nBands );
-    double *padfMax = (double*)CPLMalloc( sizeof( double ) * nBands );
-    double dfDummy;
-    GInt32 *panFound = (GInt32*)VSIMalloc2( sizeof( GInt32 ), nBands );
-    GInt32 *panClasses = (GInt32*)VSIMalloc3( sizeof( GInt32 ), nBands, LCP_MAX_CLASSES );
+    double *padfMin = reinterpret_cast<double *>( CPLMalloc( sizeof( double ) * nBands ) );
+    double *padfMax = reinterpret_cast<double *>( CPLMalloc( sizeof( double ) * nBands ) );
     /*
     ** Initialize these arrays to zeros
     */
+    GInt32 *panFound = reinterpret_cast<GInt32 *>( VSIMalloc2( sizeof( GInt32 ), nBands ) );
     memset( panFound, 0, sizeof( GInt32 ) * nBands );
+    GInt32 *panClasses = reinterpret_cast<GInt32 *>( VSIMalloc3( sizeof( GInt32 ), nBands, LCP_MAX_CLASSES ) );
     memset( panClasses, 0, sizeof( GInt32 ) * nBands * LCP_MAX_CLASSES );
 
     CPLErr eErr;
     if( bCalculateStats )
     {
-        for( i = 0; i < nBands; i++ )
+
+        for( int i = 0; i < nBands; i++ )
         {
-            poBand = poSrcDS->GetRasterBand( i + 1 );
+            GDALRasterBand *poBand = poSrcDS->GetRasterBand( i + 1 );
+            double dfDummy;
             eErr = poBand->GetStatistics( FALSE, TRUE, &padfMin[i],
                                           &padfMax[i], &dfDummy, &dfDummy );
             if( eErr != CE_None )
             {
-                CPLError( CE_Warning, CPLE_AppDefined, "Failed to properly " \
+                CPLError( CE_Warning, CPLE_AppDefined, "Failed to properly "
                                                        "calculate statistics "
                                                        "on band %d", i );
                 padfMin[i] = 0.0;
@@ -1394,13 +1370,16 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             {
                 eErr = ClassifyBandData( poBand, panFound+ i,
                                          panClasses + ( i * LCP_MAX_CLASSES ) );
+                if ( eErr != CE_None )
+                {
+                  CPLError( CE_Warning, CPLE_AppDefined,
+                            "Failed to classify band data on band %d.", i );
+                }
             }
         }
     }
 
-    VSILFILE *fp;
-
-    fp = VSIFOpenL( pszFilename, "wb" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1416,28 +1395,29 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 /*      Write the header                                                */
 /* -------------------------------------------------------------------- */
 
-    nTemp = bHaveCrownFuels ? 21 : 20;
-    CPL_LSBINT32PTR( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    GInt32 nTemp = bHaveCrownFuels ? 21 : 20;
+    CPL_LSBPTR32( &nTemp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
     nTemp = bHaveGroundFuels ? 21 : 20;
-    CPL_LSBINT32PTR( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_LSBPTR32( &nTemp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
 
-    nTemp = (GInt32)( dfLatitude + 0.5 );
-    CPL_LSBINT32PTR( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    const int nXSize = poSrcDS->GetRasterXSize();
+    nTemp = static_cast<GInt32>( dfLatitude + 0.5 );
+    CPL_LSBPTR32( &nTemp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
     dfLongitude = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
     CPL_LSBPTR64( &dfLongitude );
-    VSIFWriteL( &dfLongitude, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfLongitude, 8, 1, fp ));
     dfLongitude = adfSrcGeoTransform[0];
     CPL_LSBPTR64( &dfLongitude );
-    VSIFWriteL( &dfLongitude, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfLongitude, 8, 1, fp ));
     dfLatitude = adfSrcGeoTransform[3];
     CPL_LSBPTR64( &dfLatitude );
-    VSIFWriteL( &dfLatitude, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfLatitude, 8, 1, fp ));
     dfLatitude = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize;
     CPL_LSBPTR64( &dfLatitude );
-    VSIFWriteL( &dfLatitude, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfLatitude, 8, 1, fp ));
 
     /*
     ** Swap the two classification arrays if we are writing them, and they need
@@ -1453,7 +1433,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 
     if( bCalculateStats )
     {
-        for( i = 0; i < nBands; i++ )
+        for( int i = 0; i < nBands; i++ )
         {
             /*
             ** If we don't have Crown fuels, but do have Ground fuels, we
@@ -1461,39 +1441,39 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             */
             if( i == 5 && !bHaveCrownFuels && bHaveGroundFuels )
             {
-                VSIFSeekL( fp, 3340, SEEK_SET );
+                CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 3340, SEEK_SET ));
             }
             nTemp = (GInt32)padfMin[i];
-            CPL_LSBINT32PTR( &nTemp );
-            VSIFWriteL( &nTemp, 4, 1, fp );
+            CPL_LSBPTR32( &nTemp );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
             nTemp = (GInt32)padfMax[i];
-            CPL_LSBINT32PTR( &nTemp );
-            VSIFWriteL( &nTemp, 4, 1, fp );
+            CPL_LSBPTR32( &nTemp );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
             if( bClassifyData )
             {
                 /*
                 ** These two arrays were swapped in their entirety above.
                 */
-                VSIFWriteL( panFound + i, 4, 1, fp );
-                VSIFWriteL( panClasses + ( i * LCP_MAX_CLASSES ), 4, 100, fp );
+                CPL_IGNORE_RET_VAL(VSIFWriteL( panFound + i, 4, 1, fp ));
+                CPL_IGNORE_RET_VAL(VSIFWriteL( panClasses + ( i * LCP_MAX_CLASSES ), 4, 100, fp ));
             }
             else
             {
                 nTemp = -1;
-                CPL_LSBINT32PTR( &nTemp );
-                VSIFWriteL( &nTemp, 4, 1, fp );
-                VSIFSeekL( fp, 400, SEEK_CUR );
+                CPL_LSBPTR32( &nTemp );
+                CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
+                CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 400, SEEK_CUR ));
             }
         }
     }
     else
     {
-        VSIFSeekL( fp, 4164, SEEK_SET );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 4164, SEEK_SET ));
     }
-    CPLFree( (void*)padfMin );
-    CPLFree( (void*)padfMax );
-    CPLFree( (void*)panFound );
-    CPLFree( (void*)panClasses );
+    CPLFree( reinterpret_cast<void *>( padfMin ) );
+    CPLFree( reinterpret_cast<void *>( padfMax ) );
+    CPLFree( reinterpret_cast<void *>( panFound ) );
+    CPLFree( reinterpret_cast<void *>( panClasses ) );
 
     /*
     ** Should be at one of 3 locations, 2104, 3340, or 4164.
@@ -1501,66 +1481,66 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     CPLAssert( VSIFTellL( fp ) == 2104  ||
                VSIFTellL( fp ) == 3340  ||
                VSIFTellL( fp ) == 4164 );
-    VSIFSeekL( fp, 4164, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 4164, SEEK_SET ));
 
     /* Image size */
     nTemp = (GInt32)nXSize;
-    CPL_LSBINT32PTR( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_LSBPTR32( &nTemp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
     nTemp = (GInt32)nYSize;
-    CPL_LSBINT32PTR( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_LSBPTR32( &nTemp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
 
     /* X and Y boundaries */
     /* max x */
-    dfTemp = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
+    double dfTemp = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
     /* min x */
     dfTemp = adfSrcGeoTransform[0];
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
     /* max y */
     dfTemp = adfSrcGeoTransform[3];
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
     /* min y */
     dfTemp = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize;
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
 
     nTemp = nLinearUnits;
-    CPL_LSBINT32PTR( &nTemp );
-    VSIFWriteL( &nTemp, 4, 1, fp );
+    CPL_LSBPTR32( &nTemp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &nTemp, 4, 1, fp ));
 
     /* Resolution */
     /* x resolution */
     dfTemp = adfSrcGeoTransform[1];
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
     /* y resolution */
     dfTemp = fabs( adfSrcGeoTransform[5] );
     CPL_LSBPTR64( &dfTemp );
-    VSIFWriteL( &dfTemp, 8, 1, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( &dfTemp, 8, 1, fp ));
 
 #ifdef CPL_MSB
     GDALSwapWords( panMetadata, 2, LCP_MAX_BANDS, 2 );
 #endif
-    VSIFWriteL( panMetadata, 2, LCP_MAX_BANDS, fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( panMetadata, 2, LCP_MAX_BANDS, fp ));
 
     /* Write the source filenames */
     char **papszFileList = poSrcDS->GetFileList();
     if( papszFileList != NULL )
     {
-        for( i = 0; i < nBands; i++ )
+        for( int i = 0; i < nBands; i++ )
         {
             if( i == 5 && !bHaveCrownFuels && bHaveGroundFuels )
             {
-                VSIFSeekL( fp, 6292, SEEK_SET );
+                CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 6292, SEEK_SET ));
             }
-            VSIFWriteL( papszFileList[0], 1,
-                        CPLStrnlen( papszFileList[0], LCP_MAX_PATH ), fp );
-            VSIFSeekL( fp, 4244 + ( 256 * ( i+1 ) ), SEEK_SET );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( papszFileList[0], 1,
+                        CPLStrnlen( papszFileList[0], LCP_MAX_PATH ), fp ));
+            CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 4244 + ( 256 * ( i+1 ) ), SEEK_SET ));
         }
     }
     /*
@@ -1568,7 +1548,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     */
     else
     {
-        VSIFSeekL( fp, 6804, SEEK_SET );
+        CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 6804, SEEK_SET ));
     }
     CSLDestroy( papszFileList );
     /*
@@ -1577,16 +1557,16 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     CPLAssert( VSIFTellL( fp ) == 5524 ||
                VSIFTellL( fp ) == 6292 ||
                VSIFTellL( fp ) == 6804 );
-    VSIFSeekL( fp, 6804, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 6804, SEEK_SET ));
 
     /* Description */
-    VSIFWriteL( pszDescription, 1, CPLStrnlen( pszDescription, LCP_MAX_DESC ),
-                fp );
+    CPL_IGNORE_RET_VAL(VSIFWriteL( pszDescription, 1, CPLStrnlen( pszDescription, LCP_MAX_DESC ),
+                fp ));
     /*
     ** Should be at or below location 7316, all done with the header.
     */
     CPLAssert( VSIFTellL( fp ) <= 7316 );
-    VSIFSeekL( fp, 7316, SEEK_SET );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 7316, SEEK_SET ));
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -1596,8 +1576,8 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
-        VSIFCloseL( fp );
-        VSIFree( (void*)panScanline );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
+        VSIFree( reinterpret_cast<void *>( panScanline ) );
         return NULL;
     }
     for( int iLine = 0; iLine < nYSize; iLine++ )
@@ -1622,17 +1602,17 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 #ifdef CPL_MSB
         GDALSwapWords( panScanline, 2, nBands * nXSize, 2 );
 #endif
-        VSIFWriteL( panScanline, 2, nBands * nXSize, fp );
+        CPL_IGNORE_RET_VAL(VSIFWriteL( panScanline, 2, nBands * nXSize, fp ));
 
         if( !pfnProgress( iLine / (double)nYSize, NULL, pProgressData ) )
         {
-            VSIFree( (void*)panScanline );
-            VSIFCloseL( fp );
+            VSIFree( reinterpret_cast<void *>( panScanline ) );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return NULL;
         }
     }
     VSIFree( panScanline );
-    VSIFCloseL( fp );
+    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
     {
         return NULL;
@@ -1647,25 +1627,22 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     pszOriginalProjection = (char *)poSrcDS->GetProjectionRef();
     if( !EQUAL( pszOriginalProjection, "" ) )
     {
-        char                    *pszDirname, *pszBasename;
-        char                    *pszPrjFilename;
-        char                    *pszESRIProjection = NULL;
-        VSILFILE                *fp;
         OGRSpatialReference     oSRS;
 
-        pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
-        pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
+        char *pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
+        char *pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
 
-        pszPrjFilename = CPLStrdup( CPLFormFilename( pszDirname, pszBasename, "prj" ) );
+        char *pszPrjFilename = CPLStrdup( CPLFormFilename( pszDirname, pszBasename, "prj" ) );
         fp = VSIFOpenL( pszPrjFilename, "wt" );
         if (fp != NULL)
         {
             oSRS.importFromWkt( (char **) &pszOriginalProjection );
             oSRS.morphToESRI();
+            char *pszESRIProjection = NULL;
             oSRS.exportToWkt( &pszESRIProjection );
-            VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp );
+            CPL_IGNORE_RET_VAL(VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp ));
 
-            VSIFCloseL( fp );
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             CPLFree( pszESRIProjection );
         }
         else
@@ -1683,7 +1660,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
- 
+
 const char *LCPDataset::GetProjectionRef()
 
 {
@@ -1697,24 +1674,22 @@ const char *LCPDataset::GetProjectionRef()
 void GDALRegister_LCP()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "LCP" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "LCP" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "LCP" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "FARSITE v.4 Landscape File (.lcp)" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "lcp" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_lcp.html" );
+    poDriver->SetDescription( "LCP" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "FARSITE v.4 Landscape File (.lcp)" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "lcp" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_lcp.html" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int16" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int16" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='ELEVATION_UNIT' type='string-select' default='METERS' description='Elevation units'>"
 "       <Value>METERS</Value>"
@@ -1774,11 +1749,10 @@ void GDALRegister_LCP()
 "   <Option name='LATITUDE' type='int' default='' description='Set the latitude for the dataset, this overrides the driver trying to set it programmatically in EPSG:4269'/>"
 "   <Option name='DESCRIPTION' type='string' default='LCP file created by GDAL' description='A short description of the lcp file'/>"
 "</CreationOptionList>" );
-        poDriver->pfnOpen = LCPDataset::Open;
-        poDriver->pfnCreateCopy = LCPDataset::CreateCopy;
-        poDriver->pfnIdentify = LCPDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-   }
+    poDriver->pfnOpen = LCPDataset::Open;
+    poDriver->pfnCreateCopy = LCPDataset::CreateCopy;
+    poDriver->pfnIdentify = LCPDataset::Identify;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

@@ -34,7 +34,7 @@
 
 CPP_GDALWMSMiniDriverFactory(TiledWMS)
 
-static char SIG[]="GDAL_WMS TiledWMS: ";
+static const char SIG[]="GDAL_WMS TiledWMS: ";
 
 /*
  *\brief Read a number from an xml element
@@ -70,14 +70,14 @@ static GDALColorEntry GetXMLColorEntry(CPLXMLNode *p)
  *
  * Searches only the next siblings of the node passed in for the named element or attribute.
  * If the first character of the pszElement is '=', the search includes the psRoot node
- * 
+ *
  * @param psRoot the root node to search.  This should be a node of type
  * CXT_Element.  NULL is safe.
  *
  * @param pszElement the name of the element or attribute to search for.
  *
  *
- * @return The first matching node or NULL on failure. 
+ * @return The first matching node or NULL on failure.
  */
 
 static CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement )
@@ -179,12 +179,12 @@ static GDALColorInterp BandInterp(int nbands, int band) {
 /************************************************************************/
 
 /*
- * \brief Utility function to find the position of the bbox parameter value 
+ * \brief Utility function to find the position of the bbox parameter value
  * within a request string.  The search for the bbox is case insensitive
  *
  * @param in, the string to search into
  *
- * @return The position from the begining of the string or -1 if not found
+ * @return The position from the beginning of the string or -1 if not found
  */
 
 static int FindBbox(CPLString in) {
@@ -229,7 +229,7 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
         ret=papszTokens[j];  // The target string
         bool matches=true;
 
-        for (int k=0;k<keycount;k++)
+        for (int k=0;k<keycount && keys != NULL;k++)
         {
             const char *key=keys[k];
             int sub_number=CSLPartialFindString(substs,key);
@@ -243,6 +243,7 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
                     if (std::string::npos==ret.find(key))
                     {
                         matches=false;
+                        CPLFree(found_key);
                         break;
                     }
                     // Execute the substitution on the "ret" string
@@ -269,9 +270,11 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
     CSLDestroy(papszTokens);
 }
 
-GDALWMSMiniDriver_TiledWMS::GDALWMSMiniDriver_TiledWMS() {
-    m_requests = NULL;
-}
+GDALWMSMiniDriver_TiledWMS::GDALWMSMiniDriver_TiledWMS() :
+    m_requests(NULL),
+    m_bsx(0),
+    m_bsy(0)
+{ }
 
 GDALWMSMiniDriver_TiledWMS::~GDALWMSMiniDriver_TiledWMS() {
     CSLDestroy(m_requests);
@@ -414,7 +417,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
         }
 
        // Data values are attributes, they include NoData Min and Max
-       if (0!=CPLGetXMLNode(TG,"DataValues")) {
+       if (NULL!=CPLGetXMLNode(TG,"DataValues")) {
            const char *nodata=CPLGetXMLValue(TG,"DataValues.NoData",NULL);
            if (nodata!=NULL) m_parent_dataset->WMSSetNoDataValue(nodata);
            const char *min=CPLGetXMLValue(TG,"DataValues.min",NULL);
@@ -541,7 +544,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
         m_bsx=m_bsy=-1;
         m_data_window.m_sx=m_data_window.m_sy=0;
 
-        for (int once=1;once;once--) { // Something to break out of
+        for (int once2=1;once2;once2--) { // Something to break out of
             while ((NULL!=Pattern)&&(NULL!=(Pattern=SearchXMLSiblings(Pattern,"=TilePattern")))) {
                 int mbsx,mbsy;
 
@@ -571,7 +574,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
 
                 if (-1==m_bsx) m_bsx=mbsx;
                 if (-1==m_bsy) m_bsy=mbsy;
-                if ((m_bsy!=mbsy)||(m_bsy!=mbsy)) {
+                if ((m_bsx!=mbsx)||(m_bsy!=mbsy)) {
                     CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s",SIG,
                         "Tileset uses different block sizes.");
                     overview_count=0;

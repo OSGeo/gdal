@@ -128,8 +128,8 @@ int main(int argc, char* argv[])
 
     if ( sConv == (iconv_t)-1 )
     {
-        fprintf(stderr, 
-                  "Recode from %s to %s failed with the error: \"%s\".", 
+        fprintf(stderr,
+                  "Recode from %s to %s failed with the error: \"%s\".",
                   pszSrcEncoding, pszDstEncoding, strerror(errno) );
         return 1;
     }

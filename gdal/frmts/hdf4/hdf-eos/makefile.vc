@@ -8,6 +8,10 @@ GDAL_ROOT	=	..\..\..
 
 EXTRAFLAGS = 	-I$(HDF4_DIR)\include -I.\ -I..\ -DFRMT_hdf4 -DWIN32
 
+!IF "$(HDF4_HAS_MAXOPENFILES)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DHDF4_HAS_MAXOPENFILES
+!ENDIF
+
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\..\o
 

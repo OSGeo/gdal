@@ -29,16 +29,16 @@
 
 #ifndef timedelta_hpp
 #define timedelta_hpp
-/* 
+/*
  * TimeDelta class represents the time difference. It is used to 
  * hold the Envisat MJD (Modified Julian Date - which is time 
  * since 2000-01-01T00:00:00.000000Z) 
  */
 
 class TimeDelta  
-{ 
+{
 
-  private: 
+  private:
 
     int days ;     /* number of days */
     int secs ;     /* number of seconds since day start */ 
@@ -47,45 +47,45 @@ class TimeDelta
     /* SETTERS */
 
     /* set object using number of days, seconds and micro-seconds */
-    inline void set( int days , int secs , int usecs ) 
+    inline void set( int daysIn , int secsIn , int usecsIn ) 
     { 
         int tmp0 , tmp1 ; 
         /* overflow check with proper handling of negative values */ 
         /* note that division and modulo for negative values is impl.dependent */ 
 
-        secs += ( tmp0 = usecs>=0 ? usecs/1000000 : -1-((-usecs)/1000000) ) ;  
-        days += ( tmp1 = secs>=0 ? secs/86400 : -1-((-secs)/86400) ) ;
+        secsIn += ( tmp0 = usecsIn>=0 ? usecsIn/1000000 : -1-((-usecsIn)/1000000) ) ;  
+        daysIn += ( tmp1 = secsIn>=0 ? secsIn/86400 : -1-((-secsIn)/86400) ) ;
 
-        this->usecs = usecs - 1000000*tmp0 ;
-        this->secs  = secs - 86400*tmp1 ; 
-        this->days  = days ;
+        this->usecs = usecsIn - 1000000*tmp0 ;
+        this->secs  = secsIn - 86400*tmp1 ; 
+        this->days  = daysIn ;
     } 
 
     /* set object from floating point number of seconds */
-    inline void fromSeconds( double secs ) 
+    inline void fromSeconds( double secsIn ) 
     { 
-        int _days = (int)( secs / 86400 ) ;
-        int _secs = (int)( secs - 86400*_days ) ;
-        int _uscs = (int)(( secs - ((int)secs) )*1e6) ; 
+        int _days = (int)( secsIn / 86400 ) ;
+        int _secs = (int)( secsIn - 86400*_days ) ;
+        int _uscs = (int)(( secsIn - ((int)secsIn) )*1e6) ; 
 
         this->set( _days , _secs , _uscs ) ;
     } 
 
-  public: 
+  public:
 
     /* CONSTRUCTORS */
     TimeDelta( void ) : days(0), secs(0), usecs(0) {} 
 
     /* construct object using number of days, seconds and micro-seconds */
-    TimeDelta( int days , int secs , int usecs ) 
+    TimeDelta( int daysIn , int secsIn , int usecsIn ) 
     { 
-        this->set( days, secs, usecs ) ;
+        this->set( daysIn, secsIn, usecsIn ) ;
     } 
 
     /* construct object from floating point number of seconds */
-    TimeDelta( double secs ) 
+    TimeDelta( double secsIn ) 
     { 
-        this->fromSeconds( secs ) ;
+        this->fromSeconds( secsIn ) ;
     }
 
     /* GETTERS */
@@ -106,15 +106,14 @@ class TimeDelta
     } 
 
     /* convert to seconds - can handle safely at least 250 years dif. */
-    /*  ... before loosing the microsecond precision */
+    /*  ... before losing the microsecond precision */
     inline operator double( void ) const  
     { 
         return (this->days*86400.0) + this->secs + (this->usecs*1e-6) ;
     } 
 
-
     /* OPERATORS */
-    
+
     /* difference */
     inline TimeDelta operator -( const TimeDelta & that ) const 
     { 
@@ -186,7 +185,6 @@ class TimeDelta
                 ) ;
     } 
 
-
     inline bool operator !=( const TimeDelta & that ) const 
     { 
         return !( *this == that ) ;
@@ -202,7 +200,7 @@ class TimeDelta
         return !( *this > that ) ;
     } 
 
-} ;  
+};
 
 /*
 #include <iostream>
@@ -215,7 +213,7 @@ std::ostream & operator<<( std::ostream & out, const TimeDelta & td )
         << "," << td.getMicroseconds() << ")" ; 
 
     return out ;
-} 
+}
 */
 
 #endif /*timedelta_hpp*/

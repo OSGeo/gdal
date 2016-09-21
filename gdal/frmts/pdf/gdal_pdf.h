@@ -6,6 +6,13 @@
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
+ *
+ * Support for open-source PDFium library
+ *
+ * Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
+ * Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
+ *
+ ******************************************************************************
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,18 +34,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _GDAL_PDF_H_INCLUDED
-#define _GDAL_PDF_H_INCLUDED
+#ifndef GDAL_PDF_H_INCLUDED
+#define GDAL_PDF_H_INCLUDED
 
-#ifdef HAVE_POPPLER
-
-/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
-/* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
-#define CPL_GBOOL_DEFINED
-#define OGR_FEATURESTYLE_INCLUDE
-
-#include <goo/gtypes.h>
-#endif
+#include "pdfsdk_headers.h"
 
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
@@ -48,12 +47,18 @@
 
 #include <map>
 #include <stack>
+#include <bitset>   // For detecting usage of PDF library
+
+#define     PDFLIB_POPPLER    0
+#define     PDFLIB_PODOFO     1
+#define     PDFLIB_PDFIUM     2
+#define     PDFLIB_COUNT      3
 
 /************************************************************************/
 /*                             OGRPDFLayer                              */
 /************************************************************************/
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
 class PDFDataset;
 
@@ -109,6 +114,45 @@ typedef struct
     int            nBands;
 } GDALPDFTileDesc;
 
+#ifdef HAVE_PDFIUM
+/**
+ * Structures for Document and Document's Page for PDFium library,
+ *  which does not support multi-threading.
+ * Structures keeps objects for PDFium library and exclusive mutex locks
+ *  for one-per-time access of PDFium library methods with multi-threading GDAL
+ * Structures also keeps only one object per each opened PDF document
+ *  - this saves time for opening and memory for opened objects
+ * Document is closed after closing all pages object.
+ */
+
+/************************************************************************/
+/*                           TPdfiumPageStruct                          */
+/************************************************************************/
+
+// Map of Pdfium pages in following structure
+typedef struct {
+  int pageNum;
+  CPDF_Page* page;
+  CPLMutex * readMutex;
+  int sharedNum;
+} TPdfiumPageStruct;
+
+typedef std::map<int, TPdfiumPageStruct*>        TMapPdfiumPages;
+
+/************************************************************************/
+/*                         TPdfiumDocumentStruct                        */
+/************************************************************************/
+
+// Structure for Mutex on File
+typedef struct {
+  char* filename;
+  CPDF_Document* doc;
+  TMapPdfiumPages pages;
+  FPDF_FILEACCESS* psFileAccess;
+} TPdfiumDocumentStruct;
+
+#endif  // ~ HAVE_PDFIUM
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              PDFDataset                              */
@@ -125,12 +169,14 @@ class ObjectAutoFree;
 #define MAX_TOKEN_SIZE 256
 #define TOKEN_STACK_SIZE 8
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
 class PDFDataset : public GDALPamDataset
 {
     friend class PDFRasterBand;
     friend class PDFImageRasterBand;
+
+    PDFDataset*  poParentDS;
 
     CPLString    osFilename;
     CPLString    osUserPwd;
@@ -149,13 +195,18 @@ class PDFDataset : public GDALPamDataset
     int          bInfoDirty;
     int          bXMPDirty;
 
-    int          bUsePoppler;
+    std::bitset<PDFLIB_COUNT> bUseLib;
 #ifdef HAVE_POPPLER
     PDFDoc*      poDocPoppler;
 #endif
 #ifdef HAVE_PODOFO
     PoDoFo::PdfMemDocument* poDocPodofo;
     int          bPdfToPpmFailed;
+#endif
+#ifdef HAVE_PDFIUM
+    TPdfiumDocumentStruct*  poDocPdfium;
+    TPdfiumPageStruct*      poPagePdfium;
+    std::vector<PDFDataset*> apoOvrDS, apoOvrDSBackup;
 #endif
     GDALPDFObject* poPageObj;
 
@@ -195,14 +246,40 @@ class PDFDataset : public GDALPamDataset
     GDALPDFObject* poCatalogObject;
     GDALPDFObject* GetCatalog();
 
-#ifdef HAVE_POPPLER
-    void         AddLayer(const char* pszLayerName, OptionalContentGroup* ocg);
-    void         ExploreLayers(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
-    void         FindLayers();
-    void         TurnLayersOnOff();
-    CPLStringList osLayerList;
-    std::map<CPLString, OptionalContentGroup*> oLayerOCGMap;
+#if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
+    void         AddLayer(const char* pszLayerName);
 #endif
+
+#if defined(HAVE_POPPLER)
+    void         ExploreLayersPoppler(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
+    void         FindLayersPoppler();
+    void         TurnLayersOnOffPoppler();
+    std::map<CPLString, OptionalContentGroup*> oLayerOCGMapPoppler;
+#endif
+
+#ifdef HAVE_PDFIUM
+    void         ExploreLayersPdfium(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
+    void         FindLayersPdfium();
+    void         PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page, int start_x, int start_y,
+                                        int size_x, int size_y, const char* pszRenderingOptions);
+    void         TurnLayersOnOffPdfium();
+
+public:
+    typedef enum
+    {
+        VISIBILITY_DEFAULT,
+        VISIBILITY_ON,
+        VISIBILITY_OFF
+    } VisibilityState;
+
+    VisibilityState GetVisibilityStateForOGCPdfium(int nNum, int nGen);
+
+private:
+    std::map< CPLString, std::pair<int,int> > oMapLayerNameToOCGNumGenPdfium;
+    std::map< std::pair<int,int>, VisibilityState > oMapOCGNumGenToVisibilityStatePdfium;
+#endif
+
+    CPLStringList osLayerList;
 
     CPLStringList osLayerWithRefList;
     CPLString     FindLayerOCG(GDALPDFDictionary* poPageDict,
@@ -216,6 +293,7 @@ class PDFDataset : public GDALPamDataset
                                   const char* pszOptionName,
                                   const char* pszDefaultVal);
 
+    int                 bHasLoadedLayers;
     int                 nLayers;
     OGRLayer          **papoLayers;
 
@@ -229,7 +307,7 @@ class PDFDataset : public GDALPamDataset
 
     std::map<CPLString, int> oMapOperators;
     void                InitMapOperators();
-    
+
     int                 bSetStyle;
 
     void                ExploreTree(GDALPDFObject* poObj, int nRecLevel);
@@ -257,8 +335,12 @@ class PDFDataset : public GDALPamDataset
 
     int                 OpenVectorLayers(GDALPDFDictionary* poPageDict);
 
+#ifdef HAVE_PDFIUM
+    void    InitOverviews();
+#endif  // ~ HAVE_PDFIUM
+
   public:
-                 PDFDataset();
+                 PDFDataset(PDFDataset* poParentDS = NULL, int nXSize = 0, int nYSize = 0);
     virtual     ~PDFDataset();
 
     virtual const char* GetProjectionRef();
@@ -306,6 +388,13 @@ class PDFDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+
+#ifdef HAVE_PDFIUM
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
+
+    static int bPdfiumInit;
+#endif
 };
 
 /************************************************************************/
@@ -318,17 +407,32 @@ class PDFRasterBand : public GDALPamRasterBand
 {
     friend class PDFDataset;
 
+    int   nResolutionLevel;
+
     CPLErr IReadBlockFromTile( int, int, void * );
 
   public:
 
-                PDFRasterBand( PDFDataset *, int );
+                PDFRasterBand( PDFDataset *, int, int );
+                ~PDFRasterBand();
+
+#ifdef HAVE_PDFIUM
+    virtual int    GetOverviewCount();
+    virtual GDALRasterBand *GetOverview( int );
+#endif  // ~ HAVE_PDFIUM
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
+
+#ifdef notdef
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
+#endif
 };
 
-#endif /*  defined(HAVE_POPPLER) || defined(HAVE_PODOFO) */
+#endif /*  defined(HAVE_POPPLER) || defined(HAVE_PODOFO)|| defined(HAVE_PDFIUM) */
 
 /************************************************************************/
 /*                          PDFWritableDataset                          */
@@ -369,4 +473,4 @@ class PDFWritableVectorDataset : public GDALDataset
 GDALDataset* GDALPDFOpen(const char* pszFilename, GDALAccess eAccess);
 CPLString PDFSanitizeLayerName(const char* pszName);
 
-#endif /* ndef _GDAL_PDF_H_INCLUDED */
+#endif /* ndef GDAL_PDF_H_INCLUDED */

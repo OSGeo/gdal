@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GEOMEDIA_H_INCLUDED
-#define _OGR_GEOMEDIA_H_INCLUDED
+#ifndef OGR_GEOMEDIA_H_INCLUDED
+#define OGR_GEOMEDIA_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
@@ -41,7 +41,7 @@
 /************************************************************************/
 
 class OGRGeomediaDataSource;
-    
+
 class OGRGeomediaLayer : public OGRLayer
 {
   protected:
@@ -78,9 +78,9 @@ class OGRGeomediaLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    
+
     virtual int         TestCapability( const char * );
 
     virtual const char *GetFIDColumn();
@@ -106,7 +106,7 @@ class OGRGeomediaTableLayer : public OGRGeomediaLayer
                         OGRGeomediaTableLayer( OGRGeomediaDataSource * );
                         ~OGRGeomediaTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
                                     OGRSpatialReference* poSRS );
 
@@ -115,7 +115,7 @@ class OGRGeomediaTableLayer : public OGRGeomediaLayer
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual int         TestCapability( const char * );
 };
 
@@ -141,7 +141,7 @@ class OGRGeomediaSelectLayer : public OGRGeomediaLayer
     virtual GIntBig     GetFeatureCount( int );
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual int         TestCapability( const char * );
 };
 
@@ -171,7 +171,7 @@ class OGRGeomediaDataSource : public OGRDataSource
                         ~OGRGeomediaDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *pszTableName, 
+    int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
 
@@ -199,7 +199,7 @@ class OGRGeomediaDriver : public OGRODBCMDBDriver
 {
   public:
                 ~OGRGeomediaDriver();
-                
+
     const char  *GetName();
     OGRDataSource *Open( const char *, int );
 

@@ -7,19 +7,19 @@
 
 <h1>JP2ECW -- ERDAS JPEG2000 (.jp2)</h1>
 
-GDAL supports reading and writing JPEG2000 files using the ERDAS ECW/JP2 SDK developed by 
-Hexagon Geospatial (formerly Intergraph, ERDAS, ERMapper). Support is optional and 
+GDAL supports reading and writing JPEG2000 files using the ERDAS ECW/JP2 SDK developed by
+Hexagon Geospatial (formerly Intergraph, ERDAS, ERMapper). Support is optional and
 requires linking in the libraries available from the ECW/JP2 SDK Download page.<p>
 
-Coordinate system and georeferencing transformations are read, and 
-some degree of support is included for GeoJP2 (tm) (GeoTIFF-in-JPEG2000), 
+Coordinate system and georeferencing transformations are read, and
+some degree of support is included for GeoJP2 (tm) (GeoTIFF-in-JPEG2000),
 ERDAS GML-in-JPEG2000, and the new GML-in-JPEG2000 specification developed
 at OGC. <p>
 
 <h3>Licensing</h3>
 
 The ERDAS ECW/JP2 SDK v5.x is available under multiple license types. For Desktop usage, decoding
-any sized ECW/JP2 image is made available free of charge. To compress, deploy on a Server platform, or decode 
+any sized ECW/JP2 image is made available free of charge. To compress, deploy on a Server platform, or decode
 unlimited sized files on Mobile platforms a license must be purchased from Hexagon Geospatial.<p>
 
 
@@ -30,6 +30,16 @@ unlimited sized files on Mobile platforms a license must be purchased from Hexag
 <li>v5.x - Active development, 2013 - current</li>
 </ul>
 
+<h2>Option Options</h2>
+
+(GDAL &gt;= 2.0 )
+
+The following open option is available:
+<ul>
+<li><p><b>1BIT_ALPHA_PROMOTION=YES/NO</b>: Whether a 1-bit alpha channel should be promoted to 8-bit.
+Defaults to YES.</li>
+</ul>
+
 <h2>Creation Options:</h2>
 
 Note: Only Licensing and compression target need to be specified. The ECW/JP2 SDK will default all other options to recommended settings based on the input characteristics.
@@ -37,32 +47,45 @@ Changing other options can <i>substantially</i> impact decoding speed and compat
 
 <ul>
 
-<li> <b>LARGE_OK=YES</b>: <i>(v3.x SDK only)</i> Allow compressing files larger than 500MB in accordance with EULA terms. Deprecated since v4.x and 
+<li> <b>LARGE_OK=YES</b>: <i>(v3.x SDK only)</i> Allow compressing files larger than 500MB in accordance with EULA terms. Deprecated since v4.x and
 replaced by ECW_ENCODE_KEY & ECW_ENCODE_COMPANY.<p>
 
 <li> <b>ECW_ENCODE_KEY=key</b>: <i>(v4.x SDK or higher)</i> Provide the OEM encoding key to unlock encoding capability
-up to the licensed gigapixel limit.  The key is is approximately 129 hex digits long. The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided globally as a configuration option.<p>
+up to the licensed gigapixel limit.  The key is approximately 129 hex digits long. The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided globally as a configuration option.<p>
 
 <li> <b>ECW_ENCODE_COMPANY=name</b>: <i>(v4.x SDK or higher)</i> Provide the name of the company in the issued
-OEM key (see ECW_ENCODE_KEY).  The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided 
+OEM key (see ECW_ENCODE_KEY).  The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided
 globally as a configuration option.<p>
 
-<li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of 
-the original.  If not provided defaults to 75 for an 75% reduction.  TARGET=0 
+<li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of
+the original.  If not provided defaults to 75 for an 75% reduction.  TARGET=0
 uses lossless compression.<p>
 
-<li> <b>PROJ=name</b>: Name of the ECW projection string to use. 
+<li> <b>PROJ=name</b>: Name of the ECW projection string to use.
 Common examples are NUTM11, or GEODETIC.<p>
 
-<li> <b>DATUM=name</b>: Name of the ECW datum string to use. 
+<li> <b>DATUM=name</b>: Name of the ECW datum string to use.
 Common examples are WGS84 or NAD83.<p>
 
-<li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box conforming to the OGC GML in JPEG2000 specification should be included in the file.  Defaults to YES.<p>
+<li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box
+conforming to the OGC GML in JPEG2000 specification should be included in the
+file. Unless GMLJP2V2_DEF is used, the version of the GMLJP2 box will be
+version 1. Defaults to YES.<p>
+
+<li> <b>GMLJP2V2_DEF=filename</b>: (Starting with GDAL 2.0) Indicates whether a GML box
+conforming to the <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">
+OGC GML in JPEG2000, version 2</a> specification should be included in the
+file. <i>filename</i> must point to a file with a JSon content that defines how
+the GMLJP2 v2 box should be built. See <a href="frmt_jp2openjpeg.html#GMLJP2v2Def">
+GMLJP2v2 definition file section</a> in documentation of the JP2OpenJPEG driver
+for the syntax of the JSon configuration file.
+It is also possible to directly pass the JSon content inlined as a string.
+If filename is just set to YES, a minimal instance will be built.<p>
 
 <li> <b>GeoJP2=YES/NO</b>: Indicates whether a UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
 
-<li> <b>PROFILE=profile</b>: One of BASELINE_0, BASELINE_1, BASELINE_2, 
-NPJE or EPJE.  Review the ECW SDK documentation for details on profile 
+<li> <b>PROFILE=profile</b>: One of BASELINE_0, BASELINE_1, BASELINE_2,
+NPJE or EPJE.  Review the ECW SDK documentation for details on profile
 meanings.<p>
 
 <li> <b>PROGRESSION=LRCP/RLCP/RPCL</b>: Set the progression order with
@@ -73,7 +96,7 @@ imagery code stream will be written.  If NO a JP2 package
 will be written around the code stream including a variety of meta
 information. (Default, NO)<p>
 
-    
+
 <li> <b>LEVELS=n</b>: Resolution levels in pyramid (by default so many that the size of the smallest thumbnail image is 64x64 pixels at maximum)<p>
 <li> <b>LAYERS=n</b>: Quality layers (default, 1)<p>
 <li> <b>PRECINCT_WIDTH=n</b>: Precinct Width (default, 64)<p>
@@ -85,38 +108,66 @@ information. (Default, NO)<p>
 <li> <b>DECOMPRESS_LAYERS=n</b>: The number of quality layers to decode<p>
 <li> <b>DECOMPRESS_RECONSTRUCTION_PARAMETER=n</b>: IRREVERSIBLE_9x7 or REVERSIBLE_5x3<p>
 
+<li><p><b>WRITE_METADATA=YES/NO</b>: (GDAL &gt;= 2.0) Whether metadata should be
+written, in a dedicated JP2 XML box. Defaults to NO.
+The content of the XML box will be like:
+<pre>
+&lt;GDALMultiDomainMetadata&gt;
+  &lt;Metadata&gt;
+    &lt;MDI key="foo"&gt;bar&lt;/MDI&gt;
+  &lt;/Metadata&gt;
+  &lt;Metadata domain='aux_domain'&gt;
+    &lt;MDI key="foo"&gt;bar&lt;/MDI&gt;
+  &lt;/Metadata&gt;
+  &lt;Metadata domain='a_xml_domain' format='xml'&gt;
+    &lt;arbitrary_xml_content&gt;
+    &lt;/arbitrary_xml_content&gt;
+  &lt;/Metadata&gt;
+&lt;/GDALMultiDomainMetadata&gt;
+</pre>
+If there are metadata domain whose name starts with "xml:BOX_", they will be
+written each as separate JP2 XML box.<p>
+If there is a metadata domain whose name is "xml:XMP", its content will be
+written as a JP2 UUID XMP box.
+</p></li>
+
+<li><p><b>MAIN_MD_DOMAIN_ONLY=YES/NO</b>: (GDAL &gt;= 2.0)
+(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should
+be written. Defaults to NO.
+</p></li>
+
 </ul>
 
-"JPEG2000 format does not support creation of GDAL overviews since the format 
-is already considered to be optimized for "arbitrary overviews". 
-JP2ECW driver also arranges JP2 codestream to allow optimal access to power of two overviews. 
-This is controlled with the creation option LEVELS." 
+"JPEG2000 format does not support creation of GDAL overviews since the format
+is already considered to be optimized for "arbitrary overviews".
+JP2ECW driver also arranges JP2 codestream to allow optimal access to power of two overviews.
+This is controlled with the creation option LEVELS."
 <P>
 
 <h2> Configuration Options </h2>
 
-The ERDAS ECW/JP2 SDK supports a variety of 
-<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration 
-options</a> to control various features.  Most of these are exposed as GDAL 
+The ERDAS ECW/JP2 SDK supports a variety of
+<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration
+options</a> to control various features.  Most of these are exposed as GDAL
 configuration options.  See the ECW/JP2 SDK documentation for full details on the
-meaning of these options. 
+meaning of these options.
 
 <ul>
-<li> <b>ECW_CACHE_MAXMEM=bytes</b>: maximum bytes of RAM used for in-memory 
-caching.  If not set, up to one quarter of physical RAM will be used by the 
+<li> <b>ECW_CACHE_MAXMEM=bytes</b>: maximum bytes of RAM used for in-memory
+caching.  If not set, up to one quarter of physical RAM will be used by the
 SDK for in-memory caching.<p>
 
 <li> <b>ECW_TEXTURE_DITHER=TRUE/FALSE</b>: This may be set to FALSE to disable
 dithering when decompressing ECW files.  Defaults to TRUE.<p>
 
-<li> <b>ECW_FORCE_FILE_REOPEN=TRUE/FALSE</b>: This may be set to TRUE to 
-force open a file handle for each file for each connection made.  Defaults to 
+<li> <b>ECW_FORCE_FILE_REOPEN=TRUE/FALSE</b>: This may be set to TRUE to
+force open a file handle for each file for each connection made.  Defaults to
 FALSE.<p>
 
-<li> <b>ECW_CACHE_MAXOPEN=number</b>: The maximum number of files to keep 
+<li> <b>ECW_CACHE_MAXOPEN=number</b>: The maximum number of files to keep
 open for ECW file handle caching.  Defaults to unlimited.<p>
 
-<li> <b>ECW_AUTOGEN_J2I=TRUE/FALSE</b>: Controls whether .j2i index files 
+<li> <b>ECW_AUTOGEN_J2I=TRUE/FALSE</b>: Controls whether .j2i index files
 should be created when opening jpeg2000 files.  Defaults to TRUE.<p>
 
 <li> <b>ECW_RESILIENT_DECODING=TRUE/FALSE</b>: Controls whether the reader

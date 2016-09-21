@@ -38,17 +38,14 @@ CPL_CVSID("$Id$");
 /*                        OGRDODSSequenceLayer()                        */
 /************************************************************************/
 
-OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn, 
+OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
                                             const char *pszTargetIn,
-                                            AttrTable *poOGRLayerInfoIn )
-
-        : OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn )
-
+                                            AttrTable *poOGRLayerInfoIn ) :
+    OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn ),
+    pszSubSeqPath("profile"), // hardcode for now.
+    iLastSuperSeq(-1),
+    panSubSeqSize(NULL)
 {
-    pszSubSeqPath = "profile"; // hardcode for now. 
-    panSubSeqSize = NULL;
-    iLastSuperSeq = -1;
-
 /* -------------------------------------------------------------------- */
 /*      What is the layer name?                                         */
 /* -------------------------------------------------------------------- */
@@ -61,7 +58,7 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
         if( strlen(oLayerName.c_str()) > 0 )
             pszLayerName = oLayerName.c_str();
     }
-        
+
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     poFeatureDefn->Reference();
 
@@ -106,7 +103,7 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
         else
             oSSTargName = "impossiblexxx";
 
-        if( poDS->poDDS->var( oTargName + ".lon" ) != NULL 
+        if( poDS->poDDS->var( oTargName + ".lon" ) != NULL
             && poDS->poDDS->var( oTargName + ".lat" ) != NULL )
         {
             oXField.Initialize( (oTargName + ".lon").c_str(), "dds",
@@ -114,7 +111,7 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
             oYField.Initialize( (oTargName + ".lat").c_str(), "dds",
                                 poTargetVar, poSuperSeq );
         }
-        else if( poDS->poDDS->var( oSSTargName + ".lon" ) != NULL 
+        else if( poDS->poDDS->var( oSSTargName + ".lon" ) != NULL
                  && poDS->poDDS->var( oSSTargName + ".lat" ) != NULL )
         {
             oXField.Initialize( (oSSTargName + ".lon").c_str(), "dds",
@@ -138,8 +135,8 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
 /* -------------------------------------------------------------------- */
     if( poSuperSeq != NULL )
     {
-        for( v_i = poSuperSeq->var_begin(); 
-             v_i != poSuperSeq->var_end(); 
+        for( v_i = poSuperSeq->var_begin();
+             v_i != poSuperSeq->var_end();
              v_i++ )
             BuildFields( *v_i, NULL, NULL );
     }
@@ -165,8 +162,8 @@ Sequence *OGRDODSSequenceLayer::FindSuperSequence( BaseType *poChild )
 {
     BaseType *poParent;
 
-    for( poParent = poChild->get_parent(); 
-         poParent != NULL; 
+    for( poParent = poChild->get_parent();
+         poParent != NULL;
          poParent = poParent->get_parent() )
     {
         if( poParent->type() == dods_sequence_c )
@@ -185,10 +182,10 @@ Sequence *OGRDODSSequenceLayer::FindSuperSequence( BaseType *poChild )
 /*      the passed variable and it's children (if it has them).         */
 /************************************************************************/
 
-int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar, 
+int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
                                        const char *pszPathToVar,
                                        const char *pszPathToSequence )
-    
+
 {
     OGRFieldDefn oField( "", OFTInteger );
 
@@ -198,9 +195,9 @@ int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
     if( pszPathToVar == NULL )
         oField.SetName( poFieldVar->name().c_str() );
     else
-        oField.SetName( CPLSPrintf( "%s.%s", pszPathToVar, 
+        oField.SetName( CPLSPrintf( "%s.%s", pszPathToVar,
                                     poFieldVar->name().c_str() ) );
-                                    
+
 /* -------------------------------------------------------------------- */
 /*      Capture this field definition.                                  */
 /* -------------------------------------------------------------------- */
@@ -243,7 +240,7 @@ int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
               return FALSE;
 
           // We don't explore down into the target sequence if we
-          // are recursing from a supersequence. 
+          // are recursing from a supersequence.
           if( poFieldVar == this->poTargetVar )
               return FALSE;
 
@@ -263,19 +260,19 @@ int OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
 /* -------------------------------------------------------------------- */
     poFeatureDefn->AddFieldDefn( &oField );
 
-    papoFields = (OGRDODSFieldDefn **) 
+    papoFields = (OGRDODSFieldDefn **)
         CPLRealloc( papoFields, sizeof(void*) * poFeatureDefn->GetFieldCount());
 
-    papoFields[poFeatureDefn->GetFieldCount()-1] = 
+    papoFields[poFeatureDefn->GetFieldCount()-1] =
         new OGRDODSFieldDefn();
 
     papoFields[poFeatureDefn->GetFieldCount()-1]->Initialize(
-        OGRDODSGetVarPath(poFieldVar).c_str(), "dds", 
+        OGRDODSGetVarPath(poFieldVar).c_str(), "dds",
         poTargetVar, poSuperSeq );
 
-    
+
     if( pszPathToSequence )
-        papoFields[poFeatureDefn->GetFieldCount()-1]->pszPathToSequence 
+        papoFields[poFeatureDefn->GetFieldCount()-1]->pszPathToSequence
             = CPLStrdup( pszPathToSequence );
 
     return TRUE;
@@ -336,7 +333,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           signed char byVal;
           void *pValPtr = &byVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) byVal;
       }
@@ -346,7 +343,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           GInt16 nIntVal;
           void *pValPtr = &nIntVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) nIntVal;
       }
@@ -356,7 +353,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           GUInt16 nIntVal;
           void *pValPtr = &nIntVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) nIntVal;
       }
@@ -366,7 +363,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           GInt32 nIntVal;
           void *pValPtr = &nIntVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) nIntVal;
       }
@@ -376,7 +373,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       {
           GUInt32 nIntVal;
           void *pValPtr = &nIntVal;
-              
+
           poBT->buf2val( &pValPtr );
           return (double) nIntVal;
       }
@@ -460,8 +457,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         // for now we just scan through till find find out what
         // super sequence this in.  In the long term we need a better (cached)
         // approach that doesn't involve this quadratic cost.
-        for( iSuperSeq = 0; 
-             iSuperSeq < nSuperSeqCount; 
+        for( iSuperSeq = 0;
+             iSuperSeq < nSuperSeqCount;
              iSuperSeq++ )
         {
             if( nSeqOffset + panSubSeqSize[iSuperSeq] > nFeatureId )
@@ -474,8 +471,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 
         CPLAssert( iSubSeq != -1 );
 
-        // Make sure we have the right target var ... the one 
-        // corresponding to our current super sequence. 
+        // Make sure we have the right target var ... the one
+        // corresponding to our current super sequence.
         if( iSuperSeq != iLastSuperSeq )
         {
             iLastSuperSeq = iSuperSeq;
@@ -515,7 +512,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               signed char byVal;
               void *pValPtr = &byVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, byVal );
           }
@@ -525,7 +522,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               GInt16 nIntVal;
               void *pValPtr = &nIntVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, nIntVal );
           }
@@ -535,7 +532,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               GUInt16 nIntVal;
               void *pValPtr = &nIntVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, nIntVal );
           }
@@ -545,7 +542,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               GInt32 nIntVal;
               void *pValPtr = &nIntVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, nIntVal );
           }
@@ -555,19 +552,19 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           {
               GUInt32 nIntVal;
               void *pValPtr = &nIntVal;
-              
+
               poFieldVar->buf2val( &pValPtr );
               poFeature->SetField( iField, (int) nIntVal );
           }
           break;
 
           case dods_float32_c:
-            poFeature->SetField( iField, 
+            poFeature->SetField( iField,
                                  dynamic_cast<Float32 *>(poFieldVar)->value());
             break;
 
           case dods_float64_c:
-            poFeature->SetField( iField, 
+            poFeature->SetField( iField,
                                  dynamic_cast<Float64 *>(poFieldVar)->value());
             break;
 
@@ -585,7 +582,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             break;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle data nested in sequences.                                */
 /* -------------------------------------------------------------------- */
@@ -597,11 +594,11 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         if( poFD->pszPathToSequence == NULL )
             continue;
 
-        CPLAssert( strlen(poFD->pszPathToSequence) 
+        CPLAssert( strlen(poFD->pszPathToSequence)
                    < strlen(poFD->pszFieldName)-1 );
 
         if( strstr(poFD->pszFieldName,poFD->pszPathToSequence) != NULL )
-            pszPathFromSubSeq = 
+            pszPathFromSubSeq =
                 strstr(poFD->pszFieldName,poFD->pszPathToSequence)
                 + strlen(poFD->pszPathToSequence) + 1;
         else
@@ -610,7 +607,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Get the sequence out of which this variable will be collected.  */
 /* -------------------------------------------------------------------- */
-        BaseType *poFieldVar = seq->var_value( iSubSeq, 
+        BaseType *poFieldVar = seq->var_value( iSubSeq,
                                                poFD->pszPathToSequence );
         Sequence *poSubSeq;
         int nSubSeqCount;
@@ -623,7 +620,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             continue;
 
         nSubSeqCount = poSubSeq->number_of_rows();
-            
+
 /* -------------------------------------------------------------------- */
 /*      Allocate array to put values into.                              */
 /* -------------------------------------------------------------------- */
@@ -664,37 +661,37 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
               {
                   signed char byVal;
                   void *pValPtr = &byVal;
-                  
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = byVal;
               }
               break;
-              
+
               case dods_int16_c:
               {
                   GInt16 nIntVal;
                   void *pValPtr = &nIntVal;
-                  
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = nIntVal;
               }
               break;
-              
+
               case dods_uint16_c:
               {
                   GUInt16 nIntVal;
                   void *pValPtr = &nIntVal;
-                  
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = nIntVal;
               }
               break;
-              
+
               case dods_int32_c:
               {
                   GInt32 nIntVal;
                   void *pValPtr = &nIntVal;
-                  
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = nIntVal;
               }
@@ -704,19 +701,19 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
               {
                   GUInt32 nIntVal;
                   void *pValPtr = &nIntVal;
-              
+
                   poFieldVar->buf2val( &pValPtr );
                   panIntList[iSubIndex] = nIntVal;
               }
               break;
 
               case dods_float32_c:
-                padfDblList[iSubIndex] = 
+                padfDblList[iSubIndex] =
                     dynamic_cast<Float32 *>(poFieldVar)->value();
                 break;
 
               case dods_float64_c:
-                padfDblList[iSubIndex] = 
+                padfDblList[iSubIndex] =
                     dynamic_cast<Float64 *>(poFieldVar)->value();
                 break;
 
@@ -754,7 +751,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             CSLDestroy( papszStrList );
         }
     }
-    
+
 /* ==================================================================== */
 /*      Fetch the geometry.                                             */
 /* ==================================================================== */
@@ -771,11 +768,11 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /*      If we can't find the values in attributes then use the more     */
 /*      general mechanism to fetch the value.                           */
 /* -------------------------------------------------------------------- */
-        
-        if( iXField == -1 || iYField == -1 
+
+        if( iXField == -1 || iYField == -1
             || (oZField.bValid && iZField == -1) )
         {
-            poFeature->SetGeometryDirectly( 
+            poFeature->SetGeometryDirectly(
                 new OGRPoint( GetFieldValueAsDouble( &oXField, iSubSeq ),
                               GetFieldValueAsDouble( &oYField, iSubSeq ),
                               GetFieldValueAsDouble( &oZField, iSubSeq ) ) );
@@ -789,7 +786,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             const double *padfX, *padfY, *padfZ = NULL;
             int nPointCount, i;
             OGRLineString *poLS = new OGRLineString();
-            
+
             padfX = poFeature->GetFieldAsDoubleList( iXField, &nPointCount );
             padfY = poFeature->GetFieldAsDoubleList( iYField, &nPointCount );
             if( iZField != -1 )
@@ -798,7 +795,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             poLS->setPoints( nPointCount, (double *) padfX, (double *) padfY,
                              (double *) padfZ );
 
-            // Make a pass clearing out NaN or Inf values. 
+            // Make a pass clearing out NaN or Inf values.
             for( i = 0; i < nPointCount; i++ )
             {
                 double dfX = poLS->getX(i);
@@ -834,8 +831,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
         else
         {
-            poFeature->SetGeometryDirectly( 
-                new OGRPoint( 
+            poFeature->SetGeometryDirectly(
+                new OGRPoint(
                     poFeature->GetFieldAsDouble( iXField ),
                     poFeature->GetFieldAsDouble( iYField ),
                     poFeature->GetFieldAsDouble( iZField ) ) );
@@ -876,7 +873,7 @@ int OGRDODSSequenceLayer::ProvideDataDDS()
         return bResult;
 
     // If we are in nested sequence mode, we now need to properly set
-    // the poTargetVar based on the current step in the supersequence. 
+    // the poTargetVar based on the current step in the supersequence.
     poSuperSeq = FindSuperSequence( poTargetVar );
 
 /* ==================================================================== */
@@ -902,12 +899,12 @@ int OGRDODSSequenceLayer::ProvideDataDDS()
         nRecordCount = 0;
         for( iSuper = 0; iSuper < nSuperSeqCount; iSuper++ )
         {
-            Sequence *poSubSeq = dynamic_cast<Sequence *>( 
+            Sequence *poSubSeq = dynamic_cast<Sequence *>(
                 poSuperSeq->var_value( iSuper, pszSubSeqPath ) );
 
             panSubSeqSize[iSuper] = poSubSeq->number_of_rows();
             nRecordCount += poSubSeq->number_of_rows();
-        }    
+        }
     }
 
     return poTargetVar != NULL;
@@ -930,7 +927,7 @@ The value V represented by the word may be determined as follows:
     * If 0<E<255 then V=(-1)**S * 2 ** (E-127) * (1.F) where "1.F" is intended to represent the binary number created by prefixing F with an implicit leading 1 and a binary point.
     * If E=0 and F is nonzero, then V=(-1)**S * 2 ** (-126) * (0.F) These are "unnormalized" values.
     * If E=0 and F is zero and S is 1, then V=-0
-    * If E=0 and F is zero and S is 0, then V=0 
+    * If E=0 and F is zero and S is 0, then V=0
 
 In particular,
 
@@ -948,9 +945,9 @@ In particular,
   1 10000001 10100000000000000000000 = -1 * 2**(129-127) * 1.101 = -6.5
 
   0 00000001 00000000000000000000000 = +1 * 2**(1-127) * 1.0 = 2**(-126)
-  0 00000000 10000000000000000000000 = +1 * 2**(-126) * 0.1 = 2**(-127) 
-  0 00000000 00000000000000000000001 = +1 * 2**(-126) * 
-                                       0.00000000000000000000001 = 
+  0 00000000 10000000000000000000000 = +1 * 2**(-126) * 0.1 = 2**(-127)
+  0 00000000 00000000000000000000001 = +1 * 2**(-126) *
+                                       0.00000000000000000000001 =
                                        2**(-149)  (Smallest positive value)
 
 Double Precision:
@@ -968,7 +965,7 @@ The value V represented by the word may be determined as follows:
     * If 0<E<2047 then V=(-1)**S * 2 ** (E-1023) * (1.F) where "1.F" is intended to represent the binary number created by prefixing F with an implicit leading 1 and a binary point.
     * If E=0 and F is nonzero, then V=(-1)**S * 2 ** (-1022) * (0.F) These are "unnormalized" values.
     * If E=0 and F is zero and S is 1, then V=-0
-    * If E=0 and F is zero and S is 0, then V=0 
+    * If E=0 and F is zero and S is 0, then V=0
 
 */
 
@@ -986,16 +983,16 @@ int OGRDODSIsFloatInvalid( const float * pfValToCheck )
     const unsigned char *pabyValToCheck = (unsigned char *) pfValToCheck;
 
 #if CPL_IS_LSB == 0
-    if( (pabyValToCheck[0] & 0x7f) == 0x7f 
+    if( (pabyValToCheck[0] & 0x7f) == 0x7f
         && (pabyValToCheck[1] & 0x80) == 0x80 )
         return TRUE;
-    else 
+    else
         return FALSE;
 #else
-    if( (pabyValToCheck[3] & 0x7f) == 0x7f 
+    if( (pabyValToCheck[3] & 0x7f) == 0x7f
         && (pabyValToCheck[2] & 0x80) == 0x80 )
         return TRUE;
-    else 
+    else
         return FALSE;
 #endif
 }
@@ -1013,17 +1010,17 @@ int OGRDODSIsDoubleInvalid( const double * pdfValToCheck )
 {
     const unsigned char *pabyValToCheck = (unsigned char *) pdfValToCheck;
 
-#if CPL_IS_LSB == 0 
-    if( (pabyValToCheck[0] & 0x7f) == 0x7f 
+#if CPL_IS_LSB == 0
+    if( (pabyValToCheck[0] & 0x7f) == 0x7f
         && (pabyValToCheck[1] & 0xf0) == 0xf0 )
         return TRUE;
-    else 
+    else
         return FALSE;
 #else
-    if( (pabyValToCheck[7] & 0x7f) == 0x7f 
+    if( (pabyValToCheck[7] & 0x7f) == 0x7f
         && (pabyValToCheck[6] & 0xf0) == 0xf0 )
         return TRUE;
-    else 
+    else
         return FALSE;
 #endif
 }

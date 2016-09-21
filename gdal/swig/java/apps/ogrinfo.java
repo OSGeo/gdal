@@ -45,10 +45,10 @@ public class ogrinfo
     static boolean     bReadOnly = false;
     static boolean     bVerbose = true;
     static boolean     bSummaryOnly = false;
-    
+
     static final int OGRNullFID = -1;
     static int     nFetchFID = OGRNullFID;
-    
+
     public static void main(String[] args)
     {
         String pszWHERE = null;
@@ -79,6 +79,10 @@ public class ogrinfo
                 bReadOnly = true;
             else if (args[i].equals("-q"))
                 bVerbose = false;
+            else if (args[i].equals("-fid") && i + 1 < args.length)
+            {
+                nFetchFID = new Integer(args[++i]).intValue();
+            }
             else if (args[i].equals("-spat") && i + 4 < args.length)
             {
                 Geometry oRing = new Geometry(ogrConstants.wkbLinearRing);
@@ -91,7 +95,7 @@ public class ogrinfo
                 oRing.AddPoint(xmax, ymax);
                 oRing.AddPoint(xmax, ymin);
                 oRing.AddPoint(xmin, ymin);
-                
+
                 poSpatialFilter = new Geometry(ogrConstants.wkbPolygon);
                 poSpatialFilter.AddGeometry(oRing);
             }
@@ -157,7 +161,7 @@ public class ogrinfo
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
-        
+
         DataSource poDS = ogr.Open(pszDataSource, !bReadOnly);
         if (poDS == null && !bReadOnly)
         {
@@ -167,7 +171,7 @@ public class ogrinfo
                 System.out.println( "Had to open data source read-only.");
             }
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Report failure                                                  */
 /* -------------------------------------------------------------------- */
@@ -175,15 +179,15 @@ public class ogrinfo
         {
             System.out.print( "FAILURE:\n" +
                 "Unable to open datasource `" + pszDataSource + "' with the following drivers.\n");
-            
+
             for( int iDriver = 0; iDriver < ogr.GetDriverCount(); iDriver++ )
             {
                 System.out.println( "  -> " + ogr.GetDriver(iDriver).GetName() );
             }
-            
+
             return;
         }
-        
+
         Driver poDriver = poDS.GetDriver();
 
 /* -------------------------------------------------------------------- */
@@ -199,12 +203,12 @@ public class ogrinfo
         if( pszSQLStatement != null )
         {
             nRepeatCount = 0;  // skip layer reporting.
-    
+
             if( papszLayers.size() > 0 )
                 System.out.println( "layer names ignored in combination with -sql." );
-            
+
             Layer poResultSet = poDS.ExecuteSQL( pszSQLStatement, poSpatialFilter, pszDialect );
-    
+
             if( poResultSet != null )
             {
                 if( pszWHERE != null )
@@ -215,7 +219,7 @@ public class ogrinfo
                         return;
                     }
                 }
-    
+
                 ReportOnLayer( poResultSet, null, null );
                 poDS.ReleaseResultSet( poResultSet );
             }
@@ -225,7 +229,7 @@ public class ogrinfo
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
         //CPLDebug( "OGR", "GetLayerCount() = %d\n", poDS->GetLayerCount() );
-    
+
         for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
         {
             if (papszLayers.size() == 0)
@@ -322,7 +326,7 @@ public class ogrinfo
                 return;
             }
         }
-    
+
         if( poSpatialFilter != null )
             poLayer.SetSpatialFilter( poSpatialFilter );
 
@@ -330,41 +334,41 @@ public class ogrinfo
 /*      Report various overall information.                             */
 /* -------------------------------------------------------------------- */
         System.out.println();
-        
+
         System.out.println( "Layer name: "+  poDefn.GetName() );
-    
+
         if( bVerbose )
         {
             System.out.println( "Geometry: " +
                     ogr.GeometryTypeToName( poDefn.GetGeomType() ) );
-            
+
             System.out.println( "Feature Count: " + poLayer.GetFeatureCount() );
-            
+
             double oExt[] = poLayer.GetExtent(true);
             if (oExt != null)
                 System.out.println("Extent: (" + oExt[0] + ", " + oExt[2] + ") - (" + oExt[1] + ", " + oExt[3] + ")");
-    
+
             String pszWKT;
-            
+
             if( poLayer.GetSpatialRef() == null )
                 pszWKT = "(unknown)";
             else
             {
                 pszWKT = poLayer.GetSpatialRef().ExportToPrettyWkt();
-            }            
-    
+            }
+
             System.out.println( "Layer SRS WKT:\n" + pszWKT );
-        
+
             if( poLayer.GetFIDColumn().length() > 0 )
                 System.out.println( "FID Column = " + poLayer.GetFIDColumn() );
-        
+
             if( poLayer.GetGeometryColumn().length() > 0 )
                 System.out.println( "Geometry Column = " +  poLayer.GetGeometryColumn() );
-    
+
             for( int iAttr = 0; iAttr < poDefn.GetFieldCount(); iAttr++ )
             {
                 FieldDefn  poField = poDefn.GetFieldDefn( iAttr );
-                
+
                 System.out.println( poField.GetNameRef() + ": " + poField.GetFieldTypeName( poField.GetFieldType() ) + " (" + poField.GetWidth() + "." + poField.GetPrecision() + ")");
             }
         }
@@ -372,7 +376,7 @@ public class ogrinfo
 /*      Read, and dump features.                                        */
 /* -------------------------------------------------------------------- */
         Feature  poFeature;
-    
+
         if( nFetchFID == OGRNullFID && !bSummaryOnly )
         {
             while( (poFeature = poLayer.GetNextFeature()) != null )

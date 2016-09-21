@@ -6,15 +6,6 @@
  * Purpose:  Typemaps for Java bindings
  * Author:   Benjamin Collins, The MITRE Corporation
  *
- *
- * $Log$
- * Revision 1.2  2006/02/16 17:21:12  collinsb
- * Updates to Java bindings to keep the code from halting execution if the native libraries cannot be found.
- *
- * Revision 1.1  2006/02/02 20:56:07  collinsb
- * Added Java specific typemap code
- *
- *
 */
 
 %include arrays_java.i
@@ -37,7 +28,7 @@
       System.err.println(e);
     }
   }
-  
+
   public static boolean isAvailable() {
     return available;
   }
@@ -58,8 +49,8 @@
 /*
  *  Needed to make the Constructor and getCptr 'public' and not 'protected'.
  *   There is likely a better way to do this (with javamethodmodifiers) but
- *   none worked for me. 
- */ 
+ *   none worked for me.
+ */
 %typemap(javabody) OSRSpatialReferenceShadow, OSRCoordinateTransformationShadow %{
   private long swigCPtr;
   protected boolean swigCMemOwn;
@@ -68,7 +59,7 @@
     swigCMemOwn = cMemoryOwn;
     swigCPtr = cPtr;
   }
-  
+
   public static long getCPtr($javaclassname obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
@@ -143,7 +134,7 @@
       GetTOWGS84(array);
       return array;
   }
-  
+
   public int SetTOWGS84( double p1, double p2, double p3)
   {
       return SetTOWGS84(p1, p2, p3, 0, 0, 0, 0);
@@ -169,7 +160,7 @@
       return osr.CreateCoordinateTransformation(src, dst);
   }
 %}
-    
+
 /******************************************************************************
  *
  *  Global methods
@@ -186,7 +177,7 @@ retStringAndCPLFree* GetWellKnownGeogCSAsWKT( const char *name ) {
   OGRSpatialReferenceH srs = OSRNewSpatialReference("");
   OGRErr rcode = OSRSetWellKnownGeogCS( srs, name );
   if( rcode == OGRERR_NONE )
-      rcode = OSRExportToWkt ( srs, &argout );  
+      rcode = OSRExportToWkt ( srs, &argout );
   OSRDestroySpatialReference( srs );
   return argout;
 }
@@ -201,7 +192,7 @@ retStringAndCPLFree* GetUserInputAsWKT( const char *name ) {
   OGRSpatialReferenceH srs = OSRNewSpatialReference("");
   OGRErr rcode = OSRSetFromUserInput( srs, name );
   if( rcode == OGRERR_NONE )
-      rcode = OSRExportToWkt ( srs, &argout );  
+      rcode = OSRExportToWkt ( srs, &argout );
   OSRDestroySpatialReference( srs );
   return argout;
 }

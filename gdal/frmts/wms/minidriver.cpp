@@ -33,7 +33,7 @@ static volatile GDALWMSMiniDriverManager *g_mini_driver_manager = NULL;
 static CPLMutex *g_mini_driver_manager_mutex = NULL;
 
 GDALWMSMiniDriver::GDALWMSMiniDriver() {
-    m_parent_dataset = 0;
+    m_parent_dataset = NULL;
 }
 
 GDALWMSMiniDriver::~GDALWMSMiniDriver() {
@@ -86,12 +86,20 @@ GDALWMSMiniDriverManager *GetGDALWMSMiniDriverManager() {
 void DestroyWMSMiniDriverManager()
 
 {
-    CPLMutexHolderD(&g_mini_driver_manager_mutex);
-
-    if( g_mini_driver_manager != 0 )
     {
-        delete g_mini_driver_manager;
-        g_mini_driver_manager = NULL;
+        CPLMutexHolderD(&g_mini_driver_manager_mutex);
+
+        if( g_mini_driver_manager != NULL )
+        {
+            delete g_mini_driver_manager;
+            g_mini_driver_manager = NULL;
+        }
+    }
+
+    if( g_mini_driver_manager_mutex != NULL )
+    {
+        CPLDestroyMutex(g_mini_driver_manager_mutex);
+        g_mini_driver_manager_mutex = NULL;
     }
 }
 
@@ -99,7 +107,7 @@ GDALWMSMiniDriverManager::GDALWMSMiniDriverManager() {
 }
 
 GDALWMSMiniDriverManager::~GDALWMSMiniDriverManager() {
-    for (std::list<GDALWMSMiniDriverFactory *>::iterator it = m_mdfs.begin(); 
+    for (std::list<GDALWMSMiniDriverFactory *>::iterator it = m_mdfs.begin();
          it != m_mdfs.end(); ++it) {
         GDALWMSMiniDriverFactory *mdf = *it;
         delete mdf;

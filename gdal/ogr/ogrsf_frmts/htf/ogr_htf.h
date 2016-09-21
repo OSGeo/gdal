@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_HTF_H_INCLUDED
-#define _OGR_HTF_H_INCLUDED
+#ifndef OGR_HTF_H_INCLUDED
+#define OGR_HTF_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -45,13 +45,13 @@ protected:
     OGRSpatialReference *poSRS;
 
     VSILFILE*          fpHTF;
-    int                bEOF;
+    bool               bEOF;
 
     int                nNextFID;
 
     virtual OGRFeature *       GetNextRawFeature() = 0;
 
-    int                bHasExtent;
+    bool              bHasExtent;
     double             dfMinX;
     double             dfMinY;
     double             dfMaxX;
@@ -61,7 +61,6 @@ protected:
                         OGRHTFLayer(const char* pszFilename, int nZone, int bIsNorth);
                         ~OGRHTFLayer();
 
-
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
 
@@ -70,8 +69,9 @@ protected:
     virtual int                 TestCapability( const char * );
 
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
     void    SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
-
 };
 
 /************************************************************************/
@@ -96,10 +96,11 @@ protected:
 class OGRHTFSoundingLayer : public OGRHTFLayer
 {
 private:
-    int                        bHasFPK;
+    bool                       bHasFPK;
     int                        nFieldsPresent;
-    int                       *panFieldPresence;
-    int                        nEastingIndex, nNorthingIndex;
+    bool                      *panFieldPresence;
+    int                        nEastingIndex;
+    int                        nNorthingIndex;
     int                        nTotalSoundings;
 
 protected:
@@ -132,7 +133,6 @@ protected:
   public:
                         OGRHTFMetadataLayer(std::vector<CPLString> aosMD);
                         ~OGRHTFMetadataLayer();
-
 
     virtual void                ResetReading() { nNextFID = 0; }
     virtual OGRFeature *        GetNextFeature();
@@ -169,4 +169,4 @@ class OGRHTFDataSource : public OGRDataSource
     virtual int                 TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_HTF_H_INCLUDED */
+#endif /* ndef OGR_HTF_H_INCLUDED */

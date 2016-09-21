@@ -53,7 +53,7 @@ OGRDWGDriver::OGRDWGDriver()
 OGRDWGDriver::~OGRDWGDriver()
 
 {
-    if( bInitialized && !CSLTestBoolean(
+    if( bInitialized && !CPLTestBool(
             CPLGetConfigOption("IN_GDAL_GLOBAL_DESTRUCTOR", "NO")) )
     {
         bInitialized = FALSE;
@@ -72,7 +72,7 @@ void OGRDWGDriver::Initialize()
         return;
 
     bInitialized = TRUE;
-    
+
     OdGeContext::gErrorFunc = ErrorHandler;
 
     odInitialize(&oServices);
@@ -95,7 +95,7 @@ void OGRDWGDriver::ErrorHandler( OdResult oResult )
 
 {
     CPLError( CE_Failure, CPLE_AppDefined,
-              "GeError:%s", 
+              "GeError:%s",
               (const char *) OdError(oResult).description().c_str() );
 }
 
@@ -117,7 +117,7 @@ OGRDataSource *OGRDWGDriver::Open( const char * pszFilename, int bUpdate )
 
 {
     Initialize();
-    
+
     OGRDWGDataSource   *poDS = new OGRDWGDataSource();
 
     if( !poDS->Open( &oServices, pszFilename ) )
@@ -154,4 +154,3 @@ void RegisterOGRDWG()
                                 "drv_dwg.html" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
-

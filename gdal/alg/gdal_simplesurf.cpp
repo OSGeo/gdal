@@ -1,6 +1,6 @@
 /******************************************************************************
  * Project:  GDAL
- * Purpose:  Correlator - GDALSimpleSURF and GDALFeaturePoint classes. 
+ * Purpose:  Correlator - GDALSimpleSURF and GDALFeaturePoint classes.
  * Author:   Andrew Migal, migal.drew@gmail.com
  *
  ******************************************************************************
@@ -59,16 +59,16 @@ GDALFeaturePoint::GDALFeaturePoint(const GDALFeaturePoint& fp)
         padfDescriptor[i] = fp.padfDescriptor[i];
 }
 
-GDALFeaturePoint::GDALFeaturePoint(int nX, int nY,
-                                   int nScale, int nRadius, int nSign)
+GDALFeaturePoint::GDALFeaturePoint(int nXIn, int nYIn,
+                                   int nScaleIn, int nRadiusIn, int nSignIn)
 {
-    this->nX = nX;
-    this->nY = nY;
-    this->nScale = nScale;
-    this->nRadius = nRadius;
-    this->nSign = nSign;
+    nX = nXIn;
+    nY = nYIn;
+    nScale = nScaleIn;
+    nRadius = nRadiusIn;
+    nSign = nSignIn;
 
-    this->padfDescriptor = new double[DESC_SIZE];
+    padfDescriptor = new double[DESC_SIZE];
 }
 
 GDALFeaturePoint& GDALFeaturePoint::operator=(const GDALFeaturePoint& point)
@@ -94,19 +94,19 @@ GDALFeaturePoint& GDALFeaturePoint::operator=(const GDALFeaturePoint& point)
 }
 
 int  GDALFeaturePoint::GetX() { return nX; }
-void GDALFeaturePoint::SetX(int nX) { this->nX = nX; }
+void GDALFeaturePoint::SetX(int nXIn) { nX = nXIn; }
 
 int  GDALFeaturePoint::GetY() { return nY; }
-void GDALFeaturePoint::SetY(int nY) { this->nY = nY; }
+void GDALFeaturePoint::SetY(int nYIn) { nY = nYIn; }
 
 int  GDALFeaturePoint::GetScale() { return nScale; }
-void GDALFeaturePoint::SetScale(int nScale) { this->nScale = nScale; }
+void GDALFeaturePoint::SetScale(int nScaleIn) { nScale = nScaleIn; }
 
 int  GDALFeaturePoint::GetRadius() { return nRadius; }
-void GDALFeaturePoint::SetRadius(int nRadius) { this->nRadius = nRadius; }
+void GDALFeaturePoint::SetRadius(int nRadiusIn) { nRadius = nRadiusIn; }
 
 int  GDALFeaturePoint::GetSign() { return nSign; }
-void GDALFeaturePoint::SetSign(int nSign) { this->nSign = nSign; }
+void GDALFeaturePoint::SetSign(int nSignIn) { nSign = nSignIn; }
 
 double& GDALFeaturePoint::operator [] (int nIndex)
 {
@@ -170,20 +170,23 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     GDALDataType eGreenType = green->GetRasterDataType();
     GDALDataType eBlueType = blue->GetRasterDataType();
 
-    int dataRedSize = GDALGetDataTypeSize(eRedType) / 8;
-    int dataGreenSize = GDALGetDataTypeSize(eGreenType) / 8;
-    int dataBlueSize = GDALGetDataTypeSize(eBlueType) / 8;
+    const int dataRedSize = GDALGetDataTypeSizeBytes(eRedType);
+    const int dataGreenSize = GDALGetDataTypeSizeBytes(eGreenType);
+    const int dataBlueSize = GDALGetDataTypeSizeBytes(eBlueType);
 
     void *paRedLayer = CPLMalloc(dataRedSize * nWidth * nHeight);
     void *paGreenLayer = CPLMalloc(dataGreenSize * nWidth * nHeight);
     void *paBlueLayer = CPLMalloc(dataBlueSize * nWidth * nHeight);
 
-    red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer, nWidth, nHeight, eRedType, 0, 0, NULL);
-    green->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paGreenLayer, nWidth, nHeight, eGreenType, 0, 0, NULL);
-    blue->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paBlueLayer, nWidth, nHeight, eBlueType, 0, 0, NULL);
+    CPLErr eErr;
+    eErr = red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer, nWidth, nHeight, eRedType, 0, 0, NULL);
+    if( eErr == CE_None )
+        eErr = green->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paGreenLayer, nWidth, nHeight, eGreenType, 0, 0, NULL);
+    if( eErr == CE_None )
+        eErr = blue->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paBlueLayer, nWidth, nHeight, eBlueType, 0, 0, NULL);
 
     double maxValue = 255.0;
-    for (int row = 0; row < nHeight; row++)
+    for (int row = 0; row < nHeight && eErr == CE_None; row++)
         for (int col = 0; col < nWidth; col++)
         {
             // Get RGB values
@@ -204,20 +207,20 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     CPLFree(paGreenLayer);
     CPLFree(paBlueLayer);
 
-    return CE_None;
+    return eErr;
 }
 
 std::vector<GDALFeaturePoint>*
 GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
                                      double dfThreshold)
 {
-    std::vector<GDALFeaturePoint>* poCollection = 
+    std::vector<GDALFeaturePoint>* poCollection =
         new std::vector<GDALFeaturePoint>();
 
     //Calc Hessian values for layers
     poOctMap->ComputeMap(poImg);
 
-    //Search for exremum points
+    // Search for extremum points.
     for (int oct = octaveStart; oct <= octaveEnd; oct++)
     {
         for (int k = 0; k < GDALOctaveMap::INTERVALS - 2; k++)
@@ -241,7 +244,7 @@ GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
             }
         }
     }
-    
+
     return poCollection;
 }
 
@@ -365,8 +368,8 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
 /* -------------------------------------------------------------------- */
     if (poMatchPairs == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Matched points colection isn't specified");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Matched points collection isn't specified" );
         return CE_Failure;
     }
 
@@ -383,8 +386,8 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
     // Affects to false matching pruning
     const double ratioThreshold = 0.8;
 
-    int len_1 = poFirstCollect->size();
-    int len_2 = poSecondCollect->size();
+    int len_1 = static_cast<int>(poFirstCollect->size());
+    int len_2 = static_cast<int>(poSecondCollect->size());
 
     int minLength = (len_1 < len_2) ? len_1 : len_2;
 
@@ -511,6 +514,7 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
 
     // Clean up
     delete[] alreadyMatched;
+    delete poPairInfoList;
 
     return CE_None;
 }
@@ -519,4 +523,3 @@ GDALSimpleSURF::~GDALSimpleSURF()
 {
     delete poOctMap;
 }
-

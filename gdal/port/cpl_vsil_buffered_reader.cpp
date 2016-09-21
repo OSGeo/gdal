@@ -41,17 +41,17 @@
 
 CPL_CVSID("$Id$");
 
-class VSIBufferedReaderHandle : public VSIVirtualHandle
+class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
 {
-    VSIVirtualHandle* poBaseHandle;
+    VSIVirtualHandle* m_poBaseHandle;
     GByte*            pabyBuffer;
     GUIntBig          nBufferOffset;
     int               nBufferSize;
     GUIntBig          nCurOffset;
     int               bNeedBaseHandleSeek;
     int               bEOF;
-    vsi_l_offset      nSheatFileSize;
-    
+    vsi_l_offset      nCheatFileSize;
+
     int               SeekBaseTo(vsi_l_offset nTargetOffset);
 
   public:
@@ -59,7 +59,7 @@ class VSIBufferedReaderHandle : public VSIVirtualHandle
     VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
     VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                             const GByte* pabyBeginningContent,
-                            vsi_l_offset nSheatFileSizeIn);
+                            vsi_l_offset nCheatFileSizeIn);
     ~VSIBufferedReaderHandle();
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
@@ -82,11 +82,11 @@ VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle)
 
 VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                                                 const GByte* pabyBeginningContent,
-                                                vsi_l_offset nSheatFileSizeIn)
+                                                vsi_l_offset nCheatFileSizeIn)
 {
     return new VSIBufferedReaderHandle(poBaseHandle,
                                        pabyBeginningContent,
-                                       nSheatFileSizeIn);
+                                       nCheatFileSizeIn);
 }
 
 /************************************************************************/
@@ -95,21 +95,21 @@ VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle)
 {
-    this->poBaseHandle = poBaseHandle;
+    m_poBaseHandle = poBaseHandle;
     pabyBuffer = (GByte*)CPLMalloc(MAX_BUFFER_SIZE);
     nBufferOffset = 0;
     nBufferSize = 0;
     nCurOffset = 0;
     bNeedBaseHandleSeek = FALSE;
     bEOF = FALSE;
-    nSheatFileSize = 0;
+    nCheatFileSize = 0;
 }
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                                                  const GByte* pabyBeginningContent,
-                                                 vsi_l_offset nSheatFileSizeIn)
+                                                 vsi_l_offset nCheatFileSizeIn)
 {
-    this->poBaseHandle = poBaseHandle;
+    m_poBaseHandle = poBaseHandle;
     nBufferOffset = 0;
     nBufferSize = (int)poBaseHandle->Tell();
     pabyBuffer = (GByte*)CPLMalloc(MAX(MAX_BUFFER_SIZE,nBufferSize));
@@ -117,7 +117,7 @@ VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
     nCurOffset = 0;
     bNeedBaseHandleSeek = TRUE;
     bEOF = FALSE;
-    nSheatFileSize = nSheatFileSizeIn;
+    nCheatFileSize = nCheatFileSizeIn;
 }
 
 /************************************************************************/
@@ -126,7 +126,7 @@ VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
 
 VSIBufferedReaderHandle::~VSIBufferedReaderHandle()
 {
-    delete poBaseHandle;
+    delete m_poBaseHandle;
     CPLFree(pabyBuffer);
 }
 
@@ -142,17 +142,17 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
         nCurOffset += nOffset;
     else if (nWhence == SEEK_END)
     {
-        if( nSheatFileSize )
-            nCurOffset = nSheatFileSize;
+        if( nCheatFileSize )
+            nCurOffset = nCheatFileSize;
         else
         {
-            poBaseHandle->Seek(nOffset, nWhence);
-            nCurOffset = poBaseHandle->Tell();
+            m_poBaseHandle->Seek(nOffset, nWhence);
+            nCurOffset = m_poBaseHandle->Tell();
             bNeedBaseHandleSeek = TRUE;
         }
     }
     else
-        nCurOffset = nOffset;   
+        nCurOffset = nOffset;
 
     return 0;
 }
@@ -173,17 +173,17 @@ vsi_l_offset VSIBufferedReaderHandle::Tell()
 
 int VSIBufferedReaderHandle::SeekBaseTo(vsi_l_offset nTargetOffset)
 {
-    if( poBaseHandle->Seek(nTargetOffset, SEEK_SET) == 0 )
+    if( m_poBaseHandle->Seek(nTargetOffset, SEEK_SET) == 0 )
         return TRUE;
 
-    nCurOffset = poBaseHandle->Tell();
+    nCurOffset = m_poBaseHandle->Tell();
     if( nCurOffset > nTargetOffset )
         return FALSE;
     char abyTemp[8192];
-    while(TRUE)
+    while( true )
     {
         int nToRead = (int) MIN(8192, nTargetOffset - nCurOffset);
-        int nRead = (int)poBaseHandle->Read(abyTemp, 1, nToRead );
+        int nRead = (int)m_poBaseHandle->Read(abyTemp, 1, nToRead );
         nCurOffset += nRead;
 
         if (nRead < nToRead)
@@ -213,12 +213,12 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
         nCurOffset >= nBufferOffset && nCurOffset <= nBufferOffset + nBufferSize)
     {
         /* We try to read from an offset located within the buffer */
-        const int nReadInBuffer = (int) MIN(nTotalToRead, nBufferOffset + nBufferSize - nCurOffset);
+        const size_t nReadInBuffer = static_cast<size_t>( MIN(nTotalToRead, nBufferOffset + nBufferSize - nCurOffset) );
         memcpy(pBuffer, pabyBuffer + nCurOffset - nBufferOffset, nReadInBuffer);
-        const int nToReadInFile = nTotalToRead - nReadInBuffer;
+        const size_t nToReadInFile = nTotalToRead - nReadInBuffer;
         if (nToReadInFile > 0)
         {
-            /* The beginning of the the data to read is located in the buffer */
+            /* The beginning of the data to read is located in the buffer */
             /* but the end must be read from the file */
             if (bNeedBaseHandleSeek)
             {
@@ -229,20 +229,20 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
                 }
             }
             bNeedBaseHandleSeek = FALSE;
-            //CPLAssert(poBaseHandle->Tell() == nBufferOffset + nBufferSize);
+            //CPLAssert(m_poBaseHandle->Tell() == nBufferOffset + nBufferSize);
 
-            const int nReadInFile = poBaseHandle->Read((GByte*)pBuffer + nReadInBuffer, 1, nToReadInFile);
-            const int nRead = nReadInBuffer + nReadInFile;
+            const size_t nReadInFile = m_poBaseHandle->Read((GByte*)pBuffer + nReadInBuffer, 1, nToReadInFile);
+            const size_t nRead = nReadInBuffer + nReadInFile;
 
-            nBufferSize = MIN(nRead, MAX_BUFFER_SIZE);
+            nBufferSize = static_cast<int>( MIN(nRead, MAX_BUFFER_SIZE) );
             nBufferOffset = nCurOffset + nRead - nBufferSize;
             memcpy(pabyBuffer, (GByte*)pBuffer + nRead - nBufferSize, nBufferSize);
 
             nCurOffset += nRead;
-            //CPLAssert(poBaseHandle->Tell() == nBufferOffset + nBufferSize);
-            //CPLAssert(poBaseHandle->Tell() == nCurOffset);
+            //CPLAssert(m_poBaseHandle->Tell() == nBufferOffset + nBufferSize);
+            //CPLAssert(m_poBaseHandle->Tell() == nCurOffset);
 
-            bEOF = poBaseHandle->Eof();
+            bEOF = m_poBaseHandle->Eof();
 
             return nRead / nSize;
         }
@@ -259,16 +259,16 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize, size_t nMemb 
         if( !SeekBaseTo(nCurOffset) )
             return 0;
         bNeedBaseHandleSeek = FALSE;
-        const int nReadInFile = poBaseHandle->Read(pBuffer, 1, nTotalToRead);
-        nBufferSize = MIN(nReadInFile, MAX_BUFFER_SIZE);
+        const size_t nReadInFile = m_poBaseHandle->Read(pBuffer, 1, nTotalToRead);
+        nBufferSize = static_cast<int>( MIN(nReadInFile, MAX_BUFFER_SIZE) );
         nBufferOffset = nCurOffset + nReadInFile - nBufferSize;
         memcpy(pabyBuffer, (GByte*)pBuffer + nReadInFile - nBufferSize, nBufferSize);
 
         nCurOffset += nReadInFile;
-        //CPLAssert(poBaseHandle->Tell() == nBufferOffset + nBufferSize);
-        //CPLAssert(poBaseHandle->Tell() == nCurOffset);
+        //CPLAssert(m_poBaseHandle->Tell() == nBufferOffset + nBufferSize);
+        //CPLAssert(m_poBaseHandle->Tell() == nCurOffset);
 
-        bEOF = poBaseHandle->Eof();
+        bEOF = m_poBaseHandle->Eof();
 
         return nReadInFile / nSize;
     }
@@ -313,11 +313,11 @@ int VSIBufferedReaderHandle::Flush()
 
 int VSIBufferedReaderHandle::Close()
 {
-    if (poBaseHandle)
+    if (m_poBaseHandle)
     {
-        poBaseHandle->Close();
-        delete poBaseHandle;
-        poBaseHandle = NULL;
+        m_poBaseHandle->Close();
+        delete m_poBaseHandle;
+        m_poBaseHandle = NULL;
     }
     return 0;
 }

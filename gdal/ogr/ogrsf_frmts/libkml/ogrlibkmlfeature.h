@@ -26,14 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <kml/dom.h>
+#ifndef OGR_LIBKML_FEATURE_H
+#define OGR_LIBKML_FEATURE_H
+
+#include "ogr_libkml.h"
 
 using kmldom::KmlFactory;
 using kmldom::FeaturePtr;
 using kmldom::PlacemarkPtr;
-
-#include "ogr_libkml.h"
-
 
 /******************************************************************************
  function to output a ogr feature to a kml placemark
@@ -63,3 +63,5 @@ OGRFeature *kmlgroundoverlay2feat (
     OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
     OGRSpatialReference *poOgrSRS);
+
+#endif /*  OGR_LIBKML_FEATURE_H */

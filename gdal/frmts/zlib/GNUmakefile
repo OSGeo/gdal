@@ -18,6 +18,8 @@ OBJ = \
 	uncompr.o \
 	zutil.o
 
+CPPFLAGS	:=	$(CPPFLAGS) -DDONT_DEPRECATE_SPRINTF
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:

@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test default implementation of GDALRasterBand::IRasterIO
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -328,7 +328,7 @@ def rasterio_6():
 def rasterio_7():
 
     ds = gdal.Open('data/byte.tif')
-    
+
     data = ds.GetRasterBand(1).ReadRaster()
     l = len(data)
     if l != 400:
@@ -374,7 +374,7 @@ def rasterio_8():
     if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
        gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
         return 'skip'
-    
+
     # Test RasterBand.ReadRaster
     tab = [ 0, True ]
     data = ds.GetRasterBand(1).ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
@@ -399,7 +399,7 @@ def rasterio_8():
     if tab[0] < 0.50:
         gdaltest.post_reason('failure')
         return 'fail'
-    
+
     # Test RasterBand.ReadRaster with type change
     tab = [ 0, True ]
     data = ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Int16,
@@ -531,6 +531,26 @@ def rasterio_9():
         return 'fail'
     cs = rasterio_9_checksum(data, 10, 10, data_type = gdal.GDT_Int16)
     if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+
+    if abs(tab[0] - 1.0) > 1e-5:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Test RasterBand.ReadRaster, with Lanczos
+    tab = [ 0, None ]
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 10,
+                                          buf_ysize = 10,
+                                          resample_alg = gdal.GRIORA_Lanczos,
+                                          callback = rasterio_9_progress_callback,
+                                          callback_data = tab)
+    if data is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    cs = rasterio_9_checksum(data, 10, 10)
+    if cs != 1154: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r LANCZOS
         gdaltest.post_reason('failure')
         print(cs)
         return 'fail'
@@ -763,6 +783,108 @@ def rasterio_10():
 
     return 'success'
 
+###############################################################################
+# Test cubic resampling and nbits
+
+def rasterio_11():
+
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
+    mem_ds.GetRasterBand(1).WriteArray(numpy.array([[80,125,125,80],[80,125,125,80],[80,125,125,80]]))
+
+    # A bit dummy
+    mem_ds.GetRasterBand(1).SetMetadataItem('NBITS', '8', 'IMAGE_STRUCTURE')
+    ar = mem_ds.GetRasterBand(1).ReadAsArray(0,0,4,3,8,3, resample_alg = gdal.GRIORA_Cubic)
+    if ar.max() != 129:
+        gdaltest.post_reason('failure')
+        print(ar.max())
+        return 'fail'
+
+    # NBITS=7
+    mem_ds.GetRasterBand(1).SetMetadataItem('NBITS', '7', 'IMAGE_STRUCTURE')
+    ar = mem_ds.GetRasterBand(1).ReadAsArray(0,0,4,3,8,3, resample_alg = gdal.GRIORA_Cubic)
+    # Would overshoot to 129 if NBITS was ignored
+    if ar.max() != 127:
+        gdaltest.post_reason('failure')
+        print(ar.max())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test cubic resampling on dataset RasterIO with an alpha channel
+
+def rasterio_12_progress_callback(pct, message, user_data):
+    if pct < user_data[0]:
+        print('Got %f, last pct was %f' % (pct, user_data[0]))
+        return 0
+    user_data[0] = pct
+    return 1 # 1 to continue, 0 to stop
+
+def rasterio_12():
+
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 4)
+    for i in range(3):
+        mem_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_GrayIndex)
+    mem_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
+    for i in range(4):
+        mem_ds.GetRasterBand(i+1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
+
+    tab = [ 0 ]
+    ar_ds = mem_ds.ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic, \
+                               callback = rasterio_12_progress_callback, \
+                               callback_data = tab)
+    if tab[0] != 1.0:
+        gdaltest.post_reason('failure')
+        print(tab)
+        return 'fail'
+
+    ar_ds2 = mem_ds.ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic)
+    if not numpy.array_equal(ar_ds, ar_ds2):
+        gdaltest.post_reason('failure')
+        print(ar_ds)
+        print(ar_ds2)
+        return 'fail'
+
+    ar_bands = [mem_ds.GetRasterBand(i+1).ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic) for i in range(4) ]
+
+    # Results of band or dataset RasterIO should be the same
+    for i in range(4):
+        if not numpy.array_equal(ar_ds[i],ar_bands[i]):
+            gdaltest.post_reason('failure')
+            print(ar_ds)
+            print(ar_bands[i])
+            return 'fail'
+
+    # First, second and third band should have identical content
+    if not numpy.array_equal(ar_ds[0],ar_ds[1]):
+        gdaltest.post_reason('failure')
+        print(ar_ds[0])
+        print(ar_ds[1])
+        return 'fail'
+
+    # Alpha band should be different
+    if numpy.array_equal(ar_ds[0],ar_ds[3]):
+        gdaltest.post_reason('failure')
+        print(ar_ds[0])
+        print(ar_ds[3])
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
@@ -774,6 +896,8 @@ gdaltest_list = [
     rasterio_8,
     rasterio_9,
     rasterio_10,
+    rasterio_11,
+    rasterio_12
     ]
 
 if __name__ == '__main__':

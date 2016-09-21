@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
- * Copyright (c) 1999,  Les Technologies SoftMap Inc. 
+ * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
  * Copyright (c) 2014, Kyle Shannon <kyle at pobox dot com>
  *
@@ -39,10 +39,10 @@ extern int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransfo
 CPL_CVSID("$Id$");
 
 /* -------------------------------------------------------------------- */
-/*      The following list comes from osrs/proj/src/pj_ellps.c          */
-/*      ... please update from time to time.                            */
+/*      The following list comes from osrs/proj/src/pj_ellps.c.         */
+/*      Please update from time to time.                                */
 /* -------------------------------------------------------------------- */
-static const char *ogr_pj_ellps[] = {
+static const char * const ogr_pj_ellps[] = {
 "MERIT",        "a=6378137.0", "rf=298.257", "MERIT 1983",
 "SGS85",        "a=6378136.0", "rf=298.257",  "Soviet Geodetic System 85",
 "GRS80",        "a=6378137.0", "rf=298.257222101", "GRS 1980(IUGG, 1980)",
@@ -85,7 +85,7 @@ static const char *ogr_pj_ellps[] = {
 "WGS72",        "a=6378135.0", "rf=298.26", "WGS 72",
 "WGS84",    "a=6378137.0",  "rf=298.257223563", "WGS 84",
 "sphere",   "a=6370997.0",  "b=6370997.0", "Normal Sphere (r=6370997)",
-0, 0, 0, 0,
+NULL, NULL, NULL, NULL,
 };
 
 typedef struct
@@ -136,8 +136,7 @@ static const OGRProj4PM ogr_pj_pms [] = {
 static const char* OGRGetProj4Datum(const char* pszDatum,
                                     int nEPSGDatum)
 {
-    unsigned int i;
-    for(i=0;i<sizeof(ogr_pj_datums)/sizeof(ogr_pj_datums[0]);i++)
+    for(size_t i=0;i<sizeof(ogr_pj_datums)/sizeof(ogr_pj_datums[0]);i++)
     {
         if (nEPSGDatum == ogr_pj_datums[i].nGCS ||
             EQUAL(pszDatum, ogr_pj_datums[i].pszOGR))
@@ -150,8 +149,7 @@ static const char* OGRGetProj4Datum(const char* pszDatum,
 
 static const OGRProj4PM* OGRGetProj4PMFromProj4Name(const char* pszProj4PMName)
 {
-    unsigned int i;
-    for(i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
+    for(size_t i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
     {
         if (EQUAL(pszProj4PMName, ogr_pj_pms[i].pszProj4PMName))
         {
@@ -163,8 +161,7 @@ static const OGRProj4PM* OGRGetProj4PMFromProj4Name(const char* pszProj4PMName)
 
 static const OGRProj4PM* OGRGetProj4PMFromCode(int nPMCode)
 {
-    unsigned int i;
-    for(i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
+    for(size_t i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
     {
         if (nPMCode == ogr_pj_pms[i].nPMCode)
         {
@@ -187,6 +184,95 @@ static const OGRProj4PM* OGRGetProj4PMFromVal(double dfVal)
     return NULL;
 }
 
+typedef struct
+{
+    const char* pszWKTName;
+    const char* pszValueInMeter;
+    const char* pszProjName;
+} LinearUnitsStruct;
+
+static const LinearUnitsStruct asLinearUnits [] =
+{
+{ SRS_UL_METER, "1.0", "m" },
+{ SRS_UL_METER, "1.0", "meter" }, // alias of former
+{ SRS_UL_METER, "1.0", "metre" }, // alias of former
+{ "metre", "1.0", "m" }, // alias of former
+{ "kilometre", SRS_UL_KILOMETER_CONV, "km" }, // Leave as 'kilometre' instead of SRS_UL_KILOMETER due to historical usage
+{ SRS_UL_KILOMETER, SRS_UL_KILOMETER_CONV, "km" }, // alias of former
+{ SRS_UL_DECIMETER, SRS_UL_DECIMETER_CONV, "dm" },
+{ SRS_UL_CENTIMETER, SRS_UL_CENTIMETER_CONV, "cm" },
+{ SRS_UL_MILLIMETER, SRS_UL_MILLIMETER_CONV, "mm" },
+
+{ SRS_UL_FOOT, SRS_UL_FOOT_CONV, "ft" }, // Leave as 'Foot (International)' or SRS_UL_FOOT instead of SRS_UL_INTL_FOOT due to historical usage
+{ SRS_UL_INTL_FOOT, SRS_UL_INTL_FOOT_CONV, "ft" }, // alias of former
+{ SRS_UL_US_FOOT, SRS_UL_US_FOOT_CONV, "us-ft" },
+{ SRS_UL_INDIAN_FOOT, SRS_UL_INDIAN_FOOT_CONV, "ind-ft" },
+
+{ SRS_UL_INTL_NAUT_MILE, SRS_UL_INTL_NAUT_MILE_CONV, "kmi" },
+{ SRS_UL_NAUTICAL_MILE, SRS_UL_NAUTICAL_MILE_CONV, "kmi" }, // alias of former
+
+{ SRS_UL_INTL_STAT_MILE, SRS_UL_INTL_STAT_MILE_CONV, "mi" },
+{ "Mile", SRS_UL_INTL_STAT_MILE_CONV, "mi" }, // alias of former
+{ "IMILE", SRS_UL_INTL_STAT_MILE_CONV, "mi" }, // alias of former
+{ SRS_UL_US_STAT_MILE, SRS_UL_US_STAT_MILE_CONV, "us-mi"},
+
+{ SRS_UL_INTL_LINK, SRS_UL_INTL_LINK_CONV, "link" },
+{ SRS_UL_LINK, SRS_UL_LINK_CONV, "link" }, // alias of former
+
+{ SRS_UL_INTL_YARD, SRS_UL_INTL_YARD_CONV, "yd" },
+{ "IYARD", SRS_UL_INTL_YARD_CONV, "yd" }, // alias of former
+{ SRS_UL_US_YARD, SRS_UL_US_YARD_CONV, "us-yd" },
+{ SRS_UL_INDIAN_YARD, SRS_UL_INDIAN_YARD_CONV, "ind-yd" },
+
+{ SRS_UL_INTL_INCH, SRS_UL_INTL_INCH_CONV, "in" },
+{ SRS_UL_US_INCH, SRS_UL_US_INCH_CONV, "us-in" },
+
+{ SRS_UL_INTL_FATHOM, SRS_UL_INTL_FATHOM_CONV, "fath" },
+
+{ SRS_UL_INTL_CHAIN, SRS_UL_INTL_CHAIN_CONV, "ch" },
+{ SRS_UL_US_CHAIN, SRS_UL_US_CHAIN_CONV, "us-ch" },
+{ SRS_UL_INDIAN_CHAIN, SRS_UL_INDIAN_CHAIN_CONV, "ind-ch" },
+
+// { SRS_UL_ROD, SRS_UL_ROD_CONV, "????" }
+};
+
+/************************************************************************/
+/*                        GetLinearFromLinearConvOrName()               */
+/************************************************************************/
+
+static const LinearUnitsStruct *GetLinearFromLinearConvOrName(
+                                                  double dfLinearConv,
+                                                  const char *pszLinearUnits )
+
+{
+    for( size_t i=0; i < sizeof(asLinearUnits) / sizeof(asLinearUnits[0]); i++ )
+    {
+        if( (pszLinearUnits != NULL && EQUAL(pszLinearUnits, asLinearUnits[i].pszWKTName)) ||
+            fabs(dfLinearConv - CPLAtof(asLinearUnits[i].pszValueInMeter)) < 0.00000001 )
+        {
+            return &(asLinearUnits[i]);
+        }
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                        GetLinearFromProjName()                       */
+/************************************************************************/
+
+static const LinearUnitsStruct* GetLinearFromProjName( const char* pszProjName )
+
+{
+    for( size_t i=0; i < sizeof(asLinearUnits) / sizeof(asLinearUnits[0]); i++ )
+    {
+        if( EQUAL(pszProjName, asLinearUnits[i].pszProjName) )
+        {
+            return &(asLinearUnits[i]);
+        }
+    }
+    return NULL;
+}
+
 /************************************************************************/
 /*                          OSRProj4Tokenize()                          */
 /*                                                                      */
@@ -195,20 +281,17 @@ static const OGRProj4PM* OGRGetProj4PMFromVal(double dfVal)
 /*      strings with a + sign in the exponents of parameter values.     */
 /************************************************************************/
 
-char **OSRProj4Tokenize( const char *pszFull )
+static char **OSRProj4Tokenize( const char *pszFull )
 
 {
-    char *pszStart = NULL;
-    char *pszFullWrk;
-    char **papszTokens = NULL;
-    int  i;
-
     if( pszFull == NULL )
         return NULL;
 
-    pszFullWrk = CPLStrdup( pszFull );
+    char *pszFullWrk = CPLStrdup( pszFull );
+    char *pszStart = NULL;
+    char **papszTokens = NULL;
 
-    for( i=0; pszFullWrk[i] != '\0'; i++ )
+    for( int i=0; pszFullWrk[i] != '\0'; i++ )
     {
         switch( pszFullWrk[i] )
         {
@@ -253,7 +336,7 @@ char **OSRProj4Tokenize( const char *pszFull )
 /************************************************************************/
 /*                         OSRImportFromProj4()                         */
 /************************************************************************/
-/** 
+/**
  * \brief Import PROJ.4 coordinate string.
  *
  * This function is the same as OGRSpatialReference::importFromProj4().
@@ -261,7 +344,7 @@ char **OSRProj4Tokenize( const char *pszFull )
 OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromProj4", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromProj4", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromProj4( pszProj4 );
 }
@@ -274,13 +357,11 @@ OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
 /*      helper function for importFromProj4().                          */
 /************************************************************************/
 
-static double OSR_GDV( char **papszNV, const char * pszField, 
+static double OSR_GDV( char **papszNV, const char * pszField,
                        double dfDefaultValue )
 
 {
-    const char * pszValue;
-
-    pszValue = CSLFetchNameValue( papszNV, pszField );
+    const char *pszValue = CSLFetchNameValue( papszNV, pszField );
 
     // special hack to use k_0 if available.
     if( pszValue == NULL && EQUAL(pszField,"k") )
@@ -301,19 +382,19 @@ static double OSR_GDV( char **papszNV, const char * pszField,
  *
  * The OGRSpatialReference is initialized from the passed PROJ.4 style
  * coordinate system string.  In addition to many +proj formulations which
- * have OGC equivelents, it is also possible to import "+init=epsg:n" style
+ * have OGC equivalents, it is also possible to import "+init=epsg:n" style
  * definitions.  These are passed to importFromEPSG().  Other init strings
- * (such as the state plane zones) are not currently supported.   
+ * (such as the state plane zones) are not currently supported.
  *
  * Example:
- *   pszProj4 = "+proj=utm +zone=11 +datum=WGS84" 
+ *   pszProj4 = "+proj=utm +zone=11 +datum=WGS84"
  *
- * Some parameters, such as grids, recognised by PROJ.4 may not be well
+ * Some parameters, such as grids, recognized by PROJ.4 may not be well
  * understood and translated into the OGRSpatialReference model. It is possible
- * to add the +wktext parameter which is a special keyword that OGR recognises
+ * to add the +wktext parameter which is a special keyword that OGR recognized
  * as meaning "embed the entire PROJ.4 string in the WKT and use it literally
  * when converting back to PROJ.4 format".
- * 
+ *
  * For example:
  * "+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000 +y_0=6023150 +ellps=intl
  *  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"
@@ -332,7 +413,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
  *    PARAMETER["false_easting",2510000],
  *    PARAMETER["false_northing",6023150],
  *    UNIT["Meter",1],
- *    EXTENSION["PROJ4","+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000 
+ *    EXTENSION["PROJ4","+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000
  *               +y_0=6023150 +ellps=intl  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"]]
  * \endcode
  *
@@ -370,7 +451,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
  *
  * This method is the equivalent of the C function OSRImportFromProj4().
  *
- * @param pszProj4 the PROJ.4 style string. 
+ * @param pszProj4 the PROJ.4 style string.
  *
  * @return OGRERR_NONE on success or OGRERR_CORRUPT_DATA on failure.
  */
@@ -378,12 +459,6 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
 {
-    char **papszNV = NULL;
-    char **papszTokens;
-    int  i;
-    char *pszCleanCopy;
-    int   bAddProj4Extension = FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
@@ -393,11 +468,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Strip any newlines or other "funny" stuff that might occur      */
 /*      if this string just came from reading a file.                   */
 /* -------------------------------------------------------------------- */
-    pszCleanCopy = CPLStrdup( pszProj4 );
-    for( i = 0; pszCleanCopy[i] != '\0'; i++ )
+    char *pszCleanCopy = CPLStrdup( pszProj4 );
+    for( int i = 0; pszCleanCopy[i] != '\0'; i++ )
     {
-        if( pszCleanCopy[i] == 10 
-            || pszCleanCopy[i] == 13 
+        if( pszCleanCopy[i] == 10
+            || pszCleanCopy[i] == 13
             || pszCleanCopy[i] == 9 )
             pszCleanCopy[i] = ' ';
     }
@@ -406,19 +481,17 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Try to normalize the definition.  This should expand +init=     */
 /*      clauses and so forth.                                           */
 /* -------------------------------------------------------------------- */
-    char *pszNormalized;
-
-    pszNormalized = OCTProj4Normalize( pszCleanCopy );
+    char *pszNormalized = OCTProj4Normalize( pszCleanCopy );
 
     /* Workaround proj.4 bug (#239) by manually re-adding no_off/no_uoff */
-    if( strstr(pszCleanCopy, "+no_off") != NULL && 
+    if( strstr(pszCleanCopy, "+no_off") != NULL &&
         strstr(pszNormalized, "+no_off") == NULL )
     {
         char* pszTmp = CPLStrdup(CPLSPrintf("%s +no_off", pszNormalized));
         CPLFree(pszNormalized);
         pszNormalized = pszTmp;
     }
-    else if( strstr(pszCleanCopy, "+no_uoff") != NULL && 
+    else if( strstr(pszCleanCopy, "+no_uoff") != NULL &&
         strstr(pszNormalized, "+no_uoff") == NULL )
     {
         char* pszTmp = CPLStrdup(CPLSPrintf("%s +no_uoff", pszNormalized));
@@ -427,18 +500,17 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
 
     CPLFree( pszCleanCopy );
-    
+
 /* -------------------------------------------------------------------- */
 /*      If we have an EPSG based init string, and no existing +proj     */
 /*      portion then try to normalize into into a PROJ.4 string.        */
 /* -------------------------------------------------------------------- */
-    if( strstr(pszNormalized,"init=epsg:") != NULL 
+    if( strstr(pszNormalized,"init=epsg:") != NULL
         && strstr(pszNormalized,"proj=") == NULL )
     {
-        OGRErr eErr;
         const char *pszNumber = strstr(pszNormalized,"init=epsg:") + 10;
 
-        eErr = importFromEPSG( atoi(pszNumber) );
+        OGRErr eErr = importFromEPSG( atoi(pszNumber) );
         if( eErr == OGRERR_NONE )
         {
             CPLFree( pszNormalized );
@@ -450,10 +522,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Parse the PROJ.4 string into a cpl_string.h style name/value    */
 /*      list.                                                           */
 /* -------------------------------------------------------------------- */
-    papszTokens = OSRProj4Tokenize( pszNormalized );
+    char **papszTokens = OSRProj4Tokenize( pszNormalized );
     CPLFree( pszNormalized );
-    
-    for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
+    char **papszNV = NULL;
+
+    for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
     {
         char *pszEqual = strstr(papszTokens[i],"=");
 
@@ -472,7 +545,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Extract the prime meridian, if there is one set.                */
 /* -------------------------------------------------------------------- */
     const char *pszPM = CSLFetchNameValue( papszNV, "pm" );
-    double dfFromGreenwich = 0.0;
+    double l_dfFromGreenwich = 0.0;
     /* int    nPMCode = -1; */
 
     if( pszPM != NULL )
@@ -480,13 +553,13 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         const OGRProj4PM* psProj4PM = OGRGetProj4PMFromProj4Name(pszPM);
         if (psProj4PM)
         {
-            dfFromGreenwich = CPLDMSToDec(psProj4PM->pszFromGreenwich);
+            l_dfFromGreenwich = CPLDMSToDec(psProj4PM->pszFromGreenwich);
             pszPM = psProj4PM->pszWKTPMName;
             /* nPMCode = psProj4PM->nPMCode; */
         }
         else
         {
-            dfFromGreenwich = CPLDMSToDec( pszPM );
+            l_dfFromGreenwich = CPLDMSToDec( pszPM );
             pszPM = "unnamed";
         }
     }
@@ -497,6 +570,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
     const char *pszProj = CSLFetchNameValue(papszNV,"proj");
+    bool bAddProj4Extension = false;
 
     if( pszProj == NULL )
     {
@@ -508,41 +582,41 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"longlat") || EQUAL(pszProj,"latlong") )
     {
     }
-    
+
     else if( EQUAL(pszProj,"geocent") )
     {
         SetGeocCS( "Geocentric" );
     }
-    
+
     else if( EQUAL(pszProj,"bonne") )
     {
-        SetBonne( OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                  OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                  OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetBonne( OSR_GDV( papszNV, "lat_1", 0.0 ),
+                  OSR_GDV( papszNV, "lon_0", 0.0 ),
+                  OSR_GDV( papszNV, "x_0", 0.0 ),
                   OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"cass") )
     {
-        SetCS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetCS( OSR_GDV( papszNV, "lat_0", 0.0 ),
+               OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"nzmg") )
     {
-        SetNZMG( OSR_GDV( papszNV, "lat_0", -41.0 ), 
-                 OSR_GDV( papszNV, "lon_0", 173.0 ), 
-                 OSR_GDV( papszNV, "x_0", 2510000.0 ), 
+        SetNZMG( OSR_GDV( papszNV, "lat_0", -41.0 ),
+                 OSR_GDV( papszNV, "lon_0", 173.0 ),
+                 OSR_GDV( papszNV, "x_0", 2510000.0 ),
                  OSR_GDV( papszNV, "y_0", 6023150.0 ) );
     }
 
     else if( EQUAL(pszProj,"cea") )
     {
-        SetCEA( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
-                OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetCEA( OSR_GDV( papszNV, "lat_ts", 0.0 ),
+                OSR_GDV( papszNV, "lon_0", 0.0 ),
+                OSR_GDV( papszNV, "x_0", 0.0 ),
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
@@ -551,31 +625,31 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         const char *pszAxis = CSLFetchNameValue( papszNV, "axis" );
 
         if( pszAxis == NULL || !EQUAL(pszAxis,"wsu") )
-            SetTM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                   OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                   OSR_GDV( papszNV, "k", 1.0 ), 
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+            SetTM( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                   OSR_GDV( papszNV, "lon_0", 0.0 ),
+                   OSR_GDV( papszNV, "k", 1.0 ),
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
         else
-            SetTMSO( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                     OSR_GDV( papszNV, "k", 1.0 ), 
-                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+            SetTMSO( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                     OSR_GDV( papszNV, "lon_0", 0.0 ),
+                     OSR_GDV( papszNV, "k", 1.0 ),
+                     OSR_GDV( papszNV, "x_0", 0.0 ),
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     /* For etmerc, we translate it into standard TM for the WKT */
     /* point of view, but make sure that the original proj.4 */
     /* definition is preserved for accurate reprojection */
-    else if( EQUAL(pszProj,"etmerc") && 
+    else if( EQUAL(pszProj,"etmerc") &&
              CSLFetchNameValue( papszNV, "axis" ) == NULL )
     {
-        bAddProj4Extension = TRUE;
+        bAddProj4Extension = true;
 
-        SetTM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                OSR_GDV( papszNV, "k", 1.0 ), 
-                OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetTM( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                OSR_GDV( papszNV, "lon_0", 0.0 ),
+                OSR_GDV( papszNV, "k", 1.0 ),
+                OSR_GDV( papszNV, "x_0", 0.0 ),
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
@@ -588,57 +662,57 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"merc") /* 2SP form */
              && OSR_GDV(papszNV, "lat_ts", 1000.0) < 999.0 )
     {
-        SetMercator2SP( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
+        SetMercator2SP( OSR_GDV( papszNV, "lat_ts", 0.0 ),
                         0.0,
-                        OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                        OSR_GDV( papszNV, "x_0", 0.0 ), 
+                        OSR_GDV( papszNV, "lon_0", 0.0 ),
+                        OSR_GDV( papszNV, "x_0", 0.0 ),
                         OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"merc") ) /* 1SP form */
     {
         SetMercator( 0.0,
-                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                     OSR_GDV( papszNV, "k", 1.0 ), 
-                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "lon_0", 0.0 ),
+                     OSR_GDV( papszNV, "k", 1.0 ),
+                     OSR_GDV( papszNV, "x_0", 0.0 ),
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj,"stere") 
+    else if( EQUAL(pszProj,"stere")
              && ABS(OSR_GDV( papszNV, "lat_0", 0.0 ) - 90) < 0.001 )
     {
-        SetPS( OSR_GDV( papszNV, "lat_ts", 90.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "k", 1.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetPS( OSR_GDV( papszNV, "lat_ts", 90.0 ),
+               OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "k", 1.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj,"stere") 
+    else if( EQUAL(pszProj,"stere")
              && ABS(OSR_GDV( papszNV, "lat_0", 0.0 ) + 90) < 0.001 )
     {
-        SetPS( OSR_GDV( papszNV, "lat_ts", -90.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "k", 1.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetPS( OSR_GDV( papszNV, "lat_ts", -90.0 ),
+               OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "k", 1.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"sterea") )
     {
-        SetOS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "k", 1.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetOS( OSR_GDV( papszNV, "lat_0", 0.0 ),
+               OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "k", 1.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"stere") )
     {
-        SetStereographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                          OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                          OSR_GDV( papszNV, "k", 1.0 ),  
-                          OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetStereographic( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                          OSR_GDV( papszNV, "lon_0", 0.0 ),
+                          OSR_GDV( papszNV, "k", 1.0 ),
+                          OSR_GDV( papszNV, "x_0", 0.0 ),
                           OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
@@ -668,58 +742,58 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     else if( EQUAL(pszProj,"gnom") )
     {
-        SetGnomonic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetGnomonic( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                     OSR_GDV( papszNV, "lon_0", 0.0 ),
+                     OSR_GDV( papszNV, "x_0", 0.0 ),
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"ortho") )
     {
-        SetOrthographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                         OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                         OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetOrthographic( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                         OSR_GDV( papszNV, "lon_0", 0.0 ),
+                         OSR_GDV( papszNV, "x_0", 0.0 ),
                          OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"laea") )
     {
-        SetLAEA( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                 OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetLAEA( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                 OSR_GDV( papszNV, "lon_0", 0.0 ),
+                 OSR_GDV( papszNV, "x_0", 0.0 ),
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"aeqd") )
     {
-        SetAE( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetAE( OSR_GDV( papszNV, "lat_0", 0.0 ),
+               OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"eqdc") )
     {
-        SetEC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
-               OSR_GDV( papszNV, "lat_2", 0.0 ), 
-               OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetEC( OSR_GDV( papszNV, "lat_1", 0.0 ),
+               OSR_GDV( papszNV, "lat_2", 0.0 ),
+               OSR_GDV( papszNV, "lat_0", 0.0 ),
+               OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"mill") )
     {
-        SetMC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetMC( OSR_GDV( papszNV, "lat_0", 0.0 ),
+               OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"moll") )
     {
-        SetMollweide( OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                      OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetMollweide( OSR_GDV( papszNV, "lon_0", 0.0 ),
+                      OSR_GDV( papszNV, "x_0", 0.0 ),
                       OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
@@ -727,61 +801,61 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
              EQUAL(pszProj,"eck4") || EQUAL(pszProj,"eck5") || EQUAL(pszProj,"eck6"))
     {
         SetEckert(   pszProj[3] - '0',
-                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "lon_0", 0.0 ),
+                     OSR_GDV( papszNV, "x_0", 0.0 ),
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"poly") )
     {
-        SetPolyconic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                      OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                      OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetPolyconic( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                      OSR_GDV( papszNV, "lon_0", 0.0 ),
+                      OSR_GDV( papszNV, "x_0", 0.0 ),
                       OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"aea") )
     {
-        SetACEA( OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                 OSR_GDV( papszNV, "lat_2", 0.0 ), 
-                 OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                 OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetACEA( OSR_GDV( papszNV, "lat_1", 0.0 ),
+                 OSR_GDV( papszNV, "lat_2", 0.0 ),
+                 OSR_GDV( papszNV, "lat_0", 0.0 ),
+                 OSR_GDV( papszNV, "lon_0", 0.0 ),
+                 OSR_GDV( papszNV, "x_0", 0.0 ),
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"robin") )
     {
-        SetRobinson( OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetRobinson( OSR_GDV( papszNV, "lon_0", 0.0 ),
+                     OSR_GDV( papszNV, "x_0", 0.0 ),
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"vandg") )
     {
-        SetVDG( OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetVDG( OSR_GDV( papszNV, "lon_0", 0.0 ),
+                OSR_GDV( papszNV, "x_0", 0.0 ),
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"sinu") )
     {
-        SetSinusoidal( OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                       OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetSinusoidal( OSR_GDV( papszNV, "lon_0", 0.0 ),
+                       OSR_GDV( papszNV, "x_0", 0.0 ),
                        OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"gall") )
     {
-        SetGS( OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetGS( OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"goode") )
     {
-        SetGH( OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetGH( OSR_GDV( papszNV, "lon_0", 0.0 ),
+               OSR_GDV( papszNV, "x_0", 0.0 ),
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
@@ -792,33 +866,36 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     else if( EQUAL(pszProj,"geos") )
     {
-        SetGEOS( OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                 OSR_GDV( papszNV, "h", 35785831.0 ), 
-                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetGEOS( OSR_GDV( papszNV, "lon_0", 0.0 ),
+                 OSR_GDV( papszNV, "h", 35785831.0 ),
+                 OSR_GDV( papszNV, "x_0", 0.0 ),
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
+
+        if( EQUAL(CSLFetchNameValueDef( papszNV, "sweep", "y" ), "x") )
+            bAddProj4Extension = true;
     }
 
-    else if( EQUAL(pszProj,"lcc") ) 
+    else if( EQUAL(pszProj,"lcc") )
     {
-        if( OSR_GDV(papszNV, "lat_0", 0.0 ) 
+        if( OSR_GDV(papszNV, "lat_0", 0.0 )
             == OSR_GDV(papszNV, "lat_1", 0.0 ) &&
             CSLFetchNameValue( papszNV, "lat_2" ) == NULL )
         {
             /* 1SP form */
-            SetLCC1SP( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                       OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                       OSR_GDV( papszNV, "k_0", 1.0 ), 
-                       OSR_GDV( papszNV, "x_0", 0.0 ), 
+            SetLCC1SP( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                       OSR_GDV( papszNV, "lon_0", 0.0 ),
+                       OSR_GDV( papszNV, "k_0", 1.0 ),
+                       OSR_GDV( papszNV, "x_0", 0.0 ),
                        OSR_GDV( papszNV, "y_0", 0.0 ) );
         }
         else
         {
             /* 2SP form */
-            SetLCC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                    OSR_GDV( papszNV, "lat_2", 0.0 ), 
-                    OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                    OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                    OSR_GDV( papszNV, "x_0", 0.0 ), 
+            SetLCC( OSR_GDV( papszNV, "lat_1", 0.0 ),
+                    OSR_GDV( papszNV, "lat_2", 0.0 ),
+                    OSR_GDV( papszNV, "lat_0", 0.0 ),
+                    OSR_GDV( papszNV, "lon_0", 0.0 ),
+                    OSR_GDV( papszNV, "x_0", 0.0 ),
                     OSR_GDV( papszNV, "y_0", 0.0 ) );
         }
     }
@@ -829,73 +906,73 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             || CSLFetchNameValue(papszNV,"no_off") != NULL )
         {
             /* From PJ_omerc, when alpha is defined but not gamma */
-            /* the default gama value is alpha */
+            /* the default gamma value is alpha */
             /*  if (alp || gam) {
                     if (alp) {
                         gamma0 = asin(sin(alpha_c) / D);
                     if (!gam)
                         gamma = alpha_c; */
-            SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                    OSR_GDV( papszNV, "lonc", 0.0 ), 
-                    OSR_GDV( papszNV, "alpha", 0.0 ), 
-                    OSR_GDV( papszNV, "gamma", OSR_GDV( papszNV, "alpha", 0.0 ) ), 
-                    OSR_GDV( papszNV, "k", 1.0 ), 
-                    OSR_GDV( papszNV, "x_0", 0.0 ), 
+            SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                    OSR_GDV( papszNV, "lonc", 0.0 ),
+                    OSR_GDV( papszNV, "alpha", 0.0 ),
+                    OSR_GDV( papszNV, "gamma", OSR_GDV( papszNV, "alpha", 0.0 ) ),
+                    OSR_GDV( papszNV, "k", 1.0 ),
+                    OSR_GDV( papszNV, "x_0", 0.0 ),
                     OSR_GDV( papszNV, "y_0", 0.0 ) );
         }
         else
         {
-            SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                   OSR_GDV( papszNV, "lonc", 0.0 ), 
-                   OSR_GDV( papszNV, "alpha", 0.0 ), 
-                   OSR_GDV( papszNV, "gamma", OSR_GDV( papszNV, "alpha", 0.0 ) ), 
-                   OSR_GDV( papszNV, "k", 1.0 ), 
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+            SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                   OSR_GDV( papszNV, "lonc", 0.0 ),
+                   OSR_GDV( papszNV, "alpha", 0.0 ),
+                   OSR_GDV( papszNV, "gamma", OSR_GDV( papszNV, "alpha", 0.0 ) ),
+                   OSR_GDV( papszNV, "k", 1.0 ),
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
         }
     }
 
     else if( EQUAL(pszProj,"somerc") )
     {
-        SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                  OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                  90.0,  90.0, 
-                  OSR_GDV( papszNV, "k", 1.0 ), 
-                  OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                  OSR_GDV( papszNV, "lon_0", 0.0 ),
+                  90.0,  90.0,
+                  OSR_GDV( papszNV, "k", 1.0 ),
+                  OSR_GDV( papszNV, "x_0", 0.0 ),
                   OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"krovak") )
     {
-        SetKrovak( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                   OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                   OSR_GDV( papszNV, "alpha", 0.0 ), 
+        SetKrovak( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                   OSR_GDV( papszNV, "lon_0", 0.0 ),
+                   OSR_GDV( papszNV, "alpha", 0.0 ),
                    0.0, // pseudo_standard_parallel_1
-                   OSR_GDV( papszNV, "k", 1.0 ), 
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "k", 1.0 ),
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj, "iwm_p") )
     {
-        SetIWMPolyconic( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+        SetIWMPolyconic( OSR_GDV( papszNV, "lat_1", 0.0 ),
                          OSR_GDV( papszNV, "lat_2", 0.0 ),
-                         OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                         OSR_GDV( papszNV, "x_0", 0.0 ), 
+                         OSR_GDV( papszNV, "lon_0", 0.0 ),
+                         OSR_GDV( papszNV, "x_0", 0.0 ),
                          OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj, "wag1") )
     {
         SetWagner( 1, 0.0,
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj, "wag2") )
     {
         SetWagner( 2, 0.0,
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
@@ -903,35 +980,35 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         SetWagner( 3,
                    OSR_GDV( papszNV, "lat_ts", 0.0 ),
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj, "wag4") )
     {
         SetWagner( 4, 0.0,
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj, "wag5") )
     {
         SetWagner( 5, 0.0,
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj, "wag6") )
     {
         SetWagner( 6, 0.0,
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj, "wag7") )
     {
         SetWagner( 7, 0.0,
-                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ),
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
@@ -940,21 +1017,28 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         SetQSC( OSR_GDV( papszNV, "lat_0", 0.0 ),
                 OSR_GDV( papszNV, "lon_0", 0.0 ) );
     }
+    else if( EQUAL(pszProj,"sch") )
+    {
+        SetSCH( OSR_GDV( papszNV, "plat_0", 0.0 ),
+                OSR_GDV( papszNV, "plon_0", 0.0 ),
+                OSR_GDV( papszNV, "phdg_0", 0.0 ),
+                OSR_GDV( papszNV, "h_0", 0.0) );
+    }
 
     else if( EQUAL(pszProj,"tpeqd") )
     {
-        SetTPED( OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                 OSR_GDV( papszNV, "lon_1", 0.0 ), 
-                 OSR_GDV( papszNV, "lat_2", 0.0 ), 
-                 OSR_GDV( papszNV, "lon_2", 0.0 ), 
-                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+        SetTPED( OSR_GDV( papszNV, "lat_1", 0.0 ),
+                 OSR_GDV( papszNV, "lon_1", 0.0 ),
+                 OSR_GDV( papszNV, "lat_2", 0.0 ),
+                 OSR_GDV( papszNV, "lon_2", 0.0 ),
+                 OSR_GDV( papszNV, "x_0", 0.0 ),
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( strstr(pszProj4,"wktext") != NULL )
     {
-        // Fake out a projected coordinate system for otherwise 
-        // unrecognised projections for which we are already planning
+        // Fake out a projected coordinate system for otherwise
+        // unrecognized projections for which we are already planning
         // to embed the actual PROJ.4 string via extension node.
         SetProjection( "custom_proj4" );
     }
@@ -969,32 +1053,30 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
 /*      Try to translate the datum.                                     */
 /* -------------------------------------------------------------------- */
-    const char *pszValue;
-    int  bFullyDefined = FALSE;
+    bool bFullyDefined = false;
 
-    pszValue = CSLFetchNameValue(papszNV, "datum");
+    const char *pszValue = CSLFetchNameValue(papszNV, "datum");
     if( pszValue == NULL )
     {
         /* do nothing */
     }
     else if( (EQUAL(pszValue,"NAD27") || EQUAL(pszValue,"NAD83")
               || EQUAL(pszValue,"WGS84") || EQUAL(pszValue,"WGS72"))
-             && dfFromGreenwich == 0.0 )
+             && l_dfFromGreenwich == 0.0 )
     {
         SetWellKnownGeogCS( pszValue );
-        bFullyDefined = TRUE;
+        bFullyDefined = true;
     }
     else
     {
-        unsigned int i;
-        for(i=0;i<sizeof(ogr_pj_datums)/sizeof(ogr_pj_datums[0]);i++)
+        for(size_t i=0;i<sizeof(ogr_pj_datums)/sizeof(ogr_pj_datums[0]);i++)
         {
             if ( EQUAL(pszValue, ogr_pj_datums[i].pszPJ) )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( ogr_pj_datums[i].nEPSG );
                 CopyGeogCSFrom( &oGCS );
-                bFullyDefined = TRUE;
+                bFullyDefined = true;
                 break;
             }
         }
@@ -1010,32 +1092,28 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     pszValue = CSLFetchNameValue(papszNV, "ellps");
     if( pszValue != NULL && !bFullyDefined )
     {
-        for( i = 0; ogr_pj_ellps[i] != NULL; i += 4 )
+        for( int i = 0; ogr_pj_ellps[i] != NULL; i += 4 )
         {
             if( !EQUAL(ogr_pj_ellps[i],pszValue) )
                 continue;
 
-            CPLAssert( EQUALN(ogr_pj_ellps[i+1],"a=",2) );
-            
+            CPLAssert( STARTS_WITH_CI(ogr_pj_ellps[i+1], "a=") );
+
             dfSemiMajor = CPLAtof(ogr_pj_ellps[i+1]+2);
-            if( EQUALN(ogr_pj_ellps[i+2],"rf=",3) )
+            if( STARTS_WITH_CI(ogr_pj_ellps[i+2], "rf=") )
                 dfInvFlattening = CPLAtof(ogr_pj_ellps[i+2]+3);
             else
             {
-                CPLAssert( EQUALN(ogr_pj_ellps[i+2],"b=",2) );
+                CPLAssert( STARTS_WITH_CI(ogr_pj_ellps[i+2], "b=") );
                 dfSemiMinor = CPLAtof(ogr_pj_ellps[i+2]+2);
-                
-                if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
-                    dfInvFlattening = 0.0;
-                else
-                    dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+                dfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
             }
-            
-            SetGeogCS( ogr_pj_ellps[i+3], "unknown", ogr_pj_ellps[i], 
-                       dfSemiMajor, dfInvFlattening,
-                       pszPM, dfFromGreenwich );
 
-            bFullyDefined = TRUE;
+            SetGeogCS( ogr_pj_ellps[i+3], "unknown", ogr_pj_ellps[i],
+                       dfSemiMajor, dfInvFlattening,
+                       pszPM, l_dfFromGreenwich );
+
+            bFullyDefined = true;
             break;
         }
     }
@@ -1053,9 +1131,9 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             }
             else
             {
-                CPLDebug( "OGR_PROJ4", "Can't find ellipse definition, default to WGS84:\n%s", 
+                CPLDebug( "OGR_PROJ4", "Can't find ellipse definition, default to WGS84:\n%s",
                           pszProj4 );
-                
+
                 dfSemiMajor = SRS_WGS84_SEMIMAJOR;
                 dfSemiMinor = -1.0;
                 dfInvFlattening = SRS_WGS84_INVFLATTENING;
@@ -1074,10 +1152,10 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                     dfInvFlattening = 1.0 / dfFlattening;
             }
         }
-        
+
         if( dfSemiMinor == -1.0 && dfInvFlattening == -1.0 )
         {
-            CPLDebug( "OGR_PROJ4", "Can't find ellipse definition in:\n%s", 
+            CPLDebug( "OGR_PROJ4", "Can't find ellipse definition in:\n%s",
                       pszProj4 );
             CSLDestroy( papszNV );
             return OGRERR_UNSUPPORTED_SRS;
@@ -1085,45 +1163,47 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
         if( dfInvFlattening == -1.0 )
         {
-            if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
-                dfInvFlattening = 0.0;
-            else
-                dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+            dfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
         }
-        
+
         SetGeogCS( "unnamed ellipse", "unknown", "unnamed",
                    dfSemiMajor, dfInvFlattening,
-                   pszPM, dfFromGreenwich );
-        
-        bFullyDefined = TRUE;
+                   pszPM, l_dfFromGreenwich );
+
+        /*bFullyDefined = true;*/
     }
 
 /* -------------------------------------------------------------------- */
 /*      Handle TOWGS84 conversion.                                      */
 /* -------------------------------------------------------------------- */
     pszValue = CSLFetchNameValue(papszNV, "towgs84");
-    if(pszValue!=NULL)
+    // Make sure that we do not include a useless TOWGS84 node if the datum
+    // is WGS84.  Depending on the proj.4 version +datum=WGS84 might be
+    // expanded with a +towgs84=0,0,0 or not
+    if(pszValue!=NULL &&
+        !( EQUAL(CSLFetchNameValueDef(papszNV, "datum", ""), "WGS84")
+           && EQUAL(pszValue, "0,0,0")) )
     {
-        char **papszToWGS84 = CSLTokenizeStringComplex( pszValue, ",", 
+        char **papszToWGS84 = CSLTokenizeStringComplex( pszValue, ",",
                                                         FALSE, TRUE );
 
         if( CSLCount(papszToWGS84) >= 7 )
-            SetTOWGS84( CPLAtof(papszToWGS84[0]), 
-                        CPLAtof(papszToWGS84[1]), 
-                        CPLAtof(papszToWGS84[2]), 
-                        CPLAtof(papszToWGS84[3]), 
-                        CPLAtof(papszToWGS84[4]), 
-                        CPLAtof(papszToWGS84[5]), 
+            SetTOWGS84( CPLAtof(papszToWGS84[0]),
+                        CPLAtof(papszToWGS84[1]),
+                        CPLAtof(papszToWGS84[2]),
+                        CPLAtof(papszToWGS84[3]),
+                        CPLAtof(papszToWGS84[4]),
+                        CPLAtof(papszToWGS84[5]),
                         CPLAtof(papszToWGS84[6]) );
         else if( CSLCount(papszToWGS84) >= 3 )
-            SetTOWGS84( CPLAtof(papszToWGS84[0]), 
-                        CPLAtof(papszToWGS84[1]), 
+            SetTOWGS84( CPLAtof(papszToWGS84[0]),
+                        CPLAtof(papszToWGS84[1]),
                         CPLAtof(papszToWGS84[2]) );
         else
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Seemingly corrupt +towgs84 option (%s), ignoring.", 
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Seemingly corrupt +towgs84 option (%s), ignoring.",
                       pszValue );
-                        
+
         CSLDestroy(papszToWGS84);
     }
 
@@ -1146,14 +1226,13 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
         if( pszValue != NULL && CPLAtofM(pszValue) > 0.0 )
         {
-            double dfValue = CPLAtofM(pszValue);
-
-            if( fabs(dfValue - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
-                SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
-            else if( fabs(dfValue - CPLAtof(SRS_UL_FOOT_CONV)) < 0.00000001 )
-                SetLinearUnits( SRS_UL_FOOT, CPLAtof(SRS_UL_FOOT_CONV) );
-            else if( dfValue == 1.0 )
-                SetLinearUnits( SRS_UL_METER, 1.0 );
+            const double dfValue = CPLAtofM(pszValue);
+            const LinearUnitsStruct* psLinearUnits = GetLinearFromLinearConvOrName( dfValue, pszValue );
+            if( psLinearUnits != NULL )
+            {
+                SetLinearUnits( psLinearUnits->pszWKTName,
+                                CPLAtof(psLinearUnits->pszValueInMeter) );
+            }
             else
                 SetLinearUnits( "unknown", CPLAtofM(pszValue) );
         }
@@ -1162,76 +1241,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         */
         else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
         {
-            if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") || EQUAL(pszValue,"metre") )
-                SetLinearUnits( SRS_UL_METER, 1.0 );
-            /*
-            ** Leave as 'kilometre' instead of SRS_UL_KILOMETER due to
-            ** historical usage
-            */
-            else if( EQUAL( pszValue,"km") )
-                SetLinearUnits( "kilometre",
-                                CPLAtof( SRS_UL_KILOMETER_CONV ) );
-            else if( EQUAL( pszValue,"us-ft" ) )
-                SetLinearUnits( SRS_UL_US_FOOT,
-                                CPLAtof( SRS_UL_US_FOOT_CONV ) );
-            /*
-            ** Leave as 'Foot (International)' or SRS_UL_FOOT instead of
-            ** SRS_UL_INTL_FOOT due to historical usage
-            */
-            else if( EQUAL( pszValue,"ft" ) )
-                SetLinearUnits( SRS_UL_FOOT,
-                                CPLAtof( SRS_UL_FOOT_CONV) );
-            else if( EQUAL( pszValue,"yd" ) )
-                SetLinearUnits( SRS_UL_INTL_YARD,
-                                CPLAtof( SRS_UL_INTL_YARD_CONV ) );
-            else if( EQUAL( pszValue,"us-yd" ) )
-                SetLinearUnits( SRS_UL_US_YARD,
-                                CPLAtof( SRS_UL_US_YARD_CONV ) );
-            else if( EQUAL( pszValue,"dm" ) )
-                SetLinearUnits( SRS_UL_DECIMETER, 
-                                CPLAtof( SRS_UL_DECIMETER_CONV ) );
-            else if( EQUAL( pszValue,"cm" ) )
-                SetLinearUnits( SRS_UL_CENTIMETER,
-                                CPLAtof( SRS_UL_CENTIMETER_CONV ) );
-            else if( EQUAL( pszValue,"mm" ) )
-                SetLinearUnits( SRS_UL_MILLIMETER,
-                                CPLAtof( SRS_UL_MILLIMETER_CONV ) );
-            else if( EQUAL( pszValue,"kmi" ) )
-                SetLinearUnits( SRS_UL_INTL_NAUT_MILE,
-                                CPLAtof( SRS_UL_INTL_NAUT_MILE_CONV ) );
-            else if( EQUAL( pszValue,"in" ) )
-                SetLinearUnits( SRS_UL_INTL_INCH,
-                                CPLAtof( SRS_UL_INTL_INCH_CONV ) );
-            else if( EQUAL( pszValue,"mi" ) )
-                SetLinearUnits( SRS_UL_INTL_STAT_MILE,
-                                CPLAtof( SRS_UL_INTL_STAT_MILE_CONV ) );
-            else if( EQUAL( pszValue,"fath" ) )
-                SetLinearUnits( SRS_UL_INTL_FATHOM,
-                                CPLAtof( SRS_UL_INTL_FATHOM_CONV ) );
-            else if( EQUAL( pszValue,"ch" ) )
-                SetLinearUnits( SRS_UL_INTL_CHAIN,
-                                CPLAtof( SRS_UL_INTL_CHAIN_CONV ) );
-            else if( EQUAL( pszValue,"link" ) )
-                SetLinearUnits( SRS_UL_INTL_LINK,
-                                CPLAtof( SRS_UL_INTL_LINK_CONV ) );
-            else if( EQUAL( pszValue,"us-in" ) )
-                SetLinearUnits( SRS_UL_US_INCH,
-                                CPLAtof( SRS_UL_US_INCH_CONV ) );
-            else if( EQUAL( pszValue, "us-ch" ) )
-                SetLinearUnits( SRS_UL_US_CHAIN,
-                                CPLAtof( SRS_UL_US_CHAIN_CONV ) );
-            else if( EQUAL( pszValue, "us-mi" ) )
-                SetLinearUnits( SRS_UL_US_STAT_MILE,
-                                CPLAtof( SRS_UL_US_STAT_MILE_CONV ) );
-            else if( EQUAL( pszValue, "ind-yd" ) )
-                SetLinearUnits( SRS_UL_INDIAN_YARD,
-                                CPLAtof( SRS_UL_INDIAN_YARD_CONV ) );
-            else if( EQUAL( pszValue, "ind-ft" ) )
-                SetLinearUnits( SRS_UL_INDIAN_FOOT,
-                                CPLAtof( SRS_UL_INDIAN_FOOT_CONV ) );
-            else if( EQUAL( pszValue, "ind-ch" ) )
-                SetLinearUnits( SRS_UL_INDIAN_CHAIN,
-                                CPLAtof( SRS_UL_INDIAN_CHAIN_CONV ) );
+            const LinearUnitsStruct* psLinearUnits = GetLinearFromProjName( pszValue );
+            if( psLinearUnits != NULL )
+            {
+                SetLinearUnits( psLinearUnits->pszWKTName,
+                                CPLAtof(psLinearUnits->pszValueInMeter) );
+            }
             else // This case is untranslatable.  Should add all proj.4 unts
                 SetLinearUnits( pszValue, 1.0 );
         }
@@ -1244,12 +1259,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     if( GetLinearUnits() != 1.0 && IsProjected() )
     {
         OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-        int  i;
 
-        for( i = 0; i < poPROJCS->GetChildCount(); i++ )
+        for( int i = 0; i < poPROJCS->GetChildCount(); i++ )
         {
             OGR_SRSNode *poParm = poPROJCS->GetChild(i);
-            if( !EQUAL(poParm->GetValue(),"PARAMETER") 
+            if( !EQUAL(poParm->GetValue(),"PARAMETER")
                 || poParm->GetChildCount() != 2 )
                 continue;
 
@@ -1257,7 +1271,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
             if( IsLinearParameter(pszParmName) )
                 SetNormProjParm(pszParmName,GetProjParm(pszParmName));
-        }        
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1268,13 +1282,13 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     if( pszValue != NULL )
     {
         OGR_SRSNode *poHorizSRS = GetRoot()->Clone();
-        
+
         Clear();
-        
+
         CPLString osName = poHorizSRS->GetChild(0)->GetValue();
         osName += " + ";
         osName += "Unnamed Vertical Datum";
-        
+
         SetNode( "COMPD_CS", osName );
         GetRoot()->AddChild( poHorizSRS );
 
@@ -1286,7 +1300,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         osTarget += "|VERT_CS|VERT_DATUM";
 
         SetNode( osTarget, "Unnamed" );
-        
+
         poVERT_CS->GetChild(1)->AddChild( new OGR_SRSNode( "2005" ) );
         SetExtension( osTarget, "PROJ4_GRIDS", pszValue );
     }
@@ -1303,22 +1317,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
         if( pszValue != NULL && CPLAtofM(pszValue) > 0.0 )
         {
-            double dfValue = CPLAtofM(pszValue);
-
-            if( fabs(dfValue - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+            const double dfValue = CPLAtofM(pszValue);
+            const LinearUnitsStruct* psLinearUnits = GetLinearFromLinearConvOrName( dfValue, pszValue );
+            if( psLinearUnits != NULL )
             {
-                pszUnitName = SRS_UL_US_FOOT;
-                pszUnitConv = SRS_UL_US_FOOT_CONV;
-            }
-            else if( fabs(dfValue - CPLAtof(SRS_UL_FOOT_CONV)) < 0.00000001 )
-            {
-                pszUnitName = SRS_UL_FOOT;
-                pszUnitConv = SRS_UL_FOOT_CONV;
-            }
-            else if( dfValue == 1.0 )
-            {
-                pszUnitName = SRS_UL_METER;
-                pszUnitConv = "1.0";
+                pszUnitName = psLinearUnits->pszWKTName,
+                pszUnitConv = psLinearUnits->pszValueInMeter;
             }
             else
             {
@@ -1328,38 +1332,22 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }
         else if( (pszValue = CSLFetchNameValue(papszNV, "vunits")) != NULL )
         {
-            if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") || EQUAL(pszValue,"metre") )
+            const LinearUnitsStruct* psLinearUnits = GetLinearFromProjName( pszValue );
+            if( psLinearUnits != NULL )
             {
-                pszUnitName = SRS_UL_METER;
-                pszUnitConv = "1.0";
+                pszUnitName = psLinearUnits->pszWKTName,
+                pszUnitConv = psLinearUnits->pszValueInMeter;
             }
-            else if( EQUAL(pszValue,"us-ft" ) )
+            else
             {
-                pszUnitName = SRS_UL_US_FOOT;
-                pszUnitConv = SRS_UL_US_FOOT_CONV;
-            }
-            else if( EQUAL(pszValue,"ft" ) )
-            {
-                pszUnitName = SRS_UL_FOOT;
-                pszUnitConv = SRS_UL_FOOT_CONV;
-            }
-            else if( EQUAL(pszValue,"yd" ) )
-            {
-                pszUnitName = "Yard";
-                pszUnitConv = "0.9144";
-            }
-            else if( EQUAL(pszValue,"us-yd" ) )
-            {
-                pszUnitName = "US Yard";
-                pszUnitConv = "0.914401828803658";
+                pszUnitName = "unknown";
+                pszUnitConv = pszValue;
             }
         }
 
         if( pszUnitName != NULL )
         {
-            OGR_SRSNode *poUnits; 
-
-            poUnits = new OGR_SRSNode( "UNIT" );
+            OGR_SRSNode *poUnits = new OGR_SRSNode( "UNIT" );
             poUnits->AddChild( new OGR_SRSNode( pszUnitName ) );
             poUnits->AddChild( new OGR_SRSNode( pszUnitConv ) );
 
@@ -1407,66 +1395,18 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 }
 
 /************************************************************************/
-/*                           LinearToProj4()                            */
-/************************************************************************/
-
-static const char *LinearToProj4( double dfLinearConv, 
-                                  const char *pszLinearUnits )
-
-{
-    if( dfLinearConv == 1.0 )
-        return "m";
-
-    else if( dfLinearConv == 1000.0 )
-        return "km";
-    
-    else if( dfLinearConv == 0.0254 )
-        return "in";
-    
-    else if( EQUAL(pszLinearUnits,SRS_UL_FOOT) 
-             || fabs(dfLinearConv - CPLAtof(SRS_UL_FOOT_CONV)) < 0.000000001 )
-        return "ft";
-    
-    else if( EQUAL(pszLinearUnits,"IYARD") || dfLinearConv == 0.9144 )
-        return "yd";
-
-    else if( dfLinearConv == 0.914401828803658 )
-        return "us-yd";
-    
-    else if( dfLinearConv == 0.001 )
-        return "mm";
-    
-    else if( dfLinearConv == 0.01 )
-        return "cm";
-
-    else if( EQUAL(pszLinearUnits,SRS_UL_US_FOOT) 
-             || fabs(dfLinearConv - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
-        return "us-ft";
-
-    else if( EQUAL(pszLinearUnits,SRS_UL_NAUTICAL_MILE) )
-        return "kmi";
-
-    else if( EQUAL(pszLinearUnits,"Mile") 
-             || EQUAL(pszLinearUnits,"IMILE") )
-        return "mi";
-    else
-        return NULL;
-}
-
-
-/************************************************************************/
 /*                          OSRExportToProj4()                          */
 /************************************************************************/
-/** 
+/**
  * \brief Export coordinate system in PROJ.4 format.
  *
  * This function is the same as OGRSpatialReference::exportToProj4().
  */
-OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS, 
+OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
                                      char ** ppszReturn )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRExportToProj4", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRExportToProj4", OGRERR_FAILURE );
 
     *ppszReturn = NULL;
 
@@ -1492,7 +1432,7 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * deallocated by the caller with CPLFree() when no longer needed.
  *
  * LOCAL_CS coordinate systems are not translatable.  An empty string
- * will be returned along with OGRERR_NONE.  
+ * will be returned along with OGRERR_NONE.
  *
  * Special processing for Transverse Mercator with GDAL &gt;= 1.10 and PROJ &gt;= 4.8 :
  * if the OSR_USE_ETMERC configuration option is set to YES, the PROJ.4
@@ -1501,22 +1441,17 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * expense of computational speed) when reprojection occurs near the edges
  * of the validity area for the projection.
  *
- * This method is the equivelent of the C function OSRExportToProj4().
+ * This method is the equivalent of the C function OSRExportToProj4().
  *
- * @param ppszProj4 pointer to which dynamically allocated PROJ.4 definition 
- * will be assigned. 
+ * @param ppszProj4 pointer to which dynamically allocated PROJ.4 definition
+ * will be assigned.
  *
- * @return OGRERR_NONE on success or an error code on failure. 
+ * @return OGRERR_NONE on success or an error code on failure.
  */
 
 OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
 {
-    char        szProj4[512];
-    const char *pszProjection = GetAttrValue("PROJECTION");
-
-    szProj4[0] = '\0';
-
     if( GetRoot() == NULL )
     {
         *ppszProj4 = CPLStrdup("");
@@ -1528,7 +1463,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /* -------------------------------------------------------------------- */
 /*      Do we have a PROJ.4 override definition?                        */
 /* -------------------------------------------------------------------- */
-    const char *pszPredefProj4 = GetExtension( GetRoot()->GetValue(), 
+    const char *pszPredefProj4 = GetExtension( GetRoot()->GetValue(),
                                                "PROJ4", NULL );
     if( pszPredefProj4 != NULL )
     {
@@ -1540,25 +1475,30 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /*      Get the prime meridian info.                                    */
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
-    double dfFromGreenwich = 0.0;
+    double l_dfFromGreenwich = 0.0;
 
-    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
+    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2
         && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
-        dfFromGreenwich = CPLAtof(poPRIMEM->GetChild(1)->GetValue());
+        l_dfFromGreenwich = CPLAtof(poPRIMEM->GetChild(1)->GetValue());
     }
 
 /* ==================================================================== */
 /*      Handle the projection definition.                               */
 /* ==================================================================== */
 
+    const char *pszProjection = GetAttrValue("PROJECTION");
+
+    char szProj4[512];
+    szProj4[0] = '\0';
+
     if( pszProjection == NULL && IsGeographic() )
     {
-        CPLsprintf( szProj4+strlen(szProj4), "+proj=longlat " );
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4), "+proj=longlat " );
     }
     else if( IsGeocentric() )
     {
-        CPLsprintf( szProj4+strlen(szProj4), "+proj=geocent " );
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4), "+proj=geocent " );
     }
 
     else if( pszProjection == NULL && !IsGeographic() )
@@ -1569,7 +1509,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
     else if( EQUAL(pszProjection,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=cea +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
@@ -1579,7 +1519,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_BONNE) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=bonne +lon_0=%.16g +lat_1=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
@@ -1589,7 +1529,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=cass +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1599,7 +1539,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_NEW_ZEALAND_MAP_GRID) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=nzmg +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1615,11 +1555,11 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
              EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_25) )
     {
         int bNorth;
-        int nZone = GetUTMZone( &bNorth );
+        const int nZone = GetUTMZone( &bNorth );
 
-        if( CSLTestBoolean(CPLGetConfigOption("OSR_USE_ETMERC", "FALSE")) )
+        if( CPLTestBool(CPLGetConfigOption("OSR_USE_ETMERC", "FALSE")) )
         {
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=etmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1630,14 +1570,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         else if( nZone != 0 )
         {
             if( bNorth )
-                CPLsprintf( szProj4+strlen(szProj4), "+proj=utm +zone=%d ", 
+                CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4), "+proj=utm +zone=%d ",
                          nZone );
             else
-                CPLsprintf( szProj4+strlen(szProj4),"+proj=utm +zone=%d +south ", 
+                CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),"+proj=utm +zone=%d +south ",
                          nZone );
-        }            
+        }
         else
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=tmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                      GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1648,7 +1588,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=tmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g +axis=wsu ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1660,14 +1600,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
     {
         if( GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0) == 0.0 )
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=merc +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                      GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
         else if( GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0) == 1.0 )
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=merc +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -1684,7 +1624,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_MERCATOR_2SP) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=merc +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
@@ -1697,7 +1637,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
        // This is EPSG:3875 Pseudo Mercator. No point in trying to parse the
        // rest of the parameters, since we know pretty much everything at this
        // stage.
-       CPLsprintf( szProj4+strlen(szProj4),
+       CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
 		"+proj=merc +a=%.16g +b=%.16g +lat_ts=%.16g"
 		" +lon_0=%.16g +x_0=%.16g +y_0=%.16g +k=%.16g +units=m"
 		" +nadgrids=@null +wktext  +no_defs",
@@ -1708,13 +1648,13 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 		GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
 		GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0) );
        *ppszProj4 = CPLStrdup( szProj4 );
-       
+
        return OGRERR_NONE;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
 //         "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -1726,7 +1666,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_STEREOGRAPHIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1738,7 +1678,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) )
     {
         if( GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0) >= 0.0 )
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=stere +lat_0=90 +lat_ts=%.16g +lon_0=%.16g "
                      "+k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,90.0),
@@ -1747,7 +1687,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
         else
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=stere +lat_0=-90 +lat_ts=%.16g +lon_0=%.16g "
                      "+k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,-90.0),
@@ -1759,7 +1699,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_EQUIRECTANGULAR) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=eqc +lat_ts=%.16g +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -1770,7 +1710,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_GAUSSSCHREIBERTMERCATOR) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=gstmerc +lat_0=%.16g +lon_0=%.16g"
                  " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,-21.116666667),
@@ -1782,7 +1722,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_GNOMONIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1792,7 +1732,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_ORTHOGRAPHIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=ortho +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1802,7 +1742,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=laea +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1812,7 +1752,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=aeqd +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1822,7 +1762,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0),
@@ -1835,7 +1775,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_MILLER_CYLINDRICAL) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1845,7 +1785,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_MOLLWEIDE) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=moll +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1854,7 +1794,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_I) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=eck1 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1863,7 +1803,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_II) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=eck2 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1872,34 +1812,34 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_III) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=eck3 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_IV) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=eck4 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_V) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=eck5 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_VI) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=eck6 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1908,7 +1848,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_POLYCONIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=poly +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -1918,7 +1858,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=aea +lat_1=%.16g +lat_2=%.16g +lat_0=%.16g +lon_0=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
@@ -1931,7 +1871,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_ROBINSON) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1940,7 +1880,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_VANDERGRINTEN) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=vandg +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1949,7 +1889,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_SINUSOIDAL) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1958,7 +1898,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_GALL_STEREOGRAPHIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=gall +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1967,7 +1907,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_GOODE_HOMOLOSINE) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=goode +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1976,12 +1916,12 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_IGH) )
     {
-        CPLsprintf( szProj4+strlen(szProj4), "+proj=igh " );
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4), "+proj=igh " );
     }
 
     else if( EQUAL(pszProjection,SRS_PT_GEOSTATIONARY_SATELLITE) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=geos +lon_0=%.16g +h=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SATELLITE_HEIGHT,35785831.0),
@@ -1992,7 +1932,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
              || EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=lcc +lat_1=%.16g +lat_2=%.16g +lat_0=%.16g +lon_0=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
@@ -2002,10 +1942,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
-    
+
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=lcc +lat_1=%.16g +lat_0=%.16g +lon_0=%.16g"
                  " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2019,10 +1959,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
         /* special case for swiss oblique mercator : see bug 423 */
-        if( fabs(GetNormProjParm(SRS_PP_AZIMUTH,0.0) - 90.0) < 0.0001 
+        if( fabs(GetNormProjParm(SRS_PP_AZIMUTH,0.0) - 90.0) < 0.0001
             && fabs(GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,0.0)-90.0) < 0.0001 )
         {
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
                      " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2033,7 +1973,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         }
         else
         {
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=omerc +lat_0=%.16g +lonc=%.16g +alpha=%.16g"
                      " +k=%.16g +x_0=%.16g +y_0=%.16g +no_uoff ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2047,7 +1987,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             // Note that gamma is only supported by PROJ 4.8.0 and later.
             if( GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,1000.0) != 1000.0 )
             {
-                CPLsprintf( szProj4+strlen(szProj4), "+gamma=%.16g ",
+                CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4), "+gamma=%.16g ",
                          GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,1000.0));
             }
         }
@@ -2056,10 +1996,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER))
     {
         /* special case for swiss oblique mercator : see bug 423 */
-        if( fabs(GetNormProjParm(SRS_PP_AZIMUTH,0.0) - 90.0) < 0.0001 
+        if( fabs(GetNormProjParm(SRS_PP_AZIMUTH,0.0) - 90.0) < 0.0001
             && fabs(GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,0.0)-90.0) < 0.0001 )
         {
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
                      " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2070,7 +2010,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         }
         else
         {
-            CPLsprintf( szProj4+strlen(szProj4),
+            CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                      "+proj=omerc +lat_0=%.16g +lonc=%.16g +alpha=%.16g"
                      " +k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2084,7 +2024,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             // Note that gamma is only supported by PROJ 4.8.0 and later.
             if( GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,1000.0) != 1000.0 )
             {
-                CPLsprintf( szProj4+strlen(szProj4), "+gamma=%.16g ",
+                CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4), "+gamma=%.16g ",
                          GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,1000.0));
             }
         }
@@ -2093,15 +2033,17 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,
                    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        // Not really clear which of Point_1/1st_Point convention is the
+        // "normalized" one, so accept both
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=omerc +lat_0=%.16g"
                  " +lon_1=%.16g +lat_1=%.16g +lon_2=%.16g +lat_2=%.16g"
                  " +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0),
-                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0),
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,GetNormProjParm(SRS_PP_LONGITUDE_OF_1ST_POINT,0.0)),
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,GetNormProjParm(SRS_PP_LATITUDE_OF_1ST_POINT,0.0)),
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,GetNormProjParm(SRS_PP_LONGITUDE_OF_2ND_POINT,0.0)),
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,GetNormProjParm(SRS_PP_LATITUDE_OF_2ND_POINT,0.0)),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -2109,7 +2051,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_KROVAK) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=krovak +lat_0=%.16g +lon_0=%.16g +alpha=%.16g"
                  " +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0),
@@ -2122,7 +2064,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_TWO_POINT_EQUIDISTANT) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=tpeqd +lat_1=%.16g +lon_1=%.16g "
                  "+lat_2=%.16g +lon_2=%.16g "
                  "+x_0=%.16g +y_0=%.16g ",
@@ -2136,7 +2078,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection, SRS_PT_IMW_POLYCONIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=iwm_p +lat_1=%.16g +lat_2=%.16g +lon_0=%.16g "
                  "+x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_1ST_POINT, 0.0),
@@ -2148,7 +2090,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_I) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
@@ -2156,7 +2098,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_II) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wag2 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
@@ -2164,7 +2106,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_III) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wag3 +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
@@ -2173,7 +2115,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_IV) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wag4 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
@@ -2181,7 +2123,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_V) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wag5 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
@@ -2189,7 +2131,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_VI) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wag6 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
@@ -2197,7 +2139,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_VII) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wag7 +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
@@ -2205,16 +2147,26 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_QSC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=qsc +lat_0=%.16g +lon_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0) );
     }
 
+    else if ( EQUAL(pszProjection, SRS_PT_SCH) )
+    {
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
+                "+proj=sch +plat_0=%.16g +plon_0=%.16g +phdg_0=%.16g +h_0=%.16g ",
+                GetNormProjParm(SRS_PP_PEG_POINT_LATITUDE, 0.0),
+                GetNormProjParm(SRS_PP_PEG_POINT_LONGITUDE, 0.0),
+                GetNormProjParm(SRS_PP_PEG_POINT_HEADING, 0.0),
+                GetNormProjParm(SRS_PP_PEG_POINT_HEIGHT, 0.0) );
+    }
+
     /* Note: This never really gets used currently.  See bug 423 */
     else if( EQUAL(pszProjection,SRS_PT_SWISS_OBLIQUE_CYLINDRICAL) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2225,7 +2177,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_AITOFF) )
     {
         //+lat_ts=0.0
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=aitoff +lat_0=%.16g +lon_0=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2233,10 +2185,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
- 
+
     else if( EQUAL(pszProjection,SRS_PT_WINKEL_I) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wink1 +lat_0=%.16g +lon_0=%.16g lat_ts=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2248,7 +2200,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_WINKEL_II) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wink2 +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2260,7 +2212,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_WINKEL_TRIPEL) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=wintri +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2272,7 +2224,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_CRASTER_PARABOLIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=crast +lat_0=%.16g +lon_0=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2283,7 +2235,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_LOXIMUTHAL) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=loxim +lon_0=%.16g +lat_1=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
@@ -2294,7 +2246,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( EQUAL(pszProjection,SRS_PT_QUARTIC_AUTHALIC) )
     {
-        CPLsprintf( szProj4+strlen(szProj4),
+        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
                  "+proj=qua_aut +lat_0=%.16g +lon_0=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
@@ -2306,7 +2258,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "No translation for %s to PROJ.4 format is known.", 
+                  "No translation for %s to PROJ.4 format is known.",
                   pszProjection );
         *ppszProj4 = CPLStrdup("");
         return OGRERR_UNSUPPORTED_SRS;
@@ -2316,8 +2268,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /*      Handle earth model.  For now we just always emit the user       */
 /*      defined ellipsoid parameters.                                   */
 /* -------------------------------------------------------------------- */
-    double      dfSemiMajor = GetSemiMajor();
-    double      dfInvFlattening = GetInvFlattening();
+    const double      dfSemiMajor = GetSemiMajor();
+    const double      dfInvFlattening = GetInvFlattening();
     const char  *pszPROJ4Ellipse = NULL;
     const char  *pszDatum = GetAttrValue("DATUM");
 
@@ -2394,17 +2346,17 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( ABS(dfSemiMajor-6378165.0) < 0.01
              && ABS(dfInvFlattening-298.3) < 0.0001 )
     {
-        pszPROJ4Ellipse = "WGS60";      
+        pszPROJ4Ellipse = "WGS60";
     }
     else if( ABS(dfSemiMajor-6378145.0) < 0.01
              && ABS(dfInvFlattening-298.25) < 0.0001 )
     {
-        pszPROJ4Ellipse = "WGS66";      
+        pszPROJ4Ellipse = "WGS66";
     }
     else if( ABS(dfSemiMajor-6378135.0) < 0.01
              && ABS(dfInvFlattening-298.26) < 0.0001 )
     {
-        pszPROJ4Ellipse = "WGS72";      
+        pszPROJ4Ellipse = "WGS72";
     }
     else if( ABS(dfSemiMajor-6378137.0) < 0.01
              && ABS(dfInvFlattening-298.257223563) < 0.000001 )
@@ -2425,10 +2377,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     char szEllipseDef[128];
 
     if( pszPROJ4Ellipse == NULL )
-        CPLsprintf( szEllipseDef, "+a=%.16g +b=%.16g ",
+      CPLsnprintf( szEllipseDef, sizeof(szEllipseDef), "+a=%.16g +b=%.16g ",
                  GetSemiMajor(), GetSemiMinor() );
     else
-        CPLsprintf( szEllipseDef, "+ellps=%s ",
+        CPLsnprintf( szEllipseDef, sizeof(szEllipseDef), "+ellps=%s ",
                  pszPROJ4Ellipse );
 
 /* -------------------------------------------------------------------- */
@@ -2436,19 +2388,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /* -------------------------------------------------------------------- */
     const char *pszPROJ4Datum = NULL;
     const OGR_SRSNode *poTOWGS84 = GetAttrNode( "TOWGS84" );
-    char  szTOWGS84[256];
     int nEPSGDatum = -1;
-    const char *pszAuthority;
     int nEPSGGeogCS = -1;
-    const char *pszGeogCSAuthority;
     const char *pszProj4Grids = GetExtension( "DATUM", "PROJ4_GRIDS" );
 
-    pszAuthority = GetAuthorityName( "DATUM" );
+    const char *pszAuthority = GetAuthorityName( "DATUM" );
 
     if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
         nEPSGDatum = atoi(GetAuthorityCode( "DATUM" ));
 
-    pszGeogCSAuthority = GetAuthorityName( "GEOGCS" );
+    const char *pszGeogCSAuthority = GetAuthorityName( "GEOGCS" );
 
     if( pszGeogCSAuthority != NULL && EQUAL(pszGeogCSAuthority,"EPSG") )
         nEPSGGeogCS = atoi(GetAuthorityCode( "GEOGCS" ));
@@ -2480,14 +2429,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         pszPROJ4Datum = NULL;
     }
 
-    if( pszPROJ4Datum == NULL 
-        || CSLTestBoolean(CPLGetConfigOption("OVERRIDE_PROJ_DATUM_WITH_TOWGS84", "YES")) )
+    if( pszPROJ4Datum == NULL
+        || CPLTestBool(CPLGetConfigOption("OVERRIDE_PROJ_DATUM_WITH_TOWGS84", "YES")) )
     {
         if( poTOWGS84 != NULL )
         {
             int iChild;
             if( poTOWGS84->GetChildCount() >= 3
-                && (poTOWGS84->GetChildCount() < 7 
+                && (poTOWGS84->GetChildCount() < 7
                     || (EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
                         && EQUAL(poTOWGS84->GetChild(4)->GetValue(),"")
                         && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
@@ -2518,7 +2467,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                 pszPROJ4Datum = NULL;
             }
         }
-        
+
         // If we don't know the datum, trying looking up TOWGS84 parameters
         // based on the EPSG GCS code.
         else if( nEPSGGeogCS != -1 && pszPROJ4Datum == NULL )
@@ -2526,14 +2475,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             std::vector<CPLString> asBursaTransform;
             if( EPSGGetWGS84Transform( nEPSGGeogCS, asBursaTransform ) )
             {
-                CPLsprintf( szTOWGS84, "+towgs84=%s,%s,%s,%s,%s,%s,%s",
-                         asBursaTransform[0].c_str(),
-                         asBursaTransform[1].c_str(),
-                         asBursaTransform[2].c_str(),
-                         asBursaTransform[3].c_str(),
-                         asBursaTransform[4].c_str(),
-                         asBursaTransform[5].c_str(),
-                         asBursaTransform[6].c_str() );
+                char szTOWGS84[256];
+                CPLsnprintf( szTOWGS84, sizeof(szTOWGS84),
+                             "+towgs84=%s,%s,%s,%s,%s,%s,%s",
+                             asBursaTransform[0].c_str(),
+                             asBursaTransform[1].c_str(),
+                             asBursaTransform[2].c_str(),
+                             asBursaTransform[3].c_str(),
+                             asBursaTransform[4].c_str(),
+                             asBursaTransform[5].c_str(),
+                             asBursaTransform[6].c_str() );
                 SAFE_PROJ4_STRCAT( szEllipseDef );
                 szEllipseDef[0] = '\0';
 
@@ -2543,7 +2494,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             }
         }
     }
-    
+
     if( pszPROJ4Datum != NULL )
     {
         SAFE_PROJ4_STRCAT( "+datum=" );
@@ -2551,7 +2502,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         SAFE_PROJ4_STRCAT( " " );
     }
     else // The ellipsedef may already have been appended and will now
-        // be empty, otherwise append now.
+         // be empty, otherwise append now.
     {
         SAFE_PROJ4_STRCAT( szEllipseDef );
         szEllipseDef[0] = '\0';
@@ -2560,11 +2511,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /* -------------------------------------------------------------------- */
 /*      Is there prime meridian info to apply?                          */
 /* -------------------------------------------------------------------- */
-    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
+    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2
         && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
-        const char *pszAuthority = GetAuthorityName( "PRIMEM" );
-        char szPMValue[128];
+        pszAuthority = GetAuthorityName( "PRIMEM" );
         int  nCode = -1;
 
         if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
@@ -2574,41 +2524,45 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         if (nCode > 0)
             psProj4PM = OGRGetProj4PMFromCode(nCode);
         if (psProj4PM == NULL)
-            psProj4PM = OGRGetProj4PMFromVal(dfFromGreenwich);
+            psProj4PM = OGRGetProj4PMFromVal(l_dfFromGreenwich);
 
+        char szPMValue[128];
         if (psProj4PM != NULL)
         {
             strcpy( szPMValue, psProj4PM->pszProj4PMName );
         }
         else
         {
-            CPLsprintf( szPMValue, "%.16g", dfFromGreenwich );
+            CPLsnprintf( szPMValue, sizeof(szPMValue), "%.16g", l_dfFromGreenwich );
         }
 
         SAFE_PROJ4_STRCAT( "+pm=" );
         SAFE_PROJ4_STRCAT( szPMValue );
         SAFE_PROJ4_STRCAT( " " );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle linear units.                                            */
 /* -------------------------------------------------------------------- */
     const char  *pszPROJ4Units=NULL;
     char        *pszLinearUnits = NULL;
-    double      dfLinearConv;
+    double      dfLinearConv = GetLinearUnits( &pszLinearUnits );
 
-    dfLinearConv = GetLinearUnits( &pszLinearUnits );
-        
     if( strstr(szProj4,"longlat") != NULL )
         pszPROJ4Units = NULL;
-    else 
+    else
     {
-        pszPROJ4Units = LinearToProj4( dfLinearConv, pszLinearUnits );
+        const LinearUnitsStruct* psLinearUnits = GetLinearFromLinearConvOrName(
+                                                dfLinearConv, pszLinearUnits );
+        if( psLinearUnits != NULL )
+            pszPROJ4Units = psLinearUnits->pszProjName;
+        else
+            pszPROJ4Units = NULL;
 
         if( pszPROJ4Units == NULL )
         {
             char szLinearConv[128];
-            CPLsprintf( szLinearConv, "%.16g", dfLinearConv );
+            CPLsnprintf( szLinearConv, sizeof(szLinearConv), "%.16g", dfLinearConv );
             SAFE_PROJ4_STRCAT( "+to_meter=" );
             SAFE_PROJ4_STRCAT( szLinearConv );
             SAFE_PROJ4_STRCAT( " " );
@@ -2626,13 +2580,13 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /*      If we have vertical datum grids, attach them to the proj.4 string.*/
 /* -------------------------------------------------------------------- */
     const char *pszProj4Geoids = GetExtension( "VERT_DATUM", "PROJ4_GRIDS" );
-    
+
     if( pszProj4Geoids != NULL )
     {
         SAFE_PROJ4_STRCAT( "+geoidgrids=" );
         SAFE_PROJ4_STRCAT( pszProj4Geoids );
         SAFE_PROJ4_STRCAT(  " " );
-    }    
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle vertical units, but only if we have them.                */
@@ -2648,14 +2602,19 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         pszPROJ4Units = NULL;
 
         dfLinearConv = CPLAtof( poVUNITS->GetChild(1)->GetValue() );
-        
-        pszPROJ4Units = LinearToProj4( dfLinearConv,
-                                       poVUNITS->GetChild(0)->GetValue() );
-            
+
+        const LinearUnitsStruct* psLinearUnits = GetLinearFromLinearConvOrName(
+                                                dfLinearConv,
+                                                poVUNITS->GetChild(0)->GetValue() );
+        if( psLinearUnits != NULL )
+            pszPROJ4Units = psLinearUnits->pszProjName;
+        else
+            pszPROJ4Units = NULL;
+
         if( pszPROJ4Units == NULL )
         {
             char szLinearConv[128];
-            CPLsprintf( szLinearConv, "%.16g", dfLinearConv );
+            CPLsnprintf( szLinearConv, sizeof(szLinearConv), "%.16g", dfLinearConv );
             SAFE_PROJ4_STRCAT( "+vto_meter=" );
             SAFE_PROJ4_STRCAT( szLinearConv );
             SAFE_PROJ4_STRCAT( " " );
@@ -2673,7 +2632,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /*      proj_def.dat are implicitly used with our definitions.          */
 /* -------------------------------------------------------------------- */
     SAFE_PROJ4_STRCAT( "+no_defs " );
-    
+
     *ppszProj4 = CPLStrdup( szProj4 );
 
     return OGRERR_NONE;

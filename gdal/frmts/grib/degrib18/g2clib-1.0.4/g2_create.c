@@ -30,8 +30,8 @@ g2int g2_create(unsigned char *cgrib,g2int *listsec0,g2int *listsec1)
 //                listsec0[1]=GRIB Edition Number (currently 2)
 //     listsec1 - Contains information needed for GRIB Identification Section 1.
 //                Must be dimensioned >= 13.
-//                listsec1[0]=Id of orginating centre (Common Code Table C-1)
-//                listsec1[1]=Id of orginating sub-centre (local table)
+//                listsec1[0]=Id of originating centre (Common Code Table C-1)
+//                listsec1[1]=Id of originating sub-centre (local table)
 //                listsec1[2]=GRIB Master Tables Version Number (Code Table 1.0)
 //                listsec1[3]=GRIB Local Tables Version Number (Code Table 1.1)
 //                listsec1[4]=Significance of Reference Time (Code Table 1.2)
@@ -65,20 +65,17 @@ g2int g2_create(unsigned char *cgrib,g2int *listsec0,g2int *listsec1)
 //$$$
 {
 
-      g2int  ierr;
       g2int   zero=0,one=1;
       g2int   mapsec1len=MAPSEC1LEN;
       g2int   mapsec1[MAPSEC1LEN]={ 2,2,1,1,1,2,1,1,1,1,1,1,1 };
       g2int   i,lensec0,lensec1,iofst,ibeg,nbits,len;
 
-      ierr=0;
 //
 //  Currently handles only GRIB Edition 2.
 //  
       if (listsec0[1] != 2) {
         printf("g2_create: can only code GRIB edition 2.");
-        ierr=-1;
-        return (ierr);
+        return (-1);
       }
 //
 //  Pack Section 0 - Indicator Section 

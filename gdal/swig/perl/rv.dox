@@ -18,7 +18,7 @@ $dsname = "./";          # name of the datasource (in this case a directory)
 $lname = "borders";      # name of the layer
 $field = "country";      # name of the field whose value we need
 
-$datasource = Geo::OGR::Open($dsname);
+$datasource = Geo::GDAL::OpenEx($dsname);
 $layer = $datasource->Layer($lname);
 
 $layer->ResetReading();

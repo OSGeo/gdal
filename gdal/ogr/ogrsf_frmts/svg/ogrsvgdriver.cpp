@@ -42,7 +42,7 @@ CPL_C_END
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *OGRSVGDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRSVGDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == NULL )
@@ -69,27 +69,23 @@ GDALDataset *OGRSVGDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRSVG()
 
 {
-    if (! GDAL_CHECK_VERSION("OGR/SVG driver"))
+    if(! GDAL_CHECK_VERSION("OGR/SVG driver") )
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "SVG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "SVG" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "SVG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Scalable Vector Graphics" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "svg" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_svg.html" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "SVG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Scalable Vector Graphics" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "svg" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_svg.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRSVGDriverOpen;
+    poDriver->pfnOpen = OGRSVGDriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

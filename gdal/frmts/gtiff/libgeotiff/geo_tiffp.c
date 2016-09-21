@@ -15,7 +15,7 @@
  * notice accompanies any products derived therefrom.
  *
  **********************************************************************/
- 
+
 #include "geotiff.h"    /* public GTIFF interface */
 
 #include "geo_tiffp.h"  /* Private TIFF interface */
@@ -29,12 +29,12 @@ static int        _GTIFSetField (tiff_t *tif, pinfo_t tag, int  count, void *val
 static tagtype_t  _GTIFTagType  (tiff_t *tif, pinfo_t tag);
 
 /*
- * Set up default TIFF handlers. 
+ * Set up default TIFF handlers.
  */
 void _GTIFSetDefaultTIFF(TIFFMethod *method)
 {
 	if (!method) return;
-	
+
 	method->get = _GTIFGetField;
 	method->set = _GTIFSetField;
 	method->type = _GTIFTagType;
@@ -49,7 +49,7 @@ gdata_t _GTIFcalloc(gsize_t size)
 
 gdata_t _GTIFrealloc(gdata_t ptr, gsize_t size)
 {
-    return( _TIFFrealloc((tdata_t)ptr, (tsize_t) size) );
+    return _TIFFrealloc((tdata_t)ptr, (tsize_t) size);
 }
 
 void _GTIFmemcpy(gdata_t out,gdata_t in,gsize_t size)
@@ -76,7 +76,7 @@ static int _GTIFGetField (tiff_t *tif, pinfo_t tag, int *count, void *val )
 	char *tmp;
 	char *value;
 	gsize_t size = _gtiff_size[_GTIFTagType (tif,tag)];
-	
+
 	if (_GTIFTagType(tif,  tag) == TYPE_ASCII)
 	{
 		status = TIFFGetField((TIFF *)tif,tag,&tmp);
@@ -85,19 +85,19 @@ static int _GTIFGetField (tiff_t *tif, pinfo_t tag, int *count, void *val )
 	}
 	else status = TIFFGetField((TIFF *)tif,tag,&scount,&tmp);
 	if (!status) return status;
-	
+
 	*count = scount;
 
 	value = (char *)_GTIFcalloc( (scount+MAX_VALUES)*size);
 	if (!value) return 0;
-	
+
 	_TIFFmemcpy( value, tmp,  size * scount);
-	
+
 	*(char **)val = value;
 	return status;
 }
 
-/* 
+/*
  * Set a GeoTIFF TIFF field.
  */
 static int _GTIFSetField (tiff_t *tif, pinfo_t tag, int count, void *value )
@@ -108,7 +108,7 @@ static int _GTIFSetField (tiff_t *tif, pinfo_t tag, int count, void *value )
 	/* libtiff ASCII uses null-delimiter */
 	if (_GTIFTagType(tif,  tag) == TYPE_ASCII)
 		status = TIFFSetField((TIFF *)tif,tag,value);
-	else 
+	else
 		status = TIFFSetField((TIFF *)tif,tag,scount,value);
 	return status;
 }
@@ -128,7 +128,7 @@ static tagtype_t  _GTIFTagType  (tiff_t *tif, pinfo_t tag)
 	tagtype_t ttype;
 
 	(void) tif; /* dummy reference */
-	
+
 	switch (tag)
 	{
 		case GTIFF_ASCIIPARAMS:    ttype=TYPE_ASCII; break;
@@ -139,7 +139,6 @@ static tagtype_t  _GTIFTagType  (tiff_t *tif, pinfo_t tag)
 		case GTIFF_GEOKEYDIRECTORY: ttype=TYPE_SHORT; break;
 		default: ttype = TYPE_UNKNOWN;
 	}
-	
+
 	return ttype;
 }
-

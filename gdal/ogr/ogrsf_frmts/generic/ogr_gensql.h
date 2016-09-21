@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GENSQL_H_INCLUDED
-#define _OGR_GENSQL_H_INCLUDED
+#ifndef OGR_GENSQL_H_INCLUDED
+#define OGR_GENSQL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "swq.h"
@@ -62,8 +62,6 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     OGRFeatureDefn *poDefn;
 
-    int         PrepareSummary();
-    
     int        *panGeomFieldToSrcGeomField;
 
     GIntBig     nIndexSize;
@@ -78,9 +76,11 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         nExtraDSCount;
     GDALDataset **papoExtraDS;
 
+    int         PrepareSummary();
+
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
-    int         SortIndexSection( OGRField *pasIndexFields, 
+    int         SortIndexSection( OGRField *pasIndexFields,
                                   GIntBig nStart, GIntBig nEntries );
     int         Compare( OGRField *pasFirst, OGRField *pasSecond );
 
@@ -94,11 +94,11 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         ContainGeomSpecialField(swq_expr_node* expr);
 
     void        InvalidateOrderByIndex();
-    
+
     int         MustEvaluateSpatialFilterOnGenSQL();
 
   public:
-                OGRGenSQLResultsLayer( GDALDataset *poSrcDS, 
+                OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
                                        void *pSelectInfo,
                                        OGRGeometry *poSpatFilter,
                                        const char *pszWHERE,
@@ -125,5 +125,4 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     virtual OGRErr      SetAttributeFilter( const char * );
 };
 
-#endif /* ndef _OGR_GENSQL_H_INCLUDED */
-
+#endif /* ndef OGR_GENSQL_H_INCLUDED */

@@ -2,22 +2,22 @@
  * $Id: jpipkakdataset.cpp 2008-10-01 nbarker $
  *
  * Project:  jpip read driver
- * Purpose:  GDAL bindings for JPIP.  
+ * Purpose:  GDAL bindings for JPIP.
  * Author:   Norman Barker, ITT VIS, norman.barker@gmail.com
  *
  ******************************************************************************
  * ITT Visual Information Systems grants you use of this code, under the following license:
- * 
- * Copyright (c) 2000-2007, ITT Visual Information Solutions 
+ *
+ * Copyright (c) 2000-2007, ITT Visual Information Solutions
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions: 
+ * Software is furnished to do so, subject to the following conditions:
  * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software. 
+ * in all copies or substantial portions of the Software.
 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -36,9 +36,7 @@
 #include "cpl_vsi.h"
 #include "cpl_multiproc.h"
 
-#include "kdu_cache.h"
-#include "kdu_region_decompressor.h"
-#include "kdu_file_io.h"
+#include "jpipkak_headers.h"
 
 #include <time.h>
 
@@ -69,25 +67,25 @@ private:
     int bIsFinal;
     int bIsEOR;
 public:
-    int GetId(){return nId;}
-    int GetAux(){return nAux;}
-    int GetClassId(){return nClassId;}
-    int GetCodestreamIdx(){return nCodestream;}
-    int GetOffset(){return nOffset;}
-    int GetLen(){return nLen;}
+    long GetId(){return nId;}
+    long GetAux(){return nAux;}
+    long GetClassId(){return nClassId;}
+    long GetCodestreamIdx(){return nCodestream;}
+    long GetOffset(){return nOffset;}
+    long GetLen(){return nLen;}
     GByte* GetData(){return pabyData;}
     int IsFinal(){return bIsFinal;}
     int IsEOR(){return bIsEOR;}
 
-    void SetId(long nId){this->nId = nId;}
-    void SetAux(long nAux){this->nAux = nAux;}
-    void SetClassId(long nClassId){this->nClassId = nClassId;}
-    void SetCodestreamIdx(long nCodestream){this->nCodestream = nCodestream;}
-    void SetOffset(long nOffset){this->nOffset = nOffset;}
-    void SetLen(long nLen){this->nLen = nLen;}
-    void SetData(GByte* pabyData){this->pabyData = pabyData;}
-    void SetFinal(int bIsFinal){this->bIsFinal = bIsFinal;}
-    void SetEOR(int bIsEOR){this->bIsEOR = bIsEOR;}
+    void SetId(long nIdIn){this->nId = nIdIn;}
+    void SetAux(long nAuxIn){this->nAux = nAuxIn;}
+    void SetClassId(long nClassIdIn){this->nClassId = nClassIdIn;}
+    void SetCodestreamIdx(long nCodestreamIn){this->nCodestream = nCodestreamIn;}
+    void SetOffset(long nOffsetIn){this->nOffset = nOffsetIn;}
+    void SetLen(long nLenIn){this->nLen = nLenIn;}
+    void SetData(GByte* pabyDataIn){this->pabyData = pabyDataIn;}
+    void SetFinal(int bIsFinalIn){this->bIsFinal = bIsFinalIn;}
+    void SetEOR(int bIsEORIn){this->bIsEOR = bIsEORIn;}
     JPIPDataSegment();
     ~JPIPDataSegment();
 };
@@ -102,7 +100,6 @@ class JPIPKAKDataset: public GDALPamDataset
 private:
     int       bNeedReinitialize;
     CPLString osRequestUrl;
-    char* pszTid;
     char* pszPath;
     char* pszCid;
     char* pszProjection;
@@ -141,13 +138,13 @@ private:
     int KakaduClassId(int nClassId);
 
     CPLMutex *pGlobalMutex;
- 
+
     // support two communication threads to the server, a main and an overview thread
     volatile int bHighThreadRunning;
     volatile int bLowThreadRunning;
     volatile int bHighThreadFinished;
     volatile int bLowThreadFinished;
-    
+
     // transmission counts
     volatile long nHighThreadByteCount;
     volatile long nLowThreadByteCount;
@@ -158,7 +155,7 @@ public:
 
     // progressive methods
     virtual GDALAsyncReader* BeginAsyncReader(int xOff, int yOff,
-                                              int xSize, int ySize, 
+                                              int xSize, int ySize,
                                               void *pBuf,
                                               int bufXSize, int bufYSize,
                                               GDALDataType bufType,
@@ -175,7 +172,7 @@ public:
     int ReadFromInput(GByte* pabyData, int nLen, int& bError );
 
     int TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                        int nBufXSize, int nBufYSize, GDALDataType eDataType, 
+                        int nBufXSize, int nBufYSize, GDALDataType eDataType,
                         int nBandCount, int *panBandList );
 
     //gdaldataset methods
@@ -187,7 +184,7 @@ public:
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType, 
+                              GDALDataType eBufType,
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
@@ -201,7 +198,7 @@ public:
     static const GByte PRECINCT_DATA_BIN_CLASS = 0;
     static const GByte TILE_HEADER_DATA_BIN_CLASS = 2;
     static const GByte TILE_DATA_BIN_CLASS = 4;
-	
+
     friend class JPIPKAKAsyncReader;
     friend class JPIPKAKRasterBand;
     friend void JPIPWorkerFunc(void*);
@@ -219,9 +216,9 @@ class JPIPKAKRasterBand : public GDALPamRasterBand
 
     JPIPKAKDataset *poBaseDS;
 
-    int         nDiscardLevels; 
+    int         nDiscardLevels;
 
-    kdu_dims 	band_dims; 
+    kdu_dims 	band_dims;
 
     int		nOverviewCount;
     JPIPKAKRasterBand **papoOverviewBand;
@@ -236,7 +233,7 @@ public:
     JPIPKAKRasterBand( int, int, kdu_codestream *, int,
                        JPIPKAKDataset * );
     ~JPIPKAKRasterBand();
-    
+
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,

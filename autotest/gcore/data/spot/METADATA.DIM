@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<Dimap_Document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="Spot_Scene.xsd" name="METADATA.DIM">
+  <Metadata_Id>
+    <METADATA_FORMAT version="1.1">DIMAP</METADATA_FORMAT>
+    <METADATA_PROFILE>SPOTSCENE_1A</METADATA_PROFILE>
+  </Metadata_Id>
+  <Coordinate_Reference_System>
+    <GEO_TABLES version="5.2">EPSG</GEO_TABLES>
+    <Horizontal_CS>
+      <HORIZONTAL_CS_CODE>EPSG:4326</HORIZONTAL_CS_CODE>
+      <HORIZONTAL_CS_TYPE>GEOGRAPHIC</HORIZONTAL_CS_TYPE>
+      <HORIZONTAL_CS_NAME>WGS 84</HORIZONTAL_CS_NAME>
+    </Horizontal_CS>
+  </Coordinate_Reference_System>
+  <Dataset_Sources>
+    <Source_Information>
+      <Scene_Source>
+        <IMAGING_DATE>2001-03-01</IMAGING_DATE>
+        <IMAGING_TIME>00:00:00</IMAGING_TIME>
+        <MISSION>SPOT</MISSION>
+        <MISSION_INDEX>4</MISSION_INDEX>
+        <SUN_AZIMUTH>+1.4490376282e+02</SUN_AZIMUTH>
+        <SUN_ELEVATION>+5.4877838135e+01</SUN_ELEVATION>
+      </Scene_Source>
+    </Source_Information>
+  </Dataset_Sources>
+  <Raster_Dimensions>
+    <NCOLS>3000</NCOLS>
+    <NROWS>3000</NROWS>
+    <NBANDS>4</NBANDS>
+  </Raster_Dimensions>
+  <Raster_Encoding>
+    <NBITS>8</NBITS>
+    <DATA_TYPE>UNSIGNED</DATA_TYPE>
+    <BYTEORDER>I</BYTEORDER>
+    <COMPRESSION_NAME>NONE</COMPRESSION_NAME>
+  </Raster_Encoding>
+  <Data_Processing>
+    <PROCESSING_LEVEL>1A</PROCESSING_LEVEL>
+    <GEOMETRIC_PROCESSING>RAW</GEOMETRIC_PROCESSING>
+    <RADIOMETRIC_PROCESSING>SYSTEM</RADIOMETRIC_PROCESSING>
+  </Data_Processing>
+</Dimap_Document>

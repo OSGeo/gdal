@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _IMDREADER_H_INCLUDED
-#define _IMDREADER_H_INCLUDED
+#ifndef IMDREADER_H_INCLUDED
+#define IMDREADER_H_INCLUDED
 
 #include "cpl_vsi.h"
 #include "cpl_error.h"
@@ -39,10 +39,45 @@
 
 class GeomFieldInfo
 {
-public:
     OGRFeatureDefn* geomTable; /* separate geometry table for Ili 1 */
+public:
     CPLString       iliGeomType;
-    GeomFieldInfo() : geomTable(0) {};
+
+    GeomFieldInfo() : geomTable(NULL) {};
+    ~GeomFieldInfo() {
+       if( geomTable )
+           geomTable->Release();
+    }
+    GeomFieldInfo(const GeomFieldInfo& other)
+    {
+        geomTable = other.geomTable;
+        if( geomTable )
+            geomTable->Reference();
+        iliGeomType = other.iliGeomType;
+    }
+
+    GeomFieldInfo& operator= (const GeomFieldInfo& other)
+    {
+        if( this != &other )
+        {
+            if( geomTable )
+                geomTable->Release();
+            geomTable = other.geomTable;
+            if( geomTable )
+                geomTable->Reference();
+            iliGeomType = other.iliGeomType;
+        }
+        return *this;
+    }
+
+    OGRFeatureDefn* GetGeomTableDefnRef() const { return geomTable; }
+    void            SetGeomTableDefn(OGRFeatureDefn* geomTableIn)
+    {
+        CPLAssert(geomTable == NULL);
+        geomTable = geomTableIn;
+        if( geomTable )
+            geomTable->Reference();
+    }
 };
 
 typedef std::map<CPLString,GeomFieldInfo> GeomFieldInfos; /* key: geom field name, value: ILI geom field info */
@@ -50,11 +85,48 @@ typedef std::map<CPLString,CPLString> StructFieldInfos; /* key: struct field nam
 
 class FeatureDefnInfo
 {
-public:
     OGRFeatureDefn* poTableDefn;
+public:
     GeomFieldInfos  poGeomFieldInfos;
     StructFieldInfos poStructFieldInfos;
-    FeatureDefnInfo() : poTableDefn(0) {};
+
+    FeatureDefnInfo() : poTableDefn(NULL) {};
+    ~FeatureDefnInfo() {
+       if( poTableDefn )
+           poTableDefn->Release();
+    }
+    FeatureDefnInfo(const FeatureDefnInfo& other)
+    {
+        poTableDefn = other.poTableDefn;
+        if( poTableDefn )
+            poTableDefn->Reference();
+        poGeomFieldInfos = other.poGeomFieldInfos;
+        poStructFieldInfos = other.poStructFieldInfos;
+    }
+
+    FeatureDefnInfo& operator= (const FeatureDefnInfo& other)
+    {
+        if( this != &other )
+        {
+            if( poTableDefn )
+                poTableDefn->Release();
+            poTableDefn = other.poTableDefn;
+            if( poTableDefn )
+                poTableDefn->Reference();
+            poGeomFieldInfos = other.poGeomFieldInfos;
+            poStructFieldInfos = other.poStructFieldInfos;
+        }
+        return *this;
+    }
+
+    OGRFeatureDefn* GetTableDefnRef() const { return poTableDefn; }
+    void            SetTableDefn(OGRFeatureDefn* poTableDefnIn)
+    {
+        CPLAssert(poTableDefn == NULL);
+        poTableDefn= poTableDefnIn;
+        if( poTableDefn )
+            poTableDefn->Reference();
+    }
 };
 typedef std::list<FeatureDefnInfo> FeatureDefnInfos;
 
@@ -86,4 +158,4 @@ public:
     FeatureDefnInfo      GetFeatureDefnInfo(const char *pszLayerName);
 };
 
-#endif /* _IMDREADER_H_INCLUDED */
+#endif /* IMDREADER_H_INCLUDED */

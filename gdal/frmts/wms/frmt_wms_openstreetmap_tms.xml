@@ -12,7 +12,7 @@
         <TileCountY>1</TileCountY>
         <YOrigin>top</YOrigin>
     </DataWindow>
-    <Projection>EPSG:900913</Projection>
+    <Projection>EPSG:3857</Projection>
     <BlockSizeX>256</BlockSizeX>
     <BlockSizeY>256</BlockSizeY>
     <BandsCount>3</BandsCount>

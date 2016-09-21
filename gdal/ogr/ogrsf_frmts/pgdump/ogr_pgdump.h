@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_PGDUMP_H_INCLUDED
-#define _OGR_PGDUMP_H_INCLUDED
+#ifndef OGR_PGDUMP_H_INCLUDED
+#define OGR_PGDUMP_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
@@ -63,6 +63,9 @@ void CPL_DLL OGRPGCommonAppendFieldValue(CPLString& osCommand,
                                  OGRPGCommonEscapeStringCbk pfnEscapeString,
                                  void* userdata);
 
+char CPL_DLL *OGRPGCommonLaunderName( const char *pszSrcName,
+                                      const char* pszDebugPrefix = "OGR" );
+
 /************************************************************************/
 /*                        OGRPGDumpGeomFieldDefn                        */
 /************************************************************************/
@@ -71,12 +74,12 @@ class OGRPGDumpGeomFieldDefn : public OGRGeomFieldDefn
 {
     public:
         OGRPGDumpGeomFieldDefn( OGRGeomFieldDefn *poGeomField ) :
-            OGRGeomFieldDefn(poGeomField), nSRSId(-1), nCoordDimension(2)
+            OGRGeomFieldDefn(poGeomField), nSRSId(-1), GeometryTypeFlags(0)
             {
             }
             
         int nSRSId;
-        int nCoordDimension;
+        int GeometryTypeFlags;
 };
 
 /************************************************************************/
@@ -90,6 +93,7 @@ class OGRPGDumpLayer : public OGRLayer
 {
     char                *pszSchemaName;
     char                *pszSqlTableName;
+    CPLString           osForcedDescription;
     char                *pszFIDColumn;
     OGRFeatureDefn      *poFeatureDefn;
     OGRPGDumpDataSource *poDS;
@@ -102,8 +106,10 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bCreateTable;
     int                 nUnknownSRSId;
     int                 nForcedSRSId;
+    int                 nForcedGeometryTypeFlags;
     int                 bCreateSpatialIndexFlag;
-    int                 bPostGIS2;
+    int                 nPostGISMajor;
+    int                 nPostGISMinor;
 
     int                 iNextShapeId;
     int                 iFIDAsRegularColumnIndex;
@@ -111,6 +117,8 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bCopyStatementWithFID;
 
     char              **papszOverrideColumnTypes;
+
+    CPLString           m_osFirstGeometryFieldName;
 
     OGRErr              StartCopy(int bSetFID);
     CPLString           BuildCopyFields(int bSetFID);
@@ -141,6 +149,9 @@ class OGRPGDumpLayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature();
 
+    virtual CPLErr      SetMetadata(char** papszMD, const char* pszDomain = "");
+    virtual CPLErr      SetMetadataItem(const char* pszName, const char* pszValue, const char* pszDomain = "");
+
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
@@ -152,10 +163,14 @@ class OGRPGDumpLayer : public OGRLayer
                                 { nUnknownSRSId = nUnknownSRSIdIn; }
     void                SetForcedSRSId( int nForcedSRSIdIn )
                                 { nForcedSRSId = nForcedSRSIdIn; }
+    void                SetForcedGeometryTypeFlags( int GeometryTypeFlagsIn )
+                                { nForcedGeometryTypeFlags = GeometryTypeFlagsIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
-    void                SetPostGIS2( int bFlag )
-                                { bPostGIS2 = bFlag; }
+    void                SetPostGISVersion(int nPostGISMajorIn, int nPostGISMinorIn)
+                                { nPostGISMajor = nPostGISMajorIn; nPostGISMinor = nPostGISMinorIn; }
+    void                SetGeometryFieldName( const char* pszGeomFieldName ) { m_osFirstGeometryFieldName = pszGeomFieldName; }
+    void                SetForcedDescription( const char* pszDescriptionIn );
     OGRErr              EndCopy();
 
     static char*        GByteArrayToBYTEA( const GByte* pabyData, int nLen);
@@ -179,8 +194,7 @@ class OGRPGDumpDataSource : public OGRDataSource
                         OGRPGDumpDataSource(const char* pszName,
                                             char** papszOptions);
                         ~OGRPGDumpDataSource();
-                        
-    char               *LaunderName( const char *pszSrcName );
+
     int                 Log(const char* pszStr, int bAddSemiColumn = TRUE);
 
     virtual const char  *GetName() { return pszName; }
@@ -194,12 +208,12 @@ class OGRPGDumpDataSource : public OGRDataSource
 
     virtual int         TestCapability( const char * );
 
-    void                StartTransaction();
-    void                Commit();
+    void                LogStartTransaction();
+    void                LogCommit();
 
     void                StartCopy( OGRPGDumpLayer *poPGLayer );
     OGRErr              EndCopy( );
 };
 
-#endif /* ndef _OGR_PGDUMP_H_INCLUDED */
+#endif /* ndef OGR_PGDUMP_H_INCLUDED */
 

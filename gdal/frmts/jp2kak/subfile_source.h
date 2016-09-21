@@ -45,7 +45,7 @@
 
 class subfile_source : public kdu_compressed_source {
 
-  public: 
+  public:
     subfile_source() { file = NULL; }
     ~subfile_source() { close(); }
 
@@ -64,8 +64,8 @@ class subfile_source : public kdu_compressed_source {
               char** papszTokens = CSLTokenizeString2(fname + 12, ",", 0);
               if (CSLCount(papszTokens) >= 2)
               {
-                  subfile_offset = (int) CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
-                  subfile_size = (int) CPLScanUIntBig(papszTokens[1], strlen(papszTokens[1]));
+                  subfile_offset = (int) CPLScanUIntBig(papszTokens[0], static_cast<int>(strlen(papszTokens[0])));
+                  subfile_size = (int) CPLScanUIntBig(papszTokens[1], static_cast<int>(strlen(papszTokens[1])));
               }
               else
               {
@@ -93,14 +93,14 @@ class subfile_source : public kdu_compressed_source {
           {
               real_filename = fname;
               subfile_offset = 0;
-              subfile_size = 0; 
+              subfile_size = 0;
           }
 
           file = VSIFOpenL( real_filename, "r");
           if( file == NULL )
           {
               kdu_error e;
-              e << "Unable to open compressed data file, \"" << 
+              e << "Unable to open compressed data file, \"" <<
                   real_filename << "\"!";
               return;
           }
@@ -111,62 +111,50 @@ class subfile_source : public kdu_compressed_source {
               if( file == NULL )
               {
                   kdu_error e;
-                  e << "Unable to open compressed data file, \"" << 
+                  e << "Unable to open compressed data file, \"" <<
                       real_filename << "\"!";
                   return;
               }
           }
 
-          if( bSequential ) 
+          if( bSequential )
             capabilities = KDU_SOURCE_CAP_SEQUENTIAL;
           else
             capabilities = KDU_SOURCE_CAP_SEQUENTIAL | KDU_SOURCE_CAP_SEEKABLE;
 
-          seek_origin = subfile_offset;
           seek( 0 );
       }
 
     int get_capabilities() { return capabilities; }
 
     bool seek(kdu_long offset)
-      { 
+      {
           assert(file != NULL);
           if( file == NULL )
               return false;
-          
+
           if (!(capabilities & KDU_SOURCE_CAP_SEEKABLE))
               return false;
-          
-          if( VSIFSeekL( file, seek_origin+offset, SEEK_SET ) == 0 )
+
+          if( VSIFSeekL( file, subfile_offset+offset, SEEK_SET ) == 0 )
               return true;
           else
               return false;
       }
 
-    bool set_seek_origin(kdu_long position)
-      { 
-          if (!(capabilities & KDU_SOURCE_CAP_SEEKABLE))
-              return false;
-          seek_origin = position + subfile_offset;
-          return true;
-      }
-
-    kdu_long get_pos(bool absolute)
-      { 
+    kdu_long get_pos()
+      {
         if (file == NULL) return -1;
         kdu_long result = VSIFTellL( file );
-        if (!absolute) 
-            result -= seek_origin;
-        else
-            result -= subfile_offset;
+        result -= subfile_offset;
         return result;
       }
 
     int read(kdu_byte *buf, int num_bytes)
-      { 
+      {
         assert(file != NULL);
 
-        num_bytes = VSIFReadL(buf,1,(size_t) num_bytes,file);
+        num_bytes = static_cast<int>(VSIFReadL(buf,1,(size_t) num_bytes,file));
         return num_bytes;
       }
 
@@ -180,10 +168,9 @@ class subfile_source : public kdu_compressed_source {
 
   private: // Data
     int capabilities;
-    kdu_long seek_origin;
 
     int subfile_offset;
     int subfile_size;
-    
+
     VSILFILE *file;
   };

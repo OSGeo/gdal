@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
-#define _OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
+#ifndef OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
+#define OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
 
 #include "ogr_sqlite.h"
 
@@ -47,4 +47,4 @@ CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer* poLayer);
 
 #endif // HAVE_SQLITE_VFS
 
-#endif // _OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
+#endif // OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED

@@ -17,60 +17,38 @@ available at:
 Copyright (c) 2009, David F. Rogers
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice, 
+    * Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright notice,
       this list of conditions and the following disclaimer in the documentation
       and/or other materials provided with the distribution.
     * Neither the name of David F. Rogers nor the names of its contributors
-      may be used to endorse or promote products derived from this software 
+      may be used to endorse or promote products derived from this software
       without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdio.h>
 #include <vector>
+#include "cpl_port.h" // in case of -DDEBUG_BOOL
 
-/************************************************************************/
-/*                               knotu()                                */
-/************************************************************************/
-
-/*  Subroutine to generate a B-spline uniform (periodic) knot vector.
-
-    c            = order of the basis function
-    n            = the number of defining polygon vertices
-    nplus2       = index of x() for the first occurence of the maximum knot vector value
-    nplusc       = maximum value of the knot vector -- $n + c$
-    x[]          = array containing the knot vector
-*/
-
-static void knotu(int n,int c,int x[])
-
-{
-  int nplusc, /* nplus2, */i;
-
-    nplusc = n + c;
-    /* nplus2 = n + 2; */
-
-    x[1] = 0;
-    for (i = 2; i <= nplusc; i++){
-        x[i] = i-1;
-    }
-}
+/* used by ogrdxflayer.cpp */
+void rbspline2(int npts,int k,int p1,double b[],double h[],
+        bool xflag, double x[], double p[]);
 
 /************************************************************************/
 /*                                knot()                                */
@@ -79,15 +57,15 @@ static void knotu(int n,int c,int x[])
 /*
     Subroutine to generate a B-spline open knot vector with multiplicity
     equal to the order at the ends.
-	
+
     c            = order of the basis function
     n            = the number of defining polygon vertices
-    nplus2       = index of x() for the first occurence of the maximum knot vector value
+    nplus2       = index of x() for the first occurrence of the maximum knot vector value
     nplusc       = maximum value of the knot vector -- $n + c$
     x()          = array containing the knot vector
 */
 
-static void knot(int n,int c,int x[])
+static void knot(int n,int c,double x[])
 
 {
     int nplusc,nplus2,i;
@@ -95,10 +73,10 @@ static void knot(int n,int c,int x[])
     nplusc = n + c;
     nplus2 = n + 2;
 
-    x[1] = 0;
+    x[1] = 0.0;
     for (i = 2; i <= nplusc; i++){
         if ( (i > c) && (i < nplus2) )
-            x[i] = x[i-1] + 1;
+            x[i] = x[i-1] + 1.0;
         else
             x[i] = x[i-1];
     }
@@ -113,7 +91,7 @@ static void knot(int n,int c,int x[])
 	C code for An Introduction to NURBS
 	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
 	All rights reserved.
-	
+
 	Name: rbais
 	Language: C
 	Subroutines called: none
@@ -130,9 +108,9 @@ static void knot(int n,int c,int x[])
     t        = parameter value
     temp[]   = temporary array
     x[]      = knot vector
-*/	
+*/
 
-static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
+static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
 
 {
     int nplusc;
@@ -149,9 +127,9 @@ static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
 
     for (i = 1; i<= nplusc-1; i++){
     	if (( t >= x[i]) && (t < x[i+1]))
-            temp[i] = 1;
+            temp[i] = 1.0;
         else
-            temp[i] = 0;
+            temp[i] = 0.0;
     }
 
 /* calculate the higher order nonrational basis functions */
@@ -202,7 +180,7 @@ static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
 	C code for An Introduction to NURBS
 	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
 	All rights reserved.
-	
+
 	Name: rbspline.c
 	Language: C
 	Subroutines called: knot.c, rbasis.c, fmtmul.c
@@ -212,7 +190,7 @@ static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-	h[]			= array containing the homogeneous weighting factors 
+	h[]			= array containing the homogeneous weighting factors
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values
@@ -226,7 +204,8 @@ static void rbasis(int c,double t,int npts, int x[], double h[], double r[])
     x[]         = array containing the knot vector
 */
 
-void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
+void rbspline2(int npts,int k,int p1,double b[],double h[],
+        bool xflag, double x[], double p[])
 
 {
     int i,j,icount,jcount;
@@ -237,34 +216,15 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
     double t;
     double temp;
     std::vector<double> nbasis;
-    std::vector<int> x;
 
     nplusc = npts + k;
 
-    x.resize( nplusc+1 );
     nbasis.resize( npts+1 );
-
-/*  zero and redimension the knot vector and the basis array */
-
-    for(i = 0; i <= npts; i++){
-        nbasis[i] = 0.;
-    }
-
-    for(i = 0; i <= nplusc; i++){
-        x[i] = 0;
-    }
 
 /* generate the uniform open knot vector */
 
-    knot(npts,k,&(x[0]));
-
-/*
-  printf("The knot vector is ");
-  for (i = 1; i <= nplusc; i++){
-  printf(" %d ", x[i]);
-  }
-  printf("\n");
-*/
+    if( xflag == true )
+        knot(npts,k,x);
 
     icount = 0;
 
@@ -280,7 +240,7 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
         }
 
         /* generate the basis function for this value of t */
-        rbasis(k,t,npts,&(x[0]),h,&(nbasis[0])); 
+        rbasis(k,t,npts,x,h,&(nbasis[0]));
         for (j = 1; j <= 3; j++){      /* generate a point on the curve */
             jcount = j;
             p[icount+j] = 0.;
@@ -288,138 +248,10 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
             for (i = 1; i <= npts; i++){ /* Do local matrix multiplication */
                 temp = nbasis[i]*b[jcount];
                 p[icount + j] = p[icount + j] + temp;
-/*
-  printf("jcount,nbasis,b,nbasis*b,p = %d %f %f %f %f\n",jcount,nbasis[i],b[jcount],temp,p[icount+j]);
-*/
                 jcount = jcount + 3;
             }
         }
-/*
-  printf("icount, p %d %f %f %f \n",icount,p[icount+1],p[icount+2],p[icount+3]);
-*/
     	icount = icount + 3;
-        t = t + step;
-    }
-}
-
-/************************************************************************/
-/*                              rbsplinu()                              */
-/************************************************************************/
-
-/*  Subroutine to generate a rational B-spline curve using an uniform periodic knot vector
-
-	C code for An Introduction to NURBS
-	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
-	All rights reserved.
-	
-	Name: rbsplinu.c
-	Language: C
-	Subroutines called: knotu.c, rbasis.c, fmtmul.c
-	Book reference: Chapter 4, Alg. p. 298
-
-    b[]         = array containing the defining polygon vertices
-                  b[1] contains the x-component of the vertex
-                  b[2] contains the y-component of the vertex
-                  b[3] contains the z-component of the vertex
-	h[]			= array containing the homogeneous weighting factors 
-    k           = order of the B-spline basis function
-    nbasis      = array containing the basis functions for a single value of t
-    nplusc      = number of knot values
-    npts        = number of defining polygon vertices
-    p[,]        = array containing the curve points
-                  p[1] contains the x-component of the point
-                  p[2] contains the y-component of the point
-                  p[3] contains the z-component of the point
-    p1          = number of points to be calculated on the curve
-    t           = parameter value 0 <= t <= npts - k + 1
-    x[]         = array containing the knot vector
-*/
-
-void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[])
-
-{
-    int i,j,icount,jcount;
-    int i1;
-    int nplusc;
-
-    double step;
-    double t;
-    double temp;
-    std::vector<double> nbasis;
-    std::vector<int> x;
-
-    nplusc = npts + k;
-
-    x.resize( nplusc+1);
-    nbasis.resize(npts+1);
-
-/*  zero and redimension the knot vector and the basis array */
-
-    for(i = 0; i <= npts; i++){
-        nbasis[i] = 0.;
-    }
-
-    for(i = 0; i <= nplusc; i++){
-        x[i] = 0;
-    }
-
-/* generate the uniform periodic knot vector */
-
-    knotu(npts,k,&(x[0]));
-
-/*
-  printf("The knot vector is ");
-  for (i = 1; i <= nplusc; i++){
-  printf(" %d ", x[i]);
-  }
-  printf("\n");
-
-  printf("The usable parameter range is ");
-  for (i = k; i <= npts+1; i++){
-  printf(" %d ", x[i]);
-  }
-  printf("\n");
-*/
-
-    icount = 0;
-
-/*    calculate the points on the rational B-spline curve */
-
-    t = k-1;
-    step = ((double)((npts)-(k-1)))/((double)(p1-1));
-
-    for (i1 = 1; i1<= p1; i1++){
-
-        if ((double)x[nplusc] - t < 5e-6){
-            t = (double)x[nplusc];
-        }
-
-        rbasis(k,t,npts,&(x[0]),h,&(nbasis[0]));      /* generate the basis function for this value of t */
-/*
-  printf("t = %f \n",t);
-  printf("nbasis = ");
-  for (i = 1; i <= npts; i++){
-  printf("%f  ",nbasis[i]);
-  }
-  printf("\n");
-*/
-        for (j = 1; j <= 3; j++){      /* generate a point on the curve */
-            jcount = j;
-            p[icount+j] = 0.;
-
-            for (i = 1; i <= npts; i++){ /* Do local matrix multiplication */
-                temp = nbasis[i]*b[jcount];
-                p[icount + j] = p[icount + j] + temp;
-/*
-  printf("jcount,nbasis,b,nbasis*b,p = %d %f %f %f %f\n",jcount,nbasis[i],b[jcount],temp,p[icount+j]);
-*/
-                jcount = jcount + 3;
-            }
-        }
-/*
-  printf("icount, p %d %f %f %f \n",icount,p[icount+1],p[icount+2],p[icount+3]);
-*/
-        icount = icount + 3;
         t = t + step;
     }
 }

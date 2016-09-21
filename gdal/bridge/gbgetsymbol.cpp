@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL Bridge 
+ * Project:  GDAL Bridge
  * Purpose:  Fetch a function pointer from a shared library / DLL.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
@@ -49,14 +49,14 @@
 /*       o Attempt to look for the library in non-standard              */
 /*         locations.                                                   */
 /*       o Attempt to try variations on the symbol name, like           */
-/*         pre-prending or post-pending an underscore.                  */
+/*         pre-pending or post-pending an underscore.                   */
 /************************************************************************/
 
 void *GBGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void	*pLibrary;
-    void	*pSymbol;
+    void *pLibrary;
+    void *pSymbol;
 
     pLibrary = dlopen(pszLibrary, RTLD_LAZY);
     if( pLibrary == NULL )
@@ -71,7 +71,7 @@ void *GBGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         fprintf( stderr, "GBGetSymbol(): %s\n", dlerror() );
         return NULL;
     }
-    
+
     return( pSymbol );
 }
 
@@ -94,14 +94,14 @@ void *GBGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 /*       o Attempt to look for the library in non-standard              */
 /*         locations.                                                   */
 /*       o Attempt to try variations on the symbol name, like           */
-/*         pre-prending or post-pending an underscore.                  */
+/*         pre-pending or post-pending an underscore.                   */
 /************************************************************************/
 
 void *GBGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void	*pLibrary;
-    void	*pSymbol;
+    void *pLibrary;
+    void *pSymbol;
 
     pLibrary = LoadLibrary(pszLibrary);
     if( pLibrary == NULL )
@@ -118,7 +118,7 @@ void *GBGetSymbol( const char * pszLibrary, const char * pszSymbolName )
                  pszSymbolName );
         return NULL;
     }
-    
+
     return( pSymbol );
 }
 

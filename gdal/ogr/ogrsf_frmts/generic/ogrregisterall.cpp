@@ -43,7 +43,9 @@ void OGRRegisterAll()
 
 void OGRRegisterAllInternal()
 {
-
+#ifdef DB2_ENABLED
+    RegisterOGRDB2();
+#endif
 #ifdef SHAPE_ENABLED
     RegisterOGRShape();
 #endif
@@ -127,7 +129,7 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef MSSQLSPATIAL_ENABLED
     RegisterOGRMSSQLSpatial();
-#endif 
+#endif
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
 #endif
@@ -205,8 +207,8 @@ void OGRRegisterAllInternal()
 #ifdef WFS_ENABLED
     RegisterOGRWFS();
 #endif
-#ifdef SOSI_ENABLED 
-    RegisterOGRSOSI(); 
+#ifdef SOSI_ENABLED
+    RegisterOGRSOSI();
 #endif
 #ifdef HTF_ENABLED
     RegisterOGRHTF();
@@ -222,9 +224,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef GFT_ENABLED
     RegisterOGRGFT();
-#endif
-#ifdef GME_ENABLED
-    RegisterOGRGME();
 #endif
 #ifdef SVG_ENABLED
     RegisterOGRSVG();
@@ -265,6 +264,9 @@ void OGRRegisterAllInternal()
 #ifdef CARTODB_ENABLED
     RegisterOGRCartoDB();
 #endif
+#ifdef AMIGOCLOUD_ENABLED
+    RegisterOGRAmigoCloud();
+#endif
 #ifdef SXF_ENABLED
     RegisterOGRSXF();
 #endif
@@ -273,6 +275,18 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef JML_ENABLED
     RegisterOGRJML();
+#endif
+#ifdef PLSCENES_ENABLED
+    RegisterOGRPLSCENES();
+#endif
+#ifdef CSW_ENABLED
+    RegisterOGRCSW();
+#endif
+#ifdef MONGODB_ENABLED
+    RegisterOGRMongoDB();
+#endif
+#ifdef VDV_ENABLED
+    RegisterOGRVDV();
 #endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */

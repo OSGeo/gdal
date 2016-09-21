@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRWALK_H_INCLUDED
-#define _OGRWALK_H_INCLUDED
+#ifndef OGRWALK_H_INCLUDED
+#define OGRWALK_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
@@ -85,10 +85,10 @@ public:
     OGRFeature *        GetNextRawFeature();
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    
+
     int         TestCapability( const char * ) { return FALSE; }
 
-    virtual const char * GetFIDColumn (); 
+    virtual const char * GetFIDColumn ();
     virtual const char * GetGeometryColumn ();
 };
 
@@ -111,7 +111,7 @@ public:
                         OGRWalkTableLayer( OGRWalkDataSource * );
                         ~OGRWalkTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName, 
+    CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
                                     double minE,
                                     double maxE,
@@ -124,10 +124,12 @@ public:
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    
+
     virtual int         TestCapability( const char * );
 
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
 /************************************************************************/
@@ -144,13 +146,14 @@ class OGRWalkSelectLayer : public OGRWalkLayer
     virtual CPLODBCStatement *  GetStatement();
 
   public:
-                        OGRWalkSelectLayer( OGRWalkDataSource *, 
+                        OGRWalkSelectLayer( OGRWalkDataSource *,
                                            CPLODBCStatement * );
                         ~OGRWalkSelectLayer();
 
     virtual void        ResetReading();
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
 /************************************************************************/
@@ -161,7 +164,7 @@ class OGRWalkDataSource : public OGRDataSource
 {
     char               *pszName;
     OGRWalkLayer        **papoLayers;
-    int                 nLayers;   
+    int                 nLayers;
 
     int                 bDSUpdate;
     CPLODBCSession      oSession;
@@ -197,15 +200,15 @@ class OGRWalkDriver : public OGRODBCMDBDriver
 {
 public:
                 ~OGRWalkDriver();
-                
+
     const char    *GetName();
     OGRDataSource *Open( const char *, int );
 
     OGRDataSource *CreateDataSource( const char *, char ** );
-    
+
     int            TestCapability( const char * );
 };
 
 void RegisterOGRWalk();
 
-#endif /* ndef _OGRWALK_H_INCLUDED */
+#endif /* ndef OGRWALK_H_INCLUDED */

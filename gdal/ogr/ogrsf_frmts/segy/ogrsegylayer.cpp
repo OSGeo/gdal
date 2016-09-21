@@ -226,11 +226,11 @@ static float SEGYReadMSBFloat32(const GByte* pabyVal)
 
 
 OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
-                            VSILFILE* fp,
+                            VSILFILE* fpIn,
                             SEGYBinaryFileHeader* psBFH )
 
 {
-    this->fp = fp;
+    this->fp = fpIn;
     nNextFID = 0;
     bEOF = FALSE;
     memcpy(&sBFH, psBFH, sizeof(sBFH));
@@ -309,7 +309,7 @@ OGRFeature *OGRSEGYLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)
@@ -573,8 +573,8 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     }
 #endif
 
-    GByte* pabyData = (GByte*) VSIMalloc( nDataSize * nSamples );
-    double* padfValues = (double*) VSICalloc( nSamples, sizeof(double) );
+    GByte* pabyData = (GByte*) VSI_MALLOC_VERBOSE( nDataSize * nSamples );
+    double* padfValues = (double*) VSI_CALLOC_VERBOSE( nSamples, sizeof(double) );
     if (pabyData == NULL || padfValues == NULL)
     {
         VSIFSeekL( fp, nDataSize * nSamples, SEEK_CUR );
@@ -857,7 +857,7 @@ OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
 {
     OGRFeature  *poFeature;
 
-    while(TRUE)
+    while( true )
     {
         poFeature = GetNextRawFeature();
         if (poFeature == NULL)

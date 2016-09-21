@@ -10,7 +10,8 @@ gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
                   [-ot Byte/Int16/Int32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
-                  [-maxdist n] [-nodata n] [-fixed-buf-val n]
+                  [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
+                  [-fixed-buf-val n] 
 \endverbatim
 
 \section gdal_proximity_description DESCRIPTION
@@ -37,7 +38,7 @@ format specific documentation for legal creation options for each format.
 </dd>
 
 <dt> <b>-ot</b> <i>datatype</i>:</dt><dd> 
-Force the output image bands to have a specific type. Use type names (ie. Byte, Int16,...)
+Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
 </dd>
 
 <dt> <b>-values</b> <i>n,n,n</i>:</dt><dd> 
@@ -51,12 +52,19 @@ coordinates (default PIXEL).
 </dd>
 
 <dt> <b>-maxdist</b> <i>n</i>:</dt><dd>
-The maximum distance to be generated.  All pixels beyond this distance will
-be assigned either the nodata value, or 65535.   Distance is interpreted in pixels unless -distunits GEO is specified.
+The maximum distance to be generated. The nodata value will be used for pixels
+beyond this distance. If a nodata value is not provided, the output band will be
+queried for its nodata value. If the output band does not have a nodata value,
+then the value 65535 will be used. Distance is interpreted in pixels unless
+-distunits GEO is specified.
 </dd>
 
 <dt> <b>-nodata</b> <i>n</i>:</dt><dd>
 Specify a nodata value to use for the destination proximity raster.
+</dd>
+
+<dt> <b>-use_input_nodata</b> <i>YES/NO</i>:</dt><dd> (GDAL &gt;= 2.0)
+Indicate whether nodata pixels in the input raster should be nodata in the output raster (default NO).
 </dd>
 
 <dt> <b>-fixed-buf-val</b> <i>n</i>:</dt><dd>

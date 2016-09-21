@@ -36,46 +36,6 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          CPLHaveRuntimeAVX()                         */
-/************************************************************************/
-
-#define CPUID_OSXSAVE_ECX_BIT   27
-#define CPUID_AVX_ECX_BIT       28
-
-#define BIT_XMM_STATE           (1 << 1)
-#define BIT_YMM_STATE           (2 << 1)
-
-int CPLHaveRuntimeAVX()
-{
-    int cpuinfo[4] = {0,0,0,0};
-    GCC_CPUID(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
-
-    /* Check OSXSAVE feature */
-    if( (cpuinfo[2] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0 )
-    {
-        return FALSE;
-    }
-
-    /* Check AVX feature */
-    if( (cpuinfo[2] & (1 << CPUID_AVX_ECX_BIT)) == 0 )
-    {
-        return FALSE;
-    }
-
-    /* Issue XGETBV and check the XMM and YMM state bit */
-    unsigned int nXCRLow;
-    unsigned int nXCRHigh;
-    __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0));
-    if( (nXCRLow & ( BIT_XMM_STATE | BIT_YMM_STATE )) !=
-                   ( BIT_XMM_STATE | BIT_YMM_STATE ) )
-    {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX()     */
 /************************************************************************/
 
@@ -164,6 +124,11 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
             if( mask & (1 << j) )
             {
                 (*pdfValue) = (pafZ)[i + j];
+
+                // GCC and MSVC need explicit zeroing
+#if !defined(__clang__)
+                _mm256_zeroupper();
+#endif
                 return CE_None;
             }
         }
@@ -174,6 +139,12 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     float afNominator[8], afDenominator[8];
     _mm256_storeu_ps(afNominator, ymm_nominator);
     _mm256_storeu_ps(afDenominator, ymm_denominator);
+
+    // MSVC doesn't emit AVX afterwards but may use SSE, so clear upper bits
+    // Other compilers will continue using AVX for the below floating points operations
+#if defined(_MSC_FULL_VER)
+    _mm256_zeroupper();
+#endif
 
     float fNominator = afNominator[0] + afNominator[1] +
                        afNominator[2] + afNominator[3] +
@@ -219,7 +190,12 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     else
         (*pdfValue) = fNominator / fDenominator;
 
+    // GCC needs explicit zeroing
+#if defined(__GNUC__) && !defined(__clang__)
+    _mm256_zeroupper();
+#endif
+
     return CE_None;
 }
 
-#endif
+#endif /* HAVE_AVX_AT_COMPILE_TIME */

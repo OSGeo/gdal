@@ -6,7 +6,7 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GeoRSS driver functionality.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
 #
@@ -50,14 +50,14 @@ def ogr_georss_init():
         gdaltest.georss_read_support = 0
     else:
         gdaltest.georss_read_support = 1
-        ds.Destroy()
+        ds = None
 
     gdaltest.have_gml_reader = 0
     try:
         ds = ogr.Open( 'data/ionic_wfs.gml' )
         if ds is not None:
             gdaltest.have_gml_reader = 1
-        ds.Destroy()
+            ds = None
     except:
         pass
 
@@ -109,9 +109,6 @@ def ogr_georss_test_atom(filename):
         gdaltest.post_reason('For field "%s", got "%s"' % ('content', feat.GetFieldAsString('content')))
         return 'fail'
 
-    feat.Destroy()
-    ds.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -120,6 +117,13 @@ def ogr_georss_test_atom(filename):
 def ogr_georss_1():
 
     return ogr_georss_test_atom('data/atom_rfc_sample.xml')
+
+###############################################################################
+# Test reading an ATOM document with atom: prefiw
+
+def ogr_georss_1_atom_ns():
+
+    return ogr_georss_test_atom('data/atom_rfc_sample_atom_ns.xml')
 
 ###############################################################################
 # Test writing a Atom 1.0 document (doesn't need read support)
@@ -147,11 +151,7 @@ def ogr_georss_1bis():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-
-    ds.Destroy()
-
-    # print open('tmp/test_atom.xml').read()
+    ds = None
 
     return 'success'
 
@@ -211,7 +211,6 @@ def ogr_georss_test_rss(filename, only_first_feature):
         return 'fail'
     if feat.GetFieldAsString('category2_domain') != 'second_domain':
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'LINESTRING (2 48,2.1 48.1,2.2 48.0)'
@@ -220,7 +219,6 @@ def ogr_georss_test_rss(filename, only_first_feature):
         return 'fail'
     if feat.GetFieldAsString('title') != 'A line':
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POLYGON ((2 50,2.1 50.1,2.2 48.1,2.1 46.1,2 50))'
@@ -229,7 +227,6 @@ def ogr_georss_test_rss(filename, only_first_feature):
         return 'fail'
     if feat.GetFieldAsString('title') != 'A polygon':
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POLYGON ((2 49,2.0 49.5,2.2 49.5,2.2 49.0,2 49))'
@@ -238,9 +235,6 @@ def ogr_georss_test_rss(filename, only_first_feature):
         return 'fail'
     if feat.GetFieldAsString('title') != 'A box':
         return 'fail'
-    feat.Destroy()
-
-    ds.Destroy()
 
     return 'success'
 
@@ -298,9 +292,6 @@ def ogr_georss_create(filename, options):
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-
-
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetField('title', 'A line')
     dst_feat.SetField('author', 'Author')
@@ -311,8 +302,6 @@ def ogr_georss_create(filename, options):
     if lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
-
-    dst_feat.Destroy()
 
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetField('title', 'A polygon')
@@ -325,8 +314,6 @@ def ogr_georss_create(filename, options):
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetField('title', 'A box')
     dst_feat.SetField('author', 'Author')
@@ -338,10 +325,7 @@ def ogr_georss_create(filename, options):
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-    ds.Destroy()
-
-    #print open(filename).read()
+    ds = None
 
     return 'success'
 
@@ -436,7 +420,7 @@ def ogr_georss_10():
         gdaltest.post_reason('should not have accepted EPSG:32631 with GEOM_DIALECT != GML')
         return 'fail'
 
-    ds.Destroy()
+    ds = None
 
     try:
         os.remove ('tmp/test32631.rss')
@@ -453,9 +437,7 @@ def ogr_georss_10():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-
-    ds.Destroy()
+    ds = None
 
     content = open('tmp/test32631.rss').read()
     if content.find('<georss:where><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4000000') == -1:
@@ -495,10 +477,6 @@ def ogr_georss_11():
         print(('%s' % feat.GetGeometryRef().ExportToWkt()))
         return 'fail'
 
-    feat.Destroy()
-
-    ds.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -526,7 +504,6 @@ def ogr_georss_12():
     gdal.PopErrorHandler()
     if feat.GetGeometryRef() is not None:
         return 'fail'
-    ds.Destroy()
 
     open('tmp/broken.rss', 'wt').write('<?xml version="1.0"?><rss><channel><item><georss:where><gml:LineString><gml:posList>48 2 48.1 2.1 48</gml:posList></gml:LineString></georss:where></item></channel></rss>')
     ds = ogr.Open('tmp/broken.rss')
@@ -535,7 +512,6 @@ def ogr_georss_12():
     gdal.PopErrorHandler()
     if feat.GetGeometryRef() is not None:
         return 'fail'
-    ds.Destroy()
 
     return 'success'
 
@@ -563,9 +539,7 @@ def ogr_georss_13():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-
-    ds.Destroy()
+    ds = None
 
     content = open('tmp/nonstandard.rss').read()
     if content.find('<myns:field>val</myns:field>') == -1:
@@ -603,12 +577,7 @@ def ogr_georss_14():
         print(('Expected %s. Got %s' % ('val3', feat.GetFieldAsString('ogr_field3'))))
         return 'fail'
 
-    feat.Destroy()
-
-    ds.Destroy()
-
     return 'success'
-
 
 ###############################################################################
 # Test reading an in memory file (#2931)
@@ -649,17 +618,13 @@ def ogr_georss_15():
         print(('Expected %s. Got %s' % ('item title', feat.GetFieldAsString('title'))))
         return 'fail'
 
-    feat.Destroy()
-
-    ds.Destroy()
-
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/georssinmem')
 
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_georss_cleanup():
 
@@ -677,9 +642,10 @@ def ogr_georss_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_georss_init,
     ogr_georss_1,
+    ogr_georss_1_atom_ns,
     ogr_georss_1bis,
     ogr_georss_1ter,
     ogr_georss_2,
@@ -705,4 +671,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_AeronavFAA_H_INCLUDED
-#define _OGR_AeronavFAA_H_INCLUDED
+#ifndef OGR_AeronavFAA_H_INCLUDED
+#define OGR_AeronavFAA_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -185,4 +185,4 @@ class OGRAeronavFAADataSource : public OGRDataSource
 };
 
 
-#endif /* ndef _OGR_AeronavFAA_H_INCLUDED */
+#endif /* ndef OGR_AeronavFAA_H_INCLUDED */

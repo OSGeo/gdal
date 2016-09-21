@@ -7,7 +7,7 @@
  * RputAllMV writes a missing values to all the cells in a
  * map. For this is allocates a buffer to hold one row at a
  * time.
- * returns 1 if succesfull, 0 in case of an error
+ * returns 1 if successfully, 0 in case of an error
  */
 int RputAllMV(
 	MAP *m)

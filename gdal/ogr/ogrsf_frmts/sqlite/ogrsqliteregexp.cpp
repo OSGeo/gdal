@@ -156,7 +156,7 @@ void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc, sqlite3_
 
     int rc;
     CPLAssert(p);
-    rc = pcre_exec(p, e, str, strlen(str), 0, 0, NULL, 0);
+    rc = pcre_exec(p, e, str, static_cast<int>(strlen(str)), 0, 0, NULL, 0);
     sqlite3_result_int(ctx, rc >= 0);
 }
 
@@ -167,12 +167,16 @@ void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc, sqlite3_
 /************************************************************************/
 
 static
-void* OGRSQLiteRegisterRegExpFunction(sqlite3* hDB)
+void* OGRSQLiteRegisterRegExpFunction(sqlite3*
+#ifdef HAVE_PCRE
+                                       hDB
+#endif
+                                      )
 {
 #ifdef HAVE_PCRE
 
     /* For debugging purposes mostly */
-    if( !CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_REGEXP", "YES")) )
+    if( !CPLTestBool(CPLGetConfigOption("OGR_SQLITE_REGEXP", "YES")) )
         return NULL;
 
     /* Check if we really need to define our own REGEXP function */
@@ -201,7 +205,11 @@ void* OGRSQLiteRegisterRegExpFunction(sqlite3* hDB)
 /************************************************************************/
 
 static
-void OGRSQLiteFreeRegExpCache(void* hRegExpCache)
+void OGRSQLiteFreeRegExpCache(void*
+#ifdef HAVE_PCRE
+                              hRegExpCache
+#endif
+                              )
 {
 #ifdef HAVE_PCRE
     if( hRegExpCache == NULL )

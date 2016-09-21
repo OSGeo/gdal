@@ -93,7 +93,7 @@ OGRLayer *
 PDFWritableVectorDataset::ICreateLayer( const char * pszLayerName,
                                         OGRSpatialReference *poSRS,
                                         OGRwkbGeometryType eType,
-                                        CPL_UNUSED char ** papszOptions )
+                                        char ** )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -253,12 +253,12 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     if (dfRatio < 1)
     {
         nWidth = 1024;
-        nHeight = nWidth * dfRatio;
+        nHeight = static_cast<int>(nWidth * dfRatio);
     }
     else
     {
         nHeight = 1024;
-        nWidth = nHeight / dfRatio;
+        nWidth = static_cast<int>(nHeight / dfRatio);
     }
 
     GDALDataset* poSrcDS = MEMDataset::Create( "MEM:::", nWidth, nHeight, 0, GDT_Byte, NULL );
@@ -293,7 +293,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
                       bWriteOGRAttributes);
 
     int iObj = 0;
-    
+
     char** papszLayerNames = CSLTokenizeString2(pszOGRDisplayLayerNames,",",0);
 
     for(int i=0;i<nLayers;i++)

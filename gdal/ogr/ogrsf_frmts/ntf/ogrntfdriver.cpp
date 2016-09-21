@@ -52,7 +52,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         if( poOpenInfo->nHeaderBytes < 80 )
             return NULL;
         const char* pszHeader = (const char*)poOpenInfo->pabyHeader;
-        if( !EQUALN(pszHeader,"01",2) )
+        if( !STARTS_WITH_CI(pszHeader, "01") )
             return NULL;
 
         int j;
@@ -63,7 +63,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         }
 
         if( j == 80 || pszHeader[j-1] != '%' )
-            return FALSE;
+            return NULL;
     }
 
     OGRNTFDataSource    *poDS = new OGRNTFDataSource;
@@ -80,7 +80,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         delete poDS;
         poDS = NULL;
     }
-    
+
     return poDS;
 }
 
@@ -91,22 +91,18 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRNTF()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "UK .NTF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "UK .NTF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "UK .NTF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "UK .NTF" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_ntf.html" );
+    poDriver->SetDescription( "UK .NTF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "UK .NTF" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ntf.html" );
 
-        poDriver->pfnOpen = OGRNTFDriverOpen;
+    poDriver->pfnOpen = OGRNTFDriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

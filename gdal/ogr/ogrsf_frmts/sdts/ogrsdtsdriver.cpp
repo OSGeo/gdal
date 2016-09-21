@@ -66,7 +66,7 @@ static GDALDataset *OGRSDTSDriverOpen( GDALOpenInfo* poOpenInfo )
         delete poDS;
         poDS = NULL;
     }
-    
+
     return poDS;
 }
 
@@ -77,21 +77,17 @@ static GDALDataset *OGRSDTSDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRSDTS()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "OGR_SDTS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "OGR_SDTS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "OGR_SDTS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "SDTS" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_sdts.html" );
+    poDriver->SetDescription( "OGR_SDTS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SDTS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sdts.html" );
 
-        poDriver->pfnOpen = OGRSDTSDriverOpen;
+    poDriver->pfnOpen = OGRSDTSDriverOpen;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

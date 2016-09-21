@@ -37,14 +37,11 @@ CPL_CVSID("$Id$");
 /*                        OGROpenAirDataSource()                        */
 /************************************************************************/
 
-OGROpenAirDataSource::OGROpenAirDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-}
+OGROpenAirDataSource::OGROpenAirDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                       ~OGROpenAirDataSource()                        */
@@ -64,7 +61,7 @@ OGROpenAirDataSource::~OGROpenAirDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROpenAirDataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGROpenAirDataSource::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
@@ -78,8 +75,8 @@ OGRLayer *OGROpenAirDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -119,33 +116,38 @@ int OGROpenAirDataSource::Open( const char * pszFilename )
 
 enum { DEGREE, MINUTE, SECOND };
 
-int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon)
+bool OGROpenAirGetLatLon( const char* pszStr, double& dfLat, double& dfLon )
 {
     dfLat = 0;
     dfLon = 0;
 
-    int nCurInt = 0;
+    GUIntBig nCurInt = 0;
     double dfExp = 1.;
-    int bHasExp = FALSE;
+    bool bHasExp = false;
     int nCurPart = DEGREE;
-    double dfDegree = 0, dfMinute = 0, dfSecond = 0;
+    double dfDegree = 0;
+    double dfMinute = 0;
+    double dfSecond = 0;
     char c;
-    int bHasLat = FALSE, bHasLon = FALSE;
+    bool bHasLat = false;
+    bool bHasLon = false;
     while((c = *pszStr) != 0)
     {
         if (c >= '0' && c <= '9')
         {
-            nCurInt = nCurInt * 10 + c - '0';
-            if (bHasExp)
+            nCurInt = nCurInt * 10U + static_cast<unsigned char>(c) - '0';
+            if( nCurInt >> 60 ) // to avoid uint64 overflow at next iteration
+                return FALSE;
+            if( bHasExp )
                 dfExp *= 10;
         }
         else if (c == '.')
         {
-            bHasExp = TRUE;
+            bHasExp = true;
         }
         else if (c == ':')
         {
-            double dfVal = nCurInt / dfExp;
+            const double dfVal = nCurInt / dfExp;
             if (nCurPart == DEGREE)
                 dfDegree = dfVal;
             else if (nCurPart == MINUTE)
@@ -155,7 +157,7 @@ int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon)
             nCurPart ++;
             nCurInt = 0;
             dfExp = 1.;
-            bHasExp = FALSE;
+            bHasExp = false;
         }
         else if (c == ' ')
         {
@@ -163,7 +165,7 @@ int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon)
         }
         else if (c == 'N' || c == 'S')
         {
-            double dfVal = nCurInt / dfExp;
+            const double dfVal = nCurInt / dfExp;
             if (nCurPart == DEGREE)
                 dfDegree = dfVal;
             else if (nCurPart == MINUTE)
@@ -176,13 +178,13 @@ int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon)
                 dfLat = -dfLat;
             nCurInt = 0;
             dfExp = 1.;
-            bHasExp = FALSE;
+            bHasExp = false;
             nCurPart = DEGREE;
-            bHasLat = TRUE;
+            bHasLat = true;
         }
         else if (c == 'E' || c == 'W')
         {
-            double dfVal = nCurInt / dfExp;
+            const double dfVal = nCurInt / dfExp;
             if (nCurPart == DEGREE)
                 dfDegree = dfVal;
             else if (nCurPart == MINUTE)
@@ -193,7 +195,7 @@ int OGROpenAirGetLatLon(const char* pszStr, double& dfLat, double& dfLon)
             dfLon = dfDegree + dfMinute / 60 + dfSecond / 3600;
             if (c == 'W')
                 dfLon = -dfLon;
-            bHasLon = TRUE;
+            bHasLon = true;
             break;
         }
 

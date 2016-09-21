@@ -49,7 +49,7 @@ OGRGFTDataSource::OGRGFTDataSource()
     bReadWrite = FALSE;
     bUseHTTPS = FALSE;
 
-    bMustCleanPersistant = FALSE;
+    bMustCleanPersistent = FALSE;
 }
 
 /************************************************************************/
@@ -63,10 +63,11 @@ OGRGFTDataSource::~OGRGFTDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (bMustCleanPersistant)
+    if (bMustCleanPersistent)
     {
-        char** papszOptions = CSLAddString(NULL, CPLSPrintf("CLOSE_PERSISTENT=GFT:%p", this));
-        CPLHTTPFetch( GetAPIURL(), papszOptions);
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("GFT:%p", this));
+        CPLHTTPDestroyResult( CPLHTTPFetch( GetAPIURL(), papszOptions) );
         CSLDestroy(papszOptions);
     }
 
@@ -110,23 +111,23 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
     OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszLayerName);
     if (poLayer)
         return poLayer;
-        
+
     char* pszGeomColumnName = NULL;
-    char* pszName = CPLStrdup(pszLayerName);
-    char *pszLeftParenthesis = strchr(pszName, '(');
+    char* l_pszName = CPLStrdup(pszLayerName);
+    char *pszLeftParenthesis = strchr(l_pszName, '(');
     if( pszLeftParenthesis != NULL )
     {
         *pszLeftParenthesis = '\0';
         pszGeomColumnName = CPLStrdup(pszLeftParenthesis+1);
-        int len = strlen(pszGeomColumnName);
+        int len = static_cast<int>(strlen(pszGeomColumnName));
         if (len > 0 && pszGeomColumnName[len - 1] == ')')
             pszGeomColumnName[len - 1] = '\0';
     }
-    
-    CPLString osTableId(pszName);
+
+    CPLString osTableId(l_pszName);
     for(int i=0;i<nLayers;i++)
     {
-        if( strcmp(papoLayers[i]->GetName(), pszName) == 0)
+        if( strcmp(papoLayers[i]->GetName(), l_pszName) == 0)
         {
             osTableId = ((OGRGFTTableLayer*)papoLayers[i])->GetTableId();
             break;
@@ -135,7 +136,7 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
 
     poLayer = new OGRGFTTableLayer(this, pszLayerName, osTableId,
                                    pszGeomColumnName);
-    CPLFree(pszName);
+    CPLFree(l_pszName);
     CPLFree(pszGeomColumnName);
     if (poLayer->GetLayerDefn()->GetFieldCount() == 0)
     {
@@ -151,7 +152,7 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
 /*                      OGRGFTGetOptionValue()                          */
 /************************************************************************/
 
-CPLString OGRGFTGetOptionValue(const char* pszFilename,
+static CPLString OGRGFTGetOptionValue(const char* pszFilename,
                                const char* pszOptionName)
 {
     CPLString osOptionName(pszOptionName);
@@ -195,14 +196,14 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     osAccessToken = OGRGFTGetOptionValue(pszFilename, "access");
     if (osAccessToken.size() == 0)
         osAccessToken = CPLGetConfigOption("GFT_ACCESS_TOKEN","");
-    if (osAccessToken.size() == 0 && osRefreshToken.size() > 0) 
+    if (osAccessToken.size() == 0 && osRefreshToken.size() > 0)
     {
         osAccessToken.Seize(GOA2GetAccessToken(osRefreshToken,
                                                FUSION_TABLE_SCOPE));
         if (osAccessToken.size() == 0)
             return FALSE;
     }
-
+    /* coverity[copy_paste_error] */
     if (osAccessToken.size() == 0 && osAuth.size() > 0)
     {
         osRefreshToken.Seize(GOA2GetRefreshToken(osAuth, FUSION_TABLE_SCOPE));
@@ -241,7 +242,7 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
         psResult->pszErrBuf != NULL ||
-        strncmp(pszLine, "table id,name", strlen("table id,name")) != 0)
+        !STARTS_WITH(pszLine, "table id,name"))
     {
         CPLHTTPDestroyResult(psResult);
         return FALSE;
@@ -301,7 +302,7 @@ const char*  OGRGFTDataSource::GetAPIURL() const
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszNameIn,
                                             CPL_UNUSED OGRSpatialReference *poSpatialRef,
                                             OGRwkbGeometryType eGType,
                                             char ** papszOptions )
@@ -326,12 +327,12 @@ OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszName,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszName,papoLayers[iLayer]->GetName()) )
+        if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
-                DeleteLayer( pszName );
+                DeleteLayer( pszNameIn );
                 break;
             }
             else
@@ -340,13 +341,13 @@ OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszName,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
-                          pszName );
+                          pszNameIn );
                 return NULL;
             }
         }
     }
 
-    OGRGFTTableLayer* poLayer = new OGRGFTTableLayer(this, pszName);
+    OGRGFTTableLayer* poLayer = new OGRGFTTableLayer(this, pszNameIn);
     poLayer->SetGeometryType(eGType);
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;
@@ -451,11 +452,11 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
 
 char** OGRGFTDataSource::AddHTTPOptions(char** papszOptions)
 {
-    bMustCleanPersistant = TRUE;
+    bMustCleanPersistent = TRUE;
 
     if (strlen(osAccessToken) > 0)
       papszOptions = CSLAddString(papszOptions,
-        CPLSPrintf("HEADERS=Authorization: Bearer %s", 
+        CPLSPrintf("HEADERS=Authorization: Bearer %s",
                    osAccessToken.c_str()));
 
     return CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=GFT:%p", this));
@@ -503,19 +504,19 @@ CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszUnescapedSQL)
 /*      are transformed info failure.                                   */
 /* -------------------------------------------------------------------- */
     if (psResult && psResult->pszContentType &&
-        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+        STARTS_WITH(psResult->pszContentType, "text/html"))
     {
         CPLDebug( "GFT", "RunSQL HTML Response:%s", psResult->pabyData );
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
         CPLHTTPDestroyResult(psResult);
         psResult = NULL;
     }
-    if (psResult && psResult->pszErrBuf != NULL) 
+    if (psResult && psResult->pszErrBuf != NULL)
     {
         CPLDebug( "GFT", "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
-    else if (psResult && psResult->nStatus != 0) 
+    else if (psResult && psResult->nStatus != 0)
     {
         CPLDebug( "GFT", "RunSQL Error Status:%d", psResult->nStatus );
     }
@@ -543,7 +544,7 @@ OGRLayer * OGRGFTDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
     {
         const char *pszLayerName = pszSQLCommand + 9;
 

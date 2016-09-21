@@ -22,7 +22,7 @@ class TestOsrCtProj < Test::Unit::TestCase
     
     ct = Gdal::Osr::CoordinateTransformation.new(src, dst)
     
-    # Tranform source point to destination SRS.
+    # Transform source point to destination SRS.
     result = ct.transform_point(src_xyz[0], src_xyz[1], src_xyz[2])
 
     error = (result[0] - dst_xyz[0]).abs() +

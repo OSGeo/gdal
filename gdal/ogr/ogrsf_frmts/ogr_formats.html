@@ -24,6 +24,13 @@
 </td><td> Yes
 </td></tr>
 
+<tr><td> <a href="drv_amigocloud.html">AmigoCloud API</a>
+</td><td> AmigoCloud
+</td><td> Yes
+</td><td> Yes
+</td><td> No, needs libcurl
+</td></tr>
+
 <tr><td> <a href="drv_ao.html">ESRI ArcObjects</a>
 </td><td> ArcObjects
 </td><td> No
@@ -63,7 +70,7 @@
 </td><td> DWG
 </td><td> No
 </td><td> No
-</td><td> No
+</td><td> No, needs Open Design Alliance Teigha library
 </td></tr>
 
 <tr><td> <a href="drv_dxf.html">AutoCAD DXF</a>
@@ -80,11 +87,12 @@
 </td><td> No, needs libcurl
 </td></tr>
 
-<tr><td> <a href="drv_csv.html">Comma Separated Value (.csv)</a>
-</td><td> CSV
+
+<tr><td><a href="drv_cloudant.html">Cloudant / CouchDB</a>
+</td><td> Cloudant
 </td><td> Yes
-</td><td> No
 </td><td> Yes
+</td><td> No, needs libcurl
 </td></tr>
 
 <tr><td> <a href="drv_couchdb.html">CouchDB / GeoCouch</a>
@@ -94,9 +102,16 @@
 </td><td> No, needs libcurl
 </td></tr>
 
-<tr><td><a href="drv_cloudant.html">Cloudant / CouchDB</a>
-</td><td> CloudantB
+<tr><td> <a href="drv_csv.html">Comma Separated Value (.csv)</a>
+</td><td> CSV
 </td><td> Yes
+</td><td> No
+</td><td> Yes
+</td></tr>
+
+<tr><td> <a href="drv_csw.html">OGC CSW (Catalog Service for the Web)</a>
+</td><td> CSW
+</td><td> No
 </td><td> Yes
 </td><td> No, needs libcurl
 </td></tr>
@@ -106,6 +121,13 @@
 </td><td> No
 </td><td> Yes
 </td><td> No, needs libsqlite3
+</td></tr>
+
+<tr><td> <a href="drv_db2.html">DB2 Spatial</a>
+</td><td> DB2ODBC
+</td><td> Yes
+</td><td> Yes
+</td><td> No, needs ODBC library
 </td></tr>
 
 <tr><td> <a href="drv_dods.html">DODS/OPeNDAP</a>
@@ -124,8 +146,8 @@
 
 <tr><td> <a href="drv_elasticsearch.html">ElasticSearch</a>
 </td><td> ElasticSearch
-</td><td> Yes (write-only)
-</td><td> -
+</td><td> Yes
+</td><td> Yes
 </td><td> No, needs libcurl
 </td></tr>
 
@@ -150,7 +172,7 @@
 </td><td> No, needs ESRI SDE
 </td></tr>
 
-<tr><td> <a href="drv_shapefile.html">ESRI Shapefile</a>
+<tr><td> <a href="drv_shapefile.html">ESRI Shapefile / DBF</a>
 </td><td> ESRI Shapefile
 </td><td> Yes
 </td><td> Yes
@@ -201,13 +223,6 @@
 
 <tr><td> <a href="drv_gft.html">Google Fusion Tables</a>
 </td><td> GFT
-</td><td> Yes
-</td><td> Yes
-</td><td> No, needs libcurl
-</td></tr>
-
-<tr><td> <a href="http://trac.osgeo.org/gdal/wiki/GMEDriver">Google Maps Engine</a>
-</td><td> GME
 </td><td> Yes
 </td><td> Yes
 </td><td> No, needs libcurl
@@ -273,9 +288,8 @@
 </td><td> IDB
 </td><td> Yes
 </td><td> Yes
-</td><td> No, needs Informix DataBlade 
+</td><td> No, needs Informix DataBlade
 </td></tr>
-
 
 <tr><td> <a href="drv_ili.html">INTERLIS</a>
 </td><td> "Interlis 1" and "Interlis 2"
@@ -340,6 +354,13 @@
 </td><td> Yes
 </td></tr>
 
+<tr><td><a href="drv_mongodb.html">MongoDB</a>
+</td><td> MongoDB
+</td><td> Yes
+</td><td> Yes
+</td><td> No, needs Mongo C++ client library
+</td></tr>
+
 <tr><td> <a href="drv_mysql.html">MySQL</a>
 </td><td> MySQL
 </td><td> No
@@ -352,6 +373,13 @@
 </td><td> No
 </td><td> Yes
 </td><td> No, needs Xerces
+</td></tr>
+
+<tr><td> <a href="frmt_netcdf_vector.html">NetCDF</a>
+</td><td> netCDF
+</td><td> Yes
+</td><td> Yes
+</td><td> No, needs libnetcdf
 </td></tr>
 
 <tr><td> <a href="drv_oci.html">Oracle Spatial</a>
@@ -429,6 +457,13 @@
 </td><td> No
 </td><td> Yes
 </td><td> Yes
+</td></tr>
+
+<tr><td> <a href="drv_plscenes.html">Planet Labs Scenes API</a>
+</td><td> PLScenes
+</td><td> No
+</td><td> Yes
+</td><td> No, needs libcurl
 </td></tr>
 
 <tr><td> <a href="drv_pgdump.html">PostgreSQL SQL dump</a>
@@ -567,6 +602,13 @@
 <tr><td> <a href="drv_xplane.html">X-Plane/Flightgear aeronautical data</a>
 </td><td> XPLANE
 </td><td> No
+</td><td> Yes
+</td><td> Yes
+</td></tr>
+
+<tr><td> <a href="drv_vdv.html">VDV-451/VDV-452/IDF</a>
+</td><td> VDV
+</td><td> Yes
 </td><td> Yes
 </td><td> Yes
 </td></tr>

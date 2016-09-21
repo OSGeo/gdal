@@ -270,7 +270,7 @@ ZEXTERN int ZEXPORT deflate OF((z_streamp strm, int flush));
   output buffer because there might be more output pending.
 
     Normally the parameter flush is set to Z_NO_FLUSH, which allows deflate to
-  decide how much data to accumualte before producing output, in order to
+  decide how much data to accumulate before producing output, in order to
   maximize compression.
 
     If the parameter flush is set to Z_SYNC_FLUSH, all pending output is
@@ -869,7 +869,7 @@ ZEXTERN int ZEXPORT inflateBackInit OF((z_streamp strm, int windowBits,
      See inflateBack() for the usage of these routines.
 
      inflateBackInit will return Z_OK on success, Z_STREAM_ERROR if any of
-   the paramaters are invalid, Z_MEM_ERROR if the internal state could not
+   the parameters are invalid, Z_MEM_ERROR if the internal state could not
    be allocated, or Z_VERSION_ERROR if the version of the library does not
    match the version of the header file.
 */
@@ -1286,8 +1286,8 @@ ZEXTERN uLong ZEXPORT crc32   OF((uLong crc, const Bytef *buf, uInt len));
 /*
      Update a running CRC-32 with the bytes buf[0..len-1] and return the
    updated CRC-32. If buf is NULL, this function returns the required initial
-   value for the for the crc. Pre- and post-conditioning (one's complement) is
-   performed within this function so it shouldn't be done by the application.
+   value for the for the CRC. Pre- and post-conditioning (one's complement) is
+   performed within this function so it should not be done by the application.
    Usage example:
 
      uLong crc = crc32(0L, Z_NULL, 0);

@@ -35,22 +35,9 @@
 #include "memdataset.h"
 #include "gdalwarper.h"
 
-// Define a list of "C++" compilers that have broken template support or
-// broken scoping so we can fall back on the legacy implementation of
-// GDALCopyWords
-#define NOT_BROKEN_COMPILER \
-	(!(defined(_MSC_VER) && _MSC_VER <= 1200) && !defined(__BORLANDC__) && \
-	!defined(__SUNPRO_CC))
-
-#if NOT_BROKEN_COMPILER
 #include <stdexcept>
 #include <limits>
-
-// For now, work around MSVC++ 6.0's broken template support. If this value
-// is not defined, the old GDALCopyWords implementation is used.
-#define USE_NEW_COPYWORDS 1
-#endif
-
+#include "gdal_priv_templates.hpp"
 
 CPL_CVSID("$Id$");
 
@@ -70,19 +57,24 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   GDALRasterIOExtraArg* psExtraArg )
 
 {
-    int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
-    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+    const int nBandDataSize = GDALGetDataTypeSizeBytes( eDataType );
+    const int nBufDataSize = GDALGetDataTypeSizeBytes( eBufType );
     GByte       *pabySrcBlock = NULL;
     GDALRasterBlock *poBlock = NULL;
     int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
-    
+
     if( eRWFlag == GF_Write && eFlushBlockErr != CE_None )
     {
-        CPLError(eFlushBlockErr, CPLE_AppDefined,
-                 "An error occured while writing a dirty block");
+        CPLError( eFlushBlockErr, CPLE_AppDefined,
+                  "An error occurred while writing a dirty block" );
         CPLErr eErr = eFlushBlockErr;
         eFlushBlockErr = CE_None;
         return eErr;
+    }
+    if( nBlockXSize <= 0 || nBlockYSize <= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Invalid block size" );
+        return CE_Failure;
     }
 
 /* ==================================================================== */
@@ -92,35 +84,32 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     if( nPixelSpace == nBufDataSize
         && nLineSpace == nPixelSpace * nXSize
         && nBlockXSize == GetXSize()
-        && nBufXSize == nXSize 
+        && nBufXSize == nXSize
         && nBufYSize == nYSize )
     {
-//        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 1\n", 
-//                nXOff, nYOff, nXSize, nYSize, 
-//                (int) eRWFlag );
         CPLErr eErr = CE_None;
 
         for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
         {
             int         nSrcByteOffset;
-            
+
             iSrcY = iBufYOff + nYOff;
-            
+
             if( iSrcY < nLBlockY * nBlockYSize
                 || iSrcY >= (nLBlockY+1) * nBlockYSize )
             {
                 nLBlockY = iSrcY / nBlockYSize;
-                int bJustInitialize = 
+                int bJustInitialize =
                     eRWFlag == GF_Write
                     && nXOff == 0 && nXSize == nBlockXSize
                     && nYOff <= nLBlockY * nBlockYSize
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
 
                 /* Is this a partial tile at right and/or bottom edges of */
-                /* the raster, and that is going to be completely written ? */
-                /* If so, don't load it from storage, but zeroized it so that */
-                /* the content outsize of the validity area is initialized */
-                int bMemZeroBuffer = FALSE;
+                /* the raster, and that is going to be completely written? */
+                /* If so, do not load it from storage, but zero it so that */
+                /* the content outsize of the validity area is initialized. */
+                bool bMemZeroBuffer = false;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff == 0 && nXSize == nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
@@ -128,7 +117,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     (nLBlockY+1) * nBlockYSize > GetYSize() )
                 {
                     bJustInitialize = TRUE;
-                    bMemZeroBuffer = TRUE;
+                    bMemZeroBuffer = true;
                 }
 
                 if( poBlock )
@@ -138,22 +127,16 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( poBlock == NULL )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-            "GetBlockRef failed at X block offset %d, "
-                        "Y block offset %d", 0, nLBlockY );
+                              "GetBlockRef failed at X block offset %d, "
+                              "Y block offset %d", 0, nLBlockY );
                     eErr = CE_Failure;
                     break;
                 }
 
                 if( eRWFlag == GF_Write )
                     poBlock->MarkDirty();
-                
+
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
-                if( pabySrcBlock == NULL )
-                {
-                    poBlock->DropLock();
-                    eErr = CE_Failure;
-                    break;
-                }
                 if( bMemZeroBuffer )
                 {
                     memset(pabySrcBlock, 0,
@@ -161,24 +144,32 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 }
             }
 
+            // To make Coverity happy. Should not happen by design.
+            if( pabySrcBlock == NULL )
+            {
+                CPLAssert(FALSE);
+                eErr = CE_Failure;
+                break;
+            }
+
             nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
                 * nBandDataSize;
-            
+
             if( eDataType == eBufType )
             {
                 if( eRWFlag == GF_Read )
                     memcpy( ((GByte *) pData) + (GPtrDiff_t)iBufYOff * nLineSpace,
-                            pabySrcBlock + nSrcByteOffset, 
+                            pabySrcBlock + nSrcByteOffset,
                             (size_t)nLineSpace );
                 else
-                    memcpy( pabySrcBlock + nSrcByteOffset, 
+                    memcpy( pabySrcBlock + nSrcByteOffset,
                             ((GByte *) pData) + (GPtrDiff_t)iBufYOff * nLineSpace,
                             (size_t)nLineSpace );
             }
             else
             {
                 /* type to type conversion */
-                
+
                 if( eRWFlag == GF_Read )
                     GDALCopyWords( pabySrcBlock + nSrcByteOffset,
                                    eDataType, nBandDataSize,
@@ -205,7 +196,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         return eErr;
     }
-    
+
 /* ==================================================================== */
 /*      Do we have overviews that would be appropriate to satisfy       */
 /*      this request?                                                   */
@@ -215,7 +206,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         int         nOverview;
         GDALRasterIOExtraArg sExtraArg;
-    
+
         GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
 
         nOverview =
@@ -232,13 +223,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                             nPixelSpace, nLineSpace, &sExtraArg );
         }
     }
-    
-    
+
     if( eRWFlag == GF_Read &&
         nBufXSize < nXSize / 100 && nBufYSize < nYSize / 100 &&
         nPixelSpace == nBufDataSize &&
         nLineSpace == nPixelSpace * nBufXSize &&
-        CSLTestBoolean(CPLGetConfigOption("GDAL_NO_COSTLY_OVERVIEW", "NO")) )
+        CPLTestBool(CPLGetConfigOption("GDAL_NO_COSTLY_OVERVIEW", "NO")) )
     {
         memset(pData, 0, (size_t)(nLineSpace * nBufYSize));
         return CE_None;
@@ -253,10 +243,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     if ( /* nPixelSpace == nBufDataSize
             && */ nXSize == nBufXSize
-         && nYSize == nBufYSize )    
+         && nYSize == nBufYSize )
     {
-//        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n", 
-//                nXOff, nYOff, nXSize, nYSize, 
+//        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n",
+//                nXOff, nYOff, nXSize, nYSize,
 //                (int) eRWFlag );
 
 /* -------------------------------------------------------------------- */
@@ -287,7 +277,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 nXSpan = ( ( nXSpan < nXSpanEnd )?nXSpan:nXSpanEnd ) - iSrcX;
                 nXSpanSize = nXSpan * (int)nPixelSpace;
 
-                int bJustInitialize = 
+                int bJustInitialize =
                     eRWFlag == GF_Write
                     && nYOff <= nLBlockY * nBlockYSize
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
@@ -295,10 +285,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
 
                 /* Is this a partial tile at right and/or bottom edges of */
-                /* the raster, and that is going to be completely written ? */
-                /* If so, don't load it from storage, but zeroized it so that */
-                /* the content outsize of the validity area is initialized */
-                int bMemZeroBuffer = FALSE;
+                /* the raster, and that is going to be completely written? */
+                /* If so, do not load it from storage, but zero it so that */
+                /* the content outsize of the validity area is initialized. */
+                bool bMemZeroBuffer = false;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
@@ -308,14 +298,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                      (nYOff + nYSize == GetYSize() && (nLBlockY+1) * nBlockYSize > GetYSize())) )
                 {
                     bJustInitialize = TRUE;
-                    bMemZeroBuffer = TRUE;
+                    bMemZeroBuffer = true;
                 }
-//                printf( "bJustInitialize = %d (%d,%d,%d,%d)\n", 
-//                        bJustInitialize,
-//                        nYOff, nYSize, 
-//                        nLBlockY, nBlockYSize );
-//                bJustInitialize = FALSE;
-                
 
 /* -------------------------------------------------------------------- */
 /*      Ensure we have the appropriate block loaded.                    */
@@ -324,20 +308,15 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( !poBlock )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-            "GetBlockRef failed at X block offset %d, "
-                        "Y block offset %d", nLBlockX, nLBlockY );
+                              "GetBlockRef failed at X block offset %d, "
+                              "Y block offset %d", nLBlockX, nLBlockY );
                     return( CE_Failure );
                 }
 
                 if( eRWFlag == GF_Write )
                     poBlock->MarkDirty();
-                
+
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
-                if( pabySrcBlock == NULL )
-                {
-                    poBlock->DropLock();
-                    return CE_Failure;
-                }
                 if( bMemZeroBuffer )
                 {
                     memset(pabySrcBlock, 0,
@@ -352,20 +331,19 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 int kmax = MIN(nBlockYSize - (iSrcY % nBlockYSize), nBufYSize - iBufYOff);
                 for(int k=0; k<kmax;k++)
                 {
-                    if( eDataType == eBufType 
+                    if( eDataType == eBufType
                         && nPixelSpace == nBufDataSize )
                     {
                         if( eRWFlag == GF_Read )
                             memcpy( ((GByte *) pData) + iBufOffset + (GPtrDiff_t)k * nLineSpace,
                                     pabySrcBlock + iSrcOffset, nXSpanSize );
                         else
-                            memcpy( pabySrcBlock + iSrcOffset, 
+                            memcpy( pabySrcBlock + iSrcOffset,
                                     ((GByte *) pData) + iBufOffset + (GPtrDiff_t)k * nLineSpace, nXSpanSize );
                     }
                     else
                     {
                         /* type to type conversion */
-                        
                         if( eRWFlag == GF_Read )
                             GDALCopyWords( pabySrcBlock + iSrcOffset,
                                         eDataType, nBandDataSize,
@@ -377,7 +355,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                         pabySrcBlock + iSrcOffset,
                                         eDataType, nBandDataSize, nXSpan );
                     }
-                    
+
                     iSrcOffset += nBlockXSize * nBandDataSize;
                 }
 
@@ -435,9 +413,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     dfSrcYInc = dfYSize / (double) nBufYSize;
     CPLErr eErr = CE_None;
 
-//    printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 3\n", 
-//            nXOff, nYOff, nXSize, nYSize, 
-//            (int) eRWFlag );
     if (eRWFlag == GF_Write)
     {
 /* -------------------------------------------------------------------- */
@@ -459,7 +434,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                 // FIXME: this code likely doesn't work if the dirty block gets flushed
                 // to disk before being completely written.
-                // In the meantime, bJustInitalize should probably be set to FALSE
+                // In the meantime, bJustInitialize should probably be set to FALSE
                 // even if it is not ideal performance wise, and for lossy compression
 
     /* -------------------------------------------------------------------- */
@@ -473,12 +448,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     nLBlockX = iDstX / nBlockXSize;
                     nLBlockY = iDstY / nBlockYSize;
 
-                    int bJustInitialize = 
+                    int bJustInitialize =
                            nYOff <= nLBlockY * nBlockYSize
                         && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
                         && nXOff <= nLBlockX * nBlockXSize
                         && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
-                    /*int bMemZeroBuffer = FALSE;
+                    /*bool bMemZeroBuffer = FALSE;
                     if( !bJustInitialize &&
                         nXOff <= nLBlockX * nBlockXSize &&
                         nYOff <= nLBlockY * nBlockYSize &&
@@ -493,7 +468,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     if( poBlock != NULL )
                         poBlock->DropLock();
 
-                    poBlock = GetLockedBlockRef( nLBlockX, nLBlockY, 
+                    poBlock = GetLockedBlockRef( nLBlockX, nLBlockY,
                                                 bJustInitialize );
                     if( poBlock == NULL )
                     {
@@ -503,16 +478,19 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     poBlock->MarkDirty();
 
                     pabyDstBlock = (GByte *) poBlock->GetDataRef();
-                    if( pabyDstBlock == NULL )
-                    {
-                        poBlock->DropLock();
-                        return CE_Failure;
-                    }
                     /*if( bMemZeroBuffer )
                     {
                         memset(pabyDstBlock, 0,
                             nBandDataSize * nBlockXSize * nBlockYSize);
                     }*/
+                }
+
+                // To make Coverity happy. Should not happen by design.
+                if( pabyDstBlock == NULL )
+                {
+                    CPLAssert(FALSE);
+                    eErr = CE_Failure;
+                    break;
                 }
 
     /* -------------------------------------------------------------------- */
@@ -523,7 +501,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                 if( eDataType == eBufType )
                 {
-                    memcpy( pabyDstBlock + iDstOffset, 
+                    memcpy( pabyDstBlock + iDstOffset,
                             ((GByte *) pData) + iBufOffset, nBandDataSize );
                 }
                 else
@@ -580,7 +558,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         double      dfSrcX, dfSrcY;
         int         nLimitBlockY = 0;
-        int         bByteCopy = ( eDataType == eBufType && nBandDataSize == 1); 
+        int         bByteCopy = ( eDataType == eBufType && nBandDataSize == 1);
         int nStartBlockX = -nBlockXSize;
 
 /* -------------------------------------------------------------------- */
@@ -625,7 +603,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     if( poBlock != NULL )
                         poBlock->DropLock();
 
-                    poBlock = GetLockedBlockRef( nLBlockX, nLBlockY, 
+                    poBlock = GetLockedBlockRef( nLBlockX, nLBlockY,
                                                  FALSE );
                     if( poBlock == NULL )
                     {
@@ -634,24 +612,27 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     }
 
                     pabySrcBlock = (GByte *) poBlock->GetDataRef();
-                    if( pabySrcBlock == NULL )
-                    {
-                        eErr = CE_Failure;
-                        break;
-                    }
                 }
 
+                // To make Coverity happy.  Should not happen by design.
+                if( pabySrcBlock == NULL )
+                {
+                    CPLAssert(FALSE);
+                    eErr = CE_Failure;
+                    break;
+                }
     /* -------------------------------------------------------------------- */
     /*      Copy over this pixel of data.                                   */
     /* -------------------------------------------------------------------- */
-                iSrcOffset = ((GPtrDiff_t)nDiffX + iSrcOffsetCst)*nBandDataSize;
 
                 if( bByteCopy )
                 {
+                    iSrcOffset = (GPtrDiff_t)nDiffX + iSrcOffsetCst;
                     ((GByte *) pData)[iBufOffset] = pabySrcBlock[iSrcOffset];
                 }
                 else if( eDataType == eBufType )
                 {
+                    iSrcOffset = ((GPtrDiff_t)nDiffX + iSrcOffsetCst)*nBandDataSize;
                     memcpy( ((GByte *) pData) + iBufOffset,
                             pabySrcBlock + iSrcOffset, nBandDataSize );
                 }
@@ -659,6 +640,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 {
                     /* type to type conversion ... ouch, this is expensive way
                     of handling single words */
+                    iSrcOffset = ((GPtrDiff_t)nDiffX + iSrcOffsetCst)*nBandDataSize;
                     GDALCopyWords( pabySrcBlock + iSrcOffset, eDataType, 0,
                                 ((GByte *) pData) + iBufOffset, eBufType, 0,
                                 1 );
@@ -788,17 +770,24 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
     nRet = CPLPrintPointer(szBuffer, (GByte*)pData - nPixelSpace * nDestXOffVirtual
                             - nLineSpace * nDestYOffVirtual, sizeof(szBuffer));
     szBuffer[nRet] = 0;
-    char** papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", szBuffer);
 
-    papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
-                                CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nPixelSpace));
+    char* apszOptions[4];
+    char szBuffer0[64], szBuffer1[64], szBuffer2[64];
+    snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
+    snprintf(szBuffer1, sizeof(szBuffer1), "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nPixelSpace);
+    snprintf(szBuffer2, sizeof(szBuffer2), "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nLineSpace);
+    apszOptions[0] = szBuffer0;
+    apszOptions[1] = szBuffer1;
+    apszOptions[2] = szBuffer2;
+    apszOptions[3] = NULL;
 
-    papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
-                                CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nLineSpace));
+    poMEMDS->AddBand(eBufType, apszOptions);
 
-    poMEMDS->AddBand(eBufType, papszOptions);
-    CSLDestroy(papszOptions);
     GDALRasterBandH hMEMBand = (GDALRasterBandH)poMEMDS->GetRasterBand(1);
+
+    const char* pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    if( pszNBITS )
+        ((GDALRasterBand*)hMEMBand)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
 
     /* Do the resampling */
     if( bUseWarp )
@@ -812,8 +801,8 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
             VRTAddBand( hVRTDS, eDataType, NULL );
             hVRTBand = GDALGetRasterBand(hVRTDS, 1);
             VRTAddSimpleSource( (VRTSourcedRasterBandH)hVRTBand,
-                                (GDALRasterBandH)this, 
-                                0, 0, 
+                                (GDALRasterBandH)this,
+                                0, 0,
                                 nRasterXSize, nRasterYSize,
                                 0, 0,
                                 nRasterXSize, nRasterYSize,
@@ -826,8 +815,8 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                 VRTSourcedRasterBand* poVRTMaskBand =
                     (VRTSourcedRasterBand*)(((GDALRasterBand*)hVRTBand)->GetMaskBand());
                 poVRTMaskBand->
-                    AddMaskBandSource( this, 
-                                    0, 0, 
+                    AddMaskBandSource( this,
+                                    0, 0,
                                     nRasterXSize, nRasterYSize,
                                     0, 0,
                                     nRasterXSize, nRasterYSize);
@@ -835,7 +824,17 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         }
 
         GDALWarpOptions* psWarpOptions = GDALCreateWarpOptions();
-        psWarpOptions->eResampleAlg = (GDALResampleAlg)psExtraArg->eResampleAlg;
+        switch(psExtraArg->eResampleAlg)
+        {
+            case GRIORA_NearestNeighbour: psWarpOptions->eResampleAlg = GRA_NearestNeighbour; break;
+            case GRIORA_Bilinear:         psWarpOptions->eResampleAlg = GRA_Bilinear; break;
+            case GRIORA_Cubic:            psWarpOptions->eResampleAlg = GRA_Cubic; break;
+            case GRIORA_CubicSpline:      psWarpOptions->eResampleAlg = GRA_CubicSpline; break;
+            case GRIORA_Lanczos:          psWarpOptions->eResampleAlg = GRA_Lanczos; break;
+            case GRIORA_Average:          psWarpOptions->eResampleAlg = GRA_Average; break;
+            case GRIORA_Mode:             psWarpOptions->eResampleAlg = GRA_Mode; break;
+            default:                      CPLAssert(FALSE); psWarpOptions->eResampleAlg = GRA_NearestNeighbour; break;
+        }
         psWarpOptions->hSrcDS = (GDALDatasetH) (hVRTDS ? hVRTDS : GetDataset());
         psWarpOptions->hDstDS = (GDALDatasetH) poMEMDS;
         psWarpOptions->nBandCount = 1;
@@ -882,7 +881,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         GDALResampleFunction pfnResampleFunc =
                         GDALGetResampleFunction(pszResampling, &nKernelRadius);
         CPLAssert(pfnResampleFunc);
-        GDALDataType eWrkDataType = 
+        GDALDataType eWrkDataType =
             GDALGetOvrWorkDataType(pszResampling, eDataType);
         int bHasNoData = FALSE;
         float fNoDataValue = (float) GetNoDataValue(&bHasNoData);
@@ -892,7 +891,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         int nDstBlockXSize = nBufXSize;
         int nDstBlockYSize = nBufYSize;
         int nFullResXChunk, nFullResYChunk;
-        while(TRUE)
+        while( true )
         {
             nFullResXChunk = 3 + (int)(nDstBlockXSize * dfXRatioDstToSrc);
             nFullResYChunk = 3 + (int)(nDstBlockYSize * dfYRatioDstToSrc);
@@ -916,31 +915,29 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         int nFullResXSizeQueried = nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
         int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
 
-        void * pChunk = 
-            VSIMalloc3((GDALGetDataTypeSize(eWrkDataType)/8),
-                        nFullResXSizeQueried, nFullResYSizeQueried );
+        void * pChunk =
+            VSI_MALLOC3_VERBOSE( GDALGetDataTypeSizeBytes(eWrkDataType),
+                                 nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
         GDALRasterBand* poMaskBand = NULL;
-        int nMaskFlags = 0;
-        int bUseNoDataMask = FALSE;
+        int l_nMaskFlags = 0;
+        bool bUseNoDataMask = false;
 
         poMaskBand = GetMaskBand();
-        nMaskFlags = GetMaskFlags();
+        l_nMaskFlags = GetMaskFlags();
 
-        bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
+        bUseNoDataMask = ((l_nMaskFlags & GMF_ALL_VALID) == 0);
         if (bUseNoDataMask)
         {
-            pabyChunkNoDataMask = (GByte *) 
-                (GByte*) VSIMalloc2( nFullResXSizeQueried, nFullResYSizeQueried );
+            pabyChunkNoDataMask = (GByte *)
+                (GByte*) VSI_MALLOC2_VERBOSE( nFullResXSizeQueried, nFullResYSizeQueried );
         }
         if( pChunk == NULL || (bUseNoDataMask && pabyChunkNoDataMask == NULL) )
         {
             GDALClose(poMEMDS);
             CPLFree(pChunk);
             CPLFree(pabyChunkNoDataMask);
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Out of memory in RasterIO()." );
             return CE_Failure;
         }
 
@@ -1007,12 +1004,12 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                 /* Read the source buffers */
                 eErr = RasterIO( GF_Read,
                                 nChunkXOffQueried, nChunkYOffQueried,
-                                nChunkXSizeQueried, nChunkYSizeQueried, 
+                                nChunkXSizeQueried, nChunkYSizeQueried,
                                 pChunk,
                                 nChunkXSizeQueried, nChunkYSizeQueried,
                                 eWrkDataType, 0, 0, NULL );
 
-                int bSkipResample = FALSE;
+                bool bSkipResample = false;
                 int bNoDataMaskFullyOpaque = FALSE;
                 if (eErr == CE_None && bUseNoDataMask)
                 {
@@ -1020,7 +1017,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                                                  nChunkXOffQueried,
                                                  nChunkYOffQueried,
                                                  nChunkXSizeQueried,
-                                                 nChunkYSizeQueried, 
+                                                 nChunkYSizeQueried,
                                                  pabyChunkNoDataMask,
                                                  nChunkXSizeQueried,
                                                  nChunkYSizeQueried,
@@ -1047,7 +1044,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                                             eBufType, (int)nPixelSpace,
                                             nDstXCount);
                             }
-                            bSkipResample = TRUE;
+                            bSkipResample = true;
                         }
                         else
                         {
@@ -1100,6 +1097,462 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                          RasterIOResampled()                         */
+/************************************************************************/
+
+CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg )
+
+{
+    CPLErr eErr = CE_None;
+
+#if 0
+    // Determine if we use warping resampling or overview resampling
+    int bUseWarp;
+    if( !GDALDataTypeIsComplex( eDataType ) )
+        bUseWarp = FALSE;
+    else
+        bUseWarp = TRUE;
+#endif
+
+    double dfXOff, dfYOff, dfXSize, dfYSize;
+    if( psExtraArg->bFloatingPointWindowValidity )
+    {
+        dfXOff = psExtraArg->dfXOff;
+        dfYOff = psExtraArg->dfYOff;
+        dfXSize = psExtraArg->dfXSize;
+        dfYSize = psExtraArg->dfYSize;
+        CPLAssert(dfXOff - nXOff < 1.0);
+        CPLAssert(dfYOff - nYOff < 1.0);
+        CPLAssert(nXSize - dfXSize < 1.0);
+        CPLAssert(nYSize - dfYSize < 1.0);
+    }
+    else
+    {
+        dfXOff = nXOff;
+        dfYOff = nYOff;
+        dfXSize = nXSize;
+        dfYSize = nYSize;
+    }
+
+    double dfXRatioDstToSrc = dfXSize / nBufXSize;
+    double dfYRatioDstToSrc = dfYSize / nBufYSize;
+
+    /* Determine the coordinates in the "virtual" output raster to see */
+    /* if there are not integers, in which case we will use them as a shift */
+    /* so that subwindow extracts give the exact same results as entire raster */
+    /* scaling */
+    double dfDestXOff = dfXOff / dfXRatioDstToSrc;
+    bool bHasXOffVirtual = false;
+    int nDestXOffVirtual = 0;
+    if( fabs(dfDestXOff - (int)(dfDestXOff + 0.5)) < 1e-8 )
+    {
+        bHasXOffVirtual = true;
+        dfXOff = nXOff;
+        nDestXOffVirtual = (int)(dfDestXOff + 0.5);
+    }
+
+    double dfDestYOff = dfYOff / dfYRatioDstToSrc;
+    bool bHasYOffVirtual = false;
+    int nDestYOffVirtual = 0;
+    if( fabs(dfDestYOff - (int)(dfDestYOff + 0.5)) < 1e-8 )
+    {
+        bHasYOffVirtual = true;
+        dfYOff = nYOff;
+        nDestYOffVirtual = (int)(dfDestYOff + 0.5);
+    }
+
+    /* Create a MEM dataset that wraps the output buffer */
+    GDALDataset* poMEMDS = MEMDataset::Create("", nDestXOffVirtual + nBufXSize,
+                                              nDestYOffVirtual + nBufYSize, 0,
+                                              eBufType, NULL);
+    GDALRasterBand** papoDstBands = (GDALRasterBand**) CPLMalloc( nBandCount * sizeof(GDALRasterBand*));
+    for(int i=0;i<nBandCount;i++)
+    {
+        char szBuffer[64];
+        int nRet;
+
+        nRet = CPLPrintPointer(szBuffer, (GByte*)pData - nPixelSpace * nDestXOffVirtual
+                                - nLineSpace * nDestYOffVirtual + nBandSpace * i, sizeof(szBuffer));
+        szBuffer[nRet] = 0;
+
+        char* apszOptions[4];
+        char szBuffer0[64], szBuffer1[64], szBuffer2[64];
+        snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
+        snprintf(szBuffer1, sizeof(szBuffer1), "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nPixelSpace);
+        snprintf(szBuffer2, sizeof(szBuffer2), "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nLineSpace);
+        apszOptions[0] = szBuffer0;
+        apszOptions[1] = szBuffer1;
+        apszOptions[2] = szBuffer2;
+        apszOptions[3] = NULL;
+
+        poMEMDS->AddBand(eBufType, apszOptions);
+
+        GDALRasterBand* poSrcBand = GetRasterBand(panBandMap[i]);
+        papoDstBands[i] = poMEMDS->GetRasterBand(i+1);
+        const char* pszNBITS = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        if( pszNBITS )
+            poMEMDS->GetRasterBand(i+1)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
+    }
+
+#if 0
+    /* Do the resampling */
+    if( bUseWarp )
+    {
+        VRTDatasetH hVRTDS = NULL;
+        GDALRasterBandH hVRTBand = NULL;
+        if( GetDataset() == NULL )
+        {
+            /* Create VRT dataset that wraps the whole dataset */
+            hVRTDS = VRTCreate(nRasterXSize, nRasterYSize);
+            VRTAddBand( hVRTDS, eDataType, NULL );
+            hVRTBand = GDALGetRasterBand(hVRTDS, 1);
+            VRTAddSimpleSource( (VRTSourcedRasterBandH)hVRTBand,
+                                (GDALRasterBandH)this,
+                                0, 0,
+                                nRasterXSize, nRasterYSize,
+                                0, 0,
+                                nRasterXSize, nRasterYSize,
+                                NULL, VRT_NODATA_UNSET );
+
+            /* Add a mask band if needed */
+            if( GetMaskFlags() != GMF_ALL_VALID )
+            {
+                ((GDALDataset*)hVRTDS)->CreateMaskBand(0);
+                VRTSourcedRasterBand* poVRTMaskBand =
+                    (VRTSourcedRasterBand*)(((GDALRasterBand*)hVRTBand)->GetMaskBand());
+                poVRTMaskBand->
+                    AddMaskBandSource( this,
+                                    0, 0,
+                                    nRasterXSize, nRasterYSize,
+                                    0, 0,
+                                    nRasterXSize, nRasterYSize);
+            }
+        }
+
+        GDALWarpOptions* psWarpOptions = GDALCreateWarpOptions();
+        psWarpOptions->eResampleAlg = (GDALResampleAlg)psExtraArg->eResampleAlg;
+        psWarpOptions->hSrcDS = (GDALDatasetH) (hVRTDS ? hVRTDS : GetDataset());
+        psWarpOptions->hDstDS = (GDALDatasetH) poMEMDS;
+        psWarpOptions->nBandCount = 1;
+        int nSrcBandNumber = (hVRTDS ? 1 : nBand);
+        int nDstBandNumber = 1;
+        psWarpOptions->panSrcBands = &nSrcBandNumber;
+        psWarpOptions->panDstBands = &nDstBandNumber;
+        psWarpOptions->pfnProgress = psExtraArg->pfnProgress ?
+                    psExtraArg->pfnProgress : GDALDummyProgress;
+        psWarpOptions->pProgressArg = psExtraArg->pProgressData;
+        psWarpOptions->pfnTransformer = GDALRasterIOTransformer;
+        GDALRasterIOTransformerStruct sTransformer;
+        sTransformer.dfXOff = (bHasXOffVirtual) ? 0 : dfXOff;
+        sTransformer.dfYOff = (bHasYOffVirtual) ? 0 : dfYOff;
+        sTransformer.dfXRatioDstToSrc = dfXRatioDstToSrc;
+        sTransformer.dfYRatioDstToSrc = dfYRatioDstToSrc;
+        psWarpOptions->pTransformerArg = &sTransformer;
+
+        GDALWarpOperationH hWarpOperation = GDALCreateWarpOperation(psWarpOptions);
+        eErr = GDALChunkAndWarpImage( hWarpOperation,
+                                      nDestXOffVirtual, nDestYOffVirtual,
+                                      nBufXSize, nBufYSize );
+        GDALDestroyWarpOperation( hWarpOperation );
+
+        psWarpOptions->panSrcBands = NULL;
+        psWarpOptions->panDstBands = NULL;
+        GDALDestroyWarpOptions( psWarpOptions );
+
+        if( hVRTDS )
+            GDALClose(hVRTDS);
+    }
+    else
+#endif
+    {
+        const char* pszResampling =
+            (psExtraArg->eResampleAlg == GRIORA_Bilinear) ? "BILINEAR" :
+            (psExtraArg->eResampleAlg == GRIORA_Cubic) ? "CUBIC" :
+            (psExtraArg->eResampleAlg == GRIORA_CubicSpline) ? "CUBICSPLINE" :
+            (psExtraArg->eResampleAlg == GRIORA_Lanczos) ? "LANCZOS" :
+            (psExtraArg->eResampleAlg == GRIORA_Average) ? "AVERAGE" :
+            (psExtraArg->eResampleAlg == GRIORA_Mode) ? "MODE" :
+            (psExtraArg->eResampleAlg == GRIORA_Gauss) ? "GAUSS" : "UNKNOWN";
+
+        GDALRasterBand* poFirstSrcBand = GetRasterBand(panBandMap[0]);
+        GDALDataType eDataType = poFirstSrcBand->GetRasterDataType();
+        int nBlockXSize, nBlockYSize;
+        poFirstSrcBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+        int nKernelRadius;
+        GDALResampleFunction pfnResampleFunc =
+                        GDALGetResampleFunction(pszResampling, &nKernelRadius);
+        CPLAssert(pfnResampleFunc);
+#ifdef GDAL_ENABLE_RESAMPLING_MULTIBAND
+        GDALResampleFunctionMultiBands pfnResampleFuncMultiBands =
+                        GDALGetResampleFunctionMultiBands(pszResampling, &nKernelRadius);
+#endif
+        GDALDataType eWrkDataType =
+            GDALGetOvrWorkDataType(pszResampling, eDataType);
+
+        int nDstBlockXSize = nBufXSize;
+        int nDstBlockYSize = nBufYSize;
+        int nFullResXChunk, nFullResYChunk;
+        while( true )
+        {
+            nFullResXChunk = 3 + (int)(nDstBlockXSize * dfXRatioDstToSrc);
+            nFullResYChunk = 3 + (int)(nDstBlockYSize * dfYRatioDstToSrc);
+            if( (nDstBlockXSize == 1 && nDstBlockYSize == 1) ||
+                ((GIntBig)nFullResXChunk * nFullResYChunk <= 1024 * 1024) )
+                break;
+            /* When operating on the full width of a raster whose block width is */
+            /* the raster width, prefer doing chunks in height */
+            if( nFullResXChunk >= nXSize && nXSize == nBlockXSize && nDstBlockYSize > 1 )
+                nDstBlockYSize /= 2;
+            /* Otherwise cut the maximal dimension */
+            else if( nDstBlockXSize > 1 && nFullResXChunk > nFullResYChunk )
+                nDstBlockXSize /= 2;
+            else
+                nDstBlockYSize /= 2;
+        }
+
+        int nOvrFactor = MAX( (int)(0.5 + dfXRatioDstToSrc),
+                                (int)(0.5 + dfYRatioDstToSrc) );
+        if( nOvrFactor == 0 ) nOvrFactor = 1;
+        int nFullResXSizeQueried = nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+        int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
+
+        void * pChunk =
+            VSI_MALLOC3_VERBOSE(
+                GDALGetDataTypeSizeBytes(eWrkDataType) * nBandCount,
+                nFullResXSizeQueried, nFullResYSizeQueried );
+        GByte * pabyChunkNoDataMask = NULL;
+
+        GDALRasterBand* poMaskBand = NULL;
+        int nMaskFlags = 0;
+        bool bUseNoDataMask = false;
+
+        poMaskBand = poFirstSrcBand->GetMaskBand();
+        nMaskFlags = poFirstSrcBand->GetMaskFlags();
+
+        bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
+        if (bUseNoDataMask)
+        {
+            pabyChunkNoDataMask = (GByte *)
+                (GByte*) VSI_MALLOC2_VERBOSE( nFullResXSizeQueried, nFullResYSizeQueried );
+        }
+        if( pChunk == NULL || (bUseNoDataMask && pabyChunkNoDataMask == NULL) )
+        {
+            GDALClose(poMEMDS);
+            CPLFree(pChunk);
+            CPLFree(pabyChunkNoDataMask);
+            return CE_Failure;
+        }
+
+        int nTotalBlocks = ((nBufXSize + nDstBlockXSize - 1) / nDstBlockXSize) *
+                           ((nBufYSize + nDstBlockYSize - 1) / nDstBlockYSize);
+        int nBlocksDone = 0;
+
+        int nDstYOff;
+        for( nDstYOff = 0; nDstYOff < nBufYSize && eErr == CE_None;
+            nDstYOff += nDstBlockYSize )
+        {
+            int nDstYCount;
+            if  (nDstYOff + nDstBlockYSize <= nBufYSize)
+                nDstYCount = nDstBlockYSize;
+            else
+                nDstYCount = nBufYSize - nDstYOff;
+
+            int nChunkYOff = nYOff + (int) (nDstYOff * dfYRatioDstToSrc);
+            int nChunkYOff2 = nYOff + 1 + (int) ceil((nDstYOff + nDstYCount) * dfYRatioDstToSrc);
+            if( nChunkYOff2 > nRasterYSize )
+                nChunkYOff2 = nRasterYSize;
+            int nYCount = nChunkYOff2 - nChunkYOff;
+            CPLAssert(nYCount <= nFullResYChunk);
+
+            int nChunkYOffQueried = nChunkYOff - nKernelRadius * nOvrFactor;
+            int nChunkYSizeQueried = nYCount + 2 * nKernelRadius * nOvrFactor;
+            if( nChunkYOffQueried < 0 )
+            {
+                nChunkYSizeQueried += nChunkYOffQueried;
+                nChunkYOffQueried = 0;
+            }
+            if( nChunkYSizeQueried + nChunkYOffQueried > nRasterYSize )
+                nChunkYSizeQueried = nRasterYSize - nChunkYOffQueried;
+            CPLAssert(nChunkYSizeQueried <= nFullResYSizeQueried);
+
+            int nDstXOff;
+            for( nDstXOff = 0; nDstXOff < nBufXSize && eErr == CE_None;
+                nDstXOff += nDstBlockXSize )
+            {
+                int nDstXCount;
+                if  (nDstXOff + nDstBlockXSize <= nBufXSize)
+                    nDstXCount = nDstBlockXSize;
+                else
+                    nDstXCount = nBufXSize - nDstXOff;
+
+                int nChunkXOff = nXOff + (int) (nDstXOff * dfXRatioDstToSrc);
+                int nChunkXOff2 = nXOff + 1 + (int) ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc);
+                if( nChunkXOff2 > nRasterXSize )
+                    nChunkXOff2 = nRasterXSize;
+                int nXCount = nChunkXOff2 - nChunkXOff;
+                CPLAssert(nXCount <= nFullResXChunk);
+
+                int nChunkXOffQueried = nChunkXOff - nKernelRadius * nOvrFactor;
+                int nChunkXSizeQueried = nXCount + 2 * nKernelRadius * nOvrFactor;
+                if( nChunkXOffQueried < 0 )
+                {
+                    nChunkXSizeQueried += nChunkXOffQueried;
+                    nChunkXOffQueried = 0;
+                }
+                if( nChunkXSizeQueried + nChunkXOffQueried > nRasterXSize )
+                    nChunkXSizeQueried = nRasterXSize - nChunkXOffQueried;
+                CPLAssert(nChunkXSizeQueried <= nFullResXSizeQueried);
+
+                bool bSkipResample = false;
+                int bNoDataMaskFullyOpaque = FALSE;
+                if (eErr == CE_None && bUseNoDataMask)
+                {
+                    eErr = poMaskBand->RasterIO( GF_Read,
+                                                 nChunkXOffQueried,
+                                                 nChunkYOffQueried,
+                                                 nChunkXSizeQueried,
+                                                 nChunkYSizeQueried,
+                                                 pabyChunkNoDataMask,
+                                                 nChunkXSizeQueried,
+                                                 nChunkYSizeQueried,
+                                                 GDT_Byte, 0, 0, NULL );
+
+                    /* Optimizations if mask if fully opaque or transparent */
+                    int nPixels = nChunkXSizeQueried * nChunkYSizeQueried;
+                    GByte bVal = pabyChunkNoDataMask[0];
+                    int i = 1;
+                    for( ; i < nPixels; i++ )
+                    {
+                        if( pabyChunkNoDataMask[i] != bVal )
+                            break;
+                    }
+                    if( i == nPixels )
+                    {
+                        if( bVal == 0 )
+                        {
+                            float fNoDataValue = 0.f;
+                            for(int iBand=0;iBand<nBandCount;iBand++)
+                            {
+                                for(int j=0;j<nDstYCount;j++)
+                                {
+                                    GDALCopyWords(&fNoDataValue, GDT_Float32, 0,
+                                                (GByte*)pData + iBand * nBandSpace +
+                                                    nLineSpace * (j + nDstYOff) +
+                                                    nDstXOff * nPixelSpace,
+                                                eBufType, (int)nPixelSpace,
+                                                nDstXCount);
+                                }
+                            }
+                            bSkipResample = true;
+                        }
+                        else
+                        {
+                            bNoDataMaskFullyOpaque = TRUE;
+                        }
+                    }
+                }
+
+                if( !bSkipResample && eErr == CE_None )
+                {
+                    /* Read the source buffers */
+                    eErr = RasterIO( GF_Read,
+                                    nChunkXOffQueried, nChunkYOffQueried,
+                                    nChunkXSizeQueried, nChunkYSizeQueried,
+                                    pChunk,
+                                    nChunkXSizeQueried, nChunkYSizeQueried,
+                                    eWrkDataType,
+                                    nBandCount, panBandMap,
+                                    0, 0, 0, NULL );
+                }
+
+#ifdef GDAL_ENABLE_RESAMPLING_MULTIBAND
+                if( pfnResampleFuncMultiBands && !bSkipResample && eErr == CE_None )
+                {
+                    eErr = pfnResampleFuncMultiBands( dfXRatioDstToSrc,
+                                                      dfYRatioDstToSrc,
+                                                      dfXOff - nXOff, /* == 0 if bHasXOffVirtual */
+                                                      dfYOff - nYOff, /* == 0 if bHasYOffVirtual */
+                                                      eWrkDataType,
+                                                      (GByte*)pChunk,
+                                                      nBandCount,
+                                                      (bNoDataMaskFullyOpaque) ? NULL : pabyChunkNoDataMask,
+                                                      nChunkXOffQueried - ((bHasXOffVirtual) ? 0 : nXOff),
+                                                      nChunkXSizeQueried,
+                                                      nChunkYOffQueried - ((bHasYOffVirtual) ? 0 : nYOff),
+                                                      nChunkYSizeQueried,
+                                                      nDstXOff + nDestXOffVirtual,
+                                                      nDstXOff + nDestXOffVirtual + nDstXCount,
+                                                      nDstYOff + nDestYOffVirtual,
+                                                      nDstYOff + nDestYOffVirtual + nDstYCount,
+                                                      papoDstBands,
+                                                      pszResampling,
+                                                      FALSE /*bHasNoData*/,
+                                                      0.f /* fNoDataValue */,
+                                                      NULL /* color table*/,
+                                                      eDataType );
+                }
+                else
+#endif
+                {
+                    size_t nChunkBandOffset =
+                        static_cast<size_t>(nChunkXSizeQueried) *
+                        nChunkYSizeQueried *
+                        GDALGetDataTypeSizeBytes(eWrkDataType);
+                    for(int i=0; i<nBandCount && !bSkipResample && eErr == CE_None; i++ )
+                    {
+                        eErr = pfnResampleFunc( dfXRatioDstToSrc,
+                                                dfYRatioDstToSrc,
+                                                dfXOff - nXOff, /* == 0 if bHasXOffVirtual */
+                                                dfYOff - nYOff, /* == 0 if bHasYOffVirtual */
+                                                eWrkDataType,
+                                                (GByte*)pChunk + i * nChunkBandOffset,
+                                                (bNoDataMaskFullyOpaque) ? NULL : pabyChunkNoDataMask,
+                                                nChunkXOffQueried - ((bHasXOffVirtual) ? 0 : nXOff),
+                                                nChunkXSizeQueried,
+                                                nChunkYOffQueried - ((bHasYOffVirtual) ? 0 : nYOff),
+                                                nChunkYSizeQueried,
+                                                nDstXOff + nDestXOffVirtual,
+                                                nDstXOff + nDestXOffVirtual + nDstXCount,
+                                                nDstYOff + nDestYOffVirtual,
+                                                nDstYOff + nDestYOffVirtual + nDstYCount,
+                                                poMEMDS->GetRasterBand(i+1),
+                                                pszResampling,
+                                                FALSE /*bHasNoData*/,
+                                                0.f /* fNoDataValue */,
+                                                NULL /* color table*/,
+                                                eDataType );
+                    }
+                }
+
+                nBlocksDone ++;
+                if( eErr == CE_None && psExtraArg->pfnProgress != NULL &&
+                    !psExtraArg->pfnProgress(1.0 * nBlocksDone / nTotalBlocks, "",
+                                             psExtraArg->pProgressData) )
+                {
+                    eErr = CE_Failure;
+                }
+            }
+        }
+
+        CPLFree(pChunk);
+        CPLFree(pabyChunkNoDataMask);
+    }
+
+    CPLFree(papoDstBands);
+    GDALClose(poMEMDS);
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                           GDALSwapWords()                            */
 /************************************************************************/
 
@@ -1111,13 +1564,13 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
  * word aligned in memory.  Use the CPL_LSB and CPL_MSB macros from cpl_port.h
  * to determine if the current platform is big endian or little endian.  Use
  * The macros like CPL_SWAP32() to byte swap single values without the overhead
- * of a function call. 
- * 
+ * of a function call.
+ *
  * @param pData pointer to start of data buffer.
  * @param nWordSize size of words being swapped in bytes. Normally 2, 4 or 8.
- * @param nWordCount the number of words to be swapped in this call. 
+ * @param nWordCount the number of words to be swapped in this call.
  * @param nWordSkip the byte offset from the start of one word to the start of
- * the next. For packed buffers this is the same as nWordSize. 
+ * the next. For packed buffers this is the same as nWordSize.
  */
 
 void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
@@ -1148,7 +1601,7 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
             pabyData += nWordSkip;
         }
         break;
-        
+
       case 4:
         CPLAssert( nWordSkip >= 4 || nWordCount == 1 );
         for( i = 0; i < nWordCount; i++ )
@@ -1198,210 +1651,43 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
     }
 }
 
-#ifdef USE_NEW_COPYWORDS
+/************************************************************************/
+/*                           GDALSwapWordsEx()                          */
+/************************************************************************/
+
+/**
+ * Byte swap words in-place.
+ *
+ * This function will byte swap a set of 2, 4 or 8 byte words "in place" in
+ * a memory array.  No assumption is made that the words being swapped are
+ * word aligned in memory.  Use the CPL_LSB and CPL_MSB macros from cpl_port.h
+ * to determine if the current platform is big endian or little endian.  Use
+ * The macros like CPL_SWAP32() to byte swap single values without the overhead
+ * of a function call.
+ *
+ * @param pData pointer to start of data buffer.
+ * @param nWordSize size of words being swapped in bytes. Normally 2, 4 or 8.
+ * @param nWordCount the number of words to be swapped in this call.
+ * @param nWordSkip the byte offset from the start of one word to the start of
+ * the next. For packed buffers this is the same as nWordSize.
+ * @since GDAL 2.1
+ */
+void CPL_STDCALL GDALSwapWordsEx( void *pData, int nWordSize, size_t nWordCount,
+                                  int nWordSkip )
+{
+    GByte* pabyData = reinterpret_cast<GByte*>(pData);
+    while( nWordCount )
+    {
+        /* Pick-up a multiple of 8 as max chunk size */
+        int nWordCountSmall = (nWordCount > (1 << 30)) ? (1 << 30) : static_cast<int>(nWordCount);
+        GDALSwapWords(pabyData, nWordSize, nWordCountSmall, nWordSkip);
+        pabyData += static_cast<size_t>(nWordSkip) * nWordCountSmall;
+        nWordCount -= nWordCountSmall;
+    }
+}
+
 // Place the new GDALCopyWords helpers in an anonymous namespace
 namespace {
-/************************************************************************/
-/*                          GetDataLimits()                             */
-/************************************************************************/
-/**
- * Compute the limits of values that can be placed in Tout in terms of
- * Tin. Usually used for output clamping, when the output data type's
- * limits are stable relative to the input type (i.e. no roundoff error).
- *
- * @param tMaxValue the returned maximum value
- * @param tMinValue the returned minimum value
- */
-
-template <class Tin, class Tout>
-inline void GetDataLimits(Tin &tMaxValue, Tin &tMinValue)
-{
-    tMaxValue = std::numeric_limits<Tin>::max();
-    tMinValue = std::numeric_limits<Tin>::min();
-
-    // Compute the actual minimum value of Tout in terms of Tin.
-    if (std::numeric_limits<Tout>::is_signed && std::numeric_limits<Tout>::is_integer)
-    {
-        // the minimum value is less than zero
-        if (std::numeric_limits<Tout>::digits < std::numeric_limits<Tin>::digits ||
-			!std::numeric_limits<Tin>::is_integer)
-        {
-            // Tout is smaller than Tin, so we need to clamp values in input
-            // to the range of Tout's min/max values
-            if (std::numeric_limits<Tin>::is_signed)
-            {
-                tMinValue = static_cast<Tin>(std::numeric_limits<Tout>::min());
-            }
-            tMaxValue = static_cast<Tin>(std::numeric_limits<Tout>::max());
-        }
-    }
-    else if (std::numeric_limits<Tout>::is_integer)
-    {
-        // the output is unsigned, so we just need to determine the max
-        if (std::numeric_limits<Tout>::digits <= std::numeric_limits<Tin>::digits)
-        {
-            // Tout is smaller than Tin, so we need to clamp the input values
-            // to the range of Tout's max
-            tMaxValue = static_cast<Tin>(std::numeric_limits<Tout>::max());
-        }
-        tMinValue = 0;
-    }
-
-}
-
-/************************************************************************/
-/*                            ClampValue()                                */
-/************************************************************************/
-/**
- * Clamp values of type T to a specified range
- *
- * @param tValue the value
- * @param tMax the max value
- * @param tMin the min value
- */
-template <class T>
-inline T ClampValue(const T tValue, const T tMax, const T tMin)
-{
-    return tValue > tMax ? tMax :
-           tValue < tMin ? tMin : tValue;
-}
-
-/************************************************************************/
-/*                            CopyWord()                                */
-/************************************************************************/
-/**
- * Copy a single word, optionally rounding if appropriate (i.e. going
- * from the float to the integer case). Note that this is the function
- * you should specialize if you're adding a new data type.
- *
- * @param tValueIn value of type Tin; the input value to be converted
- * @param tValueOut value of type Tout; the output value
- */
-
-template <class Tin, class Tout>
-inline void CopyWord(const Tin tValueIn, Tout &tValueOut)
-{
-    Tin tMaxVal, tMinVal;
-    GetDataLimits<Tin, Tout>(tMaxVal, tMinVal);
-    tValueOut = static_cast<Tout>(ClampValue(tValueIn, tMaxVal, tMinVal));
-}
-
-template <class Tin>
-inline void CopyWord(const Tin tValueIn, float &fValueOut)
-{
-    fValueOut = (float) tValueIn;
-}
-
-template <class Tin>
-inline void CopyWord(const Tin tValueIn, double &dfValueOut)
-{
-    dfValueOut = tValueIn;
-}
-
-inline void CopyWord(const double dfValueIn, double &dfValueOut)
-{
-    dfValueOut = dfValueIn;
-}
-
-inline void CopyWord(const float fValueIn, float &fValueOut)
-{
-    fValueOut = fValueIn;
-}
-
-inline void CopyWord(const float fValueIn, double &dfValueOut)
-{
-    dfValueOut = fValueIn;
-}
-
-inline void CopyWord(const double dfValueIn, float &fValueOut)
-{
-    fValueOut = static_cast<float>(dfValueIn);
-}
-
-template <class Tout>
-inline void CopyWord(const float fValueIn, Tout &tValueOut)
-{
-    float fMaxVal, fMinVal;
-    GetDataLimits<float, Tout>(fMaxVal, fMinVal);
-    tValueOut = static_cast<Tout>(
-        ClampValue(fValueIn + 0.5f, fMaxVal, fMinVal));
-}
-
-template <class Tout>
-inline void CopyWord(const double dfValueIn, Tout &tValueOut)
-{
-    double dfMaxVal, dfMinVal;
-    GetDataLimits<double, Tout>(dfMaxVal, dfMinVal);
-    tValueOut = static_cast<Tout>(
-        ClampValue(dfValueIn + 0.5, dfMaxVal, dfMinVal));
-}
-
-inline void CopyWord(const double dfValueIn, int &nValueOut)
-{
-    double dfMaxVal, dfMinVal;
-    GetDataLimits<double, int>(dfMaxVal, dfMinVal);
-    double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 :
-        dfValueIn - 0.5;
-    nValueOut = static_cast<int>(
-        ClampValue(dfValue, dfMaxVal, dfMinVal));
-}
-
-inline void CopyWord(const float fValueIn, short &nValueOut)
-{
-    float fMaxVal, fMinVal;
-    GetDataLimits<float, short>(fMaxVal, fMinVal);
-    float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f :
-        fValueIn - 0.5f;
-    nValueOut = static_cast<short>(
-        ClampValue(fValue, fMaxVal, fMinVal));
-}
-
-inline void CopyWord(const double dfValueIn, short &nValueOut)
-{
-    double dfMaxVal, dfMinVal;
-    GetDataLimits<double, short>(dfMaxVal, dfMinVal);
-    double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 :
-        dfValueIn - 0.5;
-    nValueOut = static_cast<short>(
-        ClampValue(dfValue, dfMaxVal, dfMinVal));
-}
-
-// Roundoff occurs for Float32 -> int32 for max/min. Overload CopyWord
-// specifically for this case.
-inline void CopyWord(const float fValueIn, int &nValueOut)
-{
-    if (fValueIn >= static_cast<float>(std::numeric_limits<int>::max()))
-    {
-        nValueOut = std::numeric_limits<int>::max();
-    }
-    else if (fValueIn <= static_cast<float>(std::numeric_limits<int>::min()))
-    {
-        nValueOut = std::numeric_limits<int>::min();
-    }
-    else
-    {
-        nValueOut = static_cast<int>(fValueIn > 0.0f ? 
-            fValueIn + 0.5f : fValueIn - 0.5f);
-    }
-}
-
-// Roundoff occurs for Float32 -> uint32 for max. Overload CopyWord
-// specifically for this case.
-inline void CopyWord(const float fValueIn, unsigned int &nValueOut)
-{
-    if (fValueIn >= static_cast<float>(std::numeric_limits<unsigned int>::max()))
-    {
-        nValueOut = std::numeric_limits<unsigned int>::max();
-    }
-    else if (fValueIn <= static_cast<float>(std::numeric_limits<unsigned int>::min()))
-    {
-        nValueOut = std::numeric_limits<unsigned int>::min();
-    }
-    else
-    {
-        nValueOut = static_cast<unsigned int>(fValueIn + 0.5f);
-    }
-}
 
 /************************************************************************/
 /*                           GDALCopyWordsT()                           */
@@ -1422,10 +1708,10 @@ inline void CopyWord(const float fValueIn, unsigned int &nValueOut)
  * @param nWordCount the total number of pixel words to copy
  *
  * @code
- * // Assume an input buffer of type GUInt16 named pBufferIn 
+ * // Assume an input buffer of type GUInt16 named pBufferIn
  * GByte *pBufferOut = new GByte[numBytesOut];
  * GDALCopyWordsT<GUInt16, GByte>(pSrcData, 2, pDstData, 1, numBytesOut);
- * @code
+ * @endcode
  * @note
  * This is a private function, and should not be exposed outside of rasterio.cpp.
  * External users should call the GDALCopyWords driver function.
@@ -1433,23 +1719,81 @@ inline void CopyWord(const float fValueIn, unsigned int &nValueOut)
  */
 
 template <class Tin, class Tout>
-static void GDALCopyWordsT(const Tin* const pSrcData, int nSrcPixelStride,
-                           Tout* const pDstData, int nDstPixelStride,
+static void GDALCopyWordsT(const Tin* const CPL_RESTRICT pSrcData, int nSrcPixelStride,
+                           Tout* const CPL_RESTRICT pDstData, int nDstPixelStride,
                            int nWordCount)
 {
     std::ptrdiff_t nDstOffset = 0;
 
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
-    for (std::ptrdiff_t n = 0; n < nWordCount; n++)
+    for (std::ptrdiff_t n = 0; n < nWordCount; n++  )
     {
         const Tin tValue = *reinterpret_cast<const Tin*>(pSrcDataPtr + (n * nSrcPixelStride));
         Tout* const pOutPixel = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
 
-        CopyWord(tValue, *pOutPixel);
+        GDALCopyWord(tValue, *pOutPixel);
 
         nDstOffset += nDstPixelStride;
     }
+}
+
+
+template <class Tin, class Tout>
+static void GDALCopyWordsT_4atatime(const Tin* const CPL_RESTRICT pSrcData, int nSrcPixelStride,
+                           Tout* const CPL_RESTRICT pDstData, int nDstPixelStride,
+                           int nWordCount)
+{
+    std::ptrdiff_t nDstOffset = 0;
+
+    const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
+    char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
+    std::ptrdiff_t n = 0;
+    if( nSrcPixelStride == (int)sizeof(Tin) && nDstPixelStride == (int)sizeof(Tout) )
+    {
+        for (; n < nWordCount-3; n+=4)
+        {
+            const Tin* pInValues = reinterpret_cast<const Tin*>(pSrcDataPtr + (n * nSrcPixelStride));
+            Tout* const pOutPixels = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
+
+            GDALCopy4Words(pInValues, pOutPixels);
+
+            nDstOffset += 4 * nDstPixelStride;
+        }
+    }
+    for( ; n < nWordCount; n++  )
+    {
+        const Tin tValue = *reinterpret_cast<const Tin*>(pSrcDataPtr + (n * nSrcPixelStride));
+        Tout* const pOutPixel = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
+
+        GDALCopyWord(tValue, *pOutPixel);
+
+        nDstOffset += nDstPixelStride;
+    }
+}
+
+static void GDALCopyWordsT(const float* const CPL_RESTRICT pSrcData, int nSrcPixelStride,
+                           GByte* const CPL_RESTRICT pDstData, int nDstPixelStride,
+                           int nWordCount)
+{
+    GDALCopyWordsT_4atatime(pSrcData, nSrcPixelStride,
+                            pDstData, nDstPixelStride, nWordCount);
+}
+
+static void GDALCopyWordsT(const float* const CPL_RESTRICT pSrcData, int nSrcPixelStride,
+                           GInt16* const CPL_RESTRICT pDstData, int nDstPixelStride,
+                           int nWordCount)
+{
+    GDALCopyWordsT_4atatime(pSrcData, nSrcPixelStride,
+                            pDstData, nDstPixelStride, nWordCount);
+}
+
+static void GDALCopyWordsT(const float* const CPL_RESTRICT pSrcData, int nSrcPixelStride,
+                           GUInt16* const CPL_RESTRICT pDstData, int nDstPixelStride,
+                           int nWordCount)
+{
+    GDALCopyWordsT_4atatime(pSrcData, nSrcPixelStride,
+                            pDstData, nDstPixelStride, nWordCount);
 }
 
 /************************************************************************/
@@ -1458,7 +1802,7 @@ static void GDALCopyWordsT(const Tin* const pSrcData, int nSrcPixelStride,
 /**
  * Template function, used to copy data from pSrcData into buffer
  * pDstData, with stride nSrcPixelStride in the source data and
- * stride nDstPixelStride in the destination data. Deals with the 
+ * stride nDstPixelStride in the destination data. Deals with the
  * complex case, where input is complex and output is complex.
  *
  * @param pSrcData the source data buffer
@@ -1471,8 +1815,8 @@ static void GDALCopyWordsT(const Tin* const pSrcData, int nSrcPixelStride,
  *
  */
 template <class Tin, class Tout>
-inline void GDALCopyWordsComplexT(const Tin* const pSrcData, int nSrcPixelStride,
-                                  Tout* const pDstData, int nDstPixelStride,
+inline void GDALCopyWordsComplexT(const Tin* const CPL_RESTRICT pSrcData, int nSrcPixelStride,
+                                  Tout* const CPL_RESTRICT pDstData, int nDstPixelStride,
                                   int nWordCount)
 {
     std::ptrdiff_t nDstOffset = 0;
@@ -1482,15 +1826,15 @@ inline void GDALCopyWordsComplexT(const Tin* const pSrcData, int nSrcPixelStride
     // Determine the minimum and maximum value we can have based
     // on the constraints of Tin and Tout.
     Tin tMaxValue, tMinValue;
-    GetDataLimits<Tin, Tout>(tMaxValue, tMinValue);
+    GDALGetDataLimits<Tin, Tout>(tMaxValue, tMinValue);
 
     for (std::ptrdiff_t n = 0; n < nWordCount; n++)
     {
         const Tin* const pPixelIn = reinterpret_cast<const Tin*>(pSrcDataPtr + n * nSrcPixelStride);
         Tout* const pPixelOut = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
 
-        CopyWord(pPixelIn[0], pPixelOut[0]);
-        CopyWord(pPixelIn[1], pPixelOut[1]);
+        GDALCopyWord(pPixelIn[0], pPixelOut[0]);
+        GDALCopyWord(pPixelIn[1], pPixelOut[1]);
 
         nDstOffset += nDstPixelStride;
     }
@@ -1502,7 +1846,7 @@ inline void GDALCopyWordsComplexT(const Tin* const pSrcData, int nSrcPixelStride
 /**
  * Template function, used to copy data from pSrcData into buffer
  * pDstData, with stride nSrcPixelStride in the source data and
- * stride nDstPixelStride in the destination data. Deals with the 
+ * stride nDstPixelStride in the destination data. Deals with the
  * case where the value is real coming in, but complex going out.
  *
  * @param pSrcData the source data buffer
@@ -1515,8 +1859,8 @@ inline void GDALCopyWordsComplexT(const Tin* const pSrcData, int nSrcPixelStride
  *
  */
 template <class Tin, class Tout>
-inline void GDALCopyWordsComplexOutT(const Tin* const pSrcData, int nSrcPixelStride,
-                                     Tout* const pDstData, int nDstPixelStride,
+inline void GDALCopyWordsComplexOutT(const Tin* const CPL_RESTRICT pSrcData, int nSrcPixelStride,
+                                     Tout* const CPL_RESTRICT pDstData, int nDstPixelStride,
                                      int nWordCount)
 {
     std::ptrdiff_t nDstOffset = 0;
@@ -1528,9 +1872,9 @@ inline void GDALCopyWordsComplexOutT(const Tin* const pSrcData, int nSrcPixelStr
 
     for (std::ptrdiff_t n = 0; n < nWordCount; n++)
     {
-        const Tin tValue = *reinterpret_cast<const Tin* const>(pSrcDataPtr + n * nSrcPixelStride);
+        const Tin tValue = *reinterpret_cast<const Tin*>(pSrcDataPtr + n * nSrcPixelStride);
         Tout* const pPixelOut = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
-        CopyWord(tValue, *pPixelOut);
+        GDALCopyWord(tValue, *pPixelOut);
 
         pPixelOut[1] = tOutZero;
 
@@ -1555,8 +1899,8 @@ inline void GDALCopyWordsComplexOutT(const Tin* const pSrcData, int nSrcPixelStr
  * @param nWordCount number of pixel words to be copied
  */
 template <class T>
-inline void GDALCopyWordsFromT(const T* const pSrcData, int nSrcPixelStride, bool bInComplex,
-                               void *pDstData, GDALDataType eDstType, int nDstPixelStride,
+inline void GDALCopyWordsFromT(const T* const CPL_RESTRICT pSrcData, int nSrcPixelStride, bool bInComplex,
+                               void * CPL_RESTRICT pDstData, GDALDataType eDstType, int nDstPixelStride,
                                int nWordCount)
 {
     switch (eDstType)
@@ -1659,14 +2003,14 @@ inline void GDALCopyWordsFromT(const T* const pSrcData, int nSrcPixelStride, boo
 }
 
 } // end anonymous namespace
-#endif
 
 /************************************************************************/
 /*                          GDALReplicateWord()                         */
 /************************************************************************/
 
-void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
-                       void *pDstData, GDALDataType eDstType, int nDstPixelStride,
+static
+void GDALReplicateWord(const void * CPL_RESTRICT pSrcData, GDALDataType eSrcType,
+                       void * CPL_RESTRICT pDstData, GDALDataType eDstType, int nDstPixelStride,
                        int nWordCount)
 {
 /* ----------------------------------------------------------------------- */
@@ -1676,8 +2020,8 @@ void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
 /* ----------------------------------------------------------------------- */
     /* Let the general translation case do the necessary conversions */
     /* on the first destination element */
-    GDALCopyWords(pSrcData, eSrcType, 0,
-                  pDstData, eDstType, nDstPixelStride,
+    GDALCopyWords((void*)pSrcData, eSrcType, 0,
+                  pDstData, eDstType, 0,
                   1 );
 
     /* Now copy the first element to the nWordCount - 1 following destination */
@@ -1750,6 +2094,112 @@ void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
 }
 
 /************************************************************************/
+/*                        GDALUnrolledByteCopy()                        */
+/************************************************************************/
+
+template<int srcStride, int dstStride>
+static inline void GDALUnrolledByteCopy(GByte* CPL_RESTRICT pabyDest,
+                                    const GByte* CPL_RESTRICT pabySrc,
+                                    int nIters)
+{
+    if (nIters >= 16)
+    {
+        for ( int i = nIters / 16; i != 0; i -- )
+        {
+            pabyDest[0*dstStride] = pabySrc[0*srcStride];
+            pabyDest[1*dstStride] = pabySrc[1*srcStride];
+            pabyDest[2*dstStride] = pabySrc[2*srcStride];
+            pabyDest[3*dstStride] = pabySrc[3*srcStride];
+            pabyDest[4*dstStride] = pabySrc[4*srcStride];
+            pabyDest[5*dstStride] = pabySrc[5*srcStride];
+            pabyDest[6*dstStride] = pabySrc[6*srcStride];
+            pabyDest[7*dstStride] = pabySrc[7*srcStride];
+            pabyDest[8*dstStride] = pabySrc[8*srcStride];
+            pabyDest[9*dstStride] = pabySrc[9*srcStride];
+            pabyDest[10*dstStride] = pabySrc[10*srcStride];
+            pabyDest[11*dstStride] = pabySrc[11*srcStride];
+            pabyDest[12*dstStride] = pabySrc[12*srcStride];
+            pabyDest[13*dstStride] = pabySrc[13*srcStride];
+            pabyDest[14*dstStride] = pabySrc[14*srcStride];
+            pabyDest[15*dstStride] = pabySrc[15*srcStride];
+            pabyDest += 16*dstStride;
+            pabySrc += 16*srcStride;
+        }
+        nIters = nIters % 16;
+    }
+    for( int i = 0; i < nIters; i++ )
+    {
+        pabyDest[i*dstStride] = *pabySrc;
+        pabySrc += srcStride;
+    }
+}
+
+/************************************************************************/
+/*                         GDALFastByteCopy()                           */
+/************************************************************************/
+
+static inline void GDALFastByteCopy(GByte* CPL_RESTRICT pabyDest,
+                                    int nDestStride,
+                                    const GByte* CPL_RESTRICT pabySrc,
+                                    int nSrcStride,
+                                    int nIters)
+{
+    if( nDestStride == 1 )
+    {
+        if( nSrcStride == 1 )
+        {
+            memcpy(pabyDest, pabySrc, nIters);
+        }
+        else if( nSrcStride == 3 )
+        {
+            GDALUnrolledByteCopy<3,1>(pabyDest, pabySrc, nIters);
+        }
+        else if( nSrcStride == 4 )
+        {
+            GDALUnrolledByteCopy<4,1>(pabyDest, pabySrc, nIters);
+        }
+        else
+        {
+            while( nIters-- > 0 )
+            {
+                *pabyDest = *pabySrc;
+                pabySrc += nSrcStride;
+                pabyDest ++;
+            }
+        }
+    }
+    else if( nSrcStride == 1 )
+    {
+        if( nDestStride == 3 )
+        {
+            GDALUnrolledByteCopy<1,3>(pabyDest, pabySrc, nIters);
+        }
+        else if( nDestStride == 4 )
+        {
+            GDALUnrolledByteCopy<1,4>(pabyDest, pabySrc, nIters);
+        }
+        else
+        {
+            while( nIters-- > 0 )
+            {
+                *pabyDest = *pabySrc;
+                pabySrc ++;
+                pabyDest += nDestStride;
+            }
+        }
+    }
+    else
+    {
+        while( nIters-- > 0 )
+        {
+            *pabyDest = *pabySrc;
+            pabySrc += nSrcStride;
+            pabyDest += nDestStride;
+        }
+    }
+}
+
+/************************************************************************/
 /*                           GDALCopyWords()                            */
 /************************************************************************/
 
@@ -1758,19 +2208,19 @@ void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
  *
  * This function is used to copy pixel word values from one memory buffer
  * to another, with support for conversion between data types, and differing
- * step factors.  The data type conversion is done using the normal GDAL 
+ * step factors.  The data type conversion is done using the normal GDAL
  * rules.  Values assigned to a lower range integer type are clipped.  For
  * instance assigning GDT_Int16 values to a GDT_Byte buffer will cause values
- * less the 0 to be set to 0, and values larger than 255 to be set to 255. 
+ * less the 0 to be set to 0, and values larger than 255 to be set to 255.
  * Assignment from floating point to integer uses default C type casting
- * semantics.   Assignment from non-complex to complex will result in the 
- * imaginary part being set to zero on output.  Assigment from complex to 
+ * semantics.   Assignment from non-complex to complex will result in the
+ * imaginary part being set to zero on output.  Assignment from complex to
  * non-complex will result in the complex portion being lost and the real
- * component being preserved (<i>not magnitidue!</i>). 
+ * component being preserved (<i>not magnitidue!</i>).
  *
- * No assumptions are made about the source or destination words occuring
+ * No assumptions are made about the source or destination words occurring
  * on word boundaries.  It is assumed that all values are in native machine
- * byte order. 
+ * byte order.
  *
  * @param pSrcData Pointer to source data to be converted.
  * @param eSrcType the source data type (see GDALDataType enum)
@@ -1780,8 +2230,7 @@ void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
  * @param nDstPixelStride Destination pixel stride (i.e. distance between 2 words), in bytes
  * @param nWordCount number of words to be copied
  *
- * 
- * @note 
+ * @note
  * When adding a new data type to GDAL, you must do the following to
  * support it properly within the GDALCopyWords function:
  * 1. Add the data type to the switch on eSrcType in GDALCopyWords.
@@ -1795,11 +2244,54 @@ void GDALReplicateWord(void *pSrcData, GDALDataType eSrcType,
  */
 
 void CPL_STDCALL
-GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
-               void * pDstData, GDALDataType eDstType, int nDstPixelStride,
+GDALCopyWords( const void * CPL_RESTRICT pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
+               void * CPL_RESTRICT pDstData, GDALDataType eDstType, int nDstPixelStride,
                int nWordCount )
 
 {
+    // On platforms where alignment matters, be careful
+    const int nSrcDataTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+    const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(eDstType);
+    if( !(eSrcType == eDstType && nSrcPixelStride == nDstPixelStride) &&
+        ( (((GPtrDiff_t)pSrcData) % nSrcDataTypeSize) != 0 ||
+          (((GPtrDiff_t)pDstData) % nDstDataTypeSize) != 0 ||
+          ( nSrcPixelStride % nSrcDataTypeSize) != 0 ||
+          ( nDstPixelStride % nDstDataTypeSize) != 0 ) )
+    {
+        if( eSrcType == eDstType )
+        {
+            for( int i = 0; i < nWordCount; i++ )
+            {
+                memcpy( (GByte*)pDstData + nDstPixelStride * i,
+                        (GByte*)pSrcData + nSrcPixelStride * i,
+                        nDstDataTypeSize );
+            }
+        }
+        else
+        {
+#define ALIGN_PTR(ptr, align) ((ptr) + ((align) - ((size_t)(ptr) % (align))) % (align))
+            GByte abySrcBuffer[32]; /* the largest we need is for CFloat64 (16 bytes), so 32 bytes to be sure to get correctly aligned pointer */
+            GByte abyDstBuffer[32];
+            GByte* pabySrcBuffer = ALIGN_PTR(abySrcBuffer, nSrcDataTypeSize);
+            GByte* pabyDstBuffer = ALIGN_PTR(abyDstBuffer, nDstDataTypeSize);
+            for( int i = 0; i < nWordCount; i++ )
+            {
+                memcpy(pabySrcBuffer, (GByte*)pSrcData + nSrcPixelStride * i, nSrcDataTypeSize);
+                GDALCopyWords( pabySrcBuffer,
+                            eSrcType,
+                            0,
+                            pabyDstBuffer,
+                            eDstType,
+                            0,
+                            1 );
+                memcpy( (GByte*)pDstData + nDstPixelStride * i, pabyDstBuffer, nDstDataTypeSize );
+            }
+        }
+        return;
+    }
+#endif
+
     // Deal with the case where we're replicating a single word into the
     // provided buffer
     if (nSrcPixelStride == 0 && nWordCount > 1)
@@ -1808,16 +2300,40 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
         return;
     }
 
-#ifdef USE_NEW_COPYWORDS
-
-    int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
-    // Let memcpy() handle the case where we're copying a packed buffer
-    // of pixels.
-    if (eSrcType == eDstType && nSrcPixelStride == nDstPixelStride &&
-        nSrcPixelStride == nSrcDataTypeSize)
+    if (eSrcType == eDstType)
     {
-        memcpy(pDstData, pSrcData, nWordCount * nSrcDataTypeSize);
-        return;
+        if( eSrcType == GDT_Byte )
+        {
+            GDALFastByteCopy((GByte*)pDstData, nDstPixelStride,
+                             (const GByte*)pSrcData, nSrcPixelStride, nWordCount);
+            return;
+        }
+
+        if( nWordCount == 1 )
+        {
+            if( eSrcType == GDT_Int16 || eSrcType == GDT_UInt16 )
+                memcpy(pDstData, pSrcData, 2);
+            else if( eSrcType == GDT_Int32 || eSrcType == GDT_UInt32 ||
+                     eSrcType == GDT_Float32 || eSrcType == GDT_CInt16 )
+                memcpy(pDstData, pSrcData, 4);
+            else if( eSrcType == GDT_Float64 || eSrcType == GDT_CInt32 ||
+                     eSrcType == GDT_CFloat32 )
+                memcpy(pDstData, pSrcData, 8 );
+            else /* if( eSrcType == GDT_CFloat64 ) */
+                memcpy(pDstData, pSrcData, 16);
+            return;
+        }
+
+        // Let memcpy() handle the case where we're copying a packed buffer
+        // of pixels.
+        if( nSrcPixelStride == nDstPixelStride )
+        {
+            if( nSrcPixelStride == nSrcDataTypeSize)
+            {
+                memcpy(pDstData, pSrcData, nWordCount * nSrcDataTypeSize);
+                return;
+            }
+        }
     }
 
     // Handle the more general case -- deals with conversion of data types
@@ -1825,57 +2341,57 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
     switch (eSrcType)
     {
     case GDT_Byte:
-        GDALCopyWordsFromT<unsigned char>(static_cast<unsigned char *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<unsigned char>(static_cast<const unsigned char *>(pSrcData), nSrcPixelStride, false,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
     case GDT_UInt16:
-        GDALCopyWordsFromT<unsigned short>(static_cast<unsigned short *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<unsigned short>(static_cast<const unsigned short *>(pSrcData), nSrcPixelStride, false,
                                            pDstData, eDstType, nDstPixelStride,
                                            nWordCount);
         break;
     case GDT_Int16:
-        GDALCopyWordsFromT<short>(static_cast<short *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<short>(static_cast<const short *>(pSrcData), nSrcPixelStride, false,
                                   pDstData, eDstType, nDstPixelStride,
                                   nWordCount);
         break;
     case GDT_UInt32:
-        GDALCopyWordsFromT<unsigned int>(static_cast<unsigned int *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<unsigned int>(static_cast<const unsigned int *>(pSrcData), nSrcPixelStride, false,
                                          pDstData, eDstType, nDstPixelStride,
                                          nWordCount);
         break;
     case GDT_Int32:
-        GDALCopyWordsFromT<int>(static_cast<int *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<int>(static_cast<const int *>(pSrcData), nSrcPixelStride, false,
                                 pDstData, eDstType, nDstPixelStride,
                                 nWordCount);
         break;
     case GDT_Float32:
-        GDALCopyWordsFromT<float>(static_cast<float *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<float>(static_cast<const float *>(pSrcData), nSrcPixelStride, false,
                                   pDstData, eDstType, nDstPixelStride,
                                   nWordCount);
         break;
     case GDT_Float64:
-        GDALCopyWordsFromT<double>(static_cast<double *>(pSrcData), nSrcPixelStride, false,
+        GDALCopyWordsFromT<double>(static_cast<const double *>(pSrcData), nSrcPixelStride, false,
                                    pDstData, eDstType, nDstPixelStride,
                                    nWordCount);
         break;
     case GDT_CInt16:
-        GDALCopyWordsFromT<short>(static_cast<short *>(pSrcData), nSrcPixelStride, true,
+        GDALCopyWordsFromT<short>(static_cast<const short *>(pSrcData), nSrcPixelStride, true,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
     case GDT_CInt32:
-        GDALCopyWordsFromT<int>(static_cast<int *>(pSrcData), nSrcPixelStride, true,
+        GDALCopyWordsFromT<int>(static_cast<const int *>(pSrcData), nSrcPixelStride, true,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
     case GDT_CFloat32:
-        GDALCopyWordsFromT<float>(static_cast<float *>(pSrcData), nSrcPixelStride, true,
+        GDALCopyWordsFromT<float>(static_cast<const float *>(pSrcData), nSrcPixelStride, true,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
     case GDT_CFloat64:
-        GDALCopyWordsFromT<double>(static_cast<double *>(pSrcData), nSrcPixelStride, true,
+        GDALCopyWordsFromT<double>(static_cast<const double *>(pSrcData), nSrcPixelStride, true,
                                  pDstData, eDstType, nDstPixelStride,
                                  nWordCount);
         break;
@@ -1883,732 +2399,6 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
     default:
         CPLAssert(FALSE);
     }
-
-#else // undefined USE_NEW_COPYWORDS
-/* -------------------------------------------------------------------- */
-/*      Special case when no data type translation is required.         */
-/* -------------------------------------------------------------------- */
-    if( eSrcType == eDstType )
-    {
-        int     nWordSize = GDALGetDataTypeSize(eSrcType)/8;
-        int     i;
-
-        // contiguous blocks.
-        if( nWordSize == nSrcPixelStride && nWordSize == nDstPixelStride )
-        {
-            memcpy( pDstData, pSrcData, nSrcPixelStride * nWordCount );
-            return;
-        }
-
-        GByte *pabySrc = (GByte *) pSrcData;
-        GByte *pabyDst = (GByte *) pDstData;
-
-        // Moving single bytes.
-        if( nWordSize == 1 )
-        {
-            if (nWordCount > 100)
-            {
-/* ==================================================================== */
-/*     Optimization for high number of words to transfer and some       */
-/*     typical source and destination pixel spacing : we unroll the     */
-/*     loop.                                                            */
-/* ==================================================================== */
-#define ASSIGN(_nSrcPixelStride, _nDstPixelStride, _k) \
-                 pabyDst[_nDstPixelStride * _k] = pabySrc[_nSrcPixelStride * _k]
-#define ASSIGN_LOOP(_nSrcPixelStride, _nDstPixelStride) \
-                for( i = nWordCount / 16 ; i != 0; i-- ) \
-                { \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 0); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 1); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 2); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 3); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 4); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 5); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 6); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 7); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 8); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 9); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 10); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 11); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 12); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 13); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 14); \
-                    ASSIGN(_nSrcPixelStride, _nDstPixelStride, 15); \
-                    pabyDst += _nDstPixelStride * 16; \
-                    pabySrc += _nSrcPixelStride * 16; \
-                } \
-                nWordCount = nWordCount % 16;
-
-                if (nSrcPixelStride == 3 && nDstPixelStride == 1)
-                {
-                    ASSIGN_LOOP(3, 1)
-                }
-                else if (nSrcPixelStride == 1 && nDstPixelStride == 3)
-                {
-                    ASSIGN_LOOP(1, 3)
-                }
-                else if (nSrcPixelStride == 4 && nDstPixelStride == 1)
-                {
-                    ASSIGN_LOOP(4, 1)
-                }
-                else if (nSrcPixelStride == 1 && nDstPixelStride == 4)
-                {
-                    ASSIGN_LOOP(1, 4)
-                }
-                else if (nSrcPixelStride == 3 && nDstPixelStride == 4)
-                {
-                    ASSIGN_LOOP(3, 4)
-                }
-                else if (nSrcPixelStride == 4 && nDstPixelStride == 3)
-                {
-                    ASSIGN_LOOP(4, 3)
-                }
-            }
-
-            for( i = nWordCount; i != 0; i-- )
-            {
-                *pabyDst = *pabySrc;
-                pabyDst += nDstPixelStride;
-                pabySrc += nSrcPixelStride;
-            }
-        }
-        else if (nWordSize == 2)
-        {
-            for( i = nWordCount; i != 0; i-- )
-            {
-                *(short*)pabyDst = *(short*)pabySrc;
-                pabyDst += nDstPixelStride;
-                pabySrc += nSrcPixelStride;
-            }
-        }
-        else if (nWordSize == 4)
-        {
-            for( i = nWordCount; i != 0; i-- )
-            {
-                *(int*)pabyDst = *(int*)pabySrc;
-                pabyDst += nDstPixelStride;
-                pabySrc += nSrcPixelStride;
-            }
-        }
-        else if (nWordSize == 8)
-        {
-            for( i = nWordCount; i != 0; i-- )
-            {
-                ((int*)pabyDst)[0] = ((int*)pabySrc)[0];
-                ((int*)pabyDst)[1] = ((int*)pabySrc)[1];
-                pabyDst += nDstPixelStride;
-                pabySrc += nSrcPixelStride;
-            }
-        }
-        else if (nWordSize == 16)
-        {
-            for( i = nWordCount; i != 0; i-- )
-            {
-                ((int*)pabyDst)[0] = ((int*)pabySrc)[0];
-                ((int*)pabyDst)[1] = ((int*)pabySrc)[1];
-                ((int*)pabyDst)[2] = ((int*)pabySrc)[2];
-                ((int*)pabyDst)[3] = ((int*)pabySrc)[3];
-                pabyDst += nDstPixelStride;
-                pabySrc += nSrcPixelStride;
-            }
-        }
-        else
-        {
-            CPLAssert(FALSE);
-        }
-
-        return;
-    }
-    
-/* ==================================================================== */
-/*      General translation case                                        */
-/* ==================================================================== */
-    for( int iWord = 0; iWord < nWordCount; iWord++ )
-    {
-        void   *pSrcWord, *pDstWord;
-        double  dfPixelValue=0.0, dfPixelValueI=0.0;
-
-        pSrcWord = static_cast<GByte *>(pSrcData) + iWord * nSrcPixelStride;
-        pDstWord = static_cast<GByte *>(pDstData) + iWord * nDstPixelStride;
-
-/* -------------------------------------------------------------------- */
-/*      Fetch source value based on data type.                          */
-/* -------------------------------------------------------------------- */
-        switch( eSrcType )
-        {
-          case GDT_Byte:
-          {
-              GByte byVal = *static_cast<GByte *>(pSrcWord);
-              switch( eDstType )
-              {
-                case GDT_UInt16:
-                  *static_cast<GUInt16 *>(pDstWord) = byVal;
-                  continue;
-                case GDT_Int16:
-                  *static_cast<GInt16 *>(pDstWord) = byVal;
-                  continue;
-                case GDT_UInt32:
-                  *static_cast<GUInt32 *>(pDstWord) = byVal;
-                  continue;
-                case GDT_Int32:
-                  *static_cast<GInt32 *>(pDstWord) = byVal;
-                  continue;
-                case GDT_CInt16:
-                {
-                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
-                    panDstWord[0] = byVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                case GDT_CInt32:
-                {
-                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
-                    panDstWord[0] = byVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                default:
-                  break;
-              }
-              dfPixelValue = byVal;
-          }
-          break;
-
-          case GDT_UInt16:
-          {
-              GUInt16 nVal = *static_cast<GUInt16 *>(pSrcWord);
-              switch( eDstType )
-              {
-                case GDT_Byte:
-                {
-                    GByte byVal;
-                    if( nVal > 255 )
-                        byVal = 255;
-                    else
-                        byVal = static_cast<GByte>(nVal);
-                    *static_cast<GByte *>(pDstWord) = byVal;
-                    continue;
-                }
-                case GDT_Int16:
-                  if( nVal > 32767 )
-                      nVal = 32767;
-                  *static_cast<GInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_UInt32:
-                  *static_cast<GUInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_Int32:
-                  *static_cast<GInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_CInt16:
-                {
-                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
-                    if( nVal > 32767 )
-                        nVal = 32767;
-                    panDstWord[0] = nVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                case GDT_CInt32:
-                {
-                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
-                    panDstWord[0] = nVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                default:
-                  break;
-              }
-              dfPixelValue = nVal;
-          }
-          break;
-          
-          case GDT_Int16:
-          {
-              GInt16 nVal = *static_cast<GInt16 *>(pSrcWord);
-              switch( eDstType )
-              {
-                case GDT_Byte:
-                {
-                    GByte byVal;
-                    if( nVal > 255 )
-                        byVal = 255;
-                    else if (nVal < 0)
-                        byVal = 0;
-                    else
-                        byVal = static_cast<GByte>(nVal);
-                    *static_cast<GByte *>(pDstWord) = byVal;
-                    continue;
-                }
-                case GDT_UInt16:
-                  if( nVal < 0 )
-                      nVal = 0;
-                  *static_cast<GUInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_UInt32:
-                  if( nVal < 0 )
-                      nVal = 0;
-                  *static_cast<GUInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_Int32:
-                  *static_cast<GInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_CInt16:
-                {
-                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
-                    panDstWord[0] = nVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                case GDT_CInt32:
-                {
-                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
-                    panDstWord[0] = nVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                default:
-                  break;
-              }
-              dfPixelValue = nVal;
-          }
-          break;
-          
-          case GDT_Int32:
-          {
-              GInt32 nVal = *static_cast<GInt32 *>(pSrcWord);
-              switch( eDstType )
-              {
-                case GDT_Byte:
-                {
-                    GByte byVal;
-                    if( nVal > 255 )
-                        byVal = 255;
-                    else if (nVal < 0)
-                        byVal = 0;
-                    else
-                        byVal = nVal;
-                    *static_cast<GByte *>(pDstWord) = byVal;
-                    continue;
-                }
-                case GDT_UInt16:
-                  if( nVal > 65535 )
-                      nVal = 65535;
-                  else if( nVal < 0 )
-                      nVal = 0;
-                  *static_cast<GUInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_Int16:
-                  if( nVal > 32767 )
-                      nVal = 32767;
-                  else if( nVal < -32768)
-                      nVal = -32768;
-                  *static_cast<GInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_UInt32:
-                  if( nVal < 0 )
-                      nVal = 0;
-                  *static_cast<GUInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_CInt16:
-                {
-                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
-                    if( nVal > 32767 )
-                        nVal = 32767;
-                    else if( nVal < -32768)
-                        nVal = -32768;
-                    panDstWord[0] = nVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                case GDT_CInt32:
-                {
-                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
-                    panDstWord[0] = nVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                default:
-                  break;
-              }
-              dfPixelValue = nVal;
-          }
-          break;
-          
-          case GDT_UInt32:
-          {
-              GUInt32 nVal = *static_cast<GUInt32 *>(pSrcWord);
-              switch( eDstType )
-              {
-                case GDT_Byte:
-                {
-                    GByte byVal;
-                    if( nVal > 255 )
-                        byVal = 255;
-                    else
-                        byVal = nVal;
-                    *static_cast<GByte *>(pDstWord) = byVal;
-                    continue;
-                }
-                case GDT_UInt16:
-                  if( nVal > 65535 )
-                      nVal = 65535;
-                  *static_cast<GUInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_Int16:
-                  if( nVal > 32767 )
-                      nVal = 32767;
-                  *static_cast<GInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_Int32:
-                  if( nVal > 2147483647UL )
-                      nVal = 2147483647UL;
-                  *static_cast<GInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_CInt16:
-                {
-                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
-                    if( nVal > 32767 )
-                        nVal = 32767;
-                    panDstWord[0] = nVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                case GDT_CInt32:
-                {
-                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
-                    if( nVal > 2147483647UL )
-                        nVal = 2147483647UL;
-                    panDstWord[0] = nVal;
-                    panDstWord[1] = 0;
-                    continue;
-                }
-                default:
-                  break;
-              }
-              dfPixelValue = nVal;
-          }
-          break;
-          
-          case GDT_CInt16:
-          {
-              GInt16 *panSrcWord = static_cast<GInt16 *>(pSrcWord);
-              GInt16 nVal = panSrcWord[0];
-              switch( eDstType )
-              {
-                case GDT_Byte:
-                {
-                    GByte byVal;
-                    if( nVal > 255 )
-                        byVal = 255;
-                    else if (nVal < 0)
-                        byVal = 0;
-                    else
-                        byVal = static_cast<GByte>(nVal);
-                    *static_cast<GByte *>(pDstWord) = byVal;
-                    continue;
-                }
-                case GDT_Int16:
-                  *static_cast<GInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_UInt16:
-                  if( nVal < 0 )
-                      nVal = 0;
-                  *static_cast<GUInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_UInt32:
-                  if( nVal < 0 )
-                      nVal = 0;
-                  *static_cast<GUInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_Int32:
-                  *static_cast<GInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_CInt32:
-                {
-                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
-                    panDstWord[0] = panSrcWord[0];
-                    panDstWord[1] = panSrcWord[1];
-                    continue;
-                }
-                default:
-                  break;
-              }
-              dfPixelValue = panSrcWord[0];
-              dfPixelValueI = panSrcWord[1];
-          }
-          break;
-          
-          case GDT_CInt32:
-          {
-              GInt32 *panSrcWord = static_cast<GInt32 *>(pSrcWord);
-              GInt32 nVal = panSrcWord[0];
-              switch( eDstType )
-              {
-                case GDT_Byte:
-                {
-                    GByte byVal;
-                    if( nVal > 255 )
-                        byVal = 255;
-                    else if (nVal < 0)
-                        byVal = 0;
-                    else
-                        byVal = nVal;
-                    *static_cast<GByte *>(pDstWord) = byVal;
-                    continue;
-                }
-                case GDT_Int16:
-                  if( nVal > 32767 )
-                      nVal = 32767;
-                  else if( nVal < -32768)
-                      nVal = -32768;
-                  *static_cast<GInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_UInt16:
-                  if( nVal > 65535 )
-                      nVal = 65535;
-                  else if( nVal < 0 )
-                      nVal = 0;
-                  *static_cast<GUInt16 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_UInt32:
-                  if( nVal < 0 )
-                      nVal = 0;
-                  *static_cast<GUInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_Int32:
-                  *static_cast<GInt32 *>(pDstWord) = nVal;
-                  continue;
-                case GDT_CInt16:
-                {
-                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
-                    if( nVal > 32767 )
-                        nVal = 32767;
-                    else if( nVal < -32768)
-                        nVal = -32768;
-                    panDstWord[0] = nVal;
-                    nVal = panSrcWord[1];
-                    if( nVal > 32767 )
-                        nVal = 32767;
-                    else if( nVal < -32768)
-                        nVal = -32768;
-                    panDstWord[1] = nVal;
-                    continue;
-                }
-                default:
-                  break;
-              }
-              dfPixelValue = panSrcWord[0];
-              dfPixelValueI = panSrcWord[1];
-          }
-          break;
-
-          case GDT_Float32:
-          {
-              float fVal = *static_cast<float *>(pSrcWord);
-              dfPixelValue = fVal;
-          }
-          break;
-          
-          case GDT_Float64:
-          {
-              dfPixelValue = *static_cast<double *>(pSrcWord);
-          }
-          break;
-
-          case GDT_CFloat32:
-          {
-              float *pafSrcWord = static_cast<float *>(pSrcWord);
-              dfPixelValue = pafSrcWord[0];
-              dfPixelValueI = pafSrcWord[1];
-          }
-          break;
-          
-          case GDT_CFloat64:
-          {
-              double *padfSrcWord = static_cast<double *>(pSrcWord);
-              dfPixelValue = padfSrcWord[0];
-              dfPixelValueI = padfSrcWord[1];
-          }
-          break;
-
-          default:
-            CPLAssert( FALSE );
-        }
-        
-/* -------------------------------------------------------------------- */
-/*      Set the destination pixel, doing range clipping as needed.      */
-/* -------------------------------------------------------------------- */
-        switch( eDstType )
-        {
-          case GDT_Byte:
-          {
-              GByte *pabyDstWord = static_cast<GByte *>(pDstWord);
-
-              dfPixelValue += (float) 0.5;
-
-              if( dfPixelValue < 0.0 )
-                  *pabyDstWord = 0;
-              else if( dfPixelValue > 255.0 )
-                  *pabyDstWord = 255;
-              else
-                  *pabyDstWord = (GByte) dfPixelValue;
-          }
-          break;
-
-          case GDT_UInt16:
-          {
-              GUInt16   nVal;
-              
-              dfPixelValue += 0.5;
-
-              if( dfPixelValue < 0.0 )
-                  nVal = 0;
-              else if( dfPixelValue > 65535.0 )
-                  nVal = 65535;
-              else
-                  nVal = (GUInt16) dfPixelValue;
-
-              *static_cast<GUInt16 *>(pDstWord) = nVal;
-          }
-          break;
-
-          case GDT_Int16:
-          {
-              GInt16    nVal;
-              
-              dfPixelValue += 0.5;
-
-              if( dfPixelValue < -32768 )
-                  nVal = -32768;
-              else if( dfPixelValue > 32767 )
-                  nVal = 32767;
-              else
-                  nVal = (GInt16) floor(dfPixelValue);
-
-              *static_cast<GInt16 *>(pDstWord) = nVal;
-          }
-          break;
-          
-          case GDT_UInt32:
-          {
-              GUInt32   nVal;
-              
-              dfPixelValue += 0.5;
-
-              if( dfPixelValue < 0 )
-                  nVal = 0;
-              else if( dfPixelValue > 4294967295U )
-                  nVal = 4294967295U;
-              else
-                  nVal = (GInt32) dfPixelValue;
-
-              *static_cast<GUInt32 *>(pDstWord) = nVal;
-          }
-          break;
-          
-          case GDT_Int32:
-          {
-              GInt32    nVal;
-              
-              dfPixelValue += 0.5;
-
-              if( dfPixelValue < -2147483648.0 )
-                  nVal = INT_MIN;
-              else if( dfPixelValue > 2147483647 )
-                  nVal = 2147483647;
-              else
-                  nVal = (GInt32) floor(dfPixelValue);
-
-              *static_cast<GInt32 *>(pDstWord) = nVal;
-          }
-          break;
-
-          case GDT_Float32:
-          {
-              *static_cast<float *>(pDstWord) = static_cast<float>(dfPixelValue);
-          }
-          break;
-
-          case GDT_Float64:
-            *static_cast<double *>(pDstWord) = dfPixelValue;
-            break;
-              
-          case GDT_CInt16:
-          {
-              GInt16    nVal;
-              GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
-              
-              dfPixelValue += 0.5;
-              dfPixelValueI += 0.5;
-
-              if( dfPixelValue < -32768 )
-                  nVal = -32768;
-              else if( dfPixelValue > 32767 )
-                  nVal = 32767;
-              else
-                  nVal = (GInt16) floor(dfPixelValue);
-              panDstWord[0] = nVal;
-
-              if( dfPixelValueI < -32768 )
-                  nVal = -32768;
-              else if( dfPixelValueI > 32767 )
-                  nVal = 32767;
-              else
-                  nVal = (GInt16) floor(dfPixelValueI);
-              panDstWord[1] = nVal;
-          }
-          break;
-          
-          case GDT_CInt32:
-          {
-              GInt32    nVal;
-              GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
-              
-              dfPixelValue += 0.5;
-              dfPixelValueI += 0.5;
-
-              if( dfPixelValue < -2147483648.0 )
-                  nVal = INT_MIN;
-              else if( dfPixelValue > 2147483647 )
-                  nVal = 2147483647;
-              else
-                  nVal = (GInt32) floor(dfPixelValue);
-
-              panDstWord[0] = nVal;
-
-              if( dfPixelValueI < -2147483648.0 )
-                  nVal = INT_MIN;
-              else if( dfPixelValueI > 2147483647 )
-                  nVal = 2147483647;
-              else
-                  nVal = (GInt32) floor(dfPixelValueI);
-
-              panDstWord[1] = nVal;
-          }
-          break;
-
-          case GDT_CFloat32:
-          {
-              float *pafDstWord = static_cast<float *>(pDstWord);
-              pafDstWord[0] = static_cast<float>(dfPixelValue);
-              pafDstWord[1] = static_cast<float>(dfPixelValueI);
-          }
-          break;
-
-          case GDT_CFloat64:
-          {
-              double *padfDstWord = static_cast<double *>(pDstWord);
-              padfDstWord[0] = dfPixelValue;
-              padfDstWord[1] = dfPixelValueI;
-          }
-          break;
-              
-          default:
-            CPLAssert( FALSE );
-        }
-    } /* next iWord */
-#endif // defined USE_NEW_COPYWORDS
 }
 
 /************************************************************************/
@@ -2619,34 +2409,34 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
  * Bitwise word copying.
  *
  * A function for moving sets of partial bytes around.  Loosely
- * speaking this is a bitswise analog to GDALCopyWords().
+ * speaking this is a bitwise analog to GDALCopyWords().
  *
- * It copies nStepCount "words" where each word is nBitCount bits long. 
+ * It copies nStepCount "words" where each word is nBitCount bits long.
  * The nSrcStep and nDstStep are the number of bits from the start of one
  * word to the next (same as nBitCount if they are packed).  The nSrcOffset
  * and nDstOffset are the offset into the source and destination buffers
- * to start at, also measured in bits. 
+ * to start at, also measured in bits.
  *
  * All bit offsets are assumed to start from the high order bit in a byte
- * (ie. most significant bit first).  Currently this function is not very
- * optimized, but it may be improved for some common cases in the future 
- * as needed. 
+ * (i.e. most significant bit first).  Currently this function is not very
+ * optimized, but it may be improved for some common cases in the future
+ * as needed.
  *
  * @param pabySrcData the source data buffer.
- * @param nSrcOffset the offset (in bits) in pabySrcData to the start of the 
+ * @param nSrcOffset the offset (in bits) in pabySrcData to the start of the
  * first word to copy.
- * @param nSrcStep the offset in bits from the start one source word to the 
- * start of the next. 
+ * @param nSrcStep the offset in bits from the start one source word to the
+ * start of the next.
  * @param pabyDstData the destination data buffer.
- * @param nDstOffset the offset (in bits) in pabyDstData to the start of the 
+ * @param nDstOffset the offset (in bits) in pabyDstData to the start of the
  * first word to copy over.
- * @param nDstStep the offset in bits from the start one word to the 
- * start of the next. 
+ * @param nDstStep the offset in bits from the start one word to the
+ * start of the next.
  * @param nBitCount the number of bits in a word to be copied.
  * @param nStepCount the number of words to copy.
  */
 
-void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep, 
+void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
                    GByte *pabyDstData, int nDstOffset, int nDstStep,
                    int nBitCount, int nStepCount )
 
@@ -2660,7 +2450,7 @@ void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
     {
         for( iBit = 0; iBit < nBitCount; iBit++ )
         {
-            if( pabySrcData[nSrcOffset>>3] 
+            if( pabySrcData[nSrcOffset>>3]
                 & (0x80 >>(nSrcOffset & 7)) )
                 pabyDstData[nDstOffset>>3] |= (0x80 >> (nDstOffset & 7));
             else
@@ -2669,7 +2459,7 @@ void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
 
             nSrcOffset++;
             nDstOffset++;
-        } 
+        }
 
         nSrcOffset += (nSrcStep - nBitCount);
         nDstOffset += (nDstStep - nBitCount);
@@ -2705,7 +2495,7 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand* poBand,
 /*      based on the least reduced axis, and represents the number      */
 /*      of source pixels to one destination pixel.                      */
 /* -------------------------------------------------------------------- */
-    if( (nXSize / (double) nBufXSize) < (nYSize / (double) nBufYSize ) 
+    if( (nXSize / (double) nBufXSize) < (nYSize / (double) nBufYSize )
         || nBufYSize == 1 )
         dfDesiredResolution = nXSize / (double) nBufXSize;
     else
@@ -2720,7 +2510,7 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand* poBand,
     GDALRasterBand* poBestOverview = NULL;
     double dfBestResolution = 0;
     int nBestOverviewLevel = -1;
-    
+
     for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
     {
         GDALRasterBand  *poOverview = poBand->GetOverview( iOverview );
@@ -2732,23 +2522,23 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand* poBand,
         // What resolution is this?
         if( (poBand->GetXSize() / (double) poOverview->GetXSize())
             < (poBand->GetYSize() / (double) poOverview->GetYSize()) )
-            dfResolution = 
+            dfResolution =
                 poBand->GetXSize() / (double) poOverview->GetXSize();
         else
-            dfResolution = 
+            dfResolution =
                 poBand->GetYSize() / (double) poOverview->GetYSize();
 
         // Is it nearly the requested resolution and better (lower) than
         // the current best resolution?
-        if( dfResolution >= dfDesiredResolution * 1.2 
+        if( dfResolution >= dfDesiredResolution * 1.2
             || dfResolution <= dfBestResolution )
             continue;
 
         // Ignore AVERAGE_BIT2GRAYSCALE overviews for RasterIO purposes.
-        const char *pszResampling = 
+        const char *pszResampling =
             poOverview->GetMetadataItem( "RESAMPLING" );
 
-        if( pszResampling != NULL && EQUALN(pszResampling,"AVERAGE_BIT2",12))
+        if( pszResampling != NULL && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
             continue;
 
         // OK, this is our new best overview.
@@ -2770,7 +2560,7 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand* poBand,
 /* -------------------------------------------------------------------- */
     int         nOXOff, nOYOff, nOXSize, nOYSize;
     double      dfXRes, dfYRes;
-    
+
     dfXRes = poBand->GetXSize() / (double) poBestOverview->GetXSize();
     dfYRes = poBand->GetYSize() / (double) poBestOverview->GetYSize();
 
@@ -2782,12 +2572,12 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand* poBand,
         nOXSize = poBestOverview->GetXSize() - nOXOff;
     if( nOYOff + nOYSize > poBestOverview->GetYSize() )
         nOYSize = poBestOverview->GetYSize() - nOYOff;
-        
+
     nXOff = nOXOff;
     nYOff = nOYOff;
     nXSize = nOXSize;
     nYSize = nOYSize;
-    
+
     if( psExtraArg && psExtraArg->bFloatingPointWindowValidity )
     {
         psExtraArg->dfXOff /= dfXRes;
@@ -2795,7 +2585,7 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand* poBand,
         psExtraArg->dfYOff /= dfYRes;
         psExtraArg->dfYSize /= dfYRes;
     }
-    
+
     return nBestOverviewLevel;
 }
 
@@ -2820,7 +2610,7 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 {
     int         nOverview;
     GDALRasterIOExtraArg sExtraArg;
-    
+
     GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
 
     nOverview =
@@ -2828,7 +2618,7 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
                                       nBufXSize, nBufYSize, &sExtraArg);
     if (nOverview < 0)
         return CE_Failure;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Recast the call in terms of the new raster layer.               */
 /* -------------------------------------------------------------------- */
@@ -2839,6 +2629,87 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
     return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace, &sExtraArg );
+}
+
+/************************************************************************/
+/*                      TryOverviewRasterIO()                           */
+/************************************************************************/
+
+CPLErr GDALRasterBand::TryOverviewRasterIO( GDALRWFlag eRWFlag,
+                                            int nXOff, int nYOff, int nXSize, int nYSize,
+                                            void * pData, int nBufXSize, int nBufYSize,
+                                            GDALDataType eBufType,
+                                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                                            GDALRasterIOExtraArg* psExtraArg,
+                                            int* pbTried )
+{
+    int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
+    GDALRasterIOExtraArg sExtraArg;
+
+    GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
+
+    int iOvrLevel = GDALBandGetBestOverviewLevel2(this,
+                                                    nXOffMod, nYOffMod,
+                                                    nXSizeMod, nYSizeMod,
+                                                    nBufXSize, nBufYSize,
+                                                    &sExtraArg);
+
+    if( iOvrLevel >= 0 )
+    {
+        GDALRasterBand* poOverviewBand = GetOverview(iOvrLevel);
+        if( poOverviewBand  )
+        {
+            *pbTried = TRUE;
+            return poOverviewBand->RasterIO(
+                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
+                pData, nBufXSize, nBufYSize, eBufType,
+                nPixelSpace, nLineSpace, &sExtraArg);
+        }
+    }
+
+    *pbTried = FALSE;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      TryOverviewRasterIO()                           */
+/************************************************************************/
+
+CPLErr GDALDataset::TryOverviewRasterIO( GDALRWFlag eRWFlag,
+                                         int nXOff, int nYOff, int nXSize, int nYSize,
+                                         void * pData, int nBufXSize, int nBufYSize,
+                                         GDALDataType eBufType,
+                                         int nBandCount, int *panBandMap,
+                                         GSpacing nPixelSpace, GSpacing nLineSpace,
+                                         GSpacing nBandSpace,
+                                         GDALRasterIOExtraArg* psExtraArg,
+                                         int* pbTried )
+{
+    int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
+    GDALRasterIOExtraArg sExtraArg;
+
+    GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
+
+    int iOvrLevel = GDALBandGetBestOverviewLevel2(papoBands[0],
+                                                    nXOffMod, nYOffMod,
+                                                    nXSizeMod, nYSizeMod,
+                                                    nBufXSize, nBufYSize,
+                                                    &sExtraArg);
+
+    if( iOvrLevel >= 0 && papoBands[0]->GetOverview(iOvrLevel) != NULL &&
+        papoBands[0]->GetOverview(iOvrLevel)->GetDataset() != NULL )
+    {
+        *pbTried = TRUE;
+        return papoBands[0]->GetOverview(iOvrLevel)->GetDataset()->RasterIO(
+            eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
+            pData, nBufXSize, nBufYSize, eBufType,
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
+    }
+    else
+    {
+        *pbTried = FALSE;
+        return CE_None;
+    }
 }
 
 /************************************************************************/
@@ -2859,10 +2730,10 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
     int iBand, iOverview;
     int nOverviewCount = 0;
     GDALRasterBand *poFirstBand = NULL;
-    
+
     if (nBandCount == 0)
         return -1;
-    
+
 /* -------------------------------------------------------------------- */
 /* Check that all bands have the same number of overviews and           */
 /* that they have all the same size and block dimensions                */
@@ -2877,7 +2748,7 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
         }
         else if (nOverviewCount != poBand->GetOverviewCount())
         {
-            CPLDebug( "GDAL", 
+            CPLDebug( "GDAL",
                       "GDALDataset::GetBestOverviewLevel() ... "
                       "mismatched overview count, use std method." );
             return -1;
@@ -2896,7 +2767,7 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
                 if ( poOvrFirstBand->GetXSize() != poOvrBand->GetXSize() ||
                      poOvrFirstBand->GetYSize() != poOvrBand->GetYSize() )
                 {
-                    CPLDebug( "GDAL", 
+                    CPLDebug( "GDAL",
                               "GDALDataset::GetBestOverviewLevel() ... "
                               "mismatched overview sizes, use std method." );
                     return -1;
@@ -2908,7 +2779,7 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
                 if (nBlockXSizeFirst != nBlockXSizeCurrent ||
                     nBlockYSizeFirst != nBlockYSizeCurrent)
                 {
-                    CPLDebug( "GDAL", 
+                    CPLDebug( "GDAL",
                           "GDALDataset::GetBestOverviewLevel() ... "
                           "mismatched block sizes, use std method." );
                     return -1;
@@ -2916,7 +2787,7 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
             }
         }
     }
- 
+
     return GDALBandGetBestOverviewLevel2(poFirstBand,
                                         nXOff, nYOff, nXSize, nYSize,
                                         nBufXSize, nBufYSize, NULL);
@@ -2930,7 +2801,7 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
 /*      much like the GDALRasterBand::IRasterIO(), but it handles       */
 /*      all bands at once, so that a format driver that handles a       */
 /*      request for different bands of the same block efficiently       */
-/*      (ie. without re-reading interleaved data) will efficiently.     */
+/*      (i.e. without re-reading interleaved data) will efficiently.    */
 /*                                                                      */
 /*      This method is intended to be called by an overridden           */
 /*      IRasterIO() method in the driver specific GDALDataset           */
@@ -2949,7 +2820,7 @@ int GDALDatasetGetBestOverviewLevel(GDALDataset* poDS,
 /*      basis. Overviews will be used when possible.                    */
 /************************************************************************/
 
-CPLErr 
+CPLErr
 GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
@@ -2958,7 +2829,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                                  GSpacing nPixelSpace, GSpacing nLineSpace,
                                  GSpacing nBandSpace,
                                  GDALRasterIOExtraArg* psExtraArg )
-    
+
 {
     GByte      **papabySrcBlock = NULL;
     GDALRasterBlock *poBlock = NULL;
@@ -2987,33 +2858,33 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
         else
         {
             poBand->GetBlockSize( &nThisBlockXSize, &nThisBlockYSize );
-            if( nThisBlockXSize != nBlockXSize 
+            if( nThisBlockXSize != nBlockXSize
                 || nThisBlockYSize != nBlockYSize )
             {
-                CPLDebug( "GDAL", 
+                CPLDebug( "GDAL",
                           "GDALDataset::BlockBasedRasterIO() ... "
                           "mismatched block sizes, use std method." );
-                return GDALDataset::IRasterIO( eRWFlag, 
-                                               nXOff, nYOff, nXSize, nYSize, 
-                                               pData, nBufXSize, nBufYSize, 
-                                               eBufType, 
+                return BandBasedRasterIO( eRWFlag,
+                                               nXOff, nYOff, nXSize, nYSize,
+                                               pData, nBufXSize, nBufYSize,
+                                               eBufType,
                                                nBandCount, panBandMap,
-                                               nPixelSpace, nLineSpace, 
+                                               nPixelSpace, nLineSpace,
                                                nBandSpace, psExtraArg );
             }
 
-            if( eDataType != poBand->GetRasterDataType() 
+            if( eDataType != poBand->GetRasterDataType()
                 && (nXSize != nBufXSize || nYSize != nBufYSize) )
             {
-                CPLDebug( "GDAL", 
+                CPLDebug( "GDAL",
                           "GDALDataset::BlockBasedRasterIO() ... "
                           "mismatched band data types, use std method." );
-                return GDALDataset::IRasterIO( eRWFlag, 
-                                               nXOff, nYOff, nXSize, nYSize, 
-                                               pData, nBufXSize, nBufYSize, 
-                                               eBufType, 
+                return BandBasedRasterIO( eRWFlag,
+                                               nXOff, nYOff, nXSize, nYSize,
+                                               pData, nBufXSize, nBufYSize,
+                                               eBufType,
                                                nBandCount, panBandMap,
-                                               nPixelSpace, nLineSpace, 
+                                               nPixelSpace, nLineSpace,
                                                nBandSpace, psExtraArg );
             }
         }
@@ -3026,7 +2897,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /*      called before proceeding to the next.                           */
 /* ==================================================================== */
 
-    if( nXSize == nBufXSize && nYSize == nBufYSize )    
+    if( nXSize == nBufXSize && nYSize == nBufYSize )
     {
         GDALRasterIOExtraArg sDummyExtraArg;
         INIT_RASTERIO_EXTRA_ARG(sDummyExtraArg);
@@ -3035,7 +2906,6 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
         for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff += nChunkYSize )
         {
-            nChunkYSize = nBlockYSize;
             nChunkYOff = iBufYOff + nYOff;
             nChunkYSize = nBlockYSize - (nChunkYOff % nBlockYSize);
             if( nChunkYSize == 0 )
@@ -3045,7 +2915,6 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
             for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff += nChunkXSize )
             {
-                nChunkXSize = nBlockXSize;
                 nChunkXOff = iBufXOff + nXOff;
                 nChunkXSize = nBlockXSize - (nChunkXOff % nBlockXSize);
                 if( nChunkXSize == 0 )
@@ -3055,20 +2924,20 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
                 GByte *pabyChunkData;
 
-                pabyChunkData = ((GByte *) pData) 
-                    + iBufXOff * nPixelSpace 
+                pabyChunkData = ((GByte *) pData)
+                    + iBufXOff * nPixelSpace
                     + (GPtrDiff_t)iBufYOff * nLineSpace;
 
                 for( iBand = 0; iBand < nBandCount; iBand++ )
                 {
                     GDALRasterBand *poBand = GetRasterBand(panBandMap[iBand]);
-                    
-                    eErr = 
-                        poBand->GDALRasterBand::IRasterIO( 
-                            eRWFlag, nChunkXOff, nChunkYOff, 
-                            nChunkXSize, nChunkYSize, 
-                            pabyChunkData + (GPtrDiff_t)iBand * nBandSpace, 
-                            nChunkXSize, nChunkYSize, eBufType, 
+
+                    eErr =
+                        poBand->GDALRasterBand::IRasterIO(
+                            eRWFlag, nChunkXOff, nChunkYOff,
+                            nChunkXSize, nChunkYSize,
+                            pabyChunkData + (GPtrDiff_t)iBand * nBandSpace,
+                            nChunkXSize, nChunkYSize, eBufType,
                             nPixelSpace, nLineSpace, &sDummyExtraArg );
                     if( eErr != CE_None )
                         return eErr;
@@ -3084,17 +2953,17 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
         return CE_None;
     }
-    
+
     /* Below code is not compatible with that case. It would need a complete */
     /* separate code like done in GDALRasterBand::IRasterIO. */
     if (eRWFlag == GF_Write && (nBufXSize < nXSize || nBufYSize < nYSize))
     {
-        return GDALDataset::IRasterIO( eRWFlag, 
-                                       nXOff, nYOff, nXSize, nYSize, 
-                                       pData, nBufXSize, nBufYSize, 
-                                       eBufType, 
+        return BandBasedRasterIO( eRWFlag,
+                                       nXOff, nYOff, nXSize, nYSize,
+                                       pData, nBufXSize, nBufYSize,
+                                       eBufType,
                                        nBandCount, panBandMap,
-                                       nPixelSpace, nLineSpace, 
+                                       nPixelSpace, nLineSpace,
                                        nBandSpace, psExtraArg );
     }
 
@@ -3102,12 +2971,12 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     if( psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
         (nBufXSize != nXSize || nBufYSize != nYSize) )
     {
-        return GDALDataset::IRasterIO( eRWFlag, 
-                                       nXOff, nYOff, nXSize, nYSize, 
-                                       pData, nBufXSize, nBufYSize, 
-                                       eBufType, 
+        return BandBasedRasterIO( eRWFlag,
+                                       nXOff, nYOff, nXSize, nYSize,
+                                       pData, nBufXSize, nBufYSize,
+                                       eBufType,
                                        nBandCount, panBandMap,
-                                       nPixelSpace, nLineSpace, 
+                                       nPixelSpace, nLineSpace,
                                        nBandSpace, psExtraArg );
     }
 
@@ -3116,11 +2985,11 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /*      request.  This is the most general implementation.              */
 /* ==================================================================== */
 
-    int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
+    const int nBandDataSize = GDALGetDataTypeSizeBytes( eDataType );
 
     papabySrcBlock = (GByte **) CPLCalloc(sizeof(GByte*),nBandCount);
     papoBlocks = (GDALRasterBlock **) CPLCalloc(sizeof(void*),nBandCount);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Select an overview level if appropriate.                        */
 /* -------------------------------------------------------------------- */
@@ -3138,7 +3007,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /*      Compute stepping increment.                                     */
 /* -------------------------------------------------------------------- */
     double      dfSrcX, dfSrcY, dfSrcXInc, dfSrcYInc;
-    
+
     dfSrcXInc = nXSize / (double) nBufXSize;
     dfSrcYInc = nYSize / (double) nBufYSize;
 
@@ -3148,24 +3017,24 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
     {
         GPtrDiff_t  iBufOffset;
-        int         iSrcOffset;
-        
+        GPtrDiff_t  iSrcOffset;
+
         dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
         iSrcY = (int) dfSrcY;
 
         iBufOffset = (GPtrDiff_t)iBufYOff * (GPtrDiff_t)nLineSpace;
-        
+
         for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++ )
         {
             int iSrcX;
 
             dfSrcX = (iBufXOff+0.5) * dfSrcXInc + nXOff;
-            
+
             iSrcX = (int) dfSrcX;
 
             // FIXME: this code likely doesn't work if the dirty block gets flushed
             // to disk before being completely written.
-            // In the meantime, bJustInitalize should probably be set to FALSE
+            // In the meantime, bJustInitialize should probably be set to FALSE
             // even if it is not ideal performance wise, and for lossy compression
 
 /* -------------------------------------------------------------------- */
@@ -3179,13 +3048,13 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                 nLBlockX = iSrcX / nBlockXSize;
                 nLBlockY = iSrcY / nBlockYSize;
 
-                int bJustInitialize = 
+                int bJustInitialize =
                     eRWFlag == GF_Write
                     && nYOff <= nLBlockY * nBlockYSize
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
                     && nXOff <= nLBlockX * nBlockXSize
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
-                /*int bMemZeroBuffer = FALSE;
+                /*bool bMemZeroBuffer = FALSE;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
@@ -3202,7 +3071,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                     GDALRasterBand *poBand = GetRasterBand( panBandMap[iBand]);
                     if (nOverviewLevel >= 0)
                         poBand = poBand->GetOverview(nOverviewLevel);
-                    poBlock = poBand->GetLockedBlockRef( nLBlockX, nLBlockY, 
+                    poBlock = poBand->GetLockedBlockRef( nLBlockX, nLBlockY,
                                                          bJustInitialize );
                     if( poBlock == NULL )
                     {
@@ -3215,15 +3084,10 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
                     if( papoBlocks[iBand] != NULL )
                         papoBlocks[iBand]->DropLock();
-                
+
                     papoBlocks[iBand] = poBlock;
 
                     papabySrcBlock[iBand] = (GByte *) poBlock->GetDataRef();
-                    if( papabySrcBlock[iBand] == NULL )
-                    {
-                        eErr = CE_Failure; 
-                        goto CleanupAndReturn;
-                    }
                     /*if( bMemZeroBuffer )
                     {
                         memset(papabySrcBlock[iBand], 0,
@@ -3242,27 +3106,27 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
             {
                 GByte *pabySrcBlock = papabySrcBlock[iBand];
                 GPtrDiff_t iBandBufOffset = iBufOffset + (GPtrDiff_t)iBand * (GPtrDiff_t)nBandSpace;
-                
+
                 if( eDataType == eBufType )
                 {
                     if( eRWFlag == GF_Read )
                         memcpy( ((GByte *) pData) + iBandBufOffset,
                                 pabySrcBlock + iSrcOffset, nBandDataSize );
                 else
-                    memcpy( pabySrcBlock + iSrcOffset, 
+                    memcpy( pabySrcBlock + iSrcOffset,
                             ((GByte *)pData) + iBandBufOffset, nBandDataSize );
                 }
                 else
                 {
                     /* type to type conversion ... ouch, this is expensive way
                        of handling single words */
-                    
+
                     if( eRWFlag == GF_Read )
                         GDALCopyWords( pabySrcBlock + iSrcOffset, eDataType, 0,
-                                       ((GByte *) pData) + iBandBufOffset, 
+                                       ((GByte *) pData) + iBandBufOffset,
                                        eBufType, 0, 1 );
                     else
-                        GDALCopyWords( ((GByte *) pData) + iBandBufOffset, 
+                        GDALCopyWords( ((GByte *) pData) + iBandBufOffset,
                                        eBufType, 0,
                                        pabySrcBlock + iSrcOffset, eDataType, 0,
                                        1 );
@@ -3288,7 +3152,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
         CPLFree( papoBlocks );
     }
 
-    return( CE_None );
+    return( eErr );
 }
 
 /************************************************************************/
@@ -3314,13 +3178,16 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     int nMaxBlockXSize = MAX(nBlockXSize, nSrcBlockXSize);
     int nMaxBlockYSize = MAX(nBlockYSize, nSrcBlockYSize);
 
-    int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
+    int nPixelSize = GDALGetDataTypeSizeBytes(eDT);
     if( bInterleave)
         nPixelSize *= nBandCount;
 
     // aim for one row of blocks.  Do not settle for less.
     int nSwathCols  = nXSize;
     int nSwathLines = nBlockYSize;
+
+    const char* pszSrcCompression =
+        poSrcPrototypeBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
 
 /* -------------------------------------------------------------------- */
 /*      What will our swath size be?                                    */
@@ -3340,6 +3207,12 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
         /* but if the minimum idal swath buf size is less, then go for it to */
         /* avoid unnecessarily abusing RAM usage */
         GIntBig nIdealSwathBufSize = (GIntBig)nSwathCols * nSwathLines * nPixelSize;
+        if( pszSrcCompression != NULL && EQUAL(pszSrcCompression, "JPEG2000") &&
+            (!bDstIsCompressed || ((nSrcBlockXSize % nBlockXSize) == 0 && (nSrcBlockYSize % nBlockYSize) == 0)) )
+        {
+            nIdealSwathBufSize = MAX(nIdealSwathBufSize,
+                                     (GIntBig)nSwathCols * nSrcBlockYSize * nPixelSize);
+        }
         if( nTargetSwathSize > nIdealSwathBufSize )
             nTargetSwathSize = (int)nIdealSwathBufSize;
     }
@@ -3355,17 +3228,17 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
                  "should be at least the size of the swath (%d) (GDAL_SWATH_SIZE config. option)", GDALGetCacheMax64(), nTargetSwathSize);
     }
 
-#define IS_MULTIPLE_OF(x,y) ((y)%(x) == 0)
+#define IS_DIVIDER_OF(x,y) ((y)%(x) == 0)
 #define ROUND_TO(x,y) (((x)/(y))*(y))
 
     /* if both input and output datasets are tiled, that the tile dimensions */
     /* are "compatible", try to stick  to a swath dimension that is a multiple */
     /* of input and output block dimensions */
     if (nBlockXSize != nXSize && nSrcBlockXSize != nXSize &&
-        IS_MULTIPLE_OF(nBlockXSize, nMaxBlockXSize) &&
-        IS_MULTIPLE_OF(nSrcBlockXSize, nMaxBlockXSize) &&
-        IS_MULTIPLE_OF(nBlockYSize, nMaxBlockYSize) &&
-        IS_MULTIPLE_OF(nSrcBlockYSize, nMaxBlockYSize))
+        IS_DIVIDER_OF(nBlockXSize, nMaxBlockXSize) &&
+        IS_DIVIDER_OF(nSrcBlockXSize, nMaxBlockXSize) &&
+        IS_DIVIDER_OF(nBlockYSize, nMaxBlockYSize) &&
+        IS_DIVIDER_OF(nSrcBlockYSize, nMaxBlockYSize))
     {
         if (((GIntBig)nMaxBlockXSize) * nMaxBlockYSize * nPixelSize <=
                                                     (GIntBig)nTargetSwathSize)
@@ -3400,8 +3273,8 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
 
         CPLDebug( "GDAL",
               "GDALCopyWholeRasterGetSwathSize(): adjusting to %d line swath "
-              "since requirement (%d * %d bytes) exceed target swath size (%d bytes) (GDAL_SWATH_SIZE config. option)",
-              nSwathLines, nBlockYSize, nMemoryPerCol, nTargetSwathSize);
+              "since requirement (" CPL_FRMT_GIB " bytes) exceed target swath size (%d bytes) (GDAL_SWATH_SIZE config. option)",
+              nSwathLines, (GIntBig)nBlockYSize * nMemoryPerCol, nTargetSwathSize);
     }
     // If we are processing single scans, try to handle several at once.
     // If we are handling swaths already, only grow the swath if a row
@@ -3413,13 +3286,43 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
 
         /* If possible try to align to source and target block height */
         if ((nSwathLines % nMaxBlockYSize) != 0 && nSwathLines > nMaxBlockYSize &&
-            IS_MULTIPLE_OF(nBlockYSize, nMaxBlockYSize) &&
-            IS_MULTIPLE_OF(nSrcBlockYSize, nMaxBlockYSize))
+            IS_DIVIDER_OF(nBlockYSize, nMaxBlockYSize) &&
+            IS_DIVIDER_OF(nSrcBlockYSize, nMaxBlockYSize))
             nSwathLines = ROUND_TO(nSwathLines, nMaxBlockYSize);
     }
 
+    if( pszSrcCompression != NULL && EQUAL(pszSrcCompression, "JPEG2000") &&
+        (!bDstIsCompressed ||
+            (IS_DIVIDER_OF(nBlockXSize, nSrcBlockXSize) &&
+             IS_DIVIDER_OF(nBlockYSize, nSrcBlockYSize))) )
+    {
+        /* Typical use case: converting from Pleaiades that is 2048x2048 tiled */
+        if (nSwathLines < nSrcBlockYSize)
+        {
+            nSwathLines = nSrcBlockYSize;
 
-    if (bDstIsCompressed)
+            /* Number of pixels that can be read/write simultaneously */
+            nSwathCols = nTargetSwathSize / (nSrcBlockXSize * nPixelSize);
+            nSwathCols = ROUND_TO(nSwathCols, nSrcBlockXSize);
+            if (nSwathCols == 0)
+                nSwathCols = nSrcBlockXSize;
+            if (nSwathCols > nXSize)
+                nSwathCols = nXSize;
+
+            CPLDebug( "GDAL",
+              "GDALCopyWholeRasterGetSwathSize(): because of compression and too high block,\n"
+              "use partial width at one time");
+        }
+        else if ((nSwathLines % nSrcBlockYSize) != 0)
+        {
+            /* Round on a multiple of nSrcBlockYSize */
+            nSwathLines = ROUND_TO(nSwathLines, nSrcBlockYSize);
+            CPLDebug( "GDAL",
+              "GDALCopyWholeRasterGetSwathSize(): because of compression, \n"
+              "round nSwathLines to block height : %d", nSwathLines);
+        }
+    }
+    else if (bDstIsCompressed)
     {
         if (nSwathLines < nBlockYSize)
         {
@@ -3458,12 +3361,12 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
 /**
  * \brief Copy all dataset raster data.
  *
- * This function copies the complete raster contents of one dataset to 
- * another similarly configured dataset.  The source and destination 
+ * This function copies the complete raster contents of one dataset to
+ * another similarly configured dataset.  The source and destination
  * dataset must have the same number of bands, and the same width
- * and height.  The bands do not have to have the same data type. 
+ * and height.  The bands do not have to have the same data type.
  *
- * This function is primarily intended to support implementation of 
+ * This function is primarily intended to support implementation of
  * driver specific CreateCopy() functions.  It implements efficient copying,
  * in particular "chunking" the copy in substantial blocks and, if appropriate,
  * performing the transfer in a pixel interleaved fashion.
@@ -3471,7 +3374,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
  * Currently the only papszOptions value supported are : "INTERLEAVE=PIXEL"
  * to force pixel interleaved operation and "COMPRESSED=YES" to force alignment
  * on target dataset block sizes to achieve best compression.  More options may be supported in
- * the future.  
+ * the future.
  *
  * @param hSrcDS the source dataset
  * @param hDstDS the destination dataset
@@ -3479,11 +3382,11 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
  * @param pfnProgress progress reporting function.
  * @param pProgressData callback data for progress function.
  *
- * @return CE_None on success, or CE_Failure on failure. 
+ * @return CE_None on success, or CE_Failure on failure.
  */
 
 CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
-    GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions, 
+    GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData )
 
 {
@@ -3500,11 +3403,11 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 /* -------------------------------------------------------------------- */
 /*      Confirm the datasets match in size and band counts.             */
 /* -------------------------------------------------------------------- */
-    int nXSize = poDstDS->GetRasterXSize(), 
+    int nXSize = poDstDS->GetRasterXSize(),
         nYSize = poDstDS->GetRasterYSize(),
         nBandCount = poDstDS->GetRasterCount();
 
-    if( poSrcDS->GetRasterXSize() != nXSize 
+    if( poSrcDS->GetRasterXSize() != nXSize
         || poSrcDS->GetRasterYSize() != nYSize
         || poSrcDS->GetRasterCount() != nBandCount )
     {
@@ -3519,7 +3422,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 /* -------------------------------------------------------------------- */
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
-        CPLError( CE_Failure, CPLE_UserInterrupt, 
+        CPLError( CE_Failure, CPLE_UserInterrupt,
                   "User terminated CreateCopy()" );
         return CE_Failure;
     }
@@ -3541,19 +3444,19 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 /* -------------------------------------------------------------------- */
     int bInterleave = FALSE;
     const char *pszInterleave = NULL;
-    
+
     pszInterleave = poSrcDS->GetMetadataItem( "INTERLEAVE", "IMAGE_STRUCTURE");
-    if( pszInterleave != NULL 
+    if( pszInterleave != NULL
         && (EQUAL(pszInterleave,"PIXEL") || EQUAL(pszInterleave,"LINE")) )
         bInterleave = TRUE;
 
     pszInterleave = poDstDS->GetMetadataItem( "INTERLEAVE", "IMAGE_STRUCTURE");
-    if( pszInterleave != NULL 
+    if( pszInterleave != NULL
         && (EQUAL(pszInterleave,"PIXEL") || EQUAL(pszInterleave,"LINE")) )
         bInterleave = TRUE;
 
     pszInterleave = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
-    if( pszInterleave != NULL 
+    if( pszInterleave != NULL
         && (EQUAL(pszInterleave,"PIXEL") || EQUAL(pszInterleave,"LINE")) )
         bInterleave = TRUE;
     else if( pszInterleave != NULL && EQUAL(pszInterleave,"BAND") )
@@ -3563,7 +3466,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     /* disk space (GTiff case for example), and to avoid data loss (JPEG compression for example) */
     int bDstIsCompressed = FALSE;
     const char* pszDstCompressed= CSLFetchNameValue( papszOptions, "COMPRESSED" );
-    if (pszDstCompressed != NULL && CSLTestBoolean(pszDstCompressed))
+    if (pszDstCompressed != NULL && CPLTestBool(pszDstCompressed))
         bDstIsCompressed = TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -3577,22 +3480,18 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                                     bDstIsCompressed, bInterleave,
                                     &nSwathCols, &nSwathLines);
 
-    int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
+    int nPixelSize = GDALGetDataTypeSizeBytes(eDT);
     if( bInterleave)
         nPixelSize *= nBandCount;
 
-    void *pSwathBuf = VSIMalloc3(nSwathCols, nSwathLines, nPixelSize );
+    void *pSwathBuf = VSI_MALLOC3_VERBOSE(nSwathCols, nSwathLines, nPixelSize );
     if( pSwathBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                "Failed to allocate %d*%d*%d byte swath buffer in\n"
-                "GDALDatasetCopyWholeRaster()",
-                nSwathCols, nSwathLines, nPixelSize );
         return CE_Failure;
     }
 
-    CPLDebug( "GDAL", 
-            "GDALDatasetCopyWholeRaster(): %d*%d swaths, bInterleave=%d", 
+    CPLDebug( "GDAL",
+            "GDALDatasetCopyWholeRaster(): %d*%d swaths, bInterleave=%d",
             nSwathCols, nSwathLines, bInterleave );
 
     if( nSwathCols == nXSize && poSrcDS->GetDriver() != NULL &&
@@ -3635,33 +3534,35 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                         nThisCols = nXSize - iX;
 
                     sExtraArg.pfnProgress = GDALScaledProgress;
-                    sExtraArg.pProgressData = 
+                    sExtraArg.pProgressData =
                         GDALCreateScaledProgress( nBlocksDone / (double)nTotalBlocks,
                                                 (nBlocksDone + 0.5) / (double)nTotalBlocks,
                                                 pfnProgress,
                                                 pProgressData );
+                    if( sExtraArg.pProgressData == NULL )
+                        sExtraArg.pfnProgress = NULL;
 
-                    eErr = poSrcDS->RasterIO( GF_Read, 
+                    eErr = poSrcDS->RasterIO( GF_Read,
                                             iX, iY, nThisCols, nThisLines,
-                                            pSwathBuf, nThisCols, nThisLines, 
-                                            eDT, 1, &nBand, 
+                                            pSwathBuf, nThisCols, nThisLines,
+                                            eDT, 1, &nBand,
                                             0, 0, 0, &sExtraArg );
 
                     GDALDestroyScaledProgress( sExtraArg.pProgressData );
 
                     if( eErr == CE_None )
-                        eErr = poDstDS->RasterIO( GF_Write, 
+                        eErr = poDstDS->RasterIO( GF_Write,
                                                 iX, iY, nThisCols, nThisLines,
-                                                pSwathBuf, nThisCols, nThisLines, 
+                                                pSwathBuf, nThisCols, nThisLines,
                                                 eDT, 1, &nBand,
                                                 0, 0, 0, NULL );
                     nBlocksDone ++;
-                    if( eErr == CE_None 
+                    if( eErr == CE_None
                         && !pfnProgress( nBlocksDone / (double)nTotalBlocks,
                                         NULL, pProgressData ) )
                     {
                         eErr = CE_Failure;
-                        CPLError( CE_Failure, CPLE_UserInterrupt, 
+                        CPLError( CE_Failure, CPLE_UserInterrupt,
                                 "User terminated CreateCopy()" );
                     }
                 }
@@ -3698,34 +3599,36 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                     nThisCols = nXSize - iX;
 
                 sExtraArg.pfnProgress = GDALScaledProgress;
-                sExtraArg.pProgressData = 
+                sExtraArg.pProgressData =
                     GDALCreateScaledProgress( nBlocksDone / (double)nTotalBlocks,
                                             (nBlocksDone + 0.5) / (double)nTotalBlocks,
                                             pfnProgress,
                                             pProgressData );
+                if( sExtraArg.pProgressData == NULL )
+                    sExtraArg.pfnProgress = NULL;
 
-                eErr = poSrcDS->RasterIO( GF_Read, 
+                eErr = poSrcDS->RasterIO( GF_Read,
                                         iX, iY, nThisCols, nThisLines,
-                                        pSwathBuf, nThisCols, nThisLines, 
-                                        eDT, nBandCount, NULL, 
+                                        pSwathBuf, nThisCols, nThisLines,
+                                        eDT, nBandCount, NULL,
                                         0, 0, 0, &sExtraArg );
 
                 GDALDestroyScaledProgress( sExtraArg.pProgressData );
 
                 if( eErr == CE_None )
-                    eErr = poDstDS->RasterIO( GF_Write, 
+                    eErr = poDstDS->RasterIO( GF_Write,
                                             iX, iY, nThisCols, nThisLines,
-                                            pSwathBuf, nThisCols, nThisLines, 
-                                            eDT, nBandCount, NULL, 
+                                            pSwathBuf, nThisCols, nThisLines,
+                                            eDT, nBandCount, NULL,
                                             0, 0, 0, NULL );
 
                 nBlocksDone ++;
-                if( eErr == CE_None 
+                if( eErr == CE_None
                     && !pfnProgress( nBlocksDone / (double)nTotalBlocks,
                                     NULL, pProgressData ) )
                 {
                     eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_UserInterrupt, 
+                    CPLError( CE_Failure, CPLE_UserInterrupt,
                             "User terminated CreateCopy()" );
                 }
             }
@@ -3815,7 +3718,7 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
     /* disk space (GTiff case for example), and to avoid data loss (JPEG compression for example) */
     int bDstIsCompressed = FALSE;
     const char* pszDstCompressed= CSLFetchNameValue( papszOptions, "COMPRESSED" );
-    if (pszDstCompressed != NULL && CSLTestBoolean(pszDstCompressed))
+    if (pszDstCompressed != NULL && CPLTestBool(pszDstCompressed))
         bDstIsCompressed = TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -3829,15 +3732,11 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
                                     bDstIsCompressed, FALSE,
                                     &nSwathCols, &nSwathLines);
 
-    int nPixelSize = (GDALGetDataTypeSize(eDT) / 8);
+    const int nPixelSize = GDALGetDataTypeSizeBytes(eDT);
 
-    void *pSwathBuf = VSIMalloc3(nSwathCols, nSwathLines, nPixelSize );
+    void *pSwathBuf = VSI_MALLOC3_VERBOSE(nSwathCols, nSwathLines, nPixelSize );
     if( pSwathBuf == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                "Failed to allocate %d*%d*%d byte swath buffer in\n"
-                "GDALRasterBandCopyWholeRaster()",
-                nSwathCols, nSwathLines, nPixelSize );
         return CE_Failure;
     }
 

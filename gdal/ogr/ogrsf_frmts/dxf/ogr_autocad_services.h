@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_AUTOCAD_SERVICES_H_INCLUDED
-#define _OGR_AUTOCAD_SERVICES_H_INCLUDED
+#ifndef OGR_AUTOCAD_SERVICES_H_INCLUDED
+#define OGR_AUTOCAD_SERVICES_H_INCLUDED
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -44,4 +44,4 @@ const unsigned char *ACGetColorTable( void );
 
 void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature );
 
-#endif /* ndef _OGR_AUTOCAD_SERVICES_H_INCLUDED */
+#endif /* ndef OGR_AUTOCAD_SERVICES_H_INCLUDED */

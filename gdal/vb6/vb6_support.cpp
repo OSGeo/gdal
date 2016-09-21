@@ -45,11 +45,11 @@ vbCStringToVB6( VARIANT *vResult, char *pszInput );
 void __declspec(dllexport) __stdcall
 vbCSLToVariant( char **papszList, VARIANT *out_list );
 
-char __declspec(dllexport) ** __stdcall 
+char __declspec(dllexport) ** __stdcall
 vbVariantToCSL( VARIANT *vList );
 
-int __declspec(dllexport) __stdcall 
-vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType, 
+int __declspec(dllexport) __stdcall
+vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType,
                   int *pnXSize, int *pnYSize );
 
 }
@@ -67,7 +67,7 @@ vbCStringToVB6( VARIANT *vResult, char *pszInput )
     USES_CONVERSION;
 
     VariantClear( vResult );
-    
+
     if( pszInput != NULL )
     {
         vResult->vt = VT_BSTR;
@@ -100,11 +100,11 @@ vbCSLToVariant( char **papszList, VARIANT *out_list )
     sBounds.lLbound = 1;
     sBounds.cElements = nLength;
 
-    result = SafeArrayCreate( VT_BSTR, 1, &sBounds );     
+    result = SafeArrayCreate( VT_BSTR, 1, &sBounds );
 
     for( i = 1; i <= nLength; i++ )
     {
-        SafeArrayPutElement( result, &i, 
+        SafeArrayPutElement( result, &i,
                              SysAllocString( A2BSTR(papszList[i-1]) ) );
 //        MessageBox( NULL, papszList[i-1], "Metadata Item", MB_OK );
     }
@@ -124,7 +124,7 @@ vbCSLToVariant( char **papszList, VARIANT *out_list )
 /*      Extract a list of strings from a variant as a stringlist.       */
 /************************************************************************/
 
-char __declspec(dllexport) ** __stdcall 
+char __declspec(dllexport) ** __stdcall
 vbVariantToCSL( VARIANT *vList )
 
 {
@@ -138,7 +138,7 @@ vbVariantToCSL( VARIANT *vList )
 /* -------------------------------------------------------------------- */
     if( vList == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "VARIANT is NULL in VariantToCSL()." );
         return NULL;
     }
@@ -149,16 +149,16 @@ vbVariantToCSL( VARIANT *vList )
         psSA = vList->parray;
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "VARIANT is wrong type (%x).", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VARIANT is wrong type (%x).",
                   vList->vt );
         return NULL;
     }
 
     if( SafeArrayGetDim(psSA) != 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Wrong dimension in array (%d)", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Wrong dimension in array (%d)",
                   SafeArrayGetDim(psSA) );
         return NULL;
     }
@@ -166,14 +166,14 @@ vbVariantToCSL( VARIANT *vList )
     if( FAILED(SafeArrayGetLBound( psSA, 1, &nLBound ))
         || FAILED(SafeArrayGetUBound( psSA, 1, &nUBound)) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "SafeARrayGet{L,U}Bound() failed." );
         return NULL;
     }
 
     if( nUBound < nLBound )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Crazy L/U Bound (L=%d, U=%d)",
                   nLBound, nUBound );
         return NULL;
@@ -182,8 +182,8 @@ vbVariantToCSL( VARIANT *vList )
     SafeArrayGetVartype(psSA, &eVartype );
     if( eVartype != VT_BSTR )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "SafeArray contains type %d instead of VT_BSTR.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SafeArray contains type %d instead of VT_BSTR.",
                   eVartype );
         return NULL;
     }
@@ -200,8 +200,8 @@ vbVariantToCSL( VARIANT *vList )
 
         if( FAILED(SafeArrayGetElement(psSA, &iElement, &bstrValue)) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "SafeArrayGetElement(%d) failed.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "SafeArrayGetElement(%d) failed.",
                       iElement );
             CSLDestroy( papszResult );
             return NULL;
@@ -221,8 +221,8 @@ vbVariantToCSL( VARIANT *vList )
 /*      SafeArray.                                                      */
 /************************************************************************/
 
-int __declspec(dllexport) __stdcall 
-vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType, 
+int __declspec(dllexport) __stdcall
+vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType,
                   int *pnXSize, int *pnYSize )
 
 {
@@ -236,7 +236,7 @@ vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType,
 /* -------------------------------------------------------------------- */
     if( vArray == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "VARIANT is NULL in SafeArrayToPtr()." );
         return NULL;
     }
@@ -247,16 +247,16 @@ vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType,
         psSA = vArray->parray;
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "VARIANT is wrong type (%x).", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VARIANT is wrong type (%x).",
                   vArray->vt );
         return NULL;
     }
 
     if( SafeArrayGetDim(psSA) < 1 || SafeArrayGetDim(psSA) > 2 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Wrong dimension in array (%d)", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Wrong dimension in array (%d)",
                   SafeArrayGetDim(psSA) );
         return NULL;
     }
@@ -267,14 +267,14 @@ vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType,
     if( FAILED(SafeArrayGetLBound( psSA, 1, &nLBound ))
         || FAILED(SafeArrayGetUBound( psSA, 1, &nUBound)) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "SafeARrayGet{L,U}Bound() failed." );
         return NULL;
     }
 
     if( nUBound <= nLBound )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Crazy L/U Bound (L=%d, U=%d)",
                   nLBound, nUBound );
         return NULL;
@@ -292,22 +292,22 @@ vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType,
         if( FAILED(SafeArrayGetLBound( psSA, 1, &nLBound ))
             || FAILED(SafeArrayGetUBound( psSA, 1, &nUBound)) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "SafeARrayGet{L,U}Bound() failed." );
             return NULL;
         }
-        
+
         if( nUBound <= nLBound )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Crazy L/U Bound (L=%d, U=%d)",
                       nLBound, nUBound );
             return NULL;
         }
-        
+
         *pnYSize = nUBound - nLBound + 1;
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Translate the type.                                             */
 /* -------------------------------------------------------------------- */
@@ -328,8 +328,8 @@ vbSafeArrayToPtr( VARIANT *vArray, GDALDataType *peDataType,
         *peDataType = GDT_Float64;
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "SafeArray contains type %d which is not supported.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SafeArray contains type %d which is not supported.",
                   eVartype );
         return NULL;
     }

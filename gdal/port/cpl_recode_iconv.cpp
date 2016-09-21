@@ -39,17 +39,25 @@ CPL_CVSID("$Id$");
 
 #define CPL_RECODE_DSTBUF_SIZE 32768
 
+ /* used by cpl_recode.cpp */
+extern void CPLClearRecodeIconvWarningFlags();
+extern char *CPLRecodeIconv( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
+extern char *CPLRecodeFromWCharIconv( const wchar_t *,
+                                      const char *, const char * );
+extern wchar_t *CPLRecodeToWCharIconv( const char *,
+                                       const char *, const char * );
+
 /************************************************************************/
 /*                 CPLClearRecodeIconvWarningFlags()                    */
 /************************************************************************/
 
-static int bHaveWarned1 = FALSE;
-static int bHaveWarned2 = FALSE;
+static bool bHaveWarned1 = false;
+static bool bHaveWarned2 = false;
 
 void CPLClearRecodeIconvWarningFlags()
 {
-    bHaveWarned1 = FALSE;
-    bHaveWarned2 = FALSE;
+    bHaveWarned1 = false;
+    bHaveWarned2 = false;
 }
 
 /************************************************************************/
@@ -60,7 +68,7 @@ void CPLClearRecodeIconvWarningFlags()
  * Convert a string from a source encoding to a destination encoding
  * using the iconv() function.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pszSource a NULL terminated string.
  * @param pszSrcEncoding the source encoding.
@@ -69,8 +77,8 @@ void CPLClearRecodeIconvWarningFlags()
  * @return a NULL terminated string which should be freed with CPLFree().
  */
 
-char *CPLRecodeIconv( const char *pszSource, 
-                      const char *pszSrcEncoding, 
+char *CPLRecodeIconv( const char *pszSource,
+                      const char *pszSrcEncoding,
                       const char *pszDstEncoding )
 
 {
@@ -80,8 +88,8 @@ char *CPLRecodeIconv( const char *pszSource,
 
     if ( sConv == (iconv_t)-1 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Recode from %s to %s failed with the error: \"%s\".", 
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Recode from %s to %s failed with the error: \"%s\".",
                   pszSrcEncoding, pszDstEncoding, strerror(errno) );
 
         return CPLStrdup(pszSource);
@@ -112,7 +120,7 @@ char *CPLRecodeIconv( const char *pszSource,
                 // Skip the invalid sequence in the input string.
                 if (!bHaveWarned1)
                 {
-                    bHaveWarned1 = TRUE;
+                    bHaveWarned1 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                             "One or several characters couldn't be converted correctly from %s to %s.\n"
                             "This warning will not be emitted anymore",
@@ -152,7 +160,7 @@ char *CPLRecodeIconv( const char *pszSource,
 /************************************************************************/
 
 /**
- * Convert wchar_t string to UTF-8. 
+ * Convert wchar_t string to UTF-8.
  *
  * Convert a wchar_t string into a multibyte utf-8 string
  * using the iconv() function.
@@ -160,18 +168,18 @@ char *CPLRecodeIconv( const char *pszSource,
  * Note that the wchar_t type varies in size on different systems. On
  * win32 it is normally 2 bytes, and on unix 4 bytes.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pwszSource the source wchar_t string, terminated with a 0 wchar_t.
  * @param pszSrcEncoding the source encoding, typically CPL_ENC_UCS2.
  * @param pszDstEncoding the destination encoding, typically CPL_ENC_UTF8.
  *
- * @return a zero terminated multi-byte string which should be freed with 
- * CPLFree(), or NULL if an error occurs. 
+ * @return a zero terminated multi-byte string which should be freed with
+ * CPLFree(), or NULL if an error occurs.
  */
 
-char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource, 
-                               const char *pszSrcEncoding, 
+char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
+                               const char *pszSrcEncoding,
                                const char *pszDstEncoding )
 
 {
@@ -202,9 +210,8 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
     }
 
     GByte *pszIconvSrcBuf = (GByte*) CPLCalloc((nSrcLen+1),nTargetCharWidth);
-    unsigned int iSrc;
 
-    for( iSrc = 0; iSrc <= nSrcLen; iSrc++ )
+    for( unsigned int iSrc = 0; iSrc <= nSrcLen; iSrc++ )
     {
         if( nTargetCharWidth == 1 )
             pszIconvSrcBuf[iSrc] = (GByte) pwszSource[iSrc];
@@ -224,8 +231,8 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
     if ( sConv == (iconv_t)-1 )
     {
         CPLFree( pszIconvSrcBuf );
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Recode from %s to %s failed with the error: \"%s\".", 
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Recode from %s to %s failed with the error: \"%s\".",
                   pszSrcEncoding, pszDstEncoding, strerror(errno) );
 
         return CPLStrdup( "" );
@@ -264,7 +271,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
                 pszSrcBuf += sizeof(wchar_t);
                 if (!bHaveWarned2)
                 {
-                    bHaveWarned2 = TRUE;
+                    bHaveWarned2 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                             "One or several characters couldn't be converted correctly from %s to %s.\n"
                             "This warning will not be emitted anymore",
@@ -313,18 +320,18 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
  * Note that the wchar_t type varies in size on different systems. On
  * win32 it is normally 2 bytes, and on unix 4 bytes.
  *
- * If an error occurs an error may, or may not be posted with CPLError(). 
+ * If an error occurs an error may, or may not be posted with CPLError().
  *
  * @param pszSource input multi-byte character string.
  * @param pszSrcEncoding source encoding, typically CPL_ENC_UTF8.
- * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2. 
+ * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2.
  *
  * @return the zero terminated wchar_t string (to be freed with CPLFree()) or
  * NULL on error.
  */
 
 wchar_t *CPLRecodeToWCharIconv( const char *pszSource,
-                                const char *pszSrcEncoding, 
+                                const char *pszSrcEncoding,
                                 const char *pszDstEncoding )
 
 {

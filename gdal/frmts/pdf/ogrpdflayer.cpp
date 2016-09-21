@@ -31,19 +31,19 @@
 
 CPL_CVSID("$Id$");
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
 /************************************************************************/
 /*                            OGRPDFLayer()                             */
 /************************************************************************/
 
-OGRPDFLayer::OGRPDFLayer( PDFDataset* poDS,
+OGRPDFLayer::OGRPDFLayer( PDFDataset* poDSIn,
                           const char * pszName,
                           OGRSpatialReference *poSRS,
                           OGRwkbGeometryType eGeomType ) :
                                 OGRMemLayer(pszName, poSRS, eGeomType )
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
     bGeomTypeSet = FALSE;
     bGeomTypeMixed = FALSE;
 }
@@ -170,19 +170,19 @@ int OGRPDFLayer::TestCapability( const char * pszCap )
         return OGRMemLayer::TestCapability(pszCap);
 }
 
-#endif /* defined(HAVE_POPPLER) || defined(HAVE_PODOFO) */
+#endif /* defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM) */
 
 /************************************************************************/
 /*                        OGRPDFWritableLayer()                         */
 /************************************************************************/
 
-OGRPDFWritableLayer::OGRPDFWritableLayer( PDFWritableVectorDataset* poDS,
+OGRPDFWritableLayer::OGRPDFWritableLayer( PDFWritableVectorDataset* poDSIn,
                           const char * pszName,
                           OGRSpatialReference *poSRS,
                           OGRwkbGeometryType eGeomType ) :
                                 OGRMemLayer(pszName, poSRS, eGeomType )
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 }
 
 /************************************************************************/

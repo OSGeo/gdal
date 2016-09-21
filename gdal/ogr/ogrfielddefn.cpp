@@ -31,6 +31,7 @@
 #include "ogr_feature.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ograpispy.h"
 
 CPL_CVSID("$Id$");
 
@@ -207,12 +208,18 @@ void OGR_Fld_SetName( OGRFieldDefnH hDefn, const char *pszName )
  *
  * @param hDefn handle to the field definition.
  * @return the name of the field definition.
- * 
+ *
  */
 
 const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 
 {
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetNameRef");
+#endif
+
     return ((OGRFieldDefn *) hDefn)->GetNameRef();
 }
 
@@ -245,6 +252,12 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
 
 {
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetType");
+#endif
+
     return ((OGRFieldDefn *) hDefn)->GetType();
 }
 
@@ -259,7 +272,7 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
  *
  * This method is the same as the C function OGR_Fld_SetType().
  *
- * @param eType the new field type.
+ * @param eTypeIn the new field type.
  */
 
 void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
@@ -325,6 +338,12 @@ void OGR_Fld_SetType( OGRFieldDefnH hDefn, OGRFieldType eType )
 OGRFieldSubType OGR_Fld_GetSubType( OGRFieldDefnH hDefn )
 
 {
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetSubType");
+#endif
+
     return ((OGRFieldDefn *) hDefn)->GetSubType();
 }
 
@@ -339,7 +358,7 @@ OGRFieldSubType OGR_Fld_GetSubType( OGRFieldDefnH hDefn )
  *
  * This method is the same as the C function OGR_Fld_SetSubType().
  *
- * @param eSubType the new field subtype.
+ * @param eSubTypeIn the new field subtype.
  * @since GDAL 2.0
  */
 void OGRFieldDefn::SetSubType( OGRFieldSubType eSubTypeIn )
@@ -391,7 +410,7 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  * low-level layers to do the job. So retrieving the feature from the layer is
  * recommended.
  *
- * The accepted values are NULL, a numeric value, a litteral value enclosed
+ * The accepted values are NULL, a numeric value, a literal value enclosed
  * between single quote characters (and inner single quote characters escaped by
  * repetition of the single quote character),
  * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
@@ -404,7 +423,7 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  *
  * This function is the same as the C function OGR_Fld_SetDefault().
  *
- * @param pszDefault new default field value or NULL pointer.
+ * @param pszDefaultIn new default field value or NULL pointer.
  *
  * @since GDAL 2.0
  */
@@ -461,7 +480,7 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
  * low-level layers to do the job. So retrieving the feature from the layer is
  * recommended.
  *
- * The accepted values are NULL, a numeric value, a litteral value enclosed
+ * The accepted values are NULL, a numeric value, a literal value enclosed
  * between single quote characters (and inner single quote characters escaped by
  * repetition of the single quote character),
  * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
@@ -530,11 +549,13 @@ const char *OGR_Fld_GetDefault( OGRFieldDefnH hDefn )
 /**
  * \brief Returns whether the default value is driver specific.
  *
- * Driver specific default values are those that are *not* NULL, a numeric value,
- * a litteral value enclosed between single quote characters, CURRENT_TIMESTAMP,
- * CURRENT_TIME, CURRENT_DATE or datetime literal value.
+ * Driver specific default values are those that are *not* NULL, a
+ * numeric value, a literal value enclosed between single quote
+ * characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
+ * datetime literal value.
  *
- * This method is the same as the C function OGR_Fld_IsDefaultDriverSpecific().
+ * This method is the same as the C function
+ * OGR_Fld_IsDefaultDriverSpecific().
  *
  * @return TRUE if the default value is driver specific.
  * @since GDAL 2.0
@@ -569,11 +590,13 @@ int OGRFieldDefn::IsDefaultDriverSpecific() const
 /**
  * \brief Returns whether the default value is driver specific.
  *
- * Driver specific default values are those that are *not* NULL, a numeric value,
- * a litteral value enclosed between single quote characters, CURRENT_TIMESTAMP,
- * CURRENT_TIME, CURRENT_DATE or datetime literal value.
+ * Driver specific default values are those that are *not* NULL, a
+ * numeric value, a literal value enclosed between single quote
+ * characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
+ * datetime literal value.
  *
- * This function is the same as the C++ method OGRFieldDefn::IsDefaultDriverSpecific().
+ * This function is the same as the C++ method
+ * OGRFieldDefn::IsDefaultDriverSpecific().
  *
  * @param hDefn handle to the field definition
  * @return TRUE if the default value is driver specific.
@@ -652,7 +675,7 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
 /**
  * \brief Fetch human readable name for a field type.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRFieldDefn::GetFieldTypeName().
  *
  * @param eType the field type to get name for.
@@ -710,7 +733,7 @@ const char * OGRFieldDefn::GetFieldSubTypeName( OGRFieldSubType eSubType )
 /**
  * \brief Fetch human readable name for a field subtype.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRFieldDefn::GetFieldSubTypeName().
  *
  * @param eSubType the field subtype to get name for.
@@ -832,7 +855,7 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
  *
  * This method is the same as the C function OGR_Fld_GetWidth().
  *
- * @return the width, zero means no specified width. 
+ * @return the width, zero means no specified width.
  */
 
 /************************************************************************/
@@ -844,7 +867,7 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
  * This function is the same as the CPP method OGRFieldDefn::GetWidth().
  *
  * @param hDefn handle to the field definition to get width from.
- * @return the width, zero means no specified width. 
+ * @return the width, zero means no specified width.
  */
 
 int OGR_Fld_GetWidth( OGRFieldDefnH hDefn )
@@ -929,12 +952,12 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
  * \fn void OGRFieldDefn::SetPrecision( int nPrecision );
  *
  * \brief Set the formatting precision for this field in characters.
- * 
- * This should normally be zero for fields of types other than OFTReal. 
+ *
+ * This should normally be zero for fields of types other than OFTReal.
  *
  * This method is the same as the C function OGR_Fld_SetPrecision().
  *
- * @param nPrecision the new precision. 
+ * @param nPrecision the new precision.
  */
 
 /************************************************************************/
@@ -942,13 +965,13 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
 /************************************************************************/
 /**
  * \brief Set the formatting precision for this field in characters.
- * 
- * This should normally be zero for fields of types other than OFTReal. 
+ *
+ * This should normally be zero for fields of types other than OFTReal.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetPrecision().
  *
  * @param hDefn handle to the field definition to set precision to.
- * @param nPrecision the new precision. 
+ * @param nPrecision the new precision.
  */
 
 void OGR_Fld_SetPrecision( OGRFieldDefnH hDefn, int nPrecision )
@@ -967,7 +990,7 @@ void OGR_Fld_SetPrecision( OGRFieldDefnH hDefn, int nPrecision )
  * This method is the same as the C function OGR_Fld_Set().
  *
  * @param pszNameIn the new name to assign.
- * @param eTypeIn the new type (one of the OFT values like OFTInteger). 
+ * @param eTypeIn the new type (one of the OFT values like OFTInteger).
  * @param nWidthIn the preferred formatting width.  Defaults to zero indicating
  * undefined.
  * @param nPrecisionIn number of decimals places for formatting, defaults to
@@ -998,7 +1021,7 @@ void OGRFieldDefn::Set( const char *pszNameIn,
  *
  * @param hDefn handle to the field definition to set to.
  * @param pszNameIn the new name to assign.
- * @param eTypeIn the new type (one of the OFT values like OFTInteger). 
+ * @param eTypeIn the new type (one of the OFT values like OFTInteger).
  * @param nWidthIn the preferred formatting width.  Defaults to zero indicating
  * undefined.
  * @param nPrecisionIn number of decimals places for formatting, defaults to
@@ -1007,13 +1030,13 @@ void OGRFieldDefn::Set( const char *pszNameIn,
  * to OJUndefined.
  */
 
-void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn, 
+void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
                         OGRFieldType eTypeIn,
                         int nWidthIn, int nPrecisionIn,
                         OGRJustification eJustifyIn )
 
 {
-    ((OGRFieldDefn *) hDefn)->Set( pszNameIn, eTypeIn, nWidthIn, 
+    ((OGRFieldDefn *) hDefn)->Set( pszNameIn, eTypeIn, nWidthIn,
                                    nPrecisionIn, eJustifyIn );
 }
 
@@ -1194,4 +1217,159 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
 void OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int bNullableIn )
 {
     ((OGRFieldDefn *) hDefn)->SetNullable( bNullableIn );
+}
+
+
+/************************************************************************/
+/*                        OGRUpdateFieldType()                          */
+/************************************************************************/
+
+/**
+ * \brief Update the type of a field definition by "merging" its existing type with a new type.
+ *
+ * The update is done such as broadening the type. For example a OFTInteger
+ * updated with OFTInteger64 will be promoted to OFTInteger64.
+ *
+ * @param poFDefn the field definition whose type must be updated.
+ * @param eNewType the new field type to merge into the existing type.
+ * @param eNewSubType the new field subtype to merge into the existing subtype.
+ * @since GDAL 2.1
+ */
+
+void OGRUpdateFieldType( OGRFieldDefn* poFDefn,
+                         OGRFieldType eNewType,
+                         OGRFieldSubType eNewSubType )
+{
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTInteger )
+    {
+        if( eNewType == OFTInteger &&
+            poFDefn->GetSubType() == OFSTBoolean && eNewSubType != OFSTBoolean )
+        {
+            poFDefn->SetSubType(OFSTNone);
+        }
+        else if( eNewType == OFTInteger64 || eNewType == OFTReal )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(eNewType);
+        }
+        else if( eNewType == OFTIntegerList || eNewType == OFTInteger64List ||
+                 eNewType == OFTRealList || eNewType == OFTStringList )
+        {
+            if( eNewType != OFTIntegerList || eNewSubType != OFSTBoolean )
+                poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(eNewType);
+        }
+        else if( eNewType != OFTInteger )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTString);
+        }
+    }
+    else if( eType == OFTInteger64 )
+    {
+        if( eNewType == OFTReal )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(eNewType);
+        }
+        else if( eNewType == OFTIntegerList )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTInteger64List);
+        }
+        else if( eNewType == OFTInteger64List ||
+                 eNewType == OFTRealList || eNewType == OFTStringList )
+        {
+            if( eNewType != OFTIntegerList )
+                poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(eNewType);
+        }
+        else if( eNewType != OFTInteger && eNewType != OFTInteger64 )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTString);
+        }
+    }
+    else if( eType == OFTReal )
+    {
+        if( eNewType == OFTIntegerList || eNewType == OFTInteger64List ||
+            eNewType == OFTRealList )
+        {
+            poFDefn->SetType(OFTRealList);
+        }
+        else if( eNewType == OFTStringList )
+        {
+            poFDefn->SetType(OFTStringList);
+        }
+        else if( eNewType != OFTInteger && eNewType != OFTInteger64 &&
+                 eNewType != OFTReal )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTString);
+        }
+    }
+    else if( eType == OFTIntegerList )
+    {
+        if( eNewType == OFTIntegerList &&
+            poFDefn->GetSubType() == OFSTBoolean && eNewSubType != OFSTBoolean )
+        {
+            poFDefn->SetSubType(OFSTNone);
+        }
+        else if( eNewType == OFTInteger64 || eNewType == OFTInteger64List )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTInteger64List);
+        }
+        else if( eNewType == OFTReal || eNewType == OFTRealList )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTRealList);
+        }
+        else if( eNewType != OFTInteger && eNewType != OFTIntegerList )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTStringList);
+        }
+    }
+    else if( eType == OFTInteger64List )
+    {
+        if( eNewType == OFTReal || eNewType == OFTRealList )
+            poFDefn->SetType(OFTRealList);
+        else if( eNewType != OFTInteger && eNewType != OFTInteger64 &&
+                 eNewType != OFTIntegerList && eNewType != OFTInteger64List )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTStringList);
+        }
+    }
+    else if( eType == OFTRealList )
+    {
+        if( eNewType != OFTInteger && eNewType != OFTInteger64 &&
+            eNewType != OFTReal &&
+            eNewType != OFTIntegerList && eNewType != OFTInteger64List &&
+            eNewType != OFTRealList )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTStringList);
+        }
+    }
+    else if( eType == OFTDateTime )
+    {
+        if( eNewType != OFTDateTime && eNewType != OFTDate )
+        {
+            poFDefn->SetType(OFTString);
+        }
+    }
+    else if( eType == OFTDate || eType == OFTTime )
+    {
+        if( eNewType == OFTDateTime )
+            poFDefn->SetType(OFTDateTime);
+        else if( eNewType != eType )
+            poFDefn->SetType(OFTString);
+    }
+    else if( eType == OFTString && eNewType == OFTStringList )
+    {
+        poFDefn->SetType(OFTStringList);
+    }
 }

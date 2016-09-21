@@ -3,11 +3,14 @@
 #define GEO_CONFIG_H
 
 #include "cpl_config.h"
+
+#ifndef COVERITY_SCAN
 #include "cpl_string.h"
 #ifdef sprintf
 #undef sprintf
 #endif
 #define sprintf CPLsprintf
+#endif
 
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
 #include "gdal_libtiff_symbol_rename.h"

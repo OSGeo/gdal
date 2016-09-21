@@ -8,8 +8,8 @@
 <h1>HFA -- Erdas Imagine .img</h1>
 
 GDAL supports Erdas Imagine .img format for read access and write.  The
-driver supports reading overviews, palettes, and georeferencing.  It 
-supports the erdas band types 
+driver supports reading overviews, palettes, and georeferencing.  It
+supports the Erdas band types
 u8, s8, u16, s16, u32, s32, f32, f64, c64 and c128.<p>
 
 Compressed and missing tiles in Erdas files should be handled properly on read.
@@ -19,7 +19,7 @@ larger than 2GiB) are also support for reading and writing.<p>
 
 Metadata reading and writing is supported at the dataset level, and for
 bands, but this is GDAL specific metadata - not metadata in an Imagine
-recognised form.  The metadata is stored in a table called GDAL_MetaData with
+recognized form.  The metadata is stored in a table called GDAL_MetaData with
 each column being a metadata item.  The title is the key and the row 1 value
 is the value.<p>
 
@@ -39,28 +39,28 @@ Creation Options:<p>
 (by default spill file created for images larger 2GiB only). Default=NO<p>
 <li> <b>COMPRESSED=YES</b>: Create file as compressed. Use of spill file disables compression. Default=NO<p>
 <li> <b>NBITS=1/2/4</b>: Create file with special sub-byte data types.<p>
-<li> <b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a 
+<li> <b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a
 new Byte file can be forced to be written as signed byte.<p>
 <li> <b>AUX=YES</b>: To create a .aux file. Default=NO<p>
 <li> <b>IGNOREUTM=YES</b> : Ignore UTM when selecting coordinate system - will use Transverse Mercator. Only used for Create() method. Default=NO<p>
 <li> <b>STATISTICS=YES</b> : To generate statistics and a histogram. Default=NO<p>
 <li> <b>DEPENDENT_FILE=filename</b> : Name of dependent file (must not have absolute path). Optional<p>
-<li> <b>FORCETOPESTRING=YES</b>: Force use of ArcGIS PE String in file instead of Imagine coordinate system format.  In some cases this improves ArcGIS coordinate system compatability.<p>
+<li> <b>FORCETOPESTRING=YES</b>: Force use of ArcGIS PE String in file instead of Imagine coordinate system format.  In some cases this improves ArcGIS coordinate system compatibility.<p>
 </ul>
 
-Erdas Imagine supports external creation of overviews (with gdaladdo for 
+Erdas Imagine supports external creation of overviews (with gdaladdo for
 instance).  To force them to be created in an .rrd file (rather than inside
 the original .img) set the global config option HFA_USE_RRD=YES).<p>
 
 Layer names can be set and retrieved with the GDALSetDescription/GDALGetDescription calls on the Raster Band objects. <p>
 
-<h2>Configuration Options</h2> 
-Currently two <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration options</a> are supported by the HFA driver: 
+<h2>Configuration Options</h2>
+Currently two <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration options</a> are supported by the HFA driver:
 
-<ul> 
-<li> <b>HFA_USE_RRD=YES/NO</b> : Whether to force creation of external overviews in Erdas rrd format and with .rrd file name extension (gdaladdo with combination -ro --config USE_RRD YES creates overview file with .aux extension). <p> 
+<ul>
+<li> <b>HFA_USE_RRD=YES/NO</b> : Whether to force creation of external overviews in Erdas rrd format and with .rrd file name extension (gdaladdo with combination -ro --config USE_RRD YES creates overview file with .aux extension). <p>
 <li> <b>HFA_COMPRESS_OVR=YES/NO</b> : (GDAL &gt;= 1.11) Whether to create compressed overviews.
-Default is to only create compressed overviews when the file is compressed. <p> 
+Default is to only create compressed overviews when the file is compressed. <p>
 This configuration option can be used when building external overviews for a base image that is not in Erdas Imagine format. Resulting overview file will use the rrd structure and have .aux extension.
 <pre>
 gdaladdo out.tif --config USE_RRD YES --config HFA_COMPRESS_OVR YES 2 4 8
@@ -71,7 +71,7 @@ gdaladdo out.tif --config USE_RRD YES --config HFA_USE_RRD YES --config HFA_COMP
 </pre>
 
 </li>
-</ul> 
+</ul>
 
 See Also:<p>
 

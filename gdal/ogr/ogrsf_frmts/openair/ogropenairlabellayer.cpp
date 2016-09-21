@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_openair.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_openair.h"
 #include "ogr_p.h"
 #include "ogr_srs_api.h"
 
@@ -39,15 +39,12 @@ CPL_CVSID("$Id$");
 /*                      OGROpenAirLabelLayer()                          */
 /************************************************************************/
 
-OGROpenAirLabelLayer::OGROpenAirLabelLayer( VSILFILE* fp )
-
+OGROpenAirLabelLayer::OGROpenAirLabelLayer( VSILFILE* fp ) :
+    poFeatureDefn(new OGRFeatureDefn("labels")),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    fpOpenAir(fp),
+    nNextFID(0)
 {
-    fpOpenAir = fp;
-    nNextFID = 0;
-
-    poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
-
-    poFeatureDefn = new OGRFeatureDefn( "labels"  );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint );
@@ -97,11 +94,9 @@ void OGROpenAirLabelLayer::ResetReading()
 
 OGRFeature *OGROpenAirLabelLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
-    while(TRUE)
+    while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -112,8 +107,8 @@ OGRFeature *OGROpenAirLabelLayer::GetNextFeature()
         {
             return poFeature;
         }
-        else
-            delete poFeature;
+
+        delete poFeature;
     }
 }
 
@@ -123,20 +118,20 @@ OGRFeature *OGROpenAirLabelLayer::GetNextFeature()
 
 OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
 {
-    const char* pszLine;
-    double dfLat = 0, dfLon = 0;
-    int bHasCoord = FALSE;
+    double dfLat = 0;
+    double dfLon = 0;
+    bool bHasCoord = false;
 
-    while(TRUE)
+    while( true )
     {
-        pszLine = CPLReadLine2L(fpOpenAir, 1024, NULL);
+        const char* pszLine = CPLReadLine2L(fpOpenAir, 1024, NULL);
         if (pszLine == NULL)
             return NULL;
 
         if (pszLine[0] == '*' || pszLine[0] == '\0')
             continue;
 
-        if (EQUALN(pszLine, "AC ", 3))
+        if (STARTS_WITH_CI(pszLine, "AC "))
         {
             if (osCLASS.size() != 0)
             {
@@ -146,13 +141,13 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
             }
             osCLASS = pszLine + 3;
         }
-        else if (EQUALN(pszLine, "AN ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AN "))
             osNAME = pszLine + 3;
-        else if (EQUALN(pszLine, "AH ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AH "))
             osCEILING = pszLine + 3;
-        else if (EQUALN(pszLine, "AL ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AL "))
             osFLOOR = pszLine + 3;
-        else if (EQUALN(pszLine, "AT ", 3))
+        else if (STARTS_WITH_CI(pszLine, "AT "))
         {
             bHasCoord = OGROpenAirGetLatLon(pszLine + 3, dfLat, dfLon);
             break;
@@ -185,7 +180,7 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROpenAirLabelLayer::TestCapability( CPL_UNUSED const char * pszCap )
+int OGROpenAirLabelLayer::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }

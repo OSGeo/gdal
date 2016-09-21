@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_PGEOGEOMETRY_H_INCLUDED
-#define _OGR_PGEOGEOMETRY_H_INCLUDED
+#ifndef OGR_PGEOGEOMETRY_H_INCLUDED
+#define OGR_PGEOGEOMETRY_H_INCLUDED
 
 #include "ogr_geometry.h"
 
@@ -85,11 +85,11 @@ OGRErr CPL_DLL OGRCreateFromShapeBin( GByte *pabyShape,
                               OGRGeometry **ppoGeom,
                               int nBytes );
 
-OGRErr CPL_DLL OGRWriteToShapeBin( OGRGeometry *poGeom, 
+OGRErr CPL_DLL OGRWriteToShapeBin( OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes );
 
-OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom, 
+OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes );
 

@@ -14,21 +14,21 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_GMLUTILS_H_INCLUDED
-#define _CPL_GMLUTILS_H_INCLUDED
+#ifndef CPL_GMLUTILS_H_INCLUDED
+#define CPL_GMLUTILS_H_INCLUDED
 
 #include <vector>
 #include <string>
@@ -38,22 +38,22 @@
 
 const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometry,
                                      std::string& osWork,
-                                     int bConsiderEPSGAsURN);
+                                     bool bConsiderEPSGAsURN);
 
-int GML_IsSRSLatLongOrder(const char* pszSRSName);
+bool GML_IsSRSLatLongOrder(const char* pszSRSName);
 
 void* GML_BuildOGRGeometryFromList_CreateCache();
 void GML_BuildOGRGeometryFromList_DestroyCache(void* hCacheSRS);
 
 OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry,
-                                          int bTryToMakeMultipolygons,
-                                          int bInvertAxisOrderIfLatLong,
+                                          bool bTryToMakeMultipolygons,
+                                          bool bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
-                                          int bConsiderEPSGAsURN,
-                                          int bGetSecondaryGeometryOption,
+                                          bool bConsiderEPSGAsURN,
+                                          int nPseudoBoolGetSecondaryGeometryOption,
                                           void* hCacheSRS,
-                                          int bFaceHoleNegative = FALSE );
+                                          bool bFaceHoleNegative = false );
 
-char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoordSwap);
+char* GML_GetSRSName(const OGRSpatialReference* poSRS, bool bLongSRS, bool *pbCoordSwap);
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

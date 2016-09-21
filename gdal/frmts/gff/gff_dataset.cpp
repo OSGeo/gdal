@@ -29,12 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
-#include "gdal_pam.h"
-#include "cpl_port.h"
 #include "cpl_conv.h"
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -44,18 +45,19 @@ CPL_CVSID("$Id$");
 
 class GFFRasterBand;
 
-class GFFDataset : public GDALPamDataset 
+class GFFDataset : public GDALPamDataset
 {
     friend class GFFRasterBand;
     VSILFILE *fp;
     GDALDataType eDataType;
-    unsigned int nEndianess;
+    unsigned int nEndianness;
     /* Some relevant headers */
     unsigned short nVersionMajor;
     unsigned short nVersionMinor;
     unsigned int nLength;
     //char *pszCreator;
-    /* I am taking this at face value (are they freakin' insane?) */
+    // TODO: Needs a better explanation.
+    /* I am taking this at face value (are they insane?) */
     //float fBPP;
     unsigned int nBPP;
 
@@ -77,9 +79,11 @@ public:
     static int Identify( GDALOpenInfo * poOpenInfo );
 };
 
-GFFDataset::GFFDataset()
+GFFDataset::GFFDataset() :
+    fp(NULL), eDataType(GDT_Unknown), nEndianness(0), nVersionMajor(0),
+    nVersionMinor(0), nLength(0), nBPP(0), nFrameCnt(0), nImageType(0),
+    nRowMajor(0), nRgCnt(0), nAzCnt(0)
 {
-    fp = NULL;
 }
 
 GFFDataset::~GFFDataset()
@@ -103,19 +107,19 @@ public:
 /************************************************************************/
 /*                           GFFRasterBand()                            */
 /************************************************************************/
-GFFRasterBand::GFFRasterBand( GFFDataset *poDS, int nBand,
-	GDALDataType eDataType ) 
+GFFRasterBand::GFFRasterBand( GFFDataset *poDSIn, int nBandIn,
+	GDALDataType eDataTypeIn )
 {
-    unsigned long nBytes;
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
-    this->eDataType = eDataType;
+    this->eDataType = eDataTypeIn;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
     /* Determine the number of bytes per sample */
+    unsigned long nBytes;
     switch (eDataType) {
       case GDT_CInt16:
         nBytes = 4;
@@ -129,15 +133,14 @@ GFFRasterBand::GFFRasterBand( GFFDataset *poDS, int nBand,
     }
 
     nRasterBandMemory = nBytes * poDS->GetRasterXSize();
-    nSampleSize = nBytes;
-
+    nSampleSize = static_cast<int>(nBytes);
 }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GFFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+CPLErr GFFRasterBand::IReadBlock( int /* nBlockXOff */ ,
                                   int nBlockYOff,
                                   void *pImage )
 {
@@ -153,17 +156,14 @@ CPLErr GFFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 #if defined(CPL_MSB)
     if( GDALDataTypeIsComplex( eDataType ) )
     {
-        int nWordSize;
-
-        nWordSize = GDALGetDataTypeSize(eDataType)/16;
+        int nWordSize = GDALGetDataTypeSize(eDataType)/16;
         GDALSwapWords( pImage, nWordSize, nBlockXSize, 2*nWordSize );
-        GDALSwapWords( ((GByte *) pImage)+nWordSize, 
+        GDALSwapWords( ((GByte *) pImage)+nWordSize,
                         nWordSize, nBlockXSize, 2*nWordSize );
     }
 #endif
 
     return CE_None;
-	
 }
 
 /********************************************************************
@@ -177,10 +177,10 @@ CPLErr GFFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 int GFFDataset::Identify( GDALOpenInfo *poOpenInfo )
 {
-    if(poOpenInfo->nHeaderBytes < 7) 
+    if(poOpenInfo->nHeaderBytes < 7)
         return 0;
 
-    if (EQUALN((char *)poOpenInfo->pabyHeader,"GSATIMG",7)) 
+    if (STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GSATIMG"))
         return 1;
 
     return 0;
@@ -190,12 +190,10 @@ int GFFDataset::Identify( GDALOpenInfo *poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo ) 
+GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 {
-    unsigned short nCreatorLength = 0;
-
     /* Check that the dataset is indeed a GSAT File Format (GFF) file */
-    if (!GFFDataset::Identify(poOpenInfo)) 
+    if (!GFFDataset::Identify(poOpenInfo))
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -203,14 +201,13 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GFF driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
     }
-    
-    GFFDataset *poDS;
-    poDS = new GFFDataset();
+
+    GFFDataset *poDS = new GFFDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     if( poDS->fp == NULL )
@@ -219,15 +216,17 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         return NULL;
     }
 
-    /* Check the endianess of the file */
+    /* Check the endianness of the file */
     VSIFSeekL(poDS->fp,54,SEEK_SET);
-    VSIFReadL(&(poDS->nEndianess),2,1,poDS->fp);
+    VSIFReadL(&(poDS->nEndianness),2,1,poDS->fp);
 
+    const bool bSwap =
 #if defined(CPL_LSB)
-    int bSwap = 0;
+    false
 #else
-    int bSwap = 1;
+    true
 #endif
+        ;
 
     VSIFSeekL(poDS->fp,8,SEEK_SET);
     VSIFReadL(&poDS->nVersionMinor,2,1,poDS->fp);
@@ -236,6 +235,8 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
     if (bSwap) CPL_SWAP16PTR(&poDS->nVersionMajor);
     VSIFReadL(&poDS->nLength,4,1,poDS->fp);
     if (bSwap) CPL_SWAP32PTR(&poDS->nLength);
+
+    unsigned short nCreatorLength = 0;
     VSIFReadL(&nCreatorLength,2,1,poDS->fp);
     if (bSwap) CPL_SWAP16PTR(&nCreatorLength);
     /* Hack for now... I should properly load the date metadata, for
@@ -290,9 +291,9 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         return NULL;
     }
 
-    /* Set raster width/height 
+    /* Set raster width/height
      * Note that the images that are complex are listed as having twice the
-     * number of X-direction values than there are actual pixels. This is 
+     * number of X-direction values than there are actual pixels. This is
      * because whoever came up with the format was crazy (actually, my
      * hunch is that they designed it very much for Matlab)
      * */
@@ -333,19 +334,21 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 /*                          GDALRegister_GFF()                          */
 /************************************************************************/
 
-void GDALRegister_GFF(void) 
+void GDALRegister_GFF()
 {
-    GDALDriver *poDriver;
-    if ( GDALGetDriverByName("GFF") == NULL ) {
-        poDriver = new GDALDriver();
-        poDriver->SetDescription("GFF");
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, 
-                                  "Ground-based SAR Applications Testbed File Format (.gff)");
-        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#GFF");
-        poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gff");
-        poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-        poDriver->pfnOpen = GFFDataset::Open;
-        GetGDALDriverManager()->RegisterDriver(poDriver);
-    }
+    if( GDALGetDriverByName( "GFF" ) != NULL )
+        return;
+
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription("GFF");
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem(
+        GDAL_DMD_LONGNAME,
+        "Ground-based SAR Applications Testbed File Format (.gff)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#GFF");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gff");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->pfnOpen = GFFDataset::Open;
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

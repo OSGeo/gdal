@@ -84,3 +84,5 @@ swig/perl/pm_to_blib
 man/
 html/
 nmake.local
+*~
+*tmp

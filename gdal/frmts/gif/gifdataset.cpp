@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GIF Driver
- * Purpose:  Implement GDAL GIF Support using libungif code.  
+ * Purpose:  Implement GDAL GIF Support using libungif code.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -28,15 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 #include "gifabstractdataset.h"
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_GIF(void);
-
 #if !(defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5)
 
 // This prototype seems to have been messed up!
@@ -50,8 +49,8 @@ GifFileType * EGifOpen(void* userData, OutputFunc writeFunc);
 
 CPL_C_END
 
-static const int InterlacedOffset[] = { 0, 4, 2, 1 }; 
-static const int InterlacedJumps[] = { 8, 8, 4, 2 };  
+static const int InterlacedOffset[] = { 0, 4, 2, 1 };
+static const int InterlacedJumps[] = { 8, 8, 4, 2 };
 
 static int VSIGIFWriteFunc( GifFileType *, const GifByteType *, int );
 
@@ -77,7 +76,6 @@ class GIFDataset : public GIFAbstractDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-
 };
 
 /************************************************************************/
@@ -98,9 +96,9 @@ class GIFRasterBand : public GIFAbstractRasterBand
 /*                           GIFRasterBand()                            */
 /************************************************************************/
 
-GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand, 
+GIFRasterBand::GIFRasterBand( GIFDataset *poDSIn, int nBandIn,
                               SavedImage *psSavedImage, int nBackground ) :
-                GIFAbstractRasterBand(poDS, nBand, psSavedImage, nBackground, FALSE)
+                GIFAbstractRasterBand(poDSIn, nBandIn, psSavedImage, nBackground, FALSE)
 
 {
 }
@@ -124,7 +122,7 @@ CPLErr GIFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if( panInterlaceMap != NULL )
         nBlockYOff = panInterlaceMap[nBlockYOff];
 
-    memcpy( pImage, psImage->RasterBits + nBlockYOff * nBlockXSize, 
+    memcpy( pImage, psImage->RasterBits + nBlockYOff * nBlockXSize,
             nBlockXSize );
 
     return CE_None;
@@ -157,7 +155,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GIF driver does not support update access to existing"
                   " files.\n" );
         return NULL;
@@ -166,18 +164,15 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Ingest.                                                         */
 /* -------------------------------------------------------------------- */
-    GifFileType 	*hGifFile;
-    VSILFILE                *fp;
-    int                  nGifErr;
-
-    fp = poOpenInfo->fpL;
+    VSILFILE *fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
 
-    hGifFile = GIFAbstractDataset::myDGifOpen( fp, GIFAbstractDataset::ReadFunc );
+    GifFileType *hGifFile
+        = GIFAbstractDataset::myDGifOpen( fp, GIFAbstractDataset::ReadFunc );
     if( hGifFile == NULL )
     {
         VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "DGifOpen() failed for %s.\n"
                   "Perhaps the gif file is corrupt?\n",
                   poOpenInfo->pszFilename );
@@ -191,27 +186,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     /*      Find the first image record.                                    */
     /* -------------------------------------------------------------------- */
-    GifRecordType RecordType = TERMINATE_RECORD_TYPE;
-
-    while( DGifGetRecordType(hGifFile, &RecordType) != GIF_ERROR
-        && RecordType != TERMINATE_RECORD_TYPE
-        && RecordType != IMAGE_DESC_RECORD_TYPE )
-    {
-        /* Skip extension records found before IMAGE_DESC_RECORD_TYPE */
-        if (RecordType == EXTENSION_RECORD_TYPE)
-        {
-            int nFunction;
-            GifByteType *pExtData;
-            if (DGifGetExtension(hGifFile, &nFunction, &pExtData) == GIF_ERROR)
-                break;
-            while (pExtData != NULL)
-            {
-                if (DGifGetExtensionNext(hGifFile, &pExtData) == GIF_ERROR)
-                    break;
-            }
-        }
-    }
-
+    GifRecordType RecordType = FindFirstImage(hGifFile);
     if( RecordType == IMAGE_DESC_RECORD_TYPE  &&
         DGifGetImageDesc(hGifFile) != GIF_ERROR)
     {
@@ -238,7 +213,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( hGifFile == NULL )
     {
         VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "DGifOpen() failed for %s.\n"
                   "Perhaps the gif file is corrupt?\n",
                   poOpenInfo->pszFilename );
@@ -246,7 +221,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    nGifErr = DGifSlurp( hGifFile );
+    int nGifErr = DGifSlurp( hGifFile );
 
     if( nGifErr != GIF_OK || hGifFile->SavedImages == NULL )
     {
@@ -263,7 +238,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
          }
          else
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                         "DGifSlurp() failed for %s.\n"
                         "Perhaps the gif file is corrupt?\n",
                         poOpenInfo->pszFilename );
@@ -274,9 +249,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GIFDataset 	*poDS;
-
-    poDS = new GIFDataset();
+    GIFDataset *poDS = new GIFDataset();
 
     poDS->fp = fp;
     poDS->eAccess = GA_ReadOnly;
@@ -309,7 +282,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
         /* Since giflib 5, de-interlacing is done by DGifSlurp() */
         psImage->ImageDesc.Interlace = 0;
 #endif
-        poDS->SetBand( poDS->nBands+1, 
+        poDS->SetBand( poDS->nBands+1,
                        new GIFRasterBand( poDS, poDS->nBands+1, psImage,
                                           hGifFile->SBackGroundColor ));
     }
@@ -371,47 +344,45 @@ static void GDALPrintGifError(CPL_UNUSED GifFileType *hGifFile, const char* pszM
 /************************************************************************/
 
 GDALDataset *
-GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-               int bStrict, char ** papszOptions, 
+GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+               int bStrict, char ** papszOptions,
                GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-    int	 bInterlace = FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      Check for interlaced option.                                    */
 /* -------------------------------------------------------------------- */
-    bInterlace = CSLFetchBoolean(papszOptions, "INTERLACING", FALSE);
+    int bInterlace = CSLFetchBoolean(papszOptions, "INTERLACING", FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
+    const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 1 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GIF driver only supports one band images.\n" );
 
         return NULL;
     }
 
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
     if (nXSize > 65535 || nYSize > 65535)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GIF driver only supports datasets up to 65535x65535 size.\n" );
 
         return NULL;
     }
 
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte
         && bStrict )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GIF driver doesn't support data type %s. "
-                  "Only eight bit bands supported.\n", 
-                  GDALGetDataTypeName( 
+                  "Only eight bit bands supported.\n",
+                  GDALGetDataTypeName(
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         return NULL;
@@ -420,18 +391,16 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Open the output file.                                           */
 /* -------------------------------------------------------------------- */
-    GifFileType *hGifFile;
-    VSILFILE *fp;
-
-    fp = VSIFOpenL( pszFilename, "wb" );
+    VSILFILE *fp  = VSIFOpenL( pszFilename, "wb" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create %s:\n%s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create %s:\n%s",
                   pszFilename, VSIStrerror( errno ) );
         return NULL;
     }
 
+    GifFileType *hGifFile;
 #if defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5
     int nError;
     hGifFile = EGifOpen( fp, VSIGIFWriteFunc, &nError );
@@ -441,7 +410,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( hGifFile == NULL )
     {
         VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "EGifOpenFilename(%s) failed.  Does file already exist?",
                   pszFilename );
 
@@ -453,12 +422,19 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
     ColorMapObject	*psGifCT;
-    int			iColor;
 
     if( poBand->GetColorTable() == NULL )
     {
         psGifCT = GifMakeMapObject( 256, NULL );
-        for( iColor = 0; iColor < 256; iColor++ )
+        if( psGifCT == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot allocate color table");
+            GIFAbstractDataset::myEGifCloseFile(hGifFile);
+            VSIFCloseL( fp );
+            return NULL;
+        }
+        for( int iColor = 0; iColor < 256; iColor++ )
         {
             psGifCT->Colors[iColor].Red = (GifByteType) iColor;
             psGifCT->Colors[iColor].Green = (GifByteType) iColor;
@@ -468,13 +444,22 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     else
     {
         GDALColorTable	*poCT = poBand->GetColorTable();
-        int nFullCount = 1;
+        int nFullCount = 2;
 
         while( nFullCount < poCT->GetColorEntryCount() )
             nFullCount = nFullCount * 2;
 
         psGifCT = GifMakeMapObject( nFullCount, NULL );
-        for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
+        if( psGifCT == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot allocate color table");
+            GIFAbstractDataset::myEGifCloseFile(hGifFile);
+            VSIFCloseL( fp );
+            return NULL;
+        }
+        int iColor = 0;
+        for( ; iColor < poCT->GetColorEntryCount(); iColor++ )
         {
             GDALColorEntry	sEntry;
 
@@ -494,7 +479,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Setup parameters.                                               */
 /* -------------------------------------------------------------------- */
-    if (EGifPutScreenDesc(hGifFile, nXSize, nYSize, 
+    if (EGifPutScreenDesc(hGifFile, nXSize, nYSize,
                           8, /* ColorRes */
                           255, /* Background */
                           psGifCT) == GIF_ERROR)
@@ -505,7 +490,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIFCloseL( fp );
         return NULL;
     }
-    
+
     GifFreeMapObject(psGifCT);
     psGifCT = NULL;
 
@@ -533,26 +518,26 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    CPLErr      eErr;
-    GDALPamDataset *poDS;
-    GByte      *pabyScanline;
-
-    pabyScanline = (GByte *) CPLMalloc( nXSize );
+    GDALPamDataset *poDS = NULL;
+    GByte *pabyScanline = (GByte *) CPLMalloc( nXSize );
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        eErr = CE_Failure;
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to setup progress." );
+    }
 
     if( !bInterlace )
     {
         for( int iLine = 0; iLine < nYSize; iLine++ )
         {
-            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                     pabyScanline, nXSize, 1, GDT_Byte,
-                                     nBands, nBands * nXSize, NULL );
+            const CPLErr eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
+                                                  pabyScanline, nXSize, 1, GDT_Byte,
+                                                  nBands, nBands * nXSize, NULL );
 
             if( eErr != CE_None || EGifPutLine( hGifFile, pabyScanline, nXSize ) == GIF_ERROR )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Error writing gif file." );
                 goto error;
             }
@@ -566,29 +551,28 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     else
     {
-        int 	i, j;
-        int nLinesRead = 0;
         int nLinesToRead = 0;
-        for ( i = 0; i < 4; i++)
+        for ( int i = 0; i < 4; i++)
         {
-            for (j = InterlacedOffset[i]; j < nYSize; j += InterlacedJumps[i]) 
+            for ( int j = InterlacedOffset[i]; j < nYSize; j += InterlacedJumps[i] )
             {
                 nLinesToRead ++;
             }
         }
 
+        int nLinesRead = 0;
         /* Need to perform 4 passes on the images: */
-        for ( i = 0; i < 4; i++)
+        for ( int i = 0; i < 4; i++)
         {
-            for (j = InterlacedOffset[i]; j < nYSize; j += InterlacedJumps[i]) 
+            for ( int j = InterlacedOffset[i]; j < nYSize; j += InterlacedJumps[i] )
             {
-                eErr= poBand->RasterIO( GF_Read, 0, j, nXSize, 1, 
+                const CPLErr eErr= poBand->RasterIO( GF_Read, 0, j, nXSize, 1,
                                         pabyScanline, nXSize, 1, GDT_Byte,
                                         1, nXSize, NULL );
 
                 if (eErr != CE_None || EGifPutLine(hGifFile, pabyScanline, nXSize) == GIF_ERROR)
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                             "Error writing gif file." );
                     goto error;
                 }
@@ -610,7 +594,7 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if (GIFAbstractDataset::myEGifCloseFile(hGifFile) == GIF_ERROR)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "EGifCloseFile() failed.\n" );
         hGifFile = NULL;
         goto error;
@@ -625,17 +609,17 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
     {
-    	double      adfGeoTransform[6];
-	
-	if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        double      adfGeoTransform[6];
+
+        if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
             GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
 
-    /* If outputing to stdout, we can't reopen it, so we'll return */
+    /* If writing to stdout, we can't reopen it, so return */
     /* a fake dataset to make the caller happy */
     CPLPushErrorHandler(CPLQuietErrorHandler);
     poDS = (GDALPamDataset*) GDALOpen(pszFilename, GA_ReadOnly);
@@ -673,7 +657,7 @@ error:
 /*      Proxy write function.                                           */
 /************************************************************************/
 
-static int VSIGIFWriteFunc( GifFileType *psGFile, 
+static int VSIGIFWriteFunc( GifFileType *psGFile,
                             const GifByteType *pabyBuffer, int nBytesToWrite )
 
 {
@@ -690,50 +674,46 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
         /* Most readers don't even care if it is GIF87a or GIF89a, but it is */
         /* better to write the right version */
 
-        int nRet = VSIFWriteL("GIF89a", 1, 6, fp);
+        size_t nRet = VSIFWriteL("GIF89a", 1, 6, fp);
         nRet += VSIFWriteL( (char *) pabyBuffer + 6, 1, nBytesToWrite - 6, fp );
-        return nRet;
+        return static_cast<int>(nRet);
     }
     else
-        return VSIFWriteL( (void *) pabyBuffer, 1, nBytesToWrite, fp );
+        return static_cast<int>(VSIFWriteL( (void *) pabyBuffer, 1, nBytesToWrite, fp ));
 }
 
 /************************************************************************/
-/*                          GDALRegister_GIF()                        */
+/*                          GDALRegister_GIF()                          */
 /************************************************************************/
 
 void GDALRegister_GIF()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "GIF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GIF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "GIF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Graphics Interchange Format (.gif)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_gif.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+    poDriver->SetDescription( "GIF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Graphics Interchange Format (.gif)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gif.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='INTERLACING' type='boolean'/>\n"
 "   <Option name='WORLDFILE' type='boolean'/>\n"
 "</CreationOptionList>\n" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = GIFDataset::Open;
-        poDriver->pfnCreateCopy = GIFDataset::CreateCopy;
-        poDriver->pfnIdentify = GIFAbstractDataset::Identify;
+    poDriver->pfnOpen = GIFDataset::Open;
+    poDriver->pfnCreateCopy = GIFDataset::CreateCopy;
+    poDriver->pfnIdentify = GIFAbstractDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

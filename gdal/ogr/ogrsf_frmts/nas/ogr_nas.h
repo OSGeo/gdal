@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_NAS_H_INCLUDED
-#define _OGR_NAS_H_INCLUDED
+#ifndef OGR_NAS_H_INCLUDED
+#define OGR_NAS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "nasreaderp.h"
@@ -48,7 +48,6 @@ class OGRNASLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
     int                 iNextNASId;
-    int                 nTotalNASCount;
 
     OGRNASDataSource    *poDS;
 
@@ -67,6 +66,8 @@ class OGRNASLayer : public OGRLayer
 
     GIntBig             GetFeatureCount( int bForce = TRUE );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -82,7 +83,7 @@ class OGRNASRelationLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
     OGRNASDataSource    *poDS;
 
-    int                  bPopulated;
+    bool                 bPopulated;
     int                  iNextFeature;
     std::vector<CPLString> aoRelationCollection;
 
@@ -101,7 +102,7 @@ class OGRNASRelationLayer : public OGRLayer
     void                AddRelation( const char *pszFromID,
                                      const char *pszType,
                                      const char *pszToID );
-    void                MarkRelationsPopulated() { bPopulated = TRUE; }
+    void                MarkRelationsPopulated() { bPopulated = true; }
 };
 
 /************************************************************************/
@@ -144,4 +145,4 @@ class OGRNASDataSource : public OGRDataSource
     void                PopulateRelations();
 };
 
-#endif /* _OGR_NAS_H_INCLUDED */
+#endif /* OGR_NAS_H_INCLUDED */

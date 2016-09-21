@@ -27,7 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_conv.h"
 #include "cpl_minixml.h"
+#include "cpl_string.h"
 #include "iso8211.h"
 #include <map>
 #include <string>
@@ -60,14 +62,14 @@ int main(int nArgc, char* papszArgv[])
         printf( "Usage: 8211createfromxml filename.xml outfilename\n" );
         exit( 1 );
     }
-    
+
     CPLXMLNode* poRoot = CPLParseXMLFile( pszFilename );
     if( poRoot == NULL )
     {
         fprintf(stderr, "Cannot parse XML file '%s'\n", pszFilename);
         exit( 1 );
     }
-    
+
     CPLXMLNode* poXMLDDFModule = CPLSearchXMLNode(poRoot, "=DDFModule");
     if( poXMLDDFModule == NULL )
     {
@@ -104,6 +106,18 @@ int main(int nArgc, char* papszArgv[])
     int nSizeFieldLength = 3;
     int nSizeFieldPos = 4;
 
+    chInterchangeLevel = CPLGetXMLValue(poXMLDDFModule, "_interchangeLevel", CPLSPrintf("%c", chInterchangeLevel))[0];
+    chLeaderIden = CPLGetXMLValue(poXMLDDFModule, "_leaderIden", CPLSPrintf("%c", chLeaderIden))[0];
+    chCodeExtensionIndicator = CPLGetXMLValue(poXMLDDFModule, "_inlineCodeExtensionIndicator", CPLSPrintf("%c", chCodeExtensionIndicator))[0];
+    chVersionNumber = CPLGetXMLValue(poXMLDDFModule, "_versionNumber", CPLSPrintf("%c", chVersionNumber))[0];
+    chAppIndicator = CPLGetXMLValue(poXMLDDFModule, "_appIndicator", CPLSPrintf("%c", chAppIndicator))[0];
+    char szExtendedCharSet[4];
+    snprintf(szExtendedCharSet, sizeof(szExtendedCharSet), "%s", CPLGetXMLValue(poXMLDDFModule, "_extendedCharSet", pszExtendedCharSet));
+    pszExtendedCharSet = szExtendedCharSet;
+    nSizeFieldLength = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldLength", CPLSPrintf("%d", nSizeFieldLength)));
+    nSizeFieldPos = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldPos", CPLSPrintf("%d", nSizeFieldPos)));
+    nSizeFieldTag = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldTag", CPLSPrintf("%d", nSizeFieldTag)));
+
     oModule.Initialize(chInterchangeLevel,
                        chLeaderIden,
                        chCodeExtensionIndicator,
@@ -113,6 +127,7 @@ int main(int nArgc, char* papszArgv[])
                        nSizeFieldLength,
                        nSizeFieldPos,
                        nSizeFieldTag);
+    oModule.SetFieldControlLength(atoi(CPLGetXMLValue(poXMLDDFModule, "_fieldControlLength", CPLSPrintf("%d", oModule.GetFieldControlLength()))));
 
     int bCreated = FALSE;
 
@@ -151,7 +166,7 @@ int main(int nArgc, char* papszArgv[])
                 pszArrayDescr = "";
             else if( eStructCode == dsc_array )
                 pszArrayDescr = "*";
- 
+
             poFDefn->Create( CPLGetXMLValue(psIter, "tag", ""),
                              CPLGetXMLValue(psIter, "fieldName", ""),
                              pszArrayDescr,
@@ -170,11 +185,16 @@ int main(int nArgc, char* papszArgv[])
                 psSubIter = psSubIter->psNext;
             }
 
+            pszFormatControls = CPLGetXMLValue(psIter, "formatControls", NULL);
+            if( pszFormatControls )
+                poFDefn->SetFormatControls(pszFormatControls);
+
             oModule.AddField( poFDefn );
         }
         else if( psIter->eType == CXT_Element &&
                  strcmp(psIter->pszValue, "DDFRecord") == 0 )
         {
+            //const bool bFirstRecord = !bCreated;
             if( !bCreated )
             {
                 oModule.Create( pszOutFilename );
@@ -183,6 +203,12 @@ int main(int nArgc, char* papszArgv[])
 
             DDFRecord *poRec = new DDFRecord( &oModule );
             std::map<std::string, int> oMapField;
+
+            //if( !bFirstRecord )
+            //    poRec->SetReuseHeader(atoi(CPLGetXMLValue(psIter, "reuseHeader", CPLSPrintf("%d", poRec->GetReuseHeader()))));
+            poRec->SetSizeFieldLength(atoi(CPLGetXMLValue(psIter, "_sizeFieldLength", CPLSPrintf("%d", poRec->GetSizeFieldLength()))));
+            poRec->SetSizeFieldPos(atoi(CPLGetXMLValue(psIter, "_sizeFieldPos", CPLSPrintf("%d", poRec->GetSizeFieldPos()))));
+            poRec->SetSizeFieldTag(atoi(CPLGetXMLValue(psIter, "_sizeFieldTag", CPLSPrintf("%d", poRec->GetSizeFieldTag()))));
 
             CPLXMLNode* psSubIter = psIter->psChild;
             while( psSubIter != NULL )
@@ -198,13 +224,13 @@ int main(int nArgc, char* papszArgv[])
                         fprintf(stderr, "Can't find field '%s'\n", pszFieldName );
                         exit(1);
                     }
-                    
+
                     int nFieldOcc = oMapField[pszFieldName];
                     oMapField[pszFieldName] ++ ;
 
                     poField = poRec->AddField( poFieldDefn );
                     const char* pszValue = CPLGetXMLValue(psSubIter, "value", NULL);
-                    if( pszValue != NULL && strncmp(pszValue, "0x", 2) == 0 )
+                    if( pszValue != NULL && STARTS_WITH(pszValue, "0x") )
                     {
                         pszValue += 2;
                         int nDataLen = (int)strlen(pszValue)  / 2;
@@ -258,7 +284,7 @@ int main(int nArgc, char* papszArgv[])
                                                               pszSubfieldValue );
                                 }
                                 else if( strcmp(pszSubfieldType, "binary") == 0 &&
-                                         strncmp(pszSubfieldValue, "0x", 2) == 0 )
+                                         STARTS_WITH(pszSubfieldValue, "0x") )
                                 {
                                     pszSubfieldValue += 2;
                                     int nDataLen = (int)strlen(pszSubfieldValue) / 2;

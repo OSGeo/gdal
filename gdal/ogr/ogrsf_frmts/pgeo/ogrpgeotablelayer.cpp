@@ -65,9 +65,9 @@ OGRPGeoTableLayer::~OGRPGeoTableLayer()
 /*                             Initialize()                             */
 /************************************************************************/
 
-CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName, 
+CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                                       const char *pszGeomCol,
-                                      int nShapeType, 
+                                      int nShapeType,
                                       double dfExtentLeft,
                                       double dfExtentRight,
                                       double dfExtentBottom,
@@ -75,10 +75,9 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                                       int nSRID,
                                       int bHasZ )
 
-
 {
     CPLODBCSession *poSession = poDS->GetSession();
-    
+
     SetDescription( pszTableName );
 
     CPLFree( pszGeomColumn );
@@ -133,17 +132,18 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
     if( eOGRType != wkbUnknown && eOGRType != wkbNone && bHasZ )
         eOGRType = wkbSetZ(eOGRType);
+    CPL_IGNORE_RET_VAL(eOGRType);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetKey( poSession );
-    
+
     if( oGetKey.GetPrimaryKeys( pszTableName ) && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
-        
-        if( oGetKey.Fetch() ) // more than one field in key! 
+
+        if( oGetKey.Fetch() ) // more than one field in key!
         {
             CPLFree( pszFIDColumn );
             pszFIDColumn = NULL;
@@ -151,7 +151,7 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                       pszTableName );
         }
         else
-            CPLDebug( "PGeo", 
+            CPLDebug( "PGeo",
                       "%s: Got primary key %s.",
                       pszTableName, pszFIDColumn );
     }
@@ -166,7 +166,7 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
     if( !oGetCol.GetColumns( pszTableName ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "GetColumns() failed on %s.\n%s",
                   pszTableName, poSession->GetLastError() );
         return CE_Failure;
@@ -178,8 +178,8 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
     if( poFeatureDefn->GetFieldCount() == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "No column definitions found for table '%s', layer not usable.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "No column definitions found for table '%s', layer not usable.",
                   pszTableName );
         return CE_Failure;
     }
@@ -299,19 +299,19 @@ OGRFeature *OGRPGeoTableLayer::GetFeature( GIntBig nFeatureId )
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRPGeoTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRPGeoTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
 
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
-            && EQUAL(pszQuery,this->pszQuery)) )
+    if( (pszQueryIn == NULL && this->pszQuery == NULL)
+        || (pszQueryIn != NULL && this->pszQuery != NULL
+            && EQUAL(pszQueryIn,this->pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = pszQuery ? CPLStrdup( pszQuery ) : NULL; 
+    this->pszQuery = pszQueryIn ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 
@@ -335,7 +335,7 @@ int OGRPGeoTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
-    else 
+    else
         return OGRPGeoLayer::TestCapability( pszCap );
 }
 
@@ -363,7 +363,7 @@ GIntBig OGRPGeoTableLayer::GetFeatureCount( int bForce )
 
     if( !oStmt.ExecuteSQL() || !oStmt.Fetch() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "GetFeatureCount() failed on query %s.\n%s",
                   oStmt.GetCommand(), poDS->GetSession()->GetLastError() );
         return OGRPGeoLayer::GetFeatureCount(bForce);

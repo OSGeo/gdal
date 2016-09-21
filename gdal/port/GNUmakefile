@@ -7,11 +7,11 @@ else
 include GDALmake.opt
 endif
 
-ifeq ($(LIBZ_SETTING),internal) 
-XTRA_OPT =      -I../frmts/zlib 
-else 
-XTRA_OPT = 
-endif 
+ifeq ($(LIBZ_SETTING),internal)
+XTRA_OPT =      -I../frmts/zlib
+else
+XTRA_OPT =
+endif
 
 CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) $(XTRA_OPT)
 
@@ -26,7 +26,8 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_vsil_tar.o cpl_vsil_stdin.o cpl_vsil_buffered_reader.o \
 	cpl_base64.o cpl_vsil_curl.o cpl_vsil_curl_streaming.o \
 	cpl_vsil_cache.o cpl_xml_validate.o cpl_spawn.o \
-	cpl_google_oauth2.o cpl_progress.o cpl_virtualmem.o
+	cpl_google_oauth2.o cpl_progress.o cpl_virtualmem.o cpl_worker_thread_pool.o \
+	cpl_vsil_crypt.o cpl_sha256.o cpl_aws.o cpl_vsi_error.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
@@ -47,6 +48,14 @@ ifeq ($(HAVE_LIBXML2),yes)
 CPPFLAGS	:=	$(CPPFLAGS) $(LIBXML2_INC) -DHAVE_LIBXML2
 endif
 
+ifeq ($(HAVE_CRYPTOPP),yes)
+CPPFLAGS	:=	$(CPPFLAGS) -DHAVE_CRYPTOPP
+endif
+
+ifeq ($(USE_ONLY_CRYPTODLL_ALG),yes)
+CPPFLAGS	:=	$(CPPFLAGS) -DUSE_ONLY_CRYPTODLL_ALG
+endif
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ): cpl_vsi_virtual.h
@@ -57,5 +66,5 @@ clean:
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
 
-xmlreformat:	xmlreformat.o 
+xmlreformat:	xmlreformat.o
 	$(CXX) $(CXXFLAGS) xmlreformat.o $(CONFIG_LIBS) -o xmlreformat

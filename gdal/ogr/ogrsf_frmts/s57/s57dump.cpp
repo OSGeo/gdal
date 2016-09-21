@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "s57.h"
 
 CPL_CVSID("$Id$");
 
@@ -40,13 +40,10 @@ CPL_CVSID("$Id$");
 int main( int nArgc, char ** papszArgv )
 
 {
-    char        **papszOptions = NULL;
-    int         bReturnPrimitives = FALSE;
-    char       *pszDataPath = NULL;
-    
     if( nArgc < 2 )
     {
-        printf( "Usage: s57dump [-pen] [-split] [-lnam] [-return-prim] [-no-update]\n"
+        printf( "Usage: s57dump [-pen] [-split] [-lnam] [-return-prim] "
+                "[-no-update]\n"
                 "               [-return-link] [-data <dirpath>] filename\n" );
         exit( 1 );
     }
@@ -54,6 +51,10 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Process commandline arguments.                                  */
 /* -------------------------------------------------------------------- */
+    char **papszOptions = NULL;
+    bool bReturnPrimitives = false;
+    char *pszDataPath = NULL;
+
     for( int iArg = 1; iArg < nArgc-1; iArg++ )
     {
         if( EQUAL(papszArgv[iArg],"-split") )
@@ -68,91 +69,91 @@ int main( int nArgc, char ** papszArgv )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_PRESERVE_EMPTY_NUMBERS,
                                  "ON" );
-        else if( EQUALN(papszArgv[iArg],"-return-prim",12) )
+        else if( STARTS_WITH_CI(papszArgv[iArg], "-return-prim") )
         {
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_RETURN_PRIMITIVES,
                                  "ON" );
-            bReturnPrimitives = TRUE;
+            bReturnPrimitives = true;
         }
-        else if( EQUALN(papszArgv[iArg],"-lnam",4) )
+        else if( STARTS_WITH_CI(papszArgv[iArg],"-lnam") )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_LNAM_REFS, "ON" );
-        else if( EQUALN(papszArgv[iArg],"-return-link",12) )
+        else if( STARTS_WITH_CI(papszArgv[iArg], "-return-link") )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_RETURN_LINKAGES, "ON" );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Load the class definitions into the registrar.                  */
 /* -------------------------------------------------------------------- */
-    S57ClassRegistrar   oRegistrar;
-    int                 bRegistrarLoaded;
-
-    bRegistrarLoaded = oRegistrar.LoadInfo( pszDataPath, NULL, TRUE );
+    S57ClassRegistrar oRegistrar;
+    bool bRegistrarLoaded = oRegistrar.LoadInfo( pszDataPath, NULL, true );
 
     S57ClassContentExplorer *poClassContentExplorer = NULL;
     if (bRegistrarLoaded)
         poClassContentExplorer = new S57ClassContentExplorer(&oRegistrar);
-            
+
 /* -------------------------------------------------------------------- */
 /*      Get a list of candidate files.                                  */
 /* -------------------------------------------------------------------- */
-    char        **papszFiles;
-    int         iFile;
+    char **papszFiles = S57FileCollector( papszArgv[nArgc-1] );
 
-    papszFiles = S57FileCollector( papszArgv[nArgc-1] );
-
-    for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
+    for( int iFile = 0;
+         papszFiles != NULL && papszFiles[iFile] != NULL;
+         iFile++ )
     {
         printf( "Found: %s\n", papszFiles[iFile] );
     }
 
-    for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
+    for( int iFile = 0;
+         papszFiles != NULL && papszFiles[iFile] != NULL;
+         iFile++ )
     {
-        printf( "<------------------------------------------------------------------------->\n" );
+        printf( "<------------------------------------------------------------"
+                "------------->\n" );
         printf( "\nFile: %s\n\n", papszFiles[iFile] );
-        
-        S57Reader       oReader( papszFiles[iFile] );
+
+        S57Reader oReader( papszFiles[iFile] );
 
         oReader.SetOptions( papszOptions );
-        
-        int             nOptionFlags = oReader.GetOptionFlags();
 
         if( !oReader.Open( FALSE ) )
             continue;
 
+        int nOptionFlags = oReader.GetOptionFlags();
+
         if( bRegistrarLoaded )
         {
-            int bGeneric = FALSE;
+            bool bGeneric = false;
             std::vector<int> anClassList;
-            unsigned int i;
+
             oReader.CollectClassList(anClassList);
 
             oReader.SetClassBased( &oRegistrar, poClassContentExplorer );
 
             printf( "Classes found:\n" );
-            for( i = 0; i < anClassList.size(); i++ )
+            for( unsigned int i = 0; i < anClassList.size(); i++ )
             {
                 if( anClassList[i] == 0 )
                     continue;
-                
+
                 if( poClassContentExplorer->SelectClass( i ) )
                 {
-                    printf( "%d: %s/%s\n",
+                    printf( "%u: %s/%s\n",
                             i,
                             poClassContentExplorer->GetAcronym(),
                             poClassContentExplorer->GetDescription() );
-                    
+
                     oReader.AddFeatureDefn(
-                        S57GenerateObjectClassDefn( &oRegistrar, 
+                        S57GenerateObjectClassDefn( &oRegistrar,
                                                     poClassContentExplorer,
                                                     i, nOptionFlags ) );
                 }
                 else
                 {
-                    printf( "%d: unrecognised ... treat as generic.\n", i );
-                    bGeneric = TRUE;
+                    printf( "%u: unrecognized ... treat as generic.\n", i );
+                    bGeneric = true;
                 }
             }
 
@@ -176,21 +177,20 @@ int main( int nArgc, char ** papszArgv )
 
         if( bReturnPrimitives )
         {
-            oReader.AddFeatureDefn( 
+            oReader.AddFeatureDefn(
                 S57GenerateVectorPrimitiveFeatureDefn( RCNM_VI, nOptionFlags));
-            oReader.AddFeatureDefn( 
+            oReader.AddFeatureDefn(
                 S57GenerateVectorPrimitiveFeatureDefn( RCNM_VC, nOptionFlags));
-            oReader.AddFeatureDefn( 
+            oReader.AddFeatureDefn(
                 S57GenerateVectorPrimitiveFeatureDefn( RCNM_VE, nOptionFlags));
-            oReader.AddFeatureDefn( 
+            oReader.AddFeatureDefn(
                 S57GenerateVectorPrimitiveFeatureDefn( RCNM_VF, nOptionFlags));
         }
-    
+
         oReader.AddFeatureDefn( S57GenerateDSIDFeatureDefn() );
 
         OGRFeature      *poFeature;
         int             nFeatures = 0;
-        DDFModule       oUpdate;
 
         while( (poFeature = oReader.ReadNextFeature()) != NULL )
         {

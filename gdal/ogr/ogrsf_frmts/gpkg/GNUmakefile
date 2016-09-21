@@ -13,7 +13,7 @@ ifeq ($(SQLITE_HAS_COLUMN_METADATA),yes)
 CPPFLAGS +=  -DSQLITE_HAS_COLUMN_METADATA
 endif
 
-CPPFLAGS := -I..  $(SQLITE_INC) $(CPPFLAGS) -I../sqlite -I../../../frmts/mem
+CPPFLAGS := -I.. -I../sqlite -I../../../frmts/mem $(SQLITE_INC) $(CPPFLAGS)
 
 default: $(O_OBJ:.o=.$(OBJ_EXT))
 
@@ -21,6 +21,6 @@ default: $(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 
-$(O_OBJ): ogr_geopackage.h ogrgeopackageutility.h ../sqlite/ogr_sqlite.h
+$(O_OBJ): ogr_geopackage.h ogrgeopackageutility.h gpkgmbtilescommon.h ../sqlite/ogr_sqlite.h
 
 

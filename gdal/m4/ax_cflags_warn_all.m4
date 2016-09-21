@@ -117,4 +117,4 @@ dnl   compilers will fail about it. That was needed since a lot of
 dnl   compilers will give false positives for some option-syntax
 dnl   like -Woption or -Xoption as they think of it is a pass-through
 dnl   to later compile stages or something. The "%" is used as a
-dnl   delimimiter. A non-option comment can be given after "%%" marks.
+dnl   delimiter. A non-option comment can be given after "%%" marks.

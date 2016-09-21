@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _HDF4COMPAT_H_INCLUDED_
-#define _HDF4COMPAT_H_INCLUDED_
+#ifndef HDF4COMPAT_H_INCLUDED_
+#define HDF4COMPAT_H_INCLUDED_
 
 /*  New versions of the HDF4 library define H4_xxx instead of xxx to
     avoid potential conflicts with NetCDF-3 library. The following

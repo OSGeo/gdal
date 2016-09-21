@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_rec.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_rec.h"
 
 CPL_CVSID("$Id$");
 
@@ -57,13 +57,11 @@ int RECGetFieldCount( FILE * fp )
 /*                       RECGetFieldDefinition()                        */
 /************************************************************************/
 
-int RECGetFieldDefinition( FILE *fp, char *pszFieldname, 
+int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
                            int *pnType, int *pnWidth, int *pnPrecision )
 
 {
     const char *pszLine = CPLReadLine( fp );
-    int         nTypeCode;
-    OGRFieldType eFType = OFTString;
 
     if( pszLine == NULL )
         return FALSE;
@@ -71,11 +69,13 @@ int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
     if( strlen(pszLine) < 44 )
         return FALSE;
 
-    // Extract field width. 
+    // Extract field width.
     *pnWidth = atoi( RECGetField( pszLine, 37, 4 ) );
 
+    OGRFieldType eFType = OFTString;
+
     // Is this an real, integer or string field?  Default to string.
-    nTypeCode = atoi(RECGetField(pszLine,33,4));
+    int nTypeCode = atoi(RECGetField(pszLine,33,4));
     if( nTypeCode == 0 )
         eFType = OFTInteger;
     else if( nTypeCode > 100 && nTypeCode < 120 )
@@ -118,12 +118,12 @@ const char *RECGetField( const char *pszSrc, int nStart, int nWidth )
 {
     static char szWorkField[128];
     int         i;
-    
+
     strncpy( szWorkField, pszSrc+nStart-1, nWidth );
     szWorkField[nWidth] = '\0';
 
-    i = strlen(szWorkField)-1;
-    
+    i = (int)strlen(szWorkField)-1;
+
     while( i >= 0 && szWorkField[i] == ' ' )
         szWorkField[i--] = '\0';
 
@@ -153,7 +153,7 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
             return FALSE;
 
         // If the end-of-line markers is '?' the record is deleted.
-        iSegLen = strlen(pszLine);
+        iSegLen = (int)strlen(pszLine);
         if( pszLine[iSegLen-1] == '?' )
         {
             pszRecord[0] = '\0';
@@ -161,12 +161,12 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
             continue;
         }
 
-        // Strip off end-of-line '!' marker. 
-        if( pszLine[iSegLen-1] != '!' 
+        // Strip off end-of-line '!' marker.
+        if( pszLine[iSegLen-1] != '!'
             && pszLine[iSegLen-1] != '^' )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Apparent corrupt data line at line=%d", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Apparent corrupt data line at line=%d",
                       nNextRecLine );
             return FALSE;
         }
@@ -174,8 +174,8 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
         iSegLen--;
         if( nDataLen + iSegLen > nRecordLength )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Too much data for line at line %d.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Too much data for line at line %d.",
                       nNextRecLine-1 );
             return FALSE;
         }

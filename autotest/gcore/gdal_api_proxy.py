@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GDAL API PROXY mechanism
 # Author:    Even Rouault, <even dot rouault at mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -55,9 +55,9 @@ def gdal_api_proxy_1():
     return 'success'
 
 ###############################################################################
-# Test connexion to TCP server
+# Test connection to TCP server
 def gdal_api_proxy_2():
-    
+
     if sys.version_info < (2,6,0):
         return 'skip'
 
@@ -70,12 +70,12 @@ def gdal_api_proxy_2():
     return 'success'
 
 ###############################################################################
-# Test connexion to Unix socket server
+# Test connection to Unix socket server
 def gdal_api_proxy_3():
-    
+
     if sys.version_info < (2,6,0):
         return 'skip'
-        
+
     if sys.platform == 'win32':
         return 'skip'
 
@@ -85,6 +85,29 @@ def gdal_api_proxy_3():
 
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -3' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
+
+    if ret.find('Failed:    0') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -nofork mode
+
+def gdal_api_proxy_4():
+
+    if sys.version_info < (2,6,0):
+        return 'skip'
+
+    if sys.platform == 'win32':
+        return 'skip'
+
+    if sys.platform == 'darwin':
+        print("Fails on MacOSX ('ERROR 1: posix_spawnp() failed'. Not sure why.")
+        return 'skip'
+
+    import test_py_scripts
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -4' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'
@@ -304,6 +327,7 @@ def gdal_api_proxy_sub():
 
     if len(ds.GetRasterBand(1).GetMetadata()) != 0:
         gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMetadata())
         return 'fail'
 
     if ds.GetRasterBand(1).GetMetadataItem('foo') is not None:
@@ -363,7 +387,7 @@ def gdal_api_proxy_sub():
     if rat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
- 
+
     if ds.GetRasterBand(1).SetDefaultRAT(None) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -377,7 +401,7 @@ def gdal_api_proxy_sub():
     if rat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
- 
+
     if ds.GetRasterBand(1).SetDefaultRAT(None) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -386,7 +410,7 @@ def gdal_api_proxy_sub():
     if rat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
- 
+
     if ds.GetRasterBand(1).GetMinimum() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -516,6 +540,15 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ret = ds.GetRasterBand(1).DeleteNoDataValue()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_nodatavalue = ds.GetRasterBand(1).GetNoDataValue()
+    if got_nodatavalue is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     ds.CreateMaskBand(0)
 
     if ds.GetRasterBand(1).GetMaskFlags() != 2:
@@ -573,7 +606,8 @@ def gdal_api_proxy_sub_clean():
 
 gdaltest_list = [ gdal_api_proxy_1,
                   gdal_api_proxy_2,
-                  gdal_api_proxy_3 ]
+                  gdal_api_proxy_3,
+                  gdal_api_proxy_4 ]
 
 if __name__ == '__main__':
 
@@ -624,6 +658,28 @@ if __name__ == '__main__':
         import time
 
         p = subprocess.Popen([gdalserver_path, '-unixserver', 'tmp/gdalapiproxysocket'])
+        time.sleep(1)
+        if p.poll() is None:
+            gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
+            gdaltest.api_proxy_server_p = p
+            gdaltest_list = [ gdal_api_proxy_sub, gdal_api_proxy_sub_clean ]
+        else:
+            try:
+                p.terminate()
+            except:
+                pass
+            p.wait()
+            gdaltest_list = []
+
+    elif len(sys.argv) >= 3 and sys.argv[2] == '-4':
+
+        gdalserver_path = sys.argv[1]
+
+        import subprocess
+        import time
+
+        p = subprocess.Popen([gdalserver_path, '-nofork', '-unixserver', 'tmp/gdalapiproxysocket'])
         time.sleep(1)
         if p.poll() is None:
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')

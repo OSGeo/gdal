@@ -5,7 +5,7 @@ OBJ	=	hdf4dataset.o hdf4imagedataset.o
 
 SUBLIBS 	= lib-hdfeos
 
-CPPFLAGS	:=	-I../pds -Ihdf-eos  $(HDF4_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../pds -Ihdf-eos  $(HDF4_INCLUDE) $(HDF4_FLAGS) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
@@ -18,7 +18,7 @@ lib-hdfeos:
 
 install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
-PLUGIN_SO       = gdal_HDF4.so
+PLUGIN_SO       = gdal_HDF4.$(SO_EXT)
 
 plugin: $(PLUGIN_SO)
 

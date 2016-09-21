@@ -109,12 +109,12 @@ void OGRXPlaneDataSource::RegisterLayer(OGRXPlaneLayer* poLayer)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
+int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFileIn )
 
 {
     Reset();
 
-    this->bReadWholeFile = bReadWholeFile;
+    this->bReadWholeFile = bReadWholeFileIn;
 
     const char* pszShortFilename = CPLGetFilename(pszFilename);
     if (EQUAL(pszShortFilename, "nav.dat") ||
@@ -137,7 +137,6 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
         poReader = OGRXPlaneCreateAwyFileReader(this);
     }
 
-    int bRet;
     if (poReader && poReader->StartParsing(pszFilename) == FALSE)
     {
         delete poReader;
@@ -152,12 +151,10 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
             for( int i = 0; i < nLayers; i++ )
                 papoLayers[i]->SetReader(poReader->CloneForLayer(papoLayers[i]));
         }
-        bRet = TRUE;
+        return true;
     }
-    else
-        bRet = FALSE;
 
-    return bRet;
+    return false;
 }
 
 /************************************************************************/

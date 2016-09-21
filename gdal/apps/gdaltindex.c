@@ -44,18 +44,18 @@ CPL_CVSID("$Id$");
 static void Usage(const char* pszErrorMsg)
 
 {
-    fprintf(stdout, "%s", 
+    fprintf(stdout, "%s",
             "\n"
             "Usage: gdaltindex [-f format] [-tileindex field_name] [-write_absolute_path] \n"
             "                  [-skip_different_projection] [-t_srs target_srs]\n"
             "                  [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]\n"
             "                  [-lyr_name name] index_file [gdal_file]*\n"
             "\n"
-            "eg.\n"
-            "  % gdaltindex doq_index.shp doq/*.tif\n" 
+            "e.g.\n"
+            "  % gdaltindex doq_index.shp doq/*.tif\n"
             "\n"
             "NOTES:\n"
-            "  o The shapefile (index_file) will be created if it doesn't already exist.\n" 
+            "  o The shapefile (index_file) will be created if it doesn't already exist.\n"
             "  o The default tile index field is 'location'.\n"
             "  o Raster filenames will be put in the file exactly as they are specified\n"
             "    on the commandline unless the option -write_absolute_path is used.\n"
@@ -141,6 +141,7 @@ int main(int argc, char *argv[])
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy( argv );
             return 0;
         }
         else if( EQUAL(argv[i_arg],"--help") )
@@ -205,7 +206,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
- 
+
     if( index_filename == NULL )
         Usage("No index filename specified.");
     if( i_arg == argc )
@@ -217,18 +218,19 @@ int main(int argc, char *argv[])
 /*      Create and validate target SRS if given.                        */
 /* -------------------------------------------------------------------- */
    if( bSetTargetSRS )
-   {  
+   {
        if ( skip_different_projection )
        {
-           fprintf( stderr, 
+           fprintf( stderr,
                     "Warning : -skip_different_projection does not apply "
                     "when -t_srs is requested.\n" );
        }
        hTargetSRS = OSRNewSpatialReference("");
+       /* coverity[tainted_data] */
        if( OSRSetFromUserInput( hTargetSRS, pszTargetSRS ) != CE_None )
        {
            OSRDestroySpatialReference( hTargetSRS );
-           fprintf( stderr, "Invalid target SRS `%s'.\n", 
+           fprintf( stderr, "Invalid target SRS `%s'.\n",
                     pszTargetSRS );
            exit(1);
        }
@@ -317,14 +319,14 @@ int main(int argc, char *argv[])
         {
             OGRFieldDefnH hFieldDefn = OGR_Fld_Create( tile_index, OFTString );
             if( nMaxFieldSize )
-                OGR_Fld_SetWidth( hFieldDefn, nMaxFieldSize);
+                OGR_Fld_SetWidth( hFieldDefn, (int)nMaxFieldSize);
             OGR_L_CreateField( hLayer, hFieldDefn, TRUE );
             OGR_Fld_Destroy(hFieldDefn);
             if( pszSrcSRSName != NULL )
             {
                 hFieldDefn = OGR_Fld_Create( pszSrcSRSName, OFTString );
                 if( nMaxFieldSize )
-                    OGR_Fld_SetWidth( hFieldDefn, nMaxFieldSize);
+                    OGR_Fld_SetWidth( hFieldDefn, (int)nMaxFieldSize);
                 OGR_L_CreateField( hLayer, hFieldDefn, TRUE );
                 OGR_Fld_Destroy(hFieldDefn);
             }
@@ -333,7 +335,7 @@ int main(int argc, char *argv[])
 
     if( hTileIndexDS == NULL || hLayer == NULL )
     {
-        fprintf( stderr, "Unable to open/create shapefile `%s'.\n", 
+        fprintf( stderr, "Unable to open/create shapefile `%s'.\n",
                  index_filename );
         exit(2);
     }
@@ -343,11 +345,11 @@ int main(int argc, char *argv[])
     ti_field = OGR_FD_GetFieldIndex( hFDefn, tile_index );
     if( ti_field < 0 )
     {
-        fprintf( stderr, "Unable to find field `%s' in file `%s'.\n", 
+        fprintf( stderr, "Unable to find field `%s' in file `%s'.\n",
                  tile_index, index_filename );
         exit(2);
     }
-    
+
     if( pszSrcSRSName != NULL )
         i_SrcSRSName = OGR_FD_GetFieldIndex( hFDefn, pszSrcSRSName );
 
@@ -435,21 +437,21 @@ int main(int argc, char *argv[])
         hDS = GDALOpen( argv[i_arg], GA_ReadOnly );
         if( hDS == NULL )
         {
-            fprintf( stderr, "Unable to open %s, skipping.\n", 
+            fprintf( stderr, "Unable to open %s, skipping.\n",
                      argv[i_arg] );
             CPLFree(fileNameToWrite);
             continue;
         }
 
         GDALGetGeoTransform( hDS, adfGeoTransform );
-        if( adfGeoTransform[0] == 0.0 
+        if( adfGeoTransform[0] == 0.0
             && adfGeoTransform[1] == 1.0
             && adfGeoTransform[3] == 0.0
             && ABS(adfGeoTransform[5]) == 1.0 )
         {
-            fprintf( stderr, 
+            fprintf( stderr,
                      "It appears no georeferencing is available for\n"
-                     "`%s', skipping.\n", 
+                     "`%s', skipping.\n",
                      argv[i_arg] );
             GDALClose( hDS );
             CPLFree(fileNameToWrite);
@@ -460,7 +462,7 @@ int main(int argc, char *argv[])
 
         /* if not set target srs, test that the current file uses same projection as others */
         if( !bSetTargetSRS )
-        { 
+        {
             if (alreadyExistingProjectionRefValid)
             {
                 int projectionRefNotNull, alreadyExistingProjectionRefNotNull;
@@ -494,40 +496,40 @@ int main(int argc, char *argv[])
 
         nXSize = GDALGetRasterXSize( hDS );
         nYSize = GDALGetRasterYSize( hDS );
-        
-        adfX[0] = adfGeoTransform[0] 
-            + 0 * adfGeoTransform[1] 
+
+        adfX[0] = adfGeoTransform[0]
+            + 0 * adfGeoTransform[1]
             + 0 * adfGeoTransform[2];
-        adfY[0] = adfGeoTransform[3] 
-            + 0 * adfGeoTransform[4] 
+        adfY[0] = adfGeoTransform[3]
+            + 0 * adfGeoTransform[4]
             + 0 * adfGeoTransform[5];
-        
-        adfX[1] = adfGeoTransform[0] 
-            + nXSize * adfGeoTransform[1] 
+
+        adfX[1] = adfGeoTransform[0]
+            + nXSize * adfGeoTransform[1]
             + 0 * adfGeoTransform[2];
-        adfY[1] = adfGeoTransform[3] 
-            + nXSize * adfGeoTransform[4] 
+        adfY[1] = adfGeoTransform[3]
+            + nXSize * adfGeoTransform[4]
             + 0 * adfGeoTransform[5];
-        
-        adfX[2] = adfGeoTransform[0] 
-            + nXSize * adfGeoTransform[1] 
+
+        adfX[2] = adfGeoTransform[0]
+            + nXSize * adfGeoTransform[1]
             + nYSize * adfGeoTransform[2];
-        adfY[2] = adfGeoTransform[3] 
-            + nXSize * adfGeoTransform[4] 
+        adfY[2] = adfGeoTransform[3]
+            + nXSize * adfGeoTransform[4]
             + nYSize * adfGeoTransform[5];
-        
-        adfX[3] = adfGeoTransform[0] 
-            + 0 * adfGeoTransform[1] 
+
+        adfX[3] = adfGeoTransform[0]
+            + 0 * adfGeoTransform[1]
             + nYSize * adfGeoTransform[2];
-        adfY[3] = adfGeoTransform[3] 
-            + 0 * adfGeoTransform[4] 
+        adfY[3] = adfGeoTransform[3]
+            + 0 * adfGeoTransform[4]
             + nYSize * adfGeoTransform[5];
-        
-        adfX[4] = adfGeoTransform[0] 
-            + 0 * adfGeoTransform[1] 
+
+        adfX[4] = adfGeoTransform[0]
+            + 0 * adfGeoTransform[1]
             + 0 * adfGeoTransform[2];
-        adfY[4] = adfGeoTransform[3] 
-            + 0 * adfGeoTransform[4] 
+        adfY[4] = adfGeoTransform[3]
+            + 0 * adfGeoTransform[4]
             + 0 * adfGeoTransform[5];
 
         if( (bSetTargetSRS || i_SrcSRSName >= 0) && projectionRef != NULL && projectionRef[0] != '\0' )
@@ -542,17 +544,17 @@ int main(int argc, char *argv[])
                 hCT = OCTNewCoordinateTransformation( hSourceSRS, hTargetSRS );
                 if( hCT == NULL || !OCTTransform( hCT, 5, adfX, adfY, NULL ) )
                 {
-                    fprintf( stderr, 
+                    fprintf( stderr,
                              "Warning : unable to transform points from source SRS `%s' to target SRS `%s'\n"
-                             "for file `%s' - file skipped\n", 
+                             "for file `%s' - file skipped\n",
                              projectionRef, pszTargetSRS, fileNameToWrite );
-                    if ( hCT ) 
+                    if ( hCT )
                         OCTDestroyCoordinateTransformation( hCT );
                     if ( hSourceSRS )
                         OSRDestroySpatialReference( hSourceSRS );
                     continue;
                 }
-                if ( hCT ) 
+                if ( hCT )
                     OCTDestroyCoordinateTransformation( hCT );
             }
         }
@@ -622,14 +624,13 @@ int main(int argc, char *argv[])
 
         OGR_F_Destroy( hFeature );
 
-        
         CPLFree(fileNameToWrite);
 
         GDALClose( hDS );
     }
-    
+
     CPLFree(current_path);
-    
+
     if (nExistingFiles)
     {
         for(i=0;i<nExistingFiles;i++)
@@ -644,10 +645,10 @@ int main(int argc, char *argv[])
         OSRDestroySpatialReference( hTargetSRS );
 
     OGR_DS_Destroy( hTileIndexDS );
-    
+
     GDALDestroyDriverManager();
     OGRCleanupAll();
     CSLDestroy(argv);
-    
+
     exit( 0 );
-} 
+}

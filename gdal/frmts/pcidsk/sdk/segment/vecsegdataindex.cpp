@@ -40,10 +40,10 @@
 using namespace PCIDSK;
 
 /* -------------------------------------------------------------------- */
-/*      Size of a block in the record/vertice block tables.  This is    */
+/*      Size of a block in the record/vertex block tables.  This is    */
 /*      determined by the PCIDSK format and may not be changed.         */
 /* -------------------------------------------------------------------- */
-static const int block_page_size = 8192;  
+static const int block_page_size = 8192;
 
 /************************************************************************/
 /*                          VecSegDataIndex()                           */
@@ -55,6 +55,11 @@ VecSegDataIndex::VecSegDataIndex()
     block_initialized = false;
     vs = NULL;
     dirty = false;
+    section = 0;
+    offset_on_disk_within_section = 0;
+    size_on_disk = 0;
+    block_count = 0;
+    bytes = 0;
 }
 
 /************************************************************************/
@@ -70,11 +75,11 @@ VecSegDataIndex::~VecSegDataIndex()
 /*                             Initialize()                             */
 /************************************************************************/
 
-void VecSegDataIndex::Initialize( CPCIDSKVectorSegment *vs, int section )
+void VecSegDataIndex::Initialize( CPCIDSKVectorSegment *vsIn, int sectionIn )
 
 {
-    this->section = section;
-    this->vs = vs;
+    this->section = sectionIn;
+    this->vs = vsIn;
 
     if( section == sec_vert )
         offset_on_disk_within_section = 0;
@@ -122,7 +127,15 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
     {
         bool needs_swap = !BigEndianSystem();
 
-        block_index.resize( block_count );
+        try
+        {
+            block_index.resize( block_count );
+        }
+        catch( const std::bad_alloc& ex )
+        {
+            throw PCIDSKException("Out of memory allocating block_index(%u): %s",
+                                  block_count, ex.what());
+        }
         if( block_count > 0 )
         {
             vs->ReadFromFile( &(block_index[0]), 

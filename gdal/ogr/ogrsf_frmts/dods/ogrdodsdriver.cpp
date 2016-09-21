@@ -61,7 +61,7 @@ OGRDataSource *OGRDODSDriver::Open( const char * pszFilename,
 {
     OGRDODSDataSource     *poDS;
 
-    if( !EQUALN(pszFilename,"DODS:http:",10) )
+    if( !STARTS_WITH_CI(pszFilename, "DODS:http:") )
         return NULL;
 
     poDS = new OGRDODSDataSource();

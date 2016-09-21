@@ -10,7 +10,7 @@
 ###############################################################################
 # Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
 #
-# Permission is hereby granted, free of charge, to any person oxyzaining a
+# Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -169,6 +169,20 @@ def kmlsuperoverlay_4():
         gdal.Unlink("/vsimem/src.vrt")
         gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
         return 'fail'
+
+    # Test fix for #6311
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
+    got_data = vrt_ds.ReadRaster(0,0,800,400,200,100)
+    ref_data = ds.ReadRaster(0,0,800,400,200,100)
+    vrt_ds = None
+    if got_data != ref_data:
+        gdaltest.post_reason('fail')
+        ds = None
+        src_ds = None
+        gdal.Unlink("/vsimem/src.vrt")
+        gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
+        return 'fail'
+
     ds = None
     src_ds = None
 
@@ -176,7 +190,7 @@ def kmlsuperoverlay_4():
     gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
 
     return 'success'
- 
+
 ###############################################################################
 # Test that a raster which crosses the anti-meridian will be able to be displayed correctly (#4528)
 

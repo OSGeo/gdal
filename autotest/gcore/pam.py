@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test functioning of the PAM metadata support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -74,11 +74,11 @@ def pam_1():
         gdaltest.post_reason( 'xml does not match' )
         print(xml_md)
         return 'fail'
-    
-    return 'success' 
+
+    return 'success'
 
 ###############################################################################
-# Verify that we can write XML to a new file. 
+# Verify that we can write XML to a new file.
 
 def pam_2():
 
@@ -98,7 +98,7 @@ def pam_2():
 
     ds = None
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
@@ -136,8 +136,20 @@ def pam_3():
     if band.GetNoDataValue() != 100:
         gdaltest.post_reason( 'nodata not saved via pam' )
         return 'fail'
-    
-    return 'success' 
+
+    ds = None
+    ds = gdal.Open('tmp/pam.pnm', gdal.GA_Update)
+    if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('tmp/pam.pnm')
+    if ds.GetRasterBand(1).GetNoDataValue() is not None:
+        gdaltest.post_reason('got nodata value whereas none was expected')
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Check that PAM binary encoded nodata values work properly.
@@ -167,13 +179,7 @@ def pam_4():
 def pam_5():
 
     ds = gdal.Open( 'data/sasha.tif' )
-
-    try:
-        filelist = ds.GetFileList()
-    except:
-        # old bindings?
-        return 'skip'
-
+    filelist = ds.GetFileList()
     ds = None
 
     if len(filelist) != 1:
@@ -191,9 +197,13 @@ def pam_6():
 
     ds = gdal.Open( 'data/f2r23.tif' )
     if ds.GetRasterBand(1).GetNoDataValue() != 0:
-        gdaltest.post_reason( 'did not get expect .aux sourced nodata.' )
+        gdaltest.post_reason( 'did not get expected .aux sourced nodata.' )
         return 'fail'
     ds = None
+
+    if os.path.exists('data/f2r23.tif.aux.xml'):
+        gdaltest.post_reason( 'did not expect .aux.xml to be created.' )
+        return 'fail'
 
     return 'success'
 
@@ -398,7 +408,7 @@ def pam_11():
     gdal.ErrorReset()
     ds = None
     error_msg = gdal.GetLastErrorMsg()
-    if error_msg.find('Unable to save auxilary information') != 0:
+    if error_msg.find('Unable to save auxiliary information') != 0:
         gdaltest.post_reason('warning was expected at that point')
         return 'fail'
 
@@ -414,21 +424,102 @@ def pam_11():
     # at the beginning of the process
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test1')
-    #print(ret)
     if ret.find('success') == -1:
-        gdaltest.post_reason('pamproxydb.py -test1 failed')
-        print(ret)
+        gdaltest.post_reason('pamproxydb.py -test1 failed %s' % ret)
         return 'fail'
 
     # Test loading an existing proxydb
     ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test2')
-    #print(ret)
     if ret.find('success') == -1:
-        gdaltest.post_reason('pamproxydb.py -test2 failed')
-        print(ret)
+        gdaltest.post_reason('pamproxydb.py -test2 failed %s' % ret)
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test histogram with 64bit counts
+
+def pam_12():
+
+    shutil.copy('data/byte.tif', 'tmp')
+    open('tmp/byte.tif.aux.xml', 'wt').write("""<PAMDataset>
+  <PAMRasterBand band="1">
+    <Histograms>
+      <HistItem>
+        <HistMin>-0.5</HistMin>
+        <HistMax>255.5</HistMax>
+        <BucketCount>256</BucketCount>
+        <IncludeOutOfRange>1</IncludeOutOfRange>
+        <Approximate>0</Approximate>
+        <HistCounts>6000000000|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|6|0|0|0|0|0|0|0|0|37|0|0|0|0|0|0|0|57|0|0|0|0|0|0|0|62|0|0|0|0|0|0|0|66|0|0|0|0|0|0|0|0|72|0|0|0|0|0|0|0|31|0|0|0|0|0|0|0|24|0|0|0|0|0|0|0|12|0|0|0|0|0|0|0|0|7|0|0|0|0|0|0|0|12|0|0|0|0|0|0|0|5|0|0|0|0|0|0|0|3|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|1</HistCounts>
+      </HistItem>
+    </Histograms>
+  </PAMRasterBand>
+</PAMDataset>""")
+
+    ds = gdal.Open('tmp/byte.tif')
+    (min, max, _, hist1) = ds.GetRasterBand(1).GetDefaultHistogram()
+    hist2 = ds.GetRasterBand(1).GetHistogram(include_out_of_range = 1, approx_ok = 0)
+    ds.SetMetadataItem('FOO', 'BAR')
+    ds.GetRasterBand(1).SetDefaultHistogram(min, max, hist1)
+    ds = None
+    aux_xml = open('tmp/byte.tif.aux.xml', 'rt').read()
+    gdal.Unlink('tmp/byte.tif')
+    gdal.Unlink('tmp/byte.tif.aux.xml')
+
+    if hist1 != hist2:
+        gdaltest.post_reason('fail')
+        print(hist1)
+        print(hist2)
+        return 'fail'
+    if hist1[0] != 6000000000:
+        gdaltest.post_reason('fail')
+        print(hist1)
+        return 'fail'
+    if aux_xml.find('<HistCounts>6000000000|') < 0:
+        gdaltest.post_reason('fail')
+        print(aux_xml)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test various stuff with PAM disabled
+#
+def pam_13():
+
+    gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'NO' )
+
+    ds = gdal.GetDriverByName('PNM').Create('/vsimem/tmp.pnm', 1, 1)
+    #if ds.GetRasterBand(1).SetColorTable(None) == 0:
+    #    gdaltest.post_reason('fail')
+    #    return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.GetRasterBand(1).SetNoDataValue(0)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = ds.GetRasterBand(1).DeleteNoDataValue()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    if gdal.VSIStatL('/vsimem/tmp.pnm.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/tmp.pnm')
+
+    gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'YES' )
+
+    return 'success'
+
 
 ###############################################################################
 # Cleanup.
@@ -464,6 +555,8 @@ gdaltest_list = [
     pam_9,
     pam_10,
     pam_11,
+    pam_12,
+    pam_13,
     pam_cleanup ]
 
 if __name__ == '__main__':
@@ -473,4 +566,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

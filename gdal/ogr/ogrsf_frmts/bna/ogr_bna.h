@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_BNA_H_INCLUDED
-#define _OGR_BNA_H_INCLUDED
+#ifndef OGR_BNA_H_INCLUDED
+#define OGR_BNA_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -49,7 +49,7 @@ typedef struct
 class OGRBNALayer : public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
-    
+
     OGRBNADataSource*  poDS;
     int                bWriter;
 
@@ -58,7 +58,7 @@ class OGRBNALayer : public OGRLayer
     int                failed;
     int                curLine;
     int                nNextFID;
-    VSILFILE*              fpBNA;
+    VSILFILE*          fpBNA;
     int                nFeatures;
     int                partialIndexTable;
     OffsetAndLine*     offsetAndLineFeaturesTable;
@@ -69,7 +69,7 @@ class OGRBNALayer : public OGRLayer
     void               FastParseUntil ( int interestFID);
     void               WriteFeatureAttributes(VSILFILE* fp, OGRFeature *poFeature);
     void               WriteCoord(VSILFILE* fp, double dfX, double dfY);
-    
+
   public:
                         OGRBNALayer(const char *pszFilename,
                                     const char* layerName,
@@ -86,12 +86,12 @@ class OGRBNALayer : public OGRLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
-    
+
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    
+
     OGRFeature *        GetFeature( GIntBig nFID );
 
     int                 TestCapability( const char * );
@@ -110,7 +110,7 @@ class OGRBNADataSource : public OGRDataSource
     int                 nLayers;
 
     int                 bUpdate;
-    
+
     /*  Export related */
     VSILFILE                *fpOutput; /* Virtual file API */
     int                 bUseCRLF;
@@ -120,7 +120,7 @@ class OGRBNADataSource : public OGRDataSource
     int                 nbPairPerLine;
     int                 coordinatePrecision;
     char*               pszCoordinateSeparator;
-    
+
   public:
                         OGRBNADataSource();
                         ~OGRBNADataSource();
@@ -136,15 +136,15 @@ class OGRBNADataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename,
                               int bUpdate );
-    
-    int                 Create( const char *pszFilename, 
+
+    int                 Create( const char *pszFilename,
                               char **papszOptions );
-    
+
     const char*         GetName() { return pszName; }
 
     int                 GetLayerCount() { return nLayers; }
     OGRLayer*           GetLayer( int );
-    
+
     OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
@@ -153,4 +153,4 @@ class OGRBNADataSource : public OGRDataSource
     int                 TestCapability( const char * );
 };
 
-#endif /* ndef _OGR_BNA_H_INCLUDED */
+#endif /* ndef OGR_BNA_H_INCLUDED */

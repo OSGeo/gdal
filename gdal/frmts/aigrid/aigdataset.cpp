@@ -28,27 +28,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "cpl_string.h"
-#include "ogr_spatialref.h"
-#include "gdal_rat.h"
 #include "aigrid.h"
 #include "avc.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gdal_rat.h"
+#include "ogr_spatialref.h"
+
 #include <vector>
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void	GDALRegister_AIGrid(void);
-CPL_C_END
-
-static CPLString OSR_GDS( char **papszNV, const char * pszField, 
+static CPLString OSR_GDS( char **papszNV, const char * pszField,
                            const char *pszDefaultValue );
 
 
 /************************************************************************/
 /* ==================================================================== */
-/*				AIGDataset				*/
+/*                              AIGDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -57,11 +55,11 @@ class AIGRasterBand;
 class CPL_DLL AIGDataset : public GDALPamDataset
 {
     friend class AIGRasterBand;
-    
-    AIGInfo_t	*psInfo;
 
-    char	**papszPrj;
-    char	*pszProjection;
+    AIGInfo_t   *psInfo;
+
+    char        **papszPrj;
+    char        *pszProjection;
 
     GDALColorTable *poCT;
     int         bHasReadRat;
@@ -111,26 +109,26 @@ class AIGRasterBand : public GDALPamRasterBand
 /*                           AIGRasterBand()                            */
 /************************************************************************/
 
-AIGRasterBand::AIGRasterBand( AIGDataset *poDS, int nBand )
+AIGRasterBand::AIGRasterBand( AIGDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
-    nBlockXSize = poDS->psInfo->nBlockXSize;
-    nBlockYSize = poDS->psInfo->nBlockYSize;
+    nBlockXSize = poDSIn->psInfo->nBlockXSize;
+    nBlockYSize = poDSIn->psInfo->nBlockYSize;
 
-    if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT
-        && poDS->psInfo->dfMin >= 0.0 && poDS->psInfo->dfMax <= 254.0 )
+    if( poDSIn->psInfo->nCellType == AIG_CELLTYPE_INT
+        && poDSIn->psInfo->dfMin >= 0.0 && poDSIn->psInfo->dfMax <= 254.0 )
     {
         eDataType = GDT_Byte;
     }
-    else if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT
-        && poDS->psInfo->dfMin >= -32767 && poDS->psInfo->dfMax <= 32767 )
+    else if( poDSIn->psInfo->nCellType == AIG_CELLTYPE_INT
+        && poDSIn->psInfo->dfMin >= -32767 && poDSIn->psInfo->dfMax <= 32767 )
     {
         eDataType = GDT_Int16;
     }
-    else if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT )
+    else if( poDSIn->psInfo->nCellType == AIG_CELLTYPE_INT )
     {
         eDataType = GDT_Int32;
     }
@@ -148,9 +146,8 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    AIGDataset	*poODS = (AIGDataset *) poDS;
-    GInt32	*panGridRaster;
-    int		i;
+    AIGDataset *poODS = (AIGDataset *) poDS;
+    GInt32 *panGridRaster;
 
     if( poODS->psInfo->nCellType == AIG_CELLTYPE_INT )
     {
@@ -165,7 +162,7 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         if( eDataType == GDT_Byte )
         {
-            for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
             {
                 if( panGridRaster[i] == ESRI_GRID_NO_DATA )
                     ((GByte *) pImage)[i] = 255;
@@ -175,7 +172,7 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else if( eDataType == GDT_Int16 )
         {
-            for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
             {
                 if( panGridRaster[i] == ESRI_GRID_NO_DATA )
                     ((GInt16 *) pImage)[i] = -32768;
@@ -185,10 +182,10 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
                 ((GInt32 *) pImage)[i] = panGridRaster[i];
         }
-        
+
         CPLFree( panGridRaster );
 
         return CE_None;
@@ -207,7 +204,7 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
 
 {
-    AIGDataset	*poODS = (AIGDataset *) poDS;
+    AIGDataset *poODS = (AIGDataset *) poDS;
 
 /* -------------------------------------------------------------------- */
 /*      Read info raster attribute table, if present.                   */
@@ -231,7 +228,7 @@ GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
 double AIGRasterBand::GetMinimum( int *pbSuccess )
 
 {
-    AIGDataset	*poODS = (AIGDataset *) poDS;
+    AIGDataset *poODS = (AIGDataset *) poDS;
 
     if( pbSuccess != NULL )
         *pbSuccess = TRUE;
@@ -246,7 +243,7 @@ double AIGRasterBand::GetMinimum( int *pbSuccess )
 double AIGRasterBand::GetMaximum( int *pbSuccess )
 
 {
-    AIGDataset	*poODS = (AIGDataset *) poDS;
+    AIGDataset *poODS = (AIGDataset *) poDS;
 
     if( pbSuccess != NULL )
         *pbSuccess = TRUE;
@@ -266,12 +263,14 @@ double AIGRasterBand::GetNoDataValue( int *pbSuccess )
 
     if( eDataType == GDT_Float32 )
         return ESRI_GRID_FLOAT_NO_DATA;
-    else if( eDataType == GDT_Int16 )
+
+    if( eDataType == GDT_Int16 )
         return -32768;
-    else if( eDataType == GDT_Byte )
+
+    if( eDataType == GDT_Byte )
         return 255;
-    else
-        return ESRI_GRID_NO_DATA;
+
+    return ESRI_GRID_NO_DATA;
 }
 
 /************************************************************************/
@@ -281,12 +280,12 @@ double AIGRasterBand::GetNoDataValue( int *pbSuccess )
 GDALColorInterp AIGRasterBand::GetColorInterpretation()
 
 {
-    AIGDataset	*poODS = (AIGDataset *) poDS;
+    AIGDataset *poODS = (AIGDataset *) poDS;
 
     if( poODS->poCT != NULL )
         return GCI_PaletteIndex;
-    else
-        return GDALPamRasterBand::GetColorInterpretation();
+
+    return GDALPamRasterBand::GetColorInterpretation();
 }
 
 /************************************************************************/
@@ -296,12 +295,12 @@ GDALColorInterp AIGRasterBand::GetColorInterpretation()
 GDALColorTable *AIGRasterBand::GetColorTable()
 
 {
-    AIGDataset	*poODS = (AIGDataset *) poDS;
+    AIGDataset *poODS = (AIGDataset *) poDS;
 
     if( poODS->poCT != NULL )
         return poODS->poCT;
-    else
-        return GDALPamRasterBand::GetColorTable();
+
+    return GDALPamRasterBand::GetColorTable();
 }
 
 /************************************************************************/
@@ -315,15 +314,14 @@ GDALColorTable *AIGRasterBand::GetColorTable()
 /*                            AIGDataset()                            */
 /************************************************************************/
 
-AIGDataset::AIGDataset()
-
+AIGDataset::AIGDataset() :
+    psInfo(NULL),
+    papszPrj(NULL),
+    poCT(NULL),
+    bHasReadRat(FALSE),
+    poRAT(NULL)
 {
-    psInfo = NULL;
-    papszPrj = NULL;
     pszProjection = CPLStrdup("");
-    poCT = NULL;
-    poRAT = NULL;
-    bHasReadRat = FALSE;
 }
 
 /************************************************************************/
@@ -357,22 +355,21 @@ char **AIGDataset::GetFileList()
 
     // Add in all files in the cover directory.
     char **papszCoverFiles = VSIReadDir( GetDescription() );
-    int i;
 
-    for( i = 0; papszCoverFiles != NULL && papszCoverFiles[i] != NULL; i++ )
+    for(int  i = 0; papszCoverFiles != NULL && papszCoverFiles[i] != NULL; i++ )
     {
         if( EQUAL(papszCoverFiles[i],".")
             || EQUAL(papszCoverFiles[i],"..") )
             continue;
 
-        papszFileList = 
-            CSLAddString( papszFileList, 
-                          CPLFormFilename( GetDescription(), 
-                                           papszCoverFiles[i], 
+        papszFileList =
+            CSLAddString( papszFileList,
+                          CPLFormFilename( GetDescription(),
+                                           papszCoverFiles[i],
                                            NULL ) );
     }
     CSLDestroy(papszCoverFiles);
-    
+
     return papszFileList;
 }
 
@@ -384,18 +381,18 @@ class AIGErrorDescription
 {
     public:
         CPLErr eErr;
-        int    no;
+        CPLErrorNum    no;
         CPLString osMsg;
 };
 
-static void CPL_STDCALL AIGErrorHandlerVATOpen(CPLErr eErr, int no, const char* msg)
+static void CPL_STDCALL AIGErrorHandlerVATOpen(CPLErr eErr, CPLErrorNum no, const char* msg)
 {
     std::vector<AIGErrorDescription>* paoErrors =
         (std::vector<AIGErrorDescription>* )CPLGetErrorHandlerUserData();
-    if( EQUALN(msg, "EOF encountered in", strlen("EOF encountered in")) &&
+    if( STARTS_WITH_CI(msg, "EOF encountered in") &&
         strstr(msg, "../info/arc.dir") != NULL )
         return;
-    if( EQUALN(msg, "Failed to open table ", strlen("Failed to open table ")) )
+    if( STARTS_WITH_CI(msg, "Failed to open table ") )
         return;
     AIGErrorDescription oError;
     oError.eErr = eErr;
@@ -411,8 +408,6 @@ static void CPL_STDCALL AIGErrorHandlerVATOpen(CPLErr eErr, int no, const char* 
 void AIGDataset::ReadRAT()
 
 {
-#ifndef OGR_ENABLED
-#else
 /* -------------------------------------------------------------------- */
 /*      Check if we have an associated info directory.  If not          */
 /*      return quietly.                                                 */
@@ -422,14 +417,14 @@ void AIGDataset::ReadRAT()
 
     osInfoPath = psInfo->pszCoverName;
     osInfoPath += "/../info";
-    
+
     if( VSIStatL( osInfoPath, &sStatBuf ) != 0 )
     {
         CPLDebug( "AIG", "No associated info directory at: %s, skip RAT.",
                   osInfoPath.c_str() );
         return;
     }
-    
+
     osInfoPath += "/";
 
 /* -------------------------------------------------------------------- */
@@ -443,7 +438,7 @@ void AIGDataset::ReadRAT()
     std::vector<AIGErrorDescription> aoErrors;
     CPLPushErrorHandlerEx(AIGErrorHandlerVATOpen, &aoErrors );
 
-    AVCBinFile *psFile = 
+    AVCBinFile *psFile =
         AVCBinReadOpen( osInfoPath, osTableName,
                         AVCCoverTypeUnknown, AVCFileTABLE, NULL );
     CPLPopErrorHandler();
@@ -465,11 +460,9 @@ void AIGDataset::ReadRAT()
 /* -------------------------------------------------------------------- */
 /*      Setup columns in corresponding RAT.                             */
 /* -------------------------------------------------------------------- */
-    int iField;
-
     poRAT = new GDALDefaultRasterAttributeTable();
 
-    for( iField = 0; iField < psTableDef->numFields; iField++ )
+    for( int iField = 0; iField < psTableDef->numFields; iField++ )
     {
         AVCFieldInfo *psFDef = psTableDef->pasFieldDef + iField;
         GDALRATFieldUsage eFUsage = GFU_Generic;
@@ -482,7 +475,7 @@ void AIGDataset::ReadRAT()
             eFUsage = GFU_MinMax;
         else if( EQUAL(osFName,"COUNT") )
             eFUsage = GFU_PixelCount;
-        
+
         if( psFDef->nType1 * 10 == AVC_FT_BININT )
             eFType = GFT_Integer;
         else if( psFDef->nType1 * 10 == AVC_FT_BINFLOAT )
@@ -501,7 +494,7 @@ void AIGDataset::ReadRAT()
     {
         iRecord++;
 
-        for( iField = 0; iField < psTableDef->numFields; iField++ )
+        for( int iField = 0; iField < psTableDef->numFields; iField++ )
         {
             switch( psTableDef->pasFieldDef[iField].nType1 * 10 )
             {
@@ -519,19 +512,19 @@ void AIGDataset::ReadRAT()
 
               case AVC_FT_BININT:
                 if( psTableDef->pasFieldDef[iField].nSize == 4 )
-                    poRAT->SetValue( iRecord-1, iField, 
+                    poRAT->SetValue( iRecord-1, iField,
                                      pasFields[iField].nInt32 );
                 else
-                    poRAT->SetValue( iRecord-1, iField, 
+                    poRAT->SetValue( iRecord-1, iField,
                                      pasFields[iField].nInt16 );
                 break;
 
               case AVC_FT_BINFLOAT:
                 if( psTableDef->pasFieldDef[iField].nSize == 4 )
-                    poRAT->SetValue( iRecord-1, iField, 
+                    poRAT->SetValue( iRecord-1, iField,
                                      pasFields[iField].fFloat );
                 else
-                    poRAT->SetValue( iRecord-1, iField, 
+                    poRAT->SetValue( iRecord-1, iField,
                                      pasFields[iField].dDouble );
                 break;
             }
@@ -547,8 +540,6 @@ void AIGDataset::ReadRAT()
     /* Workaround against #2447 and #3031, to avoid binding languages */
     /* not being able to open the dataset */
     CPLErrorReset();
-
-#endif /* OGR_ENABLED */
 }
 
 /************************************************************************/
@@ -558,7 +549,7 @@ void AIGDataset::ReadRAT()
 GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    AIGInfo_t	*psInfo;
+    AIGInfo_t *psInfo;
 
 /* -------------------------------------------------------------------- */
 /*      If the pass name ends in .adf assume a file within the          */
@@ -568,7 +559,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osCoverName;
 
     osCoverName = poOpenInfo->pszFilename;
-    if( osCoverName.size() > 4 
+    if( osCoverName.size() > 4
         && EQUAL(osCoverName.c_str()+osCoverName.size()-4,".adf") )
     {
         osCoverName = CPLGetDirname( poOpenInfo->pszFilename );
@@ -589,10 +580,9 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
     CPLString osTestName;
-    
+
     osTestName.Printf( "%s/hdr.adf", osCoverName.c_str() );
     if( VSIStatL( osTestName, &sStatBuf ) != 0 )
-
     {
         osTestName.Printf( "%s/HDR.ADF", osCoverName.c_str() );
         if( VSIStatL( osTestName, &sStatBuf ) != 0 )
@@ -605,8 +595,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      there are none this is likely not a grid.                       */
 /* -------------------------------------------------------------------- */
     char **papszFileList = VSIReadDir( osCoverName );
-    int iFile;
-    int bGotOne = FALSE;
+    bool bGotOne = false;
 
     if (papszFileList == NULL)
     {
@@ -618,20 +607,20 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
             osTestName.Printf( "%s/W001001.ADF", osCoverName.c_str() );
             if( VSIStatL( osTestName, &sStatBuf ) == 0 )
             {
-                bGotOne = TRUE;
+                bGotOne = true;
                 break;
             }
 
             osTestName.Printf( "%s/w001001.adf", osCoverName.c_str() );
             if( VSIStatL( osTestName, &sStatBuf ) == 0 )
             {
-                bGotOne = TRUE;
+                bGotOne = true;
                 break;
             }
         } while(0);
     }
 
-    for( iFile = 0; 
+    for( int iFile = 0;
          papszFileList != NULL && papszFileList[iFile] != NULL && !bGotOne;
          iFile++ )
     {
@@ -645,37 +634,37 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
             && papszFileList[iFile][0] != 'Z' )
             continue;
 
-        if( strncmp(papszFileList[iFile] + 1, "0010", 4) != 0 )
+        if( !STARTS_WITH(papszFileList[iFile] + 1, "0010") )
             continue;
 
         if( !EQUAL(papszFileList[iFile] + 7, ".adf") )
             continue;
 
-        bGotOne = TRUE;
+        bGotOne = true;
     }
     CSLDestroy( papszFileList );
 
     if( !bGotOne )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     psInfo = AIGOpen( osCoverName.c_str(), "r" );
-    
+
     if( psInfo == NULL )
     {
         CPLErrorReset();
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
         AIGClose(psInfo);
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The AIG driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
@@ -683,9 +672,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    AIGDataset 	*poDS;
-
-    poDS = new AIGDataset();
+    AIGDataset *poDS = new AIGDataset();
 
     poDS->psInfo = psInfo;
 
@@ -693,48 +680,46 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to read a color table (.clr).  It seems it is legal to      */
 /*      have more than one so we just use the first one found.          */
 /* -------------------------------------------------------------------- */
-    char **papszFiles = CPLReadDir( psInfo->pszCoverName );
+    char **papszFiles = VSIReadDir( psInfo->pszCoverName );
     CPLString osClrFilename;
     CPLString osCleanPath = CPLCleanTrailingSlash( psInfo->pszCoverName );
-  
+
     // first check for any .clr in coverage dir.
-    for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
+    for( int iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
     {
         if( !EQUAL(CPLGetExtension(papszFiles[iFile]),"clr") && !EQUAL(CPLGetExtension(papszFiles[iFile]),"CLR"))
             continue;
-      
+
         osClrFilename = CPLFormFilename( psInfo->pszCoverName,
                                          papszFiles[iFile], NULL );
         break;
     }
-  
+
     CSLDestroy( papszFiles );
-  
+
     // Look in parent if we don't find a .clr in the coverage dir.
     if( strlen(osClrFilename) == 0 )
     {
         osTestName.Printf( "%s/../%s.clr",
                            psInfo->pszCoverName,
                            CPLGetFilename( osCleanPath ) );
-      
-        if( VSIStatL( osTestName, &sStatBuf ) != 0 )
 
-	{
+        if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+        {
             osTestName.Printf( "%s/../%s.CLR",
                                psInfo->pszCoverName,
                                CPLGetFilename( osCleanPath ) );
-      
+
             if( !VSIStatL( osTestName, &sStatBuf ) )
                 osClrFilename = osTestName;
         }
         else
             osClrFilename = osTestName;
     }
-    
-  
+
     if( strlen(osClrFilename) > 0 )
         poDS->TranslateColorTable( osClrFilename );
-  
+
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
 /* -------------------------------------------------------------------- */
@@ -748,22 +733,21 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new AIGRasterBand( poDS, 1 ) );
 
 /* -------------------------------------------------------------------- */
-/*	Try to read projection file.					*/
+/*      Try to read projection file.                                    */
 /* -------------------------------------------------------------------- */
-    const char	*pszPrjFilename;
-
-    pszPrjFilename = CPLFormCIFilename( psInfo->pszCoverName, "prj", "adf" );
+    const char *pszPrjFilename
+        = CPLFormCIFilename( psInfo->pszCoverName, "prj", "adf" );
     if( VSIStatL( pszPrjFilename, &sStatBuf ) == 0 )
     {
-        OGRSpatialReference	oSRS;
+        OGRSpatialReference oSRS;
 
         poDS->papszPrj = CSLLoad( pszPrjFilename );
 
         if( oSRS.importFromESRI( poDS->papszPrj ) == OGRERR_NONE )
         {
-            // If geographic values are in seconds, we must transform. 
-            // Is there a code for minutes too? 
-            if( oSRS.IsGeographic() 
+            // If geographic values are in seconds, we must transform.
+            // Is there a code for minutes too?
+            if( oSRS.IsGeographic()
                 && EQUAL(OSR_GDS( poDS->papszPrj, "Units", ""), "DS") )
             {
                 psInfo->dfLLX /= 3600.0;
@@ -805,7 +789,7 @@ CPLErr AIGDataset::GetGeoTransform( double * padfTransform )
     padfTransform[3] = psInfo->dfURY;
     padfTransform[4] = 0;
     padfTransform[5] = -psInfo->dfCellSizeY;
-    
+
     return( CE_None );
 }
 
@@ -826,16 +810,13 @@ const char *AIGDataset::GetProjectionRef()
 void AIGDataset::TranslateColorTable( const char *pszClrFilename )
 
 {
-    int  iLine;
-    char **papszClrLines;
-
-    papszClrLines = CSLLoad( pszClrFilename );
+    char **papszClrLines = CSLLoad( pszClrFilename );
     if( papszClrLines == NULL )
         return;
 
     poCT = new GDALColorTable();
 
-    for( iLine = 0; papszClrLines[iLine] != NULL; iLine++ )
+    for( int iLine = 0; papszClrLines[iLine] != NULL; iLine++ )
     {
         char **papszTokens = CSLTokenizeString( papszClrLines[iLine] );
 
@@ -850,13 +831,13 @@ void AIGDataset::TranslateColorTable( const char *pszClrFilename )
             sEntry.c3 = (short) atoi(papszTokens[3]);
             sEntry.c4 = 255;
 
-            if( (nIndex < 0 || nIndex > 33000) 
+            if( (nIndex < 0 || nIndex > 33000)
                 || (sEntry.c1 < 0 || sEntry.c1 > 255)
                 || (sEntry.c2 < 0 || sEntry.c2 > 255)
                 || (sEntry.c3 < 0 || sEntry.c3 > 255) )
             {
                 CSLDestroy( papszTokens );
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Color table entry appears to be corrupt, skipping the rest. " );
                 break;
             }
@@ -874,17 +855,16 @@ void AIGDataset::TranslateColorTable( const char *pszClrFilename )
 /*                              OSR_GDS()                               */
 /************************************************************************/
 
-static CPLString OSR_GDS( char **papszNV, const char * pszField, 
+static CPLString OSR_GDS( char **papszNV, const char * pszField,
                            const char *pszDefaultValue )
 
 {
-    int         iLine;
-
     if( papszNV == NULL || papszNV[0] == NULL )
         return pszDefaultValue;
 
-    for( iLine = 0; 
-         papszNV[iLine] != NULL && 
+    int iLine = 0;
+    for( ;
+         papszNV[iLine] != NULL &&
              !EQUALN(papszNV[iLine],pszField,strlen(pszField));
          iLine++ ) {}
 
@@ -893,15 +873,13 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
     else
     {
         CPLString osResult;
-        char    **papszTokens;
-        
-        papszTokens = CSLTokenizeString(papszNV[iLine]);
+        char    **papszTokens = CSLTokenizeString(papszNV[iLine]);
 
         if( CSLCount(papszTokens) > 1 )
             osResult = papszTokens[1];
         else
             osResult = pszDefaultValue;
-        
+
         CSLDestroy( papszTokens );
         return osResult;
     }
@@ -950,9 +928,8 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
 /*      Work out the corresponding new names.                           */
 /* -------------------------------------------------------------------- */
     char **papszNewFileList = NULL;
-    int i;
-    
-    for( i = 0; papszFileList[i] != NULL; i++ )
+
+    for( int i = 0; papszFileList[i] != NULL; i++ )
     {
         CPLString osNewFilename;
 
@@ -963,7 +940,7 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
         }
 
         osNewFilename = osNewPath + (papszFileList[i] + strlen(osOldPath));
-        
+
         papszNewFileList = CSLAddString( papszNewFileList, osNewFilename );
     }
 
@@ -974,10 +951,11 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
     {
         if( VSIMkdir( osNewPath, 0777 ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to create directory %s:\n%s",
                       osNewPath.c_str(),
                       VSIStrerror(errno) );
+            CSLDestroy(papszNewFileList);
             return CE_Failure;
         }
     }
@@ -987,26 +965,34 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    for( i = 0; papszFileList[i] != NULL; i++ )
+    for( int i = 0; papszFileList[i] != NULL; i++ )
     {
-        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0
             && VSI_ISREG( sStatBuf.st_mode ) )
         {
             if( CPLMoveFile( papszNewFileList[i], papszFileList[i] ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Unable to move %s to %s:\n%s",
                           papszFileList[i],
-                          papszNewFileList[i], 
+                          papszNewFileList[i],
                           VSIStrerror(errno) );
+                CSLDestroy(papszNewFileList);
                 return CE_Failure;
             }
         }
     }
 
     if( VSIStatL( osOldPath, &sStatBuf ) == 0 )
-        CPLUnlinkTree( osOldPath );
+    {
+        if ( CPLUnlinkTree( osOldPath ) != 0 )
+        {
+          CPLError( CE_Warning, CPLE_AppDefined, "Unable to cleanup old path.");
+        }
+    }
 
+    CSLDestroy(papszFileList);
+    CSLDestroy(papszNewFileList);
     return CE_None;
 }
 
@@ -1035,17 +1021,16 @@ static CPLErr AIGDelete( const char *pszDatasetname )
 /* -------------------------------------------------------------------- */
 /*      Delete all regular files.                                       */
 /* -------------------------------------------------------------------- */
-    int i;
-    for( i = 0; papszFileList[i] != NULL; i++ )
+    for( int i = 0; papszFileList[i] != NULL; i++ )
     {
         VSIStatBufL sStatBuf;
-        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0
             && VSI_ISREG( sStatBuf.st_mode ) )
         {
             if( VSIUnlink( papszFileList[i] ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                          "Unable to delete '%s':\n%s", 
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unable to delete '%s':\n%s",
                           papszFileList[i], VSIStrerror( errno ) );
                 return CE_Failure;
             }
@@ -1055,10 +1040,10 @@ static CPLErr AIGDelete( const char *pszDatasetname )
 /* -------------------------------------------------------------------- */
 /*      Delete directories.                                             */
 /* -------------------------------------------------------------------- */
-    for( i = 0; papszFileList[i] != NULL; i++ )
+    for( int i = 0; papszFileList[i] != NULL; i++ )
     {
         VSIStatBufL sStatBuf;
-        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0
             && VSI_ISDIR( sStatBuf.st_mode ) )
         {
             if( CPLUnlinkTree( papszFileList[i] ) != 0 )
@@ -1070,31 +1055,29 @@ static CPLErr AIGDelete( const char *pszDatasetname )
 }
 
 /************************************************************************/
-/*                          GDALRegister_AIG()                        */
+/*                          GDALRegister_AIG()                          */
 /************************************************************************/
 
 void GDALRegister_AIGrid()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "AIG" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "AIG" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "AIG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Arc/Info Binary Grid" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#AIG" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        
-        poDriver->pfnOpen = AIGDataset::Open;
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnRename = AIGRename;
-        poDriver->pfnDelete = AIGDelete;
+    poDriver->SetDescription( "AIG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Arc/Info Binary Grid" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_various.html#AIG" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = AIGDataset::Open;
+
+    poDriver->pfnRename = AIGRename;
+    poDriver->pfnDelete = AIGDelete;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

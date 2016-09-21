@@ -60,7 +60,7 @@ void DDFField::Initialize( DDFFieldDefn *poDefnIn, const char * pachDataIn,
  * subfields is written to the given debugging file handle.  Note that
  * field definition information (ala DDFFieldDefn) isn't written.
  *
- * @param fp The standard io file handle to write to.  ie. stderr
+ * @param fp The standard IO file handle to write to.  i.e. stderr
  */
 
 void DDFField::Dump( FILE * fp )
@@ -100,14 +100,14 @@ void DDFField::Dump( FILE * fp )
             fprintf( fp, "      ...\n" );
             break;
         }
-        
+
         for( int i = 0; i < poDefn->GetSubfieldCount(); i++ )
         {
             int         nBytesConsumed;
 
             poDefn->GetSubfield(i)->DumpData( pachData + iOffset,
                                               nDataSize - iOffset, fp );
-        
+
             poDefn->GetSubfield(i)->GetDataLength( pachData + iOffset,
                                                    nDataSize - iOffset,
                                                    &nBytesConsumed );
@@ -149,7 +149,7 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
 
 {
     int         iOffset = 0;
-    
+
     if( poSFDefn == NULL )
         return NULL;
 
@@ -165,15 +165,23 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
         {
             int nBytesConsumed;
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
-            
+
+            if( nDataSize < iOffset )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid data size for subfield %s of %s",
+                         poThisSFDefn->GetName(), poDefn->GetName());
+                return NULL;
+            }
+
             if( poThisSFDefn == poSFDefn && iSubfieldIndex == 0 )
             {
                 if( pnMaxBytes != NULL )
                     *pnMaxBytes = nDataSize - iOffset;
-                
+
                 return pachData + iOffset;
             }
-            
+
             poThisSFDefn->GetDataLength( pachData+iOffset, nDataSize - iOffset,
                                          &nBytesConsumed);
             iOffset += nBytesConsumed;
@@ -191,14 +199,14 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
 /************************************************************************/
 
 /**
- * How many times do the subfields of this record repeat?  This    
+ * How many times do the subfields of this record repeat?  This
  * will always be one for non-repeating fields.
  *
  * @return The number of times that the subfields of this record occur
  * in this record.  This will be one for non-repeating fields.
  *
  * @see <a href="example.html">8211view example program</a>
- * for demonstation of handling repeated fields properly.
+ * for a demonstration of handling repeated fields properly.
  */
 
 int DDFField::GetRepeatCount()
@@ -208,7 +216,7 @@ int DDFField::GetRepeatCount()
         return 1;
 
 /* -------------------------------------------------------------------- */
-/*      The occurance count depends on how many copies of this          */
+/*      The occurrence count depends on how many copies of this         */
 /*      field's list of subfields can fit into the data space.          */
 /* -------------------------------------------------------------------- */
     if( poDefn->GetFixedWidth() )
@@ -226,8 +234,8 @@ int DDFField::GetRepeatCount()
 /*      much value for testing.                                         */
 /* -------------------------------------------------------------------- */
     int         iOffset = 0, iRepeatCount = 1;
-    
-    while( TRUE )
+
+    while( true )
     {
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {
@@ -237,7 +245,7 @@ int DDFField::GetRepeatCount()
             if( poThisSFDefn->GetWidth() > nDataSize - iOffset )
                 nBytesConsumed = poThisSFDefn->GetWidth();
             else
-                poThisSFDefn->GetDataLength( pachData+iOffset, 
+                poThisSFDefn->GetDataLength( pachData+iOffset,
                                              nDataSize - iOffset,
                                              &nBytesConsumed);
 
@@ -261,18 +269,18 @@ int DDFField::GetRepeatCount()
  * Get field instance data and size.
  *
  * The returned data pointer and size values are suitable for use with
- * DDFRecord::SetFieldRaw(). 
+ * DDFRecord::SetFieldRaw().
  *
- * @param nInstance a value from 0 to GetRepeatCount()-1.  
+ * @param nInstance a value from 0 to GetRepeatCount()-1.
  * @param pnInstanceSize a location to put the size (in bytes) of the
  * field instance data returned.  This size will include the unit terminator
  * (if any), but not the field terminator.  This size pointer may be NULL
  * if not needed.
  *
- * @return the data pointer, or NULL on error. 
+ * @return the data pointer, or NULL on error.
  */
 
-const char *DDFField::GetInstanceData( int nInstance, 
+const char *DDFField::GetInstanceData( int nInstance,
                                        int *pnInstanceSize )
 
 {
@@ -289,7 +297,7 @@ const char *DDFField::GetInstanceData( int nInstance,
     if( poDefn->GetSubfieldCount() == 0 )
     {
         pachWrkData = GetData();
-        if( pnInstanceSize != 0 )
+        if( pnInstanceSize != NULL )
             *pnInstanceSize = GetDataSize();
         return pachWrkData;
     }
@@ -298,13 +306,15 @@ const char *DDFField::GetInstanceData( int nInstance,
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
-    int         nBytesRemaining1, nBytesRemaining2;
+    int         nBytesRemaining1 = 0, nBytesRemaining2 = 0;
     DDFSubfieldDefn *poFirstSubfield;
 
     poFirstSubfield = poDefn->GetSubfield(0);
 
     pachWrkData = GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
                                nInstance);
+    if( pachWrkData == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the size of the entire field instance, including     */
@@ -313,17 +323,20 @@ const char *DDFField::GetInstanceData( int nInstance,
     if( pnInstanceSize != NULL )
     {
         DDFSubfieldDefn *poLastSubfield;
-        int              nLastSubfieldWidth;
+        int              nLastSubfieldWidth = 0;
         const char          *pachLastData;
-        
+
         poLastSubfield = poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
-        
-        pachLastData = GetSubfieldData( poLastSubfield, &nBytesRemaining2, 
+
+        pachLastData = GetSubfieldData( poLastSubfield, &nBytesRemaining2,
                                         nInstance );
-        poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2, 
+        if( pachLastData == NULL )
+            return NULL;
+
+        poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2,
                                        &nLastSubfieldWidth );
-        
-        *pnInstanceSize = 
+
+        *pnInstanceSize =
             nBytesRemaining1 - (nBytesRemaining2 - nLastSubfieldWidth);
     }
 

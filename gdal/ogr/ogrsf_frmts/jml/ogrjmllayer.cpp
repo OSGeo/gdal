@@ -26,8 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_jml.h"
 #include "cpl_conv.h"
+#include "ogr_jml.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -39,49 +39,39 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRJMLLayer::OGRJMLLayer( const char* pszLayerName,
-                                    OGRJMLDataset* poDS,
-                                    VSILFILE* fp )
-
+                          OGRJMLDataset * /* poDSIn */,
+                          VSILFILE* fpIn ) :
+    poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
+    nNextFID(0),
+    fp(fpIn),
+    bHasReadSchema(false),
+    oParser(NULL),
+    currentDepth(0),
+    bStopParsing(false),
+    nWithoutEventCounter(0),
+    nDataHandlerCounter(0),
+    bAccumulateElementValue(false),
+    pszElementValue(static_cast<char*>(CPLCalloc(1024, 1))),
+    nElementValueLen(0),
+    nElementValueAlloc(1024),
+    poFeature(NULL),
+    ppoFeatureTab(NULL),
+    nFeatureTabLength(0),
+    nFeatureTabIndex(0),
+    bSchemaFinished(false),
+    nJCSGMLInputTemplateDepth(0),
+    nCollectionElementDepth(0),
+    nFeatureElementDepth(0),
+    nGeometryElementDepth(0),
+    nColumnDepth(0),
+    nNameDepth(0),
+    nTypeDepth(0),
+    nAttributeElementDepth(0),
+    iAttr(-1),
+    iRGBField(-1)
 {
-    nNextFID = 0;
-
-    this->poDS = poDS;
-    this->fp = fp;
-
-    poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-
-    bAccumulateElementValue = FALSE;
-    pszElementValue = (char*)CPLCalloc(1024, 1);
-    nElementValueLen = 0;
-    nElementValueAlloc = 1024;
-
-    ppoFeatureTab = NULL;
-    nFeatureTabIndex = 0;
-    nFeatureTabLength = 0;
-
-    nWithoutEventCounter = 0;
-    nDataHandlerCounter = 0;
-    currentDepth = 0;
-    bStopParsing = FALSE;
-    bHasReadSchema = FALSE;
-    
-    bSchemaFinished = FALSE;
-    nJCSGMLInputTemplateDepth = 0;
-    nCollectionElementDepth = 0;
-    nFeatureElementDepth = 0;
-    nGeometryElementDepth = 0;
-    nColumnDepth = 0;
-    nNameDepth = 0;
-    nTypeDepth = 0;
-    nAttributeElementDepth = 0;
-    iAttr = -1;
-    iRGBField = -1;
-
-    poFeature = NULL;
-
-    oParser = NULL;
 }
 
 /************************************************************************/
@@ -97,8 +87,7 @@ OGRJMLLayer::~OGRJMLLayer()
 
     CPLFree(pszElementValue);
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i=nFeatureTabIndex; i<nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
 
@@ -122,17 +111,17 @@ OGRFeatureDefn * OGRJMLLayer::GetLayerDefn()
 static void XMLCALL startElementCbk(void *pUserData, const char *pszName,
                                     const char **ppszAttr)
 {
-    ((OGRJMLLayer*)pUserData)->startElementCbk(pszName, ppszAttr);
+    static_cast<OGRJMLLayer*>(pUserData)->startElementCbk(pszName, ppszAttr);
 }
 
 static void XMLCALL endElementCbk(void *pUserData, const char *pszName)
 {
-    ((OGRJMLLayer*)pUserData)->endElementCbk(pszName);
+    static_cast<OGRJMLLayer*>(pUserData)->endElementCbk(pszName);
 }
 
 static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen)
 {
-    ((OGRJMLLayer*)pUserData)->dataHandlerCbk(data, nLen);
+    static_cast<OGRJMLLayer*>(pUserData)->dataHandlerCbk(data, nLen);
 }
 
 /************************************************************************/
@@ -153,8 +142,7 @@ void OGRJMLLayer::ResetReading()
     XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
     XML_SetUserData(oParser, this);
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for( int i=nFeatureTabIndex; i<nFeatureTabLength; i++ )
         delete ppoFeatureTab[i];
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
@@ -169,7 +157,7 @@ void OGRJMLLayer::ResetReading()
     nAttributeElementDepth = 0;
     iAttr = -1;
 
-    bAccumulateElementValue = FALSE;
+    bAccumulateElementValue = false;
     nElementValueLen = 0;
     pszElementValue[0] = '\0';
 }
@@ -183,12 +171,12 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     if (bStopParsing) return;
 
     nWithoutEventCounter = 0;
-    
+
     if( nFeatureElementDepth > 0 && nAttributeElementDepth == 0 &&
         nGeometryElementDepth == 0 && osGeometryElement.compare(pszName) == 0 )
     {
         nGeometryElementDepth = currentDepth;
-        bAccumulateElementValue = TRUE;
+        bAccumulateElementValue = true;
     }
     else if( nFeatureElementDepth > 0 && nAttributeElementDepth == 0 &&
              nGeometryElementDepth == 0 )
@@ -196,7 +184,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         /* We assume that attributes are present in the order they are */
         /* declared, so as a first guess, we can try the aoColumns[iAttr + 1] */
         int i = (iAttr+1 < poFeatureDefn->GetFieldCount()) ? -1 : 0;
-        for(; i<(int)aoColumns.size();i++)
+        for(; i< static_cast<int>(aoColumns.size()); i++ )
         {
             const OGRJMLColumn& oColumn =
                 (i < 0) ? aoColumns[iAttr + 1] : aoColumns[i];
@@ -212,7 +200,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 {
                     /* <osElementName osAttributeName="osAttributeValue">value</osElementName> */
 
-                    bAccumulateElementValue = TRUE;
+                    bAccumulateElementValue = true;
                     nAttributeElementDepth = currentDepth;
                     iAttr = (i < 0) ? iAttr + 1 : i;
                     break;
@@ -221,7 +209,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 {
                     /* <osElementName>value</osElementName> */
 
-                    bAccumulateElementValue = TRUE;
+                    bAccumulateElementValue = true;
                     nAttributeElementDepth = currentDepth;
                     iAttr = (i < 0) ? iAttr + 1 : i;
                     break;
@@ -233,7 +221,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             {
                 /* <osElementName osAttributeName="value"></osElementName> */
 
-                AddStringToElementValue(ppszAttr[1], strlen(ppszAttr[1]));
+                AddStringToElementValue(ppszAttr[1], (int)strlen(ppszAttr[1]));
 
                 nAttributeElementDepth = currentDepth;
                 iAttr = (i < 0) ? iAttr + 1 : i;
@@ -250,9 +238,9 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         while( papszIter && *papszIter != NULL )
         {
             AddStringToElementValue(" ", 1);
-            AddStringToElementValue(papszIter[0], strlen(papszIter[0]));
+            AddStringToElementValue(papszIter[0], (int)strlen(papszIter[0]));
             AddStringToElementValue("=\"", 2);
-            AddStringToElementValue(papszIter[1], strlen(papszIter[1]));
+            AddStringToElementValue(papszIter[1], (int)strlen(papszIter[1]));
             AddStringToElementValue("\"", 1);
             papszIter += 2;
         }
@@ -260,12 +248,14 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         AddStringToElementValue(">", 1);
     }
     else if( nCollectionElementDepth > 0 &&
-             nFeatureElementDepth == 0 && osFeatureElement.compare(pszName) == 0 )
+             nFeatureElementDepth == 0 &&
+             osFeatureElement.compare(pszName) == 0 )
     {
         nFeatureElementDepth = currentDepth;
         poFeature = new OGRFeature(poFeatureDefn);
     }
-    else if( nCollectionElementDepth == 0 && osCollectionElement.compare(pszName) == 0 )
+    else if( nCollectionElementDepth == 0 &&
+             osCollectionElement.compare(pszName) == 0 )
     {
         nCollectionElementDepth = currentDepth;
     }
@@ -279,7 +269,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
 void OGRJMLLayer::StopAccumulate()
 {
-    bAccumulateElementValue = FALSE;
+    bAccumulateElementValue = false;
     nElementValueLen = 0;
     pszElementValue[0] = '\0';
 }
@@ -293,9 +283,9 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
     if (bStopParsing) return;
 
     nWithoutEventCounter = 0;
-    
+
     currentDepth--;
-    
+
     if( nAttributeElementDepth == currentDepth )
     {
         if( nElementValueLen )
@@ -306,14 +296,15 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
     else if( nGeometryElementDepth > 0 && currentDepth > nGeometryElementDepth )
     {
         AddStringToElementValue("</", 2);
-        AddStringToElementValue(pszName, (int)strlen(pszName));
+        AddStringToElementValue(pszName, static_cast<int>(strlen(pszName)));
         AddStringToElementValue(">", 1);
     }
     else if( nGeometryElementDepth == currentDepth )
     {
         if( nElementValueLen )
         {
-            OGRGeometry* poGeom = (OGRGeometry* )OGR_G_CreateFromGML(pszElementValue);
+            OGRGeometry* poGeom = reinterpret_cast<OGRGeometry *>(
+                OGR_G_CreateFromGML(pszElementValue) );
             if( poGeom != NULL &&
                 poGeom->getGeometryType() == wkbGeometryCollection &&
                 poGeom->IsEmpty() )
@@ -332,21 +323,26 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
         /* Builds a style string from R_G_B if we don't already have a */
         /* style string */
         OGRGeometry* poGeom = poFeature->GetGeometryRef();
-        int R, G, B;
+        int R;
+        int G;
+        int B;
         if( iRGBField >= 0 && poFeature->IsFieldSet(iRGBField) &&
             poFeature->GetStyleString() == NULL && poGeom != NULL &&
             sscanf(poFeature->GetFieldAsString(iRGBField),
                        "%02X%02X%02X", &R, &G, &B) == 3 )
         {
-            OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
+            const OGRwkbGeometryType eGeomType
+                = wkbFlatten(poGeom->getGeometryType());
             if( eGeomType == wkbPoint || eGeomType == wkbMultiPoint ||
                 eGeomType == wkbLineString || eGeomType == wkbMultiLineString )
             {
-                poFeature->SetStyleString(CPLSPrintf("PEN(c:#%02X%02X%02X)", R, G, B));
+                poFeature->SetStyleString(
+                    CPLSPrintf("PEN(c:#%02X%02X%02X)", R, G, B));
             }
             else if( eGeomType == wkbPolygon || eGeomType == wkbMultiPolygon )
             {
-                poFeature->SetStyleString(CPLSPrintf("BRUSH(fc:#%02X%02X%02X)", R, G, B));
+                poFeature->SetStyleString(
+                    CPLSPrintf("BRUSH(fc:#%02X%02X%02X)", R, G, B));
             }
         }
 
@@ -357,9 +353,9 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
         {
-            ppoFeatureTab = (OGRFeature**)
-                    CPLRealloc(ppoFeatureTab,
-                                sizeof(OGRFeature*) * (nFeatureTabLength + 1));
+            ppoFeatureTab = static_cast<OGRFeature**>(
+                CPLRealloc(ppoFeatureTab,
+                           sizeof(OGRFeature*) * (nFeatureTabLength + 1)) );
             ppoFeatureTab[nFeatureTabLength] = poFeature;
             nFeatureTabLength++;
         }
@@ -384,15 +380,23 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
 
 void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
 {
+    if( nLen > INT_MAX - nElementValueLen - 1 - 1000 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Too much data in a single element");
+        XML_StopParser(oParser, XML_FALSE);
+        bStopParsing = true;
+        return;
+    }
     if( nElementValueLen + nLen + 1 > nElementValueAlloc )
     {
-        char* pszNewElementValue = (char*) VSIRealloc(pszElementValue,
-                                        nElementValueLen + nLen + 1 + 1000);
+        char* pszNewElementValue = static_cast<char*>(
+            VSI_REALLOC_VERBOSE( pszElementValue,
+                                 nElementValueLen + nLen + 1 + 1000) );
         if (pszNewElementValue == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
             XML_StopParser(oParser, XML_FALSE);
-            bStopParsing = TRUE;
+            bStopParsing = true;
             return;
         }
         nElementValueAlloc =  nElementValueLen + nLen + 1 + 1000;
@@ -401,13 +405,6 @@ void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
     memcpy(pszElementValue + nElementValueLen, data, nLen);
     nElementValueLen += nLen;
     pszElementValue[nElementValueLen] = '\0';
-    if (nElementValueLen > 10000000)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                    "Too much data inside one element. File probably corrupted");
-        XML_StopParser(oParser, XML_FALSE);
-        bStopParsing = TRUE;
-    }
 }
 
 /************************************************************************/
@@ -424,12 +421,12 @@ void OGRJMLLayer::dataHandlerCbk(const char *data, int nLen)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
         XML_StopParser(oParser, XML_FALSE);
-        bStopParsing = TRUE;
+        bStopParsing = true;
         return;
     }
 
     nWithoutEventCounter = 0;
-    
+
     if (bAccumulateElementValue)
     {
         AddStringToElementValue(data, nLen);
@@ -452,15 +449,15 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
     {
         return ppoFeatureTab[nFeatureTabIndex++];
     }
-    
+
     if (VSIFEofL(fp))
         return NULL;
-    
+
     char aBuf[BUFSIZ];
-    
+
     nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
-    
+
     nWithoutEventCounter = 0;
 
     int nDone;
@@ -478,7 +475,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
                      XML_ErrorString(XML_GetErrorCode(oParser)),
                      (int)XML_GetCurrentLineNumber(oParser),
                      (int)XML_GetCurrentColumnNumber(oParser));
-            bStopParsing = TRUE;
+            bStopParsing = true;
         }
         nWithoutEventCounter ++;
     } while (!nDone && !bStopParsing && nFeatureTabLength == 0 &&
@@ -486,23 +483,26 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
 
     if (nWithoutEventCounter == 10)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too much data inside one element. File probably corrupted");
-        bStopParsing = TRUE;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Too much data inside one element. File probably corrupted");
+        bStopParsing = true;
     }
 
     return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
 }
 
-static void XMLCALL startElementLoadSchemaCbk(void *pUserData, const char *pszName,
-                                              const char **ppszAttr)
+static void XMLCALL startElementLoadSchemaCbk( void *pUserData,
+                                               const char *pszName,
+                                               const char **ppszAttr )
 {
-    ((OGRJMLLayer*)pUserData)->startElementLoadSchemaCbk(pszName, ppszAttr);
+    static_cast<OGRJMLLayer*>(pUserData)->
+        startElementLoadSchemaCbk(pszName, ppszAttr);
 }
 
-static void XMLCALL endElementLoadSchemaCbk(void *pUserData, const char *pszName)
+static void XMLCALL endElementLoadSchemaCbk( void *pUserData,
+                                             const char *pszName )
 {
-    ((OGRJMLLayer*)pUserData)->endElementLoadSchemaCbk(pszName);
+    static_cast<OGRJMLLayer*>(pUserData)->endElementLoadSchemaCbk(pszName);
 }
 
 /************************************************************************/
@@ -515,7 +515,7 @@ void OGRJMLLayer::LoadSchema()
     if (bHasReadSchema)
         return;
 
-    bHasReadSchema = TRUE;
+    bHasReadSchema = true;
 
     oParser = OGRCreateExpatXMLParser();
     XML_SetElementHandler(oParser, ::startElementLoadSchemaCbk,
@@ -530,19 +530,22 @@ void OGRJMLLayer::LoadSchema()
     do
     {
         nDataHandlerCounter = 0;
-        unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fp );
+        const unsigned int nLen = static_cast<unsigned int>(
+            VSIFReadL( aBuf, 1, sizeof(aBuf), fp ) );
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of JML file failed : %s at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
-            bStopParsing = TRUE;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "XML parsing of JML file failed : %s at line %d, "
+                      "column %d",
+                      XML_ErrorString(XML_GetErrorCode(oParser)),
+                      static_cast<int>(XML_GetCurrentLineNumber(oParser)),
+                      static_cast<int>(XML_GetCurrentColumnNumber(oParser)) );
+            bStopParsing = true;
         }
         nWithoutEventCounter ++;
-    } while (!nDone && !bStopParsing && !bSchemaFinished && nWithoutEventCounter < 10);
+    } while ( !nDone && !bStopParsing && !bSchemaFinished &&
+              nWithoutEventCounter < 10 );
 
     XML_ParserFree(oParser);
     oParser = NULL;
@@ -551,15 +554,16 @@ void OGRJMLLayer::LoadSchema()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
-        bStopParsing = TRUE;
+        bStopParsing = true;
     }
-    
+
     if( osCollectionElement.size() == 0 || osFeatureElement.size() == 0 ||
         osGeometryElement.size() == 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Missing CollectionElement, FeatureElement or GeometryElement");
-        bStopParsing = TRUE;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Missing CollectionElement, FeatureElement or "
+                  "GeometryElement" );
+        bStopParsing = true;
     }
 
     ResetReading();
@@ -570,8 +574,8 @@ void OGRJMLLayer::LoadSchema()
 /*                  startElementLoadSchemaCbk()                         */
 /************************************************************************/
 
-void OGRJMLLayer::startElementLoadSchemaCbk(const char *pszName,
-                                                 const char **ppszAttr)
+void OGRJMLLayer::startElementLoadSchemaCbk( const char *pszName,
+                                             const char **ppszAttr )
 {
     if (bStopParsing) return;
 
@@ -586,19 +590,19 @@ void OGRJMLLayer::startElementLoadSchemaCbk(const char *pszName,
             strcmp(pszName, "CollectionElement") == 0 )
         {
             nCollectionElementDepth = currentDepth;
-            bAccumulateElementValue = TRUE;
+            bAccumulateElementValue = true;
         }
         else if( nFeatureElementDepth == 0 &&
                 strcmp(pszName, "FeatureElement") == 0 )
         {
             nFeatureElementDepth = currentDepth;
-            bAccumulateElementValue = TRUE;
+            bAccumulateElementValue = true;
         }
         else if( nGeometryElementDepth == 0 &&
                  strcmp(pszName, "GeometryElement") == 0 )
         {
             nGeometryElementDepth = currentDepth;
-            bAccumulateElementValue = TRUE;
+            bAccumulateElementValue = true;
         }
         else  if( nColumnDepth == 0 && strcmp(pszName, "column") == 0 )
         {
@@ -608,19 +612,19 @@ void OGRJMLLayer::startElementLoadSchemaCbk(const char *pszName,
             oCurColumn.osElementName = "";
             oCurColumn.osAttributeName = "";
             oCurColumn.osAttributeValue = "";
-            oCurColumn.bIsBody = FALSE;
+            oCurColumn.bIsBody = false;
         }
         else if( nColumnDepth > 0 )
         {
             if( nNameDepth == 0 && strcmp(pszName, "name") == 0 )
             {
                 nNameDepth = currentDepth;
-                bAccumulateElementValue = TRUE;
+                bAccumulateElementValue = true;
             }
             else if( nTypeDepth == 0 && strcmp(pszName, "type") == 0 )
             {
                 nTypeDepth = currentDepth;
-                bAccumulateElementValue = TRUE;
+                bAccumulateElementValue = true;
             }
             else if( strcmp(pszName, "valueElement") == 0 )
             {
@@ -658,7 +662,7 @@ void OGRJMLLayer::startElementLoadSchemaCbk(const char *pszName,
 /*                   endElementLoadSchemaCbk()                          */
 /************************************************************************/
 
-void OGRJMLLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
+void OGRJMLLayer::endElementLoadSchemaCbk( const char * /* pszName */ )
 {
     if (bStopParsing) return;
 
@@ -669,46 +673,53 @@ void OGRJMLLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
     if( nJCSGMLInputTemplateDepth == currentDepth )
     {
         nJCSGMLInputTemplateDepth = 0;
-        bSchemaFinished = TRUE;
+        bSchemaFinished = true;
     }
     else if( nCollectionElementDepth == currentDepth )
     {
         nCollectionElementDepth = 0;
         osCollectionElement = pszElementValue;
-        //CPLDebug("JML", "osCollectionElement = %s", osCollectionElement.c_str());
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "JML", "osCollectionElement = %s",
+                  osCollectionElement.c_str() );
+#endif
         StopAccumulate();
     }
     else if( nFeatureElementDepth == currentDepth )
     {
         nFeatureElementDepth = 0;
         osFeatureElement = pszElementValue;
-        //CPLDebug("JML", "osFeatureElement = %s", osFeatureElement.c_str());
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "JML", "osFeatureElement = %s", osFeatureElement.c_str() );
+#endif
         StopAccumulate();
     }
     else if( nGeometryElementDepth == currentDepth )
     {
         nGeometryElementDepth = 0;
         osGeometryElement = pszElementValue;
-        //CPLDebug("JML", "osGeometryElement = %s", osGeometryElement.c_str());
+#ifdef DEBUG_VERBOSE
+        CPLDebug( "JML", "osGeometryElement = %s", osGeometryElement.c_str() );
+#endif
         StopAccumulate();
     }
     else if( nColumnDepth == currentDepth )
     {
-        int bIsOK = TRUE;
+        bool bIsOK = true;
         if( oCurColumn.osName.size() == 0 )
-            bIsOK = FALSE;
+            bIsOK = false;
         if( oCurColumn.osType.size() == 0 )
-            bIsOK = FALSE;
+            bIsOK = false;
         if( oCurColumn.osElementName.size() == 0 )
-            bIsOK = FALSE;
+            bIsOK = false;
         if( oCurColumn.bIsBody )
         {
             if( oCurColumn.osAttributeName.size() == 0 &&
                 oCurColumn.osAttributeValue.size() != 0 )
-                bIsOK = FALSE;
+                bIsOK = false;
             if( oCurColumn.osAttributeName.size() != 0 &&
                 oCurColumn.osAttributeValue.size() == 0 )
-                bIsOK = FALSE;
+                bIsOK = false;
             /* Only 2 valid possibilities : */
             /* <osElementName osAttributeName="osAttributeValue">value</osElementName> */
             /* <osElementName>value</osElementName> */
@@ -717,11 +728,11 @@ void OGRJMLLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
         {
             /* <osElementName osAttributeName="value"></osElementName> */
             if( oCurColumn.osAttributeName.size() == 0 )
-                bIsOK = FALSE;
+                bIsOK = false;
             if( oCurColumn.osAttributeValue.size() != 0 )
-                bIsOK = FALSE;
+                bIsOK = false;
         }
-        
+
         if( bIsOK )
         {
             OGRFieldType eType = OFTString;
@@ -741,14 +752,15 @@ void OGRJMLLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
         }
         else
         {
-            CPLDebug("JML", "Invalid column definition: name = %s, type = %s, "
-                    "elementName = %s, attributeName = %s, attributeValue = %s, bIsBody = %d", 
-                    oCurColumn.osName.c_str(),
-                    oCurColumn.osType.c_str(), 
-                    oCurColumn.osElementName.c_str(),
-                    oCurColumn.osAttributeName.c_str(), 
-                    oCurColumn.osAttributeValue.c_str(),
-                    oCurColumn.bIsBody);
+            CPLDebug( "JML", "Invalid column definition: name = %s, type = %s, "
+                      "elementName = %s, attributeName = %s, "
+                      "attributeValue = %s, bIsBody = %d",
+                      oCurColumn.osName.c_str(),
+                      oCurColumn.osType.c_str(),
+                      oCurColumn.osElementName.c_str(),
+                      oCurColumn.osAttributeName.c_str(),
+                      oCurColumn.osAttributeValue.c_str(),
+                      static_cast<int>(oCurColumn.bIsBody) );
         }
 
         nColumnDepth = 0;
@@ -757,14 +769,18 @@ void OGRJMLLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
     {
         nNameDepth = 0;
         oCurColumn.osName = pszElementValue;
-        //CPLDebug("JML", "oCurColumn.osName = %s", oCurColumn.osName.c_str());
+#ifdef DEBUG_VERBOSE
+        CPLDebug("JML", "oCurColumn.osName = %s", oCurColumn.osName.c_str());
+#endif
         StopAccumulate();
     }
     else if( nTypeDepth == currentDepth )
     {
         nTypeDepth = 0;
         oCurColumn.osType = pszElementValue;
-        //CPLDebug("JML", "oCurColumn.osType = %s", oCurColumn.osType.c_str());
+#ifdef DEBUG_VERBOSE
+        CPLDebug("JML", "oCurColumn.osType = %s", oCurColumn.osType.c_str());
+#endif
         StopAccumulate();
     }
 }
@@ -776,10 +792,7 @@ void OGRJMLLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
 int OGRJMLLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCStringsAsUTF8) )
-        return TRUE;
-    else 
-        return FALSE;
+    return EQUAL(pszCap,OLCStringsAsUTF8);
 }
 
 #endif /* HAVE_EXPAT */

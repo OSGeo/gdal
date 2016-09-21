@@ -18,16 +18,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -99,14 +99,22 @@ static int OGRTABDriverIdentify( GDALOpenInfo* poOpenInfo )
         for( int i = 0; i < poOpenInfo->nHeaderBytes; i++)
         {
             const char* pszLine = (const char*)poOpenInfo->pabyHeader + i;
-            if (EQUALN(pszLine, "Fields", 6))
+            if (STARTS_WITH_CI(pszLine, "Fields"))
                 return TRUE;
-            else if (EQUALN(pszLine, "create view", 11))
+            else if (STARTS_WITH_CI(pszLine, "create view"))
                 return TRUE;
-            else if (EQUALN(pszLine, "\"\\IsSeamless\" = \"TRUE\"", 21))
+            else if (STARTS_WITH_CI(pszLine, "\"\\IsSeamless\" = \"TRUE\""))
                 return TRUE;
         }
     }
+#ifdef DEBUG
+    /* For AFL, so that .cur_input is detected as the archive filename */
+    if( !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
+        EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
+    {
+        return -1;
+    }
+#endif
     return FALSE;
 }
 
@@ -130,6 +138,19 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
         if( poOpenInfo->eAccess == GA_Update )
             return NULL;
     }
+
+#ifdef DEBUG
+    /* For AFL, so that .cur_input is detected as the archive filename */
+    if( poOpenInfo->fpL != NULL &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
+        EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
+    {
+        GDALOpenInfo oOpenInfo( (CPLString("/vsitar/") + poOpenInfo->pszFilename).c_str(),
+                                poOpenInfo->nOpenFlags );
+        oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
+        return OGRTABDriverOpen(&oOpenInfo);
+    }
+#endif
 
     poDS = new OGRTABDataSource();
     if( poDS->Open( poOpenInfo, TRUE ) )
@@ -224,28 +245,23 @@ extern "C"
 void RegisterOGRTAB()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "MapInfo File" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "MapInfo File" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "MapInfo File" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "MapInfo File" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tab mif mid" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_mitab.html" );
-
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "MapInfo File" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MapInfo File" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tab mif mid" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mitab.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='BOUNDS' type='string' description='Custom bounds. Expect format is xmin,ymin,xmax,ymax'/>"
 "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='FORMAT' type='string-select' description='type of MapInfo format'>"
 "    <Value>MIF</Value>"
@@ -255,18 +271,19 @@ void RegisterOGRTAB()
 "    <Value>QUICK</Value>"
 "    <Value>OPTIMIZED</Value>"
 "  </Option>"
+"  <Option name='BLOCKSIZE' type='int' description='.map block size' min='512' max='32256' default='512'/>"
 "</CreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date DateTime Time" );
 
-        poDriver->pfnOpen = OGRTABDriverOpen;
-        poDriver->pfnIdentify = OGRTABDriverIdentify;
-        poDriver->pfnCreate = OGRTABDriverCreate;
-        poDriver->pfnDelete = OGRTABDriverDelete;
-        poDriver->pfnUnloadDriver = OGRTABDriverUnload;
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Real String Date DateTime Time" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = OGRTABDriverOpen;
+    poDriver->pfnIdentify = OGRTABDriverIdentify;
+    poDriver->pfnCreate = OGRTABDriverCreate;
+    poDriver->pfnDelete = OGRTABDriverDelete;
+    poDriver->pfnUnloadDriver = OGRTABDriverUnload;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 
 }

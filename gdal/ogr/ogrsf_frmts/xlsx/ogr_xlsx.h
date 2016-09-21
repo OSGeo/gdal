@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_XLSX_H_INCLUDED
-#define _OGR_XLSX_H_INCLUDED
+#ifndef OGR_XLSX_H_INCLUDED
+#define OGR_XLSX_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -38,6 +38,8 @@
 #include <vector>
 #include <string>
 #include <map>
+
+namespace OGRXLSX {
 
 /************************************************************************/
 /*                             OGRXLSXLayer                             */
@@ -101,8 +103,8 @@ class OGRXLSXLayer : public OGRMemLayer
     virtual OGRErr      ReorderFields( int* panMap )
     { Init(); SetUpdated(); return OGRMemLayer::ReorderFields(panMap); }
 
-    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
-    { Init(); SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlags); }
+    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
+    { Init(); SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn); }
 
     int                 TestCapability( const char * pszCap )
     { Init(); return OGRMemLayer::TestCapability(pszCap); }
@@ -134,6 +136,18 @@ typedef struct
     HandlerStateEnum  eVal;
     int               nBeginDepth;
 } HandlerState;
+
+class XLSXFieldTypeExtended
+{
+public:
+    OGRFieldType      eType;
+    int               bHasMS;
+
+                    XLSXFieldTypeExtended() : eType(OFTMaxType), bHasMS(FALSE) {}
+                    XLSXFieldTypeExtended(OGRFieldType eTypeIn,
+                                          int bHasMSIn = FALSE) :
+                                    eType(eTypeIn), bHasMS(bHasMSIn) {}
+};
 
 class OGRXLSXDataSource : public OGRDataSource
 {
@@ -176,8 +190,8 @@ class OGRXLSXDataSource : public OGRDataSource
     std::vector<std::string>  apoCurLineTypes;
 
     int                        bInCellXFS;
-    std::map<int,OGRFieldType> apoMapStyleFormats;
-    std::vector<OGRFieldType>  apoStyles;
+    std::map<int,XLSXFieldTypeExtended> apoMapStyleFormats;
+    std::vector<XLSXFieldTypeExtended>  apoStyles;
 
     void                PushState(HandlerStateEnum eVal);
     void                startElementDefault(const char *pszName, const char **ppszAttr);
@@ -241,6 +255,8 @@ class OGRXLSXDataSource : public OGRDataSource
     void                SetUpdated() { bUpdated = TRUE; }
 };
 
+} /* end of OGRXLSX namespace */
+
 /************************************************************************/
 /*                             OGRXLSXDriver                             */
 /************************************************************************/
@@ -257,8 +273,6 @@ class OGRXLSXDriver : public OGRSFDriver
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
     virtual OGRErr      DeleteDataSource( const char *pszName );
-    
 };
 
-
-#endif /* ndef _OGR_XLSX_H_INCLUDED */
+#endif /* ndef OGR_XLSX_H_INCLUDED */

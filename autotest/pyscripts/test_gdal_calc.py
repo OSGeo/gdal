@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_calc.py testing
 # Author:   Etienne Tourigny <etourigny dot dev @ gmail dot com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2013, Even Rouault <even dot rouault @ mines-paris dot org>
 # Copyright (c) 2014, Etienne Tourigny <etourigny dot dev @ gmail dot com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -105,9 +105,11 @@ def test_gdal_calc_py_2():
 
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 -B tmp/test_gdal_calc_py.tif --B_band 2 --calc=A+B --overwrite --outfile tmp/test_gdal_calc_py_2_1.tif')
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 -B tmp/test_gdal_calc_py.tif --B_band 2 --calc=A*B --overwrite --outfile tmp/test_gdal_calc_py_2_2.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band 1 --calc="sqrt(A)" --type=Float32 --overwrite --outfile tmp/test_gdal_calc_py_2_3.tif')
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_2_1.tif')
     ds2 = gdal.Open('tmp/test_gdal_calc_py_2_2.tif')
+    ds3 = gdal.Open('tmp/test_gdal_calc_py_2_3.tif')
 
     if ds1 is None:
         gdaltest.post_reason('ds1 not found')
@@ -115,16 +117,21 @@ def test_gdal_calc_py_2():
     if ds2 is None:
         gdaltest.post_reason('ds2 not found')
         return 'fail'
-
+    if ds3 is None:
+        gdaltest.post_reason('ds3 not found')
+        return 'fail'
     if ds1.GetRasterBand(1).Checksum() != 12368:
         gdaltest.post_reason('ds1 wrong checksum')
         return 'fail'
     if ds2.GetRasterBand(1).Checksum() != 62785:
         gdaltest.post_reason('ds2 wrong checksum')
         return 'fail'
-
+    if ds3.GetRasterBand(1).Checksum() != 47132:
+        gdaltest.post_reason('ds3 wrong checksum')
+        return 'fail'
     ds1 = None
     ds2 = None
+    ds3 = None
 
     return 'success'
 
@@ -182,7 +189,7 @@ def test_gdal_calc_py_4():
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif -B tmp/test_gdal_calc_py_4_1.tif --B_band 1 --allBands A --calc=A+B --NoDataValue=999 --overwrite --outfile tmp/test_gdal_calc_py_4_2.tif')
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_4_2.tif')
-    
+
     if ds1 is None:
         gdaltest.post_reason('ds1 not found')
         return 'fail'
@@ -202,7 +209,7 @@ def test_gdal_calc_py_4():
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif -B tmp/test_gdal_calc_py.tif --B_band 1 --allBands A --calc=A*B --NoDataValue=999 --overwrite --outfile tmp/test_gdal_calc_py_4_3.tif')
 
     ds2 = gdal.Open('tmp/test_gdal_calc_py_4_3.tif')
-    
+
     if ds2 is None:
         gdaltest.post_reason('ds2 not found')
         return 'fail'
@@ -228,6 +235,7 @@ def test_gdal_calc_py_cleanup():
             'tmp/test_gdal_calc_py_1_2.tif',
             'tmp/test_gdal_calc_py_2_1.tif',
             'tmp/test_gdal_calc_py_2_2.tif',
+            'tmp/test_gdal_calc_py_2_3.tif',
             'tmp/test_gdal_calc_py_3.tif',
             'tmp/test_gdal_calc_py_4_1.tif',
             'tmp/test_gdal_calc_py_4_2.tif',

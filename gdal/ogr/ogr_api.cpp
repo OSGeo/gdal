@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  C API Functions that don't correspond one-to-one with C++ 
+ * Purpose:  C API Functions that don't correspond one-to-one with C++
  *           methods, such as the "simplified" geometry access functions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -33,7 +33,7 @@
 #include "ogr_api.h"
 #include "cpl_error.h"
 
-static int bNonLinearGeometriesEnabled = TRUE;
+static bool bNonLinearGeometriesEnabled = true;
 
 /************************************************************************/
 /*                        OGR_G_GetPointCount()                         */
@@ -74,8 +74,9 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
  *
  * This method primary exists to preset the number of points in a linestring
  * geometry before setPoint() is used to assign them to avoid reallocating
- * the array larger with each call to addPoint(). 
+ * the array larger with each call to addPoint().
  *
+ * @param hGeom handle to the geometry.
  * @param nNewPointCount the new number of points for geometry.
  */
 
@@ -89,8 +90,8 @@ void OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount )
       case wkbLineString:
       case wkbCircularString:
       {
-        OGRLineString *poLine = (OGRLineString *) hGeom;
-        poLine->setNumPoints( nNewPointCount );
+        OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+        poSC->setNumPoints( nNewPointCount );
         break;
       }
       default:
@@ -107,7 +108,7 @@ void OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount )
  *
  * @param hGeom handle to the geometry from which to get the x coordinate.
  * @param i point to get the x coordinate.
- * @return the X coordinate of this point. 
+ * @return the X coordinate of this point.
  */
 
 double OGR_G_GetX( OGRGeometryH hGeom, int i )
@@ -131,13 +132,13 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          if (i < 0 || i >= poLS->getNumPoints())
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
           }
-          return poLS->getX( i );
+          return poSC->getX( i );
       }
 
       default:
@@ -154,7 +155,7 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
  *
  * @param hGeom handle to the geometry from which to get the y coordinate.
  * @param i point to get the Y coordinate.
- * @return the Y coordinate of this point. 
+ * @return the Y coordinate of this point.
  */
 
 double OGR_G_GetY( OGRGeometryH hGeom, int i )
@@ -178,13 +179,13 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          if (i < 0 || i >= poLS->getNumPoints())
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
           }
-          return poLS->getY( i );
+          return poSC->getY( i );
       }
 
       default:
@@ -201,7 +202,7 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
  *
  * @param hGeom handle to the geometry from which to get the Z coordinate.
  * @param i point to get the Z coordinate.
- * @return the Z coordinate of this point. 
+ * @return the Z coordinate of this point.
  */
 
 double OGR_G_GetZ( OGRGeometryH hGeom, int i )
@@ -225,13 +226,60 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          if (i < 0 || i >= poLS->getNumPoints())
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
           }
-          return poLS->getZ( i );
+          return poSC->getZ( i );
+      }
+
+      default:
+          CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+          return 0.0;
+    }
+}
+
+/************************************************************************/
+/*                             OGR_G_GetM()                             */
+/************************************************************************/
+/**
+ * \brief Fetch the m coordinate of a point from a geometry.
+ *
+ * @param hGeom handle to the geometry from which to get the M coordinate.
+ * @param i point to get the M coordinate.
+ * @return the M coordinate of this point.
+ */
+
+double OGR_G_GetM( OGRGeometryH hGeom, int i )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetM", 0 );
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          if( i == 0 )
+              return ((OGRPoint *) hGeom)->getM();
+          else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
+              return 0.0;
+          }
+      }
+
+      case wkbLineString:
+      case wkbCircularString:
+      {
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              return 0.0;
+          }
+          return poSC->getM( i );
       }
 
       default:
@@ -248,7 +296,7 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
  * \brief Returns all points of line string.
  *
  * This method copies all points into user arrays. The user provides the
- * stride between 2 consecutives elements of the array.
+ * stride between 2 consecutive elements of the array.
  *
  * On some CPU architectures, care must be taken so that the arrays are properly aligned.
  *
@@ -286,9 +334,9 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          poLS->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride);
-          return poLS->getNumPoints();
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          poSC->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride);
+          return poSC->getNumPoints();
       }
       break;
 
@@ -299,6 +347,68 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
     }
 }
 
+/************************************************************************/
+/*                          OGR_G_GetPointsZM()                         */
+/************************************************************************/
+
+/**
+ * \brief Returns all points of line string.
+ *
+ * This method copies all points into user arrays. The user provides the
+ * stride between 2 consecutive elements of the array.
+ *
+ * On some CPU architectures, care must be taken so that the arrays are properly aligned.
+ *
+ * @param hGeom handle to the geometry from which to get the coordinates.
+ * @param pabyX a buffer of at least (sizeof(double) * nXStride * nPointCount) bytes, may be NULL.
+ * @param nXStride the number of bytes between 2 elements of pabyX.
+ * @param pabyY a buffer of at least (sizeof(double) * nYStride * nPointCount) bytes, may be NULL.
+ * @param nYStride the number of bytes between 2 elements of pabyY.
+ * @param pabyZ a buffer of at last size (sizeof(double) * nZStride * nPointCount) bytes, may be NULL.
+ * @param nZStride the number of bytes between 2 elements of pabyZ.
+ * @param pabyM a buffer of at last size (sizeof(double) * nMStride * nPointCount) bytes, may be NULL.
+ * @param nMStride the number of bytes between 2 elements of pabyM.
+ *
+ * @return the number of points
+ *
+ * @since OGR 1.9.0
+ */
+
+int OGR_G_GetPointsZM( OGRGeometryH hGeom,
+                       void* pabyX, int nXStride,
+                       void* pabyY, int nYStride,
+                       void* pabyZ, int nZStride,
+                       void* pabyM, int nMStride)
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetPointsZM", 0 );
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+        if (pabyX) *((double*)pabyX) = ((OGRPoint *)hGeom)->getX();
+        if (pabyY) *((double*)pabyY) = ((OGRPoint *)hGeom)->getY();
+        if (pabyZ) *((double*)pabyZ) = ((OGRPoint *)hGeom)->getZ();
+        if (pabyM) *((double*)pabyM) = ((OGRPoint *)hGeom)->getM();
+        return 1;
+      }
+      break;
+
+      case wkbLineString:
+      case wkbCircularString:
+      {
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          poSC->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride, pabyM, nMStride);
+          return poSC->getNumPoints();
+      }
+      break;
+
+      default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        return 0;
+        break;
+    }
+}
 
 /************************************************************************/
 /*                           OGR_G_GetPoint()                           */
@@ -314,7 +424,7 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
  * @param pdfZ value of z coordinate.
  */
 
-void OGR_G_GetPoint( OGRGeometryH hGeom, int i, 
+void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
                      double *pdfX, double *pdfY, double *pdfZ )
 
 {
@@ -341,8 +451,8 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          if (i < 0 || i >= poLS->getNumPoints())
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               *pdfX = *pdfY = 0;
@@ -351,10 +461,10 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
           }
           else
           {
-            *pdfX = poLS->getX( i );
-            *pdfY = poLS->getY( i );
+            *pdfX = poSC->getX( i );
+            *pdfY = poSC->getY( i );
             if( pdfZ != NULL )
-                *pdfZ =  poLS->getZ( i );
+                *pdfZ =  poSC->getZ( i );
           }
       }
       break;
@@ -366,7 +476,79 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
 }
 
 /************************************************************************/
-/*                           OGR_G_SetPoint()                           */
+/*                           OGR_G_GetPointZM()                         */
+/************************************************************************/
+
+/**
+ * \brief Fetch a point in line string or a point geometry.
+ *
+ * @param hGeom handle to the geometry from which to get the coordinates.
+ * @param i the vertex to fetch, from 0 to getNumPoints()-1, zero for a point.
+ * @param pdfX value of x coordinate.
+ * @param pdfY value of y coordinate.
+ * @param pdfZ value of z coordinate.
+ * @param pdfM value of m coordinate.
+ */
+
+void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
+                       double *pdfX, double *pdfY, double *pdfZ, double *pdfM )
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_GetPointZM" );
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          if( i == 0 )
+          {
+              *pdfX = ((OGRPoint *)hGeom)->getX();
+              *pdfY = ((OGRPoint *)hGeom)->getY();
+              if( pdfZ != NULL )
+                  *pdfZ = ((OGRPoint *)hGeom)->getZ();
+              if( pdfM != NULL )
+                  *pdfM = ((OGRPoint *)hGeom)->getM();
+          }
+          else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
+          }
+      }
+      break;
+
+      case wkbLineString:
+      case wkbCircularString:
+      {
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              *pdfX = *pdfY = 0;
+              if( pdfZ != NULL )
+                  *pdfZ = 0;
+              if( pdfM != NULL )
+                  *pdfM = 0;
+          }
+          else
+          {
+            *pdfX = poSC->getX( i );
+            *pdfY = poSC->getY( i );
+            if( pdfZ != NULL )
+                *pdfZ =  poSC->getZ( i );
+            if( pdfM != NULL )
+                *pdfM =  poSC->getM( i );
+          }
+      }
+      break;
+
+      default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        break;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_G_SetPoints()                          */
 /************************************************************************/
 /**
  * \brief Assign all points in a point or a line string geometry.
@@ -376,11 +558,11 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
  *
  * @param hGeom handle to the geometry to set the coordinates.
  * @param nPointsIn number of points being passed in padfX and padfY.
- * @param padfX list of X coordinates of points being assigned.
+ * @param pabyX list of X coordinates (double values) of points being assigned.
  * @param nXStride the number of bytes between 2 elements of pabyX.
- * @param padfY list of Y coordinates of points being assigned.
+ * @param pabyY list of Y coordinates (double values) of points being assigned.
  * @param nYStride the number of bytes between 2 elements of pabyY.
- * @param padfZ list of Z coordinates of points being assigned (defaults to NULL for 2D objects).
+ * @param pabyZ list of Z coordinates (double values) of points being assigned (defaults to NULL for 2D objects).
  * @param nZStride the number of bytes between 2 elements of pabyZ.
  */
 
@@ -392,38 +574,175 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPoints" );
 
+    if( pabyX == NULL || pabyY == NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "pabyX == NULL || pabyY == NULL");
+        return;
+    }
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPoint:
       {
-        ((OGRPoint *) hGeom)->setX( pabyX ? *( (double *)pabyX ) : 0.0 );
-        ((OGRPoint *) hGeom)->setY( pabyY ? *( (double *)pabyY ) : 0.0 );
-        ((OGRPoint *) hGeom)->setZ( pabyZ ? *( (double *)pabyZ ) : 0.0 );
+        ((OGRPoint *) hGeom)->setX( *( (double *)pabyX ) );
+        ((OGRPoint *) hGeom)->setY( *( (double *)pabyY ) );
+        if( pabyZ != NULL )
+            ((OGRPoint *) hGeom)->setZ(*( (double *)pabyZ ) );
         break;
       }
       case wkbLineString:
       case wkbCircularString:
       {
-        OGRLineString* poLine = (OGRLineString *) hGeom;
+        OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
 
-        if( nXStride == 0 && nYStride == 0 && nZStride == 0 )
+        if( nXStride == (int)sizeof(double) &&
+            nYStride == (int)sizeof(double) &&
+            ((nZStride == 0 && pabyZ == NULL) ||
+             (nZStride == (int)sizeof(double) && pabyZ != NULL)) )
         {
-          poLine->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ ); 
+          poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ );
         }
         else
         {
-          double x, y, z;		  
-          x = y = z = 0;
-          poLine->setNumPoints( nPointsIn );
+          poSC->setNumPoints( nPointsIn );
 
           for (int i = 0; i < nPointsIn; ++i)
           {
-            if( pabyX ) x = *(double*)((char*)pabyX + i * nXStride);
-            if( pabyY ) y = *(double*)((char*)pabyY + i * nYStride);
-            if( pabyZ ) z = *(double*)((char*)pabyZ + i * nZStride);
-
-            poLine->setPoint( i, x, y, z );
+            double x = *(double*)((char*)pabyX + i * nXStride);
+            double y = *(double*)((char*)pabyY + i * nYStride);
+            if( pabyZ )
+            {
+                double z = *(double*)((char*)pabyZ + i * nZStride);
+                poSC->setPoint( i, x, y, z );
+            }
+            else
+            {
+                poSC->setPoint( i, x, y );
+            }
           }
+        }
+        break;
+      }
+      default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        break;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_G_SetPointsZM()                        */
+/************************************************************************/
+/**
+ * \brief Assign all points in a point or a line string geometry.
+ *
+ * This method clear any existing points assigned to this geometry,
+ * and assigns a whole new set.
+ *
+ * @param hGeom handle to the geometry to set the coordinates.
+ * @param nPointsIn number of points being passed in padfX and padfY.
+ * @param pabyX list of X coordinates (double values) of points being assigned.
+ * @param nXStride the number of bytes between 2 elements of pabyX.
+ * @param pabyY list of Y coordinates (double values) of points being assigned.
+ * @param nYStride the number of bytes between 2 elements of pabyY.
+ * @param pabyZ list of Z coordinates (double values) of points being assigned (if not NULL, upgrades the geometry to have Z coordinate).
+ * @param nZStride the number of bytes between 2 elements of pabyZ.
+ * @param pabyM list of M coordinates (double values) of points being assigned (if not NULL, upgrades the geometry to have M coordinate).
+ * @param nMStride the number of bytes between 2 elements of pabyM.
+ */
+
+void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
+                                void* pabyX, int nXStride,
+                                void* pabyY, int nYStride,
+                                void* pabyZ, int nZStride,
+                                void* pabyM, int nMStride )
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_SetPointsZM" );
+
+    if( pabyX == NULL || pabyY == NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "pabyX == NULL || pabyY == NULL");
+        return;
+    }
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+        ((OGRPoint *) hGeom)->setX( *( (double *)pabyX ) );
+        ((OGRPoint *) hGeom)->setY( *( (double *)pabyY ) );
+        if (pabyZ)
+            ((OGRPoint *) hGeom)->setZ( *(double *)pabyZ );
+        if (pabyM)
+            ((OGRPoint *) hGeom)->setM( *(double *)pabyM );
+        break;
+      }
+      case wkbLineString:
+      case wkbCircularString:
+      {
+        OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+
+        if(  nXStride == (int)sizeof(double) &&
+             nYStride == (int)sizeof(double) &&
+             ((nZStride == 0 && pabyZ == NULL) ||
+              (nZStride == (int)sizeof(double) && pabyZ != NULL)) &&
+             ((nMStride == 0 && pabyM == NULL) ||
+              (nMStride == (int)sizeof(double) && pabyM != NULL)) )
+        {
+            if (!pabyZ && !pabyM)
+                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY );
+            else if (pabyZ && !pabyM)
+                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ );
+            else if (!pabyZ && pabyM)
+                poSC->setPointsM( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyM );
+            else
+                poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ, (double *)pabyM );
+        }
+        else
+        {
+          poSC->setNumPoints( nPointsIn );
+
+          if (!pabyZ && !pabyM)
+          {
+              for (int i = 0; i < nPointsIn; ++i)
+              {
+                  double x = *(double*)((char*)pabyX + i * nXStride);
+                  double y = *(double*)((char*)pabyY + i * nYStride);
+                  poSC->setPoint( i, x, y );
+              }
+          }
+          else if (pabyZ && !pabyM)
+          {
+              for (int i = 0; i < nPointsIn; ++i)
+              {
+                  double x = *(double*)((char*)pabyX + i * nXStride);
+                  double y = *(double*)((char*)pabyY + i * nYStride);
+                  double z = *(double*)((char*)pabyZ + i * nZStride);
+                  poSC->setPoint( i, x, y, z );
+              }
+          }
+          else if (!pabyZ && pabyM)
+          {
+              for (int i = 0; i < nPointsIn; ++i)
+              {
+                  double x = *(double*)((char*)pabyX + i * nXStride);
+                  double y = *(double*)((char*)pabyY + i * nYStride);
+                  double m = *(double*)((char*)pabyM + i * nMStride);
+                  poSC->setPointM( i, x, y, m );
+              }
+          }
+          else
+          {
+              for (int i = 0; i < nPointsIn; ++i)
+              {
+                  double x = *(double*)((char*)pabyX + i * nXStride);
+                  double y = *(double*)((char*)pabyY + i * nYStride);
+                  double z = *(double*)((char*)pabyZ + i * nZStride);
+                  double m = *(double*)((char*)pabyM + i * nMStride);
+                  poSC->setPoint( i, x, y, z, m );
+              }
+          }
+
         }
         break;
       }
@@ -451,7 +770,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
  * @param dfZ input Z coordinate to assign (defaults to zero).
  */
 
-void OGR_G_SetPoint( OGRGeometryH hGeom, int i, 
+void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
                      double dfX, double dfY, double dfZ )
 
 {
@@ -482,7 +801,7 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
           }
-          ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY, dfZ );
+          ((OGRSimpleCurve *) hGeom)->setPoint( i, dfX, dfY, dfZ );
           break;
       }
 
@@ -509,9 +828,9 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
  * @param dfY input Y coordinate to assign.
  */
 
-void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i, 
+void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
                         double dfX, double dfY )
-    
+
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPoint_2D" );
 
@@ -539,7 +858,127 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
           }
-          ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY );
+          ((OGRSimpleCurve *) hGeom)->setPoint( i, dfX, dfY );
+          break;
+      }
+
+      default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        break;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_G_SetPointM()                          */
+/************************************************************************/
+/**
+ * \brief Set the location of a vertex in a point or linestring geometry.
+ *
+ * If iPoint is larger than the number of existing
+ * points in the linestring, the point count will be increased to
+ * accommodate the request.
+ *
+ * @param hGeom handle to the geometry to add a vertex to.
+ * @param i the index of the vertex to assign (zero based) or
+ *  zero for a point.
+ * @param dfX input X coordinate to assign.
+ * @param dfY input Y coordinate to assign.
+ * @param dfM input M coordinate to assign.
+ */
+
+void OGR_G_SetPointM( OGRGeometryH hGeom, int i,
+                      double dfX, double dfY, double dfM )
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_SetPointM" );
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          if( i == 0 )
+          {
+              ((OGRPoint *) hGeom)->setX( dfX );
+              ((OGRPoint *) hGeom)->setY( dfY );
+              ((OGRPoint *) hGeom)->setM( dfM );
+          }
+          else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
+          }
+      }
+      break;
+
+      case wkbLineString:
+      case wkbCircularString:
+      {
+          if (i < 0)
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              return;
+          }
+          ((OGRSimpleCurve *) hGeom)->setPointM( i, dfX, dfY, dfM );
+          break;
+      }
+
+      default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        break;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_G_SetPointZM()                         */
+/************************************************************************/
+/**
+ * \brief Set the location of a vertex in a point or linestring geometry.
+ *
+ * If iPoint is larger than the number of existing
+ * points in the linestring, the point count will be increased to
+ * accommodate the request.
+ *
+ * @param hGeom handle to the geometry to add a vertex to.
+ * @param i the index of the vertex to assign (zero based) or
+ *  zero for a point.
+ * @param dfX input X coordinate to assign.
+ * @param dfY input Y coordinate to assign.
+ * @param dfZ input Z coordinate to assign.
+ * @param dfM input M coordinate to assign.
+ */
+
+void OGR_G_SetPointZM( OGRGeometryH hGeom, int i,
+                       double dfX, double dfY, double dfZ, double dfM )
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_SetPointZM" );
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          if( i == 0 )
+          {
+              ((OGRPoint *) hGeom)->setX( dfX );
+              ((OGRPoint *) hGeom)->setY( dfY );
+              ((OGRPoint *) hGeom)->setZ( dfZ );
+              ((OGRPoint *) hGeom)->setM( dfM );
+          }
+          else
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Only i == 0 is supported");
+          }
+      }
+      break;
+
+      case wkbLineString:
+      case wkbCircularString:
+      {
+          if (i < 0)
+          {
+              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
+              return;
+          }
+          ((OGRSimpleCurve *) hGeom)->setPoint( i, dfX, dfY, dfZ, dfM );
           break;
       }
 
@@ -564,7 +1003,7 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
  * @param dfZ z coordinate of point to add.
  */
 
-void OGR_G_AddPoint( OGRGeometryH hGeom, 
+void OGR_G_AddPoint( OGRGeometryH hGeom,
                      double dfX, double dfY, double dfZ )
 
 {
@@ -582,7 +1021,7 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
 
       case wkbLineString:
       case wkbCircularString:
-        ((OGRLineString *) hGeom)->addPoint( dfX, dfY, dfZ );
+        ((OGRSimpleCurve *) hGeom)->addPoint( dfX, dfY, dfZ );
         break;
 
       default:
@@ -592,7 +1031,7 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
 }
 
 /************************************************************************/
-/*                           OGR_G_AddPoint()                           */
+/*                           OGR_G_AddPoint_2D()                        */
 /************************************************************************/
 /**
  * \brief Add a point to a geometry (line string or point).
@@ -605,7 +1044,7 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
  * @param dfY y coordinate of point to add.
  */
 
-void OGR_G_AddPoint_2D( OGRGeometryH hGeom, 
+void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
                         double dfX, double dfY )
 
 {
@@ -622,7 +1061,93 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
 
       case wkbLineString:
       case wkbCircularString:
-        ((OGRLineString *) hGeom)->addPoint( dfX, dfY );
+        ((OGRSimpleCurve *) hGeom)->addPoint( dfX, dfY );
+        break;
+
+      default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        break;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_G_AddPointM()                          */
+/************************************************************************/
+/**
+ * \brief Add a point to a geometry (line string or point).
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * @param hGeom handle to the geometry to add a point to.
+ * @param dfX x coordinate of point to add.
+ * @param dfY y coordinate of point to add.
+ * @param dfM m coordinate of point to add.
+ */
+
+void OGR_G_AddPointM( OGRGeometryH hGeom,
+                      double dfX, double dfY, double dfM )
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_AddPointM" );
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          ((OGRPoint *) hGeom)->setX( dfX );
+          ((OGRPoint *) hGeom)->setY( dfY );
+          ((OGRPoint *) hGeom)->setM( dfM );
+      }
+      break;
+
+      case wkbLineString:
+      case wkbCircularString:
+        ((OGRSimpleCurve *) hGeom)->addPointM( dfX, dfY, dfM );
+        break;
+
+      default:
+        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        break;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_G_AddPointZM()                         */
+/************************************************************************/
+/**
+ * \brief Add a point to a geometry (line string or point).
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * @param hGeom handle to the geometry to add a point to.
+ * @param dfX x coordinate of point to add.
+ * @param dfY y coordinate of point to add.
+ * @param dfZ z coordinate of point to add.
+ * @param dfM m coordinate of point to add.
+ */
+
+void OGR_G_AddPointZM( OGRGeometryH hGeom,
+                       double dfX, double dfY, double dfZ, double dfM )
+
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_AddPointZM" );
+
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          ((OGRPoint *) hGeom)->setX( dfX );
+          ((OGRPoint *) hGeom)->setY( dfY );
+          ((OGRPoint *) hGeom)->setZ( dfZ );
+          ((OGRPoint *) hGeom)->setM( dfM );
+      }
+      break;
+
+      case wkbLineString:
+      case wkbCircularString:
+          ((OGRSimpleCurve *) hGeom)->addPoint( dfX, dfY, dfZ, dfM );
         break;
 
       default:
@@ -682,19 +1207,19 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
  *
  * This function returns an handle to a geometry within the container.
  * The returned geometry remains owned by the container, and should not be
- * modified.  The handle is only valid untill the next change to the
+ * modified.  The handle is only valid until the next change to the
  * geometry container.  Use OGR_G_Clone() to make a copy.
  *
- * This function relates to the SFCOM 
+ * This function relates to the SFCOM
  * IGeometryCollection::get_Geometry() method.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRGeometryCollection::getGeometryRef().
  *
  * For a polygon, OGR_G_GetGeometryRef(iSubGeom) returns the exterior ring
  * if iSubGeom == 0, and the interior rings for iSubGeom > 0.
  *
- * @param hGeom handle to the geometry container from which to get a 
+ * @param hGeom handle to the geometry container from which to get a
  * geometry from.
  * @param iSubGeom the index of the geometry to fetch, between 0 and
  *          getNumGeometries() - 1.
@@ -710,10 +1235,10 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
         if( iSubGeom == 0 )
-            return (OGRGeometryH) 
+            return (OGRGeometryH)
                 ((OGRCurvePolygon *)hGeom)->getExteriorRingCurve();
         else
-            return (OGRGeometryH) 
+            return (OGRGeometryH)
                 ((OGRCurvePolygon *)hGeom)->getInteriorRingCurve(iSubGeom-1);
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
@@ -723,7 +1248,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
-        return 0;
+        return NULL;
     }
 }
 
@@ -740,7 +1265,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
  *
  * There is no SFCOM analog to this method.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRGeometryCollection::addGeometry.
  *
  * For a polygon, hNewSubGeom must be a linearring. If the polygon is empty,
@@ -775,7 +1300,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        eErr = ((OGRGeometryCollection *)hGeom)->addGeometry( 
+        eErr = ((OGRGeometryCollection *)hGeom)->addGeometry(
                                                 (OGRGeometry *) hNewSubGeom );
     }
 
@@ -793,7 +1318,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
  * geometry is taken by the container rather than cloning as addGeometry()
  * does.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRGeometryCollection::addGeometryDirectly.
  *
  * There is no SFCOM analog to this method.
@@ -809,7 +1334,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
  * the geometry type is illegal for the type of geometry container.
  */
 
-OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom, 
+OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
                                   OGRGeometryH hNewSubGeom )
 
 {
@@ -831,7 +1356,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        eErr = ((OGRGeometryCollection *)hGeom)->addGeometryDirectly( 
+        eErr = ((OGRGeometryCollection *)hGeom)->addGeometryDirectly(
                                                 (OGRGeometry *) hNewSubGeom );
     }
 
@@ -853,7 +1378,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
  *
  * There is no SFCOM analog to this method.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the CPP method
  * OGRGeometryCollection::removeGeometry().
  *
  * @param hGeom the existing geometry to delete from.
@@ -862,7 +1387,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
  *
  * @param bDelete if TRUE the geometry will be destroyed, otherwise it will
  * not.  The default is TRUE as the existing geometry is considered to own the
- * geometries in it. 
+ * geometries in it.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
  * out of range.
@@ -871,12 +1396,12 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
 OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_RemoveGeometry", 0 );
+    VALIDATE_POINTER1( hGeom, "OGR_G_RemoveGeometry", OGRERR_FAILURE );
 
     OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                 "OGR_G_RemoveGeometry() not supported on polygons yet." );
         return OGRERR_UNSUPPORTED_OPERATION;
     }
@@ -898,12 +1423,12 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
  * \brief Compute length of a geometry.
  *
  * Computes the length for OGRCurve or MultiCurve objects.
- * Undefined for all other geometry types (returns zero). 
+ * Undefined for all other geometry types (returns zero).
  *
  * This function utilizes the C++ get_Length() method.
  *
  * @param hGeom the geometry to operate on.
- * @return the lenght or 0.0 for unsupported geometry types.
+ * @return the length or 0.0 for unsupported geometry types.
  *
  * @since OGR 1.8.0
  */
@@ -943,12 +1468,12 @@ double OGR_G_Length( OGRGeometryH hGeom )
  * \brief Compute geometry area.
  *
  * Computes the area for an OGRLinearRing, OGRPolygon or OGRMultiPolygon.
- * Undefined for all other geometry types (returns zero). 
+ * Undefined for all other geometry types (returns zero).
  *
  * This function utilizes the C++ get_Area() methods such as
- * OGRPolygon::get_Area(). 
+ * OGRPolygon::get_Area().
  *
- * @param hGeom the geometry to operate on. 
+ * @param hGeom the geometry to operate on.
  * @return the area or 0.0 for unsupported geometry types.
  *
  * @since OGR 1.8.0
@@ -998,27 +1523,6 @@ double OGR_G_GetArea( OGRGeometryH hGeom )
     return OGR_G_Area( hGeom );
 }
 
-#ifndef OGR_ENABLED
-OGRGeometryH OGR_G_CreateGeometryFromJson( const char* )
-{
-    return NULL;
-}
-
-char* OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode )
-{
-    return NULL;
-}
-
-char* OGR_G_ExportToJson( OGRGeometryH )
-{
-    return NULL;
-}
-char* OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions )
-{
-    return NULL;
-}
-#endif
-
 /************************************************************************/
 /*                         OGR_G_HasCurveGeometry()                     */
 /************************************************************************/
@@ -1067,12 +1571,12 @@ int OGR_G_HasCurveGeometry( OGRGeometryH hGeom, int bLookForNonLinear )
  *
  * The reverse function is OGR_G_GetCurveGeometry().
  *
- * This method relates to the ISO SQL/MM Part 3 ICurve::CurveToLine() and 
+ * This method relates to the ISO SQL/MM Part 3 ICurve::CurveToLine() and
  * CurvePolygon::CurvePolyToPoly() methods.
  *
  * This function is the same as C++ method OGRGeometry::getLinearGeometry().
  *
- * @param hGeom the geometry to operate on. 
+ * @param hGeom the geometry to operate on.
  * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the
  * arc, zero to use the default setting.
  * @param papszOptions options as a null-terminated list of strings or NULL.
@@ -1111,7 +1615,7 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry( OGRGeometryH hGeom,
  *
  * This function is the same as C++ method OGRGeometry::getCurveGeometry().
  *
- * @param hGeom the geometry to operate on. 
+ * @param hGeom the geometry to operate on.
  * @param papszOptions options as a null-terminated list of strings.
  *                     Unused for now. Must be set to NULL.
  *
@@ -1192,7 +1696,7 @@ OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
 
 void OGRSetNonLinearGeometriesEnabledFlag(int bFlag)
 {
-    bNonLinearGeometriesEnabled = bFlag;
+    bNonLinearGeometriesEnabled = (bFlag != FALSE);
 }
 
 /************************************************************************/

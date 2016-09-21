@@ -153,7 +153,7 @@ def ogr_rfc41_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Check setting to wkbNone and implicitely destroying the field
+    # Check setting to wkbNone and implicitly destroying the field.
     for i in range(2):
         feature_defn.SetGeomType(ogr.wkbNone)
         if feature_defn.GetGeomFieldCount() != 0:
@@ -404,7 +404,7 @@ def ogr_rfc41_3():
         return 'fail'
 
     # Test that in SetFrom() where target has a single geometry field,
-    # we get the first geometry of the source even if we cannot find a 
+    # we get the first geometry of the source even if we cannot find a
     # source geometry field with the right name.
     feature_defn_default = ogr.FeatureDefn()
     feature_default = ogr.Feature(feature_defn_default)
@@ -545,28 +545,29 @@ def ogr_rfc41_5():
         return 'fail'
 
     try:
-        f['inexisting_field']
-        gdaltest.post_reason('fail')
-        return 'fail'
-    except:
-        pass
-    try:
-        f.inexisting_field
+        f['nonexistent_field']
         gdaltest.post_reason('fail')
         return 'fail'
     except:
         pass
 
     try:
-        f['inexisting_field'] = 'foo'
+        f.nonexistent_field
         gdaltest.post_reason('fail')
         return 'fail'
     except:
         pass
 
-    # This works. Default Python behaviour. Stored in a dictionnary
-    f.inexisting_field = 'bar'
-    if f.inexisting_field != 'bar':
+    try:
+        f['nonexistent_field'] = 'foo'
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    # This works.  Default Python behaviour. Stored in a dictionary
+    f.nonexistent_field = 'bar'
+    if f.nonexistent_field != 'bar':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -847,7 +848,7 @@ def ogr_rfc41_6():
         return 'fail'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
-    
+
     sql_lyr = ds.ExecuteSQL('SELECT * FROM poly WHERE geomfield IS NULL')
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSet(0):
@@ -879,7 +880,7 @@ def ogr_rfc41_6():
         return 'fail'
     feat = None
     ds.ReleaseResultSet(sql_lyr)
-    
+
     sql_lyr = ds.ExecuteSQL('SELECT count(*) FROM poly WHERE geomfield IS NOT NULL')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 1:

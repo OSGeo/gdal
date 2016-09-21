@@ -112,7 +112,7 @@ int OGRSEGUKOOADataSource::Open( const char * pszFilename )
 //      Does this appear to be a UKOOA P1/90 file?
 // --------------------------------------------------------------------
 
-    if (strncmp(pszLine, "H0100 ", 6) == 0)
+    if (STARTS_WITH(pszLine, "H0100 "))
     {
         VSIFSeekL( fp, 0, SEEK_SET );
 

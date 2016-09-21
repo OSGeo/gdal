@@ -6,14 +6,14 @@
  * Author:   Trent Hare (thare@usgs.gov)
  *           Frank Warmerdam (warmerdam@pobox.com)
  *
- * NOTE: Original code authored by Trent and placed in the public domain as 
- * per US government policy.  I have (within my rights) appropriated it and 
- * placed it under the following license.  This is not intended to diminish 
- * Trents contribution. 
+ * NOTE: Original code authored by Trent and placed in the public domain as
+ * per US government policy.  I have (within my rights) appropriated it and
+ * placed it under the following license.  This is not intended to diminish
+ * Trents contribution.
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -33,27 +33,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define NULL1 0
-#define NULL2 -32768
+static const int NULL1 = 0;
+static const int NULL2 = -32768;
 //#define NULL3 0xFF7FFFFB //in hex
 //Same as ESRI_GRID_FLOAT_NO_DATA
 //#define NULL3 -340282346638528859811704183484516925440.0
-#define NULL3 -3.4028226550889044521e+38
+static const double NULL3 = -3.4028226550889044521e+38;
 
-#ifndef PI
-#  define PI 3.1415926535897932384626433832795
-#endif
-
-#include "rawdataset.h"
-#include "ogr_spatialref.h"
-#include "cpl_string.h" 
+#include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "nasakeywordhandler.h"
+#include "ogr_spatialref.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id: isis3dataset.cpp 10646 2007-09-18 02:38:10Z xxxx $");
-
-CPL_C_START
-void GDALRegister_ISIS3(void);
-CPL_C_END
 
 class ISIS3Dataset;
 
@@ -75,8 +68,8 @@ class ISISTiledBand : public GDALPamRasterBand
 
                 ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
                                int nBand, GDALDataType eDT,
-                               int nTileXSize, int nTileYSize, 
-                               GIntBig nFirstTileOffset, 
+                               int nTileXSize, int nTileYSize,
+                               GIntBig nFirstTileOffset,
                                GIntBig nXTileOffset,
                                GIntBig nYTileOffset,
                                int bNativeOrder );
@@ -89,39 +82,39 @@ class ISISTiledBand : public GDALPamRasterBand
 /*                           ISISTiledBand()                            */
 /************************************************************************/
 
-ISISTiledBand::ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
-                              int nBand, GDALDataType eDT,
-                              int nTileXSize, int nTileYSize, 
-                              GIntBig nFirstTileOffset, 
-                              GIntBig nXTileOffset,
-                              GIntBig nYTileOffset,
-                              int bNativeOrder )
+ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
+                              int nBandIn, GDALDataType eDT,
+                              int nTileXSize, int nTileYSize,
+                              GIntBig nFirstTileOffsetIn,
+                              GIntBig nXTileOffsetIn,
+                              GIntBig nYTileOffsetIn,
+                              int bNativeOrderIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->fpVSIL = fpVSIL;
-    this->bNativeOrder = bNativeOrder;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
+    this->fpVSIL = fpVSILIn;
+    this->bNativeOrder = bNativeOrderIn;
     eDataType = eDT;
     nBlockXSize = nTileXSize;
     nBlockYSize = nTileYSize;
+    this->nXTileOffset = nXTileOffsetIn;
+    this->nYTileOffset = nYTileOffsetIn;
 
-    int nBlocksPerRow = 
+    const int l_nBlocksPerRow =
             (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
-    int nBlocksPerColumn = 
+    const int l_nBlocksPerColumn =
             (poDS->GetRasterYSize() + nTileYSize - 1) / nTileYSize;
 
     if( nXTileOffset == 0 && nYTileOffset == 0 )
     {
-        nXTileOffset = (GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
-        nYTileOffset = nXTileOffset * nBlocksPerRow;
+        nXTileOffset = static_cast<GIntBig>(GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
+        nYTileOffset = nXTileOffset * l_nBlocksPerRow;
     }
 
-    this->nFirstTileOffset = nFirstTileOffset
-        + (nBand-1) * nYTileOffset * nBlocksPerColumn;
+    this->nFirstTileOffset = nFirstTileOffsetIn
+        + (nBand-1) * nYTileOffset * l_nBlocksPerColumn;
 
-    this->nXTileOffset = nXTileOffset;
-    this->nYTileOffset = nYTileOffset;
 }
 
 /************************************************************************/
@@ -131,30 +124,30 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
 CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 
 {
-    GIntBig  nOffset = nFirstTileOffset + 
+    const GIntBig  nOffset = nFirstTileOffset +
         nXBlock * nXTileOffset + nYBlock * nYTileOffset;
-    size_t nBlockSize = 
+    const size_t nBlockSize =
         (GDALGetDataTypeSize(eDataType)/8) * nBlockXSize * nBlockYSize;
 
     if( VSIFSeekL( fpVSIL, nOffset, SEEK_SET ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to offset %d to read tile %d,%d.",
-                  (int) nOffset, nXBlock, nYBlock );
+                  static_cast<int>( nOffset ), nXBlock, nYBlock );
         return CE_Failure;
     }
 
     if( VSIFReadL( pImage, 1, nBlockSize, fpVSIL ) != nBlockSize )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %d bytes for tile %d,%d.",
-                  (int) nBlockSize, nXBlock, nYBlock );
+                  static_cast<int>( nBlockSize ), nXBlock, nYBlock );
         return CE_Failure;
     }
 
     if( !bNativeOrder )
-        GDALSwapWords( pImage, GDALGetDataTypeSize(eDataType)/8, 
-                       nBlockXSize*nBlockYSize, 
+        GDALSwapWords( pImage, GDALGetDataTypeSize(eDataType)/8,
+                       nBlockXSize*nBlockYSize,
                        GDALGetDataTypeSize(eDataType)/8 );
 
     return CE_None;
@@ -171,12 +164,12 @@ class ISIS3Dataset : public RawDataset
     VSILFILE	*fpImage;	// image data file.
 
     CPLString   osExternalCube;
-    
+
     NASAKeywordHandler  oKeywords;
-  
+
     int         bGotTransform;
     double      adfGeoTransform[6];
-  
+
     CPLString   osProjection;
 
     int parse_label(const char *file, char *keyword, char *value);
@@ -184,19 +177,19 @@ class ISIS3Dataset : public RawDataset
 
     CPLString   oTempResult;
 
-    const char *GetKeyword( const char *pszPath, 
+    const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
-    const char *GetKeywordSub( const char *pszPath, 
-                               int iSubscript, 
+    const char *GetKeywordSub( const char *pszPath,
+                               int iSubscript,
                                const char *pszDefault = "");
-    
+
 public:
     ISIS3Dataset();
     ~ISIS3Dataset();
-  
+
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
-  
+
     virtual char **GetFileList();
 
     static int          Identify( GDALOpenInfo * );
@@ -207,15 +200,14 @@ public:
 };
 
 
-
 /************************************************************************/
 /*                            ISIS3Dataset()                            */
 /************************************************************************/
 
-ISIS3Dataset::ISIS3Dataset()
+ISIS3Dataset::ISIS3Dataset() :
+    fpImage(NULL),
+    bGotTransform(FALSE)
 {
-    fpImage = NULL;
-    bGotTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -243,9 +235,7 @@ ISIS3Dataset::~ISIS3Dataset()
 char **ISIS3Dataset::GetFileList()
 
 {
-    char **papszFileList = NULL;
-
-    papszFileList = GDALPamDataset::GetFileList();
+    char **papszFileList = GDALPamDataset::GetFileList();
 
     if( strlen(osExternalCube) > 0 )
         papszFileList = CSLAddString( papszFileList, osExternalCube );
@@ -262,8 +252,8 @@ const char *ISIS3Dataset::GetProjectionRef()
 {
     if( strlen(osProjection) > 0 )
         return osProjection;
-    else
-        return GDALPamDataset::GetProjectionRef();
+
+    return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -278,23 +268,21 @@ CPLErr ISIS3Dataset::GetGeoTransform( double * padfTransform )
         memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
         return CE_None;
     }
-    else
-    {
-        return GDALPamDataset::GetGeoTransform( padfTransform );
-    }
+
+    return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 int ISIS3Dataset::Identify( GDALOpenInfo * poOpenInfo )
-    
+
 {
     if( poOpenInfo->pabyHeader != NULL
         && strstr((const char *)poOpenInfo->pabyHeader,"IsisCube") != NULL )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -317,9 +305,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( fpQube == NULL )
         return NULL;
 
-    ISIS3Dataset 	*poDS;
-
-    poDS = new ISIS3Dataset();
+    ISIS3Dataset *poDS = new ISIS3Dataset();
 
     if( ! poDS->oKeywords.Ingest( fpQube, 0 ) )
     {
@@ -327,11 +313,11 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-    
+
     VSIFCloseL( fpQube );
 
 /* -------------------------------------------------------------------- */
-/*	Assume user is pointing to label (ie .lbl) file for detached option */
+/* Assume user is pointing to label (i.e. .lbl) file for detached option */
 /* -------------------------------------------------------------------- */
     //  Image can be inline or detached and point to an image name
     //  the Format can be Tiled or Raw
@@ -352,7 +338,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     //      Format      = Tile
     //      TileSamples = 128
     //      TileLines   = 128
-    
+
 /* -------------------------------------------------------------------- */
 /*      What file contains the actual data?                             */
 /* -------------------------------------------------------------------- */
@@ -372,50 +358,17 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check if file an ISIS3 header file?  Read a few lines of text   */
 /*      searching for something starting with nrows or ncols.           */
 /* -------------------------------------------------------------------- */
-    GDALDataType eDataType = GDT_Byte;
-    OGRSpatialReference oSRS;
-
-    int	nRows = -1;
-    int nCols = -1;
-    int nBands = 1;
-    int nSkipBytes = 0;
-    int tileSizeX = 0;
-    int tileSizeY = 0;
-    double dfULXMap=0.5;
-    double dfULYMap = 0.5;
-    double dfXDim = 1.0;
-    double dfYDim = 1.0;
-    double scaleFactor = 1.0;
-    double dfNoData = 0.0;
-    int	bNoDataSet = FALSE;
-    char chByteOrder = 'M';  //default to MSB
-    char szLayout[32] = "BandSequential"; //default to band seq.
-    const char *target_name; //planet name
-    //projection parameters
-    const char *map_proj_name;
-    int	bProjectionSet = TRUE;
-    char proj_target_name[200]; 
-    char geog_name[60];  
-    char datum_name[60];  
-    char sphere_name[60];
-    char bIsGeographic = TRUE;
-    double semi_major = 0.0;
-    double semi_minor = 0.0;
-    double iflattening = 0.0;
-    double center_lat = 0.0;
-    double center_lon = 0.0;
-    double first_std_parallel = 0.0;
-    double second_std_parallel = 0.0;
-    double radLat, localRadius;
-    VSILFILE	*fp;
 
     /*************   Skipbytes     *****************************/
-    nSkipBytes = atoi(poDS->GetKeyword("IsisCube.Core.StartByte","")) - 1;
+    const int nSkipBytes = atoi(poDS->GetKeyword("IsisCube.Core.StartByte","")) - 1;
 
     /*******   Grab format type (BandSequential, Tiled)  *******/
-    const char *value;
+    const char *value = poDS->GetKeyword( "IsisCube.Core.Format", "" );
 
-    value = poDS->GetKeyword( "IsisCube.Core.Format", "" );
+    char szLayout[32] = "BandSequential";
+    int tileSizeX = 0;
+    int tileSizeY = 0;
+
     if (EQUAL(value,"Tile") )  { //Todo
         strcpy(szLayout,"Tiled");
        /******* Get Tile Sizes *********/
@@ -432,134 +385,149 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     else if (EQUAL(value,"BandSequential") )
         strcpy(szLayout,"BSQ");
     else {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
         return NULL;
     }
 
     /***********   Grab samples lines band ************/
-    nCols = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Samples",""));
-    nRows = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Lines",""));
-    nBands = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Bands",""));
-     
-    /****** Grab format type - ISIS3 only supports 8,U16,S16,32 *****/
-    const char *itype;
+    const int nCols = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Samples",""));
+    const int nRows = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Lines",""));
+    const int nBands = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Bands",""));
 
-    itype = poDS->GetKeyword( "IsisCube.Core.Pixels.Type" );
+    /****** Grab format type - ISIS3 only supports 8,U16,S16,32 *****/
+    GDALDataType eDataType = GDT_Byte;
+    double dfNoData = 0.0;
+    bool bNoDataSet = false;
+
+    const char *itype = poDS->GetKeyword( "IsisCube.Core.Pixels.Type" );
     if (EQUAL(itype,"UnsignedByte") ) {
         eDataType = GDT_Byte;
         dfNoData = NULL1;
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
     }
     else if (EQUAL(itype,"UnsignedWord") ) {
         eDataType = GDT_UInt16;
         dfNoData = NULL1;
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
     }
     else if (EQUAL(itype,"SignedWord") ) {
         eDataType = GDT_Int16;
         dfNoData = NULL2;
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
     }
     else if (EQUAL(itype,"Real") || EQUAL(value,"") ) {
         eDataType = GDT_Float32;
         dfNoData = NULL3;
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
     }
     else {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout type not supported. Abort\n\n", itype);
         delete poDS;
         return NULL;
     }
 
     /***********   Grab samples lines band ************/
+    char chByteOrder = 'M';  //default to MSB
+
     value = poDS->GetKeyword( "IsisCube.Core.Pixels.ByteOrder");
     if (EQUAL(value,"Lsb"))
         chByteOrder = 'I';
-    
+
     /***********   Grab Cellsize ************/
+    double dfXDim = 1.0;
+    double dfYDim = 1.0;
+
     value = poDS->GetKeyword("IsisCube.Mapping.PixelResolution");
     if (strlen(value) > 0 ) {
         dfXDim = CPLAtof(value); /* values are in meters */
         dfYDim = -CPLAtof(value);
     }
-    
+
     /***********   Grab UpperLeftCornerY ************/
+    double dfULYMap = 0.5;
+
     value = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerY");
     if (strlen(value) > 0) {
         dfULYMap = CPLAtof(value);
     }
-     
+
     /***********   Grab UpperLeftCornerX ************/
+    double dfULXMap = 0.5;
+
     value = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerX");
     if( strlen(value) > 0 ) {
         dfULXMap = CPLAtof(value);
     }
-     
+
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. Mars ***/
-    target_name = poDS->GetKeyword("IsisCube.Mapping.TargetName");
-     
+    const char *target_name = poDS->GetKeyword("IsisCube.Mapping.TargetName");
+
     /***********   Grab MAP_PROJECTION_TYPE ************/
-    map_proj_name = 
+     const char *map_proj_name =
         poDS->GetKeyword( "IsisCube.Mapping.ProjectionName");
 
     /***********   Grab SEMI-MAJOR ************/
-    semi_major = 
+    const double semi_major =
         CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.EquatorialRadius"));
 
     /***********   Grab semi-minor ************/
-    semi_minor = 
+    const double semi_minor =
         CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PolarRadius"));
 
     /***********   Grab CENTER_LAT ************/
-    center_lat = 
+    const double center_lat =
         CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLatitude"));
 
     /***********   Grab CENTER_LON ************/
-    center_lon = 
+    const double center_lon =
         CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLongitude"));
 
     /***********   Grab 1st std parallel ************/
-    first_std_parallel = 
+    const double first_std_parallel =
         CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.FirstStandardParallel"));
 
     /***********   Grab 2nd std parallel ************/
-    second_std_parallel = 
+    const double second_std_parallel =
         CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.SecondStandardParallel"));
-     
+
     /***********   Grab scaleFactor ************/
-    scaleFactor = 
+    const double scaleFactor =
         CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.scaleFactor", "1.0"));
-     
+
     /*** grab      LatitudeType = Planetographic ****/
     // Need to further study how ocentric/ographic will effect the gdal library
-    // So far we will use this fact to define a sphere or ellipse for some 
+    // So far we will use this fact to define a sphere or ellipse for some
     // projections
 
     // Frank - may need to talk this over
     value = poDS->GetKeyword("IsisCube.Mapping.LatitudeType");
+    bool bIsGeographic = true;
     if (EQUAL( value, "Planetocentric" ))
-        bIsGeographic = FALSE; 
-     
+        bIsGeographic = false;
+
     //Set oSRS projection and parameters
     //############################################################
     //ISIS3 Projection types
-    //  Equirectangular 
-    //  LambertConformal 
-    //  Mercator 
+    //  Equirectangular
+    //  LambertConformal
+    //  Mercator
     //  ObliqueCylindrical //Todo
-    //  Orthographic 
-    //  PolarStereographic 
-    //  SimpleCylindrical 
-    //  Sinusoidal 
+    //  Orthographic
+    //  PolarStereographic
+    //  SimpleCylindrical
+    //  Sinusoidal
     //  TransverseMercator
-    
+
 #ifdef DEBUG
     CPLDebug( "ISIS3", "using projection %s", map_proj_name);
 #endif
+
+    OGRSpatialReference oSRS;
+    bool bProjectionSet = true;
 
     if ((EQUAL( map_proj_name, "Equirectangular" )) ||
         (EQUAL( map_proj_name, "SimpleCylindrical" )) )  {
@@ -580,84 +548,93 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "ISIS3",
                   "Dataset projection %s is not supported. Continuing...",
                   map_proj_name );
-        bProjectionSet = FALSE;
+        bProjectionSet = false;
     }
 
     if (bProjectionSet) {
+        char proj_target_name[200];
+
         //Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
         strcpy(proj_target_name, map_proj_name);
         strcat(proj_target_name, " ");
         strcat(proj_target_name, target_name);
         oSRS.SetProjCS(proj_target_name); //set ProjCS keyword
-     
+
         //The geographic/geocentric name will be the same basic name as the body name
         //'GCS' = Geographic/Geocentric Coordinate System
+        char geog_name[60];
         strcpy(geog_name, "GCS_");
         strcat(geog_name, target_name);
-        
+
         //The datum name will be the same basic name as the planet
+        char datum_name[60];
         strcpy(datum_name, "D_");
         strcat(datum_name, target_name);
-     
+
+        char sphere_name[60];
         strcpy(sphere_name, target_name);
         //strcat(sphere_name, "_IAU_IAG");  //Might not be IAU defined so don't add
-          
+
         //calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
-        if ((semi_major - semi_minor) < 0.0000001) 
+        double iflattening = 0.0;
+        if ((semi_major - semi_minor) < 0.0000001)
            iflattening = 0;
         else
            iflattening = semi_major / (semi_major - semi_minor);
-     
+
         //Set the body size but take into consideration which proj is being used to help w/ proj4 compatibility
         //The use of a Sphere, polar radius or ellipse here is based on how ISIS does it internally
-        if ( ( (EQUAL( map_proj_name, "Stereographic" ) && (fabs(center_lat) == 90)) ) || 
-	           (EQUAL( map_proj_name, "PolarStereographic" )) )  
+        if ( ( (EQUAL( map_proj_name, "Stereographic" ) && (fabs(center_lat) == 90)) ) ||
+	           (EQUAL( map_proj_name, "PolarStereographic" )) )
          {
-            if (bIsGeographic) { 
+            if (bIsGeographic) {
                 //Geograpraphic, so set an ellipse
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, iflattening, 
+                                semi_major, iflattening,
                                "Reference_Meridian", 0.0 );
             } else {
-              //Geocentric, so force a sphere using the semi-minor axis. I hope... 
+              //Geocentric, so force a sphere using the semi-minor axis. I hope...
               strcat(sphere_name, "_polarRadius");
               oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                              semi_minor, 0.0, 
+                              semi_minor, 0.0,
                               "Reference_Meridian", 0.0 );
             }
         }
-        else if ( (EQUAL( map_proj_name, "SimpleCylindrical" )) || 
-  	               (EQUAL( map_proj_name, "Orthographic" )) || 
-	               (EQUAL( map_proj_name, "Stereographic" )) || 
+        else if ( (EQUAL( map_proj_name, "SimpleCylindrical" )) ||
+  	               (EQUAL( map_proj_name, "Orthographic" )) ||
+	               (EQUAL( map_proj_name, "Stereographic" )) ||
 	               (EQUAL( map_proj_name, "Sinusoidal" )) ) {
-            //isis uses the sphereical equation for these projections so force a sphere
+            // ISIS uses the spherical equation for these projections
+            // so force a sphere.
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                            semi_major, 0.0, 
+                            semi_major, 0.0,
                             "Reference_Meridian", 0.0 );
-        } 
-        else if  (EQUAL( map_proj_name, "Equirectangular" )) { 
-            //Calculate localRadius using ISIS3 simple elliptical method 
+        }
+        else if  (EQUAL( map_proj_name, "Equirectangular" )) {
+            //Calculate localRadius using ISIS3 simple elliptical method
             //  not the more standard Radius of Curvature method
             //PI = 4 * atan(1);
-            radLat = center_lat * PI / 180;  // in radians
-            localRadius = semi_major * semi_minor / sqrt(pow(semi_minor*cos(radLat),2) 
-                          + pow(semi_major*sin(radLat),2) );
+            const double radLat = center_lat * M_PI / 180;  // in radians
+            const double localRadius
+                = semi_major * semi_minor
+                / sqrt( pow( semi_minor * cos( radLat ), 2)
+                       + pow( semi_major * sin( radLat ), 2) );
             strcat(sphere_name, "_localRadius");
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                            localRadius, 0.0, 
+                            localRadius, 0.0,
                             "Reference_Meridian", 0.0 );
-        } 
-        else { 
+        }
+        else {
             //All other projections: Mercator, Transverse Mercator, Lambert Conformal, etc.
             //Geographic, so set an ellipse
             if (bIsGeographic) {
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, iflattening, 
+                                semi_major, iflattening,
                                 "Reference_Meridian", 0.0 );
-            } else { 
-                //Geocentric, so force a sphere. I hope... 
+            } else {
+                //Geocentric, so force a sphere. I hope...
                 oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
-                                semi_major, 0.0, 
+                                semi_major, 0.0,
                                 "Reference_Meridian", 0.0 );
             }
         }
@@ -671,7 +648,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 /* END ISIS3 Label Read */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    
+
 /* -------------------------------------------------------------------- */
 /*     Is the CUB detached - if so, reset name to binary file?          */
 /* -------------------------------------------------------------------- */
@@ -711,8 +688,8 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to open %s with write permission.\n%s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open %s with write permission.\n%s",
                   osQubeFile.c_str(),
                   VSIStrerror( errno ) );
         delete poDS;
@@ -724,91 +701,84 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
-    int     nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int	    nLineOffset=0, nPixelOffset=0, nBandOffset=0;
-    
+    const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
+    int nLineOffset=0, nPixelOffset=0, nBandOffset=0;
+
     if( EQUAL(szLayout,"BSQ") )
     {
         nPixelOffset = nItemSize;
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = nLineOffset * nRows;
     }
-    else /* Tiled */
-    {
-    }
-    
+    /* else Tiled */
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int i;
-
-#ifdef CPL_LSB                               
+#ifdef CPL_LSB
     int bNativeOrder = !(chByteOrder == 'M');
 #else
     int bNativeOrder = (chByteOrder == 'M');
-#endif        
+#endif
 
 
-    for( i = 0; i < nBands; i++ )
+    for( int i = 0; i < nBands; i++ )
     {
         GDALRasterBand	*poBand;
 
         if( EQUAL(szLayout,"Tiled") )
         {
             poBand = new ISISTiledBand( poDS, poDS->fpImage, i+1, eDataType,
-                                        tileSizeX, tileSizeY, 
-                                        nSkipBytes, 0, 0, 
+                                        tileSizeX, tileSizeY,
+                                        nSkipBytes, 0, 0,
                                         bNativeOrder );
         }
         else
         {
-            poBand = 
+            poBand =
                 new RawRasterBand( poDS, i+1, poDS->fpImage,
-                                   nSkipBytes + nBandOffset * i, 
+                                   nSkipBytes + nBandOffset * i,
                                    nPixelOffset, nLineOffset, eDataType,
-#ifdef CPL_LSB                               
+#ifdef CPL_LSB
                                    chByteOrder == 'I' || chByteOrder == 'L',
 #else
                                    chByteOrder == 'M',
-#endif        
+#endif
                                    TRUE );
         }
 
         poDS->SetBand( i+1, poBand );
 
         if( bNoDataSet )
-            ((GDALPamRasterBand *) poBand)->SetNoDataValue( dfNoData );
+            reinterpret_cast<GDALPamRasterBand *>(
+                poBand )->SetNoDataValue( dfNoData );
 
         // Set offset/scale values at the PAM level.
-        poBand->SetOffset( 
+        poBand->SetOffset(
             CPLAtofM(poDS->GetKeyword("IsisCube.Core.Pixels.Base","0.0")));
-        poBand->SetScale( 
+        poBand->SetScale(
           CPLAtofM(poDS->GetKeyword("IsisCube.Core.Pixels.Multiplier","1.0")));
     }
 
 /* -------------------------------------------------------------------- */
 /*      Check for a .prj file. For ISIS3 I would like to keep this in   */
 /* -------------------------------------------------------------------- */
-    CPLString osPath, osName;
-
-    osPath = CPLGetPath( poOpenInfo->pszFilename );
-    osName = CPLGetBasename(poOpenInfo->pszFilename);
+    const CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
+    const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
     const char  *pszPrjFile = CPLFormCIFilename( osPath, osName, "prj" );
 
-    fp = VSIFOpenL( pszPrjFile, "r" );
+    VSILFILE *fp = VSIFOpenL( pszPrjFile, "r" );
     if( fp != NULL )
     {
-        char	**papszLines;
-        OGRSpatialReference oSRS;
-
         VSIFCloseL( fp );
-        
-        papszLines = CSLLoad( pszPrjFile );
 
-        if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
+        char **papszLines = CSLLoad( pszPrjFile );
+
+        OGRSpatialReference oSRS2;
+        if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
         {
             char *pszResult = NULL;
-            oSRS.exportToWkt( &pszResult );
+            oSRS2.exportToWkt( &pszResult );
             poDS->osProjection = pszResult;
             CPLFree( pszResult );
         }
@@ -816,8 +786,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszLines );
     }
 
-    
-    if( dfULYMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
+    if( dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
     {
         poDS->bGotTransform = TRUE;
         poDS->adfGeoTransform[0] = dfULXMap;
@@ -827,15 +796,15 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = dfYDim;
     }
-    
+
     if( !poDS->bGotTransform )
-        poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, "cbw", 
+        poDS->bGotTransform =
+            GDALReadWorldFile( poOpenInfo->pszFilename, "cbw",
                                poDS->adfGeoTransform );
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, "wld", 
+        poDS->bGotTransform =
+            GDALReadWorldFile( poOpenInfo->pszFilename, "wld",
                                poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
@@ -856,7 +825,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *ISIS3Dataset::GetKeyword( const char *pszPath, 
+const char *ISIS3Dataset::GetKeyword( const char *pszPath,
                                       const char *pszDefault )
 
 {
@@ -867,20 +836,20 @@ const char *ISIS3Dataset::GetKeyword( const char *pszPath,
 /*                            GetKeywordSub()                           */
 /************************************************************************/
 
-const char *ISIS3Dataset::GetKeywordSub( const char *pszPath, 
+const char *ISIS3Dataset::GetKeywordSub( const char *pszPath,
                                          int iSubscript,
                                          const char *pszDefault )
 
 {
     const char *pszResult = oKeywords.GetKeyword( pszPath, NULL );
-    
+
     if( pszResult == NULL )
         return pszDefault;
 
     if( pszResult[0] != '(' )
         return pszDefault;
 
-    char **papszTokens = CSLTokenizeString2( pszResult, "(,)", 
+    char **papszTokens = CSLTokenizeString2( pszResult, "(,)",
                                              CSLT_HONOURSTRINGS );
 
     if( iSubscript <= CSLCount(papszTokens) )
@@ -889,11 +858,9 @@ const char *ISIS3Dataset::GetKeywordSub( const char *pszPath,
         CSLDestroy( papszTokens );
         return oTempResult.c_str();
     }
-    else
-    {
-        CSLDestroy( papszTokens );
-        return pszDefault;
-    }
+
+    CSLDestroy( papszTokens );
+    return pszDefault;
 }
 
 
@@ -904,24 +871,21 @@ const char *ISIS3Dataset::GetKeywordSub( const char *pszPath,
 void GDALRegister_ISIS3()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "ISIS3" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "ISIS3" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "ISIS3" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "USGS Astrogeology ISIS cube (Version 3)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_isis3.html" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = ISIS3Dataset::Open;
-        poDriver->pfnIdentify = ISIS3Dataset::Identify;
+    poDriver->SetDescription( "ISIS3" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "USGS Astrogeology ISIS cube (Version 3)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "frmt_isis3.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = ISIS3Dataset::Open;
+    poDriver->pfnIdentify = ISIS3Dataset::Identify;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

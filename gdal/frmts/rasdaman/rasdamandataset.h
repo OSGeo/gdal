@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  rasdaman Driver
- * Purpose:  Implement Rasdaman GDAL driver 
+ * Purpose:  Implement Rasdaman GDAL driver
  * Author:   Constantin Jucovschi, jucovschi@yahoo.com
  *
  ******************************************************************************
@@ -26,10 +26,20 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#ifndef _RASDAMAN_DATASET_H_
-#define _RASDAMAN_DATASET_H_
-#include "gdal.h"
+#ifndef RASDAMAN_DATASET_H_
+#define RASDAMAN_DATASET_H_
 
-void CPL_DLL CPL_STDCALL GDALRegister_RASDAMAN();
+#define __EXECUTABLE__
+#define EARLY_TEMPLATE
+
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER))
+#pragma GCC system_header
+#endif
+
+#include "raslib/template_inst.hh"
+#include "raslib/structuretype.hh"
+#include "raslib/type.hh"
+
+#include "rasodmg/database.hh"
 
 #endif

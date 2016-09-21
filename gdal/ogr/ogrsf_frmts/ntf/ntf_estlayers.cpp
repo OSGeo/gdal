@@ -52,7 +52,7 @@ static OGRFeature *TranslateCodePoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -66,7 +66,7 @@ static OGRFeature *TranslateCodePoint( NTFFileReader *poReader,
         poReader->ApplyAttributeValues( poFeature, papoGroup,
                                         "PC", 1, "PQ", 2, "PR", 3, "TP", 4,
                                         "DQ", 5, "RP", 6, "BP", 7, "PD", 8,
-                                        "MP", 9, "UM", 10, "RV", 11, 
+                                        "MP", 9, "UM", 10, "RV", 11,
                                         NULL );
     else
         poReader->ApplyAttributeValues( poFeature, papoGroup,
@@ -74,7 +74,7 @@ static OGRFeature *TranslateCodePoint( NTFFileReader *poReader,
                                         "DQ", 5, "RP", 6, "BP", 7, "PD", 8,
                                         "MP", 9, "UM", 10, "RV", 11,
                                         "RH", 12, "LH", 13, "CC", 14,
-                                        "DC", 15, "WC", 16, 
+                                        "DC", 15, "WC", 16,
                                         NULL );
 
     return poFeature;
@@ -93,7 +93,7 @@ static OGRFeature *TranslateAddressPoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -134,7 +134,7 @@ static OGRFeature *TranslateOscarPoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -142,7 +142,7 @@ static OGRFeature *TranslateOscarPoint( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -169,7 +169,7 @@ static OGRFeature *TranslateOscarLine( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -177,7 +177,7 @@ static OGRFeature *TranslateOscarLine( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -205,7 +205,7 @@ static OGRFeature *TranslateOscarRoutePoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -213,7 +213,7 @@ static OGRFeature *TranslateOscarRoutePoint( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -263,7 +263,7 @@ static OGRFeature *TranslateOscarRouteLine( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -271,7 +271,7 @@ static OGRFeature *TranslateOscarRouteLine( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -280,7 +280,7 @@ static OGRFeature *TranslateOscarRouteLine( NTFFileReader *poReader,
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "FC", 2, "OD", 3, "PN", 4, "LL", 5,
-                                    "RN", 6, "TR", 7, "NP", 8, 
+                                    "RN", 6, "TR", 7, "NP", 8,
                                     NULL );
 
     // PARENT_OSODR
@@ -348,7 +348,7 @@ static OGRFeature *TranslateOscarNetworkPoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -356,7 +356,7 @@ static OGRFeature *TranslateOscarNetworkPoint( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -384,7 +384,7 @@ static OGRFeature *TranslateOscarNetworkLine( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -392,7 +392,7 @@ static OGRFeature *TranslateOscarNetworkLine( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -401,7 +401,7 @@ static OGRFeature *TranslateOscarNetworkLine( NTFFileReader *poReader,
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "FC", 2, "OD", 3, "PN", 4, "LL", 5,
-                                    "RN", 6, 
+                                    "RN", 6,
                                     NULL );
 
     return poFeature;
@@ -420,7 +420,7 @@ static OGRFeature *TranslateBasedataPoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -428,7 +428,7 @@ static OGRFeature *TranslateBasedataPoint( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -457,7 +457,7 @@ static OGRFeature *TranslateBasedataLine( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -465,7 +465,7 @@ static OGRFeature *TranslateBasedataLine( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -489,11 +489,11 @@ static OGRFeature *TranslateBoundarylineCollection( NTFFileReader *poReader,
                                                     NTFRecord **papoGroup )
 
 {
-    if( CSLCount((char **) papoGroup) != 2 
+    if( CSLCount((char **) papoGroup) != 2
         || papoGroup[0]->GetType() != NRT_COLLECT
         || papoGroup[1]->GetType() != NRT_ATTREC )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // COLL_ID
@@ -501,14 +501,14 @@ static OGRFeature *TranslateBoundarylineCollection( NTFFileReader *poReader,
 
     // NUM_PARTS
     int         nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
-    
+
     if( nNumLinks > MAX_LINK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "MAX_LINK exceeded in ntf_estlayers.cpp." );
         return poFeature;
     }
-    
+
     poFeature->SetField( 1, nNumLinks );
 
     // POLY_ID
@@ -539,13 +539,13 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /* ==================================================================== */
 /*      Traditional POLYGON record groups.                              */
 /* ==================================================================== */
-    if( CSLCount((char **) papoGroup) == 4 
+    if( CSLCount((char **) papoGroup) == 4
         && papoGroup[0]->GetType() == NRT_POLYGON
-        && papoGroup[1]->GetType() == NRT_ATTREC 
-        && papoGroup[2]->GetType() == NRT_CHAIN 
+        && papoGroup[1]->GetType() == NRT_ATTREC
+        && papoGroup[2]->GetType() == NRT_CHAIN
         && papoGroup[3]->GetType() == NRT_GEOMETRY )
     {
-        
+
         OGRFeature      *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
         // POLY_ID
@@ -553,14 +553,14 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 
         // NUM_PARTS
         int             nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
-    
+
         if( nNumLinks > MAX_LINK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "MAX_LINK exceeded in ntf_estlayers.cpp." );
             return poFeature;
         }
-    
+
         poFeature->SetField( 4, nNumLinks );
 
         // DIR
@@ -604,7 +604,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /*      First we do validation of the grouping.                         */
 /* -------------------------------------------------------------------- */
     int         iRec;
-    
+
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
              && papoGroup[iRec]->GetType() == NRT_POLYGON
@@ -622,7 +622,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 /* -------------------------------------------------------------------- */
 /*      Collect the chains for each of the rings, and just aggregate    */
 /*      these into the master list without any concept of where the     */
-/*      boundaries are.  The boundary information will be emmitted      */
+/*      boundaries are.  The boundary information will be emitted      */
 /*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
@@ -641,7 +641,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
         nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
         anRingStart[nRings++] = nNumLink;
-        
+
         for( i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
         {
             anDirList[nNumLink] =
@@ -653,7 +653,7 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 
         if( nNumLink == MAX_LINK*2 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "MAX_LINK exceeded in ntf_estlayers.cpp." );
 
             delete poFeature;
@@ -673,12 +673,13 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
     // RingStart
     poFeature->SetField( 7, nRings, anRingStart );
 
-    
+
 /* -------------------------------------------------------------------- */
 /*      collect information for whole complex polygon.                  */
 /* -------------------------------------------------------------------- */
     // POLY_ID
-    poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
+    if( papoGroup[iRec] != NULL )
+        poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
@@ -704,16 +705,16 @@ static OGRFeature *TranslateBoundarylineLink( NTFFileReader *poReader,
                                               NTFRecord **papoGroup )
 
 {
-    if( CSLCount((char **) papoGroup) != 2 
+    if( CSLCount((char **) papoGroup) != 2
         || papoGroup[0]->GetType() != NRT_GEOMETRY
         || papoGroup[1]->GetType() != NRT_ATTREC )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[0],
                                                              &nGeomId));
 
@@ -740,12 +741,12 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /* ==================================================================== */
 /*      Traditional POLYGON record groups.                              */
 /* ==================================================================== */
-    if( CSLCount((char **) papoGroup) == 3 
+    if( CSLCount((char **) papoGroup) == 3
         && papoGroup[0]->GetType() == NRT_POLYGON
-        && papoGroup[1]->GetType() == NRT_ATTREC 
+        && papoGroup[1]->GetType() == NRT_ATTREC
         && papoGroup[2]->GetType() == NRT_CHAIN  )
     {
-        
+
         OGRFeature      *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
         // POLY_ID
@@ -753,15 +754,15 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 
         // NUM_PARTS
         int             nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
-    
+
         if( nNumLinks > MAX_LINK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "MAX_LINK exceeded in ntf_estlayers.cpp." );
 
             return poFeature;
         }
-    
+
         poFeature->SetField( 3, nNumLinks );
 
         // DIR
@@ -801,7 +802,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /*      First we do validation of the grouping.                         */
 /* -------------------------------------------------------------------- */
     int         iRec;
-    
+
     for( iRec = 0;
          papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
              && papoGroup[iRec]->GetType() == NRT_POLYGON
@@ -818,7 +819,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 /* -------------------------------------------------------------------- */
 /*      Collect the chains for each of the rings, and just aggregate    */
 /*      these into the master list without any concept of where the     */
-/*      boundaries are.  The boundary information will be emmitted      */
+/*      boundaries are.  The boundary information will be emitted      */
 /*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
@@ -837,7 +838,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
         nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
 
         anRingStart[nRings++] = nNumLink;
-        
+
         for( i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
         {
             anDirList[nNumLink] =
@@ -849,7 +850,7 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 
         if( nNumLink == MAX_LINK*2 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "MAX_LINK exceeded in ntf_estlayers.cpp." );
 
             delete poFeature;
@@ -869,12 +870,13 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
     // RingStart
     poFeature->SetField( 6, nRings, anRingStart );
 
-    
+
 /* -------------------------------------------------------------------- */
 /*      collect information for whole complex polygon.                  */
 /* -------------------------------------------------------------------- */
     // POLY_ID
-    poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
+    if( papoGroup[iRec] != NULL )
+        poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
@@ -901,7 +903,7 @@ static OGRFeature *TranslateBL2000Link( NTFFileReader *poReader,
         || papoGroup[1]->GetType() != NRT_GEOMETRY
         || papoGroup[2]->GetType() != NRT_ATTREC )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -909,7 +911,7 @@ static OGRFeature *TranslateBL2000Link( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -918,7 +920,7 @@ static OGRFeature *TranslateBL2000Link( NTFFileReader *poReader,
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "FC", 2, "LK", 3, 
+                                    "FC", 2, "LK", 3,
                                     NULL );
 
     return poFeature;
@@ -937,7 +939,7 @@ static OGRFeature *TranslateBL2000Collection( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_COLLECT
         || papoGroup[1]->GetType() != NRT_ATTREC )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // COLL_ID
@@ -945,39 +947,41 @@ static OGRFeature *TranslateBL2000Collection( NTFFileReader *poReader,
 
     // NUM_PARTS
     int         nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
-    
+
     if( nNumLinks > MAX_LINK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "MAX_LINK exceeded in ntf_estlayers.cpp." );
 
         return poFeature;
     }
-    
+
     poFeature->SetField( 1, nNumLinks );
 
     // POLY_ID / COLL_ID_REFS
-    int         i, anList[MAX_LINK], anCollList[MAX_LINK];
+    int         anList[MAX_LINK], anCollList[MAX_LINK];
     int         nPolys=0, nCollections=0;
 
-    for( i = 0; i < nNumLinks; i++ )
+    for( int i = 0; i < nNumLinks; i++ )
     {
         if( atoi(papoGroup[0]->GetField( 13+i*8, 14+i*8 )) == 34 )
-            anCollList[nCollections++] = 
+            anCollList[nCollections++] =
                 atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
         else
-            anList[nPolys++] = 
+            anList[nPolys++] =
                 atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
     }
 
+    // coverity[uninit_use_in_call]
     poFeature->SetField( 2, nPolys, anList );
+    // coverity[uninit_use_in_call]
     poFeature->SetField( 10, nCollections, anCollList );
 
     // Attributes
     // Node that _CODE_DESC values are automatically applied if
-    // the target fields exist. 
+    // the target fields exist.
     poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "AI", 3, "OP", 4, "NM", 5, "TY", 6, 
+                                    "AI", 3, "OP", 4, "NM", 5, "TY", 6,
                                     "AC", 7, "NB", 8, "NA", 9,
                                     NULL );
 
@@ -997,7 +1001,7 @@ static OGRFeature *TranslateMeridianPoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -1005,7 +1009,7 @@ static OGRFeature *TranslateMeridianPoint( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -1016,7 +1020,7 @@ static OGRFeature *TranslateMeridianPoint( NTFFileReader *poReader,
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "FC", 2, "PN", 3, "OS", 4, "JN", 5,
                                     "RT", 6, "SI", 7, "PI", 8, "NM", 9,
-                                    "DA", 10, 
+                                    "DA", 10,
                                     NULL );
 
     return poFeature;
@@ -1035,7 +1039,7 @@ static OGRFeature *TranslateMeridianLine( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -1043,7 +1047,7 @@ static OGRFeature *TranslateMeridianLine( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -1054,7 +1058,7 @@ static OGRFeature *TranslateMeridianLine( NTFFileReader *poReader,
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "FC", 1, "OM", 3, "RN", 4, "TR", 5,
                                     "RI", 6, "LC", 7, "RC", 8, "LD", 9,
-                                    "RD", 10, 
+                                    "RD", 10,
                                     NULL );
 
     return poFeature;
@@ -1073,7 +1077,7 @@ static OGRFeature *TranslateMeridian2Point( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -1081,7 +1085,7 @@ static OGRFeature *TranslateMeridian2Point( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -1090,9 +1094,9 @@ static OGRFeature *TranslateMeridian2Point( NTFFileReader *poReader,
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "FC", 2, "PN", 3, "OD", 4, "PO", 5, 
-                                    "JN", 6, "RT", 7, "SN", 8, "SI", 9, 
-                                    "PI", 10, "NM", 11, "DA", 12, 
+                                    "FC", 2, "PN", 3, "OD", 4, "PO", 5,
+                                    "JN", 6, "RT", 7, "SN", 8, "SI", 9,
+                                    "PI", 10, "NM", 11, "DA", 12,
                                     "WA", 13, "HT", 14, "FA", 15,
                                     NULL );
 
@@ -1112,7 +1116,7 @@ static OGRFeature *TranslateMeridian2Line( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -1120,7 +1124,7 @@ static OGRFeature *TranslateMeridian2Line( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -1129,7 +1133,7 @@ static OGRFeature *TranslateMeridian2Line( NTFFileReader *poReader,
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "FC", 1, "OD", 3, "PO", 4, "RN", 5, 
+                                    "FC", 1, "OD", 3, "PO", 4, "RN", 5,
                                     "TR", 6, "PN", 7, "RI", 8, "LC", 9,
                                     "RC", 10, "LD", 11, "RD", 12, "WI", 14,
                                     NULL );
@@ -1163,15 +1167,15 @@ static OGRFeature *TranslateStrategiNode( CPL_UNUSED NTFFileReader *poReader,
 
     // NUM_LINKS
     int         nNumLinks = atoi(papoGroup[0]->GetField( 15, 18 ));
-    
+
     if( nNumLinks > MAX_LINK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "MAX_LINK exceeded in ntf_estlayers.cpp." );
 
         return poFeature;
     }
-    
+
     poFeature->SetField( 2, nNumLinks );
 
     // DIR
@@ -1193,7 +1197,7 @@ static OGRFeature *TranslateStrategiNode( CPL_UNUSED NTFFileReader *poReader,
         anList[i] = atoi(papoGroup[0]->GetField( 19+i*12+11, 19+i*12+11 ));
 
     poFeature->SetField( 5, nNumLinks, anList );
-    
+
     // ORIENT (optional)
     if( EQUAL(poFeature->GetDefnRef()->GetFieldDefn(6)->GetNameRef(),
               "ORIENT") )
@@ -1223,11 +1227,11 @@ static OGRFeature *TranslateStrategiText( NTFFileReader *poReader,
 {
     if( CSLCount((char **) papoGroup) < 4
         || papoGroup[0]->GetType() != NRT_TEXTREC
-        || papoGroup[1]->GetType() != NRT_TEXTPOS 
-        || papoGroup[2]->GetType() != NRT_TEXTREP 
+        || papoGroup[1]->GetType() != NRT_TEXTPOS
+        || papoGroup[2]->GetType() != NRT_TEXTREP
         || papoGroup[3]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -1273,7 +1277,7 @@ static OGRFeature *TranslateStrategiPoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -1281,7 +1285,7 @@ static OGRFeature *TranslateStrategiPoint( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -1315,7 +1319,7 @@ static OGRFeature *TranslateStrategiLine( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -1323,7 +1327,7 @@ static OGRFeature *TranslateStrategiLine( NTFFileReader *poReader,
 
     // Geometry
     int         nGeomId;
-    
+
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1],
                                                              &nGeomId));
 
@@ -1354,7 +1358,7 @@ static OGRFeature *TranslateLandrangerPoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -1365,7 +1369,7 @@ static OGRFeature *TranslateLandrangerPoint( NTFFileReader *poReader,
 
     // HEIGHT
     poFeature->SetField( 2, atoi(papoGroup[0]->GetField( 11, 16 )) );
-    
+
     // Geometry
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1]));
 
@@ -1385,7 +1389,7 @@ static OGRFeature *TranslateLandrangerLine( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -1412,12 +1416,12 @@ static OGRFeature *TranslateProfilePoint( NTFFileReader *poReader,
                                           NTFRecord **papoGroup )
 
 {
-    if( CSLCount((char **) papoGroup) < 2 
+    if( CSLCount((char **) papoGroup) < 2
         || papoGroup[0]->GetType() != NRT_POINTREC
         || (papoGroup[1]->GetType() != NRT_GEOMETRY
             && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -1429,14 +1433,14 @@ static OGRFeature *TranslateProfilePoint( NTFFileReader *poReader,
     // Geometry
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1]));
 
-    // Attributes 
+    // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "HT", 2,
                                     NULL );
 
     // Set HEIGHT/elevation
     OGRPoint    *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
-    
+
     if( poPoint != NULL && poPoint->getCoordinateDimension() == 3 )
     {
         poFeature->SetField( 2, poPoint->getZ() );
@@ -1446,7 +1450,7 @@ static OGRFeature *TranslateProfilePoint( NTFFileReader *poReader,
         poFeature->SetField( 2, poFeature->GetFieldAsDouble(2) * 0.01 );
         poPoint->setZ( poFeature->GetFieldAsDouble(2) );
     }
-    
+
     return poFeature;
 }
 
@@ -1464,7 +1468,7 @@ static OGRFeature *TranslateProfileLine( NTFFileReader *poReader,
         || (papoGroup[1]->GetType() != NRT_GEOMETRY
             && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -1476,14 +1480,14 @@ static OGRFeature *TranslateProfileLine( NTFFileReader *poReader,
     // Geometry
     poFeature->SetGeometryDirectly(poReader->ProcessGeometry(papoGroup[1]));
 
-    // Attributes 
+    // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "HT", 2,
                                     NULL );
-    
+
     // Set HEIGHT/elevation
     OGRLineString *poLine = (OGRLineString *) poFeature->GetGeometryRef();
-    
+
     poFeature->SetField( 2, poFeature->GetFieldAsDouble(2) * 0.01 );
     if( poLine != NULL && poLine->getCoordinateDimension() == 2 )
     {
@@ -1496,14 +1500,14 @@ static OGRFeature *TranslateProfileLine( NTFFileReader *poReader,
     else if( poLine != NULL )
     {
         double  dfAccum = 0.0;
-        
+
         for( int i = 0; i < poLine->getNumPoints(); i++ )
         {
             dfAccum += poLine->getZ(i);
         }
         poFeature->SetField( 2, dfAccum / poLine->getNumPoints() );
     }
-    
+
     return poFeature;
 }
 
@@ -1520,7 +1524,7 @@ static OGRFeature *TranslateLandlinePoint( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_POINTREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // POINT_ID
@@ -1568,7 +1572,7 @@ static OGRFeature *TranslateLandlineLine( NTFFileReader *poReader,
         || papoGroup[0]->GetType() != NRT_LINEREC
         || papoGroup[1]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // LINE_ID
@@ -1603,33 +1607,33 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
                                           NTFRecord **papoGroup )
 
 {
-    if( CSLCount((char **) papoGroup) != 3 
+    if( CSLCount((char **) papoGroup) != 3
         || papoGroup[0]->GetType() != NRT_NAMEREC
         || papoGroup[1]->GetType() != NRT_NAMEPOSTN
         || papoGroup[2]->GetType() != NRT_GEOMETRY )
         return NULL;
-        
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-        
+
     // NAME_ID
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
-        
+
     // TEXT_CODE
     poFeature->SetField( 1, papoGroup[0]->GetField( 9, 12 ) );
-        
+
     // TEXT
     int         nNumChar = atoi(papoGroup[0]->GetField(13,14));
     poFeature->SetField( 2, papoGroup[0]->GetField( 15, 15+nNumChar-1) );
-    
+
     // FONT
     poFeature->SetField( 3, atoi(papoGroup[1]->GetField( 3, 6 )) );
 
     // TEXT_HT
     poFeature->SetField( 4, atoi(papoGroup[1]->GetField(7,9)) * 0.1 );
-        
+
     // DIG_POSTN
     poFeature->SetField( 5, atoi(papoGroup[1]->GetField(10,10)) );
-        
+
     // ORIENT
     poFeature->SetField( 6, CPLAtof(papoGroup[1]->GetField( 11, 14 )) * 0.1 );
 
@@ -1647,7 +1651,7 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
     // CHG_TYPE (optional)
     if( poFeature->GetFieldIndex("CHG_TYPE") == 9 )
     {
-        poFeature->SetField( 9, papoGroup[0]->GetField( 15+nNumChar+1, 
+        poFeature->SetField( 9, papoGroup[0]->GetField( 15+nNumChar+1,
                                                         15+nNumChar+1 ) );
     }
 
@@ -1683,7 +1687,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
     poLayer = poDS->GetNamedLayer(pszLayerName);
 
 /* ==================================================================== */
-/*      Create a new layer matching the request if we don't aleady      */
+/*      Create a new layer matching the request if we don't already      */
 /*      have one.                                                       */
 /* ==================================================================== */
     if( poLayer == NULL )
@@ -1700,26 +1704,26 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
 /*      Fetch definitions of each field in turn.                        */
 /* -------------------------------------------------------------------- */
         va_start(hVaArgs, poClass);
-        while( TRUE )
+        while( true )
         {
             const char  *pszFieldName = va_arg(hVaArgs, const char *);
             OGRFieldType     eType;
             int          nWidth, nPrecision;
-            
+
             if( pszFieldName == NULL )
                 break;
-            
+
             eType = (OGRFieldType) va_arg(hVaArgs, int);
             nWidth = va_arg(hVaArgs, int);
             nPrecision = va_arg(hVaArgs, int);
-            
+
             OGRFieldDefn         oFieldDefn( pszFieldName, eType );
             oFieldDefn.SetWidth( nWidth );
             oFieldDefn.SetPrecision( nPrecision );
-            
+
             poDefn->AddFieldDefn( &oFieldDefn );
         }
-        
+
         va_end(hVaArgs);
 
 /* -------------------------------------------------------------------- */
@@ -1733,18 +1737,18 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                 OGRFieldDefn    oFieldDefn( poClass->papszAttrNames[iGAtt],
                                             OFTInteger );
 
-                if( EQUALN(pszFormat,"I",1) )
+                if( STARTS_WITH_CI(pszFormat, "I") )
                 {
                     oFieldDefn.SetType( OFTInteger );
                     oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt] );
                 }
-                else if( EQUALN(pszFormat,"D",1)
-                         || EQUALN(pszFormat,"A",1) )
+                else if( STARTS_WITH_CI(pszFormat, "D")
+                         || STARTS_WITH_CI(pszFormat, "A") )
                 {
                     oFieldDefn.SetType( OFTString );
                     oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt] );
                 }
-                else if( EQUALN(pszFormat,"R",1) )
+                else if( STARTS_WITH_CI(pszFormat, "R") )
                 {
                     oFieldDefn.SetType( OFTReal );
                     oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt]+1 );
@@ -1756,7 +1760,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
 
                 poDefn->AddFieldDefn( &oFieldDefn );
 
-                /* 
+                /*
                 ** If this field can appear multiple times, create an
                 ** additional attribute to hold lists of values.  This
                 ** is always created as a variable length string field.
@@ -1765,7 +1769,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                 {
                     char szName[128];
 
-                    sprintf( szName, "%s_LIST", 
+                    snprintf( szName, sizeof(szName), "%s_LIST",
                              poClass->papszAttrNames[iGAtt] );
 
                     OGRFieldDefn oFieldDefnL( szName, OFTString );
@@ -1783,7 +1787,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
         oTileID.SetWidth( 10 );
 
         poDefn->AddFieldDefn( &oTileID );
-            
+
 /* -------------------------------------------------------------------- */
 /*      Create the layer, and give over to the data source object to    */
 /*      maintain.                                                       */
@@ -1828,13 +1832,13 @@ void NTFFileReader::EstablishLayers()
                         "ORIENT", OFTReal, 5, 1,
                         "DISTANCE", OFTReal, 6, 3,
                         NULL );
-                        
+
         EstablishLayer( "LANDLINE_LINE", wkbLineString,
                         TranslateLandlineLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
                         NULL );
-                        
+
         EstablishLayer( "LANDLINE_NAME", wkbPoint,
                         TranslateLandlineName, NRT_NAMEREC, NULL,
                         "NAME_ID", OFTInteger, 6, 0,
@@ -1855,18 +1859,18 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "ORIENT", OFTReal, 5, 1,
                         "DISTANCE", OFTReal, 6, 3,
-                        "CHG_DATE", OFTString, 6, 0, 
-                        "CHG_TYPE", OFTString, 1, 0, 
+                        "CHG_DATE", OFTString, 6, 0,
+                        "CHG_TYPE", OFTString, 1, 0,
                         NULL );
-                        
+
         EstablishLayer( "LANDLINE99_LINE", wkbLineString,
                         TranslateLandlineLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
-                        "CHG_DATE", OFTString, 6, 0, 
-                        "CHG_TYPE", OFTString, 1, 0, 
+                        "CHG_DATE", OFTString, 6, 0,
+                        "CHG_TYPE", OFTString, 1, 0,
                         NULL );
-                        
+
         EstablishLayer( "LANDLINE99_NAME", wkbPoint,
                         TranslateLandlineName, NRT_NAMEREC, NULL,
                         "NAME_ID", OFTInteger, 6, 0,
@@ -1878,7 +1882,7 @@ void NTFFileReader::EstablishLayers()
                         "ORIENT", OFTReal, 5, 1,
                         "TEXT_HT_GROUND", OFTReal, 10, 3,
                         "CHG_DATE", OFTString, 6, 0,
-                        "CHG_TYPE", OFTString, 1, 0, 
+                        "CHG_TYPE", OFTString, 1, 0,
                         NULL );
     }
     else if( GetProductId() == NPC_LANDRANGER_CONT )
@@ -1889,7 +1893,7 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "HEIGHT", OFTReal, 7, 2,
                         NULL );
-                        
+
         EstablishLayer( "PANORAMA_CONTOUR", wkbLineString,
                         TranslateLandrangerLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
@@ -1905,7 +1909,7 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "HEIGHT", OFTReal, 7, 2,
                         NULL );
-                        
+
         EstablishLayer( "PROFILE_LINE", wkbLineString25D,
                         TranslateProfileLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
@@ -1919,14 +1923,14 @@ void NTFFileReader::EstablishLayers()
                         TranslateStrategiPoint, NRT_POINTREC, NULL,
                         "POINT_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
-                        "PROPER_NAME", OFTString, 0, 0, 
-                        "FEATURE_NUMBER", OFTString, 0, 0, 
-                        "RB", OFTString, 1, 0, 
-                        "RU", OFTString, 1, 0, 
-                        "AN", OFTString, 0, 0, 
-                        "AO", OFTString, 0, 0, 
-                        "COUNTY_NAME", OFTString, 0, 0, 
-                        "UNITARY_NAME", OFTString, 0, 0, 
+                        "PROPER_NAME", OFTString, 0, 0,
+                        "FEATURE_NUMBER", OFTString, 0, 0,
+                        "RB", OFTString, 1, 0,
+                        "RU", OFTString, 1, 0,
+                        "AN", OFTString, 0, 0,
+                        "AO", OFTString, 0, 0,
+                        "COUNTY_NAME", OFTString, 0, 0,
+                        "UNITARY_NAME", OFTString, 0, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
                         "DATE", OFTInteger, 8, 0,
                         "DISTRICT_NAME", OFTString, 0, 0,
@@ -1945,7 +1949,7 @@ void NTFFileReader::EstablishLayers()
                         "RESTRICTION_ANTICLOCKWISE", OFTString, 0, 0,
                         "USAGE", OFTInteger, 1, 0,
                         NULL );
-        
+
         EstablishLayer( "STRATEGI_LINE", wkbLineString,
                         TranslateStrategiLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
@@ -1961,7 +1965,7 @@ void NTFFileReader::EstablishLayers()
                         "FERRY_RESTRICTIONS", OFTString, 0, 0,
                         "FERRY_TO", OFTString, 0, 0,
                         "GIS", OFTString, 0, 0,
-                        "FEATURE_NUMBER", OFTString, 0, 0, 
+                        "FEATURE_NUMBER", OFTString, 0, 0,
                         NULL );
 
         EstablishLayer( "STRATEGI_TEXT", wkbPoint,
@@ -1970,9 +1974,9 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "FONT", OFTInteger, 4, 0,
                         "TEXT_HT", OFTReal, 5, 1,
-                        "DIG_POSTN", OFTInteger, 1, 0, 
+                        "DIG_POSTN", OFTInteger, 1, 0,
                         "ORIENT", OFTReal, 5, 1,
-                        "TEXT", OFTString, 0, 0, 
+                        "TEXT", OFTString, 0, 0,
                         "TEXT_HT_GROUND", OFTReal, 10, 3,
                         "DATE", OFTInteger, 8, 0,
                         NULL );
@@ -1995,29 +1999,29 @@ void NTFFileReader::EstablishLayers()
                         "POINT_ID", OFTInteger, 6, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
-                        "PROPER_NAME", OFTString, 0, 0, 
+                        "PROPER_NAME", OFTString, 0, 0,
                         "OSMDR", OFTString, 13, 0,
                         "JUNCTION_NAME", OFTString, 0, 0,
                         "ROUNDABOUT", OFTString, 1, 0,
                         "STATION_ID", OFTString, 13, 0,
-                        "GLOBAL_ID", OFTInteger, 6, 0, 
-                        "ADMIN_NAME", OFTString, 0, 0, 
-                        "DA_DLUA_ID", OFTString, 13, 0, 
+                        "GLOBAL_ID", OFTInteger, 6, 0,
+                        "ADMIN_NAME", OFTString, 0, 0,
+                        "DA_DLUA_ID", OFTString, 13, 0,
                         NULL );
-        
+
         EstablishLayer( "MERIDIAN_LINE", wkbLineString,
                         TranslateMeridianLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
-                        "OSMDR", OFTString, 13, 0, 
-                        "ROAD_NUM", OFTString, 0, 0, 
-                        "TRUNK_ROAD", OFTString, 1, 0, 
-                        "RAIL_ID", OFTString, 13, 0, 
-                        "LEFT_COUNTY", OFTInteger, 6, 0, 
-                        "RIGHT_COUNTY", OFTInteger, 6, 0, 
-                        "LEFT_DISTRICT", OFTInteger, 6, 0, 
-                        "RIGHT_DISTRICT", OFTInteger, 6, 0, 
+                        "OSMDR", OFTString, 13, 0,
+                        "ROAD_NUM", OFTString, 0, 0,
+                        "TRUNK_ROAD", OFTString, 1, 0,
+                        "RAIL_ID", OFTString, 13, 0,
+                        "LEFT_COUNTY", OFTInteger, 6, 0,
+                        "RIGHT_COUNTY", OFTInteger, 6, 0,
+                        "LEFT_DISTRICT", OFTInteger, 6, 0,
+                        "RIGHT_DISTRICT", OFTInteger, 6, 0,
                         NULL );
 
         EstablishLayer( "MERIDIAN_TEXT", wkbPoint,
@@ -2026,9 +2030,9 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "FONT", OFTInteger, 4, 0,
                         "TEXT_HT", OFTReal, 5, 1,
-                        "DIG_POSTN", OFTInteger, 1, 0, 
+                        "DIG_POSTN", OFTInteger, 1, 0,
                         "ORIENT", OFTReal, 5, 1,
-                        "TEXT", OFTString, 0, 0, 
+                        "TEXT", OFTString, 0, 0,
                         "TEXT_HT_GROUND", OFTReal, 10, 3,
                         NULL );
 
@@ -2050,37 +2054,37 @@ void NTFFileReader::EstablishLayers()
                         "POINT_ID", OFTInteger, 6, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
-                        "PROPER_NAME", OFTString, 0, 0, 
+                        "PROPER_NAME", OFTString, 0, 0,
                         "OSODR", OFTString, 13, 0,
                         "PARENT_OSODR", OFTString, 13, 0,
                         "JUNCTION_NAME", OFTString, 0, 0,
                         "ROUNDABOUT", OFTString, 1, 0,
                         "SETTLEMENT_NAME", OFTString, 0, 0,
                         "STATION_ID", OFTString, 13, 0,
-                        "GLOBAL_ID", OFTInteger, 6, 0, 
-                        "ADMIN_NAME", OFTString, 0, 0, 
-                        "DA_DLUA_ID", OFTString, 13, 0, 
-                        "WATER_AREA", OFTString, 13, 0, 
+                        "GLOBAL_ID", OFTInteger, 6, 0,
+                        "ADMIN_NAME", OFTString, 0, 0,
+                        "DA_DLUA_ID", OFTString, 13, 0,
+                        "WATER_AREA", OFTString, 13, 0,
                         "HEIGHT", OFTInteger, 8, 0,
                         "FOREST_ID", OFTString, 13, 0,
                         NULL );
-        
+
         EstablishLayer( "MERIDIAN2_LINE", wkbLineString,
                         TranslateMeridian2Line, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
-                        "OSODR", OFTString, 13, 0, 
+                        "OSODR", OFTString, 13, 0,
                         "PARENT_OSODR", OFTString, 13, 0,
-                        "ROAD_NUM", OFTString, 0, 0, 
-                        "TRUNK_ROAD", OFTString, 1, 0, 
-                        "PROPER_NAME", OFTString, 0, 0, 
-                        "RAIL_ID", OFTString, 13, 0, 
-                        "LEFT_COUNTY", OFTInteger, 6, 0, 
-                        "RIGHT_COUNTY", OFTInteger, 6, 0, 
-                        "LEFT_DISTRICT", OFTInteger, 6, 0, 
-                        "RIGHT_DISTRICT", OFTInteger, 6, 0, 
-                        "WATER_LINK_ID", OFTString, 13, 0, 
+                        "ROAD_NUM", OFTString, 0, 0,
+                        "TRUNK_ROAD", OFTString, 1, 0,
+                        "PROPER_NAME", OFTString, 0, 0,
+                        "RAIL_ID", OFTString, 13, 0,
+                        "LEFT_COUNTY", OFTInteger, 6, 0,
+                        "RIGHT_COUNTY", OFTInteger, 6, 0,
+                        "LEFT_DISTRICT", OFTInteger, 6, 0,
+                        "RIGHT_DISTRICT", OFTInteger, 6, 0,
+                        "WATER_LINK_ID", OFTString, 13, 0,
                         NULL );
 
         EstablishLayer( "MERIDIAN2_TEXT", wkbPoint,
@@ -2089,9 +2093,9 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "FONT", OFTInteger, 4, 0,
                         "TEXT_HT", OFTReal, 5, 1,
-                        "DIG_POSTN", OFTInteger, 1, 0, 
+                        "DIG_POSTN", OFTInteger, 1, 0,
                         "ORIENT", OFTReal, 5, 1,
-                        "TEXT", OFTString, 0, 0, 
+                        "TEXT", OFTString, 0, 0,
                         "TEXT_HT_GROUND", OFTReal, 10, 3,
                         NULL );
 
@@ -2113,17 +2117,17 @@ void NTFFileReader::EstablishLayers()
                         "GEOM_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
                         "GLOBAL_LINK_ID", OFTInteger, 10, 0,
-                        "HWM_FLAG", OFTInteger, 1, 0, 
+                        "HWM_FLAG", OFTInteger, 1, 0,
                         NULL );
 
-        EstablishLayer( "BOUNDARYLINE_POLY", 
+        EstablishLayer( "BOUNDARYLINE_POLY",
                         bCacheLines ? wkbPolygon : wkbPoint,
                         TranslateBoundarylinePoly, NRT_POLYGON, NULL,
                         "POLY_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
                         "GLOBAL_SEED_ID", OFTInteger, 6, 0,
                         "HECTARES", OFTReal, 9, 3,
-                        "NUM_PARTS", OFTInteger, 4, 0, 
+                        "NUM_PARTS", OFTInteger, 4, 0,
                         "DIR", OFTIntegerList, 1, 0,
                         "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
                         "RingStart", OFTIntegerList, 6, 0,
@@ -2134,7 +2138,7 @@ void NTFFileReader::EstablishLayers()
                         "COLL_ID", OFTInteger, 6, 0,
                         "NUM_PARTS", OFTInteger, 4, 0,
                         "POLY_ID", OFTIntegerList, 6, 0,
-                        "ADMIN_AREA_ID", OFTInteger, 6, 0, 
+                        "ADMIN_AREA_ID", OFTInteger, 6, 0,
                         "OPCS_CODE", OFTString, 6, 0,
                         "ADMIN_NAME", OFTString, 0, 0,
                         NULL );
@@ -2148,25 +2152,25 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "GLOBAL_LINK_ID", OFTInteger, 10, 0,
                         NULL );
-        EstablishLayer( "BL2000_POLY", 
+        EstablishLayer( "BL2000_POLY",
                         bCacheLines ? wkbPolygon : wkbNone,
                         TranslateBL2000Poly, NRT_POLYGON, NULL,
                         "POLY_ID", OFTInteger, 6, 0,
                         "GLOBAL_SEED_ID", OFTInteger, 6, 0,
                         "HECTARES", OFTReal, 12, 3,
-                        "NUM_PARTS", OFTInteger, 4, 0, 
+                        "NUM_PARTS", OFTInteger, 4, 0,
                         "DIR", OFTIntegerList, 1, 0,
                         "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
                         "RingStart", OFTIntegerList, 6, 0,
                         NULL );
-        if( poDS->GetOption("CODELIST") != NULL 
+        if( poDS->GetOption("CODELIST") != NULL
             && EQUAL(poDS->GetOption("CODELIST"),"ON") )
             EstablishLayer( "BL2000_COLLECTIONS", wkbNone,
                             TranslateBL2000Collection, NRT_COLLECT, NULL,
                             "COLL_ID", OFTInteger, 6, 0,
                             "NUM_PARTS", OFTInteger, 4, 0,
                             "POLY_ID", OFTIntegerList, 6, 0,
-                            "ADMIN_AREA_ID", OFTInteger, 6, 0, 
+                            "ADMIN_AREA_ID", OFTInteger, 6, 0,
                             "CENSUS_CODE", OFTString, 7, 0,
                             "ADMIN_NAME", OFTString, 0, 0,
                             "AREA_TYPE", OFTString, 2, 0,
@@ -2184,7 +2188,7 @@ void NTFFileReader::EstablishLayers()
                             "COLL_ID", OFTInteger, 6, 0,
                             "NUM_PARTS", OFTInteger, 4, 0,
                             "POLY_ID", OFTIntegerList, 6, 0,
-                            "ADMIN_AREA_ID", OFTInteger, 6, 0, 
+                            "ADMIN_AREA_ID", OFTInteger, 6, 0,
                             "CENSUS_CODE", OFTString, 7, 0,
                             "ADMIN_NAME", OFTString, 0, 0,
                             "AREA_TYPE", OFTString, 2, 0,
@@ -2201,21 +2205,21 @@ void NTFFileReader::EstablishLayers()
                         "POINT_ID", OFTInteger, 6, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
-                        "PROPER_NAME", OFTString, 0, 0, 
-                        "FEATURE_NUMBER", OFTString, 0, 0, 
-                        "COUNTY_NAME", OFTString, 0, 0, 
-                        "UNITARY_NAME", OFTString, 0, 0, 
+                        "PROPER_NAME", OFTString, 0, 0,
+                        "FEATURE_NUMBER", OFTString, 0, 0,
+                        "COUNTY_NAME", OFTString, 0, 0,
+                        "UNITARY_NAME", OFTString, 0, 0,
                         "ORIENT", OFTRealList, 5, 1,
                         NULL );
-        
+
         EstablishLayer( "BASEDATA_LINE", wkbLineString,
                         TranslateBasedataLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
                         "GEOM_ID", OFTInteger, 6, 0,
-                        "PROPER_NAME", OFTString, 0, 0, 
-                        "FEATURE_NUMBER", OFTString, 0, 0, 
-                        "RB", OFTString, 1, 0, 
+                        "PROPER_NAME", OFTString, 0, 0,
+                        "FEATURE_NUMBER", OFTString, 0, 0,
+                        "RB", OFTString, 1, 0,
                         NULL );
 
         EstablishLayer( "BASEDATA_TEXT", wkbPoint,
@@ -2224,9 +2228,9 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "FONT", OFTInteger, 4, 0,
                         "TEXT_HT", OFTReal, 5, 1,
-                        "DIG_POSTN", OFTInteger, 1, 0, 
+                        "DIG_POSTN", OFTInteger, 1, 0,
                         "ORIENT", OFTReal, 5, 1,
-                        "TEXT", OFTString, 0, 0, 
+                        "TEXT", OFTString, 0, 0,
                         "TEXT_HT_GROUND", OFTReal, 10, 3,
                         NULL );
 
@@ -2253,7 +2257,7 @@ void NTFFileReader::EstablishLayers()
                         "JUNCTION_NAME", OFTString, 0, 0,
                         "SETTLE_NAME", OFTString, 0, 0,
                         NULL );
-        
+
         EstablishLayer( "OSCAR_LINE", wkbLineString,
                         TranslateOscarLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
@@ -2265,7 +2269,7 @@ void NTFFileReader::EstablishLayers()
                         "SOURCE", OFTString, 1, 0,
                         "FORM_OF_WAY", OFTString, 1, 0,
                         "ROAD_NUM", OFTString, 0, 0,
-                        "TRUNK_ROAD", OFTString, 1, 0, 
+                        "TRUNK_ROAD", OFTString, 1, 0,
                         NULL );
 
         EstablishLayer( "OSCAR_NODE", wkbNone,
@@ -2299,7 +2303,7 @@ void NTFFileReader::EstablishLayers()
                         "PARENT_OSODR", OFTStringList, 13, 0,
                         "ROUNDABOUT", OFTString, 1, 0,
                         NULL );
-        
+
         EstablishLayer( "OSCAR_ROUTE_LINE", wkbLineString,
                         TranslateOscarRouteLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
@@ -2309,7 +2313,7 @@ void NTFFileReader::EstablishLayers()
                         "PROPER_NAME", OFTString, 0, 0,
                         "LINE_LENGTH", OFTInteger, 5, 0,
                         "ROAD_NUM", OFTString, 0, 0,
-                        "TRUNK_ROAD", OFTString, 1, 0, 
+                        "TRUNK_ROAD", OFTString, 1, 0,
                         "NUM_PARENTS", OFTInteger, 2, 0,
                         "PARENT_OSODR", OFTStringList, 13, 0,
                         NULL );
@@ -2343,7 +2347,7 @@ void NTFFileReader::EstablishLayers()
                         "SETTLE_NAME", OFTString, 0, 0,
                         "ROUNDABOUT", OFTString, 1, 0,
                         NULL );
-        
+
         EstablishLayer( "OSCAR_NETWORK_LINE", wkbLineString,
                         TranslateOscarNetworkLine, NRT_LINEREC, NULL,
                         "LINE_ID", OFTInteger, 6, 0,
@@ -2394,7 +2398,7 @@ void NTFFileReader::EstablishLayers()
                         "STATUS_FLAG", OFTString, 4, 0,
                         "RM_VERSION_DATE", OFTString, 8, 0,
                         "CHG_TYPE", OFTString, 1, 0,
-                        "CHG_DATE", OFTString, 6, 0, 
+                        "CHG_DATE", OFTString, 6, 0,
                         NULL );
     }
     else if( GetProductId() == NPC_CODE_POINT )
@@ -2405,13 +2409,13 @@ void NTFFileReader::EstablishLayers()
                         "UNIT_POSTCODE", OFTString, 7, 0,
                         "POSITIONAL_QUALITY", OFTInteger, 1, 0,
                         "PO_BOX_INDICATOR", OFTString, 1, 0,
-                        "TOTAL_DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "DOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "NONDOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "POBOX_DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "MATCHED_ADDRESS_PREMISES", OFTInteger, 3, 0, 
-                        "UNMATCHED_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "TOTAL_DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "DOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "NONDOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "POBOX_DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "MATCHED_ADDRESS_PREMISES", OFTInteger, 3, 0,
+                        "UNMATCHED_DELIVERY_POINTS", OFTInteger, 3, 0,
                         "RM_VERSION_DATA", OFTString, 8, 0,
                         NULL );
     }
@@ -2423,13 +2427,13 @@ void NTFFileReader::EstablishLayers()
                         "UNIT_POSTCODE", OFTString, 7, 0,
                         "POSITIONAL_QUALITY", OFTInteger, 1, 0,
                         "PO_BOX_INDICATOR", OFTString, 1, 0,
-                        "TOTAL_DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "DOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "NONDOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "POBOX_DELIVERY_POINTS", OFTInteger, 3, 0, 
-                        "MATCHED_ADDRESS_PREMISES", OFTInteger, 3, 0, 
-                        "UNMATCHED_DELIVERY_POINTS", OFTInteger, 3, 0, 
+                        "TOTAL_DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "DOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "NONDOMESTIC_DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "POBOX_DELIVERY_POINTS", OFTInteger, 3, 0,
+                        "MATCHED_ADDRESS_PREMISES", OFTInteger, 3, 0,
+                        "UNMATCHED_DELIVERY_POINTS", OFTInteger, 3, 0,
                         "RM_VERSION_DATA", OFTString, 8, 0,
                         "NHS_REGIONAL_HEALTH_AUTHORITY", OFTString, 3, 0,
                         "NHS_HEALTH_AUTHORITY", OFTString, 3, 0,
@@ -2441,7 +2445,7 @@ void NTFFileReader::EstablishLayers()
     else // generic case
     {
         CPLAssert( GetProductId() == NPC_UNKNOWN );
-        
+
         poDS->WorkupGeneric( this );
     }
 }

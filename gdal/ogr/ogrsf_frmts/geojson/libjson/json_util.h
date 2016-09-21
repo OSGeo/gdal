@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _json_util_h_
-#define _json_util_h_
+#ifndef json_util_h_
+#define json_util_h_
 
 #include "json_object.h"
 

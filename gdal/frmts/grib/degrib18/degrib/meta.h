@@ -89,7 +89,7 @@ typedef struct {
    uChar intens[NUM_UGLY_WORD]; /* (see WxIntens) */
    uChar vis[NUM_UGLY_WORD]; /* 255 no vis, otherwise in units of 1/32 SM
                             * so 6SM -> 192. P6SM -> 224 */
-   uChar f_or[NUM_UGLY_WORD]; /* true if OR, or MX was a hazzard. */
+   uChar f_or[NUM_UGLY_WORD]; /* true if OR, or MX was a hazard. */
    uChar f_priority[NUM_UGLY_WORD]; /* 0 if normal,
                             * 1 if 'include unconditional'
                             * 2 if 'high priority' */
@@ -101,7 +101,7 @@ typedef struct {
                             * temporarily 3 (invalid and used). */
    sInt4 validIndex;    /* Which index this is, counting only used
                             * valid indexes.  If it is not used it is -1 */
-   char *english[NUM_UGLY_WORD]; /* The english translation of ugly string. */
+   char *english[NUM_UGLY_WORD]; /* The English translation of ugly string. */
    uChar wx_inten[NUM_UGLY_WORD]; /* A code to represent the wx and
                               intensity for an "ugly word". */
    sInt4 HazCode[NUM_UGLY_WORD]; /* A code to represent all the attributes. */
@@ -116,7 +116,7 @@ typedef struct {
    int maxLen;               /* Max Length of all of the "ugly strings"
                               * It includes 1 for the \0 character. */
    UglyStringType *ugly;     /* The parsed Ugly string. */
-   int maxEng[NUM_UGLY_WORD]; /* Max length of english phrases for all ugly
+   int maxEng[NUM_UGLY_WORD]; /* Max length of English phrases for all ugly
                                * word number X. */
 } sect2_WxType;
 
@@ -409,7 +409,7 @@ typedef struct {
    uChar center;             /* For lambert and polar stereographic, answers:
                                 (south/north?) and (bi-polar?) */
    uChar scan;               /* describes how the grid was traversed when it
-                                was stored. (ie top/down left/right etc.)
+                                was stored. (i.e. top/down left/right etc.)
                                 Internally we use 0100. (start lower left) */
    double lat2, lon2;        /* lat,lon position of last grid point.
                                 (0 if unused) */
@@ -442,7 +442,7 @@ enum { GS5_SIMPLE = 0, GS5_CMPLX = 2, GS5_CMPLXSEC = 3, GS5_JPEG2000 = 40,
 };
 typedef struct {
    sInt4 packType;           /* What kind of packing was used. */
-   float refVal;             /* The refrence value for the grid, also the
+   float refVal;             /* The reference value for the grid, also the
                               * minimum value? */
    short int ESF;            /* Power of 2 scaling factor. */
    short int DSF;            /* Decimal Scale Factor */

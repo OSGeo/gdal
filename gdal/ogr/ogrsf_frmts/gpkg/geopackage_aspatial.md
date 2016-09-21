@@ -8,7 +8,8 @@ Aspatial Support
 
 ## Introduction
 
-Support for aspatial data (ie. SQLite tables/views without a geometry column), potentially with associated metadata.
+Support for aspatial data (i.e. SQLite tables/views without a geometry column),
+potentially with associated metadata.
 
 ## Extension Author
 

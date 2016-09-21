@@ -37,7 +37,7 @@
 
 class vsil_target : public kdu_compressed_target {
 
-public: 
+public:
     vsil_target() { file = NULL; }
     ~vsil_target() { close(); }
 
@@ -48,7 +48,7 @@ public:
             if( file == NULL )
             {
                 kdu_error e;
-                e << "Unable to open compressed data file, \"" << 
+                e << "Unable to open compressed data file, \"" <<
                     fname << "\"!";
                 return;
             }
@@ -58,7 +58,7 @@ public:
         {
             if( file == NULL )
                 return false;
-            
+
             if( (int) VSIFWriteL( buf, 1, num_bytes, file ) != num_bytes )
                 return false;
             else
@@ -98,4 +98,3 @@ public:
 private: // Data
     VSILFILE *file;
 };
-

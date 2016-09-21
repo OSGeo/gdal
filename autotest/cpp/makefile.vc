@@ -4,7 +4,7 @@
 #
 # These tests are dedicated to Windows CE platform and cover features
 # supported by Windows CE port of GDAL.
-# Also, compilable and runnable on Windows 2000/XP.
+# Also, compatible and runnable on Windows 2000/XP.
 #
 #############################################################################
 # CONFIGURATION
@@ -46,10 +46,12 @@ INCLUDE_DIR = \
 
 OBJ = \
     test_cpl.obj \
+    test_alg.obj \
     test_gdal.obj \
     test_gdal_aaigrid.obj \
     test_gdal_dted.obj \
     test_gdal_gtiff.obj \
+    test_triangulation.obj \
     test_ogr.obj \
     test_ogr_geos.obj \
     test_ogr_shape.obj \
@@ -68,13 +70,19 @@ CPPFLAGS = $(CFLAGS)
 
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testdestroy.exe
 
-check:	 $(GDAL_TEST_EXE)
+check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe
 	 $(GDAL_TEST_EXE)
+	testblockcache.exe -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
+	testblockcache.exe -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
+	testblockcache.exe -check -co TILED=YES -migrate
+	testblockcache.exe -check -memdriver
+	testblockcachewrite.exe --debug ON
+	testblockcachelimits.exe --debug ON
+	testdestroy.exe
 
-check-all:	 $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
-	 $(GDAL_TEST_EXE)
+check-all:	 check testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
 	testcopywords.exe
 	testperfcopywords.exe
 	testclosedondestroydm.exe
@@ -92,13 +100,29 @@ testperfcopywords.exe: testperfcopywords.cpp
 	$(CC) testperfcopywords.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testperfcopywords.exe.manifest mt -manifest testperfcopywords.exe.manifest -outputresource:testperfcopywords.exe;1
 
-testclosedondestroydm.exe: testclosedondestroydm.c
-	$(CC) testclosedondestroydm.c $(CFLAGS) $(GDAL_LIB)
+testclosedondestroydm.exe: testclosedondestroydm.cpp
+	$(CC) testclosedondestroydm.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testclosedondestroydm.exe.manifest mt -manifest testclosedondestroydm.exe.manifest -outputresource:testclosedondestroydm.exe;1
 
-testthreadcond.exe: testthreadcond.c
-	$(CC) testthreadcond.c $(CFLAGS) $(GDAL_LIB)
+testthreadcond.exe: testthreadcond.cpp
+	$(CC) testthreadcond.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testthreadcond.exe.manifest mt -manifest testthreadcond.exe.manifest -outputresource:testthreadcond.exe;1
+
+testblockcache.exe: testblockcache.cpp
+	$(CC) testblockcache.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testblockcache.exe.manifest mt -manifest testblockcache.exe.manifest -outputresource:testblockcache.exe;1
+
+testblockcachewrite.exe: testblockcachewrite.cpp
+	$(CC) testblockcachewrite.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testblockcachewrite.exe.manifest mt -manifest testblockcachewrite.exe.manifest -outputresource:testblockcachewrite.exe;1
+
+testblockcachelimits.exe: testblockcachelimits.cpp
+	$(CC) testblockcachelimits.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testblockcachelimits.exe.manifest mt -manifest testblockcachelimits.exe.manifest -outputresource:testblockcachelimits.exe;1
+
+testdestroy.exe: testdestroy.cpp
+	$(CC) testdestroy.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testdestroy.exe.manifest mt -manifest testdestroy.exe.manifest -outputresource:testdestroy.exe;1
 
 copy-gdal-dll:	$(GDAL_DLL) 
 

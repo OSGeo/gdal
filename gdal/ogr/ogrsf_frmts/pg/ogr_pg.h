@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_PG_H_INCLUDED
-#define _OGR_PG_H_INCLUDED
+#ifndef OGR_PG_H_INCLUDED
+#define OGR_PG_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "libpq-fe.h"
@@ -59,6 +59,7 @@
 #define FLOAT4OID               700
 #define FLOAT8OID               701
 #define BOOLARRAYOID            1000
+#define INT2ARRAYOID            1005
 #define INT4ARRAYOID            1007
 #define TEXTARRAYOID            1009
 #define BPCHARARRAYOID          1014
@@ -73,6 +74,7 @@
 #define TIMESTAMPOID	        1114
 #define TIMESTAMPTZOID	        1184
 #define NUMERICOID              1700
+#define NUMERICARRAYOID         1231
 
 CPLString OGRPGEscapeString(PGconn *hPGConn,
                             const char* pszStrValue, int nMaxLength = -1,
@@ -97,7 +99,7 @@ typedef struct
 {
     char* pszName;
     char* pszGeomType;
-    int   nCoordDimension;
+    int   GeometryTypeFlags;
     int   nSRID;
     PostgisType   ePostgisType;
     int   bNullable;
@@ -116,7 +118,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
         OGRPGGeomFieldDefn( OGRPGLayer* poLayerIn,
                                 const char* pszFieldName ) :
             OGRGeomFieldDefn(pszFieldName, wkbUnknown), poLayer(poLayerIn),
-            nSRSId(UNDETERMINED_SRID), nCoordDimension(2), ePostgisType(GEOM_TYPE_UNKNOWN)
+            nSRSId(UNDETERMINED_SRID), GeometryTypeFlags(0), ePostgisType(GEOM_TYPE_UNKNOWN)
             {
             }
 
@@ -125,7 +127,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
         void UnsetLayer() { poLayer = NULL; }
 
         int nSRSId;
-        int nCoordDimension;
+        int GeometryTypeFlags;
         PostgisType   ePostgisType;
 };
 
@@ -167,7 +169,7 @@ class OGRPGLayer : public OGRLayer
     GIntBig             iNextShapeId;
 
     static char        *GByteArrayToBYTEA( const GByte* pabyData, int nLen);
-    static char        *GeometryToBYTEA( OGRGeometry *, int bIsPostGIS1 );
+    static char        *GeometryToBYTEA( OGRGeometry *, int nPostGISMajor, int nPostGISMinor );
     static GByte       *BYTEAToGByteArray( const char *pszBytea, int* pnLength );
     static OGRGeometry *BYTEAToGeometry( const char *, int bIsPostGIS1 );
     Oid                 GeometryToOID( OGRGeometry * );
@@ -179,6 +181,7 @@ class OGRPGLayer : public OGRLayer
 
     char               *pszCursorName;
     PGresult           *hCursorResult;
+    int                 bInvalidated;
 
     int                 nResultOffset;
 
@@ -187,8 +190,8 @@ class OGRPGLayer : public OGRLayer
     char                *pszFIDColumn;
 
     int                 bCanUseBinaryCursor;
-    int                *panMapFieldNameToIndex;
-    int                *panMapFieldNameToGeomIndex;
+    int                *m_panMapFieldNameToIndex;
+    int                *m_panMapFieldNameToGeomIndex;
 
     int                 ParsePGDate( const char *, OGRField * );
 
@@ -198,11 +201,17 @@ class OGRPGLayer : public OGRLayer
     virtual CPLString   GetFromClauseForGetExtent() = 0;
     OGRErr              RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
                                              CPLString osCommand, int bErrorAsDebug );
-    void                CreateMapFromFieldNameToIndex();
+    static void         CreateMapFromFieldNameToIndex(PGresult* hResult,
+                                                      OGRFeatureDefn* poFeatureDefn,
+                                                      int*& panMapFieldNameToIndex,
+                                                      int*& panMapFieldNameToGeomIndex);
 
     int                 ReadResultDefinition(PGresult *hInitialResultIn);
 
-    OGRFeature         *RecordToFeature( int iRecord );
+    OGRFeature         *RecordToFeature( PGresult* hResult,
+                                         const int* panMapFieldNameToIndex,
+                                         const int* panMapFieldNameToGeomIndex,
+                                         int iRecord );
     OGRFeature         *GetNextRawFeature();
 
   public:
@@ -221,10 +230,12 @@ class OGRPGLayer : public OGRLayer
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
 
+    void                InvalidateCursor();
+
     virtual const char *GetFIDColumn();
 
     virtual OGRErr      SetNextByIndex( GIntBig nIndex );
-    
+
     OGRPGDataSource    *GetDS() { return poDS; }
 
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) = 0;
@@ -244,6 +255,8 @@ class OGRPGTableLayer : public OGRPGLayer
 
     char               *pszTableName;
     char               *pszSchemaName;
+    char               *pszDescription;
+    CPLString           osForcedDescription;
     char               *pszSqlTableName;
     int                 bTableDefinitionValid;
 
@@ -275,23 +288,25 @@ class OGRPGTableLayer : public OGRPGLayer
 
     int                 bRetrieveFID;
     int                 bHasWarnedAlreadySetFID;
-    
+
     char              **papszOverrideColumnTypes;
     int                 nForcedSRSId;
-    int                 nForcedDimension;
+    int                 nForcedGeometryTypeFlags;
     int                 bCreateSpatialIndexFlag;
     int                 bInResetReading;
-    
+
     int                 bAutoFIDOnCreateViaCopy;
     int                 bUseCopyByDefault;
-    
-    int                 bDifferedCreation;
+
+    int                 bDeferredCreation;
     CPLString           osCreateTable;
-    
+
     int                 iFIDAsRegularColumnIndex;
 
+    CPLString           m_osFirstGeometryFieldName;
+
     virtual CPLString   GetFromClauseForGetExtent() { return pszSqlTableName; }
-    
+
     OGRErr              RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField );
     OGRErr              RunCreateSpatialIndex( OGRPGGeomFieldDefn *poGeomField );
 
@@ -300,6 +315,7 @@ public:
                                          CPLString& osCurrentSchema,
                                          const char * pszTableName,
                                          const char * pszSchemaName,
+                                         const char * pszDescriptionIn,
                                          const char * pszGeomColForced,
                                          int bUpdate );
                         ~OGRPGTableLayer();
@@ -338,6 +354,12 @@ public:
 
     virtual const char *GetFIDColumn();
 
+    virtual char      **GetMetadataDomainList();
+    virtual char      **GetMetadata(const char* pszDomain = "");
+    virtual const char *GetMetadataItem(const char* pszName, const char* pszDomain = "");
+    virtual CPLErr      SetMetadata(char** papszMD, const char* pszDomain = "");
+    virtual CPLErr      SetMetadataItem(const char* pszName, const char* pszValue, const char* pszDomain = "");
+
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
@@ -346,8 +368,8 @@ public:
 
     void                SetOverrideColumnTypes( const char* pszOverrideColumnTypes );
 
-    virtual OGRErr      StartCopy();
-    virtual OGRErr      EndCopy();
+    OGRErr              StartCopy();
+    OGRErr              EndCopy();
 
     int                 ReadTableDefinition();
     int                 HasGeometryInformation() { return bGeometryInformationSet; }
@@ -356,19 +378,20 @@ public:
                                            OGRwkbGeometryType eType,
                                            const char* pszGeomType,
                                            int nSRSId,
-                                           int nCoordDimension);
+                                           int GeometryTypeFlags);
 
     void                SetForcedSRSId( int nForcedSRSIdIn )
                                 { nForcedSRSId = nForcedSRSIdIn; }
-    void                SetForcedDimension( int nForcedDimensionIn )
-                                { nForcedDimension = nForcedDimensionIn; }
+    void                SetForcedGeometryTypeFlags( int GeometryTypeFlagsIn )
+                                { nForcedGeometryTypeFlags = GeometryTypeFlagsIn; }
     void                SetCreateSpatialIndexFlag( int bFlag )
                                 { bCreateSpatialIndexFlag = bFlag; }
+    void                SetForcedDescription( const char* pszDescriptionIn );
     void                AllowAutoFIDOnCreateViaCopy() { bAutoFIDOnCreateViaCopy = TRUE; }
     void                SetUseCopy() { bUseCopy = TRUE; bUseCopyByDefault = TRUE; }
 
-    void                SetDifferedCreation(int bDifferedCreationIn, CPLString osCreateTable);
-    OGRErr              RunDifferedCreationIfNecessary();
+    void                SetDeferredCreation(int bDeferredCreationIn, CPLString osCreateTable);
+    OGRErr              RunDeferredCreationIfNecessary();
 
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn);
 };
@@ -387,7 +410,7 @@ class OGRPGResultLayer : public OGRPGLayer
     char                *pszGeomTableSchemaName;
 
     CPLString           osWHERE;
-    
+
     virtual CPLString   GetFromClauseForGetExtent()
         { CPLString osStr("(");
           osStr += pszRawStatement; osStr += ")"; return osStr; }
@@ -433,11 +456,13 @@ class OGRPGDataSource : public OGRDataSource
     int                 bHavePostGIS;
     int                 bHaveGeography;
 
+    int                 bUserTransactionActive;
+    int                 bSavePointActive;
     int                 nSoftTransactionLevel;
 
     PGconn              *hPGConn;
 
-    int                 DeleteLayer( int iLayer );
+    OGRErr              DeleteLayer( int iLayer );
 
     Oid                 nGeometryOID;
     Oid                 nGeographyOID;
@@ -456,13 +481,18 @@ class OGRPGDataSource : public OGRDataSource
     CPLString           GetCurrentSchema();
 
     int                 nUndefinedSRID;
-    
+
     char               *pszForcedTables;
     char              **papszSchemaList;
     int                 bHasLoadTables;
     CPLString           osActiveSchema;
     int                 bListAllTables;
     void                LoadTables();
+
+    CPLString           osDebugLastTransactionCommand;
+    OGRErr              DoTransactionCommand(const char* pszCommand);
+
+    OGRErr              FlushSoftTransaction();
 
   public:
     PGver               sPostgreSQLVersion;
@@ -484,10 +514,12 @@ class OGRPGDataSource : public OGRDataSource
     OGRSpatialReference *FetchSRS( int nSRSId );
     OGRErr              InitializeMetadataTables();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char *, int bUpdate, int bTestOpen,
+                              char** papszOpenOptions );
     OGRPGTableLayer*    OpenTable( CPLString& osCurrentSchema,
                                    const char * pszTableName,
                                    const char * pszSchemaName,
+                                   const char * pszDescription,
                                    const char * pszGeomColForced,
                                    int bUpdate, int bTestOpen );
 
@@ -496,6 +528,8 @@ class OGRPGDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int );
     OGRLayer            *GetLayerByName(const char * pszName);
 
+    virtual void        FlushCache(void);
+
     virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
@@ -503,11 +537,13 @@ class OGRPGDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    OGRErr              SoftStartTransaction();
-    OGRErr              SoftCommit();
-    OGRErr              SoftRollback();
+    virtual OGRErr      StartTransaction(int bForce = FALSE);
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
 
-    OGRErr              FlushSoftTransaction();
+    OGRErr              SoftStartTransaction();
+    OGRErr              SoftCommitTransaction();
+    OGRErr              SoftRollbackTransaction();
 
     Oid                 GetGeometryOID() { return nGeometryOID; }
     Oid                 GetGeographyOID() { return nGeographyOID; }
@@ -517,31 +553,12 @@ class OGRPGDataSource : public OGRDataSource
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
-    char               *LaunderName( const char * );
+    virtual const char* GetMetadataItem(const char* pszKey,
+                                             const char* pszDomain);
 
     int                 UseCopy();
     void                StartCopy( OGRPGTableLayer *poPGLayer );
     OGRErr              EndCopy( );
-    int                 CopyInProgress( );
 };
 
-/************************************************************************/
-/*                             OGRPGDriver                              */
-/************************************************************************/
-
-class OGRPGDriver : public OGRSFDriver
-{
-  public:
-                ~OGRPGDriver();
-
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-
-    int                 TestCapability( const char * );
-};
-
-#endif /* ndef _OGR_PG_H_INCLUDED */
-
+#endif /* ndef OGR_PG_H_INCLUDED */

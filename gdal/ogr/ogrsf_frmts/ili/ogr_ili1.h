@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_ILI1_H_INCLUDED
-#define _OGR_ILI1_H_INCLUDED
+#ifndef OGR_ILI1_H_INCLUDED
+#define OGR_ILI1_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "ili1reader.h"
@@ -44,7 +44,7 @@ class OGRILI1DataSource;
 class OGRILI1Layer : public OGRLayer
 {
 private:
-#ifdef notused
+#if 0
     OGRSpatialReference *poSRS;
 #endif
     OGRFeatureDefn      *poFeatureDefn;
@@ -54,7 +54,7 @@ private:
     OGRFeature          **papoFeatures;
     int                 nFeatureIdx;
 
-    int                 bGeomsJoined;
+    bool                bGeomsJoined;
 
     OGRILI1DataSource   *poDS;
 
@@ -70,7 +70,8 @@ private:
     void                ResetReading();
     OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextFeatureRef();
-    OGRFeature *        GetFeatureRef( long nFID );
+    OGRFeature *        GetFeatureRef( long nFid );
+    OGRFeature *        GetFeatureRef( const char* );
 
     GIntBig             GetFeatureCount( int bForce = TRUE );
 
@@ -78,6 +79,7 @@ private:
     int                 GeometryAppend( OGRGeometry *poGeometry );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    GeomFieldInfos      GetGeomFieldInfos() { return oGeomFieldInfos; }
 
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
 
@@ -85,7 +87,7 @@ private:
 
   private:
     void                JoinGeomLayers();
-    void                JoinSurfaceLayer( OGRILI1Layer* poSurfacePolyLayer, int nSurfaceFieldIndex );
+    void                JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurfaceFieldIndex );
     OGRMultiPolygon*    Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines = false );
     void                PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nAreaFieldIndex, int nPointFieldIndex );
 };
@@ -109,7 +111,7 @@ class OGRILI1DataSource : public OGRDataSource
                 OGRILI1DataSource();
                ~OGRILI1DataSource();
 
-    int         Open( const char *, int bTestOpen );
+    int         Open( const char *, char** papszOpenOptions, int bTestOpen );
     int         Create( const char *pszFile, char **papszOptions );
 
     const char *GetName() { return pszName; }
@@ -127,4 +129,4 @@ class OGRILI1DataSource : public OGRDataSource
     int         TestCapability( const char * );
 };
 
-#endif /* _OGR_ILI1_H_INCLUDED */
+#endif /* OGR_ILI1_H_INCLUDED */

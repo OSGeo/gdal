@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GPSBABEL_H_INCLUDED
-#define _OGR_GPSBABEL_H_INCLUDED
+#ifndef OGR_GPSBABEL_H_INCLUDED
+#define OGR_GPSBABEL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
@@ -60,7 +60,8 @@ class OGRGPSBabelDataSource : public OGRDataSource
     virtual int         TestCapability( const char * );
 
     int                 Open ( const char* pszFilename,
-                               const char* pszGPSBabelDriverNameIn );
+                               const char* pszGPSBabelDriverNameIn,
+                               char** papszOpenOptions );
 
     static int          IsSpecialFile(const char* pszFilename);
     static int          IsValidDriverName(const char* pszGPSBabelDriverName);
@@ -99,5 +100,4 @@ class OGRGPSBabelWriteDataSource : public OGRDataSource
     int                 Create ( const char* pszFilename, char **papszOptions );
 };
 
-#endif /* ndef _OGR_GPSBABEL_H_INCLUDED */
-
+#endif /* ndef OGR_GPSBABEL_H_INCLUDED */

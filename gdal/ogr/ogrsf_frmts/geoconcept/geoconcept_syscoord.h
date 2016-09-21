@@ -29,8 +29,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
-#ifndef _GEOCONCEPT_SYSCOORD_H_INCLUDED
-#define _GEOCONCEPT_SYSCOORD_H_INCLUDED
+#ifndef GEOCONCEPT_SYSCOORD_H_INCLUDED
+#define GEOCONCEPT_SYSCOORD_H_INCLUDED
 
 #include "ogr_srs_api.h"
 
@@ -62,7 +62,7 @@ typedef struct _tSysCoord_GCSRS GCSysCoord;
 struct _tSpheroidInfo_GCSRS {
   const char *pszSpheroidName;
   double      dfA; /* semi major axis in meters */
-  double      dfE; /* excentricity */
+  double      dfE; /* eccentricity */
   int         nEllipsoidID;
 };
 
@@ -88,6 +88,7 @@ struct _tDatumInfo_GCSRS {
 
 struct _tProjectionInfo_GCSRS {
   const char *pszProjName;
+  /* TODO: Translate to English. */
   int         nSphere;/*
                        * 1 = sphere de courbure
                        * 2 = sphere equatoriale
@@ -100,8 +101,8 @@ struct _tProjectionInfo_GCSRS {
 };
 
 struct _tSysCoord_GCSRS {
-  char   *pszSysCoordName;
-  char   *pszUnit;
+  const char   *pszSysCoordName;
+  const char   *pszUnit;
 
   double  dfPM;
   /* inherited : */
@@ -185,4 +186,4 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
 #endif
 
 
-#endif /* ndef _GEOCONCEPT_SYSCOORD_H_INCLUDED */
+#endif /* ndef GEOCONCEPT_SYSCOORD_H_INCLUDED */

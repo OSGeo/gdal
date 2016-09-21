@@ -27,8 +27,8 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-#ifndef _OGR_OPENFILEGDB_H_INCLUDED
-#define _OGR_OPENFILEGDB_H_INCLUDED
+#ifndef OGR_OPENFILEGDB_H_INCLUDED
+#define OGR_OPENFILEGDB_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
@@ -68,7 +68,6 @@ class OGROpenFileGDBLayer : public OGRLayer
     int               m_iCurFeat;
     std::string       m_osDefinition;
     std::string       m_osDocumentation;
-    std::string       m_osFIDName;
     OGRwkbGeometryType m_eGeomType;
     int               m_bValidLayerDefn;
     int               m_bEOF;
@@ -78,7 +77,7 @@ class OGROpenFileGDBLayer : public OGRLayer
     OGRFeature       *GetCurrentFeature();
 
     FileGDBOGRGeometryConverter* m_poGeomConverter;
-    
+
     int               m_iFieldToReadAsBinary;
 
     FileGDBIterator      *m_poIterator;
@@ -104,7 +103,7 @@ public:
                                             const char* pszGeomName = NULL,
                                             OGRwkbGeometryType eGeomType = wkbUnknown);
   virtual              ~OGROpenFileGDBLayer();
-  
+
   const std::string&    GetXMLDefinition() { return m_osDefinition; }
   const std::string&    GetXMLDocumentation() { return m_osDocumentation; }
   int                   GetAttrIndexUse() { return (m_poIterator == NULL) ? 0 : (m_bIteratorSufficientToEvaluateFilter) ? 2 : 1; }
@@ -116,7 +115,7 @@ public:
   int                   HasIndexForField(const char* pszFieldName);
   FileGDBIterator*      BuildIndex(const char* pszFieldName,
                                    int bAscending,
-                                   swq_op op,
+                                   int op,
                                    swq_expr_node* poValue);
   SPIState              GetSpatialIndexState() const { return m_eSpatialIndexState; }
   int                   IsValidLayerDefn() { return BuildLayerDefinition(); }
@@ -133,11 +132,14 @@ public:
 
   virtual GIntBig     GetFeatureCount( int bForce = TRUE );
   virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
   virtual OGRFeatureDefn* GetLayerDefn();
 
   virtual void        SetSpatialFilter( OGRGeometry * );
-
+  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
   virtual OGRErr      SetAttributeFilter( const char* pszFilter );
 
   virtual int         TestCapability( const char * );
@@ -157,7 +159,7 @@ class OGROpenFileGDBDataSource : public OGRDataSource
   std::map<std::string, int>     m_osMapNameToIdx;
 
   /* For debugging/testing */
-  int                            bLastSQLUsedOptimizedImplementation;
+  bool                           bLastSQLUsedOptimizedImplementation;
 
   int                 OpenFileGDBv10(int iGDBItems,
                                      int nInterestTable);
@@ -169,7 +171,7 @@ class OGROpenFileGDBDataSource : public OGRDataSource
   void                AddLayer( const CPLString& osName,
                                 int nInterestTable,
                                 int& nCandidateLayers,
-                                int& nLayersSDC,
+                                int& nLayersSDCOrCDF,
                                 const CPLString& osDefinition,
                                 const CPLString& osDocumentation,
                                 const char* pszGeomName,
@@ -193,10 +195,10 @@ public:
   virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
 
   virtual int         TestCapability( const char * );
-  
+
   virtual char      **GetFileList();
 };
 
 int OGROpenFileGDBIsComparisonOp(int op);
 
-#endif /* ndef _OGR_OPENFILEGDB_H_INCLUDED */
+#endif /* ndef OGR_OPENFILEGDB_H_INCLUDED */

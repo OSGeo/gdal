@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL 
+ * Project:  GDAL
  * Purpose:  CPLString implementation.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -34,9 +34,9 @@
 CPL_CVSID("$Id$");
 
 /*
- * The CPLString class is derived from std::string, so the vast majority 
+ * The CPLString class is derived from std::string, so the vast majority
  * of the implementation comes from that.  This module is just the extensions
- * we add. 
+ * we add.
  */
 
 /************************************************************************/
@@ -82,8 +82,6 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 /*      result.                                                         */
 /* -------------------------------------------------------------------- */
 #else
-    char szModestBuffer[500];
-    int nPR;
     va_list wrk_args;
 
 #ifdef va_copy
@@ -91,13 +89,16 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 #else
     wrk_args = args;
 #endif
-    
-    nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat, 
-                     wrk_args );
+
+    char szModestBuffer[500];
+    szModestBuffer[0] = '\0';
+    int nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat,
+                             wrk_args );
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
-        char *pszWorkBuffer = (char *) CPLMalloc(nWorkBufferSize);
+        char *pszWorkBuffer = reinterpret_cast<char *>(
+            CPLMalloc(nWorkBufferSize));
 
 #ifdef va_copy
         va_end( wrk_args );
@@ -106,11 +107,11 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
         wrk_args = args;
 #endif
         while( (nPR=CPLvsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,wrk_args))
-               >= nWorkBufferSize-1 
+               >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer, 
+            pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer,
                                                 nWorkBufferSize );
 #ifdef va_copy
             va_end( wrk_args );
@@ -141,16 +142,16 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 
 /**
  * Format double in C locale.
- * 
- * The passed value is formatted using the C locale (period as decimal 
- * seperator) and appended to the target CPLString. 
  *
- * @param dfValue the value to format. 
+ * The passed value is formatted using the C locale (period as decimal
+ * separator) and appended to the target CPLString.
+ *
+ * @param dfValue the value to format.
  * @param pszFormat the sprintf() style format to use or omit for default.
- * Note that this format string should only include one substitution argument 
- * and it must be for a double (%f or %g). 
+ * Note that this format string should only include one substitution argument
+ * and it must be for a double (%f or %g).
  *
- * @return a reference to the CPLString. 
+ * @return a reference to the CPLString.
  */
 
 CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
@@ -159,13 +160,14 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
     if( pszFormat == NULL )
         pszFormat = "%g";
 
-    char szWork[512]; // presumably long enough for any number?
+    // presumably long enough for any number.
+    const size_t buf_size = 512;
+    char szWork[buf_size];
 
-    CPLsprintf( szWork, pszFormat, dfValue );
-    CPLAssert( strlen(szWork) < sizeof(szWork) );
+    CPLsnprintf( szWork, buf_size, pszFormat, dfValue );
 
     *this += szWork;
-    
+
     return *this;
 }
 
@@ -179,24 +181,23 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
  * Trims white space off the let and right of the string.  White space
  * is any of a space, a tab, a newline ('\n') or a carriage control ('\r').
  *
- * @return a reference to the CPLString. 
+ * @return a reference to the CPLString.
  */
 
 CPLString &CPLString::Trim()
 
 {
-    size_t iLeft, iRight;
     static const char szWhitespace[] = " \t\r\n";
 
-    iLeft = find_first_not_of( szWhitespace );
-    iRight = find_last_not_of( szWhitespace );
+    const size_t iLeft = find_first_not_of( szWhitespace );
+    const size_t iRight = find_last_not_of( szWhitespace );
 
     if( iLeft == std::string::npos )
     {
         erase();
         return *this;
     }
-    
+
     assign( substr( iLeft, iRight - iLeft + 1 ) );
 
     return *this;
@@ -218,7 +219,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
     if( strcmp(pszSrcEncoding,pszDstEncoding) == 0 )
         return *this;
 
-    char *pszRecoded = CPLRecode( c_str(), 
+    char *pszRecoded = CPLRecode( c_str(),
                                   pszSrcEncoding,
                                   pszDstEncoding );
 
@@ -235,7 +236,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
 /*                               ifind()                                */
 /************************************************************************/
 
-/** 
+/**
  * Case insensitive find() alternative.
  *
  * @param str substring to find.
@@ -264,7 +265,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 {
     const char *pszHaystack = c_str();
     char chFirst = (char) ::tolower( s[0] );
-    int nTargetLen = strlen(s);
+    size_t nTargetLen = strlen(s);
 
     if( nPos > size() )
         nPos = size();
@@ -297,9 +298,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 CPLString &CPLString::toupper()
 
 {
-    size_t i;
-
-    for( i = 0; i < size(); i++ )
+    for( size_t i = 0; i < size(); i++ )
         (*this)[i] = (char) ::toupper( (*this)[i] );
 
     return *this;
@@ -316,9 +315,7 @@ CPLString &CPLString::toupper()
 CPLString &CPLString::tolower()
 
 {
-    size_t i;
-
-    for( i = 0; i < size(); i++ )
+    for(size_t i = 0; i < size(); i++ )
         (*this)[i] = (char) ::tolower( (*this)[i] );
 
     return *this;
@@ -422,10 +419,11 @@ CPLString CPLOPrintf( const char *pszFormat, ... )
 
 {
     va_list args;
-    CPLString osTarget;
-
     va_start( args, pszFormat );
+
+    CPLString osTarget;
     osTarget.vPrintf( pszFormat, args );
+
     va_end( args );
 
     return osTarget;

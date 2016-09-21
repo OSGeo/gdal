@@ -23,7 +23,7 @@
 namespace tut
 {
   /**
-   * Exception to be throwed when attempted to execute 
+   * Exception to throw when attempted to execute 
    * missed test by number.
    */
   struct no_such_test : public std::logic_error
@@ -51,7 +51,7 @@ namespace tut
   };
 
   /**
-   * Internal exception to be throwed when 
+   * Internal exception to throw when 
    * no more tests left in group or journal.
    */
   struct no_more_tests
@@ -60,7 +60,7 @@ namespace tut
   };
 
   /**
-   * Internal exception to be throwed when 
+   * Internal exception to throw when 
    * test constructor has failed.
    */
   struct bad_ctor : public std::logic_error
@@ -70,7 +70,7 @@ namespace tut
   };
 
   /**
-   * Exception to be throwed when ensure() fails or fail() called.
+   * Exception to be thrown when ensure() fails or fail() called.
    */
   class failure : public std::logic_error
   {
@@ -79,7 +79,7 @@ namespace tut
   };
 
   /**
-   * Exception to be throwed when test desctructor throwed an exception.
+   * Exception to be thrown when test desctructor throws an exception.
    */
   class warning : public std::logic_error
   {
@@ -88,7 +88,7 @@ namespace tut
   };
 
   /**
-   * Exception to be throwed when test issued SEH (Win32)
+   * Exception to be thrown when test issues SEH (Win32)
    */
   class seh : public std::logic_error
   {
@@ -97,7 +97,7 @@ namespace tut
   };
 
   /**
-   * Return type of runned test/test group.
+   * Return type of ran test/test group.
    *
    * For test: contains result of test and, possible, message
    * for failure or exception.
@@ -122,8 +122,8 @@ namespace tut
     /**
      * ok - test finished successfully
      * fail - test failed with ensure() or fail() methods
-     * ex - test throwed an exceptions
-     * warn - test finished successfully, but test destructor throwed
+     * ex - test throws an exceptions
+     * warn - test finished successfully, but test destructor threw
      * term - test forced test application to terminate abnormally
      */
     typedef enum { ok, fail, ex, warn, term, ex_ctor } result_type;
@@ -221,6 +221,8 @@ namespace tut
      * Called when all tests in run completed.
      */
     virtual void run_completed(){};
+    
+    virtual bool all_ok() const { return true; }
   };
 
   /**
@@ -307,8 +309,9 @@ namespace tut
     /**
      * Runs all tests in all groups.
      * @param callback Callback object if exists; null otherwise
+     * @return true if everything's OK
      */
-    void run_tests() const
+    bool run_tests() const
     {
       callback_->run_started();
 
@@ -330,6 +333,8 @@ namespace tut
       }
 
       callback_->run_completed();
+      
+      return callback_->all_ok();
     }
 
     /**
@@ -446,10 +451,10 @@ namespace tut
 
     /**
      * The flag is set to true by default (dummy) test.
-     * Used to detect usused test numbers and avoid unnecessary
+     * Used to detect unused test numbers and avoid unnecessary
      * test object creation which may be time-consuming depending
      * on operations described in Data::Data() and Data::~Data().
-     * TODO: replace with throwing special exception from default test.
+     * TODO: Replace with throwing special exception from default test.
      */
     bool called_method_was_a_dummy_test_;
     
@@ -520,6 +525,16 @@ namespace tut
     void ensure_equals(const Q& actual,const T& expected)
     {
       ensure_equals<>(0,actual,expected);
+    }
+
+    void ensure_equals(const char* msg, const char* actual,const char* expected)
+    {
+      ensure_equals(msg, std::string(actual), std::string(expected));
+    }
+
+    void ensure_equals(const char* actual,const char* expected)
+    {
+      ensure_equals(0,actual,expected);
     }
 
     /**
@@ -635,7 +650,7 @@ namespace tut
        * Specially treats exceptions in test object destructor; 
        * if test itself failed, exceptions in destructor
        * are ignored; if test was successful and destructor failed,
-       * warning exception throwed.
+       * warning exception thrown.
        */
       void release()
       {
@@ -779,7 +794,7 @@ namespace tut
       if( tests_.rbegin() == tests_.rend() ) throw beyond_last_test();
       if( tests_.rbegin()->first < n ) throw beyond_last_test();
 
-      // withing scope; check if given test exists
+      // within scope; check if given test exists
       tests_iterator ti = tests_.find(n);
       if( ti == tests_.end() ) throw no_such_test();
 

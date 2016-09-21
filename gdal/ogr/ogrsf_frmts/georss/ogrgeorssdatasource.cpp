@@ -38,21 +38,24 @@ CPL_CVSID("$Id$");
 /*                          OGRGeoRSSDataSource()                          */
 /************************************************************************/
 
-OGRGeoRSSDataSource::OGRGeoRSSDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    fpOutput = NULL;
-
-    pszName = NULL;
-
-    eFormat = GEORSS_RSS;
-    eGeomDialect = GEORSS_SIMPLE;
-    bUseExtensions = FALSE;
-    bWriteHeaderAndFooter = TRUE;
-}
+OGRGeoRSSDataSource::OGRGeoRSSDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    fpOutput(NULL),
+#ifdef HAVE_EXPAT
+    validity(GEORSS_VALIDITY_UNKNOWN),
+#endif
+    eFormat(GEORSS_RSS),
+    eGeomDialect(GEORSS_SIMPLE),
+    bUseExtensions(FALSE),
+    bWriteHeaderAndFooter(TRUE)
+#ifdef HAVE_EXPAT
+    ,
+    oCurrentParser(NULL),
+    nDataHandlerCounter(0)
+#endif
+{ }
 
 /************************************************************************/
 /*                         ~OGRGeoRSSDataSource()                          */
@@ -139,7 +142,7 @@ OGRLayer * OGRGeoRSSDataSource::ICreateLayer( const char * pszLayerName,
     nLayers++;
     papoLayers = (OGRGeoRSSLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGeoRSSLayer*));
     papoLayers[nLayers-1] = new OGRGeoRSSLayer( pszName, pszLayerName, this, poSRS, TRUE );
-    
+
     return papoLayers[nLayers-1];
 }
 
@@ -148,21 +151,22 @@ OGRLayer * OGRGeoRSSDataSource::ICreateLayer( const char * pszLayerName,
 /*                startElementValidateCbk()                             */
 /************************************************************************/
 
-void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszName, const char **ppszAttr)
+void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszNameIn, const char **ppszAttr)
 {
     if (validity == GEORSS_VALIDITY_UNKNOWN)
     {
-        if (strcmp(pszName, "rss") == 0)
+        if (strcmp(pszNameIn, "rss") == 0)
         {
             validity = GEORSS_VALIDITY_VALID;
             eFormat = GEORSS_RSS;
         }
-        else if (strcmp(pszName, "feed") == 0)
+        else if (strcmp(pszNameIn, "feed") == 0 ||
+                 strcmp(pszNameIn, "atom:feed") == 0)
         {
             validity = GEORSS_VALIDITY_VALID;
             eFormat = GEORSS_ATOM;
         }
-        else if (strcmp(pszName, "rdf:RDF") == 0)
+        else if (strcmp(pszNameIn, "rdf:RDF") == 0)
         {
             const char** ppszIter = ppszAttr;
             while(*ppszIter)
@@ -234,20 +238,20 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp == NULL)
         return FALSE;
-    
+
     validity = GEORSS_VALIDITY_UNKNOWN;
-    
+
     XML_Parser oParser = OGRCreateExpatXMLParser();
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
     oCurrentParser = oParser;
-    
+
     char aBuf[BUFSIZ];
     int nDone;
     unsigned int nLen;
     int nCount = 0;
-    
+
     /* Begin to parse the file and look for the <rss> or <feed> element */
     /* It *MUST* be the first element of an XML file */
     /* So once we have read the first element, we know if we can */
@@ -263,7 +267,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 aBuf[nLen] = 0;
             else
                 aBuf[BUFSIZ-1] = 0;
-            if (strstr(aBuf, "<?xml") && (strstr(aBuf, "<rss") || strstr(aBuf, "<feed")))
+            if (strstr(aBuf, "<?xml") && (strstr(aBuf, "<rss") || strstr(aBuf, "<feed") || strstr(aBuf, "<atom:feed")))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "XML parsing of GeoRSS file failed : %s at line %d, column %d",
@@ -291,11 +295,11 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 break;
         }
     } while (!nDone && nLen > 0 );
-    
+
     XML_ParserFree(oParser);
-    
+
     VSIFCloseL(fp);
-    
+
     if (validity == GEORSS_VALIDITY_VALID)
     {
         CPLDebug("GeoRSS", "%s seems to be a GeoRSS file.", pszFilename);
@@ -313,7 +317,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, 255, fp );
         aBuf[nLen] = 0;
-        if (strstr(aBuf, "<?xml") && (strstr(aBuf, "<rss") || strstr(aBuf, "<feed")))
+        if (strstr(aBuf, "<?xml") && (strstr(aBuf, "<rss") || strstr(aBuf, "<atom:feed") || strstr(aBuf, "<feed")))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                     "OGR/GeoRSS driver has not been built with read support. Expat library required");
@@ -329,7 +333,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRGeoRSSDataSource::Create( const char *pszFilename, 
+int OGRGeoRSSDataSource::Create( const char *pszFilename,
                                  char **papszOptions )
 {
     if( fpOutput != NULL)
@@ -353,7 +357,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
                  pszFilename);
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
@@ -362,8 +366,8 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     fpOutput = VSIFOpenL( pszFilename, "w" );
     if( fpOutput == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create GeoRSS file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create GeoRSS file %s.",
                   pszFilename );
         return FALSE;
     }
@@ -399,7 +403,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     }
 
     const char* pszWriteHeaderAndFooter = CSLFetchNameValue(papszOptions, "WRITE_HEADER_AND_FOOTER");
-    if (pszWriteHeaderAndFooter && CSLTestBoolean(pszWriteHeaderAndFooter) == FALSE)
+    if (pszWriteHeaderAndFooter && CPLTestBool(pszWriteHeaderAndFooter) == FALSE)
     {
         bWriteHeaderAndFooter = FALSE;
         return TRUE;
@@ -450,7 +454,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     }
 
     const char* pszUseExtensions = CSLFetchNameValue( papszOptions, "USE_EXTENSIONS");
-    bUseExtensions =  (pszUseExtensions && CSLTestBoolean(pszUseExtensions));
+    bUseExtensions = pszUseExtensions && CPLTestBool(pszUseExtensions);
 
 /* -------------------------------------------------------------------- */
 /*     Output header of GeoRSS file.                                       */

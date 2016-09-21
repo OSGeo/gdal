@@ -32,12 +32,6 @@
 
 #include "cpl_vsi_virtual.h"
 
-
-/* begin of poppler xpdf includes */
-#include <poppler/Object.h>
-#include <poppler/Stream.h>
-/* end of poppler xpdf includes */
-
 /************************************************************************/
 /*                         VSIPDFFileStream                             */
 /************************************************************************/
@@ -101,7 +95,7 @@ class VSIPDFFileStream: public BaseStream
         GooString         *poFilename;
         VSILFILE          *f;
         vsi_l_offset       nStart;
-        int                bLimited;
+        GBool              bLimited;
         vsi_l_offset       nLength;
 
         vsi_l_offset       nCurrentPos;

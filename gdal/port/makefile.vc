@@ -49,6 +49,11 @@ OBJ	=	cpl_conv.obj \
 		cpl_google_oauth2.obj \
 		cpl_progress.obj \
 		cpl_virtualmem.obj \
+		cpl_worker_thread_pool.obj \
+		cpl_vsil_crypt.obj \
+		cpl_sha256.obj \
+		cpl_aws.obj \
+		cpl_vsi_error.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
@@ -71,6 +76,14 @@ EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
 EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_LIBXML2 $(LIBXML2_INC)
 !ENDIF
 
+!IFDEF CRYPTOPP_INC
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_CRYPTOPP $(CRYPTOPP_INC)
+!ENDIF
+
+!IFDEF USE_ONLY_CRYPTODLL_ALG
+EXTRAFLAGS =	$(EXTRAFLAGS) -DUSE_ONLY_CRYPTODLL_ALG
+!ENDIF
+
 !IFDEF ODBC_SUPPORTED
 ODBC_OBJ =	cpl_odbc.obj
 !ENDIF
@@ -85,5 +98,3 @@ clean:
 
 cpl_config.h:	cpl_config.h.vc
 	copy cpl_config.h.vc cpl_config.h
-
-

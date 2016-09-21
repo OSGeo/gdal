@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.74 2012-06-21 02:01:31 fwarmerdam Exp $ */
+/* $Id: tif_fax3.c,v 1.77 2015-12-19 21:50:52 erouault Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -442,8 +442,9 @@ _TIFFFax3fillruns(unsigned char* buf, uint32* runs, uint32* erun, uint32 lastx)
 			FILL(n, cp);
 			run &= 7;
 		    }
+                    /* Explicit 0xff masking to make icc -check=conversions happy */
 		    if (run)
-			cp[0] |= 0xff00 >> run;
+			cp[0] = (unsigned char)((cp[0] | (0xff00 >> run))&0xff);
 		} else
 		    cp[0] |= _fillmasks[run]>>bx;
 		x += runs[1];
@@ -696,7 +697,6 @@ Fax3PutEOL(TIFF* tif)
 				align = sp->bit + (8 - align);
 			else
 				align = sp->bit - align;
-			code = 0;
 			tparm=align; 
 			_PutBits(tif, 0, tparm);
 		}
@@ -814,7 +814,7 @@ find0span(unsigned char* bp, int32 bs, int32 be)
 	/*
 	 * Check partial byte on lhs.
 	 */
-	if (bits > 0 && (n = (bs & 7))) {
+	if (bits > 0 && (n = (bs & 7)) != 0) {
 		span = zeroruns[(*bp << n) & 0xff];
 		if (span > 8-n)		/* table value too generous */
 			span = 8-n;
@@ -873,7 +873,7 @@ find1span(unsigned char* bp, int32 bs, int32 be)
 	/*
 	 * Check partial byte on lhs.
 	 */
-	if (bits > 0 && (n = (bs & 7))) {
+	if (bits > 0 && (n = (bs & 7)) != 0) {
 		span = oneruns[(*bp << n) & 0xff];
 		if (span > 8-n)		/* table value too generous */
 			span = 8-n;
@@ -1181,7 +1181,7 @@ Fax3VSetField(TIFF* tif, uint32 tag, va_list ap)
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
 	
-	if ((fip = TIFFFieldWithTag(tif, tag)))
+	if ((fip = TIFFFieldWithTag(tif, tag)) != NULL)
 		TIFFSetFieldBit(tif, fip->field_bit);
 	else
 		return 0;

@@ -25,8 +25,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef __INCLUDE_PCIDSK_EDB_H
-#define __INCLUDE_PCIDSK_EDB_H
+#ifndef INCLUDE_PCIDSK_EDB_H
+#define INCLUDE_PCIDSK_EDB_H
 
 #include "pcidsk_config.h"
 
@@ -63,4 +63,4 @@ namespace PCIDSK
                                        std::string access);    
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_PCIDSK_EDB_H
+#endif // INCLUDE_PCIDSK_EDB_H

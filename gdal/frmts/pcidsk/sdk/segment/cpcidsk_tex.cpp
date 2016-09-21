@@ -36,9 +36,9 @@ using namespace PCIDSK;
 /*                            CPCIDSK_TEX()                             */
 /************************************************************************/
 
-CPCIDSK_TEX::CPCIDSK_TEX( PCIDSKFile *file, int segment,
+CPCIDSK_TEX::CPCIDSK_TEX( PCIDSKFile *fileIn, int segmentIn,
                           const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer )
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer )
 
 {
 }

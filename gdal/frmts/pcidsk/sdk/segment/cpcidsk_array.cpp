@@ -39,9 +39,9 @@ using namespace PCIDSK;
 /*                            CPCIDSK_ARRAY()                           */
 /************************************************************************/
 
-CPCIDSK_ARRAY::CPCIDSK_ARRAY( PCIDSKFile *file, int segment,
+CPCIDSK_ARRAY::CPCIDSK_ARRAY( PCIDSKFile *fileIn, int segmentIn,
                               const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer ),
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer ),
         loaded_(false),mbModified(false)
 {
     MAX_DIMENSIONS = 8;
@@ -68,10 +68,10 @@ void CPCIDSK_ARRAY::Load()
     }
 
     PCIDSKBuffer& seg_header = this->GetHeader();
-    seg_data.SetSize(GetContentSize());
+    seg_data.SetSize(static_cast<int>(GetContentSize()));
     ReadFromFile(seg_data.buffer, 0, seg_data.buffer_size);
 
-    if(std::strncmp(seg_header.buffer+160, "64R     ", 8))
+    if(!STARTS_WITH(seg_header.buffer+160, "64R     "))
     {
         seg_header.Put("64R     ",160,8);
         loaded_ = true;
@@ -85,7 +85,7 @@ void CPCIDSK_ARRAY::Load()
         oStream << "Invalid array dimension " << nDimension;
         oStream << " stored in the segment.";
         std::string oMsg = oStream.str();
-        throw PCIDSKException(oMsg.c_str());
+        return ThrowPCIDSKException("%s", oMsg.c_str());
     }
     mnDimension = static_cast<unsigned char>(nDimension);
 
@@ -98,7 +98,7 @@ void CPCIDSK_ARRAY::Load()
             std::stringstream oStream;
             oStream << "Invalid size " << nSize << " for dimension " << i+1;
             std::string oMsg = oStream.str();
-            throw PCIDSKException(oMsg.c_str());
+            return ThrowPCIDSKException("%s", oMsg.c_str());
         }
 		moSizes.push_back( nSize );
     }
@@ -140,10 +140,10 @@ void CPCIDSK_ARRAY::Write(void)
     }
 
     PCIDSKBuffer& seg_header = this->GetHeader();
-    int nBlocks = (moArray.size()*8 + 511)/512 ;
+    int nBlocks = (static_cast<int>(moArray.size())*8 + 511)/512 ;
     unsigned int nSizeBuffer = (nBlocks)*512 ;
     //64 values can be put into 512 bytes.
-    unsigned int nRest = nBlocks*64 - moArray.size();
+    unsigned int nRest = nBlocks*64 - static_cast<unsigned int>(moArray.size());
 
     seg_data.SetSize(nSizeBuffer);
 
@@ -166,7 +166,7 @@ void CPCIDSK_ARRAY::Write(void)
     //set the end of the buffer to 0.
     for( unsigned int i=0 ; i < nRest ; i++)
     {
-        seg_data.Put(0.0,(moArray.size()+i)*8,8,"%22.14f");
+        seg_data.Put(0.0,(static_cast<int>(moArray.size())+i)*8,8,"%22.14f");
     }
 
     WriteToFile(seg_data.buffer,0,seg_data.buffer_size);
@@ -175,7 +175,7 @@ void CPCIDSK_ARRAY::Write(void)
 }
 
 /**
- * Synchronize the segement, if it was modified then
+ * Synchronize the segment, if it was modified then
  * write it into disk.
  */
 void CPCIDSK_ARRAY::Synchronize()
@@ -210,7 +210,7 @@ void CPCIDSK_ARRAY::SetDimensionCount(unsigned char nDim)
 {
     if(nDim < 1 || nDim > 8)
     {
-        throw PCIDSKException("An array cannot have a "
+        return ThrowPCIDSKException("An array cannot have a "
             "dimension bigger than 8 or smaller than 1.");
     }
     mnDimension = nDim;
@@ -239,7 +239,7 @@ void CPCIDSK_ARRAY::SetSizes(const std::vector<unsigned int>& oSizes)
 {
     if(oSizes.size() != GetDimensionCount())
     {
-        throw PCIDSKException("You need to specify the sizes"
+        return ThrowPCIDSKException("You need to specify the sizes"
             " for each dimension of the array");
     }
 
@@ -247,7 +247,7 @@ void CPCIDSK_ARRAY::SetSizes(const std::vector<unsigned int>& oSizes)
     {
         if(oSizes[i] == 0)
         {
-            throw PCIDSKException("You cannot define the size of a dimension to 0.");
+            return ThrowPCIDSKException("You cannot define the size of a dimension to 0.");
         }
     }
     moSizes = oSizes;
@@ -298,7 +298,7 @@ void CPCIDSK_ARRAY::SetArray(const std::vector<double>& oArray)
 
     if(nLength != oArray.size())
     {
-        throw PCIDSKException("the size of this array doesn't match "
+        return ThrowPCIDSKException("the size of this array doesn't match "
             "the size specified in GetSizes(). See documentation for"
             " more information.");
     }

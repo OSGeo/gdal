@@ -23,7 +23,7 @@ static const struct gridtemplate templatesgrid[MAXGRIDTEMP] = {
          {30, 22, 0, {1,1,4,1,4,1,4,4,4,-4,-4,1,-4,-4,4,4,1,1,-4,-4,-4,-4} },
              // 3.31: Albers equal area
          {31, 22, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,4,1,1,-4,-4,-4,4} },
-             // 3.40: Guassian Lat/Lon
+             // 3.40: Gaussian Lat/Lon
          {40, 19, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1} },
              // 3.41: Rotated Gaussian Lat/Lon
          {41, 22, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1,-4,4,4} },
@@ -90,16 +90,16 @@ g2int getgridindex(g2int number)
 !
 !$$$*/
 {
-           g2int j,getgridindex=-1;
+           g2int j,l_getgridindex=-1;
 
            for (j=0;j<MAXGRIDTEMP;j++) {
               if (number == templatesgrid[j].template_num) {
-                 getgridindex=j;
-                 return(getgridindex);
+                 l_getgridindex=j;
+                 return(l_getgridindex);
               }
            }
 
-           return(getgridindex);
+           return(l_getgridindex);
 }
 
 xxtemplate *getgridtemplate(g2int number)
@@ -134,18 +134,18 @@ xxtemplate *getgridtemplate(g2int number)
 !
 !$$$*/
 {
-           g2int index;
+           g2int l_index;
            xxtemplate *new;
 
-           index=getgridindex(number);
+           l_index=getgridindex(number);
 
-           if (index != -1) {
+           if (l_index != -1) {
               new=(xxtemplate *)malloc(sizeof(xxtemplate));
               new->type=3;
-              new->num=templatesgrid[index].template_num;
-              new->maplen=templatesgrid[index].mapgridlen;
-              new->needext=templatesgrid[index].needext;
-              new->map=(g2int *)templatesgrid[index].mapgrid;
+              new->num=templatesgrid[l_index].template_num;
+              new->maplen=templatesgrid[l_index].mapgridlen;
+              new->needext=templatesgrid[l_index].needext;
+              new->map=(g2int *)templatesgrid[l_index].mapgrid;
               new->extlen=0;
               new->ext=0;        //NULL
               return(new);
@@ -192,12 +192,13 @@ xxtemplate *extgridtemplate(g2int number,g2int *list)
 !$$$*/
 {
            xxtemplate *new;
-           g2int index,i;
+           g2int l_index,i;
 
-           index=getgridindex(number);
-           if (index == -1) return(0);
+           l_index=getgridindex(number);
+           if (l_index == -1) return(0);
 
            new=getgridtemplate(number);
+           if( new == NULL ) return(NULL);
 
            if ( ! new->needext ) return(new);
 

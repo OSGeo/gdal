@@ -12,6 +12,10 @@ EXTRAFLAGS = 	-I..\pds -I$(HDF4_DIR)\include -Ihdf-eos -DFRMT_hdf4
 EXTRAFLAGS = $(EXTRAFLAGS) -DHDF4_PLUGIN
 !ENDIF
 
+!IF "$(HDF4_HAS_MAXOPENFILES)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DHDF4_HAS_MAXOPENFILES
+!ENDIF
+
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

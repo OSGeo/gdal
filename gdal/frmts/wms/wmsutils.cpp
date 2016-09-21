@@ -35,7 +35,7 @@ CPLString MD5String(const char *s) {
     const char *tohex = "0123456789abcdef";
     struct cvs_MD5Context context;
     cvs_MD5Init(&context);
-    cvs_MD5Update(&context, reinterpret_cast<unsigned char const *>(s), strlen(s));
+    cvs_MD5Update(&context, reinterpret_cast<unsigned char const *>(s), static_cast<int>(strlen(s)));
     cvs_MD5Final(hash, &context);
     for (int i = 0; i < 16; ++i) {
         hhash[i * 2] = tohex[(hash[i] >> 4) & 0xf];
@@ -147,5 +147,5 @@ int URLSearchAndReplace (CPLString *base, const char *search, const char *fmt, .
     va_end(args);
 
     base->replace(start, strlen(search), tmp);
-    return start;
+    return static_cast<int>(start);
 }

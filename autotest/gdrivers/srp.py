@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 from osgeo import gdal
 from osgeo import osr
@@ -100,14 +101,15 @@ def srp_2():
 
 def srp_3():
     return srp_1('USRP_PCB8/FKUSRP01.IMG')
-    
+
 ###############################################################################
 # Read from TRANSH01.THF file.
 
 def srp_4():
 
     tst = gdaltest.GDALTest( 'SRP', 'USRP_PCB0/TRANSH01.THF', 1, 24576 )
-    return tst.testOpen()
+    ret = tst.testOpen()
+    return ret
 
 ###############################################################################
 # Read from TRANSH01.THF file (without "optimization" for single GEN in THF)
@@ -152,6 +154,16 @@ def srp_6():
     tst = gdaltest.GDALTest( 'SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute = 1 )
     return tst.testOpen()
 
+
+###############################################################################
+# Cleanup
+
+def srp_cleanup():
+
+    # FIXME ?
+    os.unlink('data/USRP_PCB0/TRANSH01.THF.aux.xml')
+    return 'success'
+
 ###############################################################################
 
 gdaltest_list = [
@@ -160,7 +172,8 @@ gdaltest_list = [
     srp_3,
     srp_4,
     srp_5,
-    srp_6
+    srp_6,
+    srp_cleanup
  ]
 
 if __name__ == '__main__':

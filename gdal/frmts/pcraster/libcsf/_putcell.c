@@ -1,6 +1,3 @@
-/*
- * _putcell.c
- */
 #include "csf.h"
 #include "csfimpl.h"
 

@@ -12,6 +12,8 @@ gdalvars:
 
 python: gdalvars 
         cd python
+        -del setup_vars.ini
+        echo 'GNM_ENABLED=$(GNM_ENABLED)' > setup_vars.ini
         $(SWIG) -python -modern -new_repr -o extensions/gdalconst_wrap.c -outdir osgeo ..\include\gdalconst.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/gdal_wrap.cpp -outdir osgeo ..\include\gdal.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/osr_wrap.cpp -outdir osgeo ..\include\osr.i
@@ -50,16 +52,22 @@ java: gdalvars
         cd const
         $(SWIG) -java -c++ -package org.gdal.gdalconst -outdir ../org/gdal/gdalconst -I../../include/java -o gdalconst_wrap.cpp ../../../include/gdalconst.i
         cd ..
+		cd org\gdal
+        if not exist gnm mkdir gnm
+        cd ../../
+		cd gnm
+        $(SWIG) -java -c++ -package org.gdal.gnm -outdir ../org/gdal/gnm -I../../include/java -o gnm_wrap.cpp ../../../include/gnm.i
+        cd ..
         $(MAKE) /f makefile.vc
 
-ruby: gdalvars
-        cd ruby
-        $(SWIG) -ruby -I../include/ruby -o gdalconst_wrap.c -autorename -prefix "gdal::" ../include/gdalconst.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o gdal_wrap.cpp -autorename -prefix "gdal::" ../include/gdal.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o osr_wrap.cpp -autorename -prefix "gdal::" ../include/osr.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp -autorename -prefix "gdal::" ../include/ogr.i
-        $(MAKE) /f makefile.vc build
-        $(MAKE) /f makefile.vc install 
+#ruby: gdalvars
+#        cd ruby
+#        $(SWIG) -ruby -I../include/ruby -o gdalconst_wrap.c -autorename -prefix "gdal::" ../include/gdalconst.i
+#        $(SWIG) -c++ -ruby -I../include/ruby -o gdal_wrap.cpp -autorename -prefix "gdal::" ../include/gdal.i
+#        $(SWIG) -c++ -ruby -I../include/ruby -o osr_wrap.cpp -autorename -prefix "gdal::" ../include/osr.i
+#        $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp -autorename -prefix "gdal::" ../include/ogr.i
+#        $(MAKE) /f makefile.vc build
+#        $(MAKE) /f makefile.vc install 
         
 test: gdalvars
 				cd $(GDAL_HOME)\..\gdalautotest

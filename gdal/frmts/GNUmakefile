@@ -6,6 +6,11 @@ OBJ	=	o/gdalallregister.o
 
 FRMT_FLAGS	=	$(foreach FRMT, $(GDAL_FORMATS), -DFRMT_$(FRMT))
 
+ifeq ($(GNM_ENABLED),yes)
+   GDAL_INCLUDE += -I$(GDAL_ROOT)/gnm -I$(GDAL_ROOT)/gnm/gnm_frmts
+   CXXFLAGS += -DGNM_ENABLED
+endif
+
 %-install-obj:
 	$(MAKE) -C $* install-obj
 
@@ -16,7 +21,7 @@ clean:	$(foreach d,$(GDAL_FORMATS),$(d)-clean)
 	$(RM) o/*.lo
 
 o/gdalallregister.$(OBJ_EXT):	gdalallregister.cpp ../GDALmake.opt
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(FRMT_FLAGS) \
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $(FRMT_FLAGS) \
 		-DGDAL_FORMATS="$(GDAL_FORMATS)" \
 		gdalallregister.cpp -o o/gdalallregister.$(OBJ_EXT)
 

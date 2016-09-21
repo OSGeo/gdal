@@ -39,8 +39,41 @@ CPL_CVSID("$Id$");
 static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return poOpenInfo->fpL != NULL &&
-           EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"dxf");
+    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0 )
+        return FALSE;
+    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"dxf") )
+        return TRUE;
+    const char* pszIter = (const char*)poOpenInfo->pabyHeader;
+    int bFoundZero = FALSE;
+    int i = 0;
+    for(i=0; pszIter[i]; i++)
+    {
+        if( pszIter[i] == '0' )
+        {
+            int j=i-1;
+            for(; j>=0; j--)
+            {
+                if( pszIter[j] != ' ' )
+                    break;
+            }
+            if( j < 0 || pszIter[j] == '\n'|| pszIter[j] == '\r' )
+            {
+                bFoundZero = TRUE;
+                break;
+            }
+        }
+    }
+    if( !bFoundZero )
+        return FALSE;
+    i ++;
+    while( pszIter[i] == ' ' )
+        i ++;
+    while( pszIter[i] == '\n' || pszIter[i] == '\r' )
+        i ++;
+    if( !STARTS_WITH_CI(pszIter + i, "SECTION") )
+        return FALSE;
+    i += static_cast<int>(strlen("SECTION"));
+    return pszIter[i] == '\n' || pszIter[i] == '\r';
 }
 
 /************************************************************************/
@@ -93,36 +126,32 @@ static GDALDataset *OGRDXFDriverCreate( const char * pszName,
 void RegisterOGRDXF()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "DXF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "DXF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver  *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "DXF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "AutoCAD DXF" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dxf" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_dxf.html" );
+    poDriver->SetDescription( "DXF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "AutoCAD DXF" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dxf" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_dxf.html" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='HEADER' type='string' description='Template header file' default='header.dxf'/>"
 "  <Option name='TRAILER' type='string' description='Template trailer file' default='trailer.dxf'/>"
 "  <Option name='FIRST_ENTITY' type='int' description='Identifier of first entity'/>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-                                            "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                               "<LayerCreationOptionList/>" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRDXFDriverOpen;
-        poDriver->pfnIdentify = OGRDXFDriverIdentify;
-        poDriver->pfnCreate = OGRDXFDriverCreate;
+    poDriver->pfnOpen = OGRDXFDriverOpen;
+    poDriver->pfnIdentify = OGRDXFDriverIdentify;
+    poDriver->pfnCreate = OGRDXFDriverCreate;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

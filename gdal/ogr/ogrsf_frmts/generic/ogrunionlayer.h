@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGRUNIONLAYER_H_INCLUDED
-#define _OGRUNIONLAYER_H_INCLUDED
+#ifndef OGRUNIONLAYER_H_INCLUDED
+#define OGRUNIONLAYER_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -112,7 +112,7 @@ class OGRUnionLayer : public OGRLayer
     void                SetFields(FieldUnionStrategy eFieldStrategy,
                                   int nFields,
                                   OGRFieldDefn** papoFields,  /* duplicated by the method */
-                                  int nGeomFields, /* maybe -1 to explicitely disable geometry fields */
+                                  int nGeomFields, /* maybe -1 to explicitly disable geometry fields */
                                   OGRUnionLayerGeomFieldDefn** papoGeomFields  /* duplicated by the method */);
     void                SetSourceLayerFieldName(const char* pszSourceLayerFieldName);
     void                SetPreserveSrcFID(int bPreserveSrcFID);
@@ -150,4 +150,4 @@ class OGRUnionLayer : public OGRLayer
     virtual OGRErr      SyncToDisk();
 };
 
-#endif // _OGRUNIONLAYER_H_INCLUDED
+#endif // OGRUNIONLAYER_H_INCLUDED

@@ -42,7 +42,7 @@ OGRSOSILayer::OGRSOSILayer( OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn
     poHeaderDefn  = poHeadDefn;
     nNextFID      = 0;
     poNextSerial  = NULL;
-    
+
     SetDescription( poFeatureDefn->GetName() );
     if( poFeatureDefn->GetGeomFieldCount() > 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poParent->poSRS);
@@ -76,9 +76,9 @@ OGRErr OGRSOSILayer::CreateField (OGRFieldDefn *poField, CPL_UNUSED int bApproxO
 /*                           ICreateFeature()                            */
 /************************************************************************/
 OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
-    short nNavn;
+    //short nNavn;
     long nSerial;
-    
+
     const char *pszSosi = NULL;
     switch (poFeatureDefn->GetGeomType()) {
         case wkbPoint: {
@@ -98,7 +98,7 @@ OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
     }
-    nNavn = LC_NyGr(poFileadm, (char *)pszSosi, &oNextSerial, &nSerial);
+    /*nNavn = */ LC_NyGr(poFileadm, (char *)pszSosi, &oNextSerial, &nSerial);
     /* === WIP - Work in progress === */
     /* PutGI for all headers */
     char pszGi[255];
@@ -117,7 +117,7 @@ OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
     LC_WsGr(poFileadm); /* Writing the header here! */
     return OGRERR_NONE;
 }
-    
+
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -125,8 +125,6 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
     short nName, nNumLines;
     long  nNumCoo;
     unsigned short nInfo;
-
-    typedef std::map<CPLString, CPLString> S2S;
 
     /* iterate through the SOSI groups*/
     while (LC_NextBgr(poNextSerial,LC_FRAMGR)) {
@@ -172,20 +170,28 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             long nRefCount;
             LC_GRF_STATUS oGrfStat;
 
-            LC_InitGetRefFlate(&oGrfStat); /* Iterate through all objects that constitute this area */
+            // Iterate through all objects that constitute this area.
+            LC_InitGetRefFlate(&oGrfStat);
             nRefCount = LC_GetRefFlate(&oGrfStat, GRF_YTRE, &nRefNr, &nRefStatus, 1);
             while (nRefCount > 0) {
-                if (poParent->papoBuiltGeometries[nRefNr] == NULL) { /* this shouldn't happen under normal operation */
-                    CPLError( CE_Fatal, CPLE_AppDefined, "Feature %li referenced by %li, but it was not initialized.", nRefNr, oNextSerial.lNr);
+                if (poParent->papoBuiltGeometries[nRefNr] == NULL) {
+                    // This should not happen under normal operation.
+                    CPLError( CE_Fatal, CPLE_AppDefined,
+                              "Feature %li referenced by %li, but it was not "
+                              "initialized.", nRefNr, oNextSerial.lNr);
                     return NULL;
                 }
-                OGRLineString *poCurve = (OGRLineString*)(poParent->papoBuiltGeometries[nRefNr]);
+                OGRLineString *poCurve
+                    = (OGRLineString*)(poParent->papoBuiltGeometries[nRefNr]);
                 if (nRefStatus == LC_MED_DIG) {         /* clockwise */
                     poOuter->addSubLineString(poCurve);
                 } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
                     poOuter->addSubLineString(poCurve,poCurve->getNumPoints()-1,0);
                 } else {
-                    CPLError( CE_Failure, CPLE_OpenFailed, "Island (OEY) encountered, but not yet supported.");
+                    CPLError( CE_Failure, CPLE_OpenFailed,
+                              "Island (OEY) encountered, "
+                              "but not yet supported.");
+                    delete poOuter;
                     return NULL;
                 }
                 nRefCount = LC_GetRefFlate(&oGrfStat, GRF_YTRE, &nRefNr, &nRefStatus, 1);
@@ -240,7 +246,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
 
         if (poGeom == NULL) continue;                         /* skipping L_HODE and unrecognized groups */
         if (oGType != poFeatureDefn->GetGeomType()) {
-            if (poGeom != NULL) delete poGeom;     
+            if (poGeom != NULL) delete poGeom;
             continue; /* skipping features that are not the correct geometry */
         }
 
@@ -255,7 +261,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                 continue;
 			}
             if ((pszLine[0] == '\'')||(pszLine[0] == '\"')) { /* If the value is quoted, ignore these */
-                int nLen = strlen(pszLine);
+                int nLen = static_cast<int>(strlen(pszLine));
                 char *pszNline = (char*)CPLMalloc(nLen-1);
                 strncpy(pszNline, pszLine+1, nLen-2);
                 pszNline[nLen-2] = '\0';
@@ -265,7 +271,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                 poFeature->SetField( iHNr, pszLine);
             }
         }
-        
+
         if( poGeom != NULL )
             poGeom->assignSpatialReference(poParent->poSRS);
 

@@ -27,36 +27,28 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+#include "rasdamandataset.h"
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdal_pam.h"
+#include "gdal_frmts.h"
 #include "regex.h"
 #include <string>
 #include <memory>
 #include <map>
 
+#include "gdal.h"
 
-#define __EXECUTABLE__
-#define EARLY_TEMPLATE
-#include "raslib/template_inst.hh"
-#include "raslib/structuretype.hh"
-#include "raslib/type.hh"
-
-#include "rasodmg/database.hh"
+void CPL_DLL CPL_STDCALL GDALRegister_RASDAMAN();
 
 CPL_CVSID("$Id$");
-
-
-CPL_C_START
-void	GDALRegister_RASDAMAN(void);
-CPL_C_END
 
 
 class Subset
 {
 public:
-  Subset(int x_lo, int x_hi, int y_lo, int y_hi)
-    : m_x_lo(x_lo), m_x_hi(x_hi),  m_y_lo(y_lo),  m_y_hi(y_hi)
+  Subset(int x_loIn, int x_hiIn, int y_loIn, int y_hiIn)
+    : m_x_lo(x_loIn), m_x_hi(x_hiIn),  m_y_lo(y_loIn),  m_y_hi(y_hiIn)
   {}
 
   bool operator < (const Subset& rhs) const {
@@ -143,7 +135,7 @@ private:
 
   r_Database database;
   r_Transaction transaction;
-  
+
   CPLString queryParam;
   CPLString host;
   int port;
@@ -187,7 +179,7 @@ RasdamanDataset::~RasdamanDataset()
 CPLErr RasdamanDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, 
+                               GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
@@ -197,9 +189,9 @@ CPLErr RasdamanDataset::IRasterIO( GDALRWFlag eRWFlag,
     CPLError(CE_Failure, CPLE_NoWriteAccess, "Write support is not implemented.");
     return CE_Failure;
   }
-  
+
   transaction.begin(r_Transaction::read_only);
-  
+
   /* TODO: Setup database access/transaction */
   int dummyX, dummyY;
   /* Cache the whole image region */
@@ -212,7 +204,7 @@ CPLErr RasdamanDataset::IRasterIO( GDALRWFlag eRWFlag,
                                       psExtraArg);
 
   transaction.commit();
-  
+
   /* Clear the cache */
   clear_array_cache();
 
@@ -229,7 +221,7 @@ r_Ref<r_GMarray>& RasdamanDataset::request_array(const Subset& subset, int& offs
 {
   // set the offsets to 0
   offsetX = 0; offsetY = 0;
-  
+
   // check whether or not the subset was already requested
   ArrayCache::iterator it = m_array_cache.find(subset);
   if (it != m_array_cache.end()) {
@@ -247,13 +239,12 @@ r_Ref<r_GMarray>& RasdamanDataset::request_array(const Subset& subset, int& offs
       // TODO: check if offsets are correct
       offsetX = subset.x_lo() - existing.x_lo();
       offsetY = subset.y_lo() - existing.y_lo();
-      
+
       CPLDebug("rasdaman", "Found matching tile (%d, %d, %d, %d) for requested tile (%d, %d, %d, %d). Offests are (%d, %d).",
             existing.x_lo(), existing.x_hi(), existing.y_lo(), existing.y_hi(),
             subset.x_lo(), subset.x_hi(), subset.y_lo(), subset.y_hi(),
             offsetX, offsetY);
-      
-      
+
       return it->second;
     }
   }
@@ -282,13 +273,13 @@ r_Ref<r_GMarray>& RasdamanDataset::request_array(const Subset& subset, int& offs
   if (result_set.cardinality() != 1) {
     // TODO: throw exception
   }
-  
+
   r_Ref<r_GMarray> result_array = r_Ref<r_GMarray>(*result_set.create_iterator());
   //std::auto_ptr<r_GMarray> ptr(new r_GMarray);
   //r_GMarray* ptr_ = ptr.get();
   //(*ptr) = *result_array;
   //std::pair<ArrayCache::iterator, bool> inserted = m_array_cache.insert(ArrayCache::value_type(subset, ptr));
-  
+
   std::pair<ArrayCache::iterator, bool> inserted = m_array_cache.insert(ArrayCache::value_type(subset, result_array));
 
   return inserted.first->second;//*(ptr);
@@ -343,17 +334,17 @@ public:
 /*                           RasdamanRasterBand()                       */
 /************************************************************************/
 
-RasdamanRasterBand::RasdamanRasterBand( RasdamanDataset *poDS, int nBand, GDALDataType type, int offset, int size, int nBlockXSize, int nBlockYSize )
+RasdamanRasterBand::RasdamanRasterBand( RasdamanDataset *poDSIn, int nBandIn, GDALDataType type, int offset, int size, int nBlockXSizeIn, int nBlockYSizeIn )
 {
-  this->poDS = poDS;
-  this->nBand = nBand;
+  this->poDS = poDSIn;
+  this->nBand = nBandIn;
 
   eDataType = type;
   typeSize = size;
   typeOffset = offset;
 
-  this->nBlockXSize = nBlockXSize;
-  this->nBlockYSize = nBlockYSize;
+  this->nBlockXSize = nBlockXSizeIn;
+  this->nBlockYSize = nBlockYSizeIn;
 
   nRecordSize = nBlockXSize * nBlockYSize * typeSize;
 }
@@ -382,16 +373,16 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         y_lo = nBlockYOff * nBlockYSize,
         y_hi = MIN(poGDS->nRasterYSize, (nBlockYOff + 1) * nBlockYSize),
         offsetX = 0, offsetY = 0;
-    
+
     r_Ref<r_GMarray>& gmdd = poGDS->request_array(x_lo, x_hi, y_lo, y_hi, offsetX, offsetY);
 
     int xPos = poGDS->xPos;
     int yPos = poGDS->yPos;
-  
+
     r_Minterval sp = gmdd->spatial_domain();
     r_Point extent = sp.get_extent();
     r_Point base = sp.get_origin();
-    
+
     int extentX = extent[xPos];
     int extentY = extent[yPos];
 
@@ -415,7 +406,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     return CPLGetLastErrorType();
   }
-  
+
   return CE_None;
 }
 
@@ -447,7 +438,7 @@ static int getOption(const char *string, regmatch_t cMatch, int defaultValue) {
   return nRet;
 }
 
-void replace(CPLString& str, const char *from, const char *to) {
+static void replace(CPLString& str, const char *from, const char *to) {
   if(strlen(from) == 0)
     return;
   size_t start_pos = 0;
@@ -465,11 +456,11 @@ static CPLString getQuery(const char *templateString, const char* x_lo, const ch
   replace(result, "$x_hi", x_hi);
   replace(result, "$y_lo", y_lo);
   replace(result, "$y_hi", y_hi);
-  
+
   return result;
 }
 
-GDALDataType mapRasdamanTypesToGDAL(r_Type::r_Type_Id typeId) {
+static GDALDataType mapRasdamanTypesToGDAL(r_Type::r_Type_Id typeId) {
   switch (typeId) {
   case r_Type::ULONG:
     return GDT_UInt32;
@@ -578,7 +569,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
   }
   // check 2: the request contains --collection
   char* connString = poOpenInfo->pszFilename;
-  if (!EQUALN(connString, "rasdaman", 8)) {
+  if (!STARTS_WITH_CI(connString, "rasdaman")) {
     return NULL;
   }
 
@@ -701,7 +692,6 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
     delete rasDataset;
     return NULL;
   }
-  
 
   return rasDataset;
 }
@@ -710,25 +700,20 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          GDALRegister_RASDAMAN()                     */
 /************************************************************************/
 
-extern void GDALRegister_RASDAMAN()
+void GDALRegister_RASDAMAN()
 
 {
-  GDALDriver	*poDriver;
+  if( GDALGetDriverByName( "RASDAMAN" ) != NULL )
+      return;
 
-  if( GDALGetDriverByName( "RASDAMAN" ) == NULL )
-  {
-    poDriver = new GDALDriver();
+  GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "RASDAMAN" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "RASDAMAN" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_rasdaman.html" );
+  poDriver->SetDescription( "RASDAMAN" );
+  poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+  poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "RASDAMAN" );
+  poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rasdaman.html" );
 
-    poDriver->pfnOpen = RasdamanDataset::Open;
+  poDriver->pfnOpen = RasdamanDataset::Open;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
-  }
+  GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

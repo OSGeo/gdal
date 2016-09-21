@@ -37,9 +37,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-#ifdef OGR_ENABLED
 # include "ogrsf_frmts.h"
-#endif /* OGR_ENABLED */
 
 CPL_CVSID("$Id$");
 
@@ -47,12 +45,29 @@ CPL_CVSID("$Id$");
 /*                        OGRFormatDouble()                             */
 /************************************************************************/
 
-void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDecimalSep, int nPrecision )
+void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
+                      char chDecimalSep, int nPrecision, char chConversionSpecifier )
 {
     int i;
     int nTruncations = 0;
     char szFormat[16];
-    sprintf(szFormat, "%%.%df", nPrecision);
+
+    // So to have identical cross platform representation
+    if( CPLIsInf(dfVal) )
+    {
+        if( dfVal > 0 )
+            CPLsnprintf(pszBuffer, nBufferLen, "%s", "inf");
+        else
+            CPLsnprintf(pszBuffer, nBufferLen, "%s", "-inf");
+        return;
+    }
+    if( CPLIsNan(dfVal) )
+    {
+        CPLsnprintf(pszBuffer, nBufferLen, "%s", "nan");
+        return;
+    }
+
+    snprintf(szFormat, sizeof(szFormat), "%%.%d%c", nPrecision, chConversionSpecifier);
 
     int ret = CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
     /* Windows CRT doesn't conform with C99 and return -1 when buffer is truncated */
@@ -62,6 +77,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
         return;
     }
 
+    if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
+        return;
+
     while(nPrecision > 0)
     {
         i = 0;
@@ -69,7 +87,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
         int iDotPos = -1;
         while( pszBuffer[i] != '\0' )
         {
-            if ((pszBuffer[i] == '.' || pszBuffer[i] == ',') && chDecimalSep != '\0')
+            if (pszBuffer[i] == '.' && chDecimalSep != '\0')
             {
                 iDotPos = i;
                 pszBuffer[i] = chDecimalSep;
@@ -78,26 +96,28 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
                 nCountBeforeDot ++;
             i++;
         }
+        if( iDotPos < 0 )
+            break;
 
     /* -------------------------------------------------------------------- */
     /*      Trim trailing 00000x's as they are likely roundoff error.       */
     /* -------------------------------------------------------------------- */
-        if( i > 10 && iDotPos >=0 )
+        if( i > 10 )
         {
             if (/* && pszBuffer[i-1] == '1' &&*/
-                pszBuffer[i-2] == '0' 
-                && pszBuffer[i-3] == '0' 
-                && pszBuffer[i-4] == '0' 
-                && pszBuffer[i-5] == '0' 
+                pszBuffer[i-2] == '0'
+                && pszBuffer[i-3] == '0'
+                && pszBuffer[i-4] == '0'
+                && pszBuffer[i-5] == '0'
                 && pszBuffer[i-6] == '0' )
             {
                 pszBuffer[--i] = '\0';
             }
             else if( i - 8 > iDotPos && /* pszBuffer[i-1] == '1' */
                   /* && pszBuffer[i-2] == '0' && */
-                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '0') 
-                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '0') 
-                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '0') 
+                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '0')
+                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '0')
+                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '0')
                     && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '0')
                     && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '0')
                     && pszBuffer[i-8] == '0'
@@ -120,27 +140,28 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
     /*      Detect trailing 99999X's as they are likely roundoff error.     */
     /* -------------------------------------------------------------------- */
         if( i > 10 &&
-            iDotPos >= 0 &&
             nPrecision + nTruncations >= 15)
         {
             if (/*pszBuffer[i-1] == '9' && */
-                 pszBuffer[i-2] == '9' 
-                && pszBuffer[i-3] == '9' 
-                && pszBuffer[i-4] == '9' 
-                && pszBuffer[i-5] == '9' 
+                 pszBuffer[i-2] == '9'
+                && pszBuffer[i-3] == '9'
+                && pszBuffer[i-4] == '9'
+                && pszBuffer[i-5] == '9'
                 && pszBuffer[i-6] == '9' )
             {
                 nPrecision --;
                 nTruncations ++;
-                sprintf(szFormat, "%%.%df", nPrecision);
+                snprintf(szFormat, sizeof(szFormat), "%%.%d%c", nPrecision, chConversionSpecifier);
                 CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+                if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
+                    return;
                 continue;
             }
             else if (i - 9 > iDotPos && /*pszBuffer[i-1] == '9' && */
                      /*pszBuffer[i-2] == '9' && */
-                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '9') 
-                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '9') 
-                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '9') 
+                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '9')
+                    && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '9')
+                    && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '9')
                     && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '9')
                     && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '9')
                     && pszBuffer[i-8] == '9'
@@ -148,8 +169,10 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
             {
                 nPrecision --;
                 nTruncations ++;
-                sprintf(szFormat, "%%.%df", nPrecision);
+                snprintf(szFormat, sizeof(szFormat), "%%.%d%c", nPrecision, chConversionSpecifier);
                 CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
+                if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
+                    return;
                 continue;
             }
         }
@@ -170,12 +193,14 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
 /*      characters barring the X or Y value being extremely large.      */
 /************************************************************************/
 
-void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z, 
+void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
                            int nDimension )
 
 {
     const size_t bufSize = 75;
     const size_t maxTargetSize = 75; /* Assumed max length of the target buffer. */
+    const char chDecimalSep = '.';
+    const int nPrecision = 15;
 
     char szX[bufSize];
     char szY[bufSize];
@@ -183,17 +208,27 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
     szZ[0] = '\0';
 
-    int nLenX, nLenY;
+    size_t nLenX, nLenY;
 
-    if( x == (int) x && y == (int) y )
+    if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
     {
         snprintf( szX, bufSize, "%d", (int) x );
         snprintf( szY, bufSize, "%d", (int) y );
     }
     else
     {
-        OGRFormatDouble( szX, bufSize, x, '.' );
-        OGRFormatDouble( szY, bufSize, y, '.' );
+        OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision, fabs(x) < 1 ? 'f' : 'g' );
+        if( CPLIsFinite(x) && strchr(szX, '.') == NULL &&
+            strchr(szX, 'e') == NULL && strlen(szX) < bufSize - 2 )
+        {
+            strcat(szX, ".0");
+        }
+        OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision, fabs(y) < 1 ? 'f' : 'g' );
+        if( CPLIsFinite(y) && strchr(szY, '.') == NULL &&
+            strchr(szY, 'e') == NULL && strlen(szY) < bufSize - 2 )
+        {
+            strcat(szY, ".0");
+        }
     }
 
     nLenX = strlen(szX);
@@ -201,22 +236,22 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
     if( nDimension == 3 )
     {
-        if( z == (int) z )
+        if( CPL_IS_DOUBLE_A_INT(z) )
         {
             snprintf( szZ, bufSize, "%d", (int) z );
         }
         else
         {
-            OGRFormatDouble( szZ, bufSize, z, '.' );
+            OGRFormatDouble( szZ, bufSize, z, chDecimalSep, nPrecision, 'g' );
         }
     }
 
     if( nLenX + 1 + nLenY + ((nDimension == 3) ? (1 + strlen(szZ)) : 0) >= maxTargetSize )
     {
 #ifdef DEBUG
-        CPLDebug( "OGR", 
+        CPLDebug( "OGR",
                   "Yow!  Got this big result in OGRMakeWktCoordinate()\n"
-                  "%s %s %s", 
+                  "%s %s %s",
                   szX, szY, szZ );
 #endif
         if( nDimension == 3 )
@@ -242,9 +277,132 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 }
 
 /************************************************************************/
+/*                        OGRMakeWktCoordinateM()                       */
+/*                                                                      */
+/*      Format a well known text coordinate, trying to keep the         */
+/*      ASCII representation compact, but accurate.  These rules        */
+/*      will have to tighten up in the future.                          */
+/*                                                                      */
+/*      Currently a new point should require no more than 64            */
+/*      characters barring the X or Y value being extremely large.      */
+/************************************************************************/
+
+void OGRMakeWktCoordinateM( char *pszTarget, double x, double y, double z, double m,
+                            OGRBoolean hasZ, OGRBoolean hasM )
+
+{
+    const size_t bufSize = 75;
+    const size_t maxTargetSize = 75; /* Assumed max length of the target buffer. */
+    const char chDecimalSep = '.';
+    const int nPrecision = 15;
+
+    char szX[bufSize];
+    char szY[bufSize];
+    char szZ[bufSize];
+    char szM[bufSize];
+
+    szZ[0] = '\0';
+    szM[0] = '\0';
+
+    size_t nLen, nLenX, nLenY;
+
+    if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
+    {
+        snprintf( szX, bufSize, "%d", (int) x );
+        snprintf( szY, bufSize, "%d", (int) y );
+    }
+    else
+    {
+        OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision, fabs(x) < 1 ? 'f' : 'g' );
+        if( CPLIsFinite(x) && strchr(szX, '.') == NULL &&
+            strchr(szX, 'e') == NULL && strlen(szX) < bufSize - 2 )
+        {
+            strcat(szX, ".0");
+        }
+        OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision, fabs(y) < 1 ? 'f' : 'g' );
+        if( CPLIsFinite(y) && strchr(szY, '.') == NULL &&
+            strchr(szY, 'e') == NULL && strlen(szY) < bufSize - 2 )
+        {
+            strcat(szY, ".0");
+        }
+    }
+
+    nLenX = strlen(szX);
+    nLenY = strlen(szY);
+    nLen = nLenX + nLenY + 1;
+
+    if( hasZ )
+    {
+        if( CPL_IS_DOUBLE_A_INT(z) )
+        {
+            snprintf( szZ, bufSize, "%d", (int) z );
+        }
+        else
+        {
+            OGRFormatDouble( szZ, bufSize, z, chDecimalSep, nPrecision, 'g' );
+        }
+        nLen += strlen(szZ) + 1;
+    }
+
+    if( hasM )
+    {
+        if( CPL_IS_DOUBLE_A_INT(m) )
+        {
+            snprintf( szM, bufSize, "%d", (int) m );
+        }
+        else
+        {
+            OGRFormatDouble( szM, bufSize, m, chDecimalSep, nPrecision, 'g' );
+        }
+        nLen += strlen(szM) + 1;
+    }
+
+    if( nLen >= maxTargetSize )
+    {
+#ifdef DEBUG
+        CPLDebug( "OGR",
+                  "Yow!  Got this big result in OGRMakeWktCoordinate()\n"
+                  "%s %s %s %s",
+                  szX, szY, szZ, szM );
+#endif
+        if( hasZ && hasM )
+            strcpy( pszTarget, "0 0 0 0");
+        else if( hasZ || hasM )
+            strcpy( pszTarget, "0 0 0");
+        else
+            strcpy( pszTarget, "0 0");
+    }
+    else
+    {
+        char *target = pszTarget;
+        strcpy( target, szX );
+        target += nLenX;
+        *target = ' ';
+        target++;
+        strcpy( target, szY );
+        target += nLenY;
+        if( hasZ )
+        {
+            *target = ' ';
+            target++;
+            strcpy( target, szZ );
+            target += strlen(szZ);
+        }
+        if( hasM )
+        {
+            *target = ' ';
+            target++;
+            strcpy( target, szM );
+            target += strlen(szM);
+        }
+        *target = '\0';
+    }
+}
+
+/************************************************************************/
 /*                          OGRWktReadToken()                           */
 /*                                                                      */
-/*      Read one token or delimeter and put into token buffer.  Pre     */
+/*      Read one token or delimiter and put into token buffer.  Pre     */
 /*      and post white space is swallowed.                              */
 /************************************************************************/
 
@@ -253,7 +411,7 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
 {
     if( pszInput == NULL )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Swallow pre-white space.                                        */
 /* -------------------------------------------------------------------- */
@@ -261,13 +419,13 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
         pszInput++;
 
 /* -------------------------------------------------------------------- */
-/*      If this is a delimeter, read just one character.                */
+/*      If this is a delimiter, read just one character.                */
 /* -------------------------------------------------------------------- */
     if( *pszInput == '(' || *pszInput == ')' || *pszInput == ',' )
     {
         pszToken[0] = *pszInput;
         pszToken[1] = '\0';
-        
+
         pszInput++;
     }
 
@@ -278,13 +436,13 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
     else
     {
         int             iChar = 0;
-        
+
         while( iChar < OGR_WKT_TOKEN_MAX-1
                && ((*pszInput >= 'a' && *pszInput <= 'z')
                    || (*pszInput >= 'A' && *pszInput <= 'Z')
                    || (*pszInput >= '0' && *pszInput <= '9')
-                   || *pszInput == '.' 
-                   || *pszInput == '+' 
+                   || *pszInput == '.'
+                   || *pszInput == '+'
                    || *pszInput == '-') )
         {
             pszToken[iChar++] = *(pszInput++);
@@ -320,7 +478,7 @@ const char * OGRWktReadPoints( const char * pszInput,
 
     if( pszInput == NULL )
         return NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Eat any leading white space.                                    */
 /* -------------------------------------------------------------------- */
@@ -335,7 +493,7 @@ const char * OGRWktReadPoints( const char * pszInput,
         CPLDebug( "OGR",
                   "Expected '(', but got %s in OGRWktReadPoints().\n",
                   pszInput );
-                  
+
         return pszInput;
     }
 
@@ -347,7 +505,7 @@ const char * OGRWktReadPoints( const char * pszInput,
 /*      encountered.                                                    */
 /* ==================================================================== */
     char        szDelim[OGR_WKT_TOKEN_MAX];
-    
+
     do {
 /* -------------------------------------------------------------------- */
 /*      Read the X and Y values, verify they are numeric.               */
@@ -402,7 +560,7 @@ const char * OGRWktReadPoints( const char * pszInput,
         }
         else if ( *ppadfZ != NULL )
             (*ppadfZ)[*pnPointsRead] = 0.0;
-        
+
         (*pnPointsRead)++;
 
 /* -------------------------------------------------------------------- */
@@ -413,9 +571,9 @@ const char * OGRWktReadPoints( const char * pszInput,
         {
             pszInput = OGRWktReadToken( pszInput, szDelim );
         }
-        
+
 /* -------------------------------------------------------------------- */
-/*      Read next delimeter ... it should be a comma if there are       */
+/*      Read next delimiter ... it should be a comma if there are       */
 /*      more points.                                                    */
 /* -------------------------------------------------------------------- */
         if( szDelim[0] != ')' && szDelim[0] != ',' )
@@ -426,7 +584,218 @@ const char * OGRWktReadPoints( const char * pszInput,
                       szDelim, pszInput, pszOrigInput );
             return NULL;
         }
-        
+
+    } while( szDelim[0] == ',' );
+
+    return pszInput;
+}
+
+/************************************************************************/
+/*                          OGRWktReadPointsM()                         */
+/*                                                                      */
+/*      Read a point string.  The point list must be contained in       */
+/*      brackets and each point pair separated by a comma.              */
+/************************************************************************/
+
+const char * OGRWktReadPointsM( const char * pszInput,
+                                OGRRawPoint ** ppaoPoints, double **ppadfZ, double **ppadfM,
+                                int * flags,
+                                int * pnMaxPoints,
+                                int * pnPointsRead )
+
+{
+    const char *pszOrigInput = pszInput;
+    int no_flags = !(*flags & OGRGeometry::OGR_G_3D) && !(*flags & OGRGeometry::OGR_G_MEASURED);
+    *pnPointsRead = 0;
+
+    if( pszInput == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Eat any leading white space.                                    */
+/* -------------------------------------------------------------------- */
+    while( *pszInput == ' ' || *pszInput == '\t' )
+        pszInput++;
+
+/* -------------------------------------------------------------------- */
+/*      If this isn't an opening bracket then we have a problem!        */
+/* -------------------------------------------------------------------- */
+    if( *pszInput != '(' )
+    {
+        CPLDebug( "OGR",
+                  "Expected '(', but got %s in OGRWktReadPointsM().\n",
+                  pszInput );
+
+        return pszInput;
+    }
+
+    pszInput++;
+
+/* ==================================================================== */
+/*      This loop reads a single point.  It will continue till we       */
+/*      run out of well formed points, or a closing bracket is          */
+/*      encountered.                                                    */
+/* ==================================================================== */
+    char        szDelim[OGR_WKT_TOKEN_MAX];
+
+    do {
+/* -------------------------------------------------------------------- */
+/*      Read the X and Y values, verify they are numeric.               */
+/* -------------------------------------------------------------------- */
+        char    szTokenX[OGR_WKT_TOKEN_MAX];
+        char    szTokenY[OGR_WKT_TOKEN_MAX];
+
+        pszInput = OGRWktReadToken( pszInput, szTokenX );
+        pszInput = OGRWktReadToken( pszInput, szTokenY );
+
+        if( (!isdigit(szTokenX[0]) && szTokenX[0] != '-' && szTokenX[0] != '.' )
+            || (!isdigit(szTokenY[0]) && szTokenY[0] != '-' && szTokenY[0] != '.') )
+            return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to grow the point list to hold this point?           */
+/* -------------------------------------------------------------------- */
+        if( *pnPointsRead == *pnMaxPoints )
+        {
+            *pnMaxPoints = *pnMaxPoints * 2 + 10;
+            *ppaoPoints = (OGRRawPoint *)
+                CPLRealloc(*ppaoPoints, sizeof(OGRRawPoint) * *pnMaxPoints);
+
+            if( *ppadfZ != NULL )
+            {
+                *ppadfZ = (double *)
+                    CPLRealloc(*ppadfZ, sizeof(double) * *pnMaxPoints);
+            }
+
+            if( *ppadfM != NULL )
+            {
+                *ppadfM = (double *)
+                    CPLRealloc(*ppadfM, sizeof(double) * *pnMaxPoints);
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Add point to list.                                              */
+/* -------------------------------------------------------------------- */
+        (*ppaoPoints)[*pnPointsRead].x = CPLAtof(szTokenX);
+        (*ppaoPoints)[*pnPointsRead].y = CPLAtof(szTokenY);
+
+/* -------------------------------------------------------------------- */
+/*      Read the next token.                                            */
+/* -------------------------------------------------------------------- */
+        pszInput = OGRWktReadToken( pszInput, szDelim );
+
+/* -------------------------------------------------------------------- */
+/*      If there are unexpectedly more coordinates, they are Z.         */
+/* -------------------------------------------------------------------- */
+
+        if( !(*flags & OGRGeometry::OGR_G_3D) && !(*flags & OGRGeometry::OGR_G_MEASURED) &&
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ))
+        {
+            *flags |= OGRGeometry::OGR_G_3D;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Get Z if flag says so.                                          */
+/*      Zero out possible remains from earlier strings.                 */
+/* -------------------------------------------------------------------- */
+
+        if( *flags & OGRGeometry::OGR_G_3D )
+        {
+            if( *ppadfZ == NULL )
+            {
+                *ppadfZ = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);
+            }
+            if( isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' )
+            {
+                (*ppadfZ)[*pnPointsRead] = CPLAtof(szDelim);
+                pszInput = OGRWktReadToken( pszInput, szDelim );
+            }
+            else {
+                (*ppadfZ)[*pnPointsRead] = 0.0;
+            }
+        }
+        else if ( *ppadfZ != NULL )
+            (*ppadfZ)[*pnPointsRead] = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      If there are unexpectedly even more coordinates,                */
+/*      they are discarded unless there were no flags originally.       */
+/*      This is for backwards compatibility. Should this be an error?   */
+/* -------------------------------------------------------------------- */
+
+        if( !(*flags & OGRGeometry::OGR_G_MEASURED) &&
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ) )
+        {
+            if( no_flags )
+            {
+                *flags |= OGRGeometry::OGR_G_MEASURED;
+            }
+            else
+            {
+                pszInput = OGRWktReadToken( pszInput, szDelim );
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Get M if flag says so.                                          */
+/*      Zero out possible remains from earlier strings.                 */
+/* -------------------------------------------------------------------- */
+
+        if( *flags & OGRGeometry::OGR_G_MEASURED )
+        {
+            if( *ppadfM == NULL )
+            {
+                *ppadfM = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);
+            }
+            if( isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' )
+            {
+                (*ppadfM)[*pnPointsRead] = CPLAtof(szDelim);
+                pszInput = OGRWktReadToken( pszInput, szDelim );
+            }
+            else {
+                (*ppadfM)[*pnPointsRead] = 0.0;
+            }
+        }
+        else if ( *ppadfM != NULL )
+            (*ppadfM)[*pnPointsRead] = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      If there are still more coordinates and we do not have Z        */
+/*      then we have a case of flags == M and four coordinates.         */
+/*      This is allowed in BNF.                                         */
+/* -------------------------------------------------------------------- */
+
+        if( !(*flags & OGRGeometry::OGR_G_3D) &&
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.') )
+        {
+            *flags |= OGRGeometry::OGR_G_3D;
+            if( *ppadfZ == NULL )
+            {
+                *ppadfZ = (double *) CPLCalloc(sizeof(double),*pnMaxPoints);
+            }
+            (*ppadfZ)[*pnPointsRead] = (*ppadfM)[*pnPointsRead];
+            (*ppadfM)[*pnPointsRead] = CPLAtof(szDelim);
+            pszInput = OGRWktReadToken( pszInput, szDelim );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Increase points index.                                          */
+/* -------------------------------------------------------------------- */
+        (*pnPointsRead)++;
+
+/* -------------------------------------------------------------------- */
+/*      The next delimiter should be a comma or an ending bracket.      */
+/* -------------------------------------------------------------------- */
+        if( szDelim[0] != ')' && szDelim[0] != ',' )
+        {
+            CPLDebug( "OGR",
+                      "Corrupt input in OGRWktReadPointsM()\n"
+                      "Got `%s' when expecting `,' or `)', near `%s' in %s.\n",
+                      szDelim, pszInput, pszOrigInput );
+            return NULL;
+        }
+
     } while( szDelim[0] == ',' );
 
     return pszInput;
@@ -483,28 +852,28 @@ void OGRFree( void * pMemory )
 /**
  * General utility option processing.
  *
- * This function is intended to provide a variety of generic commandline 
+ * This function is intended to provide a variety of generic commandline
  * options for all OGR commandline utilities.  It takes care of the following
  * commandline options:
- *  
- *  --version: report version of GDAL in use. 
+ *
+ *  --version: report version of GDAL in use.
  *  --license: report GDAL license info.
- *  --format [format]: report details of one format driver. 
+ *  --format [format]: report details of one format driver.
  *  --formats: report all format drivers configured.
- *  --optfile filename: expand an option file into the argument list. 
- *  --config key value: set system configuration option. 
+ *  --optfile filename: expand an option file into the argument list.
+ *  --config key value: set system configuration option.
  *  --debug [on/off/value]: set debug level.
  *  --pause: Pause for user input (allows time to attach debugger)
  *  --locale [locale]: Install a locale using setlocale() (debugging)
- *  --help-general: report detailed help on general options. 
+ *  --help-general: report detailed help on general options.
  *
- * The argument array is replaced "in place" and should be freed with 
+ * The argument array is replaced "in place" and should be freed with
  * CSLDestroy() when no longer needed.  The typical usage looks something
  * like the following.  Note that the formats should be registered so that
  * the --formats option will work properly.
  *
  *  int main( int argc, char ** argv )
- *  { 
+ *  {
  *    OGRRegisterAll();
  *
  *    argc = OGRGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -512,10 +881,10 @@ void OGRFree( void * pMemory )
  *        exit( -argc );
  *
  * @param nArgc number of values in the argument list.
- * @param ppapszArgv pointer to the argument list array (will be updated in place). 
+ * @param ppapszArgv pointer to the argument list array (will be updated in place).
  * @param nOptions unused.
  *
- * @return updated nArgc argument count.  Return of 0 requests terminate 
+ * @return updated nArgc argument count.  Return of 0 requests terminate
  * without error, return of -1 requests exit with error code.
  */
 
@@ -536,18 +905,18 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
  * Parse date string.
  *
  * This function attempts to parse a date string in a variety of formats
- * into the OGRField.Date format suitable for use with OGR.  Generally 
+ * into the OGRField.Date format suitable for use with OGR.  Generally
  * speaking this function is expecting values like:
- * 
- *   YYYY-MM-DD HH:MM:SS+nn
- *   or YYYY-MM-DDTHH:MM:SSZ (ISO 8601 format)
+ *
+ *   YYYY-MM-DD HH:MM:SS[.sss]+nn
+ *   or YYYY-MM-DDTHH:MM:SS[.sss]Z (ISO 8601 format)
  *
  * The seconds may also have a decimal portion (which is ignored).  And
- * just dates (YYYY-MM-DD) or just times (HH:MM:SS) are also supported. 
+ * just dates (YYYY-MM-DD) or just times (HH:MM:SS[.sss]) are also supported.
  * The date may also be in YYYY/MM/DD format.  If the year is less than 100
  * and greater than 30 a "1900" century value will be set.  If it is less than
- * 30 and greater than -1 then a "2000" century value will be set.  In 
- * the future this function may be generalized, and additional control 
+ * 30 and greater than -1 then a "2000" century value will be set.  In
+ * the future this function may be generalized, and additional control
  * provided through nOptions, but an nOptions value of "0" should always do
  * a reasonable default form of processing.
  *
@@ -565,7 +934,7 @@ int OGRParseDate( const char *pszInput,
                   OGRField *psField,
                   CPL_UNUSED int nOptions )
 {
-    int bGotSomething = FALSE;
+    bool bGotSomething = false;
 
     psField->Date.Year = 0;
     psField->Date.Month = 0;
@@ -574,15 +943,18 @@ int OGRParseDate( const char *pszInput,
     psField->Date.Minute = 0;
     psField->Date.Second = 0;
     psField->Date.TZFlag = 0;
+    psField->Date.Reserved = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a date?                                              */
 /* -------------------------------------------------------------------- */
     while( *pszInput == ' ' )
         pszInput++;
-    
+
     if( strstr(pszInput,"-") != NULL || strstr(pszInput,"/") != NULL )
     {
+        if( !(*pszInput == '-' || *pszInput == '+' || (*pszInput >= '0' && *pszInput <= '9')) )
+            return FALSE;
         int nYear = atoi(pszInput);
         if( nYear != (GInt16)nYear )
         {
@@ -591,38 +963,44 @@ int OGRParseDate( const char *pszInput,
             return FALSE;
         }
         psField->Date.Year = (GInt16)nYear;
-        if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
-            psField->Date.Year += 1900;
-        else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
-            psField->Date.Year += 2000;
+        if( (pszInput[1] == '-' || pszInput[1] == '/' ) ||
+            (pszInput[1] != '\0' && (pszInput[2] == '-' || pszInput[2] == '/' )) )
+        {
+            if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
+                psField->Date.Year += 1900;
+            else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
+                psField->Date.Year += 2000;
+        }
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        if( *pszInput == '-' )
+            pszInput ++;
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != '-' && *pszInput != '/' )
             return FALSE;
-        else 
+        else
             pszInput++;
 
         psField->Date.Month = (GByte)atoi(pszInput);
-        if( psField->Date.Month > 12 )
+        if( psField->Date.Month <= 0 || psField->Date.Month > 12 )
             return FALSE;
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != '-' && *pszInput != '/' )
             return FALSE;
-        else 
+        else
             pszInput++;
 
         psField->Date.Day = (GByte)atoi(pszInput);
-        if( psField->Date.Day > 31 )
+        if( psField->Date.Day <= 0 || psField->Date.Day > 31 )
             return FALSE;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
 
-        bGotSomething = TRUE;
-        
+        bGotSomething = true;
+
         /* If ISO 8601 format */
         if( *pszInput == 'T' )
             pszInput ++;
@@ -633,46 +1011,48 @@ int OGRParseDate( const char *pszInput,
 /* -------------------------------------------------------------------- */
     while( *pszInput == ' ' )
         pszInput++;
-    
+
     if( strstr(pszInput,":") != NULL )
     {
         psField->Date.Hour = (GByte)atoi(pszInput);
         if( psField->Date.Hour > 23 )
             return FALSE;
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
         if( *pszInput != ':' )
             return FALSE;
-        else 
+        else
             pszInput++;
 
         psField->Date.Minute = (GByte)atoi(pszInput);
         if( psField->Date.Minute > 59 )
             return FALSE;
 
-        while( *pszInput >= '0' && *pszInput <= '9' ) 
+        while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
-        if( *pszInput != ':' )
-            return FALSE;
-        else 
-            pszInput++;
-
-        psField->Date.Second = (GByte)atoi(pszInput);
-        if( psField->Date.Second > 59 )
-            return FALSE;
-
-        while( (*pszInput >= '0' && *pszInput <= '9')
-               || *pszInput == '.' )
-            pszInput++;
-
-        /* If ISO 8601 format */
-        if( *pszInput == 'Z' )
+        if( *pszInput == ':' )
         {
-            psField->Date.TZFlag = 100;
+            pszInput++;
+
+            psField->Date.Second = (float)CPLAtof(pszInput);
+            if( psField->Date.Second > 61 )
+                return FALSE;
+
+            while( (*pszInput >= '0' && *pszInput <= '9')
+                || *pszInput == '.' )
+            {
+                pszInput++;
+            }
+
+            /* If ISO 8601 format */
+            if( *pszInput == 'Z' )
+            {
+                psField->Date.TZFlag = 100;
+            }
         }
 
-        bGotSomething = TRUE;
+        bGotSomething = true;
     }
 
     // No date or time!
@@ -684,7 +1064,7 @@ int OGRParseDate( const char *pszInput,
 /* -------------------------------------------------------------------- */
     while( *pszInput == ' ' )
         pszInput++;
-    
+
     if( *pszInput == '-' || *pszInput == '+' )
     {
         // +HH integral offset
@@ -694,7 +1074,7 @@ int OGRParseDate( const char *pszInput,
         else if( pszInput[3] == ':'  // +HH:MM offset
                  && atoi(pszInput+4) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100 
+            psField->Date.TZFlag = (GByte)(100
                 + atoi(pszInput+1) * 4
                 + (atoi(pszInput+4) / 15));
 
@@ -704,7 +1084,7 @@ int OGRParseDate( const char *pszInput,
         else if( isdigit(pszInput[3]) && isdigit(pszInput[4])  // +HHMM offset
                  && atoi(pszInput+3) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100 
+            psField->Date.TZFlag = (GByte)(100
                 + static_cast<GByte>(CPLScanLong(pszInput+1,2)) * 4
                 + (atoi(pszInput+3) / 15));
 
@@ -714,7 +1094,7 @@ int OGRParseDate( const char *pszInput,
         else if( isdigit(pszInput[3]) && pszInput[4] == '\0'  // +HMM offset
                  && atoi(pszInput+2) % 15 == 0 )
         {
-            psField->Date.TZFlag = (GByte)(100 
+            psField->Date.TZFlag = (GByte)(100
                 + static_cast<GByte>(CPLScanLong(pszInput+1,1)) * 4
                 + (atoi(pszInput+2) / 15));
 
@@ -733,8 +1113,7 @@ int OGRParseDate( const char *pszInput,
 /************************************************************************/
 
 int OGRParseXMLDateTime( const char* pszXMLDateTime,
-                               int *pnYear, int *pnMonth, int *pnDay,
-                               int *pnHour, int *pnMinute, float* pfSecond, int *pnTZ)
+                         OGRField* psField)
 {
     int year = 0, month = 0, day = 0, hour = 0, minute = 0, TZHour, TZMinute;
     float second = 0;
@@ -773,13 +1152,14 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
 
     if (bRet)
     {
-        if (pnYear) *pnYear = year;
-        if (pnMonth) *pnMonth = month;
-        if (pnDay) *pnDay = day;
-        if (pnHour) *pnHour = hour;
-        if (pnMinute) *pnMinute = minute;
-        if (pfSecond) *pfSecond = second;
-        if (pnTZ) *pnTZ = TZ;
+        psField->Date.Year = (GInt16)year;
+        psField->Date.Month = (GByte)month;
+        psField->Date.Day = (GByte)day;
+        psField->Date.Hour = (GByte)hour;
+        psField->Date.Minute = (GByte)minute;
+        psField->Date.Second = second;
+        psField->Date.TZFlag = (GByte)TZ;
+        psField->Date.Reserved = 0;
     }
 
     return bRet;
@@ -789,12 +1169,10 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
 /*                      OGRParseRFC822DateTime()                        */
 /************************************************************************/
 
-static const char* aszMonthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+static const char* const aszMonthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-int OGRParseRFC822DateTime( const char* pszRFC822DateTime,
-                                  int *pnYear, int *pnMonth, int *pnDay,
-                                  int *pnHour, int *pnMinute, int *pnSecond, int *pnTZ)
+int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
 {
     /* Following http://asg.web.cmu.edu/rfc/rfc822.html#sec-5 : [Fri,] 28 Dec 2007 05:24[:17] GMT */
     char** papszTokens = CSLTokenizeStringComplex( pszRFC822DateTime, " ,:", TRUE, FALSE );
@@ -877,13 +1255,14 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime,
                 }
             }
 
-            if (pnYear) *pnYear = year;
-            if (pnMonth) *pnMonth = month;
-            if (pnDay) *pnDay = day;
-            if (pnHour) *pnHour = hour;
-            if (pnMinute) *pnMinute = minute;
-            if (pnSecond) *pnSecond = second;
-            if (pnTZ) *pnTZ = TZ;
+            psField->Date.Year = (GInt16)year;
+            psField->Date.Month = (GByte)month;
+            psField->Date.Day = (GByte)day;
+            psField->Date.Hour = (GByte)hour;
+            psField->Date.Minute = (GByte)minute;
+            psField->Date.Second = static_cast<float>(second);
+            psField->Date.TZFlag = (GByte)TZ;
+            psField->Date.Reserved = 0;
         }
     }
     CSLDestroy(papszTokens);
@@ -924,16 +1303,19 @@ int OGRGetDayOfWeek(int day, int month, int year)
 /*                         OGRGetRFC822DateTime()                       */
 /************************************************************************/
 
-char* OGRGetRFC822DateTime(int year, int month, int day, int hour, int minute, int second, int TZFlag)
+char* OGRGetRFC822DateTime(const OGRField* psField)
 {
     char* pszTZ = NULL;
     const char* aszDayOfWeek[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
-    int dayofweek = OGRGetDayOfWeek(day, month, year);
+    int dayofweek = OGRGetDayOfWeek(psField->Date.Day, psField->Date.Month,
+                                    psField->Date.Year);
 
+    int month = psField->Date.Month;
     if (month < 1 || month > 12)
         month = 1;
 
+    int TZFlag = psField->Date.TZFlag;
     if (TZFlag == 0 || TZFlag == 100)
     {
         pszTZ = CPLStrdup("GMT");
@@ -947,7 +1329,9 @@ char* OGRGetRFC822DateTime(int year, int month, int day, int hour, int minute, i
                                         TZHour, TZMinute));
     }
     char* pszRet = CPLStrdup(CPLSPrintf("%s, %02d %s %04d %02d:%02d:%02d %s",
-                     aszDayOfWeek[dayofweek], day, aszMonthStr[month - 1], year, hour, minute, second, pszTZ));
+                     aszDayOfWeek[dayofweek], psField->Date.Day, aszMonthStr[month - 1],
+                     psField->Date.Year, psField->Date.Hour,
+                     psField->Date.Minute, (int)psField->Date.Second, pszTZ));
     CPLFree(pszTZ);
     return pszRet;
 }
@@ -956,22 +1340,38 @@ char* OGRGetRFC822DateTime(int year, int month, int day, int hour, int minute, i
 /*                            OGRGetXMLDateTime()                       */
 /************************************************************************/
 
-char* OGRGetXMLDateTime(int year, int month, int day, int hour, int minute, int second, int TZFlag)
+char* OGRGetXMLDateTime(const OGRField* psField)
 {
     char* pszRet;
+    int year = psField->Date.Year;
+    int month = psField->Date.Month;
+    int day = psField->Date.Day;
+    int hour = psField->Date.Hour;
+    int minute = psField->Date.Minute;
+    float second = psField->Date.Second;
+    int TZFlag = psField->Date.TZFlag;
     if (TZFlag == 0 || TZFlag == 100)
     {
-        pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
-                           year, month, day, hour, minute, second));
+        if( OGR_GET_MS(second) )
+            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%06.3fZ",
+                                    year, month, day, hour, minute, second));
+        else
+            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+                                    year, month, day, hour, minute, (int)second));
     }
     else
     {
         int TZOffset = ABS(TZFlag - 100) * 15;
         int TZHour = TZOffset / 60;
         int TZMinute = TZOffset - TZHour * 60;
-        pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
+        if( OGR_GET_MS(second) )
+            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%06.3f%c%02d:%02d",
                            year, month, day, hour, minute, second,
                            (TZFlag > 100) ? '+' : '-', TZHour, TZMinute));
+        else
+            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
+                            year, month, day, hour, minute, (int)second,
+                            (TZFlag > 100) ? '+' : '-', TZHour, TZMinute));
     }
     return pszRet;
 }
@@ -986,10 +1386,10 @@ char* OGRGetXML_UTF8_EscapedString(const char* pszString)
     if (!CPLIsUTF8(pszString, -1) &&
          CSLTestBoolean(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
     {
-        static int bFirstTime = TRUE;
+        static bool bFirstTime = true;
         if (bFirstTime)
         {
-            bFirstTime = FALSE;
+            bFirstTime = false;
             CPLError(CE_Warning, CPLE_AppDefined,
                     "%s is not a valid UTF-8 string. Forcing it to ASCII.\n"
                     "If you still want the original string and change the XML file encoding\n"
@@ -1085,23 +1485,23 @@ double OGRCallAtofOnShortString(const char* pszStr)
 /** Same contract as CPLAtof, except than it doesn't always call the
  *  system CPLAtof() that may be slow on some platforms. For simple but
  *  common strings, it'll use a faster implementation (up to 20x faster
- *  than CPLAtof() on MS runtime libraries) that has no garanty to return
+ *  than CPLAtof() on MS runtime libraries) that has no guaranty to return
  *  exactly the same floating point number.
  */
- 
+
 double OGRFastAtof(const char* pszStr)
 {
     double dfVal = 0;
     double dfSign = 1.0;
     const char* p = pszStr;
-    
+
     static const double adfTenPower[] =
     {
         1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10,
         1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20,
         1e21, 1e22, 1e23, 1e24, 1e25, 1e26, 1e27, 1e28, 1e29, 1e30, 1e31
     };
-        
+
     while(*p == ' ' || *p == '\t')
         p++;
 
@@ -1112,8 +1512,8 @@ double OGRFastAtof(const char* pszStr)
         dfSign = -1.0;
         p++;
     }
-    
-    while(TRUE)
+
+    while( true )
     {
         if (*p >= '0' && *p <= '9')
         {
@@ -1130,9 +1530,9 @@ double OGRFastAtof(const char* pszStr)
         else
             return dfSign * dfVal;
     }
-    
+
     unsigned int countFractionnal = 0;
-    while(TRUE)
+    while( true )
     {
         if (*p >= '0' && *p <= '9')
         {
@@ -1189,48 +1589,46 @@ OGRErr OGRCheckPermutation(int* panPermutation, int nSize)
 
 
 OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVariant,
-                               OGRwkbGeometryType *peGeometryType, OGRBoolean *pbIs3D )
+                               OGRwkbGeometryType *peGeometryType )
 {
-    if ( ! (peGeometryType && pbIs3D) )
+    if ( !peGeometryType )
         return OGRERR_FAILURE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
-    OGRwkbByteOrder eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
-    if (!( eByteOrder == wkbXDR || eByteOrder == wkbNDR ))
+    int nByteOrder = DB2_V72_FIX_BYTE_ORDER(*pabyData);
+    if (!( nByteOrder == wkbXDR || nByteOrder == wkbNDR ))
         return OGRERR_CORRUPT_DATA;
+    OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder) nByteOrder;
 
 /* -------------------------------------------------------------------- */
-/*      Get the geometry feature type.  For now we assume that          */
-/*      geometry type is between 0 and 255 so we only have to fetch     */
-/*      one byte.                                                       */
+/*      Get the geometry type.                                          */
 /* -------------------------------------------------------------------- */
     int bIs3D = FALSE;
+    int bIsMeasured = FALSE;
     int iRawType;
-    
+
     memcpy(&iRawType, pabyData + 1, 4);
     if ( OGR_SWAP(eByteOrder))
     {
         CPL_SWAP32PTR(&iRawType);
     }
-    
-    /* Old-style OGC z-bit is flipped? */
+
+    /* Test for M bit in PostGIS WKB, see ogrgeometry.cpp:4956 */
+    if ( 0x40000000 & iRawType )
+    {
+        iRawType &= ~0x40000000;
+        bIsMeasured = TRUE;
+    }
+    /* Old-style OGC z-bit is flipped? Tests also Z bit in PostGIS WKB */
     if ( wkb25DBitInternalUse & iRawType )
     {
         /* Clean off top 3 bytes */
         iRawType &= 0x000000FF;
-        bIs3D = TRUE;        
-    }
-    
-    /* ISO SQL/MM style Z types (between 1001 and 1012)? */
-    if ( iRawType >= 1001 && iRawType <= (int)wkbMultiSurfaceZ )
-    {
-        /* Remove the ISO padding */
-        iRawType -= 1000;
         bIs3D = TRUE;
     }
-    
+
     /*  ISO SQL/MM Part3 draft -> Deprecated */
     /* See http://jtc1sc32.org/doc/N1101-1150/32N1107-WD13249-3--spatial.pdf  */
     if (iRawType == 1000001)
@@ -1243,75 +1641,87 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
         iRawType = wkbMultiCurve;
     else if (iRawType == 1000005)
         iRawType = wkbMultiSurface;
+    else if (iRawType == 2000001)
+        iRawType = wkbPointZM;
+    else if (iRawType == 2000002)
+        iRawType = wkbLineStringZM;
+    else if (iRawType == 2000003)
+        iRawType = wkbCircularStringZM;
+    else if (iRawType == 2000004)
+        iRawType = wkbCompoundCurveZM;
+    else if (iRawType == 2000005)
+        iRawType = wkbPolygonZM;
+    else if (iRawType == 2000006)
+        iRawType = wkbCurvePolygonZM;
+    else if (iRawType == 2000007)
+        iRawType = wkbMultiPointZM;
+    else if (iRawType == 2000008)
+        iRawType = wkbMultiCurveZM;
+    else if (iRawType == 2000009)
+        iRawType = wkbMultiLineStringZM;
+    else if (iRawType == 2000010)
+        iRawType = wkbMultiSurfaceZM;
+    else if (iRawType == 2000011)
+        iRawType = wkbMultiPolygonZM;
+    else if (iRawType == 2000012)
+        iRawType = wkbGeometryCollectionZM;
     else if (iRawType == 3000001)
-    {
-        iRawType = wkbPoint;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbPoint25D;
     else if (iRawType == 3000002)
-    {
-        iRawType = wkbLineString;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbLineString25D;
     else if (iRawType == 3000003)
-    {
-        iRawType = wkbCircularString;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbCircularStringZ;
     else if (iRawType == 3000004)
-    {
-        iRawType = wkbCompoundCurve;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbCompoundCurveZ;
     else if (iRawType == 3000005)
-    {
-        iRawType = wkbPolygon;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbPolygon25D;
     else if (iRawType == 3000006)
-    {
-        iRawType = wkbCurvePolygon;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbCurvePolygonZ;
     else if (iRawType == 3000007)
-    {
-        iRawType = wkbMultiPoint;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiPoint25D;
     else if (iRawType == 3000008)
-    {
-        iRawType = wkbMultiCurve;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiCurveZ;
     else if (iRawType == 3000009)
-    {
-        iRawType = wkbMultiLineString;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiLineString25D;
     else if (iRawType == 3000010)
-    {
-        iRawType = wkbMultiSurface;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiSurfaceZ;
     else if (iRawType == 3000011)
-    {
-        iRawType = wkbMultiPolygon;
-        bIs3D = TRUE;
-    }
+        iRawType = wkbMultiPolygon25D;
     else if (iRawType == 3000012)
-    {
-        iRawType = wkbGeometryCollection;
-        bIs3D = TRUE;
-    }
-    
+        iRawType = wkbGeometryCollection25D;
+    else if (iRawType == 4000001)
+        iRawType = wkbPointM;
+    else if (iRawType == 4000002)
+        iRawType = wkbLineStringM;
+    else if (iRawType == 4000003)
+        iRawType = wkbCircularStringM;
+    else if (iRawType == 4000004)
+        iRawType = wkbCompoundCurveM;
+    else if (iRawType == 4000005)
+        iRawType = wkbPolygonM;
+    else if (iRawType == 4000006)
+        iRawType = wkbCurvePolygonM;
+    else if (iRawType == 4000007)
+        iRawType = wkbMultiPointM;
+    else if (iRawType == 4000008)
+        iRawType = wkbMultiCurveM;
+    else if (iRawType == 4000009)
+        iRawType = wkbMultiLineStringM;
+    else if (iRawType == 4000010)
+        iRawType = wkbMultiSurfaceM;
+    else if (iRawType == 4000011)
+        iRawType = wkbMultiPolygonM;
+    else if (iRawType == 4000012)
+        iRawType = wkbGeometryCollectionM;
+
     /* Sometimes the Z flag is in the 2nd byte? */
     if ( iRawType & (wkb25DBitInternalUse >> 16) )
     {
         /* Clean off top 3 bytes */
         iRawType &= 0x000000FF;
-        bIs3D = TRUE;        
+        bIs3D = TRUE;
     }
-    
+
     if( eWkbVariant == wkbVariantPostGIS1 )
     {
         if( iRawType == POSTGIS15_CURVEPOLYGON )
@@ -1322,17 +1732,33 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVaria
             iRawType = wkbMultiSurface;
     }
 
-    /* Nothing left but (hopefully) basic 2D types */
-
-    /* What if what we have is still out of range? */
-    if ( iRawType < 1 || iRawType > (int)wkbMultiSurface )
+    if( bIs3D )
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d", iRawType);            
+        iRawType += 1000;
+    }
+    if( bIsMeasured )
+    {
+        iRawType += 2000;
+    }
+
+    /* ISO SQL/MM style types are between 1-16, 1001-1016, 2001-2016, and 3001-3016 */
+    if ( !((iRawType > 0 && iRawType <= 16) ||
+           (iRawType > 1000 && iRawType <= 1016) ||
+           (iRawType > 2000 && iRawType <= 2016) ||
+           (iRawType > 3000 && iRawType <= 3016)) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d", iRawType);
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 
-    *pbIs3D = bIs3D;
+    /* convert to OGRwkbGeometryType value */
+    if( iRawType >= 1001 && iRawType <= 1007 )
+    {
+        iRawType -= 1000;
+        iRawType |= wkb25DBitInternalUse;
+    }
+
     *peGeometryType = (OGRwkbGeometryType)iRawType;
-    
+
     return OGRERR_NONE;
 }

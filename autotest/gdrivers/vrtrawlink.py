@@ -6,11 +6,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test VRTRawRasterBand support.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -20,7 +20,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -65,7 +65,7 @@ def vrtrawlink_2():
         'subClass=VRTRawRasterBand',
         'SourceFilename=data/small.raw'
         ]
-    
+
     result = ds.AddBand( gdal.GDT_Byte, options )
     if result != gdal.CE_None:
         gdaltest.post_reason( 'AddBand() returned error code' )
@@ -78,7 +78,7 @@ def vrtrawlink_2():
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
 
-    # Force it to be written to disk. 
+    # Force it to be written to disk.
     ds = None
 
     return 'success'
@@ -105,19 +105,19 @@ def vrtrawlink_3():
     return 'success'
 
 ###############################################################################
-# Add a new band, and we will test if we can write to it. 
+# Add a new band, and we will test if we can write to it.
 
 def vrtrawlink_4():
 
     # force creation of the file.
     open( 'tmp/rawlink.dat', 'w' ).write( chr(0) )
 
-    # Add a new band pointing to this bogus file. 
+    # Add a new band pointing to this bogus file.
     options = [
         'subClass=VRTRawRasterBand',
         'SourceFilename=tmp/rawlink.dat',
         'relativeToVRT=0',
-        'ImageOffset=100',
+        'ImageOffset=                      100',
         'PixelOffset=3',
         'LineOffset=93',
         'ByteOrder=MSB'
@@ -143,7 +143,7 @@ def vrtrawlink_4():
     if chksum != 12481:
         gdaltest.post_reason('Wrong checksum')
         return 'fail'
-    
+
     band_1 = None
     band = None
 
@@ -177,7 +177,7 @@ def vrtrawlink_5():
     # Add a new band pointing to this bogus file.
     options = [
         'subClass=VRTRawRasterBand',
-        'SourceFilename=tmp/rawlink.dat',
+        'SourceFilename=rawlink5.dat',
         'relativeToVRT=1',
         'ImageOffset=100',
         'PixelOffset=3',
@@ -215,14 +215,108 @@ def vrtrawlink_5():
     return 'success'
 
 ###############################################################################
+# Add a new band with relativeToVRT=1, and re-open the dataset.
+
+def vrtrawlink_6():
+
+    driver = gdal.GetDriverByName( "VRT" );
+    ds = driver.Create( 'tmp/rawlink.vrt', 31, 35, 0 )
+
+    # Add a new band pointing to this bogus file.
+    options = [
+        'subClass=VRTRawRasterBand',
+        'SourceFilename=rawlink6.dat',
+        'relativeToVRT=1',
+        'ImageOffset=100',
+        'PixelOffset=3',
+        'LineOffset=93',
+        'ByteOrder=MSB'
+        ]
+
+    result = ds.AddBand( gdal.GDT_UInt16, options )
+    if result != gdal.CE_None:
+        gdaltest.post_reason( 'AddBand() returned error code' )
+        return 'fail'
+
+    ds.FlushCache()
+
+    # Close and reopen to ensure we are getting data from disk.
+    ds = None
+
+    ds = gdal.Open('tmp/rawlink.vrt')
+    if ds is None:
+        gdaltest.post_reason( 'unable to open the dataset: "tmp/rawlink.vrt"' )
+        return 'fail'
+
+    b = ds.GetRasterBand(1)
+    if b is None:
+        gdaltest.post_reason( 'unable to open the raster band #1' )
+        return 'fail'
+
+    if not os.path.exists('tmp/rawlink6.dat'):
+        gdaltest.post_reason(
+            'tha raw file is not in the expected location ("tmp/rawlink6.dat")')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Add a new band with relativeToVRT=1, change directory and re-open the dataset.
+
+def vrtrawlink_7():
+
+    driver = gdal.GetDriverByName( "VRT" );
+    ds = driver.Create( 'tmp/rawlink.vrt', 31, 35, 0 )
+
+    # Add a new band pointing to this bogus file.
+    options = [
+        'subClass=VRTRawRasterBand',
+        'SourceFilename=rawlink7.dat',
+        'relativeToVRT=1',
+        'ImageOffset=100',
+        'PixelOffset=3',
+        'LineOffset=93',
+        'ByteOrder=MSB'
+        ]
+
+    result = ds.AddBand( gdal.GDT_UInt16, options )
+    if result != gdal.CE_None:
+        gdaltest.post_reason( 'AddBand() returned error code' )
+        return 'fail'
+
+    ds.FlushCache()
+
+    # Close and reopen to ensure we are getting data from disk.
+    ds = None
+
+    os.chdir('tmp')
+    try:
+        ds = gdal.Open('rawlink.vrt')
+        if ds is None:
+            gdaltest.post_reason( 'unable to open the dataset: "rawlink.vrt"' )
+            return 'fail'
+
+        b = ds.GetRasterBand(1)
+        if b is None:
+            gdaltest.post_reason( 'unable to open the raster band #1' )
+            return 'fail'
+    finally:
+        os.chdir('..')
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtrawlink_cleanup():
     gdaltest.rawlink_ds = None
-        
+
     try:
         os.remove( 'tmp/rawlink.vrt' )
         os.remove( 'tmp/rawlink.dat' )
+        os.remove( 'tmp/rawlink5.dat' )
+        os.remove( 'tmp/rawlink6.dat' )
+        os.remove( 'tmp/rawlink7.dat' )
     except:
         pass
     return 'success'
@@ -233,6 +327,8 @@ gdaltest_list = [
     vrtrawlink_3,
     vrtrawlink_4,
     vrtrawlink_5,
+    vrtrawlink_6,
+    vrtrawlink_7,
     vrtrawlink_cleanup ]
 
 if __name__ == '__main__':
@@ -242,4 +338,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

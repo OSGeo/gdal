@@ -34,10 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-#define GP_NODATA_MARKER -51502112
-
-#ifdef OGR_ENABLED
-
 /************************************************************************/
 /* ==================================================================== */
 /*                               RPolygon                               */
@@ -50,9 +46,9 @@ CPL_CVSID("$Id$");
 
 class RPolygon {
 public:
-    RPolygon( int nValue ) { nPolyValue = nValue; nLastLineUpdated = -1; }
+    RPolygon(  double dfValue ) { dfPolyValue = dfValue; nLastLineUpdated = -1; }
 
-    int              nPolyValue;
+    double              dfPolyValue;
     int              nLastLineUpdated;
 
     std::vector< std::vector<int> > aanXY;
@@ -70,14 +66,14 @@ void RPolygon::Dump()
 {
     size_t iString;
 
-    printf( "RPolygon: Value=%d, LastLineUpdated=%d\n",
-            nPolyValue, nLastLineUpdated );
-    
+    printf( "RPolygon: Value=%g, LastLineUpdated=%d\n",
+            dfPolyValue, nLastLineUpdated );
+
     for( iString = 0; iString < aanXY.size(); iString++ )
     {
         std::vector<int> &anString = aanXY[iString];
         size_t iVert;
-     
+
         printf( "  String %d:\n", (int) iString );
         for( iVert = 0; iVert < anString.size(); iVert += 2 )
         {
@@ -119,8 +115,8 @@ void RPolygon::Coalesce()
 /*      Loop over the following strings, trying to find one we can      */
 /*      merge onto the end of our base string.                          */
 /* -------------------------------------------------------------------- */
-            for( iString = iBaseString+1; 
-                 iString < aanXY.size(); 
+            for( iString = iBaseString+1;
+                 iString < aanXY.size();
                  iString++ )
             {
                 std::vector<int> &anString = aanXY[iString];
@@ -128,13 +124,13 @@ void RPolygon::Coalesce()
                 if( anBase[anBase.size()-2] == anString[0]
                     && anBase[anBase.size()-1] == anString[1] )
                 {
-                    Merge( iBaseString, iString, 1 );
+                    Merge( static_cast<int>(iBaseString), static_cast<int>(iString), 1 );
                     bMergeHappened = TRUE;
                 }
                 else if( anBase[anBase.size()-2] == anString[anString.size()-2]
                          && anBase[anBase.size()-1] == anString[anString.size()-1] )
                 {
-                    Merge( iBaseString, iString, -1 );
+                    Merge( static_cast<int>(iBaseString), static_cast<int>(iString), -1 );
                     bMergeHappened = TRUE;
                 }
             }
@@ -162,24 +158,24 @@ void RPolygon::Merge( int iBaseString, int iSrcString, int iDirection )
     if( iDirection == 1 )
     {
         iStart = 1;
-        iEnd = anString.size() / 2; 
+        iEnd = static_cast<int>(anString.size()) / 2;
     }
     else
     {
-        iStart = anString.size() / 2 - 2;
-        iEnd = -1; 
+        iStart = static_cast<int>(anString.size()) / 2 - 2;
+        iEnd = -1;
     }
-    
+
     for( i = iStart; i != iEnd; i += iDirection )
     {
         anBase.push_back( anString[i*2+0] );
         anBase.push_back( anString[i*2+1] );
     }
-    
+
     if( iSrcString < ((int) aanXY.size())-1 )
         aanXY[iSrcString] = aanXY[aanXY.size()-1];
 
-    size_t nSize = aanXY.size(); 
+    size_t nSize = aanXY.size();
     aanXY.resize(nSize-1);
 }
 
@@ -201,8 +197,8 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
     {
         std::vector<int> &anString = aanXY[iString];
         size_t nSSize = anString.size();
-        
-        if( anString[nSSize-2] == x1 
+
+        if( anString[nSSize-2] == x1
             && anString[nSSize-1] == y1 )
         {
             int nTemp;
@@ -216,16 +212,16 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
             y1 = nTemp;
         }
 
-        if( anString[nSSize-2] == x2 
+        if( anString[nSSize-2] == x2
             && anString[nSSize-1] == y2 )
         {
-            // We are going to add a segment, but should we just extend 
+            // We are going to add a segment, but should we just extend
             // an existing segment already going in the right direction?
 
             int nLastLen = MAX(ABS(anString[nSSize-4]-anString[nSSize-2]),
                                ABS(anString[nSSize-3]-anString[nSSize-1]));
-            
-            if( nSSize >= 4 
+
+            if( nSSize >= 4
                 && (anString[nSSize-4] - anString[nSSize-2]
                     == (anString[nSSize-2] - x1)*nLastLen)
                 && (anString[nSSize-3] - anString[nSSize-1]
@@ -271,8 +267,9 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
 /*      other side of the edge.                                         */
 /************************************************************************/
 
-static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId, 
-                      GInt32 *panPolyIdMap, GInt32 *panPolyValue,
+template<class DataType>
+static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
+                      GInt32 *panPolyIdMap, DataType *panPolyValue,
                       RPolygon **papoPoly, int iX, int iY )
 
 {
@@ -349,7 +346,7 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
     size_t iString;
 
     hPolygon = OGR_G_CreateGeometry( wkbPolygon );
-    
+
     for( iString = 0; iString < poRPoly->aanXY.size(); iString++ )
     {
         std::vector<int> &anString = poRPoly->aanXY[iString];
@@ -357,20 +354,20 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 
         int iVert;
 
-        // we go last to first to ensure the linestring is allocated to 
+        // we go last to first to ensure the linestring is allocated to
         // the proper size on the first try.
-        for( iVert = anString.size()/2 - 1; iVert >= 0; iVert-- )
+        for( iVert = static_cast<int>(anString.size())/2 - 1; iVert >= 0; iVert-- )
         {
             double dfX, dfY;
             int    nPixelX, nPixelY;
-            
+
             nPixelX = anString[iVert*2];
             nPixelY = anString[iVert*2+1];
 
-            dfX = padfGeoTransform[0] 
+            dfX = padfGeoTransform[0]
                 + nPixelX * padfGeoTransform[1]
                 + nPixelY * padfGeoTransform[2];
-            dfY = padfGeoTransform[3] 
+            dfY = padfGeoTransform[3]
                 + nPixelX * padfGeoTransform[4]
                 + nPixelY * padfGeoTransform[5];
 
@@ -379,7 +376,7 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 
         OGR_G_AddGeometryDirectly( hPolygon, hRing );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the feature object.                                      */
 /* -------------------------------------------------------------------- */
@@ -388,7 +385,7 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
     OGR_F_SetGeometryDirectly( hFeat, hPolygon );
 
     if( iPixValField >= 0 )
-        OGR_F_SetFieldInteger( hFeat, iPixValField, poRPoly->nPolyValue );
+        OGR_F_SetFieldDouble( hFeat, iPixValField, poRPoly->dfPolyValue );
 
 /* -------------------------------------------------------------------- */
 /*      Write the to the layer.                                         */
@@ -410,14 +407,15 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 /*      band is zero.                                                   */
 /************************************************************************/
 
-static CPLErr 
-GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXSize, 
-                 GInt32 *panImageLine )
+template<class DataType>
+static CPLErr
+GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXSize,
+                 DataType *panImageLine )
 
 {
     CPLErr eErr;
 
-    eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1, 
+    eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1,
                          pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
     if( eErr == CE_None )
     {
@@ -431,79 +429,22 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXS
 
     return eErr;
 }
-#endif // OGR_ENABLED
 
 /************************************************************************/
-/*                           GDALPolygonize()                           */
+/*                           GDALPolygonizeT()                          */
 /************************************************************************/
 
-/**
- * Create polygon coverage from raster data.
- *
- * This function creates vector polygons for all connected regions of pixels in
- * the raster sharing a common pixel value.  Optionally each polygon may be
- * labelled with the pixel value in an attribute.  Optionally a mask band
- * can be provided to determine which pixels are eligible for processing.
- *
- * Note that currently the source pixel band values are read into a
- * signed 32bit integer buffer (Int32), so floating point or complex 
- * bands will be implicitly truncated before processing. If you want to use a
- * version using 32bit float buffers, see GDALFPolygonize() at fpolygonize.cpp.
- *
- * Polygon features will be created on the output layer, with polygon 
- * geometries representing the polygons.  The polygon geometries will be
- * in the georeferenced coordinate system of the image (based on the
- * geotransform of the source dataset).  It is acceptable for the output
- * layer to already have features.  Note that GDALPolygonize() does not
- * set the coordinate system on the output layer.  Application code should
- * do this when the layer is created, presumably matching the raster 
- * coordinate system. 
- *
- * The algorithm used attempts to minimize memory use so that very large
- * rasters can be processed.  However, if the raster has many polygons 
- * or very large/complex polygons, the memory use for holding polygon 
- * enumerations and active polygon geometries may grow to be quite large. 
- *
- * The algorithm will generally produce very dense polygon geometries, with
- * edges that follow exactly on pixel boundaries for all non-interior pixels.
- * For non-thematic raster data (such as satellite images) the result will
- * essentially be one small polygon per pixel, and memory and output layer
- * sizes will be substantial.  The algorithm is primarily intended for 
- * relatively simple thematic imagery, masks, and classification results. 
- * 
- * @param hSrcBand the source raster band to be processed.
- * @param hMaskBand an optional mask band.  All pixels in the mask band with a 
- * value other than zero will be considered suitable for collection as 
- * polygons.  
- * @param hOutLayer the vector feature layer to which the polygons should
- * be written. 
- * @param iPixValField the attribute field index indicating the feature
- * attribute into which the pixel value of the polygon should be written.
- * @param papszOptions a name/value list of additional options
- * <dl>
- * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
- * Otherwise 4 connectedness will be applied to the algorithm
- * </dl>
- * @param pfnProgress callback for reporting algorithm progress matching the
- * GDALProgressFunc() semantics.  May be NULL.
- * @param pProgressArg callback argument passed to pfnProgress.
- * 
- * @return CE_None on success or CE_Failure on a failure.
- */
-
-CPLErr CPL_STDCALL
-GDALPolygonize( GDALRasterBandH hSrcBand, 
-                GDALRasterBandH hMaskBand,
-                OGRLayerH hOutLayer, int iPixValField, 
-                char **papszOptions,
-                GDALProgressFunc pfnProgress, 
-                void * pProgressArg )
+template<class DataType, class EqualityTest>
+static CPLErr
+GDALPolygonizeT( GDALRasterBandH hSrcBand,
+                 GDALRasterBandH hMaskBand,
+                 OGRLayerH hOutLayer, int iPixValField,
+                 char **papszOptions,
+                 GDALProgressFunc pfnProgress,
+                 void * pProgressArg,
+                 GDALDataType eDT)
 
 {
-#ifndef OGR_ENABLED
-    CPLError(CE_Failure, CPLE_NotSupported, "GDALPolygonize() unimplemented in a non OGR build");
-    return CE_Failure;
-#else
     VALIDATE_POINTER1( hSrcBand, "GDALPolygonize", CE_Failure );
     VALIDATE_POINTER1( hOutLayer, "GDALPolygonize", CE_Failure );
 
@@ -529,17 +470,15 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
     CPLErr eErr = CE_None;
     int nXSize = GDALGetRasterBandXSize( hSrcBand );
     int nYSize = GDALGetRasterBandYSize( hSrcBand );
-    GInt32 *panLastLineVal = (GInt32 *) VSIMalloc2(sizeof(GInt32),nXSize + 2);
-    GInt32 *panThisLineVal = (GInt32 *) VSIMalloc2(sizeof(GInt32),nXSize + 2);
-    GInt32 *panLastLineId =  (GInt32 *) VSIMalloc2(sizeof(GInt32),nXSize + 2);
-    GInt32 *panThisLineId =  (GInt32 *) VSIMalloc2(sizeof(GInt32),nXSize + 2);
-    GByte *pabyMaskLine = (hMaskBand != NULL) ? (GByte *) VSIMalloc(nXSize) : NULL;
+    DataType *panLastLineVal = (DataType *) VSI_MALLOC2_VERBOSE(sizeof(DataType),nXSize + 2);
+    DataType *panThisLineVal = (DataType *) VSI_MALLOC2_VERBOSE(sizeof(DataType),nXSize + 2);
+    GInt32 *panLastLineId =  (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32),nXSize + 2);
+    GInt32 *panThisLineId =  (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32),nXSize + 2);
+    GByte *pabyMaskLine = (hMaskBand != NULL) ? (GByte *) VSI_MALLOC_VERBOSE(nXSize) : NULL;
     if (panLastLineVal == NULL || panThisLineVal == NULL ||
         panLastLineId == NULL || panThisLineId == NULL ||
         (hMaskBand != NULL && pabyMaskLine == NULL))
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Could not allocate enough memory for temporary buffers");
         CPLFree( panThisLineId );
         CPLFree( panLastLineId );
         CPLFree( panThisLineVal );
@@ -564,41 +503,41 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /*      what on the second pass.                                        */
 /* -------------------------------------------------------------------- */
     int iY;
-    GDALRasterPolygonEnumerator oFirstEnum(nConnectedness);
+    GDALRasterPolygonEnumeratorT<DataType, EqualityTest> oFirstEnum(nConnectedness);
 
     for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
-        eErr = GDALRasterIO( 
+        eErr = GDALRasterIO(
             hSrcBand,
-            GF_Read, 0, iY, nXSize, 1, 
-            panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
-        
+            GF_Read, 0, iY, nXSize, 1,
+            panThisLineVal, nXSize, 1, eDT, 0, 0 );
+
         if( eErr == CE_None && hMaskBand != NULL )
             eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize, panThisLineVal );
 
         if( iY == 0 )
-            oFirstEnum.ProcessLine( 
+            oFirstEnum.ProcessLine(
                 NULL, panThisLineVal, NULL, panThisLineId, nXSize );
         else
             oFirstEnum.ProcessLine(
-                panLastLineVal, panThisLineVal, 
-                panLastLineId,  panThisLineId, 
+                panLastLineVal, panThisLineVal,
+                panLastLineId,  panThisLineId,
                 nXSize );
 
         // swap lines
-        GInt32 *panTmp = panLastLineVal;
+        DataType *panTmpVal = panLastLineVal;
         panLastLineVal = panThisLineVal;
-        panThisLineVal = panTmp;
+        panThisLineVal = panTmpVal;
 
-        panTmp = panThisLineId;
+        GInt32* panTmp = panThisLineId;
         panThisLineId = panLastLineId;
         panLastLineId = panTmp;
 
 /* -------------------------------------------------------------------- */
 /*      Report progress, and support interrupts.                        */
 /* -------------------------------------------------------------------- */
-        if( eErr == CE_None 
-            && !pfnProgress( 0.10 * ((iY+1) / (double) nYSize), 
+        if( eErr == CE_None
+            && !pfnProgress( 0.10 * ((iY+1) / (double) nYSize),
                              "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -627,11 +566,11 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
         panLastLineId[iX] = -1;
 
 /* -------------------------------------------------------------------- */
-/*      We will use a new enumerator for the second pass primariliy     */
+/*      We will use a new enumerator for the second pass primarily      */
 /*      so we can preserve the first pass map.                          */
 /* -------------------------------------------------------------------- */
-    GDALRasterPolygonEnumerator oSecondEnum(nConnectedness);
-    RPolygon **papoPoly = (RPolygon **) 
+    GDALRasterPolygonEnumeratorT<DataType, EqualityTest> oSecondEnum(nConnectedness);
+    RPolygon **papoPoly = (RPolygon **)
         CPLCalloc(sizeof(RPolygon*),oFirstEnum.nNextPolygonId);
 
 /* ==================================================================== */
@@ -645,8 +584,8 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
         if( iY < nYSize )
         {
-            eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1, 
-                                 panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
+            eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
+                                 panThisLineVal, nXSize, 1, eDT, 0, 0 );
 
             if( eErr == CE_None && hMaskBand != NULL )
                 eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize, panThisLineVal );
@@ -665,12 +604,12 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                 panThisLineId[iX] = -1;
         }
         else if( iY == 0 )
-            oSecondEnum.ProcessLine( 
+            oSecondEnum.ProcessLine(
                 NULL, panThisLineVal, NULL, panThisLineId+1, nXSize );
         else
             oSecondEnum.ProcessLine(
-                panLastLineVal, panThisLineVal, 
-                panLastLineId+1,  panThisLineId+1, 
+                panLastLineVal, panThisLineVal,
+                panLastLineId+1,  panThisLineId+1,
                 nXSize );
 
 /* -------------------------------------------------------------------- */
@@ -679,7 +618,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
         for( iX = 0; iX < nXSize+1; iX++ )
         {
-            AddEdges( panThisLineId, panLastLineId, 
+            AddEdges( panThisLineId, panLastLineId,
                       oFirstEnum.panPolyIdMap, oFirstEnum.panPolyValue,
                       papoPoly, iX, iY );
         }
@@ -691,19 +630,16 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
         if( iY % 8 == 7 )
         {
-            for( iX = 0; 
-                 eErr == CE_None && iX < oSecondEnum.nNextPolygonId; 
+            for( iX = 0;
+                 eErr == CE_None && iX < oSecondEnum.nNextPolygonId;
                  iX++ )
             {
                 if( papoPoly[iX] && papoPoly[iX]->nLastLineUpdated < iY-1 )
                 {
-                    if( hMaskBand == NULL
-                        || papoPoly[iX]->nPolyValue != GP_NODATA_MARKER )
-                    {
-                        eErr = 
-                            EmitPolygonToLayer( hOutLayer, iPixValField, 
-                                                papoPoly[iX], adfGeoTransform );
-                    }
+                    eErr =
+                        EmitPolygonToLayer( hOutLayer, iPixValField,
+                                            papoPoly[iX], adfGeoTransform );
+
                     delete papoPoly[iX];
                     papoPoly[iX] = NULL;
                 }
@@ -714,19 +650,19 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
 /*      Swap pixel value, and polygon id lines to be ready for the      */
 /*      next line.                                                      */
 /* -------------------------------------------------------------------- */
-        GInt32 *panTmp = panLastLineVal;
+        DataType *panTmpVal = panLastLineVal;
         panLastLineVal = panThisLineVal;
-        panThisLineVal = panTmp;
+        panThisLineVal = panTmpVal;
 
-        panTmp = panThisLineId;
+        GInt32* panTmp = panThisLineId;
         panThisLineId = panLastLineId;
         panLastLineId = panTmp;
 
 /* -------------------------------------------------------------------- */
 /*      Report progress, and support interrupts.                        */
 /* -------------------------------------------------------------------- */
-        if( eErr == CE_None 
-            && !pfnProgress( 0.10 + 0.90 * ((iY+1) / (double) nYSize), 
+        if( eErr == CE_None
+            && !pfnProgress( 0.10 + 0.90 * ((iY+1) / (double) nYSize),
                              "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -741,13 +677,10 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
     {
         if( papoPoly[iX] )
         {
-            if( hMaskBand == NULL
-                || papoPoly[iX]->nPolyValue != GP_NODATA_MARKER )
-            {
-                eErr = 
-                    EmitPolygonToLayer( hOutLayer, iPixValField, 
-                                        papoPoly[iX], adfGeoTransform );
-            }
+            eErr =
+                EmitPolygonToLayer( hOutLayer, iPixValField,
+                                    papoPoly[iX], adfGeoTransform );
+
             delete papoPoly[iX];
             papoPoly[iX] = NULL;
         }
@@ -764,6 +697,215 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
     CPLFree( papoPoly );
 
     return eErr;
-#endif // OGR_ENABLED
 }
 
+
+/******************************************************************************/
+/*                          GDALFloatEquals()                                 */
+/* Code from:                                                                 */
+/* http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm  */
+/******************************************************************************/
+GBool GDALFloatEquals(float A, float B)
+{
+    /**
+     * This function will allow maxUlps-1 floats between A and B.
+     */
+    const int maxUlps = MAX_ULPS;
+    int aInt, bInt;
+
+    /**
+     * Make sure maxUlps is non-negative and small enough that the default NAN
+     * won't compare as equal to anything.
+     */
+#if MAX_ULPS <= 0 || MAX_ULPS >= 4 * 1024 * 1024
+#error "Invalid MAX_ULPS"
+#endif
+
+    /**
+     * This assignation could violate strict aliasing. It causes a warning with
+     * gcc -O2. Use of memcpy preferred. Credits for Even Rouault. Further info
+     * at http://trac.osgeo.org/gdal/ticket/4005#comment:6
+     */
+    //int aInt = *(int*)&A;
+    memcpy(&aInt, &A, 4);
+
+    /**
+     * Make aInt lexicographically ordered as a twos-complement int
+     */
+    if (aInt < 0)
+        aInt = 0x80000000 - aInt;
+    /**
+     * Make bInt lexicographically ordered as a twos-complement int
+     */
+    //int bInt = *(int*)&B;
+    memcpy(&bInt, &B, 4);
+
+    if (bInt < 0)
+        bInt = 0x80000000 - bInt;
+#ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
+    int intDiff = abs((int) (((GUIntBig)((GIntBig)aInt - (GIntBig)bInt)) & 0xFFFFFFFFU) );
+#else
+    /* to make -ftrapv happy we compute the diff on larger type and cast down later */
+    int intDiff = abs((int)((GIntBig)aInt - (GIntBig)bInt));
+#endif
+    if (intDiff <= maxUlps)
+        return true;
+    return false;
+}
+
+
+/************************************************************************/
+/*                           GDALPolygonize()                           */
+/************************************************************************/
+
+/**
+ * Create polygon coverage from raster data.
+ *
+ * This function creates vector polygons for all connected regions of pixels in
+ * the raster sharing a common pixel value.  Optionally each polygon may be
+ * labeled with the pixel value in an attribute.  Optionally a mask band
+ * can be provided to determine which pixels are eligible for processing.
+ *
+ * Note that currently the source pixel band values are read into a
+ * signed 32bit integer buffer (Int32), so floating point or complex
+ * bands will be implicitly truncated before processing. If you want to use a
+ * version using 32bit float buffers, see GDALFPolygonize().
+  *
+ * Polygon features will be created on the output layer, with polygon
+ * geometries representing the polygons.  The polygon geometries will be
+ * in the georeferenced coordinate system of the image (based on the
+ * geotransform of the source dataset).  It is acceptable for the output
+ * layer to already have features.  Note that GDALPolygonize() does not
+ * set the coordinate system on the output layer.  Application code should
+ * do this when the layer is created, presumably matching the raster
+ * coordinate system.
+ *
+ * The algorithm used attempts to minimize memory use so that very large
+ * rasters can be processed.  However, if the raster has many polygons
+ * or very large/complex polygons, the memory use for holding polygon
+ * enumerations and active polygon geometries may grow to be quite large.
+ *
+ * The algorithm will generally produce very dense polygon geometries, with
+ * edges that follow exactly on pixel boundaries for all non-interior pixels.
+ * For non-thematic raster data (such as satellite images) the result will
+ * essentially be one small polygon per pixel, and memory and output layer
+ * sizes will be substantial.  The algorithm is primarily intended for
+ * relatively simple thematic imagery, masks, and classification results.
+ *
+ * @param hSrcBand the source raster band to be processed.
+ * @param hMaskBand an optional mask band.  All pixels in the mask band with a
+ * value other than zero will be considered suitable for collection as
+ * polygons.
+ * @param hOutLayer the vector feature layer to which the polygons should
+ * be written.
+ * @param iPixValField the attribute field index indicating the feature
+ * attribute into which the pixel value of the polygon should be written.
+ * @param papszOptions a name/value list of additional options
+ * <dl>
+ * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
+ * Otherwise 4 connectedness will be applied to the algorithm
+ * </dl>
+ * @param pfnProgress callback for reporting algorithm progress matching the
+ * GDALProgressFunc() semantics.  May be NULL.
+ * @param pProgressArg callback argument passed to pfnProgress.
+ *
+ * @return CE_None on success or CE_Failure on a failure.
+ */
+
+CPLErr CPL_STDCALL
+GDALPolygonize( GDALRasterBandH hSrcBand,
+                GDALRasterBandH hMaskBand,
+                OGRLayerH hOutLayer, int iPixValField,
+                char **papszOptions,
+                GDALProgressFunc pfnProgress,
+                void * pProgressArg )
+
+{
+    return GDALPolygonizeT<GInt32, IntEqualityTest>(hSrcBand,
+                                                    hMaskBand,
+                                                    hOutLayer,
+                                                    iPixValField,
+                                                    papszOptions,
+                                                    pfnProgress,
+                                                    pProgressArg,
+                                                    GDT_Int32);
+}
+
+
+/************************************************************************/
+/*                           GDALFPolygonize()                           */
+/************************************************************************/
+
+/**
+ * Create polygon coverage from raster data.
+ *
+ * This function creates vector polygons for all connected regions of pixels in
+ * the raster sharing a common pixel value.  Optionally each polygon may be
+ * labeled with the pixel value in an attribute.  Optionally a mask band
+ * can be provided to determine which pixels are eligible for processing.
+ *
+ * The source pixel band values are read into a 32bit float buffer. If you want
+ * to use a (probably faster) version using signed 32bit integer buffer, see
+ * GDALPolygonize().
+ *
+ * Polygon features will be created on the output layer, with polygon
+ * geometries representing the polygons.  The polygon geometries will be
+ * in the georeferenced coordinate system of the image (based on the
+ * geotransform of the source dataset).  It is acceptable for the output
+ * layer to already have features.  Note that GDALFPolygonize() does not
+ * set the coordinate system on the output layer.  Application code should
+ * do this when the layer is created, presumably matching the raster
+ * coordinate system.
+ *
+ * The algorithm used attempts to minimize memory use so that very large
+ * rasters can be processed.  However, if the raster has many polygons
+ * or very large/complex polygons, the memory use for holding polygon
+ * enumerations and active polygon geometries may grow to be quite large.
+ *
+ * The algorithm will generally produce very dense polygon geometries, with
+ * edges that follow exactly on pixel boundaries for all non-interior pixels.
+ * For non-thematic raster data (such as satellite images) the result will
+ * essentially be one small polygon per pixel, and memory and output layer
+ * sizes will be substantial.  The algorithm is primarily intended for
+ * relatively simple thematic imagery, masks, and classification results.
+ *
+ * @param hSrcBand the source raster band to be processed.
+ * @param hMaskBand an optional mask band.  All pixels in the mask band with a
+ * value other than zero will be considered suitable for collection as
+ * polygons.
+ * @param hOutLayer the vector feature layer to which the polygons should
+ * be written.
+ * @param iPixValField the attribute field index indicating the feature
+ * attribute into which the pixel value of the polygon should be written.
+ * @param papszOptions a name/value list of additional options
+ * <dl>
+ * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
+ * Otherwise 4 connectedness will be applied to the algorithm
+ * </dl>
+ * @param pfnProgress callback for reporting algorithm progress matching the
+ * GDALProgressFunc() semantics.  May be NULL.
+ * @param pProgressArg callback argument passed to pfnProgress.
+ *
+ * @return CE_None on success or CE_Failure on a failure.
+ *
+ * @since GDAL 1.9.0
+ */
+
+CPLErr CPL_STDCALL
+GDALFPolygonize( GDALRasterBandH hSrcBand,
+                GDALRasterBandH hMaskBand,
+                OGRLayerH hOutLayer, int iPixValField,
+                char **papszOptions,
+                GDALProgressFunc pfnProgress,
+                void * pProgressArg )
+
+{
+    return GDALPolygonizeT<float, FloatEqualityTest>(hSrcBand,
+                                                    hMaskBand,
+                                                    hOutLayer,
+                                                    iPixValField,
+                                                    papszOptions,
+                                                    pfnProgress,
+                                                    pProgressArg,
+                                                    GDT_Float32);
+}

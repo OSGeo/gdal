@@ -31,26 +31,28 @@ makedir:
 	mkdir -p org/gdal/gdalconst
 	mkdir -p org/gdal/ogr
 	mkdir -p org/gdal/osr
-
+#	mkdir -p org/gdal/gnm
 
 JAVA_MODULES = libgdaljni.$(SO_EXT) libogrjni.$(SO_EXT) libgdalconstjni.$(SO_EXT) libosrjni.$(SO_EXT)
+#libgnmjni.$(SO_EXT)
 JAVA_OBJECTS = gdalconst_wrap.$(OBJ_EXT) gdal_wrap.$(OBJ_EXT) osr_wrap.$(OBJ_EXT) ogr_wrap.$(OBJ_EXT)
+#gnm_wrap.$(OBJ_EXT)
 
 clean:
 	-rm -f ${JAVA_MODULES}
-	-rm *.$(OBJ_EXT)
-	-rm .libs/*.so
-	-rm .libs/*.dylib
-	-rm *.so
-	-rm *.dylib
+	-rm -f *.$(OBJ_EXT)
+	-rm -f .libs/*.so
+	-rm -f .libs/*.dylib
+	-rm -f *.so
+	-rm -f *.dylib
 
 	ant clean
 
 veryclean: clean
-	-rm -f ${WRAPPERS}
+	-rm -f ${WRAPPERS_WITHOUT_GNM}
 	-rm -rf ${EXTRA_DIST}/*
 
-generate: makedir ${WRAPPERS}
+generate: makedir ${WRAPPERS_WITHOUT_GNM}
 
 build: generate ${JAVA_OBJECTS} ${JAVA_MODULES}
 ifeq ($(HAVE_LIBTOOL),yes)
@@ -87,12 +89,17 @@ test:
 	${JAVA_RUN} gdalinfo -checksum tmp_test/byte.tif
 	${JAVA_RUN} ogr2ogr tmp_test/out.shp test_data/poly.shp -progress -overwrite
 	${JAVA_RUN} ogrinfo -ro -al tmp_test/out.shp
+	${JAVA_RUN} ogrinfo -ro -al tmp_test/out.shp -fid 1
+	${JAVA_RUN} ogr2ogr_new tmp_test/out2.shp test_data/poly.shp -progress -overwrite
+	${JAVA_RUN} ogr2ogr_new tmp_test/out2.shp test_data/poly.shp -append
+	${JAVA_RUN} ogrinfo -ro -al tmp_test/out2.shp
 	${JAVA_RUN} OSRTransform
 	${JAVA_RUN} gdalmajorobject
 	${JAVA_RUN} GDALTestIO
 	${JAVA_RUN} GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
 	${JAVA_RUN} testgetpoints
 	${JAVA_RUN} ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
+	${JAVA_RUN} OSRTest
 
 $(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(LINK) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
@@ -100,10 +107,10 @@ $(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
 # Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
 # See http://trac.osgeo.org/gdal/changeset/16006
 %.$(OBJ_EXT): %.cpp
-	$(CXX) -fno-strict-aliasing $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fno-strict-aliasing $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(JAVA_INCLUDE) -c $<
 
 %.$(OBJ_EXT): %.cxx
-	$(CXX) -fno-strict-aliasing $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fno-strict-aliasing $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(JAVA_INCLUDE) -c $<
 
 %.$(OBJ_EXT): %.c
-	$(CC) -fno-strict-aliasing $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CC) -fno-strict-aliasing $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(JAVA_INCLUDE) -c $<

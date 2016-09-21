@@ -7,6 +7,13 @@ OBJ =	ogrnasdriver.o ogrnasdatasource.o ogrnaslayer.o \
 CPPFLAGS :=	-I../gml -I.. -I../.. -DHAVE_XERCES=1 \
 		 $(XERCES_INCLUDE) $(CPPFLAGS)
 
+# To satisfy One Definition Rule, we have to define HAVE_EXPAT if it is used
+# by the GML driver so that the GMLHandler and GMLReader classes have the same
+# size
+ifeq ($(HAVE_EXPAT),yes)
+CPPFLAGS +=  -DHAVE_EXPAT
+endif
+
 # By default, XML validation is disabled.  Uncomment the following line to
 # enable XML schema validation in the parser.
 #CPPFLAGS +=  -DOGR_GML_VALIDATION=1

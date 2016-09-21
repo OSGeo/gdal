@@ -16,16 +16,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
@@ -62,8 +62,8 @@
  *
  **********************************************************************/
 
-#ifndef _MITAB_UTILS_H_INCLUDED_
-#define _MITAB_UTILS_H_INCLUDED_
+#ifndef MITAB_UTILS_H_INCLUDED_
+#define MITAB_UTILS_H_INCLUDED_
 
 #include "ogr_geometry.h"
 
@@ -75,7 +75,7 @@
                         Function prototypes
  =====================================================================*/
 
-int TABGenerateArc(OGRLineString *poLine, int numPoints, 
+int TABGenerateArc(OGRLineString *poLine, int numPoints,
                    double dCenterX, double dCenterY,
                    double dXRadius, double dYRadius,
                    double dStartAngle, double dEndAngle);
@@ -94,6 +94,6 @@ char *TABCleanFieldName(const char *pszSrcName);
 const char *TABUnitIdToString(int nId);
 int   TABUnitIdFromString(const char *pszName);
 
-#endif /* _MITAB_UTILS_H_INCLUDED_ */
+void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd);
 
-
+#endif /* MITAB_UTILS_H_INCLUDED_ */

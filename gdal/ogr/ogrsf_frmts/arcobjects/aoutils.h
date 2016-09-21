@@ -1,6 +1,6 @@
 
-#ifndef _AO_UTILS_H_INCLUDED
-#define _AO_UTILS_H_INCLUDED
+#ifndef AO_UTILS_H_INCLUDED
+#define AO_UTILS_H_INCLUDED
 
 #include "ogr_ao.h"
 #include <iostream>

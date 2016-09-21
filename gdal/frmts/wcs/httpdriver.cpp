@@ -28,10 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
 #include "cpl_string.h"
 #include "cpl_http.h"
 #include "cpl_atomic_ops.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
@@ -46,12 +47,12 @@ static const char* HTTPFetchContentDispositionFilename(char** papszHeaders)
     while(papszIter && *papszIter)
     {
         /* For multipart, we have in raw format, but without end-of-line characters */
-        if (strncmp(*papszIter, "Content-Disposition: attachment; filename=", 42) == 0)
+        if (STARTS_WITH(*papszIter, "Content-Disposition: attachment; filename="))
         {
             return *papszIter + 42;
         }
         /* For single part, the headers are in KEY=VAL format, but with e-o-l ... */
-        else if (strncmp(*papszIter, "Content-Disposition=attachment; filename=", 41) == 0)
+        else if (STARTS_WITH(*papszIter, "Content-Disposition=attachment; filename="))
         {
             char* pszVal = (char*)(*papszIter + 41);
             char* pszEOL = strchr(pszVal, '\r');
@@ -77,22 +78,22 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes != 0 )
         return NULL;
 
-    if( !EQUALN(poOpenInfo->pszFilename,"http:",5)
-        && !EQUALN(poOpenInfo->pszFilename,"https:",6)
-        && !EQUALN(poOpenInfo->pszFilename,"ftp:",4) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "http:")
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "https:")
+        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp:") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-    
+
     CPLHTTPResult *psResult = CPLHTTPFetch( poOpenInfo->pszFilename, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Try to handle errors.                                           */
 /* -------------------------------------------------------------------- */
-    if( psResult == NULL || psResult->nDataLen == 0 
+    if( psResult == NULL || psResult->nDataLen == 0
         || CPLGetLastErrorNo() != 0 )
     {
         CPLHTTPDestroyResult( psResult );
@@ -119,8 +120,8 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
                              nNewCounter, pszFilename );
 
     VSILFILE *fp = VSIFileFromMemBuffer( osResultFilename,
-                                     psResult->pabyData, 
-                                     psResult->nDataLen, 
+                                     psResult->pabyData,
+                                     psResult->nDataLen,
                                      TRUE );
 
     if( fp == NULL )
@@ -142,8 +143,9 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     /* suppress errors as not all drivers support /vsimem */
     CPLPushErrorHandler( CPLQuietErrorHandler );
-    GDALDataset *poDS = (GDALDataset *) 
-        GDALOpenEx( osResultFilename, 0, NULL, NULL, NULL);
+    GDALDataset *poDS = (GDALDataset *)
+        GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags, NULL,
+                    poOpenInfo->papszOpenOptions, NULL);
     CPLPopErrorHandler();
 
 /* -------------------------------------------------------------------- */
@@ -153,21 +155,33 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     if( poDS == NULL )
     {
         CPLString osTempFilename;
-        
-        osTempFilename.Printf( "/tmp/%s", CPLGetFilename(osResultFilename) );
+
+#ifdef WIN32
+        const char* pszPath = CPLGetPath(CPLGenerateTempFilename(NULL));
+#else
+        const char* pszPath = "/tmp";
+#endif
+        osTempFilename = CPLFormFilename(pszPath, CPLGetFilename(osResultFilename), NULL );
         if( CPLCopyFile( osTempFilename, osResultFilename ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to create temporary file:%s", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to create temporary file:%s",
                       osTempFilename.c_str() );
         }
         else
         {
-            poDS =  (GDALDataset *) 
-                GDALOpenEx( osResultFilename, 0, NULL, NULL, NULL);
-            VSIUnlink( osTempFilename ); /* this may not work on windows */
+            poDS =  (GDALDataset *)
+                GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags, NULL,
+                            poOpenInfo->papszOpenOptions, NULL );
+            if( VSIUnlink( osTempFilename ) != 0 && poDS != NULL )
+                poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on windows */
+            if( poDS && strcmp(poDS->GetDescription(), osTempFilename) == 0 )
+                poDS->SetDescription(poOpenInfo->pszFilename);
+
         }
     }
+    else if( strcmp(poDS->GetDescription(), osResultFilename) == 0 )
+        poDS->SetDescription(poOpenInfo->pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Release our hold on the vsi memory file, though if it is        */
@@ -186,20 +200,17 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 void GDALRegister_HTTP()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "HTTP" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "HTTP" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "HTTP" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "HTTP Fetching Wrapper" );
-        
-        poDriver->pfnOpen = HTTPOpen;
+    GDALDriver *poDriver = new GDALDriver();
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetDescription( "HTTP" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "HTTP Fetching Wrapper" );
+
+    poDriver->pfnOpen = HTTPOpen;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

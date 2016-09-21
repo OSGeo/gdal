@@ -48,12 +48,55 @@ OGRCurvePolygon::OGRCurvePolygon()
 }
 
 /************************************************************************/
+/*               OGRCurvePolygon( const OGRCurvePolygon& )              */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ *
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ *
+ * @since GDAL 2.1
+ */
+
+OGRCurvePolygon::OGRCurvePolygon( const OGRCurvePolygon& other ) :
+    OGRSurface(other),
+    oCC(other.oCC)
+{
+}
+
+/************************************************************************/
 /*                           ~OGRCurvePolygon()                         */
 /************************************************************************/
 
 OGRCurvePolygon::~OGRCurvePolygon()
 
 {
+}
+
+/************************************************************************/
+/*                 operator=( const OGRCurvePolygon&)                  */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ *
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ *
+ * @since GDAL 2.1
+ */
+
+OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
+{
+    if( this != &other)
+    {
+        OGRSurface::operator=( other );
+
+        oCC = other.oCC;
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -67,11 +110,18 @@ OGRGeometry *OGRCurvePolygon::clone() const
 
     poNewPolygon = (OGRCurvePolygon*)
             OGRGeometryFactory::createGeometry(getGeometryType());
+    if( poNewPolygon == NULL )
+        return NULL;
     poNewPolygon->assignSpatialReference( getSpatialReference() );
+    poNewPolygon->flags = flags;
 
     for( int i = 0; i < oCC.nCurveCount; i++ )
     {
-        poNewPolygon->addRing( oCC.papoCurves[i] );
+        if( poNewPolygon->addRing( oCC.papoCurves[i] ) != OGRERR_NONE )
+        {
+            delete poNewPolygon;
+            return NULL;
+        }
     }
 
     return poNewPolygon;
@@ -94,7 +144,11 @@ void OGRCurvePolygon::empty()
 OGRwkbGeometryType OGRCurvePolygon::getGeometryType() const
 
 {
-    if( nCoordDimension == 3 )
+    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+        return wkbCurvePolygonZM;
+    else if( flags & OGR_G_MEASURED  )
+        return wkbCurvePolygonM;
+    else if( flags & OGR_G_3D )
         return wkbCurvePolygonZ;
     else
         return wkbCurvePolygon;
@@ -258,6 +312,8 @@ OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
 
 {
     OGRCurve* poNewRingCloned = (OGRCurve* )poNewRing->clone();
+    if( poNewRingCloned == NULL )
+        return OGRERR_FAILURE;
     OGRErr eErr = addRingDirectly(poNewRingCloned);
     if( eErr != OGRERR_NONE )
         delete poNewRingCloned;
@@ -363,9 +419,10 @@ OGRErr OGRCurvePolygon::importFromWkb( unsigned char * pabyData,
 {
     OGRwkbByteOrder eByteOrder;
     int nDataOffset = 0;
+    /* coverity[tainted_data] */
     OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
-    if( eErr >= 0 )
+    if( eErr != OGRERR_NONE )
         return eErr;
 
     return oCC.importBodyFromWkb(this, pabyData, nSize, nDataOffset,
@@ -489,13 +546,10 @@ OGRGeometry* OGRCurvePolygon::getLinearGeometry(double dfMaxAngleStepSizeDegrees
 /*                           PointOnSurface()                           */
 /************************************************************************/
 
-int OGRCurvePolygon::PointOnSurface( OGRPoint *poPoint ) const
+OGRErr OGRCurvePolygon::PointOnSurface( OGRPoint *poPoint ) const
 
 {
-    OGRPolygon* poPoly = CurvePolyToPoly();
-    int ret = poPoly->PointOnSurface(poPoint);
-    delete poPoly;
-    return ret;
+    return PointOnSurfaceInternal(poPoint);
 }
 
 /************************************************************************/
@@ -511,7 +565,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope * psEnvelope ) const
 /************************************************************************/
 /*                            getEnvelope()                             */
 /************************************************************************/
- 
+
 void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 {
@@ -525,17 +579,16 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
 
 {
-    OGRCurvePolygon *poOPoly = (OGRCurvePolygon *) poOther;
-
-    if( poOPoly == this )
+    if( poOther == this )
         return TRUE;
-    
+
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
 
     if ( IsEmpty() && poOther->IsEmpty() )
         return TRUE;
-    
+
+    OGRCurvePolygon *poOPoly = (OGRCurvePolygon *) poOther;
     return oCC.Equals( &(poOPoly->oCC) );
 }
 
@@ -583,6 +636,15 @@ void OGRCurvePolygon::setCoordinateDimension( int nNewDimension )
     oCC.setCoordinateDimension(this, nNewDimension);
 }
 
+void OGRCurvePolygon::set3D( OGRBoolean bIs3D )
+{
+    oCC.set3D( this, bIs3D );
+}
+
+void OGRCurvePolygon::setMeasured( OGRBoolean bIsMeasured )
+{
+    oCC.setMeasured( this, bIsMeasured );
+}
 
 /************************************************************************/
 /*                               IsEmpty()                              */
@@ -670,11 +732,11 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
  * instances of OGRLineString. This can be verified if hasCurveGeometry(TRUE)
  * returns FALSE. It is not intended to approximate curve polygons. For that
  * use getLinearGeometry().
- * 
+ *
  * The passed in geometry is consumed and a new one returned (or NULL in case
- * of failure). 
- * 
- * @param poMS the input geometry - ownership is passed to the method.
+ * of failure).
+ *
+ * @param poCP the input geometry - ownership is passed to the method.
  * @return new geometry.
  */
 

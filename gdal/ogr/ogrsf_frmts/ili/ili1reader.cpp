@@ -28,13 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_ili1.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_api.h"
+#include "ogr_ili1.h"
 #include "ogr_geos.h"
 
-#include "ilihelper.h"
 #include "ili1reader.h"
 #include "ili1readerp.h"
 
@@ -46,7 +45,7 @@
 
 #ifndef POLYGONIZE_AREAS
 #  if defined(__GNUC_PREREQ)
-#    warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 3.1.0
+//#    warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 3.1.0
 #  endif
 #endif
 
@@ -55,37 +54,32 @@ CPL_CVSID("$Id$");
 //
 // ILI1Reader
 //
-IILI1Reader::~IILI1Reader() {
-}
+IILI1Reader::~IILI1Reader() {}
 
-ILI1Reader::ILI1Reader() {
-  fpItf = NULL;
-  nLayers = 0;
-  papoLayers = NULL;
-  curLayer = NULL;
-  codeBlank = '_';
-  codeUndefined = '@';
-  codeContinue = '\\';
-  SetArcDegrees(1);
-}
+ILI1Reader::ILI1Reader() :
+  fpItf(NULL),
+  nLayers(0),
+  papoLayers(NULL),
+  curLayer(NULL),
+  codeBlank('_'),
+  codeUndefined('@'),
+  codeContinue('\\')
+{}
 
-ILI1Reader::~ILI1Reader() {
-  int i;
+ILI1Reader::~ILI1Reader()
+{
   if (fpItf) VSIFClose( fpItf );
 
-  for(i=0;i<nLayers;i++)
+  for( int i=0; i < nLayers; i++)
      delete papoLayers[i];
   CPLFree(papoLayers);
-}
-
-void ILI1Reader::SetArcDegrees(double arcDegrees) {
-  arcIncr = arcDegrees*PI/180;
 }
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-int ILI1Reader::OpenFile( const char *pszFilename ) {
+int ILI1Reader::OpenFile( const char *pszFilename )
+{
     fpItf = VSIFOpen( pszFilename, "r" );
     if( fpItf == NULL )
     {
@@ -98,27 +92,48 @@ int ILI1Reader::OpenFile( const char *pszFilename ) {
     return TRUE;
 }
 
-const char* ILI1Reader::GetLayerNameString(const char* topicname, const char* tablename) {
+const char* ILI1Reader::GetLayerNameString( const char* topicname,
+                                            const char* tablename)
+{
 
     return CPLSPrintf("%s__%s", topicname, tablename);
 }
 
-int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename, OGRILI1DataSource *poDS) {
+int ILI1Reader::ReadModel( ImdReader *poImdReader,
+                           const char *pszModelFilename,
+                           OGRILI1DataSource *poDS)
+{
 
   poImdReader->ReadModel(pszModelFilename);
   for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
-    //CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with table '%s'", it->poTableDefn->GetName() );
-    OGRILI1Layer* layer = new OGRILI1Layer(it->poTableDefn, it->poGeomFieldInfos, poDS);
+#if DEBUG_VERBOSE
+    CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with table '%s'",
+              it->poTableDefn->GetName() );
+#endif
+    OGRILI1Layer* layer = new OGRILI1Layer( it->GetTableDefnRef(),
+                                            it->poGeomFieldInfos, poDS);
     AddLayer(layer);
-    //Create additional layers for surface and area geometries
-    for (GeomFieldInfos::const_iterator it2 = it->poGeomFieldInfos.begin(); it2 != it->poGeomFieldInfos.end(); ++it2)
+    // Create additional layers for surface and area geometries.
+    for (GeomFieldInfos::const_iterator it2 = it->poGeomFieldInfos.begin();
+         it2 != it->poGeomFieldInfos.end();
+         ++it2)
     {
-      if (it2->second.geomTable)
+      if (it2->second.GetGeomTableDefnRef())
       {
+        OGRFeatureDefn* poGeomTableDefn = it2->second.GetGeomTableDefnRef();
+        OGRGeomFieldDefn* poOGRGeomFieldDefn
+            = poGeomTableDefn->GetGeomFieldDefn(0);
         GeomFieldInfos oGeomFieldInfos;
-        //CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with geometry table '%s'", it2->second.geomTable->GetName() );
-        OGRILI1Layer* geomlayer = new OGRILI1Layer(it2->second.geomTable, oGeomFieldInfos, poDS);
+        // We add iliGeomType to recognize Ili1 geom tables
+        oGeomFieldInfos[poOGRGeomFieldDefn->GetNameRef()].iliGeomType
+            = it2->second.iliGeomType;
+#if DEBUG_VERBOSE
+        CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with geometry table '%s'",
+                  it2->second.geomTable->GetName() );
+#endif
+        OGRILI1Layer* geomlayer
+            = new OGRILI1Layer(poGeomTableDefn, oGeomFieldInfos, poDS);
         AddLayer(geomlayer);
       }
     }
@@ -127,22 +142,23 @@ int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename, 
   codeBlank = poImdReader->codeBlank;
   CPLDebug( "OGR_ILI", "Ili1Format blankCode '%c'", poImdReader->codeBlank );
   codeUndefined = poImdReader->codeUndefined;
-  CPLDebug( "OGR_ILI", "Ili1Format undefinedCode '%c'", poImdReader->codeUndefined );
+  CPLDebug( "OGR_ILI", "Ili1Format undefinedCode '%c'",
+            poImdReader->codeUndefined );
   codeContinue = poImdReader->codeContinue;
-  CPLDebug( "OGR_ILI", "Ili1Format continueCode '%c'", poImdReader->codeContinue );
+  CPLDebug( "OGR_ILI", "Ili1Format continueCode '%c'",
+            poImdReader->codeContinue );
   return 0;
 }
 
 int ILI1Reader::ReadFeatures() {
     char **tokens = NULL;
-    const char *firsttok = NULL;
-    const char *pszLine;
-    char *topic = NULL;
+    const char *pszLine = NULL;
+    char *topic = CPLStrdup("(null)");
     int ret = TRUE;
 
-    while (ret && (tokens = ReadParseLine()))
+    while (ret && (tokens = ReadParseLine()) != NULL)
     {
-      firsttok = tokens[0];
+      const char *firsttok = tokens[0];
       if (EQUAL(firsttok, "SCNT"))
       {
         //read description
@@ -150,7 +166,7 @@ int ILI1Reader::ReadFeatures() {
         {
           pszLine = CPLReadLine( fpItf );
         }
-        while (pszLine && !EQUALN(pszLine, "////", 4));
+        while (pszLine && !STARTS_WITH_CI(pszLine, "////"));
         ret = (pszLine != NULL);
       }
       else if (EQUAL(firsttok, "MOTR"))
@@ -160,7 +176,7 @@ int ILI1Reader::ReadFeatures() {
         {
           pszLine = CPLReadLine( fpItf );
         }
-        while (pszLine && !EQUALN(pszLine, "////", 4));
+        while (pszLine && !STARTS_WITH_CI(pszLine, "////"));
         ret = (pszLine != NULL);
       }
       else if (EQUAL(firsttok, "MTID"))
@@ -169,21 +185,25 @@ int ILI1Reader::ReadFeatures() {
       else if (EQUAL(firsttok, "MODL"))
       {
       }
-      else if (EQUAL(firsttok, "TOPI"))
+      else if (EQUAL(firsttok, "TOPI") && CSLCount(tokens) >= 2)
       {
         CPLFree(topic);
         topic = CPLStrdup(CSLGetField(tokens, 1));
       }
-      else if (EQUAL(firsttok, "TABL"))
+      else if (EQUAL(firsttok, "TABL") && CSLCount(tokens) >= 2)
       {
-        const char *layername = GetLayerNameString(topic, CSLGetField(tokens, 1));
+        const char *layername
+            = GetLayerNameString(topic, CSLGetField(tokens, 1));
         CPLDebug( "OGR_ILI", "Reading table '%s'", layername );
         curLayer = GetLayerByName(layername);
 
         if (curLayer == NULL) { //create one
-          CPLError(CE_Warning, CPLE_AppDefined,
-              "No model definition for table '%s' found, using default field names.", layername );
-          OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(GetLayerNameString(topic, CSLGetField(tokens, 1)));
+          CPLError( CE_Warning, CPLE_AppDefined,
+                    "No model definition for table '%s' found, "
+                    "using default field names.", layername );
+          OGRFeatureDefn* poFeatureDefn
+            = new OGRFeatureDefn(
+                GetLayerNameString(topic, CSLGetField(tokens, 1)));
           poFeatureDefn->SetGeomType( wkbUnknown );
           GeomFieldInfos oGeomFieldInfos;
           curLayer = new OGRILI1Layer(poFeatureDefn, oGeomFieldInfos, NULL);
@@ -191,7 +211,8 @@ int ILI1Reader::ReadFeatures() {
         }
         if(curLayer != NULL) {
           for (int i=0; i < curLayer->GetLayerDefn()->GetFieldCount(); i++) {
-            CPLDebug( "OGR_ILI", "Field %d: %s", i,  curLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef());
+            CPLDebug( "OGR_ILI", "Field %d: %s", i,
+                      curLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef());
           }
         }
         ret = ReadTable(layername);
@@ -210,7 +231,8 @@ int ILI1Reader::ReadFeatures() {
       }
       else
       {
-        CPLError(CE_Warning, CPLE_AppDefined, "Unexpected token: %s", firsttok );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unexpected token: %s", firsttok );
       }
 
       CSLDestroy(tokens);
@@ -223,288 +245,286 @@ int ILI1Reader::ReadFeatures() {
     return ret;
 }
 
-int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
-{
-#if defined(_WIN32) || defined(__WIN32__)
-    //Other positions on Windows !?
-#else
-    long nBlockLen = VSIFTell( fpItf )-fpos;
-    VSIFSeek( fpItf, fpos, SEEK_SET );
-
-    char *pszRawData = (char *) CPLMalloc(nBlockLen+1);
-    if( (int) VSIFRead( pszRawData, 1, nBlockLen, fpItf ) != nBlockLen )
-    {
-        CPLFree( pszRawData );
-
-        CPLError( CE_Failure, CPLE_FileIO, "Read of transfer file failed." );
-        return FALSE;
-    }
-    pszRawData[nBlockLen]= '\0';
-    feature->SetField(iField, pszRawData);
-    CPLFree( pszRawData );
-#endif
-    return TRUE;
-}
-
-
 int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
     char **tokens = NULL;
-    const char *firsttok = NULL;
     int ret = TRUE;
     int warned = FALSE;
-    int fIndex;
     int geomIdx = -1;
 
     OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
     OGRFeature *feature = NULL;
+    bool bFeatureAdded = false;
 
-    long fpos = VSIFTell(fpItf);
-    while (ret && (tokens = ReadParseLine()))
+    while (ret && (tokens = ReadParseLine()) != NULL)
     {
-      firsttok = CSLGetField(tokens, 0);
+      const char *firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "OBJE"))
       {
-        //Check for features spread over multiple objects
-        if (featureDef->GetGeomType() == wkbPolygon) //FIXME: Multi-geom support
+        if (featureDef->GetFieldCount() == 0)
         {
-          //Multiple polygon rings
-          feature = curLayer->GetFeatureRef(atol(CSLGetField(tokens, 2)));
-        }
-        else if (featureDef->GetGeomType() == wkbGeometryCollection)
-        {
-          //AREA lines spread over mutltiple objects
-        }
-        else
-        {
-          feature = NULL;
-        }
-
-        if (feature == NULL)
-        {
-          if (featureDef->GetFieldCount() == 0)
+          CPLError( CE_Warning, CPLE_AppDefined,
+                    "No field definition found for table: %s",
+                    featureDef->GetName() );
+          // Model not read - use heuristics.
+          for( int fIndex=1; fIndex<CSLCount(tokens); fIndex++ )
           {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                "No field definition found for table: %s", featureDef->GetName() );
-            //Model not read - use heuristics
-            for (fIndex=1; fIndex<CSLCount(tokens); fIndex++)
-            {
-              char szFieldName[32];
-              sprintf(szFieldName, "Field%02d", fIndex);
-              OGRFieldDefn oFieldDefn(szFieldName, OFTString);
-              featureDef->AddFieldDefn(&oFieldDefn);
-            }
+            char szFieldName[32];
+            snprintf(szFieldName, sizeof(szFieldName), "Field%02d", fIndex);
+            OGRFieldDefn oFieldDefn(szFieldName, OFTString);
+            featureDef->AddFieldDefn(&oFieldDefn);
           }
-          //start new feature
-          feature = new OGRFeature(featureDef);
+        }
+        //start new feature
+        if( !bFeatureAdded )
+            delete feature;
+        feature = new OGRFeature(featureDef);
 
-          int fieldno = 0;
-          for (fIndex=1; fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount(); fIndex++, fieldno++)
-          {
-            if (!(tokens[fIndex][0] == codeUndefined && tokens[fIndex][1] == '\0')) {
-              //CPLDebug( "READ TABLE OGR_ILI", "Setting Field %d (Type %d): %s", fieldno, featureDef->GetFieldDefn(fieldno)->GetType(), tokens[fIndex]);
-              if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTString) {
-                  //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
-                  char* pszRecoded = CPLRecode(tokens[fIndex], CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
-                  //Replace space marks
-                  for(char* pszString = pszRecoded; *pszString != '\0'; pszString++ ) {
-                      if (*pszString == codeBlank) *pszString = ' ';
-                  }
-                  feature->SetField(fieldno, pszRecoded);
-                  CPLFree(pszRecoded);
-              } else {
-                feature->SetField(fieldno, tokens[fIndex]);
-              }
-              if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTReal
-                  && fieldno > 0
-                  && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal) {
-                //check for Point geometry (Coord type)
-                // if there is no ili model read,
-                // we have no chance to detect the
-                // geometry column!!
-                CPLString geomfldname = featureDef->GetFieldDefn(fieldno)->GetNameRef();
-                //Check if name ends with _1
-                if (geomfldname.size() >= 2 && geomfldname[geomfldname.size()-2] == '_') {
-                  geomfldname = geomfldname.substr(0, geomfldname.size()-2);
-                  geomIdx = featureDef->GetGeomFieldIndex(geomfldname.c_str());
-                  if (geomIdx == -1)
-                  {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                        "No matching definition for field '%s' of table %s found", geomfldname.c_str(), featureDef->GetName());
-                  }
-                } else {
-                  geomIdx = -1;
+        for( int fIndex=1, fieldno = 0;
+             fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount();
+             fIndex++, fieldno++ )
+        {
+          if (!(tokens[fIndex][0] == codeUndefined && tokens[fIndex][1] == '\0')) {
+#ifdef DEBUG_VERBOSE
+            CPLDebug( "READ TABLE OGR_ILI", "Setting Field %d (Type %d): %s",
+                      fieldno, featureDef->GetFieldDefn(fieldno)->GetType(),
+                      tokens[fIndex] );
+#endif
+            if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTString) {
+                // Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
+                char* pszRecoded = CPLRecode(
+                    tokens[fIndex], CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                // Replace space marks
+                for( char* pszString = pszRecoded;
+                     *pszString != '\0';
+                     pszString++ ) {
+                    if (*pszString == codeBlank) *pszString = ' ';
                 }
-                if (geomIdx >= 0) {
-                  if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint) {
-                    //add Point geometry
-                    OGRPoint *ogrPoint = new OGRPoint(CPLAtof(tokens[fIndex-1]), CPLAtof(tokens[fIndex]));
-                    feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
-                  } else if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint25D && fieldno > 1 && featureDef->GetFieldDefn(fieldno-2)->GetType() == OFTReal) {
-                    //add 3D Point geometry
-                    OGRPoint *ogrPoint = new OGRPoint(CPLAtof(tokens[fIndex-2]), CPLAtof(tokens[fIndex-1]), CPLAtof(tokens[fIndex]));
-                    feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
-                  }
-                }
-              }
-            }
-          }
-          if (!warned && featureDef->GetFieldCount() != CSLCount(tokens)-1 && !(featureDef->GetFieldCount() == CSLCount(tokens) && EQUAL(featureDef->GetFieldDefn(featureDef->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))) {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                "Field count of table %s doesn't match. %d declared, %d found (e.g. ignored LINEATTR)", featureDef->GetName(), featureDef->GetFieldCount(), CSLCount(tokens)-1);
-            warned = TRUE;
-          }
-          if (feature->GetFieldCount() > 0) {
-            if (featureDef->GetFieldIndex("_RefTID") == 1) {
-              // Polygon geometry table: Use _RefTID as FID. References TID of attribute table.
-              feature->SetFID(atol(feature->GetFieldAsString(1)));
+                feature->SetField(fieldno, pszRecoded);
+                CPLFree(pszRecoded);
             } else {
-              // USE _TID as FID. TODO: respect IDENT field from model
-              feature->SetFID(atol(feature->GetFieldAsString(0)));
+              feature->SetField(fieldno, tokens[fIndex]);
+            }
+            if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTReal
+                && fieldno > 0
+                && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal) {
+              // Check for Point geometry (Coord type).
+              // If there is no ili model read,
+              // we have no chance to detect the
+              // geometry column.
+              CPLString geomfldname
+                  = featureDef->GetFieldDefn(fieldno)->GetNameRef();
+              // Check if name ends with _1.
+              if (geomfldname.size() >= 2 && geomfldname[geomfldname.size()-2]
+                  == '_') {
+                geomfldname = geomfldname.substr(0, geomfldname.size()-2);
+                geomIdx = featureDef->GetGeomFieldIndex(geomfldname.c_str());
+                if (geomIdx == -1)
+                {
+                  CPLError( CE_Warning, CPLE_AppDefined,
+                            "No matching definition for field '%s' of "
+                            "table %s found",
+                            geomfldname.c_str(), featureDef->GetName() );
+                }
+              } else {
+                geomIdx = -1;
+              }
+              if (geomIdx >= 0) {
+                if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() ==
+                    wkbPoint) {
+                  // Add Point geometry.
+                  OGRPoint *ogrPoint = new OGRPoint(
+                      CPLAtof(tokens[fIndex-1]), CPLAtof(tokens[fIndex]));
+                  feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
+                } else if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() ==
+                           wkbPoint25D && fieldno > 1 &&
+                           featureDef->GetFieldDefn(fieldno-2)->GetType() ==
+                           OFTReal) {
+                  // Add 3D Point geometry.
+                  OGRPoint *ogrPoint = new OGRPoint(
+                      CPLAtof(tokens[fIndex-2]), CPLAtof(tokens[fIndex-1]),
+                      CPLAtof(tokens[fIndex]) );
+                  feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
+                }
+              }
             }
           }
-          curLayer->AddFeature(feature);
-          geomIdx = -1; //Reset
         }
+        if (!warned && featureDef->GetFieldCount() != CSLCount(tokens)-1) {
+          CPLError( CE_Warning, CPLE_AppDefined,
+                    "Field count of table %s doesn't match. %d declared, "
+                    "%d found (e.g. ignored LINEATTR)",
+                    featureDef->GetName(), featureDef->GetFieldCount(),
+                    CSLCount(tokens) - 1 );
+          warned = TRUE;
+        }
+        if (feature->GetFieldCount() > 0) {
+          // USE _TID as FID. TODO: respect IDENT field from model.
+          feature->SetFID(feature->GetFieldAsInteger64(0));
+        }
+        curLayer->AddFeature(feature);
+        bFeatureAdded = true;
+        geomIdx = -1; //Reset
       }
-      else if (EQUAL(firsttok, "STPT"))
+      else if (EQUAL(firsttok, "STPT") && feature != NULL)
       {
         //Find next non-Point geometry
         if (geomIdx < 0) geomIdx = 0;
-        while (geomIdx < featureDef->GetGeomFieldCount() && featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint) { geomIdx++; }
-        OGRwkbGeometryType geomType = (geomIdx < featureDef->GetGeomFieldCount()) ? featureDef->GetGeomFieldDefn(geomIdx)->GetType() : wkbNone;
-        ReadGeom(tokens, geomIdx, geomType, feature);
-        if (EQUAL(featureDef->GetFieldDefn(featureDef->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))
-        {
-          AddIliGeom(feature, featureDef->GetFieldCount()-1, fpos); //TODO: append multi-OBJECT geometries
+        while (geomIdx < featureDef->GetGeomFieldCount() &&
+               featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint) {
+            geomIdx++;
         }
+        OGRwkbGeometryType geomType
+            = (geomIdx < featureDef->GetGeomFieldCount()) ?
+               featureDef->GetGeomFieldDefn(geomIdx)->GetType() : wkbNone;
+        ReadGeom(tokens, geomIdx, geomType, feature);
       }
       else if (EQUAL(firsttok, "ELIN"))
       {
-        //empty geom
+        // Empty geom.
       }
-      else if (EQUAL(firsttok, "EDGE"))
+      else if (EQUAL(firsttok, "EDGE") && feature != NULL)
       {
+        CSLDestroy(tokens);
         tokens = ReadParseLine(); //STPT
         //Find next non-Point geometry
-        do { geomIdx++; } while (geomIdx < featureDef->GetGeomFieldCount() && featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint);
+        do {
+            geomIdx++;
+        } while (geomIdx < featureDef->GetGeomFieldCount() &&
+                 featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint);
         ReadGeom(tokens, geomIdx, wkbMultiLineString, feature);
-        if (EQUAL(featureDef->GetFieldDefn(featureDef->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))
-        {
-          AddIliGeom(feature, featureDef->GetFieldCount()-1, fpos);
-        }
       }
       else if (EQUAL(firsttok, "PERI"))
       {
       }
       else if (EQUAL(firsttok, "ETAB"))
       {
+        CPLDebug( "OGR_ILI", "Total features: " CPL_FRMT_GIB,
+                  curLayer->GetFeatureCount() );
         CSLDestroy(tokens);
+        if( !bFeatureAdded )
+            delete feature;
         return TRUE;
       }
       else
       {
-        CPLError(CE_Warning, CPLE_AppDefined, "Unexpected token: %s", firsttok );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unexpected token: %s", firsttok );
       }
 
       CSLDestroy(tokens);
-      fpos = VSIFTell(fpItf);
     }
+
+    if( !bFeatureAdded )
+        delete feature;
 
     return ret;
 }
 
-void ILI1Reader::ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType, OGRFeature *feature) {
-    char **tokens = NULL;
-    const char *firsttok = NULL;
-    int end = FALSE;
-    int isArc = FALSE;
-    OGRLineString *ogrLine = NULL; //current line
-    OGRLinearRing *ogrRing = NULL; //current ring
-    OGRPolygon *ogrPoly = NULL; //current polygon
-    OGRPoint ogrPoint, arcPoint, endPoint; //points for arc interpolation
-    OGRMultiLineString *ogrMultiLine = NULL; //current multi line
-
-    //CPLDebug( "OGR_ILI", "ILI1Reader::ReadGeom geomIdx: %d OGRGeometryType: %s", geomIdx, OGRGeometryTypeToName(eType));
+void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
+                           OGRFeature *feature ) {
+#ifdef DEBUG_VERBOSE
+    CPLDebug( "OGR_ILI",
+              "ILI1Reader::ReadGeom geomIdx: %d OGRGeometryType: %s",
+              geomIdx, OGRGeometryTypeToName(eType) );
+#endif
     if (eType == wkbNone)
     {
-      CPLError(CE_Warning, CPLE_AppDefined, "Calling ILI1Reader::ReadGeom with wkbNone" );
+      CPLError( CE_Warning, CPLE_AppDefined,
+                "Calling ILI1Reader::ReadGeom with wkbNone" );
     }
-    //tokens = ["STPT", "1111", "22222"]
+
+    // Initialize geometry.
+
+    OGRCompoundCurve *ogrCurve = new OGRCompoundCurve();
+    OGRCurvePolygon *ogrPoly = NULL; //current polygon
+    OGRMultiCurve *ogrMultiLine = NULL; //current multi line
+
+    if (eType == wkbMultiCurve || eType == wkbMultiLineString)
+    {
+      ogrMultiLine = new OGRMultiCurve();
+    }
+    else if (eType == wkbPolygon || eType == wkbCurvePolygon)
+    {
+      ogrPoly = new OGRCurvePolygon();
+    }
+
+    OGRPoint ogrPoint; // Current point.
     ogrPoint.setX(CPLAtof(stgeom[1])); ogrPoint.setY(CPLAtof(stgeom[2]));
-    ogrLine = (eType == wkbPolygon) ? new OGRLinearRing() : new OGRLineString();
+
+    OGRLineString *ogrLine = new OGRLineString();
     ogrLine->addPoint(&ogrPoint);
 
-    //Set feature geometry
-    if (eType == wkbMultiLineString)
-    {
-      ogrMultiLine = new OGRMultiLineString();
-      feature->SetGeomFieldDirectly(geomIdx, ogrMultiLine);
-    }
-    else if (eType == wkbGeometryCollection) //AREA
-    {
-      if (feature->GetGeometryRef())
-        ogrMultiLine = (OGRMultiLineString *)feature->GetGeometryRef();
-      else
-      {
-        ogrMultiLine = new OGRMultiLineString();
-        feature->SetGeomFieldDirectly(geomIdx, ogrMultiLine);
-      }
-    }
-    else if (eType == wkbPolygon)
-    {
-      if (feature->GetGeometryRef())
-      {
-        ogrPoly = (OGRPolygon *)feature->GetGeometryRef();
-        if (ogrPoly->getNumInteriorRings() > 0)
-          ogrRing = ogrPoly->getInteriorRing(ogrPoly->getNumInteriorRings()-1);
-        else
-          ogrRing = ogrPoly->getExteriorRing();
-        if (ogrRing && !ogrRing->get_IsClosed()) ogrLine = ogrRing; //SURFACE polygon spread over multiple OBJECTs
-      }
-      else
-      {
-        ogrPoly = new OGRPolygon();
-        feature->SetGeomFieldDirectly(geomIdx, ogrPoly);
-      }
-    }
-    else
-    {
-      feature->SetGeomFieldDirectly(geomIdx, ogrLine);
-    }
+    // Parse geometry.
 
-    //Parse geometry
-    while (!end && (tokens = ReadParseLine()))
+    char **tokens = NULL;
+    bool end = false;
+    OGRCircularString *arc = NULL; //current arc
+
+    while (!end && (tokens = ReadParseLine()) != NULL)
     {
-      firsttok = CSLGetField(tokens, 0);
+      const char *firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "LIPT"))
       {
-        if (isArc) {
-          endPoint.setX(CPLAtof(tokens[1])); endPoint.setY(CPLAtof(tokens[2]));
-          interpolateArc(ogrLine, &ogrPoint, &arcPoint, &endPoint, arcIncr);
+        ogrPoint.setX(CPLAtof(tokens[1])); ogrPoint.setY(CPLAtof(tokens[2]));
+        if (arc) {
+          arc->addPoint(&ogrPoint);
+          OGRErr error =  ogrCurve->addCurveDirectly(arc);
+          if (error != OGRERR_NONE) {
+            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", arc->exportToJson() );
+          }
+          arc = NULL;
         }
-        ogrPoint.setX(CPLAtof(tokens[1])); ogrPoint.setY(CPLAtof(tokens[2])); isArc = FALSE;
         ogrLine->addPoint(&ogrPoint);
       }
       else if (EQUAL(firsttok, "ARCP"))
       {
-        isArc = TRUE;
-        arcPoint.setX(CPLAtof(tokens[1])); arcPoint.setY(CPLAtof(tokens[2]));
+        //Finish line and start arc
+        if (ogrLine->getNumPoints() > 1) {
+          OGRErr error = ogrCurve->addCurveDirectly(ogrLine);
+          if (error != OGRERR_NONE) {
+            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrLine->exportToJson() );
+          }
+          ogrLine = new OGRLineString();
+        } else {
+          ogrLine->empty();
+        }
+        arc = new OGRCircularString();
+        arc->addPoint(&ogrPoint);
+        ogrPoint.setX(CPLAtof(tokens[1])); ogrPoint.setY(CPLAtof(tokens[2]));
+        arc->addPoint(&ogrPoint);
       }
       else if (EQUAL(firsttok, "ELIN"))
       {
-        if (ogrMultiLine)
-        {
-          ogrMultiLine->addGeometryDirectly(ogrLine);
+        if (ogrLine->getNumPoints() > 1) { // Ignore single LIPT after ARCP
+          OGRErr error = ogrCurve->addCurveDirectly(ogrLine);
+          if (error != OGRERR_NONE) {
+            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrLine->exportToJson() );
+          }
+          ogrLine = NULL;
         }
-        if (ogrPoly && ogrLine != ogrRing)
-        {
-          ogrPoly->addRingDirectly((OGRLinearRing *)ogrLine);
+        if (!ogrCurve->IsEmpty()) {
+          if (ogrMultiLine)
+          {
+            OGRErr error = ogrMultiLine->addGeometryDirectly(ogrCurve);
+            if (error != OGRERR_NONE) {
+              CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrCurve->exportToJson() );
+            }
+            ogrCurve = NULL;
+          }
+          if (ogrPoly)
+          {
+            OGRErr error = ogrPoly->addRingDirectly(ogrCurve);
+            if (error != OGRERR_NONE) {
+              CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrCurve->exportToJson() );
+            }
+            ogrCurve = NULL;
+          }
         }
-        end = TRUE;
+        end = true;
       }
       else if (EQUAL(firsttok, "EEDG"))
       {
-        end = TRUE;
+        end = true;
       }
       else if (EQUAL(firsttok, "LATT"))
       {
@@ -512,18 +532,49 @@ void ILI1Reader::ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType, 
       }
       else if (EQUAL(firsttok, "EFLA"))
       {
-        end = TRUE;
+        end = true;
       }
       else if (EQUAL(firsttok, "ETAB"))
       {
-        end = TRUE;
+        end = true;
       }
       else
       {
-        CPLError(CE_Warning, CPLE_AppDefined, "Unexpected token: %s", firsttok );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unexpected token: %s", firsttok );
       }
 
       CSLDestroy(tokens);
+    }
+
+    delete ogrLine;
+
+    //Set feature geometry
+    if (eType == wkbMultiCurve)
+    {
+      feature->SetGeomFieldDirectly(geomIdx, ogrMultiLine);
+      delete ogrCurve;
+    }
+    else if (eType == wkbMultiLineString)
+    {
+      feature->SetGeomFieldDirectly(geomIdx, ogrMultiLine->getLinearGeometry());
+      delete ogrMultiLine;
+      delete ogrCurve;
+    }
+    else if (eType == wkbCurvePolygon)
+    {
+      feature->SetGeomFieldDirectly(geomIdx, ogrPoly);
+      delete ogrCurve;
+    }
+    else if (eType == wkbPolygon)
+    {
+      feature->SetGeomFieldDirectly(geomIdx, ogrPoly->getLinearGeometry());
+      delete ogrPoly;
+      delete ogrCurve;
+    }
+    else
+    {
+      feature->SetGeomFieldDirectly(geomIdx, ogrCurve);
     }
 }
 
@@ -536,8 +587,8 @@ void ILI1Reader::AddLayer( OGRILI1Layer * poNewLayer )
 {
     nLayers++;
 
-    papoLayers = (OGRILI1Layer **)
-        CPLRealloc( papoLayers, sizeof(void*) * nLayers );
+    papoLayers = static_cast<OGRILI1Layer **>(
+        CPLRealloc( papoLayers, sizeof(void*) * nLayers ) );
 
     papoLayers[nLayers-1] = poNewLayer;
 }
@@ -551,8 +602,8 @@ OGRILI1Layer *ILI1Reader::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 OGRILI1Layer *ILI1Reader::GetLayerByName( const char* pszLayerName )
@@ -584,23 +635,18 @@ int ILI1Reader::GetLayerCount()
 
 char ** ILI1Reader::ReadParseLine()
 {
-    const char  *pszLine;
-    char **tokens;
-    char **conttok;
-    char *token;
-
     CPLAssert( fpItf != NULL );
     if( fpItf == NULL )
         return( NULL );
 
-    pszLine = CPLReadLine( fpItf );
+    const char  *pszLine = CPLReadLine( fpItf );
     if( pszLine == NULL )
         return( NULL );
 
     if (strlen(pszLine) == 0) return NULL;
 
-    tokens = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
-    token = tokens[CSLCount(tokens)-1];
+    char **tokens = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
+    char *token = tokens[CSLCount(tokens)-1];
 
     //Append CONT lines
     while (strlen(pszLine) && token[0] == codeContinue && token[1] == '\0')
@@ -610,7 +656,11 @@ char ** ILI1Reader::ReadParseLine()
       tokens[CSLCount(tokens)-1] = NULL;
 
       pszLine = CPLReadLine( fpItf );
-      conttok = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
+      if( pszLine == NULL )
+      {
+          break;
+      }
+      char **conttok = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
       if (!conttok || !EQUAL(conttok[0], "CONT"))
       {
           CSLDestroy(conttok);

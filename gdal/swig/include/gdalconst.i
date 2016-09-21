@@ -33,7 +33,7 @@
 #elif defined(SWIGCSHARP)
 %module GdalConst
 #else
-%module gdalconst 
+%module gdalconst
 #endif
 
 #if defined(SWIGJAVA)
@@ -146,6 +146,7 @@
 %constant OF_ALL     = GDAL_OF_ALL;
 %constant OF_RASTER = GDAL_OF_RASTER;
 %constant OF_VECTOR = GDAL_OF_VECTOR;
+%constant OF_GNM = GDAL_OF_GNM;
 %constant OF_READONLY = GDAL_OF_READONLY;
 %constant OF_UPDATE = GDAL_OF_UPDATE;
 %constant OF_SHARED = GDAL_OF_SHARED;
@@ -158,14 +159,21 @@
 %constant char *DMD_MIMETYPE           = GDAL_DMD_MIMETYPE;
 %constant char *DMD_EXTENSION          = GDAL_DMD_EXTENSION;
 %constant char *DMD_EXTENSIONS         = GDAL_DMD_EXTENSIONS;
+%constant char *DMD_CONNECTION_PREFIX  = GDAL_DMD_CONNECTION_PREFIX;
 %constant char *DMD_CREATIONOPTIONLIST = GDAL_DMD_CREATIONOPTIONLIST;
 %constant char *DMD_CREATIONDATATYPES  = GDAL_DMD_CREATIONDATATYPES;
 %constant char *DMD_CREATIONFIELDDATATYPES  = GDAL_DMD_CREATIONFIELDDATATYPES;
 %constant char *DMD_SUBDATASETS        = GDAL_DMD_SUBDATASETS;
 
+%constant char *DCAP_OPEN       = GDAL_DCAP_OPEN;
 %constant char *DCAP_CREATE     = GDAL_DCAP_CREATE;
 %constant char *DCAP_CREATECOPY = GDAL_DCAP_CREATECOPY;
-%constant char *DCAP_VIRTUALIO = GDAL_DCAP_VIRTUALIO;
+%constant char *DCAP_VIRTUALIO  = GDAL_DCAP_VIRTUALIO;
+%constant char *DCAP_RASTER     = GDAL_DCAP_RASTER;
+%constant char *DCAP_VECTOR     = GDAL_DCAP_VECTOR;
+%constant char *DCAP_NOTNULL_FIELDS      = GDAL_DCAP_NOTNULL_FIELDS;
+%constant char *DCAP_DEFAULT_FIELDS      = GDAL_DCAP_DEFAULT_FIELDS;
+%constant char *DCAP_NOTNULL_GEOMFIELDS  = GDAL_DCAP_NOTNULL_GEOMFIELDS;
 
 #else
 
@@ -174,14 +182,21 @@
 #define GDAL_DMD_MIMETYPE "DMD_MIMETYPE"
 #define GDAL_DMD_EXTENSION "DMD_EXTENSION"
 #define GDAL_DMD_EXTENSIONS "DMD_EXTENSIONS"
+#define DMD_CONNECTION_PREFIX  "DMD_CONNECTION_PREFIX"
 #define GDAL_DMD_CREATIONOPTIONLIST "DMD_CREATIONOPTIONLIST"
 #define GDAL_DMD_CREATIONDATATYPES "DMD_CREATIONDATATYPES"
 #define GDAL_DMD_CREATIONFIELDDATATYPES "DMD_CREATIONFIELDDATATYPES"
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
 
+#define GDAL_DCAP_OPEN       "DCAP_OPEN"
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 #define GDAL_DCAP_VIRTUALIO  "DCAP_VIRTUALIO"
+#define DCAP_RASTER          "GDAL_DCAP_RASTER"
+#define DCAP_VECTOR          "GDAL_DCAP_VECTOR"
+#define DCAP_NOTNULL_FIELDS  "GDAL_DCAP_NOTNULL_FIELDS"
+#define DCAP_DEFAULT_FIELDS  "GDAL_DCAP_DEFAULT_FIELDS"
+#define DCAP_NOTNULL_GEOMFIELDS  "GDAL_DCAP_NOTNULL_GEOMFIELDS"
 
 #endif
 
@@ -193,8 +208,8 @@
 
 // GDALRATFieldType
 %constant GFT_Integer             = GFT_Integer;
-%constant GFT_Real                = GFT_Real;   
-%constant GFT_String              = GFT_String;  
+%constant GFT_Real                = GFT_Real;
+%constant GFT_String              = GFT_String;
 
 // GDALRATFieldUsage
 %constant GFU_Generic             = GFU_Generic;

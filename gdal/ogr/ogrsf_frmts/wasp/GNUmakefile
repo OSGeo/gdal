@@ -6,7 +6,6 @@ OBJ	=	ogrwaspdriver.o ogrwaspdatasource.o ogrwasplayer.o
 
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 
-
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:

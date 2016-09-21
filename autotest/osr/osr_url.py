@@ -5,11 +5,11 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some URL specific translation issues.
 # Author:   Howard Butler <hobu.inc@gmail.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2007, Howard Butler <hobu.inc@gmail.com>
 # Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -49,7 +49,7 @@ def osr_url_test(url, expected_wkt):
     """Depend on the Accepts headers that ImportFromUrl sets to request SRS from sr.org"""
     srs = osr.SpatialReference()
     from osgeo import gdal
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' ) 
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     try:
         srs.ImportFromUrl( url )
     except AttributeError: # old-gen bindings don't have this method yet
@@ -82,7 +82,7 @@ def osr_url_2():
     return osr_url_test('http://spatialreference.org/ref/epsg/4326/ogcwkt/', expected_wkt)
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_url_1,
     osr_url_2,
     None ]

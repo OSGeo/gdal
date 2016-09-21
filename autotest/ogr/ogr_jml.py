@@ -6,7 +6,7 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test JML driver functionality.
 # Author:   Even Rouault <even dot rouault at spatialys dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at spatialys dot org>
 #
@@ -133,24 +133,24 @@ def ogr_jml_1():
 # Test creating a file
 
 def ogr_jml_2():
-    
+
     # Invalid filename
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.GetDriverByName('JML').CreateDataSource('/foo/ogr_jml.jml')
     gdal.PopErrorHandler()
     ds = None
-    
+
     # Empty layer
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
     lyr = ds.CreateLayer('foo')
     lyr.ResetReading()
     lyr.GetNextFeature()
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
     data = gdal.VSIFReadL(1, 1000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data != """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
@@ -169,7 +169,7 @@ def ogr_jml_2():
         return 'fail'
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
-    
+
     # Test all data types
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
     lyr = ds.CreateLayer('foo')
@@ -179,7 +179,10 @@ def ogr_jml_2():
     lyr.CreateField(ogr.FieldDefn('date', ogr.OFTDate))
     lyr.CreateField(ogr.FieldDefn('datetime', ogr.OFTDateTime))
     lyr.CreateField(ogr.FieldDefn('datetime2', ogr.OFTDateTime))
-    lyr.CreateField(ogr.FieldDefn('time_as_str', ogr.OFTTime))
+
+    with gdaltest.error_handler():
+        lyr.CreateField(ogr.FieldDefn('time_as_str', ogr.OFTTime))
+
     if lyr.TestCapability(ogr.OLCCreateField) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -196,7 +199,7 @@ def ogr_jml_2():
     # empty feature
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
-    
+
     if lyr.TestCapability(ogr.OLCCreateField) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -215,18 +218,18 @@ def ogr_jml_2():
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
     f.SetStyleString('PEN(c:#112233)')
     lyr.CreateFeature(f)
-    
+
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0))'))
     f.SetStyleString('BRUSH(fc:#112233)')
     lyr.CreateFeature(f)
 
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data != """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
@@ -330,7 +333,7 @@ def ogr_jml_2():
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-    
+
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
     # Test with an explicit R_G_B field
@@ -341,24 +344,24 @@ def ogr_jml_2():
     f.SetField('R_G_B', '112233')
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
     lyr.CreateFeature(f)
-    
-    # Test that R_G_B is not overriden by feature style
+
+    # Test that R_G_B is not overridden by feature style
     f.SetField('R_G_B', '445566')
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
     f.SetStyleString('PEN(c:#778899)')
     lyr.CreateFeature(f)
-    
+
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data.find('112233') < 0 or data.find('445566') < 0:
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-    
+
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
     # Test CREATE_R_G_B_FIELD=NO
@@ -368,16 +371,16 @@ def ogr_jml_2():
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data.find('R_G_B') >= 0:
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-    
+
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
     # Test CREATE_OGR_STYLE_FIELD=YES
@@ -388,16 +391,16 @@ def ogr_jml_2():
     f.SetStyleString('PEN(c:#445566)')
     lyr.CreateFeature(f)
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data.find('OGR_STYLE') < 0 or data.find('PEN(c:#445566)') < 0:
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-    
+
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
     # Test CREATE_OGR_STYLE_FIELD=YES with a R_G_B field
@@ -410,16 +413,16 @@ def ogr_jml_2():
     f.SetStyleString('PEN(c:#445566)')
     lyr.CreateFeature(f)
     ds = None
-    
+
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
-    
+
     if data.find('OGR_STYLE') < 0 or data.find('PEN(c:#445566)') < 0 or data.find('112233') < 0:
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-    
+
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
     return 'success'
@@ -499,7 +502,7 @@ def ogr_jml_4():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     # XML malformed in featureCollection
     gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml',"""<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
@@ -529,7 +532,7 @@ def ogr_jml_4():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-    
+
     # XML malformed in featureCollection
     gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml',"""<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
@@ -560,7 +563,7 @@ def ogr_jml_4():
         gdaltest.post_reason('fail')
         return 'fail'
     del ds
-    
+
     # Invalid column definitions
     gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml',"""<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
@@ -634,15 +637,15 @@ def ogr_jml_4():
 
     return 'success'
 ###############################################################################
-# 
+#
 
 def ogr_jml_cleanup():
-    
+
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_jml_init,
     ogr_jml_1,
     ogr_jml_2,
@@ -657,4 +660,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -1,6 +1,0 @@
-TODO list for Windows CE port:
------------------------------
-- Add project files for eVC++ 4.0
-- Port OGR driver for GML
-- Port OGR driver for SQLite
-- Port OGR driver for new GDAL rasters support

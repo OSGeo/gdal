@@ -36,6 +36,8 @@ XTRA_OPT	:=	$(XTRA_OPT) -I../zlib
 endif
 
 CPPFLAGS	:=	$(XTRA_OPT)  $(CPPFLAGS)
+# Enable this to compile with -Wextra -Werror and get around the jump complaint.
+# CPPFLAGS += -Wno-clobbered
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
@@ -43,7 +45,7 @@ clean:
 	rm -f *.o libpng/*.o $(O_OBJ)
 
 ../o/%.$(OBJ_EXT):	libpng/%.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
+	$(CC) -c $(CPPFLAGS) $(CFLAGS_NOFTRAPV) $< -o $@
 
 all:	$(OBJ:.o=.$(OBJ_EXT))
 

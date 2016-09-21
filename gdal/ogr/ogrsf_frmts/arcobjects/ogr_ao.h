@@ -26,8 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_AO_H_INCLUDED
-#define _OGR_AO_H_INCLUDED
+#ifndef OGR_AO_H_INCLUDED
+#define OGR_AO_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 
@@ -76,10 +76,14 @@ public:
 
 
   virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
   virtual GIntBig     GetFeatureCount( int bForce );
   virtual OGRErr      SetAttributeFilter( const char *pszQuery );
   virtual void 	      SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
   virtual void        SetSpatialFilter( OGRGeometry * );
+  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
 /*
   virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn,
@@ -115,7 +119,7 @@ protected:
     //buffers are used for avoiding constant reallocation of temp memory
     unsigned char* m_pBuffer;
     long  m_bufferSize; //in bytes
-    bool  m_supressColumnMappingError;
+    bool  m_suppressColumnMappingError;
     bool  m_forceMulti;
 };
 

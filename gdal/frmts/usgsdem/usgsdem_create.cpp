@@ -5,7 +5,7 @@
  * Purpose:  CreateCopy() implementation.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
- * This writing code based on the format specification: 
+ * This writing code based on the format specification:
  *   Canadian Digital Elevation Data Product Specification - Edition 2.0
  *
  ******************************************************************************
@@ -31,15 +31,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
-#include "cpl_string.h"
-#include "gdalwarper.h"
 #include "cpl_csv.h"
+#include "cpl_string.h"
+#include "gdal_pam.h"
+#include "gdalwarper.h"
+#include "ogr_spatialref.h"
+
+#include <cmath>
+
+#include <algorithm>
+
 
 CPL_CVSID("$Id$");
 
-typedef struct 
+/* used by usgsdemdataset.cpp */
+GDALDataset *USGSDEMCreateCopy( const char *, GDALDataset *, int, char **,
+                                GDALProgressFunc pfnProgress,
+                                void * pProgressData );
+
+typedef struct
 {
     GDALDataset *poSrcDS;
     char        *pszFilename;
@@ -47,7 +57,7 @@ typedef struct
 
     char       *pszDstSRS;
 
-    double      dfLLX, dfLLY;  // These are adjusted in to center of 
+    double      dfLLX, dfLLY;  // These are adjusted in to center of
     double      dfULX, dfULY;  // corner pixels, and in decimal degrees.
     double      dfURX, dfURY;
     double      dfLRX, dfLRY;
@@ -65,7 +75,6 @@ typedef struct
     VSILFILE  *fp;
 
     GInt16     *panData;
-    
 } USGSDEMWriteInfo;
 
 #define DEM_NODATA -32767
@@ -81,7 +90,12 @@ static void USGSDEMWriteCleanup( USGSDEMWriteInfo *psWInfo )
     CPLFree( psWInfo->pszDstSRS );
     CPLFree( psWInfo->pszFilename );
     if( psWInfo->fp != NULL )
-        VSIFCloseL( psWInfo->fp );
+    {
+        if( VSIFCloseL( psWInfo->fp ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     if( psWInfo->panData != NULL )
         VSIFree( psWInfo->panData );
 }
@@ -89,15 +103,11 @@ static void USGSDEMWriteCleanup( USGSDEMWriteInfo *psWInfo )
 /************************************************************************/
 /*                       USGSDEMDectoPackedDMS()                        */
 /************************************************************************/
-const char *USGSDEMDecToPackedDMS( double dfDec )
+static const char *USGSDEMDecToPackedDMS( double dfDec )
 {
-    double  dfSeconds;
-    int nDegrees, nMinutes, nSign;
-    static char szPackBuf[100];
+    const int nSign = ( dfDec < 0.0  )? -1 : 1;
 
-    nSign = ( dfDec < 0.0 )? -1 : 1;
-
-    dfDec = ABS( dfDec );
+    dfDec = std::abs( dfDec );
     /* If the difference between the value and the nearest degree
        is less than 1e-5 second, then we force to round to the
        nearest degree, to avoid result strings like '40 59 60.0000' instead of '41'.
@@ -105,14 +115,19 @@ const char *USGSDEMDecToPackedDMS( double dfDec )
        Valgrind bug when running usgsdem_6 where the value of psDInfo->dfULCornerY
        computed in DTEDOpen() differ between Valgrind and non-Valgrind executions.
     */
-    if (fabs(dfDec - (int) floor( dfDec + .5)) < 1e-5 / 3600)
-        dfDec = nDegrees = (int) floor( dfDec + .5);
-    else
-        nDegrees = (int) floor( dfDec );
-    nMinutes = (int) floor( ( dfDec - nDegrees ) * 60.0 );
-    dfSeconds = (dfDec - nDegrees) * 3600.0 - nMinutes * 60.0;
+    int nDegrees;
+    if (std::abs(dfDec - static_cast<int>( std::floor( dfDec + .5))) < 1e-5 / 3600)
+    {
+        nDegrees = static_cast<int>( std::floor( dfDec + .5) );
+        dfDec = nDegrees;
+    } else
+        nDegrees = static_cast<int>( std::floor( dfDec ) );
+    const int nMinutes
+        = static_cast<int>( std::floor( ( dfDec - nDegrees ) * 60.0 ) );
+    const double dfSeconds = (dfDec - nDegrees) * 3600.0 - nMinutes * 60.0;
 
-    CPLsprintf( szPackBuf, "%4d%2d%7.4f", 
+    static char szPackBuf[100];
+    CPLsnprintf( szPackBuf, sizeof(szPackBuf), "%4d%2d%7.4f",
              nSign * nDegrees, nMinutes, dfSeconds );
     return szPackBuf;
 }
@@ -121,7 +136,7 @@ const char *USGSDEMDecToPackedDMS( double dfDec )
 /*                              TextFill()                              */
 /************************************************************************/
 
-static void TextFill( char *pszTarget, unsigned int nMaxChars, 
+static void TextFill( char *pszTarget, unsigned int nMaxChars,
                       const char *pszSrc )
 
 {
@@ -142,14 +157,14 @@ static void TextFill( char *pszTarget, unsigned int nMaxChars,
 /*      Right justified.                                                */
 /************************************************************************/
 
-static void TextFillR( char *pszTarget, unsigned int nMaxChars, 
+static void TextFillR( char *pszTarget, unsigned int nMaxChars,
                        const char *pszSrc )
 
 {
     if( strlen(pszSrc) < nMaxChars )
     {
         memset( pszTarget, ' ', nMaxChars - strlen(pszSrc) );
-        memcpy( pszTarget + nMaxChars - strlen(pszSrc), pszSrc, 
+        memcpy( pszTarget + nMaxChars - strlen(pszSrc), pszSrc,
                 strlen(pszSrc) );
     }
     else
@@ -171,43 +186,43 @@ static void TextFillR( char *pszTarget, unsigned int nMaxChars,
 static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
 
 {
-#define DOUBLE_BUFFER_SIZE 64
+    if ( !pszBuffer )
+        return;
 
-    char    szTemp[DOUBLE_BUFFER_SIZE];
-    int     i;
 #ifdef MSVC_HACK
     const char *pszFormat = "%25.15e";
 #else
     const char *pszFormat = "%24.15e";
 #endif
 
-    if ( !pszBuffer )
-        return;
-
-#if defined(HAVE_SNPRINTF)
-    CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
-#else
-    CPLsprintf( szTemp, pszFormat, dfValue );
-#endif
+    const int DOUBLE_BUFFER_SIZE = 64;
+    char szTemp[DOUBLE_BUFFER_SIZE];
+    int nOffset = 0;
+    if( CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue ) == 25 &&
+        szTemp[0] == ' ' )
+    {
+        nOffset = 1;
+    }
     szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
 
-    for( i = 0; szTemp[i] != '\0'; i++ )
+    for( int i = 0; szTemp[i] != '\0'; i++ )
     {
         if( szTemp[i] == 'E' || szTemp[i] == 'e' )
             szTemp[i] = 'D';
 #ifdef MSVC_HACK
         if( (szTemp[i] == '+' || szTemp[i] == '-')
-            && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
+            && szTemp[i+1] == '0' && isdigit(szTemp[i+2])
             && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
         {
-            memmove( szTemp+i+1, szTemp+i+2, 2 );
+            szTemp[i+1] = szTemp[i+2];
+            szTemp[i+2] = szTemp[i+3];
             szTemp[i+3] = '\0';
             break;
         }
 #endif
     }
 
-    TextFillR( pszBuffer, 24, szTemp );
+    TextFillR( pszBuffer, 24, szTemp + nOffset );
 }
 
 /************************************************************************/
@@ -221,43 +236,43 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
 static void USGSDEMPrintSingle( char *pszBuffer, double dfValue )
 
 {
-#define DOUBLE_BUFFER_SIZE 64
+    if ( !pszBuffer )
+        return;
 
-    char    szTemp[DOUBLE_BUFFER_SIZE];
-    int     i;
 #ifdef MSVC_HACK
     const char *pszFormat = "%13.6e";
 #else
     const char *pszFormat = "%12.6e";
 #endif
 
-    if ( !pszBuffer )
-        return;
-
-#if defined(HAVE_SNPRINTF)
-    CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
-#else
-    CPLsprintf( szTemp, pszFormat, dfValue );
-#endif
+    const int DOUBLE_BUFFER_SIZE = 64;
+    char szTemp[DOUBLE_BUFFER_SIZE];
+    int nOffset = 0;
+    if( CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue ) == 13 &&
+        szTemp[0] == ' ' )
+    {
+        nOffset = 1;
+    }
     szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
 
-    for( i = 0; szTemp[i] != '\0'; i++ )
+    for( int i = 0; szTemp[i] != '\0'; i++ )
     {
         if( szTemp[i] == 'E' || szTemp[i] == 'e' )
             szTemp[i] = 'D';
 #ifdef MSVC_HACK
         if( (szTemp[i] == '+' || szTemp[i] == '-')
-            && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
+            && szTemp[i+1] == '0' && isdigit(szTemp[i+2])
             && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
         {
-            memmove( szTemp+i+1, szTemp+i+2, 2 );
+            szTemp[i+1] = szTemp[i+2];
+            szTemp[i+2] = szTemp[i+3];
             szTemp[i+3] = '\0';
             break;
         }
 #endif
     }
 
-    TextFillR( pszBuffer, 12, szTemp );
+    TextFillR( pszBuffer, 12, szTemp + nOffset );
 }
 
 /************************************************************************/
@@ -267,19 +282,16 @@ static void USGSDEMPrintSingle( char *pszBuffer, double dfValue )
 static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 
 {
-    char achARec[1024];
-    int  i;
-    const char *pszOption;
-
 /* -------------------------------------------------------------------- */
 /*      Init to blanks.                                                 */
 /* -------------------------------------------------------------------- */
+    char achARec[1024];
     memset( achARec, ' ', sizeof(achARec) );
 
 /* -------------------------------------------------------------------- */
 /*      Load template file, if one is indicated.                        */
 /* -------------------------------------------------------------------- */
-    const char *pszTemplate = 
+    const char *pszTemplate =
         CSLFetchNameValue( psWInfo->papszOptions, "TEMPLATE" );
     if( pszTemplate != NULL )
     {
@@ -289,21 +301,21 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         if( fpTemplate == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Unable to open template file '%s'.\n%s", 
+                      "Unable to open template file '%s'.\n%s",
                       pszTemplate, VSIStrerror( errno ) );
             return FALSE;
         }
 
         if( VSIFReadL( achARec, 1, 1024, fpTemplate ) != 1024 )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
+            CPLError( CE_Failure, CPLE_FileIO,
                       "Unable to read 1024 byte A Record from template file '%s'.\n%s",
                       pszTemplate, VSIStrerror( errno ) );
             return FALSE;
         }
-        VSIFCloseL( fpTemplate );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fpTemplate ));
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Filename (right justify)                                        */
 /* -------------------------------------------------------------------- */
@@ -312,7 +324,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Producer                                                        */
 /* -------------------------------------------------------------------- */
-    pszOption = CSLFetchNameValue( psWInfo->papszOptions, "PRODUCER" );
+    const char *pszOption
+        = CSLFetchNameValue( psWInfo->papszOptions, "PRODUCER" );
 
     if( pszOption != NULL )
         TextFillR( achARec +  40, 60, pszOption );
@@ -330,9 +343,9 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
     if ( ! psWInfo->utmzone )
     {
-        TextFill( achARec + 109, 13, 
+        TextFill( achARec + 109, 13,
             USGSDEMDecToPackedDMS( psWInfo->dfLLX ) ); // longitude
-        TextFill( achARec + 122, 13, 
+        TextFill( achARec + 122, 13,
             USGSDEMDecToPackedDMS( psWInfo->dfLLY ) ); // latitude
     }
     /* this may not be best according to the spec.  But for now,
@@ -348,7 +361,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         TextFill( achARec + 135, 1, pszOption );
 
     else if( pszTemplate == NULL )
-        TextFill( achARec + 135, 1, " " ); 
+        TextFill( achARec + 135, 1, " " );
 
 /* -------------------------------------------------------------------- */
 /*      Filler                                                          */
@@ -360,7 +373,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
     if( pszTemplate == NULL )
         TextFill( achARec + 137, 3, "" );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Origin code                                                     */
 /* -------------------------------------------------------------------- */
@@ -379,18 +392,18 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 
     if( pszOption != NULL )
         TextFillR( achARec + 144, 6, pszOption );  // 1, 2 or 3.
-        
+
     else if( pszTemplate == NULL )
         TextFillR( achARec + 144, 6, "1" );  // 1, 2 or 3.
         /* some DEM readers require a value, 1 seems to be a
          * default
          */
-    
+
 /* -------------------------------------------------------------------- */
 /*      Elevation Pattern                                               */
 /* -------------------------------------------------------------------- */
     TextFillR( achARec + 150, 6, "1" );  // "1" for regular (random is 2)
-    
+
 /* -------------------------------------------------------------------- */
 /*      Horizontal Reference System.                                    */
 /*                                                                      */
@@ -418,12 +431,12 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
     {
         TextFillR( achARec + 162, 6,
             CPLSPrintf( "%02d", psWInfo->utmzone) );
-    } 
-    
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Map Projection Parameters (all 0.0).                            */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < 15; i++ )
+    for( int i = 0; i < 15; i++ )
         TextFillR( achARec + 168 + i*24, 24, "0.0" );
 
 /* -------------------------------------------------------------------- */
@@ -507,10 +520,11 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /*      Minimum and Maximum elevations for this cell.                   */
 /*      24.15 format.                                                   */
 /* -------------------------------------------------------------------- */
-    GInt16  nMin = DEM_NODATA, nMax = DEM_NODATA;
+    GInt16  nMin = DEM_NODATA;
+    GInt16  nMax = DEM_NODATA;
     int     nVoid = 0;
 
-    for( i = psWInfo->nXSize*psWInfo->nYSize-1; i >= 0; i-- )
+    for( int i = psWInfo->nXSize*psWInfo->nYSize-1; i >= 0; i-- )
     {
         if( psWInfo->panData[i] != DEM_NODATA )
         {
@@ -520,8 +534,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
             }
             else
             {
-                nMin = MIN(nMin,psWInfo->panData[i]);
-                nMax = MAX(nMax,psWInfo->panData[i]);
+                nMin = std::min(nMin,psWInfo->panData[i]);
+                nMax = std::max(nMax,psWInfo->panData[i]);
             }
         }
         else
@@ -529,11 +543,11 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
     }
 
     /* take into account z resolutions that are not 1.0 */
-    nMin = (GInt16) floor(nMin * psWInfo->dfElevStepSize);
-    nMax = (GInt16) ceil(nMax * psWInfo->dfElevStepSize);
-    
-    USGSDEMPrintDouble( achARec + 738, (double) nMin );
-    USGSDEMPrintDouble( achARec + 762, (double) nMax );
+    nMin = static_cast<GInt16>( std::floor(nMin * psWInfo->dfElevStepSize) );
+    nMax = static_cast<GInt16>( std::ceil(nMax * psWInfo->dfElevStepSize) );
+
+    USGSDEMPrintDouble( achARec + 738, static_cast<double>( nMin ) );
+    USGSDEMPrintDouble( achARec + 762, static_cast<double>( nMax ) );
 
 /* -------------------------------------------------------------------- */
 /*      Counter Clockwise angle (in radians).  Normally 0               */
@@ -661,7 +675,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 
     if( pszOption != NULL )
         TextFill( achARec + 892, 4, pszOption );
-        
+
     else if( pszTemplate == NULL )
         TextFill( achARec + 892, 4, "" );
 
@@ -670,11 +684,9 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /*                                                                      */
 /*      Round to nearest integer percentage.                            */
 /* -------------------------------------------------------------------- */
-    int nPercent;
-
-    nPercent = (int) 
+    int nPercent = static_cast<int>
         (((nVoid * 100.0) / (psWInfo->nXSize * psWInfo->nYSize)) + 0.5);
-        
+
     TextFillR( achARec + 896, 4, CPLSPrintf( "%4d", nPercent ) );
 
 /* -------------------------------------------------------------------- */
@@ -693,8 +705,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
     if( VSIFWriteL( achARec, 1, 1024, psWInfo->fp ) != 1024 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Error writing DEM/CDED A record.\n%s", 
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Error writing DEM/CDED A record.\n%s",
                   VSIStrerror( errno ) );
         return FALSE;
     }
@@ -739,8 +751,8 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
     if( ! psWInfo->utmzone )
     {
         // longitude
-        USGSDEMPrintDouble( achBuffer +  24, 
-                        3600 * (psWInfo->dfLLX 
+        USGSDEMPrintDouble( achBuffer +  24,
+                        3600 * (psWInfo->dfLLX
                                 + iProfile * psWInfo->dfHorizStepSize) );
 
         // latitude
@@ -749,8 +761,8 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
     else
     {
         // easting
-        USGSDEMPrintDouble( achBuffer +  24, 
-                        (psWInfo->dfLLX 
+        USGSDEMPrintDouble( achBuffer +  24,
+                        (psWInfo->dfLLX
                             + iProfile * psWInfo->dfHorizStepSize) );
 
         // northing
@@ -766,12 +778,12 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 /* -------------------------------------------------------------------- */
 /*      Min/Max elevation values for this profile.                      */
 /* -------------------------------------------------------------------- */
-    int iY; 
-    GInt16  nMin = DEM_NODATA, nMax = DEM_NODATA;
+    GInt16  nMin = DEM_NODATA;
+    GInt16  nMax = DEM_NODATA;
 
-    for( iY = 0; iY < psWInfo->nYSize; iY++ )
+    for( int iY = 0; iY < psWInfo->nYSize; iY++ )
     {
-        int iData = (psWInfo->nYSize-iY-1) * psWInfo->nXSize + iProfile; 
+        const int iData = (psWInfo->nYSize-iY-1) * psWInfo->nXSize + iProfile;
 
         if( psWInfo->panData[iData] != DEM_NODATA )
         {
@@ -781,18 +793,18 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
             }
             else
             {
-                nMin = MIN(nMin,psWInfo->panData[iData]);
-                nMax = MAX(nMax,psWInfo->panData[iData]);
+                nMin = std::min(nMin,psWInfo->panData[iData]);
+                nMax = std::max(nMax,psWInfo->panData[iData]);
             }
         }
     }
-    
-    /* take into account z resolutions that are not 1.0 */
-    nMin = (GInt16) floor(nMin * psWInfo->dfElevStepSize);
-    nMax = (GInt16) ceil(nMax * psWInfo->dfElevStepSize);
 
-    USGSDEMPrintDouble( achBuffer +  96, (double) nMin );
-    USGSDEMPrintDouble( achBuffer +  120, (double) nMax );
+    /* take into account z resolutions that are not 1.0 */
+    nMin = static_cast<GInt16>( std::floor(nMin * psWInfo->dfElevStepSize) );
+    nMax = static_cast<GInt16>( std::ceil(nMax * psWInfo->dfElevStepSize) );
+
+    USGSDEMPrintDouble( achBuffer +  96, static_cast<double>( nMin ) );
+    USGSDEMPrintDouble( achBuffer +  120, static_cast<double>( nMax ) );
 
 /* -------------------------------------------------------------------- */
 /*      Output all the actually elevation values, flushing blocks       */
@@ -800,17 +812,16 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 /* -------------------------------------------------------------------- */
     int iOffset = 144;
 
-    for( iY = 0; iY < psWInfo->nYSize; iY++ )
+    for( int iY = 0; iY < psWInfo->nYSize; iY++ )
     {
-        int iData = (psWInfo->nYSize-iY-1) * psWInfo->nXSize + iProfile; 
-        char szWord[10];
+        const int iData = (psWInfo->nYSize-iY-1) * psWInfo->nXSize + iProfile;
 
         if( iOffset + 6 > 1024 )
         {
             if( VSIFWriteL( achBuffer, 1, 1024, psWInfo->fp ) != 1024 )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
-                          "Failure writing profile to disk.\n%s", 
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Failure writing profile to disk.\n%s",
                           VSIStrerror( errno ) );
                 return FALSE;
             }
@@ -818,9 +829,10 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
             memset( achBuffer, ' ', 1024 );
         }
 
-        sprintf( szWord, "%d", psWInfo->panData[iData] );
+        char szWord[10];
+        snprintf( szWord, sizeof(szWord), "%d", psWInfo->panData[iData] );
         TextFillR( achBuffer + iOffset, 6, szWord );
-        
+
         iOffset += 6;
     }
 
@@ -829,8 +841,8 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 /* -------------------------------------------------------------------- */
     if( VSIFWriteL( achBuffer, 1, 1024, psWInfo->fp ) != 1024 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Failure writing profile to disk.\n%s", 
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failure writing profile to disk.\n%s",
                   VSIStrerror( errno ) );
         return FALSE;
     }
@@ -842,7 +854,7 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 /*                      USGSDEM_LookupNTSByLoc()                        */
 /************************************************************************/
 
-static int 
+static int
 USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
                         char *pszTile, char *pszName )
 
@@ -851,12 +863,11 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
 /*      Access NTS 1:50k sheet CSV file.                                */
 /* -------------------------------------------------------------------- */
     const char *pszNTSFilename = CSVFilename( "NTS-50kindex.csv" );
-    FILE *fpNTS;
 
-    fpNTS = VSIFOpen( pszNTSFilename, "rb" );
+    FILE *fpNTS = VSIFOpen( pszNTSFilename, "rb" );
     if( fpNTS == NULL )
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s", 
+        CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s",
                   pszNTSFilename );
         return FALSE;
     }
@@ -872,13 +883,16 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
     int  bGotHit = FALSE;
     char **papszTokens;
 
-    while( !bGotHit 
+    while( !bGotHit
            && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
     {
         if( CSLCount( papszTokens ) != 4 )
+        {
+            CSLDestroy( papszTokens );
             continue;
+        }
 
-        if( ABS(dfULLong - CPLAtof(papszTokens[2])) < 0.01 
+        if( ABS(dfULLong - CPLAtof(papszTokens[2])) < 0.01
             && ABS(dfULLat - CPLAtof(papszTokens[3])) < 0.01 )
         {
             bGotHit = TRUE;
@@ -890,7 +904,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
         CSLDestroy( papszTokens );
     }
 
-    VSIFClose( fpNTS );
+    CPL_IGNORE_RET_VAL(VSIFClose( fpNTS ));
 
     return bGotHit;
 }
@@ -899,7 +913,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
 /*                      USGSDEM_LookupNTSByTile()                       */
 /************************************************************************/
 
-static int 
+static int
 USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
                          double *pdfULLong, double *pdfULLat )
 
@@ -913,7 +927,7 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
     fpNTS = VSIFOpen( pszNTSFilename, "rb" );
     if( fpNTS == NULL )
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s", 
+        CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s",
                   pszNTSFilename );
         return FALSE;
     }
@@ -926,18 +940,21 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
 /* -------------------------------------------------------------------- */
 /*      Find desired sheet.                                             */
 /* -------------------------------------------------------------------- */
-    int  bGotHit = FALSE;
+    bool bGotHit = false;
     char **papszTokens;
 
-    while( !bGotHit 
+    while( !bGotHit
            && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
     {
         if( CSLCount( papszTokens ) != 4 )
+        {
+            CSLDestroy( papszTokens );
             continue;
+        }
 
         if( EQUAL(pszTile,papszTokens[0]) )
         {
-            bGotHit = TRUE;
+            bGotHit = true;
             if( pszName != NULL )
                 strncpy( pszName, papszTokens[1], 100 );
             *pdfULLong = CPLAtof(papszTokens[2]);
@@ -947,7 +964,7 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
         CSLDestroy( papszTokens );
     }
 
-    VSIFClose( fpNTS );
+    CPL_IGNORE_RET_VAL(VSIFClose( fpNTS ));
 
     return bGotHit;
 }
@@ -963,14 +980,13 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /*      Fetch TOPLEFT location so we know what cell we are dealing      */
 /*      with.                                                           */
 /* -------------------------------------------------------------------- */
-    const char *pszNTS = 
-        CSLFetchNameValue( psWInfo->papszOptions, "NTS" );
-    const char *pszTOPLEFT = CSLFetchNameValue( psWInfo->papszOptions, 
+    const char *pszNTS = CSLFetchNameValue( psWInfo->papszOptions, "NTS" );
+    const char *pszTOPLEFT = CSLFetchNameValue( psWInfo->papszOptions,
                                                 "TOPLEFT" );
     double dfULX = (psWInfo->dfULX+psWInfo->dfURX)*0.5;
     double dfULY = (psWInfo->dfULY+psWInfo->dfURY)*0.5;
 
-    // Have we been given an explicit NTS mapsheet name? 
+    // Have we been given an explicit NTS mapsheet name?
     if( pszNTS != NULL )
     {
         char szTrimmedTile[7];
@@ -981,7 +997,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
             return FALSE;
 
-        if( EQUALN(pszNTS+6,"e",1) )
+        if( STARTS_WITH_CI(pszNTS+6, "e") )
             dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
 
@@ -1009,7 +1025,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( CSLCount( papszTokens ) != 2 )
         {
             CSLDestroy( papszTokens );
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to parse TOPLEFT, should have form like '138d15W,59d0N'." );
             return FALSE;
         }
@@ -1018,15 +1034,15 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         dfULY = CPLDMSToDec( papszTokens[1] );
         CSLDestroy( papszTokens );
 
-        if( ABS(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001 
+        if( ABS(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001
             || ABS(dfULY*4-floor(dfULY*4+0.00005)) > 0.0001 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "TOPLEFT must be on a 15\" boundary for CDED50K, but is not." );
             return FALSE;
         }
     }
-    else if( strlen(psWInfo->pszFilename) == 12 
+    else if( strlen(psWInfo->pszFilename) == 12
              && psWInfo->pszFilename[6] == '_'
              && EQUAL(psWInfo->pszFilename+8,".dem") )
     {
@@ -1038,12 +1054,12 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
             return FALSE;
 
-        if( EQUALN(psWInfo->pszFilename+7,"e",1) )
+        if( STARTS_WITH_CI(psWInfo->pszFilename+7, "e") )
             dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
-             
-    else if( strlen(psWInfo->pszFilename) == 14 
-             && EQUALN(psWInfo->pszFilename+6,"DEM",3)
+
+    else if( strlen(psWInfo->pszFilename) == 14
+             && STARTS_WITH_CI(psWInfo->pszFilename+6, "DEM")
              && EQUAL(psWInfo->pszFilename+10,".dem") )
     {
         char szTrimmedTile[7];
@@ -1054,7 +1070,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
             return FALSE;
 
-        if( EQUALN(psWInfo->pszFilename+9,"e",1) )
+        if( STARTS_WITH_CI(psWInfo->pszFilename+9, "e") )
             dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
 
@@ -1106,7 +1122,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /*      Can we find the NTS 50k tile name that corresponds with         */
 /*      this?                                                           */
 /* -------------------------------------------------------------------- */
-    const char *pszINTERNAL = 
+    const char *pszINTERNAL =
         CSLFetchNameValue( psWInfo->papszOptions, "INTERNALNAME" );
     char szTile[10];
     char chEWFlag = ' ';
@@ -1128,13 +1144,13 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
     else if( chEWFlag != ' ' )
     {
         CPLFree( psWInfo->pszFilename );
-        psWInfo->pszFilename = 
+        psWInfo->pszFilename =
             CPLStrdup( CPLSPrintf("%sDEM%c", szTile, chEWFlag ) );
     }
     else
     {
         const char *pszBasename = CPLGetFilename( psWInfo->pszFilename);
-        if( !EQUALN(pszBasename+6,"DEM",3) 
+        if( !STARTS_WITH_CI(pszBasename+6, "DEM")
             || strlen(pszBasename) != 10 )
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Internal filename required to be of 'nnnannDEMz', the output\n"
@@ -1146,12 +1162,12 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Set some specific options for CDED 50K.                         */
 /* -------------------------------------------------------------------- */
-    psWInfo->papszOptions = 
+    psWInfo->papszOptions =
         CSLSetNameValue( psWInfo->papszOptions, "DEMLevelCode", "1" );
 
     if( CSLFetchNameValue( psWInfo->papszOptions, "DataSpecVersion" ) == NULL )
-        psWInfo->papszOptions = 
-            CSLSetNameValue( psWInfo->papszOptions, "DataSpecVersion", 
+        psWInfo->papszOptions =
+            CSLSetNameValue( psWInfo->papszOptions, "DataSpecVersion",
                              "1020" );
 
 /* -------------------------------------------------------------------- */
@@ -1193,35 +1209,34 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference DstoSRS;
     OGRSpatialReference SrcoSRS;
-    char                *sourceWkt;
     int                 bNorth = TRUE;
         /* XXX here we are assume (!) northern hemisphere UTM datasets  */
-    char                **readSourceWkt;
-    int                 i;
     int                 numdatums = 4;
     const char          DatumCodes[4][2] = { "1", "2", "3", "4" };
     char                Datums[4][6] = { "NAD27", "WGS72", "WGS84",
                                             "NAD83" };
 
     /* get the source dataset's projection */
-    sourceWkt = (char *) psWInfo->poSrcDS->GetProjectionRef();
-    readSourceWkt = &sourceWkt;
+    char *sourceWkt
+        = const_cast<char *>( psWInfo->poSrcDS->GetProjectionRef() );
+    char **readSourceWkt = &sourceWkt;
     if (SrcoSRS.importFromWkt(readSourceWkt) != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "DEM Default Setup: Importing source dataset projection failed" );
         return FALSE;
     }
-    
+
     /* Set the destination dataset's projection.  If the source datum
      * used is DEM compatible, just use it.  Otherwise, default to the
      * last datum in the Datums array.
      */
-    for( i=0; i < numdatums; i++ )
+    int i = 0;
+    for( ; i < numdatums; i++ )
     {
         if (DstoSRS.SetWellKnownGeogCS(Datums[i]) != OGRERR_NONE)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                 "DEM Default Setup: Failed to set datum of destination" );
             return FALSE;
         }
@@ -1234,15 +1249,15 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
             break;
         }
     }
-    strncpy( psWInfo->horizdatum, DatumCodes[i], 2 );
-    
+    CPLStrlcpy( psWInfo->horizdatum, DatumCodes[i], 2 );
+
     /* get the UTM zone, if any */
     psWInfo->utmzone = SrcoSRS.GetUTMZone(&bNorth);
     if (psWInfo->utmzone)
     {
         if (DstoSRS.SetUTM(psWInfo->utmzone) != OGRERR_NONE)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
               "DEM Default Setup: Failed to set utm zone of destination" );
             /* SetUTM isn't documented to return OGRERR_NONE
              * on success, but it does, so, we'll check for it.
@@ -1250,11 +1265,11 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
             return FALSE;
         }
     }
-    
+
     /* export the projection to sWInfo */
     if (DstoSRS.exportToWkt( &(psWInfo->pszDstSRS) ) != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
             "UTMDEM: Failed to export destination Wkt to psWInfo" );
     }
     return TRUE;
@@ -1271,30 +1286,24 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
 static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
                               CPL_UNUSED GDALRasterBand *poSrcBand )
 {
-    CPLErr eErr;
-    int i;
-
 /* -------------------------------------------------------------------- */
 /*      Allocate output array, and pre-initialize to NODATA value.      */
 /* -------------------------------------------------------------------- */
-    psWInfo->panData = 
-        (GInt16 *) VSIMalloc3( 2, psWInfo->nXSize, psWInfo->nYSize );
+    psWInfo->panData = reinterpret_cast<GInt16 *>(
+        VSI_MALLOC3_VERBOSE( 2, psWInfo->nXSize, psWInfo->nYSize ) );
     if( psWInfo->panData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory allocating %d byte internal copy of DEM.", 
-                  2 * psWInfo->nXSize * psWInfo->nYSize );
         return FALSE;
     }
 
-    for( i = 0; i < psWInfo->nXSize * psWInfo->nYSize; i++ )
+    for( int i = 0; i < psWInfo->nXSize * psWInfo->nYSize; i++ )
         psWInfo->panData[i] = DEM_NODATA;
 
 /* -------------------------------------------------------------------- */
 /*      Make a "memory dataset" wrapper for this data array.            */
 /* -------------------------------------------------------------------- */
-    GDALDriver  *poMemDriver = (GDALDriver *) GDALGetDriverByName( "MEM" );
-    GDALDataset *poMemDS;
+    GDALDriver  *poMemDriver = reinterpret_cast<GDALDriver *>(
+        GDALGetDriverByName( "MEM" ) );
 
     if( poMemDriver == NULL )
     {
@@ -1302,10 +1311,10 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
                   "Failed to find MEM driver." );
         return FALSE;
     }
-   
-    poMemDS = 
-        poMemDriver->Create( "USGSDEM_temp", psWInfo->nXSize, psWInfo->nYSize, 
-                         0, GDT_Int16, NULL );
+
+    GDALDataset *poMemDS
+        = poMemDriver->Create( "USGSDEM_temp", psWInfo->nXSize, psWInfo->nYSize,
+                               0, GDT_Int16, NULL );
     if( poMemDS == NULL )
         return FALSE;
 
@@ -1316,10 +1325,10 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
     char *apszOptions[] = { szDataPointer, NULL };
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
-    sprintf( szDataPointer, "DATAPOINTER=" );
-    CPLPrintPointer( szDataPointer+strlen(szDataPointer), 
-                     psWInfo->panData, 
-                     sizeof(szDataPointer) - strlen(szDataPointer) );
+    snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
+    CPLPrintPointer( szDataPointer+strlen(szDataPointer),
+                     psWInfo->panData,
+                     static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );
 
     if( poMemDS->AddBand( GDT_Int16, apszOptions ) != CE_None )
         return FALSE;
@@ -1348,7 +1357,7 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
 /*      Establish the resampling kernel to use.                         */
 /* -------------------------------------------------------------------- */
     GDALResampleAlg eResampleAlg = GRA_Bilinear;
-    const char *pszResample = CSLFetchNameValue( psWInfo->papszOptions, 
+    const char *pszResample = CSLFetchNameValue( psWInfo->papszOptions,
                                                  "RESAMPLE" );
 
     if( pszResample == NULL )
@@ -1363,21 +1372,21 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
         eResampleAlg = GRA_CubicSpline;
     else
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "RESAMPLE=%s, not a supported resampling kernel.", 
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "RESAMPLE=%s, not a supported resampling kernel.",
                   pszResample );
         return FALSE;
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Perform a warp from source dataset to destination buffer        */
 /*      (memory dataset).                                               */
 /* -------------------------------------------------------------------- */
-    eErr = GDALReprojectImage( (GDALDatasetH) psWInfo->poSrcDS, 
+    CPLErr eErr = GDALReprojectImage( (GDALDatasetH) psWInfo->poSrcDS,
                                psWInfo->poSrcDS->GetProjectionRef(),
-                               (GDALDatasetH) poMemDS, 
+                               (GDALDatasetH) poMemDS,
                                psWInfo->pszDstSRS,
-                               eResampleAlg, 0.0, 0.0, NULL, NULL, 
+                               eResampleAlg, 0.0, 0.0, NULL, NULL,
                                NULL );
 
 /* -------------------------------------------------------------------- */
@@ -1401,11 +1410,9 @@ USGSDEMCreateCopy( const char *pszFilename,
                    CPL_UNUSED GDALProgressFunc pfnProgress,
                    CPL_UNUSED void * pProgressData )
 {
-    USGSDEMWriteInfo sWInfo;
-
     if( poSrcDS->GetRasterCount() != 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to create multi-band USGS DEM / CDED files." );
         return NULL;
     }
@@ -1413,6 +1420,7 @@ USGSDEMCreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Capture some preliminary information.                           */
 /* -------------------------------------------------------------------- */
+    USGSDEMWriteInfo sWInfo;
     memset( &sWInfo, 0, sizeof(sWInfo) );
 
     sWInfo.poSrcDS = poSrcDS;
@@ -1426,7 +1434,7 @@ USGSDEMCreateCopy( const char *pszFilename,
 
     if ( sWInfo.nXSize <= 1 || sWInfo.nYSize <= 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Source dataset dimensions must be at least 2x2." );
         return NULL;
     }
@@ -1437,21 +1445,21 @@ USGSDEMCreateCopy( const char *pszFilename,
     double adfGeoTransform[6];
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
-    
+
     sWInfo.dfLLX = adfGeoTransform[0] + adfGeoTransform[1] * 0.5;
-    sWInfo.dfLLY = adfGeoTransform[3] 
+    sWInfo.dfLLY = adfGeoTransform[3]
         + adfGeoTransform[5] * (sWInfo.nYSize - 0.5);
 
     sWInfo.dfULX = adfGeoTransform[0] + adfGeoTransform[1] * 0.5;
     sWInfo.dfULY = adfGeoTransform[3] + adfGeoTransform[5] * 0.5;
-    
+
     sWInfo.dfURX = adfGeoTransform[0]
         + adfGeoTransform[1] * (sWInfo.nXSize - 0.5);
     sWInfo.dfURY = adfGeoTransform[3] + adfGeoTransform[5] * 0.5;
-    
-    sWInfo.dfLRX = adfGeoTransform[0] 
+
+    sWInfo.dfLRX = adfGeoTransform[0]
         + adfGeoTransform[1] * (sWInfo.nXSize - 0.5);
-    sWInfo.dfLRY = adfGeoTransform[3] 
+    sWInfo.dfLRY = adfGeoTransform[3]
         + adfGeoTransform[5] * (sWInfo.nYSize - 0.5);
 
     sWInfo.dfHorizStepSize = (sWInfo.dfURX - sWInfo.dfULX) / (sWInfo.nXSize-1);
@@ -1467,7 +1475,7 @@ USGSDEMCreateCopy( const char *pszFilename,
      {
          sWInfo.dfElevStepSize = 1.0;
      }
-     else 
+     else
      {
          // XXX: We are using CPLAtof() here instead of CPLAtof() because
          // zResolution value comes from user's input and supposed to be
@@ -1480,11 +1488,11 @@ USGSDEMCreateCopy( const char *pszFilename,
              sWInfo.dfElevStepSize = 1.0;
          }
      }
- 
+
 /* -------------------------------------------------------------------- */
 /*      Initialize for special product configurations.                  */
 /* -------------------------------------------------------------------- */
-    const char *pszProduct = CSLFetchNameValue( sWInfo.papszOptions, 
+    const char *pszProduct = CSLFetchNameValue( sWInfo.papszOptions,
                                                 "PRODUCT" );
 
     if( pszProduct == NULL || EQUAL(pszProduct,"DEFAULT") )
@@ -1505,13 +1513,13 @@ USGSDEMCreateCopy( const char *pszFilename,
     }
     else
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "DEM PRODUCT='%s' not recognised.", 
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "DEM PRODUCT='%s' not recognised.",
                   pszProduct );
         USGSDEMWriteCleanup( &sWInfo );
         return NULL;
     }
-    
+
 
 /* -------------------------------------------------------------------- */
 /*      Read the whole area of interest into memory.                    */
@@ -1528,7 +1536,7 @@ USGSDEMCreateCopy( const char *pszFilename,
     sWInfo.fp = VSIFOpenL( pszFilename, "wb" );
     if( sWInfo.fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s", VSIStrerror( errno ) );
         USGSDEMWriteCleanup( &sWInfo );
         return NULL;
@@ -1537,7 +1545,7 @@ USGSDEMCreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write the A record.                                             */
 /* -------------------------------------------------------------------- */
-    if( !USGSDEMWriteARecord( &sWInfo ) ) 
+    if( !USGSDEMWriteARecord( &sWInfo ) )
     {
         USGSDEMWriteCleanup( &sWInfo );
         return NULL;
@@ -1546,9 +1554,7 @@ USGSDEMCreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write profiles.                                                 */
 /* -------------------------------------------------------------------- */
-    int iProfile;
-
-    for( iProfile = 0; iProfile < sWInfo.nXSize; iProfile++ )
+    for( int iProfile = 0; iProfile < sWInfo.nXSize; iProfile++ )
     {
         if( !USGSDEMWriteProfile( &sWInfo, iProfile ) )
         {
@@ -1556,17 +1562,17 @@ USGSDEMCreateCopy( const char *pszFilename,
             return NULL;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     USGSDEMWriteCleanup( &sWInfo );
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *) 
-        GDALOpen( pszFilename, GA_ReadOnly );
+    GDALPamDataset *poDS = reinterpret_cast<GDALPamDataset *>(
+        GDALOpen( pszFilename, GA_ReadOnly ) );
 
     if( poDS )
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );

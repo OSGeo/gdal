@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_GFT_H_INCLUDED
-#define _OGR_GFT_H_INCLUDED
+#ifndef OGR_GFT_H_INCLUDED
+#define OGR_GFT_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
@@ -142,6 +142,9 @@ class OGRGFTTableLayer : public OGRGFTLayer
     virtual OGRFeature *        GetFeature( GIntBig nFID );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
+
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
@@ -204,7 +207,7 @@ class OGRGFTDataSource : public OGRDataSource
 
     void                DeleteLayer( const char *pszLayerName );
 
-    int                 bMustCleanPersistant;
+    int                 bMustCleanPersistent;
 
     static CPLStringList ParseSimpleJson(const char *pszJSon);
 
@@ -260,4 +263,4 @@ class OGRGFTDriver : public OGRSFDriver
 char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter );
 char* OGRGFTGotoNextLine(char* pszData);
 
-#endif /* ndef _OGR_GFT_H_INCLUDED */
+#endif /* ndef OGR_GFT_H_INCLUDED */

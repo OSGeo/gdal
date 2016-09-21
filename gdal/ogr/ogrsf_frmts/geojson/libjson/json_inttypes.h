@@ -1,6 +1,6 @@
 
-#ifndef _json_inttypes_h_
-#define _json_inttypes_h_
+#ifndef json_inttypes_h_
+#define json_inttypes_h_
 
 #include "json_config.h"
 
@@ -20,8 +20,25 @@ typedef __int64 int64_t;
 
 #ifdef JSON_C_HAVE_INTTYPES_H
 #include <inttypes.h>
+#if defined(__MSVCRT__)
+#  undef PRId64
+#  define PRId64 "I64d"
+#endif
 #endif
 /* inttypes.h includes stdint.h */
+
+#ifndef PRId64
+#define PRId64 "lld"
+#endif
+#ifndef SCNd64
+#define SCNd64 "lld"
+#endif
+#ifndef INT32_MIN
+#define INT32_MIN (-2147483647-1)
+#endif
+#ifndef INT64_MIN
+#define INT64_MIN (-9223372036854775807LL-1)
+#endif
 
 #endif
 

@@ -28,8 +28,8 @@
  ****************************************************************************/
 
 
-#ifndef _FGDB_UTILS_H_INCLUDED
-#define _FGDB_UTILS_H_INCLUDED
+#ifndef FGDB_UTILS_H_INCLUDED
+#define FGDB_UTILS_H_INCLUDED
 
 #include "ogr_fgdb.h"
 #include <iostream>
@@ -44,8 +44,8 @@ std::string WStringToString(const std::wstring& s);
 //
 
 // Type mapping
-bool GDBToOGRGeometry(std::string geoType, bool hasZ, OGRwkbGeometryType* pOut);
-bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ);
+bool GDBToOGRGeometry(std::string geoType, bool hasZ, bool hasM, OGRwkbGeometryType* pOut);
+bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ, bool *hasM);
 
 
 bool GDBToOGRSpatialReference(const std::string & wkt, OGRSpatialReference** ppSR);
@@ -71,7 +71,7 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
 //
 // GDBAPI error to OGR
 //
-bool GDBErr(long hr, std::string desc);
+bool GDBErr(long hr, std::string desc, CPLErr errType = CE_Failure, const char* pszAddMsg = "");
 bool GDBDebug(long hr, std::string desc);
 
 //

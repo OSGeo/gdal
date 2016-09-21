@@ -1,13 +1,3 @@
-
-/*
- * angle.c 
- */
-
-/********/
-/* USES */
-/********/
-
-/* libs ext. <>, our ""  */
 #include "csf.h"
 #include "csfimpl.h"
 

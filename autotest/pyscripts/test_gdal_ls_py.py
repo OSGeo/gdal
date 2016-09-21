@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_ls.py testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -74,7 +74,8 @@ def run_gdal_ls(argv):
 # List one file
 
 def test_gdal_ls_py_1():
-    (ret, ret_str) = run_gdal_ls(['', '-l', '../ogr/data/poly.shp'])
+    # TODO: Why the '' as the first element of the list here and below?
+    ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data/poly.shp'])
 
     if ret != 'success':
         return ret
@@ -89,7 +90,7 @@ def test_gdal_ls_py_1():
 # List one dir
 
 def test_gdal_ls_py_2():
-    (ret, ret_str) = run_gdal_ls(['', '-l', '../ogr/data'])
+    ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data'])
 
     if ret != 'success':
         return ret
@@ -104,7 +105,7 @@ def test_gdal_ls_py_2():
 # List recursively
 
 def test_gdal_ls_py_3():
-    (ret, ret_str) = run_gdal_ls(['', '-R', '../ogr/data'])
+    ret, ret_str = run_gdal_ls(['', '-R', '../ogr/data'])
 
     if ret != 'success':
         return ret
@@ -119,7 +120,7 @@ def test_gdal_ls_py_3():
 # List in a .zip
 
 def test_gdal_ls_py_4():
-    (ret, ret_str) = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
+    ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
 
     if ret != 'success':
         return ret
@@ -160,7 +161,7 @@ def test_gdal_ls_py_5():
     if len(d) == 0:
         return 'skip'
 
-    (ret, ret_str) = run_gdal_ls(['', '-R', 'http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/'])
+    ret, ret_str = run_gdal_ls(['', '-R', 'http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/'])
 
     if ret != 'success':
         return ret
@@ -192,7 +193,7 @@ def test_gdal_ls_py_6():
     if len(d) == 0:
         return 'skip'
 
-    (ret, ret_str) = run_gdal_ls(['', '-l', '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'])
+    ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'])
 
     if ret != 'success':
         return ret
@@ -233,7 +234,7 @@ def test_gdal_ls_py_7():
     if len(d) == 0:
         return 'skip'
 
-    (ret, ret_str) = run_gdal_ls(['', '-R', '-Rzip', 'http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/'])
+    ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/'])
 
     if ret != 'success':
         return ret
@@ -271,7 +272,7 @@ def test_gdal_ls_py_8():
     if len(d) == 0:
         return 'skip'
 
-    (ret, ret_str) = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://ftp.remotesensing.org/gdal/data/aig'])
+    ret, ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://ftp.remotesensing.org/gdal/data/aig'])
 
     if ret != 'success':
         return ret

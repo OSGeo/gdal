@@ -28,14 +28,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "rawdataset.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "rawdataset.h"
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_PNM(void);
+void GDALRegister_PNM();
 CPL_C_END
 
 /************************************************************************/
@@ -53,7 +54,7 @@ class PNMDataset : public RawDataset
 
   public:
                 PNMDataset();
-                ~PNMDataset();
+    virtual ~PNMDataset();
 
     virtual CPLErr GetGeoTransform( double * );
 
@@ -68,10 +69,10 @@ class PNMDataset : public RawDataset
 /*                            PNMDataset()                             */
 /************************************************************************/
 
-PNMDataset::PNMDataset()
+PNMDataset::PNMDataset() :
+    fpImage(NULL),
+    bGeoTransformValid(FALSE)
 {
-    fpImage = NULL;
-    bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -89,7 +90,12 @@ PNMDataset::~PNMDataset()
 {
     FlushCache();
     if( fpImage != NULL )
-        VSIFCloseL( fpImage );
+    {
+        if( VSIFCloseL( fpImage ) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
 }
 
 /************************************************************************/
@@ -99,14 +105,13 @@ PNMDataset::~PNMDataset()
 CPLErr PNMDataset::GetGeoTransform( double * padfTransform )
 
 {
-
     if( bGeoTransformValid )
     {
         memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
         return CE_None;
     }
-    else
-        return CE_Failure;
+
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -155,11 +160,14 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Parse out the tokens from the header.                           */
 /* -------------------------------------------------------------------- */
     const char  *pszSrc = (const char *) poOpenInfo->pabyHeader;
-    char        szToken[512];
-    int         iIn, iToken = 0, nWidth =-1, nHeight=-1, nMaxValue=-1;
+    char szToken[512];
+    int iToken = 0;
+    int nWidth = -1;
+    int nHeight = -1;
+    int nMaxValue = -1;
     unsigned int iOut;
 
-    iIn = 2;
+    int iIn = 2;
     while( iIn < poOpenInfo->nHeaderBytes && iToken < 3 )
     {
         iOut = 0;
@@ -207,9 +215,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    PNMDataset  *poDS;
-
-    poDS = new PNMDataset();
+    PNMDataset *poDS = new PNMDataset();
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -239,26 +245,26 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int         bMSBFirst = TRUE, iPixelSize;
-    GDALDataType eDataType;
-
 #ifdef CPL_LSB
-    bMSBFirst = FALSE;
+    const int bMSBFirst = FALSE;
+#else
+    const int bMSBFirst = TRUE;
 #endif
 
+    GDALDataType eDataType;
     if ( nMaxValue < 256 )
         eDataType = GDT_Byte;
     else
         eDataType = GDT_UInt16;
 
-    iPixelSize = GDALGetDataTypeSize( eDataType ) / 8;
+    const int iPixelSize = GDALGetDataTypeSize( eDataType ) / 8;
 
     if( poOpenInfo->pabyHeader[1] == '5' )
     {
         if (nWidth > INT_MAX / iPixelSize)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Int overflow occured.");
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
             delete poDS;
             return NULL;
         }
@@ -271,8 +277,8 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if (nWidth > INT_MAX / (3 * iPixelSize))
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Int overflow occured.");
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Int overflow occurred.");
             delete poDS;
             return NULL;
         }
@@ -296,8 +302,8 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+    poDS->bGeoTransformValid =
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
                            poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
@@ -350,10 +356,7 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    VSILFILE        *fp;
-
-    fp = VSIFOpenL( pszFilename, "wb" );
-
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -365,11 +368,9 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out the header.                                           */
 /* -------------------------------------------------------------------- */
-    char        szHeader[500];
-    const char  *pszMaxValue = NULL;
     int         nMaxValue = 0;
 
-    pszMaxValue = CSLFetchNameValue( papszOptions, "MAXVAL" );
+    const char *pszMaxValue = CSLFetchNameValue( papszOptions, "MAXVAL" );
     if ( pszMaxValue )
     {
         nMaxValue = atoi( pszMaxValue );
@@ -386,54 +387,53 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
             nMaxValue = 65535;
     }
 
-
+    char szHeader[500];
     memset( szHeader, 0, sizeof(szHeader) );
 
     if( nBands == 3 )
-        sprintf( szHeader, "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
+        snprintf( szHeader, sizeof(szHeader), "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
     else
-        sprintf( szHeader, "P5\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
+        snprintf( szHeader, sizeof(szHeader), "P5\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
 
-    VSIFWriteL( (void *) szHeader, strlen(szHeader) + 2, 1, fp );
-    VSIFCloseL( fp );
+    bool bOK = VSIFWriteL( reinterpret_cast<void *>( szHeader ),
+                strlen(szHeader) + 2, 1, fp ) == 1;
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    if( !bOK )
+        return NULL;
+    return reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
 }
 
 /************************************************************************/
-/*                         GDALRegister_PNM()                          */
+/*                         GDALRegister_PNM()                           */
 /************************************************************************/
 
 void GDALRegister_PNM()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "PNM" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "PNM" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "PNM" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Portable Pixmap Format (netpbm)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#PNM" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
-        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE,
-                                   "image/x-portable-anymap" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                                   "Byte UInt16" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "PNM" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Portable Pixmap Format (netpbm)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#PNM" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
+    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-portable-anymap" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='MAXVAL' type='unsigned int' description='Maximum color value'/>"
 "</CreationOptionList>" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = PNMDataset::Open;
-        poDriver->pfnCreate = PNMDataset::Create;
-        poDriver->pfnIdentify = PNMDataset::Identify;
+    poDriver->pfnOpen = PNMDataset::Open;
+    poDriver->pfnCreate = PNMDataset::Create;
+    poDriver->pfnIdentify = PNMDataset::Identify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

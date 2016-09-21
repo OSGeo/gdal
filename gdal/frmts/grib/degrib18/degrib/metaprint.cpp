@@ -18,6 +18,10 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
+#ifndef DONT_DEPRECATE_SPRINTF
+#define DONT_DEPRECATE_SPRINTF
+#endif
+#include "cpl_port.h"
 #include "meta.h"
 #include "metaname.h"
 #include "myerror.h"
@@ -53,9 +57,9 @@
  * Instead do sizeof(table) in calling procedure.
  *****************************************************************************
  */
-static const char *Lookup(const char **table, size_t n, size_t index)
+static const char *Lookup(const char * const *table, size_t n, size_t index)
 {
-   static const char *def[] =
+   static const char * const def[] =
     { "Reserved", "Reserved for local use", "Missing" };
    if (index < (n / sizeof (char *))) {
       return table[index];
@@ -83,7 +87,7 @@ static const char *Lookup(const char **table, size_t n, size_t index)
  * a fmt == NULL.  This last call will return the constructed message to the
  * caller, and reset the message to NULL.  It is caller's responsibility to
  * free the message, and to make sure that last call to Print has fmt = NULL,
- * so that the routine doesn't accidently keep memory.
+ * so that the routine doesn't accidentally keep memory.
  *
  * ARGUMENTS
  *   label = A label for this set of data. (Input)
@@ -97,8 +101,8 @@ static const char *Lookup(const char **table, size_t n, size_t index)
  * FILES/DATABASES: None
  *
  * RETURNS: char *
- *   NULL if (fmt != NULL) (ie we added to message)
- *   message if (fmt == NULL) (ie return the message).
+ *   NULL if (fmt != NULL) (i.e. we added to message)
+ *   message if (fmt == NULL) (i.e. return the message).
  *       It is caller's responsibility to free the message, and to make sure
  *       that last call to Print has fmt = NULL.
  *
@@ -223,18 +227,18 @@ static void PrintSect1 (pdsG2Type * pds2, unsigned short int center,
                         unsigned short int subcenter)
 {
    /* Based on Grib2 Code Table 1.2 */
-   static const char *table12[] = { "Analysis", "Start of Forecast",
+   static const char * const table12[] = { "Analysis", "Start of Forecast",
       "Verifying time of forecast", "Observation time"
    };
 
    /* Based on Grib2 Code Table 1.3 */
-   static const char *table13[] = { "Operational products",
+   static const char * const table13[] = { "Operational products",
       "Operational test products", "Research products",
       "Re-analysis products"
    };
 
    /* Based on Grib2 Code Table 1.4 */
-   static const char *table14[] = { "Analysis products",
+   static const char * const table14[] = { "Analysis products",
       "Forecast products", "Analysis and forecast products",
       "Control forecast products", "Perturbed forecast products",
       "Control and perturbed forecast products",
@@ -354,30 +358,30 @@ static void PrintSect4_Category (grib_MetaData *meta)
    sect4_type *sect4 = &(meta->pds2.sect4);
 
    /* Based on Grib2 Code Table 4.1 discipline 0 */
-   static const char *tbl41_0[] = {
+   static const char * const tbl41_0[] = {
       "Temperature", "Moisture", "Momentum", "Mass", "Short-wave Radiation",
-      "Long-wave Radiation", "Cloud", "Thermodynamic Stability indicies",
-      "Kinematic Stability indicies", "Temperature Probabilities",
+      "Long-wave Radiation", "Cloud", "Thermodynamic Stability indices",
+      "Kinematic Stability indices", "Temperature Probabilities",
       "Moisture Probabilities", "Momentum Probabilities",
       "Mass Probabilities", "Aerosols", "Trace gases (e.g. ozone, C02)",
       "Radar", "Forecast Radar Imagery", "Electro-dynamics",
       "Nuclear/radiology", "Physical atmospheric properties"
    };
    /* Based on Grib2 Code Table 4.1 discipline 1 */
-   static const char *tbl41_1[] = {
+   static const char * const tbl41_1[] = {
       "Hydrology basic products", "Hydrology probabilities"
    };
    /* Based on Grib2 Code Table 4.1 discipline 2 */
-   static const char *tbl41_2[] = {
+   static const char * const tbl41_2[] = {
       "Vegetation/Biomass", "Agri-/aquacultural Special Products",
       "Transportation-related Products", "Soil Products"
    };
    /* Based on Grib2 Code Table 4.1 discipline 3 */
-   static const char *tbl41_3[] = {
+   static const char * const tbl41_3[] = {
       "Image format products", "Quantitative products"
    };
    /* Based on Grib2 Code Table 4.1 discipline 10 */
-   static const char *tbl41_10[] = {
+   static const char * const tbl41_10[] = {
       "Waves", "Currents", "Ice", "Surface Properties",
       "Sub-surface Properties"
    };
@@ -440,7 +444,7 @@ static void PrintSect4_Category (grib_MetaData *meta)
  *
  * HISTORY
  *   9/2002 Arthur Taylor (MDL/RSIS): Created.
- *   2/2003 AAT: Adjusted the interpretation of the scale vactor and value.
+ *   2/2003 AAT: Adjusted the interpretation of the scale vector and value.
  *          to be consistent with what Matt found from email conversations
  *          with WMO GRIB2 experts.
  *   2/2003 AAT: Switched from: value / pow (10, factor)
@@ -462,7 +466,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
 {
    sect4_type *sect4 = &(meta->pds2.sect4);
    /* Based on Grib2 Code Table 4.0 */
-   static const char *tbl40[] = {
+   static const char * const tbl40[] = {
       "Analysis at a horizontal layer at a point in time",
       "Individual ensemble forecast at a horizontal layer at a point in time",
       "Derived forecast based on ensemble members at a horizontal layer at a"
@@ -483,14 +487,14 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
    };
 
    /* Based on Grib2 Code Table 4.3 */
-   static const char *tbl43[] = {
+   static const char * const tbl43[] = {
       "Analysis", "Initialization", "Forecast", "Bias corrected forecast",
       "Ensemble forecast", "Probability forecast", "Forecast error",
       "Analysis error", "Observation"
    };
 
    /* Based on Grib2 Code Table 4.4 */
-   static const char *tbl44[] = {
+   static const char * const tbl44[] = {
       "Minute", "Hour", "Day", "Month", "Year", "Decade",
       "Normal (30 years)", "Century", "Reserved", "Reserved",
       "3 hours", "6 hours", "12 hours", "Second"
@@ -500,24 +504,24 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
    /* See "metaname.c :: Surface[]" */
 
    /* Based on Grib2 Code Table 4.6 */
-   static const char *tbl46[] = {
+   static const char * const tbl46[] = {
       "Unperturbed high-resolution control forecast",
-      "Unperturbed low-reosulution control foreacst",
+      "Unperturbed low-resolution control forecast",
       "Negatively perturbed forecast", "Positively perturbed forecast"
    };
 
    /* Based on Grib2 Code Table 4.7 */
-   static const char *tbl47[] = {
+   static const char * const tbl47[] = {
       "Unweighted mean of all members", "Weighted mean of all members",
       "Standard deviation with respect to cluster mean",
       "Standard deviation with respect to cluster mean, normalized",
       "Spread of all members",
-      "Large anomally index of all memebers",
+      "Large anomaly index of all members",
       "Unweighted mean of the cluster members"
    };
 
    /* Based on Grib2 Code Table 4.9 */
-   static const char *tbl49[] = {
+   static const char * const tbl49[] = {
       "Probability of event below lower limit",
       "Probability of event above upper limit",
       "Probability of event between limits (include lower, exclude upper)",
@@ -526,7 +530,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
    };
 
    /* Based on Grib2 Code Table 4.10 */
-   static const char *tbl410[] = {
+   static const char * const tbl410[] = {
       "Average", "Accumulation", "Maximum", "Minimum",
       "Difference (Value at end of time minus beginning)",
       "Root mean square", "Standard deviation",
@@ -535,7 +539,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
    };
 
    /* Based on Grib2 Code Table 4.11 */
-   static const char *tbl411[] = {
+   static const char * const tbl411[] = {
       "Reserved",
       "Successive times; same forecast time, start time incremented",
       "Successive times; same start time, forecast time incremented",
@@ -824,6 +828,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
                 sect4->upperLimit.value *
                 pow (10.0, -1 * sect4->upperLimit.factor), buffer);
          /* Intentionally fall through. */
+         // CPL_FALLTHROUGH
       case GS4_STATISTIC:
 /*         strftime (buffer, 100, "%m/%d/%Y %H:%M:%S UTC",
                    gmtime (&(sect4->validTime)));*/
@@ -893,7 +898,7 @@ static int PrintPDS2 (grib_MetaData *meta, sChar f_unit)
 {
    pdsG2Type *pds2 = &(meta->pds2);
    /* Based on Grib2 Code Table 0.0 */
-   static const char *table0[] = {
+   static const char * const table0[] = {
       "Meteorological products", "Hydrological products",
       "Land surface products", "Space products", "Oceanographic products"
    };
@@ -946,7 +951,7 @@ static int PrintPDS2 (grib_MetaData *meta, sChar f_unit)
  *   4/2003 Arthur Taylor (MDL/RSIS): Created.
  *  10/2005 AAT: Adjusted to take center, subcenter as we moved that out of
  *               the pdsG1 type.
- *  11/2005 AAT: Added f_utit variable.
+ *  11/2005 AAT: Added f_unit variable.
  *
  * NOTES
  *****************************************************************************
@@ -1082,7 +1087,7 @@ static void PrintPDS1 (pdsG1Type *pds1, char *comment,
 static int PrintGDS (gdsType *gds, int version)
 {
    /* Based on Grib2 Code Table 3.1 */
-   static const char *table31[] = { "Latitude/Longitude", "Mercator",
+   static const char * const table31[] = { "Latitude/Longitude", "Mercator",
       "Polar Stereographic", "Lambert Conformal",
       "Space view perspective orthographic",
       "Equatorial azimuthal equidistant projection",
@@ -1186,9 +1191,9 @@ static int PrintGDS (gdsType *gds, int version)
       Print ("GDS", "Dx", Prt_FS, gds->Dx, "m");
       Print ("GDS", "Dy", Prt_FS, gds->Dy, "m");
    }
-   /* For scan mode... The user of this data doesn't necesarily care how it
-    * was stored in the Grib2 grid (ie gds->scan), they just care about how
-    * the data they are accessing is scanned (ie scan=0000) */
+   /* For scan mode... The user of this data doesn't necessarily care how it
+    * was stored in the Grib2 grid (i.e. gds->scan), they just care about how
+    * the data they are accessing is scanned (i.e. scan=0000) */
    sprintf (buffer, "%d%d%d%d", ((gds->scan & GRIB2BIT_1) / GRIB2BIT_1),
             ((gds->scan & GRIB2BIT_2) / GRIB2BIT_2),
             ((gds->scan & GRIB2BIT_3) / GRIB2BIT_3),
@@ -1259,17 +1264,17 @@ static int PrintGDS (gdsType *gds, int version)
 static void PrintGridAttrib (gridAttribType *attrib, sChar decimal)
 {
    /* Based on Grib2 Code Table 5.0 */
-   static const char *table50[] = {
+   static const char * const table50[] = {
       "Grid point data - simple packing", "Matrix value - simple packing",
       "Grid point data - complex packing",
       "Grid point data - complex packing and spatial differencing"
    };
 
    /* Based on Grib2 Code Table 5.1 */
-   static const char *table51[] = { "Floating point", "Integer" };
+   static const char * const table51[] = { "Floating point", "Integer" };
 
    /* Based on Grib2 Code Table 5.5 */
-   static const char *table55[] = {
+   static const char * const table55[] = {
       "No explicit missing value included with data",
       "Primary missing value included with data",
       "Primary and Secondary missing values included with data"

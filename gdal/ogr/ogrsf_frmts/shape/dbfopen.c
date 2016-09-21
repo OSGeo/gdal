@@ -14,7 +14,7 @@
  * option is discussed in more detail in shapelib.html.
  *
  * --
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -76,8 +76,8 @@
  *
  * Revision 1.77  2007/12/15 20:25:21  bram
  * dbfopen.c now reads the Code Page information from the DBF file, and exports
- * this information as a string through the DBFGetCodePage function.  This is 
- * either the number from the LDID header field ("LDID/<number>") or as the 
+ * this information as a string through the DBFGetCodePage function.  This is
+ * either the number from the LDID header field ("LDID/<number>") or as the
  * content of an accompanying .CPG file.  When creating a DBF file, the code can
  * be set using DBFCreateEx.
  *
@@ -177,6 +177,8 @@ SHP_CVSID("$Id: dbfopen.c,v 1.89 2011-07-24 05:59:25 fwarmerdam Exp $")
 #  define TRUE		1
 #endif
 
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+
 /************************************************************************/
 /*                             SfRealloc()                              */
 /*                                                                      */
@@ -230,7 +232,7 @@ static void DBFWriteHeader(DBFHandle psDBF)
 
     abyHeader[8] = (unsigned char) (psDBF->nHeaderLength % 256);
     abyHeader[9] = (unsigned char) (psDBF->nHeaderLength / 256);
-    
+
     abyHeader[10] = (unsigned char) (psDBF->nRecordLength % 256);
     abyHeader[11] = (unsigned char) (psDBF->nRecordLength / 256);
 
@@ -242,7 +244,7 @@ static void DBFWriteHeader(DBFHandle psDBF)
 /* -------------------------------------------------------------------- */
     psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
     psDBF->sHooks.FWrite( abyHeader, XBASE_FLDHDR_SZ, 1, psDBF->fp );
-    psDBF->sHooks.FWrite( psDBF->pszHeader, XBASE_FLDHDR_SZ, psDBF->nFields, 
+    psDBF->sHooks.FWrite( psDBF->pszHeader, XBASE_FLDHDR_SZ, psDBF->nFields,
                           psDBF->fp );
 
 /* -------------------------------------------------------------------- */
@@ -272,17 +274,17 @@ static int DBFFlushRecord( DBFHandle psDBF )
     {
 	psDBF->bCurrentRecordModified = FALSE;
 
-	nRecordOffset = 
-            psDBF->nRecordLength * (SAOffset) psDBF->nCurrentRecord 
+	nRecordOffset =
+            psDBF->nRecordLength * (SAOffset) psDBF->nCurrentRecord
             + psDBF->nHeaderLength;
 
-	if( psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 ) != 0 
-            || psDBF->sHooks.FWrite( psDBF->pszCurrentRecord, 
-                                     psDBF->nRecordLength, 
+	if( psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 ) != 0
+            || psDBF->sHooks.FWrite( psDBF->pszCurrentRecord,
+                                     psDBF->nRecordLength,
                                      1, psDBF->fp ) != 1 )
         {
             char szMessage[128];
-            sprintf( szMessage, "Failure writing DBF record %d.", 
+            snprintf( szMessage, sizeof(szMessage), "Failure writing DBF record %d.",
                      psDBF->nCurrentRecord );
             psDBF->sHooks.Error( szMessage );
             return FALSE;
@@ -306,23 +308,23 @@ static int DBFLoadRecord( DBFHandle psDBF, int iRecord )
 	if( !DBFFlushRecord( psDBF ) )
             return FALSE;
 
-	nRecordOffset = 
+	nRecordOffset =
             psDBF->nRecordLength * (SAOffset) iRecord + psDBF->nHeaderLength;
 
 	if( psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, SEEK_SET ) != 0 )
         {
             char szMessage[128];
-            sprintf( szMessage, "fseek(%ld) failed on DBF file.\n",
+            snprintf( szMessage, sizeof(szMessage), "fseek(%ld) failed on DBF file.\n",
                      (long) nRecordOffset );
             psDBF->sHooks.Error( szMessage );
             return FALSE;
         }
 
-	if( psDBF->sHooks.FRead( psDBF->pszCurrentRecord, 
+	if( psDBF->sHooks.FRead( psDBF->pszCurrentRecord,
                                  psDBF->nRecordLength, 1, psDBF->fp ) != 1 )
         {
             char szMessage[128];
-            sprintf( szMessage, "fread(%d) failed on DBF file.\n",
+            snprintf( szMessage, sizeof(szMessage), "fread(%d) failed on DBF file.\n",
                      psDBF->nRecordLength );
             psDBF->sHooks.Error( szMessage );
             return FALSE;
@@ -347,11 +349,12 @@ DBFUpdateHeader( DBFHandle psDBF )
     if( psDBF->bNoHeader )
         DBFWriteHeader( psDBF );
 
-    DBFFlushRecord( psDBF );
+    if( !DBFFlushRecord( psDBF ) )
+        return;
 
     psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
     psDBF->sHooks.FRead( abyFileHeader, 32, 1, psDBF->fp );
-    
+
     abyFileHeader[1] = (unsigned char) psDBF->nUpdateYearSince1900;
     abyFileHeader[2] = (unsigned char) psDBF->nUpdateMonth;
     abyFileHeader[3] = (unsigned char) psDBF->nUpdateDay;
@@ -359,7 +362,7 @@ DBFUpdateHeader( DBFHandle psDBF )
     abyFileHeader[5] = (unsigned char) ((psDBF->nRecords/256) % 256);
     abyFileHeader[6] = (unsigned char) ((psDBF->nRecords/(256*256)) % 256);
     abyFileHeader[7] = (unsigned char) ((psDBF->nRecords/(256*256*256)) % 256);
-    
+
     psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
     psDBF->sHooks.FWrite( abyFileHeader, 32, 1, psDBF->fp );
 
@@ -383,7 +386,7 @@ DBFSetLastModifiedDate( DBFHandle psDBF, int nYYSince1900, int nMM, int nDD )
 /*                                                                      */
 /*      Open a .dbf file.                                               */
 /************************************************************************/
-   
+
 DBFHandle SHPAPI_CALL
 DBFOpen( const char * pszFilename, const char * pszAccess )
 
@@ -400,7 +403,7 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 /*                                                                      */
 /*      Open a .dbf file.                                               */
 /************************************************************************/
-   
+
 DBFHandle SHPAPI_CALL
 DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 
@@ -411,18 +414,19 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     int			nFields, nHeadLen, iField, i;
     char		*pszBasename, *pszFullname;
     int                 nBufSize = 500;
+    size_t              nFullnameLen;
 
 /* -------------------------------------------------------------------- */
 /*      We only allow the access strings "rb" and "r+".                  */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszAccess,"r") != 0 && strcmp(pszAccess,"r+") != 0 
+    if( strcmp(pszAccess,"r") != 0 && strcmp(pszAccess,"r+") != 0
         && strcmp(pszAccess,"rb") != 0 && strcmp(pszAccess,"rb+") != 0
         && strcmp(pszAccess,"r+b") != 0 )
         return( NULL );
 
     if( strcmp(pszAccess,"r") == 0 )
         pszAccess = "rb";
- 
+
     if( strcmp(pszAccess,"r+") == 0 )
         pszAccess = "rb+";
 
@@ -432,7 +436,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
     pszBasename = (char *) malloc(strlen(pszFilename)+5);
     strcpy( pszBasename, pszFilename );
-    for( i = strlen(pszBasename)-1; 
+    for( i = (int)strlen(pszBasename)-1;
 	 i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
 	       && pszBasename[i] != '\\';
 	 i-- ) {}
@@ -440,30 +444,31 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     if( pszBasename[i] == '.' )
         pszBasename[i] = '\0';
 
-    pszFullname = (char *) malloc(strlen(pszBasename) + 5);
-    sprintf( pszFullname, "%s.dbf", pszBasename );
-        
+    nFullnameLen = strlen(pszBasename) + 5;
+    pszFullname = (char *) malloc(nFullnameLen);
+    snprintf( pszFullname, nFullnameLen, "%s.dbf", pszBasename );
+
     psDBF = (DBFHandle) calloc( 1, sizeof(DBFInfo) );
     psDBF->fp = psHooks->FOpen( pszFullname, pszAccess );
     memcpy( &(psDBF->sHooks), psHooks, sizeof(SAHooks) );
 
     if( psDBF->fp == NULL )
     {
-        sprintf( pszFullname, "%s.DBF", pszBasename );
+        snprintf( pszFullname, nFullnameLen, "%s.DBF", pszBasename );
         psDBF->fp = psDBF->sHooks.FOpen(pszFullname, pszAccess );
     }
 
-    sprintf( pszFullname, "%s.cpg", pszBasename );
+    snprintf( pszFullname, nFullnameLen, "%s.cpg", pszBasename );
     pfCPG = psHooks->FOpen( pszFullname, "r" );
     if( pfCPG == NULL )
     {
-        sprintf( pszFullname, "%s.CPG", pszBasename );
+        snprintf( pszFullname, nFullnameLen, "%s.CPG", pszBasename );
         pfCPG = psHooks->FOpen( pszFullname, "r" );
     }
 
     free( pszBasename );
     free( pszFullname );
-    
+
     if( psDBF->fp == NULL )
     {
         free( psDBF );
@@ -487,17 +492,17 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
         free( psDBF );
         return NULL;
     }
-    
+
     DBFSetLastModifiedDate(psDBF, pabyBuf[1], pabyBuf[2], pabyBuf[3]);
 
-    psDBF->nRecords = 
-     pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + pabyBuf[7]*256*256*256;
+    psDBF->nRecords =
+     pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + (pabyBuf[7] & 0x7f) *256*256*256;
 
     psDBF->nHeaderLength = nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
     psDBF->nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
     psDBF->iLanguageDriver = pabyBuf[29];
 
-    if (nHeadLen < 32)
+    if (psDBF->nRecordLength == 0 || nHeadLen < 32)
     {
         psDBF->sHooks.FClose( psDBF->fp );
         if( pfCPG ) psDBF->sHooks.FClose( pfCPG );
@@ -531,7 +536,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     }
     if( psDBF->pszCodePage == NULL && pabyBuf[29] != 0 )
     {
-        sprintf( (char *) pabyBuf, "LDID/%d", psDBF->iLanguageDriver );
+        snprintf( (char *) pabyBuf, nBufSize, "LDID/%d", psDBF->iLanguageDriver );
         psDBF->pszCodePage = (char *) malloc(strlen((char*)pabyBuf) + 1);
         strcpy( psDBF->pszCodePage, (char *) pabyBuf );
     }
@@ -539,7 +544,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*  Read in Field Definitions                                           */
 /* -------------------------------------------------------------------- */
-    
+
     pabyBuf = (unsigned char *) SfRealloc(pabyBuf,nHeadLen);
     psDBF->pszHeader = (char *) pabyBuf;
 
@@ -588,7 +593,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 	if( iField == 0 )
 	    psDBF->panFieldOffset[iField] = 1;
 	else
-	    psDBF->panFieldOffset[iField] = 
+	    psDBF->panFieldOffset[iField] =
 	      psDBF->panFieldOffset[iField-1] + psDBF->panFieldSize[iField-1];
     }
 
@@ -611,7 +616,7 @@ DBFClose(DBFHandle psDBF)
     if( psDBF->bNoHeader )
         DBFWriteHeader( psDBF );
 
-    DBFFlushRecord( psDBF );
+    CPL_IGNORE_RET_VAL_INT(DBFFlushRecord( psDBF ));
 
 /* -------------------------------------------------------------------- */
 /*      Update last access date, and number of records if we have	*/
@@ -688,6 +693,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
     char	*pszFullname, *pszBasename;
     int		i, ldid = -1;
     char chZero = '\0';
+    size_t      nFullnameLen;
 
 /* -------------------------------------------------------------------- */
 /*	Compute the base (layer) name.  If there is any extension	*/
@@ -695,7 +701,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
 /* -------------------------------------------------------------------- */
     pszBasename = (char *) malloc(strlen(pszFilename)+5);
     strcpy( pszBasename, pszFilename );
-    for( i = strlen(pszBasename)-1; 
+    for( i = (int)strlen(pszBasename)-1;
 	 i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
 	       && pszBasename[i] != '\\';
 	 i-- ) {}
@@ -703,8 +709,9 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
     if( pszBasename[i] == '.' )
         pszBasename[i] = '\0';
 
-    pszFullname = (char *) malloc(strlen(pszBasename) + 5);
-    sprintf( pszFullname, "%s.dbf", pszBasename );
+    nFullnameLen = strlen(pszBasename) + 5;
+    pszFullname = (char *) malloc(nFullnameLen);
+    snprintf( pszFullname, nFullnameLen, "%s.dbf", pszBasename );
 
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
@@ -716,7 +723,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
         free( pszFullname );
         return( NULL );
     }
-    
+
     psHooks->FWrite( &chZero, 1, 1, fp );
     psHooks->FClose( fp );
 
@@ -728,7 +735,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
         return( NULL );
     }
 
-    sprintf( pszFullname, "%s.cpg", pszBasename );
+    snprintf( pszFullname, nFullnameLen, "%s.cpg", pszBasename );
     if( pszCodePage != NULL )
     {
         if( strncmp( pszCodePage, "LDID/", 5 ) == 0 )
@@ -763,7 +770,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
     psDBF->nFields = 0;
     psDBF->nRecordLength = 1;
     psDBF->nHeaderLength = 33;
-    
+
     psDBF->panFieldOffset = NULL;
     psDBF->panFieldSize = NULL;
     psDBF->panFieldDecimals = NULL;
@@ -795,7 +802,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
 /************************************************************************/
 
 int SHPAPI_CALL
-DBFAddField(DBFHandle psDBF, const char * pszFieldName, 
+DBFAddField(DBFHandle psDBF, const char * pszFieldName,
             DBFFieldType eType, int nWidth, int nDecimals )
 
 {
@@ -808,7 +815,7 @@ DBFAddField(DBFHandle psDBF, const char * pszFieldName,
     else
         chNativeType = 'N';
 
-    return DBFAddNativeFieldType( psDBF, pszFieldName, chNativeType, 
+    return DBFAddNativeFieldType( psDBF, pszFieldName, chNativeType,
                                   nWidth, nDecimals );
 }
 
@@ -840,7 +847,7 @@ static char DBFGetNullCharacter(char chType)
 /************************************************************************/
 
 int SHPAPI_CALL
-DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName, 
+DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
                       char chType, int nWidth, int nDecimals )
 
 {
@@ -873,16 +880,16 @@ DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
 /* -------------------------------------------------------------------- */
     psDBF->nFields++;
 
-    psDBF->panFieldOffset = (int *) 
+    psDBF->panFieldOffset = (int *)
         SfRealloc( psDBF->panFieldOffset, sizeof(int) * psDBF->nFields );
 
-    psDBF->panFieldSize = (int *) 
+    psDBF->panFieldSize = (int *)
         SfRealloc( psDBF->panFieldSize, sizeof(int) * psDBF->nFields );
 
-    psDBF->panFieldDecimals = (int *) 
+    psDBF->panFieldDecimals = (int *)
         SfRealloc( psDBF->panFieldDecimals, sizeof(int) * psDBF->nFields );
 
-    psDBF->pachFieldType = (char *) 
+    psDBF->pachFieldType = (char *)
         SfRealloc( psDBF->pachFieldType, sizeof(char) * psDBF->nFields );
 
 /* -------------------------------------------------------------------- */
@@ -924,7 +931,7 @@ DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
         pszFInfo[16] = (unsigned char) nWidth;
         pszFInfo[17] = (unsigned char) nDecimals;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Make the current record buffer appropriately larger.            */
 /* -------------------------------------------------------------------- */
@@ -1065,7 +1072,7 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
             *pchDst = '\0';
     }
 #endif
-    
+
     return( pReturnField );
 }
 
@@ -1263,10 +1270,10 @@ DBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName,
     if ( psDBF->pachFieldType[iField] == 'L' )
 	return( FTLogical);
 
-    else if( psDBF->pachFieldType[iField] == 'N' 
+    else if( psDBF->pachFieldType[iField] == 'N'
              || psDBF->pachFieldType[iField] == 'F' )
     {
-	if( psDBF->panFieldDecimals[iField] > 0 
+	if( psDBF->panFieldDecimals[iField] > 0
             || psDBF->panFieldSize[iField] >= 10 )
 	    return( FTDouble );
 	else
@@ -1355,9 +1362,9 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
         if( (int) sizeof(szSField)-2 < nWidth )
             nWidth = sizeof(szSField)-2;
 
-        sprintf( szFormat, "%%%d.%df", 
+        snprintf( szFormat, sizeof(szFormat), "%%%d.%df",
                     nWidth, psDBF->panFieldDecimals[iField] );
-        CPLsprintf(szSField, szFormat, *((double *) pValue) );
+        CPLsnprintf(szSField, sizeof(szSField), szFormat, *((double *) pValue) );
         if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
         {
             szSField[psDBF->panFieldSize[iField]] = '\0';
@@ -1369,7 +1376,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
       }
 
       case 'L':
-        if (psDBF->panFieldSize[iField] >= 1  && 
+        if (psDBF->panFieldSize[iField] >= 1  &&
             (*(char*)pValue == 'F' || *(char*)pValue == 'T'))
             *(pabyRec+psDBF->panFieldOffset[iField]) = *(char*)pValue;
         break;
@@ -1384,7 +1391,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
         {
             memset( pabyRec+psDBF->panFieldOffset[iField], ' ',
                     psDBF->panFieldSize[iField] );
-	    j = strlen((char *) pValue);
+	    j = (int)strlen((char *) pValue);
         }
 
 	strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
@@ -1453,7 +1460,7 @@ DBFWriteAttributeDirectly(DBFHandle psDBF, int hEntity, int iField,
     {
         memset( pabyRec+psDBF->panFieldOffset[iField], ' ',
                 psDBF->panFieldSize[iField] );
-        j = strlen((char *) pValue);
+        j = (int)strlen((char *) pValue);
     }
 
     strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
@@ -1617,21 +1624,21 @@ DBFReadTuple(DBFHandle psDBF, int hEntity )
 /************************************************************************/
 
 DBFHandle SHPAPI_CALL
-DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename ) 
+DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
 {
     DBFHandle	newDBF;
 
    newDBF = DBFCreateEx ( pszFilename, psDBF->pszCodePage );
-   if ( newDBF == NULL ) return ( NULL ); 
-   
+   if ( newDBF == NULL ) return ( NULL );
+
    newDBF->nFields = psDBF->nFields;
    newDBF->nRecordLength = psDBF->nRecordLength;
    newDBF->nHeaderLength = psDBF->nHeaderLength;
-    
+
    newDBF->pszHeader = (char *) malloc ( newDBF->nHeaderLength );
    memcpy ( newDBF->pszHeader, psDBF->pszHeader, newDBF->nHeaderLength );
-   
-   newDBF->panFieldOffset = (int *) malloc ( sizeof(int) * psDBF->nFields ); 
+
+   newDBF->panFieldOffset = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldOffset, psDBF->panFieldOffset, sizeof(int) * psDBF->nFields );
    newDBF->panFieldSize = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldSize, psDBF->panFieldSize, sizeof(int) * psDBF->nFields );
@@ -1642,10 +1649,10 @@ DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
 
    newDBF->bNoHeader = TRUE;
    newDBF->bUpdated = TRUE;
-   
+
    DBFWriteHeader ( newDBF );
    DBFClose ( newDBF );
-   
+
    newDBF = DBFOpen ( pszFilename, "rb+" );
 
    return ( newDBF );
@@ -1679,9 +1686,9 @@ DBFGetNativeFieldType( DBFHandle psDBF, int iField )
 static void str_to_upper (char *string)
 {
     int len;
-    short i = -1;
+    int i = -1;
 
-    len = strlen (string);
+    len = (int)strlen (string);
 
     while (++i < len)
         if (isalpha(string[i]) && islower(string[i]))
@@ -1751,7 +1758,7 @@ int SHPAPI_CALL DBFIsRecordDeleted( DBFHandle psDBF, int iShape )
 /*                        DBFMarkRecordDeleted()                        */
 /************************************************************************/
 
-int SHPAPI_CALL DBFMarkRecordDeleted( DBFHandle psDBF, int iShape, 
+int SHPAPI_CALL DBFMarkRecordDeleted( DBFHandle psDBF, int iShape,
                                       int bIsDeleted )
 
 {
@@ -1775,7 +1782,7 @@ int SHPAPI_CALL DBFMarkRecordDeleted( DBFHandle psDBF, int iShape,
 /* -------------------------------------------------------------------- */
     if( bIsDeleted )
         chNewFlag = '*';
-    else 
+    else
         chNewFlag = ' ';
 
     if( psDBF->pszCurrentRecord[0] != chNewFlag )
@@ -1840,16 +1847,16 @@ DBFDeleteField(DBFHandle psDBF, int iField)
     /* resize fields arrays */
     psDBF->nFields--;
 
-    psDBF->panFieldOffset = (int *) 
+    psDBF->panFieldOffset = (int *)
         SfRealloc( psDBF->panFieldOffset, sizeof(int) * psDBF->nFields );
 
-    psDBF->panFieldSize = (int *) 
+    psDBF->panFieldSize = (int *)
         SfRealloc( psDBF->panFieldSize, sizeof(int) * psDBF->nFields );
 
-    psDBF->panFieldDecimals = (int *) 
+    psDBF->panFieldDecimals = (int *)
         SfRealloc( psDBF->panFieldDecimals, sizeof(int) * psDBF->nFields );
 
-    psDBF->pachFieldType = (char *) 
+    psDBF->pachFieldType = (char *)
         SfRealloc( psDBF->pachFieldType, sizeof(char) * psDBF->nFields );
 
     /* update header information */
@@ -1881,14 +1888,14 @@ DBFDeleteField(DBFHandle psDBF, int iField)
     /* shift records to their new positions */
     for (iRecord = 0; iRecord < psDBF->nRecords; iRecord++)
     {
-        nRecordOffset = 
+        nRecordOffset =
             nOldRecordLength * (SAOffset) iRecord + nOldHeaderLength;
 
         /* load record */
         psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
         psDBF->sHooks.FRead( pszRecord, nOldRecordLength, 1, psDBF->fp );
 
-        nRecordOffset = 
+        nRecordOffset =
             psDBF->nRecordLength * (SAOffset) iRecord + psDBF->nHeaderLength;
 
         /* move record in two steps */
@@ -1942,7 +1949,8 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
     if( !DBFFlushRecord( psDBF ) )
         return FALSE;
 
-    panFieldOffsetNew = (int *) malloc(sizeof(int) * psDBF->nFields);
+    /* a simple malloc() would be enough, but calloc() helps clang static analyzer */
+    panFieldOffsetNew = (int *) calloc(sizeof(int), psDBF->nFields);
     panFieldSizeNew = (int *) malloc(sizeof(int) *  psDBF->nFields);
     panFieldDecimalsNew = (int *) malloc(sizeof(int) *  psDBF->nFields);
     pachFieldTypeNew = (char *) malloc(sizeof(char) *  psDBF->nFields);
@@ -2039,7 +2047,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
     int   nOffset;
     int   nOldWidth;
     int   nOldRecordLength;
-    int   nRecordOffset;
+    SAOffset  nRecordOffset;
     char* pszFInfo;
     char  chOldType;
     int   bIsNULL;

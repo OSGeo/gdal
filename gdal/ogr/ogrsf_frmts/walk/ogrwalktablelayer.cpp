@@ -62,7 +62,7 @@ OGRWalkTableLayer::~OGRWalkTableLayer()
 /*                             Initialize()                             */
 /************************************************************************/
 
-CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName, 
+CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
                                       const char *pszGeomCol,
                                       double minE,
                                       double maxE,
@@ -94,19 +94,19 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     char* pszFeatureTableName = (char *) CPLMalloc(strlen(pszLayerName)+10);
 
-    sprintf(pszFeatureTableName, "%sFeatures", pszLayerName);
+    snprintf(pszFeatureTableName, strlen(pszLayerName)+10, "%sFeatures", pszLayerName);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetKey( poSession );
-    
-    if( oGetKey.GetPrimaryKeys( pszFeatureTableName, NULL, NULL ) 
+
+    if( oGetKey.GetPrimaryKeys( pszFeatureTableName, NULL, NULL )
         && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
-        
-        if( oGetKey.Fetch() ) // more than one field in key! 
+
+        if( oGetKey.Fetch() ) // more than one field in key!
         {
             CPLFree( pszFIDColumn );
             pszFIDColumn = NULL;
@@ -146,13 +146,13 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
 
     if( poFeatureDefn->GetFieldCount() == 0 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "No column definitions found for table '%s', layer not usable.", 
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "No column definitions found for table '%s', layer not usable.",
                   pszLayerName );
         CPLFree( pszFeatureTableName );
         return CE_Failure;
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      If we got a geometry column, does it exist?  Is it binary?      */
 /* -------------------------------------------------------------------- */
@@ -161,8 +161,8 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
         int iColumn = oGetCol.GetColId( pszGeomColumn );
         if( iColumn < 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Column %s requested for geometry, but it does not exist.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Column %s requested for geometry, but it does not exist.",
                       pszGeomColumn );
             CPLFree( pszGeomColumn );
             pszGeomColumn = NULL;
@@ -283,19 +283,19 @@ OGRFeature *OGRWalkTableLayer::GetFeature( GIntBig nFeatureId )
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRWalkTableLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRWalkTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
 
-    if( (pszQuery == NULL && this->pszQuery == NULL)
-        || (pszQuery != NULL && this->pszQuery != NULL 
-            && EQUAL(pszQuery,this->pszQuery)) )
+    if( (pszQueryIn == NULL && this->pszQuery == NULL)
+        || (pszQueryIn != NULL && this->pszQuery != NULL
+            && EQUAL(pszQueryIn,this->pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = (pszQuery != NULL ) ? CPLStrdup( pszQuery ) : NULL;
+    this->pszQuery = (pszQueryIn != NULL ) ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 
@@ -312,8 +312,8 @@ int OGRWalkTableLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
-        
-    else 
+
+    else
         return OGRWalkLayer::TestCapability( pszCap );
 }
 
@@ -342,7 +342,7 @@ GIntBig OGRWalkTableLayer::GetFeatureCount( int bForce )
 
     if( !oStmt.ExecuteSQL() || !oStmt.Fetch() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "GetFeatureCount() failed on query %s.\n%s",
                   oStmt.GetCommand(), poDS->GetSession()->GetLastError() );
         return OGRWalkLayer::GetFeatureCount(bForce);

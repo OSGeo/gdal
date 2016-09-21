@@ -3,10 +3,10 @@
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster driver support declarations.
- * Author:   Kor de Jong, k.dejong at geog.uu.nl
+ * Author:   Kor de Jong, Oliver Schmitz
  *
  ******************************************************************************
- * Copyright (c) 2004, Kor de Jong
+ * Copyright (c) PCRaster owners
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,28 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-// Library headers.
-#ifndef INCLUDED_STRING
-#include <string>
-#define INCLUDED_STRING
-#endif
+#ifndef INCLUDED_PCRASTERUTIL
+#define INCLUDED_PCRASTERUTIL
 
-// PCRaster library headers.
-#ifndef INCLUDED_CSF
 #include "csf.h"
-#define INCLUDED_CSF
-#endif
-
-#ifndef INCLUDED_PCRTYPES
-#include "pcrtypes.h"
-#define INCLUDED_PCRTYPES
-#endif
-
-// Module headers.
-#ifndef INCLUDED_GDAL_PRIV
 #include "gdal_priv.h"
-#define INCLUDED_GDAL_PRIV
-#endif
+#include "pcrtypes.h"
 
 
 GDALDataType       cellRepresentation2GDALType(CSF_CR cellRepresentation);
@@ -101,6 +85,13 @@ void               castValuesToBooleanRange(
                                         size_t size,
                                         CSF_CR cellRepresentation);
 
+void               castValuesToDirectionRange(
+                                        void* buffer,
+                                        size_t size);
+
+void               castValuesToLddRange(void* buffer,
+                                        size_t size);
+
 template<typename T>
 struct CastToBooleanRange
 {
@@ -117,7 +108,6 @@ struct CastToBooleanRange
 };
 
 
-
 template<>
 struct CastToBooleanRange<UINT1>
 {
@@ -127,7 +117,6 @@ struct CastToBooleanRange<UINT1>
     }
   }
 };
-
 
 
 template<>
@@ -141,7 +130,6 @@ struct CastToBooleanRange<UINT2>
 };
 
 
-
 template<>
 struct CastToBooleanRange<UINT4>
 {
@@ -151,3 +139,33 @@ struct CastToBooleanRange<UINT4>
     }
   }
 };
+
+
+struct CastToDirection
+{
+  void operator()(REAL4& value) {
+    REAL4 factor = static_cast<REAL4>(M_PI / 180.0);
+    if(!pcr::isMV(value)) {
+      value = REAL4(value * factor);
+    }
+  }
+};
+
+
+struct CastToLdd
+{
+  void operator()(UINT1& value) {
+    if(!pcr::isMV(value)) {
+      if((value < 1) || (value > 9)) {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+         "PCRaster driver: incorrect LDD value used, assigned MV instead");
+        pcr::setMV(value);
+      }
+      else {
+        value = UINT1(value);
+      }
+    }
+  }
+};
+
+#endif  // INCLUDED_PCRASTERUTIL

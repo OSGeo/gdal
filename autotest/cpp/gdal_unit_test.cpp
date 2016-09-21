@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 
     GDALGeneralCmdLineProcessor( argc, &argv, 0 );
 
-    // We don't actually use the arguments ourself. 
+    // We don't actually use the arguments ourself.
     CSLDestroy( argv );
     argv = NULL;
 
@@ -101,14 +101,17 @@ int main(int argc, char* argv[])
     tut::reporter visi;
     tut::runner.get().set_callback(&visi);
 
+    bool bOk = false;
     try
     {
-        tut::runner.get().run_tests();
+        bOk = tut::runner.get().run_tests();
     }
     catch( const std::exception& ex )
     {
         std::cerr << "TUT raised ex: " << ex.what() << std::endl;
     }
+
+    int nRetCode = bOk ? 0 : 1;
 
     GDALDestroyDriverManager();
     OGRCleanupAll();
@@ -121,5 +124,5 @@ int main(int argc, char* argv[])
     std::cin.get();
 #endif // _WIN32_WCE
 
-    return 0;
+    return nRetCode;
 }

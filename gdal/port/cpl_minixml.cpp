@@ -15,26 +15,26 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
  * Independent Security Audit 2003/04/05 Andrey Kiselev:
  *   Completed audit of this module. Any documents may be parsed without
  *   buffer overflows and stack corruptions.
- * 
+ *
  * Security Audit 2003/03/28 warmerda:
- *   Completed security audit.  I believe that this module may be safely used 
- *   to parse, and serialize arbitrary documents provided by a potentially 
+ *   Completed security audit.  I believe that this module may be safely used
+ *   to parse, and serialize arbitrary documents provided by a potentially
  *   hostile source.
  *
  */
@@ -49,8 +49,8 @@ CPL_CVSID("$Id$");
 
 typedef enum {
     TNone,
-    TString, 
-    TOpen, 
+    TString,
+    TOpen,
     TClose,
     TEqual,
     TToken,
@@ -84,7 +84,7 @@ typedef struct {
     CPLXMLNode *psLastNode;
 } ParseContext;
 
-static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType, 
+static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
                                       const char *pszText );
 
 /************************************************************************/
@@ -94,15 +94,13 @@ static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType
 static CPL_INLINE char ReadChar( ParseContext *psContext )
 
 {
-    char        chReturn;
-
-    chReturn = psContext->pszInput[psContext->nInputOffset++];
+    const char chReturn = psContext->pszInput[psContext->nInputOffset++];
 
     if( chReturn == '\0' )
         psContext->nInputOffset--;
     else if( chReturn == 10 )
         psContext->nInputLine++;
-    
+
     return chReturn;
 }
 
@@ -114,26 +112,22 @@ static CPL_INLINE void UnreadChar( ParseContext *psContext, char chToUnread )
 
 {
     if( chToUnread == '\0' )
-    {
-        /* do nothing */
-    }
-    else
-    {
-        CPLAssert( chToUnread 
-                   == psContext->pszInput[psContext->nInputOffset-1] );
+        return;
 
-        psContext->nInputOffset--;
+    CPLAssert( chToUnread
+               == psContext->pszInput[psContext->nInputOffset-1] );
 
-        if( chToUnread == 10 )
-            psContext->nInputLine--;
-    }
+    psContext->nInputOffset--;
+
+    if( chToUnread == 10 )
+        psContext->nInputLine--;
 }
 
 /************************************************************************/
 /*                           ReallocToken()                             */
 /************************************************************************/
 
-static int ReallocToken( ParseContext *psContext )
+static bool ReallocToken( ParseContext *psContext )
 {
     if (psContext->nTokenMaxSize > INT_MAX / 2)
     {
@@ -141,11 +135,11 @@ static int ReallocToken( ParseContext *psContext )
                  "Out of memory allocating %d*2 bytes", (int)psContext->nTokenMaxSize);
         VSIFree(psContext->pszToken);
         psContext->pszToken = NULL;
-        return FALSE;
+        return false;
     }
 
     psContext->nTokenMaxSize *= 2;
-    char* pszToken = (char *) 
+    char* pszToken = (char *)
         VSIRealloc(psContext->pszToken,psContext->nTokenMaxSize);
     if (pszToken == NULL)
     {
@@ -153,28 +147,28 @@ static int ReallocToken( ParseContext *psContext )
                  "Out of memory allocating %d bytes", (int)psContext->nTokenMaxSize);
         VSIFree(psContext->pszToken);
         psContext->pszToken = NULL;
-        return FALSE;
+        return false;
     }
     psContext->pszToken = pszToken;
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                             AddToToken()                             */
 /************************************************************************/
 
-static CPL_INLINE int _AddToToken( ParseContext *psContext, char chNewChar )
+static CPL_INLINE bool _AddToToken( ParseContext *psContext, char chNewChar )
 
 {
     if( psContext->nTokenSize >= psContext->nTokenMaxSize - 2 )
     {
         if (!ReallocToken(psContext))
-            return FALSE;
+            return false;
     }
 
     psContext->pszToken[psContext->nTokenSize++] = chNewChar;
     psContext->pszToken[psContext->nTokenSize] = '\0';
-    return TRUE;
+    return true;
 }
 
 #define AddToToken(psContext, chNewChar) if (!_AddToToken(psContext, chNewChar)) goto fail;
@@ -186,20 +180,18 @@ static CPL_INLINE int _AddToToken( ParseContext *psContext, char chNewChar )
 static XMLTokenType ReadToken( ParseContext *psContext )
 
 {
-    char        chNext;
-
     psContext->nTokenSize = 0;
     psContext->pszToken[0] = '\0';
-    
-    chNext = ReadChar( psContext );
+
+    char chNext = ReadChar( psContext );
     while( isspace((unsigned char)chNext) )
         chNext = ReadChar( psContext );
 
 /* -------------------------------------------------------------------- */
 /*      Handle comments.                                                */
 /* -------------------------------------------------------------------- */
-    if( chNext == '<' 
-        && EQUALN(psContext->pszInput+psContext->nInputOffset,"!--",3) )
+    if( chNext == '<'
+        && STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "!--") )
     {
         psContext->eTokenType = TComment;
 
@@ -208,7 +200,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         ReadChar(psContext);
         ReadChar(psContext);
 
-        while( !EQUALN(psContext->pszInput+psContext->nInputOffset,"-->",3)
+        while( !STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "-->")
                && (chNext = ReadChar(psContext)) != '\0' )
             AddToToken( psContext, chNext );
 
@@ -220,25 +212,25 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 /* -------------------------------------------------------------------- */
 /*      Handle DOCTYPE.                                                 */
 /* -------------------------------------------------------------------- */
-    else if( chNext == '<' 
-          && EQUALN(psContext->pszInput+psContext->nInputOffset,"!DOCTYPE",8) )
+    else if( chNext == '<'
+          && STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "!DOCTYPE") )
     {
-        int   bInQuotes = FALSE;
+        bool bInQuotes = false;
         psContext->eTokenType = TLiteral;
-        
+
         AddToToken( psContext, '<' );
-        do { 
+        do {
             chNext = ReadChar(psContext);
             if( chNext == '\0' )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Parse error in DOCTYPE on or before line %d, "
-                          "reached end of file without '>'.", 
+                          "reached end of file without '>'.",
                           psContext->nInputLine );
-                
+
                 break;
             }
-            
+
             /* The markup declaration block within a DOCTYPE tag consists of:
              * - a left square bracket [
              * - a list of declarations
@@ -258,13 +250,13 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                     AddToToken( psContext, chNext );
                 }
                 while( chNext != '\0'
-                    && !EQUALN(psContext->pszInput+psContext->nInputOffset,"]>", 2) );
-                    
+                    && !STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "]>") );
+
                 if (chNext == '\0')
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                           "Parse error in DOCTYPE on or before line %d, "
-                          "reached end of file without ']'.", 
+                          "reached end of file without ']'.",
                           psContext->nInputLine );
                     break;
                 }
@@ -290,13 +282,13 @@ static XMLTokenType ReadToken( ParseContext *psContext )
             }
 
             AddToToken( psContext, chNext );
-        } while( TRUE );
+        } while( true );
     }
 /* -------------------------------------------------------------------- */
 /*      Handle CDATA.                                                   */
 /* -------------------------------------------------------------------- */
-    else if( chNext == '<' 
-          && EQUALN(psContext->pszInput+psContext->nInputOffset,"![CDATA[",8) )
+    else if( chNext == '<'
+          && STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "![CDATA[") )
     {
         psContext->eTokenType = TString;
 
@@ -310,7 +302,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         ReadChar( psContext );
         ReadChar( psContext );
 
-        while( !EQUALN(psContext->pszInput+psContext->nInputOffset,"]]>",3)
+        while( !STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset, "]]>")
                && (chNext = ReadChar(psContext)) != '\0' )
             AddToToken( psContext, chNext );
 
@@ -343,7 +335,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 /* -------------------------------------------------------------------- */
 /*      Handle the /> token terminator.                                 */
 /* -------------------------------------------------------------------- */
-    else if( chNext == '/' && psContext->bInElement 
+    else if( chNext == '/' && psContext->bInElement
              && psContext->pszInput[psContext->nInputOffset] == '>' )
     {
         chNext = ReadChar( psContext );
@@ -355,11 +347,11 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 /* -------------------------------------------------------------------- */
 /*      Handle the ?> token terminator.                                 */
 /* -------------------------------------------------------------------- */
-    else if( chNext == '?' && psContext->bInElement 
+    else if( chNext == '?' && psContext->bInElement
              && psContext->pszInput[psContext->nInputOffset] == '>' )
     {
         chNext = ReadChar( psContext );
-        
+
         CPLAssert( chNext == '>' );
 
         psContext->eTokenType = TQuestionClose;
@@ -373,23 +365,23 @@ static XMLTokenType ReadToken( ParseContext *psContext )
     {
         psContext->eTokenType = TString;
 
-        while( (chNext = ReadChar(psContext)) != '"' 
+        while( (chNext = ReadChar(psContext)) != '"'
                && chNext != '\0' )
             AddToToken( psContext, chNext );
-        
+
         if( chNext != '"' )
         {
             psContext->eTokenType = TNone;
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Parse error on line %d, reached EOF before closing quote.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "Parse error on line %d, reached EOF before closing quote.",
                       psContext->nInputLine );
         }
 
         /* Do we need to unescape it? */
         if( strchr(psContext->pszToken,'&') != NULL )
         {
-            int  nLength;
-            char *pszUnescaped = CPLUnescapeString( psContext->pszToken, 
+            int nLength = 0;
+            char *pszUnescaped = CPLUnescapeString( psContext->pszToken,
                                                     &nLength, CPLES_XML );
             strcpy( psContext->pszToken, pszUnescaped );
             CPLFree( pszUnescaped );
@@ -401,23 +393,23 @@ static XMLTokenType ReadToken( ParseContext *psContext )
     {
         psContext->eTokenType = TString;
 
-        while( (chNext = ReadChar(psContext)) != '\'' 
+        while( (chNext = ReadChar(psContext)) != '\''
                && chNext != '\0' )
             AddToToken( psContext, chNext );
-        
+
         if( chNext != '\'' )
         {
             psContext->eTokenType = TNone;
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Parse error on line %d, reached EOF before closing quote.", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "Parse error on line %d, reached EOF before closing quote.",
                       psContext->nInputLine );
         }
 
         /* Do we need to unescape it? */
         if( strchr(psContext->pszToken,'&') != NULL )
         {
-            int  nLength;
-            char *pszUnescaped = CPLUnescapeString( psContext->pszToken, 
+            int nLength = 0;
+            char *pszUnescaped = CPLUnescapeString( psContext->pszToken,
                                                     &nLength, CPLES_XML );
             strcpy( psContext->pszToken, pszUnescaped );
             CPLFree( pszUnescaped );
@@ -434,7 +426,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         psContext->eTokenType = TString;
 
         AddToToken( psContext, chNext );
-        while( (chNext = ReadChar(psContext)) != '<' 
+        while( (chNext = ReadChar(psContext)) != '<'
                && chNext != '\0' )
             AddToToken( psContext, chNext );
         UnreadChar( psContext, chNext );
@@ -442,15 +434,15 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         /* Do we need to unescape it? */
         if( strchr(psContext->pszToken,'&') != NULL )
         {
-            int  nLength;
-            char *pszUnescaped = CPLUnescapeString( psContext->pszToken, 
+            int nLength = 0;
+            char *pszUnescaped = CPLUnescapeString( psContext->pszToken,
                                                     &nLength, CPLES_XML );
             strcpy( psContext->pszToken, pszUnescaped );
             CPLFree( pszUnescaped );
             psContext->nTokenSize = strlen(psContext->pszToken );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Collect a regular token terminated by white space, or           */
 /*      special character(s) like an equal sign.                        */
@@ -462,7 +454,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         /* add the first character to the token regardless of what it is */
         AddToToken( psContext, chNext );
 
-        for( chNext = ReadChar(psContext); 
+        for( chNext = ReadChar(psContext);
              (chNext >= 'A' && chNext <= 'Z')
                  || (chNext >= 'a' && chNext <= 'z')
                  || chNext == '-'
@@ -470,14 +462,14 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                  || chNext == '.'
                  || chNext == ':'
                  || (chNext >= '0' && chNext <= '9');
-             chNext = ReadChar(psContext) ) 
+             chNext = ReadChar(psContext) )
         {
             AddToToken( psContext, chNext );
         }
 
         UnreadChar(psContext, chNext);
     }
-    
+
     return psContext->eTokenType;
 
 fail:
@@ -489,23 +481,24 @@ fail:
 /*                              PushNode()                              */
 /************************************************************************/
 
-static int PushNode( ParseContext *psContext, CPLXMLNode *psNode )
+static bool PushNode( ParseContext *psContext, CPLXMLNode *psNode )
 
 {
     if( psContext->nStackMaxSize <= psContext->nStackSize )
     {
-        psContext->nStackMaxSize += 10;
-
-        if (psContext->nStackMaxSize >= (int)(INT_MAX / sizeof(StackContext)))
+        /* Somewhat arbitrary number... */
+        if (psContext->nStackMaxSize >= 10000)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Out of memory allocating %d*%d bytes", (int)sizeof(StackContext), psContext->nStackMaxSize);
+            CPLError(CE_Failure, CPLE_NotSupported,
+                 "XML element depth beyond 10000. Giving up");
             VSIFree(psContext->papsStack);
             psContext->papsStack = NULL;
-            return FALSE;
+            return false;
         }
+        psContext->nStackMaxSize += 10;
+
         StackContext* papsStack;
-        papsStack = (StackContext *)VSIRealloc(psContext->papsStack, 
+        papsStack = (StackContext *)VSIRealloc(psContext->papsStack,
                     sizeof(StackContext) * psContext->nStackMaxSize);
         if (papsStack == NULL)
         {
@@ -513,17 +506,22 @@ static int PushNode( ParseContext *psContext, CPLXMLNode *psNode )
                  "Out of memory allocating %d bytes", (int)(sizeof(StackContext) * psContext->nStackMaxSize));
             VSIFree(psContext->papsStack);
             psContext->papsStack = NULL;
-            return FALSE;
+            return false;
         }
         psContext->papsStack = papsStack;
     }
+#ifdef DEBUG
+    // To make Coverity happy, but cannot happen
+    if( psContext->papsStack == NULL )
+        return false;
+#endif
 
     psContext->papsStack[psContext->nStackSize].psFirstNode = psNode;
     psContext->papsStack[psContext->nStackSize].psLastChild = NULL;
     psContext->nStackSize ++;
-    return TRUE;
+    return true;
 }
-    
+
 /************************************************************************/
 /*                             AttachNode()                             */
 /*                                                                      */
@@ -545,14 +543,16 @@ static void AttachNode( ParseContext *psContext, CPLXMLNode *psNode )
         psContext->psLastNode->psNext = psNode;
         psContext->psLastNode = psNode;
     }
-    else if( psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild == NULL )
-    {
-        psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild = psNode;
-        psContext->papsStack[psContext->nStackSize-1].psLastChild = psNode;
-    }
     else
     {
-        psContext->papsStack[psContext->nStackSize-1].psLastChild->psNext = psNode;
+        if( psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild == NULL )
+        {
+            psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild = psNode;
+        }
+        else
+        {
+            psContext->papsStack[psContext->nStackSize-1].psLastChild->psNext = psNode;
+        }
         psContext->papsStack[psContext->nStackSize-1].psLastChild = psNode;
     }
 }
@@ -564,43 +564,57 @@ static void AttachNode( ParseContext *psContext, CPLXMLNode *psNode )
 /**
  * \brief Parse an XML string into tree form.
  *
- * The passed document is parsed into a CPLXMLNode tree representation. 
+ * The passed document is parsed into a CPLXMLNode tree representation.
  * If the document is not well formed XML then NULL is returned, and errors
  * are reported via CPLError().  No validation beyond wellformedness is
  * done.  The CPLParseXMLFile() convenience function can be used to parse
- * from a file. 
+ * from a file.
  *
- * The returned document tree is is owned by the caller and should be freed
+ * The returned document tree is owned by the caller and should be freed
  * with CPLDestroyXMLNode() when no longer needed.
  *
- * If the document has more than one "root level" element then those after the 
+ * If the document has more than one "root level" element then those after the
  * first will be attached to the first as siblings (via the psNext pointers)
  * even though there is no common parent.  A document with no XML structure
- * (no angle brackets for instance) would be considered well formed, and 
- * returned as a single CXT_Text node.  
- * 
- * @param pszString the document to parse. 
+ * (no angle brackets for instance) would be considered well formed, and
+ * returned as a single CXT_Text node.
  *
- * @return parsed tree or NULL on error. 
+ * @param pszString the document to parse.
+ *
+ * @return parsed tree or NULL on error.
  */
 
 CPLXMLNode *CPLParseXMLString( const char *pszString )
 
 {
-    ParseContext sContext;
-
     CPLErrorReset();
 
     if( pszString == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLParseXMLString() called with NULL pointer." );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check for a UTF-8 BOM and skip if found                         */
+/*                                                                      */
+/*      TODO: BOM is variable-length parameter and depends on encoding. */
+/*            Add BOM detection for other encodings.                    */
+/* -------------------------------------------------------------------- */
+
+    // Used to skip to actual beginning of XML data
+    if( ( (unsigned char)pszString[0] == 0xEF )
+        && ( (unsigned char)pszString[1] == 0xBB )
+        && ( (unsigned char)pszString[2] == 0xBF) )
+    {
+        pszString += 3;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize parse context.                                       */
 /* -------------------------------------------------------------------- */
+    ParseContext sContext;
     sContext.pszInput = pszString;
     sContext.nInputOffset = 0;
     sContext.nInputLine = 0;
@@ -627,16 +641,15 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
         if( sContext.eTokenType == TOpen )
         {
-            CPLXMLNode *psElement;
-
             if( ReadToken(&sContext) != TToken )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Line %d: Didn't find element token after open angle bracket.",
                           sContext.nInputLine );
                 break;
             }
 
+            CPLXMLNode *psElement;
             if( sContext.pszToken[0] != '/' )
             {
                 psElement = _CPLCreateXMLNode( NULL, CXT_Element,
@@ -646,17 +659,34 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                 if (!PushNode( &sContext, psElement ))
                     break;
             }
-            else 
+            else
             {
                 if( sContext.nStackSize == 0
                     || !EQUAL(sContext.pszToken+1,
                          sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue) )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Line %d: <%.500s> doesn't have matching <%.500s>.",
-                              sContext.nInputLine,
-                              sContext.pszToken, sContext.pszToken+1 );
-                    break;
+#ifdef DEBUG
+                    /* Makes life of fuzzers easier if we accept somewhat corrupted XML */
+                    /* like <foo> ... </not_foo> */
+                    if( CPLTestBool(CPLGetConfigOption("CPL_MINIXML_RELAXED", "FALSE")) )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                "Line %d: <%.500s> doesn't have matching <%.500s>.",
+                                sContext.nInputLine,
+                                sContext.pszToken, sContext.pszToken+1 );
+                        if( sContext.nStackSize == 0 )
+                            break;
+                        goto end_processing_close;
+                    }
+                    else
+#endif
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                "Line %d: <%.500s> doesn't have matching <%.500s>.",
+                                sContext.nInputLine,
+                                sContext.pszToken, sContext.pszToken+1 );
+                        break;
+                    }
                 }
                 else
                 {
@@ -673,10 +703,12 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                                 sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue,
                                 sContext.pszToken );
                     }
-
+#ifdef DEBUG
+end_processing_close:
+#endif
                     if( ReadToken(&sContext) != TClose )
                     {
-                        CPLError( CE_Failure, CPLE_AppDefined, 
+                        CPLError( CE_Failure, CPLE_AppDefined,
                                   "Line %d: Missing close angle bracket after <%.500s.",
                                   sContext.nInputLine,
                                   sContext.pszToken );
@@ -694,15 +726,31 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
         else if( sContext.eTokenType == TToken )
         {
-            CPLXMLNode *psAttr;
-
-            psAttr = _CPLCreateXMLNode(NULL, CXT_Attribute, sContext.pszToken);
+            CPLXMLNode *psAttr = _CPLCreateXMLNode(NULL, CXT_Attribute, sContext.pszToken);
             if (!psAttr) break;
             AttachNode( &sContext, psAttr );
-            
+
             if( ReadToken(&sContext) != TEqual )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                // Parse stuff like <?valbuddy_schematron ../wmtsSimpleGetCapabilities.sch?>
+                if( sContext.nStackSize > 0 &&
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue[0] == '?' &&
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->psChild == psAttr )
+                {
+                    CPLDestroyXMLNode(psAttr);
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->psChild = NULL;
+                    sContext.papsStack[sContext.nStackSize-1].psLastChild = NULL;
+
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue = (char*)CPLRealloc(
+                        sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue,
+                        strlen(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue) + 1 + strlen(sContext.pszToken) + 1);
+                    strcat(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue, " ");
+                    strcat(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue, sContext.pszToken);
+
+                    continue;
+                }
+
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Line %d: Didn't find expected '=' for value of attribute '%.500s'.",
                           sContext.nInputLine, psAttr->pszValue );
                 break;
@@ -720,7 +768,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
             }
             else if( sContext.eTokenType != TString )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Line %d: Didn't find expected attribute value.",
                           sContext.nInputLine );
                 break;
@@ -736,7 +784,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
         {
             if( sContext.nStackSize == 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Line %d: Found unbalanced '>'.",
                           sContext.nInputLine );
                 break;
@@ -751,7 +799,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
         {
             if( sContext.nStackSize == 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Line %d: Found unbalanced '/>'.",
                           sContext.nInputLine );
                 break;
@@ -768,14 +816,14 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
         {
             if( sContext.nStackSize == 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Line %d: Found unbalanced '?>'.",
                           sContext.nInputLine );
                 break;
             }
             else if( sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue[0] != '?' )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Line %d: Found '?>' without matching '<?'.",
                           sContext.nInputLine );
                 break;
@@ -791,9 +839,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
         else if( sContext.eTokenType == TComment )
         {
-            CPLXMLNode *psValue;
-
-            psValue = _CPLCreateXMLNode(NULL, CXT_Comment, sContext.pszToken);
+            CPLXMLNode *psValue = _CPLCreateXMLNode(NULL, CXT_Comment, sContext.pszToken);
             if (!psValue) break;
             AttachNode( &sContext, psValue );
         }
@@ -803,9 +849,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
         else if( sContext.eTokenType == TLiteral )
         {
-            CPLXMLNode *psValue;
-
-            psValue = _CPLCreateXMLNode(NULL, CXT_Literal, sContext.pszToken);
+            CPLXMLNode *psValue = _CPLCreateXMLNode(NULL, CXT_Literal, sContext.pszToken);
             if (!psValue) break;
             AttachNode( &sContext, psValue );
         }
@@ -815,9 +859,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
         else if( sContext.eTokenType == TString && !sContext.bInElement )
         {
-            CPLXMLNode *psValue;
-
-            psValue = _CPLCreateXMLNode(NULL, CXT_Text, sContext.pszToken);
+            CPLXMLNode *psValue = _CPLCreateXMLNode(NULL, CXT_Text, sContext.pszToken);
             if (!psValue) break;
             AttachNode( &sContext, psValue );
         }
@@ -826,8 +868,8 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Parse error at line %d, unexpected token:%.500s\n", 
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Parse error at line %d, unexpected token:%.500s\n",
                       sContext.nInputLine, sContext.pszToken );
             break;
         }
@@ -836,12 +878,27 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
 /*      Did we pop all the way out of our stack?                        */
 /* -------------------------------------------------------------------- */
-    if( CPLGetLastErrorType() != CE_Failure && sContext.nStackSize != 0 )
+    if( CPLGetLastErrorType() != CE_Failure && sContext.nStackSize > 0 &&
+        sContext.papsStack != NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Parse error at EOF, not all elements have been closed,\n"
-                  "starting with %.500s\n", 
-                  sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue );
+#ifdef DEBUG
+        /* Makes life of fuzzers easier if we accept somewhat corrupted XML */
+        /* like <x> ... */
+        if( CPLTestBool(CPLGetConfigOption("CPL_MINIXML_RELAXED", "FALSE")) )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                    "Parse error at EOF, not all elements have been closed,\n"
+                    "starting with %.500s\n",
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue );
+        }
+        else
+#endif
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Parse error at EOF, not all elements have been closed,\n"
+                    "starting with %.500s\n",
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -865,38 +922,43 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /*                            _GrowBuffer()                             */
 /************************************************************************/
 
-static void _GrowBuffer( size_t nNeeded, 
-                         char **ppszText, unsigned int *pnMaxLength )
+static bool _GrowBuffer( size_t nNeeded,
+                         char **ppszText, size_t *pnMaxLength )
 
 {
     if( nNeeded+1 >= *pnMaxLength )
     {
         *pnMaxLength = MAX(*pnMaxLength * 2,nNeeded+1);
-        *ppszText = (char *) CPLRealloc(*ppszText, *pnMaxLength);
+        char* pszTextNew = (char *) VSIRealloc(*ppszText, *pnMaxLength);
+        if( pszTextNew == NULL )
+            return false;
+        *ppszText = pszTextNew;
     }
+    return true;
 }
 
 /************************************************************************/
 /*                        CPLSerializeXMLNode()                         */
 /************************************************************************/
 
-static void
+static bool
 CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
-                     char **ppszText, unsigned int *pnLength, 
-                     unsigned int *pnMaxLength )
+                     char **ppszText, size_t *pnLength,
+                     size_t *pnMaxLength )
 
 {
     if( psNode == NULL )
-        return;
-    
+        return true;
+
 /* -------------------------------------------------------------------- */
 /*      Ensure the buffer is plenty large to hold this additional       */
 /*      string.                                                         */
 /* -------------------------------------------------------------------- */
     *pnLength += strlen(*ppszText + *pnLength);
-    _GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent, 
-                 ppszText, pnMaxLength );
-    
+    if( !_GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent,
+                      ppszText, pnMaxLength ) )
+        return false;
+
 /* -------------------------------------------------------------------- */
 /*      Text is just directly emitted.                                  */
 /* -------------------------------------------------------------------- */
@@ -907,8 +969,12 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
         CPLAssert( psNode->psChild == NULL );
 
         /* Escaped text might be bigger than expected. */
-        _GrowBuffer( strlen(pszEscaped) + *pnLength,
-                     ppszText, pnMaxLength );
+        if( !_GrowBuffer( strlen(pszEscaped) + *pnLength,
+                          ppszText, pnMaxLength ) )
+        {
+            CPLFree( pszEscaped );
+            return false;
+        }
         strcat( *ppszText + *pnLength, pszEscaped );
 
         CPLFree( pszEscaped );
@@ -919,22 +985,27 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Attribute )
     {
-        CPLAssert( psNode->psChild != NULL 
+        CPLAssert( psNode->psChild != NULL
                    && psNode->psChild->eType == CXT_Text );
 
-        sprintf( *ppszText + *pnLength, " %s=\"", psNode->pszValue );
+        snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength, " %s=\"", psNode->pszValue );
         *pnLength += strlen(*ppszText + *pnLength);
 
         char *pszEscaped = CPLEscapeString( psNode->psChild->pszValue, -1, CPLES_XML );
 
-        _GrowBuffer( strlen(pszEscaped) + *pnLength,
-                     ppszText, pnMaxLength );
+        if( !_GrowBuffer( strlen(pszEscaped) + *pnLength,
+                          ppszText, pnMaxLength ) )
+        {
+            CPLFree( pszEscaped );
+            return false;
+        }
         strcat( *ppszText + *pnLength, pszEscaped );
 
         CPLFree( pszEscaped );
 
         *pnLength += strlen(*ppszText + *pnLength);
-        _GrowBuffer( 3 + *pnLength, ppszText, pnMaxLength );
+        if( !_GrowBuffer( 3 + *pnLength, ppszText, pnMaxLength ) )
+            return false;
         strcat( *ppszText + *pnLength, "\"" );
     }
 
@@ -943,14 +1014,12 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Comment )
     {
-        int     i;
-
         CPLAssert( psNode->psChild == NULL );
 
-        for( i = 0; i < nIndent; i++ )
+        for( int i = 0; i < nIndent; i++ )
             (*ppszText)[(*pnLength)++] = ' ';
 
-        sprintf( *ppszText + *pnLength, "<!--%s-->\n", 
+        snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength, "<!--%s-->\n",
                  psNode->pszValue );
     }
 
@@ -959,11 +1028,9 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Literal )
     {
-        int     i;
-
         CPLAssert( psNode->psChild == NULL );
 
-        for( i = 0; i < nIndent; i++ )
+        for( int i = 0; i < nIndent; i++ )
             (*ppszText)[(*pnLength)++] = ' ';
 
         strcpy( *ppszText + *pnLength, psNode->pszValue );
@@ -976,31 +1043,36 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Element )
     {
-        int             bHasNonAttributeChildren = FALSE;
-        CPLXMLNode      *psChild;
-        
-        memset( *ppszText + *pnLength, ' ', nIndent );
+        bool bHasNonAttributeChildren = false;
+
+        if( nIndent )
+            memset( *ppszText + *pnLength, ' ', nIndent );
         *pnLength += nIndent;
         (*ppszText)[*pnLength] = '\0';
 
-        sprintf( *ppszText + *pnLength, "<%s", psNode->pszValue );
+        snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength, "<%s", psNode->pszValue );
 
         /* Serialize *all* the attribute children, regardless of order */
-        for( psChild = psNode->psChild; 
-             psChild != NULL; 
+        CPLXMLNode *psChild;
+        for( psChild = psNode->psChild;
+             psChild != NULL;
              psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Attribute )
-                CPLSerializeXMLNode( psChild, 0, ppszText, pnLength, 
-                                     pnMaxLength );
+            {
+                if( !CPLSerializeXMLNode( psChild, 0, ppszText, pnLength,
+                                          pnMaxLength ) )
+                    return false;
+            }
             else
-                bHasNonAttributeChildren = TRUE;
+                bHasNonAttributeChildren = true;
         }
-        
+
         if( !bHasNonAttributeChildren )
         {
-            _GrowBuffer( *pnLength + 40,
-                         ppszText, pnMaxLength );
+            if( !_GrowBuffer( *pnLength + 40,
+                              ppszText, pnMaxLength ) )
+                return false;
 
             if( psNode->pszValue[0] == '?' )
                 strcat( *ppszText + *pnLength, "?>\n" );
@@ -1009,12 +1081,12 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
         }
         else
         {
-            int         bJustText = TRUE;
+            bool bJustText = true;
 
             strcat( *ppszText + *pnLength, ">" );
 
-            for( psChild = psNode->psChild; 
-                 psChild != NULL; 
+            for( psChild = psNode->psChild;
+                 psChild != NULL;
                  psChild = psChild->psNext )
             {
                 if( psChild->eType == CXT_Attribute )
@@ -1022,31 +1094,36 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 
                 if( psChild->eType != CXT_Text && bJustText )
                 {
-                    bJustText = FALSE;
+                    bJustText = false;
                     strcat( *ppszText + *pnLength, "\n" );
                 }
 
-                CPLSerializeXMLNode( psChild, nIndent + 2, ppszText, pnLength, 
-                                     pnMaxLength );
+                if( !CPLSerializeXMLNode( psChild, nIndent + 2, ppszText, pnLength,
+                                          pnMaxLength ) )
+                    return false;
             }
-        
+
             *pnLength += strlen(*ppszText + *pnLength);
-            _GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent, 
-                         ppszText, pnMaxLength );
+            if( !_GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent,
+                              ppszText, pnMaxLength ) )
+                return false;
 
             if( !bJustText )
             {
-                memset( *ppszText + *pnLength, ' ', nIndent );
+                if( nIndent )
+                    memset( *ppszText + *pnLength, ' ', nIndent );
                 *pnLength += nIndent;
                 (*ppszText)[*pnLength] = '\0';
             }
 
             *pnLength += strlen(*ppszText + *pnLength);
-            sprintf( *ppszText + *pnLength, "</%s>\n", psNode->pszValue );
+            snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength, "</%s>\n", psNode->pszValue );
         }
     }
+
+    return true;
 }
-                                
+
 /************************************************************************/
 /*                        CPLSerializeXMLTree()                         */
 /************************************************************************/
@@ -1056,27 +1133,35 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
  *
  * This function converts a CPLXMLNode tree representation of a document
  * into a flat string representation.  White space indentation is used
- * visually preserve the tree structure of the document.  The returned 
+ * visually preserve the tree structure of the document.  The returned
  * document becomes owned by the caller and should be freed with CPLFree()
  * when no longer needed.
  *
  * @param psNode the node to serialize.
  *
- * @return the document on success or NULL on failure. 
+ * @return the document on success or NULL on failure.
  */
 
 char *CPLSerializeXMLTree( const CPLXMLNode *psNode )
 
 {
-    unsigned int nMaxLength = 100, nLength = 0;
-    char *pszText = NULL;
-    const CPLXMLNode *psThis;
-
-    pszText = (char *) CPLMalloc(nMaxLength);
+    size_t nMaxLength = 100;
+    char *pszText =  (char *) VSIMalloc(nMaxLength);
+    if( pszText == NULL )
+        return NULL;
     pszText[0] = '\0';
 
-    for( psThis = psNode; psThis != NULL; psThis = psThis->psNext )
-        CPLSerializeXMLNode( psThis, 0, &pszText, &nLength, &nMaxLength );
+    size_t nLength = 0;
+    for( const CPLXMLNode *psThis = psNode;
+         psThis != NULL;
+         psThis = psThis->psNext )
+    {
+        if( !CPLSerializeXMLNode( psThis, 0, &pszText, &nLength, &nMaxLength ) )
+        {
+            VSIFree(pszText);
+            return NULL;
+        }
+    }
 
     return pszText;
 }
@@ -1085,31 +1170,35 @@ char *CPLSerializeXMLTree( const CPLXMLNode *psNode )
 /*                          CPLCreateXMLNode()                          */
 /************************************************************************/
 
+#ifdef DEBUG
+static CPLXMLNode* psDummyStaticNode;
+#endif
+
 /**
  * \brief Create an document tree item.
  *
  * Create a single CPLXMLNode object with the desired value and type, and
- * attach it as a child of the indicated parent.  
+ * attach it as a child of the indicated parent.
  *
- * @param poParent the parent to which this node should be attached as a 
- * child.  May be NULL to keep as free standing. 
+ * @param poParent the parent to which this node should be attached as a
+ * child.  May be NULL to keep as free standing.
  * @param eType the type of the newly created node
  * @param pszText the value of the newly created node
  *
  * @return the newly created node, now owned by the caller (or parent node).
  */
 
-CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType, 
+CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
                               const char *pszText )
 
 {
-    CPLXMLNode  *psNode;
 
 /* -------------------------------------------------------------------- */
 /*      Create new node.                                                */
 /* -------------------------------------------------------------------- */
-    psNode = (CPLXMLNode *) CPLCalloc(sizeof(CPLXMLNode),1);
-    
+    CPLXMLNode *psNode
+        = (CPLXMLNode *) CPLCalloc(sizeof(CPLXMLNode),1);
+
     psNode->eType = eType;
     psNode->pszValue = CPLStrdup( pszText );
 
@@ -1130,7 +1219,17 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
             psLink->psNext = psNode;
         }
     }
-    
+#ifdef DEBUG
+    else
+    {
+        // Coverity sometimes doesn't realize that this function is passed
+        // with a non NULL parent and thinks that this branch is taken, leading
+        // to creating object being leak by caller. This ugly hack hopefully
+        // makes it believe that someone will reference it...
+        psDummyStaticNode = psNode;
+    }
+#endif
+
     return psNode;
 }
 
@@ -1141,22 +1240,22 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
 /* Same as CPLCreateXMLNode() but can return NULL in case of out-of-memory */
 /* situation */
 
-static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType, 
-                               const char *pszText )
+static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
+                                      const char *pszText )
 
 {
-    CPLXMLNode  *psNode;
 
 /* -------------------------------------------------------------------- */
 /*      Create new node.                                                */
 /* -------------------------------------------------------------------- */
-    psNode = (CPLXMLNode *) VSICalloc(sizeof(CPLXMLNode),1);
+    CPLXMLNode  *psNode
+        = (CPLXMLNode *) VSICalloc(sizeof(CPLXMLNode),1);
     if (psNode == NULL)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate CPLXMLNode");
         return NULL;
     }
-    
+
     psNode->eType = eType;
     psNode->pszValue = VSIStrdup( pszText );
     if (psNode->pszValue == NULL)
@@ -1183,7 +1282,7 @@ static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType
             psLink->psNext = psNode;
         }
     }
-    
+
     return psNode;
 }
 
@@ -1192,10 +1291,10 @@ static CPLXMLNode *_CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType
 /************************************************************************/
 
 /**
- * \brief Destroy a tree. 
+ * \brief Destroy a tree.
  *
  * This function frees resources associated with a CPLXMLNode and all its
- * children nodes.  
+ * children nodes.
  *
  * @param psNode the tree to free.
  */
@@ -1243,38 +1342,37 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
  * siblings as well as children, prefix the pszElement name with an equal
  * sign.  This function does an in-order traversal of the document tree.
  * So it will first match against the current node, then it's first child,
- * that childs first child, and so on. 
+ * that child's first child, and so on.
  *
  * Use CPLGetXMLNode() to find a specific child, or along a specific
- * node path. 
+ * node path.
  *
  * @param psRoot the subtree to search.  This should be a node of type
- * CXT_Element.  NULL is safe. 
+ * CXT_Element.  NULL is safe.
  *
  * @param pszElement the name of the element or attribute to search for.
  *
- * @return The matching node or NULL on failure. 
+ * @return The matching node or NULL on failure.
  */
 
 CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
 
 {
-    int         bSideSearch = FALSE;
-    CPLXMLNode *psChild, *psResult;
-
     if( psRoot == NULL || pszElement == NULL )
         return NULL;
 
+    bool bSideSearch = false;
+
     if( *pszElement == '=' )
     {
-        bSideSearch = TRUE;
+        bSideSearch = true;
         pszElement++;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Does this node match?                                           */
 /* -------------------------------------------------------------------- */
-    if( (psRoot->eType == CXT_Element 
+    if( (psRoot->eType == CXT_Element
          || psRoot->eType == CXT_Attribute)
         && EQUAL(pszElement,psRoot->pszValue) )
         return psRoot;
@@ -1282,16 +1380,17 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
 /* -------------------------------------------------------------------- */
 /*      Search children.                                                */
 /* -------------------------------------------------------------------- */
+    CPLXMLNode *psChild;
     for( psChild = psRoot->psChild; psChild != NULL; psChild = psChild->psNext)
     {
-        if( (psChild->eType == CXT_Element 
+        if( (psChild->eType == CXT_Element
              || psChild->eType == CXT_Attribute)
             && EQUAL(pszElement,psChild->pszValue) )
             return psChild;
 
         if( psChild->psChild != NULL )
         {
-            psResult = CPLSearchXMLNode( psChild, pszElement );
+            CPLXMLNode *psResult = CPLSearchXMLNode( psChild, pszElement );
             if( psResult != NULL )
                 return psResult;
         }
@@ -1304,12 +1403,12 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
     {
         for( psRoot = psRoot->psNext; psRoot != NULL; psRoot = psRoot->psNext )
         {
-            psResult = CPLSearchXMLNode( psRoot, pszElement );
+            CPLXMLNode *psResult = CPLSearchXMLNode( psRoot, pszElement );
             if( psResult != NULL )
                 return psResult;
         }
     }
-    
+
     return NULL;
 }
 
@@ -1320,45 +1419,45 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
 /**
  * \brief Find node by path.
  *
- * Searches the document or subdocument indicated by psRoot for an element 
+ * Searches the document or subdocument indicated by psRoot for an element
  * (or attribute) with the given path.  The path should consist of a set of
- * element names separated by dots, not including the name of the root 
+ * element names separated by dots, not including the name of the root
  * element (psRoot).  If the requested element is not found NULL is returned.
  *
- * Attribute names may only appear as the last item in the path. 
+ * Attribute names may only appear as the last item in the path.
  *
  * The search is done from the root nodes children, but all intermediate
- * nodes in the path must be specified.  Seaching for "name" would only find
+ * nodes in the path must be specified.  Searching for "name" would only find
  * a name element or attribute if it is a direct child of the root, not at any
- * level in the subdocument. 
+ * level in the subdocument.
  *
  * If the pszPath is prefixed by "=" then the search will begin with the
  * root node, and it's siblings, instead of the root nodes children.  This
  * is particularly useful when searching within a whole document which is
  * often prefixed by one or more "junk" nodes like the <?xml> declaration.
  *
- * @param psRoot the subtree in which to search.  This should be a node of 
- * type CXT_Element.  NULL is safe. 
+ * @param psRoot the subtree in which to search.  This should be a node of
+ * type CXT_Element.  NULL is safe.
  *
- * @param pszPath the list of element names in the path (dot separated). 
+ * @param pszPath the list of element names in the path (dot separated).
  *
- * @return the requested element node, or NULL if not found. 
+ * @return the requested element node, or NULL if not found.
  */
 
 CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
 
 {
-    char        *apszTokens[2];
-    char        **papszTokens;
-    int         iToken = 0;
-    int         bSideSearch = FALSE;
-
     if( psRoot == NULL || pszPath == NULL )
         return NULL;
 
+    char        *apszTokens[2];
+    char        **papszTokens;
+    int         iToken = 0;
+    bool        bSideSearch = false;
+
     if( *pszPath == '=' )
     {
-        bSideSearch = TRUE;
+        bSideSearch = true;
         pszPath++;
     }
 
@@ -1380,14 +1479,14 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
         if( bSideSearch )
         {
             psChild = psRoot;
-            bSideSearch = FALSE;
+            bSideSearch = false;
         }
         else
             psChild = psRoot->psChild;
 
-        for( ; psChild != NULL; psChild = psChild->psNext ) 
+        for( ; psChild != NULL; psChild = psChild->psNext )
         {
-            if( psChild->eType != CXT_Text 
+            if( psChild->eType != CXT_Text
                 && EQUAL(papszTokens[iToken],psChild->pszValue) )
                 break;
         }
@@ -1412,21 +1511,21 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
 /************************************************************************/
 
 /**
- * \brief Fetch element/attribute value. 
+ * \brief Fetch element/attribute value.
  *
  * Searches the document for the element/attribute value associated with
  * the path.  The corresponding node is internally found with CPLGetXMLNode()
- * (see there for details on path handling).  Once found, the value is 
+ * (see there for details on path handling).  Once found, the value is
  * considered to be the first CXT_Text child of the node.
  *
- * If the attribute/element search fails, or if the found node has not
- * value then the passed default value is returned. 
+ * If the attribute/element search fails, or if the found node has no
+ * value then the passed default value is returned.
  *
  * The returned value points to memory within the document tree, and should
- * not be altered or freed. 
+ * not be altered or freed.
  *
- * @param psRoot the subtree in which to search.  This should be a node of 
- * type CXT_Element.  NULL is safe. 
+ * @param psRoot the subtree in which to search.  This should be a node of
+ * type CXT_Element.  NULL is safe.
  *
  * @param pszPath the list of element names in the path (dot separated).  An
  * empty path means get the value of the psRoot node.
@@ -1437,7 +1536,7 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
  * @return the requested value or pszDefault if not found.
  */
 
-const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath, 
+const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
                             const char *pszDefault )
 
 {
@@ -1453,7 +1552,7 @@ const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
 
     if( psTarget->eType == CXT_Attribute )
     {
-        CPLAssert( psTarget->psChild != NULL 
+        CPLAssert( psTarget->psChild != NULL
                    && psTarget->psChild->eType == CXT_Text );
 
         return psTarget->psChild->pszValue;
@@ -1461,7 +1560,7 @@ const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
 
     if( psTarget->eType == CXT_Element )
     {
-        // Find first non-attribute child, and verify it is a single text 
+        // Find first non-attribute child, and verify it is a single text
         // with no siblings
 
         psTarget = psTarget->psChild;
@@ -1469,7 +1568,7 @@ const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
         while( psTarget != NULL && psTarget->eType == CXT_Attribute )
             psTarget = psTarget->psNext;
 
-        if( psTarget != NULL 
+        if( psTarget != NULL
             && psTarget->eType == CXT_Text
             && psTarget->psNext == NULL )
             return psTarget->pszValue;
@@ -1483,7 +1582,7 @@ const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
 /************************************************************************/
 
 /**
- * \brief Add child node to parent. 
+ * \brief Add child node to parent.
  *
  * The passed child is added to the list of children of the indicated
  * parent.  Normally the child is added at the end of the parents child
@@ -1491,19 +1590,17 @@ const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
  * attributes but before any other element type.  Ownership of the child
  * node is effectively assumed by the parent node.   If the child has
  * siblings (it's psNext is not NULL) they will be trimmed, but if the child
- * has children they are carried with it. 
+ * has children they are carried with it.
  *
  * @param psParent the node to attach the child to.  May not be NULL.
  *
- * @param psChild the child to add to the parent.  May not be NULL.  Should 
- * not be a child of any other parent. 
+ * @param psChild the child to add to the parent.  May not be NULL.  Should
+ * not be a child of any other parent.
  */
 
 void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 
 {
-    CPLXMLNode *psSib;
-
     if( psParent->psChild == NULL )
     {
         psParent->psChild = psChild;
@@ -1511,7 +1608,7 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
     }
 
     // Insert at head of list if first child is not attribute.
-    if( psChild->eType == CXT_Attribute 
+    if( psChild->eType == CXT_Attribute
         && psParent->psChild->eType != CXT_Attribute )
     {
         psChild->psNext = psParent->psChild;
@@ -1520,13 +1617,14 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
     }
 
     // Search for end of list.
-    for( psSib = psParent->psChild; 
-         psSib->psNext != NULL; 
-         psSib = psSib->psNext ) 
+    CPLXMLNode *psSib;
+    for( psSib = psParent->psChild;
+         psSib->psNext != NULL;
+         psSib = psSib->psNext )
     {
         // Insert attributes if the next node is not an attribute.
-        if( psChild->eType == CXT_Attribute 
-            && psSib->psNext != NULL 
+        if( psChild->eType == CXT_Attribute
+            && psSib->psNext != NULL
             && psSib->psNext->eType != CXT_Attribute )
         {
             psChild->psNext = psSib->psNext;
@@ -1543,7 +1641,7 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 /************************************************************************/
 
 /**
- * \brief Remove child node from parent. 
+ * \brief Remove child node from parent.
  *
  * The passed child is removed from the child list of the passed parent,
  * but the child is not destroyed.  The child retains ownership of it's
@@ -1559,20 +1657,19 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 int CPLRemoveXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 
 {
-    CPLXMLNode *psLast = NULL, *psThis;
-
     if( psParent == NULL )
         return FALSE;
 
-    for( psThis = psParent->psChild; 
-         psThis != NULL; 
+    CPLXMLNode *psLast = NULL, *psThis;
+    for( psThis = psParent->psChild;
+         psThis != NULL;
          psLast = psThis, psThis = psThis->psNext )
     {
         if( psThis == psChild )
         {
             if( psLast == NULL )
                 psParent->psChild = psThis->psNext;
-            else 
+            else
                 psLast->psNext = psThis->psNext;
 
             psThis->psNext = NULL;
@@ -1590,14 +1687,14 @@ int CPLRemoveXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 /**
  * \brief Add new sibling.
  *
- * The passed psNewSibling is added to the end of siblings of the 
+ * The passed psNewSibling is added to the end of siblings of the
  * psOlderSibling node.  That is, it is added to the end of the psNext
- * chain.  There is no special handling if psNewSibling is an attribute. 
- * If this is required, use CPLAddXMLChild(). 
+ * chain.  There is no special handling if psNewSibling is an attribute.
+ * If this is required, use CPLAddXMLChild().
  *
  * @param psOlderSibling the node to attach the sibling after.
  *
- * @param psNewSibling the node to add at the end of psOlderSiblings psNext 
+ * @param psNewSibling the node to add at the end of psOlderSiblings psNext
  * chain.
  */
 
@@ -1628,7 +1725,7 @@ void CPLAddXMLSibling( CPLXMLNode *psOlderSibling, CPLXMLNode *psNewSibling )
  *
  *     psElementNode = CPLCreateXMLNode( psParent, CXT_Element, pszName );
  *     psTextNode = CPLCreateXMLNode( psElementNode, CXT_Text, pszValue );
- * 
+ *
  *     return psElementNode;
  * \endcode
  *
@@ -1636,25 +1733,61 @@ void CPLAddXMLSibling( CPLXMLNode *psOlderSibling, CPLXMLNode *psNewSibling )
  * attaches the element to the passed parent.
  *
  * @param psParent the parent node to which the resulting node should
- * be attached.  May be NULL to keep as freestanding. 
+ * be attached.  May be NULL to keep as freestanding.
  *
  * @param pszName the element name to create.
- * @param pszValue the text to attach to the element. Must not be NULL. 
+ * @param pszValue the text to attach to the element. Must not be NULL.
  *
  * @return the pointer to the new element node.
  */
 
-CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent, 
-                                         const char *pszName, 
+CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
+                                         const char *pszName,
                                          const char *pszValue )
 
 {
-    CPLXMLNode *psElementNode;
-
-    psElementNode = CPLCreateXMLNode( psParent, CXT_Element, pszName );
+    CPLXMLNode *psElementNode
+        = CPLCreateXMLNode( psParent, CXT_Element, pszName );
     CPLCreateXMLNode( psElementNode, CXT_Text, pszValue );
 
     return psElementNode;
+}
+
+/************************************************************************/
+/*                    CPLCreateXMLElementAndValue()                     */
+/************************************************************************/
+
+/**
+ * \brief Create an attribute and text value.
+ *
+ * This is function is a convenient short form for:
+ *
+ * \code
+ *   CPLXMLNode *psAttributeNode;
+ *
+ *   psAttributeNode = CPLCreateXMLNode( psParent, CXT_Attribute, pszName );
+ *   CPLCreateXMLNode( psAttributeNode, CXT_Text, pszValue );
+ * \endcode
+ *
+ * It creates a CXT_Attribute node, with a CXT_Text child, and
+ * attaches the element to the passed parent.
+ *
+ * @param psParent the parent node to which the resulting node should
+ * be attached.  Must not be NULL.
+ * @param pszName the attribute name to create.
+ * @param pszValue the text to attach to the attribute. Must not be NULL.
+ *
+ * @since GDAL 2.0
+ */
+
+void CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
+                                 const char *pszName,
+                                 const char *pszValue )
+{
+    CPLAssert(psParent != NULL);
+    CPLXMLNode *psAttributeNode
+        = CPLCreateXMLNode( psParent, CXT_Attribute, pszName );
+    CPLCreateXMLNode( psAttributeNode, CXT_Text, pszValue );
 }
 
 /************************************************************************/
@@ -1664,11 +1797,11 @@ CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
 /**
  * \brief Copy tree.
  *
- * Creates a deep copy of a CPLXMLNode tree.  
+ * Creates a deep copy of a CPLXMLNode tree.
  *
- * @param psTree the tree to duplicate. 
+ * @param psTree the tree to duplicate.
  *
- * @return a copy of the whole tree. 
+ * @return a copy of the whole tree.
  */
 
 CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
@@ -1679,9 +1812,8 @@ CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
 
     while( psTree != NULL )
     {
-        CPLXMLNode *psCopy;
-
-        psCopy = CPLCreateXMLNode( NULL, psTree->eType, psTree->pszValue );
+        CPLXMLNode *psCopy
+            = CPLCreateXMLNode( NULL, psTree->eType, psTree->pszValue );
         if( psReturn == NULL )
             psReturn = psCopy;
         if( psPrevious != NULL )
@@ -1702,14 +1834,14 @@ CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
 /************************************************************************/
 
 /**
- * \brief Set element value by path. 
+ * \brief Set element value by path.
  *
  * Find (or create) the target element or attribute specified in the
- * path, and assign it the indicated value. 
+ * path, and assign it the indicated value.
  *
  * Any path elements that do not already exist will be created.  The target
  * nodes value (the first CXT_Text child) will be replaced with the provided
- * value.  
+ * value.
  *
  * If the target node is an attribute instead of an element, the name
  * should be prefixed with a #.
@@ -1718,11 +1850,11 @@ CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
  *   CPLSetXMLValue( "Citation.Id.Description", "DOQ dataset" );
  *   CPLSetXMLValue( "Citation.Id.Description.#name", "doq" );
  *
- * @param psRoot the subdocument to be updated. 
+ * @param psRoot the subdocument to be updated.
  *
- * @param pszPath the dot seperated path to the target element/attribute.
+ * @param pszPath the dot separated path to the target element/attribute.
  *
- * @param pszValue the text value to assign. 
+ * @param pszValue the text value to assign.
  *
  * @return TRUE on success.
  */
@@ -1731,30 +1863,31 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
                     const char *pszValue )
 
 {
-    char        **papszTokens;
-    int         iToken = 0;
+    char **papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
+    int iToken = 0;
 
-    papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
-
-    while( papszTokens[iToken] != NULL && psRoot != NULL )
+    while( papszTokens[iToken] != NULL )
     {
-        CPLXMLNode *psChild;
-        int        bIsAttribute = FALSE;
+        bool        bIsAttribute = false;
         const char *pszName = papszTokens[iToken];
 
         if( pszName[0] == '#' )
         {
-            bIsAttribute = TRUE;
+            bIsAttribute = true;
             pszName++;
         }
 
         if( psRoot->eType != CXT_Element )
-            return FALSE;
-
-        for( psChild = psRoot->psChild; psChild != NULL; 
-             psChild = psChild->psNext ) 
         {
-            if( psChild->eType != CXT_Text 
+            CSLDestroy( papszTokens );
+            return FALSE;
+        }
+
+        CPLXMLNode *psChild;
+        for( psChild = psRoot->psChild; psChild != NULL;
+             psChild = psChild->psNext )
+        {
+            if( psChild->eType != CXT_Text
                 && EQUAL(pszName,psChild->pszValue) )
                 break;
         }
@@ -1784,10 +1917,10 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
 /* -------------------------------------------------------------------- */
 /*      Now set a value node under this node.                           */
 /* -------------------------------------------------------------------- */
-    
+
     if( psTextChild == NULL )
         CPLCreateXMLNode( psRoot, CXT_Text, pszValue );
-    else 
+    else
     {
         CPLFree( psTextChild->pszValue );
         psTextChild->pszValue = CPLStrdup( pszValue );
@@ -1801,16 +1934,16 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
 /************************************************************************/
 
 /**
- * \brief Strip indicated namespaces. 
+ * \brief Strip indicated namespaces.
  *
  * The subdocument (psRoot) is recursively examined, and any elements
  * with the indicated namespace prefix will have the namespace prefix
  * stripped from the element names.  If the passed namespace is NULL, then
- * all namespace prefixes will be stripped. 
+ * all namespace prefixes will be stripped.
  *
  * Nodes other than elements should remain unaffected.  The changes are
- * made "in place", and should not alter any node locations, only the 
- * pszValue field of affected nodes. 
+ * made "in place", and should not alter any node locations, only the
+ * pszValue field of affected nodes.
  *
  * @param psRoot the document to operate on.
  * @param pszNamespace the name space prefix (not including colon), or NULL.
@@ -1818,8 +1951,8 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
  * operate on the passed node.
  */
 
-void CPLStripXMLNamespace( CPLXMLNode *psRoot, 
-                           const char *pszNamespace, 
+void CPLStripXMLNamespace( CPLXMLNode *psRoot,
+                           const char *pszNamespace,
                            int bRecurse )
 
 {
@@ -1832,7 +1965,7 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
         {
             if( pszNamespace != NULL )
             {
-                if( EQUALN(pszNamespace,psRoot->pszValue,nNameSpaceLen) 
+                if( EQUALN(pszNamespace,psRoot->pszValue,nNameSpaceLen)
                     && psRoot->pszValue[nNameSpaceLen] == ':' )
                 {
                     memmove(psRoot->pszValue, psRoot->pszValue+nNameSpaceLen+1,
@@ -1875,12 +2008,12 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
  *
  * The named file is opened, loaded into memory as a big string, and
  * parsed with CPLParseXMLString().  Errors in reading the file or parsing
- * the XML will be reported by CPLError(). 
+ * the XML will be reported by CPLError().
  *
  * The "large file" API is used, so XML files can come from virtualized
- * files. 
+ * files.
  *
- * @param pszFilename the file to open. 
+ * @param pszFilename the file to open.
  *
  * @return NULL on failure, or the document tree on success.
  */
@@ -1888,21 +2021,19 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 
 {
-    GByte           *pabyOut = NULL;
-    char            *pszDoc;
-    CPLXMLNode      *psTree;
-
 /* -------------------------------------------------------------------- */
 /*      Ingest the file.                                                */
 /* -------------------------------------------------------------------- */
+    GByte *pabyOut = NULL;
     if( !VSIIngestFile( NULL, pszFilename, &pabyOut, NULL, -1 ) )
         return NULL;
-    pszDoc = (char*) pabyOut;
+
+    char *pszDoc = (char*) pabyOut;
 
 /* -------------------------------------------------------------------- */
 /*      Parse it.                                                       */
 /* -------------------------------------------------------------------- */
-    psTree = CPLParseXMLString( pszDoc );
+    CPLXMLNode *psTree = CPLParseXMLString( pszDoc );
     CPLFree( pszDoc );
 
     return psTree;
@@ -1913,41 +2044,37 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 /************************************************************************/
 
 /**
- * \brief Write document tree to a file. 
+ * \brief Write document tree to a file.
  *
- * The passed document tree is converted into one big string (with 
+ * The passed document tree is converted into one big string (with
  * CPLSerializeXMLTree()) and then written to the named file.  Errors writing
  * the file will be reported by CPLError().  The source document tree is
- * not altered.  If the output file already exists it will be overwritten. 
+ * not altered.  If the output file already exists it will be overwritten.
  *
- * @param psTree the document tree to write. 
- * @param pszFilename the name of the file to write to. 
+ * @param psTree the document tree to write.
+ * @param pszFilename the name of the file to write to.
  * @return TRUE on success, FALSE otherwise.
  */
 
 int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename )
 
 {
-    char    *pszDoc;
-    VSILFILE    *fp;
-    vsi_l_offset nLength;
-
 /* -------------------------------------------------------------------- */
 /*      Serialize document.                                             */
 /* -------------------------------------------------------------------- */
-    pszDoc = CPLSerializeXMLTree( psTree );
+    char *pszDoc = CPLSerializeXMLTree( psTree );
     if( pszDoc == NULL )
         return FALSE;
 
-    nLength = strlen(pszDoc);
+    vsi_l_offset nLength = strlen(pszDoc);
 
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "wt" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wt" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open %.500s to write.", pszFilename );
         CPLFree( pszDoc );
         return FALSE;
@@ -1958,10 +2085,10 @@ int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename
 /* -------------------------------------------------------------------- */
     if( VSIFWriteL( pszDoc, 1, (size_t)nLength, fp ) != nLength )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
+        CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write whole XML document (%.500s).",
                   pszFilename );
-        VSIFCloseL( fp );
+        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
         CPLFree( pszDoc );
         return FALSE;
     }
@@ -1969,10 +2096,16 @@ int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSIFCloseL( fp );
+    int bRet = VSIFCloseL( fp ) == 0;
+    if( !bRet )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to write whole XML document (%.500s).",
+                  pszFilename );
+    }
     CPLFree( pszDoc );
 
-    return TRUE;
+    return bRet;
 }
 
 /************************************************************************/
@@ -1982,15 +2115,15 @@ int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename
 /**
  * \brief Make string into safe XML token.
  *
- * Modififies a string in place to try and make it into a legal
+ * Modifies a string in place to try and make it into a legal
  * XML token that can be used as an element name.   This is accomplished
- * by changing any characters not legal in a token into an underscore. 
- * 
- * NOTE: This function should implement the rules in section 2.3 of 
+ * by changing any characters not legal in a token into an underscore.
+ *
+ * NOTE: This function should implement the rules in section 2.3 of
  * http://www.w3.org/TR/xml11/ but it doesn't yet do that properly.  We
  * only do a rough approximation of that.
  *
- * @param pszTarget the string to be adjusted.  It is altered in place. 
+ * @param pszTarget the string to be adjusted.  It is altered in place.
  */
 
 void CPLCleanXMLElementName( char *pszTarget )

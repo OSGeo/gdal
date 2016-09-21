@@ -27,18 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _COMMONUTILS_H_
-#define _COMMONUTILS_H_
+#ifndef COMMONUTILS_H_INCLUDED
+#define COMMONUTILS_H_INCLUDED
 
 #include "cpl_port.h"
 
 CPL_C_START
 
-void CheckExtensionConsistency(const char* pszDestFilename,
+void CPL_DLL CheckExtensionConsistency(const char* pszDestFilename,
                                const char* pszDriverName);
 
-void EarlySetConfigOptions( int argc, char ** argv );
+void CPL_DLL EarlySetConfigOptions( int argc, char ** argv );
 
 CPL_C_END
 
-#endif
+#endif /* COMMONUTILS_H_INCLUDED */

@@ -39,21 +39,13 @@ CPL_CVSID("$Id$");
 /*                        OGRCloudantDataSource()                       */
 /************************************************************************/
 
-OGRCloudantDataSource::OGRCloudantDataSource()
-
-{
-
-}
+OGRCloudantDataSource::OGRCloudantDataSource() {}
 
 /************************************************************************/
 /*                       ~OGRCloudantDataSource()                       */
 /************************************************************************/
 
-OGRCloudantDataSource::~OGRCloudantDataSource()
-
-{
-
-}
+OGRCloudantDataSource::~OGRCloudantDataSource() {}
 
 /************************************************************************/
 /*                             OpenDatabase()                           */
@@ -78,9 +70,9 @@ OGRLayer* OGRCloudantDataSource::OpenDatabase(const char* pszLayerName)
         if (pszLastSlash)
         {
             osEscapedName = pszLastSlash + 1;
-            char* pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
-            osTableName = pszName;
-            CPLFree(pszName);
+            char* l_pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
+            osTableName = l_pszName;
+            CPLFree(l_pszName);
             *pszLastSlash = 0;
         }
         osURL = pszURL;
@@ -132,10 +124,10 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 {
     int bHTTP = FALSE;
-    if (strncmp(pszFilename, "http://", 7) == 0 ||
-        strncmp(pszFilename, "https://", 8) == 0)
+    if (STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://"))
         bHTTP = TRUE;
-    else if (!EQUALN(pszFilename, "cloudant:", 9))
+    else if (!STARTS_WITH_CI(pszFilename, "cloudant:"))
         return FALSE;
 
     bReadWrite = bUpdateIn;
@@ -212,7 +204,7 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     int nTables = json_object_array_length(poAnswerObj);
-    
+
     for(int i=0;i<nTables;i++)
     {
         json_object* poAnswerObjDBName = json_object_array_get_idx(poAnswerObj, i);
@@ -238,7 +230,7 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
+OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
                                            OGRSpatialReference *poSpatialRef,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
@@ -249,7 +241,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
         return NULL;
     }
 
-    char *pszLayerName = CPLStrlwr(CPLStrdup(pszName));
+    char *pszLayerName = CPLStrlwr(CPLStrdup(l_pszName));
     CPLString osLayerName = pszLayerName;
     CPLFree(pszLayerName);
 
@@ -311,7 +303,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
     if (eGType != wkbNone)
     {
         char szSrid[100];
-        bool bSrid = FALSE;
+        bool bSrid = false;
         const char* designDoc = "_design/SpatialView";
         osURI = "/";
         osURI += osEscapedName;
@@ -326,27 +318,26 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
             if (poSpatialRef->IsProjected())
             {
                 pszAuthName = poSpatialRef->GetAuthorityName("PROJCS");
-                if ((pszAuthName != NULL) && (strncmp(pszAuthName, "EPSG", 4) == 0))
+                if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
                     pszEpsg = poSpatialRef->GetAuthorityCode("PROJCS");
             }
             else
             {
                 pszAuthName = poSpatialRef->GetAuthorityName("GEOGCS");
-                if ((pszAuthName != NULL) && (strncmp(pszAuthName, "EPSG", 4) == 0))
+                if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
                     pszEpsg = poSpatialRef->GetAuthorityCode("GEOGCS");
             }
 
             if (pszEpsg != NULL)
             {
-                const char * pszUrn = "urn:ogc:def:crs:epsg::";
-                CPLStrlcpy(szSrid, pszUrn, sizeof(szSrid));
-                if (CPLStrlcpy(szSrid + sizeof(pszUrn), pszEpsg, sizeof(szSrid)) >= sizeof(szSrid))
+                if( snprintf(szSrid, sizeof(szSrid), "urn:ogc:def:crs:epsg::%s",
+                             pszEpsg) >= (int)sizeof(szSrid) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Unable to parse SRID");
                     return NULL;
                 }
                 else
-                    bSrid = TRUE;
+                    bSrid = true;
             }
         }
 
@@ -358,9 +349,9 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
         json_object_object_add(poDoc, "_id",
                                json_object_new_string(designDoc));
         json_object_object_add(poStIndexes, "spatial", poSpatial);
-        json_object_object_add(poSpatial, "index", 
+        json_object_object_add(poSpatial, "index",
             json_object_new_string("function(doc) {if (doc.geometry && doc.geometry.coordinates && doc.geometry.coordinates.length != 0){st_index(doc.geometry);}}"));
-        
+
         if (bSrid)
             json_object_object_add(poStIndexes, "srsid", json_object_new_string(szSrid));
 
@@ -375,7 +366,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
         json_object_put(poAnswerObj);
     }
 
-    int bGeoJSONDocument = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
+    int bGeoJSONDocument = CPLTestBool(CSLFetchNameValueDef(papszOptions, "GEOJSON", "TRUE"));
     int nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 
     OGRCloudantTableLayer* poLayer = new OGRCloudantTableLayer(this, osLayerName);
@@ -385,4 +376,4 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *pszName,
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;
     return poLayer;
-}   
+}

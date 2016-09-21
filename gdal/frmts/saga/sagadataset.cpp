@@ -30,10 +30,11 @@
 
 #include "cpl_conv.h"
 
-#include <float.h>
-#include <limits.h>
-#include <assert.h>
+#include <cassert>
+#include <cfloat>
+#include <climits>
 
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
@@ -45,19 +46,13 @@ CPL_CVSID("$Id$");
 
 /* NODATA Values */
 //#define	SG_NODATA_GDT_Bit	0.0
-#define SG_NODATA_GDT_Byte		255
+static const GByte SG_NODATA_GDT_Byte = 255;
 #define	SG_NODATA_GDT_UInt16	65535
 #define	SG_NODATA_GDT_Int16		-32767
 #define	SG_NODATA_GDT_UInt32	4294967295U
 #define	SG_NODATA_GDT_Int32		-2147483647
 #define	SG_NODATA_GDT_Float32	-99999.0
 #define	SG_NODATA_GDT_Float64	-99999.0
-
-
-CPL_C_START
-void	GDALRegister_SAGA(void);
-CPL_C_END
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -69,37 +64,37 @@ class SAGARasterBand;
 
 class SAGADataset : public GDALPamDataset
 {
-    friend class		SAGARasterBand;
+    friend class SAGARasterBand;
 
-	static CPLErr		WriteHeader( CPLString osHDRFilename, GDALDataType eType,
-									int nXSize, int nYSize,
-									double dfMinX, double dfMinY,
-									double dfCellsize, double dfNoData,
-									double dfZFactor, bool bTopToBottom );
-    VSILFILE				*fp;
-    char                *pszProjection;
+    static CPLErr WriteHeader( CPLString osHDRFilename, GDALDataType eType,
+                               int nXSize, int nYSize,
+                               double dfMinX, double dfMinY,
+                               double dfCellsize, double dfNoData,
+                               double dfZFactor, bool bTopToBottom );
+    VSILFILE *fp;
+    char     *pszProjection;
 
   public:
         SAGADataset();
-		~SAGADataset();
+        ~SAGADataset();
 
-		static GDALDataset		*Open( GDALOpenInfo * );
-		static GDALDataset		*Create( const char * pszFilename,
-			 							int nXSize, int nYSize, int nBands,
-										GDALDataType eType,
-										char **papszParmList );
-		static GDALDataset		*CreateCopy( const char *pszFilename,
-										GDALDataset *poSrcDS,
-										int bStrict, char **papszOptions,
-										GDALProgressFunc pfnProgress,
-										void *pProgressData );
-		
-        virtual const char     *GetProjectionRef(void);
-        virtual CPLErr          SetProjection( const char * );
-        virtual char          **GetFileList();
+    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType,
+                                char **papszParmList );
+    static GDALDataset *CreateCopy( const char *pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char **papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void *pProgressData );
 
-		CPLErr					GetGeoTransform( double *padfGeoTransform );
-		CPLErr					SetGeoTransform( double *padfGeoTransform );
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
+    virtual char **GetFileList();
+
+    CPLErr GetGeoTransform( double *padfGeoTransform );
+    CPLErr SetGeoTransform( double *padfGeoTransform );
 };
 
 
@@ -112,7 +107,7 @@ class SAGADataset : public GDALPamDataset
 class SAGARasterBand : public GDALPamRasterBand
 {
     friend class	SAGADataset;
-    
+
     int				m_Cols;
     int				m_Rows;
     double			m_Xmin;
@@ -124,11 +119,10 @@ class SAGARasterBand : public GDALPamRasterBand
 
     void			SetDataType( GDALDataType eType );
     void            SwapBuffer(void* pImage);
-public:
 
+public:
     SAGARasterBand( SAGADataset *, int );
-    ~SAGARasterBand();
-    
+
     CPLErr		IReadBlock( int, int, void * );
     CPLErr		IWriteBlock( int, int, void * );
 
@@ -139,25 +133,23 @@ public:
 /*                           SAGARasterBand()                           */
 /************************************************************************/
 
-SAGARasterBand::SAGARasterBand( SAGADataset *poDS, int nBand )
-
+SAGARasterBand::SAGARasterBand( SAGADataset *poDS_, int nBand_ ) :
+    m_Cols(0),
+    m_Rows(0),
+    m_Xmin(0.0),
+    m_Ymin(0.0),
+    m_Cellsize(0.0),
+    m_NoData(0.0),
+    m_ByteOrder(0),
+    m_nBits(0)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    
+    poDS = poDS_;
+    nBand = nBand_;
+
     eDataType = GDT_Float32;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-}
-
-/************************************************************************/
-/*                           ~SAGARasterBand()                          */
-/************************************************************************/
-
-SAGARasterBand::~SAGARasterBand( )
-
-{
 }
 
 /************************************************************************/
@@ -179,16 +171,16 @@ void SAGARasterBand::SwapBuffer(void* pImage)
 {
 
 #ifdef CPL_LSB
-    int bSwap = ( m_ByteOrder == 1);
+    const bool bSwap = ( m_ByteOrder == 1);
 #else
-    int bSwap = ( m_ByteOrder == 0);
+    const bool bSwap = ( m_ByteOrder == 0);
 #endif
 
     if (bSwap)
     {
         if ( m_nBits == 16 )
         {
-            short* pImage16 = (short*) pImage;
+            short* pImage16 = reinterpret_cast<short *>( pImage );
             for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
             {
                 CPL_SWAP16PTR( pImage16 + iPixel );
@@ -196,7 +188,7 @@ void SAGARasterBand::SwapBuffer(void* pImage)
         }
         else if ( m_nBits == 32 )
         {
-            int* pImage32 = (int*) pImage;
+            int* pImage32 = reinterpret_cast<int *>( pImage );
             for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
             {
                 CPL_SWAP32PTR( pImage32 + iPixel );
@@ -204,14 +196,14 @@ void SAGARasterBand::SwapBuffer(void* pImage)
         }
         else if ( m_nBits == 64 )
         {
-            double* pImage64 = (double*) pImage;
+            double* pImage64 = reinterpret_cast<double *>( pImage );
             for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
             {
                 CPL_SWAP64PTR( pImage64 + iPixel );
             }
         }
     }
-    
+
 }
 
 /************************************************************************/
@@ -225,8 +217,9 @@ CPLErr SAGARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 		return CE_Failure;
 
-    SAGADataset *poGDS = dynamic_cast<SAGADataset *>(poDS);
-    vsi_l_offset offset = (vsi_l_offset) (m_nBits / 8) * nRasterXSize * (nRasterYSize - nBlockYOff - 1);
+    SAGADataset *poGDS = static_cast<SAGADataset *>( poDS );
+    vsi_l_offset offset = static_cast<vsi_l_offset>( m_nBits / 8 )
+        * nRasterXSize * (nRasterYSize - nBlockYOff - 1);
 
     if( VSIFSeekL( poGDS->fp, offset, SEEK_SET ) != 0 )
     {
@@ -265,8 +258,9 @@ CPLErr SAGARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
 		return CE_Failure;
 
-    vsi_l_offset offset = (vsi_l_offset) (m_nBits / 8) * nRasterXSize * (nRasterYSize - nBlockYOff - 1);
-    SAGADataset *poGDS = dynamic_cast<SAGADataset *>(poDS);
+    const vsi_l_offset offset = static_cast<vsi_l_offset> (m_nBits / 8)
+        * nRasterXSize * (nRasterYSize - nBlockYOff - 1);
+    SAGADataset *poGDS = static_cast<SAGADataset *>(poDS);
     assert( poGDS != NULL );
 
     if( VSIFSeekL( poGDS->fp, offset, SEEK_SET ) != 0 )
@@ -275,14 +269,15 @@ CPLErr SAGARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
               "Unable to seek to beginning of grid row.\n" );
         return CE_Failure;
     }
-    
-    SwapBuffer(pImage);
-    
-    int bSuccess = ( VSIFWriteL( pImage, m_nBits / 8, nBlockXSize,
-                    poGDS->fp ) == static_cast<unsigned>(nBlockXSize) );
 
     SwapBuffer(pImage);
-    
+
+    const bool bSuccess = (
+        VSIFWriteL( pImage, m_nBits / 8, nBlockXSize, poGDS->fp )
+        == static_cast<unsigned>(nBlockXSize) );
+
+    SwapBuffer(pImage);
+
     if (!bSuccess)
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -312,11 +307,10 @@ double SAGARasterBand::GetNoDataValue( int * pbSuccess )
 /************************************************************************/
 
 
-SAGADataset::SAGADataset()
-
-{
-    pszProjection = CPLStrdup("");
-}
+SAGADataset::SAGADataset() :
+    fp(NULL),
+    pszProjection(CPLStrdup(""))
+{}
 
 SAGADataset::~SAGADataset()
 
@@ -334,14 +328,12 @@ SAGADataset::~SAGADataset()
 
 char** SAGADataset::GetFileList()
 {
-    CPLString osPath = CPLGetPath( GetDescription() );
-    CPLString osName = CPLGetBasename( GetDescription() );
-    VSIStatBufL sStatBuf;
+    const CPLString osPath = CPLGetPath( GetDescription() );
+    const CPLString osName = CPLGetBasename( GetDescription() );
 
-    char **papszFileList = NULL;
 
-    // Main data file, etc. 
-    papszFileList = GDALPamDataset::GetFileList();
+    // Main data file, etc.
+    char **papszFileList = GDALPamDataset::GetFileList();
 
     // Header file.
     CPLString osFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
@@ -349,9 +341,10 @@ char** SAGADataset::GetFileList()
 
     // projections file.
     osFilename = CPLFormCIFilename( osPath, osName, "prj" );
+    VSIStatBufL sStatBuf;
     if( VSIStatExL( osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
         papszFileList = CSLAddString( papszFileList, osFilename );
-    
+
     return papszFileList;
 }
 
@@ -396,15 +389,14 @@ CPLErr SAGADataset::SetProjection( const char *pszSRS )
 /* -------------------------------------------------------------------- */
 /*      Write to .prj file.                                             */
 /* -------------------------------------------------------------------- */
-    CPLString osPrjFilename = CPLResetExtension( GetDescription(), "prj" );
-    VSILFILE *fp;
-
-    fp = VSIFOpenL( osPrjFilename.c_str(), "wt" );
-    if( fp != NULL )
+    const CPLString osPrjFilename = CPLResetExtension( GetDescription(), "prj" );
+    VSILFILE *l_fp = VSIFOpenL( osPrjFilename.c_str(), "wt" );
+    if( l_fp != NULL )
     {
-        VSIFWriteL( pszESRI_SRS, 1, strlen(pszESRI_SRS), fp );
-        VSIFWriteL( (void *) "\n", 1, 1, fp );
-        VSIFCloseL( fp );
+        VSIFWriteL( pszESRI_SRS, 1, strlen(pszESRI_SRS), l_fp );
+        VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>(  "\n" ) ),
+                    1, 1, l_fp );
+        VSIFCloseL( l_fp );
     }
 
     CPLFree( pszESRI_SRS );
@@ -420,24 +412,18 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     /* -------------------------------------------------------------------- */
-    /*	We assume the user is pointing to the binary (ie. .sdat) file.	    */
+    /*  We assume the user is pointing to the binary (i.e. .sdat) file.     */
     /* -------------------------------------------------------------------- */
     if( !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sdat"))
     {
         return NULL;
     }
 
-    CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
-    CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
-    CPLString osHDRFilename;
+    const CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
+    const CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
+    const CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
 
-    osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
-
-
-    VSILFILE	*fp;
-
-    fp = VSIFOpenL( osHDRFilename, "r" );
-    
+    VSILFILE *fp = VSIFOpenL( osHDRFilename, "r" );
     if( fp == NULL )
     {
         return NULL;
@@ -447,61 +433,58 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     /*      Is this file a SAGA header file?  Read a few lines of text      */
     /*      searching for something starting with nrows or ncols.           */
     /* -------------------------------------------------------------------- */
-    const char		*pszLine;
     int				nRows = -1, nCols = -1;
     double			dXmin = 0.0, dYmin = 0.0, dCellsize = 0.0, dNoData = 0.0, dZFactor = 0.0;
     int				nLineCount			= 0;
     char			szDataFormat[20]	= "DOUBLE";
     char            szByteOrderBig[10]	= "FALSE";
     char			szTopToBottom[10]	= "FALSE";
-    char            **papszHDR			= NULL;
-    
-	
-    while( (pszLine = CPLReadLineL( fp )) != NULL )    
-    {
-        char	**papszTokens;
 
+    const char		*pszLine;
+    while( (pszLine = CPLReadLineL( fp )) != NULL )
+    {
         nLineCount++;
 
         if( nLineCount > 50 || strlen(pszLine) > 1000 )
             break;
 
-        papszHDR = CSLAddString( papszHDR, pszLine );
-
-        papszTokens = CSLTokenizeStringComplex( pszLine, " =", TRUE, FALSE );
+        char **papszTokens
+            = CSLTokenizeStringComplex( pszLine, " =", TRUE, FALSE );
         if( CSLCount( papszTokens ) < 2 )
-        {		
+        {
             CSLDestroy( papszTokens );
             continue;
         }
 
-        if( EQUALN(papszTokens[0],"CELLCOUNT_X",strlen("CELLCOUNT_X")) )
+        char **papszHDR = CSLAddString( NULL, pszLine );
+
+        if( STARTS_WITH_CI(papszTokens[0], "CELLCOUNT_X") )
             nCols = atoi(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"CELLCOUNT_Y",strlen("CELLCOUNT_Y")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "CELLCOUNT_Y") )
             nRows = atoi(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"POSITION_XMIN",strlen("POSITION_XMIN")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "POSITION_XMIN") )
             dXmin = CPLAtofM(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"POSITION_YMIN",strlen("POSITION_YMIN")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "POSITION_YMIN") )
             dYmin = CPLAtofM(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"CELLSIZE",strlen("CELLSIZE")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "CELLSIZE") )
             dCellsize = CPLAtofM(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"NODATA_VALUE",strlen("NODATA_VALUE")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "NODATA_VALUE") )
             dNoData = CPLAtofM(papszTokens[1]);
-        else if( EQUALN(papszTokens[0],"DATAFORMAT",strlen("DATAFORMAT")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "DATAFORMAT") )
             strncpy( szDataFormat, papszTokens[1], sizeof(szDataFormat)-1 );
-        else if( EQUALN(papszTokens[0],"BYTEORDER_BIG",strlen("BYTEORDER_BIG")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "BYTEORDER_BIG") )
             strncpy( szByteOrderBig, papszTokens[1], sizeof(szByteOrderBig)-1 );
-        else if( EQUALN(papszTokens[0],"TOPTOBOTTOM",strlen("TOPTOBOTTOM")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "TOPTOBOTTOM") )
             strncpy( szTopToBottom, papszTokens[1], sizeof(szTopToBottom)-1 );
-        else if( EQUALN(papszTokens[0],"Z_FACTOR",strlen("Z_FACTOR")) )
+        else if( STARTS_WITH_CI(papszTokens[0], "Z_FACTOR") )
             dZFactor = CPLAtofM(papszTokens[1]);
 
         CSLDestroy( papszTokens );
+        CSLDestroy( papszHDR );
     }
 
     VSIFCloseL( fp );
 
-    CSLDestroy( papszHDR );
 
     /* -------------------------------------------------------------------- */
     /*      Did we get the required keywords?  If not we return with        */
@@ -517,23 +500,21 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     {
         return NULL;
     }
-    
-    if( EQUALN(szTopToBottom,"TRUE",strlen("TRUE")) )
+
+    if( STARTS_WITH_CI(szTopToBottom, "TRUE") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Currently the SAGA Binary Grid driver does not support\n"
                   "SAGA grids written TOPTOBOTTOM.\n");
         return NULL;
     }
     if( dZFactor != 1.0)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Currently the SAGA Binary Grid driver does not support\n"
                   "ZFACTORs other than 1.\n");
     }
-	
-	
-	
+
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
@@ -548,8 +529,8 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->fp == NULL )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "VSIFOpenL(%s) failed unexpectedly.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "VSIFOpenL(%s) failed unexpectedly.",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -559,13 +540,12 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     SAGARasterBand *poBand = new SAGARasterBand( poDS, 1 );
 
-
     /* -------------------------------------------------------------------- */
     /*      Figure out the byte order.                                      */
     /* -------------------------------------------------------------------- */
-    if( EQUALN(szByteOrderBig,"TRUE",strlen("TRUE")) )
+    if( STARTS_WITH_CI(szByteOrderBig, "TRUE") )
         poBand->m_ByteOrder = 1;
-    else if( EQUALN(szByteOrderBig,"FALSE",strlen("FALSE")) )
+    else if( STARTS_WITH_CI(szByteOrderBig, "FALSE") )
         poBand->m_ByteOrder = 0;
 
 
@@ -619,13 +599,13 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "SAGA driver does not support the dataformat %s.", 
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "SAGA driver does not support the dataformat %s.",
                   szDataFormat );
         delete poBand;
         delete poDS;
         return NULL;
-    }	
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Save band information                                           */
@@ -636,7 +616,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     poBand->m_Cellsize	= dCellsize;
     poBand->m_Rows		= nRows;
     poBand->m_Cols		= nCols;
-	
+
     poDS->SetBand( 1, poBand );
 
 /* -------------------------------------------------------------------- */
@@ -654,13 +634,11 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( fp != NULL )
     {
-        char  **papszLines;
-        OGRSpatialReference oSRS;
-
         VSIFCloseL( fp );
-        
-        papszLines = CSLLoad( pszPrjFilename );
 
+        char **papszLines = CSLLoad( pszPrjFilename );
+
+        OGRSpatialReference oSRS;
         if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
         {
             CPLFree( poDS->pszProjection );
@@ -687,7 +665,7 @@ CPLErr SAGADataset::GetGeoTransform( double *padfGeoTransform )
     if( padfGeoTransform == NULL )
 		return CE_Failure;
 
-    SAGARasterBand *poGRB = dynamic_cast<SAGARasterBand *>(GetRasterBand( 1 ));
+    SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand( 1 ));
 
     if( poGRB == NULL )
     {
@@ -734,7 +712,7 @@ CPLErr SAGADataset::SetGeoTransform( double *padfGeoTransform )
         return CE_Failure;
     }
 
-    SAGARasterBand *poGRB = dynamic_cast<SAGARasterBand *>(GetRasterBand( 1 ));
+    SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand( 1 ));
 
     if( poGRB == NULL || padfGeoTransform == NULL)
         return CE_Failure;
@@ -747,19 +725,18 @@ CPLErr SAGADataset::SetGeoTransform( double *padfGeoTransform )
         return CE_Failure;
     }
 
-    double dfMinX = padfGeoTransform[0] + padfGeoTransform[1] / 2;
-    double dfMinY =
+    const double dfMinX = padfGeoTransform[0] + padfGeoTransform[1] / 2;
+    const double dfMinY =
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
 
-    CPLString osPath		= CPLGetPath( GetDescription() );
-    CPLString osName		= CPLGetBasename( GetDescription() );
-    CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+    const CPLString osPath = CPLGetPath( GetDescription() );
+    const CPLString osName = CPLGetBasename( GetDescription() );
+    const CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
 
     CPLErr eErr = WriteHeader( osHDRFilename, poGRB->GetRasterDataType(),
                                poGRB->nRasterXSize, poGRB->nRasterYSize,
                                dfMinX, dfMinY, padfGeoTransform[1],
                                poGRB->m_NoData, 1.0, false );
-
 
     if( eErr == CE_None )
     {
@@ -784,14 +761,12 @@ CPLErr SAGADataset::WriteHeader( CPLString osHDRFilename, GDALDataType eType,
                                  double dfZFactor, bool bTopToBottom )
 
 {
-    VSILFILE	*fp;
-
-    fp = VSIFOpenL( osHDRFilename, "wt" );
+    VSILFILE	*fp = VSIFOpenL( osHDRFilename, "wt" );
 
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to write .sgrd file %s.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to write .sgrd file %s.",
                   osHDRFilename.c_str() );
         return CE_Failure;
     }
@@ -800,7 +775,7 @@ CPLErr SAGADataset::WriteHeader( CPLString osHDRFilename, GDALDataType eType,
     VSIFPrintfL( fp, "DESCRIPTION\t=\n" );
     VSIFPrintfL( fp, "UNIT\t=\n" );
     VSIFPrintfL( fp, "DATAFILE_OFFSET\t= 0\n" );
-    
+
     if( eType == GDT_Int32 )
         VSIFPrintfL( fp, "DATAFORMAT\t= INTEGER\n" );
     else if( eType == GDT_UInt32 )
@@ -812,7 +787,7 @@ CPLErr SAGADataset::WriteHeader( CPLString osHDRFilename, GDALDataType eType,
     else if( eType == GDT_Byte )
         VSIFPrintfL( fp, "DATAFORMAT\t= BYTE_UNSIGNED\n" );
     else if( eType == GDT_Float32 )
-        VSIFPrintfL( fp, "DATAFORMAT\t= FLOAT\n" );		
+        VSIFPrintfL( fp, "DATAFORMAT\t= FLOAT\n" );
     else //if( eType == GDT_Float64 )
         VSIFPrintfL( fp, "DATAFORMAT\t= DOUBLE\n" );
 #ifdef CPL_LSB
@@ -858,7 +833,7 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
 
         return NULL;
     }
-    
+
     if( nBands != 1 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
@@ -887,8 +862,7 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
                   pszFilename );
         return NULL;
     }
-    
-    char abyNoData[8];
+
     double dfNoDataVal = 0.0;
 
     const char* pszNoDataValue = CSLFetchNameValue(papszParmList, "NODATA_VALUE");
@@ -939,10 +913,11 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
       }
     }
 
+    char abyNoData[8];
     GDALCopyWords(&dfNoDataVal, GDT_Float64, 0,
                   abyNoData, eType, 0, 1);
 
-    CPLString osHdrFilename = CPLResetExtension( pszFilename, "sgrd" );
+    const CPLString osHdrFilename = CPLResetExtension( pszFilename, "sgrd" );
     CPLErr eErr = WriteHeader( osHdrFilename, eType,
                                nXSize, nYSize,
                                0.0, 0.0, 1.0,
@@ -956,14 +931,15 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
 
     if (CSLFetchBoolean( papszParmList , "FILL_NODATA", TRUE ))
     {
-        int nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
-        GByte* pabyNoDataBuf = (GByte*) VSIMalloc2(nDataTypeSize, nXSize);
+        const int nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
+        GByte* pabyNoDataBuf = reinterpret_cast<GByte *>(
+            VSIMalloc2(nDataTypeSize, nXSize ) );
         if (pabyNoDataBuf == NULL)
         {
             VSIFCloseL( fp );
             return NULL;
         }
-        
+
         for( int iCol = 0; iCol < nXSize; iCol++)
         {
             memcpy(pabyNoDataBuf + iCol * nDataTypeSize, abyNoData, nDataTypeSize);
@@ -971,7 +947,8 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
 
         for( int iRow = 0; iRow < nYSize; iRow++ )
         {
-            if( VSIFWriteL( pabyNoDataBuf, nDataTypeSize, nXSize, fp ) != (unsigned)nXSize )
+            if( VSIFWriteL( pabyNoDataBuf, nDataTypeSize, nXSize, fp )
+                != static_cast<unsigned>( nXSize ) )
             {
                 VSIFCloseL( fp );
                 VSIFree(pabyNoDataBuf);
@@ -980,13 +957,14 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
                 return NULL;
             }
         }
-        
+
         VSIFree(pabyNoDataBuf);
     }
 
     VSIFCloseL( fp );
 
-    return (GDALDataset *)GDALOpen( pszFilename, GA_Update );
+    return reinterpret_cast<GDALDataset *>(
+        GDALOpen( pszFilename, GA_Update ) );
 }
 
 /************************************************************************/
@@ -1005,7 +983,7 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "SAGA driver does not support source dataset with zero band.\n");
         return NULL;
     }
@@ -1025,21 +1003,20 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
-    
-    char** papszCreateOptions = NULL;
-    papszCreateOptions = CSLSetNameValue(papszCreateOptions, "FILL_NODATA", "NO");
+
+    char** papszCreateOptions = CSLSetNameValue( NULL, "FILL_NODATA", "NO" );
 
     int bHasNoDataValue = FALSE;
-    double dfNoDataValue = poSrcBand->GetNoDataValue(&bHasNoDataValue);
+    const double dfNoDataValue = poSrcBand->GetNoDataValue(&bHasNoDataValue);
     if (bHasNoDataValue)
         papszCreateOptions = CSLSetNameValue(papszCreateOptions, "NODATA_VALUE",
                                              CPLSPrintf("%.16g", dfNoDataValue));
-    
+
     GDALDataset* poDstDS =
         Create(pszFilename, poSrcBand->GetXSize(), poSrcBand->GetYSize(),
                1, poSrcBand->GetRasterDataType(), papszCreateOptions);
     CSLDestroy(papszCreateOptions);
-    
+
     if (poDstDS == NULL)
         return NULL;
 
@@ -1047,13 +1024,11 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
     /*      Copy band data.	                                                */
     /* -------------------------------------------------------------------- */
 
-    CPLErr	eErr;
-    
-    eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
-                                       (GDALDatasetH) poDstDS,
-                                       NULL,
-                                       pfnProgress, pProgressData );
-                                       
+    CPLErr eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS,
+                                              (GDALDatasetH) poDstDS,
+                                              NULL,
+                                              pfnProgress, pProgressData );
+
     if (eErr == CE_Failure)
     {
         delete poDstDS;
@@ -1064,7 +1039,7 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
     poDstDS->SetGeoTransform( adfGeoTransform );
-    
+
     poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
 
     return poDstDS;
@@ -1077,28 +1052,25 @@ GDALDataset *SAGADataset::CreateCopy( const char *pszFilename,
 void GDALRegister_SAGA()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "SAGA" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "SAGA" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "SAGA" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "SAGA GIS Binary Grid (.sdat)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#SAGA" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sdat" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-				   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "SAGA" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "SAGA GIS Binary Grid (.sdat)" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#SAGA" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sdat" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 "
+                               "UInt16 Int32 UInt32 Float32 Float64" );
 
-        poDriver->pfnOpen = SAGADataset::Open;
-        poDriver->pfnCreate = SAGADataset::Create;
-        poDriver->pfnCreateCopy = SAGADataset::CreateCopy;
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = SAGADataset::Open;
+    poDriver->pfnCreate = SAGADataset::Create;
+    poDriver->pfnCreateCopy = SAGADataset::CreateCopy;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

@@ -41,15 +41,12 @@ CPL_CVSID("$Id$");
 /**
  * \brief Constructor
  *
- * Normally the driver registrar is constucted by the 
+ * Normally the driver registrar is constructed by the
  * OGRSFDriverRegistrar::GetRegistrar() accessor which ensures singleton
- * status.  
+ * status.
  */
 
-OGRSFDriverRegistrar::OGRSFDriverRegistrar()
-
-{
-}
+OGRSFDriverRegistrar::OGRSFDriverRegistrar() {}
 
 /************************************************************************/
 /*                       ~OGRSFDriverRegistrar()                        */
@@ -76,13 +73,14 @@ OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 /************************************************************************/
 
 #if defined(WIN32) && defined(_MSC_VER)
+#include "ogremulatedtransaction.h"
 void OGRRegisterMutexedDataSource();
 void OGRRegisterMutexedLayer();
 int OGRwillNeverBeTrue = FALSE;
 #endif
 
 /**
- * \brief Cleanup all OGR related resources. 
+ * \brief Cleanup all OGR related resources.
  *
  * FIXME
  */
@@ -91,12 +89,13 @@ void OGRCleanupAll()
 {
     GDALDestroyDriverManager();
 #if defined(WIN32) && defined(_MSC_VER)
-// Horrible hack: for some reason MSVC doesn't export those classes
+// Horrible hack: for some reason MSVC doesn't export those classes&symbols
 // if they are not referenced from the DLL itself
     if(OGRwillNeverBeTrue)
     {
         OGRRegisterMutexedDataSource();
         OGRRegisterMutexedLayer();
+        OGRCreateEmulatedTransactionDataSourceWrapper(NULL,NULL,FALSE,FALSE);
     }
 #endif
 }
@@ -155,10 +154,15 @@ OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpyClose(hDS);
+        OGRAPISpyPreClose(hDS);
+#endif
+    GDALClose( (GDALDatasetH) hDS );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpyPostClose();
 #endif
 
-    GDALClose( (GDALDatasetH) hDS );
     return OGRERR_NONE;
 }
 
@@ -297,7 +301,7 @@ void OGRRegisterDriver( OGRSFDriverH hDriver )
 
 {
     VALIDATE_POINTER0( hDriver, "OGRRegisterDriver" );
-    
+
     GetGDALDriverManager()->RegisterDriver( (GDALDriver*)hDriver );
 }
 
@@ -309,7 +313,7 @@ void OGRDeregisterDriver( OGRSFDriverH hDriver )
 
 {
     VALIDATE_POINTER0( hDriver, "OGRDeregisterDriver" );
-    
+
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver*)hDriver );
 }
 
@@ -404,6 +408,6 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
 {
     VALIDATE_POINTER1( pszName, "OGRGetDriverByName", NULL );
 
-    return (OGRSFDriverH) 
+    return (OGRSFDriverH)
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );
 }

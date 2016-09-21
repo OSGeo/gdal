@@ -390,7 +390,8 @@ INPUT                  = port \
                          ogr/ogrsf_frmts/generic \
                          ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
                          ogr/ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
-			 swig/python/scripts
+			 swig/python/scripts \
+			 gnm 
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -939,7 +940,8 @@ PREDEFINED             = HAVE_DLFCN_H \
                          __cplusplus \
                          DOXYGEN_SKIP \
                          HAVE_CURL \
-			 OGR_ENABLED
+                         CPL_UNUSED= \
+                         UNUSED_IF_NO_GEOS=
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 

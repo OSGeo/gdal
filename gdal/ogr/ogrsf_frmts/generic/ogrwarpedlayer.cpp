@@ -221,7 +221,7 @@ OGRFeature *OGRWarpedLayer::WarpedFeatureToSrcFeature(OGRFeature* poFeature)
 
 OGRFeature *OGRWarpedLayer::GetNextFeature()
 {
-    while(TRUE)
+    while( true )
     {
         OGRFeature* poFeature = m_poDecoratedLayer->GetNextFeature();
         if( poFeature == NULL )
@@ -287,7 +287,7 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
     OGRFeature* poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
     if( poFeatureNew == NULL )
         return OGRERR_FAILURE;
-   
+
     eErr = m_poDecoratedLayer->CreateFeature(poFeatureNew);
 
     delete poFeatureNew;
@@ -439,9 +439,9 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
     double *padfX, *padfY;
     int* pabSuccess;
 
-    padfX = (double*) VSIMalloc((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
-    padfY = (double*) VSIMalloc((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
-    pabSuccess = (int*) VSIMalloc((NSTEP + 1) * (NSTEP + 1) * sizeof(int));
+    padfX = (double*) VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
+    padfY = (double*) VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
+    pabSuccess = (int*) VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(int));
     if( padfX == NULL || padfY == NULL || pabSuccess == NULL)
     {
         VSIFree(padfX);

@@ -89,18 +89,18 @@ void PCIDSKBuffer::SetSize( int size )
 
 {
     buffer_size = size;
-    if( buffer == NULL )
-        buffer = (char *) malloc(size+1);
-    else
-        buffer = (char *) realloc(buffer,size+1);
+    char* new_buffer = (char *) realloc(buffer,size+1);
 
-    if( buffer == NULL )
+    if( new_buffer == NULL )
     {
+        free( buffer );
+        buffer = NULL;
         buffer_size = 0;
-        ThrowPCIDSKException( "Out of memory allocating %d byte PCIDSKBuffer.",
+        throw PCIDSKException( "Out of memory allocating %d byte PCIDSKBuffer.",
                                size );
     }
 
+    buffer = new_buffer;
     buffer[size] = '\0';
 }
 
@@ -123,7 +123,7 @@ void PCIDSKBuffer::Get( int offset, int size, std::string &target, int unpad ) c
 
 {
     if( offset + size > buffer_size )
-        ThrowPCIDSKException( "Get() past end of PCIDSKBuffer." );
+        return ThrowPCIDSKException( "Get() past end of PCIDSKBuffer." );
 
     if( unpad )
     {
@@ -144,7 +144,7 @@ uint64 PCIDSKBuffer::GetUInt64( int offset, int size ) const
     std::string value_str;
 
     if( offset + size > buffer_size )
-        ThrowPCIDSKException( "GetUInt64() past end of PCIDSKBuffer." );
+        return ThrowPCIDSKException(0, "GetUInt64() past end of PCIDSKBuffer." );
 
     value_str.assign( buffer + offset, size );
 
@@ -161,7 +161,7 @@ int PCIDSKBuffer::GetInt( int offset, int size ) const
     std::string value_str;
 
     if( offset + size > buffer_size )
-        ThrowPCIDSKException( "GetInt() past end of PCIDSKBuffer." );
+        return ThrowPCIDSKException(0, "GetInt() past end of PCIDSKBuffer." );
 
     value_str.assign( buffer + offset, size );
 
@@ -178,7 +178,7 @@ double PCIDSKBuffer::GetDouble( int offset, int size ) const
     std::string value_str;
 
     if( offset + size > buffer_size )
-        ThrowPCIDSKException( "GetDouble() past end of PCIDSKBuffer." );
+        return ThrowPCIDSKException(0, "GetDouble() past end of PCIDSKBuffer." );
 
     value_str.assign( buffer + offset, size );
 
@@ -213,9 +213,9 @@ void PCIDSKBuffer::Put( const char *value, int offset, int size, bool null_term 
 
 {
     if( offset + size > buffer_size )
-        ThrowPCIDSKException( "Put() past end of PCIDSKBuffer." );
+        return ThrowPCIDSKException( "Put() past end of PCIDSKBuffer." );
 
-    int v_size = strlen(value);
+    int v_size = static_cast<int>(strlen(value));
     if( v_size > size )
         v_size = size;
 
@@ -250,8 +250,8 @@ void PCIDSKBuffer::Put( uint64 value, int offset, int size )
     char fmt[64];
     char wrk[128];
 
-    sprintf( fmt, "%%%d%sd", size, PCIDSK_FRMT_64_WITHOUT_PREFIX );
-    sprintf( wrk, fmt, value );
+    snprintf( fmt, sizeof(fmt), "%%%d%sd", size, PCIDSK_FRMT_64_WITHOUT_PREFIX );
+    snprintf( wrk, sizeof(wrk), fmt, value );
 
     Put( wrk, offset, size );
 }

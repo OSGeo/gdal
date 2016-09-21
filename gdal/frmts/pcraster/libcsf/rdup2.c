@@ -1,7 +1,3 @@
-
-/*
- * rdup2.c 
- */
 #include "csf.h"
 #include "csfimpl.h"
 

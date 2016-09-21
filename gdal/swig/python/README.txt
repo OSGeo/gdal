@@ -152,7 +152,7 @@ There are five major modules that are included with the GDAL_ Python bindings.::
 Additionally, there are five compatibility modules that are included but 
 provide notices to state that they are deprecated and will be going away.  
 If you are using GDAL 1.7 bindings, you should update your imports to utilize 
-the usage above, but the following will work until at least GDAL 2.0. ::
+the usage above, but the following will work until at least GDAL 2.1. ::
 
   >>> import gdal
   >>> import ogr
@@ -209,7 +209,7 @@ data, this approach is expected to be prohibitively memory intensive.
 
 .. _GDAL API Tutorial: http://www.gdal.org/gdal_tutorial.html
 .. _GDAL Windows Binaries: http://gisinternals.com/sdk/
-.. _Microsoft KnowledgeBase doc: http://support.microsoft.com/kb/310519
+.. _Microsoft Knowledge Base doc: http://support.microsoft.com/kb/310519
 .. _Python Cheeseshop: http://pypi.python.org/pypi/GDAL/
 .. _val_repl.py: http://trac.osgeo.org/gdal/browser/trunk/gdal/swig/python/samples/val_repl.py
 .. _GDAL: http://www.gdal.org

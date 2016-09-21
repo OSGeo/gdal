@@ -4,7 +4,7 @@
  * Purpose:  Tools for PostGIS Raster driver
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *                          jorgearevalo@libregis.org
- * 
+ *
  * Author:	 David Zwarg, dzwarg@azavea.com
  *
  * Last changes: $Id: $
@@ -12,7 +12,7 @@
  ***********************************************************************
  * Copyright (c) 2009 - 2013, Jorge Arevalo, David Zwarg
  *
- * Permission is hereby granted, free of charge, to any person obtaining 
+ * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
@@ -20,21 +20,20 @@
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * The above copyright notice and this permission notice shall be 
+ * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
- * NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
- * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  **********************************************************************/
  #include "postgisraster.h"
- 
- 
+
  /**********************************************************************
  * \brief Replace the quotes by single quotes in the input string
  *
@@ -45,7 +44,7 @@ char * ReplaceQuotes(const char * pszInput, int nLength) {
     char * pszOutput = NULL;
 
     if (nLength == -1)
-        nLength = strlen(pszInput);
+        nLength = static_cast<int>(strlen(pszInput));
 
     pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
 
@@ -69,7 +68,7 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
     char* pszOutput = NULL;
 
     if (nLength == -1)
-        nLength = strlen(pszInput);
+        nLength = static_cast<int>(strlen(pszInput));
 
     pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
 
@@ -97,15 +96,15 @@ char** ParseConnectionString(const char * pszConnectionString) {
     char * pszEscapedConnectionString = NULL;
 
     /* Escape string following SQL scheme */
-    pszEscapedConnectionString = 
+    pszEscapedConnectionString =
         ReplaceSingleQuotes(pszConnectionString, -1);
 
     /* Avoid PG: part */
-    char* pszStartPos = (char*) 
+    char* pszStartPos = (char*)
         strstr(pszEscapedConnectionString, ":") + 1;
 
     /* Tokenize */
-    char** papszParams = 
+    char** papszParams =
         CSLTokenizeString2(pszStartPos, " ", CSLT_HONOURSTRINGS);
 
     /* Free */
@@ -115,7 +114,7 @@ char** ParseConnectionString(const char * pszConnectionString) {
 }
 
 /***********************************************************************
- * \brief Translate a PostGIS Raster datatype string in a valid 
+ * \brief Translate a PostGIS Raster datatype string in a valid
  * GDALDataType object.
  **********************************************************************/
 GBool TranslateDataType(const char * pszDataType,
@@ -128,35 +127,35 @@ GBool TranslateDataType(const char * pszDataType,
     if (pbSignedByte)
         *pbSignedByte = false;
 
-    if (EQUALN(pszDataType, "1BB", 3 * sizeof(char))) {
+    if (EQUAL(pszDataType, "1BB")) {
         if (pnBitsDepth)
             *pnBitsDepth = 1;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUALN(pszDataType, "2BUI", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "2BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 2;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUALN(pszDataType, "4BUI", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "4BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 4;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUALN(pszDataType, "8BUI", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "8BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 8;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUALN(pszDataType, "8BSI", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "8BSI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 8;
         if (poDataType)
@@ -170,42 +169,42 @@ GBool TranslateDataType(const char * pszDataType,
         if (pbSignedByte)
             *pbSignedByte = true;
     }
-    else if (EQUALN(pszDataType, "16BSI", 5 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "16BSI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 16;
         if (poDataType)
             *poDataType = GDT_Int16;
     }
 
-    else if (EQUALN(pszDataType, "16BUI", 5 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "16BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 16;
         if (poDataType)
             *poDataType = GDT_UInt16;
     }
 
-    else if (EQUALN(pszDataType, "32BSI", 5 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "32BSI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_Int32;
     }
 
-    else if (EQUALN(pszDataType, "32BUI", 5 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "32BUI")) {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_UInt32;
     }
 
-    else if (EQUALN(pszDataType, "32BF", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "32BF")) {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_Float32;
     }
 
-    else if (EQUALN(pszDataType, "64BF", 4 * sizeof (char))) {
+    else if (EQUAL(pszDataType, "64BF")) {
         if (pnBitsDepth)
             *pnBitsDepth = 64;
         if (poDataType)
@@ -223,4 +222,3 @@ GBool TranslateDataType(const char * pszDataType,
 
     return true;
 }
-

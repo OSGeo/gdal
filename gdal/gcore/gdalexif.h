@@ -27,11 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define EXIFOFFSETTAG 0x8769
-#define INTEROPERABILITYOFFSET 0xA005
-#define GPSOFFSETTAG     0x8825
-#define MAXSTRINGLENGTH 65535
-
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
 #include "../frmts/gtiff/libtiff/gdal_libtiff_symbol_rename.h"
 #endif
@@ -47,10 +42,10 @@ static const struct gpsname {
     { 0x04, "EXIF_GPSLongitude" },
     { 0x05, "EXIF_GPSAltitudeRef" },
     { 0x06, "EXIF_GPSAltitude" },
-    { 0x07, "EXIF_GPSTimeStamp" }, 
-    { 0x08, "EXIF_GPSSatellites" }, 
-    { 0x09, "EXIF_GPSStatus" }, 
-    { 0x0a, "EXIF_GPSMeasureMode" }, 
+    { 0x07, "EXIF_GPSTimeStamp" },
+    { 0x08, "EXIF_GPSSatellites" },
+    { 0x09, "EXIF_GPSStatus" },
+    { 0x0a, "EXIF_GPSMeasureMode" },
     { 0x0b, "EXIF_GPSDOP" },
     { 0x0c, "EXIF_GPSSpeedRef"},
     { 0x0d, "EXIF_GPSSpeed"},
@@ -70,9 +65,9 @@ static const struct gpsname {
     { 0x1b, "EXIF_GPSProcessingMethod"},
     { 0x1c, "EXIF_GPSAreaInformation"},
     { 0x1d, "EXIF_GPSDateStamp"},
-    { 0x1e, "EXIF_GPSDifferential"},  
-    { 0xffff,       ""}
-}; 
+    { 0x1e, "EXIF_GPSDifferential"},
+    { 0xffff, ""}
+};
 
 static const struct tagname {
   GUInt16       tag;
@@ -209,7 +204,7 @@ typedef enum {
         TIFF_FLOAT      = 11,   /* !32-bit IEEE floating point */
         TIFF_DOUBLE     = 12,   /* !64-bit IEEE floating point */
         TIFF_IFD        = 13    /* %32-bit unsigned integer (offset) */
-} TIFFDataType;
+} GDALEXIFTIFFDataType;
 
 /*
  * TIFF Image File Directories are comprised of a table of field
@@ -227,10 +222,10 @@ typedef struct {
         GUInt16          tdir_type;      /* data type; see below */
         GUInt32          tdir_count;     /* number of items; length in spec */
         GUInt32          tdir_offset;    /* byte offset to field data */
-} TIFFDirEntry;
+} GDALEXIFTIFFDirEntry;
 
 CPL_C_START
-extern	int TIFFDataWidth(TIFFDataType);    /* table of tag datatype widths */
+extern	int TIFFDataWidth(GDALEXIFTIFFDataType);    /* table of tag datatype widths */
 extern	void TIFFSwabShort(GUInt16*);
 extern	void TIFFSwabLong(GUInt32*);
 extern	void TIFFSwabDouble(double*);
@@ -238,4 +233,3 @@ extern	void TIFFSwabArrayOfShort(GUInt16*, unsigned long);
 extern	void TIFFSwabArrayOfLong(GUInt32*, unsigned long);
 extern	void TIFFSwabArrayOfDouble(double*, unsigned long);
 CPL_C_END
-

@@ -1,8 +1,3 @@
-/********/
-/* USES */
-/********/
-
-/* libs ext. <>, our ""  */
 #include <string.h>
 
 /* global header (opt.) and strpad's prototypes "" */

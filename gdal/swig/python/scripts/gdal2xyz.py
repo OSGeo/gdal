@@ -9,17 +9,17 @@
 #
 ###############################################################################
 # Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
 # and/or sell copies of the Software, and to permit persons to whom the
 # Software is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,12 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
 import sys
+
+from osgeo import gdal
 
 try:
     import numpy as Numeric
@@ -56,7 +53,7 @@ def Usage():
 if __name__ == '__main__':
 
     srcwin = None
-    skip = 1    
+    skip = 1
     srcfile = None
     dstfile = None
     band_nums = []
@@ -106,14 +103,14 @@ if __name__ == '__main__':
         Usage()
 
     if band_nums == []: band_nums = [1]
-    # Open source file. 
+    # Open source file.
     srcds = gdal.Open( srcfile )
     if srcds is None:
         print('Could not open %s.' % srcfile)
         sys.exit( 1 )
 
     bands = []
-    for band_num in band_nums: 
+    for band_num in band_nums:
         band = srcds.GetRasterBand(band_num)
         if band is None:
             print('Could not get band %d' % band_num)
@@ -121,7 +118,7 @@ if __name__ == '__main__':
         bands.append(band)
 
     gt = srcds.GetGeoTransform()
-  
+
     # Collect information on all the source files.
     if srcwin is None:
         srcwin = (0,0,srcds.RasterXSize,srcds.RasterYSize)
@@ -149,7 +146,7 @@ if __name__ == '__main__':
         data = []
         for band in bands:
 
-            band_data = band.ReadAsArray( srcwin[0], y, srcwin[2], 1 )    
+            band_data = band.ReadAsArray( srcwin[0], y, srcwin[2], 1 )
             band_data = Numeric.reshape( band_data, (srcwin[2],) )
             data.append(band_data)
 
@@ -163,11 +160,9 @@ if __name__ == '__main__':
             x_i_data = []
             for i in range(len(bands)):
                 x_i_data.append(data[i][x_i])
-            
+
             band_str = band_format % tuple(x_i_data)
 
             line = format % (float(geo_x),float(geo_y), band_str)
 
             dst_fh.write( line )
-
-

@@ -64,7 +64,7 @@ class TestOgrBasic < Test::Unit::TestCase
 
     poly = Gdal::Ogr::Geometry.new(Gdal::Ogr::WKBPOLYGON)
 
-    # Poly takes over owernship of ring here
+    # Poly takes over ownership of ring here.
     poly.add_geometry_directly( ring )
 
     layer = @ds.get_layer('poly')

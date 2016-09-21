@@ -32,18 +32,18 @@
 
 CPL_CVSID("$Id$");
 
-#define DEG_TO_RAD (PI/180.0)
+#define DEG_TO_RAD (M_PI/180.0)
 
 /************************************************************************/
 /*                         ComputePointOnArc()                          */
 /************************************************************************/
 
-static void ComputePointOnArc2D( double dfPrimary, double dfSecondary, 
+static void ComputePointOnArc2D( double dfPrimary, double dfSecondary,
                                  double dfAxisRotation, double dfAngle,
                                  double *pdfX, double *pdfY )
 
 {
-    //dfAxisRotation and dfAngle are suposed to be in Radians
+    // dfAxisRotation and dfAngle are supposed to be in Radians
     double      dfCosRotation = cos(dfAxisRotation);
     double      dfSinRotation = sin(dfAxisRotation);
     double      dfEllipseX = dfPrimary * cos(dfAngle);
@@ -61,12 +61,12 @@ static void ComputePointOnArc2D( double dfPrimary, double dfSecondary,
  * Generate a polyline approximation of an arc.
  *
  * Produce a series of equidistant (actually equi-angle) points along
- * an arc.  Currently this only works for 2D arcs (and ellipses). 
+ * an arc.  Currently this only works for 2D arcs (and ellipses).
  *
  * @param hFile the DGN file to which the arc belongs (currently not used).
  * @param psArc the arc to be approximated.
  * @param nPoints the number of points to use to approximate the arc.
- * @param pasPoints the array of points into which to put the results. 
+ * @param pasPoints the array of points into which to put the results.
  * There must be room for at least nPoints points.
  *
  * @return TRUE on success or FALSE on failure.
@@ -84,7 +84,7 @@ int DGNStrokeArc( CPL_UNUSED DGNHandle hFile,
 
     if( psArc->primary_axis == 0.0 || psArc->secondary_axis == 0.0 )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "Zero primary or secondary axis in DGNStrokeArc()." );
         return FALSE;
     }
@@ -93,8 +93,8 @@ int DGNStrokeArc( CPL_UNUSED DGNHandle hFile,
     for( i = 0; i < nPoints; i++ )
     {
         dfAngle = (psArc->startang + dfAngleStep * i) * DEG_TO_RAD;
-        
-        ComputePointOnArc2D( psArc->primary_axis, 
+
+        ComputePointOnArc2D( psArc->primary_axis,
                              psArc->secondary_axis,
                              psArc->rotation * DEG_TO_RAD,
                              dfAngle,
@@ -121,7 +121,7 @@ int DGNStrokeArc( CPL_UNUSED DGNHandle hFile,
  * @param hFile the DGN file to which the arc belongs (currently not used).
  * @param psCurve the curve to be approximated.
  * @param nPoints the number of points to use to approximate the curve.
- * @param pasPoints the array of points into which to put the results. 
+ * @param pasPoints the array of points into which to put the results.
  * There must be room for at least nPoints points.
  *
  * @return TRUE on success or FALSE on failure.
@@ -155,6 +155,7 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
 
     for( k = 0; k < nDGNPoints-1; k++ )
     {
+        /* coverity[overrun-local] */
         padfD[k] = sqrt( (pasDGNPoints[k+1].x-pasDGNPoints[k].x)
                            * (pasDGNPoints[k+1].x-pasDGNPoints[k].x)
                          + (pasDGNPoints[k+1].y-pasDGNPoints[k].y)
@@ -228,7 +229,7 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
         dfCx = padfTx[k];
         dfBx = (3.0 * (pasDGNPoints[k+1].x - pasDGNPoints[k].x) / padfD[k]
                 - 2.0 * padfTx[k] - padfTx[k+1]) / padfD[k];
-        dfAx = (padfTx[k] + padfTx[k+1] 
+        dfAx = (padfTx[k] + padfTx[k+1]
                 - 2 * (pasDGNPoints[k+1].x - pasDGNPoints[k].x) / padfD[k])
             / (padfD[k] * padfD[k]);
 
@@ -238,7 +239,7 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
         dfCy = padfTy[k];
         dfBy = (3.0 * (pasDGNPoints[k+1].y - pasDGNPoints[k].y) / padfD[k]
                 - 2.0 * padfTy[k] - padfTy[k+1]) / padfD[k];
-        dfAy = (padfTy[k] + padfTy[k+1] 
+        dfAy = (padfTy[k] + padfTy[k+1]
                 - 2 * (pasDGNPoints[k+1].y - pasDGNPoints[k].y) / padfD[k])
             / (padfD[k] * padfD[k]);
 
@@ -257,11 +258,11 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
         {
             pasPoints[iOutPoint].x = dfAx * dfD * dfD * dfD
                                    + dfBx * dfD * dfD
-                                   + dfCx * dfD 
+                                   + dfCx * dfD
                                    + pasDGNPoints[k].x;
             pasPoints[iOutPoint].y = dfAy * dfD * dfD * dfD
                                    + dfBy * dfD * dfD
-                                   + dfCy * dfD 
+                                   + dfCy * dfD
                                    + pasDGNPoints[k].y;
             pasPoints[iOutPoint].z = 0.0;
             iOutPoint++;
@@ -314,10 +315,10 @@ int main( int argc, char ** argv )
 
     dfPrimary = CPLAtof(argv[1]);
     dfSecondary = CPLAtof(argv[2]);
-    dfAxisRotation = CPLAtof(argv[3]) / 180 * PI;
-    dfAngle = CPLAtof(argv[4]) / 180 * PI;
+    dfAxisRotation = CPLAtof(argv[3]) / 180 * M_PI;
+    dfAngle = CPLAtof(argv[4]) / 180 * M_PI;
 
-    ComputePointOnArc2D( dfPrimary, dfSecondary, dfAxisRotation, dfAngle, 
+    ComputePointOnArc2D( dfPrimary, dfSecondary, dfAxisRotation, dfAngle,
                          &dfX, &dfY );
 
     printf( "X=%.2f, Y=%.2f\n", dfX, dfY );

@@ -1,0 +1,14 @@
+<GDAL_WMS>
+    <Service name="IIP">
+        <ServerUrl>http://iipserver-genova.hdue.it/fast/iipsrv.fcgi?FIF=/mnt/links/ASGenova/./ArchiviodiStatodiGenova/RaccoltadeiTipidisegniemappedellArchiviodiStatodiGenova/Fondicartograficioriginari/MappeetipidellaRepubblicadiGenova/Cartericonducibiliallordinamentooriginario/AA%40[1]_0001_IMG1360.tif</ServerUrl>
+    </Service>
+    <DataWindow>
+        <SizeX>14658</SizeX>
+        <SizeY>6510</SizeY>
+        <TileLevel>6</TileLevel>
+    </DataWindow>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+    <Cache />
+</GDAL_WMS>

@@ -60,7 +60,7 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
         {
             case PGRES_TUPLES_OK:
                 pszRetCode = "PGRES_TUPLES_OK";
-                sprintf(szNTuples, ", ntuples = %d", PQntuples(hResult));
+                snprintf(szNTuples, sizeof(szNTuples), ", ntuples = %d", PQntuples(hResult));
                 break;
             case PGRES_COMMAND_OK:
                 pszRetCode = "PGRES_COMMAND_OK";
@@ -81,7 +81,7 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Generate an error report if an error occured.                   */
+/*      Generate an error report if an error occurred.                  */
 /* -------------------------------------------------------------------- */
     if ( !hResult || (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR ||
                       PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )

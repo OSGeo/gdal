@@ -3,7 +3,7 @@
  *
  * Project:  DWG Translator
  * Purpose:  Implements translation support for HATCH elements as part
- *           of the OGRDWGLayer class.  
+ *           of the OGRDWGLayer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -43,9 +43,6 @@
 
 CPL_CVSID("$Id$");
 
-#ifndef PI
-#define PI  3.14159265358979323846
-#endif 
 
 static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                                       OGRGeometryCollection *poGC );
@@ -67,7 +64,7 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
 
     TranslateGenericProperties( poFeature, poEntity );
 
-    poFeature->SetField( "Text", 
+    poFeature->SetField( "Text",
                          (const char *) poHatch->patternName() );
 
 /* -------------------------------------------------------------------- */
@@ -83,7 +80,7 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
 
-    OGRGeometryH hFinalGeom = 
+    OGRGeometryH hFinalGeom =
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oGC,
                                   TRUE, TRUE, 0.0000001, &eErr );
 
@@ -101,14 +98,14 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
     if( oStyleProperties.count("Color") > 0 )
         nColor = atoi(oStyleProperties["Color"]);
 
-    // Use layer color? 
+    // Use layer color?
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
         if( pszValue != NULL )
             nColor = atoi(pszValue);
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Setup the style string.                                         */
 /* -------------------------------------------------------------------- */
@@ -116,12 +113,12 @@ OGRFeature *OGRDWGLayer::TranslateHATCH( OdDbEntityPtr poEntity )
     {
         CPLString osStyle;
         const unsigned char *pabyDWGColors = ACGetColorTable();
-        
+
         osStyle.Printf( "BRUSH(fc:#%02x%02x%02x)",
                         pabyDWGColors[nColor*3+0],
                         pabyDWGColors[nColor*3+1],
                         pabyDWGColors[nColor*3+2] );
-        
+
         poFeature->SetStyleString( osStyle );
     }
 
@@ -152,10 +149,10 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
         for (i = 0; i < (int) vertices.size(); i++)
         {
             if( i >= (int) bulges.size() )
-                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0, 
+                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0,
                                           0.0 );
             else
-                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0, 
+                oSmoothPolyline.AddPoint( vertices[i].x, vertices[i].y, 0.0,
                                           bulges[i] );
         }
 
@@ -191,9 +188,9 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
         {
             OdGeCircArc2d* poCircArc = (OdGeCircArc2d*) poEdge;
             OdGePoint2d oCenter = poCircArc->center();
-            double dfStartAngle = poCircArc->startAng() * 180 / PI;
-            double dfEndAngle = poCircArc->endAng() * 180 / PI;
-            
+            double dfStartAngle = poCircArc->startAng() * 180 / M_PI;
+            double dfEndAngle = poCircArc->endAng() * 180 / M_PI;
+
             if( !poCircArc->isClockWise() )
             {
                 dfStartAngle *= -1;
@@ -204,8 +201,8 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                 dfEndAngle += 360.0;
             }
 
-            OGRLineString *poLS = (OGRLineString *) 
-                OGRGeometryFactory::approximateArcAngles( 
+            OGRLineString *poLS = (OGRLineString *)
+                OGRGeometryFactory::approximateArcAngles(
                     oCenter.x, oCenter.y, 0.0,
                     poCircArc->radius(), poCircArc->radius(), 0.0,
                     dfStartAngle, dfEndAngle, 0.0 );
@@ -221,11 +218,11 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
             double dfRotation;
             double dfStartAng, dfEndAng;
 
-            dfRotation = -1 * atan2( oMajorAxis.y, oMajorAxis.x ) * 180 / PI;
+            dfRotation = -1 * atan2( oMajorAxis.y, oMajorAxis.x ) * 180 / M_PI;
 
-            dfStartAng = poArc->startAng()*180/PI;
-            dfEndAng = poArc->endAng()*180/PI;
- 
+            dfStartAng = poArc->startAng()*180/M_PI;
+            dfEndAng = poArc->endAng()*180/M_PI;
+
             if( !poArc->isClockWise() )
             {
                 dfStartAng *= -1;
@@ -236,8 +233,8 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                 dfEndAng += 360.0;
             }
 
-            OGRLineString *poLS = (OGRLineString *) 
-                OGRGeometryFactory::approximateArcAngles( 
+            OGRLineString *poLS = (OGRLineString *)
+                OGRGeometryFactory::approximateArcAngles(
                     oCenter.x, oCenter.y, 0.0,
                     poArc->majorRadius(), poArc->minorRadius(), dfRotation,
                     OGRDWGLayer::AngleCorrect(dfStartAng,dfRatio),
@@ -249,9 +246,8 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
             CPLDebug( "DWG", "Unsupported edge type (%d) in hatch loop.",
                       (int) poEdge->type() );
 
-        //case OdGe::kNurbCurve2d : dumpNurbCurveEdge(indent + 1, pEdge);    
+        //case OdGe::kNurbCurve2d : dumpNurbCurveEdge(indent + 1, pEdge);
     }
 
     return OGRERR_NONE;
 }
-

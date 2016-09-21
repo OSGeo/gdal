@@ -507,7 +507,7 @@ Em Python:
 \section gdal_tutorial_create Usando Create()
 
 Em situa&ccedil;&otilde;es em que n&atilde;o se quer somente exportar um arquivo existente 
-para uma arquivo novo, geralmente usa-se o m&eacute;todo GDALDriver::Criar() (embora algumas 
+para uma arquivo novo, geralmente usa-se o m&eacute;todo GDALDriver::Create() (embora algumas 
 op&ccedil;&otilde;es interessantes s&atilde;o poss&iacute;veis 
 com o uso de arquivos virtuais ou de arquivos da em-mem&oacute;ria). 
 O m&eacute;todo Create() examina uma lista de op&ccedil;&otilde;es bem como o CreateCopy(), mas 

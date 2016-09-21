@@ -56,7 +56,7 @@ CPL_CVSID("$Id$");
     sInfo.nChangeset = 0; \
     sInfo.nVersion = 0; \
     sInfo.nUID = 0; \
-    sInfo.bTimeStampIsStr = 0; \
+    sInfo.bTimeStampIsStr = false; \
     sInfo.pszUserSID = NULL;
 /*    \    sInfo.nVisible = 1; */
 
@@ -97,23 +97,23 @@ struct _OSMContext
 
 #ifdef HAVE_EXPAT
     XML_Parser     hXMLParser;
-    int            bEOF;
-    int            bStopParsing;
-    int            bHasFoundFeature;
+    bool           bEOF;
+    bool           bStopParsing;
+    bool           bHasFoundFeature;
     int            nWithoutEventCounter;
     int            nDataHandlerCounter;
 
     unsigned int   nStrLength;
     unsigned int   nTags;
 
-    int            bInNode;
-    int            bInWay;
-    int            bInRelation;
+    bool           bInNode;
+    bool           bInWay;
+    bool           bInRelation;
 
     OSMWay         sWay;
     OSMRelation    sRelation;
 
-    int            bTryToFetchBounds;
+    bool           bTryToFetchBounds;
 #endif
 
     VSILFILE      *fp;
@@ -144,7 +144,7 @@ struct _OSMContext
 
 typedef enum
 {
-    BLOB_UNKNOW,
+    BLOB_UNKNOWN,
     BLOB_OSMHEADER,
     BLOB_OSMDATA
 } BlobType;
@@ -154,7 +154,7 @@ int ReadBlobHeader(GByte* pabyData, GByte* pabyDataLimit,
                    unsigned int* pnBlobSize, BlobType* peBlobType)
 {
     *pnBlobSize = 0;
-    *peBlobType = BLOB_UNKNOW;
+    *peBlobType = BLOB_UNKNOWN;
 
     while(pabyData < pabyDataLimit)
     {
@@ -384,7 +384,7 @@ int ReadStringTable(GByte* pabyData, GByte* pabyDataLimit,
         int* panStrOffNew;
         psCtxt->nStrAllocated = MAX(psCtxt->nStrAllocated * 2,
                                           (unsigned int)(pabyDataLimit - pabyData));
-        panStrOffNew = (int*) VSIRealloc(
+        panStrOffNew = (int*) VSI_REALLOC_VERBOSE(
             panStrOff, psCtxt->nStrAllocated * sizeof(int));
         if( panStrOffNew == NULL )
             GOTO_END_ERROR;
@@ -402,7 +402,7 @@ int ReadStringTable(GByte* pabyData, GByte* pabyDataLimit,
             unsigned int nDataLength;
             READ_SIZE(pabyData, pabyDataLimit, nDataLength);
 
-            panStrOff[nStrCount ++] = pabyData - (GByte*)pszStrBuf;
+            panStrOff[nStrCount ++] = static_cast<int>(pabyData - (GByte*)pszStrBuf);
             pbSaved = &pabyData[nDataLength];
 
             pabyData += nDataLength;
@@ -487,7 +487,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
                 OSMNode* pasNodesNew;
                 psCtxt->nNodesAllocated = MAX(psCtxt->nNodesAllocated * 2,
                                                  nSize);
-                pasNodesNew = (OSMNode*) VSIRealloc(
+                pasNodesNew = (OSMNode*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasNodes, psCtxt->nNodesAllocated * sizeof(OSMNode));
                 if( pasNodesNew == NULL )
                     GOTO_END_ERROR;
@@ -502,7 +502,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
         {
             unsigned int nSize;
             GByte* pabyDataNewLimit;
- 
+
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             /* Inline reading of DenseInfo structure */
@@ -565,7 +565,7 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSIRealloc(
+                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -656,9 +656,9 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
             /* if( pabyDataVisible )
                 READ_VARINT32(pabyDataVisible, pabyDataLimit, nVisible); */
 
-            if( pabyDataKeyVal )
+            if( pabyDataKeyVal != NULL && pasTags != NULL )
             {
-                while (TRUE)
+                while( true )
                 {
                     unsigned int nKey, nVal;
                     READ_VARUINT32(pabyDataKeyVal, pabyDataLimit, nKey);
@@ -679,21 +679,27 @@ int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
                 }
             }
 
-            if( nTags > nKVIndexStart )
+            if( pasTags != NULL && nTags > nKVIndexStart )
                 pasNodes[nNodes].pasTags = pasTags + nKVIndexStart;
             else
                 pasNodes[nNodes].pasTags = NULL;
             pasNodes[nNodes].nTags = nTags - nKVIndexStart;
 
             pasNodes[nNodes].nID = nID;
-            pasNodes[nNodes].dfLat = .000000001 * (psCtxt->nLatOffset + (psCtxt->nGranularity * nLat));
-            pasNodes[nNodes].dfLon = .000000001 * (psCtxt->nLonOffset + (psCtxt->nGranularity * nLon));
-            pasNodes[nNodes].sInfo.bTimeStampIsStr = FALSE;
+            pasNodes[nNodes].dfLat = .000000001 * (psCtxt->nLatOffset + ((double)psCtxt->nGranularity * nLat));
+            pasNodes[nNodes].dfLon = .000000001 * (psCtxt->nLonOffset + ((double)psCtxt->nGranularity * nLon));
+            if( pasNodes[nNodes].dfLon < -180 || pasNodes[nNodes].dfLon > 180 ||
+                pasNodes[nNodes].dfLat < -90 || pasNodes[nNodes].dfLat > 90 )
+                GOTO_END_ERROR;
+            pasNodes[nNodes].sInfo.bTimeStampIsStr = false;
             pasNodes[nNodes].sInfo.ts.nTimeStamp = nTimeStamp;
             pasNodes[nNodes].sInfo.nChangeset = nChangeset;
             pasNodes[nNodes].sInfo.nVersion = nVersion;
             pasNodes[nNodes].sInfo.nUID = nUID;
-            pasNodes[nNodes].sInfo.pszUserSID = pszStrBuf + panStrOff[nUserSID];
+            if( nUserSID >= nStrCount )
+                pasNodes[nNodes].sInfo.pszUserSID = "";
+            else
+                pasNodes[nNodes].sInfo.pszUserSID = pszStrBuf + panStrOff[nUserSID];
             /* pasNodes[nNodes].sInfo.nVisible = nVisible; */
             nNodes ++;
             /* printf("nLat = " CPL_FRMT_GIB "\n", nLat); printf("nLon = " CPL_FRMT_GIB "\n", nLon); */
@@ -789,12 +795,16 @@ end_error:
 /*                             ReadNode()                               */
 /************************************************************************/
 
+/* From https://github.com/openstreetmap/osmosis/blob/master/osmosis-osm-binary/src/main/protobuf/osmformat.proto */
+/* The one advertized in http://wiki.openstreetmap.org/wiki/PBF_Format and */
+/* used previously seem wrong/old-dated */
+
 #define NODE_IDX_ID      1
-#define NODE_IDX_LAT     7
-#define NODE_IDX_LON     8
-#define NODE_IDX_KEYS    9
-#define NODE_IDX_VALS    10
-#define NODE_IDX_INFO    11
+#define NODE_IDX_LAT     8
+#define NODE_IDX_LON     9
+#define NODE_IDX_KEYS    2
+#define NODE_IDX_VALS    3
+#define NODE_IDX_INFO    4
 
 static
 int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
@@ -823,13 +833,13 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
         {
             GIntBig nLat;
             READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLat);
-            sNode.dfLat = .000000001 * (psCtxt->nLatOffset + (psCtxt->nGranularity * nLat));
+            sNode.dfLat = .000000001 * (psCtxt->nLatOffset + ((double)psCtxt->nGranularity * nLat));
         }
         else if (nKey == MAKE_KEY(NODE_IDX_LON, WT_VARINT))
         {
             GIntBig nLon;
             READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLon);
-            sNode.dfLon = .000000001 * (psCtxt->nLonOffset + (psCtxt->nGranularity * nLon));
+            sNode.dfLon = .000000001 * (psCtxt->nLonOffset + ((double)psCtxt->nGranularity * nLon));
         }
         else if (nKey == MAKE_KEY(NODE_IDX_KEYS, WT_DATA))
         {
@@ -845,7 +855,7 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSIRealloc(
+                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -856,15 +866,15 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
             pabyDataNewLimit = pabyData + nSize;
             while (pabyData < pabyDataNewLimit)
             {
-                unsigned int nKey;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey);
+                unsigned int nKey2;
+                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
 
-                if (nKey >= psCtxt->nStrCount)
+                if (nKey2 >= psCtxt->nStrCount)
                     GOTO_END_ERROR;
 
                 psCtxt->pasTags[sNode.nTags].pszK = psCtxt->pszStrBuf +
-                                              psCtxt->panStrOff[nKey];
-                psCtxt->pasTags[sNode.nTags].pszV = NULL;
+                                              psCtxt->panStrOff[nKey2];
+                psCtxt->pasTags[sNode.nTags].pszV = "";
                 sNode.nTags ++;
             }
             if (pabyData != pabyDataNewLimit)
@@ -906,6 +916,10 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
             SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
         }
     }
+
+    if( sNode.dfLon < -180 || sNode.dfLon > 180 ||
+        sNode.dfLat < -90 || sNode.dfLat > 90 )
+        GOTO_END_ERROR;
 
     if( pabyData != pabyDataLimit )
         GOTO_END_ERROR;
@@ -971,7 +985,7 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSIRealloc(
+                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -982,15 +996,15 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
             pabyDataNewLimit = pabyData + nSize;
             while (pabyData < pabyDataNewLimit)
             {
-                unsigned int nKey;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey);
+                unsigned int nKey2;
+                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
 
-                if (nKey >= psCtxt->nStrCount)
+                if (nKey2 >= psCtxt->nStrCount)
                     GOTO_END_ERROR;
 
                 psCtxt->pasTags[sWay.nTags].pszK = psCtxt->pszStrBuf +
-                                                   psCtxt->panStrOff[nKey];
-                psCtxt->pasTags[sWay.nTags].pszV = NULL;
+                                                   psCtxt->panStrOff[nKey2];
+                psCtxt->pasTags[sWay.nTags].pszV = "";
                 sWay.nTags ++;
             }
             if (pabyData != pabyDataNewLimit)
@@ -1041,7 +1055,7 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
                 GIntBig* panNodeRefsNew;
                 psCtxt->nNodeRefsAllocated =
                     MAX(psCtxt->nNodeRefsAllocated * 2, nSize);
-                panNodeRefsNew = (GIntBig*) VSIRealloc(
+                panNodeRefsNew = (GIntBig*) VSI_REALLOC_VERBOSE(
                         psCtxt->panNodeRefs,
                         psCtxt->nNodeRefsAllocated * sizeof(GIntBig));
                 if( panNodeRefsNew == NULL )
@@ -1135,7 +1149,7 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
 
                 psCtxt->nTagsAllocated = MAX(
                     psCtxt->nTagsAllocated * 2, nSize);
-                pasTagsNew = (OSMTag*) VSIRealloc(
+                pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
                 if( pasTagsNew == NULL )
@@ -1146,15 +1160,15 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
             pabyDataNewLimit = pabyData + nSize;
             while (pabyData < pabyDataNewLimit)
             {
-                unsigned int nKey;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey);
+                unsigned int nKey2;
+                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
 
-                if (nKey >= psCtxt->nStrCount)
+                if (nKey2 >= psCtxt->nStrCount)
                     GOTO_END_ERROR;
 
                 psCtxt->pasTags[sRelation.nTags].pszK = psCtxt->pszStrBuf +
-                                                        psCtxt->panStrOff[nKey];
-                psCtxt->pasTags[sRelation.nTags].pszV = NULL;
+                                                        psCtxt->panStrOff[nKey2];
+                psCtxt->pasTags[sRelation.nTags].pszV = "";
                 sRelation.nTags ++;
             }
             if (pabyData != pabyDataNewLimit)
@@ -1204,7 +1218,7 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
                 OSMMember* pasMembersNew;
                 psCtxt->nMembersAllocated =
                     MAX(psCtxt->nMembersAllocated * 2, nSize);
-                pasMembersNew = (OSMMember*) VSIRealloc(
+                pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                         psCtxt->pasMembers,
                         psCtxt->nMembersAllocated * sizeof(OSMMember));
                 if( pasMembersNew == NULL )
@@ -1388,6 +1402,8 @@ int ReadPrimitiveBlock(GByte* pabyData, GByte* pabyDataLimit,
         if (nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_GRANULARITY, WT_VARINT))
         {
             READ_VARINT32(pabyData, pabyDataLimit, psCtxt->nGranularity);
+            if( psCtxt->nGranularity <= 0 )
+                GOTO_END_ERROR;
         }
         else if (nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_DATE_GRANULARITY, WT_VARINT))
         {
@@ -1427,7 +1443,7 @@ int ReadPrimitiveBlock(GByte* pabyData, GByte* pabyDataLimit,
 
             /* Dirty little trick */
             /* ReadStringTable() will over-write the byte after the */
-            /* StringTable message with a NUL charachter, so we backup */
+            /* StringTable message with a NUL character, so we backup */
             /* it to be able to restore it just before issuing the next */
             /* READ_FIELD_KEY. Then we will re-NUL it to have valid */
             /* NUL terminated strings */
@@ -1540,9 +1556,14 @@ int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
                 if (nUncompressedSize > psCtxt->nUncompressedAllocated)
                 {
                     GByte* pabyUncompressedNew;
-                    psCtxt->nUncompressedAllocated =
-                        MAX(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
-                    pabyUncompressedNew = (GByte*)VSIRealloc(psCtxt->pabyUncompressed,
+                    if( psCtxt->nUncompressedAllocated <= INT_MAX )
+                        psCtxt->nUncompressedAllocated =
+                            MAX(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
+                    else
+                        psCtxt->nUncompressedAllocated = nUncompressedSize;
+                    if( psCtxt->nUncompressedAllocated > 0xFFFFFFFFU - EXTRA_BYTES )
+                        GOTO_END_ERROR;
+                    pabyUncompressedNew = (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyUncompressed,
                                         psCtxt->nUncompressedAllocated + EXTRA_BYTES);
                     if( pabyUncompressedNew == NULL )
                         GOTO_END_ERROR;
@@ -1590,46 +1611,42 @@ end_error:
 /*                        EmptyNotifyNodesFunc()                        */
 /************************************************************************/
 
-static void EmptyNotifyNodesFunc(CPL_UNUSED unsigned int nNodes,
-                                 CPL_UNUSED OSMNode* pasNodes,
-                                 CPL_UNUSED OSMContext* psCtxt,
-                                 CPL_UNUSED void* user_data)
-{
-}
+static void EmptyNotifyNodesFunc(unsigned int /* nNodes */,
+                                 OSMNode* /* pasNodes */,
+                                 OSMContext* /* psCtxt */,
+                                 void* /* user_data */)
+{}
 
 
 /************************************************************************/
 /*                         EmptyNotifyWayFunc()                         */
 /************************************************************************/
 
-static void EmptyNotifyWayFunc(CPL_UNUSED OSMWay* psWay,
-                               CPL_UNUSED OSMContext* psCtxt,
-                               CPL_UNUSED void* user_data)
-{
-}
+static void EmptyNotifyWayFunc(OSMWay* /* psWay */,
+                               OSMContext* /* psCtxt */,
+                               void* /* user_data */)
+{}
 
 /************************************************************************/
 /*                       EmptyNotifyRelationFunc()                      */
 /************************************************************************/
 
-static void EmptyNotifyRelationFunc(CPL_UNUSED OSMRelation* psRelation,
-                                    CPL_UNUSED OSMContext* psCtxt,
-                                    CPL_UNUSED void* user_data)
-{
-}
+static void EmptyNotifyRelationFunc( OSMRelation* /* psRelation */,
+                                     OSMContext* /* psCtxt */,
+                                     void* /* user_data */)
+{}
 
 /************************************************************************/
 /*                         EmptyNotifyBoundsFunc()                      */
 /************************************************************************/
 
-static void EmptyNotifyBoundsFunc( CPL_UNUSED double dfXMin,
-                                   CPL_UNUSED double dfYMin,
-                                   CPL_UNUSED double dfXMax,
-                                   CPL_UNUSED double dfYMax,
-                                   CPL_UNUSED OSMContext* psCtxt,
-                                   CPL_UNUSED void* user_data )
-{
-}
+static void EmptyNotifyBoundsFunc( double /* dfXMin */,
+                                   double /* dfYMin */,
+                                   double /* dfXMax */,
+                                   double /* dfYMax */,
+                                   OSMContext* /*psCtxt */,
+                                   void * /* user_data */)
+{}
 
 #ifdef HAVE_EXPAT
 
@@ -1677,8 +1694,9 @@ static GIntBig OSM_Atoi64( const char *pszString )
 /*                      OSM_XML_startElementCbk()                       */
 /************************************************************************/
 
-static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName,
-                                            const char **ppszAttr)
+static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
+                                             const char *pszName,
+                                             const char **ppszAttr)
 {
     OSMContext* psCtxt = (OSMContext*) pUserData;
     const char** ppszIter = ppszAttr;
@@ -1694,7 +1712,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
         {
             int nCountCoords = 0;
 
-            psCtxt->bTryToFetchBounds = FALSE;
+            psCtxt->bTryToFetchBounds = false;
 
             if( ppszIter )
             {
@@ -1749,8 +1767,8 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
     if( !psCtxt->bInNode && !psCtxt->bInWay && !psCtxt->bInRelation &&
         strcmp(pszName, "node") == 0 )
     {
-        psCtxt->bInNode = TRUE;
-        psCtxt->bTryToFetchBounds = FALSE;
+        psCtxt->bInNode = true;
+        psCtxt->bTryToFetchBounds = false;
 
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
@@ -1794,7 +1812,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
                 else if( strcmp(ppszIter[0], "timestamp") == 0 )
                 {
                     psCtxt->pasNodes[0].sInfo.ts.pszTimeStamp = OSM_AddString(psCtxt, ppszIter[1]);
-                    psCtxt->pasNodes[0].sInfo.bTimeStampIsStr = 1;
+                    psCtxt->pasNodes[0].sInfo.bTimeStampIsStr = true;
                 }
                 ppszIter += 2;
             }
@@ -1804,7 +1822,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
     else if( !psCtxt->bInNode && !psCtxt->bInWay && !psCtxt->bInRelation &&
              strcmp(pszName, "way") == 0 )
     {
-        psCtxt->bInWay = TRUE;
+        psCtxt->bInWay = true;
 
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
@@ -1840,7 +1858,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
                 else if( strcmp(ppszIter[0], "timestamp") == 0 )
                 {
                     psCtxt->sWay.sInfo.ts.pszTimeStamp = OSM_AddString(psCtxt, ppszIter[1]);
-                    psCtxt->sWay.sInfo.bTimeStampIsStr = 1;
+                    psCtxt->sWay.sInfo.bTimeStampIsStr = true;
                 }
                 ppszIter += 2;
             }
@@ -1850,7 +1868,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
     else if( !psCtxt->bInNode && !psCtxt->bInWay && !psCtxt->bInRelation &&
              strcmp(pszName, "relation") == 0 )
     {
-        psCtxt->bInRelation = TRUE;
+        psCtxt->bInRelation = true;
 
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
@@ -1886,7 +1904,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
                 else if( strcmp(ppszIter[0], "timestamp") == 0 )
                 {
                     psCtxt->sRelation.sInfo.ts.pszTimeStamp = OSM_AddString(psCtxt, ppszIter[1]);
-                    psCtxt->sRelation.sInfo.bTimeStampIsStr = 1;
+                    psCtxt->sRelation.sInfo.bTimeStampIsStr = true;
 
                 }
                 ppszIter += 2;
@@ -1924,7 +1942,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
             OSMMember* pasMembersNew;
             int nMembersAllocated =
                 MAX(psCtxt->nMembersAllocated * 2, psCtxt->sRelation.nMembers + 1);
-            pasMembersNew = (OSMMember*) VSIRealloc(
+            pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasMembers,
                     nMembersAllocated * sizeof(OSMMember));
             if( pasMembersNew == NULL )
@@ -2029,13 +2047,23 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
     if( psCtxt->bInNode && strcmp(pszName, "node") == 0 )
     {
-        psCtxt->pasNodes[0].nTags = psCtxt->nTags;
-        psCtxt->pasNodes[0].pasTags = psCtxt->pasTags;
+        if( psCtxt->pasNodes[0].dfLon < -180 || psCtxt->pasNodes[0].dfLon > 180 ||
+            psCtxt->pasNodes[0].dfLat < -90 || psCtxt->pasNodes[0].dfLat > 90 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid lon=%f lat=%f",
+                     psCtxt->pasNodes[0].dfLon,
+                     psCtxt->pasNodes[0].dfLat);
+        }
+        else
+        {
+            psCtxt->pasNodes[0].nTags = psCtxt->nTags;
+            psCtxt->pasNodes[0].pasTags = psCtxt->pasTags;
 
-        psCtxt->pfnNotifyNodes(1, psCtxt->pasNodes, psCtxt, psCtxt->user_data);
+            psCtxt->pfnNotifyNodes(1, psCtxt->pasNodes, psCtxt, psCtxt->user_data);
 
-        psCtxt->bHasFoundFeature = TRUE;
-
+            psCtxt->bHasFoundFeature = true;
+        }
         psCtxt->bInNode = FALSE;
     }
 
@@ -2049,7 +2077,7 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
         psCtxt->pfnNotifyWay(&(psCtxt->sWay), psCtxt, psCtxt->user_data);
 
-        psCtxt->bHasFoundFeature = TRUE;
+        psCtxt->bHasFoundFeature = true;
 
         psCtxt->bInWay = FALSE;
     }
@@ -2064,20 +2092,20 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
         psCtxt->pfnNotifyRelation(&(psCtxt->sRelation), psCtxt, psCtxt->user_data);
 
-        psCtxt->bHasFoundFeature = TRUE;
+        psCtxt->bHasFoundFeature = true;
 
-        psCtxt->bInRelation = FALSE;
+        psCtxt->bInRelation = false;
     }
 }
 /************************************************************************/
 /*                           dataHandlerCbk()                           */
 /************************************************************************/
 
-static void XMLCALL OSM_XML_dataHandlerCbk(void *pUserData,
-                                           CPL_UNUSED const char *data,
-                                           CPL_UNUSED int nLen)
+static void XMLCALL OSM_XML_dataHandlerCbk( void *pUserData,
+                                            const char * /* data */,
+                                            int /* nLen */)
 {
-    OSMContext* psCtxt = (OSMContext*) pUserData;
+    OSMContext* psCtxt = static_cast<OSMContext *>(pUserData);
 
     if (psCtxt->bStopParsing) return;
 
@@ -2089,7 +2117,7 @@ static void XMLCALL OSM_XML_dataHandlerCbk(void *pUserData,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
         XML_StopParser(psCtxt->hXMLParser, XML_FALSE);
-        psCtxt->bStopParsing = TRUE;
+        psCtxt->bStopParsing = true;
         return;
     }
 }
@@ -2105,7 +2133,7 @@ static OSMRetCode XML_ProcessBlock(OSMContext* psCtxt)
     if( psCtxt->bStopParsing )
         return OSM_ERROR;
 
-    psCtxt->bHasFoundFeature = FALSE;
+    psCtxt->bHasFoundFeature = false;
     psCtxt->nWithoutEventCounter = 0;
 
     do
@@ -2120,7 +2148,7 @@ static OSMRetCode XML_ProcessBlock(OSMContext* psCtxt)
 
         psCtxt->nBytesRead += nLen;
 
-        psCtxt->bEOF = VSIFEofL(psCtxt->fp);
+        psCtxt->bEOF = CPL_TO_BOOL(VSIFEofL(psCtxt->fp));
         eErr = XML_Parse(psCtxt->hXMLParser, (const char*) psCtxt->pabyBlob,
                          nLen, psCtxt->bEOF );
 
@@ -2132,18 +2160,18 @@ static OSMRetCode XML_ProcessBlock(OSMContext* psCtxt)
                      XML_ErrorString(XML_GetErrorCode(psCtxt->hXMLParser)),
                      (int)XML_GetCurrentLineNumber(psCtxt->hXMLParser),
                      (int)XML_GetCurrentColumnNumber(psCtxt->hXMLParser));
-            psCtxt->bStopParsing = TRUE;
+            psCtxt->bStopParsing = true;
         }
         psCtxt->nWithoutEventCounter ++;
     } while (!psCtxt->bEOF && !psCtxt->bStopParsing &&
-             psCtxt->bHasFoundFeature == FALSE &&
+             !psCtxt->bHasFoundFeature &&
              psCtxt->nWithoutEventCounter < 10);
 
     if (psCtxt->nWithoutEventCounter == 10)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
-        psCtxt->bStopParsing = TRUE;
+        psCtxt->bStopParsing = true;
     }
 
     return psCtxt->bStopParsing ? OSM_ERROR : psCtxt->bEOF ? OSM_EOF : OSM_OK;
@@ -2162,19 +2190,17 @@ OSMContext* OSM_Open( const char* pszFilename,
                       NotifyBoundsFunc pfnNotifyBounds,
                       void* user_data )
 {
-    OSMContext* psCtxt;
-    GByte abyHeader[1024];
-    int nRead;
-    VSILFILE* fp;
-    int i;
-    int bPBF = FALSE;
 
-    fp = VSIFOpenL(pszFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp == NULL)
         return NULL;
 
-    nRead = (int)VSIFReadL(abyHeader, 1, sizeof(abyHeader)-1, fp);
+    GByte abyHeader[1024];
+    int nRead = static_cast<int>(
+        VSIFReadL(abyHeader, 1, sizeof(abyHeader)-1, fp));
     abyHeader[nRead] = '\0';
+
+    bool bPBF = false;
 
     if( strstr((const char*)abyHeader, "<osm") != NULL )
     {
@@ -2188,8 +2214,8 @@ OSMContext* OSM_Open( const char* pszFilename,
     }
     else
     {
-        int nLimitI = nRead - strlen("OSMHeader");
-        for(i = 0; i < nLimitI; i++)
+        const int nLimitI = nRead - static_cast<int>(strlen("OSMHeader"));
+        for( int i = 0; i < nLimitI; i++)
         {
             if( memcmp(abyHeader + i, "OSMHeader", strlen("OSMHeader") ) == 0 )
             {
@@ -2206,7 +2232,8 @@ OSMContext* OSM_Open( const char* pszFilename,
 
     VSIFSeekL(fp, 0, SEEK_SET);
 
-    psCtxt = (OSMContext*) VSIMalloc(sizeof(OSMContext));
+    OSMContext* psCtxt = static_cast<OSMContext *>(
+        VSI_MALLOC_VERBOSE(sizeof(OSMContext)) );
     if (psCtxt == NULL)
     {
         VSIFCloseL(fp);
@@ -2239,7 +2266,7 @@ OSMContext* OSM_Open( const char* pszFilename,
         psCtxt->nBlobSizeAllocated = XML_BUFSIZE;
 
         psCtxt->nStrAllocated = 65536;
-        psCtxt->pszStrBuf = (char*) VSIMalloc(psCtxt->nStrAllocated);
+        psCtxt->pszStrBuf = (char*) VSI_MALLOC_VERBOSE(psCtxt->nStrAllocated);
         if( psCtxt->pszStrBuf )
             psCtxt->pszStrBuf[0] = '\0';
 
@@ -2250,21 +2277,21 @@ OSMContext* OSM_Open( const char* pszFilename,
                               OSM_XML_endElementCbk);
         XML_SetCharacterDataHandler(psCtxt->hXMLParser, OSM_XML_dataHandlerCbk);
 
-        psCtxt->bTryToFetchBounds = TRUE;
+        psCtxt->bTryToFetchBounds = true;
 
         psCtxt->nNodesAllocated = 1;
-        psCtxt->pasNodes = (OSMNode*) VSIMalloc(sizeof(OSMNode) * psCtxt->nNodesAllocated);
+        psCtxt->pasNodes = (OSMNode*) VSI_MALLOC_VERBOSE(sizeof(OSMNode) * psCtxt->nNodesAllocated);
 
         psCtxt->nTagsAllocated = 256;
-        psCtxt->pasTags = (OSMTag*) VSIMalloc(sizeof(OSMTag) * psCtxt->nTagsAllocated);
+        psCtxt->pasTags = (OSMTag*) VSI_MALLOC_VERBOSE(sizeof(OSMTag) * psCtxt->nTagsAllocated);
 
         /* 300 is the recommended value, but there are files with more than 2000 so we should be able */
         /* to realloc over that value */
         psCtxt->nMembersAllocated = 2000;
-        psCtxt->pasMembers = (OSMMember*) VSIMalloc(sizeof(OSMMember) * psCtxt->nMembersAllocated);
+        psCtxt->pasMembers = (OSMMember*) VSI_MALLOC_VERBOSE(sizeof(OSMMember) * psCtxt->nMembersAllocated);
 
         psCtxt->nNodeRefsAllocated = 2000;
-        psCtxt->panNodeRefs = (GIntBig*) VSIMalloc(sizeof(GIntBig) * psCtxt->nNodeRefsAllocated);
+        psCtxt->panNodeRefs = (GIntBig*) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * psCtxt->nNodeRefsAllocated);
 
         if( psCtxt->pszStrBuf == NULL ||
             psCtxt->pasNodes == NULL ||
@@ -2279,7 +2306,7 @@ OSMContext* OSM_Open( const char* pszFilename,
     }
 #endif
 
-    psCtxt->pabyBlob = (GByte*)VSIMalloc(psCtxt->nBlobSizeAllocated);
+    psCtxt->pabyBlob = (GByte*)VSI_MALLOC_VERBOSE(psCtxt->nBlobSizeAllocated);
     if( psCtxt->pabyBlob == NULL )
     {
         OSM_Close(psCtxt);
@@ -2339,16 +2366,16 @@ void OSM_ResetReading( OSMContext* psCtxt )
                               OSM_XML_startElementCbk,
                               OSM_XML_endElementCbk);
         XML_SetCharacterDataHandler(psCtxt->hXMLParser, OSM_XML_dataHandlerCbk);
-        psCtxt->bEOF = FALSE;
-        psCtxt->bStopParsing = FALSE;
+        psCtxt->bEOF = false;
+        psCtxt->bStopParsing = false;
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
         psCtxt->nTags = 0;
 
-        psCtxt->bTryToFetchBounds = TRUE;
-        psCtxt->bInNode = FALSE;
+        psCtxt->bTryToFetchBounds = true;
+        psCtxt->bInNode = false;
         psCtxt->bInWay = FALSE;
-        psCtxt->bInRelation = FALSE;
+        psCtxt->bInRelation = false;
     }
 #endif
 }
@@ -2384,7 +2411,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
 
     memset(psCtxt->pabyBlob + nHeaderSize, 0, EXTRA_BYTES);
     nRet = ReadBlobHeader(psCtxt->pabyBlob, psCtxt->pabyBlob + nHeaderSize, &nBlobSize, &eType);
-    if (!nRet || eType == BLOB_UNKNOW)
+    if (!nRet || eType == BLOB_UNKNOWN)
         GOTO_END_ERROR;
 
     if (nBlobSize > 64*1024*1024)
@@ -2393,7 +2420,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
     {
         GByte* pabyBlobNew;
         psCtxt->nBlobSizeAllocated = MAX(psCtxt->nBlobSizeAllocated * 2, nBlobSize);
-        pabyBlobNew = (GByte*)VSIRealloc(psCtxt->pabyBlob,
+        pabyBlobNew = (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyBlob,
                                         psCtxt->nBlobSizeAllocated + EXTRA_BYTES);
         if( pabyBlobNew == NULL )
             GOTO_END_ERROR;

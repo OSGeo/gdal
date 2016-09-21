@@ -57,9 +57,9 @@ OGRTigerLayer::OGRTigerLayer( OGRTigerDataSource *poDSIn,
 /* -------------------------------------------------------------------- */
     if( !poDS->GetWriteMode() )
     {
-        panModuleFCount = (int *) 
+        panModuleFCount = (int *)
             CPLCalloc(poDS->GetModuleCount(),sizeof(int));
-        panModuleOffset = (int *) 
+        panModuleOffset = (int *)
             CPLCalloc(poDS->GetModuleCount()+1,sizeof(int));
 
         nFeatureCount = 0;
@@ -93,7 +93,7 @@ OGRTigerLayer::~OGRTigerLayer()
     if( m_nFeaturesRead > 0 && poReader->GetFeatureDefn() != NULL )
     {
         CPLDebug( "TIGER", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poReader->GetFeatureDefn()->GetName() );
     }
 
@@ -128,7 +128,7 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
 /*      If we don't have the current module open for the requested      */
 /*      data, then open it now.                                         */
 /* -------------------------------------------------------------------- */
-    if( iLastModule == -1 
+    if( iLastModule == -1
         || nFeatureId <= panModuleOffset[iLastModule]
         || nFeatureId > panModuleOffset[iLastModule+1] )
     {
@@ -208,7 +208,7 @@ int OGRTigerLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
+    else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
         return FALSE;
 
@@ -221,7 +221,7 @@ int OGRTigerLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCSequentialWrite) )
         return poDS->GetWriteMode();
 
-    else 
+    else
         return FALSE;
 }
 

@@ -30,31 +30,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
+
 #include "hdf.h"
 #include "mfhdf.h"
 
 #include "HdfEosDef.h"
 
-#include "gdal_priv.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-
-#include "hdf4compat.h"
 #include "hdf4dataset.h"
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-void	GDALRegister_HDF4(void);
-CPL_C_END
-
-extern const char *pszGDALSignature;
+extern const char * const pszGDALSignature;
 
 CPLMutex *hHDF4Mutex = NULL;
 
 /************************************************************************/
 /* ==================================================================== */
-/*				HDF4Dataset				*/
+/*                              HDF4Dataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -62,18 +58,16 @@ CPLMutex *hHDF4Mutex = NULL;
 /*                           HDF4Dataset()                              */
 /************************************************************************/
 
-HDF4Dataset::HDF4Dataset()
-
-{
-    hSD = 0;
-    hGR = 0;
-    nImages = 0;
-    iSubdatasetType = H4ST_UNKNOWN;
-    pszSubdatasetType = NULL;
-    papszGlobalMetadata = NULL;
-    papszSubDatasets = NULL;
-    bIsHDFEOS = 0;
-}
+HDF4Dataset::HDF4Dataset() :
+    bIsHDFEOS(false),
+    hGR(0),
+    hSD(0),
+    nImages(0),
+    iSubdatasetType(H4ST_UNKNOWN),
+    pszSubdatasetType(NULL),
+    papszGlobalMetadata(NULL),
+    papszSubDatasets(NULL)
+{}
 
 /************************************************************************/
 /*                            ~HDF4Dataset()                            */
@@ -85,13 +79,13 @@ HDF4Dataset::~HDF4Dataset()
     CPLMutexHolderD(&hHDF4Mutex);
 
     if ( hSD )
-	SDend( hSD );
+        SDend( hSD );
     if ( hGR )
-	GRend( hGR );
+        GRend( hGR );
     if ( papszSubDatasets )
-	CSLDestroy( papszSubDatasets );
+        CSLDestroy( papszSubDatasets );
     if ( papszGlobalMetadata )
-	CSLDestroy( papszGlobalMetadata );
+        CSLDestroy( papszGlobalMetadata );
 }
 
 /************************************************************************/
@@ -112,10 +106,10 @@ char **HDF4Dataset::GetMetadataDomainList()
 char **HDF4Dataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
+    if( pszDomain != NULL && STARTS_WITH_CI(pszDomain, "SUBDATASETS") )
         return papszSubDatasets;
-    else
-        return GDALDataset::GetMetadata( pszDomain );
+
+    return GDALDataset::GetMetadata( pszDomain );
 }
 
 /************************************************************************/
@@ -130,51 +124,62 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
                           int nValues, const char *pszDelimiter )
 {
-    char        *pszString, *pszField;
-    int         i, iFieldSize, iStringSize;
-
-    iFieldSize = 32 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
+    const int iFieldSize = 32 + static_cast<int>(strlen( pszDelimiter ) );
+    char *pszField = static_cast<char *>( CPLMalloc( iFieldSize + 1 ) );
+    const int iStringSize = nValues * iFieldSize + 1;
+    char *pszString = static_cast<char *>( CPLMalloc( iStringSize ) );
     memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
+    for( int i = 0; i < nValues; i++ )
     {
         switch ( eDataType )
         {
             case GDT_Byte:
-                sprintf( pszField, "%d%s", ((GByte *)paDataArray)[i],
-                     (i < nValues - 1)?pszDelimiter:"" );
+                snprintf( pszField, iFieldSize + 1, "%d%s",
+                         reinterpret_cast<GByte *>(
+                             const_cast<void *>( paDataArray ) )[i],
+                         (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_UInt16:
-                sprintf( pszField, "%u%s", ((GUInt16 *)paDataArray)[i],
-                     (i < nValues - 1)?pszDelimiter:"" );
+                snprintf( pszField, iFieldSize + 1, "%u%s",
+                         reinterpret_cast<GUInt16 *>(
+                             const_cast<void *>(  paDataArray ) )[i],
+                         (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Int16:
             default:
-                sprintf( pszField, "%d%s", ((GInt16 *)paDataArray)[i],
-                     (i < nValues - 1)?pszDelimiter:"" );
+                snprintf( pszField, iFieldSize + 1, "%d%s",
+                         reinterpret_cast<GInt16 *>(
+                             const_cast<void *>(  paDataArray ) )[i],
+                         (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_UInt32:
-                sprintf( pszField, "%u%s", ((GUInt32 *)paDataArray)[i],
+                snprintf( pszField, iFieldSize + 1, "%u%s",
+                         reinterpret_cast<GUInt32 *>(
+                             const_cast<void *>(  paDataArray ) )[i],
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Int32:
-                sprintf( pszField, "%d%s", ((GInt32 *)paDataArray)[i],
-                     (i < nValues - 1)?pszDelimiter:"" );
+                snprintf( pszField, iFieldSize + 1, "%d%s",
+                         reinterpret_cast<GInt32 *>(
+                                const_cast<void *>(  paDataArray ) )[i],
+                         (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Float32:
-                CPLsprintf( pszField, "%.10g%s", ((float *)paDataArray)[i],
-                     (i < nValues - 1)?pszDelimiter:"" );
+                CPLsnprintf( pszField, iFieldSize + 1, "%.10g%s",
+                             reinterpret_cast<float *>(
+                                 const_cast<void *>(  paDataArray ) )[i],
+                             (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Float64:
-                CPLsprintf( pszField, "%.15g%s", ((double *)paDataArray)[i],
-                     (i < nValues - 1)?pszDelimiter:"" );
+                CPLsnprintf( pszField, iFieldSize + 1, "%.15g%s",
+                             reinterpret_cast<double *>(
+                                 const_cast<void *>(  paDataArray ) )[i],
+                             (i < nValues - 1)?pszDelimiter:"" );
                 break;
         }
         strcat( pszString, pszField );
     }
-    
+
     CPLFree( pszField );
     return pszString;
 }
@@ -213,7 +218,7 @@ GDALDataType HDF4Dataset::GetDataType( int32 iNumType )
 }
 
 /************************************************************************/
-/*		Return the human readable name of data type		*/
+/*              Return the human readable name of data type             */
 /************************************************************************/
 
 const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
@@ -244,13 +249,18 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
 	    return "32-bit floating-point";
         case DFNT_FLOAT64:
 	    return "64-bit floating-point";
-	default:
-	    return "unknown type";
+        default:
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Unknown type %d\n", static_cast<int>(iNumType) );
+
+            return "unknown type";
+        }
     }
 }
 
 /************************************************************************/
-/*  Return the size of data type in bytes	                        */
+/*  Return the size of data type in bytes                               */
 /************************************************************************/
 
 int HDF4Dataset::GetDataTypeSize( int32 iNumType )
@@ -273,8 +283,12 @@ int HDF4Dataset::GetDataTypeSize( int32 iNumType )
         case DFNT_UINT64:
         case DFNT_FLOAT64:
 	    return 8;
-	default:
-	    return 0;
+        default:
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Unknown type %d\n", static_cast<int>(iNumType) );
+            return 0;
+        }
     }
 }
 
@@ -287,27 +301,42 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
     switch ( iNumType )
     {
         case DFNT_INT8:
-            return (double)*(char *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<char *>( pData ) );
         case DFNT_UINT8:
-            return (double)*(unsigned char *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<unsigned char *>( pData ) );
         case DFNT_INT16:
-            return (double)*(short *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<short *>( pData ) );
         case DFNT_UINT16:
-            return (double)*(unsigned short *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<unsigned short *>( pData ) );
         case DFNT_INT32:
-            return (double)*(long *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<int *>( pData ) );
         case DFNT_UINT32:
-            return (double)*(unsigned long *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<unsigned int *>( pData ) );
         case DFNT_INT64:
-            return (double)*(char *)pData;
+            // Highly suspicious! Should be GIntBig. But cannot verify.
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<char *>( pData ) );
         case DFNT_UINT64:
-            return (double)*(GIntBig *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<GIntBig *>( pData ) );
         case DFNT_FLOAT32:
-            return (double)*(float *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<float *>( pData ) );
         case DFNT_FLOAT64:
-            return (double)*(double *)pData;
+            return *reinterpret_cast<double *>(
+                reinterpret_cast<double *>( pData ) );
         default:
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Unknown type %d\n", static_cast<int>(iNumType) );
             return 0.0;
+        }
     }
 }
 
@@ -315,28 +344,27 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
 /*         Tokenize HDF-EOS attributes.                                 */
 /************************************************************************/
 
-char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString ) 
+char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 
 {
-    const char  *pszDelimiters = " \t\n\r";
+    const char  * const pszDelimiters = " \t\n\r";
     char        **papszRetList = NULL;
-    char        *pszToken;
-    int         nTokenMax, nTokenLen;
 
-    pszToken = (char *) CPLCalloc( 10, 1 );
-    nTokenMax = 10;
-    
+    char *pszToken = static_cast<char *>( CPLCalloc( 10, 1 ) );
+    int nTokenMax = 10;
+
     while( pszString != NULL && *pszString != '\0' )
     {
-        int     bInString = FALSE, bInBracket = FALSE;
+        bool bInString = false;
+        bool bInBracket = false;
 
-        nTokenLen = 0;
-        
-        // Try to find the next delimeter, marking end of token
+        int nTokenLen = 0;
+
+        // Try to find the next delimiter, marking end of token.
         for( ; *pszString != '\0'; pszString++ )
         {
 
-            // End if this is a delimeter skip it and break.
+            // End if this is a delimiter skip it and break.
             if ( !bInBracket && !bInString
                  && strchr(pszDelimiters, *pszString) != NULL )
             {
@@ -346,41 +374,34 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 
             // Sometimes in bracketed tokens we may found a sort of
             // paragraph formatting. We will remove unneeded spaces and new
-            // lines. 
+            // lines.
             if ( bInBracket )
                 if ( strchr("\r\n", *pszString) != NULL
                      || ( *pszString == ' '
                           && strchr(" \r\n", *(pszString - 1)) != NULL ) )
                 continue;
-            
+
             if ( *pszString == '"' )
             {
-                if ( bInString )
-                {
-                    bInString = FALSE;
-                    continue;
-                }
-                else
-                {
-                    bInString = TRUE;
-                    continue;
-                }
+                bInString = !bInString;
+                continue;
             }
             else if ( *pszString == '(' )
-	    {
+            {
                 bInBracket = TRUE;
-		continue;
-	    }
+                continue;
+            }
 	    else if ( *pszString == ')' )
-	    {
+            {
 		bInBracket = FALSE;
-		continue;
-	    }
+                continue;
+            }
 
 	    if( nTokenLen >= nTokenMax - 2 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
-                pszToken = (char *) CPLRealloc( pszToken, nTokenMax );
+                pszToken = static_cast<char *>(
+                    CPLRealloc( pszToken, nTokenMax ) );
             }
 
             pszToken[nTokenLen] = *pszString;
@@ -395,7 +416,7 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
         }
 
         // If the last token is an empty token, then we have to catch
-        // it now, otherwise we won't reenter the loop and it will be lost. 
+        // it now, otherwise we won't reenter the loop and it will be lost.
         if ( *pszString == '\0' && strchr(pszDelimiters, *(pszString-1)) )
         {
             papszRetList = CSLAddString( papszRetList, "" );
@@ -403,7 +424,7 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
     }
 
     if( papszRetList == NULL )
-        papszRetList = (char **) CPLCalloc( sizeof(char *), 1 );
+        papszRetList = static_cast<char **>( CPLCalloc( sizeof(char *), 1 ) );
 
     CPLFree( pszToken );
 
@@ -411,38 +432,44 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 }
 
 /************************************************************************/
-/*     Find object name and its value in HDF-EOS attributes.            */
+/*     Find object name, class value in HDF-EOS attributes.             */
 /*     Function returns pointer to the string in list next behind       */
 /*     recognized object.                                               */
 /************************************************************************/
 
-char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
+char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList,
+                                      char **ppszAttrName,
+                                      char **ppszAttrClass,
                                       char **ppszAttrValue )
 {
-    int	    iCount, i, j;
     *ppszAttrName = NULL;
+    *ppszAttrClass = NULL;
     *ppszAttrValue = NULL;
 
-    iCount = CSLCount( papszAttrList );
-    for ( i = 0; i < iCount - 2; i++ )
+    const int iCount = CSLCount( papszAttrList );
+    for( int i = 0; i < iCount - 2; i++ )
     {
-	if ( EQUAL( papszAttrList[i], "OBJECT" ) )
-	{
-	    i += 2;
-	    for ( j = 1; i + j < iCount - 2; j++ )
-	    {
-	        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
-		     EQUAL( papszAttrList[i + j], "OBJECT" ) )
-	            return &papszAttrList[i + j];
-	        else if ( EQUAL( papszAttrList[i + j], "VALUE" ) )
-	        {
-		    *ppszAttrName = papszAttrList[i];
-	            *ppszAttrValue = papszAttrList[i + j + 2];
-
-		    return &papszAttrList[i + j + 2];
-	        }
-	    }
-	}
+        if ( EQUAL( papszAttrList[i], "OBJECT" ) )
+        {
+            i += 2;
+            for ( int j = 1; i + j < iCount - 2; j++ )
+            {
+                if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
+                     EQUAL( papszAttrList[i + j], "OBJECT" ) )
+                    return &papszAttrList[i + j];
+                else if ( EQUAL( papszAttrList[i + j], "CLASS" ) )
+                {
+                    *ppszAttrClass = papszAttrList[i + j + 2];
+                    continue;
+                }
+                else if ( EQUAL( papszAttrList[i + j], "VALUE" ) )
+                {
+                    *ppszAttrName = papszAttrList[i];
+                    *ppszAttrValue = papszAttrList[i + j + 2];
+                    continue;
+                }
+            }
+        }
     }
 
     return NULL;
@@ -455,30 +482,29 @@ char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
 char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     int32 iAttribute, int32 nValues, char **papszMetadata )
 {
-    char	*pszData;
-    
-    pszData = (char *)CPLMalloc( (nValues + 1) * sizeof(char) );
+    char *pszData = static_cast<char *>(
+        CPLMalloc( (nValues + 1) * sizeof(char) ) );
     pszData[nValues] = '\0';
     SDreadattr( iHandle, iAttribute, pszData );
     // HDF4-EOS attributes has followed structure:
-    // 
+    //
     // GROUP = <name>
     //   GROUPTYPE = <name>
     //
     //   GROUP = <name>
-    //   
+    //
     //     OBJECT = <name>
     //       CLASS = <string>
     //       NUM_VAL = <number>
     //       VALUE = <string> or <number>
     //     END_OBJECT = <name>
-    //     
+    //
     //     .......
     //     .......
     //     .......
-    //     
+    //
     //   END_GROUP = <name>
-    //   
+    //
     // .......
     // .......
     // .......
@@ -495,44 +521,59 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     // or
     // (<number>,<number>,...)
     //
-    // Records within objects may follows in any order, objects may contains
-    // other objects (and lacks VALUE record), groups contains other groups
+    // Records within objects could come in any order, objects could contain
+    // other objects (and lack VALUE record), groups could contain other groups
     // and objects. Names of groups and objects are not unique and may repeat.
     // Objects may contains other types of records.
     //
-    // We are interested in OBJECTS structures only.
+    // We are interested in OBJECTS structures only. To avoid multiple items
+    // with the same name, names will be suffixed with the class values, e.g.
+    //
+    //  OBJECT                 = PARAMETERNAME
+    //    CLASS                = "9"
+    //    NUM_VAL              = 1
+    //    VALUE                = "Spectral IR Surf Bidirect Reflectivity"
+    //  END_OBJECT             = PARAMETERNAME
+    //
+    //  will be translated into metadata record:
+    //
+    //  PARAMETERNAME.9 = "Spectral IR Surf Bidirect Reflectivity"
 
-    char *pszAttrName, *pszAttrValue;
+    char *pszAttrName = NULL;
+    char *pszAttrClass = NULL;
+    char *pszAttrValue = NULL;
     char *pszAddAttrName = NULL;
-    char **papszAttrList, **papszAttrs;
-    
-    papszAttrList = HDF4EOSTokenizeAttrs( pszData );
-    papszAttrs = papszAttrList;
+
+    char ** const papszAttrList = HDF4EOSTokenizeAttrs( pszData );
+    char ** papszAttrs = papszAttrList;
     while ( papszAttrs )
     {
-	papszAttrs =
-	    HDF4EOSGetObject( papszAttrs, &pszAttrName, &pszAttrValue );
+	papszAttrs = HDF4EOSGetObject( papszAttrs, &pszAttrName,
+                                       &pszAttrClass, &pszAttrValue );
 	if ( pszAttrName && pszAttrValue )
-	{
+        {
 	    // Now we should recognize special type of HDF EOS metastructures:
 	    // ADDITIONALATTRIBUTENAME = <name>
 	    // PARAMETERVALUE = <value>
 	    if ( EQUAL( pszAttrName, "ADDITIONALATTRIBUTENAME" ) )
 		pszAddAttrName = pszAttrValue;
 	    else if ( pszAddAttrName && EQUAL( pszAttrName, "PARAMETERVALUE" ) )
-	    {
+            {
 		papszMetadata =
 		    CSLAddNameValue( papszMetadata, pszAddAttrName, pszAttrValue );
 		pszAddAttrName = NULL;
-	    }
-	    else
-	    {
-		papszMetadata =
-		    CSLAddNameValue( papszMetadata, pszAttrName, pszAttrValue );
-	    }
-	}
+            }
+            else
+            {
+                // Add class suffix to the key name if applicable
+		papszMetadata = CSLAddNameValue( papszMetadata,
+                    pszAttrClass ?
+                    CPLSPrintf("%s.%s", pszAttrName, pszAttrClass) : pszAttrName,
+                    pszAttrValue );
+            }
+        }
     }
-    
+
     CSLDestroy( papszAttrList );
     CPLFree( pszData );
 
@@ -547,12 +588,11 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     int32 iAttribute, char *pszAttrName, int32 iNumType, int32 nValues,
     char **papszMetadata )
 {
-    void	*pData = NULL;
-    char	*pszTemp = NULL;
-    
+
 /* -------------------------------------------------------------------- */
 /*     Allocate a buffer to hold the attribute data.                    */
 /* -------------------------------------------------------------------- */
+    void *pData = NULL;
     if ( iNumType == DFNT_CHAR8 || iNumType == DFNT_UCHAR8 )
         pData = CPLMalloc( (nValues + 1) * GetDataTypeSize(iNumType) );
     else
@@ -564,20 +604,20 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     SDreadattr( iHandle, iAttribute, pData );
     if ( iNumType == DFNT_CHAR8 || iNumType == DFNT_UCHAR8 )
     {
-        ((char *)pData)[nValues] = '\0';
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, 
-                                         (const char *) pData );
+        reinterpret_cast<char *>( pData )[nValues] = '\0';
+        papszMetadata = CSLAddNameValue(
+            papszMetadata, pszAttrName,
+            const_cast<const char *>( reinterpret_cast<char *>( pData )) );
     }
     else
     {
+        char *pszTemp = NULL;
         pszTemp = SPrintArray( GetDataType(iNumType), pData, nValues, ", " );
         papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-        if ( pszTemp )
-	    CPLFree( pszTemp );
+        CPLFree( pszTemp );
     }
-    
-    if ( pData )
-	CPLFree( pData );
+
+    CPLFree( pData );
 
     return papszMetadata;
 }
@@ -588,46 +628,50 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
 
 CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 {
-    int32	iAttribute, nValues, iNumType, nDatasets, nAttributes;
-    char	szAttrName[H4_MAX_NC_NAME];
-
 /* -------------------------------------------------------------------- */
 /*     Obtain number of SDSs and global attributes in input file.       */
 /* -------------------------------------------------------------------- */
+    int32 nDatasets, nAttributes;
     if ( SDfileinfo( iHandler, &nDatasets, &nAttributes ) != 0 )
-	return CE_Failure;
+        return CE_Failure;
+
+    char szAttrName[H4_MAX_NC_NAME];  // TODO: Get this off the stack.
 
     // Loop through the all attributes
-    for ( iAttribute = 0; iAttribute < nAttributes; iAttribute++ )
+    for( int32 iAttribute = 0; iAttribute < nAttributes; iAttribute++ )
     {
+        int32 iNumType = 0;
+        int32 nValues = 0;
+
         // Get information about the attribute. Note that the first
         // parameter is an SD interface identifier.
         SDattrinfo( iHandler, iAttribute, szAttrName, &iNumType, &nValues );
 
-        if ( EQUALN( szAttrName, "coremetadata", 12 )    ||
-	     EQUALN( szAttrName, "archivemetadata.", 16 ) ||
-	     EQUALN( szAttrName, "productmetadata.", 16 ) ||
-             EQUALN( szAttrName, "badpixelinformation", 19 ) ||
-	     EQUALN( szAttrName, "product_summary", 15 ) ||
-	     EQUALN( szAttrName, "dem_specific", 12 ) ||
-	     EQUALN( szAttrName, "bts_specific", 12 ) ||
-	     EQUALN( szAttrName, "etse_specific", 13 ) ||
-	     EQUALN( szAttrName, "dst_specific", 12 ) ||
-	     EQUALN( szAttrName, "acv_specific", 12 ) ||
-	     EQUALN( szAttrName, "act_specific", 12 ) ||
-	     EQUALN( szAttrName, "etst_specific", 13 ) ||
-	     EQUALN( szAttrName, "level_1_carryover", 17 ) )
+        if ( STARTS_WITH_CI(szAttrName, "coremetadata")    ||
+	     STARTS_WITH_CI(szAttrName, "archivemetadata.") ||
+	     STARTS_WITH_CI(szAttrName, "productmetadata.") ||
+             STARTS_WITH_CI(szAttrName, "badpixelinformation") ||
+	     STARTS_WITH_CI(szAttrName, "product_summary") ||
+	     STARTS_WITH_CI(szAttrName, "dem_specific") ||
+	     STARTS_WITH_CI(szAttrName, "bts_specific") ||
+	     STARTS_WITH_CI(szAttrName, "etse_specific") ||
+	     STARTS_WITH_CI(szAttrName, "dst_specific") ||
+	     STARTS_WITH_CI(szAttrName, "acv_specific") ||
+	     STARTS_WITH_CI(szAttrName, "act_specific") ||
+	     STARTS_WITH_CI(szAttrName, "etst_specific") ||
+	     STARTS_WITH_CI(szAttrName, "level_1_carryover") )
         {
-            bIsHDFEOS = 1;
-            papszGlobalMetadata = TranslateHDF4EOSAttributes( iHandler,
-		iAttribute, nValues, papszGlobalMetadata );
+            bIsHDFEOS = true;
+            papszGlobalMetadata
+                = TranslateHDF4EOSAttributes(
+                    iHandler, iAttribute, nValues, papszGlobalMetadata );
         }
 
         // Skip "StructMetadata.N" records. We will fetch information
         // from them using HDF-EOS API
-	else if ( EQUALN( szAttrName, "structmetadata.", 15 ) )
+	else if ( STARTS_WITH_CI(szAttrName, "structmetadata.") )
         {
-            bIsHDFEOS = 1;
+            bIsHDFEOS = true;
             continue;
         }
 
@@ -664,31 +708,29 @@ int HDF4Dataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int32	i;
-
     if( !Identify( poOpenInfo ) )
         return NULL;
-    
+
     CPLMutexHolderD(&hHDF4Mutex);
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    int32	hHDF4;
-    
+
     // Attempt to increase maximum number of opened HDF files
 #ifdef HDF4_HAS_MAXOPENFILES
-    intn        nCurrMax, nSysLimit;
+    intn nCurrMax = 0;
+    intn nSysLimit = 0;
 
     if ( SDget_maxopenfiles(&nCurrMax, &nSysLimit) >= 0
          && nCurrMax < nSysLimit )
     {
-        intn res = SDreset_maxopenfiles( nSysLimit );
+        /*intn res = */SDreset_maxopenfiles( nSysLimit );
     }
 #endif /* HDF4_HAS_MAXOPENFILES */
 
-    hHDF4 = Hopen(poOpenInfo->pszFilename, DFACC_READ, 0);
-    
+    int32 hHDF4 = Hopen(poOpenInfo->pszFilename, DFACC_READ, 0);
+
     if( hHDF4 <= 0 )
         return( NULL );
 
@@ -697,10 +739,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    HDF4Dataset *poDS;
-
-    CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
-    poDS = new HDF4Dataset();
+    // Release mutex otherwise we will deadlock with GDALDataset own mutex.
+    CPLReleaseMutex(hHDF4Mutex);
+    HDF4Dataset *poDS = new HDF4Dataset();
     CPLAcquireMutex(hHDF4Mutex, 1000.0);
 
     if( poOpenInfo->fpL != NULL )
@@ -708,7 +749,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFCloseL(poOpenInfo->fpL);
         poOpenInfo->fpL = NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*          Open HDF SDS Interface.                                     */
 /* -------------------------------------------------------------------- */
@@ -716,7 +757,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ( poDS->hSD == -1 )
     {
-        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+      // Release mutex otherwise we will deadlock with GDALDataset own mutex.
+        CPLReleaseMutex(hHDF4Mutex);
         delete poDS;
         CPLAcquireMutex(hHDF4Mutex, 1000.0);
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -724,13 +766,14 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
         return NULL;
     }
-   
+
 /* -------------------------------------------------------------------- */
-/*		Now read Global Attributes.				*/
+/*              Now read Global Attributes.                             */
 /* -------------------------------------------------------------------- */
     if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
     {
-        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        // Release mutex otherwise we will deadlock with GDALDataset own mutex.
+        CPLReleaseMutex(hHDF4Mutex);
         delete poDS;
         CPLAcquireMutex(hHDF4Mutex, 1000.0);
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -742,33 +785,32 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadata( poDS->papszGlobalMetadata, "" );
 
 /* -------------------------------------------------------------------- */
-/*		Determine type of file we read.				*/
+/*              Determine type of file we read.                         */
 /* -------------------------------------------------------------------- */
-    const char	*pszValue;
-    
-    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                       "Signature"))
-	 && EQUAL( pszValue, pszGDALSignature ) )
+    const char *pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                             "Signature");
+
+    if ( pszValue != NULL && EQUAL( pszValue, pszGDALSignature ) )
     {
 	poDS->iSubdatasetType = H4ST_GDAL;
 	poDS->pszSubdatasetType = "GDAL_HDF4";
     }
 
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title")) != NULL
 	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
     {
 	poDS->iSubdatasetType = H4ST_SEAWIFS_L1A;
 	poDS->pszSubdatasetType = "SEAWIFS_L1A";
     }
 
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title")) != NULL
 	&& EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
     {
 	poDS->iSubdatasetType = H4ST_SEAWIFS_L2;
 	poDS->pszSubdatasetType = "SEAWIFS_L2";
     }
 
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title")) != NULL
 	&& EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
     {
 	poDS->iSubdatasetType = H4ST_SEAWIFS_L3;
@@ -776,8 +818,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                            "L1 File Generated By"))
-	&& EQUALN( pszValue, "HYP version ", 12 ) )
+                                            "L1 File Generated By")) != NULL
+	&& STARTS_WITH_CI(pszValue, "HYP version ") )
     {
 	poDS->iSubdatasetType = H4ST_HYPERION_L1;
 	poDS->pszSubdatasetType = "HYPERION_L1";
@@ -790,50 +832,49 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*  If we have HDF-EOS dataset, process it here.	                */
+/*  If we have HDF-EOS dataset, process it here.                        */
 /* -------------------------------------------------------------------- */
-    char	szName[VSNAMELENMAX + 1], szTemp[8192];
-    char	*pszString;
-    const char  *pszName;
-    int		nCount;
-    int32	aiDimSizes[H4_MAX_VAR_DIMS];
-    int32	iRank, iNumType, nAttrs;
-    bool        bIsHDF = true;
-    
+    int32 aiDimSizes[H4_MAX_VAR_DIMS];  // TODO: Get this off of the stack.
+    int32 iRank = 0;
+    int32 iNumType = 0;
+    int32 nAttrs = 0;
+    bool bIsHDF = true;
+
     // Sometimes "HDFEOSVersion" attribute is not defined and we will
     // determine HDF-EOS datasets using other records
     // (see ReadGlobalAttributes() method).
     if ( poDS->bIsHDFEOS
          || CSLFetchNameValue(poDS->papszGlobalMetadata, "HDFEOSVersion") )
     {
-        bIsHDF  = false;
-
-        int32   nSubDatasets, nStrBufSize;
-
 /* -------------------------------------------------------------------- */
 /*  Process swath layers.                                               */
 /* -------------------------------------------------------------------- */
         hHDF4 = SWopen( poOpenInfo->pszFilename, DFACC_READ );
         if( hHDF4 < 0)
         {
-            CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+            // Release mutex otherwise we will deadlock with GDALDataset own
+            // mutex.
+            CPLReleaseMutex(hHDF4Mutex);
             delete poDS;
             CPLAcquireMutex(hHDF4Mutex, 1000.0);
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to open HDF-EOS file \"%s\" for swath reading.\n",
                       poOpenInfo->pszFilename );
             return NULL;
-        } 
-        nSubDatasets = SWinqswath(poOpenInfo->pszFilename, NULL, &nStrBufSize);
+        }
+        int32 nStrBufSize;
+        int32 nSubDatasets
+            = SWinqswath(poOpenInfo->pszFilename, NULL, &nStrBufSize);
+
 #ifdef DEBUG
-        CPLDebug( "HDF4", "Number of HDF-EOS swaths: %d", (int)nSubDatasets );
+        CPLDebug( "HDF4", "Number of HDF-EOS swaths: %d",
+                  static_cast<int>( nSubDatasets ) );
 #endif
+
         if ( nSubDatasets > 0 && nStrBufSize > 0 )
         {
-            char    *pszSwathList;
-            char    **papszSwaths;
-
-            pszSwathList = (char *)CPLMalloc( nStrBufSize + 1 );
+            char *pszSwathList
+                = static_cast<char *>( CPLMalloc( nStrBufSize + 1 ) );
             SWinqswath( poOpenInfo->pszFilename, pszSwathList, &nStrBufSize );
             pszSwathList[nStrBufSize] = '\0';
 
@@ -841,55 +882,58 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             CPLDebug( "HDF4", "List of HDF-EOS swaths: %s", pszSwathList );
 #endif
 
-            papszSwaths =
+            char **papszSwaths =
                 CSLTokenizeString2( pszSwathList, ",", CSLT_HONOURSTRINGS );
             CPLFree( pszSwathList );
 
             if ( nSubDatasets != CSLCount(papszSwaths) )
             {
                 CSLDestroy( papszSwaths );
-                CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+                // Release mutex otherwise we will deadlock with GDALDataset own
+                // mutex.
+                CPLReleaseMutex(hHDF4Mutex);
                 delete poDS;
                 CPLAcquireMutex(hHDF4Mutex, 1000.0);
-                CPLDebug( "HDF4", "Can not parse list of HDF-EOS grids." );
+                CPLDebug( "HDF4", "Cannot parse list of HDF-EOS grids." );
                 return NULL;
             }
 
-            for ( i = 0; i < nSubDatasets; i++)
+            for( int32 i = 0; i < nSubDatasets; i++)
             {
-                char    *pszFieldList;
-                char    **papszFields;
-                int32   *paiRank, *paiNumType;
-                int32   hSW, nFields, j;
+                const int32 hSW = SWattach( hHDF4, papszSwaths[i] );
 
-                hSW = SWattach( hHDF4, papszSwaths[i] );
-
-                nFields = SWnentries( hSW, HDFE_NENTDFLD, &nStrBufSize );
-                pszFieldList = (char *)CPLMalloc( nStrBufSize + 1 );
-                paiRank = (int32 *)CPLMalloc( nFields * sizeof(int32) );
-                paiNumType = (int32 *)CPLMalloc( nFields * sizeof(int32) );
+                const int32 nFields
+                    = SWnentries( hSW, HDFE_NENTDFLD, &nStrBufSize );
+                char *pszFieldList = static_cast<char *>(
+                    CPLMalloc( nStrBufSize + 1 ) );
+                int32 *paiRank = static_cast<int32 *>(
+                    CPLMalloc( nFields * sizeof(int32) ) );
+                int32 *paiNumType = static_cast<int32 *>(
+                    CPLMalloc( nFields * sizeof(int32) ) );
 
                 SWinqdatafields( hSW, pszFieldList, paiRank, paiNumType );
 
 #ifdef DEBUG
                 {
-                    char *pszTmp =
+                    char * const pszTmp =
                         SPrintArray( GDT_UInt32, paiRank, nFields, "," );
 
                     CPLDebug( "HDF4", "Number of data fields in swath %d: %d",
-                              (int) i, (int) nFields );
+                              static_cast<int>( i ),
+                              static_cast<int>( nFields ) );
                     CPLDebug( "HDF4", "List of data fields in swath %d: %s",
-                              (int) i, pszFieldList );
+                              static_cast<int>( i ), pszFieldList );
                     CPLDebug( "HDF4", "Data fields ranks: %s", pszTmp );
 
                     CPLFree( pszTmp );
                 }
 #endif
 
-                papszFields = CSLTokenizeString2( pszFieldList, ",",
-                                                  CSLT_HONOURSTRINGS );
-                
-                for ( j = 0; j < nFields; j++ )
+                char **papszFields = CSLTokenizeString2( pszFieldList, ",",
+                                                         CSLT_HONOURSTRINGS );
+
+                char szTemp[256] = {'\0'};  // TODO: Get this off the stack.
+                for( int32 j = 0; j < nFields; j++ )
                 {
                     SWfieldinfo( hSW, papszFields[j], &iRank, aiDimSizes,
                                  &iNumType, NULL );
@@ -897,26 +941,28 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                     if ( iRank < 2 )
                         continue;
 
-	            // Add field to the list of GDAL subdatasets
-                    nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-                    sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
-	            // We will use the field index as an identificator.
+                    // Add field to the list of GDAL subdatasets
+                    const int nCount = CSLCount( poDS->papszSubDatasets ) / 2;
+                    snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nCount + 1 );
+                    // We will use the field index as an identificator.
                     poDS->papszSubDatasets =
                         CSLSetNameValue( poDS->papszSubDatasets, szTemp,
                                 CPLSPrintf("HDF4_EOS:EOS_SWATH:\"%s\":%s:%s",
                                            poOpenInfo->pszFilename,
                                            papszSwaths[i], papszFields[j]) );
 
-                    sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
-                    pszString = SPrintArray( GDT_UInt32, aiDimSizes,
-                                             iRank, "x" );
+                    snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nCount + 1 );
+                    char *pszString = SPrintArray( GDT_UInt32, aiDimSizes,
+                                                   iRank, "x" );
                     poDS->papszSubDatasets =
                         CSLSetNameValue( poDS->papszSubDatasets, szTemp,
-                                         CPLSPrintf( "[%s] %s %s (%s)", pszString,
+                                         CPLSPrintf( "[%s] %s %s (%s)",
+                                                     pszString,
                                          papszFields[j],
                                          papszSwaths[i],
                                          poDS->GetDataTypeName(iNumType) ) );
                     CPLFree( pszString );
+                    szTemp[0] = '\0';
                 }
 
                 CSLDestroy( papszFields );
@@ -935,49 +981,51 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         hHDF4 = GDopen( poOpenInfo->pszFilename, DFACC_READ );
         nSubDatasets = GDinqgrid( poOpenInfo->pszFilename, NULL, &nStrBufSize );
+
 #ifdef DEBUG
-        CPLDebug( "HDF4", "Number of HDF-EOS grids: %d", (int)nSubDatasets );
+        CPLDebug( "HDF4", "Number of HDF-EOS grids: %d",
+                  static_cast<int>( nSubDatasets ) );
 #endif
+
         if ( nSubDatasets > 0 && nStrBufSize > 0 )
         {
-            char    *pszGridList;
-            char    **papszGrids;
-
-            pszGridList = (char *)CPLMalloc( nStrBufSize + 1 );
+            char *pszGridList
+                = static_cast<char *>( CPLMalloc( nStrBufSize + 1 ) );
             GDinqgrid( poOpenInfo->pszFilename, pszGridList, &nStrBufSize );
 
 #ifdef DEBUG
             CPLDebug( "HDF4", "List of HDF-EOS grids: %s", pszGridList );
 #endif
 
-            papszGrids =
+            char **papszGrids =
                 CSLTokenizeString2( pszGridList, ",", CSLT_HONOURSTRINGS );
             CPLFree( pszGridList );
 
             if ( nSubDatasets != CSLCount(papszGrids) )
             {
                 CSLDestroy( papszGrids );
-                GDclose( hHDF4 ); 
-                CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+                GDclose( hHDF4 );
+                // Release mutex otherwise we will deadlock with GDALDataset own
+                // mutex.
+                CPLReleaseMutex(hHDF4Mutex);
                 delete poDS;
                 CPLAcquireMutex(hHDF4Mutex, 1000.0);
-                CPLDebug( "HDF4", "Can not parse list of HDF-EOS grids." );
+                CPLDebug( "HDF4", "Cannot parse list of HDF-EOS grids." );
                 return NULL;
             }
 
-            for ( i = 0; i < nSubDatasets; i++)
+            for( int32 i = 0; i < nSubDatasets; i++)
             {
-                char    *pszFieldList;
-                char    **papszFields;
-                int32   *paiRank, *paiNumType;
-                int32   hGD, nFields, j;
+                const int32 hGD = GDattach( hHDF4, papszGrids[i] );
 
-                hGD = GDattach( hHDF4, papszGrids[i] );
-
-                nFields = GDnentries( hGD, HDFE_NENTDFLD, &nStrBufSize );
-                pszFieldList = (char *)CPLMalloc( nStrBufSize + 1 );
-                paiRank = (int32 *)CPLMalloc( nFields * sizeof(int32) );
-                paiNumType = (int32 *)CPLMalloc( nFields * sizeof(int32) );
+                const int32 nFields
+                    = GDnentries( hGD, HDFE_NENTDFLD, &nStrBufSize );
+                char *pszFieldList = static_cast<char *>(
+                    CPLMalloc( nStrBufSize + 1 ) );
+                int32 *paiRank = static_cast<int32 *>(
+                    CPLMalloc( nFields * sizeof(int32) ) );
+                int32 *paiNumType = static_cast<int32 *>(
+                    CPLMalloc( nFields * sizeof(int32) ) );
 
                 GDinqfields( hGD, pszFieldList, paiRank, paiNumType );
 
@@ -986,19 +1034,20 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                     char* pszTmp =
                             SPrintArray( GDT_UInt32, paiRank, nFields, "," );
                     CPLDebug( "HDF4", "Number of fields in grid %d: %d",
-                            (int) i, (int) nFields );
+                              static_cast<int>( i ),
+                              static_cast<int>( nFields ) );
                     CPLDebug( "HDF4", "List of fields in grid %d: %s",
-                            (int) i, pszFieldList );
-                    CPLDebug( "HDF4", "Fields ranks: %s",
-                            pszTmp );
+                              static_cast<int>( i ), pszFieldList );
+                    CPLDebug( "HDF4", "Fields ranks: %s", pszTmp );
                     CPLFree( pszTmp );
                 }
 #endif
 
-                papszFields = CSLTokenizeString2( pszFieldList, ",",
+                char **papszFields = CSLTokenizeString2( pszFieldList, ",",
                                                   CSLT_HONOURSTRINGS );
-                
-                for ( j = 0; j < nFields; j++ )
+
+                char szTemp[256];
+                for( int32 j = 0; j < nFields; j++ )
                 {
                     GDfieldinfo( hGD, papszFields[j], &iRank, aiDimSizes,
                                  &iNumType, NULL );
@@ -1006,22 +1055,23 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                     if ( iRank < 2 )
                         continue;
 
-	            // Add field to the list of GDAL subdatasets
-                    nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-                    sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
-	            // We will use the field index as an identificator.
+                    // Add field to the list of GDAL subdatasets
+                    const int nCount = CSLCount( poDS->papszSubDatasets ) / 2;
+                    snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nCount + 1 );
+                    // We will use the field index as an identificator.
                     poDS->papszSubDatasets =
                         CSLSetNameValue(poDS->papszSubDatasets, szTemp,
                                 CPLSPrintf( "HDF4_EOS:EOS_GRID:\"%s\":%s:%s",
                                             poOpenInfo->pszFilename,
                                             papszGrids[i], papszFields[j]));
 
-                    sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
-                    pszString = SPrintArray( GDT_UInt32, aiDimSizes,
-                                             iRank, "x" );
+                    snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nCount + 1 );
+                    char *pszString = SPrintArray( GDT_UInt32, aiDimSizes,
+                                                   iRank, "x" );
                     poDS->papszSubDatasets =
                         CSLSetNameValue( poDS->papszSubDatasets, szTemp,
-                                         CPLSPrintf("[%s] %s %s (%s)", pszString,
+                                         CPLSPrintf("[%s] %s %s (%s)",
+                                                    pszString,
                                              papszFields[j],
                                              papszGrids[i],
                                              poDS->GetDataTypeName(iNumType)) );
@@ -1042,51 +1092,61 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         bIsHDF = ( nSubDatasets == 0 ); // Try to read as HDF
     }
 
+    char szName[VSNAMELENMAX + 1];
+
     if( bIsHDF )
     {
 
 /* -------------------------------------------------------------------- */
-/*  Make a list of subdatasets from SDSs contained in input HDF file.	*/
+/*  Make a list of subdatasets from SDSs contained in input HDF file.   */
 /* -------------------------------------------------------------------- */
-        int32   nDatasets;
+        int32 nDatasets = 0;
 
         if ( SDfileinfo( poDS->hSD, &nDatasets, &nAttrs ) != 0 )
-	    return NULL;
+            return NULL;
 
-        for ( i = 0; i < nDatasets; i++ )
+        char szTemp[256] = {'\0'};  // TODO: Get this off the stack.
+        const char *pszName = NULL;
+
+        for( int32 i = 0; i < nDatasets; i++ )
         {
-            int32	iSDS;
-
-            iSDS = SDselect( poDS->hSD, i );
-            if ( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, &nAttrs) != 0 )
+            const int32 iSDS = SDselect( poDS->hSD, i );
+            if ( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType,
+                            &nAttrs) != 0 )
                 return NULL;
-            
-            if ( iRank == 1 )		// Skip 1D datsets
+
+            if ( iRank == 1 )  // Skip 1D datsets
                     continue;
 
             // Do sort of known datasets. We will display only image bands
             if ( (poDS->iSubdatasetType == H4ST_SEAWIFS_L1A ) &&
-                      !EQUALN( szName, "l1a_data", 8 ) )
+                      !STARTS_WITH_CI(szName, "l1a_data") )
                     continue;
             else
                 pszName = szName;
-            
+
             // Add datasets with multiple dimensions to the list of GDAL subdatasets
-            nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-            sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+            const int nCount = CSLCount( poDS->papszSubDatasets ) / 2;
+            snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nCount + 1 );
             // We will use SDS index as an identificator, because SDS names
             // are not unique. Filename also needed for further file opening
-            poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp, 
+            poDS->papszSubDatasets = CSLSetNameValue(
+                  poDS->papszSubDatasets,
+                  szTemp,
                   CPLSPrintf( "HDF4_SDS:%s:\"%s\":%ld", poDS->pszSubdatasetType,
-                              poOpenInfo->pszFilename, (long)i) );
-            sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
-            pszString = SPrintArray( GDT_UInt32, aiDimSizes, iRank, "x" );
-            poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+                              poOpenInfo->pszFilename,
+                              static_cast<long>( i ) ) );
+            snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nCount + 1 );
+            char *pszString = SPrintArray( GDT_UInt32, aiDimSizes, iRank, "x" );
+            poDS->papszSubDatasets = CSLSetNameValue(
+                poDS->papszSubDatasets,
+                szTemp,
                 CPLSPrintf( "[%s] %s (%s)", pszString,
                             pszName, poDS->GetDataTypeName(iNumType)) );
             CPLFree( pszString );
 
             SDendaccess( iSDS );
+            szTemp[0] = '\0';
         }
 
         SDend( poDS->hSD );
@@ -1105,7 +1165,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if ( GRfileinfo( poDS->hGR, &poDS->nImages, &nAttrs ) == -1 )
         {
-            CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+            // Release mutex otherwise we will deadlock with GDALDataset own
+            // mutex.
+            CPLReleaseMutex(hHDF4Mutex);
             GRend( poDS->hGR );
             poDS->hGR = 0;
             Hclose( hHDF4 );
@@ -1114,17 +1176,20 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        for ( i = 0; i < poDS->nImages; i++ )
+        char szTemp[256] = {'\0'};  // TODO: Get this off the stack.
+        for( int32 i = 0; i < poDS->nImages; i++ )
         {
-            int32   iInterlaceMode; 
-            int32   iGR = GRselect( poDS->hGR, i );
+            const int32 iGR = GRselect( poDS->hGR, i );
 
             // iRank in GR interface has another meaning. It represents number
             // of samples per pixel. aiDimSizes has only two dimensions.
+            int32 iInterlaceMode;
             if ( GRgetiminfo( iGR, szName, &iRank, &iNumType, &iInterlaceMode,
                               aiDimSizes, &nAttrs ) != 0 )
             {
-                CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+                // Release mutex otherwise we will deadlock with GDALDataset
+                // own mutex.
+                CPLReleaseMutex(hHDF4Mutex);
                 GRend( poDS->hGR );
                 poDS->hGR = 0;
                 Hclose( hHDF4 );
@@ -1132,19 +1197,22 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLAcquireMutex(hHDF4Mutex, 1000.0);
                 return NULL;
             }
-            nCount = CSLCount( poDS->papszSubDatasets ) / 2;
-            sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+            const int nCount = CSLCount( poDS->papszSubDatasets ) / 2;
+            snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nCount + 1 );
             poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets,
                 szTemp,CPLSPrintf( "HDF4_GR:UNKNOWN:\"%s\":%ld",
-                                   poOpenInfo->pszFilename, (long)i));
-            sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
-            pszString = SPrintArray( GDT_UInt32, aiDimSizes, 2, "x" );
+                                   poOpenInfo->pszFilename,
+                                   static_cast<long>( i ) ) );
+            snprintf( szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nCount + 1 );
+            char *pszString = SPrintArray( GDT_UInt32, aiDimSizes, 2, "x" );
             poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets,
-                szTemp, CPLSPrintf( "[%sx%ld] %s (%s)", pszString, (long)iRank,
+                szTemp, CPLSPrintf( "[%sx%ld] %s (%s)", pszString,
+                                    static_cast<long>( iRank ),
                                     szName, poDS->GetDataTypeName(iNumType)) );
             CPLFree( pszString );
 
             GRendaccess( iGR );
+            szTemp[0] = '\0';
         }
 
         GRend( poDS->hGR );
@@ -1163,14 +1231,15 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if ( CSLCount( poDS->papszSubDatasets ) / 2 == 1 )
     {
-        char *pszSDSName;
-        pszSDSName = CPLStrdup( CSLFetchNameValue( poDS->papszSubDatasets,
-                            "SUBDATASET_1_NAME" ));
-        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        char *pszSDSName = CPLStrdup( CSLFetchNameValue( poDS->papszSubDatasets,
+                                                         "SUBDATASET_1_NAME" ));
+        // Release mutex otherwise we will deadlock with GDALDataset own mutex.
+        CPLReleaseMutex(hHDF4Mutex);
         delete poDS;
         poDS = NULL;
 
-        GDALDataset* poRetDS = (GDALDataset*) GDALOpen( pszSDSName, poOpenInfo->eAccess );
+        GDALDataset* poRetDS = reinterpret_cast<GDALDataset*>(
+            GDALOpen( pszSDSName, poOpenInfo->eAccess ) );
         CPLFree( pszSDSName );
 
         CPLAcquireMutex(hHDF4Mutex, 1000.0);
@@ -1189,16 +1258,18 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         if( poOpenInfo->eAccess == GA_Update )
         {
-            CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+            // Release mutex otherwise we will deadlock with GDALDataset own
+            // mutex.
+            CPLReleaseMutex(hHDF4Mutex);
             delete poDS;
             CPLAcquireMutex(hHDF4Mutex, 1000.0);
 
-            CPLError( CE_Failure, CPLE_NotSupported, 
-                      "The HDF4 driver does not support update access to existing"
-                      " datasets.\n" );
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "The HDF4 driver does not support update access to "
+                      "existing datasets.\n" );
             return NULL;
         }
-    
+
     }
 
     return( poDS );
@@ -1208,7 +1279,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*                           HDF4UnloadDriver()                         */
 /************************************************************************/
 
-static void HDF4UnloadDriver(CPL_UNUSED GDALDriver* poDriver)
+static void HDF4UnloadDriver( GDALDriver * /* poDriver */ )
 {
     if( hHDF4Mutex != NULL )
         CPLDestroyMutex(hHDF4Mutex);
@@ -1216,39 +1287,35 @@ static void HDF4UnloadDriver(CPL_UNUSED GDALDriver* poDriver)
 }
 
 /************************************************************************/
-/*                        GDALRegister_HDF4()				*/
+/*                        GDALRegister_HDF4()                           */
 /************************************************************************/
 
 void GDALRegister_HDF4()
 
 {
-    GDALDriver	*poDriver;
-    
-    if (! GDAL_CHECK_VERSION("HDF4 driver"))
+    if( !GDAL_CHECK_VERSION( "HDF4 driver" ) )
         return;
 
-    if( GDALGetDriverByName( "HDF4" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "HDF4" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Hierarchical Data Format Release 4" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_hdf4.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdf" );
-        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    if( GDALGetDriverByName( "HDF4" ) != NULL )
+        return;
 
-        poDriver->pfnOpen = HDF4Dataset::Open;
-        poDriver->pfnIdentify = HDF4Dataset::Identify;
-        poDriver->pfnUnloadDriver = HDF4UnloadDriver;
+    GDALDriver *poDriver = new GDALDriver();
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->SetDescription( "HDF4" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Hierarchical Data Format Release 4" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hdf4.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdf" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+
+    poDriver->pfnOpen = HDF4Dataset::Open;
+    poDriver->pfnIdentify = HDF4Dataset::Identify;
+    poDriver->pfnUnloadDriver = HDF4UnloadDriver;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 
 #ifdef HDF4_PLUGIN
     GDALRegister_HDF4Image();
 #endif
-
 }

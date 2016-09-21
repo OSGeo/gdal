@@ -31,7 +31,7 @@
 %{
 #include "gdalgrid.h"
 
-#ifdef DEBUG 
+#ifdef DEBUG
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
 #else
@@ -48,7 +48,8 @@ typedef void OGRGeometryShadow;
 %rename (TermProgress_nocb) GDALTermProgress_nocb;
 %feature( "kwargs" ) GDALTermProgress_nocb;
 %inline %{
-int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
+static int
+GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
   return GDALTermProgress( dfProgress, pszMessage, pData);
 }
 %}
@@ -58,7 +59,6 @@ int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void
 int GDALTermProgress( double, const char *, void * );
 %nocallback;
 #endif
-
 
 /************************************************************************/
 /*                        ComputeMedianCutPCT()                         */
@@ -86,10 +86,10 @@ int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
                                           colors,
                                           callback,
                                           callback_data);
-    
+
     return err;
 }
-%} 
+%}
 
 /************************************************************************/
 /*                           DitherRGB2PCT()                            */
@@ -115,7 +115,7 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
                                   colors,
                                   callback,
                                   callback_data);
-    
+
     return err;
 }
 %}
@@ -125,6 +125,9 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
 /*                           ReprojectImage()                           */
 /************************************************************************/
 %apply Pointer NONNULL {GDALDatasetShadow *src_ds, GDALDatasetShadow *dst_ds};
+#ifndef SWIGJAVA
+%feature( "kwargs" ) ReprojectImage;
+#endif
 %inline %{
 CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          GDALDatasetShadow *dst_ds,
@@ -134,9 +137,17 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          double WarpMemoryLimit=0.0,
                          double maxerror = 0.0,
 			 GDALProgressFunc callback = NULL,
-                     	 void* callback_data=NULL) {
+                     	 void* callback_data=NULL,
+                         char** options = NULL ) {
 
     CPLErrorReset();
+
+    GDALWarpOptions* psOptions = NULL;
+    if( options != NULL )
+    {
+        psOptions = GDALCreateWarpOptions();
+        psOptions->papszWarpOptions = CSLDuplicate(options);
+    }
 
     CPLErr err = GDALReprojectImage( src_ds,
                                      src_wkt,
@@ -147,11 +158,14 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                                      maxerror,
                                      callback,
                                      callback_data,
-                                     NULL);
-    
+                                     psOptions);
+
+    if( psOptions != NULL )
+        GDALDestroyWarpOptions(psOptions);
+
     return err;
 }
-%} 
+%}
 %clear GDALDatasetShadow *src_ds, GDALDatasetShadow *dst_ds;
 
 /************************************************************************/
@@ -173,7 +187,7 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
     return GDALComputeProximity( srcBand, proximityBand, options,
                                  callback, callback_data );
 }
-%} 
+%}
 %clear GDALRasterBandShadow *srcBand, GDALRasterBandShadow *proximityBand;
 
 /************************************************************************/
@@ -189,7 +203,7 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 int  RasterizeLayer( GDALDatasetShadow *dataset,
                  int bands, int *band_list,
                  OGRLayerShadow *layer,
-		 int burn_values = 0, double *burn_values_list = NULL, 
+		 int burn_values = 0, double *burn_values_list = NULL,
                  char **options = NULL,
                  GDALProgressFunc callback=NULL,
                  void* callback_data=NULL) {
@@ -206,15 +220,15 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
     }
     else if( burn_values != bands )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Did not get the expected number of burn values in RasterizeLayer()" );
         return CE_Failure;
     }
 
     eErr = GDALRasterizeLayers( dataset, bands, band_list,
-                                1, &layer, 
+                                1, &layer,
                                 NULL, NULL,
-                                burn_values_list, options, 
+                                burn_values_list, options,
                                 callback, callback_data );
 
     if( burn_values == 0 )
@@ -222,7 +236,7 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
 
     return eErr;
 }
-%} 
+%}
 #else
 %feature( "kwargs" ) RasterizeLayer;
 %apply (int nList, int *pList ) { (int bands, int *band_list ) };
@@ -232,8 +246,8 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
                  int bands, int *band_list,
                  OGRLayerShadow *layer,
                  void *pfnTransformer = NULL,
-                 void *pTransformArg = NULL, 
-		 int burn_values = 0, double *burn_values_list = NULL, 
+                 void *pTransformArg = NULL,
+		 int burn_values = 0, double *burn_values_list = NULL,
                  char **options = NULL,
                  GDALProgressFunc callback=NULL,
                  void* callback_data=NULL) {
@@ -250,16 +264,16 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
     }
     else if( burn_values != bands )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Did not get the expected number of burn values in RasterizeLayer()" );
         return CE_Failure;
     }
 
     eErr = GDALRasterizeLayers( dataset, bands, band_list,
-                                1, &layer, 
-                                (GDALTransformerFunc) pfnTransformer, 
+                                1, &layer,
+                                (GDALTransformerFunc) pfnTransformer,
                                 pTransformArg,
-                                burn_values_list, options, 
+                                burn_values_list, options,
                                 callback, callback_data );
 
     if( burn_values == 0 )
@@ -267,7 +281,7 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
 
     return eErr;
 }
-%} 
+%}
 #endif
 
 /************************************************************************/
@@ -281,7 +295,7 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
 %inline %{
 int  Polygonize( GDALRasterBandShadow *srcBand,
      		 GDALRasterBandShadow *maskBand,
-  	         OGRLayerShadow *outLayer, 
+  	         OGRLayerShadow *outLayer,
                  int iPixValField,
                  char **options = NULL,
                  GDALProgressFunc callback=NULL,
@@ -292,7 +306,27 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
     return GDALPolygonize( srcBand, maskBand, outLayer, iPixValField,
                            options, callback, callback_data );
 }
-%} 
+%}
+
+#ifndef SWIGJAVA
+%feature( "kwargs" ) FPolygonize;
+#endif
+%inline %{
+int  FPolygonize( GDALRasterBandShadow *srcBand,
+                 GDALRasterBandShadow *maskBand,
+                 OGRLayerShadow *outLayer,
+                 int iPixValField,
+                 char **options = NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALFPolygonize( srcBand, maskBand, outLayer, iPixValField,
+                           options, callback, callback_data );
+}
+%}
+
 %clear GDALRasterBandShadow *srcBand, OGRLayerShadow *outLayer;
 
 /************************************************************************/
@@ -315,11 +349,11 @@ int  FillNodata( GDALRasterBandShadow *targetBand,
 
     CPLErrorReset();
 
-    return GDALFillNodata( targetBand, maskBand, maxSearchDist, 
-    	   		   0, smoothingIterations, options, 
+    return GDALFillNodata( targetBand, maskBand, maxSearchDist,
+    	   		   0, smoothingIterations, options,
 			   callback, callback_data );
 }
-%} 
+%}
 %clear GDALRasterBandShadow *targetBand;
 
 /************************************************************************/
@@ -341,27 +375,26 @@ int  SieveFilter( GDALRasterBandShadow *srcBand,
 
     CPLErrorReset();
 
-    return GDALSieveFilter( srcBand, maskBand, dstBand, 
+    return GDALSieveFilter( srcBand, maskBand, dstBand,
                             threshold, connectedness,
                             options, callback, callback_data );
 }
-%} 
+%}
 %clear GDALRasterBandShadow *srcBand, GDALRasterBandShadow *dstBand;
 
 /************************************************************************/
 /*                        RegenerateOverviews()                         */
 /************************************************************************/
 
-#ifndef SWIGPERL
 #ifndef SWIGJAVA
 %feature( "kwargs" ) RegenerateOverviews;
-#endif
+#endif /* SWIGJAVA */
 #ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int overviewBandCount, GDALRasterBandShadow **overviewBands)};
-#endif
+#endif /* SWIGCSHARP */
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *resampling};
-#endif
+#endif /* SWIGJAVA */
 %apply Pointer NONNULL { GDALRasterBandShadow* srcBand };
 %inline %{
 int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
@@ -379,9 +412,8 @@ int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
 %}
 #ifdef SWIGJAVA
 %clear (const char* resampling);
-#endif
+#endif /* SWIGJAVA */
 %clear GDALRasterBandShadow* srcBand;
-#endif
 
 /************************************************************************/
 /*                         RegenerateOverview()                         */
@@ -444,7 +476,7 @@ int wrapper_GridCreate( char* algorithmOptions,
     {
         eErr = ParseAlgorithmAndOptions( szAlgNameInvDist, &eAlgorithm, &pOptions );
     }
-    
+
     if ( eErr != CE_None )
     {
         CPLError( eErr, CPLE_AppDefined, "Failed to process algorithm name and parameters.\n" );
@@ -480,7 +512,7 @@ int ContourGenerate( GDALRasterBandShadow *srcBand,
                      double *fixedLevels,
                      int useNoData,
                      double noDataValue,
-                     OGRLayerShadow* dstLayer, 
+                     OGRLayerShadow* dstLayer,
                      int idField,
                      int elevField,
                      GDALProgressFunc callback = NULL,
@@ -531,10 +563,34 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
     /*throw CPLGetLastErrorMsg(); causes a SWIG_exception later*/
   }
   return ds;
-  
+
 }
 %}
 %clear GDALDatasetShadow *src_ds;
+
+/************************************************************************/
+/*                        CreatePansharpenedVRT()                       */
+/************************************************************************/
+
+%newobject CreatePansharpenedVRT;
+#ifndef SWIGCSHARP
+%apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int nInputSpectralBands, GDALRasterBandShadow **ahInputSpectralBands)};
+#endif /* SWIGCSHARP */
+%apply Pointer NONNULL { GDALRasterBandShadow* panchroBand };
+
+%inline %{
+GDALDatasetShadow*  CreatePansharpenedVRT( const char* pszXML,
+                            GDALRasterBandShadow* panchroBand,
+                            int nInputSpectralBands,
+                            GDALRasterBandShadow** ahInputSpectralBands )
+{
+    CPLErrorReset();
+
+    return (GDALDatasetShadow*)GDALCreatePansharpenedVRT( pszXML, panchroBand,
+                                      nInputSpectralBands, ahInputSpectralBands );
+}
+%}
+%clear GDALRasterBandShadow* panchroBand;
 
 /************************************************************************/
 /*                             Transformer                              */
@@ -549,8 +605,8 @@ public:
 
   GDALTransformerInfoShadow( GDALDatasetShadow *src, GDALDatasetShadow *dst,
                              char **options ) {
-    GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*) 
-       GDALCreateGenImgProjTransformer2( (GDALDatasetH)src, (GDALDatasetH)dst, 
+    GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*)
+       GDALCreateGenImgProjTransformer2( (GDALDatasetH)src, (GDALDatasetH)dst,
                                          options );
     return obj;
   }
@@ -570,23 +626,23 @@ public:
   int TransformPoint( int bDstToSrc, double inout[3] ) {
     int nRet, nSuccess = TRUE;
 
-    nRet = GDALUseTransformer( self, bDstToSrc, 
-                               1, &inout[0], &inout[1], &inout[2], 
+    nRet = GDALUseTransformer( self, bDstToSrc,
+                               1, &inout[0], &inout[1], &inout[2],
                                &nSuccess );
 
     return nRet && nSuccess;
   }
 %clear (double inout[3]);
 
-  int TransformPoint( double argout[3], int bDstToSrc, 
+  int TransformPoint( double argout[3], int bDstToSrc,
                       double x, double y, double z = 0.0 ) {
     int nRet, nSuccess = TRUE;
-    
+
     argout[0] = x;
     argout[1] = y;
     argout[2] = z;
-    nRet = GDALUseTransformer( self, bDstToSrc, 
-                               1, &argout[0], &argout[1], &argout[2], 
+    nRet = GDALUseTransformer( self, bDstToSrc,
+                               1, &argout[0], &argout[1], &argout[2],
                                &nSuccess );
 
     return nRet && nSuccess;
@@ -596,7 +652,7 @@ public:
   %apply (double *inout) {(double*)};
   %apply (double *inout) {(int*)};
 #endif
-  int TransformPoints( int bDstToSrc, 
+  int TransformPoints( int bDstToSrc,
                        int nCount, double *x, double *y, double *z,
                        int *panSuccess ) {
     int nRet;
@@ -621,7 +677,7 @@ public:
 #endif
 
   int  TransformGeolocations( GDALRasterBandShadow *xBand,
-                              GDALRasterBandShadow *yBand, 
+                              GDALRasterBandShadow *yBand,
 	  		      GDALRasterBandShadow *zBand,
                               GDALProgressFunc callback=NULL,
                               void* callback_data=NULL,
@@ -629,7 +685,7 @@ public:
 
     CPLErrorReset();
 
-    return GDALTransformGeolocations( xBand, yBand, zBand, 
+    return GDALTransformGeolocations( xBand, yBand, zBand,
                                       GDALUseTransformer, self,
                             	      callback, callback_data, options );
   }

@@ -26,7 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <kml/dom.h>
+#ifndef OGR_LIBKML_GEOMETRY_H
+#define OGR_LIBKML_GEOMETRY_H
+
+#include "libkml_headers.h"
 
 using kmldom::ElementPtr;
 using kmldom::KmlFactory;
@@ -35,8 +38,8 @@ using kmldom::LatLonBoxPtr;
 using kmldom::GxLatLonQuadPtr;
 
 /*******************************************************************************
-	funtion to write out a ogr geometry to kml
-	
+	function to write out a ogr geometry to km
+
 args:
 						poOgrGeom		the ogr geometry
 						extra		used in recursion, just pass -1
@@ -58,7 +61,7 @@ ElementPtr geom2kml (
 
 Args:
             poKmlGeometry   pointer to the kml geometry to translate
-            poOgrSRS        pointer to the spatial ref to set on the geometry 
+            poOgrSRS        pointer to the spatial ref to set on the geometry
 
 Returns:
             pointer to the new ogr geometry object
@@ -76,3 +79,5 @@ OGRGeometry *kml2geom_latlonbox (
 OGRGeometry *kml2geom_latlonquad (
     GxLatLonQuadPtr poKmlLatLonQuad,
     OGRSpatialReference *poOgrSRS);
+
+#endif /* OGR_LIBKML_GEOMETRY_H */

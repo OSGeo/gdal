@@ -37,11 +37,12 @@ CPL_CVSID("$Id$");
 /*                        GDALNoDataMaskBand()                          */
 /************************************************************************/
 
-GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParent )
+GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParentIn )
 
 {
     poDS = NULL;
     nBand = 0;
+    poParent = poParentIn;
 
     nRasterXSize = poParent->GetXSize();
     nRasterYSize = poParent->GetYSize();
@@ -49,7 +50,6 @@ GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParent )
     eDataType = GDT_Byte;
     poParent->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
-    this->poParent = poParent;
     dfNoDataValue = poParent->GetNoDataValue();
 }
 
@@ -71,11 +71,11 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 
 {
     GDALDataType eWrkDT;
-  
+
 /* -------------------------------------------------------------------- */
 /*      Decide on a working type.                                       */
 /* -------------------------------------------------------------------- */
-    switch( poParent->GetRasterDataType() ) 
+    switch( poParent->GetRasterDataType() )
     {
       case GDT_Byte:
         eWrkDT = GDT_Byte;
@@ -97,12 +97,12 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
       case GDT_CFloat32:
         eWrkDT = GDT_Float32;
         break;
-    
+
       case GDT_Float64:
       case GDT_CFloat64:
         eWrkDT = GDT_Float64;
         break;
-    
+
       default:
         CPLAssert( FALSE );
         eWrkDT = GDT_Float64;
@@ -112,14 +112,13 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Read the image data.                                            */
 /* -------------------------------------------------------------------- */
-    GByte *pabySrc;
     CPLErr eErr;
 
-    pabySrc = (GByte *) VSIMalloc3( GDALGetDataTypeSize(eWrkDT)/8, nBlockXSize, nBlockYSize );
+    GByte *pabySrc = static_cast<GByte *>(
+        VSI_MALLOC3_VERBOSE( GDALGetDataTypeSizeBytes(eWrkDT),
+                             nBlockXSize, nBlockYSize ) );
     if (pabySrc == NULL)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "GDALNoDataMaskBand::IReadBlock: Out of memory for buffer." );
         return CE_Failure;
     }
 
@@ -135,14 +134,17 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     {
         /* memset the whole buffer to avoid Valgrind warnings in case we can't */
         /* fetch a full block */
-        memset(pabySrc, 0, GDALGetDataTypeSize(eWrkDT)/8 * nBlockXSize * nBlockYSize );
+        memset( pabySrc, 0,
+                GDALGetDataTypeSizeBytes(eWrkDT) * nBlockXSize * nBlockYSize );
     }
 
     eErr = poParent->RasterIO( GF_Read,
-                               nXBlockOff * nBlockXSize, nYBlockOff * nBlockYSize,
+                               nXBlockOff * nBlockXSize,
+                               nYBlockOff * nBlockYSize,
                                nXSizeRequest, nYSizeRequest,
                                pabySrc, nXSizeRequest, nYSizeRequest,
-                               eWrkDT, 0, nBlockXSize * (GDALGetDataTypeSize(eWrkDT)/8),
+                               eWrkDT, 0,
+                               nBlockXSize * GDALGetDataTypeSizeBytes(eWrkDT),
                                NULL );
     if( eErr != CE_None )
     {

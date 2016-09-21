@@ -9,7 +9,7 @@
  *
  * Contributor: Alessandro Furieri, a.furieri@lqt.it
  * Portions of this module properly supporting SpatiaLite DB creation
- * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from
  * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
  *
  ******************************************************************************
@@ -38,22 +38,7 @@
 #include "ogr_sqlite.h"
 #include "cpl_conv.h"
 
-#ifdef HAVE_SPATIALITE
-#include "spatialite.h"
-#endif
-
 CPL_CVSID("$Id$");
-
-/************************************************************************/
-/*                          OGRSQLiteDriverUnload()                     */
-/************************************************************************/
-
-static void OGRSQLiteDriverUnload(CPL_UNUSED GDALDriver* poDriver)
-{
-#ifdef SPATIALITE_412_OR_LATER
-    spatialite_shutdown();
-#endif
-}
 
 /************************************************************************/
 /*                     OGRSQLiteDriverIdentify()                        */
@@ -63,7 +48,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     int nLen = (int) strlen(poOpenInfo->pszFilename);
-    if (EQUALN(poOpenInfo->pszFilename, "VirtualShape:", strlen( "VirtualShape:" )) &&
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") &&
         nLen > 4 && EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
     {
         return TRUE;
@@ -71,6 +56,25 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 
     if( EQUAL(poOpenInfo->pszFilename, ":memory:") )
         return TRUE;
+
+#ifdef SQLITE_OPEN_URI
+    // This code enables support for named memory databases in SQLite.
+    // Named memory databases use file name format
+    //   file:name?mode=memory&cache=shared
+    // SQLITE_USE_URI is checked only to enable backward compatibility, in case
+    // we accidentally hijacked some other format.
+    if( STARTS_WITH(poOpenInfo->pszFilename, "file:") &&
+        CPLTestBool(CPLGetConfigOption("SQLITE_USE_URI", "YES")) )
+    {
+        char * queryparams = strchr(poOpenInfo->pszFilename, '?');
+        if( queryparams )
+        {
+            if( strstr(queryparams, "mode=memory") != NULL )
+                return TRUE;
+        }
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Verify that the target is a real file, and has an               */
 /*      appropriate magic string at the beginning.                      */
@@ -78,7 +82,11 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 16 )
         return FALSE;
 
-    return( strncmp( (const char*)poOpenInfo->pabyHeader, "SQLite format 3", 15 ) == 0 );
+    if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
+        return FALSE;
+
+    // Could be a Rasterlite file as well
+    return -1;
 }
 
 /************************************************************************/
@@ -88,14 +96,14 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !OGRSQLiteDriverIdentify(poOpenInfo) )
+    if( OGRSQLiteDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Check VirtualShape:xxx.shp syntax                               */
 /* -------------------------------------------------------------------- */
     int nLen = (int) strlen(poOpenInfo->pszFilename);
-    if (EQUALN(poOpenInfo->pszFilename, "VirtualShape:", strlen( "VirtualShape:" )) &&
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") &&
         nLen > 4 && EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
     {
         OGRSQLiteDataSource     *poDS;
@@ -146,7 +154,8 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 
     poDS = new OGRSQLiteDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
+                     poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         return NULL;
@@ -173,7 +182,7 @@ static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
 
     if( VSIStatL( pszName, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "It seems a file system object called '%s' already exists.",
                   pszName );
 
@@ -200,7 +209,7 @@ static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
 /*                             Delete()                                 */
 /************************************************************************/
 
-CPLErr OGRSQLiteDriverDelete( const char *pszName )
+static CPLErr OGRSQLiteDriverDelete( const char *pszName )
 {
     if (VSIUnlink( pszName ) == 0)
         return CE_None;
@@ -215,23 +224,27 @@ CPLErr OGRSQLiteDriverDelete( const char *pszName )
 void RegisterOGRSQLite()
 
 {
-    if (! GDAL_CHECK_VERSION("SQLite driver"))
+    if( !GDAL_CHECK_VERSION("SQLite driver") )
         return;
-    GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "SQLite" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "SQLite" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "SQLite" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "SQLite / Spatialite" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_sqlite.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sqlite db" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetDescription( "SQLite" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SQLite / Spatialite" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sqlite.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sqlite db" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including non-spatial ones, should be listed' default='NO'/>"
+"  <Option name='LIST_VIRTUAL_OGR' type='boolean' description='Whether VirtualOGR virtual tables should be listed. Should only be enabled on trusted datasources to avoid potential safety issues' default='NO'/>"
+"</OpenOptionList>");
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 #ifdef HAVE_SPATIALITE
 "  <Option name='SPATIALITE' type='boolean' description='Whether to create a Spatialite database' default='NO'/>"
@@ -240,7 +253,7 @@ void RegisterOGRSQLite()
 "  <Option name='INIT_WITH_EPSG' type='boolean' description='Whether to insert the content of the EPSG CSV files into the spatial_ref_sys table ' default='NO'/>"
 "</CreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='FORMAT' type='string-select' description='Format of geometry columns'>"
 "    <Value>WKB</Value>"
@@ -260,20 +273,20 @@ void RegisterOGRSQLite()
 "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
 "  <Option name='FID' type='string' description='Name of the FID column to create' default='OGC_FID'/>"
 "</LayerCreationOptionList>");
-        
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time Binary" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnOpen = OGRSQLiteDriverOpen;
-        poDriver->pfnIdentify = OGRSQLiteDriverIdentify;
-        poDriver->pfnCreate = OGRSQLiteDriverCreate;
-        poDriver->pfnDelete = OGRSQLiteDriverDelete;
-        poDriver->pfnUnloadDriver = OGRSQLiteDriverUnload;
+    poDriver->pfnOpen = OGRSQLiteDriverOpen;
+    poDriver->pfnIdentify = OGRSQLiteDriverIdentify;
+    poDriver->pfnCreate = OGRSQLiteDriverCreate;
+    poDriver->pfnDelete = OGRSQLiteDriverDelete;
+    poDriver->pfnUnloadDriver = OGRSQLiteDriverUnload;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

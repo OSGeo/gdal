@@ -1,4 +1,4 @@
-/* $Id: tif_compress.c,v 1.22 2010-03-10 18:56:48 bfriesen Exp $ */
+/* $Id: tif_compress.c,v 1.24 2015-11-22 15:31:03 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -85,7 +85,7 @@ TIFFNoDecode(TIFF* tif, const char* method)
 	return (-1);
 }
 
-int
+static int
 _TIFFNoFixupTags(TIFF* tif)
 {
 	(void) tif;
@@ -227,7 +227,7 @@ TIFFUnRegisterCODEC(TIFFCodec* c)
 	codec_t* cd;
 	codec_t** pcd;
 
-	for (pcd = &registeredCODECS; (cd = *pcd); pcd = &cd->next)
+	for (pcd = &registeredCODECS; (cd = *pcd) != NULL; pcd = &cd->next)
 		if (cd->info == c) {
 			*pcd = cd->next;
 			_TIFFfree(cd);

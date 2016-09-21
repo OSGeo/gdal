@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  NITF Read/Write Library
- * Purpose:  Simple test mainline to dump info about NITF file. 
+ * Purpose:  Simple test mainline to dump info about NITF file.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
@@ -33,9 +33,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
-#ifdef OGR_ENABLED
 #include "ogr_api.h"
-#endif
 
 CPL_CVSID("$Id$");
 
@@ -55,7 +53,7 @@ static void DumpMetadata( const char *, const char *, char ** );
 /*      buffer and zero terminate it.                                   */
 /************************************************************************/
 
-char *NITFGetField( char *pszTarget, const char *pszSource, 
+char *NITFGetField( char *pszTarget, const char *pszSource,
                     int nStart, int nLength )
 
 {
@@ -140,11 +138,9 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
 
     VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET);
 
-    pasLocations = (NITFLocation *)  VSICalloc(sizeof(NITFLocation), nLocCount);
+    pasLocations = (NITFLocation *)  VSI_CALLOC_VERBOSE(sizeof(NITFLocation), nLocCount);
     if (pasLocations == NULL)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate memory for location table");
         return NULL;
     }
 
@@ -206,7 +202,7 @@ static const LocationNameId asLocationTable[] =
     { "ColorTableIndexRecord", 153 }
 };
 
-const char* GetLocationNameFromId(int nID)
+static const char* GetLocationNameFromId(int nID)
 {
     unsigned int i;
     for(i=0;i<sizeof(asLocationTable) / sizeof(asLocationTable[0]);i++)
@@ -235,7 +231,7 @@ int main( int nArgc, char ** papszArgv )
         printf( "Usage: nitfdump [-tre] [-extractshp | -extractshpinmem] <nitf_filename>*\n" );
         exit( 1 );
     }
-    
+
     for( iFile = 1; iFile < nArgc; iFile++ )
     {
         if ( EQUAL(papszArgv[iFile], "-tre") )
@@ -339,18 +335,18 @@ int main( int nArgc, char ** papszArgv )
         {
             NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
 
-            printf( "Segment %d (Type=%s):\n", 
+            printf( "Segment %d (Type=%s):\n",
                     iSegment + 1, psSegInfo->szSegmentType );
 
             printf( "  HeaderStart=" CPL_FRMT_GUIB ", HeaderSize=%u, DataStart=" CPL_FRMT_GUIB ", DataSize=" CPL_FRMT_GUIB "\n",
                     psSegInfo->nSegmentHeaderStart,
-                    psSegInfo->nSegmentHeaderSize, 
+                    psSegInfo->nSegmentHeaderSize,
                     psSegInfo->nSegmentStart,
                     psSegInfo->nSegmentSize );
             printf( "  DLVL=%d, ALVL=%d, LOC=C%d,R%d, CCS=C%d,R%d\n",
-                    psSegInfo->nDLVL, 
-                    psSegInfo->nALVL, 
-                    psSegInfo->nLOC_C, 
+                    psSegInfo->nDLVL,
+                    psSegInfo->nALVL,
+                    psSegInfo->nLOC_C,
                     psSegInfo->nLOC_R,
                     psSegInfo->nCCS_C,
                     psSegInfo->nCCS_R );
@@ -370,7 +366,7 @@ int main( int nArgc, char ** papszArgv )
 
             if( !EQUAL(psSegInfo->szSegmentType,"IM") )
                 continue;
-        
+
             psImage = NITFImageAccess( psFile, iSegment );
             if( psImage == NULL )
             {
@@ -378,16 +374,16 @@ int main( int nArgc, char ** papszArgv )
                 continue;
             }
 
-            printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n", 
-                    iSegment + 1, psImage->nCols, psImage->nRows, 
+            printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n",
+                    iSegment + 1, psImage->nCols, psImage->nRows,
                     psImage->nBands, psImage->nBitsPerSample );
-            printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s, ICORDS=%c\n", 
+            printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s, ICORDS=%c\n",
                     psImage->szPVType, psImage->szIREP, psImage->szICAT,
                     psImage->chIMODE, psImage->szIC, psImage->szCOMRAT,
                     psImage->chICORDS );
             if( psImage->chICORDS != ' ' )
             {
-                printf( "  UL=(%.15g,%.15g), UR=(%.15g,%.15g) Center=%d\n  LL=(%.15g,%.15g), LR=(%.15g,%.15g)\n", 
+                printf( "  UL=(%.15g,%.15g), UR=(%.15g,%.15g) Center=%d\n  LL=(%.15g,%.15g), LR=(%.15g,%.15g)\n",
                         psImage->dfULX, psImage->dfULY,
                         psImage->dfURX, psImage->dfURY,
                         psImage->bIsBoxCenterOfPixel,
@@ -396,22 +392,21 @@ int main( int nArgc, char ** papszArgv )
             }
 
             printf( "  IDLVL=%d, IALVL=%d, ILOC R=%d,C=%d, IMAG=%s\n",
-                    psImage->nIDLVL, psImage->nIALVL, 
-                    psImage->nILOCRow, psImage->nILOCColumn, 
+                    psImage->nIDLVL, psImage->nIALVL,
+                    psImage->nILOCRow, psImage->nILOCColumn,
                     psImage->szIMAG );
 
             printf( "  %d x %d blocks of size %d x %d\n",
                     psImage->nBlocksPerRow, psImage->nBlocksPerColumn,
                     psImage->nBlockWidth, psImage->nBlockHeight );
-        
+
             if( psImage->pachTRE != NULL )
             {
                 int nTREBytes = psImage->nTREBytes;
                 const char *pszTREData = psImage->pachTRE;
-            
-            
+
                 printf( "  Image TREs:" );
-            
+
                 while( nTREBytes > 10 )
                 {
                     int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
@@ -421,7 +416,7 @@ int main( int nArgc, char ** papszArgv )
                         printf(" Invalid size (%d) for TRE %s", nThisTRESize, szTemp);
                         break;
                     }
-                
+
                     printf( " %6.6s(%d)", pszTREData, nThisTRESize );
                     pszTREData += nThisTRESize + 11;
                     nTREBytes -= (nThisTRESize + 11);
@@ -432,7 +427,7 @@ int main( int nArgc, char ** papszArgv )
                 {
                     nTREBytes = psImage->nTREBytes;
                     pszTREData = psImage->pachTRE;
-    
+
                     while( nTREBytes > 10 )
                     {
                         char *pszEscaped;
@@ -441,12 +436,12 @@ int main( int nArgc, char ** papszArgv )
                         {
                             break;
                         }
-    
+
                         pszEscaped = CPLEscapeString( pszTREData + 11, nThisTRESize,
                                                         CPLES_BackslashQuotable );
                         printf( "  TRE '%6.6s' : %s\n", pszTREData, pszEscaped);
                         CPLFree(pszEscaped);
-    
+
                         pszTREData += nThisTRESize + 11;
                         nTREBytes -= (nThisTRESize + 11);
                     }
@@ -461,7 +456,7 @@ int main( int nArgc, char ** papszArgv )
                 printf( "  Location Table\n" );
                 for( i = 0; i < psImage->nLocCount; i++ )
                 {
-                    printf( "    LocName=%s, LocId=%d, Offset=%d, Size=%d\n", 
+                    printf( "    LocName=%s, LocId=%d, Offset=%d, Size=%d\n",
                             GetLocationNameFromId(psImage->pasLocations[i].nLocId),
                             psImage->pasLocations[i].nLocId,
                             psImage->pasLocations[i].nLocOffset,
@@ -521,35 +516,35 @@ int main( int nArgc, char ** papszArgv )
             char achSubheader[298];
             int  nSTYPEOffset;
 
-            if( !EQUAL(psSegInfo->szSegmentType,"GR") 
+            if( !EQUAL(psSegInfo->szSegmentType,"GR")
                 && !EQUAL(psSegInfo->szSegmentType,"SY") )
                 continue;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Load the graphic subheader.                                     */
 /* -------------------------------------------------------------------- */
-            if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart, 
-                           SEEK_SET ) != 0 
-                || VSIFReadL( achSubheader, 1, sizeof(achSubheader), 
+            if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart,
+                           SEEK_SET ) != 0
+                || VSIFReadL( achSubheader, 1, sizeof(achSubheader),
                               psFile->fp ) < 258 )
             {
-                CPLError( CE_Warning, CPLE_FileIO, 
-                          "Failed to read graphic subheader at " CPL_FRMT_GUIB ".", 
+                CPLError( CE_Warning, CPLE_FileIO,
+                          "Failed to read graphic subheader at " CPL_FRMT_GUIB ".",
                           psSegInfo->nSegmentHeaderStart );
                 continue;
             }
 
             // NITF 2.0. (also works for NITF 2.1)
             nSTYPEOffset = 200;
-            if( EQUALN(achSubheader+193,"999998",6) )
+            if( STARTS_WITH_CI(achSubheader+193, "999998") )
                 nSTYPEOffset += 40;
 
 /* -------------------------------------------------------------------- */
 /*      Report some standard info.                                      */
 /* -------------------------------------------------------------------- */
             printf( "Graphic Segment %d, type=%2.2s, sfmt=%c, sid=%10.10s\n",
-                    iSegment + 1, 
-                    achSubheader + 0, 
+                    iSegment + 1,
+                    achSubheader + 0,
                     achSubheader[nSTYPEOffset],
                     achSubheader + 2 );
 
@@ -602,13 +597,13 @@ int main( int nArgc, char ** papszArgv )
 
             /* Allocate one extra byte for the NULL terminating character */
             pabyTextData = (char *) CPLCalloc(1,(size_t)psSegment->nSegmentSize+1);
-            if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
-                        SEEK_SET ) != 0 
-                || VSIFReadL( pabyTextData, 1, (size_t)psSegment->nSegmentSize, 
+            if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart,
+                        SEEK_SET ) != 0
+                || VSIFReadL( pabyTextData, 1, (size_t)psSegment->nSegmentSize,
                             psFile->fp ) != psSegment->nSegmentSize )
             {
-                CPLError( CE_Warning, CPLE_FileIO, 
-                        "Failed to read " CPL_FRMT_GUIB " bytes of text data at " CPL_FRMT_GUIB ".", 
+                CPLError( CE_Warning, CPLE_FileIO,
+                        "Failed to read " CPL_FRMT_GUIB " bytes of text data at " CPL_FRMT_GUIB ".",
                         psSegment->nSegmentSize,
                         psSegment->nSegmentStart );
                 CPLFree( pabyTextData );
@@ -635,7 +630,7 @@ int main( int nArgc, char ** papszArgv )
 
             if( !EQUAL(psSegInfo->szSegmentType,"DE") )
                 continue;
-        
+
             psDES = NITFDESAccess( psFile, iSegment );
             if( psDES == NULL )
             {
@@ -687,7 +682,7 @@ int main( int nArgc, char ** papszArgv )
                     printf( "  Location Table\n" );
                     for( i = 0; i < nLocCount; i++ )
                     {
-                        printf( "    LocName=%s, LocId=%d, Offset=%d, Size=%d\n", 
+                        printf( "    LocName=%s, LocId=%d, Offset=%d, Size=%d\n",
                                 GetLocationNameFromId(pasLocations[i].nLocId),
                                 pasLocations[i].nLocId,
                                 pasLocations[i].nLocOffset,
@@ -706,16 +701,15 @@ int main( int nArgc, char ** papszArgv )
                 char szFilename[32];
                 char szRadix[32];
                 if (bExtractSHPInMem)
-                    sprintf(szRadix, "/vsimem/nitf_segment_%d", iSegment + 1);
+                    snprintf(szRadix, sizeof(szRadix), "/vsimem/nitf_segment_%d", iSegment + 1);
                 else
-                    sprintf(szRadix, "nitf_segment_%d", iSegment + 1);
+                    snprintf(szRadix, sizeof(szRadix), "nitf_segment_%d", iSegment + 1);
 
                 if (NITFDESExtractShapefile(psDES, szRadix))
                 {
-#ifdef OGR_ENABLED
                     OGRDataSourceH hDS;
                     OGRRegisterAll();
-                    sprintf(szFilename, "%s.SHP", szRadix);
+                    snprintf(szFilename, sizeof(szFilename), "%s.SHP", szRadix);
                     hDS = OGROpen(szFilename, FALSE, NULL);
                     if (hDS)
                     {
@@ -741,16 +735,15 @@ int main( int nArgc, char ** papszArgv )
                         }
                         OGR_DS_Destroy(hDS);
                     }
-#endif
                 }
 
                 if (bExtractSHPInMem)
                 {
-                    sprintf(szFilename, "%s.SHP", szRadix);
+                    snprintf(szFilename, sizeof(szFilename), "%s.SHP", szRadix);
                     VSIUnlink(szFilename);
-                    sprintf(szFilename, "%s.SHX", szRadix);
+                    snprintf(szFilename, sizeof(szFilename), "%s.SHX", szRadix);
                     VSIUnlink(szFilename);
-                    sprintf(szFilename, "%s.DBF", szRadix);
+                    snprintf(szFilename, sizeof(szFilename), "%s.DBF", szRadix);
                     VSIUnlink(szFilename);
                 }
             }
@@ -761,13 +754,11 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
         NITFClose( psFile );
     }
-    
+
     CPLFinderClean();
     CPLCleanupTLS();
     VSICleanupFileManager();
-#ifdef OGR_ENABLED
     OGRCleanupAll();
-#endif
 
     exit( 0 );
 }
@@ -776,7 +767,7 @@ int main( int nArgc, char ** papszArgv )
 /*                            DumpMetadata()                            */
 /************************************************************************/
 
-static void DumpMetadata( const char *pszTitle, const char *pszPrefix, 
+static void DumpMetadata( const char *pszTitle, const char *pszPrefix,
                           char ** papszMD )
 {
     int i;
@@ -826,7 +817,7 @@ static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC )
         else if( (i%5) == 4  )
             printf( "\n                     " );
     }
-    
+
     printf( "    LINE_DEN_COEFF = " );
     for( i=0; i < 20; i++ )
     {
@@ -837,7 +828,7 @@ static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC )
         else if( (i%5) == 4  )
             printf( "\n                     " );
     }
-    
+
     printf( "    SAMP_NUM_COEFF = " );
     for( i=0; i < 20; i++ )
     {
@@ -848,7 +839,7 @@ static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC )
         else if( (i%5) == 4  )
             printf( "\n                     " );
     }
-    
+
     printf( "    SAMP_DEN_COEFF = " );
     for( i=0; i < 20; i++ )
     {
@@ -864,23 +855,23 @@ static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 /*      Dump some known locations.                                      */
 /* -------------------------------------------------------------------- */
     {
-        double adfLong[] = { psImage->dfULX, psImage->dfURX, 
-                             psImage->dfLLX, psImage->dfLRX, 
+        double adfLong[] = { psImage->dfULX, psImage->dfURX,
+                             psImage->dfLLX, psImage->dfLRX,
                              (psImage->dfULX + psImage->dfLRX) / 2,
                              (psImage->dfULX + psImage->dfLRX) / 2 };
-        double adfLat[] = { psImage->dfULY, psImage->dfURY, 
-                            psImage->dfLLY, psImage->dfLRY, 
+        double adfLat[] = { psImage->dfULY, psImage->dfURY,
+                            psImage->dfLLY, psImage->dfLRY,
                             (psImage->dfULY + psImage->dfLRY) / 2,
                             (psImage->dfULY + psImage->dfLRY) / 2 };
         double adfHeight[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 300.0 };
         double dfPixel, dfLine;
-        
+
         for( i = 0; i < sizeof(adfLong) / sizeof(double); i++ )
         {
-            NITFRPCGeoToImage( psRPC, adfLong[i], adfLat[i], adfHeight[i], 
+            NITFRPCGeoToImage( psRPC, adfLong[i], adfLat[i], adfHeight[i],
                                &dfPixel, &dfLine );
-            
-            printf( "    RPC Transform (%.12g,%.12g,%g) -> (%g,%g)\n", 
+
+            printf( "    RPC Transform (%.12g,%.12g,%g) -> (%g,%g)\n",
                     adfLong[i], adfLat[i], adfHeight[i], dfPixel, dfLine );
         }
     }

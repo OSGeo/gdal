@@ -27,12 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_pds.h"
 #include "cpl_conv.h"
+#include "ogr_pds.h"
 
 CPL_CVSID("$Id$");
 
 extern "C" void RegisterOGRPDS();
+
+using namespace OGRPDS;
 
 /************************************************************************/
 /*                                Open()                                */
@@ -48,7 +50,7 @@ static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
     if( strstr((const char*)poOpenInfo->pabyHeader, "PDS_VERSION_ID") == NULL )
         return NULL;
 
-    OGRPDSDataSource   *poDS = new OGRPDSDataSource();
+    OGRPDSDataSource *poDS = new OGRPDSDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
@@ -61,30 +63,26 @@ static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
 
 
 /************************************************************************/
-/*                           RegisterOGRPDS()                      */
+/*                           RegisterOGRPDS()                           */
 /************************************************************************/
 
 void RegisterOGRPDS()
 
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName( "OGR_PDS" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "OGR_PDS" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "OGR_PDS" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Planetary Data Systems TABLE" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_pds.html" );
+    poDriver->SetDescription( "OGR_PDS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "Planetary Data Systems TABLE" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pds.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->pfnOpen = OGRPDSDriverOpen;
 
-        poDriver->pfnOpen = OGRPDSDriverOpen;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
 

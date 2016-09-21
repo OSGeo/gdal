@@ -35,7 +35,7 @@ CPL_CVSID("$Id$");
 /*                    GH5_FetchAttribute(CPLString)                     */
 /************************************************************************/
 
-bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName, 
+bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                         CPLString &osResult, bool bReportError )
 
 {
@@ -57,12 +57,12 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
     hid_t hAttrTypeID      = H5Aget_type( hAttr );
     hid_t hAttrNativeType  = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
 
-    if( H5Tget_class( hAttrNativeType ) == H5T_STRING ) 
+    if( H5Tget_class( hAttrNativeType ) == H5T_STRING )
     {
-	int nAttrSize = H5Tget_size( hAttrTypeID );
+	size_t nAttrSize = H5Tget_size( hAttrTypeID );
         char *pachBuffer = (char *) CPLCalloc(nAttrSize+1,1);
 	H5Aread( hAttr, hAttrNativeType, pachBuffer );
-        
+
         osResult = pachBuffer;
         CPLFree( pachBuffer );
 
@@ -89,7 +89,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
 /*                      GH5_FetchAttribute(double)                      */
 /************************************************************************/
 
-bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName, 
+bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                          double &dfResult, bool bReportError )
 
 {
@@ -115,7 +115,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
     hid_t hAttrSpace       = H5Aget_space( hAttr );
     hsize_t anSize[64];
     int nAttrDims       = H5Sget_simple_extent_dims( hAttrSpace, anSize, NULL );
-    
+
     int i, nAttrElements = 1;
 
     for( i=0; i < nAttrDims; i++ ) {
@@ -135,7 +135,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
         H5Aclose( hAttr );
         return false;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the value.                                                 */
 /* -------------------------------------------------------------------- */
@@ -181,47 +181,46 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
 /*                                                                      */
 /*      Transform HDF5 datatype to GDAL datatype                        */
 /************************************************************************/
-GDALDataType GH5_GetDataType(hid_t TypeID) 
+GDALDataType GH5_GetDataType(hid_t TypeID)
 {
     if( H5Tequal( H5T_NATIVE_CHAR,        TypeID ) )
 	return GDT_Byte;
-    else if( H5Tequal( H5T_NATIVE_SCHAR,  TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_SCHAR,  TypeID ) )
 	return GDT_Byte;
-    else if( H5Tequal( H5T_NATIVE_UCHAR,  TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_UCHAR,  TypeID ) )
 	return GDT_Byte;
     else if( H5Tequal( H5T_NATIVE_SHORT,  TypeID ) )
 	return GDT_Int16;
-    else if( H5Tequal( H5T_NATIVE_USHORT, TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_USHORT, TypeID ) )
 	return GDT_UInt16;
-    else if( H5Tequal( H5T_NATIVE_INT,    TypeID ) ) 
-	return GDT_Int32;      
-    else if( H5Tequal( H5T_NATIVE_UINT,   TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_INT,    TypeID ) )
+	return GDT_Int32;
+    else if( H5Tequal( H5T_NATIVE_UINT,   TypeID ) )
 	return GDT_UInt32;
-    else if( H5Tequal( H5T_NATIVE_LONG,   TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_LONG,   TypeID ) )
     {
         if( sizeof(long) == 4 )
-            return GDT_Int32;      
+            return GDT_Int32;
         else
             return GDT_Unknown;
     }
-    else if( H5Tequal( H5T_NATIVE_ULONG,  TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_ULONG,  TypeID ) )
     {
         if( sizeof(unsigned long) == 4 )
-            return GDT_UInt32;      
+            return GDT_UInt32;
         else
             return GDT_Unknown;
     }
-    else if( H5Tequal( H5T_NATIVE_FLOAT,  TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_FLOAT,  TypeID ) )
 	return GDT_Float32;
-    else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) )
 	return GDT_Float64;
-    else if( H5Tequal( H5T_NATIVE_LLONG,  TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_LLONG,  TypeID ) )
 	return GDT_Unknown;
-    else if( H5Tequal( H5T_NATIVE_ULLONG, TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_ULLONG, TypeID ) )
 	return GDT_Unknown;
-    else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) ) 
+    else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) )
 	return GDT_Unknown;
 
     return GDT_Unknown;
 }
-

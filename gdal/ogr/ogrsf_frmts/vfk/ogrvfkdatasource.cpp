@@ -41,9 +41,9 @@ CPL_CVSID("$Id$");
 OGRVFKDataSource::OGRVFKDataSource()
 {
     pszName    = NULL;
-    
+
     poReader   = NULL;
-    
+
     papoLayers = NULL;
     nLayers    = 0;
 }
@@ -54,10 +54,10 @@ OGRVFKDataSource::OGRVFKDataSource()
 OGRVFKDataSource::~OGRVFKDataSource()
 {
     CPLFree(pszName);
-    
+
     if (poReader)
         delete poReader;
-    
+
     for(int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
@@ -76,19 +76,19 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 {
     FILE * fp;
     char   szHeader[1000];
-    
+
     /* open the source file */
     fp = VSIFOpen(pszNewName, "r");
     if (fp == NULL) {
         if (!bTestOpen)
-            CPLError(CE_Failure, CPLE_OpenFailed, 
+            CPLError(CE_Failure, CPLE_OpenFailed,
                      "Failed to open VFK file `%s'",
                      pszNewName);
-        
+
         return FALSE;
     }
 
-   /* If we aren't sure it is VFK, load a header chunk and check    
+   /* If we aren't sure it is VFK, load a header chunk and check
       for signs it is VFK */
     if (bTestOpen) {
         size_t nRead = VSIFRead(szHeader, 1, sizeof(szHeader), fp);
@@ -97,12 +97,12 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
             return FALSE;
         }
         szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
-        
+
         // TODO: improve check
-        if (strncmp(szHeader, "&H", 2) != 0) {
+        if (!STARTS_WITH(szHeader, "&H")) {
             VSIFClose(fp);
             return FALSE;
-        } 
+        }
     }
 
     /* We assume now that it is VFK. Close and instantiate a
@@ -110,29 +110,29 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
     VSIFClose(fp);
 
     pszName = CPLStrdup(pszNewName);
-    
+
     poReader = CreateVFKReader(pszNewName);
     if (poReader == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "File %s appears to be VFK but the VFK reader can't"
                  "be instantiated",
                  pszNewName);
         return FALSE;
     }
-   
+
     /* read data blocks, i.e. &B */
     poReader->ReadDataBlocks();
-    
+
     /* get list of layers */
     papoLayers = (OGRVFKLayer **) CPLCalloc(sizeof(OGRVFKLayer *), poReader->GetDataBlockCount());
-    
+
     for (int iLayer = 0; iLayer < poReader->GetDataBlockCount(); iLayer++) {
         papoLayers[iLayer] = CreateLayerFromBlock(poReader->GetDataBlock(iLayer));
         nLayers++;
     }
-    
+
     /* read data records if required */
-    if (CSLTestBoolean(CPLGetConfigOption("OGR_VFK_DB_READ_ALL_BLOCKS", "YES")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ_ALL_BLOCKS", "YES")))
         poReader->ReadDataRecords();
 
     return TRUE;
@@ -149,12 +149,12 @@ OGRLayer *OGRVFKDataSource::GetLayer(int iLayer)
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    
+
     return papoLayers[iLayer];
 }
 
 /*!
-  \brief Test datasource capabilies
+  \brief Test datasource capabilities
 
   \param pszCap capability
 
@@ -196,9 +196,9 @@ OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const IVFKDataBlock *poDataB
             oField.SetWidth(poProperty->GetWidth());
         if(poProperty->GetPrecision() > 0)
             oField.SetPrecision(poProperty->GetPrecision());
-        
+
         poLayer->GetLayerDefn()->AddFieldDefn(&oField);
     }
-    
+
     return poLayer;
 }

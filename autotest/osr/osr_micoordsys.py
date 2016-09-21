@@ -5,7 +5,7 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some MITAB specific translation issues.
 # Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
 #
@@ -40,7 +40,7 @@ from osgeo import osr
 #
 
 def osr_micoordsys_1():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromMICoordSys('Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0')
 
@@ -61,7 +61,7 @@ def osr_micoordsys_1():
 #
 
 def osr_micoordsys_2():
-    
+
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
     DATUM["North_American_Datum_1927",\
@@ -85,10 +85,45 @@ def osr_micoordsys_2():
 
     return 'success'
 
+###############################################################################
+# Test EPSG:3857
+#
 
-gdaltest_list = [ 
+def osr_micoordsys_3():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+
+    proj = srs.ExportToMICoordSys()
+
+    if proj != 'Earth Projection 10, 157, "m", 0':
+        gdaltest.post_reason('failure')
+        print(proj)
+        return 'fail'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromMICoordSys('Earth Projection 10, 157, "m", 0')
+    wkt = srs.ExportToWkt()
+    if wkt.find('EXTENSION["PROJ4"') < 0:
+        gdaltest.post_reason('failure')
+        print(wkt)
+        return 'fail'
+
+    # Transform again to MITAB (we no longer have the EPSG code, so we rely on PROJ4 extension node)
+    proj = srs.ExportToMICoordSys()
+
+    if proj != 'Earth Projection 10, 157, "m", 0':
+        gdaltest.post_reason('failure')
+        print(proj)
+        return 'fail'
+
+    return 'success'
+
+
+gdaltest_list = [
     osr_micoordsys_1,
-    osr_micoordsys_2 ]
+    osr_micoordsys_2,
+    osr_micoordsys_3 ]
 
 if __name__ == '__main__':
 

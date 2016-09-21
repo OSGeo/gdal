@@ -1247,10 +1247,10 @@ int MITABLoadCoordSysTable(const char *pszFname)
 
             iLine++;
 
-            if (strlen(pszLine) < 10 || EQUALN(pszLine, "#", 1))
+            if (strlen(pszLine) < 10 || STARTS_WITH_CI(pszLine, "#"))
                 continue;  // Skip empty lines/comments
 
-            if( EQUALN(pszLine, "Source", strlen("Source")) )
+            if( STARTS_WITH_CI(pszLine, "Source") )
             {
                 const char* pszEqual = strchr(pszLine, '=');
                 if( !pszEqual )
@@ -1265,7 +1265,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
                 }
                 if( strstr(pszLine, "Bounds") != NULL )
                 {
-                    CPLError(CE_Warning, CPLE_IllegalArg, "Unexpected Bounds paramater at line %d",
+                    CPLError(CE_Warning, CPLE_IllegalArg, "Unexpected Bounds parameter at line %d",
                              iLine);
                 }
                 bHasProjIn = TRUE;
@@ -1273,7 +1273,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
                 iLine++;
                 pszLine = CPLReadLineL(fp);
                 if( pszLine == NULL ||
-                    !EQUALN(pszLine, "Destination", strlen("Destination")) ||
+                    !STARTS_WITH_CI(pszLine, "Destination") ||
                     (pszEqual = strchr(pszLine, '=')) == NULL )
                 {
                     CPLError(CE_Warning, CPLE_IllegalArg, "Invalid format at line %d", iLine);

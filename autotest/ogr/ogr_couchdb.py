@@ -355,7 +355,7 @@ def ogr_couchdb_changeLayer():
 if gdaltest.skip_on_travis():
     gdaltest_list = []
 else:
-    gdaltest_list = [ 
+    gdaltest_list = [
     ogr_couchdb_init,
     ogr_couchdb_GetFeatureCount,
     ogr_couchdb_GetNextFeature,

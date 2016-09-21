@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_XPLANE_GEO_UTILS_H_INCLUDED
-#define _OGR_XPLANE_GEO_UTILS_H_INCLUDED
+#ifndef OGR_XPLANE_GEO_UTILS_H_INCLUDED
+#define OGR_XPLANE_GEO_UTILS_H_INCLUDED
 
 double OGRXPlane_Distance(double dfLatA_deg, double dfLonA_deg,
                           double dfLatB_deg, double dfLonB_deg);
@@ -41,4 +41,4 @@ int OGRXPlane_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
                              double* pdfLatB_deg, double* pdfLonB_deg);
 
 
-#endif /* ndef _OGR_XPLANE_GEO_UTILS_H_INCLUDED */
+#endif /* ndef OGR_XPLANE_GEO_UTILS_H_INCLUDED */

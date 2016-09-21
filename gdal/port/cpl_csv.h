@@ -2,8 +2,8 @@
  * $Id$
  *
  * Project:  Common Portability Library
- * Purpose:  Functions for reading and scaning CSV (comma separated,
- *           variable length text files holding tables) files.  
+ * Purpose:  Functions for reading and scanning CSV (comma separated,
+ *           variable length text files holding tables) files.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -49,13 +49,19 @@ char CPL_DLL CSVDetectSeperator( const char *pszLine );
 
 char CPL_DLL  **CSVReadParseLine( FILE *fp);
 char CPL_DLL  **CSVReadParseLine2( FILE *fp, char chDelimiter );
+
+char CPL_DLL  **CSVReadParseLineL( VSILFILE *fp);
+char CPL_DLL  **CSVReadParseLine2L( VSILFILE *fp, char chDelimiter );
+
 char CPL_DLL **CSVScanLines( FILE *, int, const char *, CSVCompareCriteria );
+char CPL_DLL **CSVScanLinesL( VSILFILE *, int, const char *, CSVCompareCriteria );
 char CPL_DLL **CSVScanFile( const char *, int, const char *,
                             CSVCompareCriteria );
 char CPL_DLL **CSVScanFileByName( const char *, const char *, const char *,
                                   CSVCompareCriteria );
 char CPL_DLL **CSVGetNextLine( const char * );
 int CPL_DLL CSVGetFieldId( FILE *, const char * );
+int CPL_DLL CSVGetFieldIdL( VSILFILE *, const char * );
 int CPL_DLL CSVGetFileFieldId( const char *, const char * );
 
 void CPL_DLL CSVDeaccess( const char * );
@@ -68,4 +74,3 @@ void CPL_DLL SetCSVFilenameHook( const char *(*)(const char *) );
 CPL_C_END
 
 #endif /* ndef CPL_CSV_H_INCLUDED */
-

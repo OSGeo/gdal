@@ -63,7 +63,7 @@
  *
  * PURPOSE
  *   Unpack the local use data assuming that it was packed using the MDL
- * encoder.  This assumes "local" starts at octet 6 (ie skipping over the
+ * encoder.  This assumes "local" starts at octet 6 (i.e. skipping over the
  * length and section ID octets)
  *
  *   In Section 2, GRIB2 provides for local use data.  The MDL encoder packs
@@ -185,7 +185,7 @@ static int mdl_LocalUnpack (unsigned char *local, sInt4 locallen,
             memBitRead (&uli_temp, sizeof (sInt4), local, numBits,
                         &bufLoc, &numUsed);
             local += numUsed;
-            BytesUsed += numUsed;
+            BytesUsed += (int) numUsed;
             rdat[curIndex] = (refVal + uli_temp) * recScale10;
             curIndex++;
          }
@@ -206,7 +206,7 @@ static int mdl_LocalUnpack (unsigned char *local, sInt4 locallen,
             memBitRead (&uli_temp, sizeof (sInt4), local, numBits,
                         &bufLoc, &numUsed);
             local += numUsed;
-            BytesUsed += numUsed;
+            BytesUsed += (int) numUsed;
             idat[curIndex] = (refVal + uli_temp) * recScale10;
             curIndex++;
          }
@@ -335,7 +335,7 @@ static int fillOutSectLen (unsigned char *c_ipack, int lenCpack,
  *         bmap = bitmap from NCEPs routines. (Input)
  * f_ignoreScan = Flag to ignore the attempt at changing the scan (Input)
  *         scan = The scan orientation of fld/bmap/iain/ib (Input/Output)
- *       nx, ny = The dimmensions of the grid. (Input)
+ *       nx, ny = The dimensions of the grid. (Input)
  *       iclean = 1 means the user wants the unpacked data returned without
  *                missing values in it. 0 means embed the missing values. (In)
  *       xmissp = The primary missing value to use if iclean = 0. (Input).
@@ -440,7 +440,7 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
  *         bmap = bitmap from NCEPs routines. (Input)
  *         scan = The scan orientation of fld/bmap/iain/ib (Input/Output)
  * f_ignoreScan = Flag to ignore the attempt at changing the scan (Input)
- *       nx, ny = The dimmensions of the grid. (Input)
+ *       nx, ny = The dimensions of the grid. (Input)
  *       iclean = 1 means the user wants the unpacked data returned without
  *                missing values in it. 0 means embed the missing values. (In)
  *       xmissp = The primary missing value to use if iclean = 0. (Input).
@@ -610,7 +610,7 @@ Routine g2_addlocal can be used to add a Local Use Section ( Section 2 ).
 Note that this section is optional and need not appear in a GRIB2 message.
 
 Function g2_addgrid is used to encode a grid definition into Section 3.
-This grid definition defines the geometry of the the data values in the
+This grid definition defines the geometry of the data values in the
 fields that follow it.  g2_addgrid can be called again to change the grid
 definition describing subsequent data fields.
 
@@ -696,14 +696,14 @@ is required for each GRIB2 message.
  *                                 Request for an invalid subgrid
  *                                 Problems unpacking the data.
  *                                 problems expanding the data.
- *                                 Calling dimmensions were too small.
+ *                                 Calling dimensions were too small.
  * ker=2 jer[1,0]=100  jer[1,1]=2: Error unpacking section 1.
  * ker=3 jer[2,0]=200  jer[2,1]=2: Error unpacking section 2.
  * ker=4 jer[3,0]=300  jer[3,1]=2: Error unpacking section 3.
  * ker=5 jer[4,0]=400  jer[4,1]=2: Error unpacking section 4.
  * ker=6 jer[5,0]=500  jer[5,1]=2: Error unpacking section 5.
  *                                 Data Template not implemented.
- *                                 Durring Transfer, nx * ny != ngrdpts.
+ *                                 During Transfer, nx * ny != ngrdpts.
  * ker=7 jer[6,0]=600  jer[6,1]=2: Error unpacking section 6.
  * ker=8 jer[7,0]=700  jer[7,1]=2: Error unpacking section 7.
  * ker=9 jer[8,0]=2001 jer[8,1]=2: nd2x3 is not large enough.
@@ -740,6 +740,7 @@ is required for each GRIB2 message.
  * gfld->num_coord = number of values in array gfld->coord_list[].
  *****************************************************************************
  */
+static
 void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
                   sInt4 * idat, sInt4 * nidat, float * rdat, sInt4 * nrdat,
                   sInt4 * is0, CPL_UNUSED sInt4 * ns0, sInt4 * is1, CPL_UNUSED sInt4 * ns1,
@@ -870,7 +871,7 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
       g2_free (gfld);
       return;
    }
-   /* Check if data wasn't unpacked. */
+   /* Check if data was not unpacked. */
    if (!gfld->unpacked) {
       jer[0 + *ndjer] = 2;
       *kjer = 1;
@@ -1355,7 +1356,7 @@ static void clear (float * ain, sInt4 * iain, sInt4 * nd2x3, sInt4 * idat,
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   This is so we can copy upto 4 bytes from a big endian 4 byte int data
+ *   This is so we can copy up to 4 bytes from a big endian 4 byte int data
  * stream.
  *
  *   The reason this is needed is because the GRIB2 API required the GRIB2
@@ -1746,6 +1747,7 @@ void unpk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
 /* Not sure I need this... It is intended to provide a way to call it from
  * FORTRAN, but I'm not sure it is needed. */
 /* gcc has two __ if there is one _ in the procedure name. */
+#ifndef GDAL_COMPILATION
 void unpk_grib2__ (sInt4 * kfildo, float * ain, sInt4 * iain,
                    sInt4 * nd2x3, sInt4 * idat, sInt4 * nidat, float * rdat,
                    sInt4 * nrdat, sInt4 * is0, sInt4 * ns0, sInt4 * is1,
@@ -1762,6 +1764,7 @@ void unpk_grib2__ (sInt4 * kfildo, float * ain, sInt4 * iain,
                is7, ns7, ib, ibitmap, ipack, nd5, xmissp, xmisss, inew,
                iclean, l3264b, iendpk, jer, ndjer, kjer);
 }
+#endif
 
 /*****************************************************************************
  * C_pkGrib2() --

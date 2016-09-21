@@ -27,11 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "libkml_headers.h"
+
 #include <ogrsf_frmts.h>
 #include <ogr_geometry.h>
 #include "gdal.h"
-
-#include <kml/dom.h>
 
 using kmldom::KmlFactory;
 using kmldom::PlacemarkPtr;
@@ -58,6 +58,7 @@ using kmldom::ImagePyramidPtr;
 #include "ogrlibkmlgeometry.h"
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlfeaturestyle.h"
+#include "ogrlibkmlfeature.h"
 
 static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                                  int iHeading,
@@ -87,11 +88,11 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                 poOgrFeat->GetFieldAsString(iCameraAltitudeModeField), isGX);
             camera->set_altitudemode(nAltitudeMode);
         }
-        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should define altitudeMode != 'clampToGround'");
         if( iCameraAltitudeField >= 0 && poOgrFeat->IsFieldSet(iCameraAltitudeField))
             camera->set_altitude(poOgrFeat->GetFieldAsDouble(iCameraAltitudeField));
-        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
         {
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should have an altitude/Z");
             camera->set_altitude(0.0);
@@ -117,7 +118,7 @@ static CPLString OGRLIBKMLReplaceLevelXYInURL(const char* pszURL,
                                               int level, int x, int y)
 {
     CPLString osRet(pszURL);
-    int nPos = osRet.find("$[level]");
+    size_t nPos = osRet.find("$[level]");
     osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", level) + osRet.substr(nPos + strlen("$[level]"));
     nPos = osRet.find("$[x]");
     osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", x) + osRet.substr(nPos + strlen("$[x]"));
@@ -145,7 +146,7 @@ static int IsPowerOf2(int nVal)
 /*                    OGRLIBKMLGetMaxDimensions()                       */
 /************************************************************************/
 
-static void OGRLIBKMLGetMaxDimensions(const char* pszURL, 
+static void OGRLIBKMLGetMaxDimensions(const char* pszURL,
                                       int nTileSize,
                                       int* panMaxWidth,
                                       int* panMaxHeight)
@@ -154,7 +155,7 @@ static void OGRLIBKMLGetMaxDimensions(const char* pszURL,
     int nMaxLevel = 0;
     *panMaxWidth = 0;
     *panMaxHeight = 0;
-    while( TRUE )
+    while( true )
     {
         CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, nMaxLevel, 0, 0);
         if( strstr(osURL, ".kmz/") )
@@ -357,7 +358,7 @@ FeaturePtr feat2kml (
             poKmlViewVolume->set_bottomfov(dfBottomFov);
             poKmlViewVolume->set_topfov(dfTopFov);
             poKmlViewVolume->set_near(dfNear);
-            
+
             if( bIsTiledPhotoOverlay )
             {
                 ImagePyramidPtr poKmlImagePyramid = poKmlFactory->CreateImagePyramid( );
@@ -398,10 +399,10 @@ FeaturePtr feat2kml (
         int iFlyToView = poOgrFeat->GetFieldIndex(oFC.networklink_flytoview_field);
 
         if( iRefreshVisibility >= 0 && poOgrFeat->IsFieldSet(iRefreshVisibility) )
-            poKmlNetworkLink->set_refreshvisibility(poOgrFeat->GetFieldAsInteger(iRefreshVisibility));
+            poKmlNetworkLink->set_refreshvisibility(CPL_TO_BOOL(poOgrFeat->GetFieldAsInteger(iRefreshVisibility)));
 
         if( iFlyToView >= 0 && poOgrFeat->IsFieldSet(iFlyToView) )
-            poKmlNetworkLink->set_flytoview(poOgrFeat->GetFieldAsInteger(iFlyToView));
+            poKmlNetworkLink->set_flytoview(CPL_TO_BOOL(poOgrFeat->GetFieldAsInteger(iFlyToView)));
 
         LinkPtr poKmlLink = poKmlFactory->CreateLink (  );
         poKmlLink->set_href( poOgrFeat->GetFieldAsString( iNetworkLink ) );
@@ -484,7 +485,7 @@ FeaturePtr feat2kml (
             const char* pszHttpQuery = poOgrFeat->GetFieldAsString(iHttpQuery);
             if( strstr(pszHttpQuery, "[clientVersion]") != NULL ||
                 strstr(pszHttpQuery, "[kmlVersion]") != NULL ||
-                strstr(pszHttpQuery, "[clientName]") != NULL || 
+                strstr(pszHttpQuery, "[clientName]") != NULL ||
                 strstr(pszHttpQuery, "[language]") != NULL ) /* ATC 47 */
             {
                 poKmlLink->set_httpquery(pszHttpQuery);
@@ -523,7 +524,7 @@ FeaturePtr feat2kml (
             if( nAltitudeMode != kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
                 poOgrPoint->getCoordinateDimension() != 3 )
             {
-                if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                     CPLError(CE_Warning, CPLE_AppDefined, "Altitude should be defined");
             }
         }
@@ -550,7 +551,7 @@ FeaturePtr feat2kml (
         int iScaleX = poOgrFeat->GetFieldIndex(oFC.scalexfield);
         int iScaleY = poOgrFeat->GetFieldIndex(oFC.scaleyfield);
         int iScaleZ = poOgrFeat->GetFieldIndex(oFC.scalezfield);
-        
+
         ScalePtr scale = poKmlFactory->CreateScale();
         model->set_scale(scale);
         if( iScaleX >= 0 && poOgrFeat->IsFieldSet(iScaleX) )
@@ -573,12 +574,12 @@ FeaturePtr feat2kml (
 
         /* Collada 3D file ? */
         if( EQUAL(CPLGetExtension(pszURL), "dae") &&
-            CSLTestBoolean(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")) )
+            CPLTestBool(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")) )
         {
             VSILFILE* fp;
             int bIsURL = FALSE;
-            if( EQUALN(pszURL, "http://", strlen("http://")) ||
-                EQUALN(pszURL, "https://", strlen("https://")) )
+            if( STARTS_WITH_CI(pszURL, "http://") ||
+                STARTS_WITH_CI(pszURL, "https://") )
             {
                 bIsURL = TRUE;
                 fp = VSIFOpenL(CPLSPrintf("/vsicurl/%s", pszURL), "rb");
@@ -616,7 +617,12 @@ FeaturePtr feat2kml (
                                     resourceMap = poKmlFactory->CreateResourceMap();
                                 AliasPtr alias = poKmlFactory->CreateAlias();
                                 if( bIsURL && CPLIsFilenameRelative(osImage) )
-                                    alias->set_targethref(CPLFormFilename(CPLGetPath(pszURL), osImage, NULL));
+                                {
+                                    if( STARTS_WITH(pszURL, "http") )
+                                        alias->set_targethref(CPLSPrintf("%s/%s", CPLGetPath(pszURL), osImage.c_str()));
+                                    else
+                                        alias->set_targethref(CPLFormFilename(CPLGetPath(pszURL), osImage, NULL));
+                                }
                                 else
                                     alias->set_targethref(osImage);
                                 alias->set_sourcehref(osImage);
@@ -646,7 +652,7 @@ FeaturePtr feat2kml (
         poKmlFeature = poKmlPlacemark;
 
         OGRPoint* poOgrPoint = (OGRPoint*) poOgrGeom;
-        CameraPtr camera = poKmlFactory->CreateCamera();
+        camera = poKmlFactory->CreateCamera();
         camera->set_latitude(poOgrPoint->getY());
         camera->set_longitude(poOgrPoint->getX());
         int isGX = FALSE;
@@ -658,11 +664,11 @@ FeaturePtr feat2kml (
                 poOgrFeat->GetFieldAsString(iAltitudeMode), isGX);
             camera->set_altitudemode(nAltitudeMode);
         }
-        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should define altitudeMode != 'clampToGround'");
         if( poOgrPoint->getCoordinateDimension() == 3 )
             camera->set_altitude(poOgrPoint->getZ());
-        else if( CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if( CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
         {
             CPLError(CE_Warning, CPLE_AppDefined, "Camera should have an altitude/Z");
             camera->set_altitude(0.0);

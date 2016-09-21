@@ -28,8 +28,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
-#ifndef _GEOCONCEPT_H_INCLUDED
-#define _GEOCONCEPT_H_INCLUDED
+#ifndef GEOCONCEPT_H_INCLUDED
+#define GEOCONCEPT_H_INCLUDED
 
 #include "cpl_port.h"
 #include "cpl_list.h"
@@ -335,7 +335,7 @@ GCField GCIOAPI_CALL1(*) AddTypeField_GCIO ( GCExportFileH* H, const char* typNa
 GCField GCIOAPI_CALL1(*) AddSubTypeField_GCIO ( GCExportFileH* H, const char* typName, const char* subtypName, int where, const char* name, long id, GCTypeKind knd, const char* extra, const char* enums );
 GCExportFileMetadata GCIOAPI_CALL1(*) ReadConfig_GCIO ( GCExportFileH* H );
 GCExportFileH GCIOAPI_CALL1(*) WriteHeader_GCIO ( GCExportFileH* H );
-GCExportFileMetadata GCIOAPI_CALL1(*) CreateHeader_GCIO ( );
+GCExportFileMetadata GCIOAPI_CALL1(*) CreateHeader_GCIO ( void );
 void GCIOAPI_CALL DestroyHeader_GCIO ( GCExportFileMetadata** m );
 GCExtent GCIOAPI_CALL1(*) CreateExtent_GCIO ( double Xmin, double Ymin, double Xmax, double Ymax );
 void GCIOAPI_CALL DestroyExtent_GCIO ( GCExtent** theExtent );
@@ -497,4 +497,4 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 #endif
 
 
-#endif /* ndef _GEOCONCEPT_H_INCLUDED */
+#endif /* ndef GEOCONCEPT_H_INCLUDED */

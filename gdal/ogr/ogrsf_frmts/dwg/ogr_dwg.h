@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_DWG_H_INCLUDED
-#define _OGR_DWG_H_INCLUDED
+#ifndef OGR_DWG_H_INCLUDED
+#define OGR_DWG_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
@@ -86,7 +86,7 @@ class OGRDWGBlocksLayer : public OGRLayer
     OGRDWGDataSource   *poDS;
 
     OGRFeatureDefn     *poFeatureDefn;
-    
+
     int                 iNextFID;
     unsigned int        iNextSubFeature;
 
@@ -122,8 +122,8 @@ class OGRDWGLayer : public OGRLayer
     void                ClearPendingFeatures();
 
     std::map<CPLString,CPLString> oStyleProperties;
-    
-    void                TranslateGenericProperties( OGRFeature *poFeature, 
+
+    void                TranslateGenericProperties( OGRFeature *poFeature,
                                                     OdDbEntityPtr poEntity );
     void                PrepareLineStyle( OGRFeature *poFeature );
 //    void                ApplyOCSTransformer( OGRGeometry * );
@@ -187,7 +187,7 @@ class OGRDWGDataSource : public OGRDataSource
     CPLString           osEncoding;
 
     // indexed by layer name, then by property name.
-    std::map< CPLString, std::map<CPLString,CPLString> > 
+    std::map< CPLString, std::map<CPLString,CPLString> >
                         oLayerTable;
 
     std::map<CPLString,CPLString> oLineTypeTable;
@@ -227,13 +227,13 @@ class OGRDWGDataSource : public OGRDataSource
     // Layer and other Table Handling (ogrdatasource.cpp)
     void                ReadLayerDefinitions();
     void                ReadLineTypeDefinitions();
-    const char         *LookupLayerProperty( const char *pszLayer, 
+    const char         *LookupLayerProperty( const char *pszLayer,
                                              const char *pszProperty );
     const char         *LookupLineType( const char *pszName );
 
-    // Header variables. 
+    // Header variables.
     void                ReadHeaderSection();
-    const char         *GetVariable(const char *pszName, 
+    const char         *GetVariable(const char *pszName,
                                     const char *pszDefault=NULL );
 
     const char         *GetEncoding() { return osEncoding; }
@@ -259,7 +259,7 @@ class OGRDWGDriver : public OGRSFDriver
 {
     int     bInitialized;
     void    Initialize();
-    
+
     OdStaticRxObject<OGRDWGServices> oServices;
 
     static void ErrorHandler( OdResult oRes );
@@ -276,4 +276,4 @@ class OGRDWGDriver : public OGRSFDriver
 };
 
 
-#endif /* ndef _OGR_DWG_H_INCLUDED */
+#endif /* ndef OGR_DWG_H_INCLUDED */

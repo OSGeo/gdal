@@ -27,7 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
- 
+
 %include cpl_exceptions.i
 
 %rename (GetFieldType) GetType;
@@ -49,7 +49,7 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
       int size = WkbSize();
       if (buffer.Length < size)
         throw new ArgumentException("Buffer size is small (ExportToWkb)");
-        
+
       IntPtr ptr = Marshal.AllocHGlobal(size * Marshal.SizeOf(buffer[0]));
       try {
           retval = ExportToWkb(size, ptr, byte_order);
@@ -63,11 +63,11 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
   public int ExportToWkb( byte[] buffer ) {
       return ExportToWkb( buffer, wkbByteOrder.wkbXDR);
   }
-  
+
   public static $csclassname CreateFromWkb(byte[] wkb){
      if (wkb.Length == 0)
         throw new ArgumentException("Buffer size is small (CreateFromWkb)");
-     $csclassname retval;   
+     $csclassname retval;
      IntPtr ptr = Marshal.AllocHGlobal(wkb.Length * Marshal.SizeOf(wkb[0]));
      try {
          Marshal.Copy(wkb, 0, ptr, wkb.Length);
@@ -75,17 +75,17 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
       } finally {
           Marshal.FreeHGlobal(ptr);
       }
-      return retval;  
+      return retval;
   }
-  
+
   public static $csclassname CreateFromWkt(string wkt){
      return new $csclassname(wkbGeometryType.wkbUnknown, wkt, 0, IntPtr.Zero, null);
   }
-  
+
   public static $csclassname CreateFromGML(string gml){
      return new $csclassname(wkbGeometryType.wkbUnknown, null, 0, IntPtr.Zero, gml);
   }
-  
+
   public Geometry(wkbGeometryType type) : this(OgrPINVOKE.new_Geometry((int)type, null, 0, IntPtr.Zero, null), true, null) {
     if (OgrPINVOKE.SWIGPendingException.Pending) throw OgrPINVOKE.SWIGPendingException.Retrieve();
   }

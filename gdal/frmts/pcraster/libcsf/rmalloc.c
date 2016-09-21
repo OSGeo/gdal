@@ -1,6 +1,3 @@
-/*
- * rmalloc.c 
- */
 #include "csf.h"
 #include "csfimpl.h"
 

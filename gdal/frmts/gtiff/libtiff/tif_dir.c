@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.119 2014-12-27 15:20:42 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.125 2016-01-23 21:20:34 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -57,13 +57,13 @@ void _TIFFsetByteArray(void** vpp, void* vp, uint32 n)
     { setByteArray(vpp, vp, n, 1); }
 void _TIFFsetString(char** cpp, char* cp)
     { setByteArray((void**) cpp, (void*) cp, strlen(cp)+1, 1); }
-void _TIFFsetNString(char** cpp, char* cp, uint32 n)
+static void _TIFFsetNString(char** cpp, char* cp, uint32 n)
     { setByteArray((void**) cpp, (void*) cp, n, 1); }
 void _TIFFsetShortArray(uint16** wpp, uint16* wp, uint32 n)
     { setByteArray((void**) wpp, (void*) wp, n, sizeof (uint16)); }
 void _TIFFsetLongArray(uint32** lpp, uint32* lp, uint32 n)
     { setByteArray((void**) lpp, (void*) lp, n, sizeof (uint32)); }
-void _TIFFsetLong8Array(uint64** lpp, uint64* lp, uint32 n)
+static void _TIFFsetLong8Array(uint64** lpp, uint64* lp, uint32 n)
     { setByteArray((void**) lpp, (void*) lp, n, sizeof (uint64)); }
 void _TIFFsetFloatArray(float** fpp, float* fp, uint32 n)
     { setByteArray((void**) fpp, (void*) fp, n, sizeof (float)); }
@@ -170,7 +170,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 	 * We want to force the custom code to be used for custom
 	 * fields even if the tag happens to match a well known 
 	 * one - important for reinterpreted handling of standard
-	 * tag values in custom directories (ie. EXIF) 
+	 * tag values in custom directories (i.e. EXIF) 
 	 */
 	if (fip->field_bit == FIELD_CUSTOM) {
 		standard_tag = 0;
@@ -402,7 +402,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		if ((tif->tif_flags & TIFF_INSUBIFD) == 0) {
 			td->td_nsubifd = (uint16) va_arg(ap, uint16_vap);
 			_TIFFsetLong8Array(&td->td_subifd, (uint64*) va_arg(ap, uint64*),
-			    (long) td->td_nsubifd);
+			    (uint32) td->td_nsubifd);
 		} else {
 			TIFFErrorExt(tif->tif_clientdata, module,
 				     "%s: Sorry, cannot nest SubIFDs",
@@ -421,7 +421,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		v = (td->td_samplesperpixel - td->td_extrasamples) > 1 ? 3 : 1;
 		for (i = 0; i < v; i++)
 			_TIFFsetShortArray(&td->td_transferfunction[i],
-			    va_arg(ap, uint16*), 1L<<td->td_bitspersample);
+			    va_arg(ap, uint16*), 1U<<td->td_bitspersample);
 		break;
 	case TIFFTAG_REFERENCEBLACKWHITE:
 		/* XXX should check for null range */
@@ -579,10 +579,10 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				   handled this way ... likely best if we move it into
 				   the directory structure with an explicit field in 
 				   libtiff 4.1 and assign it a FIELD_ value */
-				uint16 v[2];
-				v[0] = (uint16)va_arg(ap, int);
-				v[1] = (uint16)va_arg(ap, int);
-				_TIFFmemcpy(tv->value, &v, 4);
+				uint16 v2[2];
+				v2[0] = (uint16)va_arg(ap, int);
+				v2[1] = (uint16)va_arg(ap, int);
+				_TIFFmemcpy(tv->value, &v2, 4);
 			}
 
 			else if (fip->field_passcount
@@ -600,66 +600,66 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				case TIFF_BYTE:
 				case TIFF_UNDEFINED:
 					{
-						uint8 v = (uint8)va_arg(ap, int);
-						_TIFFmemcpy(val, &v, tv_size);
+						uint8 v2 = (uint8)va_arg(ap, int);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SBYTE:
 					{
-						int8 v = (int8)va_arg(ap, int);
-						_TIFFmemcpy(val, &v, tv_size);
+						int8 v2 = (int8)va_arg(ap, int);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SHORT:
 					{
-						uint16 v = (uint16)va_arg(ap, int);
-						_TIFFmemcpy(val, &v, tv_size);
+						uint16 v2 = (uint16)va_arg(ap, int);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SSHORT:
 					{
-						int16 v = (int16)va_arg(ap, int);
-						_TIFFmemcpy(val, &v, tv_size);
+						int16 v2 = (int16)va_arg(ap, int);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_LONG:
 				case TIFF_IFD:
 					{
-						uint32 v = va_arg(ap, uint32);
-						_TIFFmemcpy(val, &v, tv_size);
+						uint32 v2 = va_arg(ap, uint32);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SLONG:
 					{
-						int32 v = va_arg(ap, int32);
-						_TIFFmemcpy(val, &v, tv_size);
+						int32 v2 = va_arg(ap, int32);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_LONG8:
 				case TIFF_IFD8:
 					{
-						uint64 v = va_arg(ap, uint64);
-						_TIFFmemcpy(val, &v, tv_size);
+						uint64 v2 = va_arg(ap, uint64);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_SLONG8:
 					{
-						int64 v = va_arg(ap, int64);
-						_TIFFmemcpy(val, &v, tv_size);
+						int64 v2 = va_arg(ap, int64);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_RATIONAL:
 				case TIFF_SRATIONAL:
 				case TIFF_FLOAT:
 					{
-						float v = (float)va_arg(ap, double);
-						_TIFFmemcpy(val, &v, tv_size);
+						float v2 = (float)va_arg(ap, double);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				case TIFF_DOUBLE:
 					{
-						double v = va_arg(ap, double);
-						_TIFFmemcpy(val, &v, tv_size);
+						double v2 = va_arg(ap, double);
+						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
 				default:
@@ -672,9 +672,9 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 	}
 	}
 	if (status) {
-		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
-		if (fip)                
-			TIFFSetFieldBit(tif, fip->field_bit);
+		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
+		if (fip2)                
+			TIFFSetFieldBit(tif, fip2->field_bit);
 		tif->tif_flags |= TIFF_DIRTYDIRECT;
 	}
 
@@ -683,31 +683,31 @@ end:
 	return (status);
 badvalue:
         {
-		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
 		TIFFErrorExt(tif->tif_clientdata, module,
 		     "%s: Bad value %u for \"%s\" tag",
 		     tif->tif_name, v,
-		     fip ? fip->field_name : "Unknown");
+		     fip2 ? fip2->field_name : "Unknown");
 		va_end(ap);
         }
 	return (0);
 badvalue32:
         {
-		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
 		TIFFErrorExt(tif->tif_clientdata, module,
 		     "%s: Bad value %u for \"%s\" tag",
 		     tif->tif_name, v32,
-		     fip ? fip->field_name : "Unknown");
+		     fip2 ? fip2->field_name : "Unknown");
 		va_end(ap);
         }
 	return (0);
 badvaluedouble:
         {
-        const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+        const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
         TIFFErrorExt(tif->tif_clientdata, module,
              "%s: Bad value %f for \"%s\" tag",
              tif->tif_name, dblval,
-             fip ? fip->field_name : "Unknown");
+             fip2 ? fip2->field_name : "Unknown");
         va_end(ap);
         }
     return (0);
@@ -834,7 +834,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 	 * We want to force the custom code to be used for custom
 	 * fields even if the tag happens to match a well known 
 	 * one - important for reinterpreted handling of standard
-	 * tag values in custom directories (ie. EXIF) 
+	 * tag values in custom directories (i.e. EXIF) 
 	 */
 	if (fip->field_bit == FIELD_CUSTOM) {
 		standard_tag = 0;
@@ -885,7 +885,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 				*va_arg(ap, double**) = td->td_sminsamplevalue;
 			else
 			{
-				/* libtiff historially treats this as a single value. */
+				/* libtiff historically treats this as a single value. */
 				uint16 i;
 				double v = td->td_sminsamplevalue[0];
 				for (i=1; i < td->td_samplesperpixel; ++i)
@@ -899,7 +899,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 				*va_arg(ap, double**) = td->td_smaxsamplevalue;
 			else
 			{
-				/* libtiff historially treats this as a single value. */
+				/* libtiff historically treats this as a single value. */
 				uint16 i;
 				double v = td->td_smaxsamplevalue[0];
 				for (i=1; i < td->td_samplesperpixel; ++i)
@@ -1486,7 +1486,8 @@ TIFFAdvanceDirectory(TIFF* tif, uint64* nextdir, uint64* off)
 				(void) TIFFSeekFile(tif,
 				    dircount16*20, SEEK_CUR);
 			if (!ReadOK(tif, nextdir, sizeof (uint64))) {
-				TIFFErrorExt(tif->tif_clientdata, module, "%s: Error fetching directory link",
+				TIFFErrorExt(tif->tif_clientdata, module,
+                                             "%s: Error fetching directory link",
 				    tif->tif_name);
 				return (0);
 			}
@@ -1513,10 +1514,14 @@ TIFFNumberOfDirectories(TIFF* tif)
 	n = 0;
 	while (nextdir != 0 && TIFFAdvanceDirectory(tif, &nextdir, NULL))
         {
-		if(++n == 0)
+                if (n != 65535) {
+                        ++n;
+                }
+		else
                 {
                         TIFFErrorExt(tif->tif_clientdata, module,
-                                     "Directory count exceeded 65535 limit, giving up on counting.");
+                                     "Directory count exceeded 65535 limit,"
+                                     " giving up on counting.");
                         return (65535);
                 }
         }

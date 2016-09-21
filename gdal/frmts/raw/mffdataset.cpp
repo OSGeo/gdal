@@ -30,15 +30,14 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
-#include <ctype.h>
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "atlsci_spheroid.h"
 
-CPL_CVSID("$Id$");
+#include <cctype>
+#include <algorithm>
 
-CPL_C_START
-void	GDALRegister_MFF(void);
-CPL_C_END
+CPL_CVSID("$Id$");
 
 enum {
   MFFPRJ_NONE,
@@ -51,7 +50,7 @@ static int         GetMFFProjectionType(const char * pszNewProjection);
 
 /************************************************************************/
 /* ==================================================================== */
-/*				MFFDataset				*/
+/*                              MFFDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -62,20 +61,19 @@ class MFFDataset : public RawDataset
 
     char *pszProjection;
     char *pszGCPProjection;
-    double adfGeoTransform[6]; 
+    double adfGeoTransform[6];
 
     void        ScanForGCPs();
     void        ScanForProjectionInfo();
- 
 
   public:
-    		MFFDataset();
-    	        ~MFFDataset();
-    
-    char	**papszHdrLines;
-    
+                MFFDataset();
+    virtual ~MFFDataset();
+
+    char        **papszHdrLines;
+
     VSILFILE        **pafpBandFiles;
-    
+
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
@@ -87,10 +85,10 @@ class MFFDataset : public RawDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
-    static GDALDataset *CreateCopy( const char * pszFilename, 
-                                    GDALDataset *poSrcDS, 
-                                    int bStrict, char ** papszOptions, 
-                                    GDALProgressFunc pfnProgress, 
+    static GDALDataset *CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
 };
@@ -112,7 +110,7 @@ class MFFTiledBand : public GDALRasterBand
 
                    MFFTiledBand( MFFDataset *, int, VSILFILE *, int, int,
                                  GDALDataType, int );
-                   ~MFFTiledBand();
+    virtual ~MFFTiledBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -122,22 +120,19 @@ class MFFTiledBand : public GDALRasterBand
 /*                            MFFTiledBand()                            */
 /************************************************************************/
 
-MFFTiledBand::MFFTiledBand( MFFDataset *poDS, int nBand, VSILFILE *fp, 
-                            int nTileXSize, int nTileYSize, 
-                            GDALDataType eDataType, int bNative )
-
+MFFTiledBand::MFFTiledBand( MFFDataset *poDSIn, int nBandIn, VSILFILE *fp,
+                            int nTileXSize, int nTileYSize,
+                            GDALDataType eDataTypeIn, int bNativeIn ) :
+    fpRaw(fp),
+    bNative(bNativeIn)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
-    this->eDataType = eDataType; 
+    eDataType = eDataTypeIn;
 
-    this->bNative = bNative;
-
-    this->nBlockXSize = nTileXSize;
-    this->nBlockYSize = nTileYSize;
-
-    this->fpRaw = fp;
+    nBlockXSize = nTileXSize;
+    nBlockYSize = nTileYSize;
 }
 
 /************************************************************************/
@@ -147,7 +142,10 @@ MFFTiledBand::MFFTiledBand( MFFDataset *poDS, int nBand, VSILFILE *fp,
 MFFTiledBand::~MFFTiledBand()
 
 {
-    VSIFCloseL( fpRaw );
+    if( VSIFCloseL( fpRaw ) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+    }
 }
 
 
@@ -159,39 +157,35 @@ CPLErr MFFTiledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                  void * pImage )
 
 {
-    long    nOffset;
-    int     nTilesPerRow;
-    int     nWordSize, nBlockSize;
+    const int nTilesPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    const int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
+    const int nBlockSize = nWordSize * nBlockXSize * nBlockYSize;
 
-    nTilesPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
-    nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
-    nBlockSize = nWordSize * nBlockXSize * nBlockYSize;
+    const long nOffset = nBlockSize * (nBlockXOff + nBlockYOff*nTilesPerRow);
 
-    nOffset = nBlockSize * (nBlockXOff + nBlockYOff*nTilesPerRow);
-
-    if( VSIFSeekL( fpRaw, nOffset, SEEK_SET ) == -1 
+    if( VSIFSeekL( fpRaw, nOffset, SEEK_SET ) == -1
         || VSIFReadL( pImage, 1, nBlockSize, fpRaw ) < 1 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Read of tile %d/%d failed with fseek or fread error.", 
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Read of tile %d/%d failed with fseek or fread error.",
                   nBlockXOff, nBlockYOff );
         return CE_Failure;
     }
-    
+
     if( !bNative && nWordSize > 1 )
     {
         if( GDALDataTypeIsComplex( eDataType ) )
         {
-            GDALSwapWords( pImage, nWordSize/2, nBlockXSize*nBlockYSize, 
+            GDALSwapWords( pImage, nWordSize/2, nBlockXSize*nBlockYSize,
                            nWordSize );
-            GDALSwapWords( ((GByte *) pImage)+nWordSize/2, 
+            GDALSwapWords( reinterpret_cast<GByte *>( pImage ) + nWordSize / 2,
                            nWordSize/2, nBlockXSize*nBlockYSize, nWordSize );
         }
         else
             GDALSwapWords( pImage, nWordSize,
                            nBlockXSize * nBlockYSize, nWordSize );
     }
-    
+
     return CE_None;
 }
 
@@ -201,12 +195,9 @@ CPLErr MFFTiledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 class MFFSpheroidList : public SpheroidList
 {
-
 public:
-
   MFFSpheroidList();
-  ~MFFSpheroidList();
-
+  ~MFFSpheroidList() {};
 };
 
 MFFSpheroidList :: MFFSpheroidList()
@@ -214,7 +205,7 @@ MFFSpheroidList :: MFFSpheroidList()
   num_spheroids = 18;
 
   epsilonR = 0.1;
-  epsilonI = 0.000001;   
+  epsilonI = 0.000001;
 
   spheroids[0].SetValuesByRadii("SPHERE",6371007.0,6371007.0);
   spheroids[1].SetValuesByRadii("EVEREST",6377304.0,6356103.0);
@@ -233,17 +224,12 @@ MFFSpheroidList :: MFFSpheroidList()
   spheroids[14].SetValuesByRadii("WGS_72",6378135.0,6356751.0);
   spheroids[15].SetValuesByRadii("IUGG_75",6378140.0,6356755.0);
   spheroids[16].SetValuesByRadii("WGS_84",6378137.0,6356752.0);
-  spheroids[17].SetValuesByRadii("HUGHES",6378273.0,6356889.4); 
-}
-
-MFFSpheroidList::~MFFSpheroidList()
-
-{
+  spheroids[17].SetValuesByRadii("HUGHES",6378273.0,6356889.4);
 }
 
 /************************************************************************/
 /* ==================================================================== */
-/*				MFFDataset				*/
+/*                              MFFDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -251,15 +237,14 @@ MFFSpheroidList::~MFFSpheroidList()
 /*                            MFFDataset()                             */
 /************************************************************************/
 
-MFFDataset::MFFDataset()
+MFFDataset::MFFDataset() :
+    nGCPCount(0),
+    pasGCPList(NULL),
+    pszProjection(CPLStrdup("")),
+    pszGCPProjection(CPLStrdup("")),
+    papszHdrLines(NULL),
+    pafpBandFiles(NULL)
 {
-    papszHdrLines = NULL;
-    pafpBandFiles = NULL;
-    nGCPCount = 0;
-    pasGCPList = NULL;
-
-    pszProjection = CPLStrdup("");
-    pszGCPProjection = CPLStrdup("");
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -282,7 +267,12 @@ MFFDataset::~MFFDataset()
         for( int i = 0; i < GetRasterCount(); i++ )
         {
             if( pafpBandFiles[i] != NULL )
-                VSIFCloseL( pafpBandFiles[i] );
+            {
+                if( VSIFCloseL( pafpBandFiles[i] ) != 0 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                }
+            }
         }
         CPLFree( pafpBandFiles );
     }
@@ -316,8 +306,8 @@ const char *MFFDataset::GetGCPProjection()
 {
     if( nGCPCount > 0 )
         return pszGCPProjection;
-    else
-        return "";
+
+    return "";
 }
 
 /************************************************************************/
@@ -327,7 +317,7 @@ const char *MFFDataset::GetGCPProjection()
 const char *MFFDataset::GetProjectionRef()
 
 {
-   return ( pszProjection );
+   return pszProjection;
 }
 
 /************************************************************************/
@@ -337,8 +327,8 @@ const char *MFFDataset::GetProjectionRef()
 CPLErr MFFDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 ); 
-    return( CE_None );
+    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -358,24 +348,23 @@ const GDAL_GCP *MFFDataset::GetGCPs()
 void MFFDataset::ScanForGCPs()
 
 {
-    int     nCorner;
-    int	    NUM_GCPS = 0;
-    
+    int NUM_GCPS = 0;
+
     if( CSLFetchNameValue(papszHdrLines, "NUM_GCPS") != NULL )
         NUM_GCPS = atoi(CSLFetchNameValue(papszHdrLines, "NUM_GCPS"));
     if (NUM_GCPS < 0)
         return;
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *) VSICalloc(sizeof(GDAL_GCP),5+NUM_GCPS);
+    pasGCPList = reinterpret_cast<GDAL_GCP *>(
+        VSICalloc( sizeof(GDAL_GCP) , 5 + NUM_GCPS ) );
     if (pasGCPList == NULL)
         return;
 
-    for( nCorner = 0; nCorner < 5; nCorner++ )
+    for( int nCorner = 0; nCorner < 5; nCorner++ )
     {
         const char * pszBase=NULL;
         double       dfRasterX=0.0, dfRasterY=0.0;
-        char         szLatName[40], szLongName[40];
 
         if( nCorner == 0 )
         {
@@ -408,21 +397,22 @@ void MFFDataset::ScanForGCPs()
             pszBase = "CENTRE";
         }
 
-        sprintf( szLatName, "%s_LATITUDE", pszBase );
-        sprintf( szLongName, "%s_LONGITUDE", pszBase );
-        
+        char szLatName[40], szLongName[40];
+        snprintf( szLatName, sizeof(szLatName), "%s_LATITUDE", pszBase );
+        snprintf( szLongName, sizeof(szLongName), "%s_LONGITUDE", pszBase );
+
         if( CSLFetchNameValue(papszHdrLines, szLatName) != NULL
             && CSLFetchNameValue(papszHdrLines, szLongName) != NULL )
         {
             GDALInitGCPs( 1, pasGCPList + nGCPCount );
-            
+
             CPLFree( pasGCPList[nGCPCount].pszId );
 
             pasGCPList[nGCPCount].pszId = CPLStrdup( pszBase );
-                
-            pasGCPList[nGCPCount].dfGCPX = 
+
+            pasGCPList[nGCPCount].dfGCPX =
                 CPLAtof(CSLFetchNameValue(papszHdrLines, szLongName));
-            pasGCPList[nGCPCount].dfGCPY = 
+            pasGCPList[nGCPCount].dfGCPY =
                 CPLAtof(CSLFetchNameValue(papszHdrLines, szLatName));
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
 
@@ -431,7 +421,6 @@ void MFFDataset::ScanForGCPs()
 
             nGCPCount++;
         }
-       
     }
 
 /* -------------------------------------------------------------------- */
@@ -440,19 +429,15 @@ void MFFDataset::ScanForGCPs()
 /*      GCPn = row, col, lat, long                                      */
 /*      GCP1 = 1, 1, 45.0, -75.0                                        */
 /* -------------------------------------------------------------------- */
-    int i;
-
-    for( i = 0; i < NUM_GCPS; i++ )
+    for( int i = 0; i < NUM_GCPS; i++ )
     {
-        char	szName[25];
-        char    **papszTokens;
-
-        sprintf( szName, "GCP%d", i+1 );
+        char szName[25];
+        snprintf( szName, sizeof(szName), "GCP%d", i+1 );
         if( CSLFetchNameValue( papszHdrLines, szName ) == NULL )
             continue;
 
-        papszTokens = CSLTokenizeStringComplex( 
-            CSLFetchNameValue( papszHdrLines, szName ), 
+        char **papszTokens = CSLTokenizeStringComplex(
+            CSLFetchNameValue( papszHdrLines, szName ),
             ",", FALSE, FALSE );
         if( CSLCount(papszTokens) == 4 )
         {
@@ -480,19 +465,12 @@ void MFFDataset::ScanForGCPs()
 
 void MFFDataset::ScanForProjectionInfo()
 {
-    const char *pszProjName, *pszOriginLong, *pszSpheroidName;
-    const char *pszSpheroidEqRadius, *pszSpheroidPolarRadius;
-    double eq_radius, polar_radius;
-    OGRSpatialReference oProj;
-    OGRSpatialReference oLL;
-    MFFSpheroidList *mffEllipsoids;
-
-    pszProjName = CSLFetchNameValue(papszHdrLines, 
-                                    "PROJECTION_NAME");
-    pszOriginLong = CSLFetchNameValue(papszHdrLines, 
-                                      "PROJECTION_ORIGIN_LONGITUDE");
-    pszSpheroidName = CSLFetchNameValue(papszHdrLines, 
-                                      "SPHEROID_NAME");
+    const char *pszProjName
+        = CSLFetchNameValue(papszHdrLines, "PROJECTION_NAME");
+    const char *pszOriginLong
+        = CSLFetchNameValue(papszHdrLines, "PROJECTION_ORIGIN_LONGITUDE");
+    const char *pszSpheroidName
+        = CSLFetchNameValue(papszHdrLines, "SPHEROID_NAME");
 
     if (pszProjName == NULL)
     {
@@ -512,8 +490,9 @@ void MFFDataset::ScanForProjectionInfo()
         pszGCPProjection=CPLStrdup("");
         return;
     }
-    mffEllipsoids = new MFFSpheroidList;
+    MFFSpheroidList *mffEllipsoids = new MFFSpheroidList;
 
+    OGRSpatialReference oProj;
     if( EQUAL(pszProjName,"utm") )
     {
         int nZone;
@@ -526,19 +505,19 @@ void MFFDataset::ScanForProjectionInfo()
             nZone = 31;
         }
         else
-            nZone = 31 + (int) floor(CPLAtof(pszOriginLong)/6.0);
-
+            nZone = 31 + static_cast<int>(
+                floor( CPLAtof( pszOriginLong ) / 6.0) );
 
         if( nGCPCount >= 5 && pasGCPList[4].dfGCPY < 0 )
             oProj.SetUTM( nZone, 0 );
         else
             oProj.SetUTM( nZone, 1 );
-     
+
         if (pszOriginLong != NULL)
             oProj.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,CPLAtof(pszOriginLong));
-        
     }
 
+    OGRSpatialReference oLL;
     if (pszOriginLong != NULL)
         oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,CPLAtof(pszOriginLong));
 
@@ -553,30 +532,30 @@ void MFFDataset::ScanForProjectionInfo()
     else
     {
       if (mffEllipsoids->SpheroidInList(pszSpheroidName))
-      { 
+      {
          oProj.SetGeogCS( "unknown","unknown",pszSpheroidName,
-                         mffEllipsoids->GetSpheroidEqRadius(pszSpheroidName), 
+                         mffEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
                          mffEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
                        );
          oLL.SetGeogCS( "unknown","unknown",pszSpheroidName,
-                         mffEllipsoids->GetSpheroidEqRadius(pszSpheroidName), 
+                         mffEllipsoids->GetSpheroidEqRadius(pszSpheroidName),
                          mffEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
                       );
       }
       else if (EQUAL(pszSpheroidName,"USER_DEFINED"))
       {
-          pszSpheroidEqRadius = CSLFetchNameValue(papszHdrLines,
-                                                  "SPHEROID_EQUATORIAL_RADIUS");
-          pszSpheroidPolarRadius = CSLFetchNameValue(papszHdrLines,
-                                                  "SPHEROID_POLAR_RADIUS");
+          const char *pszSpheroidEqRadius
+              = CSLFetchNameValue(papszHdrLines, "SPHEROID_EQUATORIAL_RADIUS");
+          const char *pszSpheroidPolarRadius
+              = CSLFetchNameValue(papszHdrLines, "SPHEROID_POLAR_RADIUS");
           if ((pszSpheroidEqRadius != NULL) && (pszSpheroidPolarRadius != NULL))
           {
-            eq_radius = CPLAtof( pszSpheroidEqRadius );
-            polar_radius = CPLAtof( pszSpheroidPolarRadius );
+            const double eq_radius = CPLAtof( pszSpheroidEqRadius );
+            const double polar_radius = CPLAtof( pszSpheroidPolarRadius );
             oProj.SetGeogCS( "unknown","unknown","unknown",
                          eq_radius, eq_radius/(eq_radius - polar_radius));
             oLL.SetGeogCS( "unknown","unknown","unknown",
-                         eq_radius, eq_radius/(eq_radius - polar_radius));          
+                         eq_radius, eq_radius/(eq_radius - polar_radius));
           }
           else
           {
@@ -593,56 +572,50 @@ void MFFDataset::ScanForProjectionInfo()
          oProj.SetWellKnownGeogCS( "WGS84" );
          oLL.SetWellKnownGeogCS( "WGS84" );
       }
-    }  
+    }
 
-    /* If a geotransform is sufficient to represent the GCP's (ie. each  */
+    /* If a geotransform is sufficient to represent the GCP's (i.e. each */
     /* estimated gcp is within 0.25*pixel size of the actual value- this */
     /* is the test applied by GDALGCPsToGeoTransform), store the         */
     /* geotransform.                                                     */
-    int transform_ok = FALSE;
+    bool transform_ok = false;
 
     if (EQUAL(pszProjName,"LL"))
     {
-        transform_ok = GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0);
+        transform_ok = CPL_TO_BOOL(GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0));
     }
     else
     {
-        OGRCoordinateTransformation *poTransform = NULL;
-        double *dfPrjX, *dfPrjY; 
-        int gcp_index;
-        int    bSuccess = TRUE;
-
-        dfPrjX = (double *) CPLMalloc(nGCPCount*sizeof(double));
-        dfPrjY = (double *) CPLMalloc(nGCPCount*sizeof(double));
-
-
-        poTransform = OGRCreateCoordinateTransformation( &oLL, &oProj );
+        OGRCoordinateTransformation *poTransform
+            = OGRCreateCoordinateTransformation( &oLL, &oProj );
+        bool bSuccess = true;
         if( poTransform == NULL )
         {
             CPLErrorReset();
             bSuccess = FALSE;
         }
 
-        for(gcp_index=0;gcp_index<nGCPCount;gcp_index++)
+        double *dfPrjX = reinterpret_cast<double *>( CPLMalloc(nGCPCount*sizeof(double)) );
+        double *dfPrjY = reinterpret_cast<double *>( CPLMalloc(nGCPCount*sizeof(double)) );
+
+        for( int gcp_index = 0; gcp_index < nGCPCount; gcp_index++ )
         {
             dfPrjX[gcp_index] = pasGCPList[gcp_index].dfGCPX;
             dfPrjY[gcp_index] = pasGCPList[gcp_index].dfGCPY;
 
             if( bSuccess && !poTransform->Transform( 1, &(dfPrjX[gcp_index]), &(dfPrjY[gcp_index]) ) )
                 bSuccess = FALSE;
- 
         }
 
         if( bSuccess )
         {
-
-            for(gcp_index=0;gcp_index<nGCPCount;gcp_index++)
+            for(int gcp_index = 0; gcp_index < nGCPCount; gcp_index++ )
             {
                 pasGCPList[gcp_index].dfGCPX = dfPrjX[gcp_index];
                 pasGCPList[gcp_index].dfGCPY = dfPrjY[gcp_index];
 
             }
-            transform_ok = GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0);
+            transform_ok = CPL_TO_BOOL(GDALGCPsToGeoTransform(nGCPCount,pasGCPList,adfGeoTransform,0));
 
         }
 
@@ -661,7 +634,7 @@ void MFFDataset::ScanForProjectionInfo()
     oProj.exportToWkt( &pszProjection );
     oProj.exportToWkt( &pszGCPProjection );
 
-    if (transform_ok == FALSE)
+    if( !transform_ok )
     {
     /* transform is sufficient in some cases (slant range, standalone gcps) */
         adfGeoTransform[0] = 0.0;
@@ -675,7 +648,7 @@ void MFFDataset::ScanForProjectionInfo()
     }
 
     delete mffEllipsoids;
-  
+
 }
 
 
@@ -686,9 +659,6 @@ void MFFDataset::ScanForProjectionInfo()
 GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i, bNative = TRUE;
-    char        **papszHdrLines;
-
 /* -------------------------------------------------------------------- */
 /*      We assume the user is pointing to the header file.              */
 /* -------------------------------------------------------------------- */
@@ -702,25 +672,23 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Load the .hdr file, and compress white space out around the     */
 /*      equal sign.                                                     */
 /* -------------------------------------------------------------------- */
-    papszHdrLines = CSLLoad( poOpenInfo->pszFilename );
+    char **papszHdrLines = CSLLoad( poOpenInfo->pszFilename );
     if( papszHdrLines == NULL )
         return NULL;
 
-    for( i = 0; papszHdrLines[i] != NULL; i++ )
+    // Remove spaces.  e.g.
+    // SPHEROID_NAME = CLARKE_1866 -> SPHEROID_NAME=CLARKE_1866
+    for( int i = 0; papszHdrLines[i] != NULL; i++ )
     {
-        int       bAfterEqual = FALSE;
-        int       iSrc, iDst;
+        int iDst = 0;
         char     *pszLine = papszHdrLines[i];
 
-        for( iSrc=0, iDst=0; pszLine[iSrc] != '\0'; iSrc++ )
+        for( int iSrc=0; pszLine[iSrc] != '\0'; iSrc++ )
         {
-            if( bAfterEqual || pszLine[iSrc] != ' ' )
+            if( pszLine[iSrc] != ' ' )
             {
                 pszLine[iDst++] = pszLine[iSrc];
             }
-
-            if( iDst > 0 && pszLine[iDst-1] == '=' )
-                bAfterEqual = FALSE;
         }
         pszLine[iDst] = '\0';
     }
@@ -735,26 +703,24 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( (CSLFetchNameValue( papszHdrLines, "IMAGE_LINES" ) == NULL 
+    if( (CSLFetchNameValue( papszHdrLines, "IMAGE_LINES" ) == NULL
          || CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES") == NULL)
-        && (CSLFetchNameValue( papszHdrLines, "no_rows" ) == NULL 
+        && (CSLFetchNameValue( papszHdrLines, "no_rows" ) == NULL
             || CSLFetchNameValue(papszHdrLines,"no_columns") == NULL) )
     {
         CSLDestroy( papszHdrLines );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    MFFDataset 	*poDS;
-
-    poDS = new MFFDataset();
+    MFFDataset *poDS = new MFFDataset();
 
     poDS->papszHdrLines = papszHdrLines;
 
     poDS->eAccess = poOpenInfo->eAccess;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set some dataset wide information.                              */
 /* -------------------------------------------------------------------- */
@@ -776,6 +742,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    int bNative = TRUE;
     if( CSLFetchNameValue( papszHdrLines, "BYTE_ORDER" ) != NULL )
     {
 #ifdef CPL_MSB
@@ -788,24 +755,23 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get some information specific to APP tiled files.               */
 /* -------------------------------------------------------------------- */
-    int bTiled, nTileXSize=0, nTileYSize=0;
-    const char *pszRefinedType = NULL;
+    int nTileXSize = 0;
+    int nTileYSize = 0;
+    const char *pszRefinedType = CSLFetchNameValue(papszHdrLines, "type" );
+    const bool bTiled = CSLFetchNameValue(papszHdrLines,"no_rows") != NULL;
 
-    pszRefinedType = CSLFetchNameValue(papszHdrLines, "type" );
-
-    bTiled = CSLFetchNameValue(papszHdrLines,"no_rows") != NULL;
     if( bTiled )
     {
         if( CSLFetchNameValue(papszHdrLines,"tile_size_rows") )
-            nTileYSize = 
+            nTileYSize =
                 atoi(CSLFetchNameValue(papszHdrLines,"tile_size_rows"));
         if( CSLFetchNameValue(papszHdrLines,"tile_size_columns") )
-            nTileXSize = 
+            nTileXSize =
                 atoi(CSLFetchNameValue(papszHdrLines,"tile_size_columns"));
 
         if (nTileXSize <= 0 || nTileYSize <= 0 ||
-            poDS->nRasterXSize > INT_MAX - (nTileXSize - 1) ||
-            poDS->nRasterYSize > INT_MAX - (nTileYSize - 1))
+            poDS->nRasterXSize-1 > INT_MAX - nTileXSize ||
+            poDS->nRasterYSize-1 > INT_MAX - nTileYSize )
         {
             delete poDS;
             return NULL;
@@ -815,13 +781,9 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the directory to find matching band files.                 */
 /* -------------------------------------------------------------------- */
-    char       **papszDirFiles;
-    char       *pszTargetBase, *pszTargetPath;
-    int        nRawBand, nSkipped=0;
-
-    pszTargetPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
-    pszTargetBase = CPLStrdup(CPLGetBasename( poOpenInfo->pszFilename ));
-    papszDirFiles = CPLReadDir( CPLGetPath( poOpenInfo->pszFilename ) );
+    char *pszTargetPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *pszTargetBase = CPLStrdup(CPLGetBasename( poOpenInfo->pszFilename ));
+    char **papszDirFiles = VSIReadDir( CPLGetPath( poOpenInfo->pszFilename ) );
     if( papszDirFiles == NULL )
     {
         CPLFree(pszTargetPath);
@@ -830,14 +792,15 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    for( nRawBand = 0; TRUE; nRawBand++ )
+    int nSkipped = 0;
+    for( int nRawBand = 0; true; nRawBand++ )
     {
-        const char  *pszExtension;
-        int          nBand;
-        GDALDataType eDataType;
+        const char *pszExtension = NULL;
 
         /* Find the next raw band file. */
-        for( i = 0; papszDirFiles[i] != NULL; i++ )
+
+        int i = 0;
+        for( ; papszDirFiles[i] != NULL; i++ )
         {
             if( !EQUAL(CPLGetBasename(papszDirFiles[i]),pszTargetBase) )
                 continue;
@@ -845,7 +808,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             pszExtension = CPLGetExtension(papszDirFiles[i]);
             if( strlen(pszExtension) >= 2
                 && isdigit(pszExtension[1])
-                && atoi(pszExtension+1) == nRawBand 
+                && atoi(pszExtension+1) == nRawBand
                 && strchr("bBcCiIjJrRxXzZ",pszExtension[0]) != NULL )
                 break;
         }
@@ -854,24 +817,25 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             break;
 
         /* open the file for required level of access */
-        VSILFILE     *fpRaw;
-        const char *pszRawFilename = CPLFormFilename(pszTargetPath, 
+        const char *pszRawFilename = CPLFormFilename(pszTargetPath,
                                                      papszDirFiles[i], NULL );
 
+        VSILFILE *fpRaw;
         if( poOpenInfo->eAccess == GA_Update )
             fpRaw = VSIFOpenL( pszRawFilename, "rb+" );
         else
             fpRaw = VSIFOpenL( pszRawFilename, "rb" );
-        
+
         if( fpRaw == NULL )
         {
-            CPLError( CE_Warning, CPLE_OpenFailed, 
-                      "Unable to open %s ... skipping.\n", 
+            CPLError( CE_Warning, CPLE_OpenFailed,
+                      "Unable to open %s ... skipping.\n",
                       pszRawFilename );
             nSkipped++;
             continue;
         }
 
+        GDALDataType eDataType;
         pszExtension = CPLGetExtension(papszDirFiles[i]);
         if( pszRefinedType != NULL )
         {
@@ -895,11 +859,11 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                 eDataType = GDT_UInt32;
             else if( EQUAL(pszRefinedType,"J*1") )
             {
-                CPLError( CE_Warning, CPLE_OpenFailed, 
-                        "Unable to open band %d because type J*1 is not handled ... skipping.\n", 
+                CPLError( CE_Warning, CPLE_OpenFailed,
+                        "Unable to open band %d because type J*1 is not handled ... skipping.\n",
                          nRawBand + 1 );
                 nSkipped++;
-                VSIFCloseL(fpRaw);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
                 continue; /* we don't support 1 byte complex */
             }
             else if( EQUAL(pszRefinedType,"J*2") )
@@ -908,52 +872,53 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                 eDataType = GDT_CInt32;
             else
             {
-                CPLError( CE_Warning, CPLE_OpenFailed, 
-                        "Unable to open band %d because type %s is not handled ... skipping.\n", 
+                CPLError( CE_Warning, CPLE_OpenFailed,
+                        "Unable to open band %d because type %s is not handled ... skipping.\n",
                          nRawBand + 1, pszRefinedType );
                 nSkipped++;
-                VSIFCloseL(fpRaw);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
                 continue;
             }
         }
-        else if( EQUALN(pszExtension,"b",1) )
+        else if( STARTS_WITH_CI(pszExtension, "b") )
         {
             eDataType = GDT_Byte;
         }
-        else if( EQUALN(pszExtension,"i",1) )
+        else if( STARTS_WITH_CI(pszExtension, "i") )
         {
             eDataType = GDT_UInt16;
         }
-        else if( EQUALN(pszExtension,"j",1) )
+        else if( STARTS_WITH_CI(pszExtension, "j") )
         {
             eDataType = GDT_CInt16;
         }
-        else if( EQUALN(pszExtension,"r",1) )
+        else if( STARTS_WITH_CI(pszExtension, "r") )
         {
             eDataType = GDT_Float32;
         }
-        else if( EQUALN(pszExtension,"x",1) )
+        else if( STARTS_WITH_CI(pszExtension, "x") )
         {
             eDataType = GDT_CFloat32;
         }
         else
         {
-            CPLError( CE_Warning, CPLE_OpenFailed, 
-                    "Unable to open band %d because extension %s is not handled ... skipping.\n", 
+            CPLError( CE_Warning, CPLE_OpenFailed,
+                      "Unable to open band %d because extension %s is not "
+                      "handled ... skipping.\n",
                       nRawBand + 1, pszExtension );
             nSkipped++;
-            VSIFCloseL(fpRaw);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
             continue;
         }
 
-        nBand = poDS->GetRasterCount() + 1;
+        const int nBand = poDS->GetRasterCount() + 1;
 
-        int nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
+        const int nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
         GDALRasterBand *poBand = NULL;
-        
+
         if( bTiled )
         {
-            poBand = 
+            poBand =
                 new MFFTiledBand( poDS, nBand, fpRaw, nTileXSize, nTileYSize,
                                   eDataType, bNative );
         }
@@ -961,13 +926,14 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             if (poDS->GetRasterXSize() > INT_MAX / nPixelOffset)
             {
-                CPLError( CE_Warning, CPLE_AppDefined,  "Int overflow occured... skipping");
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Int overflow occurred... skipping");
                 nSkipped++;
-                VSIFCloseL(fpRaw);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
                 continue;
             }
 
-            poBand = 
+            poBand =
                 new RawRasterBand( poDS, nBand, fpRaw, 0, nPixelOffset,
                                    nPixelOffset * poDS->GetRasterXSize(),
                                    eDataType, bNative, TRUE, TRUE );
@@ -987,16 +953,16 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if( nSkipped > 0 && poOpenInfo->eAccess )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to open %d files that were apparently bands.\n"
-                      "Perhaps this dataset is readonly?\n", 
+                      "Perhaps this dataset is readonly?\n",
                       nSkipped );
             delete poDS;
             return NULL;
         }
         else
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "MFF header file read successfully, but no bands\n"
                       "were successfully found and opened." );
             delete poDS;
@@ -1008,25 +974,24 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Set all information from the .hdr that isn't well know to be    */
 /*      metadata.                                                       */
 /* -------------------------------------------------------------------- */
-    for( i = 0; papszHdrLines[i] != NULL; i++ )
+    for( int i = 0; papszHdrLines[i] != NULL; i++ )
     {
-        const char *pszValue;
         char       *pszName;
 
-        pszValue = CPLParseNameValue(papszHdrLines[i], &pszName);
+        const char *pszValue = CPLParseNameValue(papszHdrLines[i], &pszName);
         if( pszName == NULL || pszValue == NULL )
             continue;
 
-        if( !EQUAL(pszName,"END") 
-            && !EQUAL(pszName,"FILE_TYPE") 
-            && !EQUAL(pszName,"BYTE_ORDER") 
-            && !EQUAL(pszName,"no_columns") 
-            && !EQUAL(pszName,"no_rows") 
-            && !EQUAL(pszName,"type") 
-            && !EQUAL(pszName,"tile_size_rows") 
-            && !EQUAL(pszName,"tile_size_columns") 
-            && !EQUAL(pszName,"IMAGE_FILE_FORMAT") 
-            && !EQUAL(pszName,"IMAGE_LINES") 
+        if( !EQUAL(pszName,"END")
+            && !EQUAL(pszName,"FILE_TYPE")
+            && !EQUAL(pszName,"BYTE_ORDER")
+            && !EQUAL(pszName,"no_columns")
+            && !EQUAL(pszName,"no_rows")
+            && !EQUAL(pszName,"type")
+            && !EQUAL(pszName,"tile_size_rows")
+            && !EQUAL(pszName,"tile_size_columns")
+            && !EQUAL(pszName,"IMAGE_FILE_FORMAT")
+            && !EQUAL(pszName,"IMAGE_LINES")
             && !EQUAL(pszName,"LINE_SAMPLES") )
         {
             poDS->SetMetadataItem( pszName, pszValue );
@@ -1040,7 +1005,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->ScanForGCPs();
     poDS->ScanForProjectionInfo();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
@@ -1059,19 +1024,19 @@ int GetMFFProjectionType(const char *pszNewProjection)
 {
     OGRSpatialReference oSRS(pszNewProjection);
 
-    if( !EQUALN(pszNewProjection,"GEOGCS",6)
-       && !EQUALN(pszNewProjection,"PROJCS",6)
+    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
+       && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
        && !EQUAL(pszNewProjection,"") )
       {
-          return MFFPRJ_UNRECOGNIZED;       
+          return MFFPRJ_UNRECOGNIZED;
       }
       else if (EQUAL(pszNewProjection,""))
-      { 
-          return MFFPRJ_NONE;  
+      {
+          return MFFPRJ_NONE;
       }
       else
       {
-             if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
+             if ((oSRS.GetAttrValue("PROJECTION") != NULL) &&
                  (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
              {
                return MFFPRJ_UTM;
@@ -1102,12 +1067,12 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
     if (nBands <= 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "MFF driver does not support %d bands.\n", nBands);
         return NULL;
     }
 
-    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16 
+    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
         && eType != GDT_CInt16 && eType != GDT_CFloat32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1121,13 +1086,11 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Establish the base filename (path+filename, less extension).    */
 /* -------------------------------------------------------------------- */
-    char	*pszBaseFilename;
-    int         i;
-
-    pszBaseFilename = (char *) CPLMalloc(strlen(pszFilenameIn)+5);
+    char *pszBaseFilename
+        = reinterpret_cast<char *>( CPLMalloc( strlen( pszFilenameIn ) + 5 ) );
     strcpy( pszBaseFilename, pszFilenameIn );
-    
-    for( i = strlen(pszBaseFilename)-1; i > 0; i-- )
+
+    for( int i = static_cast<int>(strlen(pszBaseFilename))-1; i > 0; i-- )
     {
         if( pszBaseFilename[i] == '.' )
         {
@@ -1138,80 +1101,85 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
         if( pszBaseFilename[i] == '/' || pszBaseFilename[i] == '\\' )
             break;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the header file.                                         */
 /* -------------------------------------------------------------------- */
-    VSILFILE       *fp;
-    const char *pszFilename;
+    const char *pszFilename = CPLFormFilename( NULL, pszBaseFilename, "hdr" );
 
-    pszFilename = CPLFormFilename( NULL, pszBaseFilename, "hdr" );
-
-    fp = VSIFOpenL( pszFilename, "wt" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wt" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Couldn't create %s.\n", pszFilename );
         CPLFree(pszBaseFilename);
         return NULL;
     }
 
-    VSIFPrintfL( fp, "IMAGE_FILE_FORMAT = MFF\n" );
-    VSIFPrintfL( fp, "FILE_TYPE = IMAGE\n" );
-    VSIFPrintfL( fp, "IMAGE_LINES = %d\n", nYSize );
-    VSIFPrintfL( fp, "LINE_SAMPLES = %d\n", nXSize );
-#ifdef CPL_MSB     
-    VSIFPrintfL( fp, "BYTE_ORDER = MSB\n" );
+    bool bOK = VSIFPrintfL( fp, "IMAGE_FILE_FORMAT = MFF\n" ) >= 0;
+    bOK &= VSIFPrintfL( fp, "FILE_TYPE = IMAGE\n" ) >= 0;
+    bOK &= VSIFPrintfL( fp, "IMAGE_LINES = %d\n", nYSize ) >= 0;
+    bOK &= VSIFPrintfL( fp, "LINE_SAMPLES = %d\n", nXSize ) >= 0;
+#ifdef CPL_MSB
+    bOK &= VSIFPrintfL( fp, "BYTE_ORDER = MSB\n" ) >= 0;
 #else
-    VSIFPrintfL( fp, "BYTE_ORDER = LSB\n" );
+    bOK &= VSIFPrintfL( fp, "BYTE_ORDER = LSB\n" ) >= 0;
 #endif
 
     if (CSLFetchNameValue(papszParmList,"NO_END") == NULL)
-        VSIFPrintfL( fp, "END\n" );
-    
-    VSIFCloseL( fp );
-   
+        bOK &= VSIFPrintfL( fp, "END\n" ) >= 0;
+
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
+
 /* -------------------------------------------------------------------- */
 /*      Create the data files, but don't bother writing any data to them.*/
 /* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; bOK && iBand < nBands; iBand++ )
     {
         char       szExtension[4];
 
         if( eType == GDT_Byte )
-            sprintf( szExtension, "b%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension), "b%02d", iBand );
         else if( eType == GDT_UInt16 )
-            sprintf( szExtension, "i%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension), "i%02d", iBand );
         else if( eType == GDT_Float32 )
-            sprintf( szExtension, "r%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension),  "r%02d", iBand );
         else if( eType == GDT_CInt16 )
-            sprintf( szExtension, "j%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension), "j%02d", iBand );
         else if( eType == GDT_CFloat32 )
-            sprintf( szExtension, "x%02d", iBand );
+            snprintf( szExtension, sizeof(szExtension), "x%02d", iBand );
 
         pszFilename = CPLFormFilename( NULL, pszBaseFilename, szExtension );
         fp = VSIFOpenL( pszFilename, "wb" );
         if( fp == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                       "Couldn't create %s.\n", pszFilename );
             CPLFree(pszBaseFilename);
             return NULL;
         }
 
-        VSIFWriteL( (void *) "", 1, 1, fp );
-        VSIFCloseL( fp );
+        bOK &= VSIFWriteL( reinterpret_cast<void *>( const_cast<char *>( "" ) ),
+                    1, 1, fp ) == 1;
+        if( VSIFCloseL( fp ) != 0 )
+            bOK = false;
+    }
+
+    if( !bOK )
+    {
+        CPLFree( pszBaseFilename );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Open the dataset normally.                                      */
 /* -------------------------------------------------------------------- */
-    GDALDataset *poDS;
-
     strcat( pszBaseFilename, ".hdr" );
-    poDS = (GDALDataset *) GDALOpen( pszBaseFilename, GA_Update );
+    GDALDataset *poDS = reinterpret_cast<GDALDataset *>(
+        GDALOpen( pszBaseFilename, GA_Update ) );
     CPLFree( pszBaseFilename );
-    
+
     return poDS;
 }
 
@@ -1227,111 +1195,99 @@ MFFDataset::CreateCopy( const char * pszFilename,
                         GDALProgressFunc pfnProgress,
                         void * pProgressData )
 {
-    MFFDataset	*poDS;
-    GDALDataType eType;
-    int          iBand;
-    char **newpapszOptions=NULL;
-
-    int nBands = poSrcDS->GetRasterCount();
+    const int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "MFF driver does not support source dataset with zero band.\n");
         return NULL;
     }
 
-    eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
 
     /* check that other bands match type- sets type */
     /* to unknown if they differ.                  */
-    for( iBand = 1; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    for( int iBand = 1; iBand < poSrcDS->GetRasterCount(); iBand++ )
      {
          GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
          eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
      }
 
-    newpapszOptions=CSLDuplicate(papszOptions);
+    char **newpapszOptions = CSLDuplicate(papszOptions);
     newpapszOptions=CSLSetNameValue(newpapszOptions,"NO_END","TRUE");
 
-    poDS = (MFFDataset *) Create( pszFilename, 
-                                  poSrcDS->GetRasterXSize(), 
-                                  poSrcDS->GetRasterYSize(), 
-                                  poSrcDS->GetRasterCount(), 
-                                  eType, newpapszOptions );
-    
+    MFFDataset *poDS = reinterpret_cast<MFFDataset *>(
+        Create( pszFilename,
+                poSrcDS->GetRasterXSize(),
+                poSrcDS->GetRasterYSize(),
+                poSrcDS->GetRasterCount(),
+                eType, newpapszOptions ) );
+
     CSLDestroy(newpapszOptions);
-   
 
     /* Check that Create worked- return Null if it didn't */
     if (poDS == NULL)
         return NULL;
 
-
 /* -------------------------------------------------------------------- */
 /*      Copy the image data.                                            */
 /* -------------------------------------------------------------------- */
-    int         nXSize = poDS->GetRasterXSize();
-    int         nYSize = poDS->GetRasterYSize();
-    int  	nBlockXSize, nBlockYSize, nBlockTotal, nBlocksDone;
+    const int nXSize = poDS->GetRasterXSize();
+    const int nYSize = poDS->GetRasterYSize();
 
+    int nBlockXSize, nBlockYSize;
     poDS->GetRasterBand(1)->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
-    nBlockTotal = ((nXSize + nBlockXSize - 1) / nBlockXSize)
+    const int nBlockTotal = ((nXSize + nBlockXSize - 1) / nBlockXSize)
         * ((nYSize + nBlockYSize - 1) / nBlockYSize)
         * poSrcDS->GetRasterCount();
 
-    nBlocksDone = 0;
-    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    int nBlocksDone = 0;
+    for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand+1 );
-        int	       iYOffset, iXOffset;
-        void           *pData;
-        CPLErr  eErr;
 
+        void *pData = CPLMalloc(nBlockXSize * nBlockYSize
+                                * GDALGetDataTypeSize(eType) / 8);
 
-        pData = CPLMalloc(nBlockXSize * nBlockYSize
-                          * GDALGetDataTypeSize(eType) / 8);
-
-        for( iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
+        for( int iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
         {
-            for( iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
+            for( int iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
             {
-                int	nTBXSize, nTBYSize;
-
-                if( !pfnProgress( (nBlocksDone++) / (float) nBlockTotal,
-                                  NULL, pProgressData ) )
+                if( !pfnProgress(
+                       (nBlocksDone++) / static_cast<float>( nBlockTotal ),
+                       NULL, pProgressData ) )
                 {
-                    CPLError( CE_Failure, CPLE_UserInterrupt, 
+                    CPLError( CE_Failure, CPLE_UserInterrupt,
                               "User terminated" );
                     delete poDS;
                     CPLFree( pData );
 
-                    GDALDriver *poMFFDriver = 
-                        (GDALDriver *) GDALGetDriverByName( "MFF" );
+                    GDALDriver *poMFFDriver = reinterpret_cast<GDALDriver *>(
+                        GDALGetDriverByName( "MFF" ) );
                     poMFFDriver->Delete( pszFilename );
                     return NULL;
                 }
 
-                nTBXSize = MIN(nBlockXSize,nXSize-iXOffset);
-                nTBYSize = MIN(nBlockYSize,nYSize-iYOffset);
+                const int nTBXSize = std::min( nBlockXSize, nXSize - iXOffset );
+                const int nTBYSize = std::min( nBlockYSize, nYSize - iYOffset );
 
-                eErr = poSrcBand->RasterIO( GF_Read, 
-                                            iXOffset, iYOffset, 
-                                            nTBXSize, nTBYSize,
-                                            pData, nTBXSize, nTBYSize,
-                                            eType, 0, 0, NULL );
+                CPLErr eErr = poSrcBand->RasterIO(
+                    GF_Read, iXOffset, iYOffset, nTBXSize, nTBYSize,
+                    pData, nTBXSize, nTBYSize, eType, 0, 0, NULL );
+
                 if( eErr != CE_None )
                 {
                     delete poDS;
                     CPLFree( pData );
                     return NULL;
                 }
-            
-                eErr = poDstBand->RasterIO( GF_Write, 
-                                            iXOffset, iYOffset, 
+
+                eErr = poDstBand->RasterIO( GF_Write,
+                                            iXOffset, iYOffset,
                                             nTBXSize, nTBYSize,
                                             pData, nTBXSize, nTBYSize,
                                             eType, 0, 0, NULL );
@@ -1352,19 +1308,14 @@ MFFDataset::CreateCopy( const char * pszFilename,
 /*      Copy georeferencing information, if enough is available.        */
 /* -------------------------------------------------------------------- */
 
-
 /* -------------------------------------------------------------------- */
 /*      Establish the base filename (path+filename, less extension).    */
 /* -------------------------------------------------------------------- */
-    char	*pszBaseFilename;
-    int         i;
-    VSILFILE       *fp;
-    const char *pszFilenameGEO;
-
-    pszBaseFilename = (char *) CPLMalloc(strlen(pszFilename)+5);
+    char *pszBaseFilename = reinterpret_cast<char *>(
+        CPLMalloc(strlen(pszFilename)+5) );
     strcpy( pszBaseFilename, pszFilename );
-    
-    for( i = strlen(pszBaseFilename)-1; i > 0; i-- )
+
+    for( int i = static_cast<int>(strlen(pszBaseFilename))-1; i > 0; i-- )
     {
         if( pszBaseFilename[i] == '.' )
         {
@@ -1376,41 +1327,36 @@ MFFDataset::CreateCopy( const char * pszFilename,
             break;
     }
 
-    pszFilenameGEO = CPLFormFilename( NULL, pszBaseFilename, "hdr" );
+    const char *pszFilenameGEO
+        = CPLFormFilename( NULL, pszBaseFilename, "hdr" );
 
-    fp = VSIFOpenL( pszFilenameGEO, "at" );
+    VSILFILE *fp = VSIFOpenL( pszFilenameGEO, "at" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Couldn't open %s for appending.\n", pszFilenameGEO );
         CPLFree(pszBaseFilename);
         return NULL;
-    }  
-    
+    }
 
     /* MFF requires corner and center gcps */
-    double	*padfTiepoints;
-    int         src_prj;
-    int         georef_created = FALSE;
+    bool georef_created = false;
 
-    padfTiepoints = (double *) CPLMalloc(2*sizeof(double)*5);
+    double *padfTiepoints = reinterpret_cast<double *>(
+        CPLMalloc( 2 * sizeof(double) * 5 ) );
 
-    src_prj = GetMFFProjectionType(poSrcDS->GetProjectionRef());
+    const int src_prj = GetMFFProjectionType(poSrcDS->GetProjectionRef());
 
     if ((src_prj != MFFPRJ_NONE) && (src_prj != MFFPRJ_UNRECOGNIZED))
     {
-      double    *tempGeoTransform = NULL; 
-
-      tempGeoTransform = (double *) CPLMalloc(6*sizeof(double));
+      double *tempGeoTransform = reinterpret_cast<double *>(
+          CPLMalloc( 6 * sizeof(double) ) );
 
       if (( poSrcDS->GetGeoTransform( tempGeoTransform ) == CE_None)
           && (tempGeoTransform[0] != 0.0 || tempGeoTransform[1] != 1.0
           || tempGeoTransform[2] != 0.0 || tempGeoTransform[3] != 0.0
               || tempGeoTransform[4] != 0.0 || ABS(tempGeoTransform[5]) != 1.0 ))
       {
-          OGRCoordinateTransformation *poTransform = NULL;          
-          char *newGCPProjection=NULL;
-
           padfTiepoints[0]=tempGeoTransform[0] + tempGeoTransform[1]*0.5 +\
                            tempGeoTransform[2]*0.5;
 
@@ -1446,79 +1392,76 @@ MFFDataset::CreateCopy( const char * pszFilename,
                            tempGeoTransform[5]*(poSrcDS->GetRasterYSize())/2.0;
 
           OGRSpatialReference oUTMorLL(poSrcDS->GetProjectionRef());
+          char *newGCPProjection = NULL;
           (oUTMorLL.GetAttrNode("GEOGCS"))->exportToWkt(&newGCPProjection);
           OGRSpatialReference oLL(newGCPProjection);
           CPLFree(newGCPProjection);
           newGCPProjection = NULL;
 
-          if EQUALN(poSrcDS->GetProjectionRef(),"PROJCS",6)
+          if STARTS_WITH_CI(poSrcDS->GetProjectionRef(), "PROJCS")
           {
             // projected coordinate system- need to translate gcps */
-            int bSuccess=TRUE;
-            int index;
+            bool bSuccess = true;
 
-            poTransform = OGRCreateCoordinateTransformation( &oUTMorLL, &oLL );
+            OGRCoordinateTransformation *poTransform
+                = OGRCreateCoordinateTransformation( &oUTMorLL, &oLL );
             if( poTransform == NULL )
-                bSuccess = FALSE;
+                bSuccess = false;
 
-            for (index=0;index<5;index++)
+            for ( int index = 0; index < 5; index++ )
             {
+                // TODO: If bSuccess is false, set it to false?
                 if( !bSuccess || !poTransform->Transform( 1, &(padfTiepoints[index*2]), &(padfTiepoints[index*2+1]) ) )
-                  bSuccess = FALSE;
+                  bSuccess = false;
             }
             if (bSuccess == TRUE)
-               georef_created = TRUE;
+               georef_created = true;
           }
           else
           {
-            georef_created = TRUE;
+            georef_created = true;
           }
       }
       CPLFree(tempGeoTransform);
-    } 
-  
-    if (georef_created == TRUE)
+    }
+
+    bool bOK = true;
+    if (georef_created == true)
     {
     /* -------------------------------------------------------------------- */
     /*      top left                                                        */
     /* -------------------------------------------------------------------- */
-          VSIFPrintfL( fp, "TOP_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[1] );
-          VSIFPrintfL( fp, "TOP_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[0] );
+          bOK &= VSIFPrintfL( fp, "TOP_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[1] ) >= 0;
+          bOK &= VSIFPrintfL( fp, "TOP_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[0] ) >= 0;
     /* -------------------------------------------------------------------- */
     /*      top_right                                                       */
     /* -------------------------------------------------------------------- */
-          VSIFPrintfL( fp, "TOP_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[3] );
-          VSIFPrintfL( fp, "TOP_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[2] );
+          bOK &= VSIFPrintfL( fp, "TOP_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[3] ) >= 0;
+          bOK &= VSIFPrintfL( fp, "TOP_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[2] ) >= 0;
     /* -------------------------------------------------------------------- */
     /*      bottom_left                                                     */
     /* -------------------------------------------------------------------- */
-          VSIFPrintfL( fp, "BOTTOM_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[5] );
-          VSIFPrintfL( fp, "BOTTOM_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[4] );
+          bOK &= VSIFPrintfL( fp, "BOTTOM_LEFT_CORNER_LATITUDE = %.10f\n", padfTiepoints[5] ) >= 0;
+          bOK &= VSIFPrintfL( fp, "BOTTOM_LEFT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[4] ) >= 0;
     /* -------------------------------------------------------------------- */
     /*      bottom_right                                                    */
     /* -------------------------------------------------------------------- */
-          VSIFPrintfL( fp, "BOTTOM_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[7] );
-          VSIFPrintfL( fp, "BOTTOM_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[6] );
+          bOK &= VSIFPrintfL( fp, "BOTTOM_RIGHT_CORNER_LATITUDE = %.10f\n", padfTiepoints[7] ) >= 0;
+          bOK &= VSIFPrintfL( fp, "BOTTOM_RIGHT_CORNER_LONGITUDE = %.10f\n", padfTiepoints[6] ) >= 0;
     /* -------------------------------------------------------------------- */
     /*      Center                                                          */
     /* -------------------------------------------------------------------- */
-          VSIFPrintfL( fp, "CENTRE_LATITUDE = %.10f\n", padfTiepoints[9] );
-          VSIFPrintfL( fp, "CENTRE_LONGITUDE = %.10f\n", padfTiepoints[8] );
+          bOK &= VSIFPrintfL( fp, "CENTRE_LATITUDE = %.10f\n", padfTiepoints[9] ) >= 0;
+          bOK &= VSIFPrintfL( fp, "CENTRE_LONGITUDE = %.10f\n", padfTiepoints[8] ) >= 0;
     /* ------------------------------------------------------------------- */
     /*     Ellipsoid/projection                                            */
     /* --------------------------------------------------------------------*/
 
-          
-          MFFSpheroidList *mffEllipsoids;
-          double eq_radius, inv_flattening;
-          OGRErr ogrerrorEq=OGRERR_NONE;
-          OGRErr ogrerrorInvf=OGRERR_NONE;
-          OGRErr ogrerrorOl=OGRERR_NONE;
           const char *pszSrcProjection = poSrcDS->GetProjectionRef();
           char *spheroid_name = NULL;
 
-          if( !EQUALN(pszSrcProjection,"GEOGCS",6)
-           && !EQUALN(pszSrcProjection,"PROJCS",6)
+          if( !STARTS_WITH_CI(pszSrcProjection, "GEOGCS")
+           && !STARTS_WITH_CI(pszSrcProjection, "PROJCS")
            && !EQUAL(pszSrcProjection,"") )
           {
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -1530,67 +1473,82 @@ MFFDataset::CreateCopy( const char * pszFilename,
           {
              OGRSpatialReference oSRS(pszSrcProjection);
 
-             if ((oSRS.GetAttrValue("PROJECTION") != NULL) && 
+             if ((oSRS.GetAttrValue("PROJECTION") != NULL) &&
                  (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
              {
-                 VSIFPrintfL(fp,"PROJECTION_NAME = UTM\n");
-                 VSIFPrintfL(fp,"PROJECTION_ORIGIN_LONGITUDE = %f\n",
-                         oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
+                 bOK &= VSIFPrintfL(fp,"PROJECTION_NAME = UTM\n") >= 0;
+                 OGRErr ogrerrorOl = OGRERR_NONE;
+                 bOK &= VSIFPrintfL(fp,"PROJECTION_ORIGIN_LONGITUDE = %f\n",
+                         oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl)) >= 0;
              }
              else if ((oSRS.GetAttrValue("PROJECTION") == NULL) && (oSRS.IsGeographic()))
              {
-                  VSIFPrintfL(fp,"PROJECTION_NAME = LL\n");
+                  bOK &= VSIFPrintfL(fp,"PROJECTION_NAME = LL\n") >= 0;
              }
              else
              {
                   CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unrecognized projection- no georeferencing information transferred.");
-                  VSIFPrintfL(fp,"PROJECTION_NAME = LL\n");
+                            "Unrecognized projection- no georeferencing "
+                            "information transferred." );
+                  bOK &= VSIFPrintfL(fp,"PROJECTION_NAME = LL\n") >= 0;
              }
-             eq_radius = oSRS.GetSemiMajor(&ogrerrorEq);
-             inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
-             if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE)) 
+             OGRErr ogrerrorEq = OGRERR_NONE;
+             const double eq_radius = oSRS.GetSemiMajor(&ogrerrorEq);
+             OGRErr ogrerrorInvf = OGRERR_NONE;
+             const double inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
+             if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE))
              {
-                 mffEllipsoids = new MFFSpheroidList;
+                 MFFSpheroidList *mffEllipsoids = new MFFSpheroidList;
                  spheroid_name = mffEllipsoids->GetSpheroidNameByEqRadiusAndInvFlattening(eq_radius,inv_flattening);
                  if (spheroid_name != NULL)
                  {
-                     VSIFPrintfL(fp,"SPHEROID_NAME = %s\n",spheroid_name );
-                 } 
+                     bOK &= VSIFPrintfL(fp,"SPHEROID_NAME = %s\n",spheroid_name ) >= 0;
+                 }
                  else
                  {
-                     VSIFPrintfL(fp,
-       "SPHEROID_NAME = USER_DEFINED\nSPHEROID_EQUATORIAL_RADIUS = %.10f\nSPHEROID_POLAR_RADIUS = %.10f\n",
-                     eq_radius,eq_radius*(1-1.0/inv_flattening) );
+                     bOK &= VSIFPrintfL(
+                         fp, "SPHEROID_NAME = USER_DEFINED\n"
+                         "SPHEROID_EQUATORIAL_RADIUS = %.10f\n"
+                         "SPHEROID_POLAR_RADIUS = %.10f\n",
+                     eq_radius,eq_radius*(1-1.0/inv_flattening) ) >= 0;
                  }
                  delete mffEllipsoids;
                  CPLFree(spheroid_name);
               }
-          } 
-    } 
-      
+          }
+    }
+
     CPLFree( padfTiepoints );
-    VSIFPrintfL( fp, "END\n" );
-    VSIFCloseL( fp );
-   
+    bOK &= VSIFPrintfL( fp, "END\n" ) >= 0;
+    if( VSIFCloseL( fp ) != 0 )
+        bOK = false;
+
+    if( !bOK )
+    {
+        delete poDS;
+        CPLFree(pszBaseFilename);
+        return NULL;
+    }
+
     /* End of georeferencing stuff */
 
     /* Make sure image data gets flushed */
-    for( iBand = 0; iBand < poDS->GetRasterCount(); iBand++ )
+    for( int iBand = 0; iBand < poDS->GetRasterCount(); iBand++ )
     {
-        RawRasterBand *poDstBand =  (RawRasterBand *) poDS->GetRasterBand( iBand+1 );
+        RawRasterBand *poDstBand = reinterpret_cast<RawRasterBand *>(
+            poDS->GetRasterBand( iBand+1 ) );
         poDstBand->FlushCache();
     }
 
 
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
     {
-        CPLError( CE_Failure, CPLE_UserInterrupt, 
+        CPLError( CE_Failure, CPLE_UserInterrupt,
                   "User terminated" );
         delete poDS;
 
-        GDALDriver *poMFFDriver = 
-            (GDALDriver *) GDALGetDriverByName( "MFF" );
+        GDALDriver *poMFFDriver = reinterpret_cast<GDALDriver *>(
+            GDALGetDriverByName( "MFF" ) );
         poMFFDriver->Delete( pszFilename );
         CPLFree(pszBaseFilename);
         return NULL;
@@ -1604,34 +1562,30 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
 
 /************************************************************************/
-/*                         GDALRegister_MFF()                          */
+/*                         GDALRegister_MFF()                           */
 /************************************************************************/
 
 void GDALRegister_MFF()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "MFF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "MFF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "MFF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Vexcel MFF Raster" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#MFF" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Float32 CInt16 CFloat32" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription( "MFF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Vexcel MFF Raster" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#MFF" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Float32 CInt16 CFloat32" );
 
-        poDriver->pfnOpen = MFFDataset::Open;
-        poDriver->pfnCreate = MFFDataset::Create;
-        poDriver->pfnCreateCopy = MFFDataset::CreateCopy;
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = MFFDataset::Open;
+    poDriver->pfnCreate = MFFDataset::Create;
+    poDriver->pfnCreateCopy = MFFDataset::CreateCopy;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

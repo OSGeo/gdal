@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  SDTS Translator
- * Purpose:  Dump 8211 file in verbose form - just a junk program. 
+ * Purpose:  Dump 8211 file in verbose form - just a junk program.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -43,6 +43,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszFilename = NULL;
     int         bFSPTHack = FALSE;
     int         bXML = FALSE;
+    bool        bAllDetails = false;
 
 /* -------------------------------------------------------------------- */
 /*      Check arguments.                                                */
@@ -53,13 +54,18 @@ int main( int nArgc, char ** papszArgv )
             bFSPTHack = TRUE;
         else if( EQUAL(papszArgv[iArg],"-xml") )
             bXML = TRUE;
+        else if( EQUAL(papszArgv[iArg],"-xml_all_details") )
+        {
+            bXML = TRUE;
+            bAllDetails = true;
+        }
         else
             pszFilename = papszArgv[iArg];
     }
 
     if( pszFilename == NULL )
     {
-        printf( "Usage: 8211dump [-xml] [-fspt_repeating] filename\n" );
+        printf( "Usage: 8211dump [-xml|-xml_all_details] [-fspt_repeating] filename\n" );
         exit( 1 );
     }
 
@@ -77,7 +83,7 @@ int main( int nArgc, char ** papszArgv )
         DDFFieldDefn *poFSPT = oModule.FindFieldDefn( "FSPT" );
 
         if( poFSPT == NULL )
-            fprintf( stderr, 
+            fprintf( stderr,
                      "unable to find FSPT field to set repeating flag.\n" );
         else
             poFSPT->SetRepeatingFlag( TRUE );
@@ -89,7 +95,21 @@ int main( int nArgc, char ** papszArgv )
     DDFRecord       *poRecord;
     if( bXML )
     {
-        printf("<DDFModule>\n");
+        printf("<DDFModule");
+        if( bAllDetails )
+        {
+            printf(" _interchangeLevel=\"%c\"", oModule.GetInterchangeLevel());
+            printf(" _leaderIden=\"%c\"", oModule.GetLeaderIden());
+            printf(" _inlineCodeExtensionIndicator=\"%c\"", oModule.GetCodeExtensionIndicator());
+            printf(" _versionNumber=\"%c\"", oModule.GetVersionNumber());
+            printf(" _appIndicator=\"%c\"", oModule.GetAppIndicator());
+            printf(" _extendedCharSet=\"%s\"", oModule.GetExtendedCharSet());
+            printf(" _fieldControlLength=\"%d\"", oModule.GetFieldControlLength());
+            printf(" _sizeFieldLength=\"%d\"", oModule.GetSizeFieldLength());
+            printf(" _sizeFieldPos=\"%d\"", oModule.GetSizeFieldPos());
+            printf(" _sizeFieldTag=\"%d\"", oModule.GetSizeFieldTag());
+        }
+        printf(">\n");
 
         int nFieldDefnCount = oModule.GetFieldCount();
         for( int i = 0; i < nFieldDefnCount; i++ )
@@ -101,19 +121,19 @@ int main( int nArgc, char ** papszArgv )
                 case dsc_elementary:
                     pszDataStructCode = "elementary";
                     break;
-                    
+
                 case dsc_vector:
                     pszDataStructCode = "vector";
                     break;
-                    
+
                 case dsc_array:
                     pszDataStructCode = "array";
                     break;
-                    
+
                 case dsc_concatenated:
                     pszDataStructCode = "concatenated";
                     break;
-                    
+
                 default:
                     pszDataStructCode = "(unknown)";
                     break;
@@ -125,27 +145,27 @@ int main( int nArgc, char ** papszArgv )
                 case dtc_char_string:
                     pszDataTypeCode = "char_string";
                     break;
-                    
+
                 case dtc_implicit_point:
                     pszDataTypeCode = "implicit_point";
                     break;
-                    
+
                 case dtc_explicit_point:
                     pszDataTypeCode = "explicit_point";
                     break;
-                    
+
                 case dtc_explicit_point_scaled:
                     pszDataTypeCode = "explicit_point_scaled";
                     break;
-                    
+
                 case dtc_char_bit_string:
                     pszDataTypeCode = "char_bit_string";
                     break;
-                    
+
                 case dtc_bit_string:
                     pszDataTypeCode = "bit_string";
                     break;
-                    
+
                 case dtc_mixed_data_type:
                     pszDataTypeCode = "mixed_data_type";
                     break;
@@ -154,16 +174,20 @@ int main( int nArgc, char ** papszArgv )
                     pszDataTypeCode = "(unknown)";
                     break;
             }
-            
-            printf("<DDFFieldDefn tag=\"%s\" fieldName=\"%s\" arrayDescr=\"%s\" "
-                   "formatControls=\"%s\" dataStructCode=\"%s\" dataTypeCode=\"%s\">\n",
+
+            printf("<DDFFieldDefn tag=\"%s\" fieldName=\"%s\""
+                   " dataStructCode=\"%s\" dataTypeCode=\"%s\"",
                    poFieldDefn->GetName(),
                    poFieldDefn->GetDescription(),
-                   poFieldDefn->GetArrayDescr(),
-                   poFieldDefn->GetFormatControls(),
                    pszDataStructCode,
                    pszDataTypeCode);
             int nSubfieldCount = poFieldDefn->GetSubfieldCount();
+            if( bAllDetails || nSubfieldCount == 0 )
+            {
+                printf(" arrayDescr=\"%s\"", poFieldDefn->GetArrayDescr());
+                printf(" formatControls=\"%s\"", poFieldDefn->GetFormatControls());
+            }
+            printf(">\n");
             for( int iSubField = 0; iSubField < nSubfieldCount; iSubField++ )
             {
                 DDFSubfieldDefn* poSubFieldDefn = poFieldDefn->GetSubfield(iSubField);
@@ -176,7 +200,17 @@ int main( int nArgc, char ** papszArgv )
         for( poRecord = oModule.ReadRecord();
              poRecord != NULL; poRecord = oModule.ReadRecord() )
         {
-            printf("<DDFRecord>\n");
+            printf("<DDFRecord");
+            if( bAllDetails )
+            {
+                if( poRecord->GetReuseHeader() )
+                    printf(" reuseHeader=\"1\"");
+                printf(" dataSize=\"%d\"", poRecord->GetDataSize());
+                printf(" _sizeFieldTag=\"%d\"", poRecord->GetSizeFieldTag());
+                printf(" _sizeFieldPos=\"%d\"", poRecord->GetSizeFieldPos());
+                printf(" _sizeFieldLength=\"%d\"", poRecord->GetSizeFieldLength());
+            }
+            printf(">\n");
             int nFieldCount = poRecord->GetFieldCount();
             for( int iField = 0; iField < nFieldCount; iField++ )
             {
@@ -282,12 +316,9 @@ int main( int nArgc, char ** papszArgv )
     }
 
     oModule.Close();
-    
+
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
 
 }
-
-
-

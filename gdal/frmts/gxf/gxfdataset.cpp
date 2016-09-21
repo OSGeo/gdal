@@ -28,18 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gxfopen.h"
+#include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gxfopen.h"
 
 CPL_CVSID("$Id$");
-
-#ifndef PI
-#  define PI 3.14159265358979323846
-#endif
-
-CPL_C_START
-void	GDALRegister_GXF(void);
-CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -52,7 +45,7 @@ class GXFRasterBand;
 class GXFDataset : public GDALPamDataset
 {
     friend class GXFRasterBand;
-    
+
     GXFHandle	hGXF;
 
     char	*pszProjection;
@@ -62,7 +55,7 @@ class GXFDataset : public GDALPamDataset
   public:
                 GXFDataset();
 		~GXFDataset();
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * padfTransform );
@@ -78,7 +71,7 @@ class GXFDataset : public GDALPamDataset
 class GXFRasterBand : public GDALPamRasterBand
 {
     friend class GXFDataset;
-    
+
   public:
 
     		GXFRasterBand( GXFDataset *, int );
@@ -92,13 +85,13 @@ class GXFRasterBand : public GDALPamRasterBand
 /*                           GXFRasterBand()                            */
 /************************************************************************/
 
-GXFRasterBand::GXFRasterBand( GXFDataset *poDS, int nBand )
+GXFRasterBand::GXFRasterBand( GXFDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    
-    eDataType = poDS->eDataType;
+    poDS = poDSIn;
+    nBand = nBandIn;
+
+    eDataType = poDSIn->eDataType;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
@@ -142,17 +135,17 @@ CPLErr GXFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         if( padfBuffer == NULL )
             return CE_Failure;
         eErr = GXFGetScanline( poGXF_DS->hGXF, nBlockYOff, padfBuffer );
-        
+
         for( i = 0; i < nBlockXSize; i++ )
             pafBuffer[i] = (float) padfBuffer[i];
-    
+
         CPLFree( padfBuffer );
     }
     else if (eDataType == GDT_Float64)
         eErr = GXFGetScanline( poGXF_DS->hGXF, nBlockYOff, (double*)pImage );
     else
         eErr = CE_Failure;
-    
+
     return eErr;
 }
 
@@ -205,8 +198,8 @@ CPLErr GXFDataset::GetGeoTransform( double * padfTransform )
     if( eErr != CE_None )
         return eErr;
 
-    // Transform to radians. 
-    dfRotation = (dfRotation / 360.0) * 2 * PI;
+    // Transform to radians.
+    dfRotation = (dfRotation / 360.0) * 2 * M_PI;
 
     padfTransform[1] = dfXSize * cos(dfRotation);
     padfTransform[2] = dfYSize * sin(dfRotation);
@@ -216,7 +209,7 @@ CPLErr GXFDataset::GetGeoTransform( double * padfTransform )
     // take into account that GXF is point or center of pixel oriented.
     padfTransform[0] = dfXOrigin - 0.5*padfTransform[1] - 0.5*padfTransform[2];
     padfTransform[3] = dfYOrigin - 0.5*padfTransform[4] - 0.5*padfTransform[5];
-    
+
     return CE_None;
 }
 
@@ -237,9 +230,9 @@ const char *GXFDataset::GetProjectionRef()
 GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    GXFHandle	hGXF;
+    GXFHandle	l_hGXF;
     int		i, bFoundKeyword, bFoundIllegal;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Before trying GXFOpen() we first verify that there is at        */
 /*      least one "\n#keyword" type signature in the first chunk of     */
@@ -256,11 +249,11 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
              || poOpenInfo->pabyHeader[i] == 13)
             && poOpenInfo->pabyHeader[i+1] == '#' )
         {
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "include", strlen("include")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "include") )
                 return NULL;
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "define", strlen("define")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "define") )
                 return NULL;
-            if( strncmp((const char*)poOpenInfo->pabyHeader + i + 2, "ifdef", strlen("ifdef")) == 0 )
+            if( STARTS_WITH((const char*)poOpenInfo->pabyHeader + i + 2, "ifdef") )
                 return NULL;
             bFoundKeyword = TRUE;
         }
@@ -273,8 +266,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( !bFoundKeyword || bFoundIllegal )
         return NULL;
-    
-    
+
 /* -------------------------------------------------------------------- */
 /*      At this point it is plausible that this is a GXF file, but      */
 /*      we also now verify that there is a #GRID keyword before         */
@@ -289,12 +281,12 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     char *pszBigBuf = (char *) CPLMalloc(BIGBUFSIZE);
-    nBytesRead = VSIFRead( pszBigBuf, 1, BIGBUFSIZE, fp );
+    nBytesRead = static_cast<int>(VSIFRead( pszBigBuf, 1, BIGBUFSIZE, fp ));
     VSIFClose( fp );
 
     for( i = 0; i < nBytesRead - 5 && !bGotGrid; i++ )
     {
-        if( pszBigBuf[i] == '#' && EQUALN(pszBigBuf+i+1,"GRID",4) )
+        if( pszBigBuf[i] == '#' && STARTS_WITH_CI(pszBigBuf+i+1, "GRID") )
             bGotGrid = TRUE;
     }
 
@@ -306,31 +298,31 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    
-    hGXF = GXFOpen( poOpenInfo->pszFilename );
-    
-    if( hGXF == NULL )
+
+    l_hGXF = GXFOpen( poOpenInfo->pszFilename );
+
+    if( l_hGXF == NULL )
         return( NULL );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        GXFClose(hGXF);
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        GXFClose(l_hGXF);
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The GXF driver does not support update access to existing"
                   " datasets.\n" );
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     GXFDataset 	*poDS;
 
     poDS = new GXFDataset();
-    
+
     const char* pszGXFDataType = CPLGetConfigOption("GXF_DATATYPE", "Float32");
     GDALDataType eDT = GDALGetDataTypeByName(pszGXFDataType);
     if (!(eDT == GDT_Float32 || eDT == GDT_Float64))
@@ -340,25 +332,25 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
         eDT = GDT_Float32;
     }
 
-    poDS->hGXF = hGXF;
+    poDS->hGXF = l_hGXF;
     poDS->eDataType = eDT;
-    
+
 /* -------------------------------------------------------------------- */
 /*	Establish the projection.					*/
 /* -------------------------------------------------------------------- */
-    poDS->pszProjection = GXFGetMapProjectionAsOGCWKT( hGXF );
+    poDS->pszProjection = GXFGetMapProjectionAsOGCWKT( l_hGXF );
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    GXFGetRawInfo( hGXF, &(poDS->nRasterXSize), &(poDS->nRasterYSize), NULL,
+    GXFGetRawInfo( l_hGXF, &(poDS->nRasterXSize), &(poDS->nRasterYSize), NULL,
                    NULL, NULL, &(poDS->dfNoDataValue) );
 
     if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Invalid dimensions : %d x %d", 
-                  poDS->nRasterXSize, poDS->nRasterYSize); 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid dimensions : %d x %d",
+                  poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
         return NULL;
     }
@@ -390,22 +382,19 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_GXF()
 
 {
-    GDALDriver	*poDriver;
+    if( GDALGetDriverByName( "GXF" ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( "GXF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "GXF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "GeoSoft Grid Exchange Format" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#GXF" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gxf" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = GXFDataset::Open;
+    poDriver->SetDescription( "GXF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               "GeoSoft Grid Exchange Format" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GXF" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gxf" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = GXFDataset::Open;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

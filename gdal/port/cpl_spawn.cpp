@@ -14,30 +14,54 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
 #include "cpl_spawn.h"
 
-#include "cpl_error.h"
 #include "cpl_conv.h"
-#include "cpl_string.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
 
-#define PIPE_BUFFER_SIZE    4096
+#if defined(WIN32)
+#include <windows.h>
+#else
+#include <cerrno>
+#include <csignal>
+#include <cstdio>
+#include <cstdlib>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#ifdef HAVE_POSIX_SPAWNP
+    #include <spawn.h>
+    #ifdef __APPLE__
+        #include <TargetConditionals.h>
+    #endif
+    #if defined(__APPLE__) && (!defined(TARGET_OS_IPHONE) || TARGET_OS_IPHONE==0)
+        #include <crt_externs.h>
+        #define environ (*_NSGetEnviron())
+    #else
+        extern char** environ;
+    #endif
+#endif
+#endif
 
-#define IN_FOR_PARENT   0
-#define OUT_FOR_PARENT  1
+static const int PIPE_BUFFER_SIZE = 4096;
+
+static const int IN_FOR_PARENT = 0;
+static const int OUT_FOR_PARENT = 1;
 
 CPL_CVSID("$Id$");
 
@@ -52,9 +76,10 @@ static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout);
 static void FillPipeFromFile(VSILFILE* fin, CPL_FILE_HANDLE pipe_fd)
 {
     char buf[PIPE_BUFFER_SIZE];
-    while(TRUE)
+    while(true)
     {
-        int nRead = (int)VSIFReadL(buf, 1, PIPE_BUFFER_SIZE, fin);
+        const int nRead
+            = static_cast<int>( VSIFReadL(buf, 1, PIPE_BUFFER_SIZE, fin) );
         if( nRead <= 0 )
             break;
         if (!CPLPipeWrite(pipe_fd, buf, nRead))
@@ -114,12 +139,14 @@ int CPLSpawn(const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
     FillFileFromPipe(err_child, ferr);
     CPLSpawnAsyncCloseErrorFileHandle(sp);
 
-    VSIFCloseL(ferr);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(ferr));
     vsi_l_offset nDataLength = 0;
     GByte* pData = VSIGetMemFileBuffer(osName.c_str(), &nDataLength, TRUE);
     if( nDataLength > 0 )
         pData[nDataLength-1] = '\0';
-    if( pData && strstr((const char*)pData, "An error occured while forking process") != NULL )
+    if( pData && strstr(
+            const_cast<const char *>( reinterpret_cast<char *>( pData ) ),
+            "An error occurred while forking process") != NULL )
         bDisplayErr = TRUE;
     if( pData && bDisplayErr )
         CPLError(CE_Failure, CPLE_AppDefined, "[%s error] %s", papszArgv[0], pData);
@@ -129,8 +156,6 @@ int CPLSpawn(const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
 }
 
 #if defined(WIN32)
-
-#include <windows.h>
 
 #if 0
 /************************************************************************/
@@ -148,8 +173,8 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
 
     char* pszDupedCommandLine = (pszCommandLine) ? CPLStrdup(pszCommandLine) : NULL;
 
-    if( !CreateProcess( pszApplicationName, 
-                        pszDupedCommandLine, 
+    if( !CreateProcess( pszApplicationName,
+                        pszDupedCommandLine,
                         NULL,
                         NULL,
                         FALSE,
@@ -167,7 +192,7 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
     {
         WaitForSingleObject( processInfo.hProcess, INFINITE );
 
-        DWORD exitCode;
+        DWORD exitCode = 0;
 
         // Get the exit code.
         int err = GetExitCodeProcess(processInfo.hProcess, &exitCode);
@@ -187,7 +212,7 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
 
     return nRet;
 }
-#endif
+#endif  // if 0
 
 /************************************************************************/
 /*                          CPLPipeRead()                               */
@@ -195,7 +220,7 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
 
 int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
 {
-    GByte* pabyData = (GByte*)data;
+    GByte* pabyData = reinterpret_cast<GByte *>( data );
     int nRemain = length;
     while( nRemain > 0 )
     {
@@ -234,9 +259,9 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
 static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
 {
     char buf[PIPE_BUFFER_SIZE];
-    while(TRUE)
+    while(true)
     {
-        DWORD nRead;
+        DWORD nRead = 0;
         if (!ReadFile( pipe_fd, buf, PIPE_BUFFER_SIZE, &nRead, NULL))
             break;
         if (nRead <= 0)
@@ -261,12 +286,12 @@ struct _CPLSpawnedProcess
 /*                            CPLSpawnAsync()                           */
 /************************************************************************/
 
-CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
+CPLSpawnedProcess* CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
                                  const char * const papszArgv[],
                                  int bCreateInputPipe,
                                  int bCreateOutputPipe,
                                  int bCreateErrorPipe,
-                                 char** papszOptions)
+                                 CPL_UNUSED char** papszOptions)
 {
     HANDLE pipe_in[2] = {NULL, NULL};
     HANDLE pipe_out[2] = {NULL, NULL};
@@ -275,7 +300,6 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     PROCESS_INFORMATION piProcInfo;
     STARTUPINFO siStartInfo;
     CPLString osCommandLine;
-    int i;
     CPLSpawnedProcess* p = NULL;
 
     if( papszArgv == NULL )
@@ -318,13 +342,13 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 
     memset(&piProcInfo, 0, sizeof(PROCESS_INFORMATION));
     memset(&siStartInfo, 0, sizeof(STARTUPINFO));
-    siStartInfo.cb = sizeof(STARTUPINFO); 
+    siStartInfo.cb = sizeof(STARTUPINFO);
     siStartInfo.hStdInput = (bCreateInputPipe) ? pipe_in[IN_FOR_PARENT] : GetStdHandle(STD_INPUT_HANDLE);
     siStartInfo.hStdOutput = (bCreateOutputPipe) ? pipe_out[OUT_FOR_PARENT] : GetStdHandle(STD_OUTPUT_HANDLE);
     siStartInfo.hStdError = (bCreateErrorPipe) ? pipe_err[OUT_FOR_PARENT] : GetStdHandle(STD_ERROR_HANDLE);
     siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-    for(i=0;papszArgv[i] != NULL;i++)
+    for( int i=0; papszArgv[i] != NULL; i++ )
     {
         if (i > 0)
             osCommandLine += " ";
@@ -340,14 +364,14 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             osCommandLine += papszArgv[i];
     }
 
-    if (!CreateProcess(NULL, 
+    if (!CreateProcess(NULL,
                        (CHAR*)osCommandLine.c_str(),
-                       NULL,          // process security attributes 
-                       NULL,          // primary thread security attributes 
-                       TRUE,          // handles are inherited 
-                       CREATE_NO_WINDOW|NORMAL_PRIORITY_CLASS,             // creation flags 
-                       NULL,          // use parent's environment 
-                       NULL,          // use parent's current directory 
+                       NULL,          // process security attributes
+                       NULL,          // primary thread security attributes
+                       TRUE,          // handles are inherited
+                       CREATE_NO_WINDOW|NORMAL_PRIORITY_CLASS,             // creation flags
+                       NULL,          // use parent's environment
+                       NULL,          // use parent's current directory
                        &siStartInfo,
                        &piProcInfo))
     {
@@ -376,7 +400,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 err_pipe:
     CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
 err:
-    for(i=0;i<2;i++)
+    for( int i=0; i < 2; i++ )
     {
         if (pipe_in[i] != NULL)
             CloseHandle(pipe_in[i]);
@@ -402,7 +426,7 @@ CPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess* p)
 /*                        CPLSpawnAsyncFinish()                         */
 /************************************************************************/
 
-int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int bKill)
+int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, CPL_UNUSED int bKill)
 {
     // Get the exit code.
     DWORD exitCode = -1;
@@ -459,27 +483,7 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
     p->ferr = NULL;
 }
 
-#else
-
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <errno.h>
-#include <signal.h>
-#ifdef HAVE_POSIX_SPAWNP
-    #include <spawn.h>
-    #ifdef __APPLE__
-        #include <TargetConditionals.h>
-    #endif
-    #if defined(__APPLE__) && (!defined(TARGET_OS_IPHONE) || TARGET_OS_IPHONE==0)
-        #include <crt_externs.h>
-        #define environ (*_NSGetEnviron())
-    #else
-        extern char** environ;
-    #endif
-#endif
+#else  // Not WIN32
 
 #if 0
 /************************************************************************/
@@ -497,7 +501,7 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
  *
  * @param pszApplicationName the lpApplicationName for Windows (might be NULL),
  *                           or ignored on other platforms.
- * @param pszCommandLine the command line, starting with the executable name 
+ * @param pszCommandLine the command line, starting with the executable name
  *
  * @return the exit code of the spawned process, or -1 in case of error.
  *
@@ -527,13 +531,13 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
  */
 int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
 {
-    GByte* pabyData = (GByte*)data;
+    GByte* pabyData = reinterpret_cast<GByte*>( data );
     int nRemain = length;
     while( nRemain > 0 )
     {
-        while(TRUE)
+        while(true)
         {
-            int n = read(fin, pabyData, nRemain);
+            const int n = static_cast<int>(read(fin, pabyData, nRemain));
             if( n < 0 )
             {
                 if( errno == EINTR )
@@ -568,13 +572,13 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
  */
 int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
 {
-    const GByte* pabyData = (const GByte*)data;
+    const GByte* pabyData = reinterpret_cast<const GByte*>( data );
     int nRemain = length;
     while( nRemain > 0 )
     {
-        while(TRUE)
+        while(true)
         {
-            int n = write(fout, pabyData, nRemain);
+            const int n = static_cast<int>(write(fout, pabyData, nRemain));
             if( n < 0 )
             {
                 if( errno == EINTR )
@@ -597,12 +601,13 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
 static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
 {
     char buf[PIPE_BUFFER_SIZE];
-    while(TRUE)
+    while(true)
     {
-        int nRead = read(pipe_fd, buf, PIPE_BUFFER_SIZE);
+        const int nRead = static_cast<int>(read(pipe_fd, buf, PIPE_BUFFER_SIZE));
         if (nRead <= 0)
             break;
-        int nWritten = (int)VSIFWriteL(buf, 1, nRead, fout);
+        const int nWritten = static_cast<int>(
+            VSIFWriteL(buf, 1, nRead, fout) );
         if (nWritten < nRead)
             break;
     }
@@ -655,20 +660,22 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
                                  int bCreateErrorPipe,
                                  CPL_UNUSED char** papszOptions)
 {
-    pid_t pid;
     int pipe_in[2] = { -1, -1 };
     int pipe_out[2] = { -1, -1 };
     int pipe_err[2] = { -1, -1 };
-    int i;
-    char** papszArgvDup = CSLDuplicate((char**)papszArgv);
-    int bDup2In = bCreateInputPipe,
-        bDup2Out = bCreateOutputPipe,
-        bDup2Err = bCreateErrorPipe;
+    bool bDup2In = CPL_TO_BOOL(bCreateInputPipe);
+    bool bDup2Out = CPL_TO_BOOL(bCreateOutputPipe);
+    bool bDup2Err = CPL_TO_BOOL(bCreateErrorPipe);
 
     if ((bCreateInputPipe && pipe(pipe_in)) ||
         (bCreateOutputPipe && pipe(pipe_out)) ||
         (bCreateErrorPipe && pipe(pipe_err)))
-        goto err_pipe;
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
+        return NULL;
+    }
+
+    char** papszArgvDup = CSLDuplicate( const_cast<char **>( papszArgv ) );
 
     /* If we don't do any file actions, posix_spawnp() might be implemented */
     /* efficiently as a vfork()/exec() pair (or if it is not available, we */
@@ -676,28 +683,28 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     /* we pass the pipe handles as commandline arguments */
     if( papszArgv != NULL )
     {
-        for(i=0; papszArgvDup[i] != NULL; i++)
+        for( int i=0; papszArgvDup[i] != NULL; i++ )
         {
             if( bCreateInputPipe && strcmp(papszArgvDup[i], "{pipe_in}") == 0 )
             {
                 CPLFree(papszArgvDup[i]);
                 papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
                     pipe_in[IN_FOR_PARENT], pipe_in[OUT_FOR_PARENT]));
-                bDup2In = FALSE;
+                bDup2In = false;
             }
             else if( bCreateOutputPipe && strcmp(papszArgvDup[i], "{pipe_out}") == 0 )
             {
                 CPLFree(papszArgvDup[i]);
                 papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
                     pipe_out[OUT_FOR_PARENT], pipe_out[IN_FOR_PARENT]));
-                bDup2Out = FALSE;
+                bDup2Out = false;
             }
             else if( bCreateErrorPipe && strcmp(papszArgvDup[i], "{pipe_err}") == 0 )
             {
                 CPLFree(papszArgvDup[i]);
                 papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
                     pipe_err[OUT_FOR_PARENT], pipe_err[IN_FOR_PARENT]));
-                bDup2Err = FALSE;
+                bDup2Err = false;
             }
         }
     }
@@ -705,7 +712,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 #ifdef HAVE_POSIX_SPAWNP
     if( papszArgv != NULL )
     {
-        int bHasActions = FALSE;
+        bool bHasActions = false;
         posix_spawn_file_actions_t actions;
 
         if( bDup2In )
@@ -713,7 +720,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             if( !bHasActions ) posix_spawn_file_actions_init(&actions);
             posix_spawn_file_actions_adddup2(&actions, pipe_in[IN_FOR_PARENT], fileno(stdin));
             posix_spawn_file_actions_addclose(&actions, pipe_in[OUT_FOR_PARENT]);
-            bHasActions = TRUE;
+            bHasActions = true;
         }
 
         if( bDup2Out )
@@ -721,7 +728,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             if( !bHasActions ) posix_spawn_file_actions_init(&actions);
             posix_spawn_file_actions_adddup2(&actions, pipe_out[OUT_FOR_PARENT], fileno(stdout));
             posix_spawn_file_actions_addclose(&actions, pipe_out[IN_FOR_PARENT]);
-            bHasActions = TRUE;
+            bHasActions = true;
         }
 
         if( bDup2Err )
@@ -729,13 +736,14 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             if( !bHasActions ) posix_spawn_file_actions_init(&actions);
             posix_spawn_file_actions_adddup2(&actions, pipe_err[OUT_FOR_PARENT], fileno(stderr));
             posix_spawn_file_actions_addclose(&actions, pipe_err[IN_FOR_PARENT]);
-            bHasActions = TRUE;
+            bHasActions = true;
         }
 
+        pid_t pid;
         if( posix_spawnp(&pid, papszArgvDup[0],
                          bHasActions ? &actions : NULL,
                          NULL,
-                         (char* const*) papszArgvDup,
+                         reinterpret_cast<char* const*>( papszArgvDup ),
                          environ) != 0 )
         {
             if( bHasActions )
@@ -756,9 +764,10 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 
         /* Ignore SIGPIPE */
     #ifdef SIGPIPE
-        signal (SIGPIPE, SIG_IGN);
+        std::signal( SIGPIPE, SIG_IGN );
     #endif
-        CPLSpawnedProcess* p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
+        CPLSpawnedProcess *p = static_cast<CPLSpawnedProcess *>(
+            CPLMalloc( sizeof(CPLSpawnedProcess) ) );
         if( bHasActions )
             memcpy(&p->actions, &actions, sizeof(actions));
         p->bFreeActions = bHasActions;
@@ -770,9 +779,15 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     }
 #endif // #ifdef HAVE_POSIX_SPAWNP
 
+    pid_t pid;
 #ifdef HAVE_VFORK
+    /* coverity[dead_error_line] */
     if( papszArgv != NULL && !bDup2In && !bDup2Out && !bDup2Err )
-        pid = vfork();
+    {
+        /* Workaround clang static analyzer warning about unsafe use of vfork */
+        pid_t (*p_vfork)(void) = vfork;
+        pid = p_vfork();
+    }
     else
 #endif
         pid = fork();
@@ -827,9 +842,10 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 
         /* Ignore SIGPIPE */
 #ifdef SIGPIPE
-        signal (SIGPIPE, SIG_IGN);
+        std::signal( SIGPIPE, SIG_IGN );
 #endif
-        CPLSpawnedProcess* p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
+        CPLSpawnedProcess* p = static_cast<CPLSpawnedProcess *>(
+            CPLMalloc( sizeof(CPLSpawnedProcess) ) );
 #ifdef HAVE_POSIX_SPAWNP
         p->bFreeActions = FALSE;
 #endif
@@ -845,11 +861,9 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
         goto err;
     }
 
-err_pipe:
-    CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
 err:
     CSLDestroy(papszArgvDup);
-    for(i=0;i<2;i++)
+    for( int i = 0; i < 2; i++ )
     {
         if (pipe_in[i] >= 0)
             close(pipe_in[i]);
@@ -896,7 +910,7 @@ int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, CPL_UNUSED int bKill)
         while(1)
         {
             status = -1;
-            int ret = waitpid (p->pid, &status, 0);
+            const int ret = waitpid (p->pid, &status, 0);
             if (ret < 0)
             {
                 if (errno != EINTR)
@@ -908,8 +922,7 @@ int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, CPL_UNUSED int bKill)
                 break;
         }
     }
-    else
-        bWait = FALSE;
+
     CPLSpawnAsyncCloseInputFileHandle(p);
     CPLSpawnAsyncCloseOutputFileHandle(p);
     CPLSpawnAsyncCloseErrorFileHandle(p);

@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_EDIGEO_H_INCLUDED
-#define _OGR_EDIGEO_H_INCLUDED
+#ifndef OGR_EDIGEO_H_INCLUDED
+#define OGR_EDIGEO_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include <vector>
@@ -74,7 +74,8 @@ class OGREDIGEOLayer : public OGRLayer
     virtual int                 TestCapability( const char * );
 
     virtual OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
-
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     void                        AddFeature(OGRFeature* poFeature);
 
@@ -119,7 +120,7 @@ class OGREDIGEOObjectDescriptor
 class OGREDIGEOAttributeDescriptor
 {
     public:
-        OGREDIGEOAttributeDescriptor() {}
+        OGREDIGEOAttributeDescriptor() : nWidth(0) {}
 
         CPLString osRID;        /* e.g. TEX2_id */
         CPLString osNameRID;    /* e.g. ID_N_ATT_TEX2 */
@@ -150,6 +151,7 @@ class OGREDIGEODataSource : public OGRDataSource
     VSILFILE*           OpenFile(const char *pszType,
                                  const CPLString& osExt);
 
+    // TODO: Tranlate comments to English.
     CPLString osLON; /* Nom du lot */
     CPLString osGNN; /* Nom du sous-ensemble de données générales */
     CPLString osGON; /* Nom du sous-ensemble de la référence de coordonnées */
@@ -241,4 +243,4 @@ class OGREDIGEODataSource : public OGRDataSource
 };
 
 
-#endif /* ndef _OGR_EDIGEO_H_INCLUDED */
+#endif /* ndef OGR_EDIGEO_H_INCLUDED */

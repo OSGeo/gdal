@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test (error cases of) OSRValidate
 # Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -48,7 +48,7 @@ def osr_validate_1():
     return 'success'
 
 ###############################################################################
-# Unrecognised root node
+# Unrecognized root node
 
 def osr_validate_2():
 
@@ -66,10 +66,12 @@ def osr_validate_3():
 
     # No DATUM child in GEOGCS
     srs = osr.SpatialReference()
-    
+
     srs.ImportFromWkt("""COMPD_CS[]""")
-    print(srs.Validate())
-    
+    # 5 is OGRERR_CORRUPT_DATA.
+    if srs.Validate() == 0:
+        return 'fail'
+
     srs.ImportFromWkt("""COMPD_CS["MYNAME",GEOGCS[]]""")
     if srs.Validate() == 0:
         return 'fail'
@@ -225,7 +227,7 @@ def osr_validate_6():
     if srs.Validate() == 0:
         return 'fail'
 
-    # Unrecognised PARAMETER `foo'
+    # Unrecognized PARAMETER `foo'
     srs = osr.SpatialReference()
     srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N",PARAMETER["foo",0]]')
     if srs.Validate() == 0:
@@ -237,7 +239,7 @@ def osr_validate_6():
     if srs.Validate() == 0:
         return 'fail'
 
-    # Unrecognised PROJECTION `foo'
+    # Unrecognized PROJECTION `foo'
     srs = osr.SpatialReference()
     srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N",PROJECTION["foo"]]')
     if srs.Validate() == 0:
@@ -289,7 +291,7 @@ def osr_validate_6():
 
 ###############################################################################
 
-gdaltest_list = [ 
+gdaltest_list = [
     osr_validate_1,
     osr_validate_2,
     osr_validate_3,
@@ -304,4 +306,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdallocationinfo testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -148,12 +148,8 @@ def test_gdallocationinfo_6():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' tmp/test_gdallocationinfo_6.tif 10 10 -overview 1')
 
     gdal.GetDriverByName('GTiff').Delete('tmp/test_gdallocationinfo_6.tif')
-
-    expected_ret = """Report:
-  Location: (10P,10L)
-  Band 1:
-    Value: 130"""
-    if ret.find(expected_ret) != 0:
+    expected_ret = """Value: 130"""
+    if ret.find(expected_ret) < 0:
         print(ret)
         return 'fail'
 

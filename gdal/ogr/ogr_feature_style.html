@@ -206,7 +206,7 @@ The best way to get familiar with something is by example.
   A point symbol:
      "SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")"
 
-  A text label, taking the text string from the "text_string" 
+  A text label, taking the text string from the "text_string"
   attribute field:
      "LABEL(f:"Times New Roman",s:12pt,t:{text_string})"</PRE>
 Here is what a style table that contains all the above styles could look
@@ -260,7 +260,7 @@ tool to define a portion of the complete graphical representation:
 
   &lt;style_part> =   &lt;tool_name>([&lt;tool_param>[,&lt;tool_param>[,...]]])
 
-  &lt;tool_name> =    name of a drawing tool, for now: PEN | BRUSH | SYMBOL | LABEL 
+  &lt;tool_name> =    name of a drawing tool, for now: PEN | BRUSH | SYMBOL | LABEL
 
   &lt;tool_param> =   &lt;param_name>:&lt;param_value>
 
@@ -359,14 +359,14 @@ in)
 
   <TR>
     <TD ALIGN=CENTER>id</TD>
-    <TD><B>Comma-delimited list of Pen Names or Ids</B> - For systems that 
-identify pens with a name or an id.  The names in the comma-delimited list 
+    <TD><B>Comma-delimited list of Pen Names or Ids</B> - For systems that
+identify pens with a name or an id.  The names in the comma-delimited list
 of ids are scanned until one is recognized by the target system.
       <P>
 Pen Ids can be either system-specific ids (see further below) or be one
 of the pre-defined OGR pen ids for well known line patterns.  The id
-parameter should always include one of the OGR ids at the end of the 
-comma-delimited list of ids so that an application never has to rely on 
+parameter should always include one of the OGR ids at the end of the
+comma-delimited list of ids so that an application never has to rely on
 understanding system-specific ids.
       <P>
 Here is the current list of OGR pen ids (this could grow over time):<BR>
@@ -377,24 +377,24 @@ Here is the current list of OGR pen ids (this could grow over time):<BR>
         <LI>ogr-pen-3: short-dash
         <LI>ogr-pen-4: long-dash
         <LI>ogr-pen-5: dot
-line 
+line
         <LI>ogr-pen-6: dash-dot
-line 
+line
         <LI>ogr-pen-7: dash-dot-dot
 line
         <LI>ogr-pen-8: alternate-line (sets every other pixel)
 
       </UL>
       <P>
-System-specific ids are very 
-likely to be meaningful only to that specific system that created them.  
-The ids should start with the system's name, followed by a dash (-), 
-followed by whatever information is meaningful to that system (a number, 
+System-specific ids are very
+likely to be meaningful only to that specific system that created them.
+The ids should start with the system's name, followed by a dash (-),
+followed by whatever information is meaningful to that system (a number,
 a name, a filename, etc.).<BR>
 e.g. "mapinfo-5", or "mysoft-lines.sym-123", or "othersystems-funnyline"
       <P>
-System-specific ids are allowed in order to prevent loss of information when 
-dealing with data from systems that store line patterns in external files 
+System-specific ids are allowed in order to prevent loss of information when
+dealing with data from systems that store line patterns in external files
 or that have their own pre-defined set of line styles.  (To do a MapInfo MIF
 to TAB translation without any loss for instance.)
       <P>Examples: <BR>
@@ -489,40 +489,40 @@ list can eventually grow and that all parameters are optional:
 <TD ALIGN=CENTER>id</TD>
 
 <TD>
-      <P><B>Brush Name or Brush Id</B> - Comma-delimited list of brush names or ids.  The names in the comma-delimited list 
+      <P><B>Brush Name or Brush Id</B> - Comma-delimited list of brush names or ids.  The names in the comma-delimited list
 of ids are scanned until one is recognized by the target system.
 </P>
       <P>
 Brush  Ids can be either system-specific ids (see further below) or be one
 of the pre-defined OGR brush  ids for well known brush patterns.  The id
-parameter should always include one of the OGR ids at the end of the 
-comma-delimited list of ids so that an application never has to rely on 
+parameter should always include one of the OGR ids at the end of the
+comma-delimited list of ids so that an application never has to rely on
 understanding system-specific ids.
       <P>
 Here is the current list of OGR brush ids (this could grow over time):<BR>
       <UL>
         <LI>ogr-brush-0: solid  (the default when no id is provided)
         <LI>ogr-brush-1: null brush (transparent - no fill)
-        <LI>ogr-brush-2:  horizontal hatch /* ------ */	
-        <LI>ogr-brush-3: vertical hatch /* |||||| */          
-	      <LI>ogr-brush-4: fdiagonal hatch /* \\\\\\ */         
-        <LI>ogr-brush-5: bdiagonal hatch /* ////// */         	
-        <LI>ogr-brush-6: cross hatch /* ++++++ */             	
-        <LI>ogr-brush-7:  diagcross hatch /* xxxxxx */              
+        <LI>ogr-brush-2:  horizontal hatch /* ------ */
+        <LI>ogr-brush-3: vertical hatch /* |||||| */
+	      <LI>ogr-brush-4: fdiagonal hatch /* \\\\\\ */
+        <LI>ogr-brush-5: bdiagonal hatch /* ////// */
+        <LI>ogr-brush-6: cross hatch /* ++++++ */
+        <LI>ogr-brush-7:  diagcross hatch /* xxxxxx */
       </UL>
       <P>
-Like with Pen Ids, system-specific brush ids are very 
-likely to be meaningful only to that specific system that created them.  
-The ids should start with the system's name, followed by a dash (-), 
-followed by whatever information is meaningful to that system (a number, 
+Like with Pen Ids, system-specific brush ids are very
+likely to be meaningful only to that specific system that created them.
+The ids should start with the system's name, followed by a dash (-),
+followed by whatever information is meaningful to that system (a number,
 a name, a filename, etc.).
       <P>The following conventions will be used for common system-specific brush ids:</P>
       <UL>
         <LI>&quot;bmp-filename.bmp&quot; for Windows BMP patterns
         <LI>??? any others, e.g. vector symbols, WMF, ???
-        
+
       </UL>
-    
+
       </TD>
 </TR>
 
@@ -590,19 +590,19 @@ list can eventually grow and that all parameters are optional:
 <TD ALIGN=CENTER>id</TD>
 
     <TD>
-      <P><B>Symbol Name or Id</B> - Comma-delimited list of symbol names or ids.  The names in the comma-delimited list 
+      <P><B>Symbol Name or Id</B> - Comma-delimited list of symbol names or ids.  The names in the comma-delimited list
 of ids are scanned until one is recognized by the target system.
 </P>
       <P>
 Symbol  Ids can be either system-specific ids (see further below) or be one
 of the pre-defined OGR symbol  ids for well known symbols.  The id
-parameter should always include one of the OGR ids at the end of the 
-comma-delimited list of ids so that an application never has to rely on 
+parameter should always include one of the OGR ids at the end of the
+comma-delimited list of ids so that an application never has to rely on
 understanding system-specific ids.
       <P>
 Here is the current list of OGR symbol ids (this could grow over time):<BR>
       <UL>
-        <LI>ogr-sym-0: cross (+)        
+        <LI>ogr-sym-0: cross (+)
         <LI>ogr-sym-1: diagcross (X)
         <LI>ogr-sym-2: circle (not filled)
         <LI>ogr-sym-3: circle (filled)
@@ -613,19 +613,19 @@ Here is the current list of OGR symbol ids (this could grow over time):<BR>
         <LI>ogr-sym-8: star (not filled)
         <LI>ogr-sym-9: star (filled)
         <LI>ogr-sym-10: vertical bar (can be rotated using angle attribute to produce diag bar)
-        <LI>??? should any other common be included ???             
+        <LI>??? should any other common be included ???
       </UL>
       <P>
-Like with Pen Ids, system-specific symbol ids are very 
-likely to be meaningful only to that specific system that created them.  
-The ids should start with the system's name, followed by a dash (-), 
-followed by whatever information is meaningful to that system (a number, 
+Like with Pen Ids, system-specific symbol ids are very
+likely to be meaningful only to that specific system that created them.
+The ids should start with the system's name, followed by a dash (-),
+followed by whatever information is meaningful to that system (a number,
 a name, a filename, etc.).
       <P>The following conventions will be used for common system-specific symbol ids:</P>
       <UL>
         <LI>&quot;bmp-filename.bmp&quot; for Windows BMP symbols
         <LI>??? any others, e.g. vector symbols, WMF, ???
-        
+
       </UL>
       </TD>
 </TR>
@@ -729,7 +729,7 @@ this list can eventually grow and all parameters are optional:
 
   <TR>
     <TD ALIGN=CENTER>f</TD>
-    <TD><B>Font Name</B> - 
+    <TD><B>Font Name</B> -
 <BR>
       Comma-delimited list of fonts names.  works like the HTML FONT tag: the list of font names is scanned until a supported font name is encountered.
 <BR>
@@ -789,7 +789,7 @@ it is escaped with a antislash (\) character before it.
 
   <TR>
     <TD ALIGN=CENTER>w</TD>
-    <TD><B>Stretch</B> - The stretch factor changes the width of all 
+    <TD><B>Stretch</B> - The stretch factor changes the width of all
 	    characters in the font by factor percent. For example, setting
 	    factor to 150 results in all characters in the font being 1.5
 	    times (i.e. 150%) wider. The default stretch factor is 100.</TD>
@@ -864,7 +864,7 @@ line along which it is placed.  If the offset is negative then the label will be
   </TR>
   <TR>
     <TD ALIGN=CENTER>bo</TD>
-    <TD><B>Bold</B> - 
+    <TD><B>Bold</B> -
 <BR>
       If specified, then text will be bold.</TD>
   </TR>
@@ -876,7 +876,7 @@ line along which it is placed.  If the offset is negative then the label will be
     <TD ALIGN=CENTER>un</TD>
     <TD><B>Underline</B> -</TD>
   </TR>
-  
+
 
   <TR>
     <TD ALIGN=CENTER>l</TD>
@@ -971,9 +971,9 @@ The OGRStyle class knows how to parse a style string,</LI>
     } OGRSTUnitId;
 
     typedef enum ogr_style_tool_param_pen_id
-    {  
-      OGRSTPenColor = 0,                   
-      OGRSTPenWidth,                   
+    {
+      OGRSTPenColor = 0,
+      OGRSTPenWidth,
       OGRSTPenPattern,
       OGRSTPenId,
       OGRSTPenPerOffset,
@@ -981,27 +981,27 @@ The OGRStyle class knows how to parse a style string,</LI>
       OGRSTPenJoin,
       OGRSTPenPriority,
       OGRSTPenLast
-              
+
     } OGRSTPenParam;
 
     typedef enum ogr_style_tool_param_brush_id
-    {  
-      OGRSTBrushFColor = 0,                   
-      OGRSTBrushBColor,                   
+    {
+      OGRSTBrushFColor = 0,
+      OGRSTBrushBColor,
       OGRSTBrushId,
-      OGRSTBrushAngle,                   
+      OGRSTBrushAngle,
       OGRSTBrushSize,
       OGRSTBrushDx,
       OGRSTBrushDy,
       OGRSTBrushPriority,
       OGRSTBrushLast
-              
+
     } OGRSTBrushParam;
 
 
 
     typedef enum ogr_style_tool_param_symbol_id
-    {  
+    {
       OGRSTSymbolId = 0,
       OGRSTSymbolAngle,
       OGRSTSymbolColor,
@@ -1013,11 +1013,11 @@ The OGRStyle class knows how to parse a style string,</LI>
       OGRSTSymbolOffset,
       OGRSTSymbolPriority,
       OGRSTSymbolLast
-              
+
     } OGRSTSymbolParam;
 
     typedef enum ogr_style_tool_param_label_id
-    {  
+    {
       OGRSTLabelFontName = 0,
       OGRSTLabelSize,
       OGRSTLabelTextString,
@@ -1034,54 +1034,54 @@ The OGRStyle class knows how to parse a style string,</LI>
       OGRSTLabelUnderline,
       OGRSTLabelPriority,
       OGRSTLabelLast
-              
+
     } OGRSTLabelParam;
 
-    //Every time a pszStyleString given in parameter is NULL, 
+    //Every time a pszStyleString given in parameter is NULL,
       the StyleString defined in the Mgr will be use.
 
 class OGRStyleMgr
 {
     OGRStyleMgr(OGRStyleTable *poDataSetStyleTable =NULL);
- 
+
     GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=NULL,
 				GBool bNoMatching = FALSE);
-    /*it will set in the given feature the pszStyleString with 
-	    the style or will set the style name found in 
+    /*it will set in the given feature the pszStyleString with
+	    the style or will set the style name found in
             dataset StyleTable (if bNoMatching == FALSE)*/
-	      
+
     const char *InitFromFeature(OGRFeature *);
     GBool InitStyleString(const char *pszStyleString = NULL);
-    
+
     const char *GetStyleName(const char *pszStyleString= NULL);
     const char *GetStyleByName(const char *pszStyleName);
-    
+
     GBool AddStyle(const char *pszStyleName, const char *pszStyleString=NULL);
-    
+
     const char *GetStyleString(OGRFeature * = NULL);
- 
+
     GBool AddPart(OGRStyleTool *);
     GBool AddPart(const char *);
 
     int GetPartCount(const char *pszStyleString = NULL);
     OGRStyleTool *GetPart(int hPartId, const char *pszStyleString = NULL);
-        
+
     OGRStyleTable *GetDataSetStyleTable(){return m_poDataSetStyleTable;}
-    
+
     OGRStyleTool *CreateStyleToolFromStyleString(const char *pszStyleString);
 
-}; 
+};
 
 class OGRStyleTool
 {
     OGRStyleTool(OGRSTClassId eClassId);
-    GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen, 
+    GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
 			   int &nBlue);
-    int   GetSpecificId(const char *pszId, const char *pszWanted); 
+    int   GetSpecificId(const char *pszId, const char *pszWanted);
     OGRSTClassId GetType();
     void SetUnit(OGRSTUnitId,double dfScale = 1.0); //the dfScale will be
          //used if we are working with Ground Unit ( ground = paper * scale);
-    OGRSTUnitId GetUnit(){return m_eUnit;}   
+    OGRSTUnitId GetUnit(){return m_eUnit;}
     void SetStyleString(const char *pszStyleString);
 };
 
@@ -1090,7 +1090,7 @@ class OGRStylePen : public OGRStyleTool
    /**********************************************************************/
     /* Explicit fct for all parameters defined in the Drawing tools  Pen */
     /**********************************************************************/
-     
+
     const char *Color(GBool &bDefault)
     void SetColor(const char *pszColor)
     double Width(GBool &bDefault)
@@ -1113,11 +1113,11 @@ class OGRStylePen : public OGRStyleTool
     inline const char *GetParamStr(OGRSTPenParam eParam, GBool &bValueIsNull)
     inline int GetParamNum(OGRSTPenParam eParam,GBool &bValueIsNull)
     inline double GetParamDbl(OGRSTPenParam eParam,GBool &bValueIsNull)
-    inline void SetParamStr(OGRSTPenParam eParam, 
+    inline void SetParamStr(OGRSTPenParam eParam,
 	                        const char *pszParamString)
     inline void SetParamNum(OGRSTPenParam eParam, int nParam)
     inline void SetParamDbl(OGRSTPenParam eParam, double dfParam)
-   
+
 };
 
 
@@ -1142,16 +1142,16 @@ class OGRStyleBrush : public OGRStyleTool
     void SetSpacingY(double dfY)
     int  Priority(GBool &bDefault)
     void SetPriority(int nPriority)
-    
+
     /*****************************************************************/
-    
+
 };
 class OGRStyleSymbol : public OGRStyleTool
 {
     /*****************************************************************/
     /* Explicit fct for all parameters defined in the Drawing tools */
     /*****************************************************************/
-    
+
     const char *Id(GBool &bDefault)
     void  SetId(const char *pszId)
     double Angle(GBool &bDefault)
@@ -1172,9 +1172,9 @@ class OGRStyleSymbol : public OGRStyleTool
     void SetPerp(double dfPerp)
     int  Priority(GBool &bDefault)
     void SetPriority(int nPriority)
-    
+
     /*****************************************************************/
-    
+
 };
 
 class OGRStyleLabel : public OGRStyleTool
@@ -1183,7 +1183,7 @@ class OGRStyleLabel : public OGRStyleTool
     /*****************************************************************/
     /* Explicit fct for all parameters defined in the Drawing tools */
     /*****************************************************************/
-    
+
     const char *FontName(GBool &bDefault)
     void  SetFontName(const char *pszFontName)
     double Size(GBool &bDefault)
@@ -1215,18 +1215,18 @@ class OGRStyleLabel : public OGRStyleTool
     int  Priority(GBool &bDefault)
     void SetPriority(int nPriority)
     /*****************************************************************/
-    
+
 };
 
 class OGRStyleTable
 {
-    
+
     OGRStyleTable();
 
     GBool AddStyle(const char *pszName,const char *pszStyleString);
     GBool RemoveStyle(const char *pszName);
     GBool ModifyStyle(const char *pszName, const char *pszStyleString);
-    
+
     GBool SaveStyleTable(const char *pszFilename);
     GBool LoadStyleTable(const char *pszFilename);
     const char *Find(const char *pszStyleString);
@@ -1252,7 +1252,7 @@ Usage examples:
    }
 
    oStyleTable->SaveStyleTable("ttt.tbl");
-   
+
 
    // Create a New style in the style table
 
@@ -1262,7 +1262,7 @@ Usage examples:
    poStyleMgr->AddStyle("@Name");
    poStyleMgr->SetFeatureStyleString(poFeature,"@Name",TRUE);
    oStyleTable->SaveStyleTable("ttt.tbl");
-   
+
 
    // Create a New style in the style table
 
@@ -1272,7 +1272,7 @@ Usage examples:
    poStylePen->SetUnit(OGRSTUPixel);
    poStylePen->SetWidth(10.0);
    poStyleMgr->AddPart(poStylePen);
-   
+
    delete poStylePen;
 
 
@@ -1281,7 +1281,7 @@ Usage examples:
    OGRStyleTool  *poStyleTool;
 
    poStyleMgr->GetStyleString(poFeature);
-   
+
    for (i=0;i<poStyleMgr->GetPartCount();i++)
    {
       poStyleTool = GetPart(i);
@@ -1291,7 +1291,7 @@ Usage examples:
             poStylePen = (OGRStylePen *)poStyleTool;
             pszColor = poStylePen->Color(bDefault);
             if (bDefault == FALSE)
-              poStylePen->GetRGBFromString(pszColor, nRed, nGree, 
+              poStylePen->GetRGBFromString(pszColor, nRed, nGreen,
 	                                   nBlue, nTrans);
             else
               // Color not defined;
@@ -1300,8 +1300,8 @@ Usage examples:
             if (bDefault == FALSE)
               // Use dfWidth
             else
-              // dfWidth not defined                
-     
+              // dfWidth not defined
+
            :
            :
        }
@@ -1313,4 +1313,4 @@ Usage examples:
 </P>
 <P>
 <HR WIDTH=50%>
-</BODY></HTML>    
+</BODY></HTML>

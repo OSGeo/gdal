@@ -6,10 +6,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  nearblack testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -19,7 +19,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -45,7 +45,7 @@ import test_cli_utilities
 def test_nearblack_1():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
-    
+
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -nb 0 -of GTiff -o tmp/nearblack1.tif')
     if not (err is None or err == '') :
         gdaltest.post_reason('got error/warning')
@@ -190,7 +190,7 @@ def test_nearblack_6():
 
     shutil.copy('tmp/nearblack5.tif','tmp/nearblack6.tif')
     shutil.copy('tmp/nearblack5.tif.msk','tmp/nearblack6.tif.msk')
-    
+
     gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' -setmask -nb 0 -of GTiff tmp/nearblack6.tif')
 
     ds = gdal.Open('tmp/nearblack6.tif')
@@ -229,6 +229,44 @@ def test_nearblack_7():
         return 'fail'
 
     ds = None
+
+    return 'success'
+
+###############################################################################
+# Test in-place update
+
+def test_nearblack_8():
+    if test_cli_utilities.get_nearblack_path() is None:
+        return 'skip'
+
+    src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
+    gdal.GetDriverByName('GTiff').CreateCopy('tmp/nearblack8.tif', src_ds)
+    src_ds = None
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' tmp/nearblack8.tif -nb 0')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
+
+    ds = gdal.Open('tmp/nearblack8.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 21106:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum band 1')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 20736:
+        print(ds.GetRasterBand(2).Checksum())
+        gdaltest.post_reason('Bad checksum band 2')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 21309:
+        print(ds.GetRasterBand(3).Checksum())
+        gdaltest.post_reason('Bad checksum band 3')
+        return 'fail'
 
     return 'success'
 
@@ -276,6 +314,10 @@ def test_nearblack_cleanup():
         os.remove('tmp/nearblack7.tif')
     except:
         pass
+    try:
+        os.remove('tmp/nearblack8.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -286,6 +328,7 @@ gdaltest_list = [
     test_nearblack_5,
     test_nearblack_6,
     test_nearblack_7,
+    test_nearblack_8,
     test_nearblack_cleanup
     ]
 

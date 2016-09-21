@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.61 2012-12-12 22:50:18 tgl Exp $ */
+/* $Id: tif_print.c,v 1.64 2015-12-06 22:19:56 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -35,9 +35,9 @@
 #include <ctype.h>
 
 static void
-_TIFFprintAsciiBounded(FILE* fd, const char* cp, int max_chars);
+_TIFFprintAsciiBounded(FILE* fd, const char* cp, size_t max_chars);
 
-static const char *photoNames[] = {
+static const char * const photoNames[] = {
     "min-is-white",				/* PHOTOMETRIC_MINISWHITE */
     "min-is-black",				/* PHOTOMETRIC_MINISBLACK */
     "RGB color",				/* PHOTOMETRIC_RGB */
@@ -52,7 +52,7 @@ static const char *photoNames[] = {
 };
 #define	NPHOTONAMES	(sizeof (photoNames) / sizeof (photoNames[0]))
 
-static const char *orientNames[] = {
+static const char * const orientNames[] = {
     "0 (0x0)",
     "row 0 top, col 0 lhs",			/* ORIENTATION_TOPLEFT */
     "row 0 top, col 0 rhs",			/* ORIENTATION_TOPRIGHT */
@@ -237,7 +237,6 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 	char *sep;
-	uint16 i;
 	long l, n;
 
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
@@ -365,6 +364,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		}
 	}
 	if (TIFFFieldSet(tif,FIELD_EXTRASAMPLES) && td->td_extrasamples) {
+		uint16 i;
 		fprintf(fd, "  Extra Samples: %u<", td->td_extrasamples);
 		sep = "";
 		for (i = 0; i < td->td_extrasamples; i++) {
@@ -389,13 +389,14 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	}
 	if (TIFFFieldSet(tif,FIELD_INKNAMES)) {
 		char* cp;
+		uint16 i;
 		fprintf(fd, "  Ink Names: ");
 		i = td->td_samplesperpixel;
 		sep = "";
 		for (cp = td->td_inknames; 
 		     i > 0 && cp < td->td_inknames + td->td_inknameslen; 
 		     cp = strchr(cp,'\0')+1, i--) {
-			int max_chars = 
+			size_t max_chars = 
 				td->td_inknameslen - (cp - td->td_inknames);
 			fputs(sep, fd);
 			_TIFFprintAsciiBounded(fd, cp, max_chars);
@@ -481,6 +482,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	if (TIFFFieldSet(tif,FIELD_MAXSAMPLEVALUE))
 		fprintf(fd, "  Max Sample Value: %u\n", td->td_maxsamplevalue);
 	if (TIFFFieldSet(tif,FIELD_SMINSAMPLEVALUE)) {
+		int i;
 		int count = (tif->tif_flags & TIFF_PERSAMPLE) ? td->td_samplesperpixel : 1;
 		fprintf(fd, "  SMin Sample Value:");
 		for (i = 0; i < count; ++i)
@@ -488,6 +490,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		fprintf(fd, "\n");
 	}
 	if (TIFFFieldSet(tif,FIELD_SMAXSAMPLEVALUE)) {
+		int i;
 		int count = (tif->tif_flags & TIFF_PERSAMPLE) ? td->td_samplesperpixel : 1;
 		fprintf(fd, "  SMax Sample Value:");
 		for (i = 0; i < count; ++i)
@@ -527,6 +530,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			fprintf(fd, "(present)\n");
 	}
 	if (TIFFFieldSet(tif,FIELD_REFBLACKWHITE)) {
+		int i;
 		fprintf(fd, "  Reference Black/White:\n");
 		for (i = 0; i < 3; i++)
 		fprintf(fd, "    %2d: %5g %5g\n", i,
@@ -539,6 +543,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			fprintf(fd, "\n");
 			n = 1L<<td->td_bitspersample;
 			for (l = 0; l < n; l++) {
+				uint16 i;
 				fprintf(fd, "    %2lu: %5u",
 				    l, td->td_transferfunction[0][l]);
 				for (i = 1; i < td->td_samplesperpixel; i++)
@@ -550,6 +555,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			fprintf(fd, "(present)\n");
 	}
 	if (TIFFFieldSet(tif, FIELD_SUBIFD) && (td->td_subifd)) {
+		uint16 i;
 		fprintf(fd, "  SubIFD Offsets:");
 		for (i = 0; i < td->td_nsubifd; i++)
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
@@ -679,7 +685,7 @@ _TIFFprintAscii(FILE* fd, const char* cp)
 }
 
 static void
-_TIFFprintAsciiBounded(FILE* fd, const char* cp, int max_chars)
+_TIFFprintAsciiBounded(FILE* fd, const char* cp, size_t max_chars)
 {
 	for (; max_chars > 0 && *cp != '\0'; cp++, max_chars--) {
 		const char* tp;
