@@ -47,14 +47,14 @@ OGRElasticDataSource::OGRElasticDataSource() :
     m_pszName(NULL),
     m_papoLayers(NULL),
     m_nLayers(0),
-    m_bOverwrite(FALSE),
+    m_bOverwrite(false),
     m_nBulkUpload(0),
     m_pszWriteMap(NULL),
     m_pszMapping(NULL),
     m_nBatchSize(100),
     m_nFeatureCountToEstablishFeatureDefn(100),
-    m_bJSonField(FALSE),
-    m_bFlattenNestedAttributes(TRUE)
+    m_bJSonField(false),
+    m_bFlattenNestedAttributes(true)
 {
     const char* pszWriteMapIn = CPLGetConfigOption("ES_WRITEMAP", NULL);
     if (pszWriteMapIn != NULL) {
@@ -84,8 +84,8 @@ int OGRElasticDataSource::TestCapability(const char * pszCap) {
         EQUAL(pszCap, ODsCDeleteLayer) ||
         EQUAL(pszCap, ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -173,20 +173,21 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
     // Check if the index exists
-    int bIndexExists = FALSE;
+    bool bIndexExists = false;
     CPLPushErrorHandler(CPLQuietErrorHandler);
     CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s",
                                            GetURL(), osLaunderedName.c_str()), NULL);
     CPLPopErrorHandler();
-    if (psResult) {
-        bIndexExists = (psResult->pszErrBuf == NULL);
+    if( psResult )
+      {
+        bIndexExists = psResult->pszErrBuf == NULL;
         CPLHTTPDestroyResult(psResult);
     }
 
     const char* m_pszMappingName = CSLFetchNameValueDef(papszOptions,
                                         "MAPPING_NAME", "FeatureCollection");
 
-    int bMappingExists = FALSE;
+    bool bMappingExists = false;
     if( bIndexExists )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -260,7 +261,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     m_papoLayers = (OGRElasticLayer **) CPLRealloc(m_papoLayers, m_nLayers * sizeof (OGRElasticLayer*));
     m_papoLayers[m_nLayers - 1] = poLayer;
 
-    poLayer->FinalizeFeatureDefn(FALSE);
+    poLayer->FinalizeFeatureDefn(false);
 
     if( eGType != wkbNone )
     {

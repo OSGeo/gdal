@@ -172,7 +172,7 @@ public:
 
     virtual OGRErr      SyncToDisk();
 
-    void                FinalizeFeatureDefn(int bReadFeatures = TRUE);
+    void                FinalizeFeatureDefn(bool bReadFeatures = true);
     void                InitFeatureDefnFromMapping(json_object* poSchema,
                                     const char* pszPrefix,
                                     const std::vector<CPLString>& aosPath);
@@ -203,14 +203,14 @@ public:
                             OGRElasticDataSource();
                             virtual ~OGRElasticDataSource();
 
-    int                 m_bOverwrite;
+    bool                m_bOverwrite;
     int                 m_nBulkUpload;
     char               *m_pszWriteMap;
     char               *m_pszMapping;
     int                 m_nBatchSize;
     int                 m_nFeatureCountToEstablishFeatureDefn;
-    int                 m_bJSonField;
-    int                 m_bFlattenNestedAttributes;
+    bool                m_bJSonField;
+    bool                m_bFlattenNestedAttributes;
 
     int Open(GDALOpenInfo* poOpenInfo);
 

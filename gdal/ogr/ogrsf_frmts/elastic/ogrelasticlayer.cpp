@@ -396,7 +396,7 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
 /*                        FinalizeFeatureDefn()                         */
 /************************************************************************/
 
-void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
+void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
 {
     if( m_bFeatureDefnFinalized )
         return;
