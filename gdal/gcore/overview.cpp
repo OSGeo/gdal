@@ -33,15 +33,6 @@
 #include "gdal_priv.h"
 #include "gdalwarper.h"
 
-#include "smmintrin.h"
-
-double sseCeil(double v)
-{
-	__m128d xmm = _mm_set_sd(v);
-	xmm = _mm_ceil_sd(xmm, xmm);
-	return _mm_cvtsd_f64(xmm);
-}
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -304,11 +295,12 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     bool bSrcXSpacingIsTwo = true;
     for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
     {
-		const double dSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
-        int nSrcXOff = (int)dSrcXOff;
+        int   nSrcXOff, nSrcXOff2;
+
+        nSrcXOff = (int) (dfSrcXDelta + iDstPixel * dfXRatioDstToSrc);
         if ( nSrcXOff < nChunkXOff )
             nSrcXOff = nChunkXOff;
-        int nSrcXOff2 = (int)sseCeil(dSrcXOff + dfXRatioDstToSrc);
+        nSrcXOff2 = (int) ceil(dfSrcXDelta + (iDstPixel+1) * dfXRatioDstToSrc);
         if( nSrcXOff2 == nSrcXOff )
             nSrcXOff2 ++;
 
@@ -331,12 +323,11 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     CPLErr eErr = CE_None;
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-		const double dSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
-        int nSrcYOff = (int)dSrcYOff;
+        int nSrcYOff = (int) (dfSrcYDelta + iDstLine * dfYRatioDstToSrc);
         if ( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        int nSrcYOff2 = (int)sseCeil(dSrcYOff + dfYRatioDstToSrc);
+        int nSrcYOff2 = (int) ceil(dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc);
         if( nSrcYOff2 == nSrcYOff )
             nSrcYOff2 ++;
 
@@ -631,9 +622,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* ==================================================================== */
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-		const double dSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
-        int nSrcYOff = (int)dSrcYOff;
-        int nSrcYOff2 = (int)sseCeil(dSrcYOff + dfYRatioDstToSrc);
+        int nSrcYOff = (int) (dfSrcYDelta + iDstLine * dfYRatioDstToSrc);
+        int nSrcYOff2 = (int) ceil(dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc);
 
         if( nSrcYOff < nChunkYOff )
         {
@@ -667,9 +657,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         int  iDstPixel;
         for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
         {
-			const double dSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
-            int nSrcXOff = (int)dSrcXOff;
-            int nSrcXOff2 = (int)sseCeil(dSrcXOff + dfXRatioDstToSrc);
+            int nSrcXOff = (int) (dfSrcXDelta + iDstPixel * dfXRatioDstToSrc);
+            int nSrcXOff2 = (int) ceil(dfSrcXDelta + (iDstPixel+1) * dfXRatioDstToSrc);
 
             int iSizeX = nSrcXOff2 - nSrcXOff;
             nSrcXOff = nSrcXOff + iSizeX/2 - nGaussMatrixDim/2;
@@ -843,12 +832,11 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     {
         int iDstPixel;
 
-		const double dScrYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
-        int nSrcYOff = (int)dScrYOff;
+        int nSrcYOff = (int) (dfSrcYDelta + iDstLine * dfYRatioDstToSrc);
         if ( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        int nSrcYOff2 = (int)sseCeil(dScrYOff + dfYRatioDstToSrc);
+        int nSrcYOff2 = (int) ceil(dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc);
         if( nSrcYOff2 == nSrcYOff )
             nSrcYOff2 ++;
 
@@ -871,11 +859,10 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* -------------------------------------------------------------------- */
         for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
         {
-			const double dSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
-			int nSrcXOff = (int)dSrcXOff;
+            int nSrcXOff = (int) (dfSrcXDelta + iDstPixel * dfXRatioDstToSrc);
             if ( nSrcXOff < nChunkXOff )
                 nSrcXOff = nChunkXOff;
-            int nSrcXOff2 = (int)sseCeil(dSrcXOff + dfXRatioDstToSrc);
+            int nSrcXOff2 = (int) ceil(dfSrcXDelta + (iDstPixel+1) * dfXRatioDstToSrc);
             if( nSrcXOff2 == nSrcXOff )
                 nSrcXOff2 ++;
 
@@ -1845,12 +1832,11 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
 /* ==================================================================== */
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-		const double dSrcYOff = iDstLine * dfYRatioDstToSrc;
-        int nSrcYOff = (int)dSrcYOff;
+        int nSrcYOff = (int) (iDstLine * dfYRatioDstToSrc);
         if( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        int nSrcYOff2 = (int)sseCeil(dSrcYOff + dfYRatioDstToSrc);
+        int nSrcYOff2 = (int) ceil((iDstLine+1) * dfYRatioDstToSrc);
         if( nSrcYOff2 == nSrcYOff )
             nSrcYOff2 ++;
 
@@ -1872,9 +1858,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
         int iDstPixel;
         for( iDstPixel = 0; iDstPixel < nOXSize; iDstPixel++ )
         {
-			const double dSrcXOff = iDstPixel * dfXRatioDstToSrc;
-            int nSrcXOff = (int)dSrcXOff;
-            int nSrcXOff2 = (int)sseCeil(dSrcXOff + dfXRatioDstToSrc);
+            int nSrcXOff = (int) (iDstPixel * dfXRatioDstToSrc);
+            int nSrcXOff2 = (int)
+                ceil((iDstPixel+1) * dfXRatioDstToSrc);
             if( nSrcXOff2 == nSrcXOff )
                 nSrcXOff2 ++;
             if( nSrcXOff2 > nSrcWidth || iDstPixel == nOXSize-1 )
@@ -2916,7 +2902,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                 nDstYCount = nDstHeight - nDstYOff;
 
             int nChunkYOff = (int) (nDstYOff * dfYRatioDstToSrc);
-            int nChunkYOff2 = (int) sseCeil((nDstYOff + nDstYCount) * dfYRatioDstToSrc);
+            int nChunkYOff2 = (int) ceil((nDstYOff + nDstYCount) * dfYRatioDstToSrc);
             if( nChunkYOff2 > nSrcHeight || nDstYOff + nDstYCount == nDstHeight)
                 nChunkYOff2 = nSrcHeight;
             int nYCount = nChunkYOff2 - nChunkYOff;
@@ -2951,7 +2937,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
                     nDstXCount = nDstWidth - nDstXOff;
 
                 int nChunkXOff = (int) (nDstXOff * dfXRatioDstToSrc);
-                int nChunkXOff2 = (int) sseCeil((nDstXOff + nDstXCount) * dfXRatioDstToSrc);
+                int nChunkXOff2 = (int) ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc);
                 if( nChunkXOff2 > nSrcWidth || nDstXOff + nDstXCount == nDstWidth)
                     nChunkXOff2 = nSrcWidth;
                 int nXCount = nChunkXOff2 - nChunkXOff;
