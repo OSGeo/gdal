@@ -151,6 +151,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            nRetCode = 0;
             goto exit;
         }
         else if( EQUAL(papszArgv[iArg],"--help") )
@@ -190,7 +191,8 @@ int main( int nArgc, char ** papszArgv )
     if( strcmp(psOptionsForBinary->pszDestDataSource, "/vsistdout/") == 0 )
         psOptionsForBinary->bQuiet = TRUE;
 
-    if (!psOptionsForBinary->bQuiet && psOptionsForBinary->bFormatExplicitlySet)
+    if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet &&
+        psOptionsForBinary->eAccessMode == ACCESS_CREATION)
     {
         CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
                                            psOptionsForBinary->pszFormat);

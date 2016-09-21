@@ -1370,7 +1370,7 @@ OGRErr OGRSpatialReference::morphToESRI()
             e2 = 2 *f - f*f;
         }
         const double dfStdP1Lat =
-            acos( sqrt( (1 - e2) / (1 / (dfK0 * dfK0)) - e2) ) / M_PI * 180.0;
+            acos( sqrt( (1 - e2) / ((1 / (dfK0 * dfK0)) - e2)) ) / M_PI * 180.0;
         if( poProjCS )
         {
             const int iScaleFactorChild =

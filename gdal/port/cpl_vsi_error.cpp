@@ -164,7 +164,7 @@ void    VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
                             sizeof(VSIErrorContext)
                             - DEFAULT_LAST_ERR_MSG_SIZE
                             + psCtx->nLastErrMsgMax + 1) );
-            CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
+            CPLSetTLS( CTLS_VSIERRORCONTEXT, psCtx, TRUE );
         }
 
         va_end( wrk_args );

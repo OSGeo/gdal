@@ -3449,6 +3449,15 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
                  [ 'GEOMETRYCOLLECTION ZM (POINT ZM (1 2 3 4))', 'GEOMETRYCOLLECTION (POINT (1 2))', 'GEOMETRYCOLLECTION Z (POINT Z (1 2 3))' ],
                ]
     for (before, after_2D, after_3D) in list_wkt:
+
+        geom = ogr.CreateGeometryFromWkt(before)
+        wkb = geom.ExportToIsoWkb()
+        geom2 = ogr.CreateGeometryFromWkb(wkb)
+        if not geom.Equals(geom2):
+            print(before)
+            print(geom2.ExportToIsoWkt())
+            return 'fail'
+
         geom = ogr.CreateGeometryFromWkt(before)
         geom.FlattenTo2D()
         if geom.ExportToIsoWkt() != after_2D:

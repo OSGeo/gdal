@@ -2310,8 +2310,7 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
         sJob.nYStep = nThreads;
         sJob.hCondMutex = CPLCreateMutex(); /* and  implicitly take the mutex */
         sJob.hCond = CPLCreateCond();
-        if( sJob.pfnRealProgress != NULL && sJob.pfnRealProgress != GDALDummyProgress )
-            sJob.pfnProgress = GDALGridProgressMultiThread;
+        sJob.pfnProgress = GDALGridProgressMultiThread;
 
 /* -------------------------------------------------------------------- */
 /*      Start threads.                                                  */

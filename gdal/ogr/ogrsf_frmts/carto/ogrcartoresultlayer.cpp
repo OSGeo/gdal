@@ -1,8 +1,7 @@
 /******************************************************************************
- * $Id
  *
- * Project:  CartoDB Translator
- * Purpose:  Implements OGRCARTODBResultLayer class.
+ * Project:  Carto Translator
+ * Purpose:  Implements OGRCARTOResultLayer class.
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
@@ -27,17 +26,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_cartodb.h"
+#include "ogr_carto.h"
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          OGRCARTODBResultLayer()                     */
+/*                          OGRCARTOResultLayer()                     */
 /************************************************************************/
 
-OGRCARTODBResultLayer::OGRCARTODBResultLayer( OGRCARTODBDataSource* poDSIn,
+OGRCARTOResultLayer::OGRCARTOResultLayer( OGRCARTODataSource* poDSIn,
                                               const char * pszRawQueryIn ) :
-    OGRCARTODBLayer(poDSIn),
+    OGRCARTOLayer(poDSIn),
     poFirstFeature(NULL)
 {
     osBaseSQL = pszRawQueryIn;
@@ -45,10 +44,10 @@ OGRCARTODBResultLayer::OGRCARTODBResultLayer( OGRCARTODBDataSource* poDSIn,
 }
 
 /************************************************************************/
-/*                       ~OGRCARTODBResultLayer()                       */
+/*                       ~OGRCARTOResultLayer()                       */
 /************************************************************************/
 
-OGRCARTODBResultLayer::~OGRCARTODBResultLayer()
+OGRCARTOResultLayer::~OGRCARTOResultLayer()
 
 {
     delete poFirstFeature;
@@ -58,7 +57,7 @@ OGRCARTODBResultLayer::~OGRCARTODBResultLayer()
 /*                          GetLayerDefnInternal()                      */
 /************************************************************************/
 
-OGRFeatureDefn * OGRCARTODBResultLayer::GetLayerDefnInternal(json_object* poObjIn)
+OGRFeatureDefn * OGRCARTOResultLayer::GetLayerDefnInternal(json_object* poObjIn)
 {
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
@@ -72,7 +71,7 @@ OGRFeatureDefn * OGRCARTODBResultLayer::GetLayerDefnInternal(json_object* poObjI
 /*                           GetNextRawFeature()                        */
 /************************************************************************/
 
-OGRFeature  *OGRCARTODBResultLayer::GetNextRawFeature()
+OGRFeature  *OGRCARTOResultLayer::GetNextRawFeature()
 {
     if( poFirstFeature )
     {
@@ -81,14 +80,14 @@ OGRFeature  *OGRCARTODBResultLayer::GetNextRawFeature()
         return poRet;
     }
     else
-        return OGRCARTODBLayer::GetNextRawFeature();
+        return OGRCARTOLayer::GetNextRawFeature();
 }
 
 /************************************************************************/
 /*                                IsOK()                                */
 /************************************************************************/
 
-int  OGRCARTODBResultLayer::IsOK()
+int  OGRCARTOResultLayer::IsOK()
 {
     CPLErrorReset();
     poFirstFeature = GetNextFeature();
@@ -99,7 +98,7 @@ int  OGRCARTODBResultLayer::IsOK()
 /*                             GetSRS_SQL()                             */
 /************************************************************************/
 
-CPLString OGRCARTODBResultLayer::GetSRS_SQL(const char* pszGeomCol)
+CPLString OGRCARTOResultLayer::GetSRS_SQL(const char* pszGeomCol)
 {
     CPLString osSQL;
     CPLString osLimitedSQL;
@@ -126,7 +125,7 @@ CPLString OGRCARTODBResultLayer::GetSRS_SQL(const char* pszGeomCol)
     /* to geometries of all rows. */
     osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
                 "(SELECT ST_SRID(%s) FROM (%s) ogr_subselect)",
-                OGRCARTODBEscapeIdentifier(pszGeomCol).c_str(),
+                OGRCARTOEscapeIdentifier(pszGeomCol).c_str(),
                 osLimitedSQL.c_str());
 
     return osSQL;

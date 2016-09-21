@@ -146,6 +146,8 @@ class GMLHandler
 
     std::vector<NodeLastChild> apsXMLNode;
 
+    int        m_nSRSDimensionIfMissing;
+
     OGRErr     startElementTop(const char *pszName, int nLenName, void* attr);
 
     OGRErr     endElementIgnoredFeature();

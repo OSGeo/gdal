@@ -998,7 +998,7 @@ def test_gdalwarp_lib_128():
                    transformerOptions = ['RPC_DEM=data/test_gdalwarp_lib_128_dem.tif'])
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != 4351:
+    if cs != 4248:
         gdaltest.post_reason('bad checksum')
         print(cs)
         return 'fail'
@@ -1017,7 +1017,7 @@ def test_gdalwarp_lib_128():
     gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE', None)
     cs = ds.GetRasterBand(1).Checksum()
 
-    if cs != 4351:
+    if cs != 4248:
         gdaltest.post_reason('bad checksum')
         print(cs)
         return 'fail'

@@ -36,6 +36,7 @@
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "cpl_string.h"
+#include <list>
 
 IGMLReader *CreateNASReader();
 
@@ -76,7 +77,8 @@ class NASHandler : public DefaultHandler
     CPLString  m_osLastPropertyName;
     CPLString  m_osLastPropertyValue;
     CPLString  m_osLastEnded;
-    CPLString  m_osLastOccasion;
+
+    std::list<CPLString> m_LastOccasions;
 
 public:
     NASHandler( NASReader *poReader );

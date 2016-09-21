@@ -70,6 +70,9 @@ public:
                        double dfXEnd, double dfYEnd, int bLeftHigh );
     void   MakeRoomFor( int );
     int    Merge( GDALContourItem * );
+    double DistanceSqr(double x0, double y0, double x1, double y1);
+    int    MergeCase( double ax0, double ay0, double ax1, double ay1,
+                      double bx0, double by0, double bx1, double by1);
     void   PrepareEjection();
 };
 
@@ -1227,105 +1230,189 @@ int GDALContourItem::AddSegment( double dfXStart, double dfYStart,
 }
 
 /************************************************************************/
+/*                               DistanceSqr()                          */
+/************************************************************************/
+
+double GDALContourItem::DistanceSqr( 
+   double x0, double y0, double x1, double y1
+)
+{
+// --------------------------------------------------------------------
+// Coumpute the square of the euclidian distance between
+// (x0;y0)-(x1;y1)
+// --------------------------------------------------------------------
+   double dx = x0 - x1;
+   double dy = y0 - y1;
+
+   return (dx*dx + dy*dy);
+}
+
+/************************************************************************/
+/*                               MergeCase()                            */
+/************************************************************************/
+
+int GDALContourItem::MergeCase( 
+   double ax0, double ay0, double ax1, double ay1,
+   double bx0, double by0, double bx1, double by1
+)
+{
+    double dd;
+
+// --------------------------------------------------------------------
+// Try to find a match case between line ends
+// Calculate all possible distances and choose the closest
+// if less than JOIN_DIST
+// --------------------------------------------------------------------
+
+    // avoid sqrt()
+    const double jds = JOIN_DIST * JOIN_DIST;   
+
+    // case 1 e-b
+    int cs = 1;
+    double dmin = DistanceSqr (ax1, ay1, bx0, by0);
+
+    // case 2 b-e
+    dd = DistanceSqr (ax0, ay0, bx1, by1);
+    if (dd < dmin)
+    {
+        dmin = dd;
+        cs   = 2;
+    }
+
+    // case 3 e-e
+    dd = DistanceSqr (ax1, ay1, bx1, by1);
+    if (dd < dmin)
+    {
+        dmin = dd;
+        cs   = 3;
+    }
+
+    // case 4 b-b
+    dd = DistanceSqr (ax0, ay0, bx0, by0);
+    if (dd < dmin)
+    {
+        dmin = dd;
+        cs   = 4;
+    }
+
+    if (dmin > jds)
+        cs = 0;
+
+    return cs;
+}
+
+/************************************************************************/
 /*                               Merge()                                */
 /************************************************************************/
 
 int GDALContourItem::Merge( GDALContourItem *poOther )
 
 {
+    int rc = FALSE;
+    int i;
+
     if( poOther->dfLevel != dfLevel )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Try to matching up with one of the ends, and insert.            */
 /* -------------------------------------------------------------------- */
-    if( fabs(padfX[nPoints-1]-poOther->padfX[0]) < JOIN_DIST
-        && fabs(padfY[nPoints-1]-poOther->padfY[0]) < JOIN_DIST )
+
+    int mc = MergeCase (
+        padfX[0],                           padfY[0], 
+        padfX[nPoints-1],                   padfY[nPoints-1],
+        poOther->padfX[0],                  poOther->padfY[0], 
+        poOther->padfX[poOther->nPoints-1], poOther->padfY[poOther->nPoints-1]
+    );
+
+    switch (mc)
     {
-        MakeRoomFor( nPoints + poOther->nPoints - 1 );
+        case 0:
+            break;
 
-        memcpy( padfX + nPoints, poOther->padfX + 1,
-                sizeof(double) * (poOther->nPoints-1) );
-        memcpy( padfY + nPoints, poOther->padfY + 1,
-                sizeof(double) * (poOther->nPoints-1) );
-        nPoints += poOther->nPoints - 1;
+        case 1:   // case 1 e-b
+            MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
-        bRecentlyAccessed = TRUE;
+            memcpy( padfX + nPoints, poOther->padfX + 1,
+                    sizeof(double) * (poOther->nPoints-1) );
+            memcpy( padfY + nPoints, poOther->padfY + 1,
+                    sizeof(double) * (poOther->nPoints-1) );
+            nPoints += poOther->nPoints - 1;
 
-        dfTailX = padfX[nPoints-1];
+            bRecentlyAccessed = TRUE;
 
-        return TRUE;
+            dfTailX = padfX[nPoints-1];
+
+            rc = TRUE;
+            break;
+
+        case 2:   // case 2 b-e
+            MakeRoomFor( nPoints + poOther->nPoints - 1 );
+
+            memmove( padfX + poOther->nPoints - 1, padfX,
+                    sizeof(double) * nPoints );
+            memmove( padfY + poOther->nPoints - 1, padfY,
+                    sizeof(double) * nPoints );
+            memcpy( padfX, poOther->padfX,
+                    sizeof(double) * (poOther->nPoints-1) );
+            memcpy( padfY, poOther->padfY,
+                    sizeof(double) * (poOther->nPoints-1) );
+            nPoints += poOther->nPoints - 1;
+
+            bRecentlyAccessed = TRUE;
+
+            dfTailX = padfX[nPoints-1];
+
+            rc = TRUE;
+            break;
+
+        case 3:   // case 3 e-e
+            MakeRoomFor( nPoints + poOther->nPoints - 1 );
+
+            for( i = 0; i < poOther->nPoints-1; i++ )
+            {
+                padfX[i+nPoints] = poOther->padfX[poOther->nPoints-i-2];
+                padfY[i+nPoints] = poOther->padfY[poOther->nPoints-i-2];
+            }
+
+            nPoints += poOther->nPoints - 1;
+
+            bRecentlyAccessed = TRUE;
+
+            dfTailX = padfX[nPoints-1];
+
+            rc = TRUE;
+            break;
+
+        case 4:   // case 3 b-b
+            MakeRoomFor( nPoints + poOther->nPoints - 1 );
+
+            memmove( padfX + poOther->nPoints - 1, padfX,
+                    sizeof(double) * nPoints );
+            memmove( padfY + poOther->nPoints - 1, padfY,
+                    sizeof(double) * nPoints );
+
+            for( i = 0; i < poOther->nPoints-1; i++ )
+            {
+                padfX[i] = poOther->padfX[poOther->nPoints - i - 1];
+                padfY[i] = poOther->padfY[poOther->nPoints - i - 1];
+            }
+
+            nPoints += poOther->nPoints - 1;
+
+            bRecentlyAccessed = TRUE;
+
+            dfTailX = padfX[nPoints-1];
+
+            rc = TRUE;
+            break;
+
+        default:
+            CPLAssert(FALSE);
+            break;
     }
-    else if( fabs(padfX[0]-poOther->padfX[poOther->nPoints-1]) < JOIN_DIST
-             && fabs(padfY[0]-poOther->padfY[poOther->nPoints-1]) < JOIN_DIST )
-    {
-        MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
-        memmove( padfX + poOther->nPoints - 1, padfX,
-                sizeof(double) * nPoints );
-        memmove( padfY + poOther->nPoints - 1, padfY,
-                sizeof(double) * nPoints );
-        memcpy( padfX, poOther->padfX,
-                sizeof(double) * (poOther->nPoints-1) );
-        memcpy( padfY, poOther->padfY,
-                sizeof(double) * (poOther->nPoints-1) );
-        nPoints += poOther->nPoints - 1;
-
-        bRecentlyAccessed = TRUE;
-
-        dfTailX = padfX[nPoints-1];
-
-        return TRUE;
-    }
-    else if( fabs(padfX[nPoints-1]-poOther->padfX[poOther->nPoints-1]) < JOIN_DIST
-        && fabs(padfY[nPoints-1]-poOther->padfY[poOther->nPoints-1]) < JOIN_DIST )
-    {
-        int i;
-
-        MakeRoomFor( nPoints + poOther->nPoints - 1 );
-
-        for( i = 0; i < poOther->nPoints-1; i++ )
-        {
-            padfX[i+nPoints] = poOther->padfX[poOther->nPoints-i-2];
-            padfY[i+nPoints] = poOther->padfY[poOther->nPoints-i-2];
-        }
-
-        nPoints += poOther->nPoints - 1;
-
-        bRecentlyAccessed = TRUE;
-
-        dfTailX = padfX[nPoints-1];
-
-        return TRUE;
-    }
-    else if( fabs(padfX[0]-poOther->padfX[0]) < JOIN_DIST
-        && fabs(padfY[0]-poOther->padfY[0]) < JOIN_DIST )
-    {
-        int i;
-
-        MakeRoomFor( nPoints + poOther->nPoints - 1 );
-
-        memmove( padfX + poOther->nPoints - 1, padfX,
-                sizeof(double) * nPoints );
-        memmove( padfY + poOther->nPoints - 1, padfY,
-                sizeof(double) * nPoints );
-
-        for( i = 0; i < poOther->nPoints-1; i++ )
-        {
-            padfX[i] = poOther->padfX[poOther->nPoints - i - 1];
-            padfY[i] = poOther->padfY[poOther->nPoints - i - 1];
-        }
-
-        nPoints += poOther->nPoints - 1;
-
-        bRecentlyAccessed = TRUE;
-
-        dfTailX = padfX[nPoints-1];
-
-        return TRUE;
-    }
-    else
-        return FALSE;
+    return rc;
 }
 
 /************************************************************************/

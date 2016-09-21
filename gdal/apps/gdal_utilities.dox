@@ -392,7 +392,11 @@ from the source image for copying based on pixel/line location.  </dd>
 <dt> <b>-projwin</b> <i>ulx uly lrx lry</i>:</dt><dd> Selects a subwindow from
 the source image for copying (like <b>-srcwin</b>) but with the corners given
 in georeferenced coordinates (by default expressed in the SRS of the dataset. Can be
-changed with -projwin_srs). </dd>
+changed with -projwin_srs).
+Note: in GDAL 2.1.0 and 2.1.1, using -projwin with coordinates not aligned with
+pixels will result in a sub-pixel shift. This has been corrected in later versions.
+When selecting non-nearest neighbour resampling, starting with GDAL 2.1.0,
+sub-pixel accuracy is however used.</dd>
 <dt> <b>-projwin_srs</b> <i>srs_def</i>:</dt><dd> (GDAL >= 2.0) Specifies the SRS in
 which to interpret the coordinates given with -projwin. The <i>srs_def</i> may
 be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file

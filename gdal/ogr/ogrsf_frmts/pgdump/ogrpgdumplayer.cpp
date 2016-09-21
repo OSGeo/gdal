@@ -1061,7 +1061,7 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
     // Binary formatting
     else if( nOGRFieldType == OFTBinary )
     {
-        osCommand += "'";
+        osCommand += "E'";
 
         int nLen = 0;
         GByte* pabyData = poFeature->GetFieldAsBinary( i, &nLen );

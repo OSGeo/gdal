@@ -437,6 +437,8 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     bool        m_bHasGotSiblingFiles;
     char      **GetSiblingFiles();
 
+    void        FlushCacheInternal( bool bFlushDirectory );
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -3930,6 +3932,9 @@ void GTiffRasterBand::SetDescription( const char *pszDescription )
     if( pszDescription == NULL )
         pszDescription = "";
 
+    if( osDescription != pszDescription )
+        poGDS->bMetadataChanged = true;
+
     osDescription = pszDescription;
 }
 
@@ -6183,43 +6188,32 @@ int GTiffDataset::Finalize()
     psVirtualMemIOMapping = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Ensure any blocks write cached by GDAL gets pushed through libtiff.*/
-/* -------------------------------------------------------------------- */
-    GDALPamDataset::FlushCache();
-
-/* -------------------------------------------------------------------- */
 /*      Fill in missing blocks with empty data.                         */
 /* -------------------------------------------------------------------- */
     if( bFillEmptyTiles )
     {
+/* -------------------------------------------------------------------- */
+/*  Ensure any blocks write cached by GDAL gets pushed through libtiff. */
+/* -------------------------------------------------------------------- */
+        FlushCacheInternal( false /* do not call FlushDirectory */ );
+
         FillEmptyTiles();
-        bFillEmptyTiles = FALSE;
+        bFillEmptyTiles = false;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Force a complete flush, including either rewriting(moving)      */
 /*      of writing in place the current directory.                      */
 /* -------------------------------------------------------------------- */
-    FlushCache();
+    FlushCacheInternal( true );
 
-    // Finish compression
+    // Destroy compression pool
     if( poCompressThreadPool )
     {
-        poCompressThreadPool->WaitCompletion();
         delete poCompressThreadPool;
 
-        // Flush remaining data
-        for(int i=0;i<(int)asCompressionJobs.size();i++)
+        for( int i = 0; i < static_cast<int>(asCompressionJobs.size()); ++i )
         {
-            if( asCompressionJobs[i].bReady )
-            {
-                if( asCompressionJobs[i].nCompressedBufferSize )
-                {
-                    WriteRawStripOrTile( asCompressionJobs[i].nStripOrTile,
-                                   asCompressionJobs[i].pabyCompressedBuffer,
-                                   asCompressionJobs[i].nCompressedBufferSize );
-                }
-            }
             CPLFree(asCompressionJobs[i].pabyBuffer);
             if( asCompressionJobs[i].pszTmpFilename )
             {
@@ -7708,8 +7702,14 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
 /*      cache if need be.                                               */
 /************************************************************************/
 
+
 void GTiffDataset::FlushCache()
 
+{
+    FlushCacheInternal( true );
+}
+
+void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
 {
     if (bIsFinalized || ppoActiveDSRef == NULL)
         return;
@@ -7722,11 +7722,38 @@ void GTiffDataset::FlushCache()
     CPLFree( pabyBlockBuf );
     pabyBlockBuf = NULL;
     nLoadedBlock = -1;
-    bLoadedBlockDirty = FALSE;
+    bLoadedBlockDirty = false;
 
-    if (!SetDirectory())
-        return;
-    FlushDirectory();
+    // Finish compression
+    if( poCompressThreadPool )
+    {
+        poCompressThreadPool->WaitCompletion();
+
+        // Flush remaining data
+        for( int i = 0; i < static_cast<int>(asCompressionJobs.size()); ++i )
+        {
+            if( asCompressionJobs[i].bReady )
+            {
+                if( asCompressionJobs[i].nCompressedBufferSize )
+                {
+                    WriteRawStripOrTile( asCompressionJobs[i].nStripOrTile,
+                                   asCompressionJobs[i].pabyCompressedBuffer,
+                                   asCompressionJobs[i].nCompressedBufferSize );
+                }
+                asCompressionJobs[i].pabyCompressedBuffer = NULL;
+                asCompressionJobs[i].nBufferSize = 0;
+                asCompressionJobs[i].bReady = false;
+                asCompressionJobs[i].nStripOrTile = -1;
+            }
+        }
+    }
+
+    if( bFlushDirectory )
+    {
+        if( !SetDirectory() )
+            return;
+        FlushDirectory();
+    }
 }
 
 /************************************************************************/
@@ -9373,6 +9400,7 @@ void GTiffDataset::PushMetadataToPam()
             poBand->GDALPamRasterBand::SetDescription( poBand->GetDescription() );
         }
     }
+    MarkPamDirty();
 }
 
 /************************************************************************/
@@ -11866,6 +11894,8 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 if (pszUnitType)
                     poBand->osUnitType = pszUnitType;
             }
+            if( poBand->osDescription.size() == 0 )
+                poBand->osDescription = poBand->GDALPamRasterBand::GetDescription();
 
             GDALColorInterp ePAMColorInterp = poBand->GDALPamRasterBand::GetColorInterpretation();
             if( ePAMColorInterp != GCI_Undefined )
@@ -13142,6 +13172,9 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->bCrystalized = FALSE;
     poDS->nSamplesPerPixel = (uint16) nBands;
     poDS->osFilename = pszFilename;
+ 
+    // Don't try to load external metadata files (#6597)
+    poDS->bIMDRPCMetadataLoaded = TRUE;
 
     /* Avoid premature crystalization that will cause directory re-writing */
     /* if GetProjectionRef() or GetGeoTransform() are called on the newly created GeoTIFF */
@@ -13532,6 +13565,25 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #endif
 
 /* -------------------------------------------------------------------- */
+/*      If the source is RGB, then set the PHOTOMETRIC=RGB value        */
+/* -------------------------------------------------------------------- */
+
+    const bool bForcePhotometric =
+        CSLFetchNameValue(papszOptions, "PHOTOMETRIC") != NULL;
+
+    if( nBands >= 3 && !bForcePhotometric &&
+#ifdef HAVE_LIBJPEG
+        !bCopyFromJPEG &&
+#endif
+        poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
+        poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
+        poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
+    {
+        papszCreateOptions =
+            CSLSetNameValue( papszCreateOptions, "PHOTOMETRIC", "RGB" );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
     VSILFILE* fpL = NULL;
@@ -13557,39 +13609,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
         nCompression = COMPRESSION_NONE;
-
-    bool bForcePhotometric =
-        CSLFetchNameValue(papszOptions,"PHOTOMETRIC") != NULL;
-
-/* -------------------------------------------------------------------- */
-/*      If the source is RGB, then set the PHOTOMETRIC_RGB value        */
-/* -------------------------------------------------------------------- */
-    if( nBands >= 3 && !bForcePhotometric &&
-        nCompression != COMPRESSION_JPEG &&
-        poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
-        poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
-        poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
-    {
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
-
-        /* We need to update the number of extra samples */
-        uint16 *v;
-        uint16 count = 0;
-        uint16 nNewExtraSamplesCount = static_cast<uint16>(nBands - 3);
-        if( nBands >= 4 &&
-            TIFFGetField( hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) &&
-            count > nNewExtraSamplesCount )
-        {
-            uint16* pasNewExtraSamples =
-                (uint16*)CPLMalloc( nNewExtraSamplesCount * sizeof(uint16) );
-            memcpy( pasNewExtraSamples, v + count - nNewExtraSamplesCount,
-                    nNewExtraSamplesCount * sizeof(uint16) );
-
-            TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nNewExtraSamplesCount, pasNewExtraSamples);
-
-            CPLFree(pasNewExtraSamples);
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the alpha channel if it is the last one.                    */
@@ -14140,6 +14159,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->bForceUnsetGTOrGCPs = FALSE;
     poDS->bForceUnsetProjection = FALSE;
     poDS->bStreamingOut = bStreaming;
+
+    // Don't try to load external metadata files (#6597)
+    poDS->bIMDRPCMetadataLoaded = TRUE;
 
     /* We must re-set the compression level at this point, since it has */
     /* been lost a few lines above when closing the newly create TIFF file */

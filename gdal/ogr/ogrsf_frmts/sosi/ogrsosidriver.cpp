@@ -70,6 +70,7 @@ static GDALDataset *OGRSOSIDriverOpen( GDALOpenInfo* poOpenInfo )
     return poDS;
 }
 
+#ifdef WRITE_SUPPORT
 /************************************************************************/
 /*                              Create()                                */
 /************************************************************************/
@@ -91,6 +92,7 @@ static GDALDataset *OGRSOSIDriverCreate( const char * pszName,
     }
     return poDS;
 }
+#endif
 
 /************************************************************************/
 /*                         RegisterOGRSOSI()                            */
@@ -108,7 +110,9 @@ void RegisterOGRSOSI() {
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sosi.html" );
 
     poDriver->pfnOpen = OGRSOSIDriverOpen;
+#ifdef WRITE_SUPPORT
     poDriver->pfnCreate = OGRSOSIDriverCreate;
+#endif
     poDriver->pfnUnloadDriver = OGRSOSIDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );

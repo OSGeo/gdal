@@ -1,4 +1,5 @@
 /******************************************************************************
+ry
  * $Id$
  *
  * Project:  PlanetLabs scene driver
@@ -194,8 +195,36 @@ CPLString OGRPLScenesLayer::BuildFilter(swq_expr_node* poNode)
                   poNode->papoSubExpr[0]->field_index != poFeatureDefn->GetFieldIndex("id") &&
                   poNode->papoSubExpr[0]->field_index < poFeatureDefn->GetFieldCount() )
         {
-            OGRFieldDefn *poFieldDefn;
-            poFieldDefn = poFeatureDefn->GetFieldDefn(poNode->papoSubExpr[0]->field_index);
+            OGRFieldDefn *poFieldDefn =
+                poFeatureDefn->GetFieldDefn(poNode->papoSubExpr[0]->field_index);
+
+            int nOperation = poNode->nOperation;
+
+            // image_quality supports only gte filters
+            // (https://www.planet.com/docs-v0/v0/scenes/planetscope/#metadata)
+            if( poNode->papoSubExpr[0]->field_index ==
+                    poFeatureDefn->GetFieldIndex("image_statistics.image_quality") &&
+                nOperation != SWQ_GE )
+            {
+                // == target can be safely turned as >= target
+                if( poNode->nOperation == SWQ_EQ &&
+                    poNode->papoSubExpr[1]->field_type == SWQ_STRING &&
+                    strcmp(poNode->papoSubExpr[1]->string_value, "target") == 0 )
+                {
+                    nOperation = SWQ_GE;
+                }
+                else
+                {
+                    if( !bFilterMustBeClientSideEvaluated )
+                    {
+                        bFilterMustBeClientSideEvaluated = TRUE;
+                        CPLDebug("PLSCENES",
+                                 "Part or full filter will have to be "
+                                 "evaluated on client side.");
+                    }
+                    return "";
+                }
+            }
 
             CPLString osFilter(poFieldDefn->GetNameRef());
 
@@ -211,22 +240,23 @@ CPLString OGRPLScenesLayer::BuildFilter(swq_expr_node* poNode)
             }
 
             osFilter += ".";
-            if( poNode->nOperation == SWQ_EQ )
+
+            if( nOperation == SWQ_EQ )
             {
                 if( bDateTimeParsed )
                     osFilter += "gte";
                 else
                     osFilter += "eq";
             }
-            else if( poNode->nOperation == SWQ_NE )
+            else if( nOperation == SWQ_NE )
                 osFilter += "neq";
-            else if( poNode->nOperation == SWQ_LT )
+            else if( nOperation == SWQ_LT )
                 osFilter += "lt";
-            else if( poNode->nOperation == SWQ_LE )
+            else if( nOperation == SWQ_LE )
                 osFilter += "lte";
-            else if( poNode->nOperation == SWQ_GT )
+            else if( nOperation == SWQ_GT )
                 osFilter += "gt";
-            else if( poNode->nOperation == SWQ_GE )
+            else if( nOperation == SWQ_GE )
                 osFilter += "gte";
             osFilter += "=";
 
@@ -242,7 +272,7 @@ CPLString OGRPLScenesLayer::BuildFilter(swq_expr_node* poNode)
                 {
                     osFilter += CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
                                            nYear, nMonth, nDay, nHour, nMinute, nSecond);
-                    if( poNode->nOperation == SWQ_EQ )
+                    if( nOperation == SWQ_EQ )
                     {
                         osFilter += "&";
                         osFilter += poFieldDefn->GetNameRef();

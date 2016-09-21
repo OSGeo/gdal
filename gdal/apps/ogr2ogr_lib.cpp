@@ -369,6 +369,7 @@ public:
     bool                  m_bPreserveFID;
     bool                  m_bCopyMD;
     bool                  m_bNativeData;
+    bool                  m_bNewDataSource;
 
     TargetLayerInfo*            Setup(OGRLayer * poSrcLayer,
                                       const char *pszNewLayerName,
@@ -1266,6 +1267,10 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         bOverwrite = true;
         bUpdate = true;
     }
+    else if( hDstDS != NULL )
+    {
+        bUpdate = true;
+    }
 
     osDateLineOffset = CPLOPrintf("%g", psOptions->dfDateLineOffset);
 
@@ -1437,6 +1442,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
+    bool bNewDataSource = false;
     if( !bUpdate )
     {
         OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
@@ -1507,6 +1513,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             GDALVectorTranslateOptionsFree(psOptions);
             return NULL;
         }
+        bNewDataSource = true;
 
         if( psOptions->bCopyMD )
         {
@@ -1650,6 +1657,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oSetup.m_bPreserveFID = psOptions->bPreserveFID;
     oSetup.m_bCopyMD = psOptions->bCopyMD;
     oSetup.m_bNativeData = psOptions->bNativeData;
+    oSetup.m_bNewDataSource = bNewDataSource;
 
     LayerTranslator oTranslator;
     oTranslator.m_poSrcDS = poDS;
@@ -2840,7 +2848,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 /* -------------------------------------------------------------------- */
 /*      Otherwise we will append to it, if append was requested.        */
 /* -------------------------------------------------------------------- */
-    else if( !bAppend )
+    else if( !bAppend && !m_bNewDataSource )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Layer %s already exists, and -append not specified.\n"
                          "        Consider using -append, or -overwrite.",
@@ -3961,7 +3969,9 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         }
         else if( EQUAL(papszArgv[i],"-update") )
         {
-            psOptions->eAccessMode = ACCESS_UPDATE;
+            /* Don't reset -append or -overwrite */
+            if( psOptions->eAccessMode != ACCESS_APPEND && psOptions->eAccessMode != ACCESS_OVERWRITE )
+                psOptions->eAccessMode = ACCESS_UPDATE;
         }
         else if( EQUAL(papszArgv[i],"-relaxedFieldNameMatch") )
         {

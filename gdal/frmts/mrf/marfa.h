@@ -602,7 +602,7 @@ public:
     CPLErr CompressPNG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressPNG(buf_mgr &dst, buf_mgr &src);
 
-    const ILImage &img;
+    const ILImage img;
 
     void *PNGColors;
     void *PNGAlpha;
@@ -642,7 +642,7 @@ public:
     CPLErr DecompressJPEG12(buf_mgr &dst, buf_mgr &src);
 #endif
 
-    const ILImage &img;
+    const ILImage img;
 
     // JPEG specific flags
     bool sameres;

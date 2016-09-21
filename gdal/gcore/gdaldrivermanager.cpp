@@ -551,6 +551,10 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 {
     CPLMutexHolderD( &hDMMutex );
 
+    // Alias old name to new name
+    if( EQUAL(pszName, "CartoDB") )
+        pszName = "Carto";
+
     return oMapNameToDrivers[CPLString(pszName).toupper()];
 }
 

@@ -52,7 +52,6 @@ class OGRGeoJSONLayer : public OGRMemLayer
 public:
 
     static const char* const DefaultName;
-    static const char* const DefaultFIDColumn;
     static const OGRwkbGeometryType DefaultGeometryType;
 
     OGRGeoJSONLayer( const char* pszName,
@@ -80,6 +79,7 @@ private:
     OGRGeoJSONDataSource* poDS_;
     CPLString sFIDColumn_;
     bool bUpdated_;
+    bool bOriginalIdModified_;
 };
 
 /************************************************************************/

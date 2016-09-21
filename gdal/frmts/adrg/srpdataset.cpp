@@ -391,15 +391,25 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
 {
     if( EQUAL(osProduct,"ASRP") )
     {
-        if( ZNA == 9 || ZNA == 18 )
+        if( ZNA == 9)
         {
-            padfGeoTransform[0] = -1152000.0;
-            padfGeoTransform[1] = 500.0;
+            // North Polar Case
+            padfGeoTransform[0] = 111319.4907933 * (90.0 - PSO/3600.0) * sin(LSO * M_PI / 648000.0);
+            padfGeoTransform[1] = 40075016.68558 / ARV;
             padfGeoTransform[2] = 0.0;
-            padfGeoTransform[3] = 1152000.0;
+            padfGeoTransform[3] = -111319.4907933 * (90.0 - PSO/3600.0) * cos(LSO * M_PI / 648000.0);
             padfGeoTransform[4] = 0.0;
-            padfGeoTransform[5] = -500.0;
-
+            padfGeoTransform[5] = -40075016.68558 / ARV;
+        }
+        else if (ZNA == 18)
+        {
+            // South Polar Case
+            padfGeoTransform[0] = 111319.4907933 * (90.0 + PSO/3600.0) * sin(LSO * M_PI / 648000.0);
+            padfGeoTransform[1] = 40075016.68558 / ARV;
+            padfGeoTransform[2] = 0.0;
+            padfGeoTransform[3] = 111319.4907933 * (90.0 + PSO/3600.0) * cos(LSO * M_PI / 648000.0);
+            padfGeoTransform[4] = 0.0;
+            padfGeoTransform[5] = -40075016.68558 / ARV;
         }
         else
         {
@@ -770,12 +780,12 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 
         if( ZNA == 9 )
         {
-            osSRS = "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Azimuthal_Equidistant\"],PARAMETER[\"latitude_of_center\",90],PARAMETER[\"longitude_of_center\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]";
+            osSRS = "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\",DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Azimuthal_Equidistant\"],PARAMETER[\"latitude_of_center\",90],PARAMETER[\"longitude_of_center\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]";
         }
 
         if (ZNA == 18)
         {
-            osSRS = "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Azimuthal_Equidistant\"],PARAMETER[\"latitude_of_center\",-90],PARAMETER[\"longitude_of_center\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]";
+            osSRS = "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\",DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Azimuthal_Equidistant\"],PARAMETER[\"latitude_of_center\",-90],PARAMETER[\"longitude_of_center\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]";
         }
     }
     else

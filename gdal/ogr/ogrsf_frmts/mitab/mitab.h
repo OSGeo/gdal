@@ -258,7 +258,7 @@ class IMapInfoFile : public OGRLayer
     virtual int  SetMIFCoordSys(const char *pszMIFCoordSys) = 0;
 
     static int GetTABType( OGRFieldDefn *poField, TABFieldType* peTABType,
-                           int *pnWidth);
+                           int *pnWidth, int *pnPrecision);
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) = 0;

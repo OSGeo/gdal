@@ -411,6 +411,88 @@ def stats_square_shape():
     return 'success'
 
 ###############################################################################
+# Test when nodata = FLT_MIN (#6578)
+
+def stats_flt_min():
+
+    shutil.copyfile('data/flt_min.tif', 'tmp/flt_min.tif')
+    try:
+        os.remove('tmp/flt_min.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/flt_min.tif')
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    os.remove('tmp/flt_min.tif.aux.xml')
+
+    ds = gdal.Open('tmp/flt_min.tif')
+    minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
+    ds = None
+
+    os.remove('tmp/flt_min.tif')
+
+    if nodata != 1.17549435082228751e-38:
+        gdaltest.post_reason('did not get expected nodata')
+        print("%.18g" % nodata)
+        return 'fail'
+
+    if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    if minmax != (0.0, 1.0):
+        gdaltest.post_reason('did not get expected minmax')
+        print(minmax)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test when nodata = DBL_MIN (#6578)
+
+def stats_dbl_min():
+
+    shutil.copyfile('data/dbl_min.tif', 'tmp/dbl_min.tif')
+    try:
+        os.remove('tmp/dbl_min.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/dbl_min.tif')
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    os.remove('tmp/dbl_min.tif.aux.xml')
+
+    ds = gdal.Open('tmp/dbl_min.tif')
+    minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
+    ds = None
+
+    os.remove('tmp/dbl_min.tif')
+
+    if nodata != 2.22507385850720138e-308:
+        gdaltest.post_reason('did not get expected nodata')
+        print("%.18g" % nodata)
+        return 'fail'
+
+    if stats != [0.0, 1.0, 0.33333333333333337, 0.47140452079103168]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    if minmax != (0.0, 1.0):
+        gdaltest.post_reason('did not get expected minmax')
+        print(minmax)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Run tests
 
 gdaltest_list = [
@@ -431,7 +513,9 @@ gdaltest_list = [
     stats_nodata_posinf_linux,
     stats_nodata_posinf_msvc,
     stats_stddev_huge_values,
-    stats_square_shape
+    stats_square_shape,
+    stats_flt_min,
+    stats_dbl_min
     ]
 
 if __name__ == '__main__':

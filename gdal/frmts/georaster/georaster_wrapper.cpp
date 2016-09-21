@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: $
  *
  * Name:     georaster_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -34,6 +33,8 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+
+CPL_CVSID("$Id: georaster_wrapper.cpp 34811 2016-07-28 15:15:05Z goatbar $");
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterWrapper()
@@ -325,28 +326,13 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     char szDataTable[OWCODE];
     char szWhere[OWTEXT];
     int nRasterId = -1;
-    int nSizeX = 0;
-    int nSizeY = 0;
-    int nSRID  = 0;
     OCILobLocator* phLocator = NULL;
-    double dfULx = 0.0;
-    double dfURx = 0.0;
-    double dfLRx = 0.0;
-    double dfULy = 0.0;
-    double dfLLy = 0.0;
-    double dfLRy = 0.0;
-    char szWKText[3 * OWTEXT];
-    char szAuthority[OWTEXT];
-    char szMLC[OWTEXT];
 
     szOwner[0]     = '\0';
     szTable[0]     = '\0';
     szColumn[0]    = '\0';
     szDataTable[0] = '\0';
     szWhere[0]     = '\0';
-    szWKText[0]    = '\0';
-    szAuthority[0] = '\0';
-    szMLC[0]       = '\0';
 
     if( ! poGRW->sOwner.empty() )
     {
@@ -378,10 +364,6 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     OWStatement* poStmt = poGRW->poConnection->CreateStatement(
       "DECLARE\n"
       "  SCM VARCHAR2(64) := 'xmlns=\"http://xmlns.oracle.com/spatial/georaster\"';\n"
-      "  GUL SDO_GEOMETRY := null;\n"
-      "  GUR SDO_GEOMETRY := null;\n"
-      "  GLL SDO_GEOMETRY := null;\n"
-      "  GLR SDO_GEOMETRY := null;\n"
       "BEGIN\n"
       "\n"
       "    IF :datatable IS NOT NULL AND :rasterid  > 0 THEN\n"
@@ -416,57 +398,6 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
       "\n"
       "    END IF;\n"
       "\n"
-      "  SELECT\n"
-      "    extractValue(XMLType(:metadata),"
-      "'/georasterMetadata/rasterInfo/dimensionSize[@type=\"ROW\"]/size', "
-      "SCM),\n"
-      "    extractValue(XMLType(:metadata),"
-      "'/georasterMetadata/rasterInfo/dimensionSize[@type=\"COLUMN\"]/size', "
-      "SCM),\n"
-      "    extractValue(XMLType(:metadata),"
-      "'/georasterMetadata/spatialReferenceInfo/SRID', "
-      "SCM),\n"
-      "    extractValue(XMLType(:metadata),"
-      "'/georasterMetadata/spatialReferenceInfo/modelCoordinateLocation', "
-      "SCM)\n"
-      "    INTO :sizey, :sizex, :srid, :mcl FROM DUAL;\n"
-      "\n"
-      "  EXECUTE IMMEDIATE\n"
-      "    'SELECT\n"
-      "      SDO_GEOR.getModelCoordinate('||:column||', 0, "
-      "SDO_NUMBER_ARRAY(0, 0)),\n"
-      "      SDO_GEOR.getModelCoordinate('||:column||', 0, "
-      "SDO_NUMBER_ARRAY(0, '||:sizex||')),\n"
-      "      SDO_GEOR.getModelCoordinate('||:column||', 0, "
-      "SDO_NUMBER_ARRAY('||:sizey||', 0)),\n"
-      "      SDO_GEOR.getModelCoordinate('||:column||', 0, "
-      "SDO_NUMBER_ARRAY('||:sizey||', '||:sizex||'))\n"
-      "     FROM  '||:owner||'.'||:table||' T\n"
-      "     WHERE T.'||:column||'.RASTERDATATABLE = UPPER(:1)\n"
-      "       AND T.'||:column||'.RASTERID = :2'\n"
-      "    INTO  GUL, GLL, GUR, GLR\n"
-      "    USING :datatable, :rasterid;\n"
-      "\n"
-      "  :ULx := GUL.sdo_point.x;\n"
-      "  :URx := GUR.sdo_point.x;\n"
-      "  :LRx := GLR.sdo_point.x;\n"
-      "  :ULy := GUL.sdo_point.y;\n"
-      "  :LLy := GLL.sdo_point.y;\n"
-      "  :LRy := GLR.sdo_point.y;\n"
-      "\n"
-      "  BEGIN\n"
-      "    EXECUTE IMMEDIATE\n"
-      "      'SELECT WKTEXT, AUTH_NAME\n"
-      "       FROM   MDSYS.CS_SRS\n"
-      "       WHERE  SRID = :1 AND WKTEXT IS NOT NULL'\n"
-      "      INTO   :wktext, :authority\n"
-      "      USING  :srid;\n"
-      "  EXCEPTION\n"
-      "    WHEN no_data_found THEN\n"
-      "      :wktext := '';\n"
-      "      :authority := '';\n"
-      "  END;\n"
-      "\n"
       "  EXCEPTION\n"
       "    WHEN no_data_found THEN :counter := 0;\n"
       "    WHEN too_many_rows THEN :counter := 2;\n"
@@ -482,18 +413,6 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     poStmt->BindName( ":where", szWhere );
     poStmt->BindName( ":counter", &nCounter );
     poStmt->BindName( ":metadata", &phLocator );
-    poStmt->BindName( ":sizex", &nSizeX );
-    poStmt->BindName( ":sizey", &nSizeY );
-    poStmt->BindName( ":srid", &nSRID );
-    poStmt->BindName( ":mcl", szMLC );
-    poStmt->BindName( ":ULx", &dfULx );
-    poStmt->BindName( ":URx", &dfURx );
-    poStmt->BindName( ":LRx", &dfLRx );
-    poStmt->BindName( ":ULy", &dfULy );
-    poStmt->BindName( ":LLy", &dfLLy );
-    poStmt->BindName( ":LRy", &dfLRy );
-    poStmt->BindName( ":wktext", szWKText, sizeof(szWKText) );
-    poStmt->BindName( ":authority", szAuthority );
 
     CPLErrorReset();
 
@@ -528,8 +447,6 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
         return poGRW;
     }
 
-    poGRW->sWKText      = szWKText;
-    poGRW->sAuthority   = szAuthority;
     poGRW->sDataTable   = szDataTable;
     poGRW->nRasterId    = nRasterId;
     poGRW->sWhere       = CPLSPrintf(
@@ -553,61 +470,13 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
 
         poGRW->phMetadata = CPLParseXMLString( pszXML );
         poGRW->GetRasterInfo();
+        poGRW->GetSpatialReference();
     }
     else
     {
         poGRW->sDataTable = "";
         poGRW->nRasterId  = 0;
     }
-
-    // --------------------------------------------------------------------
-    // Load Coefficients matrix
-    // --------------------------------------------------------------------
-
-    if ( EQUAL( szMLC, "UPPERLEFT" ) )
-    {
-      poGRW->eModelCoordLocation = MCL_UPPERLEFT;
-    }
-    else
-    {
-      poGRW->eModelCoordLocation = MCL_DEFAULT;
-    }
-
-    double dfRotation = 0.0;
-
-    if( ! CPLIsEqual( dfULy, dfLLy ) )
-    {
-        dfRotation = ( dfURx - dfULx ) / ( dfLLy - dfULy );
-    }
-
-    poGRW->dfXCoefficient[0] = ( dfLRx - dfULx ) / nSizeX;
-    poGRW->dfXCoefficient[1] = dfRotation;
-    poGRW->dfXCoefficient[2] = dfULx;
-    poGRW->dfYCoefficient[0] = -dfRotation;
-    poGRW->dfYCoefficient[1] = ( dfLRy - dfULy ) / nSizeY;
-    poGRW->dfYCoefficient[2] = dfULy;
-
-    if ( poGRW->eModelCoordLocation == MCL_CENTER )
-    {
-      poGRW->dfXCoefficient[2] -= poGRW->dfXCoefficient[0] / 2;
-      poGRW->dfYCoefficient[2] -= poGRW->dfYCoefficient[1] / 2;
-
-      CPLDebug("GEOR","eModelCoordLocation = MCL_CENTER");
-    }
-    else
-    {
-      CPLDebug("GEOR","eModelCoordLocation = MCL_UPPERLEFT");
-    }
-
-    //  -------------------------------------------------------------------
-    //  Apply ULTCoordinate
-    //  -------------------------------------------------------------------
-
-    poGRW->dfXCoefficient[2] +=
-                ( poGRW->anULTCoordinate[0] * poGRW->dfXCoefficient[0] );
-
-    poGRW->dfYCoefficient[2] +=
-                ( poGRW->anULTCoordinate[1] * poGRW->dfYCoefficient[1] );
 
     //  -------------------------------------------------------------------
     //  Clean up
@@ -2013,7 +1882,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         //  ----------------------------------------------------------------
 
 #ifndef CPL_MSB
-        if( nCellSizeBits > 8 && 
+        if( nCellSizeBits > 8 &&
             EQUAL( sCompressionType.c_str(), "DEFLATE") == false )
         {
             int nWordSize  = nCellSizeBits / 8;
@@ -2364,6 +2233,165 @@ void GeoRasterWrapper::LoadNoDataValues( void )
             psNoDataList = AddToNoDataList( phSubNoData, nNumber, psNoDataList );
         }
     }
+}
+
+//  ---------------------------------------------------------------------------
+//                                                        GetSpatialReference()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterWrapper::GetSpatialReference()
+{
+    int i;
+
+    CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata, "spatialReferenceInfo" );
+    
+    if( phSRSInfo == NULL )
+    {
+        return;
+    }
+    
+    const char* pszMCL = CPLGetXMLValue( phSRSInfo, "modelCoordinateLocation", 
+                                                    "CENTER" );
+    
+    if( EQUAL( pszMCL, "CENTER" ) )
+    {
+      eModelCoordLocation = MCL_CENTER;
+    }
+    else
+    {
+      eModelCoordLocation = MCL_UPPERLEFT;
+    }
+
+    const char* pszModelType = CPLGetXMLValue( phSRSInfo, "modelType", "None" );
+    
+    if( EQUAL( pszModelType, "FunctionalFitting" ) == false )
+    {
+        return;
+    }
+
+    CPLXMLNode* phPolyModel = CPLGetXMLNode( phSRSInfo, "polynomialModel" );
+
+    if ( phPolyModel == NULL )
+    {
+        return;
+    }
+
+    CPLXMLNode* phPolynomial = CPLGetXMLNode( phPolyModel, "pPolynomial" );
+
+    if ( phPolynomial == NULL )
+    {
+        return;
+    }
+
+    int nNumCoeff = atoi( CPLGetXMLValue( phPolynomial, "nCoefficients", "0" ));
+
+    if ( nNumCoeff != 3 ) 
+    {
+        return;
+    }
+
+    const char* pszPolyCoeff = CPLGetXMLValue( phPolynomial, 
+                                             "polynomialCoefficients", "None" );
+
+    if ( EQUAL( pszPolyCoeff, "None" ) )
+    {
+        return;
+    }
+
+    char** papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ", 
+                                           CSLT_STRIPLEADSPACES );
+
+    if( CSLCount( papszCeoff ) < 3 )
+    {
+        return;
+    }
+
+    double adfPCoef[3];
+    
+    for( i = 0; i < 3; i++ )
+    {
+        adfPCoef[i] = CPLAtof( papszCeoff[i] );
+    }
+
+    phPolynomial = CPLGetXMLNode( phPolyModel, "rPolynomial" );
+
+    if ( phPolynomial == NULL )
+    {
+        return;
+    }
+
+    pszPolyCoeff = CPLGetXMLValue( phPolynomial, "polynomialCoefficients", "None" );
+
+    if ( EQUAL( pszPolyCoeff, "None" ) )
+    {
+        return;
+    }
+
+    papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ", CSLT_STRIPLEADSPACES );
+
+    if( CSLCount( papszCeoff ) < 3 )
+    {
+        return;
+    }
+    
+    double adfRCoef[3];
+
+    for( i = 0; i < 3; i++ )
+    {
+        adfRCoef[i] = CPLAtof( papszCeoff[i] );
+    }
+
+    //  -------------------------------------------------------------------
+    //  Inverse the transformation matrix
+    //  -------------------------------------------------------------------
+
+    double adfVal[6] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+
+    double dfDet = adfRCoef[1] * adfPCoef[2] - adfRCoef[2] * adfPCoef[1];
+   
+    if( CPLIsEqual( dfDet, 0.0 ) )
+    {
+        dfDet = 0.0000000001; // to avoid divide by zero
+        CPLError( CE_Warning, CPLE_AppDefined, "Determinant is ZERO!!!");
+    }
+
+    adfVal[0] =   adfPCoef[2] / dfDet;
+    adfVal[1] =  -adfRCoef[2] / dfDet;
+    adfVal[2] = -(adfRCoef[0] * adfPCoef[2] - adfPCoef[0] * adfRCoef[2]) / dfDet;
+    adfVal[3] =  -adfPCoef[1] / dfDet;
+    adfVal[4] =   adfRCoef[1] / dfDet;
+    adfVal[5] =  (adfRCoef[0] * adfPCoef[1] - adfPCoef[0] * adfRCoef[1]) / dfDet;
+
+    //  -------------------------------------------------------------------
+    //  Adjust Model Coordinate Location
+    //  -------------------------------------------------------------------
+    
+    if ( eModelCoordLocation == MCL_CENTER )
+    {
+        adfVal[2] -= adfVal[0] / 2.0;
+        adfVal[5] -= adfVal[4] / 2.0;
+    }
+/*
+    CPLDebug("GEOR", "m = [%g, %g, %g, %g, %g, %g]", adfRCoef[1], adfRCoef[2], 
+             adfRCoef[0], adfPCoef[1], adfPCoef[2], adfPCoef[0]);
+    
+    CPLDebug("GEOR", "i = [%g, %g, %g, %g, %g, %g]", adfVal[0], adfVal[1], 
+             adfVal[2], adfVal[3], adfVal[4], adfVal[5]);
+*/    
+    dfXCoefficient[0] = adfVal[0];
+    dfXCoefficient[1] = adfVal[1];
+    dfXCoefficient[2] = adfVal[2];
+    dfYCoefficient[0] = adfVal[3];
+    dfYCoefficient[1] = adfVal[4];
+    dfYCoefficient[2] = adfVal[5];
+    
+    //  -------------------------------------------------------------------
+    //  Apply ULTCoordinate
+    //  -------------------------------------------------------------------
+
+    dfXCoefficient[2] += ( anULTCoordinate[0] * dfXCoefficient[0] );
+
+    dfYCoefficient[2] += ( anULTCoordinate[1] * dfYCoefficient[1] );
 }
 
 //  ---------------------------------------------------------------------------
@@ -3145,8 +3173,6 @@ bool GeoRasterWrapper::FlushMetadata()
 
     if ( eModelCoordLocation == MCL_CENTER )
     {
-      dfXCoef[2] += dfXCoefficient[0] / 2;
-      dfYCoef[2] += dfYCoefficient[1] / 2;
       nMLC = MCL_CENTER;
     }
     else

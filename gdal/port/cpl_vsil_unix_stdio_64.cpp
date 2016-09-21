@@ -526,7 +526,7 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
 
     if( fp == NULL )
     {
-        if(bSetError) { VSIError(VSIE_FileError, "%s", strerror(nError)); }
+        if(bSetError) { VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(nError)); }
         errno = nError;
         return NULL;
     }

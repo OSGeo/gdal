@@ -2567,7 +2567,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "data_type TEXT NOT NULL,"
             "identifier TEXT UNIQUE,"
             "description TEXT DEFAULT '',"
-            "last_change DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)),"
+            "last_change DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),"
             "min_x DOUBLE, min_y DOUBLE,"
             "max_x DOUBLE, max_y DOUBLE,"
             "srs_id INTEGER,"
@@ -3721,7 +3721,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     poLayer = new OGRGeoPackageSelectLayer( this, osSQL, hSQLStmt,
                                         bUseStatementForGetNextFeature, bEmptyLayer );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != NULL && poLayer->GetLayerDefn()->GetGeomFieldCount() > 0 )
         poLayer->SetSpatialFilter( 0, poSpatialFilter );
 
     return poLayer;
