@@ -68,19 +68,20 @@ class OGRGeoRSSLayer : public OGRLayer
     int                bWriteMode;
     int                nTotalFeatureCount;
 
-    int                eof;
+    // TODO(schwehr): Remove eof?
+    bool               eof;
     int                nNextFID;
     VSILFILE*          fpGeoRSS; /* Large file API */
-    int                bHasReadSchema;
+    bool               bHasReadSchema;
 #ifdef HAVE_EXPAT
     XML_Parser         oParser;
     XML_Parser         oSchemaParser;
 #endif
     OGRGeometry*       poGlobalGeom;
-    int                bStopParsing;
-    int                bInFeature;
-    int                hasFoundLat;
-    int                hasFoundLon;
+    bool               bStopParsing;
+    bool               bInFeature;
+    bool               hasFoundLat;
+    bool               hasFoundLon;
 #ifdef HAVE_EXPAT
     double             latVal;
     double             lonVal;
@@ -91,17 +92,17 @@ class OGRGeoRSSLayer : public OGRLayer
 #ifdef HAVE_EXPAT
     int                iCurrentField;
 #endif
-    int                bInSimpleGeometry;
-    int                bInGMLGeometry;
-    int                bInGeoLat;
-    int                bInGeoLong;
+    bool               bInSimpleGeometry;
+    bool               bInGMLGeometry;
+    bool               bInGeoLat;
+    bool               bInGeoLong;
 #ifdef HAVE_EXPAT
-    int                bFoundGeom;
-    int                bSameSRS;
+    bool               bFoundGeom;
+    bool               bSameSRS;
 #endif
     OGRwkbGeometryType eGeomType;
     char*              pszGMLSRSName;
-    int                bInTagWithSubTag;
+    bool               bInTagWithSubTag;
     char*              pszTagWithSubTag;
     int                currentDepth;
     int                featureDepth;
@@ -122,7 +123,7 @@ class OGRGeoRSSLayer : public OGRLayer
 #ifdef HAVE_EXPAT
     void               AddStrToSubElementValue(const char* pszStr);
 #endif
-    int                IsStandardField(const char* pszName);
+    bool               IsStandardField( const char* pszName );
 
   public:
                         OGRGeoRSSLayer(const char *pszFilename,
@@ -183,8 +184,8 @@ class OGRGeoRSSDataSource : public OGRDataSource
 #endif
     OGRGeoRSSFormat     eFormat;
     OGRGeoRSSGeomDialect eGeomDialect;
-    int                 bUseExtensions;
-    int                 bWriteHeaderAndFooter;
+    bool                bUseExtensions;
+    bool                bWriteHeaderAndFooter;
 #ifdef HAVE_EXPAT
     XML_Parser          oCurrentParser;
     int                 nDataHandlerCounter;
@@ -215,7 +216,7 @@ class OGRGeoRSSDataSource : public OGRDataSource
     VSILFILE *          GetOutputFP() { return fpOutput; }
     OGRGeoRSSFormat     GetFormat() { return eFormat; }
     OGRGeoRSSGeomDialect GetGeomDialect() { return eGeomDialect; }
-    int                 GetUseExtensions() { return bUseExtensions; }
+    bool                GetUseExtensions() { return bUseExtensions; }
 
 #ifdef HAVE_EXPAT
     void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
