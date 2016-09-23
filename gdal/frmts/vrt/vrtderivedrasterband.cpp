@@ -234,7 +234,7 @@ typedef HMODULE LibraryHandle;
 /*                          LoadPythonAPI()                             */
 /************************************************************************/
 
-#ifdef LOAD_NOCHECK_WITH_NAME
+#if defined(LOAD_NOCHECK_WITH_NAME) && defined(HAVE_DLFCN_H) && !defined(WIN32)
 static LibraryHandle libHandleStatic = NULL;
 #endif
 
