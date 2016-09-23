@@ -49,7 +49,7 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( GDALGeoPackageDataset *poDS,
     if( bUseStatementForGetNextFeature )
     {
         m_poQueryStatement = hStmtIn;
-        bDoStep = FALSE;
+        bDoStep = false;
     }
     else
     {
@@ -103,7 +103,7 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     ClearStatement();
 
     iNextShapeId = 0;
-    bDoStep = TRUE;
+    bDoStep = true;
 
 #ifdef DEBUG
     CPLDebug( "OGR_GPKG", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );

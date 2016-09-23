@@ -42,7 +42,7 @@ OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) :
     m_poFeatureDefn(NULL),
     iNextShapeId(0),
     m_poQueryStatement(NULL),
-    bDoStep(TRUE),
+    bDoStep(true),
     m_pszFidColumn(NULL),
     iFIDCol(-1),
     iGeomCol(-1),
@@ -132,7 +132,9 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
             }
         }
         else
-            bDoStep = TRUE;
+        {
+            bDoStep = true;
+        }
 
         OGRFeature *poFeature = TranslateFeature(m_poQueryStatement);
         if( poFeature == NULL )
