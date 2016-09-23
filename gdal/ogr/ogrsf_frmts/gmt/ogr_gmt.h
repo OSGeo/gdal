@@ -54,20 +54,20 @@ class OGRGmtLayer : public OGRLayer
 
     VSILFILE           *fp;
 
-    int                 ReadLine();
+    bool                ReadLine();
     CPLString           osLine;
     char              **papszKeyedValues;
 
-    int                 ScanAheadForHole();
-    int                 NextIsFeature();
+    bool                ScanAheadForHole();
+    bool                NextIsFeature();
 
     OGRFeature         *GetNextRawFeature();
 
-    OGRErr              WriteGeometry( OGRGeometryH hGeom, int bHaveAngle );
+    OGRErr              WriteGeometry( OGRGeometryH hGeom, bool bHaveAngle );
     OGRErr              CompleteHeader( OGRGeometry * );
 
   public:
-    int                 bValidFile;
+    bool                bValidFile;
 
                         OGRGmtLayer( const char *pszFilename, int bUpdate );
                         virtual ~OGRGmtLayer();
