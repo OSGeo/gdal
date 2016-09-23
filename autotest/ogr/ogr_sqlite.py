@@ -3385,6 +3385,35 @@ def ogr_sqlite_43():
     return 'success'
 
 ###############################################################################
+# Test creating unsupported geometry types
+
+def ogr_spatialite_11():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_11.sqlite', options = ['SPATIALITE=YES'])
+
+    # Will be converted to LineString
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbCurve)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+
+    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbNone)
+    with gdaltest.error_handler():
+        res = lyr.CreateGeomField( ogr.GeomFieldDefn('foo', ogr.wkbCurvePolygon) )
+    if res == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_spatialite_11.sqlite')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_sqlite_cleanup():
@@ -3568,6 +3597,7 @@ gdaltest_list = [
     ogr_sqlite_41,
     ogr_sqlite_42,
     ogr_sqlite_43,
+    ogr_spatialite_11,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]
