@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.44 2016-07-03 16:02:17 erouault Exp $ */
+/* $Id: tif_write.c,v 1.45 2016-09-23 22:12:18 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -798,7 +798,14 @@ TIFFFlushData1(TIFF* tif)
 		if (!TIFFAppendToStrip(tif,
 		    isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip,
 		    tif->tif_rawdata, tif->tif_rawcc))
+        {
+            /* We update those variables even in case of error since there's */
+            /* code that doesn't really check the return code of this */
+            /* function */
+            tif->tif_rawcc = 0;
+            tif->tif_rawcp = tif->tif_rawdata;
 			return (0);
+        }
 		tif->tif_rawcc = 0;
 		tif->tif_rawcp = tif->tif_rawdata;
 	}
