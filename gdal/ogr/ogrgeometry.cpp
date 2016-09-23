@@ -6032,8 +6032,9 @@ int OGR_GT_IsSurface( OGRwkbGeometryType eGeomType )
 /**
  * \brief Return if a geometry type is a non-linear geometry type.
  *
- * Such geometry type are wkbCircularString, wkbCompoundCurve, wkbCurvePolygon,
- * wkbMultiCurve, wkbMultiSurface and their 3D variant.
+ * Such geometry type are wkbCurve, wkbCircularString, wkbCompoundCurve,
+ * wkbSurface, wkbCurvePolygon, wkbMultiCurve, wkbMultiSurface and their
+ * Z/M variants.
  *
  * @param eGeomType the geometry type
  * @return TRUE if the geometry type is a non-linear geometry type.
@@ -6044,7 +6045,8 @@ int OGR_GT_IsSurface( OGRwkbGeometryType eGeomType )
 int OGR_GT_IsNonLinear( OGRwkbGeometryType eGeomType )
 {
     OGRwkbGeometryType eFGeomType = wkbFlatten(eGeomType);
-    return eFGeomType == wkbCircularString || eFGeomType == wkbCompoundCurve ||
+    return eFGeomType == wkbCurve || eFGeomType == wkbSurface ||
+           eFGeomType == wkbCircularString || eFGeomType == wkbCompoundCurve ||
            eFGeomType == wkbCurvePolygon || eFGeomType == wkbMultiCurve ||
            eFGeomType == wkbMultiSurface;
 }

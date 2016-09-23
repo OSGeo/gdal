@@ -2058,6 +2058,20 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
+    if ( bIsSpatiaLiteDB && eType != wkbNone )
+    {
+        // We need to catch this right now as AddGeometryColumn does not
+        // return an error
+        OGRwkbGeometryType eFType = wkbFlatten(eType);
+        if( eFType > wkbGeometryCollection )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "Cannot create geometry field of type %s",
+                    OGRToOGCGeomType(eType));
+            return NULL;
+        }
+    }
+
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( papoLayers[iLayer]->IsTableLayer() )
