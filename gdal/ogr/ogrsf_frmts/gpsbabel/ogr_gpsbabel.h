@@ -63,8 +63,8 @@ class OGRGPSBabelDataSource : public OGRDataSource
                                const char* pszGPSBabelDriverNameIn,
                                char** papszOpenOptions );
 
-    static int          IsSpecialFile(const char* pszFilename);
-    static int          IsValidDriverName(const char* pszGPSBabelDriverName);
+    static bool         IsSpecialFile( const char* pszFilename );
+    static bool         IsValidDriverName( const char* pszGPSBabelDriverName );
 };
 
 
@@ -80,7 +80,7 @@ class OGRGPSBabelWriteDataSource : public OGRDataSource
     CPLString           osTmpFileName;
     GDALDataset        *poGPXDS;
 
-    int                 Convert();
+    bool                Convert();
 
   public:
                         OGRGPSBabelWriteDataSource();

@@ -114,18 +114,20 @@ static char** GetArgv( int bExplicitFeatures, int bWaypoints, int bRoutes,
 /*                         IsSpecialFile()                              */
 /************************************************************************/
 
-int OGRGPSBabelDataSource::IsSpecialFile(const char* pszFilename)
+bool OGRGPSBabelDataSource::IsSpecialFile( const char* pszFilename )
 {
-    return (STARTS_WITH(pszFilename, "/dev/") ||
-            STARTS_WITH(pszFilename, "usb:") ||
-            (STARTS_WITH(pszFilename, "COM")  && atoi(pszFilename + 3) > 0));
+    return
+        STARTS_WITH(pszFilename, "/dev/") ||
+        STARTS_WITH(pszFilename, "usb:") ||
+        (STARTS_WITH(pszFilename, "COM")  && atoi(pszFilename + 3) > 0);
 }
 
 /************************************************************************/
 /*                       IsValidDriverName()                            */
 /************************************************************************/
 
-int OGRGPSBabelDataSource::IsValidDriverName(const char* pszGPSBabelDriverName)
+bool
+OGRGPSBabelDataSource::IsValidDriverName( const char* pszGPSBabelDriverName )
 {
     for( int i = 0; pszGPSBabelDriverName[i] != '\0'; i++ )
     {
@@ -137,10 +139,10 @@ int OGRGPSBabelDataSource::IsValidDriverName(const char* pszGPSBabelDriverName)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Invalid GPSBabel driver name");
-            return FALSE;
+            return false;
         }
     }
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
