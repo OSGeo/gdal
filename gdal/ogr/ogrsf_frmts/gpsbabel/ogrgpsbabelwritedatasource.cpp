@@ -68,7 +68,7 @@ OGRGPSBabelWriteDataSource::~OGRGPSBabelWriteDataSource()
 /*                                Convert()                             */
 /************************************************************************/
 
-int OGRGPSBabelWriteDataSource::Convert()
+bool OGRGPSBabelWriteDataSource::Convert()
 {
     int nRet = -1;
     if( osTmpFileName.size() > 0 && pszFilename != NULL &&
