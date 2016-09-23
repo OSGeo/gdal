@@ -1873,6 +1873,8 @@ public:
             case wkbCurvePolygon:
             case wkbMultiCurve:
             case wkbMultiSurface:
+            case wkbCurve:
+            case wkbSurface:
             case wkbNone:
             /*case wkbLinearRing:*/
             case wkbCircularStringZ:
@@ -1880,6 +1882,8 @@ public:
             case wkbCurvePolygonZ:
             case wkbMultiCurveZ:
             case wkbMultiSurfaceZ:
+            case wkbCurveZ:
+            case wkbSurfaceZ:
             case wkbPoint25D:
             case wkbLineString25D:
             case wkbPolygon25D:
@@ -1899,6 +1903,8 @@ public:
             case wkbCurvePolygonM:
             case wkbMultiCurveM:
             case wkbMultiSurfaceM:
+            case wkbCurveM:
+            case wkbSurfaceM:
             case wkbPointZM:
             case wkbLineStringZM:
             case wkbPolygonZM:
@@ -1911,6 +1917,8 @@ public:
             case wkbCurvePolygonZM:
             case wkbMultiCurveZM:
             case wkbMultiSurfaceZM:
+            case wkbCurveZM:
+            case wkbSurfaceZM:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal geometry type value");
