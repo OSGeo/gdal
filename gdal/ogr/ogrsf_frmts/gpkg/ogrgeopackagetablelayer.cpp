@@ -176,15 +176,11 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
 // Utility method to determine if there is a non-Null geometry
 // in an OGRGeometry.
 //
-OGRBoolean OGRGeoPackageTableLayer::IsGeomFieldSet( OGRFeature *poFeature )
+bool OGRGeoPackageTableLayer::IsGeomFieldSet( OGRFeature *poFeature )
 {
-    if ( poFeature->GetDefnRef()->GetGeomFieldCount() &&
-         poFeature->GetGeomFieldRef(0) )
-    {
-        return TRUE;
-    }
-
-    return FALSE;
+    return
+        poFeature->GetDefnRef()->GetGeomFieldCount() &&
+        poFeature->GetGeomFieldRef(0);
 }
 
 OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
@@ -193,13 +189,12 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                                                        bool bAddFID,
                                                        bool bBindNullFields )
 {
-    int nColCount = 1;
-
     if ( ! (poFeature && poStmt && pnColCount) )
         return OGRERR_FAILURE;
 
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
 
+    int nColCount = 1;
     if( bAddFID )
     {
         const int err =
@@ -1280,7 +1275,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     /* Update the layer extents with this new object */
-    if ( IsGeomFieldSet(poFeature) )
+    if( IsGeomFieldSet(poFeature) )
     {
         OGREnvelope oEnv;
         poFeature->GetGeomFieldRef(0)->getEnvelope(&oEnv);
@@ -1427,7 +1422,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
     if (eErr == OGRERR_NONE)
     {
         /* Update the layer extents with this new object */
-        if ( IsGeomFieldSet(poFeature) )
+        if( IsGeomFieldSet(poFeature) )
         {
             OGREnvelope oEnv;
             poFeature->GetGeomFieldRef(0)->getEnvelope(&oEnv);
@@ -2323,7 +2318,7 @@ void OGRGeoPackageTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 /*                        HasFastSpatialFilter()                        */
 /************************************************************************/
 
-int OGRGeoPackageTableLayer::HasFastSpatialFilter(int iGeomColIn)
+int OGRGeoPackageTableLayer::HasFastSpatialFilter( int iGeomColIn )
 {
     if( iGeomColIn < 0 || iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount() )
         return FALSE;
@@ -2641,7 +2636,7 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
 
     m_bHasReadMetadataFromStorage = true;
 
-    if ( !m_poDS->HasMetadataTables() )
+    if( !m_poDS->HasMetadataTables() )
         return OGRLayer::GetMetadata( pszDomain );
 
     char* pszSQL = sqlite3_mprintf(

@@ -78,37 +78,37 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
     CPLString           m_osTilingScheme;
 
         void            ComputeTileAndPixelShifts();
-        int             InitRaster ( GDALGeoPackageDataset* poParentDS,
+        bool            InitRaster ( GDALGeoPackageDataset* poParentDS,
                                      const char* pszTableName,
-                                        double dfMinX,
-                                        double dfMinY,
-                                        double dfMaxX,
-                                        double dfMaxY,
-                                        const char* pszContentsMinX,
-                                        const char* pszContentsMinY,
-                                        const char* pszContentsMaxX,
-                                        const char* pszContentsMaxY,
-                                        char** papszOpenOptions,
-                                        const SQLResult& oResult,
-                                        int nIdxInResult );
-        int             InitRaster ( GDALGeoPackageDataset* poParentDS,
+                                     double dfMinX,
+                                     double dfMinY,
+                                     double dfMaxX,
+                                     double dfMaxY,
+                                     const char* pszContentsMinX,
+                                     const char* pszContentsMinY,
+                                     const char* pszContentsMaxX,
+                                     const char* pszContentsMaxY,
+                                     char** papszOpenOptions,
+                                     const SQLResult& oResult,
+                                     int nIdxInResult );
+        bool            InitRaster ( GDALGeoPackageDataset* poParentDS,
                                      const char* pszTableName,
-                                        int nZoomLevel,
-                                        int nBandCount,
-                                        double dfTMSMinX,
-                                        double dfTMSMaxY,
-                                        double dfPixelXSize,
-                                        double dfPixelYSize,
-                                        int nTileWidth,
-                                        int nTileHeight,
-                                        int nTileMatrixWidth,
-                                        int nTileMatrixHeight,
-                                        double dfGDALMinX,
-                                        double dfGDALMinY,
-                                        double dfGDALMaxX,
-                                        double dfGDALMaxY );
+                                     int nZoomLevel,
+                                     int nBandCount,
+                                     double dfTMSMinX,
+                                     double dfTMSMaxY,
+                                     double dfPixelXSize,
+                                     double dfPixelYSize,
+                                     int nTileWidth,
+                                     int nTileHeight,
+                                     int nTileMatrixWidth,
+                                     int nTileMatrixHeight,
+                                     double dfGDALMinX,
+                                     double dfGDALMinY,
+                                     double dfGDALMaxX,
+                                     double dfGDALMaxY );
 
-        int     OpenRaster( const char* pszTableName,
+        bool    OpenRaster( const char* pszTableName,
                             const char* pszIdentifier,
                             const char* pszDescription,
                             int nSRSId,
@@ -123,12 +123,12 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
                             char** papszOptions );
         CPLErr   FinalizeRasterRegistration();
 
-        int                     RegisterWebPExtension();
-        int                     RegisterZoomOtherExtension();
+        bool                    RegisterWebPExtension();
+        bool                    RegisterZoomOtherExtension();
         void                    ParseCompressionOptions(char** papszOptions);
 
-        int                     HasMetadataTables();
-        int                     CreateMetadataTables();
+        bool                    HasMetadataTables();
+        bool                    CreateMetadataTables();
         const char*             CheckMetadataDomain( const char* pszDomain );
         void                    WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method */
                                               const char* pszTableName);
@@ -220,7 +220,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
         OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
         OGRErr              SetApplicationId();
-        int                 OpenOrCreateDB(int flags);
+        bool                OpenOrCreateDB( int flags );
         bool                HasGDALAspatialExtension();
 };
 
@@ -251,7 +251,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     int                  iNextShapeId;
 
     sqlite3_stmt        *m_poQueryStatement;
-    int                  bDoStep;
+    bool                 bDoStep;
 
     char                *m_pszFidColumn;
 
@@ -404,7 +404,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              SaveExtent();
     OGRErr              SaveTimestamp();
     OGRErr              BuildColumns();
-    OGRBoolean          IsGeomFieldSet( OGRFeature *poFeature );
+    bool                IsGeomFieldSet( OGRFeature *poFeature );
     CPLString           FeatureGenerateUpdateSQL( OGRFeature *poFeature );
     CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, bool bAddFID, bool bBindNullFields );
     OGRErr              FeatureBindUpdateParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt );
