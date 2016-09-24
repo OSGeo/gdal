@@ -286,7 +286,7 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
 
 OGRFeature* GTMWaypointLayer::GetNextFeature()
 {
-    if (bError)
+    if( bError )
         return NULL;
 
     while (poDS->hasNextWaypoint())
@@ -296,7 +296,7 @@ OGRFeature* GTMWaypointLayer::GetNextFeature()
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not read waypoint. File probably corrupted");
-            bError = TRUE;
+            bError = true;
             return NULL;
         }
 

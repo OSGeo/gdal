@@ -105,15 +105,15 @@ static unsigned char readUChar(VSILFILE* fp)
     return val;
 }
 
-static unsigned short readUShort(VSILFILE* fp, int *pbSuccess = NULL)
+static unsigned short readUShort( VSILFILE* fp, bool *pbSuccess = NULL )
 {
     unsigned short val;
     if (VSIFReadL( &val, 1, 2, fp ) != 2)
     {
-        if (pbSuccess) *pbSuccess = FALSE;
+        if (pbSuccess) *pbSuccess = false;
         return 0;
     }
-    if (pbSuccess) *pbSuccess = TRUE;
+    if (pbSuccess) *pbSuccess = true;
     CPL_LSBPTR16(&val);
     return val;
 }
@@ -730,11 +730,11 @@ vsi_l_offset GTM::findFirstTrackpointOffset()
         if (VSIFSeekL(pGTMFile, 26, SEEK_CUR) != 0)
             return 0;
         /* Read string comment size */
-        int bSuccess = FALSE;
+        bool bSuccess = false;
         const unsigned short stringSize = readUShort(pGTMFile, &bSuccess);
 
         /* Skip to the next Waypoint */
-        if (bSuccess == FALSE || VSIFSeekL(pGTMFile, stringSize + 15, SEEK_CUR) != 0)
+        if( !bSuccess || VSIFSeekL(pGTMFile, stringSize + 15, SEEK_CUR) != 0 )
             return 0;
     }
 
@@ -750,11 +750,12 @@ vsi_l_offset GTM::findFirstTrackpointOffset()
                 return 0;
 
             /* Read string facename size */
-            int bSuccess = FALSE;
+            bool bSuccess = false;
             const unsigned short stringSize = readUShort(pGTMFile, &bSuccess);
 
             /* Skip to the next Waypoint Style*/
-            if (bSuccess == FALSE || VSIFSeekL(pGTMFile, stringSize + 24, SEEK_CUR) != 0)
+            if( !bSuccess ||
+                VSIFSeekL(pGTMFile, stringSize + 24, SEEK_CUR) != 0 )
                 return 0;
         }
     }
