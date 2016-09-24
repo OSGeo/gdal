@@ -549,7 +549,7 @@ int OGRGTMDataSource::getNWpts()
 bool OGRGTMDataSource::hasNextWaypoint()
 {
     if (poGTMFile == NULL)
-        return FALSE;
+        return false;
 
     return poGTMFile->hasNextWaypoint();
 }
@@ -604,7 +604,7 @@ int OGRGTMDataSource::getNTracks()
 bool OGRGTMDataSource::hasNextTrack()
 {
     if (poGTMFile == NULL)
-        return FALSE;
+        return false;
 
     return poGTMFile->hasNextTrack();
 }
