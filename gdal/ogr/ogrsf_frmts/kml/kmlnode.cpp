@@ -96,12 +96,12 @@ Coordinate* ParseCoordinate(std::string const& text)
     // Z coordinate
     if(pszStr[pos - 1] != ',')
     {
-        psTmp->bHasZ = FALSE;
+        psTmp->bHasZ = false;
         psTmp->dfAltitude = 0;
         return psTmp;
     }
 
-    psTmp->bHasZ = TRUE;
+    psTmp->bHasZ = true;
     psTmp->dfAltitude = CPLAtof(pszStr + pos);
 
     return psTmp;
@@ -545,7 +545,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                     {
-                        if (psCoord->bHasZ)
+                        if( psCoord->bHasZ )
                             poGeom = new OGRPoint(psCoord->dfLongitude,
                                                   psCoord->dfLatitude,
                                                   psCoord->dfAltitude);
@@ -576,7 +576,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                     {
-                        if (psCoord->bHasZ)
+                        if( psCoord->bHasZ )
                             ((OGRLineString*)poGeom)->addPoint(psCoord->dfLongitude,
                                                                psCoord->dfLatitude,
                                                                psCoord->dfAltitude);
@@ -628,7 +628,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                         {
                             poLinearRing = new OGRLinearRing();
                         }
-                        if (psCoord->bHasZ)
+                        if( psCoord->bHasZ )
                             poLinearRing->addPoint(psCoord->dfLongitude,
                                                    psCoord->dfLatitude,
                                                    psCoord->dfAltitude);
@@ -683,7 +683,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                             psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
                             if(psCoord != NULL)
                             {
-                                if (psCoord->bHasZ)
+                                if( psCoord->bHasZ )
                                     poLinearRing->addPoint(psCoord->dfLongitude,
                                                         psCoord->dfLatitude,
                                                         psCoord->dfAltitude);
