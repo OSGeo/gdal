@@ -81,7 +81,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
   protected:
     GDALDataType eDataType;
     double      adfGeoTransform[6];
-    int         bNoDataSet;
+    bool        bNoDataSet;
     double      dfNoDataValue;
 
 
@@ -300,7 +300,7 @@ CPLErr AAIGRasterBand::SetNoDataValue( double dfNoData )
 {
     AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>( poDS );
 
-    poODS->bNoDataSet = TRUE;
+    poODS->bNoDataSet = true;
     poODS->dfNoDataValue = dfNoData;
 
     return CE_None;
@@ -323,7 +323,7 @@ AAIGDataset::AAIGDataset() :
     nBufferOffset(0),
     nOffsetInBuffer(256),
     eDataType(GDT_Int32),
-    bNoDataSet(FALSE),
+    bNoDataSet(false),
     dfNoDataValue(-9999.0)
 {
     adfGeoTransform[0] = 0.0;
@@ -588,7 +588,7 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
     {
         const char* pszNoData = papszTokens[i + 1];
 
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
         dfNoDataValue = CPLAtofM(pszNoData);
         if( pszDataType == NULL &&
             (strchr( pszNoData, '.' ) != NULL ||
@@ -689,7 +689,7 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
     {
         const char* pszNoData = papszTokens[i + 1];
 
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
         dfNoDataValue = CPLAtofM(pszNoData);
         if( pszDataType == NULL &&
             (strchr( pszNoData, '.' ) != NULL ||
