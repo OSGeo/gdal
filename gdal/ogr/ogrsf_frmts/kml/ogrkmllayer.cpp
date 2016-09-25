@@ -343,7 +343,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         CPLString osRet = WriteSchema();
         if( osRet.size() )
             VSIFPrintfL( fp, "%s", osRet.c_str() );
-        bSchemaWritten_ = TRUE;
+        bSchemaWritten_ = true;
 
         VSIFPrintfL( fp, "<Folder><name>%s</name>\n", pszName_);
     }
