@@ -539,7 +539,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
 /* -------------------------------------------------------------------- */
     const char* pszTIF = record->GetStringSubfield( "SPR", 0, "TIF", 0 );
     const bool TIF = pszTIF != NULL && EQUAL(pszTIF,"Y");
-    CPLDebug("SRP", "TIF=%d", TIF);
+    CPLDebug("SRP", "TIF=%s", TIF ? "true": "false");
 
     if( TIF )
     {
@@ -997,10 +997,10 @@ DDFRecord* SRPDataset::FindRecordInGENForIMG( DDFModule& module,
 SRPDataset* SRPDataset::OpenDataset(
     const char* pszGENFileName, const char* pszIMGFileName, DDFRecord* record)
 {
+    DDFModule module; // Don't move this line as it holds ownership of record.
 
     if (record == NULL)
     {
-        DDFModule module;
         record = FindRecordInGENForIMG(module, pszGENFileName, pszIMGFileName);
         if (record == NULL)
             return NULL;
