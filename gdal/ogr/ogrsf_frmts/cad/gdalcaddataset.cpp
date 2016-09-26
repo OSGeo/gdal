@@ -395,10 +395,13 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
         }
     }
 
-    char *pszProjection = NULL;
-    poSpatialRef->exportToWkt( &pszProjection );
-    soWKT = pszProjection;
-    CPLFree( pszProjection );
+	if( poSpatialRef != NULL )
+	{
+    	char *pszProjection = NULL;
+    	poSpatialRef->exportToWkt( &pszProjection );
+    	soWKT = pszProjection;
+    	CPLFree( pszProjection );
+	}
     return poSpatialRef;
 }
 
