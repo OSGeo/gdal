@@ -45,6 +45,7 @@
 #endif
 
 #include <map>
+#include <new>
 
 CPL_CVSID("$Id$");
 
@@ -63,17 +64,23 @@ CPL_C_END
 
 typedef enum
 {
-    RW_MUTEX_STATE_UNKNOW,
+    RW_MUTEX_STATE_UNKNOWN,
     RW_MUTEX_STATE_ALLOWED,
     RW_MUTEX_STATE_DISABLED
 } GDALAllowReadWriteMutexState;
 
-typedef struct
+class GDALDatasetPrivate
 {
-    CPLMutex* hMutex;
-    int       nMutexTakenCount;
-    GDALAllowReadWriteMutexState eStateReadWriteMutex;
-} GDALDatasetPrivate;
+    public:
+        CPLMutex* hMutex;
+        std::map<GIntBig, int> oMapThreadToMutexTakenCount;
+        GDALAllowReadWriteMutexState eStateReadWriteMutex;
+
+        GDALDatasetPrivate() :
+            hMutex(NULL),
+            eStateReadWriteMutex(RW_MUTEX_STATE_UNKNOWN) {}
+
+};
 
 typedef struct
 {
@@ -204,9 +211,7 @@ GDALDataset::GDALDataset()
         CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
     
     m_poStyleTable = NULL;
-    m_hPrivateData = CPLCalloc(1, sizeof(GDALDatasetPrivate));
-    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
-    psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_UNKNOW;
+    m_hPrivateData = new (std::nothrow) GDALDatasetPrivate;
 }
 
 
@@ -317,7 +322,7 @@ GDALDataset::~GDALDataset()
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
     if( psPrivate->hMutex != NULL )
         CPLDestroyMutex( psPrivate->hMutex );
-    CPLFree(psPrivate);
+    delete psPrivate;
 
     CSLDestroy( papszOpenOptions );
 }
@@ -5775,7 +5780,7 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
     if( eAccess == GA_Update )
     {
-        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOW )
+        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
         {
             // In case dead-lock would occur, which is not impossible,
             // this can be used to prevent it, but at the risk of other
@@ -5792,8 +5797,12 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
         if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_ALLOWED &&
             (eRWFlag == GF_Write || psPrivate->hMutex != NULL) )
         {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] Acquiring RW mutex for %s",
+                     CPLGetPID(), GetDescription());
+#endif
             CPLCreateOrAcquireMutex(&psPrivate->hMutex, 1000.0);
-            psPrivate->nMutexTakenCount ++; /* not sure if we can have recursive calls, so ...*/
+            psPrivate->oMapThreadToMutexTakenCount[ CPLGetPID() ] ++; /* not sure if we can have recursive calls, so ...*/
             return TRUE;
         }
     }
@@ -5807,8 +5816,12 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 void GDALDataset::LeaveReadWrite()
 {
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
-    psPrivate->nMutexTakenCount --;
+    psPrivate->oMapThreadToMutexTakenCount[ CPLGetPID() ] --; /* not sure if we can have recursive calls, so ...*/
     CPLReleaseMutex(psPrivate->hMutex);
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] Releasing RW mutex for %s",
+                     CPLGetPID(), GetDescription());
+#endif
 }
 
 /************************************************************************/
@@ -5832,8 +5845,19 @@ void GDALDataset::DisableReadWriteMutex()
 void GDALDataset::TemporarilyDropReadWriteLock()
 {
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
-    for(int i=0;i<psPrivate->nMutexTakenCount;i++)
-        CPLReleaseMutex(psPrivate->hMutex);
+    if( psPrivate->hMutex )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] "
+                 "Temporarily drop RW mutex for %s",
+                 CPLGetPID(), GetDescription());
+#endif
+        const int nCount = psPrivate->oMapThreadToMutexTakenCount[ CPLGetPID() ];
+        for(int i=0;i<nCount;i++)
+        {
+            CPLReleaseMutex(psPrivate->hMutex);
+        }
+    }
 }
 
 /************************************************************************/
@@ -5843,6 +5867,17 @@ void GDALDataset::TemporarilyDropReadWriteLock()
 void GDALDataset::ReacquireReadWriteLock()
 {
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
-    for(int i=0;i<psPrivate->nMutexTakenCount;i++)
-        CPLAcquireMutex(psPrivate->hMutex, 1000.0);
+    if( psPrivate->hMutex )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] "
+                 "Reacquire temporarily dropped RW mutex for %s",
+                 CPLGetPID(), GetDescription());
+#endif
+        const int nCount = psPrivate->oMapThreadToMutexTakenCount[ CPLGetPID() ];
+        for(int i=0;i<nCount;i++)
+        {
+            CPLAcquireMutex(psPrivate->hMutex, 1000.0);
+        }
+    }
 }
