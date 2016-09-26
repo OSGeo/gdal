@@ -148,7 +148,7 @@ class OGRODSDataSource : public OGRDataSource
     int                 nRowsRepeated;
     int                 nCurCol;
     int                 nCellsRepeated;
-    int                 bEndTableParsing;
+    bool                bEndTableParsing;
 
     OGRODSLayer        *poCurLayer;
 

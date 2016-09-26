@@ -117,32 +117,32 @@ class ods_formula_node {
     std::string    TransformToString() const;
 
     // TODO: It appears that all the Evaluate methods should return bool.
-    int            EvaluateOR(IODSCellEvaluator* poEvaluator);
-    int            EvaluateAND(IODSCellEvaluator* poEvaluator);
-    int            EvaluateNOT(IODSCellEvaluator* poEvaluator);
-    int            EvaluateIF(IODSCellEvaluator* poEvaluator);
+    bool           EvaluateOR( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateAND( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateNOT( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateIF( IODSCellEvaluator* poEvaluator );
 
-    int            EvaluateLEN(IODSCellEvaluator* poEvaluator);
-    int            EvaluateLEFT(IODSCellEvaluator* poEvaluator);
-    int            EvaluateRIGHT(IODSCellEvaluator* poEvaluator);
-    int            EvaluateMID(IODSCellEvaluator* poEvaluator);
+    bool           EvaluateLEN( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateLEFT( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateRIGHT( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateMID( IODSCellEvaluator* poEvaluator );
 
-    int            EvaluateListArgOp(IODSCellEvaluator* poEvaluator);
+    bool           EvaluateListArgOp( IODSCellEvaluator* poEvaluator );
 
-    int            EvaluateSingleArgOp(IODSCellEvaluator* poEvaluator);
+    bool           EvaluateSingleArgOp( IODSCellEvaluator* poEvaluator );
 
-    int            EvaluateEQ(IODSCellEvaluator* poEvaluator);
-    int            EvaluateNE(IODSCellEvaluator* poEvaluator);
-    int            EvaluateLE(IODSCellEvaluator* poEvaluator);
-    int            EvaluateGE(IODSCellEvaluator* poEvaluator);
-    int            EvaluateLT(IODSCellEvaluator* poEvaluator);
-    int            EvaluateGT(IODSCellEvaluator* poEvaluator);
+    bool           EvaluateEQ( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateNE( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateLE( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateGE( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateLT( IODSCellEvaluator* poEvaluator );
+    bool           EvaluateGT( IODSCellEvaluator* poEvaluator );
 
-    int            EvaluateBinaryArithmetic(IODSCellEvaluator* poEvaluator);
+    bool           EvaluateBinaryArithmetic( IODSCellEvaluator* poEvaluator );
 
-    int            EvaluateCONCAT(IODSCellEvaluator* poEvaluator);
+    bool           EvaluateCONCAT( IODSCellEvaluator* poEvaluator );
 
-    int            EvaluateCELL(IODSCellEvaluator* poEvaluator);
+    bool           EvaluateCELL( IODSCellEvaluator* poEvaluator );
 
  public:
     ods_formula_node();
@@ -161,7 +161,7 @@ class ods_formula_node {
     void           Initialize();
     void           Dump( FILE *fp, int depth );
 
-    int            Evaluate(IODSCellEvaluator* poEvaluator);
+    bool           Evaluate( IODSCellEvaluator* poEvaluator );
 
     ods_formula_node_type eNodeType;
     ods_formula_field_type field_type;
