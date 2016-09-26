@@ -96,6 +96,12 @@
 #include "gdal_priv.h"
 #include "gdal_utils_priv.h"
 
+#if defined(__SSE2__) || defined(_M_X64)
+#define HAVE_16_SSE_REG
+#define HAVE_SSE2
+#include "emmintrin.h"
+#endif
+
 CPL_CVSID("$Id$");
 
 typedef enum
@@ -140,6 +146,18 @@ template<class T>
 struct GDALGeneric3x3ProcessingAlg
 {
     typedef float (*type) (const T* pafWindow, float fDstNoDataValue, void* pData);
+};
+
+template<class T>
+struct GDALGeneric3x3ProcessingAlg_multisample
+{
+    typedef int (*type)  (const T* pafThreeLineWin,
+                          int nLine1Off,
+                          int nLine2Off,
+                          int nLine3Off,
+                          int nXSize,
+                          void* pData,
+                          float* pafOutputBuf);
 };
 
 template<class T>
@@ -246,6 +264,7 @@ static
 CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                                    GDALRasterBandH hDstBand,
                                    typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg,
+                                   typename GDALGeneric3x3ProcessingAlg_multisample<T>::type pfnAlg_multisample,
                                    void* pData,
                                    int bComputeAtEdges,
                                    GDALProgressFunc pfnProgress,
@@ -482,6 +501,47 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
                                          bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
+        }
+        else
+        {
+            // Exclude the edges
+            pafOutputBuf[0] = fDstNoDataValue;
+        }
+
+        j = 1;
+        if( pfnAlg_multisample && !bOneOfThreeLinesHasNoData )
+        {
+            j = pfnAlg_multisample(pafThreeLineWin,
+                                   nLine1Off,
+                                   nLine2Off,
+                                   nLine3Off,
+                                   nXSize,
+                                   pData,
+                                   pafOutputBuf);
+        }
+
+        for (; j < nXSize - 1; j++)
+        {
+            T afWin[9];
+            afWin[0] = pafThreeLineWin[nLine1Off + j-1];
+            afWin[1] = pafThreeLineWin[nLine1Off + j];
+            afWin[2] = pafThreeLineWin[nLine1Off + j+1];
+            afWin[3] = pafThreeLineWin[nLine2Off + j-1];
+            afWin[4] = pafThreeLineWin[nLine2Off + j];
+            afWin[5] = pafThreeLineWin[nLine2Off + j+1];
+            afWin[6] = pafThreeLineWin[nLine3Off + j-1];
+            afWin[7] = pafThreeLineWin[nLine3Off + j];
+            afWin[8] = pafThreeLineWin[nLine3Off + j+1];
+
+            pafOutputBuf[j] = ComputeVal(bOneOfThreeLinesHasNoData, fSrcNoDataValue,
+                                         bIsSrcNoDataNan,
+                                         afWin, fDstNoDataValue,
+                                         pfnAlg, pData, bComputeAtEdges);
+        }
+
+        if (bComputeAtEdges && nXSize >= 2)
+        {
+            T afWin[9];
             j = nXSize - 1;
 
             afWin[0] = pafThreeLineWin[nLine1Off + j-1];
@@ -502,28 +562,8 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
         else
         {
             // Exclude the edges
-            pafOutputBuf[0] = fDstNoDataValue;
             if (nXSize > 1)
                 pafOutputBuf[nXSize - 1] = fDstNoDataValue;
-        }
-
-        for (j = 1; j < nXSize - 1; j++)
-        {
-            T afWin[9];
-            afWin[0] = pafThreeLineWin[nLine1Off + j-1];
-            afWin[1] = pafThreeLineWin[nLine1Off + j];
-            afWin[2] = pafThreeLineWin[nLine1Off + j+1];
-            afWin[3] = pafThreeLineWin[nLine2Off + j-1];
-            afWin[4] = pafThreeLineWin[nLine2Off + j];
-            afWin[5] = pafThreeLineWin[nLine2Off + j+1];
-            afWin[6] = pafThreeLineWin[nLine3Off + j-1];
-            afWin[7] = pafThreeLineWin[nLine3Off + j];
-            afWin[8] = pafThreeLineWin[nLine3Off + j+1];
-
-            pafOutputBuf[j] = ComputeVal(bOneOfThreeLinesHasNoData, fSrcNoDataValue,
-                                         bIsSrcNoDataNan,
-                                         afWin, fDstNoDataValue,
-                                         pfnAlg, pData, bComputeAtEdges);
         }
 
         /* -----------------------------------------
@@ -592,19 +632,24 @@ end:
 /*                         GDALHillshade()                              */
 /************************************************************************/
 
+
 typedef struct
 {
     double inv_nsres;
     double inv_ewres;
     double sin_altRadians;
-    double cos_altRadians_mul_z_scale_factor;
+    double cos_alt_mul_z;
     double azRadians;
-    double cos_azRadians_mul_cos_altRadians_mul_z_scale_factor;
-    double sin_azRadians_mul_cos_altRadians_mul_z_scale_factor;
-    double square_z_scale_factor;
+    double cos_az_mul_cos_alt_mul_z;
+    double sin_az_mul_cos_alt_mul_z;
+    double square_z;
     double sin_altRadians_mul_254;
-    double cos_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254;
-    double sin_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254;
+    double cos_az_mul_cos_alt_mul_z_mul_254;
+    double sin_az_mul_cos_alt_mul_z_mul_254;
+
+    double square_z_mul_square_inv_res;
+    double cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res;
+    double sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res;
 } GDALHillshadeAlgData;
 
 /* Unoptimized formulas are :
@@ -626,9 +671,9 @@ typedef struct
 
 ==>
     cang = (psData->sin_altRadians -
-           psData->cos_altRadians_mul_z_scale_factor * sqrt(xx_plus_yy) *
+           psData->cos_alt_mul_z * sqrt(xx_plus_yy) *
            sin(aspect - psData->azRadians)) /
-           sqrt(1 + psData->square_z_scale_factor * xx_plus_yy);
+           sqrt(1 + psData->square_z * xx_plus_yy);
 
     But:
     sin(aspect - psData->azRadians)
@@ -637,13 +682,12 @@ typedef struct
 
 so:
     cang = (psData->sin_altRadians -
-           (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor)) /
-           sqrt(1 + psData->square_z_scale_factor * xx_plus_yy);
+           (y * psData->cos_az_mul_cos_alt_mul_z -
+            x * psData->sin_az_mul_cos_alt_mul_z)) /
+           sqrt(1 + psData->square_z * xx_plus_yy);
 */
 
-#if defined(__SSE2__) || defined(_M_X64)
-#include "emmintrin.h"
+#ifdef HAVE_SSE2
 inline double ApproxADivByInvSqrtB( double a, double b )
 {
     __m128d regB = _mm_load_sd( &b );
@@ -686,9 +730,9 @@ float GDALHillshadeAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
 
     // ... then the shade value
     double cang_mul_254 = ApproxADivByInvSqrtB(psData->sin_altRadians_mul_254 -
-           (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254 -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254),
-           1 + psData->square_z_scale_factor * xx_plus_yy);
+           (y * psData->cos_az_mul_cos_alt_mul_z_mul_254 -
+            x * psData->sin_az_mul_cos_alt_mul_z_mul_254),
+           1 + psData->square_z * xx_plus_yy);
 
     double cang;
     if (cang_mul_254 <= 0.0)
@@ -698,6 +742,155 @@ float GDALHillshadeAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
 
     return static_cast<float>(cang);
 }
+
+template<class T>
+static
+float GDALHillshadeAlg_same_res (const T* afWin, float /*fDstNoDataValue*/, void* pData)
+{
+    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+
+    // First Slope ...
+    /*x = (afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+        (afWin[2] + afWin[5] + afWin[5] + afWin[8]);
+
+    y = (afWin[0] + afWin[1] + afWin[1] + afWin[2]) -
+        (afWin[6] + afWin[7] + afWin[7] + afWin[8]);*/
+
+    T accX = afWin[0] - afWin[8];
+    const T six_minus_two = afWin[6] - afWin[2];
+    T accY = accX;
+    const T three_minus_five = afWin[3] - afWin[5];
+    const T one_minus_seven = afWin[1] - afWin[7];
+    accX += three_minus_five;
+    accY += one_minus_seven;
+    accX += three_minus_five;
+    accY += one_minus_seven;
+    accX += six_minus_two;
+    accY -= six_minus_two;
+    double x = accX;
+    double y = accY;
+
+    double xx_plus_yy = x * x + y * y;
+
+    // ... then the shade value
+    double cang_mul_254 = ApproxADivByInvSqrtB(psData->sin_altRadians_mul_254 +
+           (x * psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res +
+            y * psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res),
+           1 + psData->square_z_mul_square_inv_res * xx_plus_yy);
+
+    double cang;
+    if (cang_mul_254 <= 0.0)
+        cang = 1.0;
+    else
+        cang = 1.0 + cang_mul_254;
+
+    return static_cast<float>(cang);
+}
+
+#ifdef HAVE_16_SSE_REG
+template<class T>
+static
+int GDALHillshadeAlg_same_res_multisample( const T* pafThreeLineWin,
+                                           int nLine1Off,
+                                           int nLine2Off,
+                                           int nLine3Off,
+                                           int nXSize,
+                                           void* pData,
+                                           float* pafOutputBuf )
+{
+    // Only valid for T == int
+
+    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+    const __m128d reg_fact_x = _mm_load1_pd(
+                      &(psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res));
+    const __m128d reg_fact_y = _mm_load1_pd (
+                      &(psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res));
+    const __m128d reg_constant_num = _mm_load1_pd(
+                      &(psData->sin_altRadians_mul_254));
+    const __m128d reg_constant_denom = _mm_load1_pd(
+                      &(psData->square_z_mul_square_inv_res));
+    const __m128d reg_half = _mm_set1_pd(0.5);
+    const __m128d reg_one = _mm_add_pd(reg_half, reg_half);
+    const __m128 reg_one_float = _mm_set1_ps(1);
+
+    int j;
+    for( j = 1; j < nXSize - 4; j+= 4 )
+    {
+        const T* firstLine  = pafThreeLineWin + nLine1Off + j-1;
+        const T* secondLine = pafThreeLineWin + nLine2Off + j-1;
+        const T* thirdLine  = pafThreeLineWin + nLine3Off + j-1;
+
+        __m128i firstLine0 = _mm_loadu_si128( (__m128i const*)firstLine );
+        __m128i firstLine1 = _mm_loadu_si128( (__m128i const*)(firstLine + 1) );
+        __m128i firstLine2 = _mm_loadu_si128( (__m128i const*)(firstLine + 2) );
+        __m128i thirdLine0 = _mm_loadu_si128( (__m128i const*)thirdLine );
+        __m128i thirdLine1 = _mm_loadu_si128( (__m128i const*)(thirdLine + 1) );
+        __m128i thirdLine2 = _mm_loadu_si128( (__m128i const*)(thirdLine + 2) );
+        __m128i accX = _mm_sub_epi32( firstLine0, thirdLine2);
+        const __m128i six_minus_two = _mm_sub_epi32( thirdLine0, firstLine2 );
+        __m128i accY = accX;
+        const __m128i three_minus_five = _mm_sub_epi32(
+                          _mm_loadu_si128( (__m128i const*)secondLine ),
+                          _mm_loadu_si128( (__m128i const*)(secondLine+2) ) );
+        const __m128i one_minus_seven = _mm_sub_epi32( firstLine1, thirdLine1 );
+        accX = _mm_add_epi32(accX, three_minus_five);
+        accY = _mm_add_epi32(accY, one_minus_seven);
+        accX = _mm_add_epi32(accX, three_minus_five);
+        accY = _mm_add_epi32(accY, one_minus_seven);
+        accX = _mm_add_epi32(accX, six_minus_two);
+        accY = _mm_sub_epi32(accY, six_minus_two);
+
+        __m128d reg_x0 = _mm_cvtepi32_pd(accX);
+        __m128d reg_x1 = _mm_cvtepi32_pd(_mm_srli_si128(accX, 8));
+        __m128d reg_y0 = _mm_cvtepi32_pd(accY);
+        __m128d reg_y1 = _mm_cvtepi32_pd(_mm_srli_si128(accY, 8));
+        __m128d reg_xx_plus_yy0 = _mm_add_pd( _mm_mul_pd(reg_x0, reg_x0),
+                                              _mm_mul_pd(reg_y0, reg_y0) );
+        __m128d reg_xx_plus_yy1 = _mm_add_pd( _mm_mul_pd(reg_x1, reg_x1),
+                                              _mm_mul_pd(reg_y1, reg_y1) );
+
+        __m128d reg_numerator0 = _mm_add_pd(reg_constant_num,
+                  _mm_add_pd( _mm_mul_pd(reg_fact_x, reg_x0),
+                              _mm_mul_pd(reg_fact_y, reg_y0) ) );
+        __m128d reg_numerator1 = _mm_add_pd(reg_constant_num,
+                  _mm_add_pd( _mm_mul_pd(reg_fact_x, reg_x1),
+                              _mm_mul_pd(reg_fact_y, reg_y1) ) );
+        __m128d reg_denominator0 = _mm_add_pd(reg_one,
+                              _mm_mul_pd(reg_constant_denom, reg_xx_plus_yy0));
+        __m128d reg_denominator1 = _mm_add_pd(reg_one,
+                              _mm_mul_pd(reg_constant_denom, reg_xx_plus_yy1));
+
+        __m128d regB0 = reg_denominator0;
+        __m128d regB1 = reg_denominator1;
+        __m128d regB0_half = _mm_mul_pd( regB0, reg_half );
+        __m128d regB1_half = _mm_mul_pd( regB1, reg_half );
+        // Compute rough approximation of 1 / sqrt(b) with _mm_rsqrt_ps
+        regB0 = _mm_cvtps_pd( _mm_rsqrt_ps( _mm_cvtpd_ps( regB0 ) ) );
+        regB1 = _mm_cvtps_pd( _mm_rsqrt_ps( _mm_cvtpd_ps( regB1 ) ) );
+        // And perform one step of Newton-Raphson approximation to improve it
+        // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
+        //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
+        const __m128d reg_one_and_a_half = _mm_add_pd(reg_one, reg_half);
+        regB0 = _mm_mul_pd(regB0, _mm_sub_pd( reg_one_and_a_half,
+                                             _mm_mul_pd(regB0_half,
+                                                  _mm_mul_pd(regB0, regB0)) ) );
+        regB1 = _mm_mul_pd(regB1, _mm_sub_pd( reg_one_and_a_half,
+                                            _mm_mul_pd(regB1_half,
+                                                  _mm_mul_pd(regB1, regB1)) ) );
+        reg_numerator0 = _mm_mul_pd(reg_numerator0, regB0);
+        reg_numerator1 = _mm_mul_pd(reg_numerator1, regB1);
+
+        __m128 res = _mm_castsi128_ps(
+          _mm_unpacklo_epi64 (_mm_castps_si128(_mm_cvtpd_ps(reg_numerator0)),
+                              _mm_castps_si128(_mm_cvtpd_ps(reg_numerator1))));
+        res = _mm_add_ps(res, reg_one_float);
+        res = _mm_max_ps(res, reg_one_float);
+
+        _mm_storeu_ps( pafOutputBuf + j, res);
+    }
+    return j;
+}
+#endif
 
 static const double INV_SQUARE_OF_HALF_PI = 1.0 / ((M_PI*M_PI)/4);
 
@@ -717,12 +910,12 @@ float GDALHillshadeCombinedAlg (const T* afWin, float /*fDstNoDataValue*/, void*
 
     xx_plus_yy = x * x + y * y;
 
-    double slope = xx_plus_yy * psData->square_z_scale_factor;
+    double slope = xx_plus_yy * psData->square_z;
 
     // ... then the shade value
     cang = acos(ApproxADivByInvSqrtB(psData->sin_altRadians -
-           (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor),
+           (y * psData->cos_az_mul_cos_alt_mul_z -
+            x * psData->sin_az_mul_cos_alt_mul_z),
            1 + slope));
 
     // combined shading
@@ -751,9 +944,9 @@ float GDALHillshadeZevenbergenThorneAlg (const T* afWin, float /*fDstNoDataValue
     xx_plus_yy = x * x + y * y;
 
     cang = ApproxADivByInvSqrtB(psData->sin_altRadians -
-           (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor),
-           1 + psData->square_z_scale_factor * xx_plus_yy);
+           (y * psData->cos_az_mul_cos_alt_mul_z -
+            x * psData->sin_az_mul_cos_alt_mul_z),
+           1 + psData->square_z * xx_plus_yy);
 
     if (cang <= 0.0)
         cang = 1.0;
@@ -777,12 +970,12 @@ float GDALHillshadeZevenbergenThorneCombinedAlg (const T* afWin, float /*fDstNoD
 
     xx_plus_yy = x * x + y * y;
 
-    double slope = xx_plus_yy * psData->square_z_scale_factor;
+    double slope = xx_plus_yy * psData->square_z;
 
     // ... then the shade value
     cang = acos(ApproxADivByInvSqrtB(psData->sin_altRadians -
-           (y * psData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor -
-            x * psData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor),
+           (y * psData->cos_az_mul_cos_alt_mul_z -
+            x * psData->sin_az_mul_cos_alt_mul_z),
            1 + slope));
 
     // combined shading
@@ -805,28 +998,38 @@ void*  GDALCreateHillshadeData(double* adfGeoTransform,
                                int bZevenbergenThorne)
 {
     GDALHillshadeAlgData* pData =
-        (GDALHillshadeAlgData*)CPLMalloc(sizeof(GDALHillshadeAlgData));
+        (GDALHillshadeAlgData*)CPLCalloc(1, sizeof(GDALHillshadeAlgData));
 
     const double degreesToRadians = M_PI / 180.0;
     pData->inv_nsres = 1.0 / adfGeoTransform[5];
     pData->inv_ewres = 1.0 / adfGeoTransform[1];
     pData->sin_altRadians = sin(alt * degreesToRadians);
     pData->azRadians = az * degreesToRadians;
-    double z_scale_factor = z / (((bZevenbergenThorne) ? 2 : 8) * scale);
-    pData->cos_altRadians_mul_z_scale_factor =
-        cos(alt * degreesToRadians) * z_scale_factor;
-    pData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor =
-        cos(pData->azRadians) * pData->cos_altRadians_mul_z_scale_factor;
-    pData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor =
-        sin(pData->azRadians) * pData->cos_altRadians_mul_z_scale_factor;
-    pData->square_z_scale_factor = z_scale_factor * z_scale_factor;
+    double z_scaled = z / (((bZevenbergenThorne) ? 2 : 8) * scale);
+    pData->cos_alt_mul_z =
+        cos(alt * degreesToRadians) * z_scaled;
+    pData->cos_az_mul_cos_alt_mul_z =
+        cos(pData->azRadians) * pData->cos_alt_mul_z;
+    pData->sin_az_mul_cos_alt_mul_z =
+        sin(pData->azRadians) * pData->cos_alt_mul_z;
+    pData->square_z = z_scaled * z_scaled;
 
     pData->sin_altRadians_mul_254 = 254.0 *
                                     pData->sin_altRadians;
-    pData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254 = 254.0 *
-        pData->cos_azRadians_mul_cos_altRadians_mul_z_scale_factor;
-    pData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor_mul_254 = 254.0 *
-        pData->sin_azRadians_mul_cos_altRadians_mul_z_scale_factor;
+    pData->cos_az_mul_cos_alt_mul_z_mul_254 = 254.0 *
+        pData->cos_az_mul_cos_alt_mul_z;
+    pData->sin_az_mul_cos_alt_mul_z_mul_254 = 254.0 *
+        pData->sin_az_mul_cos_alt_mul_z;
+
+    if( adfGeoTransform[1] == -adfGeoTransform[5] )
+    {
+        pData->square_z_mul_square_inv_res = 
+          pData->square_z * pData->inv_ewres * pData->inv_ewres;
+        pData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res =
+          pData->cos_az_mul_cos_alt_mul_z_mul_254 * -pData->inv_ewres;
+        pData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res =
+          pData->sin_az_mul_cos_alt_mul_z_mul_254 * pData->inv_ewres;
+    }
 
     return pData;
 }
@@ -2826,6 +3029,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
     void* pData = NULL;
     GDALGeneric3x3ProcessingAlg<float>::type pfnAlgFloat = NULL;
     GDALGeneric3x3ProcessingAlg<GInt32>::type pfnAlgInt32 = NULL;
+    GDALGeneric3x3ProcessingAlg_multisample<GInt32>::type pfnAlgInt32_multisample = NULL;
 
     if (eUtilityMode == HILL_SHADE)
     {
@@ -2854,8 +3058,20 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
         {
             if(!psOptions->bCombined)
             {
-                pfnAlgFloat = GDALHillshadeAlg<float>;
-                pfnAlgInt32 = GDALHillshadeAlg<GInt32>;
+                if( adfGeoTransform[1] == -adfGeoTransform[5] )
+                {
+                    pfnAlgFloat = GDALHillshadeAlg_same_res<float>;
+                    pfnAlgInt32 = GDALHillshadeAlg_same_res<GInt32>;
+#ifdef HAVE_16_SSE_REG
+                    pfnAlgInt32_multisample =
+                                GDALHillshadeAlg_same_res_multisample<GInt32>;
+#endif
+                }
+                else
+                {
+                    pfnAlgFloat = GDALHillshadeAlg<float>;
+                    pfnAlgInt32 = GDALHillshadeAlg<GInt32>;
+                }
             }
             else
             {
@@ -3115,14 +3331,18 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest,
         if( eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16 )
         {
             GDALGeneric3x3Processing<GInt32>(hSrcBand, hDstBand,
-                                             pfnAlgInt32, pData,
+                                             pfnAlgInt32,
+                                             pfnAlgInt32_multisample,
+                                             pData,
                                              psOptions->bComputeAtEdges,
                                              pfnProgress, pProgressData);
         }
         else
         {
             GDALGeneric3x3Processing<float>(hSrcBand, hDstBand,
-                                            pfnAlgFloat, pData,
+                                            pfnAlgFloat,
+                                            NULL,
+                                            pData,
                                             psOptions->bComputeAtEdges,
                                             pfnProgress, pProgressData);
         }
