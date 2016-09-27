@@ -697,6 +697,7 @@ MEMDataset::MEMDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = -1.0;
+    DisableReadWriteMutex();
 }
 
 /************************************************************************/
