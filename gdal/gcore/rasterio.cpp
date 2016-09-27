@@ -825,28 +825,45 @@ CPLErr GDALRasterBand::RasterIOResampled(
     }
 
     // Create a MEM dataset that wraps the output buffer.
-    GDALDataset* poMEMDS = MEMDataset::Create( "", nDestXOffVirtual + nBufXSize,
-                                               nDestYOffVirtual + nBufYSize, 0,
-                                               eBufType, NULL );
+    GDALDataset* poMEMDS;
+    void* pTempBuffer = NULL;
+    GSpacing nPSMem = nPixelSpace;
+    GSpacing nLSMem = nLineSpace;
+    void* pDataMem = pData;
+    GDALDataType eDTMem = eBufType;
+    if( eBufType != eDataType )
+    {
+        nPSMem = GDALGetDataTypeSizeBytes(eDataType);
+        nLSMem = nPSMem * nBufXSize;
+        pTempBuffer = VSI_MALLOC2_VERBOSE( nBufYSize, static_cast<size_t>(nLSMem) );
+        if( pTempBuffer == NULL )
+            return CE_Failure;
+        pDataMem = pTempBuffer;
+        eDTMem = eDataType;
+    }
+
+    poMEMDS = MEMDataset::Create( "", nDestXOffVirtual + nBufXSize,
+                                  nDestYOffVirtual + nBufYSize, 0,
+                                  eDTMem, NULL );
     char szBuffer[64] = { '\0' };
     int nRet =
         CPLPrintPointer(
-            szBuffer, static_cast<GByte*>(pData)
-            - nPixelSpace * nDestXOffVirtual
-            - nLineSpace * nDestYOffVirtual, sizeof(szBuffer));
+            szBuffer, static_cast<GByte*>(pDataMem)
+            - nPSMem * nDestXOffVirtual
+            - nLSMem * nDestYOffVirtual, sizeof(szBuffer));
     szBuffer[nRet] = '\0';
 
     char szBuffer0[64] = { '\0' };
     snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
     char szBuffer1[64] = { '\0' };
     snprintf( szBuffer1, sizeof(szBuffer1),
-              "PIXELOFFSET=" CPL_FRMT_GIB, static_cast<GIntBig>(nPixelSpace) );
+              "PIXELOFFSET=" CPL_FRMT_GIB, static_cast<GIntBig>(nPSMem) );
     char szBuffer2[64] = { '\0' };
     snprintf( szBuffer2, sizeof(szBuffer2),
-              "LINEOFFSET=" CPL_FRMT_GIB, static_cast<GIntBig>(nLineSpace) );
+              "LINEOFFSET=" CPL_FRMT_GIB, static_cast<GIntBig>(nLSMem) );
     char* apszOptions[4] = { szBuffer0, szBuffer1, szBuffer2, NULL };
 
-    poMEMDS->AddBand(eBufType, apszOptions);
+    poMEMDS->AddBand(eDTMem, apszOptions);
 
     GDALRasterBandH hMEMBand = poMEMDS->GetRasterBand(1);
 
@@ -1025,6 +1042,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
             GDALClose(poMEMDS);
             CPLFree(pChunk);
             CPLFree(pabyChunkNoDataMask);
+            VSIFree(pTempBuffer);
             return CE_Failure;
         }
 
@@ -1191,7 +1209,19 @@ CPLErr GDALRasterBand::RasterIOResampled(
         CPLFree(pabyChunkNoDataMask);
     }
 
+    if( eBufType != eDataType )
+    {
+        CPL_IGNORE_RET_VAL(poMEMDS->GetRasterBand(1)->RasterIO(GF_Read,
+                          nDestXOffVirtual, nDestYOffVirtual,
+                          nBufXSize, nBufYSize,
+                          pData,
+                          nBufXSize, nBufYSize,
+                          eBufType,
+                          nPixelSpace, nLineSpace,
+                          NULL));
+    }
     GDALClose(poMEMDS);
+    VSIFree(pTempBuffer);
 
     return eErr;
 }
@@ -1841,7 +1871,7 @@ namespace {
  */
 
 template <class Tin, class Tout>
-static void GDALCopyWordsGenericT( const Tin* const CPL_RESTRICT pSrcData,
+static void inline GDALCopyWordsGenericT( const Tin* const CPL_RESTRICT pSrcData,
                             int nSrcPixelStride,
                             Tout* const CPL_RESTRICT pDstData,
                             int nDstPixelStride,
@@ -1865,7 +1895,7 @@ static void GDALCopyWordsGenericT( const Tin* const CPL_RESTRICT pSrcData,
 }
 
 template <class Tin, class Tout>
-static void GDALCopyWordsT( const Tin* const CPL_RESTRICT pSrcData,
+static void inline GDALCopyWordsT( const Tin* const CPL_RESTRICT pSrcData,
                             int nSrcPixelStride,
                             Tout* const CPL_RESTRICT pDstData,
                             int nDstPixelStride,
@@ -1877,7 +1907,7 @@ static void GDALCopyWordsT( const Tin* const CPL_RESTRICT pSrcData,
 }
 
 template <class Tin, class Tout>
-static void GDALCopyWordsT_4atatime( const Tin* const CPL_RESTRICT pSrcData,
+static void inline GDALCopyWordsT_4atatime( const Tin* const CPL_RESTRICT pSrcData,
                                      int nSrcPixelStride,
                                      Tout* const CPL_RESTRICT pDstData,
                                      int nDstPixelStride,
