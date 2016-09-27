@@ -92,7 +92,7 @@ protected:
 
     /**
      * @brief read geometry from CAD file
-     * @param iLayerIndex
+     * @param iLayerIndex layer index (counts from 0)
      * @param dHandle Handle of CAD object
      * @param dBlockRefHandle Handle of BlockRef (0 if geometry is not in block reference)
      * @return NULL if failed or pointer which mast be feed by user
