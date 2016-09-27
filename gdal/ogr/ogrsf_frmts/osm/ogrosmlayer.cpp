@@ -303,7 +303,7 @@ int OGROSMLayer::TestCapability( const char * pszCap )
 /*                             AddToArray()                             */
 /************************************************************************/
 
-int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
+bool OGROSMLayer::AddToArray( OGRFeature* poFeature, int bCheckFeatureThreshold )
 {
     if( bCheckFeatureThreshold && nFeatureArraySize > MAX_THRESHOLD)
     {
@@ -315,7 +315,7 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
                     GetName());
         }
         bHasWarnedTooManyFeatures = true;
-        return FALSE;
+        return false;
     }
 
     if (nFeatureArraySize == nFeatureArrayMaxSize)
@@ -329,13 +329,13 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "For layer %s, cannot resize feature array to %d features",
                      GetName(), nFeatureArrayMaxSize);
-            return FALSE;
+            return false;
         }
         papoFeatures = papoNewFeatures;
     }
     papoFeatures[nFeatureArraySize ++] = poFeature;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -374,7 +374,7 @@ int  OGROSMLayer::AddFeature(OGRFeature* poFeature,
         && (m_poAttrQuery == NULL || bAttrFilterAlreadyEvaluated
             || m_poAttrQuery->Evaluate( poFeature )) )
     {
-        if (!AddToArray(poFeature, bCheckFeatureThreshold))
+        if( !AddToArray(poFeature, bCheckFeatureThreshold) )
         {
             delete poFeature;
             return FALSE;
@@ -528,7 +528,7 @@ static int OGROSMFormatForHSTORE(const char* pszV, char* pszAllTags)
 
 void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                                     GIntBig nID,
-                                    int bIsWayID,
+                                    bool bIsWayID,
                                     unsigned int nTags, OSMTag* pasTags,
                                     OSMInfo* psInfo)
 {
