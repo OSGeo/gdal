@@ -117,7 +117,8 @@ class OGROSMLayer : public OGRLayer
 
     bool                  bUserInterested;
 
-    int                  AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold);
+    bool                  AddToArray( OGRFeature* poFeature,
+                                      int bCheckFeatureThreshold );
 
     int                   AddInOtherOrAllTags(const char* pszK);
 
@@ -189,7 +190,7 @@ class OGROSMLayer : public OGRLayer
 
     void                SetFieldsFromTags(OGRFeature* poFeature,
                                           GIntBig nID,
-                                          int bIsWayID,
+                                          bool bIsWayID,
                                           unsigned int nTags, OSMTag* pasTags,
                                           OSMInfo* psInfo);
 
@@ -405,18 +406,18 @@ class OGROSMDataSource : public OGRDataSource
                                        OSMInfo* psInfo );
 
     bool                ParseConf(char** papszOpenOptions);
-    int                 CreateTempDB();
+    bool                CreateTempDB();
     bool                SetDBOptions();
     bool                SetCacheSize();
     bool                CreatePreparedStatements();
     void                CloseDB();
 
-    int                 IndexPoint(OSMNode* psNode);
-    int                 IndexPointSQLite(OSMNode* psNode);
+    bool                IndexPoint( OSMNode* psNode );
+    bool                IndexPointSQLite( OSMNode* psNode );
     bool                FlushCurrentSector();
     bool                FlushCurrentSectorCompressedCase();
     bool                FlushCurrentSectorNonCompressedCase();
-    bool                IndexPointCustom(OSMNode* psNode);
+    bool                IndexPointCustom( OSMNode* psNode );
 
     void                IndexWay(GIntBig nWayID, bool bIsArea,
                                  unsigned int nTags, IndexedKVP* pasTags,
@@ -473,6 +474,7 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 Open ( const char* pszFilename, char** papszOpenOptions );
 
+    // TODO(schwehr): Should ResetReading be a virtual void like the other calls?
     int                 ResetReading();
     bool                ParseNextChunk(int nIdxLayer);
     OGRErr              GetExtent( OGREnvelope *psExtent );

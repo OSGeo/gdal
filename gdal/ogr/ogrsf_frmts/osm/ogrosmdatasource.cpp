@@ -449,10 +449,10 @@ static const GByte abyBitsCount[] = {
 4,5,5,6,5,6,6,7,5,6,6,7,6,7,7,8
 };
 
-int OGROSMDataSource::IndexPoint(OSMNode* psNode)
+bool OGROSMDataSource::IndexPoint( OSMNode* psNode )
 {
     if( !bIndexPoints )
-        return TRUE;
+        return true;
 
     if( bCustomIndexing)
         return IndexPointCustom(psNode);
@@ -464,7 +464,7 @@ int OGROSMDataSource::IndexPoint(OSMNode* psNode)
 /*                          IndexPointSQLite()                          */
 /************************************************************************/
 
-int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
+bool OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
 {
     sqlite3_bind_int64( hInsertNodeStmt, 1, psNode->nID );
 
@@ -475,7 +475,7 @@ int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
     sqlite3_bind_blob( hInsertNodeStmt, 2, &sLonLat, sizeof(sLonLat),
                        SQLITE_STATIC );
 
-    int rc = sqlite3_step( hInsertNodeStmt );
+    const int rc = sqlite3_step( hInsertNodeStmt );
     sqlite3_reset( hInsertNodeStmt );
     if( !(rc == SQLITE_OK || rc == SQLITE_DONE) )
     {
@@ -484,7 +484,7 @@ int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
             psNode->nID, sqlite3_errmsg(hDB));
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -828,7 +828,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 const char* pszK = pasTags[j].pszK;
                 if( papoLayers[IDX_LYR_POINTS]->IsSignificantKey(pszK) )
                 {
-                    bInterestingTag = TRUE;
+                    bInterestingTag = true;
                     break;
                 }
             }
@@ -843,7 +843,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 new OGRPoint(pasNodes[i].dfLon, pasNodes[i].dfLat));
 
             papoLayers[IDX_LYR_POINTS]->SetFieldsFromTags(
-                poFeature, pasNodes[i].nID, FALSE, pasNodes[i].nTags,
+                poFeature, pasNodes[i].nID, false, pasNodes[i].nTags,
                 pasTags, &pasNodes[i].sInfo );
 
             int bFilteredOut = FALSE;
@@ -1032,7 +1032,7 @@ static GIntBig ReadVarSInt64(GByte** ppabyPtr)
 /*                           DecompressSector()                         */
 /************************************************************************/
 
-static int DecompressSector(GByte* pabyIn, int nSectorSize, GByte* pabyOut)
+static bool DecompressSector( GByte* pabyIn, int nSectorSize, GByte* pabyOut )
 {
     GByte* pabyPtr = pabyIn;
     LonLat* pasLonLatOut = (LonLat*) pabyOut;
@@ -1069,7 +1069,7 @@ static int DecompressSector(GByte* pabyIn, int nSectorSize, GByte* pabyOut)
 
     int nRead = (int)(pabyPtr - pabyIn);
     nRead = ROUND_COMPRESS_SIZE(nRead);
-    return( nRead == nSectorSize );
+    return nRead == nSectorSize;
 }
 
 /************************************************************************/
@@ -1877,7 +1877,8 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         poFeature = new OGRFeature(papoLayers[IDX_LYR_LINES]->GetLayerDefn());
 
         papoLayers[IDX_LYR_LINES]->SetFieldsFromTags(
-            poFeature, psWay->nID, FALSE, psWay->nTags, psWay->pasTags, &psWay->sInfo );
+            poFeature, psWay->nID, false, psWay->nTags, psWay->pasTags,
+            &psWay->sInfo );
 
         /* Optimization : if we have an attribute filter, that does not require geometry, */
         /* and if we don't need to index ways, then we can just evaluate the attribute */
@@ -2483,7 +2484,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
 
         papoLayers[iCurLayer]->SetFieldsFromTags( poFeature,
                                                   psRelation->nID,
-                                                  FALSE,
+                                                  false,
                                                   psRelation->nTags,
                                                   psRelation->pasTags,
                                                   &psRelation->sInfo);
@@ -2526,7 +2527,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
             papoLayers[iCurLayer]->SetFieldsFromTags(
                 poFeature,
                 psRelation->nID,
-                FALSE,
+                false,
                 nExtraTags ? nExtraTags : psRelation->nTags,
                 nExtraTags ? pasExtraTags : psRelation->pasTags,
                 &psRelation->sInfo);
@@ -2626,7 +2627,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
 
             papoLayers[IDX_LYR_MULTIPOLYGONS]->SetFieldsFromTags( poFeature,
                                                                   id,
-                                                                  TRUE,
+                                                                  true,
                                                                   nTags,
                                                                   pasTags,
                                                                   &sInfo);
@@ -2872,7 +2873,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
         }
     }
 
-    const int bRet = CreateTempDB();
+    const bool bRet = CreateTempDB();
     if( bRet )
     {
         CPLString osInterestLayers = GetInterestLayersForDSName(GetName());
@@ -2888,7 +2889,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
 /*                             CreateTempDB()                           */
 /************************************************************************/
 
-int OGROSMDataSource::CreateTempDB()
+bool OGROSMDataSource::CreateTempDB()
 {
     char* pszErrMsg = NULL;
 
@@ -2978,12 +2979,12 @@ int OGROSMDataSource::CreateTempDB()
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "sqlite3_open(%s) failed: %s",
                   osTmpDBName.c_str(), sqlite3_errmsg( hDB ) );
-        return FALSE;
+        return false;
     }
 
     if( !SetDBOptions() )
     {
-        return FALSE;
+        return false;
     }
 
     if( !bIsExisting )
@@ -2997,7 +2998,7 @@ int OGROSMDataSource::CreateTempDB()
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to create table nodes : %s", pszErrMsg );
             sqlite3_free( pszErrMsg );
-            return FALSE;
+            return false;
         }
 
         rc = sqlite3_exec(
@@ -3009,7 +3010,7 @@ int OGROSMDataSource::CreateTempDB()
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to create table ways : %s", pszErrMsg );
             sqlite3_free( pszErrMsg );
-            return FALSE;
+            return false;
         }
 
         rc = sqlite3_exec(
@@ -3022,12 +3023,13 @@ int OGROSMDataSource::CreateTempDB()
                       "Unable to create table polygons_standalone : %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
-            return FALSE;
+            return false;
         }
     }
 
     return CreatePreparedStatements();
 }
+
 /************************************************************************/
 /*                            SetDBOptions()                            */
 /************************************************************************/
@@ -3598,10 +3600,10 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
                         const char* pszSQL = strchr(pszLine, '=') + 1;
                         while( *pszSQL == ' ' )
                             pszSQL ++;
-                        int bInQuotes = FALSE;
+                        bool bInQuotes = false;
                         if( *pszSQL == '"' )
                         {
-                            bInQuotes = TRUE;
+                            bInQuotes = true;
                             pszSQL ++;
                         }
                         oAttributes[i].osSQL = pszSQL;

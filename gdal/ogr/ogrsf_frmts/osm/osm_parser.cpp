@@ -117,7 +117,7 @@ struct _OSMContext
 
     VSILFILE      *fp;
 
-    int            bPBF;
+    bool           bPBF;
 
     double         dfLeft;
     double         dfRight;
@@ -149,8 +149,8 @@ typedef enum
 } BlobType;
 
 static
-int ReadBlobHeader(GByte* pabyData, GByte* pabyDataLimit,
-                   unsigned int* pnBlobSize, BlobType* peBlobType)
+bool ReadBlobHeader( GByte* pabyData, GByte* pabyDataLimit,
+                     unsigned int* pnBlobSize, BlobType* peBlobType )
 {
     *pnBlobSize = 0;
     *peBlobType = BLOB_UNKNOWN;
@@ -199,7 +199,7 @@ int ReadBlobHeader(GByte* pabyData, GByte* pabyDataLimit,
     return pabyData == pabyDataLimit;
 
 end_error:
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -212,8 +212,8 @@ end_error:
 #define HEADERBBOX_IDX_BOTTOM   4
 
 static
-int ReadHeaderBBox(GByte* pabyData, GByte* pabyDataLimit,
-                   OSMContext* psCtxt)
+bool ReadHeaderBBox( GByte* pabyData, GByte* pabyDataLimit,
+                     OSMContext* psCtxt )
 {
     psCtxt->dfLeft = 0.0;
     psCtxt->dfRight = 0.0;
@@ -266,7 +266,7 @@ int ReadHeaderBBox(GByte* pabyData, GByte* pabyDataLimit,
 
 end_error:
     /* printf("<ReadHeaderBBox\n"); */
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -285,8 +285,8 @@ end_error:
 #define OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL   34
 
 static
-int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
-                  OSMContext* psCtxt)
+bool ReadOSMHeader( GByte* pabyData, GByte* pabyDataLimit,
+                    OSMContext* psCtxt )
 {
     char* pszTxt = NULL;
 
@@ -360,7 +360,7 @@ int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
     return pabyData == pabyDataLimit;
 
 end_error:
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -370,8 +370,8 @@ end_error:
 #define READSTRINGTABLE_IDX_STRING  1
 
 static
-int ReadStringTable(GByte* pabyData, GByte* pabyDataLimit,
-                    OSMContext* psCtxt)
+bool ReadStringTable( GByte* pabyData, GByte* pabyDataLimit,
+                      OSMContext* psCtxt )
 {
     char* pszStrBuf = (char*)pabyData;
 
@@ -457,8 +457,8 @@ end_error:
 #define DENSENODES_IDX_KEYVALS      10
 
 static
-int ReadDenseNodes(GByte* pabyData, GByte* pabyDataLimit,
-                   OSMContext* psCtxt)
+bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
+                     OSMContext* psCtxt )
 {
     GByte* pabyDataIDs = NULL;
     GByte* pabyDataIDsLimit = NULL;
@@ -728,12 +728,12 @@ end_error:
 #define INFO_IDX_VISIBLE     6
 
 static
-int ReadOSMInfo(GByte* pabyData, GByte* pabyDataLimit,
-             OSMInfo* psInfo, OSMContext* psContext) CPL_NO_INLINE;
+bool ReadOSMInfo( GByte* pabyData, GByte* pabyDataLimit,
+                  OSMInfo* psInfo, OSMContext* psContext ) CPL_NO_INLINE;
 
 static
-int ReadOSMInfo(GByte* pabyData, GByte* pabyDataLimit,
-             OSMInfo* psInfo, OSMContext* psContext)
+bool ReadOSMInfo( GByte* pabyData, GByte* pabyDataLimit,
+                  OSMInfo* psInfo, OSMContext* psContext )
 {
     /* printf(">ReadOSMInfo\n"); */
     while(pabyData < pabyDataLimit)
@@ -783,7 +783,7 @@ int ReadOSMInfo(GByte* pabyData, GByte* pabyDataLimit,
 end_error:
     /* printf("<ReadOSMInfo\n"); */
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -802,8 +802,8 @@ end_error:
 #define NODE_IDX_INFO    4
 
 static
-int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
-             OSMContext* psCtxt)
+bool ReadNode( GByte* pabyData, GByte* pabyDataLimit,
+               OSMContext* psCtxt )
 {
     OSMNode sNode;
 
@@ -925,12 +925,12 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
 
     /* printf("<ReadNode\n"); */
 
-    return TRUE;
+    return true;
 
 end_error:
     /* printf("<ReadNode\n"); */
 
-    return FALSE;
+    return false;
 }
 
 
@@ -945,8 +945,8 @@ end_error:
 #define WAY_IDX_REFS    8
 
 static
-int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
-            OSMContext* psCtxt)
+bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
+              OSMContext* psCtxt )
 {
     OSMWay sWay;
     sWay.nID = 0;
@@ -1085,12 +1085,12 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
 
     psCtxt->pfnNotifyWay(&sWay, psCtxt, psCtxt->user_data);
 
-    return TRUE;
+    return true;
 
 end_error:
     /* printf("<ReadWay\n"); */
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1106,8 +1106,8 @@ end_error:
 #define RELATION_IDX_TYPES        10
 
 static
-int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
-                 OSMContext* psCtxt)
+bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
+                   OSMContext* psCtxt )
 {
     OSMRelation sRelation;
     sRelation.nID = 0;
@@ -1289,12 +1289,12 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
 
     psCtxt->pfnNotifyRelation(&sRelation, psCtxt, psCtxt->user_data);
 
-    return TRUE;
+    return true;
 
 end_error:
     /* printf("<ReadRelation\n"); */
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1307,8 +1307,8 @@ end_error:
 #define PRIMITIVEGROUP_IDX_RELATIONS  4
 #define PRIMITIVEGROUP_IDX_CHANGESETS 5
 
-typedef int (*PrimitiveFuncType)(GByte* pabyData, GByte* pabyDataLimit,
-                                 OSMContext* psCtxt);
+typedef bool (*PrimitiveFuncType)( GByte* pabyData, GByte* pabyDataLimit,
+                                   OSMContext* psCtxt );
 
 static const PrimitiveFuncType apfnPrimitives[] =
 {
@@ -1319,8 +1319,8 @@ static const PrimitiveFuncType apfnPrimitives[] =
 };
 
 static
-int ReadPrimitiveGroup(GByte* pabyData, GByte* pabyDataLimit,
-                       OSMContext* psCtxt)
+bool ReadPrimitiveGroup( GByte* pabyData, GByte* pabyDataLimit,
+                         OSMContext* psCtxt )
 {
     /* printf(">ReadPrimitiveGroup\n"); */
     while(pabyData < pabyDataLimit)
@@ -1368,8 +1368,8 @@ end_error:
 #define PRIMITIVEBLOCK_IDX_LON_OFFSET       20
 
 static
-int ReadPrimitiveBlock(GByte* pabyData, GByte* pabyDataLimit,
-                       OSMContext* psCtxt)
+bool ReadPrimitiveBlock( GByte* pabyData, GByte* pabyDataLimit,
+                         OSMContext* psCtxt )
 {
     GByte* pabyDataSave = pabyData;
 
@@ -1478,7 +1478,7 @@ int ReadPrimitiveBlock(GByte* pabyData, GByte* pabyDataLimit,
 
 end_error:
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1490,11 +1490,11 @@ end_error:
 #define BLOB_IDX_ZLIB_DATA   3
 
 static
-int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
-             OSMContext* psCtxt)
+bool ReadBlob( GByte* pabyData, unsigned int nDataSize, BlobType eType,
+               OSMContext* psCtxt )
 {
     unsigned int nUncompressedSize = 0;
-    int bRet = TRUE;
+    bool bRet = true;
     GByte* pabyDataLimit = pabyData + nDataSize;
 
     while(pabyData < pabyDataLimit)
@@ -1589,7 +1589,7 @@ int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
     return bRet;
 
 end_error:
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -2046,7 +2046,7 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
             psCtxt->bHasFoundFeature = true;
         }
-        psCtxt->bInNode = FALSE;
+        psCtxt->bInNode = false;
     }
 
     else
@@ -2061,7 +2061,7 @@ static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 
         psCtxt->bHasFoundFeature = true;
 
-        psCtxt->bInWay = FALSE;
+        psCtxt->bInWay = false;
     }
 
     else
@@ -2200,7 +2200,7 @@ OSMContext* OSM_Open( const char* pszFilename,
         {
             if( memcmp(abyHeader + i, "OSMHeader", strlen("OSMHeader") ) == 0 )
             {
-                bPBF = TRUE;
+                bPBF = true;
                 break;
             }
         }
@@ -2355,7 +2355,7 @@ void OSM_ResetReading( OSMContext* psCtxt )
 
         psCtxt->bTryToFetchBounds = true;
         psCtxt->bInNode = false;
-        psCtxt->bInWay = FALSE;
+        psCtxt->bInWay = false;
         psCtxt->bInRelation = false;
     }
 #endif
@@ -2367,7 +2367,7 @@ void OSM_ResetReading( OSMContext* psCtxt )
 
 static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
 {
-    int nRet = FALSE;
+    bool nRet = false;
     GByte abyHeaderSize[4];
     unsigned int nBlobSize = 0;
     BlobType eType;
@@ -2391,7 +2391,8 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
     psCtxt->nBytesRead += nHeaderSize;
 
     memset(psCtxt->pabyBlob + nHeaderSize, 0, EXTRA_BYTES);
-    nRet = ReadBlobHeader(psCtxt->pabyBlob, psCtxt->pabyBlob + nHeaderSize, &nBlobSize, &eType);
+    nRet = ReadBlobHeader(psCtxt->pabyBlob, psCtxt->pabyBlob + nHeaderSize,
+                          &nBlobSize, &eType);
     if (!nRet || eType == BLOB_UNKNOWN)
         GOTO_END_ERROR;
 
