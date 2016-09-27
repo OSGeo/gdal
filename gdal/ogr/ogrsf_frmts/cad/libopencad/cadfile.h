@@ -74,7 +74,7 @@ public:
 
     /**
      * @brief returns NamedObjectDictionary (root) of all others dictionaries
-     * @return pointer to the root CADDictionary
+     * @return root CADDictionary
      */
     virtual CADDictionary GetNOD() = 0;
 
@@ -92,9 +92,9 @@ protected:
 
     /**
      * @brief read geometry from CAD file
-     * @param size_t LayerIndex
-     * @param handle Handle of CAD object
-     * @param handle Handle of BlockRef (0 if geometry is not in block reference)
+     * @param iLayerIndex
+     * @param dHandle Handle of CAD object
+     * @param dBlockRefHandle Handle of BlockRef (0 if geometry is not in block reference)
      * @return NULL if failed or pointer which mast be feed by user
      */
     virtual CADGeometry * GetGeometry( size_t iLayerIndex, long dHandle, long dBlockRefHandle = 0 ) = 0;
