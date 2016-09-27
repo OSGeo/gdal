@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import struct
 import sys
 
 sys.path.append( '../pymod' )
@@ -529,6 +530,7 @@ def rasterio_9():
     if data is None:
         gdaltest.post_reason('failure')
         return 'fail'
+    data_ar = struct.unpack('h' * 10 * 10, data)
     cs = rasterio_9_checksum(data, 10, 10, data_type = gdal.GDT_Int16)
     if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
         gdaltest.post_reason('failure')
@@ -537,6 +539,19 @@ def rasterio_9():
 
     if abs(tab[0] - 1.0) > 1e-5:
         gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Same but query with GDT_Float32. Check that we do not get floating-point
+    # values, since the band type is Byte
+    data = ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Float32,
+                                          buf_xsize = 10,
+                                          buf_ysize = 10,
+                                          resample_alg = gdal.GRIORA_Bilinear)
+
+    data_float32_ar = struct.unpack('f' * 10 * 10, data)
+    if data_ar != data_float32_ar:
+        gdaltest.post_reason('failure')
+        print(data_float32_ar)
         return 'fail'
 
     # Test RasterBand.ReadRaster, with Lanczos
