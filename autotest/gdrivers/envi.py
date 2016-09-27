@@ -307,6 +307,22 @@ def envi_13():
 
     return 'success'
 
+###############################################################################
+# Test that the image file is at the expected size on closing (#6662)
+
+def envi_14():
+
+    gdal.GetDriverByName('ENVI').Create('/vsimem/envi_14.dat', 3, 4, 5, gdal.GDT_Int16)
+
+    gdal.Unlink('/vsimem/envi_14.dat.aux.xml')
+
+    if gdal.VSIStatL('/vsimem/envi_14.dat').size != 3 * 4 * 5 * 2:
+        return 'fail'
+
+    gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_14.dat')
+
+    return 'success'
+
 gdaltest_list = [
     envi_1,
     envi_2,
@@ -321,6 +337,7 @@ gdaltest_list = [
     envi_11,
     envi_12,
     envi_13,
+    envi_14,
     ]
 
 
