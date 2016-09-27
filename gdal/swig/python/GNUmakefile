@@ -28,6 +28,7 @@ clean:
 	-rm -f *.so ./osgeo/*.so
 	-rm -rf dist
 
+SWIGARGS += -threads
 SWIGARGS += -outdir "${PACKAGE_DIR}" 
 
 
