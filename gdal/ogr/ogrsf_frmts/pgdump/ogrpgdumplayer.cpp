@@ -69,7 +69,7 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
     bLaunderColumnNames(true),
     bPreservePrecision(true),
     bUseCopy(USE_COPY_UNSET),
-    bWriteAsHex(bWriteAsHexIn),
+    bWriteAsHex(CPL_TO_BOOL(bWriteAsHexIn)),
     bCopyActive(false),
     bFIDColumnInCopyFields(false),
     bCreateTable(bCreateTableIn),
@@ -679,7 +679,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
 /*                             StartCopy()                              */
 /************************************************************************/
 
-OGRErr OGRPGDumpLayer::StartCopy(int bSetFID)
+OGRErr OGRPGDumpLayer::StartCopy( int bSetFID )
 
 {
     /* Tell the datasource we are now planning to copy data */
@@ -726,9 +726,8 @@ OGRErr OGRPGDumpLayer::EndCopy()
 /*                          BuildCopyFields()                           */
 /************************************************************************/
 
-CPLString OGRPGDumpLayer::BuildCopyFields(int bSetFID)
+CPLString OGRPGDumpLayer::BuildCopyFields( int bSetFID )
 {
-    int     nFIDIndex = -1;
     CPLString osFieldList;
 
     for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
@@ -741,6 +740,7 @@ CPLString OGRPGDumpLayer::BuildCopyFields(int bSetFID)
         osFieldList += OGRPGDumpEscapeColumnName(poGFldDefn->GetNameRef());
     }
 
+    int nFIDIndex = -1;
     bFIDColumnInCopyFields = pszFIDColumn != NULL && bSetFID;
     if( bFIDColumnInCopyFields )
     {
@@ -793,9 +793,8 @@ CPLString OGRPGDumpEscapeColumnName(const char* pszColumnName)
 /*                             EscapeString( )                          */
 /************************************************************************/
 
-CPLString OGRPGDumpEscapeString(
-                                   const char* pszStrValue, int nMaxLength,
-                                   const char* pszFieldName)
+CPLString OGRPGDumpEscapeString( const char* pszStrValue, int nMaxLength,
+                                 const char* pszFieldName )
 {
     CPLString osCommand;
 
@@ -803,7 +802,7 @@ CPLString OGRPGDumpEscapeString(
     osCommand += "'";
 
     int nSrcLen = static_cast<int>(strlen(pszStrValue));
-    int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
+    const int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
 
     if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
     {
@@ -857,16 +856,19 @@ CPLString OGRPGDumpEscapeString(
             pszDestStr[j++] = '\'';
             pszDestStr[j++] = '\'';
         }
-        /* FIXME: at some point (when we drop PostgreSQL < 9.1 support, remove
-           the escaping of backslash and remove 'SET standard_conforming_strings = OFF'
-           inICreateLayer() */
+        // FIXME: at some point (when we drop PostgreSQL < 9.1 support, remove
+        // the escaping of backslash and remove
+        //   'SET standard_conforming_strings = OFF'
+        //  in ICreateLayer().
         else if (pszStrValue[i] == '\\')
         {
             pszDestStr[j++] = '\\';
             pszDestStr[j++] = '\\';
         }
         else
+        {
             pszDestStr[j++] = pszStrValue[i];
+        }
     }
     pszDestStr[j] = 0;
 
@@ -1505,13 +1507,13 @@ CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn* poFieldDefn)
 OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
                                     int bApproxOK )
 {
-    CPLString           osCommand;
-    CPLString           osFieldType;
-    OGRFieldDefn        oField( poFieldIn );
+    CPLString osFieldType;
+    OGRFieldDefn oField( poFieldIn );
 
     // Can be set to NO to test ogr2ogr default behaviour
-    int bAllowCreationOfFieldWithFIDName =
-        CPLTestBool(CPLGetConfigOption("PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME", "YES"));
+    const bool bAllowCreationOfFieldWithFIDName =
+        CPLTestBool(CPLGetConfigOption(
+            "PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME", "YES"));
 
     if( bAllowCreationOfFieldWithFIDName && pszFIDColumn != NULL &&
         EQUAL( oField.GetNameRef(), pszFIDColumn ) &&
@@ -1538,14 +1540,18 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
         if( EQUAL(oField.GetNameRef(),"oid") )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Renaming field 'oid' to 'oid_' to avoid conflict with internal oid field." );
+                      "Renaming field 'oid' to 'oid_' to avoid conflict with "
+                      "internal oid field." );
             oField.SetName( "oid_" );
         }
     }
 
-    const char* pszOverrideType = CSLFetchNameValue(papszOverrideColumnTypes, oField.GetNameRef());
+    const char* pszOverrideType =
+        CSLFetchNameValue(papszOverrideColumnTypes, oField.GetNameRef());
     if( pszOverrideType != NULL )
+    {
         osFieldType = pszOverrideType;
+    }
     else
     {
         osFieldType =
@@ -1558,6 +1564,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
+    CPLString osCommand;
     osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                       pszSqlTableName,
                       OGRPGDumpEscapeColumnName(oField.GetNameRef()).c_str(),
@@ -1591,7 +1598,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
 /************************************************************************/
 
 OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
-                                        CPL_UNUSED int bApproxOK )
+                                        int /* bApproxOK */ )
 {
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if( eType == wkbNone )
@@ -1603,9 +1610,11 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 
     // Check if GEOMETRY_NAME layer creation option was set, but no initial
     // column was created in ICreateLayer()
-    CPLString osGeomFieldName =
-        ( m_osFirstGeometryFieldName.size() ) ? m_osFirstGeometryFieldName :
-                                                CPLString(poGeomFieldIn->GetNameRef());
+    const CPLString osGeomFieldName =
+        !m_osFirstGeometryFieldName.empty()
+        ? m_osFirstGeometryFieldName
+        : CPLString(poGeomFieldIn->GetNameRef());
+
     m_osFirstGeometryFieldName = ""; // reset for potential next geom columns
 
     OGRGeomFieldDefn oTmpGeomFieldDefn( poGeomFieldIn );
