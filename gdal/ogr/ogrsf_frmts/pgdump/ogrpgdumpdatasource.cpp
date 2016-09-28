@@ -42,9 +42,9 @@ OGRPGDumpDataSource::OGRPGDumpDataSource( const char* pszNameIn,
     nLayers(0),
     papoLayers(NULL),
     pszName(CPLStrdup(pszNameIn)),
-    bTriedOpen(FALSE),
+    bTriedOpen(false),
     fp(NULL),
-    bInTransaction(FALSE),
+    bInTransaction(false),
     poLayerInCopyMode(NULL),
     pszEOL("\n")
 {
@@ -105,9 +105,9 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
 
 void OGRPGDumpDataSource::LogStartTransaction()
 {
-    if (bInTransaction)
+    if( bInTransaction )
         return;
-    bInTransaction = TRUE;
+    bInTransaction = true;
     Log("BEGIN");
 }
 
@@ -119,9 +119,9 @@ void OGRPGDumpDataSource::LogCommit()
 {
     EndCopy();
 
-    if (!bInTransaction)
+    if( !bInTransaction )
         return;
-    bInTransaction = FALSE;
+    bInTransaction = false;
     Log("COMMIT");
 }
 
@@ -129,10 +129,11 @@ void OGRPGDumpDataSource::LogCommit()
 /*                         OGRPGCommonLaunderName()                     */
 /************************************************************************/
 
-char *OGRPGCommonLaunderName( const char *pszSrcName, const char* pszDebugPrefix )
+char *OGRPGCommonLaunderName( const char *pszSrcName,
+                              const char* pszDebugPrefix )
 
 {
-    char    *pszSafeName = CPLStrdup( pszSrcName );
+    char *pszSafeName = CPLStrdup( pszSrcName );
 
     for( int i = 0; pszSafeName[i] != '\0'; i++ )
     {
@@ -159,15 +160,15 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
                                   char ** papszOptions )
 
 {
-    CPLString            osCommand;
-    const char          *pszGeomType = NULL;
-    char                *pszTableName = NULL;
-    char                *pszSchemaName = NULL;
-    int                  bHavePostGIS = TRUE;
-    int                 GeometryTypeFlags = 0;
+    CPLString osCommand;
+    const char *pszGeomType = NULL;
+    char *pszTableName = NULL;
+    char *pszSchemaName = NULL;
+    bool bHavePostGIS = true;
+    int GeometryTypeFlags = 0;
 
     const char* pszFIDColumnNameIn = CSLFetchNameValue(papszOptions, "FID");
-    CPLString osFIDColumnName, osFIDColumnNameEscaped;
+    CPLString osFIDColumnName;
     if (pszFIDColumnNameIn == NULL)
         osFIDColumnName = "ogc_fid";
     else
@@ -183,7 +184,8 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
             osFIDColumnName = pszFIDColumnNameIn;
         }
     }
-    osFIDColumnNameEscaped = OGRPGDumpEscapeColumnName(osFIDColumnName);
+    const CPLString osFIDColumnNameEscaped =
+        OGRPGDumpEscapeColumnName(osFIDColumnName);
 
     if (STARTS_WITH(pszLayerName, "pg"))
     {
@@ -242,7 +244,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     if (bNoneAsUnknown && eType == wkbNone)
         eType = wkbUnknown;
     else if (eType == wkbNone)
-        bHavePostGIS = FALSE;
+        bHavePostGIS = false;
 
     int bExtractSchemaFromLayerName = CPLTestBool(CSLFetchNameValueDef(
                                     papszOptions, "EXTRACT_SCHEMA_FROM_LAYER_NAME", "YES"));
@@ -394,7 +396,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     const char *pszGeometryType = OGRToOGCGeomType(eType);
 
     const char *pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
-    if( bHavePostGIS && !EQUAL(pszGeomType, "geography"))
+    if( bHavePostGIS && !EQUAL(pszGeomType, "geography") )
     {
         if( pszGFldName == NULL )
             pszGFldName = "wkb_geometry";
@@ -433,10 +435,12 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         osCreateTable.Printf("CREATE TEMPORARY TABLE \"%s\"", pszTableName);
     }
     else
+    {
         osCreateTable.Printf("CREATE TABLE%s \"%s\".\"%s\"",
-                             CPLFetchBool( papszOptions, "UNLOGGED", FALSE ) ?
+                             CPLFetchBool( papszOptions, "UNLOGGED", false ) ?
                              " UNLOGGED": "",
                              pszSchemaName, pszTableName);
+    }
 
     if( !bHavePostGIS )
     {
@@ -545,7 +549,8 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
     poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
-    const char* pszOverrideColumnTypes = CSLFetchNameValue( papszOptions, "COLUMN_TYPES" );
+    const char* pszOverrideColumnTypes =
+        CSLFetchNameValue( papszOptions, "COLUMN_TYPES" );
     poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);
     poLayer->SetUnknownSRSId(nUnknownSRSId);
     poLayer->SetForcedSRSId(nForcedSRSId);
@@ -619,26 +624,26 @@ OGRLayer *OGRPGDumpDataSource::GetLayer( int iLayer )
 /*                                  Log()                               */
 /************************************************************************/
 
-int  OGRPGDumpDataSource::Log(const char* pszStr, int bAddSemiColumn)
+bool OGRPGDumpDataSource::Log( const char* pszStr, bool bAddSemiColumn )
 {
     if (fp == NULL)
     {
-        if (bTriedOpen)
-            return FALSE;
-        bTriedOpen = TRUE;
+        if( bTriedOpen )
+            return false;
+        bTriedOpen = true;
         fp = VSIFOpenL(pszName, "wb");
         if (fp == NULL)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszName);
-            return FALSE;
+            return false;
         }
     }
 
-    if (bAddSemiColumn)
+    if( bAddSemiColumn )
         VSIFPrintfL(fp, "%s;%s", pszStr, pszEOL);
     else
         VSIFPrintfL(fp, "%s%s", pszStr, pszEOL);
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
