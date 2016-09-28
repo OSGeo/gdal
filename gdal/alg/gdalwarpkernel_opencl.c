@@ -938,10 +938,10 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
 "vecf cubicConvolution(float dist1, float dist2, float dist3,\n"
                        "vecf f0, vecf f1, vecf f2, vecf f3)\n"
 "{\n"
-    "return   (  -f0 +    f1  - f2 + f3) * dist3\n"
-           "+ (2.0f*(f0 - f1) + f2 - f3) * dist2\n"
-           "+ (  -f0          + f2     ) * dist1\n"
-           "+             f1;\n"
+   "return (  f1\n"
+       "+ 0.5f * (dist1*(f2 - f0)\n"
+               "+ dist2*(2.0f*f0 - 5.0f*f1 + 4.0f*f2 - f3)\n"
+               "+ dist3*(3.0f*(f1 - f2) + f3 - f0)));\n"
 "}\n"
 
 // ************************ Cubic ************************
