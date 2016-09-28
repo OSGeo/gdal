@@ -1972,7 +1972,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     OGRPGCommonAppendCopyFieldsExceptGeom(osCommand,
                                           poFeature,
                                           pszFIDColumn,
-                                          bFIDColumnInCopyFields,
+                                          CPL_TO_BOOL(bFIDColumnInCopyFields),
                                           (OGRPGCommonEscapeStringCbk)OGRPGEscapeString,
                                           hPGConn);
 
@@ -2158,7 +2158,9 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         osFieldType = pszOverrideType;
     else
     {
-        osFieldType = OGRPGCommonLayerGetType(oField, bPreservePrecision, bApproxOK);
+        osFieldType = OGRPGCommonLayerGetType(oField,
+                                              CPL_TO_BOOL(bPreservePrecision),
+                                              CPL_TO_BOOL(bApproxOK));
         if (osFieldType.size() == 0)
             return OGRERR_FAILURE;
     }
@@ -2517,8 +2519,8 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG))
     {
         CPLString osFieldType = OGRPGCommonLayerGetType(oField,
-                                                       bPreservePrecision,
-                                                       TRUE);
+                                                       CPL_TO_BOOL(bPreservePrecision),
+                                                       true);
         if (osFieldType.size() == 0)
         {
             poDS->SoftRollbackTransaction();

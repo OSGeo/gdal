@@ -500,7 +500,7 @@ OGRErr OGRCARTOTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         osSQL.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                     OGRCARTOEscapeIdentifier(osName).c_str(),
                     OGRCARTOEscapeIdentifier(oField.GetNameRef()).c_str(),
-                    OGRPGCommonLayerGetType(oField, FALSE, TRUE).c_str() );
+                    OGRPGCommonLayerGetType(oField, false, true).c_str() );
         if( !oField.IsNullable() )
             osSQL += " NOT NULL";
         if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
@@ -1445,7 +1445,7 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
         {
             osSQL += OGRCARTOEscapeIdentifier(poFieldDefn->GetNameRef());
             osSQL += " ";
-            osSQL += OGRPGCommonLayerGetType(*poFieldDefn, FALSE, TRUE);
+            osSQL += OGRPGCommonLayerGetType(*poFieldDefn, false, true);
             if( !poFieldDefn->IsNullable() )
                 osSQL += " NOT NULL";
             if( poFieldDefn->GetDefault() != NULL && !poFieldDefn->IsDefaultDriverSpecific() )

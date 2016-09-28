@@ -520,7 +520,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     }
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
+    bool bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
     if( bCreateTable && bHavePostGIS && bCreateSpatialIndex )
     {
 /* -------------------------------------------------------------------- */
