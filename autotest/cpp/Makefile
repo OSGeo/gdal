@@ -18,7 +18,7 @@ endif
 
 LDFLAGS = $(shell gdal-config --libs)
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting
 
 all: $(PROGS)
 
@@ -40,6 +40,7 @@ quick_test:
 	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
 	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
 	./testblockcachelimits --debug ON
+	./testmultithreadedwriting
 	./testdestroy
 
 OBJ = \
@@ -82,6 +83,9 @@ testblockcache: testblockcache.cpp
 	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 testblockcachewrite: testblockcachewrite.cpp
+	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+testmultithreadedwriting: testmultithreadedwriting.cpp
 	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 testblockcachelimits: testblockcachelimits.cpp
