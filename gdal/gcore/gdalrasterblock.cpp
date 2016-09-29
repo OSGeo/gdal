@@ -969,9 +969,10 @@ CPLErr GDALRasterBlock::Internalize()
  */
 
 void GDALRasterBlock::MarkDirty()
-
 {
-    bDirty = TRUE;
+    bDirty = true;
+    if( poBand )
+        poBand->InitRWLock();
 }
 
 
