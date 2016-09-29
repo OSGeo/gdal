@@ -83,12 +83,11 @@
  *  on the continental slope Marine Geodesy, 2007, 30, 3-35
  ****************************************************************************/
 
-#include "cpl_port.h"  // Must be first.
 #include "cpl_vsi.h"
 #include <algorithm>
 #include <float.h>
 #include <cstdlib>
-#include <cmath>
+#include <math.h>
 #include <limits>
 
 #include "cpl_conv.h"
