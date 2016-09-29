@@ -5835,8 +5835,8 @@ void GDALDataset::InitRWLock()
     {
         if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
         {
-            EnterReadWrite(GF_Write);
-            LeaveReadWrite();
+            if( EnterReadWrite(GF_Write) )
+                LeaveReadWrite();
         }
     }
 }
