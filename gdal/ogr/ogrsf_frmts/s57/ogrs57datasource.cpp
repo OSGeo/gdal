@@ -210,7 +210,7 @@ int OGRS57DataSource::Open( const char * pszFilename )
                              GetOption(S57O_RECODE_BY_DSSI) );
 
     S57Reader *poModule = new S57Reader( pszFilename );
-    int bRet = poModule->SetOptions( papszReaderOptions );
+    bool bRet = poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
 
     if( !bRet )

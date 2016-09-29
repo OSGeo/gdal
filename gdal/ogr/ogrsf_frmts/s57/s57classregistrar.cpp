@@ -96,10 +96,10 @@ S57ClassContentExplorer::~S57ClassContentExplorer()
 /*                              FindFile()                              */
 /************************************************************************/
 
-int S57ClassRegistrar::FindFile( const char *pszTarget,
-                                 const char *pszDirectory,
-                                 int bReportErr,
-                                 VSILFILE **pfp )
+bool S57ClassRegistrar::FindFile( const char *pszTarget,
+                                  const char *pszDirectory,
+                                  bool bReportErr,
+                                  VSILFILE **pfp )
 
 {
     const char *pszFilename = NULL;
@@ -160,17 +160,17 @@ const char *S57ClassRegistrar::ReadLine( VSILFILE * fp )
         papszNextLine = NULL;
         return NULL;
     }
-    else
-        return *(papszNextLine++);
+
+    return *(papszNextLine++);
 }
 
 /************************************************************************/
 /*                              LoadInfo()                              */
 /************************************************************************/
 
-int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
-                                 const char * pszProfile,
-                                 int bReportErr )
+bool S57ClassRegistrar::LoadInfo( const char * pszDirectory,
+                                  const char * pszProfile,
+                                  bool bReportErr )
 
 {
     if( pszDirectory == NULL )
@@ -202,7 +202,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 
     VSILFILE *fp = NULL;
     if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Skip the line defining the column titles.                       */
@@ -217,7 +217,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
                   "s57objectclasses columns don't match expected format!\n" );
         if( fp != NULL )
             VSIFCloseL( fp );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -237,7 +237,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 
     nClasses = apszClassesInfo.size();
     if( nClasses == 0 )
-        return FALSE;
+        return false;
 
 /* ==================================================================== */
 /*      Read the attributes list.                                       */
@@ -261,7 +261,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     }
 
     if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Skip the line defining the column titles.                       */
@@ -275,7 +275,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
                   "s57attributes columns don't match expected format!\n" );
         if( fp != NULL )
             VSIFCloseL( fp );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -339,18 +339,18 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
         }
     } while( bModified );
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                         SelectClassByIndex()                         */
 /************************************************************************/
 
-int S57ClassContentExplorer::SelectClassByIndex( int nNewIndex )
+bool S57ClassContentExplorer::SelectClassByIndex( int nNewIndex )
 
 {
     if( nNewIndex < 0 || nNewIndex >= poRegistrar->nClasses )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have our cache of class information field lists?          */
@@ -372,14 +372,14 @@ int S57ClassContentExplorer::SelectClassByIndex( int nNewIndex )
 
     iCurrentClass = nNewIndex;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                             SelectClass()                            */
 /************************************************************************/
 
-int S57ClassContentExplorer::SelectClass( int nOBJL )
+bool S57ClassContentExplorer::SelectClass( int nOBJL )
 
 {
     for( int i = 0; i < poRegistrar->nClasses; i++ )
@@ -395,7 +395,7 @@ int S57ClassContentExplorer::SelectClass( int nOBJL )
 /*                            SelectClass()                             */
 /************************************************************************/
 
-int S57ClassContentExplorer::SelectClass( const char *pszAcronym )
+bool S57ClassContentExplorer::SelectClass( const char *pszAcronym )
 
 {
     for( int i = 0; i < poRegistrar->nClasses; i++ )
@@ -404,10 +404,10 @@ int S57ClassContentExplorer::SelectClass( const char *pszAcronym )
             continue;
 
         if( strcmp(GetAcronym(),pszAcronym) == 0 )
-            return TRUE;
+            return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
