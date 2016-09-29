@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import copy
 import os
 import sys
 from osgeo import gdal
@@ -2127,6 +2128,315 @@ def nitf_71():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test writing and reading RPC00B
+
+def compare_rpc(src_md, md):
+    # Check that we got data with the expected precision
+    for key in src_md:
+        if key == 'ERR_BIAS' or key == 'ERR_RAND':
+            continue
+        if key not in md:
+            gdaltest.post_reason('fail: %s missing' % key)
+            print(md)
+            return 'fail'
+        if 'COEFF' in key:
+            expected = [ float(v) for v in src_md[key].strip().split(' ') ]
+            found =  [ float(v) for v in md[key].strip().split(' ') ]
+            if expected != found:
+                gdaltest.post_reason('fail: %s value is not the one expected' % key)
+                print(md)
+                print(found)
+                print(expected)
+                return 'fail'
+        elif float(src_md[key]) != float(md[key]):
+            gdaltest.post_reason('fail: %s value is not the one expected' % key)
+            print(md)
+            return 'fail'
+    return 'success'
+
+def nitf_72():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    # Use full precision
+    src_md_max_precision = {
+        'ERR_BIAS' : '1234.56',
+        'ERR_RAND' : '2345.67',
+        'LINE_OFF' : '345678',
+        'SAMP_OFF' : '45678',
+        'LAT_OFF' : '-89.8765',
+        'LONG_OFF' : '-179.1234',
+        'HEIGHT_OFF' : '-9876',
+        'LINE_SCALE' : '987654',
+        'SAMP_SCALE' : '67890',
+        'LAT_SCALE' : '-12.3456',
+        'LONG_SCALE' : '-123.4567',
+        'HEIGHT_SCALE' : '-1234',
+        'LINE_NUM_COEFF' : '0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'LINE_DEN_COEFF' : '1 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'SAMP_NUM_COEFF' : '2 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'SAMP_DEN_COEFF' : '3 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+    }
+    src_md = src_md_max_precision
+    src_ds.SetMetadata(src_md, 'RPC')
+
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
+
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail: did not expect warning')
+        return 'fail'
+
+    if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is not None:
+        gdaltest.post_reason('fail: PAM file not expected')
+        f = gdal.VSIFOpenL('/vsimem/nitf_72.ntf.aux.xml', 'rb')
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        print(str(data))
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/nitf_72.ntf')
+    md = ds.GetMetadata('RPC')
+    RPC00B = ds.GetMetadataItem('RPC00B', 'TRE')
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
+
+    if not compare_rpc(src_md, md):
+        return 'fail'
+
+    expected_RPC00B_max_precision = '11234.562345.6734567845678-89.8765-179.1234-987698765467890-12.3456-123.4567-1234+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+1.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+2.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+3.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9'
+    if RPC00B != expected_RPC00B_max_precision:
+        gdaltest.post_reason('fail: did not get expected RPC00B')
+        print(RPC00B)
+        return 'fail'
+
+    # Test without ERR_BIAS and ERR_RAND
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_md = copy.copy(src_md_max_precision)
+    del src_md['ERR_BIAS']
+    del src_md['ERR_RAND']
+    src_ds.SetMetadata(src_md, 'RPC')
+
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
+
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail: did not expect warning')
+        return 'fail'
+
+    if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is not None:
+        gdaltest.post_reason('fail: PAM file not expected')
+        f = gdal.VSIFOpenL('/vsimem/nitf_72.ntf.aux.xml', 'rb')
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        print(str(data))
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/nitf_72.ntf')
+    md = ds.GetMetadata('RPC')
+    RPC00B = ds.GetMetadataItem('RPC00B', 'TRE')
+    ds = None
+
+    expected_RPC00B = '10000.000000.0034567845678-89.8765-179.1234-987698765467890-12.3456-123.4567-1234+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+1.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+2.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+3.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9'
+    if RPC00B != expected_RPC00B:
+        gdaltest.post_reason('fail: did not get expected RPC00B')
+        print(RPC00B)
+        return 'fail'
+
+    # Test that direct RPC00B copy works
+    src_nitf_ds = gdal.Open('/vsimem/nitf_72.ntf')
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72_copy.ntf', src_nitf_ds)
+    src_nitf_ds = None
+
+    ds = gdal.Open('/vsimem/nitf_72_copy.ntf')
+    md = ds.GetMetadata('RPC')
+    RPC00B = ds.GetMetadataItem('RPC00B', 'TRE')
+    ds = None
+    if RPC00B != expected_RPC00B:
+        gdaltest.post_reason('fail: did not get expected RPC00B')
+        print(RPC00B)
+        return 'fail'
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72_copy.ntf')
+
+
+    # Test that RPC00B = NO works
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options = ['RPC00B=NO'] )
+
+    if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is None:
+        gdaltest.post_reason('fail: PAM file was expected')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/nitf_72.ntf')
+    md = ds.GetMetadata('RPC')
+    RPC00B = ds.GetMetadataItem('RPC00B', 'TRE')
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
+    if RPC00B is not None:
+        gdaltest.post_reason('fail: did not expect RPC00B')
+        print(RPC00B)
+        return 'fail'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    # Test padding
+    src_md = {
+        'ERR_BIAS' : '123',
+        'ERR_RAND' : '234',
+        'LINE_OFF' : '3456',
+        'SAMP_OFF' : '4567',
+        'LAT_OFF' : '8',
+        'LONG_OFF' : '17',
+        'HEIGHT_OFF' : '987',
+        'LINE_SCALE' : '98765',
+        'SAMP_SCALE' : '6789',
+        'LAT_SCALE' : '12',
+        'LONG_SCALE' : '109',
+        'HEIGHT_SCALE' : '34',
+        'LINE_NUM_COEFF' : '0 9.87e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'LINE_DEN_COEFF' : '1 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'SAMP_NUM_COEFF' : '2 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+        'SAMP_DEN_COEFF' : '3 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9',
+    }
+    src_ds.SetMetadata(src_md, 'RPC')
+
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
+
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail: did not expect warning')
+        return 'fail'
+
+    if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is not None:
+        gdaltest.post_reason('fail: PAM file not expected')
+        f = gdal.VSIFOpenL('/vsimem/nitf_72.ntf.aux.xml', 'rb')
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        print(str(data))
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/nitf_72.ntf')
+    md = ds.GetMetadata('RPC')
+    RPC00B = ds.GetMetadataItem('RPC00B', 'TRE')
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
+
+    if not compare_rpc(src_md, md):
+        return 'fail'
+
+    expected_RPC00B = '10123.000234.0000345604567+08.0000+017.0000+098709876506789+12.0000+109.0000+0034+0.000000E+0+9.870000E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+1.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+2.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+3.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9'
+    if RPC00B != expected_RPC00B:
+        gdaltest.post_reason('fail: did not get expected RPC00B')
+        print(RPC00B)
+        return 'fail'
+
+
+    # Test loss of precision
+    for key in ('LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF', 'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE', 'LONG_SCALE', 'HEIGHT_SCALE' ):
+        src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+        src_md = copy.copy(src_md_max_precision)
+        if src_md[key].find('.') < 0:
+            src_md[key] += '.1'
+        else:
+            src_md[key] += '1'
+
+        src_ds.SetMetadata(src_md, 'RPC')
+
+        with gdaltest.error_handler():
+            ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
+        if ds is None:
+            gdaltest.post_reason('fail: expected a dataset')
+            return 'fail'
+        ds = None
+
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail: expected a warning')
+            return 'fail'
+
+        if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is None:
+            gdaltest.post_reason('fail: PAM file was expected')
+            return 'fail'
+        gdal.Unlink('/vsimem/nitf_72.ntf.aux.xml')
+
+        ds = gdal.Open('/vsimem/nitf_72.ntf')
+        md = ds.GetMetadata('RPC')
+        RPC00B = ds.GetMetadataItem('RPC00B', 'TRE')
+        ds = None
+
+        gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
+
+        if RPC00B != expected_RPC00B_max_precision:
+            gdaltest.post_reason('fail: did not get expected RPC00B')
+            print(RPC00B)
+            return 'fail'
+
+    # Test loss of precision on coefficient lines
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_md = copy.copy(src_md_max_precision)
+    src_md['LINE_NUM_COEFF'] = '0 9.876543e-10 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9'
+    src_ds.SetMetadata(src_md, 'RPC')
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
+    if ds is None:
+        gdaltest.post_reason('fail: expected a dataset')
+        return 'fail'
+    ds = None
+
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail: expected a warning')
+        return 'fail'
+
+    if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is None:
+        gdaltest.post_reason('fail: PAM file was expected')
+        return 'fail'
+    gdal.Unlink('/vsimem/nitf_72.ntf.aux.xml')
+
+    ds = gdal.Open('/vsimem/nitf_72.ntf')
+    md = ds.GetMetadata('RPC')
+    RPC00B = ds.GetMetadataItem('RPC00B', 'TRE')
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
+
+    expected_RPC00B = '11234.562345.6734567845678-89.8765-179.1234-987698765467890-12.3456-123.4567-1234+0.000000E+0+0.000000E+0+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+1.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+2.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+3.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9+0.000000E+0+9.876543E+9+9.876543E-9-9.876543E+9-9.876543E-9'
+    if RPC00B != expected_RPC00B:
+        gdaltest.post_reason('fail: did not get expected RPC00B')
+        print(RPC00B)
+        return 'fail'
+
+    # Test out of range
+    for key in ('LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF', 'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE', 'LONG_SCALE', 'HEIGHT_SCALE' ):
+        src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+        src_md = copy.copy(src_md_max_precision)
+        if src_md[key].find('-') >= 0:
+            src_md[key] = '-1' + src_md[key][1:]
+        else:
+            src_md[key] = '1' + src_md[key]
+
+        src_ds.SetMetadata(src_md, 'RPC')
+
+        with gdaltest.error_handler():
+            ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
+        if ds is not None:
+            gdaltest.post_reason('fail: expected failure for %s' % key)
+            return 'fail'
+
+    # Test out of rangeon coefficient lines
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_md = copy.copy(src_md_max_precision)
+    src_md['LINE_NUM_COEFF'] = '0 9.876543e10 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9'
+    src_ds.SetMetadata(src_md, 'RPC')
+
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
+    if ds is not None:
+        gdaltest.post_reason('fail: expected failure')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
@@ -3137,6 +3447,7 @@ gdaltest_list = [
     nitf_69,
     nitf_70,
     nitf_71,
+    nitf_72,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
@@ -3175,6 +3486,8 @@ gdaltest_list = [
     nitf_online_24,
     nitf_online_25,
     nitf_cleanup ]
+
+# gdaltest_list = [ nitf_72 ]
 
 if __name__ == '__main__':
 

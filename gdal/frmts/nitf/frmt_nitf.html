@@ -26,7 +26,8 @@ the higher precision coordinates of BLOCKA are used if the block data covers
 the complete image - that is the L_LINES field with the row count for that
 block is equal to the row count of the image. Additionally, all BLOCKA
 instances are returned as metadata. If GeoSDE TRE are available, they will be
-used to provide higher precision coordinates.
+used to provide higher precision coordinates. If the RPC00B (or RPC00A) TRE is
+available, it is used to report RPC metadata.
 <p>
 
 Most file header and image header fields are returned as dataset level
@@ -105,9 +106,9 @@ two variations supported are "NITF02.10" (the default), and "NSIF01.00". <p>
 each output band. (Only needed for
 Create() method, not CreateCopy()).<p>
 
-<li> <b>IREPBAND</b>: (GDAL >= 1.9.0) Comma separated list of band IREPBANDs in band order.<p>
+<li> <b>IREPBAND</b>: (GDAL &gt;= 1.9.0) Comma separated list of band IREPBANDs in band order.<p>
 
-<li> <b>ISUBCAT</b>: (GDAL >= 1.9.0) Comma separated list of band ISUBCATs in band order.<p>
+<li> <b>ISUBCAT</b>: (GDAL &gt;= 1.9.0) Comma separated list of band ISUBCATs in band order.<p>
 
 <li> <b>LUT_SIZE</b>: Set to control the size of pseudocolor tables for
 RGB/LUT bands.  A value of 256 assumed if not present. (Only needed for
@@ -133,11 +134,17 @@ tre-name should be at most six characters, and the tre-contents should be
 "backslash escaped" if it contains backslashes or zero bytes.  The argument
 is the same format as returned in the TRE metadata domain when reading.<p>
 
-<li> <b>FILE_TRE=tre-name=tre-contents</b>: (GDAL >= 1.8.0) Similar to above options,
+<li> <b>FILE_TRE=tre-name=tre-contents</b>: (GDAL &gt;= 1.8.0) Similar to above options,
 except that the TREs are written in the file header, instead of the image header.<p>
 
-<li> <b>SDE_TRE=YES/NO</b>: (GDAL >= 1.8.0) Write GEOLOB and GEOPSB TREs to get
+<li> <b>SDE_TRE=YES/NO</b>: (GDAL &gt;= 1.8.0) Write GEOLOB and GEOPSB TREs to get
 more precise georeferencing. This is limited to geographic SRS, and to CreateCopy() for now.<p>
+
+<li> <b>RPC00B=YES/NO</b>: (GDAL &gt;= 2.2.0) Write RPC00B TRE, from a source
+RPC00B TRE if it exists (NITF to NITF conversion), or from values found in the
+RPC metadata domain. This is only taken into account by CreateCopy() for now.
+Note that the NITF RPC00B format uses limited prevision ASCII encoded numbers.
+Default to YES.<p>
 
 </ul>
 
