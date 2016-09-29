@@ -45,8 +45,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
     poTransfer(poTransferIn),
     iLayer(iLayerIn),
     poReader(poTransferIn->GetLayerIndexedReader( iLayerIn )),
-    poDS(poDSIn),
-    bPolygonsBuilt(FALSE)
+    poDS(poDSIn)
 {
 /* -------------------------------------------------------------------- */
 /*      Define the feature.                                             */

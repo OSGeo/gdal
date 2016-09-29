@@ -52,9 +52,6 @@ class OGRSDTSLayer : public OGRLayer
 
     OGRFeature         *GetNextUnfilteredFeature();
 
-    void                BuildPolygons();
-    int                 bPolygonsBuilt;
-
   public:
                         OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
                         ~OGRSDTSLayer();
