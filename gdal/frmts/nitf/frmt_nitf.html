@@ -27,7 +27,10 @@ the complete image - that is the L_LINES field with the row count for that
 block is equal to the row count of the image. Additionally, all BLOCKA
 instances are returned as metadata. If GeoSDE TRE are available, they will be
 used to provide higher precision coordinates. If the RPC00B (or RPC00A) TRE is
-available, it is used to report RPC metadata.
+available, it is used to report RPC metadata. Starting with GDAL 2.2, RPC
+information can be retrieved from _rpc.txt files, and they will be used in
+priority over internal RPC00B values, since the latter have less precision
+than the ones stored in external _rpc.txt.
 <p>
 
 Most file header and image header fields are returned as dataset level
@@ -146,6 +149,10 @@ RPC metadata domain. This is only taken into account by CreateCopy() for now.
 Note that the NITF RPC00B format uses limited prevision ASCII encoded numbers.
 Default to YES.<p>
 
+<li> <b>RPCTXT=YES/NO</b>: (GDAL &gt;= 2.2.0) Whether to write RPC metadata
+in a external _rpc.txt file. This may be useful since internal RPC00B TRE have
+limited precision. This is only taken into account by CreateCopy() for now.
+Default to NO.<p>
 </ul>
 
 

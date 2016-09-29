@@ -2406,6 +2406,39 @@ def nitf_72():
         print(RPC00B)
         return 'fail'
 
+    # Test RPCTXT creation option
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options = ['RPCTXT=YES'])
+
+    if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is None:
+        gdaltest.post_reason('fail: PAM file was expected')
+        return 'fail'
+    gdal.Unlink('/vsimem/nitf_72.ntf.aux.xml')
+
+    if gdal.VSIStatL('/vsimem/nitf_72_RPC.TXT') is None:
+        gdaltest.post_reason('fail: rpc.txt file was expected')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/nitf_72.ntf')
+    md = ds.GetMetadata('RPC')
+    RPC00B = ds.GetMetadataItem('RPC00B', 'TRE')
+    fl = ds.GetFileList()
+    ds = None
+
+    if '/vsimem/nitf_72_RPC.TXT' not in fl:
+        gdaltest.post_reason('fail: _RPC.TXT file not reported in file list')
+        print(fl)
+        return 'fail'
+
+    # Check that we get full precision from the _RPC.TXT file
+    if not compare_rpc(src_md, md):
+        return 'fail'
+
+    if RPC00B != expected_RPC00B:
+        gdaltest.post_reason('fail: did not get expected RPC00B')
+        print(RPC00B)
+        return 'fail'
+
     # Test out of range
     for key in ('LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF', 'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE', 'LONG_SCALE', 'HEIGHT_SCALE' ):
         src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
