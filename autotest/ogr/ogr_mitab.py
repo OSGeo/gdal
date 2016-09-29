@@ -871,6 +871,8 @@ def ogr_mitab_22():
                     return 'fail'
             ds = None
 
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
     return 'success'
 
 ###############################################################################
@@ -2194,6 +2196,7 @@ def ogr_mitab_43():
     if out_ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.Unlink('/vsimem/all_geoms_block_invalid.dat')
     src_ds = None
 
     size = gdal.VSIStatL('/vsimem/all_geoms_block_512.map').size
@@ -2268,6 +2271,10 @@ def ogr_mitab_cleanup():
 
     if gdaltest.mapinfo_ds is None:
         return 'skip'
+
+    fl = gdal.ReadDir('/vsimem/')
+    if fl is not None:
+        print(fl)
 
     gdaltest.mapinfo_ds = None
     gdaltest.mapinfo_drv.DeleteDataSource( 'tmp' )
