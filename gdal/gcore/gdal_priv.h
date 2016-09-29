@@ -429,6 +429,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     // should not be used by out-of-tree code if possible.
     int                 EnterReadWrite(GDALRWFlag eRWFlag);
     void                LeaveReadWrite();
+    void                InitRWLock();
 
     void                TemporarilyDropReadWriteLock();
     void                ReacquireReadWriteLock();
@@ -865,6 +866,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     int          EnterReadWrite(GDALRWFlag eRWFlag);
     void         LeaveReadWrite();
+    void         InitRWLock();
 //! @endcond
 
   protected:

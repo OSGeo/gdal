@@ -6358,6 +6358,23 @@ void GDALDataset::LeaveReadWrite()
 }
 
 /************************************************************************/
+/*                           InitRWLock()                               */
+/************************************************************************/
+
+void GDALDataset::InitRWLock()
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    if( psPrivate )
+    {
+        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
+        {
+            EnterReadWrite(GF_Write);
+            LeaveReadWrite();
+        }
+    }
+}
+
+/************************************************************************/
 /*                       DisableReadWriteMutex()                        */
 /************************************************************************/
 
