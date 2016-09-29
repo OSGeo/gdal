@@ -45,7 +45,7 @@ class OGRPLScenesLayer;
 
 class OGRPLScenesDataset: public GDALDataset
 {
-        int             bMustCleanPersistent;
+        bool            bMustCleanPersistent;
         CPLString       osBaseURL;
         CPLString       osAPIKey;
 
@@ -84,7 +84,7 @@ class OGRPLScenesLayer: public OGRLayer
             CPLString       osBaseURL;
             OGRFeatureDefn* poFeatureDefn;
             OGRSpatialReference* poSRS;
-            int             bEOF;
+            bool            bEOF;
             GIntBig         nNextFID;
             GIntBig         nFeatureCount;
             CPLString       osNextURL;
@@ -97,10 +97,10 @@ class OGRPLScenesLayer: public OGRLayer
             OGRGeometry    *poMainFilter;
 
             int             nPageSize;
-            int             bStillInFirstPage;
+            bool            bStillInFirstPage;
             int             bAcquiredAscending;
 
-            int             bFilterMustBeClientSideEvaluated;
+            bool            bFilterMustBeClientSideEvaluated;
             CPLString       osFilterURLPart;
 
             OGRFeature     *GetNextRawFeature();

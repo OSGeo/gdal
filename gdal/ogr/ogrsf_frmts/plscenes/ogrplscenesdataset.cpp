@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRPLScenesDataset::OGRPLScenesDataset() :
-    bMustCleanPersistent(FALSE),
+    bMustCleanPersistent(false),
     nLayers(0),
     papoLayers(NULL)
 {}
@@ -53,7 +53,6 @@ OGRPLScenesDataset::~OGRPLScenesDataset()
 
     if( bMustCleanPersistent )
     {
-
         char **papszOptions =
             CSLSetNameValue(NULL, "CLOSE_PERSISTENT",
                             CPLSPrintf("PLSCENES:%p", this));
@@ -66,7 +65,7 @@ OGRPLScenesDataset::~OGRPLScenesDataset()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPLScenesDataset::GetLayer(int idx)
+OGRLayer *OGRPLScenesDataset::GetLayer( int idx )
 {
     if( idx < 0 || idx >= nLayers )
         return NULL;
@@ -179,11 +178,15 @@ void OGRPLScenesDataset::ReleaseResultSet( OGRLayer * poResultsSet )
 
 char** OGRPLScenesDataset::GetBaseHTTPOptions()
 {
-    bMustCleanPersistent = TRUE;
+    bMustCleanPersistent = true;
 
     char** papszOptions = NULL;
-    papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=PLSCENES:%p", this));
-    papszOptions = CSLAddString(papszOptions, CPLSPrintf("HEADERS=Authorization: api-key %s", osAPIKey.c_str()));
+    papszOptions =
+        CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=PLSCENES:%p", this));
+    papszOptions =
+        CSLAddString(papszOptions,
+                     CPLSPrintf("HEADERS=Authorization: api-key %s",
+                                osAPIKey.c_str()));
     return papszOptions;
 }
 
@@ -468,7 +471,7 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->osBaseURL = CPLGetConfigOption("PL_URL", "https://api.planet.com/v0/scenes/");
 
     char** papszOptions = CSLTokenizeStringComplex(
-            poOpenInfo->pszFilename+strlen("PLScenes:"), ",", TRUE, FALSE );
+        poOpenInfo->pszFilename+strlen("PLScenes:"), ",", TRUE, FALSE );
 
     poDS->osAPIKey = CSLFetchNameValueDef(papszOptions, "api_key",
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "API_KEY",

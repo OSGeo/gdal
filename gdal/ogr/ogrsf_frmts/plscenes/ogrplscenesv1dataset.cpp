@@ -54,7 +54,7 @@ OGRPLScenesV1Dataset::~OGRPLScenesV1Dataset()
         delete m_papoLayers[i];
     CPLFree(m_papoLayers);
 
-    if (m_bMustCleanPersistent)
+    if( m_bMustCleanPersistent )
     {
         char **papszOptions =
             CSLSetNameValue(
@@ -243,8 +243,12 @@ char** OGRPLScenesV1Dataset::GetBaseHTTPOptions()
     m_bMustCleanPersistent = true;
 
     char** papszOptions = NULL;
-    papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=PLSCENES:%p", this));
-    papszOptions = CSLAddString(papszOptions, CPLSPrintf("HEADERS=Authorization: api-key %s", m_osAPIKey.c_str()));
+    papszOptions =
+        CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=PLSCENES:%p", this));
+    papszOptions =
+        CSLAddString(papszOptions,
+                     CPLSPrintf("HEADERS=Authorization: api-key %s",
+                                m_osAPIKey.c_str()));
     return papszOptions;
 }
 
@@ -313,7 +317,7 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
     }
     CSLDestroy(papszOptions);
 
-    if ( pszPostContent != NULL && m_bMustCleanPersistent)
+    if( pszPostContent != NULL && m_bMustCleanPersistent )
     {
         papszOptions = CSLSetNameValue(NULL, "CLOSE_PERSISTENT", CPLSPrintf("PLSCENES:%p", this));
         CPLHTTPDestroyResult(CPLHTTPFetch(m_osBaseURL, papszOptions));
