@@ -1390,21 +1390,24 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             return( NULL );
         }
 
-        if( !bJustInitialize
-         && IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
-        {
-            poBlock->DropLock();
-            FlushBlock( nXBlockOff, nYBlockOff );
-            ReportError( CE_Failure, CPLE_AppDefined,
-                "IReadBlock failed at X offset %d, Y offset %d",
-                nXBlockOff, nYBlockOff );
-            return( NULL );
-        }
-
         if( !bJustInitialize )
         {
+            int bCallLeaveReadWrite = EnterReadWrite(GF_Read);
+            eErr = IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef());
+            if( bCallLeaveReadWrite) LeaveReadWrite();
+            if( eErr != CE_None )
+            {
+                poBlock->DropLock();
+                FlushBlock( nXBlockOff, nYBlockOff );
+                ReportError( CE_Failure, CPLE_AppDefined,
+                    "IReadBlock failed at X offset %d, Y offset %d",
+                    nXBlockOff, nYBlockOff );
+                return NULL;
+            }
+
             nBlockReads++;
-            if( nBlockReads == nBlocksPerRow * nBlocksPerColumn + 1 
+            if( static_cast<GIntBig>(nBlockReads) ==
+                static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn + 1
                 && nBand == 1 && poDS != NULL )
             {
                 CPLDebug( "GDAL", "Potential thrashing on band %d of %s.",
@@ -5479,4 +5482,14 @@ void GDALRasterBand::LeaveReadWrite()
 {
     if( poDS != NULL )
         poDS->LeaveReadWrite();
+}
+
+/************************************************************************/
+/*                           InitRWLock()                               */
+/************************************************************************/
+
+void GDALRasterBand::InitRWLock()
+{
+    if( poDS != NULL )
+        poDS->InitRWLock();
 }
