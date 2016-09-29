@@ -2285,7 +2285,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
     CPLsnprintf( szTemp, sizeof(szTemp), "%+.6E", dfVal);
     nLen = strlen(szTemp);
     CPLAssert( szTemp[9] == 'E' );
-    CPLAssert( nLen == 14 || nLen == 13 );
+#ifdef WIN32
     if( nLen == 14 ) // Old MSVC versions: 3 digits for the exponent
     {
         if( szTemp[11] != '0' || szTemp[12] != '0' )
@@ -2298,7 +2298,9 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
         szTemp[11] = szTemp[13];
     }
     else // behaviour of the standard: 2 digits for the exponent
+#endif
     {
+        CPLAssert( nLen == 13 );
         if( szTemp[11] != '0')
         {
             CPLError(CE_Warning, CPLE_AppDefined, "%g rounded to 0", dfVal);
@@ -2425,7 +2427,7 @@ char* NITFFormatRPC00BFromMetadata( char** papszRPC, int* pbPrecisionLoss )
     if( fabs(sRPC.dfLAT_OFF - CPLAtof(NITFGetField(szTemp, pszRPC00B, nOffset, nLength ))) > 1e-8 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "LAT_OFF rounded from %g to %s",
+                 "LAT_OFF was rounded from %f to %s",
                  sRPC.dfLAT_OFF, szTemp);
         if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
     }
@@ -2443,7 +2445,7 @@ char* NITFFormatRPC00BFromMetadata( char** papszRPC, int* pbPrecisionLoss )
     if( fabs(sRPC.dfLONG_OFF - CPLAtof(NITFGetField(szTemp, pszRPC00B, nOffset, nLength ))) > 1e-8 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "LONG_OFF rounded from %g to %s",
+                 "LONG_OFF was rounded from %f to %s",
                  sRPC.dfLONG_OFF, szTemp);
         if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
     }
@@ -2518,7 +2520,7 @@ char* NITFFormatRPC00BFromMetadata( char** papszRPC, int* pbPrecisionLoss )
     if( fabs(sRPC.dfLAT_SCALE - CPLAtof(NITFGetField(szTemp, pszRPC00B, nOffset, nLength ))) > 1e-8 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "LAT_SCALE rounded from %g to %s",
+                 "LAT_SCALE was rounded from %f to %s",
                  sRPC.dfLAT_SCALE, szTemp);
         if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
     }
@@ -2536,7 +2538,7 @@ char* NITFFormatRPC00BFromMetadata( char** papszRPC, int* pbPrecisionLoss )
     if( fabs(sRPC.dfLONG_SCALE - CPLAtof(NITFGetField(szTemp, pszRPC00B, nOffset, nLength ))) > 1e-8 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "LONG_SCALE rounded from %g to %s",
+                 "LONG_SCALE was rounded from %f to %s",
                  sRPC.dfLONG_SCALE, szTemp);
         if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
     }
