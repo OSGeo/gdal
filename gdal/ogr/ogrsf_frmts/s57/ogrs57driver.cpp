@@ -146,7 +146,7 @@ S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
     {
         poRegistrar = new S57ClassRegistrar();
 
-        if( !poRegistrar->LoadInfo( NULL, NULL, FALSE ) )
+        if( !poRegistrar->LoadInfo( NULL, NULL, false ) )
         {
             delete poRegistrar;
             poRegistrar = NULL;
