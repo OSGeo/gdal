@@ -193,7 +193,7 @@ void check_GDT_Byte()
 
     for(int i=0;i<17;i++)
     {
-        pIn[i] = i;
+        pIn[i] = (GByte)i;
     }
 
     memset(pOut, 0xff, 128);
@@ -527,7 +527,7 @@ int main(int /* argc */, char* /* argv */ [])
             memset(pIn, 0xff, 256);
             for(int i=0;i<17;i++)
             {
-                pIn[spacing*i] = i;
+                pIn[spacing*i] = (GByte)i;
             }
             memset(pOut, 0xff, 256);
             GDALCopyWords(pIn, GDT_Byte, spacing,
@@ -542,7 +542,7 @@ int main(int /* argc */, char* /* argv */ [])
             memset(pOut, 0xff, 256);
             for(int i=0;i<17;i++)
             {
-                pIn[i] = i;
+                pIn[i] = (GByte)i;
             }
             GDALCopyWords(pIn, GDT_Byte, 1,
                         pOut, GDT_Byte, spacing,
