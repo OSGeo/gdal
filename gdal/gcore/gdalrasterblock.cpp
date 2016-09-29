@@ -1005,7 +1005,12 @@ CPLErr GDALRasterBlock::Internalize()
  * to disk before it can be flushed.
  */
 
-void GDALRasterBlock::MarkDirty() { bDirty = true; }
+void GDALRasterBlock::MarkDirty()
+{
+    bDirty = true;
+    if( poBand )
+        poBand->InitRWLock();
+}
 
 /************************************************************************/
 /*                             MarkClean()                              */
