@@ -542,10 +542,10 @@ const char *CPLFormFilename( const char * pszPath,
     {
         /* FIXME? would be better to ask the filesystems what they */
         /* prefer as directory separator */
-        if (STARTS_WITH(pszPath, "/vsicurl/") ||
-            STARTS_WITH(pszPath, "/vsicurl_streaming/"))
-            pszAddedPathSep = "/";
-        else if (STARTS_WITH(pszPath, "/vsizip/"))
+        if (STARTS_WITH(pszPath, "/vsimem/") ||
+            STARTS_WITH(pszPath, "/vsicurl/") ||
+            STARTS_WITH(pszPath, "/vsicurl_streaming/") ||
+            STARTS_WITH(pszPath, "/vsizip/"))
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -725,7 +725,8 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
         /* FIXME? would be better to ask the filesystems what they */
         /* prefer as directory separator */
         const char* pszAddedPathSep;
-        if (STARTS_WITH(pszStaticResult, "/vsicurl/"))
+        if (STARTS_WITH(pszStaticResult, "/vsicurl/") ||
+            STARTS_WITH(pszStaticResult, "/vsimem/"))
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
