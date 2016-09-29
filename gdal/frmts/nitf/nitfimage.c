@@ -4237,6 +4237,8 @@ static void NITFPossibleIGEOLOReorientation( NITFImage *psImage )
 /*      Read DPPDB IMRFCA TRE (and the associated IMASDA TRE) if it is  */
 /*      available. IMRFCA RPC coefficients are remapped into RPC00B     */
 /*      organization.                                                   */
+/*      See table 68 for IMASDA and table 69 for IMRFCA in              */
+/*      http://earth-info.nga.mil/publications/specs/printed/89034/89034DPPDB.pdf */
 /************************************************************************/
 int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 {

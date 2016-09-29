@@ -694,6 +694,37 @@
         </loop>
     </tre>
 
+    <!-- Table 68 of http://earth-info.nga.mil/publications/specs/printed/89034/89034DPPDB.pdf -->
+    <tre name="IMASDA" length="242" location="image">
+        <field name="LONTR" length="22" type="real" unit="degrees" minval="-180.0" maxval="180.0"/>
+        <field name="LATTR" length="22" type="real" unit="degrees" minval="-90.0" maxval="90.0"/>
+        <field name="ELVTR" length="22" type="real" unit="meters" minval="-1000.0" maxval="10000.0"/>
+        <field name="LONSC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="LATSC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="ELVSC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="XITR" length="22" type="real" unit="pixels" minval="-10000.0" maxval="10000.0"/>
+        <field name="YITR" length="22" type="real" unit="pixels" minval="-10000.0" maxval="10000.0"/>
+        <field name="XISC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="YISC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="DELEV" length="22" type="real" unit="meters" minval="-1000.0" maxval="10000.0"/>
+    </tre>
+
+    <!-- Table 69 of http://earth-info.nga.mil/publications/specs/printed/89034/89034DPPDB.pdf -->
+    <tre name="IMRFCA" length="1760" location="image">
+        <loop iterations="20" name="XINC">
+            <field name="" longname="XINC" length="22" type="real"/>
+        </loop>
+        <loop iterations="20" name="XIDC">
+            <field name="" longname="XIDC" length="22" type="real"/>
+        </loop>
+        <loop iterations="20" name="YINC">
+            <field name="" longname="YINC" length="22" type="real"/>
+        </loop>
+        <loop iterations="20" name="YIDC">
+            <field name="" longname="YIDC" length="22" type="real"/>
+        </loop>
+    </tre>
+
     <tre name="RSMAPA" minlength="507" maxlength="1243" location="image">
         <field name="IID" length="80" type="string"/>
         <field name="EDITION" length="40" type="string"/>
