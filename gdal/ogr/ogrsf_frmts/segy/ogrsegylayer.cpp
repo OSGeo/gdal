@@ -228,7 +228,7 @@ OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
                             VSILFILE* fpIn,
                             SEGYBinaryFileHeader* psBFH ) :
     poFeatureDefn(new OGRFeatureDefn(CPLGetBasename(pszFilename))),
-    bEOF(FALSE),
+    bEOF(false),
     nNextFID(0),
     fp(fpIn),
     nDataSize(0)
@@ -297,7 +297,7 @@ void OGRSEGYLayer::ResetReading()
 
 {
     nNextFID = 0;
-    bEOF = FALSE;
+    bEOF = false;
 
     VSIFSeekL( fp, 3200 + 400 + 3200 * sBFH.nNumberOfExtendedTextualFileHeader,
                SEEK_SET );
@@ -356,14 +356,14 @@ static float GetIBMFloat(const GByte* pabyData)
 
 OGRFeature *OGRSEGYLayer::GetNextRawFeature()
 {
-    if (bEOF)
+    if( bEOF )
         return NULL;
 
     GByte abyTraceHeader[240];
 
-    if ((int)VSIFReadL(abyTraceHeader, 1, 240, fp) != 240)
+    if( (int)VSIFReadL(abyTraceHeader, 1, 240, fp) != 240 )
     {
-        bEOF = TRUE;
+        bEOF = true;
         return NULL;
     }
 
@@ -412,7 +412,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
 
     if (nSamples < 0)
     {
-        bEOF = TRUE;
+        bEOF = true;
         return NULL;
     }
     int nSampleInterval = SEGYReadMSBInt16(abyTraceHeader + 116);
@@ -583,7 +583,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     {
         if ((int)VSIFReadL(pabyData, nDataSize, nSamples, fp) != nSamples)
         {
-            bEOF = TRUE;
+            bEOF = true;
         }
         for(int i=0;i<nSamples;i++)
         {
@@ -807,7 +807,7 @@ OGRSEGYHeaderLayer::OGRSEGYHeaderLayer( const char* pszLayerName,
                                         SEGYBinaryFileHeader* psBFH,
                                         const char* pszHeaderTextIn ) :
     poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
-    bEOF(FALSE),
+    bEOF(false),
     pszHeaderText(CPLStrdup(pszHeaderTextIn))
 {
     memcpy(&sBFH, psBFH, sizeof(sBFH));
@@ -847,7 +847,7 @@ OGRSEGYHeaderLayer::~OGRSEGYHeaderLayer()
 void OGRSEGYHeaderLayer::ResetReading()
 
 {
-    bEOF = FALSE;
+    bEOF = false;
 }
 
 /************************************************************************/
@@ -870,7 +870,9 @@ OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
             return poFeature;
         }
         else
+        {
             delete poFeature;
+        }
     }
 }
 
@@ -880,10 +882,10 @@ OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
 
 OGRFeature *OGRSEGYHeaderLayer::GetNextRawFeature()
 {
-    if (bEOF)
+    if( bEOF )
         return NULL;
 
-    bEOF = TRUE;
+    bEOF = true;
 
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
     poFeature->SetFID(0);
