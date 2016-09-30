@@ -77,9 +77,9 @@ class OGRSVGLayer : public OGRLayer
 
     int                depthLevel;
     int                interestingDepthLevel;
-    int                inInterestingElement;
+    bool               inInterestingElement;
 
-    int                bStopParsing;
+    bool               bStopParsing;
 #ifdef HAVE_EXPAT
     int                nWithoutEventCounter;
     int                nDataHandlerCounter;
