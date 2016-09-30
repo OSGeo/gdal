@@ -64,7 +64,7 @@ protected:
 
     OGRWalkDataSource    *poDS;
 
-    int                bGeomColumnWKB;
+    bool               bGeomColumnWKB;
     char               *pszGeomColumn;
     char               *pszFIDColumn;
 
@@ -166,7 +166,6 @@ class OGRWalkDataSource : public OGRDataSource
     OGRWalkLayer        **papoLayers;
     int                 nLayers;
 
-    int                 bDSUpdate;
     CPLODBCSession      oSession;
 
 public:

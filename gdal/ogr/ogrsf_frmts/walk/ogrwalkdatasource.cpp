@@ -38,8 +38,7 @@ CPL_CVSID("$Id$");
 OGRWalkDataSource::OGRWalkDataSource() :
     pszName(NULL),
     papoLayers(NULL),
-    nLayers(0),
-    bDSUpdate(FALSE)
+    nLayers(0)
 {}
 
 /************************************************************************/
@@ -64,7 +63,7 @@ OGRWalkDataSource::~OGRWalkDataSource()
 /*                              Open()                                  */
 /************************************************************************/
 
-int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
+int OGRWalkDataSource::Open( const char * pszNewName, int /* bUpdate */ )
 {
 /* -------------------------------------------------------------------- */
 /*      If this is the name of an MDB file, then construct the          */
@@ -104,8 +103,6 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
     CPLFree( pszDSN );
 
     pszName = CPLStrdup( pszNewName );
-
-    bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
 /*      Collect list of layers and their attributes.                    */

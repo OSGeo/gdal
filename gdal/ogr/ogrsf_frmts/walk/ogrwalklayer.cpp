@@ -40,7 +40,7 @@ OGRWalkLayer::OGRWalkLayer() :
     poSRS(NULL),
     iNextShapeId(0),
     poDS(NULL),
-    bGeomColumnWKB(FALSE),
+    bGeomColumnWKB(false),
     pszGeomColumn(NULL),
     pszFIDColumn(NULL),
     panFieldOrdinals(NULL)
