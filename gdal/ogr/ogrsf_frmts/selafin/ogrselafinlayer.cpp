@@ -62,7 +62,7 @@ OGRSelafinLayer::OGRSelafinLayer(
     const char *pszLayerNameP, int bUpdateP, OGRSpatialReference *poSpatialRefP,
     Selafin::Header *poHeaderP, int nStepNumberP, SelafinTypeDef eTypeP ) :
     eType(eTypeP),
-    bUpdate(bUpdateP),
+    bUpdate(CPL_TO_BOOL(bUpdateP)),
     nStepNumber(nStepNumberP),
     poHeader(poHeaderP),
     poFeatureDefn(new OGRFeatureDefn(CPLGetBasename(pszLayerNameP))),
@@ -134,18 +134,18 @@ OGRErr OGRSelafinLayer::SetNextByIndex(GIntBig nIndex) {
 int OGRSelafinLayer::TestCapability(const char *pszCap) {
     //CPLDebug("Selafin","TestCapability(%s)",pszCap);
     if (EQUAL(pszCap,OLCRandomRead)) return TRUE;
-    if (EQUAL(pszCap,OLCSequentialWrite)) return (bUpdate);
-    if (EQUAL(pszCap,OLCRandomWrite)) return (bUpdate);
+    if (EQUAL(pszCap,OLCSequentialWrite)) return bUpdate;
+    if (EQUAL(pszCap,OLCRandomWrite)) return bUpdate;
     if (EQUAL(pszCap,OLCFastSpatialFilter)) return FALSE;
     if (EQUAL(pszCap,OLCFastFeatureCount)) return TRUE;
     if (EQUAL(pszCap,OLCFastGetExtent)) return TRUE;
     if (EQUAL(pszCap,OLCFastSetNextByIndex)) return TRUE;
-    if (EQUAL(pszCap,OLCCreateField)) return (bUpdate);
+    if (EQUAL(pszCap,OLCCreateField)) return bUpdate;
     if (EQUAL(pszCap,OLCCreateGeomField)) return FALSE;
-    if (EQUAL(pszCap,OLCDeleteField)) return (bUpdate);
-    if (EQUAL(pszCap,OLCReorderFields)) return (bUpdate);
-    if (EQUAL(pszCap,OLCAlterFieldDefn)) return (bUpdate);
-    if (EQUAL(pszCap,OLCDeleteFeature)) return (bUpdate);
+    if (EQUAL(pszCap,OLCDeleteField)) return bUpdate;
+    if (EQUAL(pszCap,OLCReorderFields)) return bUpdate;
+    if (EQUAL(pszCap,OLCAlterFieldDefn)) return bUpdate;
+    if (EQUAL(pszCap,OLCDeleteFeature)) return bUpdate;
     if (EQUAL(pszCap,OLCStringsAsUTF8)) return FALSE;
     if (EQUAL(pszCap,OLCTransactions)) return FALSE;
     if (EQUAL(pszCap,OLCIgnoreFields)) return FALSE;
@@ -205,10 +205,10 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
 GIntBig OGRSelafinLayer::GetFeatureCount(int bForce) {
     //CPLDebug("Selafin","GetFeatureCount(%i)",bForce);
     if (m_poFilterGeom==NULL && m_poAttrQuery==NULL) return (eType==POINTS)?poHeader->nPoints:poHeader->nElements;
-    if (bForce==FALSE) return -1;
-    int i=0;
-    int nFeatureCount=0;
-    int nMax=(eType==POINTS)?poHeader->nPoints:poHeader->nElements;
+    if( !bForce ) return -1;
+    int i = 0;
+    int nFeatureCount = 0;
+    const int nMax = eType == POINTS ? poHeader->nPoints : poHeader->nElements;
     while (i<nMax) {
         OGRFeature *poFeature=GetFeature(i++);
         if( (m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) ) && (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) ) ++nFeatureCount;

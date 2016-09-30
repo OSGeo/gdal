@@ -220,7 +220,7 @@ OGRSelafinDataSource::OGRSelafinDataSource() :
     pszLockName(NULL),
     papoLayers(NULL),
     nLayers(0),
-    bUpdate(FALSE),
+    bUpdate(false),
     poHeader(NULL),
     poSpatialRef(NULL)
 {}
@@ -264,9 +264,11 @@ OGRLayer *OGRSelafinDataSource::GetLayer( int iLayer ) {
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
-int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCreate) {
-    // Check if a range is set and extract it and the filename
-    const char *pszc=pszFilename;
+int OGRSelafinDataSource::Open( const char * pszFilename, int bUpdateIn,
+                                int bCreate )
+{
+    // Check if a range is set and extract it and the filename.
+    const char *pszc = pszFilename;
     if (*pszFilename==0) return FALSE;
     while (*pszc) ++pszc;
     if (*(pszc-1)==']') {
@@ -277,7 +279,7 @@ int OGRSelafinDataSource::Open(const char * pszFilename, int bUpdateIn, int bCre
     }
     pszName = CPLStrdup( pszFilename );
     pszName[pszc-pszFilename]=0;
-    bUpdate = bUpdateIn;
+    bUpdate = CPL_TO_BOOL(bUpdateIn);
     if (bCreate && EQUAL(pszName, "/vsistdout/")) return TRUE;
     /* For writable /vsizip/, do nothing more */
     if (bCreate && STARTS_WITH(pszName, "/vsizip/")) return TRUE;
@@ -373,18 +375,32 @@ void OGRSelafinDataSource::ReleaseLock() {
 /*                              OpenTable()                             */
 /************************************************************************/
 int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
-    //CPLDebug("Selafin","OpenTable(%s,%i)",pszFilename,bUpdate);
+#ifdef DEBUG_VERBOSE
+    CPLDebug("Selafin", "OpenTable(%s,%i)",
+             pszFilename, static_cast<int>(bUpdate));
+#endif
     // Open the file
     VSILFILE *fp = NULL;
-    if( bUpdate ) {
-        // We have to implement this locking feature for write access because the same file may hold several layers, and some programs (like QGIS) open each layer in a single datasource,
-        // so the same file might be opened several times for write access
+    if( bUpdate )
+    {
+        // We have to implement this locking feature for write access because
+        // the same file may hold several layers, and some programs (like QGIS)
+        // open each layer in a single datasource, so the same file might be
+        // opened several times for write access.
         if (TakeLock(pszFilename)==0) {
-            CPLError(CE_Failure,CPLE_OpenFailed,"Failed to open %s for write access, lock file found %s.",pszFilename,pszLockName);
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Failed to open %s for write access, "
+                     "lock file found %s.",
+                     pszFilename, pszLockName);
             return FALSE;
         }
         fp = VSIFOpenL( pszFilename, "rb+" );
-    } else fp = VSIFOpenL( pszFilename, "rb" );
+    }
+    else
+    {
+        fp = VSIFOpenL( pszFilename, "rb" );
+    }
+
     if( fp == NULL ) {
         CPLError( CE_Warning, CPLE_OpenFailed, "Failed to open %s, %s.", pszFilename, VSIStrerror( errno ) );
         return FALSE;
@@ -473,7 +489,9 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                     strftime(szTemp,29,"%Y_%m_%d_%H_%M_%S",&sDate);
                 }
                 if (eType==POINTS) osLayerName=osBaseLayerName+"_p"+szTemp; else osLayerName=osBaseLayerName+"_e"+szTemp;
-                papoLayers[nLayers++] = new OGRSelafinLayer( osLayerName, bUpdate, poSpatialRef, poHeader,i,eType);
+                papoLayers[nLayers++] =
+                    new OGRSelafinLayer( osLayerName, bUpdate, poSpatialRef,
+                                         poHeader, i, eType);
                 //poHeader->nRefCount++;
             }
         }
@@ -490,12 +508,17 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
 OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpatialReference *poSpatialRefP, OGRwkbGeometryType eGType, char ** papszOptions  ) {
     CPLDebug("Selafin","CreateLayer(%s,%s)",pszLayerName,(eGType==wkbPoint)?"wkbPoint":"wkbPolygon");
     // Verify we are in update mode.
-    if (!bUpdate) {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, "Data source %s opened read-only.\n" "New layer %s cannot be created.\n", pszName, pszLayerName );
+    if ( !bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.  "
+                  "New layer %s cannot be created.",
+                  pszName, pszLayerName );
         return NULL;
     }
     // Check that new layer is a point or polygon layer
-    if (eGType!=wkbPoint) {
+    if( eGType != wkbPoint )
+    {
         CPLError( CE_Failure, CPLE_NoWriteAccess, "Selafin format can only handle %s layers whereas input is %s\n.", OGRGeometryTypeToName(wkbPoint),OGRGeometryTypeToName(eGType));
         return NULL;
     }
@@ -546,9 +569,13 @@ OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpati
     papoLayers = (OGRSelafinLayer **) CPLRealloc(papoLayers, sizeof(void*) * nLayers);
     CPLString szName=pszLayerName;
     CPLString szNewLayerName=szName+"_p";
-    papoLayers[nLayers-2] = new OGRSelafinLayer( szNewLayerName, bUpdate, poSpatialRef, poHeader,poHeader->nSteps-1,POINTS);
+    papoLayers[nLayers-2] =
+        new OGRSelafinLayer( szNewLayerName, bUpdate, poSpatialRef, poHeader,
+                             poHeader->nSteps-1, POINTS );
     szNewLayerName=szName+"_e";
-    papoLayers[nLayers-1] = new OGRSelafinLayer( szNewLayerName, bUpdate, poSpatialRef, poHeader,poHeader->nSteps-1,ELEMENTS);
+    papoLayers[nLayers-1] =
+        new OGRSelafinLayer( szNewLayerName, bUpdate, poSpatialRef, poHeader,
+                             poHeader->nSteps-1, ELEMENTS );
     return papoLayers[nLayers-2];
 }
 
@@ -557,8 +584,11 @@ OGRLayer *OGRSelafinDataSource::ICreateLayer( const char *pszLayerName, OGRSpati
 /************************************************************************/
 OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
     // Verify we are in update mode.
-    if( !bUpdate ) {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, "Data source %s opened read-only.\n" "Layer %d cannot be deleted.\n", pszName, iLayer );
+    if( !bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.  "
+                  "Layer %d cannot be deleted.\n", pszName, iLayer );
         return OGRERR_FAILURE;
     }
     if( iLayer < 0 || iLayer >= nLayers ) {
