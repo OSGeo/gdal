@@ -211,8 +211,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         virtual sqlite3                *IGetDB() { return GetDB(); }
         virtual bool                    IGetUpdate() { return bUpdate != FALSE; }
         virtual bool                    ICanIWriteBlock();
-        virtual void                    IStartTransaction() { SoftStartTransaction(); }
-        virtual void                    ICommitTransaction() { SoftCommitTransaction(); }
+        virtual OGRErr                  IStartTransaction() { return SoftStartTransaction(); }
+        virtual OGRErr                  ICommitTransaction() { return SoftCommitTransaction(); }
         virtual const char             *IGetFilename() { return m_pszFilename; }
         virtual int                     GetRowFromIntoTopConvention(int nRow) { return nRow; }
 
