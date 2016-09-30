@@ -126,8 +126,8 @@ class GDALGPKGMBTilesLikePseudoDataset
         virtual sqlite3                *IGetDB() = 0;
         virtual bool                    IGetUpdate() = 0;
         virtual bool                    ICanIWriteBlock() = 0;
-        virtual void                    IStartTransaction() = 0;
-        virtual void                    ICommitTransaction() = 0;
+        virtual OGRErr                  IStartTransaction() = 0;
+        virtual OGRErr                  ICommitTransaction() = 0;
         virtual const char             *IGetFilename() = 0;
         virtual int                     GetRowFromIntoTopConvention(int nRow) = 0;
 };

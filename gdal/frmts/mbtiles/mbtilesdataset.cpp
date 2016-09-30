@@ -169,8 +169,8 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
         virtual sqlite3                *IGetDB() { return hDB; }
         virtual bool                    IGetUpdate() { return eAccess == GA_Update; }
         virtual bool                    ICanIWriteBlock();
-        virtual void                    IStartTransaction();
-        virtual void                    ICommitTransaction();
+        virtual OGRErr                  IStartTransaction();
+        virtual OGRErr                  ICommitTransaction();
         virtual const char             *IGetFilename() { return GetDescription(); }
         virtual int                     GetRowFromIntoTopConvention(int nRow);
 
@@ -793,18 +793,40 @@ MBTilesDataset::~MBTilesDataset()
 /*                         IStartTransaction()                          */
 /************************************************************************/
 
-void MBTilesDataset::IStartTransaction()
+OGRErr MBTilesDataset::IStartTransaction()
 {
-    sqlite3_exec( hDB, "BEGIN", NULL, NULL, NULL );
+    char *pszErrMsg = NULL;
+    const int rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s transaction failed: %s",
+                  "BEGIN", pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
 /*                         ICommitTransaction()                         */
 /************************************************************************/
 
-void MBTilesDataset::ICommitTransaction()
+OGRErr MBTilesDataset::ICommitTransaction()
 {
-    sqlite3_exec( hDB, "COMMIT", NULL, NULL, NULL );
+    char *pszErrMsg = NULL;
+    const int rc = sqlite3_exec( hDB, "COMMIT", NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s transaction failed: %s",
+                  "COMMIT", pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
