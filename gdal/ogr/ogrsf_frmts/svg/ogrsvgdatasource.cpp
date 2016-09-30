@@ -242,7 +242,7 @@ int OGRSVGDataSource::Open( const char * pszFilename )
         }
     }
 
-    return (nLayers > 0);
+    return nLayers > 0;
 #else
     char aBuf[256];
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
