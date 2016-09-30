@@ -68,7 +68,7 @@ class Range {
 class OGRSelafinLayer : public OGRLayer {
     private:
         SelafinTypeDef eType;
-        int bUpdate;
+        bool bUpdate;
         int nStepNumber;
         Selafin::Header *poHeader;
         OGRFeatureDefn *poFeatureDefn;
@@ -88,13 +88,13 @@ class OGRSelafinLayer : public OGRLayer {
         OGRErr SetNextByIndex(GIntBig nIndex);
         OGRFeatureDefn *GetLayerDefn() {return poFeatureDefn;}
         int TestCapability(const char *pszCap);
-        GIntBig GetFeatureCount(int bForce=TRUE);
-        OGRErr GetExtent(OGREnvelope *psExtent,int bForce=TRUE);
+        GIntBig GetFeatureCount( int bForce = TRUE );
+        OGRErr GetExtent( OGREnvelope *psExtent, int bForce = TRUE );
         virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
         OGRErr ISetFeature(OGRFeature *poFeature);
         OGRErr ICreateFeature(OGRFeature *poFeature);
-        OGRErr CreateField(OGRFieldDefn *poField,int bApproxOK=TRUE);
+        OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
         OGRErr DeleteField(int iField);
         OGRErr ReorderFields(int *panMap);
         OGRErr AlterFieldDefn(int iField,OGRFieldDefn *poNewFieldDefn,int nFlags);
@@ -112,7 +112,7 @@ class OGRSelafinDataSource : public OGRDataSource {
         OGRSelafinLayer **papoLayers;
         Range poRange;
         int nLayers;
-        int bUpdate;
+        bool bUpdate;
         Selafin::Header *poHeader;
         CPLString osDefaultSelafinName;
         OGRSpatialReference *poSpatialRef;
