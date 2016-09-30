@@ -42,8 +42,8 @@ class OGRSUALayer : public OGRLayer
     OGRSpatialReference *poSRS;
 
     VSILFILE*          fpSUA;
-    int                bEOF;
-    int                bHasLastLine;
+    bool               bEOF;
+    bool               bHasLastLine;
     CPLString          osLastLine;
 
     int                nNextFID;
