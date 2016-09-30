@@ -2703,7 +2703,6 @@ OGRErr OGRSQLiteBaseDataSource::DoTransactionCommand(const char* pszCommand)
     rc = sqlite3_exec( hDB, pszCommand, NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
-        nSoftTransactionLevel--;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s transaction failed: %s",
                   pszCommand, pszErrMsg );
