@@ -155,7 +155,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushTiles()
     GDALGPKGMBTilesLikePseudoDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
     if( poMainDS->m_nTileInsertionCount )
     {
-        poMainDS->ICommitTransaction();
+        if( poMainDS->ICommitTransaction() != OGRERR_NONE )
+            eErr = CE_Failure;
         poMainDS->m_nTileInsertionCount = 0;
     }
     return eErr;
@@ -1489,7 +1490,13 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             }
             else if( poMainDS->m_nTileInsertionCount == 1000 )
             {
-                poMainDS->ICommitTransaction();
+                if( poMainDS->ICommitTransaction() != OGRERR_NONE )
+                {
+                    CPLFree(pabyBlob);
+                    VSIUnlink(osMemFileName);
+                    delete poMEMDS;
+                    return CE_Failure;
+                }
                 poMainDS->IStartTransaction();
                 poMainDS->m_nTileInsertionCount = 0;
             }
