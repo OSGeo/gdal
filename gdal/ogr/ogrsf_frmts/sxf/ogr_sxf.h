@@ -95,7 +95,9 @@ public:
 
     virtual GByte GetId() const { return nLayerID; };
     virtual void AddClassifyCode(unsigned nClassCode, const char *szName = NULL);
-    virtual int AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset, bool bHasSemantic, size_t nSemanticsSize);
+    virtual bool AddRecord( long nFID, unsigned nClassCode,
+                            vsi_l_offset nOffset, bool bHasSemantic,
+                            size_t nSemanticsSize );
 };
 
 

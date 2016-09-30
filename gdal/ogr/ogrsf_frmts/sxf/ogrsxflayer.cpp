@@ -123,9 +123,11 @@ void OGRSXFLayer::AddClassifyCode(unsigned nClassCode, const char *szName)
 /*                           AddRecord()                                */
 /************************************************************************/
 
-int OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset, bool bHasSemantic, size_t nSemanticsSize)
+bool OGRSXFLayer::AddRecord( long nFID, unsigned nClassCode, vsi_l_offset nOffset,
+                             bool bHasSemantic, size_t nSemanticsSize )
 {
-    if (mnClassificators.find(nClassCode) != mnClassificators.end() || EQUAL(GetName(), "Not_Classified"))
+    if( mnClassificators.find(nClassCode) != mnClassificators.end() ||
+        EQUAL(GetName(), "Not_Classified") )
     {
         mnRecordDesc[nFID] = nOffset;
         // Add additional semantics (attribute fields).
@@ -263,10 +265,10 @@ int OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
                 VSIFSeekL(fpSXF, nCurrOff, SEEK_CUR);
             }
         }
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
