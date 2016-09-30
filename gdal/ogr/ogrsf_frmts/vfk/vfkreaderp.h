@@ -51,7 +51,7 @@ private:
     bool           m_bLatin2;
 
     FILE          *m_poFD;
-    char          *ReadLine(bool = FALSE);
+    char          *ReadLine( bool = false );
 
     void          AddInfo(const char *);
 
@@ -74,9 +74,9 @@ public:
     virtual ~VFKReader();
 
     bool           IsLatin2() const { return m_bLatin2; }
-    bool           IsSpatial() const { return FALSE; }
-    bool           IsPreProcessed() const { return FALSE; }
-    bool           IsValid() const { return TRUE; }
+    bool           IsSpatial() const { return false; }
+    bool           IsPreProcessed() const { return false; }
+    bool           IsValid() const { return true; }
     int            ReadDataBlocks();
     int            ReadDataRecords(IVFKDataBlock * = NULL);
     int            LoadGeometry();
@@ -107,7 +107,7 @@ private:
 
     void           StoreInfo2DB();
 
-    void           CreateIndex(const char *, const char *, const char *, bool = TRUE);
+    void           CreateIndex(const char *, const char *, const char *, bool = true);
 
     friend class   VFKFeatureSQLite;
 public:
@@ -121,7 +121,7 @@ public:
     int           ReadDataRecords(IVFKDataBlock * = NULL);
 
     sqlite3_stmt *PrepareStatement(const char *);
-    OGRErr        ExecuteSQL(const char *, bool = FALSE);
+    OGRErr        ExecuteSQL( const char *, bool = false );
     OGRErr        ExecuteSQL(sqlite3_stmt *);
 };
 

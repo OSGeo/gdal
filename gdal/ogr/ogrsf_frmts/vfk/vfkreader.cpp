@@ -69,12 +69,12 @@ IVFKReader *CreateVFKReader(const char *pszFilename)
   \brief VFKReader constructor
 */
 VFKReader::VFKReader( const char *pszFilename ) :
-    m_bLatin2(TRUE),  // Encoding ISO-8859-2 or WINDOWS-1250.
+    m_bLatin2(true),  // Encoding ISO-8859-2 or WINDOWS-1250.
     m_poFD(NULL),
     m_pszFilename(CPLStrdup(pszFilename)),
     m_poFStat((VSIStatBuf*) CPLMalloc(sizeof(VSIStatBuf))),
     // VFK are provided in two forms - stative and amendment data.
-    m_bAmendment(FALSE),
+    m_bAmendment(false),
     m_nDataBlockCount(0),
     m_papoDataBlock(NULL)
 {
@@ -199,7 +199,7 @@ int VFKReader::ReadDataBlocks()
         else if (pszLine[1] == 'H') {
             /* check for amendment file */
             if (EQUAL(pszLine, "&HZMENY;1")) {
-                m_bAmendment = TRUE;
+                m_bAmendment = true;
             }
 
             /* header - metadata */
@@ -523,7 +523,7 @@ void VFKReader::AddInfo(const char *pszLine)
     /* recode values, assuming Latin2 */
     if (EQUAL(pszKey, "CODEPAGE")) {
         if (!EQUAL(pszValue, "WE8ISO8859P2"))
-            m_bLatin2 = FALSE;
+            m_bLatin2 = false;
     }
 
     char *pszValueEnc = CPLRecode(pszValue,

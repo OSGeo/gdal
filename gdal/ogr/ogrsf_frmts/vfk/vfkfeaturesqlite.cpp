@@ -167,11 +167,11 @@ VFKFeatureSQLite::VFKFeatureSQLite( const VFKFeature *poVFKFeature ) :
 
   \todo Implement (really needed?)
 
-  \return TRUE on success or FALSE on failure
+  \return true on success or false on failure
 */
 bool VFKFeatureSQLite::LoadGeometryPoint()
 {
-    return FALSE;
+    return false;
 }
 
 /*!
@@ -179,11 +179,11 @@ bool VFKFeatureSQLite::LoadGeometryPoint()
 
   \todo Implement (really needed?)
 
-  \return TRUE on success or FALSE on failure
+  \return true on success or false on failure
 */
 bool VFKFeatureSQLite::LoadGeometryLineStringSBP()
 {
-    return FALSE;
+    return false;
 }
 
 /*!
@@ -191,11 +191,11 @@ bool VFKFeatureSQLite::LoadGeometryLineStringSBP()
 
   \todo Implement (really needed?)
 
-  \return TRUE on success or FALSE on failure
+  \return true on success or false on failure
 */
 bool VFKFeatureSQLite::LoadGeometryLineStringHP()
 {
-    return FALSE;
+    return false;
 }
 
 /*!
@@ -203,11 +203,11 @@ bool VFKFeatureSQLite::LoadGeometryLineStringHP()
 
   \todo Implement (really needed?)
 
-  \return TRUE on success or FALSE on failure
+  \return true on success or false on failure
 */
 bool VFKFeatureSQLite::LoadGeometryPolygon()
 {
-    return FALSE;
+    return false;
 }
 
 /*!
