@@ -2948,6 +2948,9 @@ def gpkg_36():
 
 def gpkg_37():
 
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
     ds = gdal.GetDriverByName('GPKG').Create('/vsimem/gpkg_37.gpkg',205000, 200000)
     ds.SetGeoTransform([100,0.000001,0,100,0,-0.000001])
     ds = None
