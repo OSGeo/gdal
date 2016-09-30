@@ -184,15 +184,17 @@ int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
 /*!
   \brief Get number of features for given data block
 
-  \param bForce TRUE to force reading VFK data blocks if needed
+  \param bForce true to force reading VFK data blocks if needed
 
   \return number of features
 */
-GIntBig IVFKDataBlock::GetFeatureCount(bool bForce)
+GIntBig IVFKDataBlock::GetFeatureCount( bool bForce )
 {
-    if (bForce && m_nFeatureCount == -1) {
+    if( bForce && m_nFeatureCount == -1 )
+    {
         m_poReader->ReadDataRecords(this); /* read VFK data records */
-        if (m_bGeometryPerBlock && !m_bGeometry) {
+        if( m_bGeometryPerBlock && !m_bGeometry )
+        {
             LoadGeometry(); /* get real number of features */
         }
     }
@@ -425,11 +427,11 @@ IVFKFeature *IVFKDataBlock::GetFeature(GIntBig nFID)
 */
 int IVFKDataBlock::LoadGeometry()
 {
-    if (m_bGeometry)
+    if( m_bGeometry )
         return 0;
 
+    m_bGeometry = true;
     int nInvalid = 0;
-    m_bGeometry = TRUE;
 
 #ifdef DEBUG_TIMING
     const clock_t start       = clock();
@@ -488,7 +490,7 @@ int IVFKDataBlock::LoadGeometry()
   \param bNewRing  create new ring
   \param bBackward allow backward direction
 
-  \return TRUE on success or FALSE on failure
+  \return true on success or false on failure
 */
 bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineString *poLine,
                                      bool bNewRing, bool bBackward)
@@ -506,7 +508,7 @@ bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineStri
     /* create new ring */
     if (bNewRing) {
         papoRing->push_back(new PointList(poList));
-        return TRUE;
+        return true;
     }
 
     OGRPoint *poFirstNew = &(poList.front());
@@ -520,34 +522,34 @@ bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineStri
         poFirst = &(ring->front());
         poLast  = &(ring->back());
         if (!poFirst || !poLast || poLine->getNumPoints() < 2)
-            return FALSE;
+            return false;
 
         if (poFirstNew->Equals(poLast)) {
             /* forward, skip first point */
             ring->insert(ring->end(), poList.begin()+1, poList.end());
-            return TRUE;
+            return true;
         }
 
         if (bBackward && poFirstNew->Equals(poFirst)) {
             /* backward, skip last point */
             ring->insert(ring->begin(), poList.rbegin(), poList.rend()-1);
-            return TRUE;
+            return true;
         }
 
         if (poLastNew->Equals(poLast)) {
             /* backward, skip first point */
             ring->insert(ring->end(), poList.rbegin()+1, poList.rend());
-            return TRUE;
+            return true;
         }
 
         if (bBackward && poLastNew->Equals(poFirst)) {
             /* forward, skip last point */
             ring->insert(ring->begin(), poList.begin(), poList.end()-1);
-            return TRUE;
+            return true;
         }
     }
 
-    return FALSE;
+    return false;
 }
 
 /*!
@@ -983,7 +985,7 @@ int VFKDataBlock::LoadGeometryPolygon()
                  iHp != eHp; ++iHp) {
                 const OGRLineString *pLine = (OGRLineString *) (*iHp)->GetGeometry();
                 if (pLine && AppendLineToRing(&poRingList, pLine, bNewRing)) {
-                    bFound = TRUE;
+                    bFound = true;
                     poLineList.erase(iHp);
                     break;
                 }
