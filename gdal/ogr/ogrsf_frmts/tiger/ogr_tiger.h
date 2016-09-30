@@ -160,7 +160,7 @@ public:
 
   virtual const char *GetShortModule() { return pszShortModule; }
   virtual const char *GetModule() { return pszModule; }
-  virtual int         SetWriteModule( const char *, int, OGRFeature * );
+  virtual bool        SetWriteModule( const char *, int, OGRFeature * );
 
   virtual int         GetFeatureCount() { return nFeatures; }
 
@@ -170,14 +170,14 @@ public:
   static void         SetField( OGRFeature *, const char *, const char *,
                                 int, int );
 
-  int                 WriteField( OGRFeature *, const char *, char *,
+  bool                WriteField( OGRFeature *, const char *, char *,
                                   int, int, char, char );
-  int                 WriteRecord( char *pachRecord, int nRecLen,
+  bool                WriteRecord( char *pachRecord, int nRecLen,
                                    const char *pszType, VSILFILE *fp = NULL );
-  int                 WritePoint( char *pachRecord, int nStart,
+  bool                WritePoint( char *pachRecord, int nStart,
                                   double dfX, double dfY );
 
-  virtual int         SetModule( const char * pszModule );
+  virtual bool        SetModule( const char * pszModule );
   virtual OGRFeature *GetFeature( int nRecordId );
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 
@@ -208,12 +208,12 @@ class TigerCompleteChain : public TigerFileBase
   VSILFILE           *fpShape;
   int                *panShapeRecordId;
 
-  VSILFILE               *fpRT3;
-  int                 bUsingRT3;
+  VSILFILE           *fpRT3;
+  bool                bUsingRT3;
   int                 nRT1RecOffset;
 
   int                 GetShapeRecordId( int, int );
-  int                 AddShapePoints( int, int, OGRLineString *, int );
+  bool                AddShapePoints( int, int, OGRLineString *, int );
 
   void                AddFieldDefnsPre2002();
   OGRFeature         *GetFeaturePre2002( int );
@@ -232,13 +232,13 @@ public:
                                           const char * );
   virtual            ~TigerCompleteChain();
 
-  virtual int         SetModule( const char * );
+  virtual bool        SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
 
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 
-  virtual int         SetWriteModule( const char *, int, OGRFeature * );
+  virtual bool        SetWriteModule( const char *, int, OGRFeature * );
 };
 
 /************************************************************************/
@@ -359,18 +359,18 @@ class TigerPolygon : public TigerFileBase
   const TigerRecordInfo    *psRTSInfo;
 
   VSILFILE               *fpRTS;
-  int                 bUsingRTS;
+  bool                bUsingRTS;
   int                 nRTSRecLen;
 
 public:
                       TigerPolygon( OGRTigerDataSource *, const char * );
   virtual            ~TigerPolygon();
 
-  virtual int         SetModule( const char * );
+  virtual bool        SetModule( const char * );
 
   virtual OGRFeature *GetFeature( int );
 
-  virtual int         SetWriteModule( const char *, int, OGRFeature * );
+  virtual bool        SetWriteModule( const char *, int, OGRFeature * );
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
@@ -553,7 +553,7 @@ class OGRTigerDataSource : public OGRDataSource
     int                 nVersionCode;
     TigerVersion        nVersion;
 
-    int                 bWriteMode;
+    bool                bWriteMode;
 
     TigerVersion        TigerCheckVersion( TigerVersion, const char * );
 
@@ -561,10 +561,10 @@ class OGRTigerDataSource : public OGRDataSource
                         OGRTigerDataSource();
                         virtual ~OGRTigerDataSource();
 
-    int                 GetWriteMode() { return bWriteMode; }
+    bool                GetWriteMode() const { return bWriteMode; }
 
-    TigerVersion        GetVersion() { return nVersion; }
-    int                 GetVersionCode() { return nVersionCode; }
+    TigerVersion        GetVersion() const { return nVersion; }
+    int                 GetVersionCode() const { return nVersionCode; }
 
     void                SetOptionList( char ** );
     const char         *GetOption( const char * );
@@ -589,17 +589,17 @@ class OGRTigerDataSource : public OGRDataSource
                                         const char * pszExtension );
 
 
-    int                 GetModuleCount() { return nModules; }
+    int                 GetModuleCount() const { return nModules; }
     const char         *GetModule( int );
-    int                 CheckModule( const char *pszModule );
+    bool                CheckModule( const char *pszModule );
     void                AddModule( const char *pszModule );
 
     void                DeleteModuleFiles( const char *pszModule );
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                       OGRSpatialReference * = NULL,
+                                       OGRwkbGeometryType = wkbUnknown,
+                                       char ** = NULL );
 };
 
 #endif /* ndef OGR_TIGER_H_INCLUDED */

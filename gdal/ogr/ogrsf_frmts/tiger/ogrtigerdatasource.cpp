@@ -203,7 +203,7 @@ OGRTigerDataSource::OGRTigerDataSource() :
     papszModules(NULL),
     nVersionCode(0),
     nVersion(TIGER_Unknown),
-    bWriteMode(FALSE)
+    bWriteMode(false)
 {}
 
 /************************************************************************/
@@ -678,15 +678,15 @@ const char *OGRTigerDataSource::GetModule( int iModule )
 /*      written to before.                                              */
 /************************************************************************/
 
-int OGRTigerDataSource::CheckModule( const char *pszModule )
+bool OGRTigerDataSource::CheckModule( const char *pszModule )
 
 {
     for( int i = 0; i < nModules; i++ )
     {
-        if( EQUAL(pszModule,papszModules[i]) )
-            return TRUE;
+        if( EQUAL(pszModule, papszModules[i]) )
+            return true;
     }
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -785,7 +785,7 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptionsIn )
 /* -------------------------------------------------------------------- */
     pszPath = CPLStrdup( pszNameIn );
     pszName = CPLStrdup( pszNameIn );
-    bWriteMode = TRUE;
+    bWriteMode = true;
 
     SetOptionList( papszOptionsIn );
 

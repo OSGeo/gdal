@@ -385,7 +385,7 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
     psRTAInfo(NULL),
     psRTSInfo(NULL),
     fpRTS(NULL),
-    bUsingRTS(TRUE),
+    bUsingRTS(true),
     nRTSRecLen(0)
 {
     poDS = poDSIn;
@@ -440,11 +440,11 @@ TigerPolygon::~TigerPolygon()
 /*                             SetModule()                              */
 /************************************************************************/
 
-int TigerPolygon::SetModule( const char * pszModuleIn )
+bool TigerPolygon::SetModule( const char * pszModuleIn )
 
 {
     if( !OpenFile( pszModuleIn, "A" ) )
-        return FALSE;
+        return false;
 
     EstablishFeatureCount();
 
@@ -471,7 +471,7 @@ int TigerPolygon::SetModule( const char * pszModuleIn )
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -556,11 +556,11 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 /*                           SetWriteModule()                           */
 /************************************************************************/
 
-int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
-                                  OGRFeature *poFeature )
+bool TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
+                                   OGRFeature *poFeature )
 
 {
-    const int bSuccess =
+    const bool bSuccess =
         TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
     if( !bSuccess )
         return bSuccess;
@@ -586,7 +586,7 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
