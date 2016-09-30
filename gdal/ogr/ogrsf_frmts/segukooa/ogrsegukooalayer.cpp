@@ -120,7 +120,7 @@ OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
     nYear(0)
 {
     nNextFID = 0;
-    bEOF = FALSE;
+    bEOF = false;
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
     SetDescription( poFeatureDefn->GetName() );
@@ -252,7 +252,7 @@ void OGRUKOOAP190Layer::ResetReading()
 
 {
     nNextFID = 0;
-    bEOF = FALSE;
+    bEOF = false;
     VSIFSeekL( fp, 0, SEEK_SET );
 }
 
@@ -270,7 +270,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
         const char* pszLine = CPLReadLine2L(fp, 81, NULL);
         if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
         {
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
 
@@ -476,7 +476,7 @@ OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
         CPLGetConfigOption("SEGP1_USE_EASTING_NORTHING", "NO")))
 {
     nNextFID = 0;
-    bEOF = FALSE;
+    bEOF = false;
 
     poFeatureDefn = new OGRFeatureDefn( CPLGetBasename(pszFilename) );
     SetDescription( poFeatureDefn->GetName() );
@@ -517,7 +517,7 @@ void OGRSEGP1Layer::ResetReading()
 
 {
     nNextFID = 0;
-    bEOF = FALSE;
+    bEOF = false;
     VSIFSeekL( fp, 0, SEEK_SET );
 
     /* Skip first 20 header lines */
@@ -527,7 +527,7 @@ void OGRSEGP1Layer::ResetReading()
         pszLine = CPLReadLine2L(fp,81,NULL);
         if (pszLine == NULL)
         {
-            bEOF = TRUE;
+            bEOF = true;
             break;
         }
     }
@@ -539,7 +539,7 @@ void OGRSEGP1Layer::ResetReading()
 
 OGRFeature *OGRSEGP1Layer::GetNextRawFeature()
 {
-    if (bEOF)
+    if( bEOF )
         return NULL;
 
     const char* pszLine = NULL;
@@ -548,7 +548,7 @@ OGRFeature *OGRSEGP1Layer::GetNextRawFeature()
         pszLine = CPLReadLine2L(fp,81,NULL);
         if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
         {
-            bEOF = TRUE;
+            bEOF = true;
             return NULL;
         }
 
@@ -720,7 +720,7 @@ OGRSEGUKOOALineLayer::OGRSEGUKOOALineLayer( const char* pszFilename,
     poNextBaseFeature(NULL)
 {
     nNextFID = 0;
-    bEOF = FALSE;
+    bEOF = false;
 
     poFeatureDefn = new OGRFeatureDefn(
         CPLSPrintf("%s_lines",
@@ -754,7 +754,7 @@ void OGRSEGUKOOALineLayer::ResetReading()
 
 {
     nNextFID = 0;
-    bEOF = FALSE;
+    bEOF = false;
     delete poNextBaseFeature;
     poNextBaseFeature = NULL;
     poBaseLayer->ResetReading();
@@ -766,7 +766,7 @@ void OGRSEGUKOOALineLayer::ResetReading()
 
 OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
 {
-    if (bEOF)
+    if( bEOF )
         return NULL;
 
     /* Merge points of base layer that have same value for attribute(0) */
@@ -815,7 +815,7 @@ OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
         poNextBaseFeature = poBaseLayer->GetNextFeature();
     }
 
-    bEOF = TRUE;
+    bEOF = true;
     if( poFeature )
         poFeature->SetGeometryDirectly(poLS);
     return poFeature;
