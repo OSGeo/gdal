@@ -380,37 +380,40 @@ OGRErr Binary2WkbGeom(unsigned char *p, WKBGeometry* geom, int nBytes)
 /************************************************************************/
 /*                       TranslateWalkPoint()                           */
 /************************************************************************/
-static OGRBoolean TranslateWalkPoint(OGRPoint *poPoint, WKBPoint* pWalkWkbPoint)
+static bool TranslateWalkPoint(OGRPoint *poPoint, WKBPoint* pWalkWkbPoint)
 {
     if ( poPoint == NULL || pWalkWkbPoint == NULL )
-        return FALSE;
+        return false;
 
     poPoint->setX(pWalkWkbPoint->x);
     poPoint->setY(pWalkWkbPoint->y);
     poPoint->setZ(pWalkWkbPoint->z);
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                    TranslateCurveSegment()                           */
 /************************************************************************/
-static OGRBoolean TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegment)
+static bool TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegment)
 {
     if ( poLS == NULL || pSegment == NULL )
-        return FALSE;
+        return false;
 
     switch(pSegment->lineType)
     {
     case wkLineType3PArc:
     case wkLineType3PCircle:
         {
-            double      dfCenterX, dfCenterY, dfCenterZ, dfRadius;
+            double dfCenterX;
+            double dfCenterY;
+            double dfCenterZ;
+            double dfRadius;
 
             if ( !OGRWalkArcCenterFromEdgePoints( pSegment->points[0].x, pSegment->points[0].y,
                                            pSegment->points[1].x, pSegment->points[1].y,
                                            pSegment->points[2].x, pSegment->points[2].y,
                                            &dfCenterX, &dfCenterY ) )
-                return FALSE;
+                return false;
 
             //Use Z value of the first point
             dfCenterZ = pSegment->points[0].z;
@@ -422,7 +425,7 @@ static OGRBoolean TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegm
                         pSegment->points[2].x, pSegment->points[2].y,
                         dfCenterX, dfCenterY, dfCenterZ, dfRadius,
                         pSegment->numPoints, poLS ) )
-                return FALSE;
+                return false;
         }
         break;
     case wkLineTypeStraight:
@@ -437,49 +440,52 @@ static OGRBoolean TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegm
         break;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                    TranslateWalkLineString()                         */
 /************************************************************************/
-static OGRBoolean TranslateWalkLineString(OGRLineString *poLS, LineString* pLineString)
+static bool TranslateWalkLineString( OGRLineString *poLS,
+                                     LineString* pLineString )
 {
-    if ( poLS == NULL || pLineString == NULL )
-        return FALSE;
+    if( poLS == NULL || pLineString == NULL )
+        return false;
 
-    for (GUInt32 i = 0; i < pLineString->numSegments; ++i)
+    for( GUInt32 i = 0; i < pLineString->numSegments; ++i )
     {
         if ( !TranslateCurveSegment(poLS, &pLineString->segments[i]) )
-            return FALSE;
+            return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                    TranslateWalkLinearring()                         */
 /************************************************************************/
-static OGRBoolean TranslateWalkLinearring(OGRLinearRing *poRing, LineString* pLineString)
+static bool TranslateWalkLinearring( OGRLinearRing *poRing,
+                                     LineString* pLineString )
 {
-    if ( poRing == NULL || pLineString == NULL )
-        return FALSE;
+    if( poRing == NULL || pLineString == NULL )
+        return false;
 
-    for(GUInt32 i = 0; i < pLineString->numSegments; i++)
+    for( GUInt32 i = 0; i < pLineString->numSegments; i++ )
         TranslateCurveSegment(poRing, &pLineString->segments[i]);
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                    TranslateWalkPolygon()                            */
 /************************************************************************/
-static OGRBoolean TranslateWalkPolygon(OGRPolygon *poPolygon, WKBPolygon* pWalkWkbPolgon)
+static bool TranslateWalkPolygon( OGRPolygon *poPolygon,
+                                  WKBPolygon* pWalkWkbPolgon )
 {
     if ( poPolygon == NULL || pWalkWkbPolgon == NULL )
-        return FALSE;
+        return false;
 
-    for (GUInt32 i = 0; i < pWalkWkbPolgon->numRings; ++i)
+    for( GUInt32 i = 0; i < pWalkWkbPolgon->numRings; ++i )
     {
         OGRLinearRing* poRing = new OGRLinearRing();
         LineString* lineString = &pWalkWkbPolgon->rings[i];
@@ -487,7 +493,7 @@ static OGRBoolean TranslateWalkPolygon(OGRPolygon *poPolygon, WKBPolygon* pWalkW
         poPolygon->addRingDirectly(poRing);
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -508,7 +514,7 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
     {
     case wkbPoint:
         {
-            if (!TranslateWalkPoint((OGRPoint *)poGeom, &geom->point))
+            if( !TranslateWalkPoint((OGRPoint *)poGeom, &geom->point) )
             {
                 delete poGeom;
                 return OGRERR_CORRUPT_DATA;
@@ -538,7 +544,7 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
             for (GUInt32 i = 0; i < geom->mpoint.num_wkbPoints; ++i)
             {
                 OGRPoint* poPoint = new OGRPoint();
-                if (!TranslateWalkPoint(poPoint, &geom->mpoint.WKBPoints[i]))
+                if( !TranslateWalkPoint(poPoint, &geom->mpoint.WKBPoints[i]) )
                 {
                     delete poPoint;
                     delete poGeom;
@@ -588,7 +594,7 @@ OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
                     case wkbPoint:
                         {
                             OGRPoint* poPoint = new OGRPoint();
-                            if (!TranslateWalkPoint(poPoint, &sg->point))
+                            if( !TranslateWalkPoint(poPoint, &sg->point) )
                             {
                                 delete poPoint;
                                 delete poGeom;
