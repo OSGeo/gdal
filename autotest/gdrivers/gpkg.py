@@ -2942,6 +2942,27 @@ def gpkg_36():
     return 'success'
 
 ###############################################################################
+# Test that we don't crash when generating big overview factors on rasters with big dimensions
+# due to issues in comparing the factor of overviews with the user specified
+# factors
+
+def gpkg_37():
+
+    ds = gdal.GetDriverByName('GPKG').Create('/vsimem/gpkg_37.gpkg',205000, 200000)
+    ds.SetGeoTransform([100,0.000001,0,100,0,-0.000001])
+    ds = None
+
+    ds = gdal.Open('/vsimem/gpkg_37.gpkg', gdal.GA_Update)
+    ret = ds.BuildOverviews('NONE', [2,4,8,16,32,64,128,256,512,1024,2048])
+    if ret != 0 or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_37.gpkg')
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2999,9 +3020,10 @@ gdaltest_list = [
     gpkg_34,
     gpkg_35,
     gpkg_36,
+    gpkg_37,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_35, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_37, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )

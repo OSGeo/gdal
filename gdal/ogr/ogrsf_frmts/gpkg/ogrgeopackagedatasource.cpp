@@ -1034,7 +1034,9 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         {
             SQLResultFree(&oResult);
             osSQL = pszSQL;
-            osSQL += " ORDER BY zoom_level DESC LIMIT 1";
+            osSQL += " ORDER BY zoom_level DESC";
+            if( !bUpdate )
+                osSQL += " LIMIT 1";
             err = SQLQuery(hDB, osSQL.c_str(), &oResult);
         }
         if( err != OGRERR_NONE || oResult.nRowCount == 0 )
@@ -1599,8 +1601,15 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
         {
             GDALDataset* poODS = m_papoOverviewDS[j];
 
-            const int nOvFactor = (int)
-                (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
+            int nOvFactor = GDALComputeOvFactor(poODS->GetRasterXSize(),
+                                                GetRasterXSize(),
+                                                poODS->GetRasterYSize(),
+                                                GetRasterYSize());
+            if( nOvFactor > 64 &&
+                ABS(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
+            {
+                nOvFactor = GetFloorPowerOfTwo(nOvFactor);
+            }
             nMaxOvFactor = nOvFactor;
 
             if( nOvFactor == panOverviewList[i]
@@ -1671,7 +1680,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     !m_bZoomOther )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "Use of overview factor %d cause gpkg_zoom_other extension to be needed",
+                            "Use of overview factor %d causes gpkg_zoom_other extension to be needed",
                             nOvFactor);
                     RegisterZoomOtherExtension();
                     m_bZoomOther = true;
@@ -1768,7 +1777,8 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
     }
 
     GDALRasterBand*** papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    CPLErr eErr = CE_None;
+    for( int iBand = 0; eErr == CE_None && iBand < nBands; iBand++ )
     {
         papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
         int iCurOverview = 0;
@@ -1779,11 +1789,16 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
             {
                 GDALDataset* poODS = m_papoOverviewDS[j];
 
-                const int nOvFactor =
+                int nOvFactor =
                     GDALComputeOvFactor(poODS->GetRasterXSize(),
                                         GetRasterXSize(),
                                         poODS->GetRasterYSize(),
                                         GetRasterYSize());
+                if( nOvFactor > 64 &&
+                    ABS(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
+                {
+                    nOvFactor = GetFloorPowerOfTwo(nOvFactor);
+                }
 
                 if( nOvFactor == panOverviewList[i]
                     || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
@@ -1795,12 +1810,22 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     break;
                 }
             }
-            CPLAssert(j < m_nOverviewCount);
+            if( j == m_nOverviewCount )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Could not find dataset corresponding to ov factor %d",
+                         panOverviewList[i]);
+                eErr = CE_Failure;
+            }
         }
-        CPLAssert(iCurOverview == nOverviews);
+        if( eErr == CE_None )
+        {
+            CPLAssert(iCurOverview == nOverviews);
+        }
     }
 
-    CPLErr eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBands,
+    if( eErr == CE_None )
+        eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBands,
                                      nOverviews, papapoOverviewBands,
                                      pszResampling, pfnProgress, pProgressData );
 
