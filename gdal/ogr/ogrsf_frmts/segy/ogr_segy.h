@@ -77,7 +77,7 @@ typedef struct
 class OGRSEGYLayer: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
-    int                bEOF;
+    bool               bEOF;
     int                nNextFID;
     VSILFILE*          fp;
 
@@ -108,7 +108,7 @@ class OGRSEGYLayer: public OGRLayer
 class OGRSEGYHeaderLayer: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
-    int                bEOF;
+    bool               bEOF;
 
     SEGYBinaryFileHeader sBFH;
     char*                pszHeaderText;
