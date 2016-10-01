@@ -3584,7 +3584,12 @@ void GDALRegister_JP2ECW()
     poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 "
-                               "Float32 Float64" );
+                               "Float32 "
+#if ECWSDK_VERSION >= 40
+    // Crashes for sure with 3.3. Didn't try other versions
+                               "Float64"
+#endif
+                              );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"

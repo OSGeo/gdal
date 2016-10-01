@@ -117,6 +117,28 @@ def misc_4():
 
     return 'success'
 
+
+###############################################################################
+def get_filename(drv, dirname):
+
+    filename = '%s/foo' % dirname
+    if drv.ShortName == 'GTX':
+        filename = filename + '.gtx'
+    elif drv.ShortName == 'RST':
+        filename = filename + '.rst'
+    elif drv.ShortName == 'SAGA':
+        filename = filename + '.sdat'
+    elif drv.ShortName == 'ADRG':
+        filename = '%s/ABCDEF01.GEN' % dirname
+    elif drv.ShortName == 'SRTMHGT':
+        filename = '%s/N48E002.HGT' % dirname
+    elif drv.ShortName == 'ECW':
+        filename = filename + '.ecw'
+    elif drv.ShortName == 'KMLSUPEROVERLAY':
+        filename = filename + '.kmz'
+
+    return filename
+
 ###############################################################################
 # Test Create() with various band numbers (including 0) and datatype
 
@@ -135,21 +157,7 @@ def misc_5_internal(drv, datatype, nBands):
             gdaltest.post_reason(reason)
             return 0
 
-    filename = '%s/foo' % dirname
-    if drv.ShortName == 'GTX':
-        filename = filename + '.gtx'
-    elif drv.ShortName == 'RST':
-        filename = filename + '.rst'
-    elif drv.ShortName == 'SAGA':
-        filename = filename + '.sdat'
-    elif drv.ShortName == 'ADRG':
-        filename = '%s/ABCDEF01.GEN' % dirname
-    elif drv.ShortName == 'SRTMHGT':
-        filename = '%s/N48E002.HGT' % dirname
-    elif drv.ShortName == 'ECW':
-        filename = filename + '.ecw'
-    elif drv.ShortName == 'KMLSUPEROVERLAY':
-        filename = filename + '.kmz'
+    filename = get_filename(drv, dirname)
     ds = drv.Create(filename, 100, 100, nBands, datatype)
     if ds is not None and not (drv.ShortName == 'GPKG' and nBands == 0):
         set_gt = (2,1.0/10,0,49,0,-1.0/10)
@@ -285,8 +293,6 @@ def misc_6_internal(datatype, nBands):
                     if (nBands == 2 or nBands >= 5) or \
                         not (datatype == gdal.GDT_Byte or datatype == gdal.GDT_Int16 or datatype == gdal.GDT_UInt16):
                             skip = True
-                if drv.ShortName == 'JP2ECW' and datatype == gdal.GDT_Float64:
-                    skip = True
 
                 if skip is False:
                     dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
@@ -301,21 +307,7 @@ def misc_6_internal(datatype, nBands):
                             gdaltest.post_reason(reason)
                             return 'fail'
 
-                    filename = '%s/foo' % dirname
-                    if drv.ShortName == 'GTX':
-                        filename = filename + '.gtx'
-                    elif drv.ShortName == 'RST':
-                        filename = filename + '.rst'
-                    elif drv.ShortName == 'SAGA':
-                        filename = filename + '.sdat'
-                    elif drv.ShortName == 'ADRG':
-                        filename = '%s/ABCDEF01.GEN' % dirname
-                    elif drv.ShortName == 'SRTMHGT':
-                        filename = '%s/N48E002.HGT' % dirname
-                    elif drv.ShortName == 'ECW':
-                        filename = filename + '.ecw'
-                    elif drv.ShortName == 'KMLSUPEROVERLAY':
-                        filename = filename + '.kmz'
+                    filename = get_filename(drv, dirname)
 
                     dst_ds = drv.CreateCopy(filename, ds)
                     has_succeeded = dst_ds is not None
@@ -537,26 +529,8 @@ def misc_12():
 
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
-        #if drv.ShortName == 'ECW' or drv.ShortName == 'JP2ECW':
-        #    continue
         md = drv.GetMetadata()
         if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md and 'DCAP_RASTER' in md:
-
-            ext = ''
-            if drv.ShortName == 'GTX':
-                ext = '.gtx'
-            elif drv.ShortName == 'RST':
-                ext = '.rst'
-            elif drv.ShortName == 'SAGA':
-                ext = '.sdat'
-            elif drv.ShortName == 'ECW':
-                ext = '.ecw'
-            elif drv.ShortName == 'KMLSUPEROVERLAY':
-                ext = '.kmz'
-            elif drv.ShortName == 'ADRG':
-                ext = '/ABCDEF01.GEN'
-            elif drv.ShortName == 'SRTMHGT':
-                ext = '/N48E002.HGT'
 
             nbands = 1
             if drv.ShortName == 'WEBP' or drv.ShortName == 'ADRG':
@@ -579,7 +553,7 @@ def misc_12():
 
             # Test to detect crashes
             gdal.PushErrorHandler('CPLQuietErrorHandler')
-            ds = drv.CreateCopy('/nonexistingpath/nonexistingfile' + ext, src_ds)
+            ds = drv.CreateCopy('/nonexistingpath' + get_filename(drv, ''), src_ds)
             gdal.PopErrorHandler()
             if ds is None and gdal.GetLastErrorMsg() == '':
                 gdaltest.post_reason('failure')
@@ -590,7 +564,7 @@ def misc_12():
             if gdal_translate_path is not None:
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
-                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/nonexistingfile' + ext, check_memleak = False)
+                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak = False)
                 del ds
                 gdal.Unlink('tmp/misc_12.vrt')
 
