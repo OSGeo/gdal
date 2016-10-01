@@ -44,9 +44,9 @@ OGRWFSJoinLayer::OGRWFSJoinLayer( OGRWFSDataSource* poDSIn,
     bDistinct(psSelectInfo->query_mode == SWQM_DISTINCT_LIST),
     poBaseDS(NULL),
     poBaseLayer(NULL),
-    bReloadNeeded(FALSE),
-    bHasFetched(FALSE),
-    bPagingActive(FALSE),
+    bReloadNeeded(false),
+    bHasFetched(false),
+    bPagingActive(false),
     nPagingStartIndex(0),
     nFeatureRead(0),
     nFeatureCountRequested(0)
@@ -320,18 +320,18 @@ OGRWFSJoinLayer* OGRWFSJoinLayer::Build(OGRWFSDataSource* poDS,
 
 void OGRWFSJoinLayer::ResetReading()
 {
-    if (bPagingActive)
-        bReloadNeeded = TRUE;
+    if( bPagingActive )
+        bReloadNeeded = true;
     nPagingStartIndex = 0;
     nFeatureRead = 0;
     nFeatureCountRequested = 0;
-    if (bReloadNeeded)
+    if( bReloadNeeded )
     {
         GDALClose(poBaseDS);
         poBaseDS = NULL;
         poBaseLayer = NULL;
-        bHasFetched = FALSE;
-        bReloadNeeded = FALSE;
+        bHasFetched = false;
+        bReloadNeeded = false;
     }
     if (poBaseLayer)
         poBaseLayer->ResetReading();
@@ -359,7 +359,7 @@ CPLString OGRWFSJoinLayer::MakeGetFeatureURL(int bRequestHits)
                                 poDS->GetBaseStartIndex()));
         nRequestMaxFeatures = poDS->GetPageSize();
         nFeatureCountRequested = nRequestMaxFeatures;
-        bPagingActive = TRUE;
+        bPagingActive = true;
     }
 
     if (nRequestMaxFeatures)
@@ -442,7 +442,7 @@ GDALDataset* OGRWFSJoinLayer::FetchGetFeature()
                            apszOpenOptions, NULL);
         if (poGML_DS)
         {
-            //bStreamingDS = TRUE;
+            // bStreamingDS = true;
             return poGML_DS;
         }
 
@@ -470,7 +470,7 @@ GDALDataset* OGRWFSJoinLayer::FetchGetFeature()
         }
     }
 
-    //bStreamingDS = FALSE;
+    // bStreamingDS = false;
     psResult = poDS->HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
@@ -539,22 +539,23 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
 {
     while( true )
     {
-        if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeatureCountRequested)
+        if( bPagingActive &&
+            nFeatureRead == nPagingStartIndex + nFeatureCountRequested )
         {
-            bReloadNeeded = TRUE;
+            bReloadNeeded = true;
             nPagingStartIndex = nFeatureRead;
         }
-        if (bReloadNeeded)
+        if( bReloadNeeded )
         {
             GDALClose(poBaseDS);
             poBaseDS = NULL;
             poBaseLayer = NULL;
-            bHasFetched = FALSE;
-            bReloadNeeded = FALSE;
+            bHasFetched = false;
+            bReloadNeeded = false;
         }
-        if (poBaseDS == NULL && !bHasFetched)
+        if( poBaseDS == NULL && !bHasFetched )
         {
-            bHasFetched = TRUE;
+            bHasFetched = true;
             poBaseDS = FetchGetFeature();
             if (poBaseDS)
             {
