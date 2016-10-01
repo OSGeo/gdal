@@ -45,7 +45,7 @@ class OGRXLSLayer : public OGRLayer
 
     char              *pszName;
     int                iSheet;
-    int                bFirstLineIsHeaders;
+    bool               bFirstLineIsHeaders;
     int                nRows;
     unsigned short     nCols;
 
