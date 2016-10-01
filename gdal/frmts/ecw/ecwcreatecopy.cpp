@@ -718,11 +718,13 @@ CPLErr GDALECWCompressor::Initialize(
             bSigned = TRUE;
             break;
 
+#if ECWSDK_VERSION >= 40
         case GDT_Float64:
             psClient->eCellType = NCSCT_IEEE8;
             nBits = 64;
             bSigned = TRUE;
             break;
+#endif
 
         default:
             // We treat complex types as float.
@@ -1480,7 +1482,9 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
         && eDataType != GDT_Int32
         && eDataType != GDT_UInt32
         && eDataType != GDT_Float32
+#if ECWSDK_VERSION >= 40
         && eDataType != GDT_Float64
+#endif
         && bStrict )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
