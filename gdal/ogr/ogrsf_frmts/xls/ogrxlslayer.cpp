@@ -47,7 +47,7 @@ OGRXLSLayer::OGRXLSLayer( OGRXLSDataSource* poDSIn,
     poFeatureDefn(NULL),
     pszName(CPLStrdup(pszSheetname)),
     iSheet(iSheetIn),
-    bFirstLineIsHeaders(FALSE),
+    bFirstLineIsHeaders(false),
     nRows(nRowsIn),
     nCols(nColsIn),
     nNextFID(0)
@@ -116,11 +116,11 @@ void OGRXLSLayer::DetectHeaderLine(const void* xlshandle)
 
     const char* pszXLSHeaders = CPLGetConfigOption("OGR_XLS_HEADERS", "");
     if( EQUAL(pszXLSHeaders, "FORCE") )
-        bFirstLineIsHeaders = TRUE;
+        bFirstLineIsHeaders = true;
     else if( EQUAL(pszXLSHeaders, "DISABLE") )
-        bFirstLineIsHeaders = FALSE;
+        bFirstLineIsHeaders = false;
     else if( i == nCols && nCountTextOnSecondLine != nCols )
-        bFirstLineIsHeaders = TRUE;
+        bFirstLineIsHeaders = true;
 }
 
 /************************************************************************/
@@ -132,7 +132,7 @@ void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
 
 {
     FreeXL_CellValue sCellValue;
-    for( int j = bFirstLineIsHeaders ? 1 : 0; j < nRows; j ++)
+    for( int j = bFirstLineIsHeaders ? 1 : 0; j < nRows; j++ )
     {
         for( unsigned short i = 0; i < nCols; i ++)
         {
@@ -232,10 +232,11 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
             OGRFieldType eType = (OGRFieldType) paeFieldTypes[i];
             if (paeFieldTypes[i] < 0)
                 eType = OFTString;
-            if (bFirstLineIsHeaders &&
-                freexl_get_cell_value(xlshandle, 0, i, &sCellValue) == FREEXL_OK &&
+            if( bFirstLineIsHeaders &&
+                freexl_get_cell_value(xlshandle,
+                                      0, i, &sCellValue) == FREEXL_OK &&
                 (sCellValue.type == FREEXL_CELL_TEXT ||
-                 sCellValue.type == FREEXL_CELL_SST_TEXT))
+                 sCellValue.type == FREEXL_CELL_SST_TEXT) )
             {
                 OGRFieldDefn oField(sCellValue.value.text_value, eType);
                 poFeatureDefn->AddFieldDefn(&oField);
