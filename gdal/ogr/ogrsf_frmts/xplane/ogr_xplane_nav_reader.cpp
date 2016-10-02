@@ -131,17 +131,17 @@ void OGRXPlaneNavReader::Read()
         {
             CSLDestroy(papszTokens);
             papszTokens = NULL;
-            bEOF = TRUE;
+            bEOF = true;
             return;
         }
-        else if (nTokens == 0 || assertMinCol(9) == FALSE)
+        else if( nTokens == 0 || !assertMinCol(9) )
         {
             CSLDestroy(papszTokens);
             papszTokens = NULL;
             continue;
         }
 
-        int nType = atoi(papszTokens[0]);
+        const int nType = atoi(papszTokens[0]);
         if (!((nType >= NAVAID_NDB && nType <= NAVAID_IM) ||
                nType == NAVAID_DME_COLOC || nType == NAVAID_DME_STANDALONE))
         {
@@ -157,12 +157,12 @@ void OGRXPlaneNavReader::Read()
         CSLDestroy(papszTokens);
         papszTokens = NULL;
 
-        if (poInterestLayer && poInterestLayer->IsEmpty() == FALSE)
+        if( poInterestLayer && !poInterestLayer->IsEmpty() )
             return;
     }
 
     papszTokens = NULL;
-    bEOF = TRUE;
+    bEOF = true;
 }
 
 /************************************************************************/

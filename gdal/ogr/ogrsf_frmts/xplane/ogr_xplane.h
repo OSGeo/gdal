@@ -91,8 +91,8 @@ class OGRXPlaneDataSource : public OGRDataSource
     int                 nLayers;
 
     OGRXPlaneReader*    poReader;
-    int                 bReadWholeFile;
-    int                 bWholeFiledReadingDone;
+    bool                bReadWholeFile;
+    bool                bWholeFiledReadingDone;
 
     void                Reset();
 

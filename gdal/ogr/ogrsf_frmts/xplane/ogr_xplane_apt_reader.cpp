@@ -217,16 +217,16 @@ int OGRXPlaneAptReader::IsRecognizedVersion( const char* pszVersionString)
 
 void OGRXPlaneAptReader::Read()
 {
-    if (!bResumeLine)
+    if( !bResumeLine )
     {
         CPLAssert(papszTokens == NULL);
     }
 
     const char* pszLine = NULL;
 
-    while(bResumeLine || (pszLine = CPLReadLineL(fp)) != NULL)
+    while( bResumeLine || (pszLine = CPLReadLineL(fp)) != NULL )
     {
-        if (!bResumeLine)
+        if( !bResumeLine )
         {
             papszTokens = CSLTokenizeString(pszLine);
             nTokens = CSLCount(papszTokens);
@@ -257,7 +257,7 @@ void OGRXPlaneAptReader::Read()
                 }
                 return;
             }
-            else if (nTokens == 0 || assertMinCol(2) == FALSE)
+            else if( nTokens == 0 || !assertMinCol(2) )
             {
                 break;
             }
@@ -379,12 +379,12 @@ void OGRXPlaneAptReader::Read()
                               nLineNumber, nType);
                     break;
             }
-        } while(bResumeLine);
+        } while( bResumeLine );
 
         CSLDestroy(papszTokens);
         papszTokens = NULL;
 
-        if (poInterestLayer && poInterestLayer->IsEmpty() == FALSE)
+        if( poInterestLayer && !poInterestLayer->IsEmpty() )
             return;
     }
 
@@ -999,7 +999,7 @@ OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
         {
             OGRPoint pt;
             poInternalRing->getPoint(j, &pt);
-            if (poExternalRing->isPointInRing(&pt) == FALSE)
+            if( !poExternalRing->isPointInRing(&pt) )
             {
                 nOutside++;
                 jOutside = j;
@@ -1057,18 +1057,24 @@ OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
 /************************************************************************/
 
 /* This function will eat records until the end of the polygon */
-/* Return TRUE if the main parser must re-scan the current record */
+/* Return true if the main parser must re-scan the current record */
 
-#define RET_FALSE_IF_FAIL(x)      if (!(x)) return FALSE;
+#define RET_FALSE_IF_FAIL(x)      if (!(x)) return false;
 
-int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
+bool OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
 {
-    double dfLat, dfLon;
-    double dfFirstLat = 0., dfFirstLon = 0.;
-    double dfLastLat = 0., dfLastLon = 0.;
-    double dfLatBezier = 0., dfLonBezier = 0.;
-    double dfFirstLatBezier = 0., dfFirstLonBezier = 0.;
-    double dfLastLatBezier = 0., dfLastLonBezier = 0.;
+    double dfLat;
+    double dfLon;
+    double dfFirstLat = 0.0;
+    double dfFirstLon = 0.0;
+    double dfLastLat = 0.0;
+    double dfLastLon = 0.0;
+    double dfLatBezier = 0.0;
+    double dfLonBezier = 0.0;
+    double dfFirstLatBezier = 0.0;
+    double dfFirstLonBezier = 0.0;
+    double dfLastLatBezier = 0.0;
+    double dfLastLonBezier = 0.0;
     bool bIsFirst = true;
     bool bFirstIsBezier = true;
     // bool bLastIsValid = false;
@@ -1091,7 +1097,7 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
 
         if (nTokens == 1 && strcmp(papszTokens[0], "99") == 0)
         {
-            if (bLastPartIsClosed == FALSE)
+            if( !bLastPartIsClosed )
             {
                 CPLDebug("XPlane", "Line %d : Unexpected token when reading a polygon : %d",
                         nLineNumber, nType);
@@ -1103,7 +1109,7 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
 
             return true;
         }
-        if (nTokens == 0 || assertMinCol(2) == FALSE)
+        if (nTokens == 0 || !assertMinCol(2) )
         {
             CSLDestroy(papszTokens);
             continue;
@@ -1239,15 +1245,19 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
             linearRing.empty();
 
             bLastPartIsClosed = true;
-            bLastIsBezier = false; /* we don't want to draw an arc between two parts */
+            // We do not want to draw an arc between two parts.
+            bLastIsBezier = false;
         }
         else
         {
-            if (nType == APT_NODE_END || nType == APT_NODE_END_WITH_BEZIER ||
-                bLastPartIsClosed == FALSE)
+            if( nType == APT_NODE_END ||
+                nType == APT_NODE_END_WITH_BEZIER ||
+                !bLastPartIsClosed )
             {
-                CPLDebug("XPlane", "Line %d : Unexpected token when reading a polygon : %d",
-                        nLineNumber, nType);
+                CPLDebug(
+                    "XPlane",
+                    "Line %d : Unexpected token when reading a polygon : %d",
+                    nLineNumber, nType);
             }
             else
             {
@@ -1341,11 +1351,9 @@ void OGRXPlaneAptReader::ParsePavement()
 /************************************************************************/
 
 /* This function will eat records until the end of the boundary definition */
-/* Return TRUE if the main parser must re-scan the current record */
 
 void OGRXPlaneAptReader::ParseAPTBoundary()
 {
-
     RET_IF_FAIL(assertMinCol(2));
 
     const CPLString osBoundaryName = readStringUntilEnd(2);
@@ -1389,16 +1397,23 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
 /************************************************************************/
 
 /* This function will eat records until the end of the multilinestring */
-/* Return TRUE if the main parser must re-scan the current record */
+/* Return true if the main parser must re-scan the current record */
 
-int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring, int* pbIsValid)
+bool OGRXPlaneAptReader::ParseLinearGeometry(
+    OGRMultiLineString& multilinestring, int* pbIsValid )
 {
-    double dfLat, dfLon;
-    double dfFirstLat = 0., dfFirstLon = 0.;
-    double dfLastLat = 0., dfLastLon = 0.;
-    double dfLatBezier = 0., dfLonBezier = 0.;
-    double dfFirstLatBezier = 0., dfFirstLonBezier = 0.;
-    double dfLastLatBezier = 0., dfLastLonBezier = 0.;
+    double dfLat;
+    double dfLon;
+    double dfFirstLat = 0.0;
+    double dfFirstLon = 0.0;
+    double dfLastLat = 0.0;
+    double dfLastLon = 0.0;
+    double dfLatBezier = 0.0;
+    double dfLonBezier = 0.0;
+    double dfFirstLatBezier = 0.0;
+    double dfFirstLonBezier = 0.0;
+    double dfLastLatBezier = 0.0;
+    double dfLastLonBezier = 0.0;
     bool bIsFirst = true;
     bool bFirstIsBezier = true;
     // bool bLastIsValid = false;
@@ -1434,7 +1449,7 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
             }
             return true;
         }
-        if (nTokens == 0 || assertMinCol(2) == FALSE)
+        if( nTokens == 0 || !assertMinCol(2) )
         {
             CSLDestroy(papszTokens);
             continue;
@@ -1601,7 +1616,7 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
         }
         else
         {
-            if (bLastPartIsClosedOrEnded == FALSE)
+            if( !bLastPartIsClosedOrEnded )
             {
                 CPLDebug( "XPlane",
                           "Line %d : Unexpected token when reading a linear "
@@ -1650,7 +1665,6 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
 /************************************************************************/
 
 // This function will eat records until the end of the linear feature definition
-// Return TRUE if the main parser must re-scan the current record.
 
 void OGRXPlaneAptReader::ParseAPTLinearFeature()
 {
@@ -1894,17 +1908,17 @@ OGRXPlaneAPTLayer::OGRXPlaneAPTLayer() : OGRXPlaneLayer("APT")
 /*                           AddFeature()                               */
 /************************************************************************/
 
-OGRFeature*
-     OGRXPlaneAPTLayer::AddFeature(const char* pszAptICAO,
-                                   const char* pszAptName,
-                                   int nAPTType,
-                                   double dfElevation,
-                                   int bHasCoordinates,
-                                   double dfLat,
-                                   double dfLon,
-                                   int bHasTower,
-                                   double dfHeightTower,
-                                   const char* pszTowerName)
+OGRFeature *
+OGRXPlaneAPTLayer::AddFeature( const char* pszAptICAO,
+                               const char* pszAptName,
+                               int nAPTType,
+                               double dfElevation,
+                               bool bHasCoordinates,
+                               double dfLat,
+                               double dfLon,
+                               bool bHasTower,
+                               double dfHeightTower,
+                               const char* pszTowerName )
 {
     int nCount = 0;
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
@@ -1914,8 +1928,8 @@ OGRFeature*
                                    (nAPTType == APT_SEAPLANE_HEADER)   ? 1 :
                                  /*(nAPTType == APT_HELIPORT_HEADER)*/   2 );
     poFeature->SetField( nCount++, dfElevation );
-    poFeature->SetField( nCount++, bHasTower );
-    if (bHasCoordinates)
+    poFeature->SetField( nCount++, static_cast<int>(bHasTower) );
+    if( bHasCoordinates )
     {
         poFeature->SetGeometryDirectly( new OGRPoint( dfLon, dfLat ) );
     }
@@ -1923,7 +1937,7 @@ OGRFeature*
     {
         CPLDebug("XPlane", "Airport %s/%s has no coordinates", pszAptICAO, pszAptName);
     }
-    if (bHasTower)
+    if( bHasTower )
     {
         poFeature->SetField( nCount++, dfHeightTower );
         poFeature->SetField( nCount++, pszTowerName );

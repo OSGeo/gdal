@@ -172,7 +172,7 @@ OGRFeature *OGRXPlaneLayer::GetNextFeature()
             {
                 nFeatureArrayIndex = nFeatureArraySize = 0;
 
-                if (poReader->GetNextFeature() == FALSE)
+                if( !poReader->GetNextFeature() )
                     return NULL;
                 if (nFeatureArraySize == 0)
                     return NULL;
@@ -276,7 +276,7 @@ OGRErr OGRXPlaneLayer::SetNextByIndex( GIntBig nIndex )
 /*                       TestCapability()                               */
 /************************************************************************/
 
-int  OGRXPlaneLayer::TestCapability( const char * pszCap )
+int OGRXPlaneLayer::TestCapability( const char * pszCap )
 {
     if (EQUAL(pszCap,OLCFastFeatureCount) ||
         EQUAL(pszCap,OLCRandomRead) ||
