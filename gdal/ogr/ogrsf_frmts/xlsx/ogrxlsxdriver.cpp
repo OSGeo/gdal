@@ -72,17 +72,17 @@ OGRDataSource *OGRXLSXDriver::Open( const char * pszFilename, int bUpdate )
     if (fp == NULL)
         return NULL;
 
-    int bOK = FALSE;
+    bool bOK = false;
     char szBuffer[2048];
     if (VSIFReadL(szBuffer, sizeof(szBuffer), 1, fp) == 1 &&
         memcmp(szBuffer, "PK", 2) == 0)
     {
-        bOK = TRUE;
+        bOK = true;
     }
 
     VSIFCloseL(fp);
 
-    if (!bOK)
+    if( !bOK )
         return NULL;
 
     VSILFILE* fpContent = VSIFOpenL(CPLSPrintf("/vsizip/%s/[Content_Types].xml", pszFilename), "rb");

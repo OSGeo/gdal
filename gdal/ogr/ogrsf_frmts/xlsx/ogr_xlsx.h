@@ -49,24 +49,24 @@ class OGRXLSXDataSource;
 
 class OGRXLSXLayer : public OGRMemLayer
 {
-    int                bInit;
+    bool               bInit;
     OGRXLSXDataSource* poDS;
     int                nSheetId;
     void               Init();
-    int                bUpdated;
-    int                bHasHeaderLine;
+    bool               bUpdated;
+    bool               bHasHeaderLine;
 
-    public:
+  public:
         OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
                       int nSheetIdIn,
                       const char * pszName,
                       int bUpdateIn = FALSE);
 
-    int                 HasBeenUpdated() { return bUpdated; }
-    void                SetUpdated(int bUpdatedIn = TRUE);
+    bool                HasBeenUpdated() const { return bUpdated; }
+    void                SetUpdated( bool bUpdatedIn = true );
 
-    int                 GetHasHeaderLine() { return bHasHeaderLine; }
-    void                SetHasHeaderLine(int bIn) { bHasHeaderLine = bIn; }
+    bool                GetHasHeaderLine() const { return bHasHeaderLine; }
+    void                SetHasHeaderLine( bool bIn ) { bHasHeaderLine = bIn; }
 
     const char         *GetName() { return OGRMemLayer::GetLayerDefn()->GetName(); };
     OGRwkbGeometryType  GetGeomType() { return wkbNone; }
@@ -141,19 +141,21 @@ class XLSXFieldTypeExtended
 {
 public:
     OGRFieldType      eType;
-    int               bHasMS;
+    bool              bHasMS;
 
-                    XLSXFieldTypeExtended() : eType(OFTMaxType), bHasMS(FALSE) {}
+                    XLSXFieldTypeExtended() :
+                        eType(OFTMaxType),
+                        bHasMS(false) {}
                     XLSXFieldTypeExtended(OGRFieldType eTypeIn,
-                                          int bHasMSIn = FALSE) :
+                                          bool bHasMSIn = false) :
                                     eType(eTypeIn), bHasMS(bHasMSIn) {}
 };
 
 class OGRXLSXDataSource : public OGRDataSource
 {
     char*               pszName;
-    int                 bUpdatable;
-    int                 bUpdated;
+    bool                bUpdatable;
+    bool                bUpdated;
 
     int                 nLayers;
     OGRLayer          **papoLayers;
@@ -165,11 +167,11 @@ class OGRXLSXDataSource : public OGRDataSource
     std::vector<std::string>  apoSharedStrings;
     std::string         osCurrentString;
 
-    int                 bFirstLineIsHeaders;
+    bool                bFirstLineIsHeaders;
     int                 bAutodetectTypes;
 
     XML_Parser          oParser;
-    int                 bStopParsing;
+    bool                bStopParsing;
     int                 nWithoutEventCounter;
     int                 nDataHandlerCounter;
     int                 nCurLine;
@@ -189,7 +191,7 @@ class OGRXLSXDataSource : public OGRDataSource
     std::vector<std::string>  apoCurLineValues;
     std::vector<std::string>  apoCurLineTypes;
 
-    int                        bInCellXFS;
+    bool                bInCellXFS;
     std::map<int,XLSXFieldTypeExtended> apoMapStyleFormats;
     std::vector<XLSXFieldTypeExtended>  apoStyles;
 
@@ -251,8 +253,8 @@ class OGRXLSXDataSource : public OGRDataSource
 
     void                BuildLayer(OGRXLSXLayer* poLayer, int nSheetId);
 
-    int                 GetUpdatable() { return bUpdatable; }
-    void                SetUpdated() { bUpdated = TRUE; }
+    bool                GetUpdatable() { return bUpdatable; }
+    void                SetUpdated() { bUpdated = true; }
 };
 
 } /* end of OGRXLSX namespace */
