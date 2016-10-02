@@ -739,26 +739,43 @@ typedef struct
         (afWin[0] + afWin[1] + afWin[1] + afWin[2])) /
         (8.0 * psData->nsres * psData->scale);
 
-    slope = M_PI / 2 - atan(sqrt(x*x + y*y));
+    slope = atan(sqrt(x*x + y*y));
 
     aspect = atan2(y,x);
 
-    cang = sin(alt * kdfDegreesToRadians) * sin(slope) +
-           cos(alt * kdfDegreesToRadians) * cos(slope) *
-           cos(az * kdfDegreesToRadians - M_PI/2 - aspect);
+    cang = sin(alt) * cos(slope) +
+           cos(alt) * sin(slope) *
+           cos(az - M_PI/2 - aspect);
 
-==>
-    cang = (psData->sin_altRadians -
-           psData->cos_alt_mul_z * sqrt(xx_plus_yy) *
-           sin(aspect - psData->azRadians)) /
-           sqrt(1 + psData->square_z * xx_plus_yy);
+
+We can avoid a lot of trigonometric computations:
+
+    since cos(atan(x)) = 1 / sqrt(1+x^2)
+      ==> cos(slope) = 1 / sqrt(1+ x*x+y*y)
+
+      and sin(atan(x)) = x / sqrt(1+x^2)
+      ==> sin(slope) = sqrt(x*x + y*y) / sqrt(1+ x*x+y*y)
+
+      and cos(az - M_PI/2 - aspect)
+        = cos(-az + M_PI/2 + aspect)
+        = cos(M_PI/2 - (az - aspect))
+        = sin(az - aspect)
+        = -sin(aspect-az)
+
+==> cang = (sin(alt) - cos(alt) * sqrt(x*x + y*y)  * sin(aspect-as)) /
+           sqrt(1+ x*x+y*y)
 
     But:
-    sin(aspect - psData->azRadians)
-     = sin(aspect)*cos(psData->azRadians) - cos(aspect)*sin(psData->azRadians))
-     = (y * cos(psData->azRadians) - x * sin(psData->azRadians)) / sqrt(xx_plus_yy)
+    sin(aspect - az) = sin(aspect)*cos(az) - cos(aspect)*sin(az))
 
-so:
+and as sin(az)=sin(atan2(y,x)) = y / sqrt(xx_plus_yy)
+   and cos(az)=cos(atan2(y,x)) = x / sqrt(xx_plus_yy)
+
+    sin(aspect - az) = (y * cos(az) - x * sin(az)) / sqrt(xx_plus_yy)
+
+so we get a final formula with just one transcendental function
+(reciprocal of square root):
+
     cang = (psData->sin_altRadians -
            (y * psData->cos_az_mul_cos_alt_mul_z -
             x * psData->sin_az_mul_cos_alt_mul_z)) /
