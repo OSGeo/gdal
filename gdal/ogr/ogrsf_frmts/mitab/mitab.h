@@ -1880,9 +1880,9 @@ class TABDebugFeature CPL_FINAL : public TABFeature
 char CPL_DLL *MITABSpatialRef2CoordSys( OGRSpatialReference * );
 OGRSpatialReference CPL_DLL * MITABCoordSys2SpatialRef( const char * );
 
-GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
-                                  double &dXMin, double &dYMin,
-                                  double &dXMax, double &dYMax );
+bool MITABExtractCoordSysBounds( const char * pszCoordSys,
+                                 double &dXMin, double &dYMin,
+                                 double &dXMax, double &dYMax );
 int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj);
 
 typedef struct {
@@ -1913,12 +1913,12 @@ typedef struct
  * The following are used for coordsys bounds lookup
  *--------------------------------------------------------------------*/
 
-GBool   MITABLookupCoordSysBounds(TABProjInfo *psCS,
+bool    MITABLookupCoordSysBounds(TABProjInfo *psCS,
                                   double &dXMin, double &dYMin,
                                   double &dXMax, double &dYMax,
-                                  int bOnlyUserTable = FALSE);
+                                  bool bOnlyUserTable = false);
 int     MITABLoadCoordSysTable(const char *pszFname);
 void    MITABFreeCoordSysTable();
-GBool   MITABCoordSysTableLoaded();
+bool    MITABCoordSysTableLoaded();  // TODO(schwehr): Unused?
 
 #endif /* MITAB_H_INCLUDED_ */

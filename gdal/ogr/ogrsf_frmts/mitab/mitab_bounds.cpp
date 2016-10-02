@@ -1067,14 +1067,14 @@ static VSIStatBufL sStatBoundsFile;
  * This can modify that passed TABProjInfo struct if a match is found
  * in an external bound file with proj remapping.
  *
- * Returns TRUE if valid bounds were found, FALSE otherwise.
+ * Returns true if valid bounds were found, false otherwise.
  **********************************************************************/
-GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
-                                double &dXMin, double &dYMin,
-                                double &dXMax, double &dYMax,
-                                int bOnlyUserTable)
+bool MITABLookupCoordSysBounds(TABProjInfo *psCS,
+                               double &dXMin, double &dYMin,
+                               double &dXMax, double &dYMax,
+                               bool bOnlyUserTable)
 {
-    GBool bFound = FALSE;
+    bool bFound = false;
 
     /*-----------------------------------------------------------------
     * Try to load the user defined table if not loaded yet .
@@ -1112,7 +1112,7 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
         strcpy(szPreviousMitabBoundsFile, "");
     }
 
-    for(int iLoop=0; !bFound && iLoop < 2; iLoop++)
+    for( int iLoop=0; !bFound && iLoop < 2; iLoop++ )
     {
         /* MapInfo uses a hack to differentiate some SRS that have the same */
         /* definition, but different bounds, e.g. Lambet 93 France with French */
@@ -1159,7 +1159,7 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                 dYMin = gpasExtBoundsList[i].sBoundsInfo.dYMin;
                 dXMax = gpasExtBoundsList[i].sBoundsInfo.dXMax;
                 dYMax = gpasExtBoundsList[i].sBoundsInfo.dYMax;
-                bFound = TRUE;
+                bFound = true;
             }
         }
 
@@ -1193,7 +1193,7 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                 dYMin = psList->dYMin;
                 dXMax = psList->dXMax;
                 dYMax = psList->dYMax;
-                bFound = TRUE;
+                bFound = true;
             }
         }
     }
@@ -1242,7 +1242,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
         const char *pszLine = NULL;
         while( (pszLine = CPLReadLineL(fp)) != NULL)
         {
-            int bHasProjIn = FALSE;
+            bool bHasProjIn = false;
             TABProjInfo sProjIn;
             TABProjInfo sProj;
 
@@ -1269,7 +1269,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
                     CPLError(CE_Warning, CPLE_IllegalArg, "Unexpected Bounds parameter at line %d",
                              iLine);
                 }
-                bHasProjIn = TRUE;
+                bHasProjIn = true;
 
                 iLine++;
                 pszLine = CPLReadLineL(fp);
@@ -1310,7 +1310,8 @@ int MITABLoadCoordSysTable(const char *pszFname)
                                         numEntries* sizeof(MapInfoRemapProjInfo));
             }
 
-            gpasExtBoundsList[iEntry].sProjIn = (bHasProjIn) ? sProjIn : sProj;
+            gpasExtBoundsList[iEntry].sProjIn =
+                bHasProjIn ? sProjIn : sProj;
             gpasExtBoundsList[iEntry].sBoundsInfo.sProj = sProj;
             gpasExtBoundsList[iEntry].sBoundsInfo.dXMin = dXMin;
             gpasExtBoundsList[iEntry].sBoundsInfo.dYMin = dYMin;
@@ -1348,7 +1349,7 @@ void MITABFreeCoordSysTable()
  *
  * Returns TRUE if a coordsys table was loaded, FALSE otherwise.
  **********************************************************************/
-GBool MITABCoordSysTableLoaded()
+bool MITABCoordSysTableLoaded()
 {
-    return (nExtBoundsListCount >= 0);
+    return nExtBoundsListCount >= 0;
 }

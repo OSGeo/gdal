@@ -2525,9 +2525,9 @@ int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
             double dXMin, dYMin, dXMax, dYMax;
             if (SetSpatialRef(poSpatialRef) == 0)
             {
-                if (MITABExtractCoordSysBounds(pszMIFCoordSys,
+                if( MITABExtractCoordSysBounds(pszMIFCoordSys,
                                                dXMin, dYMin,
-                                               dXMax, dYMax) == TRUE)
+                                               dXMax, dYMax) )
                 {
                     // If the coordsys string contains bounds, then use them
                     if (SetBounds(dXMin, dYMin, dXMax, dYMax) != 0)
@@ -2586,10 +2586,13 @@ int TABFile::SetProjInfo(TABProjInfo *poPI)
     /*-----------------------------------------------------------------
      * Lookup default bounds and reset m_bBoundsSet flag
      *----------------------------------------------------------------*/
-    double dXMin, dYMin, dXMax, dYMax;
+    double dXMin;
+    double dYMin;
+    double dXMax;
+    double dYMax;
 
     m_bBoundsSet = FALSE;
-    if (MITABLookupCoordSysBounds(poPI, dXMin, dYMin, dXMax, dYMax) == TRUE)
+    if( MITABLookupCoordSysBounds(poPI, dXMin, dYMin, dXMax, dYMax) )
     {
         SetBounds(dXMin, dYMin, dXMax, dYMax);
     }
