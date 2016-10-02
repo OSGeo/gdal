@@ -1279,7 +1279,8 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 
 def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
               creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
-              zFactor = None, scale = None, azimuth = None, altitude = None, combined = False,
+              zFactor = None, scale = None, azimuth = None, altitude = None,
+              combined = False, multiDirectional = False,
               slopeFormat = None, trigonometric = False, zeroForFlat = False,
               callback = None, callback_data = None):
     """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
@@ -1296,6 +1297,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
           azimuth --- (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
           altitude ---(hillshade only) altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.
           combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading.
+          multiDirectional --- (hillshade only) whether to compute multi-directional shading
           slopeformat --- (slope only) "degree" or "percent".
           trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
           zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
@@ -1327,6 +1329,8 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
             new_options += ['-alt', str(altitude) ]
         if combined:
             new_options += ['-combined' ]
+        if multiDirectional:
+            new_options += ['-multidirectional' ]
         if slopeFormat == 'percent':
             new_options += ['-p' ]
         if trigonometric:

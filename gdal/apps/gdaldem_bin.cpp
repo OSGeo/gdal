@@ -50,7 +50,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "     gdaldem hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
             "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]\n"
-            "                 [-alg ZevenbergenThorne] [-combined]\n"
+            "                 [-alg ZevenbergenThorne] [-combined | -multidirectional]\n"
             "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generates a slope map from any GDAL-supported elevation raster :\n\n"

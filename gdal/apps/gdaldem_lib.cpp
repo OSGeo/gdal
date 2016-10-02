@@ -137,6 +137,7 @@ struct GDALDEMProcessingOptions
     bool bComputeAtEdges;
     bool bZevenbergenThorne;
     bool bCombined;
+    bool bMultiDirectional;
     char** papszCreateOptions;
     int nBand;
 };
@@ -707,6 +708,45 @@ CPLErr GDALGeneric3x3Processing(
 
 
 /************************************************************************/
+/*                            GradientAlg                               */
+/************************************************************************/
+
+typedef enum
+{
+    HORN,
+    ZEVENBERGEN_THORNE
+} GradientAlg;
+
+template<class T, GradientAlg alg> struct Gradient
+{
+    static void inline calc(const T* afWin, double inv_ewres, double inv_nsres,
+                            double&x, double&y);
+};
+
+template<class T> struct Gradient<T, HORN>
+{
+    static void calc(const T* afWin, double inv_ewres, double inv_nsres,
+                     double&x, double&y)
+    {
+        x = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+             (afWin[2] + afWin[5] + afWin[5] + afWin[8])) * inv_ewres;
+
+        y = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+             (afWin[0] + afWin[1] + afWin[1] + afWin[2])) * inv_nsres;
+    }
+};
+
+template<class T> struct Gradient<T, ZEVENBERGEN_THORNE>
+{
+    static void calc(const T* afWin, double inv_ewres, double inv_nsres,
+                     double&x, double&y)
+    {
+        x = (afWin[3] - afWin[5]) * inv_ewres;
+        y = (afWin[7] - afWin[1]) * inv_nsres;
+    }
+};
+
+/************************************************************************/
 /*                         GDALHillshade()                              */
 /************************************************************************/
 
@@ -807,18 +847,15 @@ inline double ApproxADivByInvSqrtB( double a, double b )
 }
 #endif
 
-template<class T>
+template<class T, GradientAlg alg>
 static
 float GDALHillshadeAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
 
     // First Slope ...
-    const double x = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
-        (afWin[2] + afWin[5] + afWin[5] + afWin[8])) * psData->inv_ewres;
-
-    const double y = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-        (afWin[0] + afWin[1] + afWin[1] + afWin[2])) * psData->inv_nsres;
+    double x, y;
+    Gradient<T, alg>::calc(afWin, psData->inv_ewres, psData->inv_nsres, x, y);
 
     const double xx_plus_yy = x * x + y * y;
 
@@ -984,84 +1021,15 @@ int GDALHillshadeAlg_same_res_multisample( const T* pafThreeLineWin,
 
 static const double INV_SQUARE_OF_HALF_PI = 1.0 / ((M_PI*M_PI)/4);
 
-template<class T>
+template<class T, GradientAlg alg>
 static
 float GDALHillshadeCombinedAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
 
     // First Slope ...
-    const double x = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
-        (afWin[2] + afWin[5] + afWin[5] + afWin[8])) * psData->inv_ewres;
-
-    const double y = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
-        (afWin[0] + afWin[1] + afWin[1] + afWin[2])) * psData->inv_nsres;
-
-    const double xx_plus_yy = x * x + y * y;
-
-    const double slope = xx_plus_yy * psData->square_z;
-
-    // ... then the shade value
-    double cang =
-        acos(
-            ApproxADivByInvSqrtB(
-                psData->sin_altRadians -
-                (y * psData->cos_az_mul_cos_alt_mul_z -
-                 x * psData->sin_az_mul_cos_alt_mul_z),
-                1 + slope));
-
-    // combined shading
-    cang = 1 - cang * atan(sqrt(slope)) * INV_SQUARE_OF_HALF_PI;
-
-    const float fcang =
-        cang <= 0.0
-        ? 1.0f
-        : static_cast<float>(1.0 + (254.0 * cang));
-
-    return fcang;
-}
-
-template<class T>
-static
-float GDALHillshadeZevenbergenThorneAlg( const T* afWin,
-                                         float /*fDstNoDataValue*/,
-                                         void* pData )
-{
-    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
-    double x, y, xx_plus_yy, cang;
-
-    // First Slope ...
-    x = (afWin[3] - afWin[5]) * psData->inv_ewres;
-
-    y = (afWin[7] - afWin[1]) * psData->inv_nsres;
-
-    xx_plus_yy = x * x + y * y;
-
-    cang = ApproxADivByInvSqrtB(
-        psData->sin_altRadians -
-        (y * psData->cos_az_mul_cos_alt_mul_z -
-         x * psData->sin_az_mul_cos_alt_mul_z),
-        1 + psData->square_z * xx_plus_yy);
-
-    const float fcang =
-        cang <= 0.0
-        ? 1.0f
-        : static_cast<float>(1.0 + (254.0 * cang));
-
-    return fcang;
-}
-
-template<class T>
-static
-float GDALHillshadeZevenbergenThorneCombinedAlg( const T* afWin,
-                                                 float /*fDstNoDataValue*/,
-                                                 void* pData )
-{
-    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
-
-    // First Slope ...
-    const double x = (afWin[3] - afWin[5]) * psData->inv_ewres;
-    const double y = (afWin[7] - afWin[1]) * psData->inv_nsres;
+    double x, y;
+    Gradient<T, alg>::calc(afWin, psData->inv_ewres, psData->inv_nsres, x, y);
 
     const double xx_plus_yy = x * x + y * y;
 
@@ -1127,6 +1095,110 @@ void* GDALCreateHillshadeData( double* adfGeoTransform,
         pData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res =
           pData->sin_az_mul_cos_alt_mul_z_mul_254 * pData->inv_ewres;
     }
+
+    return pData;
+}
+
+/************************************************************************/
+/*                   GDALHillshadeMultiDirectional()                    */
+/************************************************************************/
+
+
+typedef struct
+{
+    double inv_nsres;
+    double inv_ewres;
+    double square_z;
+    double sin_altRadians_mul_127;
+    double sin_altRadians_mul_254;
+
+    double cos_alt_mul_z_mul_127;
+    double cos225_az_mul_cos_alt_mul_z_mul_127;
+
+} GDALHillshadeMultiDirectionalAlgData;
+
+template<class T, GradientAlg alg>
+static
+float GDALHillshadeMultiDirectionalAlg (const T* afWin,
+                                        float /*fDstNoDataValue*/,
+                                        void* pData)
+{
+    const GDALHillshadeMultiDirectionalAlgData* psData =
+                            (const GDALHillshadeMultiDirectionalAlgData*)pData;
+
+    // First Slope ...
+    double x, y;
+    Gradient<T, alg>::calc(afWin, psData->inv_ewres, psData->inv_nsres, x, y);
+
+    // See http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
+    // W225 = sin^2(aspect - 225) = 0.5 * (1 - 2 * sin(aspect) * cos(aspect))
+    // W270 = sin^2(aspect - 270) = cos^2(aspect)
+    // W315 = sin^2(aspect - 270) = 0.5 * (1 + 2 * sin(aspect) * cos(aspect))
+    // W360 = sin^2(aspect - 360) = sin^2(aspect)
+    // hillshade=  0.5 * (W225 * hillshade(az=225) +
+    //                    W270 * hillshade(az=270) +
+    //                    W315 * hillshade(az=270) +
+    //                    W360 * hillshade(az=360))
+
+    const double xx = x * x;
+    const double yy = y * y;
+    const double xx_plus_yy = xx + yy;
+
+    // ... then the shade value from different azimuth
+    double val225_mul_127 = psData->sin_altRadians_mul_127 +
+                            (x-y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
+    val225_mul_127 = ( val225_mul_127 <= 0.0) ? 0.0 : val225_mul_127;
+    double val270_mul_127 = psData->sin_altRadians_mul_127 -
+                            x * psData->cos_alt_mul_z_mul_127;
+    val270_mul_127 = ( val270_mul_127 <= 0.0) ? 0.0 : val270_mul_127;
+    double val315_mul_127 = psData->sin_altRadians_mul_127 +
+                            (x+y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
+    val315_mul_127 = ( val315_mul_127 <= 0.0) ? 0.0 : val315_mul_127;
+    double val360_mul_127 = psData->sin_altRadians_mul_127 -
+                            y * psData->cos_alt_mul_z_mul_127;
+    val360_mul_127 = ( val360_mul_127 <= 0.0) ? 0.0 : val360_mul_127;
+
+    // ... then the weighted shading
+    const double weight_225 = 0.5 * xx_plus_yy - x * y;
+    const double weight_270 = xx;
+    const double weight_315 = xx_plus_yy - weight_225;
+    const double weight_360 = yy;
+    const double cang_mul_127 = ApproxADivByInvSqrtB(
+                  (weight_225 * val225_mul_127 +
+                   weight_270 * val270_mul_127 +
+                   weight_315 * val315_mul_127 +
+                   weight_360 * val360_mul_127) / xx_plus_yy,
+            1 + psData->square_z * xx_plus_yy);
+
+    const double cang = 1.0 + (
+        (xx_plus_yy == 0.0) ? psData->sin_altRadians_mul_254 : cang_mul_127);
+
+    return static_cast<float>(cang);
+}
+
+static
+void* GDALCreateHillshadeMultiDirectionalData( double* adfGeoTransform,
+                                               double z,
+                                               double scale,
+                                               double alt,
+                                               bool bZevenbergenThorne )
+{
+    GDALHillshadeMultiDirectionalAlgData* pData =
+        (GDALHillshadeMultiDirectionalAlgData*)CPLCalloc(
+                        1, sizeof(GDALHillshadeMultiDirectionalAlgData));
+
+    pData->inv_nsres = 1.0 / adfGeoTransform[5];
+    pData->inv_ewres = 1.0 / adfGeoTransform[1];
+    const double z_scaled = z / ((bZevenbergenThorne ? 2 : 8) * scale);
+    const double cos_alt_mul_z =
+        cos(alt * kdfDegreesToRadians) * z_scaled;
+    pData->square_z = z_scaled * z_scaled;
+
+    pData->sin_altRadians_mul_127 = 127.0 * sin(alt * kdfDegreesToRadians);
+    pData->sin_altRadians_mul_254 = 254.0 * sin(alt * kdfDegreesToRadians);
+    pData->cos_alt_mul_z_mul_127 = 127.0 * cos_alt_mul_z;
+    pData->cos225_az_mul_cos_alt_mul_z_mul_127 = 127.0 *
+        cos(225 * kdfDegreesToRadians) * cos_alt_mul_z;
 
     return pData;
 }
@@ -3217,6 +3289,26 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         return NULL;
     }
 
+    if( psOptionsIn->bCombined && eUtilityMode != HILL_SHADE )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "-combined can only be used with hillshade");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+
+    if( psOptionsIn->bMultiDirectional && eUtilityMode != HILL_SHADE )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "-multidirectional can only be used with hillshade");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return NULL;
+    }
+
     GDALDEMProcessingOptions* psOptionsToFree = NULL;
     const GDALDEMProcessingOptions* psOptions = psOptionsIn;
     if( !psOptions )
@@ -3278,7 +3370,27 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
     GDALGeneric3x3ProcessingAlg<GInt32>::type pfnAlgInt32 = NULL;
     GDALGeneric3x3ProcessingAlg_multisample<GInt32>::type pfnAlgInt32_multisample = NULL;
 
-    if( eUtilityMode == HILL_SHADE )
+    if( eUtilityMode == HILL_SHADE && psOptions->bMultiDirectional )
+    {
+        dfDstNoDataValue = 0;
+        bDstHasNoData = true;
+        pData = GDALCreateHillshadeMultiDirectionalData(adfGeoTransform,
+                                                        psOptions->z,
+                                                        psOptions->scale,
+                                                        psOptions->alt,
+                                                        psOptions->bZevenbergenThorne);
+        if( psOptions->bZevenbergenThorne )
+        {
+            pfnAlgFloat = GDALHillshadeMultiDirectionalAlg<float, ZEVENBERGEN_THORNE>;
+            pfnAlgInt32 = GDALHillshadeMultiDirectionalAlg<GInt32, ZEVENBERGEN_THORNE>;
+        }
+        else
+        {
+            pfnAlgFloat = GDALHillshadeMultiDirectionalAlg<float, HORN>;
+            pfnAlgInt32 = GDALHillshadeMultiDirectionalAlg<GInt32, HORN>;
+        }
+    }
+    else if( eUtilityMode == HILL_SHADE )
     {
         dfDstNoDataValue = 0;
         bDstHasNoData = true;
@@ -3292,13 +3404,13 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         {
             if( !psOptions->bCombined )
             {
-                pfnAlgFloat = GDALHillshadeZevenbergenThorneAlg<float>;
-                pfnAlgInt32 = GDALHillshadeZevenbergenThorneAlg<GInt32>;
+                pfnAlgFloat = GDALHillshadeAlg<float, ZEVENBERGEN_THORNE>;
+                pfnAlgInt32 = GDALHillshadeAlg<GInt32, ZEVENBERGEN_THORNE>;
             }
             else
             {
-                pfnAlgFloat = GDALHillshadeZevenbergenThorneCombinedAlg<float>;
-                pfnAlgInt32 = GDALHillshadeZevenbergenThorneCombinedAlg<GInt32>;
+                pfnAlgFloat = GDALHillshadeCombinedAlg<float, ZEVENBERGEN_THORNE>;
+                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, ZEVENBERGEN_THORNE>;
             }
         }
         else
@@ -3316,14 +3428,14 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                 }
                 else
                 {
-                    pfnAlgFloat = GDALHillshadeAlg<float>;
-                    pfnAlgInt32 = GDALHillshadeAlg<GInt32>;
+                    pfnAlgFloat = GDALHillshadeAlg<float, HORN>;
+                    pfnAlgInt32 = GDALHillshadeAlg<GInt32, HORN>;
                 }
             }
             else
             {
-                pfnAlgFloat = GDALHillshadeCombinedAlg<float>;
-                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32>;
+                pfnAlgFloat = GDALHillshadeCombinedAlg<float, HORN>;
+                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, HORN>;
             }
         }
     }
@@ -3651,8 +3763,10 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
     psOptions->bComputeAtEdges = false;
     psOptions->bZevenbergenThorne = false;
     psOptions->bCombined = false;
+    psOptions->bMultiDirectional = false;
     psOptions->nBand = 1;
     psOptions->papszCreateOptions = NULL;
+    bool bAzimuthSpecified = false;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -3770,6 +3884,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
                 GDALDEMProcessingOptionsFree(psOptions);
                 return NULL;
             }
+            bAzimuthSpecified = true;
             psOptions->az = CPLAtof(papszArgv[i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
@@ -3795,6 +3910,11 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
           )
         {
             psOptions->bCombined = true;
+        }
+        else if( EQUAL(papszArgv[i], "-multidirectional") ||
+                 EQUAL(papszArgv[i], "--multidirectional") )
+        {
+            psOptions->bMultiDirectional = true;
         }
         else if(
                  EQUAL(papszArgv[i], "-alpha"))
@@ -3846,6 +3966,23 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
             GDALDEMProcessingOptionsFree(psOptions);
             return NULL;
         }
+    }
+
+    if( psOptions->bMultiDirectional &&
+        psOptions->bCombined)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "-multidirectional and -combined cannot be used together");
+        GDALDEMProcessingOptionsFree(psOptions);
+        return NULL;
+    }
+
+    if( psOptions->bMultiDirectional && bAzimuthSpecified )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "-multidirectional and -az cannot be used together");
+        GDALDEMProcessingOptionsFree(psOptions);
+        return NULL;
     }
 
     if( psOptionsForBinary )
