@@ -35,14 +35,10 @@
 #include "cpl_conv.h"
 #include <map>
 #include "cpl_multiproc.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 
-#define SUPPORT_GEOMETRY
-
-#ifdef SUPPORT_GEOMETRY
-#  include "ogr_geometry.h"
-#endif
 
 /************************************************************************/
 /*                            ~IGMLReader()                             */
@@ -1387,7 +1383,6 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown, -1, true ) );
         }
 
-#ifdef SUPPORT_GEOMETRY
         if( bGetExtents && papsGeometry != NULL )
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
@@ -1445,7 +1440,6 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 delete poGeometry;
 
             }
-#endif /* def SUPPORT_GEOMETRY */
         }
 
         delete poFeature;

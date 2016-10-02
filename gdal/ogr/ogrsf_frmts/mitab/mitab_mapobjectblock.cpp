@@ -119,7 +119,7 @@ CPL_CVSID("$Id$");
  *                      class TABMAPObjectBlock
  *====================================================================*/
 
-#define MAP_OBJECT_HEADER_SIZE   20
+static const int MAP_OBJECT_HEADER_SIZE = 20;
 
 /**********************************************************************
  *                   TABMAPObjectBlock::TABMAPObjectBlock()

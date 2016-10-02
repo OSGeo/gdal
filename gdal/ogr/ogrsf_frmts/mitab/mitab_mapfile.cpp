@@ -188,6 +188,9 @@
  *
  **********************************************************************/
 
+#include <algorithm>
+#include <utility>
+
 #include "mitab.h"
 
 CPL_CVSID("$Id$");
@@ -3042,9 +3045,17 @@ int   TABMAPFile::WriteSymbolDef(TABSymbolDef *psDef)
     return m_poToolDefTable->AddSymbolDefRef(psDef);
 }
 
-#define ORDER_MIN_MAX(type,min,max)                                    \
-    {   if( (max) < (min) )                                            \
-          { type temp = (max); (max) = (min); (min) = temp; } }
+static void ORDER_MIN_MAX( double &min, double &max )
+{
+    if( max < min )
+      std::swap(min, max);
+}
+
+static void ORDER_MIN_MAX( int &min, int &max )
+{
+    if( max < min )
+      std::swap(min, max);
+}
 
 /**********************************************************************
  *                   TABMAPFile::SetCoordFilter()
@@ -3063,10 +3074,10 @@ void TABMAPFile::SetCoordFilter(TABVertex sMin, TABVertex sMax)
     Coordsys2Int(sMin.x, sMin.y, m_XMinFilter, m_YMinFilter, TRUE);
     Coordsys2Int(sMax.x, sMax.y, m_XMaxFilter, m_YMaxFilter, TRUE);
 
-    ORDER_MIN_MAX(int,m_XMinFilter,m_XMaxFilter);
-    ORDER_MIN_MAX(int,m_YMinFilter,m_YMaxFilter);
-    ORDER_MIN_MAX(double,m_sMinFilter.x,m_sMaxFilter.x);
-    ORDER_MIN_MAX(double,m_sMinFilter.y,m_sMaxFilter.y);
+    ORDER_MIN_MAX(m_XMinFilter, m_XMaxFilter);
+    ORDER_MIN_MAX(m_YMinFilter, m_YMaxFilter);
+    ORDER_MIN_MAX(m_sMinFilter.x, m_sMaxFilter.x);
+    ORDER_MIN_MAX(m_sMinFilter.y, m_sMaxFilter.y);
 }
 
 /**********************************************************************
@@ -3088,10 +3099,10 @@ void TABMAPFile::ResetCoordFilter()
     Int2Coordsys(m_XMaxFilter, m_YMaxFilter,
                  m_sMaxFilter.x, m_sMaxFilter.y);
 
-    ORDER_MIN_MAX(int,m_XMinFilter,m_XMaxFilter);
-    ORDER_MIN_MAX(int,m_YMinFilter,m_YMaxFilter);
-    ORDER_MIN_MAX(double,m_sMinFilter.x,m_sMaxFilter.x);
-    ORDER_MIN_MAX(double,m_sMinFilter.y,m_sMaxFilter.y);
+    ORDER_MIN_MAX(m_XMinFilter, m_XMaxFilter);
+    ORDER_MIN_MAX(m_YMinFilter, m_YMaxFilter);
+    ORDER_MIN_MAX(m_sMinFilter. x,m_sMaxFilter.x);
+    ORDER_MIN_MAX(m_sMinFilter. y,m_sMaxFilter.y);
 }
 
 /**********************************************************************
