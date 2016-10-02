@@ -74,7 +74,7 @@ OGRMemDataSource::ICreateLayer( const char * pszLayerName,
     OGRMemLayer *poLayer = new OGRMemLayer( pszLayerName, poSRS, eType );
 
     if( CPLFetchBool(papszOptions, "ADVERTIZE_UTF8", false) )
-        poLayer->SetAdvertizeUTF8(TRUE);
+        poLayer->SetAdvertizeUTF8(true);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
