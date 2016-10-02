@@ -3611,9 +3611,7 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = CE_None;
     const int nWorkDTSize = GDALGetDataTypeSizeBytes(eWorkDT);
-    bool bClipWarn = false;
     pabyScanline
         = static_cast<GByte *>( CPLMalloc( nBands * nXSize * nWorkDTSize ) );
 
@@ -3625,6 +3623,8 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
+    CPLErr eErr = CE_None;
+    bool bClipWarn = false;
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
         eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1,
