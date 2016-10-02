@@ -149,7 +149,7 @@ inline double round(double r) {
 /*---------------------------------------------------------------------
  * Set various constants used in generating the header block.
  *--------------------------------------------------------------------*/
-static const GUInt32 HDR_MAGIC_COOKIE = 42424242;
+static const GInt32 HDR_MAGIC_COOKIE = 42424242;
 static const GInt16 HDR_VERSION_NUMBER = 500;
 
 static const GByte HDR_DEF_ORG_QUADRANT = 1;  // N-E Quadrant
