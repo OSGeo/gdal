@@ -4725,6 +4725,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     {
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
         GDALDataset* poDS = GDALPDFOpen(pszFilename, GA_ReadOnly);
+        if( poDS == NULL )
+            return NULL;
         char** papszMD = CSLDuplicate( poSrcDS->GetMetadata() );
         papszMD = CSLMerge( papszMD, poDS->GetMetadata() );
         const char* pszAOP = CSLFetchNameValue(papszMD, GDALMD_AREA_OR_POINT);
