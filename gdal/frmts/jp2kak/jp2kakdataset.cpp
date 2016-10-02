@@ -1071,6 +1071,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         catch( ... )
         {
+            delete poRawInput;
             return NULL;
         }
     }
@@ -1171,6 +1172,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLDebug( "JP2KAK", "Cannot read JP2 boxes" );
                 delete jp2_src;
                 delete family;
+                delete poRawInput;
                 return NULL;
             }
 

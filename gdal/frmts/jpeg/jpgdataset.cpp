@@ -296,7 +296,16 @@ class JPGDataset : public JPGDatasetCommon
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-
+    static GDALDataset* CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
+                              char ** papszOptions,
+                              GDALProgressFunc pfnProgress, void * pProgressData,
+                              VSILFILE* fpImage,
+                              GDALDataType eDT,
+                              int nQuality,
+                              GDALJPEGErrorStruct& sErrorStruct,
+                              struct jpeg_compress_struct& sCInfo,
+                              struct jpeg_error_mgr& sJErr,
+                              GByte*& pabyScanline);
     static void ErrorExit(j_common_ptr cinfo);
 };
 
@@ -3356,14 +3365,6 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSILFILE *fpImage = NULL;
     GDALJPEGErrorStruct sErrorStruct;
     sErrorStruct.bNonFatalErrorEncountered = FALSE;
-
-    if (setjmp(sErrorStruct.setjmp_buffer))
-    {
-        if( fpImage )
-            VSIFCloseL( fpImage );
-        return NULL;
-    }
-
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
@@ -3438,12 +3439,42 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
+    struct jpeg_compress_struct sCInfo;
+    struct jpeg_error_mgr sJErr;
+    GByte* pabyScanline;
+
+    // Nasty trick to avoid variable clobbering issues with setjmp/longjmp
+    return CreateCopyStage2(pszFilename, poSrcDS, papszOptions,
+                            pfnProgress, pProgressData,
+                            fpImage, eDT, nQuality,
+                            sErrorStruct, sCInfo, sJErr, pabyScanline);
+}
+
+GDALDataset *
+JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
+                              char ** papszOptions,
+                              GDALProgressFunc pfnProgress, void * pProgressData,
+                              VSILFILE* fpImage,
+                              GDALDataType eDT,
+                              int nQuality,
+                              GDALJPEGErrorStruct& sErrorStruct,
+                              struct jpeg_compress_struct& sCInfo,
+                              struct jpeg_error_mgr& sJErr,
+                              GByte*& pabyScanline)
+
+{
+    if (setjmp(sErrorStruct.setjmp_buffer))
+    {
+        if( fpImage )
+            VSIFCloseL( fpImage );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize JPG access to the file.                              */
 /* -------------------------------------------------------------------- */
 
-    struct jpeg_compress_struct sCInfo;
-    struct jpeg_error_mgr sJErr;
+
     sCInfo.err = jpeg_std_error( &sJErr );
     sJErr.error_exit = JPGDataset::ErrorExit;
     sErrorStruct.p_previous_emit_message = sJErr.emit_message;
@@ -3456,6 +3487,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
+    const int nBands = poSrcDS->GetRasterCount();
     sCInfo.image_width = nXSize;
     sCInfo.image_height = nYSize;
     sCInfo.input_components = nBands;
@@ -3582,8 +3614,16 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     CPLErr eErr = CE_None;
     const int nWorkDTSize = GDALGetDataTypeSizeBytes(eWorkDT);
     bool bClipWarn = false;
-    GByte *pabyScanline
+    pabyScanline
         = static_cast<GByte *>( CPLMalloc( nBands * nXSize * nWorkDTSize ) );
+
+    if (setjmp(sErrorStruct.setjmp_buffer))
+    {
+        VSIFCloseL( fpImage );
+        CPLFree( pabyScanline );
+        jpeg_destroy_compress( &sCInfo );
+        return NULL;
+    }
 
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
@@ -3635,11 +3675,13 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Cleanup and close.                                              */
 /* -------------------------------------------------------------------- */
-    CPLFree( pabyScanline );
-
     if( eErr == CE_None )
         jpeg_finish_compress( &sCInfo );
     jpeg_destroy_compress( &sCInfo );
+
+    // Free scanline and image after jpeg_finish_compress since this could
+    // cause a longjmp to occur
+    CPLFree( pabyScanline );
 
     VSIFCloseL( fpImage );
 
