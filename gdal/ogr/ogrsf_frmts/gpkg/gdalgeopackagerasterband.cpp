@@ -143,6 +143,10 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::FlushCache()
 CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushTiles()
 {
     CPLErr eErr = CE_None;
+    GDALGPKGMBTilesLikePseudoDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
+    if( poMainDS->m_nTileInsertionCount < 0 )
+        return CE_Failure;
+
     if( IGetUpdate() )
     {
         if( m_nShiftXPixelsMod || m_nShiftYPixelsMod )
@@ -155,12 +159,17 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushTiles()
         }
     }
 
-    GDALGPKGMBTilesLikePseudoDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
-    if( poMainDS->m_nTileInsertionCount )
+    if( poMainDS->m_nTileInsertionCount > 0 )
     {
         if( poMainDS->ICommitTransaction() != OGRERR_NONE )
+        {
+            poMainDS->m_nTileInsertionCount = -1;
             eErr = CE_Failure;
-        poMainDS->m_nTileInsertionCount = 0;
+        }
+        else
+        {
+            poMainDS->m_nTileInsertionCount = 0;
+        }
     }
     return eErr;
 }
@@ -1016,6 +1025,10 @@ static bool WEBPSupports4Bands()
 
 CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTile()
 {
+    GDALGPKGMBTilesLikePseudoDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
+    if( poMainDS->m_nTileInsertionCount < 0 )
+        return CE_Failure;
+
     CPLAssert(!m_bInWriteTile);
     m_bInWriteTile = true;
     CPLErr eErr = WriteTileInternal();
@@ -1496,6 +1509,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             {
                 if( poMainDS->ICommitTransaction() != OGRERR_NONE )
                 {
+                    poMainDS->m_nTileInsertionCount = -1;
                     CPLFree(pabyBlob);
                     VSIUnlink(osMemFileName);
                     delete poMEMDS;
