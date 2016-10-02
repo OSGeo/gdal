@@ -295,7 +295,9 @@ private:
     }
 
 public:
-    OCSTransformer( double adfNIn[3], bool bInverse = false ) {
+    OCSTransformer( double adfNIn[3], bool bInverse = false ) :
+        aadfInverse()
+    {
         static const double dSmall = 1.0 / 64.0;
         static const double adfWZ[3] = {0, 0, 1};
         static const double adfWY[3] = {0, 1, 0};
