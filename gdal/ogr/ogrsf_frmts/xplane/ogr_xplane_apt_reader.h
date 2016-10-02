@@ -49,10 +49,10 @@ class OGRXPlaneAPTLayer : public OGRXPlaneLayer
                                    const char* pszAptName,
                                    int nAPTType,
                                    double dfElevation,
-                                   int bHasCoordinates = FALSE,
+                                   bool bHasCoordinates = false,
                                    double dfLat = 0,
                                    double dfLon = 0,
-                                   int bHasTower = FALSE,
+                                   bool bHasTower = false,
                                    double dfHeightTower = 0,
                                    const char* pszTowerName = NULL);
 };
@@ -637,15 +637,16 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         CPLString osAptName;
         int       nAPTType;
 
-        int       bTowerFound;
+        bool      bTowerFound;
         double    dfLatTower, dfLonTower;
         double    dfHeightTower;
         CPLString osTowerName;
 
-        int     bRunwayFound;
-        double  dfLatFirstRwy , dfLonFirstRwy;
+        bool    bRunwayFound;
+        double  dfLatFirstRwy;
+        double  dfLonFirstRwy;
 
-        int     bResumeLine;
+        bool    bResumeLine;
 
     private:
                 OGRXPlaneAptReader();
@@ -668,8 +669,9 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         void    ParseTaxiLocation();
 
         OGRGeometry* FixPolygonTopology(OGRPolygon& polygon);
-        int     ParsePolygonalGeometry(OGRGeometry** ppoGeom);
-        int     ParseLinearGeometry(OGRMultiLineString& multilinestring, int* pbIsValid);
+        bool    ParsePolygonalGeometry(OGRGeometry** ppoGeom);
+        bool    ParseLinearGeometry(
+                    OGRMultiLineString& multilinestring, int* pbIsValid );
 
         static void    AddBezierCurve (OGRLineString& lineString,
                                 double dfLatA, double dfLonA,

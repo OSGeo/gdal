@@ -106,10 +106,10 @@ void OGRXPlaneFixReader::Read()
         {
             CSLDestroy(papszTokens);
             papszTokens = NULL;
-            bEOF = TRUE;
+            bEOF = true;
             return;
         }
-        else if (nTokens == 0 || assertMinCol(3) == FALSE)
+        else if( nTokens == 0 || !assertMinCol(3) )
         {
             CSLDestroy(papszTokens);
             papszTokens = NULL;
@@ -121,12 +121,12 @@ void OGRXPlaneFixReader::Read()
         CSLDestroy(papszTokens);
         papszTokens = NULL;
 
-        if (poInterestLayer && poInterestLayer->IsEmpty() == FALSE)
+        if( poInterestLayer && !poInterestLayer->IsEmpty() )
             return;
     }
 
     papszTokens = NULL;
-    bEOF = TRUE;
+    bEOF = true;
 }
 
 /************************************************************************/
