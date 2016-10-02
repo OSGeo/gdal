@@ -107,6 +107,8 @@ int main( int argc, char ** argv )
     GDALDatasetH hDS;
 
     GDALAllRegister();
+    for( int i = 0; i < 2; i++ )
+    {
     hDS = GDALOpen( pszFilename, GA_ReadOnly );
     if( hDS == NULL )
         exit( 1 );
@@ -117,6 +119,7 @@ int main( int argc, char ** argv )
                                    GDALGetRasterYSize( hDS ) );
 
     GDALClose( hDS );
+    }
 
     printf( "Got checksum %d, launching %d worker threads on %s, %d iterations.\n",
             nChecksum, nThreadCount, pszFilename, nIterations );
