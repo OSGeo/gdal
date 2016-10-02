@@ -181,13 +181,13 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     double dYMin = 0.0;
     double dXMax = 0.0;
     double dYMax = 0.0;
-    int bHasBounds = FALSE;
+    bool bHasBounds = false;
     if( sTABProj.nProjId > 1 &&
         MITABLookupCoordSysBounds(&sTABProj,
                                   dXMin, dYMin,
-                                  dXMax, dYMax, TRUE) == TRUE )
+                                  dXMax, dYMax, true) )
     {
-        bHasBounds = TRUE;
+        bHasBounds = true;
     }
 
 /*-----------------------------------------------------------------
@@ -261,7 +261,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 /* -------------------------------------------------------------------- */
 /*      Append user bounds                                              */
 /* -------------------------------------------------------------------- */
-    if (bHasBounds)
+    if( bHasBounds )
     {
         if( fabs(dXMin - (int)floor(dXMin+0.5)) < 1e-8 &&
             fabs(dYMin - (int)floor(dYMin+0.5)) < 1e-8 &&
@@ -299,17 +299,17 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 /************************************************************************/
 /*                      MITABExtractCoordSysBounds                      */
 /*                                                                      */
-/* Return TRUE if MIF coordsys string contains a BOUNDS parameter and   */
+/* Return true if MIF coordsys string contains a BOUNDS parameter and   */
 /* Set x/y min/max values.                                              */
 /************************************************************************/
 
-GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
-                                  double &dXMin, double &dYMin,
-                                  double &dXMax, double &dYMax )
+bool MITABExtractCoordSysBounds( const char * pszCoordSys,
+                                 double &dXMin, double &dYMin,
+                                 double &dXMax, double &dYMax )
 
 {
     if( pszCoordSys == NULL )
-        return FALSE;
+        return false;
 
     char **papszFields =
         CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
@@ -323,11 +323,11 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
         dXMax = CPLAtof(papszFields[++iBounds]);
         dYMax = CPLAtof(papszFields[++iBounds]);
         CSLDestroy( papszFields );
-        return TRUE;
+        return true;
     }
 
     CSLDestroy( papszFields );
-    return FALSE;
+    return false;
 }
 
 
