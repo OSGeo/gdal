@@ -286,6 +286,9 @@ class JPGDataset : public JPGDatasetCommon
 #endif
     void   SetScaleNumAndDenom();
 
+    static GDALDataset*  OpenStage2( JPGDatasetOpenArgs* psArgs,
+                                     JPGDataset*& poDS );
+
   public:
                  JPGDataset();
     virtual ~JPGDataset();
@@ -2226,6 +2229,12 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
 
 {
     JPGDataset  *poDS = new JPGDataset();
+    return OpenStage2( psArgs, poDS );
+}
+
+GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs* psArgs,
+                                     JPGDataset*& poDS )
+{
     /* Will detect mismatch between compile-time and run-time libjpeg versions */
     if (setjmp(poDS->sErrorStruct.setjmp_buffer))
     {

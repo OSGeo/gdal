@@ -129,6 +129,7 @@ class PNGDataset : public GDALPamDataset
 
     static void WriteMetadataAsText(png_structp hPNG, png_infop psPNGInfo,
                                     const char* pszKey, const char* pszValue);
+    static GDALDataset *OpenStage2( GDALOpenInfo *, PNGDataset*& );
 
   public:
                  PNGDataset();
@@ -1120,7 +1121,12 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     PNGDataset *poDS = new PNGDataset();
+    return OpenStage2( poOpenInfo, poDS );
+}
 
+GDALDataset *PNGDataset::OpenStage2( GDALOpenInfo * poOpenInfo, PNGDataset*& poDS )
+
+{
     poDS->fpImage = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
     poDS->eAccess = poOpenInfo->eAccess;
