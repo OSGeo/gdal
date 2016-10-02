@@ -351,7 +351,13 @@ VRTCreateCopy( const char * pszFilename,
         poVRTDS->SetMaskBand( poVRTMaskBand );
     }
 
+    CPLErrorReset();
     poVRTDS->FlushCache();
+    if( CPLGetLastErrorType() != CE_None )
+    {
+        delete poVRTDS;
+        poVRTDS = NULL;
+    }
 
     return poVRTDS;
 }
