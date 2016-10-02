@@ -38,11 +38,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 
-#define SUPPORT_GEOMETRY
-
-#ifdef SUPPORT_GEOMETRY
-#  include "ogr_geometry.h"
-#endif
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 

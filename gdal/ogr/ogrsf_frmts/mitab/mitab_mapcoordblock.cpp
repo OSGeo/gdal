@@ -101,7 +101,7 @@ CPL_CVSID("$Id$");
  *                      class TABMAPCoordBlock
  *====================================================================*/
 
-#define MAP_COORD_HEADER_SIZE   8
+static const int MAP_COORD_HEADER_SIZE = 8;
 
 /**********************************************************************
  *                   TABMAPCoordBlock::TABMAPCoordBlock()

@@ -34,10 +34,11 @@
 
 CPL_CVSID("$Id$");
 
-/* 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
-/* http://opengis.github.io/geopackage/#_file_format */
-/* 0x47503130 = 1196437808 */
-#define GPKG_APPLICATION_ID 1196437808
+// 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the
+// application id.
+// http://opengis.github.io/geopackage/#_file_format
+// 0x47503130 = 1196437808
+static const int GPKG_APPLICATION_ID = 1196437808;
 
 /* "GP10" in ASCII bytes */
 static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
@@ -3127,8 +3128,9 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
                 double maxNorthing = adfGeoTransform[3];
                 double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
                 bool bChanged = false;
-#define SPHERICAL_RADIUS        6378137.0
-#define MAX_GM                  (SPHERICAL_RADIUS * M_PI)               // 20037508.342789244
+                const double SPHERICAL_RADIUS = 6378137.0;
+                const double MAX_GM =
+                    SPHERICAL_RADIUS * M_PI;  // 20037508.342789244
                 if( maxLat > 89.9999999 )
                 {
                     bChanged = true;

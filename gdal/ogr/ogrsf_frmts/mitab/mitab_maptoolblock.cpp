@@ -66,7 +66,7 @@ CPL_CVSID("$Id$");
  *                      class TABMAPToolBlock
  *====================================================================*/
 
-#define MAP_TOOL_HEADER_SIZE   8
+static const int MAP_TOOL_HEADER_SIZE = 8;
 
 /**********************************************************************
  *                   TABMAPToolBlock::TABMAPToolBlock()

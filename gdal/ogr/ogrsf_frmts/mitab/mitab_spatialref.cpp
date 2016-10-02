@@ -845,6 +845,12 @@ OGRSpatialReference *TABFile::GetSpatialRef()
  *                   TABFile::GetSpatialRefFromTABProj()
  **********************************************************************/
 
+static bool TAB_EQUAL( double a, double b )
+{
+    // TODO(schwehr): Use std::abs.
+    return (a < b ? (b - a) : (a - b)) < 1.0e-10;
+}
+
 OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABProj)
 {
     /*-----------------------------------------------------------------
@@ -1291,7 +1297,6 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
      * were in the order of 1e-150 when they should have actually been zeros,
      * we will use an epsilon in our scan instead of looking for equality.
      *----------------------------------------------------------------*/
-#define TAB_EQUAL(a, b) (((a)<(b) ? ((b)-(a)) : ((a)-(b))) < 1e-10)
     const MapInfoDatumInfo *psDatumInfo = NULL;
 
     for( int iDatumInfo = 0;

@@ -207,10 +207,10 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 /* -------------------------------------------------------------------- */
 /*      Read the edge type.                                             */
 /* -------------------------------------------------------------------- */
-#define ET_LINE         1
-#define ET_CIRCULAR_ARC 2
-#define ET_ELLIPTIC_ARC 3
-#define ET_SPLINE       4
+        const int ET_LINE = 1;
+        const int ET_CIRCULAR_ARC = 2;
+        const int ET_ELLIPTIC_ARC = 3;
+        const int ET_SPLINE = 4;
 
         nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf));
         if( nCode != 72 )

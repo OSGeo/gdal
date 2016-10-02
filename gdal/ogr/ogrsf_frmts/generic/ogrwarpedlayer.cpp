@@ -429,7 +429,7 @@ static void FindXDiscontinuity(OGRCoordinateTransformation* poCT,
 int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
                                        OGRCoordinateTransformation* poCT )
 {
-#define NSTEP   20
+    const int NSTEP = 20;
     double dfXStep = (psEnvelope->MaxX - psEnvelope->MinX) / NSTEP;
     double dfYStep = (psEnvelope->MaxY - psEnvelope->MinY) / NSTEP;
 

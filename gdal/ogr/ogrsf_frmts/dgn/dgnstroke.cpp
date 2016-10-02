@@ -31,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-#define DEG_TO_RAD (M_PI/180.0)
+static const double DEG_TO_RAD = M_PI / 180.0;
 
 /************************************************************************/
 /*                         ComputePointOnArc()                          */

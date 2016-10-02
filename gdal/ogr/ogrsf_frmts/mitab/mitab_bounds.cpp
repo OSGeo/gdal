@@ -1054,7 +1054,10 @@ static const MapInfoBoundsInfo gasBoundsList[] = {
 };
 
 
-#define TAB_EQUAL(a, b, eps) (fabs((a)-(b)) < eps)
+static bool TAB_EQUAL( double a, double b, double eps )
+{
+    return fabs((a)-(b)) < eps;
+}
 
 static char szPreviousMitabBoundsFile[2048] = { 0 };
 static VSIStatBufL sStatBoundsFile;

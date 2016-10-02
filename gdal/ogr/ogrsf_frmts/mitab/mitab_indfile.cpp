@@ -88,7 +88,7 @@ CPL_CVSID("$Id$");
  *                      class TABINDFile
  *====================================================================*/
 
-#define IND_MAGIC_COOKIE  24242424
+static const GUInt32 IND_MAGIC_COOKIE = 24242424;
 
 /**********************************************************************
  *                   TABINDFile::TABINDFile()

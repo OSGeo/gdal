@@ -48,6 +48,9 @@
  *
  **********************************************************************/
 
+#include <algorithm>
+#include <utility>
+
 #include "mitab_geometry.h"
 
 CPL_CVSID("$Id$");
@@ -129,13 +132,17 @@ GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
  * Adapted version of msPolygonLabelPoint() from MapServer's mapprimitive.c
  **********************************************************************/
 
-typedef enum {CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT} CLIP_STATE;
-#define CLIP_CHECK(min, a, max) ((a) < (min) ? CLIP_LEFT : ((a) > (max) ? CLIP_RIGHT : CLIP_MIDDLE));
-#define ROUND(a)       ( (a) + 0.5 )
-#define SWAP( a, b, t) ( (t) = (a), (a) = (b), (b) = (t) )
-#define EDGE_CHECK( x0, x, x1) ((x) < MIN( (x0), (x1)) ? CLIP_LEFT : ((x) > MAX( (x0), (x1)) ? CLIP_RIGHT : CLIP_MIDDLE ))
+typedef enum { CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT } CLIP_STATE;
+static CLIP_STATE EDGE_CHECK( double x0, double x, double x1 )
+{
+    if( x < MIN(x0, x1) )
+        return CLIP_LEFT;
+    if( x > MAX(x0, x1) )
+        return CLIP_RIGHT;
+    return CLIP_MIDDLE;
+}
 
-#define NUM_SCANLINES 5
+static const int NUM_SCANLINES = 5;
 
 int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
 {
@@ -264,8 +271,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
                 if(xintersect[i] > xintersect[i+1])
                 {
                     wrong_order = true;
-                    double temp = 0.0;
-                    SWAP(xintersect[i], xintersect[i+1], temp);
+                    std::swap(xintersect[i], xintersect[i+1]);
                 }
             }
         } while( wrong_order );

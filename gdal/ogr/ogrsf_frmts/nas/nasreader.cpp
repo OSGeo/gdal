@@ -34,11 +34,7 @@
 #include "gmlutils.h"
 #include "cpl_multiproc.h"
 
-#define SUPPORT_GEOMETRY
-
-#ifdef SUPPORT_GEOMETRY
-#  include "ogr_geometry.h"
-#endif
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 
@@ -872,7 +868,6 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
         else
             poClass->SetFeatureCount( poClass->GetFeatureCount() + 1 );
 
-#ifdef SUPPORT_GEOMETRY
         if( bGetExtents )
         {
             OGRGeometry *poGeometry = NULL;
@@ -939,7 +934,6 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
                     poClass->ClearGeometryProperties();
                 }
             }
-#endif /* def SUPPORT_GEOMETRY */
         }
 
         delete poFeature;
