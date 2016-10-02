@@ -82,6 +82,7 @@ public:
     GByte        *pabyData;
     vsi_l_offset  nLength;
     vsi_l_offset  nAllocLength;
+    vsi_l_offset  nMaxLength;
 
     time_t        mTime;
 
@@ -171,7 +172,8 @@ VSIMemFile::VSIMemFile() :
     bOwnData(true),
     pabyData(NULL),
     nLength(0),
-    nAllocLength(0)
+    nAllocLength(0),
+    nMaxLength(GUINTBIG_MAX)
 {
     time(&mTime);
 }
@@ -198,6 +200,13 @@ VSIMemFile::~VSIMemFile()
 bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 
 {
+    if( nNewLength > nMaxLength )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Maximum file size reached!");
+        return false;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Grow underlying array if needed.                                */
 /* -------------------------------------------------------------------- */
@@ -462,6 +471,14 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     CPLString osFilename = pszFilename;
     NormalizePath( osFilename );
 
+    vsi_l_offset nMaxLength = GUINTBIG_MAX;
+    size_t iPos = osFilename.find("||maxlength=");
+    if( iPos != std::string::npos )
+    {
+        nMaxLength = static_cast<vsi_l_offset>(CPLAtoGIntBig(
+                    osFilename.substr(iPos + strlen("||maxlength=")).c_str()));
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Get the filename we are opening, create if needed.              */
 /* -------------------------------------------------------------------- */
@@ -488,11 +505,13 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         poFile->osFilename = osFilename;
         oFileList[poFile->osFilename] = poFile;
         poFile->nRefCount++; // for file list
+        poFile->nMaxLength = nMaxLength;
     }
     // Overwrite
     else if( strstr(pszAccess, "w") )
     {
         poFile->SetLength(0);
+        poFile->nMaxLength = nMaxLength;
     }
 
     if( poFile->bIsDirectory )
