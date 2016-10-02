@@ -2970,6 +2970,9 @@ def gpkg_37():
 
 def gpkg_38():
 
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
     # Without padding, immediately after create copy
     src_ds = gdal.Open('data/small_world.tif')
     gdaltest.gpkg_dr.CreateCopy('/vsimem/gpkg_38.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=8'] )
