@@ -20,6 +20,12 @@ of an existing GDAL dataset (projection, geotransform, nodata, metadata).
 
 It works only with raster formats that support update access to
 existing datasets.
+
+CAUTION: depending on the format, older values of the updated information might
+still be found in the file in a "ghost" state, even if no longer accessible
+through the GDAL API. This is for example the case of the GTiff format (this is
+not a exhaustive list)
+
 <dl>
 
 <dt> <b>--help-general</b></dt>:<dd>
