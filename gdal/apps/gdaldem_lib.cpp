@@ -768,8 +768,8 @@ We can avoid a lot of trigonometric computations:
     But:
     sin(aspect - az) = sin(aspect)*cos(az) - cos(aspect)*sin(az))
 
-and as sin(az)=sin(atan2(y,x)) = y / sqrt(xx_plus_yy)
-   and cos(az)=cos(atan2(y,x)) = x / sqrt(xx_plus_yy)
+and as sin(aspect)=sin(atan2(y,x)) = y / sqrt(xx_plus_yy)
+   and cos(aspect)=cos(atan2(y,x)) = x / sqrt(xx_plus_yy)
 
     sin(aspect - az) = (y * cos(az) - x * sin(az)) / sqrt(xx_plus_yy)
 
