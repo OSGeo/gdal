@@ -251,7 +251,10 @@ CPLErr RawRasterBand::FlushCache()
 {
     CPLErr eErr = GDALRasterBand::FlushCache();
     if( eErr != CE_None )
+    {
+        bDirty = FALSE;
         return eErr;
+    }
 
     // If we have unflushed raw, flush it to disk now.
     if ( bDirty )
