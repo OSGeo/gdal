@@ -138,6 +138,8 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Write(%d) = %d", (int)nBytes, nRet);
 #endif
+    if( static_cast<OPJ_SIZE_T>(nRet) != nBytes )
+        return static_cast<OPJ_SIZE_T>(-1);
     return nRet;
 }
 
