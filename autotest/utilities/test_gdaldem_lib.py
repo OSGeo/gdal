@@ -336,6 +336,46 @@ def test_gdaldem_lib_hillshade_azimuth():
     return 'success'
 
 ###############################################################################
+# Test gdaldem hillshade -multidirectional
+
+def test_gdaldem_lib_hillshade_multidirectional():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', multiDirectional = True, computeEdges = True, scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 51784:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test gdaldem hillshade -multidirectional
+
+def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format = 'MEM', alg = 'ZevenbergenThorne', multiDirectional = True, computeEdges = True, scale = 111120, zFactor = 30)
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 50860:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test gdaldem color relief
 
 def test_gdaldem_lib_color_relief():
@@ -443,7 +483,7 @@ def test_gdaldem_lib_roughness():
 def test_gdaldem_lib_slope_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'slope', format = 'MEM', alg = 'ZevenbergenThorne', combined = True, scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'slope', format = 'MEM', alg = 'ZevenbergenThorne', scale = 111120, zFactor = 30)
     if ds is None:
         return 'fail'
 
@@ -461,7 +501,7 @@ def test_gdaldem_lib_slope_ZevenbergenThorne():
 def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'aspect', format = 'MEM', alg = 'ZevenbergenThorne', combined = True, scale = 111120, zFactor = 30)
+    ds = gdal.DEMProcessing('', src_ds, 'aspect', format = 'MEM', alg = 'ZevenbergenThorne', scale = 111120, zFactor = 30)
     if ds is None:
         return 'fail'
 
@@ -557,6 +597,8 @@ gdaltest_list = [
     test_gdaldem_lib_hillshade_compute_edges,
     test_gdaldem_lib_hillshade_compute_edges_float,
     test_gdaldem_lib_hillshade_azimuth,
+    test_gdaldem_lib_hillshade_multidirectional,
+    test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne,
     test_gdaldem_lib_color_relief,
     test_gdaldem_lib_tpi,
     test_gdaldem_lib_tri,
