@@ -1056,7 +1056,7 @@ static const MapInfoBoundsInfo gasBoundsList[] = {
 
 static bool TAB_EQUAL( double a, double b, double eps )
 {
-    return fabs((a)-(b)) < eps;
+    return fabs(a - b) < eps;
 }
 
 static char szPreviousMitabBoundsFile[2048] = { 0 };
@@ -1072,10 +1072,10 @@ static VSIStatBufL sStatBoundsFile;
  *
  * Returns true if valid bounds were found, false otherwise.
  **********************************************************************/
-bool MITABLookupCoordSysBounds(TABProjInfo *psCS,
-                               double &dXMin, double &dYMin,
-                               double &dXMax, double &dYMax,
-                               bool bOnlyUserTable)
+bool MITABLookupCoordSysBounds( TABProjInfo *psCS,
+                                double &dXMin, double &dYMin,
+                                double &dXMax, double &dYMax,
+                                bool bOnlyUserTable )
 {
     bool bFound = false;
 

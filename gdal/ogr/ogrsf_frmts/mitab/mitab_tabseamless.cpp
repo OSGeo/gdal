@@ -711,9 +711,9 @@ GBool TABSeamless::IsFieldUnique(int nFieldId)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABSeamless::GetBounds(double &dXMin, double &dYMin,
-                       double &dXMax, double &dYMax,
-                       GBool bForce /*= TRUE*/)
+int TABSeamless::GetBounds( double &dXMin, double &dYMin,
+                            double &dXMax, double &dYMax,
+                            GBool bForce /*= TRUE*/ )
 {
     if (m_poIndexTable == NULL)
     {

@@ -505,7 +505,6 @@ int TABFeature::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    double dfX,dfY;
     char **papszToken =
         CSLTokenizeString2(fp->GetSavedLine(), " \t", CSLT_HONOURSTRINGS);
 
@@ -515,8 +514,8 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    dfX = fp->GetXTrans(CPLAtof(papszToken[1]));
-    dfY = fp->GetYTrans(CPLAtof(papszToken[2]));
+    const double dfX = fp->GetXTrans(CPLAtof(papszToken[1]));
+    const double dfY = fp->GetYTrans(CPLAtof(papszToken[2]));
 
     CSLDestroy(papszToken);
     papszToken = NULL;
@@ -585,7 +584,6 @@ int TABPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 {
-    double dfX,dfY;
     char **papszToken =
         CSLTokenizeString2(fp->GetSavedLine(), " \t", CSLT_HONOURSTRINGS);
 
@@ -595,8 +593,8 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    dfX = fp->GetXTrans(CPLAtof(papszToken[1]));
-    dfY = fp->GetYTrans(CPLAtof(papszToken[2]));
+    const double dfX = fp->GetXTrans(CPLAtof(papszToken[1]));
+    const double dfY = fp->GetYTrans(CPLAtof(papszToken[2]));
 
     CSLDestroy(papszToken);
 
@@ -1114,7 +1112,6 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     }
 
     OGRLinearRing *poRing = NULL;
-    double               dX, dY;
     OGRGeometry         *poGeometry = NULL;
     int                  i,iSection;
     const char          *pszLine = NULL;
@@ -1122,7 +1119,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     for(iSection=0; iSection<numLineSections; iSection++)
     {
-        int     numSectionVertices = 0;
+        int numSectionVertices = 0;
 
         tabPolygons[iSection] = new OGRPolygon();
 
@@ -1183,8 +1180,8 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                 return -1;
             }
 
-            dX = fp->GetXTrans(CPLAtof(papszToken[0]));
-            dY = fp->GetYTrans(CPLAtof(papszToken[1]));
+            const double dX = fp->GetXTrans(CPLAtof(papszToken[0]));
+            const double dY = fp->GetYTrans(CPLAtof(papszToken[1]));
             poRing->setPoint(i, dX, dY);
 
             CSLDestroy(papszToken);
@@ -1421,8 +1418,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
          * is the way MapInfo seems to do it when a radius bigger than
          * the MBR is passed from TBA to MIF.
          *------------------------------------------------------------*/
-        double dXRadius = MIN(m_dRoundXRadius, (dXMax-dXMin)/2.0);
-        double dYRadius = MIN(m_dRoundYRadius, (dYMax-dYMin)/2.0);
+        const double dXRadius = MIN(m_dRoundXRadius, (dXMax-dXMin)/2.0);
+        const double dYRadius = MIN(m_dRoundYRadius, (dYMax-dYMin)/2.0);
         TABGenerateArc(poRing, 45,
                        dXMin + dXRadius, dYMin + dYRadius, dXRadius, dYRadius,
                        M_PI, 3.0*M_PI/2.0);
@@ -1883,27 +1880,24 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                         " \t", CSLT_HONOURSTRINGS);
     }
 
-    double dXMin, dYMin, dXMax, dYMax;
     if (CSLCount(papszToken) != 4)
     {
         CSLDestroy(papszToken);
         return -1;
     }
-    else
-    {
-        dXMin = fp->GetXTrans(CPLAtof(papszToken[0]));
-        dXMax = fp->GetXTrans(CPLAtof(papszToken[2]));
-        dYMin = fp->GetYTrans(CPLAtof(papszToken[1]));
-        dYMax = fp->GetYTrans(CPLAtof(papszToken[3]));
 
-        m_dHeight = dYMax - dYMin;  //SetTextBoxHeight(dYMax - dYMin);
-        m_dWidth  = dXMax - dXMin;  //SetTextBoxWidth(dXMax - dXMin);
+    double dXMin = fp->GetXTrans(CPLAtof(papszToken[0]));
+    double dXMax = fp->GetXTrans(CPLAtof(papszToken[2]));
+    double dYMin = fp->GetYTrans(CPLAtof(papszToken[1]));
+    double dYMax = fp->GetYTrans(CPLAtof(papszToken[3]));
 
-        if (m_dHeight <0.0)
-          m_dHeight*=-1.0;
-        if (m_dWidth <0.0)
-          m_dWidth*=-1.0;
-    }
+    m_dHeight = dYMax - dYMin;  //SetTextBoxHeight(dYMax - dYMin);
+    m_dWidth  = dXMax - dXMin;  //SetTextBoxWidth(dXMax - dXMin);
+
+    if (m_dHeight <0.0)
+      m_dHeight*=-1.0;
+    if (m_dWidth <0.0)
+      m_dWidth*=-1.0;
 
     CSLDestroy(papszToken);
     papszToken = NULL;
@@ -2026,9 +2020,10 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
      * We need to calculate the true lower left corner of the text based
      * on the MBR after rotation, the text height and the rotation angle.
      *---------------------------------------------------------------- */
-    double dCos, dSin, dX, dY;
-    dSin = sin(m_dAngle*M_PI/180.0);
-    dCos = cos(m_dAngle*M_PI/180.0);
+    double dSin = sin(m_dAngle*M_PI/180.0);
+    double dCos = cos(m_dAngle*M_PI/180.0);
+    double dX = 0.0;
+    double dY = 0.0;
     if (dSin > 0.0  && dCos > 0.0)
     {
         dX = dXMin + m_dHeight * dSin;
@@ -2106,11 +2101,14 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
         CPLFree(pszTmpString);
 
     //    UpdateTextMBR();
-    double dXMin,dYMin,dXMax,dYMax;
+    double dXMin = 0.0;
+    double dYMin = 0.0;
+    double dXMax = 0.0;
+    double dYMax = 0.0;
     GetMBR(dXMin, dYMin, dXMax, dYMax);
-    fp->WriteLine("    %.15g %.15g %.15g %.15g\n",dXMin, dYMin,dXMax, dYMax);
+    fp->WriteLine("    %.15g %.15g %.15g %.15g\n", dXMin, dYMin, dXMax, dYMax);
 
-    if (IsFontBGColorUsed())
+    if( IsFontBGColorUsed() )
       fp->WriteLine("    Font (\"%s\",%d,%d,%d,%d)\n", GetFontNameRef(),
                     GetFontStyleMIFValue(),0,GetFontFGColor(),
                     GetFontBGColor());

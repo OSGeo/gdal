@@ -256,7 +256,8 @@ OGRFeature *OGRAeronavFAADOFLayer::GetNextRawFeature()
                 poFeature->SetField(i, szBuffer);
         }
 
-        double dfLat, dfLon;
+        double dfLat = 0.0;
+        double dfLon = 0.0;
         GetLatLon(pszLine + psRecordDesc->nLatStartCol - 1,
                   pszLine + psRecordDesc->nLonStartCol - 1,
                   dfLat,
@@ -364,7 +365,8 @@ OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
                 poFeature->SetField(i, szBuffer);
         }
 
-        double dfLat, dfLon;
+        double dfLat = 0.0;
+        double dfLon = 0.0;
         GetLatLon(pszLine + psRecordDesc->nLatStartCol - 1,
                   pszLine + psRecordDesc->nLonStartCol - 1,
                   dfLat,
@@ -533,7 +535,8 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
             break;
         }
 
-        double dfLat, dfLon;
+        double dfLat = 0.0;
+        double dfLon = 0.0;
         GetLatLon(pszLine + 29 - 1,
                   pszLine + 42 - 1,
                   dfLat,
@@ -720,7 +723,8 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
                 poFeature->SetField(i + 4, szBuffer);
         }
 
-        double dfLat, dfLon;
+        double dfLat = 0.0;
+        double dfLon = 0.0;
         GetLatLon(pszLine + 16 - 1,
                   (pszLine[34 - 1] != ' ') ? pszLine + 34 - 1 : pszLine + 35 - 1,
                   dfLat,

@@ -1404,7 +1404,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     /*-----------------------------------------------------------------
      * Set the spheroid.
      *----------------------------------------------------------------*/
-    double      dfSemiMajor=0.0, dfInvFlattening=0.0;
+    double dfSemiMajor = 0.0;
+    double dfInvFlattening = 0.0;
     const char *pszSpheroidName = NULL;
 
     for( int i = 0; asSpheroidInfoList[i].nMapInfoId != -1; i++ )

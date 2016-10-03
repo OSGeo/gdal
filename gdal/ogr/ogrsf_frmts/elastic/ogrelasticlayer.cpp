@@ -1151,7 +1151,8 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                     }
                     else
                     {
-                        double lat[2], lon[2];
+                        double lat[2] = { 0.0, 0.0 };
+                        double lon[2] = { 0.0, 0.0 };
                         decode_geohash_bbox(pszLatLon, lat, lon);
                         poGeom = new OGRPoint( (lon[0] + lon[1]) / 2,
                                                (lat[0] + lat[1]) / 2 );
@@ -1175,9 +1176,9 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                     json_object_array_length(poCoordinates) == 2 )
                 {
                     const char* pszRadius = json_object_get_string(poRadius);
-                    double dfX = json_object_get_double(json_object_array_get_idx(poCoordinates, 0));
-                    double dfY = json_object_get_double(json_object_array_get_idx(poCoordinates, 1));
-                    int nRadiusLength = (int)strlen(pszRadius);
+                    const double dfX = json_object_get_double(json_object_array_get_idx(poCoordinates, 0));
+                    const double dfY = json_object_get_double(json_object_array_get_idx(poCoordinates, 1));
+                    const int nRadiusLength = (int)strlen(pszRadius);
                     double dfRadius = CPLAtof(pszRadius);
                     double dfUnit = 0.0;
                     if( nRadiusLength >= 1 && pszRadius[nRadiusLength-1] == 'm' )
@@ -1204,8 +1205,10 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                         OGRLinearRing* poRing = new OGRLinearRing();
                         for(double dfStep = 0; dfStep <= 360; dfStep += 4 )
                         {
-                            double dfLat, dfLon;
-                            OGRXPlane_ExtendPosition( dfY, dfX, dfRadius, dfStep, &dfLat, &dfLon);
+                            double dfLat = 0.0;
+                            double dfLon = 0.0;
+                            OGRXPlane_ExtendPosition(dfY, dfX, dfRadius,
+                                                      dfStep, &dfLat, &dfLon);
                             poRing->addPoint(dfLon, dfLat);
                         }
                         OGRPolygon* poPoly = new OGRPolygon();
@@ -1227,10 +1230,10 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                         json_object_get_type(poCorner2) == json_type_array &&
                         json_object_array_length(poCorner2) == 2 )
                     {
-                        double dfX1 = json_object_get_double(json_object_array_get_idx(poCorner1, 0));
-                        double dfY1 = json_object_get_double(json_object_array_get_idx(poCorner1, 1));
-                        double dfX2 = json_object_get_double(json_object_array_get_idx(poCorner2, 0));
-                        double dfY2 = json_object_get_double(json_object_array_get_idx(poCorner2, 1));
+                        const double dfX1 = json_object_get_double(json_object_array_get_idx(poCorner1, 0));
+                        const double dfY1 = json_object_get_double(json_object_array_get_idx(poCorner1, 1));
+                        const double dfX2 = json_object_get_double(json_object_array_get_idx(poCorner2, 0));
+                        const double dfY2 = json_object_get_double(json_object_array_get_idx(poCorner2, 1));
                         OGRLinearRing* poRing = new OGRLinearRing();
                         poRing->addPoint(dfX1, dfY1);
                         poRing->addPoint(dfX2, dfY1);

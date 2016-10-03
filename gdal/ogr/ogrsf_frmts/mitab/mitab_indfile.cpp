@@ -654,12 +654,12 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, const char *pszStr)
  *
  * BuildKey() for float and decimal fields
  **********************************************************************/
-GByte *TABINDFile::BuildKey(int nIndexNumber, double dValue)
+GByte *TABINDFile::BuildKey( int nIndexNumber, double dValue )
 {
     if (ValidateIndexNo(nIndexNumber) != 0)
         return NULL;
 
-    int nKeyLength = m_papoIndexRootNodes[nIndexNumber-1]->GetKeyLength();
+    const int nKeyLength = m_papoIndexRootNodes[nIndexNumber-1]->GetKeyLength();
     CPLAssert(nKeyLength == 8 && sizeof(double) == 8);
 
     /*-----------------------------------------------------------------

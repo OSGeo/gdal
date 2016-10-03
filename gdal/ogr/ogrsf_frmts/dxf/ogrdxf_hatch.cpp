@@ -464,12 +464,13 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
     char szLineBuf[257];
     DXFSmoothPolyline oSmoothPolyline;
     double dfBulge = 0.0;
-    double dfX = 0.0, dfY = 0.0;
-    int bHaveX = FALSE;
-    int bHaveY = FALSE;
-    int bIsClosed = FALSE;
+    double dfX = 0.0;
+    double dfY = 0.0;
+    bool bHaveX = false;
+    bool bHaveY = false;
+    bool bIsClosed = false;
     int nVertexCount = -1;
-    int bHaveBulges = FALSE;
+    bool bHaveBulges = false;
 
 /* -------------------------------------------------------------------- */
 /*      Read the boundary path type.                                    */
@@ -486,11 +487,11 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             break;
 
           case 72:
-            bHaveBulges = atoi(szLineBuf);
+            bHaveBulges = CPL_TO_BOOL(atoi(szLineBuf));
             break;
 
           case 73:
-            bIsClosed = atoi(szLineBuf);
+            bIsClosed = CPL_TO_BOOL(atoi(szLineBuf));
             break;
 
           case 10:
@@ -498,10 +499,10 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             {
                 oSmoothPolyline.AddPoint(dfX, dfY, 0.0, dfBulge);
                 dfBulge = 0.0;
-                bHaveY = FALSE;
+                bHaveY = false;
             }
             dfX = CPLAtof(szLineBuf);
-            bHaveX = TRUE;
+            bHaveX = true;
             break;
 
           case 20:
@@ -509,7 +510,8 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             {
                 oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
                 dfBulge = 0.0;
-                bHaveX = bHaveY = FALSE;
+                bHaveX = false;
+                bHaveY = false;
             }
             dfY = CPLAtof(szLineBuf);
             bHaveY = TRUE;
@@ -517,7 +519,8 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             {
                 oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
                 dfBulge = 0.0;
-                bHaveX = bHaveY = FALSE;
+                bHaveX = false;
+                bHaveY = false;
             }
             break;
 
@@ -527,7 +530,8 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             {
                 oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
                 dfBulge = 0.0;
-                bHaveX = bHaveY = FALSE;
+                bHaveX = false;
+                bHaveY = false;
             }
             break;
 

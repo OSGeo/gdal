@@ -316,13 +316,12 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psCell->origin.y = DGN_INT32( psDGN->abyElem + 88 );
 
               {
-              double a, b, c, d, a2, c2;
-              a = DGN_INT32( psDGN->abyElem + 68 );
-              b = DGN_INT32( psDGN->abyElem + 72 );
-              c = DGN_INT32( psDGN->abyElem + 76 );
-              d = DGN_INT32( psDGN->abyElem + 80 );
-              a2 = a * a;
-              c2 = c * c;
+              const double a = DGN_INT32( psDGN->abyElem + 68 );
+              const double b = DGN_INT32( psDGN->abyElem + 72 );
+              const double c = DGN_INT32( psDGN->abyElem + 76 );
+              const double d = DGN_INT32( psDGN->abyElem + 80 );
+              const double a2 = a * a;
+              const double c2 = c * c;
 
               psCell->xscale = sqrt(a2 + c2) / 214748;
               psCell->yscale = sqrt(b*b + d*d) / 214748;
@@ -1688,17 +1687,18 @@ const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
 int DGNGetExtents( DGNHandle hDGN, double * padfExtents )
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *) hDGN;
 
     DGNBuildIndex( psDGN );
 
     if( !psDGN->got_bounds )
         return FALSE;
 
-    DGNPoint sMin;
-    sMin.x = psDGN->min_x - 2147483648.0;
-    sMin.y = psDGN->min_y - 2147483648.0;
-    sMin.z = psDGN->min_z - 2147483648.0;
+    DGNPoint sMin = {
+        psDGN->min_x - 2147483648.0,
+        psDGN->min_y - 2147483648.0,
+        psDGN->min_z - 2147483648.0
+    };
 
     DGNTransformPoint( psDGN, &sMin );
 

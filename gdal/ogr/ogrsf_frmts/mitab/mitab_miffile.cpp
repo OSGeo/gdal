@@ -2139,8 +2139,8 @@ void MIFFile::UpdateExtents(double dfX, double dfY)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int MIFFile::SetBounds(double dXMin, double dYMin,
-                       double dXMax, double dYMax)
+int MIFFile::SetBounds( double dXMin, double dYMin,
+                        double dXMax, double dYMax )
 {
     if (m_eAccessMode != TABWrite)
     {

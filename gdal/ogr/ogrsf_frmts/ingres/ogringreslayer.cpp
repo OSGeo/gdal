@@ -118,16 +118,16 @@ OGRFeature *OGRIngresLayer::GetNextFeature()
 /*                              ParseXY()                               */
 /************************************************************************/
 
-static int ParseXY( const char **ppszNext, double *padfXY )
+static bool ParseXY( const char **ppszNext, double *padfXY )
 
 {
-    int iStartY;
     const char *pszNext = *ppszNext;
 
-    for( iStartY = 0; ; iStartY++ )
+    int iStartY = 0;  // Used after for.
+    for( ; ; iStartY++ )
     {
         if( pszNext[iStartY] == '\0' )
-            return FALSE;
+            return false;
 
         if( pszNext[iStartY] == ',' )
         {
@@ -139,19 +139,16 @@ static int ParseXY( const char **ppszNext, double *padfXY )
     padfXY[0] = CPLAtof(pszNext);
     padfXY[1] = CPLAtof(pszNext + iStartY);
 
-    int iEnd;
-
-    for( iEnd = iStartY;
-         pszNext[iEnd] != ')';
-         iEnd++ )
+    int iEnd = iStartY;  // Used after for.
+    for( ; pszNext[iEnd] != ')'; iEnd++ )
     {
         if( pszNext[iEnd] == '\0' )
-            return FALSE;
+            return false;
     }
 
     *ppszNext += iEnd;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

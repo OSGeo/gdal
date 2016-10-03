@@ -334,22 +334,22 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
 
 int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
 {
-    int i,j;
-    double cent_weight_x=0.0, cent_weight_y=0.0;
-    double len, total_len=0;
+    double cent_weight_x = 0.0;
+    double cent_weight_y = 0.0;
+    double len = 0.0;
+    double total_len = 0.0;
 
-    for(i=0; i<OGR_NUM_RINGS(poPoly); i++)
+    for( int i = 0; i<OGR_NUM_RINGS(poPoly); i++ )
     {
-        double x1, y1, x2, y2;
         OGRLinearRing *poRing = OGR_GET_RING(poPoly, i);
 
-        x2 = poRing->getX(0);
-        y2 = poRing->getY(0);
+        double x2 = poRing->getX(0);
+        double y2 = poRing->getY(0);
 
-        for(j=1; j<poRing->getNumPoints(); j++)
+        for( int j = 1; j<poRing->getNumPoints(); j++ )
         {
-            x1 = x2;
-            y1 = y2;
+            double x1 = x2;
+            double y1 = y2;
             x2 = poRing->getX(j);
             y2 = poRing->getY(j);
 
@@ -417,25 +417,22 @@ int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 
 int OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 {
-    double      segment_length, max_segment_length = 0.0;
-    double      x1, y1, x2, y2;
-
     if (poLine == NULL || poLine->getNumPoints() < 2)
         return OGRERR_FAILURE;
 
-    max_segment_length = -1.0;
+    double max_segment_length = -1.0;
 
-    x2 = poLine->getX(0);
-    y2 = poLine->getY(0);
+    double x2 = poLine->getX(0);
+    double y2 = poLine->getY(0);
 
-    for(int i=1; i<poLine->getNumPoints(); i++)
+    for( int i = 1; i < poLine->getNumPoints(); i++ )
     {
-        x1 = x2;
-        y1 = y2;
+        double x1 = x2;
+        double y1 = y2;
         x2 = poLine->getX(i);
         y2 = poLine->getY(i);
 
-        segment_length = pow((x2-x1),2) + pow((y2-y1),2);
+        double segment_length = pow((x2-x1),2) + pow((y2-y1),2);
         if (segment_length > max_segment_length)
         {
             max_segment_length = segment_length;

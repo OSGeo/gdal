@@ -691,7 +691,10 @@ int TABMAPFile::SyncToDisk()
     // if that happened...
     if (m_poHeader && m_poHeader->m_bIntBoundsOverflow)
     {
-        double dBoundsMinX, dBoundsMinY, dBoundsMaxX, dBoundsMaxY;
+        double dBoundsMinX = 0.0;
+        double dBoundsMinY = 0.0;
+        double dBoundsMaxX = 0.0;
+        double dBoundsMaxY = 0.0;
         Int2Coordsys(-1000000000, -1000000000, dBoundsMinX, dBoundsMinY);
         Int2Coordsys(1000000000, 1000000000, dBoundsMaxX, dBoundsMaxY);
 
@@ -1022,9 +1025,9 @@ int TABMAPFile::GetNextFeatureId( int nPrevId )
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY)
+int TABMAPFile::Int2Coordsys( GInt32 nX, GInt32 nY, double &dX, double &dY )
 {
-    if (m_poHeader == NULL)
+    if( m_poHeader == NULL )
         return -1;
 
     return m_poHeader->Int2Coordsys(nX, nY, dX, dY);
@@ -1041,10 +1044,10 @@ int TABMAPFile::Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY,
-                             GBool bIgnoreOverflow/*=FALSE*/)
+int TABMAPFile::Coordsys2Int( double dX, double dY, GInt32 &nX, GInt32 &nY,
+                              GBool bIgnoreOverflow/*=FALSE*/ )
 {
-    if (m_poHeader == NULL)
+    if( m_poHeader == NULL )
         return -1;
 
     return m_poHeader->Coordsys2Int(dX, dY, nX, nY, bIgnoreOverflow);
@@ -1065,9 +1068,9 @@ int TABMAPFile::Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY)
+int TABMAPFile::Int2CoordsysDist( GInt32 nX, GInt32 nY, double &dX, double &dY )
 {
-    if (m_poHeader == NULL)
+    if( m_poHeader == NULL )
         return -1;
 
     return m_poHeader->Int2CoordsysDist(nX, nY, dX, dY);
@@ -1088,7 +1091,7 @@ int TABMAPFile::Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY)
+int TABMAPFile::Coordsys2IntDist( double dX, double dY, GInt32 &nX, GInt32 &nY )
 {
     if (m_poHeader == NULL)
         return -1;
@@ -1106,15 +1109,14 @@ int TABMAPFile::Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::SetCoordsysBounds(double dXMin, double dYMin,
-                                  double dXMax, double dYMax)
+int TABMAPFile::SetCoordsysBounds( double dXMin, double dYMin,
+                                   double dXMax, double dYMax )
 {
-    int nStatus = 0;
-
     if (m_poHeader == NULL)
         return -1;
 
-    nStatus = m_poHeader->SetCoordsysBounds(dXMin, dYMin, dXMax, dYMax);
+    const int nStatus =
+        m_poHeader->SetCoordsysBounds(dXMin, dYMin, dXMax, dYMax);
 
     if (nStatus == 0)
         ResetCoordFilter();
@@ -3248,13 +3250,19 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
     /*-------------------------------------------------------------
      * Report info on current tree node
      *------------------------------------------------------------*/
-    int numEntries = poNode->GetNumEntries();
-    GInt32 nXMin, nYMin, nXMax, nYMax;
-    double dXMin, dYMin, dXMax, dYMax;
+    const int numEntries = poNode->GetNumEntries();
+    GInt32 nXMin = 0;
+    GInt32 nYMin = 0;
+    GInt32 nXMax = 0;
+    GInt32 nYMax = 0;
 
     poNode->RecomputeMBR();
     poNode->GetMBR(nXMin, nYMin, nXMax, nYMax);
 
+    double dXMin = 0.0;
+    double dYMin = 0.0;
+    double dXMax = 0.0;
+    double dYMax = 0.0;
     Int2Coordsys(nXMin, nYMin, dXMin, dYMin);
     Int2Coordsys(nXMax, nYMax, dXMax, dYMax);
 

@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /*                Local helper functions                                */
 /************************************************************************/
 
-static double GetRadius(double bulge, double length)
+static double GetRadius( double bulge, double length )
 {
     const double h = (bulge * length) / 2;
     return (h / 2) + (length * length / (8 * h));
@@ -184,8 +184,8 @@ void DXFSmoothPolyline::EmitArc(
 {
     assert(poLS);
 
-    double  ogrArcRotation = 0.0,
-            ogrArcRadius = fabs(radius);
+    double ogrArcRotation = 0.0;
+    const double ogrArcRadius = fabs(radius);
 
 /* -------------------------------------------------------------------- */
 /*      Set arc's direction and keep bulge positive                     */
