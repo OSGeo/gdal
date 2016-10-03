@@ -517,8 +517,8 @@ void        OGREditableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * po
 /*                         SetSpatialFilterRect()                       */
 /************************************************************************/
 
-void        OGREditableLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
-                                                    double dfMaxX, double dfMaxY )
+void OGREditableLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
+                                             double dfMaxX, double dfMaxY )
 {
    return OGRLayer::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
@@ -527,18 +527,20 @@ void        OGREditableLayer::SetSpatialFilterRect( double dfMinX, double dfMinY
 /*                         SetSpatialFilterRect()                       */
 /************************************************************************/
 
-void        OGREditableLayer::SetSpatialFilterRect(
-                                  int iGeomField, double dfMinX, double dfMinY,
-                                  double dfMaxX, double dfMaxY )
+void OGREditableLayer::SetSpatialFilterRect(
+    int iGeomField, double dfMinX, double dfMinY,
+    double dfMaxX, double dfMaxY )
 {
-    return OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
+    return
+      OGRLayer::SetSpatialFilterRect(iGeomField,
+                                     dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig         OGREditableLayer::GetFeatureCount( int bForce )
+GIntBig OGREditableLayer::GetFeatureCount( int bForce )
 {
     if( !m_poDecoratedLayer ) return 0;
     if( m_poAttrQuery == NULL && m_poFilterGeom == NULL &&

@@ -1066,10 +1066,10 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             SQLResultFree(&oResult2);
             return false;
         }
-        double dfPixelXSize = CPLAtof(SQLResultGetValue(&oResult, 1, 0));
-        double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, 0));
-        int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, 0));
-        int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, 0));
+        const double dfPixelXSize = CPLAtof(SQLResultGetValue(&oResult, 1, 0));
+        const double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, 0));
+        const int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, 0));
+        const int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, 0));
         osContentsMinX = CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth * atoi(SQLResultGetValue(&oResult2, 0, 0)));
         osContentsMaxY = CPLSPrintf("%.18g", dfMaxY - dfPixelYSize * nTileHeight * atoi(SQLResultGetValue(&oResult2, 1, 0)));
         osContentsMaxX = CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth * (1 + atoi(SQLResultGetValue(&oResult2, 2, 0))));
@@ -1407,10 +1407,12 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     m_papoOverviewDS = (GDALGeoPackageDataset**) CPLCalloc(sizeof(GDALGeoPackageDataset*),
                                                            m_nZoomLevel);
 
-    for(int i=0; i<=m_nZoomLevel; i++)
+    for( int i = 0; i <= m_nZoomLevel; i++ )
     {
-        double dfPixelXSizeZoomLevel, dfPixelYSizeZoomLevel;
-        int nTileMatrixWidth, nTileMatrixHeight;
+        double dfPixelXSizeZoomLevel = 0.0;
+        double dfPixelYSizeZoomLevel = 0.0;
+        int nTileMatrixWidth = 0;
+        int nTileMatrixHeight = 0;
         if( EQUAL(m_osTilingScheme, "CUSTOM") )
         {
             dfPixelXSizeZoomLevel = m_adfGeoTransform[1] * (1 << (m_nZoomLevel-i));
@@ -3123,10 +3125,18 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
             if( oSrcSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
                 oSrcSRS.IsGeographic() )
             {
-                double minLat = MIN( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
-                double maxLat = MAX( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                const double minLat =
+                    MIN( adfSrcGeoTransform[3],
+                         adfSrcGeoTransform[3] +
+                         poSrcDS->GetRasterYSize() *
+                         adfSrcGeoTransform[5] );
+                const double maxLat =
+                    MAX( adfSrcGeoTransform[3],
+                         adfSrcGeoTransform[3] +
+                         poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
                 double maxNorthing = adfGeoTransform[3];
-                double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
+                double minNorthing =
+                    adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
                 bool bChanged = false;
                 const double SPHERICAL_RADIUS = 6378137.0;
                 const double MAX_GM =

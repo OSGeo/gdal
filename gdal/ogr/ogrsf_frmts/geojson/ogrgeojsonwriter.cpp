@@ -38,7 +38,8 @@
 
 CPL_CVSID("$Id$");
 
-static json_object* json_object_new_coord(double dfVal, int nCoordPrecision, int nSignificantFigures)
+static json_object* json_object_new_coord( double dfVal, int nCoordPrecision,
+                                           int nSignificantFigures )
 {
     // If coordinate precision is specified, or significant figures is not
     // then use the '%f' formatting

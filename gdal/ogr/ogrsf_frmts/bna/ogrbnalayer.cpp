@@ -448,8 +448,9 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
             OGRMultiPolygon* multipolygon = (OGRMultiPolygon*)poGeom;
             int N = multipolygon->getNumGeometries();
             int nBNAPoints = 0;
-            double firstX = 0, firstY = 0;
-            for(int i=0;i<N;i++)
+            double firstX = 0.0;
+            double firstY = 0.0;
+            for( int i = 0; i < N; i++ )
             {
                 OGRPolygon* polygon = (OGRPolygon*)multipolygon->getGeometryRef(i);
                 OGRLinearRing* ring = polygon->getExteriorRing();
@@ -604,7 +605,8 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
         double firstX = record->tabCoords[0][0];
         double firstY = record->tabCoords[0][1];
         int isFirstPolygon = 1;
-        double secondaryFirstX = 0, secondaryFirstY = 0;
+        double secondaryFirstX = 0.0;
+        double secondaryFirstY = 0.0;
 
         OGRLinearRing* ring = new OGRLinearRing ();
         ring->setCoordinateDimension(2);

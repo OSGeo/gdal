@@ -1392,7 +1392,10 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
 
             if( poGeometry != NULL && poClass->GetGeometryPropertyCount() > 0 )
             {
-                double  dfXMin, dfXMax, dfYMin, dfYMax;
+                double dfXMin;
+                double dfXMax;
+                double dfYMin;
+                double dfYMax;
                 OGREnvelope sEnvelope;
 
                 OGRwkbGeometryType eGType = (OGRwkbGeometryType)
@@ -1477,7 +1480,10 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
             /* order */
             if (m_bCanUseGlobalSRSName)
             {
-                double  dfXMin, dfXMax, dfYMin, dfYMax;
+                double dfXMin = 0.0;
+                double dfXMax = 0.0;
+                double dfYMin = 0.0;
+                double dfYMax = 0.0;
                 if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
                     poClass->SetExtents( dfYMin, dfYMax, dfXMin, dfXMax );
             }

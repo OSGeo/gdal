@@ -2391,7 +2391,10 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
         /*-------------------------------------------------------------
          * Projection bounds correspond to the +/- 1e9 integer coord. limits
          *------------------------------------------------------------*/
-        double dX0, dX1, dY0, dY1;
+        double dX0 = 0.0;
+        double dX1 = 0.0;
+        double dY0 = 0.0;
+        double dY1 = 0.0;
         m_poMAPFile->Int2Coordsys(-1000000000, -1000000000,
                                   dX0, dY0);
         m_poMAPFile->Int2Coordsys(1000000000, 1000000000,
@@ -2432,7 +2435,10 @@ OGRErr TABFile::GetExtent (OGREnvelope *psExtent,
 
     if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
     {
-        double dX0, dX1, dY0, dY1;
+        double dX0 = 0.0;
+        double dX1 = 0.0;
+        double dY0 = 0.0;
+        double dY1 = 0.0;
         /*-------------------------------------------------------------
          * Fetch extent of the data from the .map header block
          * this value is different from the projection bounds.
@@ -2523,7 +2529,10 @@ int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
 
         if (poSpatialRef)
         {
-            double dXMin, dYMin, dXMax, dYMax;
+            double dXMin = 0.0;
+            double dYMin = 0.0;
+            double dXMax = 0.0;
+            double dYMax = 0.0;
             if (SetSpatialRef(poSpatialRef) == 0)
             {
                 if( MITABExtractCoordSysBounds(pszMIFCoordSys,

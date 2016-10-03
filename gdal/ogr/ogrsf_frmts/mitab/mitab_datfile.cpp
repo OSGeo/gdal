@@ -2115,8 +2115,8 @@ int TABDATFile::WriteSmallIntField(GInt16 nValue,
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteFloatField(double dValue,
-                                TABINDFile *poINDFile, int nIndexNo)
+int TABDATFile::WriteFloatField( double dValue,
+                                 TABINDFile *poINDFile, int nIndexNo )
 {
     if (m_poRecordBlock == NULL)
     {

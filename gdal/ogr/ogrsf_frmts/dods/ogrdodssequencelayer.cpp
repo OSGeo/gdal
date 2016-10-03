@@ -776,14 +776,17 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         else if( poFeature->GetFieldDefnRef(iXField)->GetType() == OFTRealList
             && poFeature->GetFieldDefnRef(iYField)->GetType() == OFTRealList )
         {
-            const double *padfX, *padfY, *padfZ = NULL;
             int nPointCount, i;
             OGRLineString *poLS = new OGRLineString();
 
-            padfX = poFeature->GetFieldAsDoubleList( iXField, &nPointCount );
-            padfY = poFeature->GetFieldAsDoubleList( iYField, &nPointCount );
-            if( iZField != -1 )
-                padfZ = poFeature->GetFieldAsDoubleList(iZField,&nPointCount);
+            const double *padfX =
+                poFeature->GetFieldAsDoubleList(iXField, &nPointCount);
+            const double *padfY =
+                poFeature->GetFieldAsDoubleList(iYField, &nPointCount);
+            const double *padfZ =
+                iZField != -1
+                ? poFeature->GetFieldAsDoubleList(iZField, &nPointCount)
+                : NULL;
 
             poLS->setPoints( nPointCount, (double *) padfX, (double *) padfY,
                              (double *) padfZ );

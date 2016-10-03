@@ -86,8 +86,10 @@ OGRErr OGRTopoJSONReader::Parse( const char* pszText )
 
 typedef struct
 {
-    double dfScale0, dfScale1;
-    double dfTranslate0, dfTranslate1;
+    double dfScale0;
+    double dfScale1;
+    double dfTranslate0;
+    double dfTranslate1;
 } ScalingParams;
 
 /************************************************************************/
@@ -127,12 +129,14 @@ static void ParseArc( OGRLineString* poLS, json_object* poArcsDB, int nArcID,
     if( poArcDB == NULL || json_type_array != json_object_get_type(poArcDB) )
         return;
     int nPoints = json_object_array_length(poArcDB);
-    double dfAccX = 0, dfAccY = 0;
+    double dfAccX = 0.0;
+    double dfAccY = 0.0;
     int nBaseIndice = poLS->getNumPoints();
-    for(int i=0; i<nPoints; i++)
+    for( int i = 0; i < nPoints; i++ )
     {
         json_object* poPoint = json_object_array_get_idx(poArcDB, i);
-        double dfX = 0.0, dfY = 0.0;
+        double dfX = 0.0;
+        double dfY = 0.0;
         if( ParsePoint( poPoint, &dfX, &dfY ) )
         {
             dfAccX += dfX;
@@ -318,7 +322,8 @@ static void ParseObject(const char* pszId,
     OGRGeometry* poGeom = NULL;
     if( strcmp(pszType, "Point") == 0 )
     {
-        double dfX = 0.0, dfY = 0.0;
+        double dfX = 0.0;
+        double dfY = 0.0;
         if( ParsePoint( poCoordinatesObj, &dfX, &dfY ) )
         {
             dfX = dfX * psParams->dfScale0 + psParams->dfTranslate0;
@@ -326,7 +331,9 @@ static void ParseObject(const char* pszId,
             poGeom = new OGRPoint(dfX, dfY);
         }
         else
+        {
             poGeom = new OGRPoint();
+        }
     }
     else if( strcmp(pszType, "MultiPoint") == 0 )
     {
@@ -336,7 +343,8 @@ static void ParseObject(const char* pszId,
         for(int i=0; i<nTuples; i++)
         {
             json_object* poPair = json_object_array_get_idx(poCoordinatesObj, i);
-            double dfX = 0.0, dfY = 0.0;
+            double dfX = 0.0;
+            double dfY = 0.0;
             if( ParsePoint( poPair, &dfX, &dfY ) )
             {
                 dfX = dfX * psParams->dfScale0 + psParams->dfTranslate0;

@@ -450,8 +450,8 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
-                                    double &dX, double &dY)
+int TABMAPHeaderBlock::Int2Coordsys( GInt32 nX, GInt32 nY,
+                                     double &dX, double &dY )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -496,9 +496,9 @@ int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
-                                    GInt32 &nX, GInt32 &nY,
-                                    GBool bIgnoreOverflow /*=FALSE*/)
+int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
+                                     GInt32 &nX, GInt32 &nY,
+                                     GBool bIgnoreOverflow /*=FALSE*/ )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -513,7 +513,8 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
      * NOTE: double values must be used here, the limit of integer value
      * have been reached some times due to the very big numbers used here.
      *----------------------------------------------------------------*/
-    double dTempX, dTempY;
+    double dTempX = 0.0;
+    double dTempY = 0.0;
 
     if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
         m_nCoordOriginQuadrant==0 )
@@ -584,9 +585,9 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
-                                         int nDeltaX, int nDeltaY,
-                                         double &dX, double &dY)
+int TABMAPHeaderBlock::ComprInt2Coordsys( GInt32 nCenterX, GInt32 nCenterY,
+                                          int nDeltaX, int nDeltaY,
+                                          double &dX, double &dY )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -610,8 +611,8 @@ int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY,
-                                    double &dX, double &dY)
+int TABMAPHeaderBlock::Int2CoordsysDist( GInt32 nX, GInt32 nY,
+                                         double &dX, double &dY )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -637,8 +638,8 @@ int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY,
-                                        GInt32 &nX, GInt32 &nY)
+int TABMAPHeaderBlock::Coordsys2IntDist( double dX, double dY,
+                                         GInt32 &nX, GInt32 &nY )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -661,8 +662,8 @@ int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::SetCoordsysBounds(double dXMin, double dYMin,
-                                         double dXMax, double dYMax)
+int TABMAPHeaderBlock::SetCoordsysBounds( double dXMin, double dYMin,
+                                          double dXMax, double dYMax )
 {
 //printf("SetCoordsysBounds(%10g, %10g, %10g, %10g)\n", dXMin, dYMin, dXMax, dYMax);
     /*-----------------------------------------------------------------

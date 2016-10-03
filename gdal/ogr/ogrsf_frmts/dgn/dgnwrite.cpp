@@ -1364,9 +1364,6 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
 
 {
     DGNInfo *psDGN = (DGNInfo *) hDGN;
-    DGNPoint sMin, sMax, sLowLeft, sLowRight, sUpLeft, sUpRight;
-    GInt32 nIntValue, nBase;
-    double length, height, diagonal;
 
     DGNLoadTCB( hDGN );
 
@@ -1408,11 +1405,14 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     psCore->raw_data[36] = (unsigned char) nFontId;
     psCore->raw_data[37] = (unsigned char) nJustification;
 
-    nIntValue = (int) (dfLengthMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
+    GInt32 nIntValue =
+        static_cast<int>(dfLengthMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
     DGN_WRITE_INT32( nIntValue, psCore->raw_data + 38 );
 
     nIntValue = (int) (dfHeightMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
     DGN_WRITE_INT32( nIntValue, psCore->raw_data + 42 );
+
+    GInt32 nBase = 0;
 
     if( psDGN->dimension == 2 )
     {
@@ -1455,25 +1455,33 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
     //calculate bounds if rotation is 0
-    sMin.x = dfOriginX;
-    sMin.y = dfOriginY;
-    sMin.z = 0.0;
-    sMax.x = dfOriginX + dfLengthMult * strlen(pszText);
-    sMax.y = dfOriginY + dfHeightMult;
-    sMax.z = 0.0;
+    DGNPoint sMin = { dfOriginX, dfOriginY, 0.0 };
+    DGNPoint sMax = {
+        dfOriginX + dfLengthMult * strlen(pszText),
+        dfOriginY + dfHeightMult,
+        0.0
+    };
 
     //calculate rotated bounding box coordinates
-    length = sMax.x-sMin.x;
-    height = sMax.y-sMin.y;
-    diagonal=sqrt(length*length+height*height);
-    sLowLeft.x=sMin.x;
-    sLowLeft.y=sMin.y;
-    sLowRight.x=sMin.x+cos(psText->rotation*M_PI/180.0)*length;
-    sLowRight.y=sMin.y+sin(psText->rotation*M_PI/180.0)*length;
-    sUpRight.x=sMin.x+cos((psText->rotation*M_PI/180.0)+atan(height/length))*diagonal;
-    sUpRight.y=sMin.y+sin((psText->rotation*M_PI/180.0)+atan(height/length))*diagonal;
-    sUpLeft.x=sMin.x+cos((psText->rotation+90.0)*M_PI/180.0)*height;
-    sUpLeft.y=sMin.y+sin((psText->rotation+90.0)*M_PI/180.0)*height;
+    const double length = sMax.x-sMin.x;
+    const double height = sMax.y-sMin.y;
+    const double diagonal=sqrt(length*length+height*height);
+    const DGNPoint sLowLeft = { sMin.x, sMin.y, 0.0 };
+    const DGNPoint sLowRight = {
+       sMin.x+cos(psText->rotation*M_PI/180.0)*length,
+       sMin.y+sin(psText->rotation*M_PI/180.0)*length,
+       0.0
+    };
+    const DGNPoint sUpRight = {
+        sMin.x+cos((psText->rotation*M_PI/180.0)+atan(height/length))*diagonal,
+        sMin.y+sin((psText->rotation*M_PI/180.0)+atan(height/length))*diagonal,
+        0.0
+    };
+    const DGNPoint sUpLeft = {
+        sMin.x+cos((psText->rotation+90.0)*M_PI/180.0)*height,
+        sMin.y+sin((psText->rotation+90.0)*M_PI/180.0)*height,
+        0.0
+    };
 
     //calculate new values for bounding box
     sMin.x=MIN(sLowLeft.x,MIN(sLowRight.x,MIN(sUpLeft.x,sUpRight.x)));

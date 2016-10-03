@@ -291,7 +291,7 @@ private:
 
     double Det2x2( double a, double b, double c, double d )
     {
-        return (a*d - b*c);
+        return a*d - b*c;
     }
 
 public:
@@ -299,8 +299,8 @@ public:
         aadfInverse()
     {
         static const double dSmall = 1.0 / 64.0;
-        static const double adfWZ[3] = {0, 0, 1};
-        static const double adfWY[3] = {0, 1, 0};
+        static const double adfWZ[3] = { 0.0, 0.0, 1.0 };
+        static const double adfWY[3] = { 0.0, 1.0, 0.0 };
 
         dfDeterminant = 0.0;
         Scale2Unit( adfNIn );
@@ -316,19 +316,19 @@ public:
     Scale2Unit( adfAY );
 
     if( bInverse == true ) {
-        double a[4] = { 0.0, adfAX[0], adfAY[0], adfN[0] };
-        double b[4] = { 0.0, adfAX[1], adfAY[1], adfN[1] };
-        double c[4] = { 0.0, adfAX[2], adfAY[2], adfN[2] };
+        const double a[4] = { 0.0, adfAX[0], adfAY[0], adfN[0] };
+        const double b[4] = { 0.0, adfAX[1], adfAY[1], adfN[1] };
+        const double c[4] = { 0.0, adfAX[2], adfAY[2], adfN[2] };
 
         dfDeterminant = a[1]*b[2]*c[3] - a[1]*b[3]*c[2]
                       + a[2]*b[3]*c[1] - a[2]*b[1]*c[3]
                       + a[3]*b[1]*c[2] - a[3]*b[2]*c[1];
 
         if( dfDeterminant != 0.0 ) {
-            double k = 1 / dfDeterminant;
-            double a11 = adfAX[0], a12 = adfAY[0], a13 = adfN[0];
-            double a21 = adfAX[1], a22 = adfAY[1], a23 = adfN[1];
-            double a31 = adfAX[2], a32 = adfAY[2], a33 = adfN[2];
+            const double k = 1.0 / dfDeterminant;
+            const double a11 = adfAX[0], a12 = adfAY[0], a13 = adfN[0];
+            const double a21 = adfAX[1], a22 = adfAY[1], a23 = adfN[1];
+            const double a31 = adfAX[2], a32 = adfAY[2], a33 = adfN[2];
 
             aadfInverse[1][1] = k * Det2x2( a22,a23,a32,a33 );
             aadfInverse[1][2] = k * Det2x2( a13,a12,a33,a32 );
@@ -372,7 +372,9 @@ public:
         {
             for( int i = 0; i < nCount; i++ )
             {
-                double x = adfX[i], y = adfY[i], z = adfZ[i];
+                const double x = adfX[i];
+                const double y = adfY[i];
+                const double z = adfZ[i];
 
                 adfX[i] = x * adfAX[0] + y * adfAY[0] + z * adfN[0];
                 adfY[i] = x * adfAX[1] + y * adfAY[1] + z * adfN[1];

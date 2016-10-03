@@ -481,9 +481,10 @@ OGRPoint* OGRESRIJSONReadPoint( json_object* poObj)
     const int iTypeX = json_object_get_type(poObjX);
     if ( (json_type_double != iTypeX) && (json_type_int != iTypeX) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Invalid X coordinate. Type is not double or integer for \'%s\'.",
-                json_object_to_json_string(poObjX) );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Invalid X coordinate. Type is not double or integer for \'%s\'.",
+            json_object_to_json_string(poObjX) );
         return NULL;
     }
 
@@ -499,9 +500,10 @@ OGRPoint* OGRESRIJSONReadPoint( json_object* poObj)
     const int iTypeY = json_object_get_type(poObjY);
     if ( (json_type_double != iTypeY) && (json_type_int != iTypeY) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Invalid Y coordinate. Type is not double or integer for \'%s\'.",
-                json_object_to_json_string(poObjY) );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Invalid Y coordinate. Type is not double or integer for \'%s\'.",
+            json_object_to_json_string(poObjY) );
         return NULL;
     }
 
@@ -647,8 +649,9 @@ static int OGRESRIJSONReaderParseXYZMArray (json_object* poObjCoords,
     iType = json_object_get_type(poObjCoord);
     if ( (json_type_double != iType) && (json_type_int != iType) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Invalid Y coordinate. Type is not double or integer for \'%s\'.",
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Invalid Y coordinate. Type is not double or integer for \'%s\'.",
                 json_object_to_json_string(poObjCoord) );
         return FALSE;
     }
@@ -853,7 +856,9 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
             int nNumCoords = 2;
             json_object* poObjCoords
                 = json_object_array_get_idx( poObjRing, i );
-            double dfX, dfY, dfZ;
+            double dfX = 0.0;
+            double dfY = 0.0;
+            double dfZ = 0.0;
             if( !OGRESRIJSONReaderParseXYZMArray (
                     poObjCoords, &dfX, &dfY, &dfZ, &nNumCoords) )
             {
@@ -925,7 +930,9 @@ OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj)
         int nNumCoords = 2;
         json_object* poObjCoords
             = json_object_array_get_idx( poObjPoints, i );
-        double dfX, dfY, dfZ;
+        double dfX = 0.0;
+        double dfY = 0.0;
+        double dfZ = 0.0;
         if( !OGRESRIJSONReaderParseXYZMArray (
                 poObjCoords, &dfX, &dfY, &dfZ, &nNumCoords) )
         {

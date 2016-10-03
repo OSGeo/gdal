@@ -553,11 +553,13 @@ GIntBig OGRGMLLayer::GetFeatureCount( int bForce )
 OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 
 {
-    double dfXMin, dfXMax, dfYMin, dfYMax;
-
     if( GetGeomType() == wkbNone )
         return OGRERR_FAILURE;
 
+    double dfXMin = 0.0;
+    double dfXMax = 0.0;
+    double dfYMin = 0.0;
+    double dfYMax = 0.0;
     if( poFClass != NULL &&
         poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
     {
@@ -939,10 +941,13 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
     {
-        double  dfXMin, dfXMax, dfYMin, dfYMax;
-
         if( poFClass == NULL )
             return FALSE;
+
+        double dfXMin = 0.0;
+        double dfXMax = 0.0;
+        double dfYMin = 0.0;
+        double dfYMax = 0.0;
 
         return poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax );
     }

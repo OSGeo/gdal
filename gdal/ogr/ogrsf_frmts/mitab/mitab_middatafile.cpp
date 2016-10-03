@@ -269,9 +269,8 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
 }
 
 
-void MIDDATAFile::SetTranslation(double dfXMul,double dfYMul,
-                                 double dfXTran,
-                                 double dfYTran)
+void MIDDATAFile::SetTranslation( double dfXMul,double dfYMul,
+                                  double dfXTran, double dfYTran )
 {
     m_dfXMultiplier = dfXMul;
     m_dfYMultiplier = dfYMul;

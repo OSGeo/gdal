@@ -215,7 +215,7 @@ void DGNSetSpatialFilter( DGNHandle hDGN,
                           double dfXMax, double dfYMax )
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *) hDGN;
 
     if( dfXMin == 0.0 && dfXMax == 0.0
         && dfYMin == 0.0 && dfYMax == 0.0 )

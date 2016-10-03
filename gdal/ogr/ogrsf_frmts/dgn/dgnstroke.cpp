@@ -43,10 +43,10 @@ static void ComputePointOnArc2D( double dfPrimary, double dfSecondary,
 
 {
     // dfAxisRotation and dfAngle are supposed to be in Radians
-    double      dfCosRotation = cos(dfAxisRotation);
-    double      dfSinRotation = sin(dfAxisRotation);
-    double      dfEllipseX = dfPrimary * cos(dfAngle);
-    double      dfEllipseY = dfSecondary * sin(dfAngle);
+    const double dfCosRotation = cos(dfAxisRotation);
+    const double dfSinRotation = sin(dfAxisRotation);
+    const double dfEllipseX = dfPrimary * cos(dfAngle);
+    const double dfEllipseY = dfSecondary * sin(dfAngle);
 
     *pdfX = dfEllipseX * dfCosRotation - dfEllipseY * dfSinRotation;
     *pdfY = dfEllipseX * dfSinRotation + dfEllipseY * dfCosRotation;
@@ -304,13 +304,13 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
-    double      dfX, dfY, dfPrimary, dfSecondary, dfAxisRotation, dfAngle;
+    const double dfPrimary = CPLAtof(argv[1]);
+    const double dfSecondary = CPLAtof(argv[2]);
+    const double dfAxisRotation = CPLAtof(argv[3]) / 180 * M_PI;
+    const double dfAngle = CPLAtof(argv[4]) / 180 * M_PI;
 
-    dfPrimary = CPLAtof(argv[1]);
-    dfSecondary = CPLAtof(argv[2]);
-    dfAxisRotation = CPLAtof(argv[3]) / 180 * M_PI;
-    dfAngle = CPLAtof(argv[4]) / 180 * M_PI;
-
+    double dfX = 0.0;
+    double dfY = 0.0;
     ComputePointOnArc2D( dfPrimary, dfSecondary, dfAxisRotation, dfAngle,
                          &dfX, &dfY );
 
