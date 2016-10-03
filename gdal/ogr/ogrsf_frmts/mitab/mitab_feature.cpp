@@ -355,10 +355,10 @@ void TABFeature::CopyTABFeatureBase(TABFeature *poDestFeature)
     GetMBR(dXMin, dYMin, dXMax, dYMax);
     poDestFeature->SetMBR(dXMin, dYMin, dXMax, dYMax);
 
-    GInt32 nXMin = 0.0;
-    GInt32 nYMin = 0.0;
-    GInt32 nXMax = 0.0;
-    GInt32 nYMax = 0.0;
+    GInt32 nXMin = 0;
+    GInt32 nYMin = 0;
+    GInt32 nXMax = 0;
+    GInt32 nYMax = 0;
     GetIntMBR(nXMin, nYMin, nXMax, nYMax);
     poDestFeature->SetIntMBR(nXMin, nYMin, nXMax, nYMax);
 
