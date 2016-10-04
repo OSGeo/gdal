@@ -6,6 +6,9 @@
 
 <center><b>Select language</b>: [English]<a href="index_ru.html">[Russian]</a><a href="index_br.html">[Portuguese]</a><a href="http://gdal.gloobe.org/">[French/Francais]</a></center>
 
+<table border="0" cellspacing="4" cellpadding="4">
+
+<tr><td>
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL/OGR \endlatexonly
 is a translator library for raster and vector geospatial data formats
 that is released under an <a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatlicensedoesGDALOGRuse">X/MIT</a> style
@@ -19,6 +22,13 @@ of useful command line utilities
 for data translation and processing.  The
 <a href="http://trac.osgeo.org/gdal/wiki/Release/2.1.1-News">NEWS</a>
 page describes the July 2016 GDAL/OGR 2.1.1 release.
+</td>
+
+<td>
+\htmlonly<a href="http://www.osgeo.org"><img src="OSGeo_project.png" alt="OSGeo project" border="0"></a>\endhtmlonly
+</td>
+</tr>
+</table>
 
 Traditionally GDAL used to design the raster part of the library, and OGR the
 vector part for Simple Features. Starting with GDAL 2.0, both sides have been
@@ -111,16 +121,16 @@ or <a href="http://home.gdal.org/projects/opengis/wkt_prop.doc">doc</a> format.
 \htmlonly
 <table border="0" cellspacing="4" cellpadding="4">
 
-<tr><td><a href="http://2016.foss4g.org/">
-<img src="http://wiki.osgeo.org/images/f/ff/Foss4g2016_logo_squared.png" alt="FOSS4G 2016" border="0">
+<tr><td><a href="http://2017.foss4g.org/">
+<img src="foss4g2017.png" alt="FOSS4G 2017" border="0">
 </a></td>
 
-<td><a href="http://2016.foss4g.org">FOSS4G 2016</a> is the leading annual
+<td><a href="http://2017.foss4g.org">FOSS4G 2017</a> is the leading annual
 conference for free and open source geospatial software.  It will include
 presentations related to GDAL/OGR, and some of the GDAL/OGR
 development community will be attending.  It is <i>the</i> event for those
 interested in GDAL/OGR, other FOSS geospatial technologies and the community
-around them. The conference will be held in Bonn, Germany, <strong>August 24th - 26th, 2016</strong>.</td>
+around them. The conference will be held in Boston, USA, <strong>August 14th - 18th, 2017</strong>.</td>
 </table>
 \endhtmlonly
 
