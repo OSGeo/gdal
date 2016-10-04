@@ -1557,19 +1557,18 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
                                     unsigned char *pabyTarget )
 
 {
-    double     adfCT[3];
-
-    adfCT[0] = (psPoint->x + psDGN->origin_x) / psDGN->scale;
-    adfCT[1] = (psPoint->y + psDGN->origin_y) / psDGN->scale;
-    adfCT[2] = (psPoint->z + psDGN->origin_z) / psDGN->scale;
+    double adfCT[3] = {
+        (psPoint->x + psDGN->origin_x) / psDGN->scale,
+        (psPoint->y + psDGN->origin_y) / psDGN->scale,
+        (psPoint->z + psDGN->origin_z) / psDGN->scale
+    };
 
     const int nIter = MIN(3, psDGN->dimension);
     for( int i = 0; i < nIter; i++ )
     {
-        GInt32 nCTI;
+        GInt32 nCTI = static_cast<GInt32>(
+            MAX(-2147483647,MIN(2147483647,adfCT[i])));
         unsigned char *pabyCTI = (unsigned char *) &nCTI;
-
-        nCTI = (GInt32) MAX(-2147483647,MIN(2147483647,adfCT[i]));
 
 #ifdef WORDS_BIGENDIAN
         pabyTarget[i*4+0] = pabyCTI[1];
@@ -1706,10 +1705,11 @@ int DGNGetExtents( DGNHandle hDGN, double * padfExtents )
     padfExtents[1] = sMin.y;
     padfExtents[2] = sMin.z;
 
-    DGNPoint sMax;
-    sMax.x = psDGN->max_x - 2147483648.0;
-    sMax.y = psDGN->max_y - 2147483648.0;
-    sMax.z = psDGN->max_z - 2147483648.0;
+    DGNPoint sMax = {
+        psDGN->max_x - 2147483648.0,
+        psDGN->max_y - 2147483648.0,
+        psDGN->max_z - 2147483648.0
+    };
 
     DGNTransformPoint( psDGN, &sMax );
 

@@ -96,7 +96,8 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
         return FALSE;
 
     char szBuffer[10000];
-    int nbRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
+    const int nbRead = static_cast<int>(
+        VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp));
     szBuffer[nbRead] = '\0';
 
     const bool bIsDOF =

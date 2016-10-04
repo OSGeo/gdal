@@ -176,13 +176,9 @@ static int GetLatLon(const char* pszLat,
                      int         nSecLen,
                      double& dfLat, double& dfLon)
 {
-    char szDeg[4], szMin[3], szSec[10];
-    szDeg[0] = pszLat[0];
-    szDeg[1] = pszLat[1];
-    szDeg[2] = 0;
-    szMin[0] = pszLat[3];
-    szMin[1] = pszLat[4];
-    szMin[2] = 0;
+    char szDeg[4] = { pszLat[0], pszLat[1], 0 };
+    char szMin[3] = { pszLat[3], pszLat[4], 0 };
+    char szSec[10];
     memcpy(szSec, pszLat + 6, MAX((int)sizeof(szSec) - 1, nSecLen));
     szSec[MAX((int)sizeof(szSec) - 1, nSecLen)] = 0;
 
