@@ -121,9 +121,8 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
 
     /* check coordinates */
     if (m_nGeometryType == wkbPoint) {
-        double x, y;
-        x = ((OGRPoint *) poGeom)->getX();
-        y = ((OGRPoint *) poGeom)->getY();
+        const double x = ((OGRPoint *) poGeom)->getX();
+        const double y = ((OGRPoint *) poGeom)->getY();
         if (x > -430000 || x < -910000 ||
             y > -930000 || y < -1230000) {
             CPLDebug("OGR-VFK", "%s: invalid point fid = " CPL_FRMT_GIB,

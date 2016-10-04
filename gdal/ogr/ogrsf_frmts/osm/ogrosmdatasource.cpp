@@ -2662,8 +2662,8 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
 /*                             NotifyBounds()                           */
 /************************************************************************/
 
-void OGROSMDataSource::NotifyBounds (double dfXMin, double dfYMin,
-                                     double dfXMax, double dfYMax)
+void OGROSMDataSource::NotifyBounds ( double dfXMin, double dfYMin,
+                                      double dfXMax, double dfYMax )
 {
     sExtent.MinX = dfXMin;
     sExtent.MinY = dfYMin;
@@ -2672,7 +2672,7 @@ void OGROSMDataSource::NotifyBounds (double dfXMin, double dfYMin,
     bExtentValid = true;
 
     CPLDebug( "OSM", "Got bounds : minx=%f, miny=%f, maxx=%f, maxy=%f",
-              dfXMin, dfYMin, dfXMax, dfYMax);
+              dfXMin, dfYMin, dfXMax, dfYMax );
 }
 
 static void OGROSMNotifyBounds( double dfXMin, double dfYMin,

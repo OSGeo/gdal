@@ -781,8 +781,9 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
         {
             if (adfStopwayLength[i] != 0)
             {
-                double dfHeading = OGRXPlane_Track(adfLat[i], adfLon[i],
-                                                   adfLat[1-i], adfLon[1-i]);
+                const double dfHeading =
+                    OGRXPlane_Track(adfLat[i], adfLon[i],
+                                    adfLat[1-i], adfLon[1-i]);
                 poStopwayLayer->AddFeature(osAptICAO, aosRunwayId[i],
                     adfLat[i], adfLon[i], dfHeading, dfWidth, adfStopwayLength[i]);
             }
@@ -1744,9 +1745,11 @@ void OGRXPlaneAptReader::ParseStartupLocationRecord()
 {
     RET_IF_FAIL(assertMinCol(4));
 
-    double dfLat, dfLon, dfTrueHeading;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
 
+    double dfTrueHeading = 0.0;
     RET_IF_FAIL(readTrueHeading(&dfTrueHeading, 3));
 
     const CPLString osName = readStringUntilEnd(4);
@@ -1764,7 +1767,8 @@ void OGRXPlaneAptReader::ParseLightBeaconRecord()
 {
     RET_IF_FAIL(assertMinCol(4));
 
-    double dfLat, dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
     const int eColor = atoi(papszTokens[3]);
     const CPLString osName = readStringUntilEnd(4);
@@ -1783,7 +1787,8 @@ void OGRXPlaneAptReader::ParseWindsockRecord()
 {
     RET_IF_FAIL(assertMinCol(4));
 
-    double dfLat, dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
 
     const bool bIsIllumnited = CPL_TO_BOOL(atoi(papszTokens[3]));
@@ -2100,7 +2105,8 @@ OGRFeature* OGRXPlaneRunwayThresholdLayer::
     const double dfTrueHeading = poFeature->GetFieldAsDouble("true_heading_deg");
     poFeature->SetField("is_displaced", true);
     OGRPoint* poPoint = (OGRPoint*)poFeature->GetGeometryRef();
-    double dfLatDisplaced, dfLonDisplaced;
+    double dfLatDisplaced = 0.0;
+    double dfLonDisplaced = 0.0;
     OGRXPlane_ExtendPosition(poPoint->getY(), poPoint->getX(),
                              dfDisplacedThresholdLength, dfTrueHeading,
                              &dfLatDisplaced, &dfLonDisplaced);
@@ -2279,8 +2285,10 @@ OGRFeature*
     int nCount = 0;
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-    double dfLat2, dfLon2;
-    double adfLat[4], adfLon[4];
+    double dfLat2 = 0.0;
+    double dfLon2 = 0.0;
+    double adfLat[4] = {};
+    double adfLon[4] = {};
 
     OGRXPlane_ExtendPosition( dfLatThreshold, dfLonThreshold, dfStopwayLength,
                               180 + dfRunwayHeading, &dfLat2, &dfLon2);
@@ -2446,7 +2454,8 @@ OGRFeature*
     const double dfLength = OGRXPlane_Distance(dfLat1, dfLon1, dfLat2, dfLon2);
     const double dfTrack12 = OGRXPlane_Track(dfLat1, dfLon1, dfLat2, dfLon2);
     const double dfTrack21 = OGRXPlane_Track(dfLat2, dfLon2, dfLat1, dfLon1);
-    double adfLat[4], adfLon[4];
+    double adfLat[4] = {};
+    double adfLon[4] = {};
 
     OGRXPlane_ExtendPosition( dfLat1, dfLon1, dfWidth / 2, dfTrack12 - 90,
                               &adfLat[0], &adfLon[0]);
@@ -2638,9 +2647,12 @@ OGRFeature*
 {
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-    double dfBeforeLat, dfBeforeLon;
-    double dfAfterLat, dfAfterLon;
-    double adfLat[4], adfLon[4];
+    double dfBeforeLat = 0.0;
+    double dfBeforeLon = 0.0;
+    double dfAfterLat = 0.0;
+    double dfAfterLon = 0.0;
+    double adfLat[4] = {};
+    double adfLon[4] = {};
 
     OGRXPlane_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading + 180,
                               &dfBeforeLat, &dfBeforeLon);
@@ -2741,9 +2753,12 @@ OGRFeature*
 {
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-    double dfBeforeLat, dfBeforeLon;
-    double dfAfterLat, dfAfterLon;
-    double adfLat[4], adfLon[4];
+    double dfBeforeLat = 0.0;
+    double dfBeforeLon = 0.0;
+    double dfAfterLat = 0.0;
+    double dfAfterLon = 0.0;
+    double adfLat[4] = {};
+    double adfLon[4] = {};
 
     OGRXPlane_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading + 180,
                               &dfBeforeLat, &dfBeforeLon);

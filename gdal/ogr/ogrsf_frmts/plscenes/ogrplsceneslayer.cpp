@@ -728,8 +728,8 @@ OGRErr OGRPLScenesLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 /*                              SetMainFilterRect()                     */
 /************************************************************************/
 
-void OGRPLScenesLayer::SetMainFilterRect(double dfMinX, double dfMinY,
-                                        double dfMaxX, double dfMaxY)
+void OGRPLScenesLayer::SetMainFilterRect( double dfMinX, double dfMinY,
+                                          double dfMaxX, double dfMaxY )
 {
     delete poMainFilter;
     if( dfMinX == dfMaxX && dfMinY == dfMaxY )

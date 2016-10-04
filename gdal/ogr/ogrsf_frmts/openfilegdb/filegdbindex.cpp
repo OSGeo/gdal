@@ -1056,7 +1056,8 @@ int FileGDBIndexIterator::FindPages(int iLevel, int nPage)
             case FGFT_FLOAT64:
             case FGFT_DATETIME:
             {
-                double dfVal = GetFloat64(abyPage[iLevel] + nOffsetFirstValInPage, i);
+                const double dfVal =
+                    GetFloat64(abyPage[iLevel] + nOffsetFirstValInPage, i);
 #ifdef DEBUG_INDEX_CONSISTENCY
                 returnErrorIf(i > 0 && dfVal < dfLastMax);
                 dfLastMax = dfVal;
@@ -1322,36 +1323,39 @@ int FileGDBIndexIterator::GetNextRow()
             }
         }
 
-        int bMatch;
+        bool bMatch = false;
         if( eOp == FGSO_ISNOTNULL )
         {
-            bMatch = TRUE;
+            bMatch = true;
         }
         else
         {
-            int nComp;
+            int nComp = 0;
             switch( eFieldType )
             {
                 case FGFT_INT16:
                 {
-                    GInt16 nVal = GetInt16(abyPageFeature + nOffsetFirstValInPage,
-                                           iCurFeatureInPage);
+                    const GInt16 nVal =
+                        GetInt16(abyPageFeature + nOffsetFirstValInPage,
+                                 iCurFeatureInPage);
                     nComp = COMPARE(sValue.Integer, nVal);
                     break;
                 }
 
                 case FGFT_INT32:
                 {
-                    GInt32 nVal = GetInt32(abyPageFeature + nOffsetFirstValInPage,
-                                           iCurFeatureInPage);
+                    const GInt32 nVal =
+                        GetInt32(abyPageFeature + nOffsetFirstValInPage,
+                                 iCurFeatureInPage);
                     nComp = COMPARE(sValue.Integer, nVal);
                     break;
                 }
 
                 case FGFT_FLOAT32:
                 {
-                    float fVal = GetFloat32(abyPageFeature + nOffsetFirstValInPage,
-                                           iCurFeatureInPage);
+                    const float fVal =
+                        GetFloat32(abyPageFeature + nOffsetFirstValInPage,
+                                   iCurFeatureInPage);
                     nComp = COMPARE(sValue.Real, fVal);
                     break;
                 }
@@ -1359,8 +1363,9 @@ int FileGDBIndexIterator::GetNextRow()
                 case FGFT_FLOAT64:
                 case FGFT_DATETIME:
                 {
-                    double dfVal = GetFloat64(abyPageFeature + nOffsetFirstValInPage,
-                                           iCurFeatureInPage);
+                    const double dfVal =
+                        GetFloat64(abyPageFeature + nOffsetFirstValInPage,
+                                   iCurFeatureInPage);
                     nComp = COMPARE(sValue.Real, dfVal);
                     break;
                 }
@@ -1398,7 +1403,7 @@ int FileGDBIndexIterator::GetNextRow()
                     break;
             }
 
-            bMatch = FALSE;
+            bMatch = false;
             CPL_IGNORE_RET_VAL(bMatch);
             switch( eOp )
             {
@@ -1408,7 +1413,7 @@ int FileGDBIndexIterator::GetNextRow()
                         bEOF = TRUE;
                         return -1;
                     }
-                    bMatch = TRUE;
+                    bMatch = true;
                     break;
 
                 case FGSO_LE:
@@ -1417,7 +1422,7 @@ int FileGDBIndexIterator::GetNextRow()
                         bEOF = TRUE;
                         return -1;
                     }
-                    bMatch = TRUE;
+                    bMatch = true;
                     break;
 
                 case FGSO_EQ:
@@ -1426,15 +1431,15 @@ int FileGDBIndexIterator::GetNextRow()
                         bEOF = TRUE;
                         return -1;
                     }
-                    bMatch = ( nComp == 0 );
+                    bMatch = nComp == 0;
                     break;
 
                 case FGSO_GE:
-                    bMatch = ( nComp <= 0 );
+                    bMatch = nComp <= 0;
                     break;
 
                 case FGSO_GT:
-                    bMatch = ( nComp < 0 );
+                    bMatch = nComp < 0;
                     break;
 
                 default:
@@ -1445,7 +1450,8 @@ int FileGDBIndexIterator::GetNextRow()
 
         if( bMatch )
         {
-            GUInt32 nFID = GetUInt32(abyPageFeature + 12, iCurFeatureInPage);
+            const GUInt32 nFID =
+                GetUInt32(abyPageFeature + 12, iCurFeatureInPage);
             if( bAscending )
                 iCurFeatureInPage ++;
             else
@@ -1599,7 +1605,8 @@ const OGRField* FileGDBIndexIterator::GetMinMaxValue(OGRField* psField,
     {
         case FGFT_INT16:
         {
-            GInt16 nVal = GetInt16(l_abyPage + nOffsetFirstValInPage, iFeature);
+            const GInt16 nVal =
+                GetInt16(l_abyPage + nOffsetFirstValInPage, iFeature);
             psField->Integer = nVal;
             eOutType = OFTInteger;
             return psField;
@@ -1607,7 +1614,8 @@ const OGRField* FileGDBIndexIterator::GetMinMaxValue(OGRField* psField,
 
         case FGFT_INT32:
         {
-            GInt32 nVal = GetInt32(l_abyPage + nOffsetFirstValInPage, iFeature);
+            const GInt32 nVal =
+                GetInt32(l_abyPage + nOffsetFirstValInPage, iFeature);
             psField->Integer = nVal;
             eOutType = OFTInteger;
             return psField;
@@ -1615,7 +1623,8 @@ const OGRField* FileGDBIndexIterator::GetMinMaxValue(OGRField* psField,
 
         case FGFT_FLOAT32:
         {
-            float fVal = GetFloat32(l_abyPage + nOffsetFirstValInPage, iFeature);
+            const float fVal =
+                GetFloat32(l_abyPage + nOffsetFirstValInPage, iFeature);
             psField->Real = fVal;
             eOutType = OFTReal;
             return psField;
@@ -1623,7 +1632,8 @@ const OGRField* FileGDBIndexIterator::GetMinMaxValue(OGRField* psField,
 
         case FGFT_FLOAT64:
         {
-            double dfVal = GetFloat64(l_abyPage + nOffsetFirstValInPage, iFeature);
+            const double dfVal =
+                GetFloat64(l_abyPage + nOffsetFirstValInPage, iFeature);
             psField->Real = dfVal;
             eOutType = OFTReal;
             return psField;
@@ -1631,7 +1641,8 @@ const OGRField* FileGDBIndexIterator::GetMinMaxValue(OGRField* psField,
 
         case FGFT_DATETIME:
         {
-            double dfVal = GetFloat64(l_abyPage + nOffsetFirstValInPage, iFeature);
+            const double dfVal =
+                GetFloat64(l_abyPage + nOffsetFirstValInPage, iFeature);
             FileGDBDoubleDateToOGRDate(dfVal, psField);
             eOutType = OFTDateTime;
             return psField;

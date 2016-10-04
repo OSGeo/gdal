@@ -135,7 +135,8 @@ void OGRXPlaneFixReader::Read()
 
 void    OGRXPlaneFixReader::ParseRecord()
 {
-    double dfLat, dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     CPLString osName;
 
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 0));
