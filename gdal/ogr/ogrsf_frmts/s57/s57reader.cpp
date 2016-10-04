@@ -2351,7 +2351,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
             if( poVRPT != NULL )
             {
                 int nVC_RCID = ParseName( poVRPT );
-                double dfX, dfY;
+                double dfX = 0.0;
+                double dfY = 0.0;
 
                 if( nVC_RCID != -1
                     && FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )

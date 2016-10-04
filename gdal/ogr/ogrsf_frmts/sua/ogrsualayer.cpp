@@ -239,7 +239,8 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             if (strlen(pszLine) != 16)
                 continue;
 
-            double dfLat, dfLon;
+            double dfLat = 0.0;
+            double dfLon = 0.0;
             if (!GetLatLon(pszLine, dfLat, dfLon))
                 continue;
 
@@ -265,7 +266,8 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             pszCENTRE += 7;
             if (strlen(pszCENTRE) < 17 || pszCENTRE[16] != ' ')
                 continue;
-            double dfCenterLat, dfCenterLon;
+            double dfCenterLat = 0.0;
+            double dfCenterLon = 0.0;
             if (!GetLatLon(pszCENTRE, dfCenterLat, dfCenterLon))
                 continue;
 
@@ -324,7 +326,8 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             pszCENTRE += 7;
             if (strlen(pszCENTRE) != 16)
                 continue;
-            double dfCenterLat, dfCenterLon;
+            double dfCenterLat = 0.0;
+            double dfCenterLon = 0.0;
             if (!GetLatLon(pszCENTRE, dfCenterLat, dfCenterLon))
                 continue;
 

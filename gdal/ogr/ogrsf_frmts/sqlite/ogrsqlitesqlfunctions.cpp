@@ -476,9 +476,11 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
     OGRSQLiteExtensionData* poModule =
                     (OGRSQLiteExtensionData*) sqlite3_user_data(pContext);
 
-    double dfLon = 0.0, dfLat = 0.0;
+    double dfLon = 0.0;
+    double dfLat = 0.0;
     int iAfterGeomIdx = 0;
-    int bGotLon = FALSE, bGotLat = FALSE;
+    int bGotLon = FALSE;
+    int bGotLat = FALSE;
 
     if( argc >= 2 )
     {
@@ -1036,7 +1038,9 @@ void OGR2SQLITE_ST_MakePoint(sqlite3_context* pContext,
         poPoint = new OGRPoint(dfX, dfY, dfZ);
     }
     else
+    {
         poPoint = new OGRPoint(dfX, dfY);
+    }
 
     OGR2SQLITE_SetGeom_AndDestroy(pContext, poPoint, -1);
 }

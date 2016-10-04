@@ -669,15 +669,14 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( poGeom != NULL && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
-        double dfX, dfY, dfZ;
         OGRPoint *poPoint = (OGRPoint *) poGeom;
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
                    || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC );
 
-        dfX = poPoint->getX();
-        dfY = poPoint->getY();
-        dfZ = poPoint->getZ();
+        double dfX = poPoint->getX();
+        double dfY = poPoint->getY();
+        double dfZ = poPoint->getZ();
 
         if( dfZ == 0.0 )
             WriteGeometry( poRec, 1, &dfX, &dfY, NULL );
@@ -692,17 +691,16 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
              && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
     {
         OGRMultiPoint *poMP = (OGRMultiPoint *) poGeom;
-        int i, nVCount = poMP->getNumGeometries();
-        double *padfX, *padfY, *padfZ;
+        const int nVCount = poMP->getNumGeometries();
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
                    || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC );
 
-        padfX = (double *) CPLMalloc(sizeof(double) * nVCount);
-        padfY = (double *) CPLMalloc(sizeof(double) * nVCount);
-        padfZ = (double *) CPLMalloc(sizeof(double) * nVCount);
+        double *padfX = (double *) CPLMalloc(sizeof(double) * nVCount);
+        double *padfY = (double *) CPLMalloc(sizeof(double) * nVCount);
+        double *padfZ = (double *) CPLMalloc(sizeof(double) * nVCount);
 
-        for( i = 0; i < nVCount; i++ )
+        for( int i = 0; i < nVCount; i++ )
         {
             OGRPoint *poPoint = (OGRPoint *) poMP->getGeometryRef( i );
             padfX[i] = poPoint->getX();
@@ -724,15 +722,14 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
         OGRLineString *poLS = (OGRLineString *) poGeom;
-        int i, nVCount = poLS->getNumPoints();
-        double *padfX, *padfY;
+        const int nVCount = poLS->getNumPoints();
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VE );
 
-        padfX = (double *) CPLMalloc(sizeof(double) * nVCount);
-        padfY = (double *) CPLMalloc(sizeof(double) * nVCount);
+        double *padfX = (double *) CPLMalloc(sizeof(double) * nVCount);
+        double *padfY = (double *) CPLMalloc(sizeof(double) * nVCount);
 
-        for( i = 0; i < nVCount; i++ )
+        for( int i = 0; i < nVCount; i++ )
         {
             padfX[i] = poLS->getX(i);
             padfY[i] = poLS->getY(i);

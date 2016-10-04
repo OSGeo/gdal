@@ -881,7 +881,6 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
 
             if( poGeometry != NULL )
             {
-                double  dfXMin, dfXMax, dfYMin, dfYMax;
                 OGREnvelope sEnvelope;
 
                 if( poClass->GetGeometryPropertyCount() == 0 )
@@ -908,6 +907,10 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
                 // merge extents.
                 poGeometry->getEnvelope( &sEnvelope );
                 delete poGeometry;
+                double dfXMin = 0.0;
+                double dfXMax = 0.0;
+                double dfYMin = 0.0;
+                double dfYMax = 0.0;
                 if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
                 {
                     dfXMin = MIN(dfXMin,sEnvelope.MinX);

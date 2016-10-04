@@ -141,8 +141,10 @@ void OGRXPlaneAwyReader::Read()
 
 void OGRXPlaneAwyReader::ParseRecord()
 {
-    double dfLat1, dfLon1;
-    double dfLat2, dfLon2;
+    double dfLat1 = 0.0;
+    double dfLon1 = 0.0;
+    double dfLat2 = 0.0;
+    double dfLon2 = 0.0;
 
     const char* pszFirstPointName = papszTokens[0];
     RET_IF_FAIL(readLatLon(&dfLat1, &dfLon1, 1));

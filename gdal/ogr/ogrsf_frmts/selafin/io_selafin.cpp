@@ -145,7 +145,9 @@ namespace Selafin {
         }
     }
 
-    int Header::getClosestPoint(const double &dfx,const double &dfy,const double &dfMax) {
+    int Header::getClosestPoint( const double &dfx, const double &dfy,
+                                 const double &dfMax)
+    {
         // If there is no quad-tree of the points, build it now
         if (bTreeUpdateNeeded) {
             if (poTree!=NULL) {
@@ -167,10 +169,10 @@ namespace Selafin {
             }
         }
         // Now we can look for the nearest neighbour using this tree
-        int nIndex=-1;
+        int nIndex = -1;
         CPLRectObj poObj;
-        poObj.minx=dfx-dfMax;
-        poObj.maxx=dfx+dfMax;
+        poObj.minx = dfx-dfMax;
+        poObj.maxx = dfx+dfMax;
         poObj.miny=dfy-dfMax;
         poObj.maxy=dfy+dfMax;
         int nFeatureCount = 0;
@@ -407,7 +409,8 @@ namespace Selafin {
         return 1;
     }
 
-    int read_float(VSILFILE *fp,double &dfData,bool bDiscard) {
+    int read_float(VSILFILE *fp, double &dfData, bool bDiscard)
+    {
         float dfVal = 0.0;
         if (VSIFReadL(&dfVal,1,4,fp)<4) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
@@ -420,7 +423,7 @@ namespace Selafin {
         return 1;
     }
 
-    int write_float(VSILFILE *fp,double dfData) {
+    int write_float(VSILFILE *fp, double dfData) {
         float dfVal=(float)dfData;
         CPL_MSBPTR32(&dfVal);
         if (VSIFWriteL(&dfVal,1,4,fp)<4) {

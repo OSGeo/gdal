@@ -1832,7 +1832,10 @@ typedef struct
     OGRLayer      *poLayer;
     OGRFeature    *poFeature;
     int            bHasSetBounds;
-    double         dfMinX, dfMinY, dfMaxX, dfMaxY;
+    double         dfMinX;
+    double         dfMinY;
+    double         dfMaxX;
+    double         dfMaxY;
 } OGR2SQLITESpatialIndex_vtab_cursor;
 
 /************************************************************************/

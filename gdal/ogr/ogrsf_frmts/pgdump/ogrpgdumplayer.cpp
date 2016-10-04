@@ -569,8 +569,10 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
         // We need special formatting for real list values.
         else if( nOGRFieldType == OFTRealList )
         {
-            int nCount, nOff = 0;
-            const double *padfItems =poFeature->GetFieldAsDoubleList(i,&nCount);
+            int nOff = 0;
+            int nCount = 0;
+            const double *padfItems =
+                poFeature->GetFieldAsDoubleList(i,&nCount);
 
             const size_t nLen = nCount * 40 + 10;
             pszNeedToFree = (char *) CPLMalloc(nLen);
@@ -1012,14 +1014,15 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
     // We need special formatting for real list values.
     else if( nOGRFieldType == OFTRealList )
     {
-        int nCount, nOff = 0, j;
-        const double *padfItems =poFeature->GetFieldAsDoubleList(i,&nCount);
+        int nCount = 0;
+        int nOff = 0;
+        const double *padfItems = poFeature->GetFieldAsDoubleList(i,&nCount);
         char *pszNeedToFree = NULL;
 
         const size_t nLen = nCount * 40 + 10;
         pszNeedToFree = (char *) CPLMalloc(nLen);
         strcpy( pszNeedToFree, "'{" );
-        for( j = 0; j < nCount; j++ )
+        for( int j = 0; j < nCount; j++ )
         {
             if( j != 0 )
                 strcat( pszNeedToFree+nOff, "," );

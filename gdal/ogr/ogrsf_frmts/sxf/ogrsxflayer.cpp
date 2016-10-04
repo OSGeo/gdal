@@ -425,11 +425,11 @@ int OGRSXFLayer::TestCapability( const char * pszCap )
  * coordinate, the vector format, etc.
  */
 
-GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
-                                  const char *psBuff, GUInt32 nBufLen,
-                          double *dfX, double *dfY, double *dfH)
+GUInt32 OGRSXFLayer::TranslateXYH( const SXFRecordDescription& certifInfo,
+                                   const char *psBuff, GUInt32 nBufLen,
+                                   double *dfX, double *dfY, double *dfH )
 {
-    //Xp, Yp(м) = Xo, Yo(м) + (Xd, Yd / R * S), (1)
+    // Xp, Yp(м) = Xo, Yo(м) + (Xd, Yd / R * S), (1)
 
     int offset = 0;
     switch (certifInfo.eValType)
@@ -438,7 +438,8 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
     {
         if( nBufLen < 4 )
             return 0;
-        GInt16 x, y;
+        GInt16 x = 0;
+        GInt16 y = 0;
         memcpy(&y, psBuff, 2);
         CPL_LSBPTR16(&y);
         memcpy(&x, psBuff + 2, 2);
@@ -563,7 +564,8 @@ GUInt32 OGRSXFLayer::TranslateXYH(const SXFRecordDescription& certifInfo,
     {
         if( nBufLen < 16 )
             return 0;
-        double x, y;
+        double x = 0.0;
+        double y = 0.0;
         memcpy(&y, psBuff, 8);
         CPL_LSBPTR64(&y);
         memcpy(&x, psBuff + 8, 8);
@@ -957,7 +959,8 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     double dfTmpVal = 0.0;
                     memcpy(&dfTmpVal, psSemanticsdBuf + offset, sizeof(double));
                     CPL_LSBPTR64(&dfTmpVal);
-                    double d = dfTmpVal * pow(10.0, (double)stAttInfo.nScale);
+                    const double d =
+                        dfTmpVal * pow(10.0, (double)stAttInfo.nScale);
 
                     poFeature->SetField(oFieldName, d);
 
