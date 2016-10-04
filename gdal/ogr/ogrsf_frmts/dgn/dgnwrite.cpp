@@ -1006,10 +1006,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Set arc specific information in the structure.                  */
 /* -------------------------------------------------------------------- */
-    DGNPoint sOrigin;
-    sOrigin.x = dfOriginX;
-    sOrigin.y = dfOriginY;
-    sOrigin.z = dfOriginZ;
+    DGNPoint sOrigin = { dfOriginX, dfOriginY, dfOriginZ };
 
     psArc->origin = sOrigin;
     psArc->primary_axis = dfPrimaryAxis;
@@ -1166,14 +1163,16 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
-    DGNPoint sMin;
-    sMin.x = dfOriginX - MAX(dfPrimaryAxis,dfSecondaryAxis);
-    sMin.y = dfOriginY - MAX(dfPrimaryAxis,dfSecondaryAxis);
-    sMin.z = dfOriginZ - MAX(dfPrimaryAxis,dfSecondaryAxis);
-    DGNPoint sMax;
-    sMax.x = dfOriginX + MAX(dfPrimaryAxis,dfSecondaryAxis);
-    sMax.y = dfOriginY + MAX(dfPrimaryAxis,dfSecondaryAxis);
-    sMax.z = dfOriginZ + MAX(dfPrimaryAxis,dfSecondaryAxis);
+    DGNPoint sMin = {
+        dfOriginX - MAX(dfPrimaryAxis,dfSecondaryAxis),
+        dfOriginY - MAX(dfPrimaryAxis,dfSecondaryAxis),
+        dfOriginZ - MAX(dfPrimaryAxis,dfSecondaryAxis)
+    };
+    DGNPoint sMax = {
+        dfOriginX + MAX(dfPrimaryAxis,dfSecondaryAxis),
+        dfOriginY + MAX(dfPrimaryAxis,dfSecondaryAxis),
+        dfOriginZ + MAX(dfPrimaryAxis,dfSecondaryAxis)
+    };
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
 
@@ -1232,14 +1231,8 @@ DGNCreateConeElem( DGNHandle hDGN,
 /* -------------------------------------------------------------------- */
 /*      Set cone specific information in the structure.                 */
 /* -------------------------------------------------------------------- */
-    DGNPoint sCenter_1;
-    sCenter_1.x = dfCenter_1X;
-    sCenter_1.y = dfCenter_1Y;
-    sCenter_1.z = dfCenter_1Z;
-    DGNPoint sCenter_2;
-    sCenter_2.x = dfCenter_2X;
-    sCenter_2.y = dfCenter_2Y;
-    sCenter_2.z = dfCenter_2Z;
+    DGNPoint sCenter_1 = { dfCenter_1X, dfCenter_1Y, dfCenter_1Z };
+    DGNPoint sCenter_2 = { dfCenter_2X, dfCenter_2Y, dfCenter_2Z };
     psCone->center_1 = sCenter_1;
     psCone->center_2 = sCenter_2;
     psCone->radius_1 = dfRadius_1;
@@ -1250,7 +1243,8 @@ DGNCreateConeElem( DGNHandle hDGN,
     {
         memcpy( psCone->quat, panQuaternion, sizeof(int)*4 );
     }
-    else {
+    else
+    {
       psCone->quat[0] = 1 << 31;
       psCone->quat[1] = 0;
       psCone->quat[2] = 0;
@@ -1320,8 +1314,8 @@ DGNCreateConeElem( DGNHandle hDGN,
 //     sMax.y = psCone->center_2.y+largestRadius;
 //     sMax.z = psCone->center_2.z;
 
-    DGNPoint sMin;
-    DGNPoint sMax;
+    DGNPoint sMin = { 0.0, 0.0, 0.0 };
+    DGNPoint sMax = { 0.0, 0.0, 0.0 };
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
 
     return (DGNElemCore*) psCone;
@@ -1681,10 +1675,6 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
                                  int nNumElems, DGNElemCore **papsElems )
 
 {
-    int         nTotalLength = 5;
-    int         i, nLevel;
-    DGNPoint    sMin = {0.0,0.0,0.0}, sMax = {0.0,0.0,0.0};
-
     DGNLoadTCB( hDGN );
 
     if( nNumElems < 1 || papsElems == NULL )
@@ -1697,9 +1687,12 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Collect the total size, and bounds.                             */
 /* -------------------------------------------------------------------- */
-    nLevel = papsElems[0]->level;
+    int nTotalLength = 5;
+    const int nLevel = papsElems[0]->level;
+    DGNPoint sMin = { 0.0, 0.0, 0.0 };
+    DGNPoint sMax = { 0.0, 0.0, 0.0 };
 
-    for( i = 0; i < nNumElems; i++ )
+    for( int i = 0; i < nNumElems; i++ )
     {
         nTotalLength += papsElems[i]->raw_bytes / 2;
 
@@ -1712,8 +1705,8 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
                       "Not all level values matching in a complex set group!");
         }
 
-        DGNPoint sThisMin;
-        DGNPoint sThisMax;
+        DGNPoint sThisMin = { 0.0, 0.0, 0.0 };
+        DGNPoint sThisMax = { 0.0, 0.0, 0.0 };
 
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
@@ -1889,8 +1882,8 @@ DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
                       "Not all level values matching in a complex set group!");
         }
 
-        DGNPoint sThisMin;
-        DGNPoint sThisMax;
+        DGNPoint sThisMin = { 0.0, 0.0, 0.0 };
+        DGNPoint sThisMax = { 0.0, 0.0, 0.0 };
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
         {
@@ -2104,10 +2097,9 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
     const int nIter = MIN(3, psDGN->dimension);
     for( int i = 0; i < nIter; i++ )
     {
-        GInt32 nCTI;
+        GInt32 nCTI = static_cast<GInt32>(
+            MAX(-2147483647,MIN(2147483647,adfCT[i])));
         unsigned char *pabyCTI = (unsigned char *) &nCTI;
-
-        nCTI = (GInt32) MAX(-2147483647,MIN(2147483647,adfCT[i]));
 
 #ifdef WORDS_BIGENDIAN
         pabyTarget[i*4+0] = pabyCTI[1];
@@ -2183,9 +2175,9 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 /* -------------------------------------------------------------------- */
     int nTotalLength = psInfo->dimension == 2 ? 27 : 43;
     // nLevel = papsElems[0]->level;x
-    DGNPoint sMin={0.0, 0.0, 0.0};
-    DGNPoint sMax={0.0, 0.0, 0.0};
-    unsigned char abyLevelsOccurring[8] = {0,0,0,0,0,0,0,0};
+    DGNPoint sMin = { 0.0, 0.0, 0.0 };
+    DGNPoint sMax = { 0.0, 0.0, 0.0 };
+    unsigned char abyLevelsOccurring[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
     for( int i = 0; i < nNumElems; i++ )
     {
@@ -2200,8 +2192,8 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
         nLevel = MAX(1,MIN(nLevel,64));
         abyLevelsOccurring[(nLevel-1) >> 3] |= (0x1 << ((nLevel-1)&0x7));
 
-        DGNPoint sThisMin;
-        DGNPoint sThisMax;
+        DGNPoint sThisMin = { 0.0, 0.0, 0.0 };
+        DGNPoint sThisMax = { 0.0, 0.0, 0.0 };
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
         {

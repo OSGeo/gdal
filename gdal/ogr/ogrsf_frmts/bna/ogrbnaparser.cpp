@@ -255,7 +255,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
       numChar = 0;
       (*curLine)++;
 
-      int retGetLine = BNA_GetLine(szLineBuffer, f);
+      const int retGetLine = BNA_GetLine(szLineBuffer, f);
       if (retGetLine == BNA_LINE_TOO_LONG)
       {
           detailedErrorMsg = LINE_TOO_LONG;

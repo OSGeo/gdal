@@ -447,12 +447,13 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         iSubSeq = nFeatureId;
     else
     {
-        int nSeqOffset = 0, iSuperSeq;
+        int nSeqOffset = 0;
 
-        // for now we just scan through till find find out what
+        // For now we just scan through till find find out what
         // super sequence this in.  In the long term we need a better (cached)
         // approach that doesn't involve this quadratic cost.
-        for( iSuperSeq = 0;
+        int iSuperSeq = 0;  // Used after for.
+        for( ;
              iSuperSeq < nSuperSeqCount;
              iSuperSeq++ )
         {

@@ -1003,8 +1003,9 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
     char* pszData = (char*) VSI_MALLOC_VERBOSE( nBytes );
     if( pszData != NULL && (vsi_l_offset)nBytes > VSIFTellL(fpCSV) )
     {
-        int nRequested = nBytes - 1 - (int)VSIFTellL(fpCSV);
-        int nRead = static_cast<int>(VSIFReadL(pszData, 1, nRequested, fpCSV));
+        const int nRequested = nBytes - 1 - (int)VSIFTellL(fpCSV);
+        const int nRead =
+            static_cast<int>(VSIFReadL(pszData, 1, nRequested, fpCSV));
         pszData[nRead] = 0;
 
         CPLString osTmpMemFile(CPLSPrintf("/vsimem/tmp%p", this));
@@ -2411,7 +2412,8 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
         bool bLastWasNewLine = false;
         while( true )
         {
-            int nRead = static_cast<int>(VSIFReadL(szBuffer, 1, 4096, fpCSV));
+            const int nRead =
+                static_cast<int>(VSIFReadL(szBuffer, 1, 4096, fpCSV));
             szBuffer[nRead] = 0;
             if( nTotalFeatures == 0 && szBuffer[0] != 13 && szBuffer[0] != 10 )
                 nTotalFeatures = 1;

@@ -55,8 +55,7 @@ int main( int /* argc */, char ** /* argv */ )
 /* -------------------------------------------------------------------- */
 /*      Write one line segment to it.                                   */
 /* -------------------------------------------------------------------- */
-    DGNPoint asPoints[10];
-    memset( &asPoints, 0, sizeof(asPoints) );
+    DGNPoint asPoints[10] = {};
 
     asPoints[0].x = 0;
     asPoints[0].y = 0;

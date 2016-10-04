@@ -124,7 +124,8 @@ int main( int argc, char ** argv )
 
             if( bReportExtents )
             {
-                DGNPoint sMin, sMax;
+                DGNPoint sMin = { 0.0, 0.0, 0.0 };
+                DGNPoint sMax = { 0.0, 0.0, 0.0 };
                 if( DGNGetElementExtents( hDGN, psElement, &sMin, &sMax ) )
                     printf( "  Extents: (%.6f,%.6f,%.6f)\n"
                             "        to (%.6f,%.6f,%.6f)\n",
