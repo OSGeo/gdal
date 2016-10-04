@@ -117,6 +117,10 @@ Perl module maintainer to make a CPAN release.
     - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org.
     - bugfix release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org
 
+Note: gdal-announce@ is moderated. Make sure that your email address is approved
+('mod' tick disabled in https://lists.osgeo.org/mailman/admin/gdal-announce/members),
+or your message manually approved, with an administrator of the list.
+
 14) Update the freecode.com (previously freshmeat) entry for GDAL.
 
 15) Update the freegis.org entry for GDAL.
