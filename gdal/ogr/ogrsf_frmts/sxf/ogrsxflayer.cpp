@@ -484,9 +484,10 @@ GUInt32 OGRSXFLayer::TranslateXYH( const SXFRecordDescription& certifInfo,
     {
         if( nBufLen < 8 )
             return 0;
-        float x, y;
+        float y = 0.0f;
         memcpy(&y, psBuff, 4);
         CPL_LSBPTR32(&y);
+        float x = 0.0f;
         memcpy(&x, psBuff + 4, 4);
         CPL_LSBPTR32(&x);
 
