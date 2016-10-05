@@ -34,7 +34,7 @@
 
 CPL_CVSID("$Id$");
 
-#define MAX_LINK        5000
+static const int MAX_LINK = 5000;
 
 /************************************************************************/
 /*                         TranslateCodePoint()                         */
@@ -499,7 +499,7 @@ static OGRFeature *TranslateBoundarylineCollection( NTFFileReader *poReader,
     poFeature->SetField( 0, atoi(papoGroup[0]->GetField( 3, 8 )) );
 
     // NUM_PARTS
-    int         nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
+    int nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
 
     if( nNumLinks > MAX_LINK )
     {
