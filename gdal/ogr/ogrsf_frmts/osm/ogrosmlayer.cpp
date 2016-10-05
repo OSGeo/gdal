@@ -34,15 +34,14 @@
 
 CPL_CVSID("$Id$");
 
-#define SWITCH_THRESHOLD   10000
-#define MAX_THRESHOLD      100000
+static const int SWITCH_THRESHOLD = 10000;
+static const int MAX_THRESHOLD = 100000;
 
-#define ALLTAGS_LENGTH     8192
+static const int ALLTAGS_LENGTH = 8192;
 
 /************************************************************************/
 /*                          OGROSMLayer()                               */
 /************************************************************************/
-
 
 OGROSMLayer::OGROSMLayer( OGROSMDataSource* poDSIn, int nIdxLayerIn,
                           const char* pszName ) :
@@ -303,9 +302,10 @@ int OGROSMLayer::TestCapability( const char * pszCap )
 /*                             AddToArray()                             */
 /************************************************************************/
 
-bool OGROSMLayer::AddToArray( OGRFeature* poFeature, int bCheckFeatureThreshold )
+bool OGROSMLayer::AddToArray( OGRFeature* poFeature,
+                              int bCheckFeatureThreshold )
 {
-    if( bCheckFeatureThreshold && nFeatureArraySize > MAX_THRESHOLD)
+    if( bCheckFeatureThreshold && nFeatureArraySize > MAX_THRESHOLD )
     {
         if( !bHasWarnedTooManyFeatures )
         {
