@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$");
 
-#define MAX_LINK        5000
+static const int MAX_LINK = 5000;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -818,11 +818,11 @@ static OGRFeature *TranslateGenericCPoly( NTFFileReader *poReader,
 /*      boundaries are.  The boundary information will be emitted      */
 /*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
-    int         nNumLink = 0, iLink;
+    int         nNumLink = 0;
     int         anPolyId[MAX_LINK*2];
 
     nNumLink = atoi(papoGroup[0]->GetField(9,12));
-    for( iLink = 0; iLink < nNumLink; iLink++ )
+    for( int iLink = 0; iLink < nNumLink; iLink++ )
     {
         anPolyId[iLink] = atoi(papoGroup[0]->GetField(13 + iLink*7,
                                                       18 + iLink*7));
