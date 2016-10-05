@@ -679,7 +679,7 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
 
     nCompressSize = ROUND_COMPRESS_SIZE(nCompressSize);
     GByte* pabyToWrite = NULL;
-    if(nCompressSize >= SECTOR_SIZE)
+    if( nCompressSize >= static_cast<size_t>(SECTOR_SIZE) )
     {
         nCompressSize = SECTOR_SIZE;
         pabyToWrite = pabySector;
@@ -720,7 +720,8 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
 
 bool OGROSMDataSource::FlushCurrentSectorNonCompressedCase()
 {
-    if( VSIFWriteL(pabySector, 1, SECTOR_SIZE, fpNodes) == SECTOR_SIZE )
+    if( VSIFWriteL(pabySector, 1, static_cast<size_t>(SECTOR_SIZE),
+                   fpNodes) == static_cast<size_t>(SECTOR_SIZE) )
     {
         memset(pabySector, 0, SECTOR_SIZE);
         nNodesFileSize += SECTOR_SIZE;
@@ -989,7 +990,8 @@ void OGROSMDataSource::LookupNodes( )
 
 void OGROSMDataSource::LookupNodesSQLite( )
 {
-    CPLAssert(nUnsortedReqIds <= MAX_ACCUMULATED_NODES);
+    CPLAssert(
+        nUnsortedReqIds <= static_cast<unsigned int>(MAX_ACCUMULATED_NODES));
 
     nReqIds = 0;
     for( unsigned int i = 0; i < nUnsortedReqIds; i++)
@@ -1116,7 +1118,8 @@ void OGROSMDataSource::LookupNodesCustom( )
         nBucketOld = -1;
     }
 
-    CPLAssert(nUnsortedReqIds <= MAX_ACCUMULATED_NODES);
+    CPLAssert(
+        nUnsortedReqIds <= static_cast<unsigned int>(MAX_ACCUMULATED_NODES));
 
     for( unsigned int i = 0; i < nUnsortedReqIds; i++ )
     {
@@ -1242,7 +1245,8 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
             if( nSectorSize == SECTOR_SIZE )
             {
                 if( VSIFReadL(pabySector, 1,
-                              SECTOR_SIZE, fpNodes) != SECTOR_SIZE )
+                              static_cast<size_t>(SECTOR_SIZE),
+                              fpNodes) != static_cast<size_t>(SECTOR_SIZE) )
                 {
                     CPLError(CE_Failure,  CPLE_AppDefined,
                             "Cannot read node " CPL_FRMT_GIB, id);
@@ -1420,31 +1424,34 @@ static void WriteVarSInt64( GIntBig nSVal, GByte** ppabyData )
 /*                             CompressWay()                            */
 /************************************************************************/
 
-int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
+int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags,
+                                    IndexedKVP* pasTags,
                                     int nPoints, LonLat* pasLonLatPairs,
                                     OSMInfo* psInfo,
                                     GByte* pabyCompressedWay )
 {
     GByte* pabyPtr = pabyCompressedWay;
     *pabyPtr = (bIsArea) ? 1 : 0;
-    pabyPtr ++;
-    pabyPtr ++; // skip tagCount
+    pabyPtr++;
+    pabyPtr++; // skip tagCount
 
     int nTagCount = 0;
-    CPLAssert(nTags < MAX_COUNT_FOR_TAGS_IN_WAY);
-    for(unsigned int iTag = 0; iTag < nTags; iTag++)
+    CPLAssert(nTags < static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
+    for( unsigned int iTag = 0; iTag < nTags; iTag++ )
     {
-        if ((int)(pabyPtr - pabyCompressedWay) + 2 >= MAX_SIZE_FOR_TAGS_IN_WAY)
+        if( static_cast<int>(pabyPtr - pabyCompressedWay) + 2 >=
+            MAX_SIZE_FOR_TAGS_IN_WAY )
         {
             break;
         }
 
         WriteVarInt(pasTags[iTag].nKeyIndex, &pabyPtr);
 
-        /* to fit in 2 bytes, the theoretical limit would be 127 * 128 + 127 */
+        // To fit in 2 bytes, the theoretical limit would be 127 * 128 + 127.
         if( pasTags[iTag].bVIsIndex )
         {
-            if ((int)(pabyPtr - pabyCompressedWay) + 2 >= MAX_SIZE_FOR_TAGS_IN_WAY)
+            if( static_cast<int>(pabyPtr - pabyCompressedWay) + 2 >=
+                MAX_SIZE_FOR_TAGS_IN_WAY )
             {
                 break;
             }
@@ -1849,14 +1856,15 @@ bool OGROSMDataSource::IsClosedWayTaggedAsPolygon( unsigned int nTags, const OSM
 /*                              NotifyWay()                             */
 /************************************************************************/
 
-void OGROSMDataSource::NotifyWay (OSMWay* psWay)
+void OGROSMDataSource::NotifyWay( OSMWay* psWay )
 {
     nWaysProcessed++;
-    if( (nWaysProcessed % 10000) == 0 )
+    if( nWaysProcessed % 10000 == 0 )
     {
         CPLDebug("OSM", "Ways processed : %d", nWaysProcessed);
 #ifdef DEBUG_MEM_USAGE
-        CPLDebug("OSM", "GetMaxTotalAllocs() = " CPL_FRMT_GUIB, (GUIntBig)GetMaxTotalAllocs());
+        CPLDebug("OSM", "GetMaxTotalAllocs() = " CPL_FRMT_GUIB,
+                 static_cast<GUIntBig>(GetMaxTotalAllocs()));
 #endif
     }
 
@@ -1864,7 +1872,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         return;
 
     //printf("way %d : %d nodes\n", (int)psWay->nID, (int)psWay->nRefs);
-    if( psWay->nRefs > MAX_NODES_PER_WAY )
+    if( psWay->nRefs > static_cast<unsigned int>(MAX_NODES_PER_WAY) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Ways with more than %d nodes are not supported",
@@ -1902,7 +1910,8 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
 
     OGRFeature* poFeature = NULL;
     bool bAttrFilterAlreadyEvaluated = false;
-    if( !bIsArea && papoLayers[IDX_LYR_LINES]->IsUserInterested() && bInterestingTag )
+    if( !bIsArea && papoLayers[IDX_LYR_LINES]->IsUserInterested() &&
+        bInterestingTag )
     {
         poFeature = new OGRFeature(papoLayers[IDX_LYR_LINES]->GetLayerDefn());
 
@@ -1910,11 +1919,12 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
             poFeature, psWay->nID, false, psWay->nTags, psWay->pasTags,
             &psWay->sInfo );
 
-        /* Optimization : if we have an attribute filter, that does not require geometry, */
-        /* and if we don't need to index ways, then we can just evaluate the attribute */
-        /* filter without the geometry */
+        // Optimization: if we have an attribute filter, that does not require
+        // geometry, and if we don't need to index ways, then we can just
+        // evaluate the attribute filter without the geometry.
         if( papoLayers[IDX_LYR_LINES]->HasAttributeFilter() &&
-            !papoLayers[IDX_LYR_LINES]->AttributeFilterEvaluationNeedsGeometry() &&
+            !papoLayers[IDX_LYR_LINES]->
+                AttributeFilterEvaluationNeedsGeometry() &&
             !bIndexWays )
         {
             if( !papoLayers[IDX_LYR_LINES]->EvaluateAttributeFilter(poFeature) )
@@ -1930,9 +1940,11 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         return;
     }
 
-    if( nUnsortedReqIds + psWay->nRefs > MAX_ACCUMULATED_NODES ||
+    if( nUnsortedReqIds + psWay->nRefs >
+        static_cast<unsigned int>(MAX_ACCUMULATED_NODES) ||
         nWayFeaturePairs == MAX_DELAYED_FEATURES ||
-        nAccumulatedTags + psWay->nTags > MAX_ACCUMULATED_TAGS ||
+        nAccumulatedTags + psWay->nTags >
+        static_cast<unsigned int>(MAX_ACCUMULATED_TAGS) ||
         nNonRedundantValuesLen + 1024 > MAX_NON_REDUNDANT_VALUES )
     {
         ProcessWaysBatch();
@@ -1945,7 +1957,8 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
     psWayFeaturePairs->panNodeRefs = panUnsortedReqIds + nUnsortedReqIds;
     psWayFeaturePairs->poFeature = poFeature;
     psWayFeaturePairs->bIsArea = bIsArea;
-    psWayFeaturePairs->bAttrFilterAlreadyEvaluated = bAttrFilterAlreadyEvaluated;
+    psWayFeaturePairs->bAttrFilterAlreadyEvaluated =
+        bAttrFilterAlreadyEvaluated;
 
     if( bIsArea && papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
     {
@@ -2537,7 +2550,8 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         if( !bInterestingTagFound )
         {
             poGeom = BuildMultiPolygon(psRelation, &nExtraTags, pasExtraTags);
-            CPLAssert(nExtraTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
+            CPLAssert(nExtraTags <=
+                      static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
             pasExtraTags[nExtraTags].pszK = "type";
             pasExtraTags[nExtraTags].pszV = pszTypeV;
             nExtraTags ++;
@@ -2634,7 +2648,8 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             const int nPoints = UncompressWay(
                 nBlobSize, reinterpret_cast<GByte *>(const_cast<void *>(blob)),
                 NULL, pasCoords, &nTags, pasTags, &sInfo );
-            CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
+            CPLAssert(
+                nTags <= static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
 
 
             OGRMultiPolygon* poMulti = new OGRMultiPolygon();
