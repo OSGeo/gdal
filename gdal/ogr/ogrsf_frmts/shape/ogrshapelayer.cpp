@@ -2705,12 +2705,15 @@ OGRErr OGRShapeLayer::Repack()
             // restore it later in the current shape context
             memcpy(&sSHPInfo, hNewSHP, sizeof(sSHPInfo));
 
+            // Use malloc like shapelib does
             panRecOffsetNew = reinterpret_cast<unsigned int*>(
-                VSI_MALLOC2_VERBOSE(sizeof(unsigned int), hNewSHP->nRecords));
+                malloc(sizeof(unsigned int) * hNewSHP->nRecords));
             panRecSizeNew = reinterpret_cast<unsigned int*>(
-                VSI_MALLOC2_VERBOSE(sizeof(unsigned int), hNewSHP->nRecords));
+                malloc(sizeof(unsigned int) * hNewSHP->nRecords));
             if( panRecOffsetNew == NULL || panRecSizeNew == NULL )
             {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate panRecOffsetNew/panRecSizeNew");
                 eErr = OGRERR_FAILURE;
             }
             else
@@ -2731,8 +2734,8 @@ OGRErr OGRShapeLayer::Repack()
             VSIUnlink( oTempFileSHX );
             if( !oTempFileDBF.empty() )
                 VSIUnlink( oTempFileDBF );
-            CPLFree(panRecOffsetNew);
-            CPLFree(panRecSizeNew);
+            free(panRecOffsetNew);
+            free(panRecSizeNew);
             return eErr;
         }
     }
@@ -2756,8 +2759,8 @@ OGRErr OGRShapeLayer::Repack()
                         "on top of the main ones.",
                         oTempFileDBF.c_str(),
                         VSI_SHP_GetFilename( hDBF->fp ) );
-                CPLFree(panRecOffsetNew);
-                CPLFree(panRecSizeNew);
+                free(panRecOffsetNew);
+                free(panRecSizeNew);
 
                 DBFClose( hDBF );
                 hDBF = NULL;
@@ -2785,8 +2788,8 @@ OGRErr OGRShapeLayer::Repack()
                         "on top of the main ones.",
                         oTempFileSHP.c_str(),
                         VSI_SHP_GetFilename( hSHP->fpSHP ) );
-                CPLFree(panRecOffsetNew);
-                CPLFree(panRecSizeNew);
+                free(panRecOffsetNew);
+                free(panRecSizeNew);
 
                 if( hDBF != NULL )
                 {
@@ -2807,8 +2810,8 @@ OGRErr OGRShapeLayer::Repack()
                         "on top of the main ones.",
                         oTempFileSHX.c_str(),
                         VSI_SHP_GetFilename( hSHP->fpSHX ) );
-                CPLFree(panRecOffsetNew);
-                CPLFree(panRecSizeNew);
+                free(panRecOffsetNew);
+                free(panRecSizeNew);
 
                 if( hDBF != NULL )
                 {
@@ -2830,8 +2833,8 @@ OGRErr OGRShapeLayer::Repack()
                    sizeof(sSHPInfo.adBoundsMin));
             memcpy(hSHP->adBoundsMax, sSHPInfo.adBoundsMax,
                    sizeof(sSHPInfo.adBoundsMax));
-            CPLFree(hSHP->panRecOffset);
-            CPLFree(hSHP->panRecSize);
+            free(hSHP->panRecOffset);
+            free(hSHP->panRecSize);
             hSHP->panRecOffset = panRecOffsetNew;
             hSHP->panRecSize = panRecSizeNew;
         }
