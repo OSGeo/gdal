@@ -4565,7 +4565,7 @@ def ogr_shape_100():
 
     for variant in [ 'YES', 'NO' ]:
 
-        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_100.shp')
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_shape_100.shp')
         lyr = ds.CreateLayer('ogr_shape_100')
         lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -4579,11 +4579,31 @@ def ogr_shape_100():
         f = None
         lyr.DeleteFeature(0)
         gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', variant)
+
+        f_dbf = None
+        f_shp = None
+        f_shx = None
+        if sys.platform == 'win32' and variant == 'YES':
+            # Locks the files. No way to do this on Unix easily
+            f_dbf = open('tmp/ogr_shape_100.dbf', 'rb')
+            f_shp = open('tmp/ogr_shape_100.shp', 'rb')
+            f_shx = open('tmp/ogr_shape_100.shx', 'rb')
+
         ds.ExecuteSQL('REPACK ogr_shape_100')
+
+        del f_dbf
+        del f_shp
+        del f_shx
+
         gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', old_val)
 
+        if gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+
         for ext in [ 'dbf', 'shp', 'shx', 'cpg' ]:
-            if gdal.VSIStatL('/vsimem/ogr_shape_100_packed.' + ext) is not None:
+            if gdal.VSIStatL('tmp/ogr_shape_100_packed.' + ext) is not None:
                 gdaltest.post_reason('fail')
                 print(variant)
                 print(ext)
@@ -4624,7 +4644,7 @@ def ogr_shape_100():
         f = None
         ds = None
 
-        ds = ogr.Open('/vsimem/ogr_shape_100.shp')
+        ds = ogr.Open('tmp/ogr_shape_100.shp')
         lyr = ds.GetLayer(0)
         if lyr.GetFeatureCount() != 2:
             gdaltest.post_reason('fail')
@@ -4649,7 +4669,7 @@ def ogr_shape_100():
             return 'fail'
         ds = None
 
-        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_100.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_shape_100.shp')
 
     return 'success'
 
@@ -4689,6 +4709,8 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_88.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_89.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_90.shp' )
+    if os.path.exists( 'tmp/ogr_shape_100.shp' ):
+        shape_drv.DeleteDataSource( 'tmp/ogr_shape_100.shp' )
 
     return 'success'
 
