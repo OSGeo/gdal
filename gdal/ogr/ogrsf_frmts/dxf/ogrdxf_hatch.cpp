@@ -511,10 +511,9 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
                 oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
                 dfBulge = 0.0;
                 bHaveX = false;
-                bHaveY = false;
             }
             dfY = CPLAtof(szLineBuf);
-            bHaveY = TRUE;
+            bHaveY = true;
             if( bHaveX && bHaveY && !bHaveBulges )
             {
                 oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
