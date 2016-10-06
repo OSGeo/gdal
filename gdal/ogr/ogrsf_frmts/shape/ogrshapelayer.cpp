@@ -2707,9 +2707,9 @@ OGRErr OGRShapeLayer::Repack()
 
             // Use malloc like shapelib does
             panRecOffsetNew = reinterpret_cast<unsigned int*>(
-                malloc(sizeof(unsigned int) * hNewSHP->nRecords));
+                malloc(sizeof(unsigned int) * hNewSHP->nMaxRecords));
             panRecSizeNew = reinterpret_cast<unsigned int*>(
-                malloc(sizeof(unsigned int) * hNewSHP->nRecords));
+                malloc(sizeof(unsigned int) * hNewSHP->nMaxRecords));
             if( panRecOffsetNew == NULL || panRecSizeNew == NULL )
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
