@@ -106,7 +106,7 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
         }
     }
 
-    CPLDebug("SIGY", "Header = \n%s", pabyASCIITextHeader);
+    CPLDebug("SEGY", "Header = \n%s", pabyASCIITextHeader);
     CPLFree(pabyASCIITextHeader);
     pabyASCIITextHeader = NULL;
 
