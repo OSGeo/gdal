@@ -2791,6 +2791,12 @@ OGRErr OGRShapeLayer::Repack()
             hSHP->panRecOffset = panRecOffsetNew;
             hSHP->panRecSize = panRecSizeNew;
         }
+        else
+        {
+            // The free() are not really necessary but CSA doesn't realize it
+            free(panRecOffsetNew);
+            free(panRecSizeNew);
+        }
 
         // Now that everything is successful, we can delete the temp files
         if( !oTempFileDBF.empty() )
