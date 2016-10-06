@@ -3428,7 +3428,10 @@ def ogr_shape_70():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
+    old_val = gdal.GetConfigOption('OGR_SHAPE_PACK_IN_PLACE')
+    gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', 'NO')
     ds.ExecuteSQL('REPACK ogr_shape_70')
+    gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', old_val)
     gdal.PopErrorHandler()
     errmsg = gdal.GetLastErrorMsg()
     ds = None
@@ -4553,6 +4556,104 @@ def ogr_shape_99():
 
     return 'success'
 
+###############################################################################
+# Test REPACK with both implementations
+
+def ogr_shape_100():
+
+    old_val = gdal.GetConfigOption('OGR_SHAPE_PACK_IN_PLACE')
+
+    for variant in [ 'YES', 'NO' ]:
+
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_100.shp')
+        lyr = ds.CreateLayer('ogr_shape_100')
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+        f.SetField('foo', '1')
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(1 1,2 2,3 3)'))
+        f.SetField('foo', '2')
+        lyr.CreateFeature(f)
+        f = None
+        lyr.DeleteFeature(0)
+        gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', variant)
+        ds.ExecuteSQL('REPACK ogr_shape_100')
+        gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', old_val)
+
+        for ext in [ 'dbf', 'shp', 'shx', 'cpg' ]:
+            if gdal.VSIStatL('/vsimem/ogr_shape_100_packed.' + ext) is not None:
+                gdaltest.post_reason('fail')
+                print(variant)
+                print(ext)
+                return 'fail'
+
+        f = lyr.GetFeature(0)
+        if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
+            gdaltest.post_reason('fail')
+            print(variant)
+            f.DumpReadable()
+            return 'fail'
+        with gdaltest.error_handler():
+            f = lyr.GetFeature(1)
+        if f is not None:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        lyr.ResetReading()
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
+            gdaltest.post_reason('fail')
+            print(variant)
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (3 3,4 4,5 5,6 6)'))
+        f.SetField('foo', '3')
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+        ds = ogr.Open('/vsimem/ogr_shape_100.shp')
+        lyr = ds.GetLayer(0)
+        if lyr.GetFeatureCount() != 2:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
+            gdaltest.post_reason('fail')
+            print(variant)
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f['foo'] != '3' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (3 3,4 4,5 5,6 6)':
+            gdaltest.post_reason('fail')
+            print(variant)
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        ds = None
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_100.shp')
+
+    return 'success'
+
+
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -4693,6 +4794,7 @@ gdaltest_list = [
     ogr_shape_97,
     ogr_shape_98,
     ogr_shape_99,
+    ogr_shape_100,
     ogr_shape_cleanup ]
 
 #gdaltest_list = [ ogr_shape_99 ]
