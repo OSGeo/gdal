@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 OGRDXFDataSource::OGRDXFDataSource() :
     fp(NULL),
     iEntitiesSectionOffset(0),
-    bInlineBlocks(FALSE)
+    bInlineBlocks(false)
 {}
 
 /************************************************************************/
@@ -123,7 +123,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /*      Confirm we have a header section.                               */
 /* -------------------------------------------------------------------- */
     char szLineBuf[257];
-    int bEntitiesOnly = FALSE;
+    bool bEntitiesOnly = false;
 
     if( ReadValue( szLineBuf ) != 0 || !EQUAL(szLineBuf,"SECTION") )
         return FALSE;
@@ -133,7 +133,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
         return FALSE;
 
     if( EQUAL(szLineBuf,"ENTITIES") )
-        bEntitiesOnly = TRUE;
+        bEntitiesOnly = true;
 
     /* Some files might have no header but begin directly with a TABLES section */
     else if( EQUAL(szLineBuf,"TABLES") )
@@ -598,8 +598,9 @@ bool OGRDXFDataSource::ReadHeaderSection()
         osEncoding = CPL_ENC_ISO8859_1;
     }
 
-    if( CPLGetConfigOption( "DXF_ENCODING", NULL ) != NULL )
-        osEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
+    const char *pszEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
+    if( pszEncoding != NULL )
+        osEncoding = pszEncoding;
 
     if( osEncoding != CPL_ENC_ISO8859_1 )
         CPLDebug( "DXF", "Treating DXF as encoding '%s', $DWGCODEPAGE='%s'",
