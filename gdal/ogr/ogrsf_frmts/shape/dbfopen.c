@@ -1635,8 +1635,11 @@ DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
    newDBF->nRecordLength = psDBF->nRecordLength;
    newDBF->nHeaderLength = psDBF->nHeaderLength;
 
-   newDBF->pszHeader = (char *) malloc ( newDBF->nHeaderLength );
-   memcpy ( newDBF->pszHeader, psDBF->pszHeader, newDBF->nHeaderLength );
+   if( psDBF->pszHeader )
+   {
+        newDBF->pszHeader = (char *) malloc ( XBASE_FLDHDR_SZ * psDBF->nFields );
+        memcpy ( newDBF->pszHeader, psDBF->pszHeader, XBASE_FLDHDR_SZ * psDBF->nFields );
+   }
 
    newDBF->panFieldOffset = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldOffset, psDBF->panFieldOffset, sizeof(int) * psDBF->nFields );
