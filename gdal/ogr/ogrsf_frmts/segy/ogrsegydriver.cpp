@@ -77,36 +77,39 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
 //      Try to decode the header encoded as EBCDIC and then ASCII
 // --------------------------------------------------------------------
 
-    int i, j, k;
     const GByte* pabyTextHeader = poOpenInfo->pabyHeader;
-    GByte* pabyASCIITextHeader = (GByte*) CPLMalloc(3200 + 40 + 1);
-    for( k=0; k<2; k++)
+    GByte* pabyASCIITextHeader = static_cast<GByte *>(CPLMalloc(3200 + 40 + 1));
+    for( int k = 0; k < 2; k++ )
     {
-        for( i=0, j=0;i<3200;i++)
+        int i = 0;  // Used after for.
+        int j = 0;  // Used after for.
+        for( ; i < 3200; i++ )
         {
             GByte chASCII = (k == 0) ? EBCDICToASCII[pabyTextHeader[i]] :
                                        pabyTextHeader[i];
-            if (chASCII < 32 && chASCII != '\t' &&
-                chASCII != '\n' && chASCII != '\r')
+            if( chASCII < 32 && chASCII != '\t' &&
+                chASCII != '\n' && chASCII != '\r' )
             {
                 break;
             }
             pabyASCIITextHeader[j++] = chASCII;
-            if (chASCII != '\n' && ((i + 1) % 80) == 0)
+            if( chASCII != '\n' && ((i + 1) % 80) == 0 )
                 pabyASCIITextHeader[j++] = '\n';
         }
         pabyASCIITextHeader[j] = '\0';
 
-        if (i == 3200)
+        if( i == 3200 )
             break;
-        if (k == 1)
+        if( k == 1 )
         {
             CPLFree(pabyASCIITextHeader);
             return NULL;
         }
     }
 
+#if DEBUG_VERBOSE
     CPLDebug("SEGY", "Header = \n%s", pabyASCIITextHeader);
+#endif
     CPLFree(pabyASCIITextHeader);
     pabyASCIITextHeader = NULL;
 
@@ -120,30 +123,32 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
 // --------------------------------------------------------------------
 //      First check that this binary header is not EBCDIC nor ASCII
 // --------------------------------------------------------------------
-    for( k=0;k<2;k++ )
+    for( int k = 0; k < 2; k++ )
     {
-        for( i=0;i<400;i++)
+        int i = 0;  // Used after for.
+        for( ; i < 400; i++ )
         {
             GByte chASCII = (k == 0) ? abyFileHeader[i] :
                                        EBCDICToASCII[abyFileHeader[i]];
-            /* A translated 0 value, when source value is not 0, means an invalid */
-            /* EBCDIC value. Bail out also for control characters */
-            if (chASCII < 32 && chASCII != '\t' &&
-                chASCII != '\n' && chASCII != '\r')
+            // A translated 0 value, when source value is not 0, means an
+            // invalid EBCDIC value. Bail out also for control characters.
+            if( chASCII < 32 && chASCII != '\t' &&
+                chASCII != '\n' && chASCII != '\r' )
             {
                 break;
             }
         }
-        if (i == 400)
+        if( i == 400 )
         {
             CPLFree(pabyASCIITextHeader);
             return NULL;
         }
     }
 
-    OGRSEGYDataSource   *poDS = new OGRSEGYDataSource();
+    OGRSEGYDataSource *poDS = new OGRSEGYDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, (const char*)pabyASCIITextHeader ) )
+    if( !poDS->Open( poOpenInfo->pszFilename,
+                     (const char*)pabyASCIITextHeader ) )
     {
         CPLFree(pabyASCIITextHeader);
         delete poDS;

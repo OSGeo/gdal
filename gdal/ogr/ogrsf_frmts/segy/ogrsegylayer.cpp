@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id$");
 
+// #define SEGY_EXTENSIONS
+
 static const int DT_IBM_4BYTES_FP       = 1;
 static const int DT_4BYTES_INT          = 2;
 static const int DT_2BYTES_INT          = 3;
@@ -205,11 +207,11 @@ static const int CROSSLINE_NUMBER = 71;
 static const int SHOTPOINT_NUMBER = 72;
 static const int SHOTPOINT_SCALAR = 73;
 
-#if 0
 /************************************************************************/
 /*                       SEGYReadMSBFloat32()                           */
 /************************************************************************/
 
+#ifdef SEGY_EXTENSIONS
 static float SEGYReadMSBFloat32(const GByte* pabyVal)
 {
     float fVal = 0.0f;
@@ -312,18 +314,18 @@ OGRFeature *OGRSEGYLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
+        if( poFeature == NULL )
             return NULL;
 
-        if((m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature )) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
         }
-        else
-            delete poFeature;
+
+        delete poFeature;
     }
 }
 
@@ -336,11 +338,11 @@ static float GetIBMFloat(const GByte* pabyData)
     int nVal = 0;
     memcpy(&nVal, pabyData, 4);
     CPL_MSBPTR32(&nVal);
-    int nSign = 1 - 2 * ((nVal >> 31) & 0x01);
-    int nExp = (nVal >> 24) & 0x7f;
-    int nMant = nVal & 0xffffff;
+    const int nSign = 1 - 2 * ((nVal >> 31) & 0x01);
+    const int nExp = (nVal >> 24) & 0x7f;
+    const int nMant = nVal & 0xffffff;
 
-    if (nExp == 0x7f)
+    if( nExp == 0x7f )
     {
         nVal = (nVal & 0x80000000) | (0xff << 23) | (nMant >> 1);
         float fVal = 0;
@@ -348,8 +350,13 @@ static float GetIBMFloat(const GByte* pabyData)
         return fVal;
     }
 
-    return (float)((double)nSign * nMant * pow(2.0, 4 * (nExp - 64) - 24));
+    return
+        static_cast<float>(
+            static_cast<double>(nSign) *
+            nMant *
+            pow(2.0, 4 * (nExp - 64) - 24));
 }
+
 /************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
@@ -367,125 +374,129 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
         return NULL;
     }
 
-    int nTraceNumberWithinLine = SEGYReadMSBInt32(abyTraceHeader + 0);
-    int nTraceNumberWithinFile = SEGYReadMSBInt32(abyTraceHeader + 4);
-    int nOriginalFieldRecordNumber = SEGYReadMSBInt32(abyTraceHeader + 8);
-    int nTraceNumberWithinOriginalFieldRecord = SEGYReadMSBInt32(abyTraceHeader + 12);
-    int nEnsembleNumber = SEGYReadMSBInt32(abyTraceHeader + 20);
-    int nTraceNumberWithinEnsemble = SEGYReadMSBInt32(abyTraceHeader + 24);
-    int nTraceIdentificationCode = SEGYReadMSBInt16(abyTraceHeader + 28);
-    int nNumberVerticalSummedTraces = SEGYReadMSBInt16(abyTraceHeader + 30);
-    int nNumberHorizontalStackedTraces = SEGYReadMSBInt16(abyTraceHeader + 32);
-    int nDataUse = SEGYReadMSBInt16(abyTraceHeader + 34);
-    int nDistanceSourceGroup = SEGYReadMSBInt32(abyTraceHeader + 36);
-    int nReceiverGroupElevation = SEGYReadMSBInt32(abyTraceHeader + 40);
-    int nSurfaceElevationAtSource = SEGYReadMSBInt32(abyTraceHeader + 44);
-    int nSourceDepthBelowSurface = SEGYReadMSBInt32(abyTraceHeader + 48);
-    int nDatumElevationAtReceiverGroup = SEGYReadMSBInt32(abyTraceHeader + 52);
-    int nDatumElevationAtSource = SEGYReadMSBInt32(abyTraceHeader + 56);
-    int nWaterDepthAtSource = SEGYReadMSBInt32(abyTraceHeader + 60);
-    int nWaterDepthAtGroup = SEGYReadMSBInt32(abyTraceHeader + 64);
-    int nVerticalScalar = SEGYReadMSBInt16(abyTraceHeader + 68);
-    int nHorizontalScalar = SEGYReadMSBInt16(abyTraceHeader + 70);
-    int nSourceX = SEGYReadMSBInt32(abyTraceHeader + 72);
-    int nSourceY = SEGYReadMSBInt32(abyTraceHeader + 76);
-    int nGroupX = SEGYReadMSBInt32(abyTraceHeader + 80);
-    int nGroupY = SEGYReadMSBInt32(abyTraceHeader + 84);
-    int nCoordinateUnits = SEGYReadMSBInt16(abyTraceHeader + 88);
-    int nWeatheringVelocity = SEGYReadMSBInt16(abyTraceHeader + 90);
-    int nSubWeatheringVelocity = SEGYReadMSBInt16(abyTraceHeader + 92);
+    const int nTraceNumberWithinLine = SEGYReadMSBInt32(abyTraceHeader + 0);
+    const int nTraceNumberWithinFile = SEGYReadMSBInt32(abyTraceHeader + 4);
+    const int nOriginalFieldRecordNumber = SEGYReadMSBInt32(abyTraceHeader + 8);
+    const int nTraceNumberWithinOriginalFieldRecord = SEGYReadMSBInt32(abyTraceHeader + 12);
+    const int nEnsembleNumber = SEGYReadMSBInt32(abyTraceHeader + 20);
+    const int nTraceNumberWithinEnsemble = SEGYReadMSBInt32(abyTraceHeader + 24);
+    const int nTraceIdentificationCode = SEGYReadMSBInt16(abyTraceHeader + 28);
+    const int nNumberVerticalSummedTraces = SEGYReadMSBInt16(abyTraceHeader + 30);
+    const int nNumberHorizontalStackedTraces = SEGYReadMSBInt16(abyTraceHeader + 32);
+    const int nDataUse = SEGYReadMSBInt16(abyTraceHeader + 34);
+    const int nDistanceSourceGroup = SEGYReadMSBInt32(abyTraceHeader + 36);
+    const int nReceiverGroupElevation = SEGYReadMSBInt32(abyTraceHeader + 40);
+    const int nSurfaceElevationAtSource = SEGYReadMSBInt32(abyTraceHeader + 44);
+    const int nSourceDepthBelowSurface = SEGYReadMSBInt32(abyTraceHeader + 48);
+    const int nDatumElevationAtReceiverGroup = SEGYReadMSBInt32(abyTraceHeader + 52);
+    const int nDatumElevationAtSource = SEGYReadMSBInt32(abyTraceHeader + 56);
+    const int nWaterDepthAtSource = SEGYReadMSBInt32(abyTraceHeader + 60);
+    const int nWaterDepthAtGroup = SEGYReadMSBInt32(abyTraceHeader + 64);
+    const int nVerticalScalar = SEGYReadMSBInt16(abyTraceHeader + 68);
+    const int nHorizontalScalar = SEGYReadMSBInt16(abyTraceHeader + 70);
+    const int nSourceX = SEGYReadMSBInt32(abyTraceHeader + 72);
+    const int nSourceY = SEGYReadMSBInt32(abyTraceHeader + 76);
+    const int nGroupX = SEGYReadMSBInt32(abyTraceHeader + 80);
+    const int nGroupY = SEGYReadMSBInt32(abyTraceHeader + 84);
+    const int nCoordinateUnits = SEGYReadMSBInt16(abyTraceHeader + 88);
+    const int nWeatheringVelocity = SEGYReadMSBInt16(abyTraceHeader + 90);
+    const int nSubWeatheringVelocity = SEGYReadMSBInt16(abyTraceHeader + 92);
 
-    int nUpholeTimeAtSource = SEGYReadMSBInt16(abyTraceHeader + 94);
-    int nUpholeTimeAtGroup = SEGYReadMSBInt16(abyTraceHeader + 96);
-    int nSourceStaticCorrection = SEGYReadMSBInt16(abyTraceHeader + 98);
-    int nGroupStaticCorrection = SEGYReadMSBInt16(abyTraceHeader + 100);
-    int nTotalStaticCorrection = SEGYReadMSBInt16(abyTraceHeader + 102);
-    int nLagTimeA = SEGYReadMSBInt16(abyTraceHeader + 104);
-    int nLagTimeB = SEGYReadMSBInt16(abyTraceHeader + 106);
-    int nDelayRecordingTime = SEGYReadMSBInt16(abyTraceHeader + 108);
-    int nMuteTimeStart = SEGYReadMSBInt16(abyTraceHeader + 110);
-    int nMuteTimeEnd = SEGYReadMSBInt16(abyTraceHeader + 112);
+    const int nUpholeTimeAtSource = SEGYReadMSBInt16(abyTraceHeader + 94);
+    const int nUpholeTimeAtGroup = SEGYReadMSBInt16(abyTraceHeader + 96);
+    const int nSourceStaticCorrection = SEGYReadMSBInt16(abyTraceHeader + 98);
+    const int nGroupStaticCorrection = SEGYReadMSBInt16(abyTraceHeader + 100);
+    const int nTotalStaticCorrection = SEGYReadMSBInt16(abyTraceHeader + 102);
+    const int nLagTimeA = SEGYReadMSBInt16(abyTraceHeader + 104);
+    const int nLagTimeB = SEGYReadMSBInt16(abyTraceHeader + 106);
+    const int nDelayRecordingTime = SEGYReadMSBInt16(abyTraceHeader + 108);
+    const int nMuteTimeStart = SEGYReadMSBInt16(abyTraceHeader + 110);
+    const int nMuteTimeEnd = SEGYReadMSBInt16(abyTraceHeader + 112);
 
     int nSamples = SEGYReadMSBInt16(abyTraceHeader + 114);
-    if (nSamples == 0) /* Happens with ftp://software.seg.org/pub/datasets/2D/Hess_VTI/timodel_c11.segy.gz */
+    // Happens with
+    // ftp://software.seg.org/pub/datasets/2D/Hess_VTI/timodel_c11.segy.gz
+    if( nSamples == 0 )
         nSamples = sBFH.nSamplesPerDataTrace;
 
-    if (nSamples < 0)
+    if( nSamples < 0 )
     {
         bEOF = true;
         return NULL;
     }
-    int nSampleInterval = SEGYReadMSBInt16(abyTraceHeader + 116);
+    const int nSampleInterval = SEGYReadMSBInt16(abyTraceHeader + 116);
 
-    int nGainType = SEGYReadMSBInt16(abyTraceHeader + 118);
-    int nInstrumentGainConstant = SEGYReadMSBInt16(abyTraceHeader + 120);
-    int nInstrumentInitialGain = SEGYReadMSBInt16(abyTraceHeader + 122);
-    int nCorrelated = SEGYReadMSBInt16(abyTraceHeader + 124);
-    int nSweepFrequencyAtStart = SEGYReadMSBInt16(abyTraceHeader + 126);
-    int nSweepFrequencyAtEnd = SEGYReadMSBInt16(abyTraceHeader + 128);
-    int nSweepLength = SEGYReadMSBInt16(abyTraceHeader + 130);
-    int nSweepType = SEGYReadMSBInt16(abyTraceHeader + 132);
-    int nSweepTraceTaperLengthAtStart = SEGYReadMSBInt16(abyTraceHeader + 134);
-    int nSweepTraceTaperLengthAtEnd = SEGYReadMSBInt16(abyTraceHeader + 136);
-    int nTaperType = SEGYReadMSBInt16(abyTraceHeader + 138);
-    int nAliasFilterFrequency = SEGYReadMSBInt16(abyTraceHeader + 140);
-    int nAliasFilterSlope = SEGYReadMSBInt16(abyTraceHeader + 142);
-    int nNotchFilterFrequency = SEGYReadMSBInt16(abyTraceHeader + 144);
-    int nNotchFilterSlope = SEGYReadMSBInt16(abyTraceHeader + 146);
-    int nLowCutFrequency = SEGYReadMSBInt16(abyTraceHeader + 148);
-    int nHighCutFrequency = SEGYReadMSBInt16(abyTraceHeader + 150);
-    int nLowCutSlope = SEGYReadMSBInt16(abyTraceHeader + 152);
-    int nHighCutSlope = SEGYReadMSBInt16(abyTraceHeader + 154);
+    const int nGainType = SEGYReadMSBInt16(abyTraceHeader + 118);
+    const int nInstrumentGainConstant = SEGYReadMSBInt16(abyTraceHeader + 120);
+    const int nInstrumentInitialGain = SEGYReadMSBInt16(abyTraceHeader + 122);
+    const int nCorrelated = SEGYReadMSBInt16(abyTraceHeader + 124);
+    const int nSweepFrequencyAtStart = SEGYReadMSBInt16(abyTraceHeader + 126);
+    const int nSweepFrequencyAtEnd = SEGYReadMSBInt16(abyTraceHeader + 128);
+    const int nSweepLength = SEGYReadMSBInt16(abyTraceHeader + 130);
+    const int nSweepType = SEGYReadMSBInt16(abyTraceHeader + 132);
+    const int nSweepTraceTaperLengthAtStart = SEGYReadMSBInt16(abyTraceHeader + 134);
+    const int nSweepTraceTaperLengthAtEnd = SEGYReadMSBInt16(abyTraceHeader + 136);
+    const int nTaperType = SEGYReadMSBInt16(abyTraceHeader + 138);
+    const int nAliasFilterFrequency = SEGYReadMSBInt16(abyTraceHeader + 140);
+    const int nAliasFilterSlope = SEGYReadMSBInt16(abyTraceHeader + 142);
+    const int nNotchFilterFrequency = SEGYReadMSBInt16(abyTraceHeader + 144);
+    const int nNotchFilterSlope = SEGYReadMSBInt16(abyTraceHeader + 146);
+    const int nLowCutFrequency = SEGYReadMSBInt16(abyTraceHeader + 148);
+    const int nHighCutFrequency = SEGYReadMSBInt16(abyTraceHeader + 150);
+    const int nLowCutSlope = SEGYReadMSBInt16(abyTraceHeader + 152);
+    const int nHighCutSlope = SEGYReadMSBInt16(abyTraceHeader + 154);
 
-    int nYear = SEGYReadMSBInt16(abyTraceHeader + 156);
-    int nDayOfYear = SEGYReadMSBInt16(abyTraceHeader + 158);
-    int nHour = SEGYReadMSBInt16(abyTraceHeader + 160);
-    int nMinute = SEGYReadMSBInt16(abyTraceHeader + 162);
-    int nSecond = SEGYReadMSBInt16(abyTraceHeader + 164);
-    int nTimeBasicCode = SEGYReadMSBInt16(abyTraceHeader + 166);
+    const int nYear = SEGYReadMSBInt16(abyTraceHeader + 156);
+    const int nDayOfYear = SEGYReadMSBInt16(abyTraceHeader + 158);
+    const int nHour = SEGYReadMSBInt16(abyTraceHeader + 160);
+    const int nMinute = SEGYReadMSBInt16(abyTraceHeader + 162);
+    const int nSecond = SEGYReadMSBInt16(abyTraceHeader + 164);
+    const int nTimeBasicCode = SEGYReadMSBInt16(abyTraceHeader + 166);
 
-    int nTraceWeightingFactor = SEGYReadMSBInt16(abyTraceHeader + 168);
-    int nGeophoneGroupNumberOfRollSwith = SEGYReadMSBInt16(abyTraceHeader + 170);
-    int nGeophoneGroupNumberOfTraceNumberOne = SEGYReadMSBInt16(abyTraceHeader + 172);
-    int nGeophoneGroupNumberOfLastTrace = SEGYReadMSBInt16(abyTraceHeader + 174);
-    int nGapSize = SEGYReadMSBInt16(abyTraceHeader + 176);
-    int nOverTravel = SEGYReadMSBInt16(abyTraceHeader + 178);
+    const int nTraceWeightingFactor = SEGYReadMSBInt16(abyTraceHeader + 168);
+    const int nGeophoneGroupNumberOfRollSwith = SEGYReadMSBInt16(abyTraceHeader + 170);
+    const int nGeophoneGroupNumberOfTraceNumberOne = SEGYReadMSBInt16(abyTraceHeader + 172);
+    const int nGeophoneGroupNumberOfLastTrace = SEGYReadMSBInt16(abyTraceHeader + 174);
+    const int nGapSize = SEGYReadMSBInt16(abyTraceHeader + 176);
+    const int nOverTravel = SEGYReadMSBInt16(abyTraceHeader + 178);
 
-    int nInlineNumber = SEGYReadMSBInt32(abyTraceHeader + 188);
-    int nCrosslineNumber = SEGYReadMSBInt32(abyTraceHeader + 192);
-    int nShotpointNumber = SEGYReadMSBInt32(abyTraceHeader + 196);
-    int nShotpointScalar = SEGYReadMSBInt16(abyTraceHeader + 200);
+    const int nInlineNumber = SEGYReadMSBInt32(abyTraceHeader + 188);
+    const int nCrosslineNumber = SEGYReadMSBInt32(abyTraceHeader + 192);
+    const int nShotpointNumber = SEGYReadMSBInt32(abyTraceHeader + 196);
+    const int nShotpointScalar = SEGYReadMSBInt16(abyTraceHeader + 200);
 
-#if 0
-    /* Extensions of http://sioseis.ucsd.edu/segy.header.html */
-    float fDeepWaterDelay = SEGYReadMSBFloat32(abyTraceHeader + 180);
-    float fStartMuteTime  = SEGYReadMSBFloat32(abyTraceHeader + 184);
-    float fEndMuteTime  = SEGYReadMSBFloat32(abyTraceHeader + 188);
-    float fSampleInterval  = SEGYReadMSBFloat32(abyTraceHeader + 192);
-    float fWaterBottomTime  = SEGYReadMSBFloat32(abyTraceHeader + 196);
-    int nEndOfRp = SEGYReadMSBInt16(abyTraceHeader + 200);
+#ifdef SEGY_EXTENSIONS
+#if DEBUG_VERBOSE
+    // Extensions of http://sioseis.ucsd.edu/segy.header.html
+    const float fDeepWaterDelay = SEGYReadMSBFloat32(abyTraceHeader + 180);
+    const float fStartMuteTime  = SEGYReadMSBFloat32(abyTraceHeader + 184);
+    const float fEndMuteTime  = SEGYReadMSBFloat32(abyTraceHeader + 188);
+    const float fSampleInterval  = SEGYReadMSBFloat32(abyTraceHeader + 192);
+    const float fWaterBottomTime  = SEGYReadMSBFloat32(abyTraceHeader + 196);
+    const int nEndOfRp = SEGYReadMSBInt16(abyTraceHeader + 200);
+    // TODO(schwehr): Use the extension vars and move DEBUG_VERBOSE here.
     CPLDebug("SEGY", "fDeepWaterDelay = %f", fDeepWaterDelay);
     CPLDebug("SEGY", "fStartMuteTime = %f", fStartMuteTime);
     CPLDebug("SEGY", "fEndMuteTime = %f", fEndMuteTime);
     CPLDebug("SEGY", "fSampleInterval = %f", fSampleInterval);
     CPLDebug("SEGY", "fWaterBottomTime = %f", fWaterBottomTime);
     CPLDebug("SEGY", "nEndOfRp = %d", nEndOfRp);
-#endif
+#endif  // DEBUG_VERBOSE
+#endif  // SEGY_EXTENSIONS
 
-    double dfHorizontalScale = (nHorizontalScalar > 0) ? nHorizontalScalar :
-                               (nHorizontalScalar < 0) ? 1.0 / -nHorizontalScalar : 1.0;
-    if (nCoordinateUnits == 2)
+    double dfHorizontalScale =
+        (nHorizontalScalar > 0) ? nHorizontalScalar :
+        (nHorizontalScalar < 0) ? 1.0 / -nHorizontalScalar : 1.0;
+    if( nCoordinateUnits == 2 )
         dfHorizontalScale /= 3600;
 
-    double dfGroupX = nGroupX * dfHorizontalScale;
-    double dfGroupY = nGroupY * dfHorizontalScale;
+    const double dfGroupX = nGroupX * dfHorizontalScale;
+    const double dfGroupY = nGroupY * dfHorizontalScale;
 
-#if 0
-    double dfSourceX = nSourceX * dfHorizontalScale;
-    double dfSourceY = nSourceY * dfHorizontalScale;
-#endif
+#if DEBUG_VERBOSE
+    const double dfSourceX = nSourceX * dfHorizontalScale;
+    const double dfSourceY = nSourceY * dfHorizontalScale;
 
-#if 0
     CPLDebug("SEGY", "nTraceNumberWithinLine = %d", nTraceNumberWithinLine);
     CPLDebug("SEGY", "nTraceNumberWithinFile = %d", nTraceNumberWithinFile);
     CPLDebug("SEGY", "nOriginalFieldRecordNumber = %d", nOriginalFieldRecordNumber);
@@ -564,7 +575,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     CPLDebug("SEGY", "nGapSize = %d", nGapSize);
     CPLDebug("SEGY", "nOverTravel = %d", nOverTravel);
 
-    if (sBFH.dfSEGYRevisionNumber >= 1.0)
+    if( sBFH.dfSEGYRevisionNumber >= 1.0 )
     {
         CPLDebug("SEGY", "nInlineNumber = %d", nInlineNumber);
         CPLDebug("SEGY", "nCrosslineNumber = %d", nCrosslineNumber);
@@ -573,21 +584,24 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     }
 #endif
 
-    GByte* pabyData = (GByte*) VSI_MALLOC_VERBOSE( nDataSize * nSamples );
-    double* padfValues = (double*) VSI_CALLOC_VERBOSE( nSamples, sizeof(double) );
-    if (pabyData == NULL || padfValues == NULL)
+    GByte* pabyData = static_cast<GByte *>(
+        VSI_MALLOC_VERBOSE(nDataSize * nSamples));
+    double* padfValues = static_cast<double *>(
+        VSI_CALLOC_VERBOSE(nSamples, sizeof(double)));
+    if( pabyData == NULL || padfValues == NULL )
     {
         VSIFSeekL( fp, nDataSize * nSamples, SEEK_CUR );
     }
     else
     {
-        if ((int)VSIFReadL(pabyData, nDataSize, nSamples, fp) != nSamples)
+        if( static_cast<int>(VSIFReadL(pabyData, nDataSize,
+                                       nSamples, fp)) != nSamples )
         {
             bEOF = true;
         }
-        for(int i=0;i<nSamples;i++)
+        for( int i = 0; i < nSamples; i++ )
         {
-            switch (sBFH.nDataSampleType)
+            switch( sBFH.nDataSampleType )
             {
                 case DT_IBM_4BYTES_FP:
                 {
@@ -637,7 +651,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
 
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
     poFeature->SetFID(nNextFID ++);
-    if (dfGroupX != 0.0 || dfGroupY != 0.0)
+    if( dfGroupX != 0.0 || dfGroupY != 0.0 )
         poFeature->SetGeometryDirectly(new OGRPoint(dfGroupX, dfGroupY));
 
     poFeature->SetField(TRACE_NUMBER_WITHIN_LINE, nTraceNumberWithinLine);
@@ -711,7 +725,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     poFeature->SetField(GAP_SIZE, nGapSize);
     poFeature->SetField(OVER_TRAVEL, nOverTravel);
 
-    if (sBFH.dfSEGYRevisionNumber >= 1.0)
+    if( sBFH.dfSEGYRevisionNumber >= 1.0 )
     {
         poFeature->SetField(INLINE_NUMBER, nInlineNumber);
         poFeature->SetField(CROSSLINE_NUMBER, nCrosslineNumber);
@@ -719,8 +733,9 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
         poFeature->SetField(SHOTPOINT_SCALAR, nShotpointScalar);
     }
 
-    if (nSamples > 0 && padfValues != NULL)
-        poFeature->SetField(poFeature->GetFieldCount() - 1, nSamples, padfValues);
+    if( nSamples > 0 && padfValues != NULL )
+        poFeature->SetField(poFeature->GetFieldCount() - 1,
+                            nSamples, padfValues);
 
     CPLFree(padfValues);
     return poFeature;
@@ -857,13 +872,13 @@ OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
+        if( poFeature == NULL )
             return NULL;
 
-        if((m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature )) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
         }

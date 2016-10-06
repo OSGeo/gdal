@@ -106,13 +106,14 @@ GInt32 SEGYReadMSBInt32(const GByte* pabyVal)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSEGYDataSource::Open( const char * pszFilename, const char* pszASCIITextHeader)
+int OGRSEGYDataSource::Open( const char *pszFilename,
+                             const char *pszASCIITextHeader )
 
 {
     pszName = CPLStrdup( pszFilename );
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
+    if( fp == NULL )
         return FALSE;
 
     VSIFSeekL(fp, 3200, SEEK_SET);
@@ -123,7 +124,7 @@ int OGRSEGYDataSource::Open( const char * pszFilename, const char* pszASCIITextH
 // --------------------------------------------------------------------
 
     GByte abyFileHeader[400];
-    if ((int)VSIFReadL(abyFileHeader, 1, 400, fp) != 400)
+    if( static_cast<int>(VSIFReadL(abyFileHeader, 1, 400, fp)) != 400 )
     {
         VSIFCloseL(fp);
         return FALSE;
@@ -163,7 +164,7 @@ int OGRSEGYDataSource::Open( const char * pszFilename, const char* pszASCIITextH
     sBFH.nFixedLengthTraceFlag = SEGYReadMSBInt16(abyFileHeader + 302);
     sBFH.nNumberOfExtendedTextualFileHeader = SEGYReadMSBInt16(abyFileHeader + 304);
 
-#if 0
+#if DEBUG_VERBOSE
     CPLDebug("SEGY", "nJobIdNumber = %d", sBFH.nJobIdNumber);
     CPLDebug("SEGY", "nLineNumber = %d", sBFH.nLineNumber);
     CPLDebug("SEGY", "nReelNumber = %d", sBFH.nReelNumber);
@@ -195,16 +196,20 @@ int OGRSEGYDataSource::Open( const char * pszFilename, const char* pszASCIITextH
     CPLDebug("SEGY", "dfSEGYRevisionNumber = %f", sBFH.dfSEGYRevisionNumber);
     CPLDebug("SEGY", "nFixedLengthTraceFlag = %d", sBFH.nFixedLengthTraceFlag);
     CPLDebug("SEGY", "nNumberOfExtendedTextualFileHeader = %d", sBFH.nNumberOfExtendedTextualFileHeader);
-#endif
+#endif  // DEBUG_VERBOSE
 
 // --------------------------------------------------------------------
 //      Create layer
 // --------------------------------------------------------------------
 
     nLayers = 2;
-    papoLayers = (OGRLayer**) CPLMalloc(nLayers * sizeof(OGRLayer*));
+    papoLayers = static_cast<OGRLayer **>(
+        CPLMalloc(nLayers * sizeof(OGRLayer*)));
     papoLayers[0] = new OGRSEGYLayer(pszName, fp, &sBFH);
-    papoLayers[1] = new OGRSEGYHeaderLayer(CPLSPrintf("%s_header", CPLGetBasename(pszName)), &sBFH, pszASCIITextHeader);
+    papoLayers[1] =
+        new OGRSEGYHeaderLayer(
+            CPLSPrintf("%s_header", CPLGetBasename(pszName)),
+                       &sBFH, pszASCIITextHeader);
 
     return TRUE;
 }
