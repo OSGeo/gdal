@@ -31,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE "H"
+static const char FILE_CODE[] = "H";
 
 static const TigerFieldInfo rtH_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite

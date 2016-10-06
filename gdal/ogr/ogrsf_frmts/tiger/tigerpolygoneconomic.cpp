@@ -31,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE       "E"
+static const char FILE_CODE[] = "E";
 
 /* I think this was the expected RTE format, but was never deployed, leaving
    it in the code in case I am missing something.
