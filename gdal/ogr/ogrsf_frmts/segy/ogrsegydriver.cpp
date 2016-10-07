@@ -90,7 +90,11 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
             if( chASCII < 32 && chASCII != '\t' &&
                 chASCII != '\n' && chASCII != '\r' )
             {
-                break;
+                // Nuls are okay in an ASCII header if after the first "C1".
+                if( !(i > 2 && chASCII == '\0') )
+                {
+                    break;
+                }
             }
             pabyASCIITextHeader[j++] = chASCII;
             if( chASCII != '\n' && ((i + 1) % 80) == 0 )
