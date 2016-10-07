@@ -41,7 +41,7 @@ from osgeo import ogr
 
 def ogr_segy_1():
 
-    ds = ogr.Open('data/testsegy.segy')
+    ds = ogr.Open('data/segy/testsegy.segy')
     if ds is None:
         gdaltest.post_reason('cannot open dataset')
         return 'fail'
@@ -114,8 +114,32 @@ def ogr_segy_1():
 
     return 'success'
 
+###############################################################################
+# Read ASCII header SEG-Y
+
+def ogr_segy_2():
+    ds = ogr.Open('data/segy/ascii-header-with-nuls.sgy')
+    if ds is None:
+        gdaltest.post_reason('cannot open dataset')
+        return 'fail'
+
+    if ds.GetLayerCount() != 2:
+        gdaltest.post_reason('bad layer count')
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeomType() != ogr.wkbPoint:
+        gdaltest.post_reason('bad layer geometry type')
+        return 'fail'
+
+    # TODO(schwehr): Test the values of fields and data.
+
+    return 'success'
+
+
 gdaltest_list = [
     ogr_segy_1,
+    ogr_segy_2,
 ]
 
 
