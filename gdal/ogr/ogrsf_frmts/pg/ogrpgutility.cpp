@@ -90,3 +90,21 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
 
     return hResult;
 }
+
+
+/************************************************************************/
+/*                       OGRPG_Check_Table_Exists()                     */
+/************************************************************************/
+
+bool OGRPG_Check_Table_Exists(PGconn *hPGConn, const char * pszTableName)
+{
+    CPLString osSQL;
+    osSQL.Printf("SELECT 1 FROM information_schema.tables WHERE table_name = %s LIMIT 1",
+                 OGRPGEscapeString(hPGConn, pszTableName).c_str());
+    PGresult* hResult = OGRPG_PQexec(hPGConn, osSQL);
+    bool bRet = ( hResult && PQntuples(hResult) == 1 );
+    if( !bRet )
+        CPLDebug("PG", "Does not have %s table", pszTableName);
+    OGRPGClearResult( hResult );
+    return bRet;
+}
