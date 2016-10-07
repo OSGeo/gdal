@@ -156,6 +156,15 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
     bool                bCreateSpatialIndexAtClose;
     int                 bRewindOnWrite;
 
+    bool                m_bAutoRepack;
+    typedef enum
+    {
+        YES,
+        NO,
+        MAYBE
+    } NormandyState; /* French joke. "Peut'et' ben que oui, peut'et' ben que non." Sorry :-) */
+    NormandyState       m_eNeedRepack;
+
   protected:
 
     virtual void        CloseUnderlyingLayer();
@@ -226,6 +235,7 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
     void                CreateSpatialIndexAtClose( int bFlag )
         { bCreateSpatialIndexAtClose = CPL_TO_BOOL(bFlag); }
     void                SetModificationDate( const char* pszStr );
+    void                SetAutoRepack(bool b) { m_bAutoRepack = b; }
 };
 
 /************************************************************************/

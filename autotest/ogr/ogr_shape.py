@@ -4673,6 +4673,123 @@ def ogr_shape_100():
 
     return 'success'
 
+###############################################################################
+# Test auto repack
+
+def ogr_shape_101():
+
+    for i in range(2):
+
+        # Auto-repack on create
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_101.shp')
+        lyr = ds.CreateLayer('ogr_shape_101')
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+        f.SetField('foo', '1')
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(1 1,2 2,3 3)'))
+        f.SetField('foo', '2')
+        lyr.CreateFeature(f)
+        f = None
+        lyr.DeleteFeature(0)
+
+        if i == 0:
+            ds = None
+        else:
+            ds.SyncToDisk()
+            if lyr.GetFeatureCount() != 1:
+                gdaltest.post_reason('fail')
+                print(i)
+                return 'fail'
+            # No-op
+            ds.ExecuteSQL('REPACK ogr_shape_101')
+
+        ds_read = ogr.Open('/vsimem/ogr_shape_101.shp')
+        lyr = ds_read.GetLayer(0)
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f.GetFID() != 0 or f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+
+        ds = None
+        ds_read = None
+
+        if i == 0:
+
+            # Auto-repack on update
+            ds = ogr.Open('/vsimem/ogr_shape_101.shp', update = 1)
+            lyr = ds.GetLayer(0)
+
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (3 3,4 4,5 5,6 6)'))
+            f.SetField('foo', '3')
+            lyr.CreateFeature(f)
+
+            lyr.DeleteFeature(0)
+            ds = None
+
+            ds = ogr.Open('/vsimem/ogr_shape_101.shp')
+            lyr = ds.GetLayer(0)
+            if lyr.GetFeatureCount() != 1:
+                gdaltest.post_reason('fail')
+                print(i)
+                return 'fail'
+            f = lyr.GetNextFeature()
+            if f.GetFID() != 0 or f['foo'] != '3' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (3 3,4 4,5 5,6 6)':
+                gdaltest.post_reason('fail')
+                print(i)
+                f.DumpReadable()
+                return 'fail'
+            f = lyr.GetNextFeature()
+            if f is not None:
+                gdaltest.post_reason('fail')
+                print(i)
+                return 'fail'
+            ds = None
+
+            # Test disabling auto-repack on update
+            ds = gdal.OpenEx('/vsimem/ogr_shape_101.shp', gdal.OF_UPDATE, open_options = ['AUTO_REPACK=NO'])
+            lyr = ds.GetLayer(0)
+
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetField('foo', '4')
+            lyr.CreateFeature(f)
+
+            lyr.DeleteFeature(0)
+            ds = None
+
+            ds = ogr.Open('/vsimem/ogr_shape_101.shp')
+            lyr = ds.GetLayer(0)
+            if lyr.GetFeatureCount() != 2:
+                gdaltest.post_reason('fail')
+                print(i)
+                return 'fail'
+            f = lyr.GetNextFeature()
+            if f.GetFID() != 1 or f['foo'] != '4':
+                gdaltest.post_reason('fail')
+                print(i)
+                f.DumpReadable()
+                return 'fail'
+
+            ds = None
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_101.shp')
+
+    return 'success'
+
 
 def ogr_shape_cleanup():
 
@@ -4817,9 +4934,10 @@ gdaltest_list = [
     ogr_shape_98,
     ogr_shape_99,
     ogr_shape_100,
+    ogr_shape_101,
     ogr_shape_cleanup ]
 
-#gdaltest_list = [ ogr_shape_99 ]
+# gdaltest_list = [ ogr_shape_101 ]
 
 if __name__ == '__main__':
 
