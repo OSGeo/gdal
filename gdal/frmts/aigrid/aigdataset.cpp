@@ -61,7 +61,7 @@ class CPL_DLL AIGDataset : public GDALPamDataset
     char        *pszProjection;
 
     GDALColorTable *poCT;
-    int         bHasReadRat;
+    bool        bHasReadRat;
 
     void        TranslateColorTable( const char * );
 
@@ -211,7 +211,7 @@ GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
     if (!poODS->bHasReadRat)
     {
         poODS->ReadRAT();
-        poODS->bHasReadRat = TRUE;
+        poODS->bHasReadRat = true;
     }
 
     if( poODS->poRAT )
@@ -318,7 +318,7 @@ AIGDataset::AIGDataset() :
     papszPrj(NULL),
     pszProjection(CPLStrdup("")),
     poCT(NULL),
-    bHasReadRat(FALSE),
+    bHasReadRat(false),
     poRAT(NULL)
 {}
 
