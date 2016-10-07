@@ -185,10 +185,12 @@ bool S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     char szTargetFile[1024];  // TODO: Get this off of the stack.
     if( EQUAL(pszProfile, "Additional_Military_Layers") )
     {
+        // Has been suppressed in GDAL data/
        snprintf( szTargetFile, sizeof(szTargetFile), "s57objectclasses_%s.csv", "aml" );
     }
     else if ( EQUAL(pszProfile, "Inland_Waterways") )
     {
+        // Has been suppressed in GDAL data/
        snprintf( szTargetFile, sizeof(szTargetFile), "s57objectclasses_%s.csv", "iw" );
     }
     else if( strlen(pszProfile) > 0 )
@@ -202,7 +204,16 @@ bool S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 
     VSILFILE *fp = NULL;
     if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
+    {
+        if( EQUAL(pszProfile, "Additional_Military_Layers") ||
+            EQUAL(pszProfile, "Inland_Waterways") )
+        {
+            strcpy( szTargetFile, "s57objectclasses.csv" );
+            if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
+                return false;
+        }
         return false;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Skip the line defining the column titles.                       */
@@ -226,6 +237,8 @@ bool S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     apszClassesInfo.Clear();
     while( (pszLine = ReadLine(fp)) != NULL )
     {
+        if( strstr(pszLine, "###") != NULL )
+            continue;
         apszClassesInfo.AddString(pszLine);
     }
 
@@ -245,10 +258,12 @@ bool S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 
     if( EQUAL(pszProfile, "Additional_Military_Layers") )
     {
+        // Has been suppressed in GDAL data/
       snprintf( szTargetFile, sizeof(szTargetFile), "s57attributes_%s.csv", "aml" );
     }
     else if ( EQUAL(pszProfile, "Inland_Waterways") )
     {
+        // Has been suppressed in GDAL data/
        snprintf( szTargetFile, sizeof(szTargetFile),"s57attributes_%s.csv", "iw" );
     }
     else if( strlen(pszProfile) > 0 )
@@ -261,7 +276,16 @@ bool S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     }
 
     if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
+    {
+        if( EQUAL(pszProfile, "Additional_Military_Layers") ||
+            EQUAL(pszProfile, "Inland_Waterways") )
+        {
+            strcpy( szTargetFile, "s57attributes.csv" );
+            if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
+                return false;
+        }
         return false;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Skip the line defining the column titles.                       */
@@ -283,12 +307,15 @@ bool S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* -------------------------------------------------------------------- */
     while( (pszLine = ReadLine(fp)) != NULL )
     {
+        if( strstr(pszLine, "###") != NULL )
+            continue;
+
         char    **papszTokens = CSLTokenizeStringComplex( pszLine, ",",
                                                           TRUE, TRUE );
 
         if( CSLCount(papszTokens) < 5 )
         {
-            CPLAssert( false );
+            CSLDestroy(papszTokens);
             continue;
         }
 
