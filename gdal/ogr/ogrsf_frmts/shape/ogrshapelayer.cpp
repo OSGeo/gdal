@@ -81,7 +81,9 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     eFileDescriptorsState(FD_OPENED),
     bResizeAtClose(false),
     bCreateSpatialIndexAtClose(false),
-    bRewindOnWrite(FALSE)
+    bRewindOnWrite(false),
+    m_bAutoRepack(false),
+    m_eNeedRepack(MAYBE)
 {
     if( hSHP != NULL )
     {
@@ -239,6 +241,9 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 OGRShapeLayer::~OGRShapeLayer()
 
 {
+    if( m_eNeedRepack == YES && m_bAutoRepack )
+        Repack();
+
     if( bResizeAtClose && hDBF != NULL )
     {
         ResizeDBF();
@@ -934,6 +939,7 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
             nSize != hSHP->panRecSize[nFID] )
         {
             bSHPNeedsRepack = true;
+            m_eNeedRepack = YES;
         }
     }
 
@@ -985,6 +991,7 @@ OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
     bHeaderDirty = true;
     if( CheckForQIX() || CheckForSBN() )
         DropSpatialIndex();
+    m_eNeedRepack = YES;
 
     return OGRERR_NONE;
 }
@@ -2181,6 +2188,9 @@ OGRErr OGRShapeLayer::SyncToDisk()
         hDBF->sHooks.FFlush( hDBF->fp );
     }
 
+    if( m_eNeedRepack == YES && m_bAutoRepack )
+        Repack();
+
     return OGRERR_NONE;
 }
 
@@ -2404,6 +2414,12 @@ static void ForceDeleteFile( const CPLString& osFilename )
 OGRErr OGRShapeLayer::Repack()
 
 {
+    if( m_eNeedRepack == NO )
+    {
+        CPLDebug("Shape", "REPACK: nothing to do. Was done previously");
+        return OGRERR_NONE;
+    }
+
     if( !TouchLayer() )
         return OGRERR_FAILURE;
 
@@ -2422,6 +2438,8 @@ OGRErr OGRShapeLayer::Repack()
     int nDeleteCount = 0;
     int nDeleteCountAlloc = 128;
     OGRErr eErr = OGRERR_NONE;
+
+    CPLDebug("Shape", "REPACK: Checking if features have been deleted");
 
     if( hDBF != NULL )
     {
@@ -2471,6 +2489,7 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
     if( nDeleteCount == 0 && !bSHPNeedsRepack )
     {
+        CPLDebug("Shape", "REPACK: nothing to do");
         CPLFree( panRecordsToDelete );
         return OGRERR_NONE;
     }
@@ -2567,6 +2586,7 @@ OGRErr OGRShapeLayer::Repack()
 
     if( hDBF != NULL && nDeleteCount > 0 )
     {
+        CPLDebug("Shape", "REPACK: repacking .dbf");
         bMustReopenDBF = true;
 
         oTempFileDBF = CPLFormFilename(osDirname, osBasename, NULL);
@@ -2656,6 +2676,8 @@ OGRErr OGRShapeLayer::Repack()
 
     if( hSHP != NULL )
     {
+        CPLDebug("Shape", "REPACK: repacking .shp + .shx");
+
         oTempFileSHP = CPLFormFilename(osDirname, osBasename, NULL);
         oTempFileSHP += "_packed.shp";
         oTempFileSHX = CPLFormFilename(osDirname, osBasename, NULL);
@@ -2957,6 +2979,7 @@ OGRErr OGRShapeLayer::Repack()
     if( hDBF != NULL )
         nTotalShapeCount = hDBF->nRecords;
     bSHPNeedsRepack = false;
+    m_eNeedRepack = NO;
 
     return OGRERR_NONE;
 }

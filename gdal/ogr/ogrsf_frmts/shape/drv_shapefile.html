@@ -83,6 +83,11 @@ the driver will look at the first shape and if it has M values it will expose th
 layer as having a M dimension. By specifying
 ALL_SHAPES, the driver will iterate over features until a shape with a valid
 M value is found to decide the appropriate layer type.</li>
+
+<li> <b>AUTO_REPACK=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
+Whether the shapefile should be automatically repacked when needed, at dataset
+closing or at FlushCache()/SyncToDisk() time.</li>
+
 </ul>
 
 <h2>Spatial and Attribute Indexing</h2>
@@ -195,6 +200,9 @@ the datasource ExecuteSQL() method.</p>
 <p>Starting with GDAL 2.0, REPACK will also result in .shp being rewritten if
 a feature geometry has been modified with SetFeature() and resulted in a change
 of the size the binary encoding of the geometry in the .shp file.</p>
+<p>Starting with GDAL 2.2, REPACK is also done automatically at file closing,
+or at FlushCache()/SyncToDisk() time, since shapefiles with holes can cause
+interoperability issues with other software.</p>
 
 <h2>Field sizes</h2>
 
@@ -267,6 +275,10 @@ for .SHP or .DBF files. Defaults to NO.</li>
 <li> <b>DBF_DATE_LAST_UPDATE=</b><i>YYYY-MM-DD</i>: (OGR &gt;= 2.0) Modification
 date to write in DBF header with year-month-day format. If not specified, current date is used.
 Note: behaviour of past GDAL releases was to write 1995-07-26</li>
+
+<li> <b>AUTO_REPACK=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
+Whether the shapefile should be automatically repacked when needed, at dataset
+closing or at FlushCache()/SyncToDisk() time.</li>
 
 </ul>
 
