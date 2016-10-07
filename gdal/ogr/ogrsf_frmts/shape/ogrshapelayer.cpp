@@ -34,10 +34,6 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 
-static const int FD_OPENED = 0;
-static const int FD_CLOSED = 1;
-static const int FD_CANNOT_REOPEN = 2;
-
 static const char UNSUPPORTED_OP_READ_ONLY[] =
     "%s : unsupported operation on a read-only datasource.";
 
@@ -50,8 +46,8 @@ CPL_CVSID("$Id$");
 OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                               const char * pszFullNameIn,
                               SHPHandle hSHPIn, DBFHandle hDBFIn,
-                              OGRSpatialReference *poSRSIn, int bSRSSetIn,
-                              int bUpdate,
+                              OGRSpatialReference *poSRSIn, bool bSRSSetIn,
+                              bool bUpdate,
                               OGRwkbGeometryType eReqType,
                               char ** papszCreateOptions ) :
     OGRAbstractProxiedLayer(poDSIn->GetPool()),
@@ -61,7 +57,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     pszFullName(CPLStrdup(pszFullNameIn)),
     hSHP(hSHPIn),
     hDBF(hDBFIn),
-    bUpdateAccess(CPL_TO_BOOL(bUpdate)),
+    bUpdateAccess(bUpdate),
     eRequestedGeomType(eReqType),
     panMatchingFIDs(NULL),
     iMatchingFID(0),
@@ -75,7 +71,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     bCheckedForSBN(false),
     hSBN(NULL),
     bSbnSbxDeleted(false),
-    bTruncationWarningEmitted(FALSE),
+    bTruncationWarningEmitted(false),
     bHSHPWasNonNULL(hSHPIn != NULL),
     bHDBFWasNonNULL(hDBFIn != NULL),
     eFileDescriptorsState(FD_OPENED),
@@ -423,7 +419,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
 /*                            CheckForQIX()                             */
 /************************************************************************/
 
-int OGRShapeLayer::CheckForQIX()
+bool OGRShapeLayer::CheckForQIX()
 
 {
     if( bCheckedForQIX )
@@ -442,7 +438,7 @@ int OGRShapeLayer::CheckForQIX()
 /*                            CheckForSBN()                             */
 /************************************************************************/
 
-int OGRShapeLayer::CheckForSBN()
+bool OGRShapeLayer::CheckForSBN()
 
 {
     if( bCheckedForSBN )
@@ -464,7 +460,7 @@ int OGRShapeLayer::CheckForSBN()
 /*      available.                                                      */
 /************************************************************************/
 
-int OGRShapeLayer::ScanIndices()
+bool OGRShapeLayer::ScanIndices()
 
 {
     iMatchingFID = 0;
@@ -487,7 +483,7 @@ int OGRShapeLayer::ScanIndices()
 /* -------------------------------------------------------------------- */
 
     if( m_poFilterGeom == NULL || hSHP == NULL )
-        return TRUE;
+        return true;
 
     OGREnvelope oSpatialFilterEnvelope;
     bool bTryQIXorSBN = true;
@@ -501,7 +497,7 @@ int OGRShapeLayer::ScanIndices()
         {
             // The spatial filter is larger than the layer extent. No use of
             // .qix file for now.
-            return TRUE;
+            return true;
         }
         else if( !oSpatialFilterEnvelope.Intersects(oLayerExtent) )
         {
@@ -603,7 +599,7 @@ int OGRShapeLayer::ScanIndices()
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -3243,14 +3239,14 @@ OGRErr OGRShapeLayer::RecomputeExtent()
 /*                              TouchLayer()                            */
 /************************************************************************/
 
-int OGRShapeLayer::TouchLayer()
+bool OGRShapeLayer::TouchLayer()
 {
     poDS->SetLastUsedLayer(this);
 
     if( eFileDescriptorsState == FD_OPENED )
-        return TRUE;
+        return true;
     if( eFileDescriptorsState == FD_CANNOT_REOPEN )
-        return FALSE;
+        return false;
 
     return ReopenFileDescriptors();
 }
@@ -3259,7 +3255,7 @@ int OGRShapeLayer::TouchLayer()
 /*                        ReopenFileDescriptors()                       */
 /************************************************************************/
 
-int OGRShapeLayer::ReopenFileDescriptors()
+bool OGRShapeLayer::ReopenFileDescriptors()
 {
     CPLDebug("SHAPE", "ReopenFileDescriptors(%s)", pszFullName);
 
@@ -3270,7 +3266,7 @@ int OGRShapeLayer::ReopenFileDescriptors()
         if( hSHP == NULL )
         {
             eFileDescriptorsState = FD_CANNOT_REOPEN;
-            return FALSE;
+            return false;
         }
     }
 
@@ -3283,13 +3279,13 @@ int OGRShapeLayer::ReopenFileDescriptors()
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Cannot reopen %s", CPLResetExtension(pszFullName, "dbf"));
             eFileDescriptorsState = FD_CANNOT_REOPEN;
-            return FALSE;
+            return false;
         }
     }
 
     eFileDescriptorsState = FD_OPENED;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
