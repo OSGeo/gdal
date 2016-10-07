@@ -135,7 +135,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
     ++nOutCounter_;
 
     OGRGeometry* poGeometry = poFeature->GetGeometryRef();
-    if ( (bWriteBBOX || bWriteFC_BBOX) && !poGeometry->IsEmpty() )
+    if( (bWriteBBOX || bWriteFC_BBOX) && !poGeometry->IsEmpty() )
     {
         OGREnvelope3D sEnvelope;
         poGeometry->getEnvelope(&sEnvelope);
@@ -182,9 +182,9 @@ OGRErr OGRGeoJSONWriteLayer::CreateField( OGRFieldDefn* poField,
 
 int OGRGeoJSONWriteLayer::TestCapability( const char* pszCap )
 {
-    if (EQUAL(pszCap, OLCCreateField))
+    if( EQUAL(pszCap, OLCCreateField) )
         return TRUE;
-    else if (EQUAL(pszCap, OLCSequentialWrite))
+    else if( EQUAL(pszCap, OLCSequentialWrite) )
         return TRUE;
 
     return FALSE;
