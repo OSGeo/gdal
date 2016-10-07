@@ -67,6 +67,8 @@ OGRPGDataSource::OGRPGDataSource() :
     nSoftTransactionLevel = 0;
     bBinaryTimeFormatIsInt8 = FALSE;
     bUseEscapeStringSyntax = FALSE;
+    m_bHasGeometryColumns = true;
+    m_bHasSpatialRefSys = true;
 
     nGeometryOID = (Oid) 0;
     nGeographyOID = (Oid) 0;
@@ -794,6 +796,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         }
         OGRPGClearResult( hResult );
     }
+
+    m_bHasGeometryColumns = OGRPG_Check_Table_Exists(hPGConn, "geometry_columns");
+    m_bHasSpatialRefSys = OGRPG_Check_Table_Exists(hPGConn, "spatial_ref_sys");
 
 /* -------------------------------------------------------------------- */
 /*      Find out "unknown SRID" value                                   */
@@ -2174,7 +2179,7 @@ OGRErr OGRPGDataSource::InitializeMetadataTables()
 OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 
 {
-    if( nId < 0 )
+    if( nId < 0 || !m_bHasSpatialRefSys )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -2253,7 +2258,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     char                *pszWKT = NULL;
     const char*         pszAuthorityName;
 
-    if( poSRS == NULL )
+    if( poSRS == NULL || !m_bHasSpatialRefSys )
         return nUndefinedSRID;
 
     OGRSpatialReference oSRS(*poSRS);

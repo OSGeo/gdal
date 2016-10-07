@@ -502,6 +502,9 @@ class OGRPGDataSource : public OGRDataSource
     int                 bBinaryTimeFormatIsInt8;
     int                 bUseEscapeStringSyntax;
 
+    bool                m_bHasGeometryColumns;
+    bool                m_bHasSpatialRefSys;
+
     int                GetUndefinedSRID() const { return nUndefinedSRID; }
 
   public:
