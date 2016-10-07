@@ -894,27 +894,37 @@ void OGRXPlaneAptReader::ParseHelipadRecord()
 /*                          AddBezierCurve()                           */
 /************************************************************************/
 
-#define CUBIC_INTERPOL(A, B, C, D)  ((A)*(b*b*b) + 3*(B)*(b*b)*a + 3 *(C)*b*(a*a) + (D)*(a*a*a))
+static double CUBIC_INTERPOL( double a, double b,
+                              double A, double B, double C, double D )
+{
+    return A*b*b*b + 3*B*b*b*a + 3 *C*b*a*a + D*a*a*a;
+}
 
 void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
                                         double dfLatA, double dfLonA,
                                         double dfCtrPtLatA, double dfCtrPtLonA,
-                                        double dfSymCtrlPtLatB, double dfSymCtrlPtLonB,
+                                        double dfSymCtrlPtLatB,
+                                        double dfSymCtrlPtLonB,
                                         double dfLatB, double dfLonB)
 {
     for( int step = 0; step <= 10; step++ )
     {
-        const double a = step / 10.;
-        const double b = 1. - a;
+        const double a = step / 10.0;
+        const double b = 1.0 - a;
         const double dfCtrlPtLonB = dfLonB - (dfSymCtrlPtLonB - dfLonB);
         const double dfCtrlPtLatB = dfLatB - (dfSymCtrlPtLatB - dfLatB);
-        lineString.addPoint(CUBIC_INTERPOL(dfLonA, dfCtrPtLonA, dfCtrlPtLonB, dfLonB),
-                            CUBIC_INTERPOL(dfLatA, dfCtrPtLatA, dfCtrlPtLatB, dfLatB));
+        lineString.addPoint(
+            CUBIC_INTERPOL(a, b, dfLonA, dfCtrPtLonA, dfCtrlPtLonB, dfLonB),
+            CUBIC_INTERPOL(a, b, dfLatA, dfCtrPtLatA, dfCtrlPtLatB, dfLatB));
     }
 }
 
 
-#define QUADRATIC_INTERPOL(A, B, C)  ((A)*(b*b) + 2*(B)*b*a + (C)*(a*a))
+static double QUADRATIC_INTERPOL( double a, double b,
+                                  double A, double B, double C )
+{
+    return A*b*b + 2*B*b*a + C*a*a;
+}
 
 void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
                                         double dfLatA, double dfLonA,
@@ -923,10 +933,11 @@ void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
 {
     for( int step = 0; step <= 10; step++ )
     {
-        double a = step / 10.;
-        double b = 1. - a;
-        lineString.addPoint(QUADRATIC_INTERPOL(dfLonA, dfCtrPtLon, dfLonB),
-                            QUADRATIC_INTERPOL(dfLatA, dfCtrPtLat, dfLatB));
+        const double a = step / 10.0;
+        const double b = 1.0 - a;
+        lineString.addPoint(
+            QUADRATIC_INTERPOL(a, b, dfLonA, dfCtrPtLon, dfLonB),
+            QUADRATIC_INTERPOL(a, b, dfLatA, dfCtrPtLat, dfLatB));
     }
 }
 
@@ -1100,8 +1111,10 @@ bool OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
         {
             if( !bLastPartIsClosed )
             {
-                CPLDebug("XPlane", "Line %d : Unexpected token when reading a polygon : %d",
-                        nLineNumber, nType);
+                CPLDebug(
+                    "XPlane",
+                    "Line %d : Unexpected token when reading a polygon : %d",
+                    nLineNumber, nType);
             }
             else
             {
