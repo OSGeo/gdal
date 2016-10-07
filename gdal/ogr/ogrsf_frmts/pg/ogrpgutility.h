@@ -53,5 +53,7 @@ inline void OGRPGClearResult( PGresult*& hResult )
     }
 }
 
+bool OGRPG_Check_Table_Exists(PGconn *hPGConn, const char * pszTableName);
+
 #endif /* ndef OGRPGUTILITY_H_INCLUDED */
 
