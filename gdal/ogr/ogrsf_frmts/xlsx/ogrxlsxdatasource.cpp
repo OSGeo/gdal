@@ -1554,7 +1554,9 @@ static void WriteContentTypes(const char* pszName, int nLayers)
 {
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/[Content_Types].xml", pszName), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    // TODO(schwehr): Convert all strlen(XML_HEADER) to constexpr with
+    // switch to C++11 or newer.
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<Types xmlns=\"%s/content-types\">\n", SCHEMA_PACKAGE);
     WriteOverride(fp, "/_rels/.rels", "application/vnd.openxmlformats-package.relationships+xml");
     WriteOverride(fp, "/docProps/core.xml", "application/vnd.openxmlformats-package.core-properties+xml");
@@ -1580,7 +1582,7 @@ static void WriteApp(const char* pszName)
 {
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/docProps/app.xml", pszName), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<Properties xmlns=\"%s/extended-properties\" "
                     "xmlns:vt=\"%s/docPropsVTypes\">\n", SCHEMA_OD, SCHEMA_OD);
     VSIFPrintfL(fp, "<TotalTime>0</TotalTime>\n");
@@ -1596,7 +1598,7 @@ static void WriteCore(const char* pszName)
 {
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/docProps/core.xml", pszName), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<cp:coreProperties xmlns:cp=\"%s/metadata/core-properties\" "
                     "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
                     "xmlns:dcmitype=\"http://purl.org/dc/dcmitype/\" "
@@ -1615,7 +1617,7 @@ static void WriteWorkbook(const char* pszName, OGRDataSource* poDS)
 {
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/workbook.xml", pszName), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<workbook %s xmlns:r=\"%s\">\n", MAIN_NS, SCHEMA_OD_RS);
     VSIFPrintfL(fp, "<fileVersion appName=\"Calc\"/>\n");
     /*
@@ -1682,7 +1684,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/worksheets/sheet%d.xml",
                              pszName, iLayer + 1), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<worksheet %s xmlns:r=\"%s\">\n", MAIN_NS, SCHEMA_OD_RS);
     /*
     VSIFPrintfL(fp, "<sheetViews>\n");
@@ -1850,7 +1852,7 @@ static void WriteSharedStrings(const char* pszName,
 {
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/sharedStrings.xml", pszName), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<sst %s uniqueCount=\"%d\">\n",
                 MAIN_NS,
                 (int)oStringList.size());
@@ -1874,7 +1876,7 @@ static void WriteStyles(const char* pszName)
 {
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/styles.xml", pszName), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<styleSheet %s>\n", MAIN_NS);
     VSIFPrintfL(fp, "<numFmts count=\"4\">\n");
     VSIFPrintfL(fp, "<numFmt formatCode=\"GENERAL\" numFmtId=\"164\"/>\n");
@@ -1931,7 +1933,7 @@ static void WriteWorkbookRels(const char* pszName, int nLayers)
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/_rels/workbook.xml.rels",
                              pszName), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<Relationships xmlns=\"%s\">\n", SCHEMA_PACKAGE_RS);
     VSIFPrintfL(fp, "<Relationship Id=\"rId1\" Type=\"%s/styles\" Target=\"styles.xml\"/>\n", SCHEMA_OD_RS);
     for(int i=0;i<nLayers;i++)
@@ -1953,7 +1955,7 @@ static void WriteDotRels(const char* pszName)
 {
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/_rels/.rels", pszName), "wb");
-    VSIFPrintfL(fp, XML_HEADER);
+    VSIFWriteL(XML_HEADER, strlen(XML_HEADER), 1, fp);
     VSIFPrintfL(fp, "<Relationships xmlns=\"%s\">\n", SCHEMA_PACKAGE_RS);
     VSIFPrintfL(fp, "<Relationship Id=\"rId1\" Type=\"%s/officeDocument\" Target=\"xl/workbook.xml\"/>\n", SCHEMA_OD_RS);
     VSIFPrintfL(fp, "<Relationship Id=\"rId2\" Type=\"%s/metadata/core-properties\" Target=\"docProps/core.xml\"/>\n", SCHEMA_PACKAGE_RS);
