@@ -112,7 +112,7 @@ static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGRShapeDataSource *poDS = new OGRShapeDataSource();
 
-    if( !poDS->Open( poOpenInfo, TRUE ) )
+    if( !poDS->Open( poOpenInfo, true ) )
     {
         delete poDS;
         return NULL;
@@ -182,7 +182,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
     OGRShapeDataSource  *poDS = new OGRShapeDataSource();
 
     GDALOpenInfo oOpenInfo( pszName, GA_Update );
-    if( !poDS->Open( &oOpenInfo, FALSE, bSingleNewFile ) )
+    if( !poDS->Open( &oOpenInfo, false, bSingleNewFile ) )
     {
         delete poDS;
         return NULL;

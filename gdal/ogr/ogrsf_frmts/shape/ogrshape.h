@@ -58,8 +58,8 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
                            OGRFeature *poFeature, const char *pszSHPEncoding,
-                           int* pbTruncationWarningEmitted,
-                           int bRewind );
+                           bool* pbTruncationWarningEmitted,
+                           bool bRewind );
 
 /************************************************************************/
 /*                         OGRShapeGeomFieldDefn                        */
@@ -113,7 +113,7 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
     OGRwkbGeometryType  eRequestedGeomType;
     int                 ResetGeomType( int nNewType );
 
-    int                 ScanIndices();
+    bool                ScanIndices();
 
     GIntBig            *panMatchingFIDs;
     int                 iMatchingFID;
@@ -128,33 +128,40 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
     bool                bSHPNeedsRepack;
     bool                bCheckedForQIX;
     SHPTreeDiskHandle   hQIX;
-    int                 CheckForQIX();
+    bool                CheckForQIX();
 
     bool                bCheckedForSBN;
     SBNSearchHandle     hSBN;
-    int                 CheckForSBN();
+    bool                CheckForSBN();
 
     bool                bSbnSbxDeleted;
 
     CPLString           ConvertCodePage( const char * );
     CPLString           osEncoding;
 
-    int                 bTruncationWarningEmitted;
+    bool                bTruncationWarningEmitted;
 
     bool                bHSHPWasNonNULL; // Must try to reopen a .shp?
     bool                bHDBFWasNonNULL; // Must try to reopen a .dbf
     // Current state of opening of file descriptor to .shp and .dbf.
-    int                 eFileDescriptorsState;
 
-    int                 TouchLayer();
-    int                 ReopenFileDescriptors();
+    typedef enum
+    {
+        FD_OPENED,
+        FD_CLOSED,
+        FD_CANNOT_REOPEN
+    } FileDescriptorState;
+    FileDescriptorState eFileDescriptorsState;
+
+    bool                TouchLayer();
+    bool                ReopenFileDescriptors();
 
     bool                bResizeAtClose;
 
     void                TruncateDBF();
 
     bool                bCreateSpatialIndexAtClose;
-    int                 bRewindOnWrite;
+    bool                bRewindOnWrite;
 
     bool                m_bAutoRepack;
     typedef enum
@@ -192,8 +199,8 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
                         OGRShapeLayer( OGRShapeDataSource* poDSIn,
                                        const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
-                                       OGRSpatialReference *poSRS, int bSRSSet,
-                                       int bUpdate,
+                                       OGRSpatialReference *poSRS, bool bSRSSet,
+                                       bool bUpdate,
                                        OGRwkbGeometryType eReqType,
                                        char ** papszCreateOptions = NULL);
     virtual            ~OGRShapeLayer();
@@ -264,9 +271,9 @@ class OGRShapeDataSource CPL_FINAL: public OGRDataSource
 
     OGRLayerPool       *GetPool() { return poPool; }
 
-    int                 Open( GDALOpenInfo* poOpenInfo, int bTestOpen,
-                              int bForceSingleFileDataSource = FALSE );
-    int                 OpenFile( const char *, int bUpdate, int bTestOpen );
+    bool                Open( GDALOpenInfo* poOpenInfo, bool bTestOpen,
+                              bool bForceSingleFileDataSource = false );
+    bool                OpenFile( const char *, bool bUpdate );
 
     virtual const char  *GetName() { return pszName; }
 

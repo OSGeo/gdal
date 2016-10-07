@@ -1434,8 +1434,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn * poDefn,
                            OGRFeature * poFeature,
                            const char *pszSHPEncoding,
-                           int* pbTruncationWarningEmitted,
-                           int bRewind )
+                           bool* pbTruncationWarningEmitted,
+                           bool bRewind )
 
 {
 #if DEBUG_VERBOSE
@@ -1460,7 +1460,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         const OGRErr eErr =
             SHPWriteOGRObject( hSHP, static_cast<int>(poFeature->GetFID()),
                                poFeature->GetGeometryRef(),
-                               CPL_TO_BOOL(bRewind),
+                               bRewind,
                                poDefn->GetGeomType() );
         if( eErr != OGRERR_NONE )
             return eErr;
@@ -1542,7 +1542,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               {
                   if( !(*pbTruncationWarningEmitted) )
                   {
-                      *pbTruncationWarningEmitted = TRUE;
+                      *pbTruncationWarningEmitted = true;
                       CPLError(
                           CE_Warning, CPLE_AppDefined,
                           "Value '%s' of field %s has been truncated to %d "
