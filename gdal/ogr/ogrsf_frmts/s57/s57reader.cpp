@@ -2450,8 +2450,10 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
 
         for( int i = 0; i < nFDefnCount; i++ )
         {
-            if( EQUAL(papoFDefnList[i]->GetName(),
-                      poClassContentExplorer->GetAcronym()) )
+            const char* pszAcronym = poClassContentExplorer->GetAcronym();
+            if( pszAcronym != NULL &&
+                EQUAL(papoFDefnList[i]->GetName(),
+                      pszAcronym) )
                 return papoFDefnList[i];
         }
 

@@ -403,7 +403,8 @@ bool S57ClassContentExplorer::SelectClass( const char *pszAcronym )
         if( !SelectClassByIndex( i ) )
             continue;
 
-        if( strcmp(GetAcronym(),pszAcronym) == 0 )
+        const char* pszClassAcronym = GetAcronym();
+        if( pszClassAcronym != NULL && strcmp(pszClassAcronym,pszAcronym) == 0 )
             return true;
     }
 
