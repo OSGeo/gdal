@@ -76,8 +76,8 @@ static const long aoVCS[] =
 #define NUMBER_OF_VERTICALCS    (sizeof(aoVCS)/sizeof(aoVCS[0]))
 
 // EPSG code range http://gis.stackexchange.com/a/18676/9904
-#define MIN_EPSG 1000
-#define MAX_EPSG 3768
+static const int MIN_EPSG = 1000;
+static const int MAX_EPSG = 3768;
 
 /************************************************************************/
 /*                         OGRSXFDataSource()                           */
