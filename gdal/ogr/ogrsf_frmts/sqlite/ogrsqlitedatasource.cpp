@@ -575,7 +575,7 @@ void OGRSQLiteBaseDataSource::NotifyFileOpened(const char* pszFilename,
 #ifdef USE_SQLITE_DEBUG_MEMALLOC
 
 /* DMA9 */
-#define DMA_SIGNATURE 0x444D4139
+static const int DMA_SIGNATURE = 0x444D4139;
 
 static void* OGRSQLiteDMA_Malloc(int size)
 {

@@ -58,16 +58,15 @@ typedef struct {
     pcre_extra *e;
 } cache_entry;
 
-#ifndef CACHE_SIZE
-#define CACHE_SIZE 16
-#endif
+static const int CACHE_SIZE = 16;
 
 /************************************************************************/
 /*                         OGRSQLiteREGEXPFunction()                    */
 /************************************************************************/
 
 static
-void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc, sqlite3_value **argv)
+void OGRSQLiteREGEXPFunction( sqlite3_context *ctx,
+                              CPL_UNUSED int argc, sqlite3_value **argv )
 {
     CPLAssert(argc == 2);
 

@@ -35,6 +35,9 @@ CPL_CVSID("$Id$");
 
 namespace OGRXLSX {
 
+static const int NUMBER_OF_DAYS_BETWEEN_1900_AND_1970 = 25569;
+static const int NUMBER_OF_SECONDS_PER_DAY = 86400;
+
 /************************************************************************/
 /*                            OGRXLSXLayer()                            */
 /************************************************************************/
@@ -474,8 +477,6 @@ static void SetField(OGRFeature* poFeature,
     {
         struct tm sTm;
         double dfNumberOfDaysSince1900 = CPLAtof(pszValue);
-#define NUMBER_OF_DAYS_BETWEEN_1900_AND_1970        25569
-#define NUMBER_OF_SECONDS_PER_DAY                   86400
         GIntBig nUnixTime = (GIntBig)((dfNumberOfDaysSince1900 -
                                        NUMBER_OF_DAYS_BETWEEN_1900_AND_1970 )*
                                                 NUMBER_OF_SECONDS_PER_DAY);
@@ -1533,12 +1534,17 @@ static void WriteOverride( VSILFILE* fp, const char* pszPartName,
                 pszPartName, pszContentType);
 }
 
-#define XML_HEADER "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-#define MAIN_NS "xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\""
-#define SCHEMA_OD "http://schemas.openxmlformats.org/officeDocument/2006"
-#define SCHEMA_OD_RS "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-#define SCHEMA_PACKAGE "http://schemas.openxmlformats.org/package/2006"
-#define SCHEMA_PACKAGE_RS "http://schemas.openxmlformats.org/package/2006/relationships"
+static const char XML_HEADER[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+static const char MAIN_NS[] =
+    "xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"";
+static const char SCHEMA_OD[] =
+    "http://schemas.openxmlformats.org/officeDocument/2006";
+static const char SCHEMA_OD_RS[] =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+static const char SCHEMA_PACKAGE[] =
+    "http://schemas.openxmlformats.org/package/2006";
+static const char SCHEMA_PACKAGE_RS[] =
+    "http://schemas.openxmlformats.org/package/2006/relationships";
 
 /************************************************************************/
 /*                           WriteContentTypes()                        */

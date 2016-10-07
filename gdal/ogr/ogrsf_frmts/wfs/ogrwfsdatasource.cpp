@@ -38,8 +38,8 @@
 
 CPL_CVSID("$Id$");
 
-#define DEFAULT_BASE_START_INDEX     0
-#define DEFAULT_PAGE_SIZE            100
+static const int DEFAULT_BASE_START_INDEX = 0;
+static const int DEFAULT_PAGE_SIZE = 100;
 
 typedef struct
 {
@@ -49,18 +49,18 @@ typedef struct
 
 static const MetadataItem asMetadata[] =
 {
-    {  "Service.Title", "TITLE" }, /*1.0 */
-    {  "ServiceIdentification.Title", "TITLE" }, /* 1.1 or 2.0 */
-    {  "Service.Abstract", "ABSTRACT" }, /* 1.0 */
-    {  "ServiceIdentification.Abstract", "ABSTRACT" }, /* 1.1 or 2.0 */
-    {  "ServiceProvider.ProviderName", "PROVIDER_NAME" }, /* 1.1 or 2.0 */
+    { "Service.Title", "TITLE" }, /*1.0 */
+    { "ServiceIdentification.Title", "TITLE" }, /* 1.1 or 2.0 */
+    { "Service.Abstract", "ABSTRACT" }, /* 1.0 */
+    { "ServiceIdentification.Abstract", "ABSTRACT" }, /* 1.1 or 2.0 */
+    { "ServiceProvider.ProviderName", "PROVIDER_NAME" }, /* 1.1 or 2.0 */
 };
 
 /************************************************************************/
 /*                            WFSFindNode()                             */
 /************************************************************************/
 
-CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName)
+CPLXMLNode* WFSFindNode( CPLXMLNode* psXML, const char* pszRootName )
 {
     CPLXMLNode* psIter = psXML;
     do
@@ -105,14 +105,13 @@ CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName)
 class OGRWFSWrappedResultLayer : public OGRLayer
 {
     GDALDataset *poDS;
-    OGRLayer      *poLayer;
+    OGRLayer    *poLayer;
 
     public:
-        OGRWFSWrappedResultLayer(GDALDataset* poDSIn, OGRLayer* poLayerIn)
-        {
-            poDS = poDSIn;
-            poLayer = poLayerIn;
-        }
+        OGRWFSWrappedResultLayer( GDALDataset* poDSIn, OGRLayer* poLayerIn ) :
+            poDS(poDSIn),
+            poLayer(poLayerIn)
+        {}
         ~OGRWFSWrappedResultLayer()
         {
             delete poDS;

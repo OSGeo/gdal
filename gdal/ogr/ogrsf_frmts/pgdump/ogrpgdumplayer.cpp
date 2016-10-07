@@ -33,17 +33,18 @@
 
 CPL_CVSID("$Id$");
 
-#define USE_COPY_UNSET -1
+static const int USE_COPY_UNSET = -1;
 
 static CPLString OGRPGDumpEscapeStringList(
     char** papszItems, bool bForInsertOrUpdate,
     OGRPGCommonEscapeStringCbk pfnEscapeString,
     void* userdata );
 
-static CPLString OGRPGDumpEscapeStringWithUserData(   CPL_UNUSED void* user_data,
-                                   const char* pszStrValue, int nMaxLength,
-                                   CPL_UNUSED const char* pszLayerName,
-                                   const char* pszFieldName)
+static CPLString OGRPGDumpEscapeStringWithUserData(
+    CPL_UNUSED void* user_data,
+    const char* pszStrValue, int nMaxLength,
+    CPL_UNUSED const char* pszLayerName,
+    const char* pszFieldName )
 {
     return OGRPGDumpEscapeString(pszStrValue, nMaxLength, pszFieldName);
 }
