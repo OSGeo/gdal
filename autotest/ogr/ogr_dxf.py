@@ -286,11 +286,11 @@ def ogr_dxf_9():
     feat = gdaltest.dxf_layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
-    if geom.GetGeometryType() != ogr.wkbGeometryCollection25D:
+    if geom.GetGeometryType() != ogr.wkbMultiLineString25D:
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (79.069506278985116 121.003652476272777 0,79.716898725419625 118.892590150942851 0),LINESTRING (79.716898725419625 118.892590150942851 0,78.140638855839953 120.440702522851453 0),LINESTRING (78.140638855839953 120.440702522851453 0,80.139111190485622 120.328112532167196 0),LINESTRING (80.139111190485622 120.328112532167196 0,78.619146316248077 118.920737648613908 0),LINESTRING (78.619146316248077 118.920737648613908 0,79.041358781314059 120.975504978601705 0))' ):
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((79.069506278985116 121.003652476272777 0,79.716898725419625 118.892590150942851 0),(79.716898725419625 118.892590150942851 0,78.140638855839953 120.440702522851453 0),(78.140638855839953 120.440702522851453 0,80.139111190485622 120.328112532167196 0),(80.139111190485622 120.328112532167196 0,78.619146316248077 118.920737648613908 0),(78.619146316248077 118.920737648613908 0,79.041358781314059 120.975504978601705 0))' ):
         return 'fail'
 
     # First of two MTEXTs
@@ -758,7 +758,7 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'Did not get expected block name.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),LINESTRING (0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),LINESTRING (-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),LINESTRING (1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),LINESTRING (-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))' ):
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),(0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),(-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),(1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),(-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))' ):
         return 'fail'
 
     feat = None
@@ -784,6 +784,20 @@ def ogr_dxf_17():
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt(
         'GEOMETRYCOLLECTION( LINESTRING(0 0,1 1),LINESTRING(1 0,0 1))' ) )
     dst_feat.SetField( 'BlockName', 'XMark' )
+    blyr.CreateFeature( dst_feat )
+
+    # Block with 2 polygons
+    dst_feat = ogr.Feature( feature_def = blyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt(
+        'GEOMETRYCOLLECTION( POLYGON((10 10,10 20,20 20,20 10,10 10)),POLYGON((10 -10,10 -20,20 -20,20 -10,10 -10)))' ) )
+    dst_feat.SetField( 'BlockName', 'Block2' )
+    blyr.CreateFeature( dst_feat )
+
+    # Block with point and line
+    dst_feat = ogr.Feature( feature_def = blyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt(
+        'GEOMETRYCOLLECTION( POINT(1 2),LINESTRING(0 0,1 1))' ) )
+    dst_feat.SetField( 'BlockName', 'Block3' )
     blyr.CreateFeature( dst_feat )
 
     # Write a block reference feature.
@@ -816,6 +830,20 @@ def ogr_dxf_17():
                                 [4.0,5.0,6.0] )
     lyr.CreateFeature( dst_feat )
 
+    # Write a Block2 reference feature.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT(350 100)' ))
+    dst_feat.SetField( 'Layer', 'abc' )
+    dst_feat.SetField( 'BlockName', 'Block2' )
+    lyr.CreateFeature( dst_feat )
+
+    # Write a Block3 reference feature.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT(400 100)' ))
+    dst_feat.SetField( 'Layer', 'abc' )
+    dst_feat.SetField( 'BlockName', 'Block3' )
+    lyr.CreateFeature( dst_feat )
+
     ds = None
 
     # Reopen and check contents.
@@ -830,11 +858,11 @@ def ogr_dxf_17():
         gdaltest.post_reason( 'Got wrong subclasses for feature 1.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (200 100,201 101),LINESTRING (201 100,200 101))' ):
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((200 100,201 101),(201 100,200 101))' ):
         print( 'Feature 1' )
         return 'fail'
 
-    # Check second feature.
+    # Check 2nd feature.
     feat = lyr.GetNextFeature()
     if feat.GetField('SubClasses') != 'AcDbEntity:AcDbPoint':
         gdaltest.post_reason( 'Got wrong subclasses for feature 2.' )
@@ -844,24 +872,36 @@ def ogr_dxf_17():
         print( 'Feature 2' )
         return 'fail'
 
-    # Check third feature.
+    # Check 3rd feature.
     feat = lyr.GetNextFeature()
     if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
         gdaltest.post_reason( 'Got wrong subclasses for feature 3.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),LINESTRING (250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),LINESTRING (249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),LINESTRING (251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),LINESTRING (249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))' ):
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),(250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),(249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),(251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),(249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))' ):
         print( 'Feature 3' )
         return 'fail'
 
-    # Check fourth feature (scaled and rotated)
+    # Check 4th feature (scaled and rotated)
     feat = lyr.GetNextFeature()
     if feat.GetField('SubClasses') != 'AcDbEntity:AcDbBlockReference':
         gdaltest.post_reason( 'Got wrong subclasses for feature 4.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (300 100,300.964101615137736 106.330127018922198),LINESTRING (303.464101615137736 102.0,297.5 104.330127018922198))' ):
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((300 100,300.964101615137736 106.330127018922198), (303.464101615137736 102.0,297.5 104.330127018922198))' ):
         print( 'Feature 4' )
+        return 'fail'
+
+    # Check 5th feature
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON (((360 110,360 120,370 120,370 110,360 110)),((360 90,360 80,370 80,370 90,360 90)))' ):
+        print( 'Feature 5' )
+        return 'fail'
+
+    # Check 6th feature
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (POINT (401 102),LINESTRING (400 100,401 101))' ):
+        print( 'Feature 5' )
         return 'fail'
 
     # Cleanup
@@ -995,7 +1035,7 @@ def ogr_dxf_19():
         gdaltest.post_reason( 'Got wrong subclasses for feature 1.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'GEOMETRYCOLLECTION (LINESTRING (249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),LINESTRING (250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),LINESTRING (249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),LINESTRING (251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),LINESTRING (249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))' ):
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((249.971852502328943 201.04145741382942 0,250.619244948763452 198.930395088499495 0),(250.619244948763452 198.930395088499495 0,249.042985079183779 200.47850746040811 0),(249.042985079183779 200.47850746040811 0,251.04145741382942 200.365917469723854 0),(251.04145741382942 200.365917469723854 0,249.52149253959189 198.95854258617058 0),(249.52149253959189 198.95854258617058 0,249.943705004657858 201.013309916158363 0))' ):
         return 'fail'
 
     # Cleanup
