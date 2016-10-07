@@ -14,6 +14,15 @@ ifeq ($(HAVE_JASPER),yes)
 EXTRAFLAGS	:= 	$(EXTRAFLAGS) -DHAVE_JASPER
 endif
 
+ifeq ($(PNG_SETTING),internal)
+EXTRAFLAGS      :=      $(EXTRAFLAGS) -I ../png/libpng -DUSE_PNG
+OBJ     :=      $(OBJ) pngpack.o pngunpack.o enc_png.o dec_png.o
+endif
+
+ifeq ($(LIBZ_SETTING),internal)
+EXTRAFLAGS      :=      $(EXTRAFLAGS) -I ../zlib
+endif
+
 CPPFLAGS	:=	 $(CPPFLAGS) $(EXTRAFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
