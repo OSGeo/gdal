@@ -55,7 +55,7 @@ int GeoJSONIsObject( const char* pszText )
         pszText++;
 
     const char* const apszPrefix[] = { "loadGeoJSON(", "jsonp(" };
-    for(size_t iP = 0; iP < sizeof(apszPrefix) / sizeof(apszPrefix[0]); iP++ )
+    for( size_t iP = 0; iP < sizeof(apszPrefix) / sizeof(apszPrefix[0]); iP++ )
     {
         if( strncmp(pszText, apszPrefix[iP], strlen(apszPrefix[iP])) == 0 )
         {
@@ -110,7 +110,8 @@ GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo )
     // NOTE: Sometimes URL ends with .geojson token, for example
     //       http://example/path/2232.geojson
     //       It's important to test beginning of source first.
-    if ( eGeoJSONProtocolUnknown != GeoJSONGetProtocolType( poOpenInfo->pszFilename ) )
+    if( eGeoJSONProtocolUnknown !=
+        GeoJSONGetProtocolType( poOpenInfo->pszFilename ) )
     {
         if( (strstr(poOpenInfo->pszFilename, "SERVICE=WFS") ||
              strstr(poOpenInfo->pszFilename, "service=WFS") ||
@@ -172,7 +173,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
 {
     eSubType = OFSTNone;
 
-    if (poObject == NULL) { return OFTString; }
+    if( poObject == NULL ) { return OFTString; }
 
     json_type type = json_object_get_type( poObject );
 
@@ -212,40 +213,41 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
     {
         if( bArrayAsString )
             return OFTString;
-        int nSize = json_object_array_length(poObject);
-        if (nSize == 0)
+        const int nSize = json_object_array_length(poObject);
+        if( nSize == 0 )
             return OFTStringList; /* we don't know, so let's assume it's a string list */
         OGRFieldType eType = OFTIntegerList;
-        int bOnlyBoolean = TRUE;
-        for(int i=0;i<nSize;i++)
+        bool bOnlyBoolean = true;
+        for( int i = 0; i < nSize; i++ )
         {
             json_object* poRow = json_object_array_get_idx(poObject, i);
-            if (poRow != NULL)
+            if( poRow != NULL )
             {
                 type = json_object_get_type( poRow );
-                bOnlyBoolean &= (type == json_type_boolean);
-                if (type == json_type_string)
+                bOnlyBoolean &= type == json_type_boolean;
+                if( type == json_type_string )
                     return OFTStringList;
-                else if (type == json_type_double)
+                else if( type == json_type_double )
                     eType = OFTRealList;
-                else if (eType == OFTIntegerList &&
-                         type == json_type_int)
+                else if( eType == OFTIntegerList &&
+                         type == json_type_int )
                 {
                     GIntBig nVal = json_object_get_int64(poRow);
                     if( !CPL_INT64_FITS_ON_INT32(nVal) )
                         eType = OFTInteger64List;
                 }
-                else if (type != json_type_int &&
-                         type != json_type_boolean)
+                else if( type != json_type_int &&
+                         type != json_type_boolean )
                     return OFTString;
             }
         }
         if( bOnlyBoolean )
             eSubType = OFSTBoolean;
+
         return eType;
     }
-    else
-        return OFTString; /* null, object */
+
+    return OFTString; // null, object
 }
 
 /************************************************************************/
@@ -254,7 +256,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
 
 OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 {
-    if (poObject == NULL) { return OFTString; }
+    if( poObject == NULL ) { return OFTString; }
     const char* pszStr = json_object_get_string( poObject );
 
     OGRField sWrkField;

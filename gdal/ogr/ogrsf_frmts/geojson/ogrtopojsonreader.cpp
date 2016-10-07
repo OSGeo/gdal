@@ -174,13 +174,13 @@ static void ParseArc( OGRLineString* poLS, json_object* poArcsDB, int nArcID,
 /*                        ParseLineString()                             */
 /************************************************************************/
 
-static void ParseLineString(OGRLineString* poLS, json_object* poRing,
-                            json_object* poArcsDB, ScalingParams* psParams)
+static void ParseLineString( OGRLineString* poLS, json_object* poRing,
+                             json_object* poArcsDB, ScalingParams* psParams )
 {
-    int nArcsDB = json_object_array_length(poArcsDB);
+    const int nArcsDB = json_object_array_length(poArcsDB);
 
-    int nArcsRing = json_object_array_length(poRing);
-    for(int j=0; j<nArcsRing; j++)
+    const int nArcsRing = json_object_array_length(poRing);
+    for( int j = 0; j < nArcsRing; j++ )
     {
         json_object* poArcId = json_object_array_get_idx(poRing, j);
         if( poArcId != NULL && json_type_int == json_object_get_type(poArcId) )
@@ -207,8 +207,8 @@ static void ParseLineString(OGRLineString* poLS, json_object* poRing,
 static void ParsePolygon(OGRPolygon* poPoly, json_object* poArcsObj,
                          json_object* poArcsDB, ScalingParams* psParams)
 {
-    int nRings = json_object_array_length(poArcsObj);
-    for(int i=0; i<nRings; i++)
+    const int nRings = json_object_array_length(poArcsObj);
+    for( int i = 0; i < nRings; i++ )
     {
         OGRLinearRing* poLR = new OGRLinearRing();
         poPoly->addRingDirectly(poLR);
@@ -228,8 +228,8 @@ static void ParsePolygon(OGRPolygon* poPoly, json_object* poArcsObj,
 static void ParseMultiLineString(OGRMultiLineString* poMLS, json_object* poArcsObj,
                                  json_object* poArcsDB, ScalingParams* psParams)
 {
-    int nRings = json_object_array_length(poArcsObj);
-    for(int i=0; i<nRings; i++)
+    const int nRings = json_object_array_length(poArcsObj);
+    for( int i = 0; i < nRings; i++ )
     {
         OGRLineString* poLS = new OGRLineString();
         poMLS->addGeometryDirectly(poLS);
@@ -249,8 +249,8 @@ static void ParseMultiLineString(OGRMultiLineString* poMLS, json_object* poArcsO
 static void ParseMultiPolygon(OGRMultiPolygon* poMultiPoly, json_object* poArcsObj,
                          json_object* poArcsDB, ScalingParams* psParams)
 {
-    int nPolys = json_object_array_length(poArcsObj);
-    for(int i=0; i<nPolys; i++)
+    const int nPolys = json_object_array_length(poArcsObj);
+    for( int i = 0; i < nPolys; i++ )
     {
         OGRPolygon* poPoly = new OGRPolygon();
         poMultiPoly->addGeometryDirectly(poPoly);
@@ -340,7 +340,7 @@ static void ParseObject(const char* pszId,
         OGRMultiPoint* poMP = new OGRMultiPoint();
         poGeom = poMP;
         int nTuples = json_object_array_length(poCoordinatesObj);
-        for(int i=0; i<nTuples; i++)
+        for( int i = 0; i < nTuples; i++ )
         {
             json_object* poPair = json_object_array_get_idx(poCoordinatesObj, i);
             double dfX = 0.0;
@@ -456,9 +456,9 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                         poDefn->AddFieldDefn( &fldDefn );
                     }
 
-                    int nGeometries = json_object_array_length(poGeometries);
-                    /* First pass to establish schema */
-                    for(int i=0; i<nGeometries; i++)
+                    const int nGeometries = json_object_array_length(poGeometries);
+                    // First pass to establish schema.
+                    for( int i = 0; i < nGeometries; i++ )
                     {
                         json_object* poGeom =
                             json_object_array_get_idx(poGeometries, i);
@@ -469,8 +469,8 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                         }
                     }
 
-                    /* Second pass to build objects */
-                    for(int i=0; i<nGeometries; i++)
+                    // Second pass to build objects.
+                    for( int i = 0; i < nGeometries; i++ )
                     {
                         json_object* poGeom =
                             json_object_array_get_idx(poGeometries, i);
@@ -614,15 +614,16 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     {
         const int nObjects = json_object_array_length(poObjects);
         bool bNeedSecondPass = false;
-        for(int i=0; i<nObjects; i++)
+        for( int i = 0; i < nObjects; i++ )
         {
             json_object* poObj = json_object_array_get_idx(poObjects, i);
             bNeedSecondPass |= ParseObjectMain(NULL, poObj, poDS, &poMainLayer,
-                                               poArcs, &sParams, 1, aoSetUndeterminedTypeFields);
+                                               poArcs, &sParams, 1,
+                                               aoSetUndeterminedTypeFields);
         }
         if( bNeedSecondPass )
         {
-            for(int i=0; i<nObjects; i++)
+            for( int i = 0; i < nObjects; i++ )
             {
                 json_object* poObj = json_object_array_get_idx(poObjects, i);
                 ParseObjectMain(NULL, poObj, poDS, &poMainLayer, poArcs,

@@ -82,7 +82,8 @@ class OGRESRIFeatureServiceDataset: public GDALDataset
        ~OGRESRIFeatureServiceDataset();
 
         int GetLayerCount() { return 1; }
-        OGRLayer* GetLayer( int nLayer ) { return (nLayer == 0) ? poLayer : NULL; }
+        OGRLayer* GetLayer( int nLayer )
+            { return (nLayer == 0) ? poLayer : NULL; }
 
         OGRLayer* GetUnderlyingLayer() { return poCurrent->GetLayer(0); }
 
@@ -174,10 +175,10 @@ OGRFeature* OGRESRIFeatureServiceLayer::GetNextFeature()
         nFeaturesRead ++;
         delete poSrcFeat;
 
-        if((m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature )) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
         }
