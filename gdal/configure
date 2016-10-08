@@ -730,9 +730,9 @@ EXPAT_CFLAGS
 HAVE_NAS
 XERCES_INCLUDE
 HAVE_XERCES
-XERCES_VERSION
 XERCES_LDFLAGS
 XERCES_CFLAGS
+XERCES_VERSION
 INGRES_INC
 INGRES_LIB
 II_SYSTEM
@@ -25410,7 +25410,7 @@ INGRES_INC=$INGRES_INC
 
 
 
-XERCES_REQ_VERSION="2.7.0"
+XERCES_REQ_VERSION="3.1.0"
 
 
 # Check whether --with-xerces was given.
@@ -25496,7 +25496,7 @@ fi
         CPPFLAGS="$CPPFLAGS -I$xerces_include_dir -I$xerces_include_dir2"
 
         saved_LIBS="$LIBS"
-        LIBS="$LIBS $xerces_lib_flags"
+        LIBS="$xerces_lib_flags $LIBS"
 
                                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Xerces C++ Parser headers in $xerces_include_dir and $xerces_include_dir2" >&5
 $as_echo_n "checking for Xerces C++ Parser headers in $xerces_include_dir and $xerces_include_dir2... " >&6; }
@@ -25612,13 +25612,10 @@ $as_echo_n "checking for Xerces C++ Parser... " >&6; }
 
     if test "$run_xerces_test" = "yes"; then
         if test "$xerces_header_found" = "yes" -a "$xerces_lib_found" = "yes"; then
-
-
-
-
             HAVE_XERCES="yes"
         else
             XERCES_CFLAGS=""
+            XERCES_LDFLAGS=""
             HAVE_XERCES="no"
         fi
 
@@ -25668,8 +25665,15 @@ $as_echo "yes" >&6; }
                     else
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found Xerces C++ Parser $XERCES_VERSION, which is older than required. Possible compilation failure." >&5
-$as_echo "$as_me: WARNING: Found Xerces C++ Parser $XERCES_VERSION, which is older than required. Possible compilation failure." >&2;}
+                        if test "$xerces_requested" = "yes"; then
+                            as_fn_error $? "Found Xerces C++ Parser $XERCES_VERSION, which is older than required." "$LINENO" 5
+                        else
+                            { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found Xerces C++ Parser $XERCES_VERSION, which is older than required. Disabling it" >&5
+$as_echo "$as_me: WARNING: Found Xerces C++ Parser $XERCES_VERSION, which is older than required. Disabling it" >&2;}
+                            XERCES_CFLAGS=""
+                            XERCES_LDFLAGS=""
+                            HAVE_XERCES="no"
+                        fi
                     fi
                 else
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
@@ -25679,6 +25683,9 @@ $as_echo "$as_me: WARNING: Missing header XercesVersion.hpp. Unable to determine
                 fi
             fi
         fi
+
+
+
 
     else
         HAVE_XERCES="no"
