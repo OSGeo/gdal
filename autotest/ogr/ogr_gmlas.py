@@ -1729,6 +1729,9 @@ def ogr_gmlas_dataset_getnextfeature():
 
 def ogr_gmlas_inline_identifier():
 
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
     gdal.FileFromMemBuffer('/vsimem/gmlas_fake_gml32.xsd',
                            open('data/gmlas_fake_gml32.xsd', 'rb').read())
 
@@ -1792,6 +1795,9 @@ def ogr_gmlas_inline_identifier():
 #  Test that we can handle things like gml:name and au:name
 
 def ogr_gmlas_avoid_same_name_inlined_classes():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_avoid_same_name_inlined_classes_ns1.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -1923,6 +1929,9 @@ def ogr_gmlas_validate_ignored_fixed_attribute():
 #  Test REMOVE_UNUSED_LAYERS and REMOVE_UNUSED_FIELDS options
 
 def ogr_gmlas_remove_unused_layers_and_fields():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_remove_unused_layers_and_fields.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
