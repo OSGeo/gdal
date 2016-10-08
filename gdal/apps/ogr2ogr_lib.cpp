@@ -1540,7 +1540,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
 /*      For random reading                                              */
 /* -------------------------------------------------------------------- */
-    bool bRandomLayerReading = poDS->TestCapability(ODsCRandomLayerRead);
+    const bool bRandomLayerReading = CPL_TO_BOOL(
+                                    poDS->TestCapability(ODsCRandomLayerRead));
     if( bRandomLayerReading &&
         !poODS->TestCapability(ODsCRandomLayerWrite) &&
         !psOptions->bQuiet )
