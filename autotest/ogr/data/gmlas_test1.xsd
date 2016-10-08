@@ -60,6 +60,8 @@
             <xs:element name="positiveInteger"  type="xs:positiveInteger"/>
             <xs:element name="dt"  type="xs:dateTime"/>
             <xs:element name="dt_array"  type="xs:dateTime" maxOccurs="unbounded"/>
+            <xs:element name="date"  type="xs:date"/>
+            <xs:element name="time"  type="xs:time"/>
             <xs:element name="boolean"  type="xs:boolean"/>
             <xs:element name="boolean_array" maxOccurs="2">
                 <xs:simpleType>
@@ -271,6 +273,8 @@
             <xs:element ref="otherns:an_abstract_element_in_other_ns"/>
 
             <xs:element name="any_type" type="xs:anyType"/>
+            <xs:element name="any_type_repeated" type="xs:anyType" maxOccurs="2"/>
+            <xs:element name="any_type_optional" minOccurs="0"/>
             <xs:element name="any_attr" type="myns:int_with_any_attr"/>
             <xs:element name="any_attr_no_attr" type="myns:int_with_any_attr"/>
 
