@@ -37,6 +37,8 @@
     <MYNS:dt>2012-01-01T12:34:56Z</MYNS:dt>
     <MYNS:dt_array>2012-01-01T12:34:56Z</MYNS:dt_array>
     <MYNS:dt_array>2012-01-02T12:34:56Z</MYNS:dt_array>
+    <MYNS:date>2012-01-01</MYNS:date>
+    <MYNS:time>12:34:56</MYNS:time>
     <MYNS:boolean>true</MYNS:boolean>
     <MYNS:boolean_array>true</MYNS:boolean_array>
     <MYNS:boolean_array>false</MYNS:boolean_array>
@@ -141,6 +143,9 @@
     <otherns:an_abstract_element_in_other_ns_realization1><otherns:a_int>3</otherns:a_int></otherns:an_abstract_element_in_other_ns_realization1>
 
     <MYNS:any_type foo="bar">A&lt;<foo bar="baz&quot;&gt;">blow</foo><MYNS:blo/>C</MYNS:any_type>
+    <MYNS:any_type_repeated><bar/></MYNS:any_type_repeated>
+    <MYNS:any_type_repeated><baz/></MYNS:any_type_repeated>
+    <MYNS:any_type_optional><baw/></MYNS:any_type_optional>
     <MYNS:any_attr foo="bar">1</MYNS:any_attr>
     <MYNS:any_attr_no_attr>2</MYNS:any_attr_no_attr>
 

@@ -93,6 +93,33 @@ def ogr_gmlas_basic():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_gmlas_test_ogrsf():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # Skip tests when -fsanitize is used
+    if 'TRAVIS_BRANCH' in os.environ and \
+       os.environ['TRAVIS_BRANCH'].find('sanitize') >= 0:
+       print('Skipping because of -sanitize')
+       return 'skip'
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro GMLAS:data/gmlas_test1.xml')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test virtual file support
 
 def ogr_gmlas_virtual_file():
@@ -1321,7 +1348,21 @@ def ogr_gmlas_cache():
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    # Will create the directory and download and and cache
+    # Test invalid cache directory
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options = [
+            'CONFIG_FILE=<Configuration><SchemaCache><Directory>/inexisting_directory/not/exist</Directory></SchemaCache></Configuration>'])
+    if ds is None:
+        gdaltest.post_reason('fail')
+        webserver.server_stop(webserver_process, webserver_port)
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        webserver.server_stop(webserver_process, webserver_port)
+        return 'fail'
+
+    # Will create the directory and download and cache
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_cache.xml', open_options = [
             'CONFIG_FILE=<Configuration><SchemaCache><Directory>/vsimem/my/gmlas_cache</Directory></SchemaCache></Configuration>'])
     if ds is None:
@@ -1551,15 +1592,15 @@ def ogr_gmlas_instantiate_only_gml_feature():
     if ogr.GetDriverByName('GMLAS') is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/gmlas_fake_gml32.xsd',
+    gdal.FileFromMemBuffer('/vsimem/subdir/gmlas_fake_gml32.xsd',
                            open('data/gmlas_fake_gml32.xsd', 'rb').read())
 
-    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_instantiate_only_gml_feature.xsd',
+    gdal.FileFromMemBuffer('/vsimem/subdir/ogr_gmlas_instantiate_only_gml_feature.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
               xmlns:gml="http://fake_gml32"
               elementFormDefault="qualified" attributeFormDefault="unqualified">
 
-<xs:import namespace="http://fake_gml32" schemaLocation="gmlas_fake_gml32.xsd"/>
+<xs:import namespace="http://fake_gml32" schemaLocation="../subdir/gmlas_fake_gml32.xsd"/>
 
 <!--
     Xerces correctly detects circular dependencies
@@ -1607,14 +1648,14 @@ def ogr_gmlas_instantiate_only_gml_feature():
 </xs:schema>""")
 
     ds = gdal.OpenEx('GMLAS:',
-        open_options = ['XSD=/vsimem/ogr_gmlas_instantiate_only_gml_feature.xsd'])
+        open_options = ['XSD=/vsimem/subdir/ogr_gmlas_instantiate_only_gml_feature.xsd'])
     if ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
-    gdal.Unlink('/vsimem/ogr_gmlas_instantiate_only_gml_feature.xsd')
-    gdal.Unlink('/vsimem/gmlas_fake_gml32.xsd')
+    gdal.Unlink('/vsimem/subdir/ogr_gmlas_instantiate_only_gml_feature.xsd')
+    gdal.Unlink('/vsimem/subdir/gmlas_fake_gml32.xsd')
 
     return 'success'
 
@@ -1698,7 +1739,7 @@ def ogr_gmlas_dataset_getnextfeature():
         count += 1
         last_l = l
 
-    if count != 51:
+    if count != 53:
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'
@@ -2207,6 +2248,30 @@ def ogr_gmlas_xlink_resolver():
         return 'fail'
     ds = None
 
+    # Enable remote resolution and caching and REFRESH_CACHE
+    gdal.FileFromMemBuffer('/vsimem/resource.xml', 'baz')
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
+        open_options = ['REFRESH_CACHE=YES', """CONFIG_FILE=<Configuration>
+        <XLinkResolution>
+            <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
+            <DefaultResolution enabled="true">
+                <AllowRemoteDownload>true</AllowRemoteDownload>
+                <CacheResults>true</CacheResults>
+            </DefaultResolution>
+        </XLinkResolution></Configuration>"""] )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['my_link_rawcontent' ] != 'baz':
+        gdaltest.post_reason('fail')
+        webserver.server_stop(webserver_process, webserver_port)
+        return 'fail'
+    # Check that the content is cached
+    if gdal.VSIStatL(cached_file) is None:
+        gdaltest.post_reason('fail')
+        webserver.server_stop(webserver_process, webserver_port)
+        return 'fail'
+    ds = None
+
     # Test absent remote resource
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_xlink_resolver_absent_resource.xml',
 """
@@ -2296,7 +2361,7 @@ def ogr_gmlas_xlink_resolver():
     <myns:foo>fooVal</myns:foo>
     <myns:bar>123</myns:bar>
 </myns:top>""")
-    gdal.FileFromMemBuffer('/vsimem/subdir2/resource2.xml', """
+    gdal.FileFromMemBuffer('/vsimem/subdir2/resource2_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_very_long.xml', """
 <?xml version='1.0' encoding='UTF-8'?>
 <myns:top>
     <myns:foo>fooVal2</myns:foo>
@@ -2304,6 +2369,7 @@ def ogr_gmlas_xlink_resolver():
     <myns:baz val="345"/>
     <myns:xml_blob>foo<blob/>bar</myns:xml_blob>
     <long>1234567890123</long>
+    <double>1.25</double>
     <datetime>2016-10-07T12:34:56Z</datetime>
 </myns:top>""")
     gdal.FileFromMemBuffer('/vsimem/non_matching_resource.xml', 'foo')
@@ -2315,7 +2381,7 @@ def ogr_gmlas_xlink_resolver():
           xsi:noNamespaceSchemaLocation="ogr_gmlas_xlink_resolver.xsd">
   <main_elt>
     <my_link attr_before="a" xlink:href="http://localhost:%d/vsimem/subdir1/resource.xml" attr_after="b"/>
-    <my_link2 attr_before="a2" xlink:href="http://localhost:%d/vsimem/subdir2/resource2.xml" attr_after="b2"/>
+    <my_link2 attr_before="a2" xlink:href="http://localhost:%d/vsimem/subdir2/resource2_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_very_long.xml" attr_after="b2"/>
   </main_elt>
   <main_elt>
     <my_link attr_before="a" xlink:href="http://localhost:%d/vsimem/non_matching_resource.xml" attr_after="b"/>
@@ -2363,7 +2429,7 @@ def ogr_gmlas_xlink_resolver():
                 <Field>
                     <Name>baz</Name>
                     <Type>integer</Type>
-                    <XPath>myns:top/myns:baz/@val</XPath>
+                    <XPath>/myns:top/myns:baz/@val</XPath>
                 </Field>
                 <Field>
                     <Name>xml_blob</Name>
@@ -2374,6 +2440,11 @@ def ogr_gmlas_xlink_resolver():
                     <Name>long</Name>
                     <Type>long</Type>
                     <XPath>//long</XPath>
+                </Field>
+                <Field>
+                    <Name>double</Name>
+                    <Type>double</Type>
+                    <XPath>//double</XPath>
                 </Field>
                 <Field>
                     <Name>datetime</Name>
@@ -2393,12 +2464,13 @@ def ogr_gmlas_xlink_resolver():
        f['my_link_bar'] != 123 or \
        f['my_link_attr_after'] != 'b' or \
        f['my_link2_attr_before'] != 'a2' or \
-       f['my_link2_href'] != 'http://localhost:%d/vsimem/subdir2/resource2.xml' % webserver_port or \
+       f['my_link2_href'] != 'http://localhost:%d/vsimem/subdir2/resource2_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_very_long.xml' % webserver_port or \
        f['my_link2_foo'] != 'fooVal2 fooVal3' or \
        f['my_link2_baz'] != 345 or \
        f['my_link2_xml_blob'] != """foo<blob />
 bar""" or \
        f['my_link2_long'] != 1234567890123 or \
+       f['my_link2_double'] != 1.25 or \
        f['my_link2_datetime'] != '2016/10/07 12:34:56+00' or \
        f['my_link2_bar'] is not None or \
        f['my_link2_attr_after'] != 'b2':
@@ -2415,7 +2487,7 @@ bar""" or \
         return 'fail'
 
     gdal.Unlink('/vsimem/subdir1/resource.xml')
-    gdal.Unlink('/vsimem/subdir2/resource2.xml')
+    gdal.Unlink('/vsimem/subdir2/resource2_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_very_long.xml')
 
     # Test caching
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml',
@@ -2428,7 +2500,7 @@ bar""" or \
        f['my_link_bar'] != 123 or \
        f['my_link_attr_after'] != 'b' or \
        f['my_link2_attr_before'] != 'a2' or \
-       f['my_link2_href'] != 'http://localhost:%d/vsimem/subdir2/resource2.xml' % webserver_port or \
+       f['my_link2_href'] != 'http://localhost:%d/vsimem/subdir2/resource2_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_very_long.xml' % webserver_port or \
        f['my_link2_foo'] != 'fooVal2 fooVal3' or \
        f['my_link2_baz'] != 345 or \
        f['my_link2_bar'] is not None or \
@@ -2454,8 +2526,180 @@ bar""" or \
     gdal.Unlink('/vsimem/resource.xml')
     gdal.Unlink('/vsimem/resource2.xml')
     gdal.Unlink('/vsimem/subdir1/resource.xml')
-    gdal.Unlink('/vsimem/subdir2/resource2.xml')
+    gdal.Unlink('/vsimem/subdir2/resource2_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_very_long.xml')
     gdal.Unlink('/vsimem/non_matching_resource.xml')
+
+    return 'success'
+
+###############################################################################
+# Test UTF-8 support
+
+def ogr_gmlas_recoding():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    if sys.version_info >= (3,0,0):
+        accent = '\u00e9'
+    else:
+        exec("accent = u'\\u00e9'")
+        accent = accent.encode('UTF-8')
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_recoding.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns ogr_gmlas_recoding.xsd">
+<myns:attr>""" + accent + '</myns:attr></myns:main_elt>')
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_recoding.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns" 
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="attr" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_recoding.xml')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['attr'] != accent:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_recoding.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_recoding.xsd')
+
+    return 'success'
+
+###############################################################################
+# Test schema without namespace prefix
+
+def ogr_gmlas_schema_without_namespace_prefix():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # Generic http:// namespace URI
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://my/ns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="attr" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd'])
+    lyr = ds.GetLayerByName('_ogr_layers_metadata')
+    f = lyr.GetNextFeature()
+    if f['layer_xpath'] != 'my_ns:main_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd')
+
+    # http://www.opengis.net/ namespace URI
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.opengis.net/fake/3.0"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="attr" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd'])
+    lyr = ds.GetLayerByName('_ogr_layers_metadata')
+    f = lyr.GetNextFeature()
+    if f['layer_xpath'] != 'fake_3_0:main_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd')
+
+    # Non http:// namespace URI
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="my_namespace"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="attr" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd'])
+    lyr = ds.GetLayerByName('_ogr_layers_metadata')
+    f = lyr.GetNextFeature()
+    if f['layer_xpath'] != 'my_namespace:main_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_schema_without_namespace_prefix.xsd')
+
+
+    return 'success'
+
+###############################################################################
+# Test parsing truncated XML
+
+def ogr_gmlas_truncated_xml():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_truncated_xml.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns ogr_gmlas_truncated_xml.xsd">
+<myns:attr>foo""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_truncated_xml.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns" 
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="attr" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_truncated_xml.xml')
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_truncated_xml.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_truncated_xml.xsd')
 
     return 'success'
 
@@ -2478,6 +2722,7 @@ def ogr_gmlas_cleanup():
 
 gdaltest_list = [
     ogr_gmlas_basic,
+    ogr_gmlas_test_ogrsf,
     ogr_gmlas_virtual_file,
     ogr_gmlas_datafile_with_xsd_option,
     ogr_gmlas_no_datafile_with_xsd_option,
@@ -2511,6 +2756,9 @@ gdaltest_list = [
     ogr_gmlas_validate_ignored_fixed_attribute,
     ogr_gmlas_remove_unused_layers_and_fields,
     ogr_gmlas_xlink_resolver,
+    ogr_gmlas_recoding,
+    ogr_gmlas_schema_without_namespace_prefix,
+    ogr_gmlas_truncated_xml,
     ogr_gmlas_cleanup ]
 
 #gdaltest_list = [ ogr_gmlas_instantiate_only_gml_feature ]
