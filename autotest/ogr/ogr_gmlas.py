@@ -65,6 +65,12 @@ def ogr_gmlas_basic():
         return 'fail'
     ds = None
 
+    # Skip tests when -fsanitize is used
+    if 'TRAVIS_BRANCH' in os.environ and \
+       os.environ['TRAVIS_BRANCH'].find('sanitize') >= 0:
+       print('Skipping because of -sanitize')
+       return 'skip'
+
     import test_cli_utilities
 
     if test_cli_utilities.get_ogrinfo_path() is None:
