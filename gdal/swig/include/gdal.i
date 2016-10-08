@@ -80,10 +80,12 @@ typedef void GDALAsyncReaderShadow;
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
 typedef struct OGRLayerHS OGRLayerShadow;
+typedef struct OGRFeatureHS OGRFeatureShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
 #else
 typedef void OSRSpatialReferenceShadow;
 typedef void OGRLayerShadow;
+typedef void OGRFeatureShadow;
 typedef void OGRGeometryShadow;
 #endif
 typedef struct OGRStyleTableHS OGRStyleTableShadow;

@@ -77,7 +77,7 @@ Usage:
 \verbatim
 ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|\@filename]
         [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
-        [-sql statement|\@filename] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
+        [-sql statement|\@filename] [-dialect dialect] [-al] [-rl] [-so] [-fields={YES/NO}]
         [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [-formats] [[-oo NAME=VALUE] ...]
         [-nomd] [-listmdd] [-mdd domain|`all`]*
         [-nocount] [-noextent]
@@ -94,6 +94,10 @@ source to stdout (the terminal).
 <dt> <b>-ro</b>:</dt><dd> Open the data source in read-only mode.  </dd>
 <dt> <b>-al</b>:</dt><dd> List all features of all layers (used instead of having to
 give layer names as arguments).</dd>
+<dt> <b>-rl</b>:</dt><dd> (Available in GDAL 2.2) Enable random layer reading mode,
+i.e. iterate over features in the order they are found in the dataset, and not
+layer per layer. This can be significantly faster for some formats (for example
+OSM, GMLAS).</dd>
 <dt> <b>-so</b>:</dt><dd> Summary Only: suppress listing of features, show only the
 summary information like projection, schema, feature count and
 extents.</dd>

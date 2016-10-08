@@ -1956,6 +1956,8 @@ int PCIDSK2Dataset::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return eAccess == GA_Update;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return eAccess == GA_Update;
 
     return FALSE;
 }

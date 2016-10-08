@@ -1826,6 +1826,14 @@ class Dataset(MajorObject):
         """GetLayerByName(Dataset self, char const * layer_name) -> Layer"""
         return _gdal.Dataset_GetLayerByName(self, *args)
 
+    def ResetReading(self, *args):
+        """ResetReading(Dataset self)"""
+        return _gdal.Dataset_ResetReading(self, *args)
+
+    def GetNextFeature(self, *args, **kwargs):
+        """GetNextFeature(Dataset self, bool include_layer=True, bool include_pct=False, GDALProgressFunc callback=0, void * callback_data=None) -> Feature"""
+        return _gdal.Dataset_GetNextFeature(self, *args, **kwargs)
+
     def TestCapability(self, *args):
         """TestCapability(Dataset self, char const * cap) -> bool"""
         return _gdal.Dataset_TestCapability(self, *args)
