@@ -1133,11 +1133,11 @@ float GDALHillshadeMultiDirectionalAlg (const T* afWin,
     // See http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
     // W225 = sin^2(aspect - 225) = 0.5 * (1 - 2 * sin(aspect) * cos(aspect))
     // W270 = sin^2(aspect - 270) = cos^2(aspect)
-    // W315 = sin^2(aspect - 270) = 0.5 * (1 + 2 * sin(aspect) * cos(aspect))
+    // W315 = sin^2(aspect - 315) = 0.5 * (1 + 2 * sin(aspect) * cos(aspect))
     // W360 = sin^2(aspect - 360) = sin^2(aspect)
     // hillshade=  0.5 * (W225 * hillshade(az=225) +
     //                    W270 * hillshade(az=270) +
-    //                    W315 * hillshade(az=270) +
+    //                    W315 * hillshade(az=315) +
     //                    W360 * hillshade(az=360))
 
     const double xx = x * x;
