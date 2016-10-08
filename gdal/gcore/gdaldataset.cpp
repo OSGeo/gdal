@@ -70,17 +70,34 @@ typedef enum
     RW_MUTEX_STATE_DISABLED
 } GDALAllowReadWriteMutexState;
 
+const GIntBig TOTAL_FEATURES_NOT_INIT = -2;
+const GIntBig TOTAL_FEATURES_UNKNOWN = -1;
+
 class GDALDatasetPrivate
 {
     public:
         CPLMutex* hMutex;
         std::map<GIntBig, int> oMapThreadToMutexTakenCount;
         GDALAllowReadWriteMutexState eStateReadWriteMutex;
+        int       nCurrentLayerIdx;
+        int       nLayerCount;
+        GIntBig   nFeatureReadInLayer;
+        GIntBig   nFeatureReadInDataset;
+        GIntBig   nTotalFeaturesInLayer;
+        GIntBig   nTotalFeatures;
+        OGRLayer *poCurrentLayer;
 
         GDALDatasetPrivate() :
             hMutex(NULL),
-            eStateReadWriteMutex(RW_MUTEX_STATE_UNKNOWN) {}
-
+            eStateReadWriteMutex(RW_MUTEX_STATE_UNKNOWN),
+            nCurrentLayerIdx(0),
+            nLayerCount(-1),
+            nFeatureReadInLayer(0),
+            nFeatureReadInDataset(0),
+            nTotalFeaturesInLayer(TOTAL_FEATURES_NOT_INIT),
+            nTotalFeatures(TOTAL_FEATURES_NOT_INIT),
+            poCurrentLayer(NULL)
+        {}
 };
 
 typedef struct
@@ -3574,48 +3591,6 @@ void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
 }
 
 /************************************************************************/
-/*                     GDALDatasetTestCapability()                      */
-/************************************************************************/
-
-/**
- \brief Test if capability is available.
-
- One of the following dataset capability names can be passed into this
- function, and a TRUE or FALSE value will be returned indicating whether or not
- the capability is available for this object.
-
- <ul>
-  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
-  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
-  <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
-        datasource support CreateGeomField() just after layer creation.<p>
-  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve geometries.<p>
-  <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient) transactions.<p>
-  <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports transactions through emulation.<p>
- </ul>
-
- The \#define macro forms of the capability names should be used in preference
- to the strings themselves to avoid misspelling.
-
- This function is the same as the C++ method GDALDataset::TestCapability()
-
- @since GDAL 2.0
-
- @param hDS the dataset handle.
- @param pszCap the capability to test.
-
- @return TRUE if capability available otherwise FALSE.
-*/
-int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
-
-{
-    VALIDATE_POINTER1( hDS, "GDALDatasetTestCapability", 0 );
-    VALIDATE_POINTER1( pszCap, "GDALDatasetTestCapability", 0 );
-
-    return ((GDALDataset *) hDS)->TestCapability( pszCap );
-}
-
-/************************************************************************/
 /*                       GDALDatasetGetLayerCount()                     */
 /************************************************************************/
 
@@ -6036,10 +6011,290 @@ OGRLayer* GDALDataset::GetLayer( int /*iLayer*/ )
 }
 
 /************************************************************************/
+/*                           ResetReading()                             */
+/************************************************************************/
+
+/** 
+ \brief Reset feature reading to start on the first feature.
+
+ This affects GetNextFeature().
+
+ Depending on drivers, this may also have the side effect of calling
+ OGRLayer::ResetReading() on the layers of this dataset.
+
+ This method is the same as the C function GDALDatasetResetReading().
+ 
+ @since GDAL 2.2
+*/
+void        GDALDataset::ResetReading()
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    if( !psPrivate )
+        return;
+    psPrivate->nCurrentLayerIdx = 0;
+    psPrivate->nLayerCount = -1;
+    psPrivate->poCurrentLayer = NULL;
+    psPrivate->nFeatureReadInLayer = 0;
+    psPrivate->nFeatureReadInDataset = 0;
+    psPrivate->nTotalFeaturesInLayer = TOTAL_FEATURES_NOT_INIT;
+    psPrivate->nTotalFeatures = TOTAL_FEATURES_NOT_INIT;
+}
+
+/************************************************************************/
+/*                         GDALDatasetResetReading()                    */
+/************************************************************************/
+
+/** 
+ \brief Reset feature reading to start on the first feature.
+
+ This affects GDALDatasetGetNextFeature().
+
+ Depending on drivers, this may also have the side effect of calling
+ OGR_L_ResetReading() on the layers of this dataset.
+
+ This method is the same as the C++ method GDALDataset::ResetReading()
+ 
+ @param hDS dataset handle
+ @since GDAL 2.2
+*/
+void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
+{
+    VALIDATE_POINTER0( hDS, "GDALDatasetResetReading" );
+
+    return ((GDALDataset*) hDS)->ResetReading();
+}
+
+/************************************************************************/
+/*                          GetNextFeature()                            */
+/************************************************************************/
+
+/**
+ \brief Fetch the next available feature from this dataset.
+
+ The returned feature becomes the responsibility of the caller to
+ delete with OGRFeature::DestroyFeature().
+
+ Depending on the driver, this method may return features from layers in a
+ non sequential way. This is what may happen when the
+ ODsCRandomLayerRead capability is declared (for example for the
+ OSM and GMLAS drivers). When datasets declare this capability, it is strongly
+ advised to use GDALDataset::GetNextFeature() instead of
+ OGRLayer::GetNextFeature(), as the later might have a slow, incomplete or stub
+ implementation.
+ 
+ The default implementation, used by most drivers, will
+ however iterate over each layer, and then over each feature within this
+ layer.
+
+ This method takes into account spatial and attribute filters set on layers that
+ will be iterated upon.
+
+ The ResetReading() method can be used to start at the beginning again.
+
+ Depending on drivers, this may also have the side effect of calling
+ OGRLayer::GetNextFeature() on the layers of this dataset.
+
+ This method is the same as the C function GDALDatasetGetNextFeature().
+
+ @param ppoBelongingLayer a pointer to a OGRLayer* variable to receive the
+                          layer to which the object belongs to, or NULL.
+                          It is possible that the output of *ppoBelongingLayer
+                          to be NULL despite the feature not being NULL.
+ @param pdfProgressPct    a pointer to a double variable to receive the
+                          percentage progress (in [0,1] range), or NULL.
+                          On return, the pointed value might be negative if
+                          determining the progress is not possible.
+ @param pfnProgress       a progress callback to report progress (for
+                          GetNextFeature() calls that might have a long duration)
+                          and offer cancellation possibility, or NULL
+ @param pProgressData     user data provided to pfnProgress, or NULL
+ @return a feature, or NULL if no more features are available.
+ @since GDAL 2.2
+*/
+
+OGRFeature* GDALDataset::GetNextFeature( OGRLayer** ppoBelongingLayer,
+                                         double* pdfProgressPct,
+                                         GDALProgressFunc pfnProgress,
+                                         void* pProgressData )
+{
+    GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
+    if( !psPrivate || psPrivate->nCurrentLayerIdx < 0 )
+    {
+        if( ppoBelongingLayer != NULL )
+            *ppoBelongingLayer = NULL;
+        if( pdfProgressPct != NULL )
+            *pdfProgressPct = 1.0;
+        if( pfnProgress != NULL )
+            pfnProgress(1.0, "", pProgressData);
+        return NULL;
+    }
+
+    if ( psPrivate->poCurrentLayer == NULL &&
+         (pdfProgressPct != NULL || pfnProgress != NULL) )
+    {
+        if( psPrivate->nLayerCount < 0 )
+        {
+            psPrivate->nLayerCount = GetLayerCount();
+        }
+
+        if( psPrivate->nTotalFeatures == TOTAL_FEATURES_NOT_INIT )
+        {
+            psPrivate->nTotalFeatures = 0;
+            for( int i=0; i<psPrivate->nLayerCount;i++)
+            {
+                OGRLayer* poLayer = GetLayer(i);
+                if( poLayer == NULL ||
+                    !poLayer->TestCapability(OLCFastFeatureCount) )
+                {
+                    psPrivate->nTotalFeatures = TOTAL_FEATURES_UNKNOWN;
+                    break;
+                }
+                GIntBig nCount = poLayer->GetFeatureCount(FALSE);
+                if( nCount < 0 )
+                {
+                    psPrivate->nTotalFeatures = TOTAL_FEATURES_UNKNOWN;
+                    break;
+                }
+                psPrivate->nTotalFeatures += nCount;
+            }
+        }
+    }
+
+    while( true )
+    {
+        if( psPrivate->poCurrentLayer == NULL )
+        {
+            psPrivate->poCurrentLayer = GetLayer(psPrivate->nCurrentLayerIdx);
+            if( psPrivate->poCurrentLayer == NULL )
+            {
+                psPrivate->nCurrentLayerIdx = -1;
+                if( ppoBelongingLayer != NULL )
+                    *ppoBelongingLayer = NULL;
+                if( pdfProgressPct != NULL )
+                    *pdfProgressPct = 1.0;
+                return NULL;
+            }
+            psPrivate->poCurrentLayer->ResetReading();
+            psPrivate->nFeatureReadInLayer = 0;
+            if( psPrivate->nTotalFeatures < 0 && pdfProgressPct != NULL )
+            {
+                if( psPrivate->poCurrentLayer->TestCapability(OLCFastFeatureCount) )
+                    psPrivate->nTotalFeaturesInLayer =
+                            psPrivate->poCurrentLayer->GetFeatureCount(FALSE);
+                else
+                    psPrivate->nTotalFeaturesInLayer = 0;
+            }
+        }
+        OGRFeature* poFeature = psPrivate->poCurrentLayer->GetNextFeature();
+        if( poFeature == NULL )
+        {
+            psPrivate->nCurrentLayerIdx ++;
+            psPrivate->poCurrentLayer = NULL;
+            continue;
+        }
+
+        psPrivate->nFeatureReadInLayer ++;
+        psPrivate->nFeatureReadInDataset ++;
+        if( pdfProgressPct != NULL || pfnProgress != NULL )
+        {
+            double dfPct;
+            if( psPrivate->nTotalFeatures > 0 )
+            {
+                dfPct = 1.0 * psPrivate->nFeatureReadInDataset /
+                                    psPrivate->nTotalFeatures;
+            }
+            else
+            {
+                dfPct = 1.0 * psPrivate->nCurrentLayerIdx /
+                                    psPrivate->nLayerCount;
+                if( psPrivate->nTotalFeaturesInLayer > 0 )
+                {
+                    dfPct += 1.0 * psPrivate->nFeatureReadInLayer /
+                                        psPrivate->nTotalFeaturesInLayer /
+                                        psPrivate->nLayerCount;
+                }
+            }
+            if( pdfProgressPct )
+                *pdfProgressPct = dfPct;
+            if( pfnProgress )
+                pfnProgress( dfPct, "", NULL );
+        }
+
+        if( ppoBelongingLayer != NULL )
+            *ppoBelongingLayer = psPrivate->poCurrentLayer;
+        return poFeature;
+    }
+}
+
+/************************************************************************/
+/*                     GDALDatasetGetNextFeature()                      */
+/************************************************************************/
+/**
+ \brief Fetch the next available feature from this dataset.
+
+ The returned feature becomes the responsibility of the caller to
+ delete with OGRFeature::DestroyFeature().
+
+ Depending on the driver, this method may return features from layers in a
+ non sequential way. This is what may happen when the
+ ODsCRandomLayerRead capability is declared (for example for the
+ OSM and GMLAS drivers). When datasets declare this capability, it is strongly
+ advised to use GDALDataset::GetNextFeature() instead of
+ OGRLayer::GetNextFeature(), as the later might have a slow, incomplete or stub
+ implementation.
+ 
+ The default implementation, used by most drivers, will
+ however iterate over each layer, and then over each feature within this
+ layer.
+
+ This method takes into account spatial and attribute filters set on layers that
+ will be iterated upon.
+
+ The ResetReading() method can be used to start at the beginning again.
+
+ Depending on drivers, this may also have the side effect of calling
+ OGRLayer::GetNextFeature() on the layers of this dataset.
+
+ This method is the same as the C++ method GDALDataset::GetNextFeature()
+
+ @param hDS               dataset handle.
+ @param phBelongingLayer  a pointer to a OGRLayer* variable to receive the
+                          layer to which the object belongs to, or NULL.
+                          It is possible that the output of *ppoBelongingLayer
+                          to be NULL despite the feature not being NULL.
+ @param pdfProgressPct    a pointer to a double variable to receive the
+                          percentage progress (in [0,1] range), or NULL.
+                          On return, the pointed value might be negative if
+                          determining the progress is not possible.
+ @param pfnProgress       a progress callback to report progress (for
+                          GetNextFeature() calls that might have a long duration)
+                          and offer cancellation possibility, or NULL
+ @param pProgressData     user data provided to pfnProgress, or NULL
+ @return a feature, or NULL if no more features are available.
+ @since GDAL 2.2
+*/
+OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
+                                               OGRLayerH* phBelongingLayer,
+                                               double* pdfProgressPct,
+                                               GDALProgressFunc pfnProgress,
+                                               void* pProgressData )
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetGetNextFeature", NULL );
+
+    return reinterpret_cast<OGRFeatureH>(
+                reinterpret_cast<GDALDataset*>(hDS)->GetNextFeature(
+                                                (OGRLayer**)phBelongingLayer,
+                                                 pdfProgressPct,
+                                                 pfnProgress,
+                                                 pProgressData ));
+}
+
+/************************************************************************/
 /*                            TestCapability()                          */
 /************************************************************************/
 
 /**
+ \fn GDALDataset::TestCapability( const char * pszCap )
  \brief Test if capability is available.
 
  One of the following dataset capability names can be passed into this
@@ -6054,6 +6309,10 @@ OGRLayer* GDALDataset::GetLayer( int /*iLayer*/ )
   <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve geometries.<p>
   <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient) transactions.<p>
   <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports transactions through emulation.<p>
+  <li> <b>ODsCRandomLayerRead</b>: True if this datasource has a dedicated GetNextFeature() implementation,
+          potentially returning features from layers in a non sequential way.<p>
+  <li> <b>ODsCRandomLayerWrite</b>: True if this datasource supports calling CreateFeature() on
+         layers in a non sequential way.<p>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -6069,9 +6328,58 @@ OGRLayer* GDALDataset::GetLayer( int /*iLayer*/ )
  @return TRUE if capability available otherwise FALSE.
 */
 
-int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
+/**/
+/**/
+
+int GDALDataset::TestCapability( const char * )
 {
     return FALSE;
+}
+
+/************************************************************************/
+/*                     GDALDatasetTestCapability()                      */
+/************************************************************************/
+
+/**
+ \brief Test if capability is available.
+
+ One of the following dataset capability names can be passed into this
+ function, and a TRUE or FALSE value will be returned indicating whether or not
+ the capability is available for this object.
+
+ <ul>
+  <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
+  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
+  <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
+        datasource support CreateGeomField() just after layer creation.<p>
+  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve geometries.<p>
+  <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient) transactions.<p>
+  <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports transactions through emulation.<p>
+  <li> <b>ODsCRandomLayerRead</b>: True if this datasource has a dedicated GetNextFeature() implementation,
+          potentially returning features from layers in a non sequential way.<p>
+  <li> <b>ODsCRandomLayerWrite</b>: True if this datasource supports calling CreateFeature() on
+         layers in a non sequential way.<p>
+ </ul>
+
+ The \#define macro forms of the capability names should be used in preference
+ to the strings themselves to avoid misspelling.
+
+ This function is the same as the C++ method GDALDataset::TestCapability()
+
+ @since GDAL 2.0
+
+ @param hDS the dataset handle.
+ @param pszCap the capability to test.
+
+ @return TRUE if capability available otherwise FALSE.
+*/
+int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetTestCapability", 0 );
+    VALIDATE_POINTER1( pszCap, "GDALDatasetTestCapability", 0 );
+
+    return ((GDALDataset *) hDS)->TestCapability( pszCap );
 }
 
 /************************************************************************/

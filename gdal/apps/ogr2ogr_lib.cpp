@@ -395,10 +395,10 @@ public:
     OGRGeometry                  *m_poClipSrc;
     OGRGeometry                  *m_poClipDst;
     bool                          m_bExplodeCollections;
-    vsi_l_offset                  m_nSrcFileSize;
     bool                          m_bNativeData;
 
-    int                 Translate(TargetLayerInfo* psInfo,
+    int                 Translate(OGRFeature* poFeatureIn,
+                                  TargetLayerInfo* psInfo,
                                   GIntBig nCountLayerFeatures,
                                   GIntBig* pnReadFeatureCount,
                                   GDALProgressFunc pfnProgress,
@@ -1537,8 +1537,31 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      For random reading                                              */
+/* -------------------------------------------------------------------- */
+    bool bRandomLayerReading = poDS->TestCapability(ODsCRandomLayerRead);
+    if( bRandomLayerReading &&
+        !poODS->TestCapability(ODsCRandomLayerWrite) &&
+        !psOptions->bQuiet )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                    "Input datasource uses random layer reading, but "
+                    "output datasource does not support random layer writing");
+    }
+
     if( psOptions->nLayerTransaction < 0 )
-        psOptions->nLayerTransaction = !poODS->TestCapability(ODsCTransactions);
+    {
+        if( bRandomLayerReading )
+            psOptions->nLayerTransaction = FALSE;
+        else
+            psOptions->nLayerTransaction = !poODS->TestCapability(ODsCTransactions);
+    }
+    else if( psOptions->nLayerTransaction &&
+             bRandomLayerReading )
+    {
+        psOptions->nLayerTransaction = false;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Parse the output SRS definition if possible.                    */
@@ -1615,18 +1638,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     }
 
 /* -------------------------------------------------------------------- */
-/*      For OSM file.                                                   */
-/* -------------------------------------------------------------------- */
-    int         bSrcIsOSM = (strcmp(poDS->GetDriverName(), "OSM") == 0);
-    vsi_l_offset nSrcFileSize = 0;
-    if( bSrcIsOSM && strcmp(poDS->GetDescription(), "/vsistdin/") != 0)
-    {
-        VSIStatBufL sStat;
-        if( VSIStatL(poDS->GetDescription(), &sStat) == 0 )
-            nSrcFileSize = sStat.st_size;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Create layer setup and transformer objects.                     */
 /* -------------------------------------------------------------------- */
     SetupTargetLayer oSetup;
@@ -1676,7 +1687,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oTranslator.m_poClipSrc = (OGRGeometry *)psOptions->hClipSrc;
     oTranslator.m_poClipDst = (OGRGeometry *)psOptions->hClipDst;
     oTranslator.m_bExplodeCollections = psOptions->bExplodeCollections;
-    oTranslator.m_nSrcFileSize = nSrcFileSize;
     oTranslator.m_bNativeData = psOptions->bNativeData;
 
     if( psOptions->nGroupTransactions )
@@ -1722,7 +1732,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             void        *pProgressArg = NULL;
             if (psOptions->bDisplayProgress)
             {
-                if (bSrcIsOSM)
+                if (bRandomLayerReading)
                 {
                     pfnProgress = psOptions->pfnProgress;
                     pProgressArg = psOptions->pProgressData;
@@ -1772,7 +1782,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             poPassedLayer->ResetReading();
 
             if( psInfo == NULL ||
-                !oTranslator.Translate( psInfo,
+                !oTranslator.Translate( NULL, psInfo,
                                         nCountLayerFeatures, NULL,
                                         pfnProgress, pProgressArg, psOptions ))
             {
@@ -1800,11 +1810,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
 /*      Special case for layer interleaving mode.                       */
 /* -------------------------------------------------------------------- */
-    else if( bSrcIsOSM &&
-                CPLTestBool(CPLGetConfigOption("OGR_INTERLEAVED_READING", "YES")) )
+    else if( bRandomLayerReading )
     {
-        CPLSetConfigOption("OGR_INTERLEAVED_READING", "YES");
-
         if (psOptions->bSplitListFields)
         {
             CPLError( CE_Failure, CPLE_AppDefined, "-splitlistfields not supported in this mode" );
@@ -1833,7 +1840,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
         GDALProgressFunc pfnProgress = NULL;
         void        *pProgressArg = NULL;
-        if ( psOptions->bDisplayProgress && bSrcIsOSM )
+        if ( psOptions->bDisplayProgress )
         {
             pfnProgress = psOptions->pfnProgress;
             pProgressArg = psOptions->pProgressData;
@@ -1842,11 +1849,10 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
 /*      If no target layer specified, use all source layers.            */
 /* -------------------------------------------------------------------- */
-        int iLayer;
         if ( CSLCount(psOptions->papszLayers) == 0)
         {
             psOptions->papszLayers = (char**) CPLCalloc(sizeof(char*), nSrcLayerCount + 1);
-            for( iLayer = 0; iLayer < nSrcLayerCount; iLayer++ )
+            for( int iLayer = 0; iLayer < nSrcLayerCount; iLayer++ )
             {
                 OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
@@ -1865,10 +1871,11 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         }
         else
         {
+            bool bSrcIsOSM = (strcmp(poDS->GetDriverName(), "OSM") == 0);
             if ( bSrcIsOSM )
             {
                 CPLString osInterestLayers = "SET interest_layers =";
-                for( iLayer = 0; psOptions->papszLayers[iLayer] != NULL; iLayer++ )
+                for( int iLayer = 0; psOptions->papszLayers[iLayer] != NULL; iLayer++ )
                 {
                     if( iLayer != 0 ) osInterestLayers += ",";
                     osInterestLayers += psOptions->papszLayers[iLayer];
@@ -1879,9 +1886,11 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         }
 
 /* -------------------------------------------------------------------- */
-/*      First pass to set filters and create target layers.             */
+/*      First pass to set filters.                                      */
 /* -------------------------------------------------------------------- */
-        for( iLayer = 0; iLayer < nSrcLayerCount; iLayer++ )
+        std::map<OGRLayer*, int> oMapLayerToIdx;
+
+        for( int iLayer = 0; iLayer < nSrcLayerCount; iLayer++ )
         {
             OGRLayer        *poLayer = poDS->GetLayer(iLayer);
             if( poLayer == NULL )
@@ -1902,8 +1911,10 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 {
                     if( poLayer->SetAttributeFilter( psOptions->pszWHERE ) != OGRERR_NONE )
                     {
-                        CPLError( CE_Failure, CPLE_AppDefined, "SetAttributeFilter(%s) on layer '%s' failed.",
-                                 psOptions->pszWHERE, poLayer->GetName() );
+                        CPLError( CE_Failure,
+                                  CPLE_AppDefined,
+                                  "SetAttributeFilter(%s) on layer '%s' failed.",
+                                  psOptions->pszWHERE, poLayer->GetName() );
                         if (!psOptions->bSkipFailures)
                         {
                             GDALVectorTranslateOptionsFree(psOptions);
@@ -1914,11 +1925,105 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     }
                 }
 
-                ApplySpatialFilter(poLayer, (OGRGeometry*)psOptions->hSpatialFilter, poSpatSRS, psOptions->pszGeomField, poSourceSRS );
+                ApplySpatialFilter(poLayer,
+                                   (OGRGeometry*)psOptions->hSpatialFilter,
+                                   poSpatSRS, psOptions->pszGeomField,
+                                   poSourceSRS );
+
+                oMapLayerToIdx[ poLayer ] = iLayer;
+            }
+            pasAssocLayers[iLayer].psInfo = NULL;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Second pass to process features in a interleaved layer mode.    */
+/* -------------------------------------------------------------------- */
+        bool bTargetLayersHaveBeenCreated = false;
+        while( true )
+        {
+            OGRLayer* poFeatureLayer = NULL;
+            OGRFeature* poFeature = poDS->GetNextFeature(&poFeatureLayer,
+                                                         NULL,
+                                                         pfnProgress,
+                                                         pProgressArg);
+            if( poFeature == NULL )
+                break;
+            std::map<OGRLayer*, int>::const_iterator oIter =
+                                                oMapLayerToIdx.find(poFeatureLayer);
+            if( oIter == oMapLayerToIdx.end() )
+            {
+                // Feature in a layer that is not a layer of interest.
+                OGRFeature::DestroyFeature(poFeature);
+            }
+            else
+            {
+                if( !bTargetLayersHaveBeenCreated )
+                {
+                    // We defer target layer creation at the first feature
+                    // retrieved since getting the layer definition can be
+                    // costly (case of the GMLAS driver) and thus we'd better
+                    // taking advantage from the progress callback of
+                    // GetNextFeature.
+                    bTargetLayersHaveBeenCreated = true;
+                    for( int iLayer = 0; iLayer < nSrcLayerCount; iLayer++ )
+                    {
+                        OGRLayer        *poLayer = poDS->GetLayer(iLayer);
+                        if( CSLFindString(psOptions->papszLayers, poLayer->GetName()) < 0 )
+                            continue;
+
+                        TargetLayerInfo* psInfo = oSetup.Setup(poLayer,
+                                                            psOptions->pszNewLayerName,
+                                                            psOptions);
+
+                        if( psInfo == NULL && !psOptions->bSkipFailures )
+                        {
+                            GDALVectorTranslateOptionsFree(psOptions);
+                            if( hDstDS == NULL ) GDALClose( poODS );
+                            delete poGCPCoordTrans;
+                            OGRFeature::DestroyFeature(poFeature);
+                            return NULL;
+                        }
+
+                        pasAssocLayers[iLayer].psInfo = psInfo;
+                    }
+                }
+
+                int iLayer = oIter->second;
+                TargetLayerInfo *psInfo = pasAssocLayers[iLayer].psInfo;
+                if( !oTranslator.Translate( poFeature, psInfo,
+                                            0, NULL,
+                                            NULL, NULL, psOptions )
+                    && !psOptions->bSkipFailures )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                            "Terminating translation prematurely after failed\n"
+                            "translation of layer %s (use -skipfailures to skip errors)",
+                            poFeatureLayer->GetName() );
+
+                    nRetCode = 1;
+                    break;
+                }
+            }
+        }
+
+        if (pfnProgress)
+        {
+            pfnProgress(1.0, "", pProgressArg);
+        }
+
+
+        if( !bTargetLayersHaveBeenCreated )
+        {
+            bTargetLayersHaveBeenCreated = true;
+            for( int iLayer = 0; iLayer < nSrcLayerCount; iLayer++ )
+            {
+                OGRLayer        *poLayer = poDS->GetLayer(iLayer);
+                if( CSLFindString(psOptions->papszLayers, poLayer->GetName()) < 0 )
+                    continue;
 
                 TargetLayerInfo* psInfo = oSetup.Setup(poLayer,
-                                                       psOptions->pszNewLayerName,
-                                                       psOptions);
+                                                    psOptions->pszNewLayerName,
+                                                    psOptions);
 
                 if( psInfo == NULL && !psOptions->bSkipFailures )
                 {
@@ -1930,69 +2035,12 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
                 pasAssocLayers[iLayer].psInfo = psInfo;
             }
-            else
-            {
-                pasAssocLayers[iLayer].psInfo = NULL;
-            }
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Second pass to process features in a interleaved layer mode.    */
-/* -------------------------------------------------------------------- */
-        bool bHasLayersNonEmpty;
-        do
-        {
-            bHasLayersNonEmpty = false;
-
-            for( iLayer = 0; iLayer < nSrcLayerCount;  iLayer++ )
-            {
-                OGRLayer        *poLayer = pasAssocLayers[iLayer].poSrcLayer;
-                TargetLayerInfo *psInfo = pasAssocLayers[iLayer].psInfo;
-                GIntBig nReadFeatureCount = 0;
-
-                if( psInfo )
-                {
-                    if( !oTranslator.Translate( psInfo,
-                                                0, &nReadFeatureCount,
-                                                pfnProgress, pProgressArg, psOptions )
-                        && !psOptions->bSkipFailures )
-                    {
-                        CPLError( CE_Failure, CPLE_AppDefined,
-                                "Terminating translation prematurely after failed\n"
-                                "translation of layer %s (use -skipfailures to skip errors)",
-                                poLayer->GetName() );
-
-                        nRetCode = 1;
-                        break;
-                    }
-                }
-                else
-                {
-                    /* No matching target layer : just consumes the features */
-
-                    OGRFeature* poFeature;
-                    while( (poFeature = poLayer->GetNextFeature()) != NULL )
-                    {
-                        nReadFeatureCount ++;
-                        OGRFeature::DestroyFeature(poFeature);
-                    }
-                }
-
-                if( nReadFeatureCount != 0 )
-                    bHasLayersNonEmpty = true;
-            }
-        }
-        while( bHasLayersNonEmpty );
-
-        if (pfnProgress)
-        {
-            pfnProgress(1.0, "", pProgressArg);
         }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
-        for( iLayer = 0; iLayer < nSrcLayerCount;  iLayer++ )
+        for( int iLayer = 0; iLayer < nSrcLayerCount;  iLayer++ )
         {
             if( pasAssocLayers[iLayer].psInfo )
                 FreeTargetLayerInfo(pasAssocLayers[iLayer].psInfo);
@@ -2108,7 +2156,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
             ApplySpatialFilter(poLayer, (OGRGeometry*)psOptions->hSpatialFilter, poSpatSRS, psOptions->pszGeomField, poSourceSRS);
 
-            if (psOptions->bDisplayProgress && !bSrcIsOSM)
+            if (psOptions->bDisplayProgress)
             {
                 if (!poLayer->TestCapability(OLCFastFeatureCount))
                 {
@@ -2172,12 +2220,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
             if (psOptions->bDisplayProgress)
             {
-                if ( bSrcIsOSM )
-                {
-                    pfnProgress = psOptions->pfnProgress;
-                    pProgressArg = psOptions->pProgressData;
-                }
-                else if( nCountLayersFeatures != 0 )
+                if( nCountLayersFeatures != 0 )
                 {
                     pfnProgress = GDALScaledProgress;
                     GIntBig nStart = 0;
@@ -2200,7 +2243,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             poPassedLayer->ResetReading();
 
             if( (psInfo == NULL ||
-                !oTranslator.Translate( psInfo,
+                !oTranslator.Translate( NULL, psInfo,
                                         panLayerCountFeatures[iLayer], NULL,
                                         pfnProgress, pProgressArg, psOptions ))
                 && !psOptions->bSkipFailures )
@@ -2218,7 +2261,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             if (poPassedLayer != poLayer)
                 delete poPassedLayer;
 
-            if (psOptions->bDisplayProgress && !bSrcIsOSM)
+            if (psOptions->bDisplayProgress)
                 GDALDestroyScaledProgress(pProgressArg);
         }
 
@@ -3357,7 +3400,8 @@ static bool SetupCT( TargetLayerInfo* psInfo,
 /*                     LayerTranslator::Translate()                     */
 /************************************************************************/
 
-int LayerTranslator::Translate( TargetLayerInfo* psInfo,
+int LayerTranslator::Translate( OGRFeature* poFeatureIn,
+                                TargetLayerInfo* psInfo,
                                 GIntBig nCountLayerFeatures,
                                 GIntBig* pnReadFeatureCount,
                                 GDALProgressFunc pfnProgress,
@@ -3414,7 +3458,9 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
     {
         OGRFeature      *poDstFeature = NULL;
 
-        if( psOptions->nFIDToFetch != OGRNullFID )
+        if( poFeatureIn != NULL )
+            poFeature = poFeatureIn;
+        else if( psOptions->nFIDToFetch != OGRNullFID )
             poFeature = poSrcLayer->GetFeature(psOptions->nFIDToFetch);
         else
             poFeature = poSrcLayer->GetNextFeature();
@@ -3756,29 +3802,7 @@ end_loop:
         bool bGoOn = true;
         if (pfnProgress)
         {
-            if (m_nSrcFileSize != 0)
-            {
-                if ((nCount % 1000) == 0)
-                {
-                    OGRLayer* poFCLayer = m_poSrcDS->ExecuteSQL("GetBytesRead()", NULL, NULL);
-                    if( poFCLayer != NULL )
-                    {
-                        OGRFeature* poFeat = poFCLayer->GetNextFeature();
-                        if( poFeat )
-                        {
-                            const char* pszReadSize = poFeat->GetFieldAsString(0);
-                            GUIntBig nReadSize = CPLScanUIntBig( pszReadSize, 32 );
-                            bGoOn = pfnProgress(nReadSize * 1.0 / m_nSrcFileSize, "", pProgressArg) != FALSE;
-                            OGRFeature::DestroyFeature( poFeat );
-                        }
-                    }
-                    m_poSrcDS->ReleaseResultSet(poFCLayer);
-                }
-            }
-            else
-            {
-                bGoOn = pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressArg) != FALSE;
-            }
+            bGoOn = pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressArg) != FALSE;
         }
         if( !bGoOn )
         {
@@ -3791,7 +3815,10 @@ end_loop:
 
         if( psOptions->nFIDToFetch != OGRNullFID )
             break;
+        if( poFeatureIn != NULL )
+            break;
     }
+
 
     if( psOptions->nGroupTransactions )
     {
@@ -3802,8 +3829,11 @@ end_loop:
         }
     }
 
-    CPLDebug("GDALVectorTranslate", CPL_FRMT_GIB " features written in layer '%s'",
-             nFeaturesWritten, poDstLayer->GetName());
+    if( poFeatureIn == NULL )
+    {
+        CPLDebug("GDALVectorTranslate", CPL_FRMT_GIB " features written in layer '%s'",
+                nFeaturesWritten, poDstLayer->GetName());
+    }
 
     return bRet;
 }

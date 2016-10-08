@@ -539,8 +539,11 @@ class OGRNTFDataSource : public OGRDataSource
     // Note: these are specific to NTF for now, but eventually might
     // might be available as part of a more object oriented approach to
     // features like that in FME or SFCORBA.
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    virtual void        ResetReading();
+    virtual OGRFeature* GetNextFeature( OGRLayer** ppoBelongingLayer,
+                                        double* pdfProgressPct,
+                                        GDALProgressFunc pfnProgress,
+                                        void* pProgressData );
 
     // these are only for the use of the NTFFileReader class.
     OGRNTFLayer         *GetNamedLayer( const char * );

@@ -87,7 +87,7 @@ class OGRESRIFeatureServiceDataset: public GDALDataset
 
         OGRLayer* GetUnderlyingLayer() { return poCurrent->GetLayer(0); }
 
-        int ResetReading();
+        int MyResetReading();
         int LoadNextPage();
 
         const CPLString&                GetURL() { return osURL; }
@@ -133,7 +133,7 @@ OGRESRIFeatureServiceLayer::~OGRESRIFeatureServiceLayer()
 
 void OGRESRIFeatureServiceLayer::ResetReading()
 {
-    poDS->ResetReading();
+    poDS->MyResetReading();
     nFeaturesRead = 0;
     nLastFID = 0;
     bOtherPage = false;
@@ -318,10 +318,10 @@ OGRESRIFeatureServiceDataset::~OGRESRIFeatureServiceDataset()
 }
 
 /************************************************************************/
-/*                             ResetReading()                           */
+/*                           MyResetReading()                           */
 /************************************************************************/
 
-int OGRESRIFeatureServiceDataset::ResetReading()
+int OGRESRIFeatureServiceDataset::MyResetReading()
 {
     if( nLastOffset > nFirstOffset )
     {

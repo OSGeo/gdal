@@ -2480,6 +2480,8 @@ int OGRLIBKMLDataSource::TestCapability( const char *pszCap )
         return bUpdate;
     if( EQUAL( pszCap, ODsCDeleteLayer ) )
         return bUpdate;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bUpdate;
 
     return FALSE;
 }

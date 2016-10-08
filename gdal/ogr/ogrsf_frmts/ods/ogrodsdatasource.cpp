@@ -216,6 +216,8 @@ int OGRODSDataSource::TestCapability( const char * pszCap )
         return bUpdatable;
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return bUpdatable;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bUpdatable;
     else
         return FALSE;
 }

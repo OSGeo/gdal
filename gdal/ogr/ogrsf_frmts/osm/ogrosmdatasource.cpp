@@ -280,7 +280,8 @@ OGROSMDataSource::OGROSMDataSource() :
     pabySector(NULL),
     papsBuckets(NULL),
     nBuckets(0),
-    bNeedsToSaveWayInfo(false)
+    bNeedsToSaveWayInfo(false),
+    m_nFileSize(FILESIZE_NOT_INIT)
 {}
 
 /************************************************************************/
@@ -3693,10 +3694,10 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
 }
 
 /************************************************************************/
-/*                           ResetReading()                            */
+/*                          MyResetReading()                            */
 /************************************************************************/
 
-int OGROSMDataSource::ResetReading()
+int OGROSMDataSource::MyResetReading()
 {
     if( hDB == NULL )
         return FALSE;
@@ -3734,6 +3735,9 @@ int OGROSMDataSource::ResetReading()
         return FALSE;
     }
     bHasRowInPolygonsStandalone = false;
+
+    if( hSelectPolygonsStandaloneStmt != NULL )
+        sqlite3_reset( hSelectPolygonsStandaloneStmt );
 
     {
         for( int i = 0; i < nWayFeaturePairs; i++)
@@ -3792,15 +3796,91 @@ int OGROSMDataSource::ResetReading()
     }
 
     bStopParsing = false;
+    poCurrentLayer = NULL;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                             ResetReading()                           */
+/************************************************************************/
+
+void OGROSMDataSource::ResetReading()
+{
+    MyResetReading();
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature* OGROSMDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
+                                              double* pdfProgressPct,
+                                              GDALProgressFunc pfnProgress,
+                                              void* pProgressData )
+{
+    bInterleavedReading = TRUE;
+
+    if( poCurrentLayer == NULL )
+    {
+        poCurrentLayer = papoLayers[0];
+    }
+    if( pdfProgressPct != NULL || pfnProgress != NULL )
+    {
+        if( m_nFileSize == FILESIZE_NOT_INIT )
+        {
+            VSIStatBufL sStat;
+            if( VSIStatL( pszName, &sStat ) == 0 )
+            {
+                m_nFileSize = static_cast<GIntBig>(sStat.st_size);
+            }
+            else
+            {
+                m_nFileSize = FILESIZE_INVALID;
+            }
+        }
+    }
+
+    while( true )
+    {
+        OGRFeature* poFeature = poCurrentLayer->MyGetNextFeature(pfnProgress,
+                                                                 pProgressData);
+        if( poFeature == NULL)
+        {
+            if( poCurrentLayer != NULL )
+                continue;
+            if( ppoBelongingLayer != NULL )
+                *ppoBelongingLayer = NULL;
+            if( pdfProgressPct != NULL )
+                *pdfProgressPct = 1.0;
+            return NULL;
+        }
+        if( ppoBelongingLayer != NULL )
+            *ppoBelongingLayer = poCurrentLayer;
+        if( pdfProgressPct != NULL )
+        {
+            if( m_nFileSize != FILESIZE_INVALID )
+            {
+                *pdfProgressPct = 1.0 * OSM_GetBytesRead(psParser) /
+                                        m_nFileSize;
+            }
+            else
+            {
+                *pdfProgressPct = -1.0;
+            }
+        }
+
+        return poFeature;
+    }
 }
 
 /************************************************************************/
 /*                           ParseNextChunk()                           */
 /************************************************************************/
 
-bool OGROSMDataSource::ParseNextChunk(int nIdxLayer)
+bool OGROSMDataSource::ParseNextChunk(int nIdxLayer,
+                                      GDALProgressFunc pfnProgress,
+                                      void* pProgressData)
 {
     if( bStopParsing )
         return false;
@@ -3818,6 +3898,24 @@ bool OGROSMDataSource::ParseNextChunk(int nIdxLayer)
 #endif
 
         OSMRetCode eRet = OSM_ProcessBlock(psParser);
+        if( pfnProgress != NULL )
+        {
+            double dfPct = -1.0;
+            if( m_nFileSize != FILESIZE_INVALID )
+            {
+                dfPct = 1.0 * OSM_GetBytesRead(psParser) / m_nFileSize;
+            }
+            if( !pfnProgress( dfPct, "", pProgressData ) )
+            {
+                bStopParsing = true;
+                for(int i=0;i<nLayers;i++)
+                {
+                    papoLayers[i]->ForceResetReading();
+                }
+                return false;
+            }
+        }
+
         if( eRet == OSM_EOF || eRet == OSM_ERROR )
         {
             if( eRet == OSM_EOF )
@@ -4027,9 +4125,9 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROSMDataSource::TestCapability( const char * /* pszCap */ )
+int OGROSMDataSource::TestCapability( const char * pszCap )
 {
-    return FALSE;
+    return EQUAL(pszCap, ODsCRandomLayerRead);
 }
 
 /************************************************************************/
@@ -4348,7 +4446,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
             /* Update optimization parameters */
             ExecuteSQL(osInterestLayers, NULL, NULL);
 
-            ResetReading();
+            MyResetReading();
 
             /* Run the request */
             poResultSetLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,

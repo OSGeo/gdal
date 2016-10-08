@@ -1684,6 +1684,8 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer)
         return bUpdate;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bUpdate;
     else
         return OGRSQLiteBaseDataSource::TestCapability(pszCap);
 }

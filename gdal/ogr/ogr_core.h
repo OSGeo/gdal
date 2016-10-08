@@ -760,6 +760,8 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODsCTransactions       "Transactions"       /**< Dataset capability for dataset transcations */
 #define ODsCEmulatedTransactions "EmulatedTransactions" /**< Dataset capability for emulated dataset transactions */
 #define ODsCMeasuredGeometries "MeasuredGeometries"     /**< Dataset capability for measured geometries support */
+#define ODsCRandomLayerRead     "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
+#define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
 
 #define ODrCCreateDataSource   "CreateDataSource"   /**< Driver capability for datasource creation */
 #define ODrCDeleteDataSource   "DeleteDataSource"   /**< Driver capability for datasource deletion */

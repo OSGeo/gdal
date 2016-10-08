@@ -815,6 +815,8 @@ int OGRShapeDataSource::TestCapability( const char * pszCap )
         return bDSUpdate;
     if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bDSUpdate;
 
     return FALSE;
 }

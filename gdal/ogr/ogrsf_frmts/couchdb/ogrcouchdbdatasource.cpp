@@ -77,6 +77,8 @@ int OGRCouchDBDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if( bReadWrite && EQUAL(pszCap, ODsCDeleteLayer) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bReadWrite;
     else
         return FALSE;
 }

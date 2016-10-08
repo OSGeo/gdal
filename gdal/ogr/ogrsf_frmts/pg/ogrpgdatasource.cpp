@@ -1991,6 +1991,8 @@ int OGRPGDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if ( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return TRUE;
     else
         return FALSE;
 }
