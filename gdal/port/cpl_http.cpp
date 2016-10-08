@@ -60,11 +60,19 @@ static CPLMutex *hSessionMapMutex = NULL;
 /************************************************************************/
 
 #ifdef HAVE_CURL
+
+typedef struct
+{
+    CPLHTTPResult* psResult;
+    int            nMaxFileSize;
+} CPLHTTPResultWithLimit;
+
 static size_t
 CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 
 {
-    CPLHTTPResult *psResult = (CPLHTTPResult *) reqInfo;
+    CPLHTTPResultWithLimit *psResultWithLimit = (CPLHTTPResultWithLimit *) reqInfo;
+    CPLHTTPResult* psResult = psResultWithLimit->psResult;
 
     int nBytesToWrite = static_cast<int>(nmemb)*static_cast<int>(size);
     int nNewSize = psResult->nDataLen + nBytesToWrite + 1;
@@ -89,6 +97,13 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 
     psResult->nDataLen += nBytesToWrite;
     psResult->pabyData[psResult->nDataLen] = 0;
+
+    if( psResultWithLimit->nMaxFileSize > 0 &&
+        psResult->nDataLen > psResultWithLimit->nMaxFileSize )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Maximum file size reached");
+        return 0;
+    }
 
     return nmemb;
 }
@@ -131,22 +146,23 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  * <li>LOW_SPEED_LIMIT=val, where val is in bytes/second. See LOW_SPEED_TIME. Has only
  *     effect if LOW_SPEED_TIME is specified too. (GDAL >= 2.1)</li>
  * <li>HEADERS=val, where val is an extra header to use when getting a web page.
- *                  For example "Accept: application/x-ogcwkt"
- * <li>HTTPAUTH=[BASIC/NTLM/GSSNEGOTIATE/ANY] to specify an authentication scheme to use.
- * <li>USERPWD=userid:password to specify a user and password for authentication
+ *                  For example "Accept: application/x-ogcwkt"</li>
+ * <li>HTTPAUTH=[BASIC/NTLM/GSSNEGOTIATE/ANY] to specify an authentication scheme to use.</li>
+ * <li>USERPWD=userid:password to specify a user and password for authentication</li>
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the server
- *                     with a POST request.
+ *                     with a POST request.</li>
  * <li>PROXY=val, to make requests go through a proxy server, where val is of the
- *                form proxy.server.com:port_number
- * <li>PROXYUSERPWD=val, where val is of the form username:password
- * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/ANY] to specify an proxy authentication scheme to use.
- * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.
- * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)
- * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2; ...
+ *                form proxy.server.com:port_number</li>
+ * <li>PROXYUSERPWD=val, where val is of the form username:password</li>
+ * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/ANY] to specify an proxy authentication scheme to use.</li>
+ * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.</li>
+ * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)</li>
+ * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2; ...</li>
  * <li>MAX_RETRY=val, where val is the maximum number of retry attempts if a 503 or
- *               504 HTTP error occurs. Default is 0. (GDAL >= 2.0)
+ *               504 HTTP error occurs. Default is 0. (GDAL >= 2.0)</li>
  * <li>RETRY_DELAY=val, where val is the number of seconds between retry attempts.
- *                 Default is 30. (GDAL >= 2.0)
+ *                 Default is 30. (GDAL >= 2.0)</li>
+ * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the TIMEOUT,
@@ -344,7 +360,21 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, psResult);
     curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
 
-    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, psResult );
+
+    CPLHTTPResultWithLimit sResultWithLimit;
+    sResultWithLimit.psResult = psResult;
+    sResultWithLimit.nMaxFileSize = 0;
+    const char* pszMaxFileSize = CSLFetchNameValue(papszOptions,
+                                                    "MAX_FILE_SIZE");
+    if( pszMaxFileSize != NULL )
+    {
+        sResultWithLimit.nMaxFileSize = atoi(pszMaxFileSize);
+        // Only useful if size is returned by server before actual download
+        curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
+                         sResultWithLimit.nMaxFileSize);
+    }
+
+    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &sResultWithLimit );
     curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, CPLWriteFct );
 
     szCurlErrBuf[0] = '\0';
