@@ -125,6 +125,10 @@ ifeq ($(HAVE_XERCES),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DILI_ENABLED
 endif
 
+ifeq ($(HAVE_XERCES),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DGMLAS_ENABLED
+endif
+
 ifeq ($(HAVE_NAS),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DNAS_ENABLED
 endif

@@ -437,6 +437,7 @@ void CPL_DLL RegisterOGRPLSCENES();
 void CPL_DLL RegisterOGRCSW();
 void CPL_DLL RegisterOGRMongoDB();
 void CPL_DLL RegisterOGRVDV();
+void CPL_DLL RegisterOGRGMLAS();
 // @endcond
 
 CPL_C_END

@@ -1,0 +1,18 @@
+
+OBJ	=	ogrgmlasdriver.obj ogrgmlasdatasource.obj ogrgmlaslayer.obj \
+        ogrgmlasreader.obj ogrgmlasschemaanalyzer.obj ogrgmlasfeatureclass.obj \
+        ogrgmlasxsdcache.obj ogrgmlasutils.obj ogrgmlasconf.obj ogrgmlasxpatchmatcher.obj \
+        ogrgmlasxlinkresolver.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS =	-I.. -I..\.. -I..\mem -I..\geojson\libjson $(XERCES_INCLUDE) -DHAVE_XERCES=1 $(EXPAT_EXTRAFLAGS)
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+
