@@ -394,7 +394,9 @@ public:
 
         for( int i = 0; i < nCount; i++ )
         {
-            double x = adfX[i], y = adfY[i], z = adfZ[i];
+            const double x = adfX[i];
+            const double y = adfY[i];
+            const double z = adfZ[i];
 
             adfX[i] = x * aadfInverse[1][1] + y * aadfInverse[1][2]
                     + z * aadfInverse[1][3];
@@ -466,7 +468,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     double dfHeight = 0.0;
     double dfXDirection = 0.0;
     double dfYDirection = 0.0;
-    int bHaveZ = FALSE;
+    bool bHaveZ = false;
     int nAttachmentPoint = -1;
     CPLString osText;
 
@@ -484,7 +486,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
           case 30:
             dfZ = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
+            bHaveZ = true;
             break;
 
           case 40:
@@ -644,7 +646,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     double dfAngle = 0.0;
     double dfHeight = 0.0;
     CPLString osText;
-    int bHaveZ = FALSE;
+    bool bHaveZ = false;
     int nAnchorPosition = 1;
     int nHorizontalAlignment = 0;
     int nVerticalAlignment = 0;
@@ -663,7 +665,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
           case 30:
             dfZ = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
+            bHaveZ = true;
             break;
 
           case 40:
@@ -843,7 +845,7 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
-    int bHaveZ = FALSE;
+    bool bHaveZ = false;
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -859,7 +861,7 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
 
           case 30:
             dfZ = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
+            bHaveZ = true;
             break;
 
           default:
@@ -907,7 +909,7 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
     double dfX2 = 0.0;
     double dfY2 = 0.0;
     double dfZ2 = 0.0;
-    int bHaveZ = FALSE;
+    bool bHaveZ = false;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -934,12 +936,12 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
 
           case 30:
             dfZ1 = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
+            bHaveZ = true;
             break;
 
           case 31:
             dfZ2 = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
+            bHaveZ = true;
             break;
 
           default:
@@ -997,8 +999,8 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
-    int bHaveX = FALSE;
-    int bHaveY = FALSE;
+    bool bHaveX = false;
+    bool bHaveY = false;
 
     int nNumVertices = 1;   // use 1 based index
     int npolyarcVertexCount = 1;
@@ -1042,10 +1044,10 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
                 smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
                 npolyarcVertexCount++;
                 dfBulge = 0.0;
-                bHaveY = FALSE;
+                bHaveY = false;
             }
             dfX = CPLAtof(szLineBuf);
-            bHaveX = TRUE;
+            bHaveX = true;
             break;
 
           case 20:
@@ -1054,10 +1056,10 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
                 smoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
                 npolyarcVertexCount++;
                 dfBulge = 0.0;
-                bHaveX = FALSE;
+                bHaveX = false;
             }
             dfY = CPLAtof(szLineBuf);
-            bHaveY = TRUE;
+            bHaveY = true;
             break;
 
           case 42:
@@ -1257,7 +1259,7 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
     double dfY1 = 0.0;
     double dfZ1 = 0.0;
     double dfRadius = 0.0;
-    int bHaveZ = FALSE;
+    bool bHaveZ = false;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -1276,7 +1278,7 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
 
           case 30:
             dfZ1 = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
+            bHaveZ = true;
             break;
 
           case 40:
@@ -1336,7 +1338,7 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     double dfAxisX = 0.0;
     double dfAxisY = 0.0;
     double dfAxisZ=0.0;
-    int bHaveZ = FALSE;
+    bool bHaveZ = false;
     bool bApplyOCSTransform = false;
 
 /* -------------------------------------------------------------------- */
@@ -1356,7 +1358,7 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 
           case 30:
             dfZ1 = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
+            bHaveZ = true;
             break;
 
           case 11:
@@ -1485,7 +1487,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
     double dfRadius = 0.0;
     double dfStartAngle = 0.0;
     double dfEndAngle = 360.0;
-    int bHaveZ = FALSE;
+    bool bHaveZ = false;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -1504,7 +1506,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
 
           case 30:
             dfZ1 = CPLAtof(szLineBuf);
-            bHaveZ = TRUE;
+            bHaveZ = true;
             break;
 
           case 40:
@@ -2403,8 +2405,5 @@ OGRFeature *OGRDXFLayer::GetNextFeature()
 int OGRDXFLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCStringsAsUTF8) )
-        return TRUE;
-    else
-        return FALSE;
+    return EQUAL(pszCap, OLCStringsAsUTF8);
 }

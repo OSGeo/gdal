@@ -41,15 +41,15 @@ CPL_CVSID("$Id$");
 bool OGRDXFDataSource::ReadBlocksSection()
 
 {
-    char szLineBuf[257];
-    int nCode = 0;
     OGRDXFLayer *poReaderLayer = static_cast<OGRDXFLayer *>(
         GetLayerByName( "Entities" ));
-    int bMergeBlockGeometries = CPLTestBool(
+    const bool bMergeBlockGeometries = CPLTestBool(
         CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
 
     iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
 
+    char szLineBuf[257];
+    int nCode = 0;
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
            && !EQUAL(szLineBuf,"ENDSEC") )
     {
@@ -137,7 +137,7 @@ OGRGeometry *OGRDXFDataSource::SimplifyBlockGeometry(
     if( poCollection->getNumGeometries() == 1 )
     {
         OGRGeometry *poReturn = poCollection->getGeometryRef(0);
-        poCollection->removeGeometry(0,FALSE);
+        poCollection->removeGeometry(0, FALSE);
         delete poCollection;
         return poReturn;
     }
