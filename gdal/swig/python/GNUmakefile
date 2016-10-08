@@ -14,7 +14,7 @@ include ../SWIGmake.base
 PACKAGE_DIR=osgeo
 SWIGOUTPUTDIR=extensions/
 
-SCRIPTS			= `ls ./scripts`
+SCRIPTS			= `ls ./scripts/*.py`
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
                         gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
                         gcps2vec.py
