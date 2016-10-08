@@ -121,7 +121,7 @@ CPLString GMLASXLinkResolver::FetchRawContent(const CPLString& osURL,
     time_t nTimeStart = time(NULL);
     CPLHTTPResult* psResult = CPLHTTPFetch(osURL, papszOptions);
     time_t nTimeStop = time(NULL);
-    m_nGlobalResolutionTime += nTimeStop - nTimeStart;
+    m_nGlobalResolutionTime += static_cast<int>(nTimeStop - nTimeStart);
     CSLDestroy(papszOptions);
     if( psResult == NULL )
         return CPLString();

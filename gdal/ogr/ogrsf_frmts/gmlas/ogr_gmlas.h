@@ -823,6 +823,8 @@ class GMLASSchemaAnalyzer
 
         bool IsIgnoredXPath(const CPLString& osXPath);
 
+        CPL_DISALLOW_COPY_ASSIGN(GMLASSchemaAnalyzer)
+
     public:
         GMLASSchemaAnalyzer( GMLASXPathMatcher& oIgnoredXPathMatcher );
         void SetUseArrays(bool b) { m_bUseArrays = b; }

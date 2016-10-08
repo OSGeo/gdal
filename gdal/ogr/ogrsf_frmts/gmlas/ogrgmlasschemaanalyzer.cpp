@@ -1801,8 +1801,11 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
         {
             XSElementDeclaration* poElt = poParticle->getElementTerm();
             const CPLString osEltName(transcode(poElt->getName()));
+            std::map< CPLString, int >::const_iterator oIter =
+                oMapCountOccurencesOfSameName.find(osEltName);
             const bool bEltNameWillNeedPrefix =
-                oMapCountOccurencesOfSameName.at(osEltName) > 1;
+                oIter != oMapCountOccurencesOfSameName.end() &&
+                oIter->second > 1;
             const CPLString osEltNS(transcode(poElt->getNamespace()));
             const CPLString osOnlyElementXPath(MakeXPath(osEltNS, osEltName));
             const CPLString osElementXPath( oClass.GetXPath() + "/" +
