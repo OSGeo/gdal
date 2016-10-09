@@ -860,6 +860,30 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 %}
 %clear char **papszSiblings;
 
+
+%apply (char **options) {char** allowed_drivers};
+%apply (char **options) {char** sibling_files};
+
+#ifndef SWIGJAVA
+%feature( "kwargs" ) IdentifyDriverEx;
+#endif
+%inline %{
+GDALDriverShadow *IdentifyDriverEx( const char* utf8_path,
+                                    unsigned int nIdentifyFlags = 0,
+                                    char** allowed_drivers = NULL,
+                                    char** sibling_files = NULL )
+{
+    return  (GDALDriverShadow *) GDALIdentifyDriverEx( utf8_path,
+                                                nIdentifyFlags,
+                                                allowed_drivers,
+                                                sibling_files );
+}
+%}
+
+%clear char **allowed_drivers;
+%clear char **sibling_files;
+
+
 //************************************************************************
 //
 // Define Algorithms
