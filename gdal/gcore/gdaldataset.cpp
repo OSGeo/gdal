@@ -6070,6 +6070,10 @@ void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
 
 /**
  \brief Fetch the next available feature from this dataset.
+ 
+ This method is intended for the few drivers where OGRLayer::GetNextFeature()
+ is not efficient, but in general OGRLayer::GetNextFeature() is a more
+ natural API.
 
  The returned feature becomes the responsibility of the caller to
  delete with OGRFeature::DestroyFeature().
@@ -6231,6 +6235,10 @@ OGRFeature* GDALDataset::GetNextFeature( OGRLayer** ppoBelongingLayer,
 /************************************************************************/
 /**
  \brief Fetch the next available feature from this dataset.
+ 
+ This method is intended for the few drivers where OGR_L_GetNextFeature()
+ is not efficient, but in general OGR_L_GetNextFeature() is a more
+ natural API.
 
  The returned feature becomes the responsibility of the caller to
  delete with OGRFeature::DestroyFeature().
