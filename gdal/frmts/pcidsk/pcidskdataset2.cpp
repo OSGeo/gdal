@@ -1821,7 +1821,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /* -------------------------------------------------------------------- */
         poDS->oOvManager.Initialize( poDS, pszFilename, papszSiblingFiles );
 
-        return( poDS );
+        return poDS;
     }
 
 /* -------------------------------------------------------------------- */

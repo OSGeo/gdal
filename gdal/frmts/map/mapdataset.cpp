@@ -410,7 +410,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CSLDestroy(papszLines);
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

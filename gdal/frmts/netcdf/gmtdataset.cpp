@@ -571,7 +571,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             nc_close (cdfid);
             CPLFree( padfData );
-            return( NULL );
+            return NULL;
         }
         err = nc_put_vara_double( cdfid, z_id, start, edge, padfData );
         if( err != NC_NOERR )
@@ -581,7 +581,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       pszFilename, nc_strerror( err ) );
             nc_close (cdfid);
             CPLFree( padfData );
-            return( NULL );
+            return NULL;
         }
     }
 
