@@ -2881,6 +2881,14 @@ def IdentifyDriver(*args):
   return _gdal.IdentifyDriver(*args)
 IdentifyDriver = _gdal.IdentifyDriver
 
+def IdentifyDriverEx(*args, **kwargs):
+  """
+    IdentifyDriverEx(char const * utf8_path, unsigned int nIdentifyFlags=0, char ** allowed_drivers=None, 
+        char ** sibling_files=None) -> Driver
+    """
+  return _gdal.IdentifyDriverEx(*args, **kwargs)
+IdentifyDriverEx = _gdal.IdentifyDriverEx
+
 def GeneralCmdLineProcessor(*args):
   """GeneralCmdLineProcessor(char ** papszArgv, int nOptions=0) -> char **"""
   return _gdal.GeneralCmdLineProcessor(*args)
