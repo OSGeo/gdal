@@ -357,6 +357,12 @@ GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriver( const char * pszFilename,
                                             char ** papszFileList );
+
+GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriverEx( const char* pszFilename,
+                                                      unsigned int nIdentifyFlags,
+                                                      const char* const* papszAllowedDrivers,
+                                                      const char* const* papszFileList );
+
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALOpen( const char *pszFilename, GDALAccess eAccess ) CPL_WARN_UNUSED_RESULT;
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_WARN_UNUSED_RESULT;
