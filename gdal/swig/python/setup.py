@@ -156,23 +156,12 @@ class gdal_ext(build_ext):
         self.numpy_include_dir = get_numpy_include()
         self.gdaldir = None
         self.gdal_config = self.GDAL_CONFIG
-        self.already_raised_no_config_error = False
 
     def get_compiler(self):
         return self.compiler or get_default_compiler()
 
     def get_gdal_config(self, option):
-        try:
-            return fetch_config(option, gdal_config = self.gdal_config)
-        except gdal_config_error:
-            # If an error is thrown, it is possibly because
-            # the gdal-config location given in setup.cfg is
-            # incorrect, or possibly the default -- ../../apps/gdal-config
-            # We'll try one time to use the gdal-config that might be
-            # on the path. If that fails, we're done, however.
-            if not self.already_raised_no_config_error:
-                self.already_raised_no_config_error = True
-                return fetch_config(option)
+        return fetch_config(option, gdal_config = self.gdal_config)
 
     def finalize_options(self):
         if self.include_dirs is None:
