@@ -189,7 +189,7 @@ class TerragenDataset : public GDALPamDataset
     bool get(float&);
     bool put(GInt16);
     bool put(float);
-    bool skip(size_t n) { return ( 0 == VSIFSeekL(m_fp, n, SEEK_CUR) ); }
+    bool skip(size_t n) { return 0 == VSIFSeekL(m_fp, n, SEEK_CUR); }
     bool pad(size_t n) { return skip( n ); }
 
     bool read_next_tag(char*);
@@ -1024,7 +1024,7 @@ GDALDataset* TerragenDataset::Create
 
     //VSIFClose( poDS->m_fp );
 
-    //return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    // return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
     return reinterpret_cast<GDALDataset *>( poDS );
 }
 
@@ -1091,7 +1091,7 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

@@ -1415,7 +1415,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1456,7 +1456,7 @@ const GDAL_GCP *RS2Dataset::GetGCPs()
 const char *RS2Dataset::GetProjectionRef()
 
 {
-    return( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -1469,9 +1469,9 @@ CPLErr RS2Dataset::GetGeoTransform( double * padfTransform )
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
 
     if (bHaveGeoTransform)
-        return( CE_None );
+        return CE_None;
 
-    return( CE_Failure );
+    return CE_Failure;
 }
 
 

@@ -1097,7 +1097,7 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
 
-    return( poDS );
+    return poDS;
 }
 
 
@@ -1153,7 +1153,7 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
 
 const char *SAFEDataset::GetProjectionRef()
 {
-    return( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/
