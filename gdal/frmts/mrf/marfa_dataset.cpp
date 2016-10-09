@@ -662,7 +662,7 @@ CPLErr GDALMRFDataset::LevelInit(const int l) {
 inline bool on(const char *pszValue) {
     if (!pszValue || pszValue[0] == 0)
         return false;
-    return (EQUAL(pszValue, "ON") || EQUAL(pszValue, "TRUE") || EQUAL(pszValue, "YES"));
+    return EQUAL(pszValue, "ON") || EQUAL(pszValue, "TRUE") || EQUAL(pszValue, "YES");
 }
 
 /**

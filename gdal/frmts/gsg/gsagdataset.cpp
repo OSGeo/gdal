@@ -1060,7 +1060,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
-    return( poDS );
+    return poDS;
 
 error:
     if ( bMustFreeHeader )

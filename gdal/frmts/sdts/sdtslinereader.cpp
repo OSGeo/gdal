@@ -203,7 +203,7 @@ void SDTSLineReader::Close()
 int SDTSLineReader::Open( const char * pszFilename )
 
 {
-    return( oDDFModule.Open( pszFilename ) );
+    return oDDFModule.Open( pszFilename );
 }
 
 /************************************************************************/
@@ -236,7 +236,7 @@ SDTSRawLine *SDTSLineReader::GetNextLine()
 
     if( poRawLine->Read( poIREF, poRecord ) )
     {
-        return( poRawLine );
+        return poRawLine;
     }
 
     delete poRawLine;

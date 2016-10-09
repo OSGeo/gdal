@@ -1344,7 +1344,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 // {
 //     CPLDebug("FIT", "FITDataset::GetGeoTransform");
 //     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-//     return( CE_None );
+//     return CE_None;
 // }
 
 /************************************************************************/

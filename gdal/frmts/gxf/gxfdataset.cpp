@@ -302,7 +302,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
     GXFHandle l_hGXF = GXFOpen( poOpenInfo->pszFilename );
 
     if( l_hGXF == NULL )
-        return( NULL );
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */

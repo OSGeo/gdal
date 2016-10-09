@@ -762,7 +762,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
                                  poOpenInfo->GetSiblingFiles() );
     CPLAcquireMutex(hGRIBMutex, 1000.0);
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
