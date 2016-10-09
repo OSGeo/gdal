@@ -768,7 +768,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, psInfo->pszCoverName );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -786,7 +786,7 @@ CPLErr AIGDataset::GetGeoTransform( double * padfTransform )
     padfTransform[4] = 0;
     padfTransform[5] = -psInfo->dfCellSizeY;
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/

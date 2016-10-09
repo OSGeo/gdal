@@ -99,7 +99,7 @@ CPLErr CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     CPLAssert( nBlockXOff == 0 );
 
-    return( CEOSReadScanline(poCEOS_DS->psCEOS, nBand, nBlockYOff+1, pImage) );
+    return CEOSReadScanline(poCEOS_DS->psCEOS, nBand, nBlockYOff+1, pImage);
 }
 
 /************************************************************************/
@@ -153,7 +153,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CEOSImage *psCEOS = CEOSOpen( poOpenInfo->pszFilename, "rb" );
     if( psCEOS == NULL )
-        return( NULL );
+        return NULL;
 
     if( psCEOS->nBitsPerPixel != 8 )
     {
@@ -214,7 +214,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
