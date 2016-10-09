@@ -1235,7 +1235,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

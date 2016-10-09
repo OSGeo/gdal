@@ -457,7 +457,7 @@ GDALDataset *ZMapDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-    return( poDS );
+    return poDS;
 }
 
 
@@ -688,7 +688,7 @@ CPLErr ZMapDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
