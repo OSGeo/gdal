@@ -2371,7 +2371,7 @@ static double LagrangeInterpol(const double x[],
         }
         y0 = y0 + L * y[i];
     }
-    return(y0);
+    return y0;
 }
 
 /************************************************************************/
@@ -3501,7 +3501,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->FetchMetadata();
     }
 
-    return( poDS );
+    return poDS;
 
 bad:
     delete poDS;

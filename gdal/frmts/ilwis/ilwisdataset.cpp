@@ -609,7 +609,7 @@ CPLErr ILWISDataset::WriteGeoReference()
 const char *ILWISDataset::GetProjectionRef()
 
 {
-   return ( pszProjection );
+   return pszProjection;
 }
 
 /************************************************************************/
@@ -634,7 +634,7 @@ CPLErr ILWISDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -838,7 +838,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1002,7 +1002,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     }
 
     return poDS;
-    //return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    // return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
 /************************************************************************/
@@ -1490,7 +1490,7 @@ CPLErr ILWISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open ILWIS data file.");
-        return( CE_Failure );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */

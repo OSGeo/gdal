@@ -657,15 +657,16 @@ static short HueToRGB( short n1, short n2, short hue )
 
     /* return r,g, or b value from this tridrant */
     if( hue < (HLSMAX / 6) )
-        return (n1 + (((n2 - n1) * hue + (HLSMAX / 12)) / (HLSMAX / 6)));
+        return n1 + (((n2 - n1) * hue + (HLSMAX / 12)) / (HLSMAX / 6));
     if( hue < (HLSMAX / 2) )
-        return (n2);
+        return n2;
     if( hue < ((HLSMAX * 2) / 3) )
-        return (n1 +
-                (((n2 - n1) * (((HLSMAX * 2) / 3) - hue) +
-                (HLSMAX / 12)) / (HLSMAX / 6)));
+        return
+            n1 +
+            (((n2 - n1) * (((HLSMAX * 2) / 3) - hue) +
+              (HLSMAX / 12)) / (HLSMAX / 6));
     else
-        return (n1);
+        return n1;
 }
 
 NWT_RGB HLStoRGB( HLS hls )

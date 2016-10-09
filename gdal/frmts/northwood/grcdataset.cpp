@@ -304,7 +304,7 @@ const char *NWT_GRCDataset::GetProjectionRef()
             poSpatialRef->Release();
         }
     }
-    return ( (const char *) pszProjection );
+    return (const char *) pszProjection;
 }
 
 /************************************************************************/
@@ -396,7 +396,7 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
                                  poOpenInfo->pszFilename,
                                  poOpenInfo->GetSiblingFiles() );
 
-    return (poDS);
+    return poDS;
 }
 
 

@@ -622,7 +622,7 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
     poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
             poOpenInfo->GetSiblingFiles());
 
-    return (poDS);
+    return poDS;
 }
 
 /************************************************************************/

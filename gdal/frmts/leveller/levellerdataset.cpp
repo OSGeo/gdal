@@ -232,7 +232,7 @@ static const measurement_unit kUnits[] =
 static bool approx_equal(double a, double b)
 {
     const double epsilon = 1e-5;
-    return (fabs(a-b) <= epsilon);
+    return fabs(a-b) <= epsilon;
 }
 
 
@@ -666,7 +666,7 @@ LevellerDataset::~LevellerDataset()
 
 static double degrees_to_radians(double d)
 {
-    return (d * 0.017453292);
+    return d * 0.017453292;
 }
 
 
@@ -973,14 +973,14 @@ bool LevellerDataset::write(size_t n)
 {
     GUInt32 n32 = (GUInt32)n;
     CPL_LSBPTR32(&n32);
-    return (1 == VSIFWriteL(&n32, sizeof(n32), 1, m_fp));
+    return 1 == VSIFWriteL(&n32, sizeof(n32), 1, m_fp);
 }
 
 
 bool LevellerDataset::write(double d)
 {
     CPL_LSBPTR64(&d);
-    return (1 == VSIFWriteL(&d, sizeof(d), 1, m_fp));
+    return 1 == VSIFWriteL(&d, sizeof(d), 1, m_fp);
 }
 
 
@@ -1030,7 +1030,7 @@ bool LevellerDataset::write_tag(const char* pszTag, const char* psz)
     {
         snprintf(sz, sizeof(sz), "%sd", pszTag);
         this->write_tag_start(sz, len);
-        return (1 == VSIFWriteL(psz, len, 1, m_fp));
+        return 1 == VSIFWriteL(psz, len, 1, m_fp);
     }
     return false;
 }
@@ -1163,7 +1163,7 @@ UNITLABEL LevellerDataset::meter_measure_to_code(double dM) const
     // require exact equality, otherwise be loose.
 
     const measurement_unit* pu = this->get_uom(dM);
-    return (pu != NULL ? pu->oemCode : UNITLABEL_UNKNOWN);
+    return pu != NULL ? pu->oemCode : UNITLABEL_UNKNOWN;
 }
 
 
@@ -1172,7 +1172,7 @@ UNITLABEL LevellerDataset::id_to_code(const char* pszUnits) const
     // Convert a readable UOM to its OEM code.
 
     const measurement_unit* pu = this->get_uom(pszUnits);
-    return (pu != NULL ? pu->oemCode : UNITLABEL_UNKNOWN);
+    return pu != NULL ? pu->oemCode : UNITLABEL_UNKNOWN;
 }
 
 
@@ -1181,7 +1181,7 @@ const char* LevellerDataset::code_to_id(UNITLABEL code) const
     // Convert a measurement unit's OEM ID to its readable ID.
 
     const measurement_unit* pu = this->get_uom(code);
-    return (pu != NULL ? pu->pszID : NULL);
+    return pu != NULL ? pu->pszID : NULL;
 }
 
 
@@ -1584,7 +1584,7 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
