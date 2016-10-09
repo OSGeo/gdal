@@ -35,9 +35,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FIT_WRITE
-
-#define FIT_PAGE_SIZE 128
+static const int FIT_PAGE_SIZE = 128;
 
 using namespace gstEndian;
 
@@ -64,13 +62,11 @@ class FITDataset : public GDALPamDataset
 //     virtual CPLErr GetGeoTransform( double * );
 };
 
-#ifdef FIT_WRITE
 static GDALDataset *FITCreateCopy(const char * pszFilename,
                                   GDALDataset *poSrcDS,
                                   int bStrict, char ** papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void * pProgressData );
-#endif // FIT_WRITE
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1008,7 +1004,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check if 64 bit seek is needed.                                 */
 /* -------------------------------------------------------------------- */
     uint64 bytesPerComponent =
-        (GDALGetDataTypeSize(fitDataType(poDS->info->dtype)) / 8);
+        GDALGetDataTypeSize(fitDataType(poDS->info->dtype)) / 8;
     uint64 bytesPerPixel = head->cSize * bytesPerComponent;
     uint64 recordSize = bytesPerPixel * head->xPageSize *
         head->yPageSize;
@@ -1091,7 +1087,6 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                           FITCreateCopy()                            */
 /************************************************************************/
 
-#ifdef FIT_WRITE
 static GDALDataset *FITCreateCopy(const char * pszFilename,
                                   GDALDataset *poSrcDS,
                                   int bStrict, char ** papszOptions,
@@ -1340,7 +1335,6 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     return poDS;
 }
-#endif // FIT_WRITE
 
 /************************************************************************/
 /*                           GetGeoTransform()                          */
@@ -1373,12 +1367,10 @@ void GDALRegister_FIT()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = FITDataset::Open;
-#ifdef FIT_WRITE
     poDriver->pfnCreateCopy = FITCreateCopy;
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 "
                                "Float32 Float64" );
-#endif // FIT_WRITE
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
