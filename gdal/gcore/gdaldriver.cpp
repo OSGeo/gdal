@@ -1852,7 +1852,7 @@ GDALIdentifyDriver( const char * pszFilename,
                     char **papszFileList )
 
 {
-	return GDALIdentifyDriverEx( pszFilename, 0, NULL, papszFileList );
+    return GDALIdentifyDriverEx( pszFilename, 0, NULL, papszFileList );
 }
 
 
@@ -1913,9 +1913,9 @@ GDALIdentifyDriverEx( const char* pszFilename,
     // First pass: only use drivers that have a pfnIdentify implementation.
     for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
     {
-		GDALDriver* poDriver;
+        GDALDriver* poDriver;
 
-		if( iDriver < 0 )
+        if( iDriver < 0 )
             poDriver = GDALGetAPIPROXYDriver();
         else
         {
@@ -1928,24 +1928,24 @@ GDALIdentifyDriverEx( const char* pszFilename,
         VALIDATE_POINTER1( poDriver, "GDALIdentifyDriver", NULL );
 
         if( poDriver->pfnIdentify == NULL )
-		{
-			continue;
-		}
+        {
+            continue;
+        }
 
-		if (papszAllowedDrivers != NULL &&
-			CSLFindString((char**)papszAllowedDrivers, GDALGetDriverShortName(poDriver)) == -1)
-			continue;
-		if( (nIdentifyFlags & GDAL_OF_RASTER) != 0 &&
-			(nIdentifyFlags & GDAL_OF_VECTOR) == 0 &&
-			poDriver->GetMetadataItem(GDAL_DCAP_RASTER) == NULL )
-			continue;
-		if( (nIdentifyFlags & GDAL_OF_VECTOR) != 0 &&
-			(nIdentifyFlags & GDAL_OF_RASTER) == 0 &&
-			poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == NULL )
-			continue;
+        if (papszAllowedDrivers != NULL &&
+            CSLFindString((char**)papszAllowedDrivers, GDALGetDriverShortName(poDriver)) == -1)
+            continue;
+        if( (nIdentifyFlags & GDAL_OF_RASTER) != 0 &&
+            (nIdentifyFlags & GDAL_OF_VECTOR) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_RASTER) == NULL )
+            continue;
+        if( (nIdentifyFlags & GDAL_OF_VECTOR) != 0 &&
+            (nIdentifyFlags & GDAL_OF_RASTER) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == NULL )
+            continue;
 
-		if( poDriver->pfnIdentify( &oOpenInfo ) > 0 )
-			return poDriver;
+        if( poDriver->pfnIdentify( &oOpenInfo ) > 0 )
+            return poDriver;
     }
 
     // Second pass: slow method.
@@ -1953,7 +1953,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
     {
         GDALDriver* poDriver;
 
-		if( iDriver < 0 )
+        if( iDriver < 0 )
             poDriver = GDALGetAPIPROXYDriver();
         else
         {
@@ -1963,9 +1963,9 @@ GDALIdentifyDriverEx( const char* pszFilename,
                 continue;
         }
 
-		VALIDATE_POINTER1( poDriver, "GDALIdentifyDriver", NULL );
+        VALIDATE_POINTER1( poDriver, "GDALIdentifyDriver", NULL );
 
-		if( (nIdentifyFlags & GDAL_OF_RASTER) != 0 &&
+        if( (nIdentifyFlags & GDAL_OF_RASTER) != 0 &&
             (nIdentifyFlags & GDAL_OF_VECTOR) == 0 &&
             poDriver->GetMetadataItem(GDAL_DCAP_RASTER) == NULL )
             continue;
