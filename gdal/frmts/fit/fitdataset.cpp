@@ -35,7 +35,7 @@
 
 CPL_CVSID("$Id$");
 
-static const int FIT_PAGE_SIZE = 128;
+static const size_t FIT_PAGE_SIZE = 128;
 
 using namespace gstEndian;
 
