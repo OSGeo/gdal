@@ -1693,7 +1693,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1712,55 +1712,55 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
     switch( nEPSG )
     {
       case 9801:
-        return( CT_LambertConfConic_1SP );
+        return CT_LambertConfConic_1SP;
 
       case 9802:
-        return( CT_LambertConfConic_2SP );
+        return CT_LambertConfConic_2SP;
 
       case 9803:
-        return( CT_LambertConfConic_2SP ); /* Belgian variant not supported */
+        return CT_LambertConfConic_2SP;  // Belgian variant not supported.
 
       case 9804:
-        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        return CT_Mercator;  // 1SP and 2SP not differentiated.
 
       case 9805:
-        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        return CT_Mercator;  // 1SP and 2SP not differentiated.
 
       case 9806:
-        return( CT_CassiniSoldner );
+        return CT_CassiniSoldner;
 
       case 9807:
-        return( CT_TransverseMercator );
+        return CT_TransverseMercator;
 
       case 9808:
-        return( CT_TransvMercator_SouthOriented );
+        return CT_TransvMercator_SouthOriented;
 
       case 9809:
-        return( CT_ObliqueStereographic );
+        return CT_ObliqueStereographic;
 
       case 9810:
-        return( CT_PolarStereographic );
+        return CT_PolarStereographic;
 
       case 9811:
-        return( CT_NewZealandMapGrid );
+        return CT_NewZealandMapGrid;
 
       case 9812:
-        return( CT_ObliqueMercator ); /* is hotine actually different? */
+        return CT_ObliqueMercator;  // Is hotine actually different?
 
       case 9813:
-        return( CT_ObliqueMercator_Laborde );
+        return CT_ObliqueMercator_Laborde;
 
       case 9814:
-        return( CT_ObliqueMercator_Rosenmund ); /* swiss  */
+        return CT_ObliqueMercator_Rosenmund;  // Swiss.
 
       case 9815:
-        return( CT_ObliqueMercator );
+        return CT_ObliqueMercator;
 
       case 9816: /* tunesia mining grid has no counterpart */
-        return( KvUserDefined );
+        return KvUserDefined;
     }
 
-    return( KvUserDefined );
+    return KvUserDefined;
 }
 
 /* EPSG Codes for projection parameters.  Unfortunately, these bear no
@@ -1911,7 +1911,7 @@ static int SetGTParmIds( int nCTProjection,
         return TRUE;
 
       default:
-        return( FALSE );
+        return FALSE;
     }
 }
 

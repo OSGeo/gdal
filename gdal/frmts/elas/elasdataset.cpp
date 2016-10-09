@@ -475,7 +475,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -610,7 +610,7 @@ CPLErr ELASDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -666,7 +666,7 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
     CPL_MSBPTR32(&(sHeader.Matrix[2]));
     CPL_MSBPTR32(&(sHeader.Matrix[3]));
 
-    return( CE_None );
+    return CE_None;
 }
 
 

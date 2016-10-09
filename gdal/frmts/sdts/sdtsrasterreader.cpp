@@ -328,7 +328,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Open the cell file.                                             */
 /* -------------------------------------------------------------------- */
-    return( oDDFModule.Open( poCATD->GetModuleFilePath(pszModule) ) );
+    return oDDFModule.Open( poCATD->GetModuleFilePath(pszModule) );
 }
 
 /************************************************************************/

@@ -348,7 +348,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
     }
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

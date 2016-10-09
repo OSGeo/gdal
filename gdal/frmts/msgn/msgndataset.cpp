@@ -338,7 +338,7 @@ CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 const char *MSGNDataset::GetProjectionRef()
 
 {
-    return ( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -538,7 +538,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         delete open_info;
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

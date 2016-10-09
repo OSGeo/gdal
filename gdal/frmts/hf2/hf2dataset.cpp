@@ -641,7 +641,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, osOriginalFilename.c_str() );
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -653,7 +653,7 @@ CPLErr HF2Dataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return CE_None;
 }
 
 

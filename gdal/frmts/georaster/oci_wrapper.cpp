@@ -1319,7 +1319,7 @@ bool OWStatement::WriteBlob( OCILobLocator* phLocator,
         return false;
     }
 
-    return ( nAmont == (ub4) nSize );
+    return nAmont == (ub4) nSize;
 }
 
 char* OWStatement::ReadCLob( OCILobLocator* phLocator )
