@@ -2005,7 +2005,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     break;
                 }
             }
-        }
+        }  // while true
 
         if (pfnProgress)
         {
@@ -2015,7 +2015,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
         if( !bTargetLayersHaveBeenCreated )
         {
-            bTargetLayersHaveBeenCreated = true;
+            // bTargetLayersHaveBeenCreated not used after here.
+            // bTargetLayersHaveBeenCreated = true;
             for( int iLayer = 0; iLayer < nSrcLayerCount; iLayer++ )
             {
                 OGRLayer        *poLayer = poDS->GetLayer(iLayer);
