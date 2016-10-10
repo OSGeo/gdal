@@ -133,7 +133,7 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
     {
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
-        papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
+        papoLayers = static_cast<OGRLayer **>(CPLMalloc(sizeof(OGRLayer*)));
         papoLayers[0] = new OGRAeronavFAADOFLayer(fp, CPLGetBasename(pszFilename));
         return TRUE;
     }
@@ -141,7 +141,7 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
     {
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
-        papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
+        papoLayers = static_cast<OGRLayer **>(CPLMalloc(sizeof(OGRLayer*)));
         papoLayers[0] = new OGRAeronavFAANAVAIDLayer(fp, CPLGetBasename(pszFilename));
         return TRUE;
     }
@@ -149,7 +149,7 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
     {
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
-        papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
+        papoLayers = static_cast<OGRLayer **>(CPLMalloc(sizeof(OGRLayer*)));
         papoLayers[0] = new OGRAeronavFAAIAPLayer(fp, CPLGetBasename(pszFilename));
         return TRUE;
     }
@@ -160,7 +160,7 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
             strstr(szBuffer, "STARS - STANDARD TERMINAL ARRIVALS") != NULL;
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
-        papoLayers = (OGRLayer**) CPLMalloc(sizeof(OGRLayer*));
+        papoLayers = static_cast<OGRLayer **>(CPLMalloc(sizeof(OGRLayer*)));
         papoLayers[0] = new OGRAeronavFAARouteLayer(fp, CPLGetBasename(pszFilename), bIsDPOrSTARS);
         return TRUE;
     }

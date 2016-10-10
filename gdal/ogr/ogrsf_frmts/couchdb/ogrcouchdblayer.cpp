@@ -283,8 +283,9 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
             if ( json_object_get_type(poValue) == json_type_array )
             {
                 int nLength = json_object_array_length(poValue);
-                int* panVal = (int*)CPLMalloc(sizeof(int) * nLength);
-                for(int i=0;i<nLength;i++)
+                int* panVal = static_cast<int *>(
+                    CPLMalloc(sizeof(int) * nLength));
+                for( int i = 0; i < nLength; i++ )
                 {
                     json_object* poRow = json_object_array_get_idx(poValue, i);
                     panVal[i] = json_object_get_int(poRow);
@@ -297,9 +298,10 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
         {
             if ( json_object_get_type(poValue) == json_type_array )
             {
-                int nLength = json_object_array_length(poValue);
-                double* padfVal = (double*)CPLMalloc(sizeof(double) * nLength);
-                for(int i=0;i<nLength;i++)
+                const int nLength = json_object_array_length(poValue);
+                double* padfVal = static_cast<double *>(
+                    CPLMalloc(sizeof(double) * nLength));
+                for( int i = 0; i < nLength; i++ )
                 {
                     json_object* poRow = json_object_array_get_idx(poValue, i);
                     padfVal[i] = json_object_get_double(poRow);
@@ -313,7 +315,8 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
             if ( json_object_get_type(poValue) == json_type_array )
             {
                 int nLength = json_object_array_length(poValue);
-                char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
+                char** papszVal = static_cast<char **>(
+                    CPLMalloc(sizeof(char*) * (nLength+1)));
                 int i = 0;  // Used after for.
                 for( ; i < nLength; i++ )
                 {

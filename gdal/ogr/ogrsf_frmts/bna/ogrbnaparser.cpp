@@ -447,7 +447,8 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
               {
                 if (tmpBufferLength[i] && tmpBuffer[i][0])
                 {
-                  record->ids[i] = (char*)CPLMalloc(tmpBufferLength[i] + 1);
+                  record->ids[i] = static_cast<char *>(
+                      CPLMalloc(tmpBufferLength[i] + 1));
                   tmpBuffer[i][tmpBufferLength[i]] = 0;
                   memcpy(record->ids[i], tmpBuffer[i], tmpBufferLength[i] + 1);
                 }

@@ -176,8 +176,8 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
             nLayers = 4;
 
             papoLayers = static_cast<OGRBNALayer **>(
-                CPLMalloc(nLayers * sizeof(OGRBNALayer*) ) );
-            for(i=0;i<4;i++)
+                CPLMalloc(nLayers * sizeof(OGRBNALayer*)));
+            for( i = 0; i < 4; i++ )
                 papoLayers[i] = new OGRBNALayer(
                     pszFilename,
                     layerRadixName[i],
