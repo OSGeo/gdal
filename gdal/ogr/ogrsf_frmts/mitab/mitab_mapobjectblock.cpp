@@ -937,7 +937,7 @@ TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,
 GBool TABMAPObjHdr::IsCompressedType()
 {
     // Compressed types are 1, 4, 7, etc.
-    return ((m_nType % 3) == 1 ? TRUE : FALSE);
+    return (m_nType % 3) == 1 ? TRUE : FALSE;
 }
 
 /**********************************************************************

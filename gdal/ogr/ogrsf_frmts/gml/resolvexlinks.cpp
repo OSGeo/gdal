@@ -79,7 +79,7 @@ static const char* GetID( CPLXMLNode * psNode )
     if( psNode1 == NULL )
         return FALSE;
 
-    return ( strcmp( GetID(psNode2), GetID(psNode1) ) > 0 );
+    return strcmp( GetID(psNode2), GetID(psNode1) ) > 0;
 }*/
 
 /************************************************************************/

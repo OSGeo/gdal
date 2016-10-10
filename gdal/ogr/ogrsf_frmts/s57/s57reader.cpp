@@ -138,7 +138,7 @@ char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
     if( RecodedString == NULL )
         RecodedString = CPLStrdup(SourceString);
 
-    return(RecodedString);
+    return RecodedString;
 }
 
 /************************************************************************/
@@ -2016,7 +2016,7 @@ GetIntSubfield( DDFField *poField,
                                 &nBytesRemaining,
                                 iSubfieldIndex );
 
-    return( poSFDefn->ExtractIntData( pachData, nBytesRemaining, NULL ) );
+    return poSFDefn->ExtractIntData( pachData, nBytesRemaining, NULL );
 }
 
 /************************************************************************/

@@ -811,7 +811,7 @@ int OGROpenFileGDBSimpleSQLLayer::TestCapability( const char * pszCap )
 
     if( EQUAL(pszCap,OLCFastFeatureCount) )
     {
-        return( m_poFilterGeom == NULL && m_poAttrQuery == NULL );
+        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
     }
     else if( EQUAL(pszCap,OLCFastGetExtent) )
     {

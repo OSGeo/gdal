@@ -1510,7 +1510,7 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
         nFeatureCount = nSavedFeatureId - nBaseFeatureId;
     }
 
-    return( poFeature );
+    return poFeature;
 }
 
 /************************************************************************/

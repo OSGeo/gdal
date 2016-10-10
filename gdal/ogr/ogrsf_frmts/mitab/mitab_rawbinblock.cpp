@@ -662,7 +662,7 @@ void  TABRawBinBlock::SetFirstBlockPtr(int nOffset)
  **********************************************************************/
 int     TABRawBinBlock::GetNumUnusedBytes()
 {
-    return (m_nBlockSize - m_nSizeUsed);
+    return m_nBlockSize - m_nSizeUsed;
 }
 
 /**********************************************************************
@@ -686,7 +686,7 @@ int     TABRawBinBlock::GetFirstUnusedByteOffset()
  **********************************************************************/
 int     TABRawBinBlock::GetCurAddress()
 {
-    return (m_nFileOffset + m_nCurPos);
+    return m_nFileOffset + m_nCurPos;
 }
 
 /**********************************************************************

@@ -1665,7 +1665,7 @@ bool GMLASSchemaAnalyzer::IsGMLNamespace(const CPLString& osURI)
     // Below is mostly for unit tests were we use xmlns:gml="http://fake_gml"
     std::map<CPLString,CPLString>::const_iterator oIter =
                                         m_oMapURIToPrefix.find(osURI);
-    return( oIter != m_oMapURIToPrefix.end() && oIter->second == "gml" );
+    return oIter != m_oMapURIToPrefix.end() && oIter->second == "gml";
 }
 
 /************************************************************************/

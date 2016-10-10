@@ -636,11 +636,11 @@ char ** ILI1Reader::ReadParseLine()
 {
     CPLAssert( fpItf != NULL );
     if( fpItf == NULL )
-        return( NULL );
+        return NULL;
 
     const char  *pszLine = CPLReadLine( fpItf );
     if( pszLine == NULL )
-        return( NULL );
+        return NULL;
 
     if (strlen(pszLine) == 0) return NULL;
 

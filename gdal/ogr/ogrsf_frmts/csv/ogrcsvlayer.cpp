@@ -137,7 +137,7 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
 {
     const char *pszLine = CPLReadLineL( fp );
     if( pszLine == NULL )
-        return( NULL );
+        return NULL;
 
     /* Skip BOM */
     const GByte* pabyData = reinterpret_cast<const GByte *>( pszLine );

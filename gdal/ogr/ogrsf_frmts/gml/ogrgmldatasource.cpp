@@ -2775,7 +2775,7 @@ bool OGRGMLDataSource::RemoveAppPrefix()
             papszCreateOptions, "STRIP_PREFIX", "FALSE")) )
         return true;
     const char* pszPrefix = GetAppPrefix();
-    return( pszPrefix[0] == '\0' );
+    return pszPrefix[0] == '\0';
 }
 
 /************************************************************************/
