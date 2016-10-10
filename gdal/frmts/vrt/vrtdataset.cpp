@@ -84,7 +84,7 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
 VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
 
 {
-    return ( new VRTDataset(nXSize, nYSize) );
+    return new VRTDataset(nXSize, nYSize);
 }
 
 /*! @cond Doxygen_Suppress */

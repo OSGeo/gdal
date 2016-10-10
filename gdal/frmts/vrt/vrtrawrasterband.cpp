@@ -99,7 +99,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                   "Attempt to write to read only dataset in"
                   "VRTRawRasterBand::IRasterIO()." );
 
-        return( CE_Failure );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
