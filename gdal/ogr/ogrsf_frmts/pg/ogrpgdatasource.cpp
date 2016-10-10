@@ -294,8 +294,7 @@ static void OGRPGFreeTableEntry(void * _psTableEntry)
     CPLFree(psTableEntry->pszTableName);
     CPLFree(psTableEntry->pszSchemaName);
     CPLFree(psTableEntry->pszDescription);
-    int i;
-    for(i=0;i<psTableEntry->nGeomColumnCount;i++)
+    for( int i = 0; i < psTableEntry->nGeomColumnCount; i++ )
     {
         CPLFree(psTableEntry->pasGeomColumns[i].pszName);
         CPLFree(psTableEntry->pasGeomColumns[i].pszGeomType);
