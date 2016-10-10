@@ -1003,7 +1003,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
         || (psDGN->options & DGNO_CAPTURE_RAW_DATA) )
     {
         psElement->raw_bytes = psDGN->nElemBytes;
-        psElement->raw_data = (unsigned char *)CPLMalloc(psElement->raw_bytes);
+        psElement->raw_data = static_cast<unsigned char *>(
+            CPLMalloc(psElement->raw_bytes));
 
         memcpy( psElement->raw_data, psDGN->abyElem, psElement->raw_bytes );
     }
@@ -1013,7 +1014,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 /* -------------------------------------------------------------------- */
     psElement->element_id = psDGN->next_element_id - 1;
 
-    psElement->offset = static_cast<int>(VSIFTell( psDGN->fp )) - psDGN->nElemBytes;
+    psElement->offset =
+        static_cast<int>(VSIFTell( psDGN->fp )) - psDGN->nElemBytes;
     psElement->size = psDGN->nElemBytes;
 
     return psElement;
@@ -1193,8 +1195,8 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
         psElement->attr_bytes = psDGN->nElemBytes - nAttIndex*2 - 32;
         if( psElement->attr_bytes > 0 )
         {
-            psElement->attr_data = (unsigned char *)
-                CPLMalloc(psElement->attr_bytes);
+            psElement->attr_data = static_cast<unsigned char *>(
+                CPLMalloc(psElement->attr_bytes));
             memcpy( psElement->attr_data, psData + nAttIndex * 2 + 32,
                     psElement->attr_bytes );
         }

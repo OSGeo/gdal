@@ -1000,7 +1000,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
         CSLFetchNameValueDef( papszOpenOptions, "QUOTED_FIELDS_AS_STRING",
                               "NO" ) );
 
-    char* pszData = (char*) VSI_MALLOC_VERBOSE( nBytes );
+    char* pszData = static_cast<char *>( VSI_MALLOC_VERBOSE( nBytes ));
     if( pszData != NULL && (vsi_l_offset)nBytes > VSIFTellL(fpCSV) )
     {
         const int nRequested = nBytes - 1 - (int)VSIFTellL(fpCSV);
@@ -2252,7 +2252,8 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
             if (poGeom && poGeom->exportToWkt(&pszEscaped, wkbVariantIso) == OGRERR_NONE)
             {
                 int nLenWKT = (int)strlen(pszEscaped);
-                char* pszNew = (char*) CPLMalloc(1 + nLenWKT + 1 + 1);
+                char* pszNew = static_cast<char *>(
+                    CPLMalloc(1 + nLenWKT + 1 + 1));
                 pszNew[0] = '"';
                 memcpy(pszNew + 1, pszEscaped, nLenWKT);
                 pszNew[1 + nLenWKT] = '"';
