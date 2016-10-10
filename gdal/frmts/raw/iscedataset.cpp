@@ -522,8 +522,8 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
             /* Coordinate1 and Coordinate2, because they may have the   */
             /* georeferencing information.                              */
             const char *pszCurName = CPLGetXMLValue( psCur, "name", NULL );
-            if ( pszCurName != NULL 
-                && ( EQUAL( pszCurName, "Coordinate1" ) 
+            if ( pszCurName != NULL
+                && ( EQUAL( pszCurName, "Coordinate1" )
                     || EQUAL( pszCurName, "Coordinate2" ) ) )
             {
                 /* We need two subproperties: startingValue and delta.  */
@@ -539,7 +539,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                         continue; /* Skip non property elements */
                     }
 
-                    const char 
+                    const char
                        *pszCur2Name = CPLGetXMLValue( psCur2, "name", NULL ),
                        *pszCur2Value = CPLGetXMLValue( psCur2, "value", NULL );
 
@@ -552,7 +552,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                     if ( EQUAL( pszCur2Name, "startingValue" )
                         || EQUAL( pszCur2Name, "delta" ) )
                     {
-                        char szPropName[32]; 
+                        char szPropName[32];
                         snprintf(szPropName, sizeof(szPropName), "%s%s",
                                  pszCurName, pszCur2Name);
 
@@ -567,7 +567,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
         }
         psCur = psCur->psNext;
     }
-    
+
     CPLDestroyXMLNode( psNode );
 
 /* -------------------------------------------------------------------- */
@@ -721,7 +721,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
         adfGeoTransform[5] = CPLAtof( CSLFetchNameValue( papszXmlProps,
                                                                "Coordinate2delta" ) );
         poDS->SetGeoTransform( adfGeoTransform );
-         
+
         /* ISCE format seems not to have a projection field, but uses   */
         /* WGS84.                                                       */
         poDS->SetProjection( SRS_WKT_WGS84 );

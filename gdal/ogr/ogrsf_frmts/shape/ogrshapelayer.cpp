@@ -2770,7 +2770,7 @@ OGRErr OGRShapeLayer::Repack()
         {
             if( !CopyInPlace( VSI_SHP_GetVSIL(hDBF->fp), oTempFileDBF ) )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "An error occured while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
@@ -2799,7 +2799,7 @@ OGRErr OGRShapeLayer::Repack()
         {
             if( !CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHP), oTempFileSHP ) )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "An error occured while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
@@ -2821,7 +2821,7 @@ OGRErr OGRShapeLayer::Repack()
             }
             if( !CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHX), oTempFileSHX ) )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "An error occured while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
@@ -2886,7 +2886,7 @@ OGRErr OGRShapeLayer::Repack()
 
             if( VSIUnlink( osDBFName ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "Failed to delete old DBF file: %s",
                         VSIStrerror( errno ) );
 
@@ -2899,7 +2899,7 @@ OGRErr OGRShapeLayer::Repack()
 
             if( VSIRename( oTempFileDBF, osDBFName ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "Can not rename new DBF file: %s",
                         VSIStrerror( errno ) );
                 return OGRERR_FAILURE;
