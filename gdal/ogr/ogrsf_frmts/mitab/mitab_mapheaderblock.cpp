@@ -729,7 +729,7 @@ int TABMAPHeaderBlock::GetMapObjectSize(int nObjType)
     }
 
     // Byte 0x80 is set for objects that have coordinates inside type 3 blocks
-    return (m_pabyBuf[nObjType] & 0x7f);
+    return m_pabyBuf[nObjType] & 0x7f;
 }
 
 /**********************************************************************

@@ -1289,5 +1289,5 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
         mysql_free_result(result);
     }
 
-    return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
+    return bExtentSet ? OGRERR_NONE : OGRERR_FAILURE;
 }

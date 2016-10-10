@@ -265,7 +265,7 @@ int OGRMSSQLGeometryValidator::ValidateMultiLineString(OGRMultiLineString * poGe
         poValidGeometry = poGeometries;
     }
 
-    return (poValidGeometry == NULL);
+    return poValidGeometry == NULL;
 }
 
 /************************************************************************/
@@ -321,7 +321,7 @@ int OGRMSSQLGeometryValidator::ValidatePolygon(OGRPolygon* poGeom)
         poValidGeometry = poGeometries;
     }
 
-    return (poValidGeometry == NULL);
+    return poValidGeometry == NULL;
 }
 
 /************************************************************************/
@@ -424,7 +424,7 @@ int OGRMSSQLGeometryValidator::ValidateGeometryCollection(OGRGeometryCollection*
         poValidGeometry = poGeometries;
     }
 
-    return (poValidGeometry == NULL);
+    return poValidGeometry == NULL;
 }
 
 /************************************************************************/

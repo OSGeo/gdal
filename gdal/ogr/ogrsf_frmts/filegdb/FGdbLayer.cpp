@@ -2796,7 +2796,7 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
         }
 
     }
-    return (*pOutWkt != "" || *pOutWKID != "");
+    return *pOutWkt != "" || *pOutWKID != "";
 }
 
 /************************************************************************/

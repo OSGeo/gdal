@@ -292,7 +292,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         CPLFree( pszWKT );
     }
 
-    return( CPLStrdup( osCoordSys.c_str() ) );
+    return CPLStrdup( osCoordSys.c_str() );
 }
 
 

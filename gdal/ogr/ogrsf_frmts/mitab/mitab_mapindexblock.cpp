@@ -404,7 +404,7 @@ int     TABMAPIndexBlock::WriteNextEntry(TABMAPIndexEntry *psEntry)
  **********************************************************************/
 int     TABMAPIndexBlock::GetNumFreeEntries()
 {
-    return ((m_nBlockSize-4)/20 - m_numEntries);
+    return (m_nBlockSize-4)/20 - m_numEntries;
 }
 
 /**********************************************************************

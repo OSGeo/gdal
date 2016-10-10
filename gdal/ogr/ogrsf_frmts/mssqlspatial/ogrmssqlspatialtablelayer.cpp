@@ -713,7 +713,7 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
             return TRUE;
 
         else if( EQUAL(pszCap,OLCRandomWrite) )
-            return (pszFIDColumn != NULL);
+            return pszFIDColumn != NULL;
     }
 
 #if (ODBCVER >= 0x0300)
@@ -728,7 +728,7 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     if( EQUAL(pszCap,OLCRandomRead) )
-        return (pszFIDColumn != NULL);
+        return pszFIDColumn != NULL;
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
     else
