@@ -393,7 +393,6 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
                                             int nInterestTable)
 {
     FileGDBTable oTable;
-    int i;
 
     CPLDebug("OpenFileGDB", "FileGDB v9");
 
@@ -414,7 +413,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
 
     std::vector< std::string > aosName;
     int nCandidateLayers = 0, nLayersSDCOrCDF = 0;
-    for(i=0;i<oTable.GetTotalRecordCount();i++)
+    for( int i = 0; i < oTable.GetTotalRecordCount(); i++ )
     {
         if( !oTable.SelectRow(i) )
         {
@@ -466,7 +465,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
         return FALSE;
     }
 
-    for(i=0;i<oTable.GetTotalRecordCount();i++)
+    for( int i = 0; i < oTable.GetTotalRecordCount(); i++ )
     {
         if( !oTable.SelectRow(i) )
         {
@@ -949,8 +948,8 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             {
                 OGRMemLayer* poMemLayer = NULL;
 
-                int i;
-                for(i = 0; i < oSelect.result_columns; i ++ )
+                int i = 0;  // Used after for.
+                for( ; i < oSelect.result_columns; i ++ )
                 {
                     swq_col_func col_func = oSelect.column_defs[i].col_func;
                     if( !(col_func == SWQCF_MIN || col_func == SWQCF_MAX ||
@@ -1106,8 +1105,8 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                 }
                 if( eErr == OGRERR_NONE )
                 {
-                    int i;
-                    for(i = 0; i < oSelect.result_columns; i ++ )
+                    int i = 0;  // Used after for.
+                    for( ; i < oSelect.result_columns; i++ )
                     {
                         if( oSelect.column_defs[i].col_func != SWQCF_NONE )
                             break;
