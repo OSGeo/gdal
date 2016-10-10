@@ -2290,6 +2290,10 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 
 void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
 {
+    ResetReading();
+    RunDeferredCreationIfNecessary();
+    CreateSpatialIndexIfNecessary();
+
     SQLResult oResultTable;
     char* pszSQL = sqlite3_mprintf(
         "SELECT * FROM sqlite_master WHERE name = '%q' "

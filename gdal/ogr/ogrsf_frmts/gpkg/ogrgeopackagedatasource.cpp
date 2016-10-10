@@ -3578,7 +3578,11 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
     if( !bUpdate || iLayer < 0 || iLayer >= m_nLayers )
         return OGRERR_FAILURE;
 
-    CPLString osLayerName = m_papoLayers[iLayer]->GetLayerDefn()->GetName();
+    m_papoLayers[iLayer]->ResetReading();
+    m_papoLayers[iLayer]->RunDeferredCreationIfNecessary();
+    m_papoLayers[iLayer]->CreateSpatialIndexIfNecessary();
+
+    CPLString osLayerName = m_papoLayers[iLayer]->GetName();
 
     CPLDebug( "GPKG", "DeleteLayer(%s)", osLayerName.c_str() );
 
