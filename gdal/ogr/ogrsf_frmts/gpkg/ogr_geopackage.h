@@ -35,6 +35,8 @@
 #include "ogrgeopackageutility.h"
 #include "gpkgmbtilescommon.h"
 
+#include <vector>
+
 #define UNKNOWN_SRID   -2
 #define DEFAULT_SRID    0
 
@@ -198,6 +200,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
+        void                ResetReadingAllLayers();
+
         static GDALDataset* CreateCopy( const char *pszFilename,
                                                    GDALDataset *poSrcDS,
                                                    int bStrict,
@@ -326,6 +330,8 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     void                BuildWhere(void);
     OGRErr              RegisterGeometryColumn();
 
+    CPLString           GetColumnsOfCreateTable(const std::vector<OGRFieldDefn*> apoFields);
+
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
                                             const char * pszTableName );
@@ -338,6 +344,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
     OGRErr              CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                          int bApproxOK = TRUE );
+    virtual OGRErr      DeleteField(  int iFieldToDelete );
     void                ResetReading();
     OGRErr              ICreateFeature( OGRFeature *poFeater );
     OGRErr              ISetFeature( OGRFeature *poFeature );
