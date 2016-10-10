@@ -3591,64 +3591,59 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
     if( m_papoLayers[iLayer]->HasSpatialIndex() )
         m_papoLayers[iLayer]->DropSpatialIndex();
 
-    char *pszSQL;
-    OGRErr eErr = OGRERR_NONE;
-
-    pszSQL = sqlite3_mprintf(
+    char* pszSQL = sqlite3_mprintf(
             "DELETE FROM gpkg_geometry_columns WHERE table_name = '%q'",
              osLayerName.c_str());
-    if( SQLCommand(hDB, pszSQL) != OGRERR_NONE )
-        eErr = OGRERR_FAILURE;
+    OGRErr eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf(
-             "DELETE FROM gpkg_contents WHERE table_name = '%q'",
-              osLayerName.c_str());
-    if( SQLCommand(hDB, pszSQL) != OGRERR_NONE )
-        eErr = OGRERR_FAILURE;
-    sqlite3_free(pszSQL);
+    if( eErr == OGRERR_NONE )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_contents WHERE table_name = '%q'",
+                osLayerName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
 
-    if( HasExtensionsTable() )
+    if( eErr == OGRERR_NONE && HasExtensionsTable() )
     {
         pszSQL = sqlite3_mprintf(
                 "DELETE FROM gpkg_extensions WHERE table_name = '%q'",
                 osLayerName.c_str());
-        if( SQLCommand(hDB, pszSQL) != OGRERR_NONE )
-            eErr = OGRERR_FAILURE;
+        eErr = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
     }
 
-    if( HasMetadataTables() )
+    if( eErr == OGRERR_NONE && HasMetadataTables() )
     {
         pszSQL = sqlite3_mprintf(
                 "DELETE FROM gpkg_metadata_reference WHERE table_name = '%q'",
                 osLayerName.c_str());
-        if( SQLCommand(hDB, pszSQL) != OGRERR_NONE )
-            eErr = OGRERR_FAILURE;
+        eErr = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
     }
 
-    if( HasDataColumnsTable() )
+    if( eErr == OGRERR_NONE && HasDataColumnsTable() )
     {
         pszSQL = sqlite3_mprintf(
                 "DELETE FROM gpkg_data_columns WHERE table_name = '%q'",
                 osLayerName.c_str());
-        if( SQLCommand(hDB, pszSQL) != OGRERR_NONE )
-            eErr = OGRERR_FAILURE;
+        eErr = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
     }
 
-    pszSQL = sqlite3_mprintf("DROP TABLE '%q'", osLayerName.c_str());
-    if( SQLCommand(hDB, pszSQL) != OGRERR_NONE )
-        eErr = OGRERR_FAILURE;
-    sqlite3_free(pszSQL);
+    if( eErr == OGRERR_NONE )
+    {
+        pszSQL = sqlite3_mprintf("DROP TABLE '%q'", osLayerName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
 
     // Check foreign key integrity
-    if ( OGRERR_NONE != PragmaCheck("foreign_key_check", "", 0) )
+    if ( eErr == OGRERR_NONE )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "pragma foreign_key_check failed");
-        eErr = OGRERR_FAILURE;
+        eErr = PragmaCheck("foreign_key_check", "", 0);
     }
 
     if( eErr == OGRERR_NONE )
@@ -3691,6 +3686,18 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
         return bUpdate;
 
     return OGRSQLiteBaseDataSource::TestCapability(pszCap);
+}
+
+/************************************************************************/
+/*                       ResetReadingAllLayers()                        */
+/************************************************************************/
+
+void GDALGeoPackageDataset::ResetReadingAllLayers()
+{
+    for( int i = 0; i < m_nLayers; i++ )
+    {
+        m_papoLayers[i]->ResetReading();
+    }
 }
 
 /************************************************************************/
@@ -3777,6 +3784,11 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             }
         }
         CSLDestroy(papszTokens);
+    }
+
+    if( EQUAL(pszSQLCommand, "VACUUM") )
+    {
+        ResetReadingAllLayers();
     }
 
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
