@@ -1092,7 +1092,7 @@ const char *JPIPKAKDataset::GetProjectionRef()
 
 {
     if( pszProjection && *pszProjection )
-        return( pszProjection );
+        return pszProjection;
     else
         return GDALPamDataset::GetProjectionRef();
 }

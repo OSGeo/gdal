@@ -1464,7 +1464,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        return( poDS );
+        return poDS;
     }
 
 /* -------------------------------------------------------------------- */

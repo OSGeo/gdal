@@ -250,13 +250,13 @@ const char *SDEDataset::GetProjectionRef()
     if (!hRasterColumn){
         CPLError ( CE_Failure, CPLE_AppDefined,
                    "Raster Column not defined");
-        return ("");
+        return "";
     }
 
     nSDEErr = SE_rascolinfo_get_coordref(hRasterColumn, coordref);
 
     if (nSDEErr == SE_NO_COORDREF) {
-        return ("");
+        return "";
     }
 
     if( nSDEErr != SE_SUCCESS )
@@ -502,7 +502,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     return NULL;
     }
     CSLDestroy( papszTokens);
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

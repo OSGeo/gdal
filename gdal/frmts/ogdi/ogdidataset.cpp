@@ -279,7 +279,7 @@ CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", psResult->message );
-            return( CE_Failure );
+            return CE_Failure;
         }
 
         if( eFamily == Matrix )
@@ -579,7 +579,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     char        **papszImages=NULL, **papszMatrices=NULL;
 
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "gltp:") )
-        return( NULL );
+        return NULL ;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -838,7 +838,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     CSLDestroy( papszMatrices );
     CSLDestroy( papszImages );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -928,7 +928,7 @@ CPLErr OGDIDataset::OverrideGlobalInfo( OGDIDataset *poDS,
 const char *OGDIDataset::GetProjectionRef()
 
 {
-    return( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -946,7 +946,7 @@ CPLErr OGDIDataset::GetGeoTransform( double * padfTransform )
     padfTransform[4] = 0.0;
     padfTransform[5] = -sGlobalBounds.ns_res;
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
