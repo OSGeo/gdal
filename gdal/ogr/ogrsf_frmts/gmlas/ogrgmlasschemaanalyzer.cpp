@@ -1455,6 +1455,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         XSComplexTypeDefinition* poSubEltCT =
                                             IsEltCompatibleOfFC(poSubElt);
                         if( !bAlreadyVisitedMG &&
+                            poSubEltCT != NULL &&
                             poSubEltCT->getParticle() != NULL )
                         {
                             bool bSubSimpleEnoughOut = true;

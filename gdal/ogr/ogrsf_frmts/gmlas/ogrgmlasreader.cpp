@@ -339,6 +339,7 @@ GMLASReader::GMLASReader(GMLASXSDCache& oCache,
     m_bFirstIteration = true;
     m_bEOF = false;
     m_bInterrupted = false;
+    m_papoLayers = NULL;
     m_nLevel = 0;
     m_oCurCtxt.m_nLevel = 0;
     m_oCurCtxt.m_poLayer = NULL;
@@ -1361,7 +1362,7 @@ void GMLASReader::startElement(
                     const CPLString& osNestedXPath(oField.GetRelatedClassXPath());
                     CPLAssert( !osNestedXPath.empty() );
                     OGRGMLASLayer* poSubLayer = GetLayerByXPath(osNestedXPath);
-                    if( poSubLayer )
+                    if( poSubLayer && m_nCurFieldIdx >= 0 )
                     {
                         int nOldCurFieldIdx = m_nCurFieldIdx;
                         OGRFeature* poOldCurFeature = m_oCurCtxt.m_poFeature;
