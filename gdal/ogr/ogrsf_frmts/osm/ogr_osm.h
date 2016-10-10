@@ -146,7 +146,8 @@ class OGROSMLayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature();
 
-    OGRFeature*         MyGetNextFeature( GDALProgressFunc pfnProgress,
+    OGRFeature*         MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
+                                          GDALProgressFunc pfnProgress,
                                           void* pProgressData );
 
     virtual GIntBig     GetFeatureCount( int bForce );
