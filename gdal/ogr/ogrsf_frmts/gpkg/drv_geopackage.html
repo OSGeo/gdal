@@ -52,6 +52,9 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
   GeoPackage geometries automatically appear as Spatialite geometries after translation by OGR.
 </p>
 
+<p>Starting with GDAL 2.2, the "DROP TABLE layer_name" and "ALTER TABLE layer_name RENAME TO new_layer"
+statements can be used. They will update GeoPackage system tables.</p>
+
 <h3>SQL functions</h3>
 
 Starting with GDAL 2.0, the following SQL functions, from the GeoPackage specification, are available :
