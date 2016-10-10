@@ -134,6 +134,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
                                               const char* pszTableName);
         CPLErr                  FlushMetadata();
 
+        int                     FindLayerIndex(const char* pszLayerName);
+
     public:
                             GDALGeoPackageDataset();
                             virtual ~GDALGeoPackageDataset();
@@ -191,6 +193,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         OGRErr              CreateExtensionsTableIfNecessary();
         bool                HasExtensionsTable();
         OGRErr              CreateGDALAspatialExtension();
+        bool                HasDataColumnsTable();
         void                SetMetadataDirty() { m_bMetadataDirty = true; }
 
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);

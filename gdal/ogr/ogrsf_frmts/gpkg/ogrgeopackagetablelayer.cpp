@@ -152,7 +152,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     if ( m_poFeatureDefn->GetGeomFieldCount() )
     {
         soColumns += ", ";
-        soColumn.Printf("\"%s\"", m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
+        soColumn.Printf("\"%s\"", SQLEscapeDoubleQuote(m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()).c_str());
         soColumns += soColumn;
         iGeomCol = 1;
     }
@@ -161,7 +161,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
         soColumns += ", ";
-        soColumn.Printf("\"%s\"", m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        soColumn.Printf("\"%s\"", SQLEscapeDoubleQuote(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
         soColumns += soColumn;
         panFieldOrdinals[i] = 1 + (iGeomCol >= 0) + i;
     }
@@ -434,11 +434,13 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     if( poFeatureDefn->GetFieldCount() == ((m_iFIDAsRegularColumnIndex >= 0) ? 1 : 0) &&
         poFeatureDefn->GetGeomFieldCount() == 0 &&
         !bAddFID )
-        return CPLSPrintf("INSERT INTO \"%s\" DEFAULT VALUES", m_pszTableName);
+        return CPLSPrintf("INSERT INTO \"%s\" DEFAULT VALUES",
+                          SQLEscapeDoubleQuote(m_pszTableName).c_str());
 
     /* Set up our SQL string basics */
     CPLString osSQLFront;
-    osSQLFront.Printf("INSERT INTO \"%s\" ( ", m_pszTableName);
+    osSQLFront.Printf("INSERT INTO \"%s\" ( ",
+                      SQLEscapeDoubleQuote(m_pszTableName).c_str());
 
     CPLString osSQLBack;
     osSQLBack = ") VALUES (";
@@ -447,7 +449,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
 
     if( bAddFID )
     {
-        osSQLColumn.Printf("\"%s\"", GetFIDColumn());
+        osSQLColumn.Printf("\"%s\"", SQLEscapeDoubleQuote(GetFIDColumn()).c_str());
         osSQLFront += osSQLColumn;
         osSQLBack += "?";
         bNeedComma = true;
@@ -461,7 +463,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
             osSQLBack += ", ";
         }
 
-        osSQLColumn.Printf("\"%s\"", poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
+        osSQLColumn.Printf("\"%s\"", SQLEscapeDoubleQuote(poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()).c_str());
         osSQLFront += osSQLColumn;
         osSQLBack += "?";
         bNeedComma = true;
@@ -485,7 +487,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
             osSQLBack += ", ";
         }
 
-        osSQLColumn.Printf("\"%s\"", poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        osSQLColumn.Printf("\"%s\"",
+                           SQLEscapeDoubleQuote(poFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
         osSQLFront += osSQLColumn;
         osSQLBack += "?";
     }
@@ -493,7 +496,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     osSQLBack += ")";
 
     if( !bNeedComma )
-        return CPLSPrintf("INSERT INTO \"%s\" DEFAULT VALUES", m_pszTableName);
+        return CPLSPrintf("INSERT INTO \"%s\" DEFAULT VALUES",
+                          SQLEscapeDoubleQuote(m_pszTableName).c_str());
 
     return osSQLFront + osSQLBack;
 }
@@ -517,13 +521,15 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
 
     /* Set up our SQL string basics */
     CPLString osUpdate;
-    osUpdate.Printf("UPDATE \"%s\" SET ", m_pszTableName);
+    osUpdate.Printf("UPDATE \"%s\" SET ",
+                    SQLEscapeDoubleQuote(m_pszTableName).c_str());
 
     CPLString osSQLColumn;
 
     if ( poFeatureDefn->GetGeomFieldCount() > 0 )
     {
-        osSQLColumn.Printf("\"%s\"", poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
+        osSQLColumn.Printf("\"%s\"",
+                           SQLEscapeDoubleQuote(poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()).c_str());
         osUpdate += osSQLColumn;
         osUpdate += "=?";
         bNeedComma = true;
@@ -539,13 +545,15 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
         else
             osUpdate += ", ";
 
-        osSQLColumn.Printf("\"%s\"", poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        osSQLColumn.Printf("\"%s\"",
+                           SQLEscapeDoubleQuote(poFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
         osUpdate += osSQLColumn;
         osUpdate += "=?";
     }
 
     CPLString osWhere;
-    osWhere.Printf(" WHERE \"%s\" = ?", m_pszFidColumn);
+    osWhere.Printf(" WHERE \"%s\" = ?",
+                   SQLEscapeDoubleQuote(m_pszFidColumn).c_str());
 
     return osUpdate + osWhere;
 }
@@ -941,7 +949,7 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
         const char* pszT = m_pszTableName;
         const char* pszC =m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
         char* pszSQL =
-            sqlite3_mprintf("DROP TABLE \"rtree_%s_%s\"", pszT, pszC);
+            sqlite3_mprintf("DROP TABLE \"rtree_%w_%w\"", pszT, pszC);
         SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
     }
@@ -1004,10 +1012,11 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
         CPLString osCommand;
 
         osCommand.Printf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
-                                 m_pszTableName, poField->GetNameRef(),
-                                 GPkgFieldFromOGR(poField->GetType(),
-                                                  poField->GetSubType(),
-                                                  nMaxWidth));
+                          SQLEscapeDoubleQuote(m_pszTableName).c_str(),
+                          SQLEscapeDoubleQuote(poField->GetNameRef()).c_str(),
+                          GPkgFieldFromOGR(poField->GetType(),
+                                           poField->GetSubType(),
+                                           nMaxWidth));
         if(  !poField->IsNullable() )
             osCommand += " NOT NULL";
         if( poField->GetDefault() != NULL && !poField->IsDefaultDriverSpecific() )
@@ -1105,7 +1114,7 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
     if( !m_bDeferredCreation )
     {
         char *pszSQL = sqlite3_mprintf(
-            "ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s%s",
+            "ALTER TABLE \"%w\" ADD COLUMN \"%w\" %s%s",
             m_pszTableName, oGeomField.GetNameRef(),
             m_poDS->GetGeometryTypeString(oGeomField.GetType()),
             !oGeomField.IsNullable() ? " NOT NULL DEFAULT ''" : "");
@@ -1503,9 +1512,14 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
     /* Append the attribute filter, if there is one */
     CPLString soSQL;
     if ( m_soFilter.length() > 0 )
-        soSQL.Printf("SELECT %s FROM \"%s\" WHERE %s", m_soColumns.c_str(), m_pszTableName, m_soFilter.c_str());
+        soSQL.Printf("SELECT %s FROM \"%s\" WHERE %s",
+                     m_soColumns.c_str(),
+                     SQLEscapeDoubleQuote(m_pszTableName).c_str(),
+                     m_soFilter.c_str());
     else
-        soSQL.Printf("SELECT %s FROM \"%s\" ", m_soColumns.c_str(), m_pszTableName);
+        soSQL.Printf("SELECT %s FROM \"%s\" ",
+                     m_soColumns.c_str(),
+                     SQLEscapeDoubleQuote(m_pszTableName).c_str());
 
     int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
     if ( err != SQLITE_OK )
@@ -1558,7 +1572,9 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
     /* No filters apply, just use the FID */
     CPLString soSQL;
     soSQL.Printf("SELECT %s FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
-                 m_soColumns.c_str(), m_pszTableName, m_pszFidColumn, nFID);
+                 m_soColumns.c_str(),
+                 SQLEscapeDoubleQuote(m_pszTableName).c_str(),
+                 SQLEscapeDoubleQuote(m_pszFidColumn).c_str(), nFID);
 
     int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
     if ( err != SQLITE_OK )
@@ -1618,7 +1634,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     /* No filters apply, just use the FID */
     CPLString soSQL;
     soSQL.Printf("DELETE FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
-                 m_pszTableName, m_pszFidColumn, nFID);
+                 SQLEscapeDoubleQuote(m_pszTableName).c_str(),
+                 SQLEscapeDoubleQuote(m_pszFidColumn).c_str(), nFID);
 
     OGRErr eErr = SQLCommand(m_poDS->GetDB(), soSQL.c_str());
     if( eErr == OGRERR_NONE )
@@ -1691,9 +1708,12 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
     OGRErr err;
     CPLString soSQL;
     if ( m_soFilter.length() > 0 )
-        soSQL.Printf("SELECT Count(*) FROM \"%s\" WHERE %s", m_pszTableName, m_soFilter.c_str());
+        soSQL.Printf("SELECT Count(*) FROM \"%s\" WHERE %s",
+                     SQLEscapeDoubleQuote(m_pszTableName).c_str(),
+                     m_soFilter.c_str());
     else
-        soSQL.Printf("SELECT Count(*) FROM \"%s\" ", m_pszTableName);
+        soSQL.Printf("SELECT Count(*) FROM \"%s\" ",
+                     SQLEscapeDoubleQuote(m_pszTableName).c_str());
 
     /* Just run the query directly and get back integer */
     GIntBig iFeatureCount = SQLGetInteger64(m_poDS->GetDB(), soSQL.c_str(), &err);
@@ -1852,7 +1872,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( !m_bDropRTreeTable )
     {
         pszSQL = sqlite3_mprintf(
-                    "CREATE VIRTUAL TABLE \"rtree_%s_%s\" USING rtree(id, minx, maxx, miny, maxy)",
+                    "CREATE VIRTUAL TABLE \"rtree_%w_%w\" USING rtree(id, minx, maxx, miny, maxy)",
                     pszT, pszC );
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
@@ -1866,8 +1886,8 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
 
     /* Populate the RTree */
     pszSQL = sqlite3_mprintf(
-                 "INSERT OR REPLACE INTO \"rtree_%s_%s\" "
-                 "SELECT \"%s\", st_minx(\"%s\"), st_maxx(\"%s\"), st_miny(\"%s\"), st_maxy(\"%s\") FROM \"%s\"",
+                 "INSERT OR REPLACE INTO \"rtree_%w_%w\" "
+                 "SELECT \"%w\", st_minx(\"%w\"), st_maxx(\"%w\"), st_miny(\"%w\"), st_maxy(\"%w\") FROM \"%w\"",
                  pszT, pszC, pszI, pszC, pszC, pszC, pszC, pszT );
     err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
@@ -1882,13 +1902,13 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
     /* Conditions: Insertion of non-empty geometry
        Actions   : Insert record into rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%s_%s_insert\" AFTER INSERT ON \"%s\" "
-                   "WHEN (new.\"%s\" NOT NULL AND NOT ST_IsEmpty(NEW.\"%s\")) "
+                   "CREATE TRIGGER \"rtree_%w_%w_insert\" AFTER INSERT ON \"%w\" "
+                   "WHEN (new.\"%w\" NOT NULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "INSERT OR REPLACE INTO \"rtree_%s_%s\" VALUES ("
-                   "NEW.\"%s\","
-                   "ST_MinX(NEW.\"%s\"), ST_MaxX(NEW.\"%s\"),"
-                   "ST_MinY(NEW.\"%s\"), ST_MaxY(NEW.\"%s\")"
+                   "INSERT OR REPLACE INTO \"rtree_%w_%w\" VALUES ("
+                   "NEW.\"%w\","
+                   "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
+                   "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
                    "); "
                    "END",
                    pszT, pszC, pszT,
@@ -1909,14 +1929,14 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
                No row ID change
        Actions   : Update record in rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%s_%s_update1\" AFTER UPDATE OF \"%s\" ON \"%s\" "
-                   "WHEN OLD.\"%s\" = NEW.\"%s\" AND "
-                   "(NEW.\"%s\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%s\")) "
+                   "CREATE TRIGGER \"rtree_%w_%w_update1\" AFTER UPDATE OF \"%w\" ON \"%w\" "
+                   "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
+                   "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "INSERT OR REPLACE INTO \"rtree_%s_%s\" VALUES ("
-                   "NEW.\"%s\","
-                   "ST_MinX(NEW.\"%s\"), ST_MaxX(NEW.\"%s\"),"
-                   "ST_MinY(NEW.\"%s\"), ST_MaxY(NEW.\"%s\")"
+                   "INSERT OR REPLACE INTO \"rtree_%w_%w\" VALUES ("
+                   "NEW.\"%w\","
+                   "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
+                   "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
                    "); "
                    "END",
                    pszT, pszC, pszC, pszT,
@@ -1938,11 +1958,11 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
                No row ID change
        Actions   : Remove record from rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%s_%s_update2\" AFTER UPDATE OF \"%s\" ON \"%s\" "
-                   "WHEN OLD.\"%s\" = NEW.\"%s\" AND "
-                   "(NEW.\"%s\" ISNULL OR ST_IsEmpty(NEW.\"%s\")) "
+                   "CREATE TRIGGER \"rtree_%w_%w_update2\" AFTER UPDATE OF \"%w\" ON \"%w\" "
+                   "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
+                   "(NEW.\"%w\" ISNULL OR ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "DELETE FROM \"rtree_%s_%s\" WHERE id = OLD.\"%s\"; "
+                   "DELETE FROM \"rtree_%w_%w\" WHERE id = OLD.\"%w\"; "
                    "END",
                    pszT, pszC, pszC, pszT,
                    pszI, pszI,
@@ -1962,15 +1982,15 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
         Actions   : Remove record from rtree for old <i>
                     Insert record into rtree for new <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%s_%s_update3\" AFTER UPDATE OF \"%s\" ON \"%s\" "
-                   "WHEN OLD.\"%s\" != NEW.\"%s\" AND "
-                   "(NEW.\"%s\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%s\")) "
+                   "CREATE TRIGGER \"rtree_%w_%w_update3\" AFTER UPDATE OF \"%w\" ON \"%w\" "
+                   "WHEN OLD.\"%w\" != NEW.\"%w\" AND "
+                   "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "DELETE FROM \"rtree_%s_%s\" WHERE id = OLD.\"%s\"; "
-                   "INSERT OR REPLACE INTO \"rtree_%s_%s\" VALUES ("
-                   "NEW.\"%s\","
-                   "ST_MinX(NEW.\"%s\"), ST_MaxX(NEW.\"%s\"),"
-                   "ST_MinY(NEW.\"%s\"), ST_MaxY(NEW.\"%s\")"
+                   "DELETE FROM \"rtree_%w_%w\" WHERE id = OLD.\"%w\"; "
+                   "INSERT OR REPLACE INTO \"rtree_%w_%w\" VALUES ("
+                   "NEW.\"%w\","
+                   "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
+                   "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
                    "); "
                    "END",
                    pszT, pszC, pszC, pszT,
@@ -1994,11 +2014,11 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
                     Empty geometry
         Actions   : Remove record from rtree for old and new <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%s_%s_update4\" AFTER UPDATE ON \"%s\" "
-                   "WHEN OLD.\"%s\" != NEW.\"%s\" AND "
-                   "(NEW.\"%s\" ISNULL OR ST_IsEmpty(NEW.\"%s\")) "
+                   "CREATE TRIGGER \"rtree_%w_%w_update4\" AFTER UPDATE ON \"%w\" "
+                   "WHEN OLD.\"%w\" != NEW.\"%w\" AND "
+                   "(NEW.\"%w\" ISNULL OR ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "DELETE FROM \"rtree_%s_%s\" WHERE id IN (OLD.\"%s\", NEW.\"%s\"); "
+                   "DELETE FROM \"rtree_%w_%w\" WHERE id IN (OLD.\"%w\", NEW.\"%w\"); "
                    "END",
                    pszT, pszC, pszT,
                    pszI, pszI,
@@ -2015,10 +2035,10 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
     /* Conditions: Row deleted
         Actions   : Remove record from rtree for old <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%s_%s_delete\" AFTER DELETE ON \"%s\" "
-                   "WHEN old.\"%s\" NOT NULL "
+                   "CREATE TRIGGER \"rtree_%w_%w_delete\" AFTER DELETE ON \"%w\" "
+                   "WHEN old.\"%w\" NOT NULL "
                    "BEGIN "
-                   "DELETE FROM \"rtree_%s_%s\" WHERE id = OLD.\"%s\"; "
+                   "DELETE FROM \"rtree_%w_%w\" WHERE id = OLD.\"%w\"; "
                    "END",
                    pszT, pszC, pszT,
                    pszC,
@@ -2227,36 +2247,36 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
         /* remove the content and memorize that we will have to delete the */
         /* table later */
         m_bDropRTreeTable = true;
-        pszSQL = sqlite3_mprintf("DELETE FROM \"rtree_%s_%s\"", pszT, pszC);
+        pszSQL = sqlite3_mprintf("DELETE FROM \"rtree_%w_%w\"", pszT, pszC);
     }
     else
     {
-        pszSQL = sqlite3_mprintf("DROP TABLE \"rtree_%s_%s\"", pszT, pszC);
+        pszSQL = sqlite3_mprintf("DROP TABLE \"rtree_%w_%w\"", pszT, pszC);
     }
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_insert\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_insert\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_update1\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_update1\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_update2\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_update2\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_update3\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_update3\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_update4\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_update4\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%s_%s_delete\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_delete\"", pszT, pszC);
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
@@ -2270,32 +2290,113 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 
 void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
 {
-    int bHasSpatialIndex = HasSpatialIndex();
+    SQLResult oResultTable;
+    char* pszSQL = sqlite3_mprintf(
+        "SELECT * FROM sqlite_master WHERE name = '%q' "
+        "AND type IN ('table', 'view')",
+         pszDstTableName);
+    OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
+    const bool bAlreadyExists = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
+    SQLResultFree(&oResultTable);
+    if( bAlreadyExists )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Table %s already exists",
+                 pszDstTableName);
+        return;
+    }
 
+    m_poDS->SoftStartTransaction();
+
+    OGRErr eErr = OGRERR_NONE;
+    const bool bHasSpatialIndex = HasSpatialIndex();
     if( bHasSpatialIndex )
     {
         DropSpatialIndex();
     }
 
-    /* We also need to update GeoPackage metadata tables */
-    char* pszSQL = sqlite3_mprintf(
-        "UPDATE gpkg_geometry_columns SET table_name = '%s' WHERE table_name = '%s'",
+    pszSQL = sqlite3_mprintf(
+        "UPDATE gpkg_geometry_columns SET table_name = '%q' WHERE table_name = '%q'",
         pszDstTableName, m_pszTableName);
-    SQLCommand(m_poDS->GetDB(), pszSQL);
+    if( SQLCommand(m_poDS->GetDB(), pszSQL) != OGRERR_NONE )
+        eErr = OGRERR_FAILURE;
+    sqlite3_free(pszSQL);
+
+    // Rename the identifier if it defaulted to the table name
+    pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_contents SET identifier = '%q' WHERE table_name = '%q' AND identifier = '%q'",
+            pszDstTableName, m_pszTableName, m_pszTableName);
+    if( SQLCommand(m_poDS->GetDB(), pszSQL) != OGRERR_NONE )
+        eErr = OGRERR_FAILURE;
     sqlite3_free(pszSQL);
 
     pszSQL = sqlite3_mprintf(
-            "UPDATE gpkg_contents SET table_name = '%s' WHERE table_name = '%s'",
+            "UPDATE gpkg_contents SET table_name = '%q' WHERE table_name = '%q'",
             pszDstTableName, m_pszTableName);
-    SQLCommand(m_poDS->GetDB(), pszSQL);
+    if( SQLCommand(m_poDS->GetDB(), pszSQL) != OGRERR_NONE )
+        eErr = OGRERR_FAILURE;
     sqlite3_free(pszSQL);
 
-    CPLFree(m_pszTableName);
-    m_pszTableName = CPLStrdup(pszDstTableName);
-
-    if( bHasSpatialIndex )
+    if( m_poDS->HasExtensionsTable() )
     {
-        CreateSpatialIndex();
+        pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_extensions SET table_name = '%q' WHERE table_name = '%q'",
+            pszDstTableName, m_pszTableName);
+        if( SQLCommand(m_poDS->GetDB(), pszSQL) != OGRERR_NONE )
+            eErr = OGRERR_FAILURE;
+        sqlite3_free(pszSQL);
+    }
+
+    if( m_poDS->HasMetadataTables() )
+    {
+        pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_metadata_reference SET table_name = '%q' WHERE table_name = '%q'",
+            pszDstTableName, m_pszTableName);
+        if( SQLCommand(m_poDS->GetDB(), pszSQL) != OGRERR_NONE )
+            eErr = OGRERR_FAILURE;
+        sqlite3_free(pszSQL);
+    }
+
+    if( m_poDS->HasDataColumnsTable() )
+    {
+        pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_data_columns SET table_name = '%q' WHERE table_name = '%q'",
+            pszDstTableName, m_pszTableName);
+        if( SQLCommand(m_poDS->GetDB(), pszSQL) != OGRERR_NONE )
+            eErr = OGRERR_FAILURE;
+        sqlite3_free(pszSQL);
+    }
+
+    pszSQL = sqlite3_mprintf(
+            "ALTER TABLE \"%w\" RENAME TO \"%w\"",
+            m_pszTableName, pszDstTableName );
+    if( SQLCommand(m_poDS->GetDB(), pszSQL) != OGRERR_NONE )
+        eErr = OGRERR_FAILURE;
+    sqlite3_free(pszSQL);
+
+    // Check foreign key integrity
+    if ( OGRERR_NONE != m_poDS->PragmaCheck("foreign_key_check", "", 0) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "pragma foreign_key_check failed");
+        eErr = OGRERR_FAILURE;
+    }
+
+    if( eErr == OGRERR_NONE )
+    {
+        CPLFree(m_pszTableName);
+        m_pszTableName = CPLStrdup(pszDstTableName);
+
+        if( bHasSpatialIndex )
+        {
+            CreateSpatialIndex();
+        }
+
+        m_poDS->SoftCommitTransaction();
+    }
+    else
+    {
+        m_poDS->SoftRollbackTransaction();
     }
 }
 
@@ -2510,7 +2611,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     CPLString osCommand;
 
     pszSQL = sqlite3_mprintf(
-        "CREATE TABLE \"%s\" ( "
+        "CREATE TABLE '%q' ( "
         "\"%s\" INTEGER PRIMARY KEY AUTOINCREMENT",
             pszLayerName, m_pszFidColumn);
     osCommand += pszSQL;
