@@ -479,13 +479,12 @@ class OGROSMDataSource : public OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
- 
+
     virtual void        ResetReading();
     virtual OGRFeature* GetNextFeature( OGRLayer** ppoBelongingLayer,
                                         double* pdfProgressPct,
                                        GDALProgressFunc pfnProgress,
                                         void* pProgressData );
- 
 
     int                 Open ( const char* pszFilename, char** papszOpenOptions );
 

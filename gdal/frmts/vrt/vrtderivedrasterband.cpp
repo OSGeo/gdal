@@ -312,7 +312,7 @@ static bool LoadPythonAPI()
 #endif
         CPLString osVersion;
         char* pszPath = getenv("PATH");
-        if( pszPath != NULL 
+        if( pszPath != NULL
 #ifdef DEBUG
            // For testing purposes
            && CPLTestBool( CPLGetConfigOption(
@@ -543,7 +543,7 @@ static bool LoadPythonAPI()
     {
         CPLString osDLLName;
         char* pszPath = getenv("PATH");
-        if( pszPath != NULL 
+        if( pszPath != NULL
 #ifdef DEBUG
            // For testing purposes
            && CPLTestBool( CPLGetConfigOption(
@@ -1701,7 +1701,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         sExtraArg.dfYSize - nRasterYSize) / dfYRatio);
             sExtraArg.dfYSize = nRasterYSize - sExtraArg.dfYOff;
         }
-    
+
         nXOffExt = static_cast<int>(sExtraArg.dfXOff);
         nYOffExt = static_cast<int>(sExtraArg.dfYOff);
         nXSizeExt = MIN(static_cast<int>(sExtraArg.dfXSize + 0.5),

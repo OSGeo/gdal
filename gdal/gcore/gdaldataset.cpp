@@ -6014,7 +6014,7 @@ OGRLayer* GDALDataset::GetLayer( int /*iLayer*/ )
 /*                           ResetReading()                             */
 /************************************************************************/
 
-/** 
+/**
  \brief Reset feature reading to start on the first feature.
 
  This affects GetNextFeature().
@@ -6023,7 +6023,7 @@ OGRLayer* GDALDataset::GetLayer( int /*iLayer*/ )
  OGRLayer::ResetReading() on the layers of this dataset.
 
  This method is the same as the C function GDALDatasetResetReading().
- 
+
  @since GDAL 2.2
 */
 void        GDALDataset::ResetReading()
@@ -6044,7 +6044,7 @@ void        GDALDataset::ResetReading()
 /*                         GDALDatasetResetReading()                    */
 /************************************************************************/
 
-/** 
+/**
  \brief Reset feature reading to start on the first feature.
 
  This affects GDALDatasetGetNextFeature().
@@ -6053,7 +6053,7 @@ void        GDALDataset::ResetReading()
  OGR_L_ResetReading() on the layers of this dataset.
 
  This method is the same as the C++ method GDALDataset::ResetReading()
- 
+
  @param hDS dataset handle
  @since GDAL 2.2
 */
@@ -6070,7 +6070,7 @@ void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
 
 /**
  \brief Fetch the next available feature from this dataset.
- 
+
  This method is intended for the few drivers where OGRLayer::GetNextFeature()
  is not efficient, but in general OGRLayer::GetNextFeature() is a more
  natural API.
@@ -6085,7 +6085,7 @@ void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
  advised to use GDALDataset::GetNextFeature() instead of
  OGRLayer::GetNextFeature(), as the later might have a slow, incomplete or stub
  implementation.
- 
+
  The default implementation, used by most drivers, will
  however iterate over each layer, and then over each feature within this
  layer.
@@ -6235,7 +6235,7 @@ OGRFeature* GDALDataset::GetNextFeature( OGRLayer** ppoBelongingLayer,
 /************************************************************************/
 /**
  \brief Fetch the next available feature from this dataset.
- 
+
  This method is intended for the few drivers where OGR_L_GetNextFeature()
  is not efficient, but in general OGR_L_GetNextFeature() is a more
  natural API.
@@ -6250,7 +6250,7 @@ OGRFeature* GDALDataset::GetNextFeature( OGRLayer** ppoBelongingLayer,
  advised to use GDALDataset::GetNextFeature() instead of
  OGRLayer::GetNextFeature(), as the later might have a slow, incomplete or stub
  implementation.
- 
+
  The default implementation, used by most drivers, will
  however iterate over each layer, and then over each feature within this
  layer.

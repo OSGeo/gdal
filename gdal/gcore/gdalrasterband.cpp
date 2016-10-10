@@ -588,7 +588,7 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-/** 
+/**
  * \fn GDALRasterBand::IWriteBlock(int, int, void*)
  * Write a block of data.
  *
@@ -733,20 +733,20 @@ CPLErr CPL_STDCALL GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 * Handles partial blocks at the edges of the raster and returns the true
 * number of pixels
 *
-* @param nXBlockOff the horizontal block offset for which to calculate the number of 
+* @param nXBlockOff the horizontal block offset for which to calculate the number of
 * valid pixels, with zero indicating the left most block, 1 the next block and so forth.
 *
 * @param nYBlockOff the vertical block offset, with zero indicating
 * the left most block, 1 the next block and so forth.
 *
-* @param pnXValid pointer to an integer in which the number of valid pixels in the x 
+* @param pnXValid pointer to an integer in which the number of valid pixels in the x
 * direction will be stored
 *
-* @param pnYValid pointer to an integer in which the number of valid pixels in the y 
+* @param pnYValid pointer to an integer in which the number of valid pixels in the y
 * direction will be stored
 *
 * @return CE_None if the input parameter are valid, CE_Failure otherwise
-* 
+*
 * @since GDAL 2.2
 */
 CPLErr GDALRasterBand::GetActualBlockSize(int nXBlockOff, int nYBlockOff,
