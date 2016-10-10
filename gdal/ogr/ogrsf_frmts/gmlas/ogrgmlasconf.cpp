@@ -508,6 +508,7 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode* psRoot)
 /************************************************************************/
 
 GMLASXLinkResolutionConf::URLSpecificResolution::URLSpecificResolution() :
+    m_bAllowRemoteDownload(false),
     m_eResolutionMode(RawContent),
     m_nResolutionDepth(1),
     m_bCacheResults(false)
