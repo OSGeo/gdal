@@ -3843,8 +3843,12 @@ OGRFeature* OGROSMDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
 
     while( true )
     {
-        OGRFeature* poFeature = poCurrentLayer->MyGetNextFeature(pfnProgress,
+        OGROSMLayer* poNewCurLayer = NULL;
+        CPLAssert( poCurrentLayer != NULL );
+        OGRFeature* poFeature = poCurrentLayer->MyGetNextFeature(&poNewCurLayer,
+                                                                 pfnProgress,
                                                                  pProgressData);
+        poCurrentLayer = poNewCurLayer;
         if( poFeature == NULL)
         {
             if( poCurrentLayer != NULL )

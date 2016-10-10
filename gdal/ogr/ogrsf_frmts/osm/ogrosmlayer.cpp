@@ -198,24 +198,28 @@ GIntBig OGROSMLayer::GetFeatureCount( int bForce )
 
 OGRFeature *OGROSMLayer::GetNextFeature()
 {
-    return MyGetNextFeature(NULL, NULL);
+    OGROSMLayer* poNewCurLayer = NULL;
+    OGRFeature* poFeature = MyGetNextFeature(&poNewCurLayer, NULL, NULL);
+    poDS->SetCurrentLayer(poNewCurLayer);
+    return poFeature;
 }
 
-OGRFeature *OGROSMLayer::MyGetNextFeature( GDALProgressFunc pfnProgress,
+OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
+                                           GDALProgressFunc pfnProgress,
                                            void* pProgressData )
 {
+    *ppoNewCurLayer = poDS->GetCurrentLayer();
     bResetReadingAllowed = true;
 
     if ( nFeatureArraySize == 0)
     {
         if ( poDS->IsInterleavedReading() )
         {
-            OGRLayer* poCurrentLayer = poDS->GetCurrentLayer();
-            if ( poCurrentLayer == NULL )
+            if ( *ppoNewCurLayer  == NULL )
             {
-                poDS->SetCurrentLayer(this);
+                 *ppoNewCurLayer = this;
             }
-            else if( poCurrentLayer != this )
+            else if( *ppoNewCurLayer  != this )
             {
                 return NULL;
             }
@@ -228,7 +232,7 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( GDALProgressFunc pfnProgress,
                 if (poDS->papoLayers[i] != this &&
                     poDS->papoLayers[i]->nFeatureArraySize > SWITCH_THRESHOLD)
                 {
-                    poDS->SetCurrentLayer(poDS->papoLayers[i]);
+                    *ppoNewCurLayer = poDS->papoLayers[i];
                     CPLDebug("OSM", "Switching to '%s' as they are too many "
                                     "features in '%s'",
                              poDS->papoLayers[i]->GetName(),
@@ -250,7 +254,7 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( GDALProgressFunc pfnProgress,
                     if (poDS->papoLayers[i] != this &&
                         poDS->papoLayers[i]->nFeatureArraySize > 0)
                     {
-                        poDS->SetCurrentLayer(poDS->papoLayers[i]);
+                        *ppoNewCurLayer = poDS->papoLayers[i];
                         CPLDebug("OSM",
                                  "Switching to '%s' as they are no more feature in '%s'",
                                  poDS->papoLayers[i]->GetName(),
@@ -260,7 +264,7 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( GDALProgressFunc pfnProgress,
                 }
 
                 /* Game over : no more data to read from the stream */
-                poDS->SetCurrentLayer(NULL);
+                *ppoNewCurLayer = NULL;
                 return NULL;
             }
         }
