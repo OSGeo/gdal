@@ -153,7 +153,7 @@ OGRXPlaneReader* OGRXPlaneAptReader::CloneForLayer(OGRXPlaneLayer* poLayer)
     SET_IF_INTEREST_LAYER(poVASI_PAPI_WIGWAG_Layer);
     SET_IF_INTEREST_LAYER(poTaxiLocationLayer);
 
-    if (pszFilename)
+    if( pszFilename )
     {
         poReader->pszFilename = CPLStrdup(pszFilename);
         poReader->fp = VSIFOpenL( pszFilename, "rb" );
@@ -190,18 +190,18 @@ void OGRXPlaneAptReader::Rewind()
 
 int OGRXPlaneAptReader::IsRecognizedVersion( const char* pszVersionString)
 {
-    if (STARTS_WITH_CI(pszVersionString, "810 Version"))
+    if( STARTS_WITH_CI(pszVersionString, "810 Version") )
         nVersion = APT_V_810;
-    else if (STARTS_WITH_CI(pszVersionString, "850 Version"))
+    else if( STARTS_WITH_CI(pszVersionString, "850 Version") )
         nVersion = APT_V_850;
-    else if (STARTS_WITH_CI(pszVersionString, "1000 Version"))
+    else if( STARTS_WITH_CI(pszVersionString, "1000 Version") )
         nVersion = APT_V_1000;
     else
         nVersion = APT_V_UNKNOWN;
 
-    if (nVersion == APT_V_1000)
+    if( nVersion == APT_V_1000 )
     {
-        if (poDataSource)
+        if( poDataSource )
         {
             poTaxiLocationLayer = new OGRXPlaneTaxiLocationLayer();
             poDataSource->RegisterLayer(poTaxiLocationLayer);
@@ -238,14 +238,14 @@ void OGRXPlaneAptReader::Read()
         {
             bResumeLine = false;
 
-            if (nTokens == 1 && strcmp(papszTokens[0], "99") == 0)
+            if( nTokens == 1 && strcmp(papszTokens[0], "99") == 0 )
             {
                 CSLDestroy(papszTokens);
                 papszTokens = NULL;
                 bEOF = true;
-                if (bAptHeaderFound)
+                if( bAptHeaderFound )
                 {
-                    if (poAPTLayer)
+                    if( poAPTLayer )
                     {
                         poAPTLayer->AddFeature(
                             osAptICAO, osAptName, nAPTType, dfElevation,
@@ -268,10 +268,10 @@ void OGRXPlaneAptReader::Read()
                 case APT_AIRPORT_HEADER:
                 case APT_SEAPLANE_HEADER:
                 case APT_HELIPORT_HEADER:
-                    if (bAptHeaderFound)
+                    if( bAptHeaderFound )
                     {
                         bAptHeaderFound = false;
-                        if (poAPTLayer)
+                        if( poAPTLayer )
                         {
                             poAPTLayer->AddFeature(
                                 osAptICAO, osAptName, nAPTType, dfElevation,
@@ -287,43 +287,43 @@ void OGRXPlaneAptReader::Read()
                     break;
 
                 case APT_RUNWAY_TAXIWAY_V_810:
-                    if (poAPTLayer ||
+                    if( poAPTLayer ||
                         poRunwayLayer || poRunwayThresholdLayer ||
                         poStopwayLayer ||
                         poHelipadLayer || poHelipadPolygonLayer ||
-                        poVASI_PAPI_WIGWAG_Layer || poTaxiwayRectangleLayer)
+                        poVASI_PAPI_WIGWAG_Layer || poTaxiwayRectangleLayer )
                     {
                         ParseRunwayTaxiwayV810Record();
                     }
                     break;
 
                 case APT_TOWER:
-                    if (poAPTLayer)
+                    if( poAPTLayer )
                         ParseTowerRecord();
                     break;
 
                 case APT_STARTUP_LOCATION:
-                    if (poStartupLocationLayer)
+                    if( poStartupLocationLayer )
                         ParseStartupLocationRecord();
                     break;
 
                 case APT_LIGHT_BEACONS:
-                    if (poAPTLightBeaconLayer)
+                    if( poAPTLightBeaconLayer )
                         ParseLightBeaconRecord();
                     break;
 
                 case APT_WINDSOCKS:
-                    if (poAPTWindsockLayer)
+                    if( poAPTWindsockLayer )
                         ParseWindsockRecord();
                     break;
 
                 case APT_TAXIWAY_SIGNS:
-                    if (poTaxiwaySignLayer)
+                    if( poTaxiwaySignLayer )
                         ParseTaxiwaySignRecord();
                     break;
 
                 case APT_VASI_PAPI_WIGWAG:
-                    if (poVASI_PAPI_WIGWAG_Layer)
+                    if( poVASI_PAPI_WIGWAG_Layer )
                         ParseVasiPapiWigWagRecord();
                     break;
 
@@ -334,33 +334,33 @@ void OGRXPlaneAptReader::Read()
                 case APT_ATC_TWR:
                 case APT_ATC_APP:
                 case APT_ATC_DEP:
-                    if (poATCFreqLayer)
+                    if( poATCFreqLayer )
                         ParseATCRecord(nType);
                     break;
 
                 case APT_RUNWAY:
-                    if (poAPTLayer || poRunwayLayer || poRunwayThresholdLayer
-                        || poStopwayLayer)
+                    if( poAPTLayer || poRunwayLayer || poRunwayThresholdLayer
+                        || poStopwayLayer )
                         ParseRunwayRecord();
                     break;
 
                 case APT_WATER_RUNWAY:
-                    if (poWaterRunwayLayer || poWaterRunwayThresholdLayer)
+                    if( poWaterRunwayLayer || poWaterRunwayThresholdLayer )
                         ParseWaterRunwayRecord();
                     break;
 
                 case APT_HELIPAD:
-                    if (poHelipadLayer || poHelipadPolygonLayer)
+                    if( poHelipadLayer || poHelipadPolygonLayer )
                         ParseHelipadRecord();
                     break;
 
                 case APT_PAVEMENT_HEADER:
-                    if (poPavementLayer)
+                    if( poPavementLayer )
                         ParsePavement();
                     break;
 
                 case APT_LINEAR_HEADER:
-                    if (poAPTLinearFeatureLayer)
+                    if( poAPTLinearFeatureLayer )
                         ParseAPTLinearFeature();
                     break;
 
