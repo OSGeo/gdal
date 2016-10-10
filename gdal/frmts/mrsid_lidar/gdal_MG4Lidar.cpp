@@ -590,7 +590,7 @@ const char *MG4LidarDataset::GetProjectionRef()
    const char * wkt = CPLGetXMLValue(poXMLPCView, "GeoReference", NULL);
    if (wkt == NULL)
       wkt = reader->getWKT();
-   return(wkt);
+   return wkt;
 }
 
 /************************************************************************/
@@ -908,10 +908,10 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       CPLDebug( "MG4Lidar",
          "Inappropriate number of bands (%d)", poDS->nBands );
       delete poDS;
-      return(NULL);
+      return NULL;
    }
 
-   return( poDS );
+   return poDS;
 }
 
 /************************************************************************/
