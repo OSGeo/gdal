@@ -3851,8 +3851,6 @@ OGRFeature* OGROSMDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
         poCurrentLayer = poNewCurLayer;
         if( poFeature == NULL)
         {
-            if( poCurrentLayer != NULL )
-                continue;
             if( ppoBelongingLayer != NULL )
                 *ppoBelongingLayer = NULL;
             if( pdfProgressPct != NULL )
