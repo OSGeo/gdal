@@ -2349,6 +2349,7 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
         "AND type IN ('table', 'view')",
          pszDstTableName);
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
+    sqlite3_free(pszSQL);
     const bool bAlreadyExists = ( err == OGRERR_NONE &&
                                   oResultTable.nRowCount == 1 );
     SQLResultFree(&oResultTable);
@@ -3130,6 +3131,7 @@ bool OGRGeoPackageTableLayer::IsTable()
         "SELECT * FROM sqlite_master WHERE name = '%q' AND type = 'table'",
          m_pszTableName);
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
+    sqlite3_free(pszSQL);
     const bool bIsTable = ( err == OGRERR_NONE &&
                                   oResultTable.nRowCount == 1 );
     SQLResultFree(&oResultTable);
