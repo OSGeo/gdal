@@ -3760,6 +3760,27 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Special case RECOMPUTE EXTENT ON command.                       */
+/* -------------------------------------------------------------------- */
+    if( STARTS_WITH_CI(pszSQLCommand, "RECOMPUTE EXTENT ON ") )
+    {
+        const char *pszLayerName = pszSQLCommand + strlen("RECOMPUTE EXTENT ON ");
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        int idx = FindLayerIndex( pszLayerName );
+        if( idx >= 0 )
+        {
+            m_papoLayers[idx]->RecomputeExtent();
+        }
+        else
+            CPLError(CE_Failure, CPLE_AppDefined, "Unknown layer: %s",
+                     pszLayerName);
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Intercept DROP TABLE                                            */
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszSQLCommand, "DROP TABLE ") )

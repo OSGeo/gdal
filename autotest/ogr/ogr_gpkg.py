@@ -2677,6 +2677,109 @@ def ogr_gpkg_37():
     return 'success'
 
 ###############################################################################
+# Test GetExtent() and RECOMPUTE EXTENT ON
+
+def ogr_gpkg_38():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    dbname = '/vsimem/ogr_gpkg_38.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbLineString )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    # Simulate that extent is not recorded
+    ds = ogr.Open(dbname, update = 1)
+    ds.ExecuteSQL('UPDATE gpkg_contents SET min_x = NULL, min_y = NULL, max_x = NULL, max_y = NULL')
+    ds = None
+
+    ds = ogr.Open(dbname, update = 1)
+    lyr = ds.GetLayer(0)
+    extent = lyr.GetExtent(force = 0, can_return_null = True)
+    if extent is not None:
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+    # Test that we can compute the extent of a layer that has none registered in gpkg_contents
+    extent = lyr.GetExtent(force = 1)
+    if extent != (1,3,2,4):
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+    sql_lyr = ds.ExecuteSQL('SELECT min_x, min_y, max_x, max_y FROM gpkg_contents')
+    f = sql_lyr.GetNextFeature()
+    if f['min_x'] != 1 or f['min_y'] != 2 or f['max_x'] != 3 or f['max_y'] != 4:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    extent = lyr.GetExtent(force = 0)
+    if extent != (1,3,2,4):
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+
+    # Modify feature
+    f = lyr.GetFeature(1)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (-1 -2,-3 -4)'))
+    lyr.SetFeature(f)
+
+    # The extent has grown
+    extent = lyr.GetExtent(force = 0)
+    if extent != (-3.0, 3.0, -4.0, 4.0):
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+
+    ds.ExecuteSQL('RECOMPUTE EXTENT ON test')
+    extent = lyr.GetExtent(force = 0)
+    if extent != (-3.0, -1.0, -4.0, -2.0):
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+    extent = lyr.GetExtent(force = 0)
+    if extent != (-3.0, -1.0, -4.0, -2.0):
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open(dbname, update = 1)
+    lyr = ds.GetLayer(0)
+    # Delete last feature
+    lyr.DeleteFeature(1)
+
+    # This should cancel NULLify the extent in gpkg_contents
+    ds.ExecuteSQL('RECOMPUTE EXTENT ON test')
+    extent = lyr.GetExtent(force = 0, can_return_null = True)
+    if extent is not None:
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+    extent = lyr.GetExtent(force = 0, can_return_null = True)
+    if extent is not None:
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource(dbname)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -2733,11 +2836,12 @@ gdaltest_list = [
     ogr_gpkg_35,
     ogr_gpkg_36,
     ogr_gpkg_37,
+    ogr_gpkg_38,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
 
-# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_37, ogr_gpkg_cleanup ]
+# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_38, ogr_gpkg_cleanup ]
 
 if __name__ == '__main__':
 
