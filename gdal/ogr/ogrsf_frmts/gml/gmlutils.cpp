@@ -84,24 +84,25 @@ bool GML_IsSRSLatLongOrder(const char* pszSRSName)
     if (pszSRSName == NULL)
         return false;
 
-    if (STARTS_WITH(pszSRSName, "urn:"))
+    if (STARTS_WITH(pszSRSName, "urn:") && strstr(pszSRSName, ":4326") != NULL)
     {
-        if (strstr(pszSRSName, ":4326") != NULL)
-        {
-            /* Shortcut ... */
-            return true;
-        }
-        else
-        {
-            OGRSpatialReference oSRS;
-            if (oSRS.importFromURN(pszSRSName) == OGRERR_NONE)
-            {
-                if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
-                    return true;
-            }
-        }
+        /* Shortcut ... */
+        return true;
     }
-    return false;
+    else if( !EQUALN(pszSRSName, "EPSG:", 5) )
+    {
+        OGRSpatialReference oSRS;
+        if (oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
+        {
+            if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
+                return true;
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
@@ -190,6 +191,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
                                           bool bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
                                           bool bConsiderEPSGAsURN,
+                                          GMLSwapCoordinatesEnum eSwapCoordinates,
                                           int nPseudoBoolGetSecondaryGeometryOption,
                                           void* hCacheSRS,
                                           bool bFaceHoleNegative)
@@ -248,6 +250,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
                                                             bInvertAxisOrderIfLatLong,
                                                             pszDefaultSRSName,
                                                             bConsiderEPSGAsURN,
+                                                            eSwapCoordinates,
                                                             nPseudoBoolGetSecondaryGeometryOption,
                                                             hCacheSRS);
                     }
@@ -281,8 +284,12 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
         SRSCache* poSRSCache = (SRSCache*)hCacheSRS;
         SRSDesc& oSRSDesc = poSRSCache->Get(pszNameLookup);
         poGeom->assignSpatialReference(oSRSDesc.poSRS);
-        if (oSRSDesc.bAxisInvert && bInvertAxisOrderIfLatLong)
+        if( (eSwapCoordinates == GML_SWAP_AUTO &&
+            oSRSDesc.bAxisInvert && bInvertAxisOrderIfLatLong) ||
+            eSwapCoordinates == GML_SWAP_YES )
+        {
             poGeom->swapXY();
+        }
     }
 
     return poGeom;

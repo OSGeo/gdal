@@ -39,7 +39,8 @@ configuration option to <b>EXPAT</b> or <b>XERCES</b>.<p>
 
 Since OGR 1.8.0, the GML driver has coordinate system support. This is
 only reported when all the geometries of a layer have a srsName attribute,
-whose value is the same for all geometries. For srsName such as "urn:ogc:def:crs:EPSG:",
+whose value is the same for all geometries. For srsName such as "urn:ogc:def:crs:EPSG:"
+(or "http://www.opengis.net/def/crs/EPSG/0/" starting with GDAL 2.1.2),
 for geographic coordinate systems (as returned by WFS 1.1.0 for example), the axis order
 should be (latitude, longitude) as required by the standards, but this is
 unusual and can cause issues with applications unaware of axis order. So
@@ -56,6 +57,14 @@ order. However, if you set the configuration option <b>GML_CONSIDER_EPSG_AS_URN<
 <b>YES</b>, the rules explained in the previous paragraph will be applied.<p>
 Since OGR 1.10, the above also applied for projected coordinate systems whose EPSG
 preferred axis order is (northing, easting).<p>
+<p>Starting with GDAL 2.1.2, the SWAP_COORDINATES open option (or GML_SWAP_COORDINATES
+configuration option) can be set to AUTO/YES/NO. It controls whether the order of the x/y or long/lat
+coordinates should be swapped. In AUTO mode, the driver will determine if swapping
+must be done from the srsName and value of other options
+like CONSIDER_EPSG_AS_URN and INVERT_AXIS_ORDER_IF_LAT_LONG. When SWAP_COORDINATES
+is set to YES, coordinates will be always swapped regarding the order they appear
+in the GML, and when it set to NO, they will be kept in the same order. The default
+is AUTO.</p>
 
 <h2>Schema</h2>
 
@@ -374,6 +383,13 @@ and if it has no valid associated .xsd. Defaults to NO.</li>
 present SRS and coordinate ordering in traditional GIS order. Defaults to YES.</li>
 <li> <b>CONSIDER_EPSG_AS_URN=YES/NO/AUTO</b>: (GDAL &gt;=2.0) Whether to
 consider srsName like EPSG:XXXX as respecting EPSG axis order. Defaults to AUTO.</li>
+<li> <b>SWAP_COORDINATES</b>=AUTO/YES/NO: (GDAL &gt;=2.1.2) Whether the order of the x/y or long/lat
+coordinates should be swapped. In AUTO mode, the driver will determine if swapping
+must be done from the srsName and value of other options
+like CONSIDER_EPSG_AS_URN and INVERT_AXIS_ORDER_IF_LAT_LONG. When SWAP_COORDINATES
+is set to YES, coordinates will be always swapped regarding the order they appear
+in the GML, and when it set to NO, they will be kept in the same order. The default
+is AUTO.</li>
 <li> <b>READ_MODE=AUTO/STANDARD/SEQUENTIAL_LAYERS/INTERLEAVED_LAYERS</b>: (GDAL &gt;=2.0)
 Read mode. Defaults to AUTO.</li>
 <li> <b>EXPOSE_GML_ID=YES/NO/AUTO</b>: (GDAL &gt;=2.0)
