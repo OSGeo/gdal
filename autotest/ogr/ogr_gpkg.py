@@ -2592,6 +2592,91 @@ def ogr_gpkg_36():
     return 'success'
 
 ###############################################################################
+# Test ReorderFields()
+
+def ogr_gpkg_37():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    dbname = '/vsimem/ogr_gpkg_37.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPolygon )
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateField( ogr.FieldDefn('bar', ogr.OFTString) )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(10)
+    f.SetField('foo', 'fooval')
+    f.SetField('bar', 'barval')
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
+  table_name TEXT NOT NULL,
+  column_name TEXT NOT NULL,
+  name TEXT UNIQUE,
+  title TEXT,
+  description TEXT,
+  mime_type TEXT,
+  constraint_name TEXT,
+  CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
+  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+)""")
+    ds.ExecuteSQL("INSERT INTO gpkg_data_columns VALUES('test', 'foo', 'constraint', NULL, NULL, NULL, NULL)")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'foo', 'extension_name', 'definition', 'scope')")
+    ds.ExecuteSQL("CREATE INDEX my_idx_foo ON test(foo)")
+    ds.ExecuteSQL("CREATE INDEX my_idx_bar ON test(bar)")
+
+    if lyr.TestCapability(ogr.OLCReorderFields) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = lyr.ReorderFields([-1, -1])
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    if lyr.ReorderFields([1,0]) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.ResetReading()
+    if lyr.GetLayerDefn().GetFieldIndex('foo') != 1 or lyr.GetLayerDefn().GetFieldIndex('bar') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 10 or f['foo'] != 'fooval' or f['bar'] != 'barval' or \
+    f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Check that index has been recreated
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE name = 'my_idx_foo' OR name = 'my_idx_bar'")
+    if sql_lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    # Try on read-only dataset
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        ret = lyr.ReorderFields([1,0])
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource(dbname)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -2647,11 +2732,12 @@ gdaltest_list = [
     ogr_gpkg_34,
     ogr_gpkg_35,
     ogr_gpkg_36,
+    ogr_gpkg_37,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
 
-# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_36, ogr_gpkg_cleanup ]
+# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_37, ogr_gpkg_cleanup ]
 
 if __name__ == '__main__':
 

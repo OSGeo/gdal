@@ -332,7 +332,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              RegisterGeometryColumn();
 
     CPLString           GetColumnsOfCreateTable(const std::vector<OGRFieldDefn*> apoFields);
-    CPLString           BuildSelectFieldList( int iFieldToDelete );
+    CPLString           BuildSelectFieldList(const std::vector<OGRFieldDefn*> apoFields);
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
     bool                IsTable();
@@ -351,6 +351,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                          int bApproxOK = TRUE );
     virtual OGRErr      DeleteField(  int iFieldToDelete );
     virtual OGRErr      AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlagsIn );
+    virtual OGRErr      ReorderFields( int* panMap );
     void                ResetReading();
     OGRErr              ICreateFeature( OGRFeature *poFeater );
     OGRErr              ISetFeature( OGRFeature *poFeature );
