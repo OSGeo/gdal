@@ -291,6 +291,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                                                   poDS->GetInvertAxisOrderIfLatLong(),
                                                   pszSRSName,
                                                   poDS->GetConsiderEPSGAsURN(),
+                                                  poDS->GetSwapCoordinates(),
                                                   poDS->GetSecondaryGeometryOption(),
                                                   hCacheSRS,
                                                   bFaceHoleNegative );
@@ -339,6 +340,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                                                   poDS->GetInvertAxisOrderIfLatLong(),
                                                   pszSRSName,
                                                   poDS->GetConsiderEPSGAsURN(),
+                                                  poDS->GetSwapCoordinates(),
                                                   poDS->GetSecondaryGeometryOption(),
                                                   hCacheSRS,
                                                   bFaceHoleNegative );
