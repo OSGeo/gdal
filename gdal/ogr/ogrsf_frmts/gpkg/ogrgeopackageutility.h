@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogrgeopackageutility.h 35679 2016-10-10 14:15:22Z rouault $
  *
  * Project:  GeoPackage Translator
  * Purpose:  Utility header for OGR GeoPackage driver.
@@ -83,5 +83,9 @@ OGRGeometry*        GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRS
 OGRErr              GPkgEnvelopeToOGR(GByte *pabyGpkg, size_t szGpkg, OGREnvelope *poEnv);
 
 OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader);
+
+CPLString           SQLEscapeDoubleQuote(const char* pszStr);
+CPLString           SQLUnescapeDoubleQuote(const char* pszStr);
+char**              SQLTokenize( const char* pszSQL );
 
 #endif
