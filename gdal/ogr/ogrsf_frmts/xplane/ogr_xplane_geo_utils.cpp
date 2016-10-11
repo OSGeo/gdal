@@ -31,18 +31,18 @@
 
 CPL_CVSID("$Id$");
 
-#define RAD2METER            ((180./M_PI)*60.*1852.)
-#define METER2RAD            (1/RAD2METER)
+static const double RAD2METER = (180.0 / M_PI) * 60.0 * 1852.0;
+static const double METER2RAD = 1.0 / RAD2METER;
 
-#define DEG2RAD              (M_PI/180.)
-#define RAD2DEG              (1/DEG2RAD)
+static const double DEG2RAD = M_PI / 180.0;
+static const double RAD2DEG = 1.0 / DEG2RAD;
 
 static
-double OGRXPlane_Safe_acos(double x)
+double OGRXPlane_Safe_acos( double x )
 {
-    if (x > 1)
+    if( x > 1 )
         x = 1;
-    else if (x < -1)
+    else if( x < -1 )
         x = -1;
     return acos(x);
 }

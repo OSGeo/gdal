@@ -407,6 +407,8 @@ typedef void retGetPoints;
 %constant char *ODsCTransactions       = "Transactions";
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
 %constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
+%constant char *ODsCRandomLayerRead    = "RandomLayerRead";
+%constant char *ODsCRandomLayerWrite   = "RandomLayerWrite";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -447,6 +449,8 @@ typedef int OGRErr;
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
 #define ODsCMeasuredGeometries  "MeasuredGeometries";
+#define ODsCRandomLayerRead    "RandomLayerRead";
+#define ODsCRandomLayerWrite   "RandomLayerWrite";
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"

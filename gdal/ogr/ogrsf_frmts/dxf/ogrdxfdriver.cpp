@@ -43,7 +43,7 @@ static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"dxf") )
         return TRUE;
     const char* pszIter = (const char*)poOpenInfo->pabyHeader;
-    int bFoundZero = FALSE;
+    bool bFoundZero = false;
     int i = 0;  // Used after for.
     for( ; pszIter[i]; i++ )
     {
@@ -57,7 +57,7 @@ static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
             }
             if( j < 0 || pszIter[j] == '\n'|| pszIter[j] == '\r' )
             {
-                bFoundZero = TRUE;
+                bFoundZero = true;
                 break;
             }
         }

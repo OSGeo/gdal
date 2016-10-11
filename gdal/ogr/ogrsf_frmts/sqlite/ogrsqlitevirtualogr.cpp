@@ -1086,11 +1086,11 @@ int OGR2SQLITE_Eof(sqlite3_vtab_cursor* pCursor)
 
     if( pMyCursor->nFeatureCount < 0 )
     {
-        return (pMyCursor->poFeature == NULL);
+        return pMyCursor->poFeature == NULL;
     }
     else
     {
-        return ( pMyCursor->nNextWishedIndex >= pMyCursor->nFeatureCount );
+        return pMyCursor->nNextWishedIndex >= pMyCursor->nFeatureCount;
     }
 }
 
@@ -2237,7 +2237,7 @@ int OGR2SQLITESpatialIndex_Eof(sqlite3_vtab_cursor* pCursor)
     CPLDebug("OGR2SQLITE", "Eof");
 #endif
 
-    return (pMyCursor->poFeature == NULL);
+    return pMyCursor->poFeature == NULL;
 }
 
 /************************************************************************/

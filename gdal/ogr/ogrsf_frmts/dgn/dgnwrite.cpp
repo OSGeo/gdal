@@ -337,7 +337,7 @@ DGNHandle
 /* -------------------------------------------------------------------- */
 /*      Modify TCB appropriately for the output file.                   */
 /* -------------------------------------------------------------------- */
-    GByte *pabyRawTCB = (GByte *) CPLMalloc(psSrcTCB->raw_bytes);
+    GByte *pabyRawTCB = static_cast<GByte *>(CPLMalloc(psSrcTCB->raw_bytes));
 
     memcpy( pabyRawTCB, psSrcTCB->raw_data, psSrcTCB->raw_bytes );
 
@@ -451,7 +451,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
 /* -------------------------------------------------------------------- */
     if( psSrcElement->stype == DGNST_CORE )
     {
-        psClone = (DGNElemCore *) CPLMalloc(sizeof(DGNElemCore));
+        psClone = static_cast<DGNElemCore *>(CPLMalloc(sizeof(DGNElemCore)));
         memcpy( psClone, psSrcElement, sizeof(DGNElemCore) );
     }
     else if( psSrcElement->stype == DGNST_MULTIPOINT )
@@ -461,14 +461,16 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
         const size_t nSize = sizeof(DGNElemMultiPoint)
             + sizeof(DGNPoint) * (psSrcMP->num_vertices-2);
 
-        DGNElemMultiPoint *psMP = (DGNElemMultiPoint *) CPLMalloc( nSize );
+        DGNElemMultiPoint *psMP =
+            static_cast<DGNElemMultiPoint *>(CPLMalloc( nSize ));
         memcpy( psMP, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psMP;
     }
     else if( psSrcElement->stype == DGNST_ARC )
     {
-        DGNElemArc *psArc = (DGNElemArc *) CPLMalloc(sizeof(DGNElemArc));
+        DGNElemArc *psArc =
+            static_cast<DGNElemArc *>(CPLMalloc(sizeof(DGNElemArc)));
         memcpy( psArc, psSrcElement, sizeof(DGNElemArc) );
 
         psClone = (DGNElemCore *) psArc;
@@ -478,62 +480,64 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
         DGNElemText *psSrcText = (DGNElemText *) psSrcElement;
         const size_t nSize = sizeof(DGNElemText) + strlen(psSrcText->string);
 
-        DGNElemText *psText = (DGNElemText *) CPLMalloc( nSize );
+        DGNElemText *psText =
+          static_cast<DGNElemText *>(CPLMalloc( nSize ));
         memcpy( psText, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psText;
     }
     else if( psSrcElement->stype == DGNST_TEXT_NODE )
     {
-        DGNElemTextNode *psNode = (DGNElemTextNode *)
-            CPLMalloc(sizeof(DGNElemTextNode));
+        DGNElemTextNode *psNode = static_cast<DGNElemTextNode *>(
+            CPLMalloc(sizeof(DGNElemTextNode)));
         memcpy( psNode, psSrcElement, sizeof(DGNElemTextNode) );
 
         psClone = (DGNElemCore *) psNode;
     }
     else if( psSrcElement->stype == DGNST_COMPLEX_HEADER )
     {
-        DGNElemComplexHeader *psCH = (DGNElemComplexHeader *)
-            CPLMalloc(sizeof(DGNElemComplexHeader));
+        DGNElemComplexHeader *psCH = static_cast<DGNElemComplexHeader *>(
+            CPLMalloc(sizeof(DGNElemComplexHeader)));
         memcpy( psCH, psSrcElement, sizeof(DGNElemComplexHeader) );
 
         psClone = (DGNElemCore *) psCH;
     }
     else if( psSrcElement->stype == DGNST_COLORTABLE )
     {
-        DGNElemColorTable *psCT = (DGNElemColorTable *)
-            CPLMalloc(sizeof(DGNElemColorTable));
+        DGNElemColorTable *psCT = static_cast<DGNElemColorTable *>(
+            CPLMalloc(sizeof(DGNElemColorTable)));
         memcpy( psCT, psSrcElement, sizeof(DGNElemColorTable) );
 
         psClone = (DGNElemCore *) psCT;
     }
     else if( psSrcElement->stype == DGNST_TCB )
     {
-        DGNElemTCB *psTCB = (DGNElemTCB *) CPLMalloc(sizeof(DGNElemTCB));
+        DGNElemTCB *psTCB =
+            static_cast<DGNElemTCB *>(CPLMalloc(sizeof(DGNElemTCB)));
         memcpy( psTCB, psSrcElement, sizeof(DGNElemTCB) );
 
         psClone = (DGNElemCore *) psTCB;
     }
     else if( psSrcElement->stype == DGNST_CELL_HEADER )
     {
-        DGNElemCellHeader *psCH = (DGNElemCellHeader *)
-            CPLMalloc(sizeof(DGNElemCellHeader));
+        DGNElemCellHeader *psCH = static_cast<DGNElemCellHeader *>(
+            CPLMalloc(sizeof(DGNElemCellHeader)));
         memcpy( psCH, psSrcElement, sizeof(DGNElemCellHeader) );
 
         psClone = (DGNElemCore *) psCH;
     }
     else if( psSrcElement->stype == DGNST_CELL_LIBRARY )
     {
-        DGNElemCellLibrary *psCL = (DGNElemCellLibrary *)
-            CPLMalloc(sizeof(DGNElemCellLibrary));
+        DGNElemCellLibrary *psCL = static_cast<DGNElemCellLibrary *>(
+            CPLMalloc(sizeof(DGNElemCellLibrary)));
         memcpy( psCL, psSrcElement, sizeof(DGNElemCellLibrary) );
 
         psClone = (DGNElemCore *) psCL;
     }
     else if( psSrcElement->stype == DGNST_TAG_VALUE )
     {
-        DGNElemTagValue *psTV = (DGNElemTagValue *)
-            CPLMalloc(sizeof(DGNElemTagValue));
+        DGNElemTagValue *psTV = static_cast<DGNElemTagValue *>(
+            CPLMalloc(sizeof(DGNElemTagValue)));
         memcpy( psTV, psSrcElement, sizeof(DGNElemTagValue) );
 
         if( psTV->tagType == 1 )
@@ -543,14 +547,14 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     }
     else if( psSrcElement->stype == DGNST_TAG_SET )
     {
-        DGNElemTagSet *psTS = (DGNElemTagSet *)
-            CPLMalloc(sizeof(DGNElemTagSet));
+        DGNElemTagSet *psTS = static_cast<DGNElemTagSet *>(
+            CPLMalloc(sizeof(DGNElemTagSet)));
         memcpy( psTS, psSrcElement, sizeof(DGNElemTagSet) );
 
         psTS->tagSetName = CPLStrdup( psTS->tagSetName );
 
-        DGNTagDef *pasTagList = (DGNTagDef *)
-            CPLMalloc( sizeof(DGNTagDef) * psTS->tagCount );
+        DGNTagDef *pasTagList = static_cast<DGNTagDef *>(
+            CPLMalloc( sizeof(DGNTagDef) * psTS->tagCount ));
         memcpy( pasTagList, psTS->tagList,
                 sizeof(DGNTagDef) * psTS->tagCount );
 
@@ -568,23 +572,26 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     }
     else if( psSrcElement->stype == DGNST_CONE )
     {
-        DGNElemCone *psCone = (DGNElemCone *) CPLMalloc(sizeof(DGNElemCone));
+        DGNElemCone *psCone = static_cast<DGNElemCone *>(
+            CPLMalloc(sizeof(DGNElemCone)));
         memcpy( psCone, psSrcElement, sizeof(DGNElemCone) );
 
         psClone = (DGNElemCore *) psCone;
     }
     else if( psSrcElement->stype == DGNST_BSPLINE_SURFACE_HEADER )
     {
-        DGNElemBSplineSurfaceHeader *psSurface = (DGNElemBSplineSurfaceHeader *)
-            CPLMalloc(sizeof(DGNElemBSplineSurfaceHeader));
+        DGNElemBSplineSurfaceHeader *psSurface =
+            static_cast<DGNElemBSplineSurfaceHeader *>(
+                CPLMalloc(sizeof(DGNElemBSplineSurfaceHeader)));
         memcpy( psSurface, psSrcElement, sizeof(DGNElemBSplineSurfaceHeader) );
 
         psClone = (DGNElemCore *) psSurface;
     }
     else if( psSrcElement->stype == DGNST_BSPLINE_CURVE_HEADER )
     {
-        DGNElemBSplineCurveHeader *psCurve = (DGNElemBSplineCurveHeader *)
-            CPLMalloc(sizeof(DGNElemBSplineCurveHeader));
+        DGNElemBSplineCurveHeader *psCurve =
+            static_cast<DGNElemBSplineCurveHeader *>(
+                CPLMalloc(sizeof(DGNElemBSplineCurveHeader)));
         memcpy( psCurve, psSrcElement, sizeof(DGNElemBSplineCurveHeader) );
 
         psClone = (DGNElemCore *) psCurve;
@@ -598,7 +605,8 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
             + sizeof(DGNPoint) * (psSrcBSB->numverts-1);
 
         DGNElemBSplineSurfaceBoundary *psBSB =
-            (DGNElemBSplineSurfaceBoundary *) CPLMalloc( nSize );
+            static_cast<DGNElemBSplineSurfaceBoundary *>(
+                CPLMalloc( nSize ));
         memcpy( psBSB, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psBSB;
@@ -615,15 +623,16 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
         const size_t nSize =
             sizeof(DGNElemKnotWeight) + sizeof(long) * (numelems-1);
 
-        DGNElemKnotWeight *psArray = (DGNElemKnotWeight *) CPLMalloc( nSize );
+        DGNElemKnotWeight *psArray = static_cast<DGNElemKnotWeight *>(
+            CPLMalloc( nSize ));
         memcpy( psArray, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psArray;
     }
     else if( psSrcElement->stype == DGNST_SHARED_CELL_DEFN )
     {
-        DGNElemSharedCellDefn *psCH = (DGNElemSharedCellDefn *)
-            CPLMalloc(sizeof(DGNElemSharedCellDefn));
+        DGNElemSharedCellDefn *psCH = static_cast<DGNElemSharedCellDefn *>(
+            CPLMalloc(sizeof(DGNElemSharedCellDefn)));
         memcpy( psCH, psSrcElement, sizeof(DGNElemSharedCellDefn) );
 
         psClone = (DGNElemCore *) psCH;
@@ -639,14 +648,16 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
 /* -------------------------------------------------------------------- */
     if( psClone->raw_bytes != 0 )
     {
-        psClone->raw_data = (unsigned char *) CPLMalloc(psClone->raw_bytes);
+        psClone->raw_data = static_cast<unsigned char *>(
+            CPLMalloc(psClone->raw_bytes));
         memcpy( psClone->raw_data, psSrcElement->raw_data,
                 psClone->raw_bytes );
     }
 
     if( psClone->attr_bytes != 0 )
     {
-        psClone->attr_data = (unsigned char *) CPLMalloc(psClone->attr_bytes);
+        psClone->attr_data = static_cast<unsigned char *>(
+            CPLMalloc(psClone->attr_bytes));
         memcpy( psClone->attr_data, psSrcElement->attr_data,
                 psClone->attr_bytes );
     }

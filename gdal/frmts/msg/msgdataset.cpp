@@ -94,7 +94,7 @@ MSGDataset::~MSGDataset()
 const char *MSGDataset::GetProjectionRef()
 
 {
-  return ( pszProjection );
+  return pszProjection;
 }
 
 /************************************************************************/
@@ -118,7 +118,7 @@ CPLErr MSGDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -326,7 +326,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     metadataValue.Printf("%d", poDS->iCurrentSatellite);
     poDS->SetMetadataItem("satellite_number", metadataValue.c_str(), metadataDomain);
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

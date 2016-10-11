@@ -111,7 +111,7 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
 
     double tmp = ((i1-i0)*0.5+i0)/((float)NBIN) ;
 
-    return (tmp-floor(tmp))*XDIF + XMIN ;
+    return (tmp-floor(tmp))*XDIF + XMIN;
 }
 
 

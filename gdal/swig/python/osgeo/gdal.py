@@ -1826,6 +1826,14 @@ class Dataset(MajorObject):
         """GetLayerByName(Dataset self, char const * layer_name) -> Layer"""
         return _gdal.Dataset_GetLayerByName(self, *args)
 
+    def ResetReading(self, *args):
+        """ResetReading(Dataset self)"""
+        return _gdal.Dataset_ResetReading(self, *args)
+
+    def GetNextFeature(self, *args, **kwargs):
+        """GetNextFeature(Dataset self, bool include_layer=True, bool include_pct=False, GDALProgressFunc callback=0, void * callback_data=None) -> Feature"""
+        return _gdal.Dataset_GetNextFeature(self, *args, **kwargs)
+
     def TestCapability(self, *args):
         """TestCapability(Dataset self, char const * cap) -> bool"""
         return _gdal.Dataset_TestCapability(self, *args)
@@ -2872,6 +2880,14 @@ def IdentifyDriver(*args):
   """IdentifyDriver(char const * utf8_path, char ** papszSiblings=None) -> Driver"""
   return _gdal.IdentifyDriver(*args)
 IdentifyDriver = _gdal.IdentifyDriver
+
+def IdentifyDriverEx(*args, **kwargs):
+  """
+    IdentifyDriverEx(char const * utf8_path, unsigned int nIdentifyFlags=0, char ** allowed_drivers=None, 
+        char ** sibling_files=None) -> Driver
+    """
+  return _gdal.IdentifyDriverEx(*args, **kwargs)
+IdentifyDriverEx = _gdal.IdentifyDriverEx
 
 def GeneralCmdLineProcessor(*args):
   """GeneralCmdLineProcessor(char ** papszArgv, int nOptions=0) -> char **"""

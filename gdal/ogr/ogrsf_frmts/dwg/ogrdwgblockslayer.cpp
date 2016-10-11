@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 
 OGRDWGBlocksLayer::OGRDWGBlocksLayer( OGRDWGDataSource *poDSIn ) :
     poDS(poDSIn),
-    poFeatureDefn(new OGRFeatureDefn( "blocks" )),
+    poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
     ResetReading();
 

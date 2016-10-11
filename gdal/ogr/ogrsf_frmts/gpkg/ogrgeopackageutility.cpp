@@ -665,3 +665,108 @@ OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
 
     return OGRERR_NONE;
 }
+
+CPLString SQLEscapeDoubleQuote(const char* pszStr)
+{
+    CPLString osRet;
+    while( *pszStr != '\0' )
+    {
+        if( *pszStr == '"' )
+            osRet += "\"\"";
+        else
+            osRet += *pszStr;
+        pszStr ++;
+    }
+    return osRet;
+}
+
+CPLString SQLUnescapeDoubleQuote(const char* pszStr)
+{
+    CPLString osRet;
+    const bool bStartsWithDoubleQuote = (pszStr[0] == '"');
+    if( bStartsWithDoubleQuote )
+        pszStr ++;
+    while( *pszStr != '\0' )
+    {
+        if( bStartsWithDoubleQuote && *pszStr == '"' && pszStr[1] == '"' )
+        {
+            osRet += "\"";
+            pszStr ++;
+        }
+        else if( bStartsWithDoubleQuote && *pszStr == '"' )
+        {
+            break;
+        }
+        else
+            osRet += *pszStr;
+        pszStr ++;
+    }
+    return osRet;
+}
+
+/************************************************************************/
+/*                             SQLTokenize()                            */
+/************************************************************************/
+
+char** SQLTokenize( const char* pszStr )
+{
+    char** papszTokens = NULL;
+    bool bInQuote = false;
+    char chQuoteChar = '\0';
+    bool bInSpace = true;
+    CPLString osCurrentToken;
+    while( *pszStr != '\0' )
+    {
+        if( *pszStr == ' ' && !bInQuote )
+        {
+            if( !bInSpace )
+            {
+                papszTokens = CSLAddString(papszTokens, osCurrentToken);
+                osCurrentToken.clear();
+            }
+            bInSpace = true;
+        }
+        else if( *pszStr == '"' || *pszStr == '\'' )
+        {
+            if( bInQuote && *pszStr == chQuoteChar && pszStr[1] == chQuoteChar )
+            {
+                osCurrentToken += *pszStr;
+                osCurrentToken += *pszStr;
+                pszStr += 2;
+                continue;
+            }
+            else if( bInQuote && *pszStr == chQuoteChar )
+            {
+                osCurrentToken += *pszStr;
+                papszTokens = CSLAddString(papszTokens, osCurrentToken);
+                osCurrentToken.clear();
+                bInSpace = true;
+                bInQuote = false;
+                chQuoteChar = '\0';
+            }
+            else if( bInQuote )
+            {
+                osCurrentToken += *pszStr;
+            }
+            else
+            {
+                chQuoteChar = *pszStr;
+                osCurrentToken.clear();
+                osCurrentToken += chQuoteChar;
+                bInQuote = true;
+                bInSpace = false;
+            }
+        }
+        else
+        {
+            osCurrentToken += *pszStr;
+            bInSpace = false;
+        }
+        pszStr ++;
+    }
+
+    if( !osCurrentToken.empty() )
+        papszTokens = CSLAddString(papszTokens, osCurrentToken);
+
+    return papszTokens;
+}

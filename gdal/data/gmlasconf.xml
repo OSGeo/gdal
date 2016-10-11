@@ -1,0 +1,90 @@
+<!-- This file is under the public domain -->
+
+<Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="gmlasconf.xsd">
+
+    <AllowRemoteSchemaDownload>true</AllowRemoteSchemaDownload>
+    <SchemaCache enabled="true">
+        <Directory/> <!-- empty: use $HOME/.gdal/gmlas_xsd_cache by default -->
+    </SchemaCache>
+    <Validation enabled="false">
+        <FailIfError>false</FailIfError>
+    </Validation>
+    <ExposeMetadataLayers>false</ExposeMetadataLayers>
+    <LayerBuildingRules>
+        <AlwaysGenerateOGRId>false</AlwaysGenerateOGRId>
+        <RemoveUnusedLayers>false</RemoveUnusedLayers>
+        <RemoveUnusedFields>false</RemoveUnusedFields>
+        <UseArrays>true</UseArrays>
+        <GML>
+            <IncludeGeometryXML>false</IncludeGeometryXML>
+            <InstantiateGMLFeaturesOnly>true</InstantiateGMLFeaturesOnly>
+        </GML>
+    </LayerBuildingRules>
+
+    <XLinkResolution>
+        <Timeout>10</Timeout> <!-- can be set with GDAL_HTTP_TIMEOUT -->
+        <!-- <MaxGlobalResolutionTime></MaxGlobalResolutionTime> -->
+        <MaxFileSize>1048576</MaxFileSize>
+        <!--
+        <ProxyServerPort>myproxy.com:8080</ProxyServerPort>  Can be set with GDAL_HTTP_PROXY
+        <ProxyUserPassword>user:password<ProxyUserPassword>  Can be set with GDAL_HTTP_PROXYUSERPW
+        <ProxyAuth>Basic or NTLM or Digest or Any</ProxyAuth> Can be set with GDAL_PROXY_AUTH
+        -->
+        <CacheDirectory/> <!-- empty: use $HOME/.gdal/gmlas_xlink_resolution_cache by default -->
+        <DefaultResolution enabled="false">
+            <AllowRemoteDownload>true</AllowRemoteDownload>
+            <ResolutionMode>RawContent</ResolutionMode>
+            <ResolutionDepth>1</ResolutionDepth>
+            <CacheResults>false</CacheResults>
+        </DefaultResolution>
+<!--
+        <URLSpecificResolution>
+            <URLPrefix>http://inspire.ec.europa.eu/codelist</URLPrefix>
+            <HTTPHeader>
+                <Name>Accept</Name>
+                <Value>application/x-iso19135+xml</Value>
+            </HTTPHeader>
+            <HTTPHeader>
+                <Name>Accept-Language</Name>
+                <Value>en</Value>
+            </HTTPHeader>
+            <AllowRemoteDownload>true</AllowRemoteDownload>
+            <ResolutionMode>FieldsFromXPath</ResolutionMode>
+            <ResolutionDepth>1</ResolutionDepth>
+            <CacheResults>true</CacheResults>
+            <Field>
+                <Name>name</Name>
+                <Type>string</Type>
+                <XPath>RE_RegisterItem/name/gco:CharacterString</XPath>
+            </Field>
+            <Field>
+                <Name>definition</Name>
+                <Type>string</Type>
+                <XPath>RE_RegisterItem/definition/gco:CharacterString</XPath>
+            </Field>
+        </URLSpecificResolution>
+-->
+    </XLinkResolution>
+
+    <IgnoredXPaths>
+        <WarnIfIgnoredXPathFoundInDocInstance>true</WarnIfIgnoredXPathFoundInDocInstance>
+        <Namespaces>
+            <Namespace prefix="gml" uri="http://www.opengis.net/gml"/>
+            <Namespace prefix="gml32" uri="http://www.opengis.net/gml/3.2"/>
+        </Namespaces>
+        <XPath warnIfIgnoredXPathFoundInDocInstance="false">gml:boundedBy</XPath>
+        <XPath warnIfIgnoredXPathFoundInDocInstance="false">gml32:boundedBy</XPath>
+        <XPath>gml:priorityLocation</XPath>
+        <XPath>gml32:priorityLocation</XPath>
+        <XPath>gml32:descriptionReference/@owns</XPath>
+        <XPath>@xlink:show</XPath>
+        <XPath>@xlink:type</XPath>
+        <XPath>@xlink:role</XPath>
+        <XPath>@xlink:arcrole</XPath>
+        <XPath>@xlink:actuate</XPath>
+        <XPath>@gml:remoteSchema</XPath>
+        <XPath>@gml32:remoteSchema</XPath>
+    </IgnoredXPaths>
+
+</Configuration>

@@ -480,6 +480,9 @@ int FGdbDataSource::TestCapability( const char * pszCap )
         return m_bUpdate;
     else if EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer)
         return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return m_bUpdate;
+
     return FALSE;
 }
 

@@ -1899,7 +1899,7 @@ bool netCDFDataset::SetDefineMode( bool bNewDefineMode )
         status = nc_enddef( cdfid );
 
     NCDF_ERR(status);
-    return (status == NC_NOERR);
+    return status == NC_NOERR;
 }
 
 /************************************************************************/
@@ -6350,7 +6350,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS = NULL;
         }
         CPLAcquireMutex(hNCMutex, 1000.0);
-        return( poDS );
+        return poDS;
     }
 
 /* -------------------------------------------------------------------- */
@@ -6364,7 +6364,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         poDS->TryLoadXML();
         CPLAcquireMutex(hNCMutex, 1000.0);
-        return( poDS );
+        return poDS;
     }
 
 /* -------------------------------------------------------------------- */
@@ -6720,7 +6720,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPLAcquireMutex(hNCMutex, 1000.0);
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -7030,7 +7030,7 @@ netCDFDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Return same dataset                                             */
 /* -------------------------------------------------------------------- */
-     return( poDS );
+     return poDS;
 }
 
 

@@ -701,7 +701,7 @@ int OGRDB2TableLayer::TestCapability( const char * pszCap )
             return TRUE;
 
         else if( EQUAL(pszCap,OLCRandomWrite) )
-            return (pszFIDColumn != NULL);
+            return pszFIDColumn != NULL;
     }
 
     if( EQUAL(pszCap,OLCTransactions) )
@@ -711,7 +711,7 @@ int OGRDB2TableLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     if( EQUAL(pszCap,OLCRandomRead) )
-        return (pszFIDColumn != NULL);
+        return pszFIDColumn != NULL;
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
     else

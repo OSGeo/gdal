@@ -70,7 +70,7 @@ SetConnParam(II_PTR *connHandle,
         *connHandle = setconnParm.sc_connHandle;
     }
 
-    return (setconnParm.sc_genParm.gp_status);
+    return setconnParm.sc_genParm.gp_status;
 }
 
 /************************************************************************/

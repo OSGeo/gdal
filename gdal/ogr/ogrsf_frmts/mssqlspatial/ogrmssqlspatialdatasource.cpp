@@ -103,6 +103,8 @@ int OGRMSSQLSpatialDataSource::TestCapability( const char * pszCap )
 #endif
     if( EQUAL(pszCap,ODsCCreateLayer) || EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return TRUE;
     else
         return FALSE;
 }

@@ -536,7 +536,7 @@ GIntBig TABSeamless::EncodeFeatureId(int nTableId, int nBaseFeatureId)
     /* Feature encoding is now based on the numbers of bits on the number
        of features in the index table. */
 
-    return (((GIntBig)nTableId<<32) + nBaseFeatureId);
+    return ((GIntBig)nTableId<<32) + nBaseFeatureId;
 }
 
 int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
@@ -544,7 +544,7 @@ int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return ((int)(nEncodedFeatureId>>32));
+    return (int)(nEncodedFeatureId>>32);
 }
 
 int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
@@ -552,7 +552,7 @@ int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return ((int)(nEncodedFeatureId & 0xffffffff));
+    return (int)(nEncodedFeatureId & 0xffffffff);
 }
 
 /**********************************************************************

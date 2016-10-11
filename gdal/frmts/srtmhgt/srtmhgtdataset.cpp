@@ -234,7 +234,7 @@ CPLErr SRTMHGTDataset::GetGeoTransform(double * padfTransform)
 const char *SRTMHGTDataset::GetProjectionRef()
 
 {
-    return( SRS_WKT_WGS84 );
+    return SRS_WKT_WGS84;
 }
 
 /************************************************************************/

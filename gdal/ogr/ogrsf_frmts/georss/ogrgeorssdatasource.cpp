@@ -308,7 +308,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
         papoLayers[0] = new OGRGeoRSSLayer( pszName, "georss", this, NULL, FALSE );
     }
 
-    return (validity == GEORSS_VALIDITY_VALID);
+    return validity == GEORSS_VALIDITY_VALID;
 #else
     char aBuf[256];
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");

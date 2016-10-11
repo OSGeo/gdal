@@ -575,7 +575,7 @@ void OGRSQLiteBaseDataSource::NotifyFileOpened(const char* pszFilename,
 #ifdef USE_SQLITE_DEBUG_MEMALLOC
 
 /* DMA9 */
-#define DMA_SIGNATURE 0x444D4139
+static const int DMA_SIGNATURE = 0x444D4139;
 
 static void* OGRSQLiteDMA_Malloc(int size)
 {
@@ -1683,6 +1683,8 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
     else if EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer)
+        return bUpdate;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return bUpdate;
     else
         return OGRSQLiteBaseDataSource::TestCapability(pszCap);

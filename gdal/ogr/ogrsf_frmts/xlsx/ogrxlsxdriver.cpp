@@ -60,7 +60,8 @@ const char *OGRXLSXDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-#define XLSX_MIMETYPE "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"
+static const char XLSX_MIMETYPE[] =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml";
 
 OGRDataSource *OGRXLSXDriver::Open( const char * pszFilename, int bUpdate )
 

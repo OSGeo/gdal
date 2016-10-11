@@ -34,10 +34,6 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 
-static const int FD_OPENED = 0;
-static const int FD_CLOSED = 1;
-static const int FD_CANNOT_REOPEN = 2;
-
 static const char UNSUPPORTED_OP_READ_ONLY[] =
     "%s : unsupported operation on a read-only datasource.";
 
@@ -50,8 +46,8 @@ CPL_CVSID("$Id$");
 OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                               const char * pszFullNameIn,
                               SHPHandle hSHPIn, DBFHandle hDBFIn,
-                              OGRSpatialReference *poSRSIn, int bSRSSetIn,
-                              int bUpdate,
+                              OGRSpatialReference *poSRSIn, bool bSRSSetIn,
+                              bool bUpdate,
                               OGRwkbGeometryType eReqType,
                               char ** papszCreateOptions ) :
     OGRAbstractProxiedLayer(poDSIn->GetPool()),
@@ -61,7 +57,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     pszFullName(CPLStrdup(pszFullNameIn)),
     hSHP(hSHPIn),
     hDBF(hDBFIn),
-    bUpdateAccess(CPL_TO_BOOL(bUpdate)),
+    bUpdateAccess(bUpdate),
     eRequestedGeomType(eReqType),
     panMatchingFIDs(NULL),
     iMatchingFID(0),
@@ -75,13 +71,15 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     bCheckedForSBN(false),
     hSBN(NULL),
     bSbnSbxDeleted(false),
-    bTruncationWarningEmitted(FALSE),
+    bTruncationWarningEmitted(false),
     bHSHPWasNonNULL(hSHPIn != NULL),
     bHDBFWasNonNULL(hDBFIn != NULL),
     eFileDescriptorsState(FD_OPENED),
     bResizeAtClose(false),
     bCreateSpatialIndexAtClose(false),
-    bRewindOnWrite(FALSE)
+    bRewindOnWrite(false),
+    m_bAutoRepack(false),
+    m_eNeedRepack(MAYBE)
 {
     if( hSHP != NULL )
     {
@@ -239,6 +237,9 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 OGRShapeLayer::~OGRShapeLayer()
 
 {
+    if( m_eNeedRepack == YES && m_bAutoRepack )
+        Repack();
+
     if( bResizeAtClose && hDBF != NULL )
     {
         ResizeDBF();
@@ -418,7 +419,7 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
 /*                            CheckForQIX()                             */
 /************************************************************************/
 
-int OGRShapeLayer::CheckForQIX()
+bool OGRShapeLayer::CheckForQIX()
 
 {
     if( bCheckedForQIX )
@@ -437,7 +438,7 @@ int OGRShapeLayer::CheckForQIX()
 /*                            CheckForSBN()                             */
 /************************************************************************/
 
-int OGRShapeLayer::CheckForSBN()
+bool OGRShapeLayer::CheckForSBN()
 
 {
     if( bCheckedForSBN )
@@ -459,7 +460,7 @@ int OGRShapeLayer::CheckForSBN()
 /*      available.                                                      */
 /************************************************************************/
 
-int OGRShapeLayer::ScanIndices()
+bool OGRShapeLayer::ScanIndices()
 
 {
     iMatchingFID = 0;
@@ -482,7 +483,7 @@ int OGRShapeLayer::ScanIndices()
 /* -------------------------------------------------------------------- */
 
     if( m_poFilterGeom == NULL || hSHP == NULL )
-        return TRUE;
+        return true;
 
     OGREnvelope oSpatialFilterEnvelope;
     bool bTryQIXorSBN = true;
@@ -496,7 +497,7 @@ int OGRShapeLayer::ScanIndices()
         {
             // The spatial filter is larger than the layer extent. No use of
             // .qix file for now.
-            return TRUE;
+            return true;
         }
         else if( !oSpatialFilterEnvelope.Intersects(oLayerExtent) )
         {
@@ -598,7 +599,7 @@ int OGRShapeLayer::ScanIndices()
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -934,6 +935,7 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
             nSize != hSHP->panRecSize[nFID] )
         {
             bSHPNeedsRepack = true;
+            m_eNeedRepack = YES;
         }
     }
 
@@ -985,6 +987,7 @@ OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
     bHeaderDirty = true;
     if( CheckForQIX() || CheckForSBN() )
         DropSpatialIndex();
+    m_eNeedRepack = YES;
 
     return OGRERR_NONE;
 }
@@ -2181,6 +2184,9 @@ OGRErr OGRShapeLayer::SyncToDisk()
         hDBF->sHooks.FFlush( hDBF->fp );
     }
 
+    if( m_eNeedRepack == YES && m_bAutoRepack )
+        Repack();
+
     return OGRERR_NONE;
 }
 
@@ -2404,6 +2410,12 @@ static void ForceDeleteFile( const CPLString& osFilename )
 OGRErr OGRShapeLayer::Repack()
 
 {
+    if( m_eNeedRepack == NO )
+    {
+        CPLDebug("Shape", "REPACK: nothing to do. Was done previously");
+        return OGRERR_NONE;
+    }
+
     if( !TouchLayer() )
         return OGRERR_FAILURE;
 
@@ -2422,6 +2434,8 @@ OGRErr OGRShapeLayer::Repack()
     int nDeleteCount = 0;
     int nDeleteCountAlloc = 128;
     OGRErr eErr = OGRERR_NONE;
+
+    CPLDebug("Shape", "REPACK: Checking if features have been deleted");
 
     if( hDBF != NULL )
     {
@@ -2471,6 +2485,7 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
     if( nDeleteCount == 0 && !bSHPNeedsRepack )
     {
+        CPLDebug("Shape", "REPACK: nothing to do");
         CPLFree( panRecordsToDelete );
         return OGRERR_NONE;
     }
@@ -2567,6 +2582,7 @@ OGRErr OGRShapeLayer::Repack()
 
     if( hDBF != NULL && nDeleteCount > 0 )
     {
+        CPLDebug("Shape", "REPACK: repacking .dbf");
         bMustReopenDBF = true;
 
         oTempFileDBF = CPLFormFilename(osDirname, osBasename, NULL);
@@ -2656,6 +2672,8 @@ OGRErr OGRShapeLayer::Repack()
 
     if( hSHP != NULL )
     {
+        CPLDebug("Shape", "REPACK: repacking .shp + .shx");
+
         oTempFileSHP = CPLFormFilename(osDirname, osBasename, NULL);
         oTempFileSHP += "_packed.shp";
         oTempFileSHX = CPLFormFilename(osDirname, osBasename, NULL);
@@ -2752,7 +2770,7 @@ OGRErr OGRShapeLayer::Repack()
         {
             if( !CopyInPlace( VSI_SHP_GetVSIL(hDBF->fp), oTempFileDBF ) )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "An error occured while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
@@ -2781,7 +2799,7 @@ OGRErr OGRShapeLayer::Repack()
         {
             if( !CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHP), oTempFileSHP ) )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "An error occured while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
@@ -2803,7 +2821,7 @@ OGRErr OGRShapeLayer::Repack()
             }
             if( !CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHX), oTempFileSHX ) )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "An error occured while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
@@ -2868,7 +2886,7 @@ OGRErr OGRShapeLayer::Repack()
 
             if( VSIUnlink( osDBFName ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "Failed to delete old DBF file: %s",
                         VSIStrerror( errno ) );
 
@@ -2881,7 +2899,7 @@ OGRErr OGRShapeLayer::Repack()
 
             if( VSIRename( oTempFileDBF, osDBFName ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_FileIO, 
+                CPLError( CE_Failure, CPLE_FileIO,
                         "Can not rename new DBF file: %s",
                         VSIStrerror( errno ) );
                 return OGRERR_FAILURE;
@@ -2957,6 +2975,7 @@ OGRErr OGRShapeLayer::Repack()
     if( hDBF != NULL )
         nTotalShapeCount = hDBF->nRecords;
     bSHPNeedsRepack = false;
+    m_eNeedRepack = NO;
 
     return OGRERR_NONE;
 }
@@ -3220,14 +3239,14 @@ OGRErr OGRShapeLayer::RecomputeExtent()
 /*                              TouchLayer()                            */
 /************************************************************************/
 
-int OGRShapeLayer::TouchLayer()
+bool OGRShapeLayer::TouchLayer()
 {
     poDS->SetLastUsedLayer(this);
 
     if( eFileDescriptorsState == FD_OPENED )
-        return TRUE;
+        return true;
     if( eFileDescriptorsState == FD_CANNOT_REOPEN )
-        return FALSE;
+        return false;
 
     return ReopenFileDescriptors();
 }
@@ -3236,7 +3255,7 @@ int OGRShapeLayer::TouchLayer()
 /*                        ReopenFileDescriptors()                       */
 /************************************************************************/
 
-int OGRShapeLayer::ReopenFileDescriptors()
+bool OGRShapeLayer::ReopenFileDescriptors()
 {
     CPLDebug("SHAPE", "ReopenFileDescriptors(%s)", pszFullName);
 
@@ -3247,7 +3266,7 @@ int OGRShapeLayer::ReopenFileDescriptors()
         if( hSHP == NULL )
         {
             eFileDescriptorsState = FD_CANNOT_REOPEN;
-            return FALSE;
+            return false;
         }
     }
 
@@ -3260,13 +3279,13 @@ int OGRShapeLayer::ReopenFileDescriptors()
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Cannot reopen %s", CPLResetExtension(pszFullName, "dbf"));
             eFileDescriptorsState = FD_CANNOT_REOPEN;
-            return FALSE;
+            return false;
         }
     }
 
     eFileDescriptorsState = FD_OPENED;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

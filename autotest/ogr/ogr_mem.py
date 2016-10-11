@@ -713,6 +713,131 @@ def ogr_mem_16():
 
     return 'success'
 
+###############################################################################
+# Test Dataset.GetNextFeature() implementation
+
+def ogr_mem_17():
+
+    ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer('ogr_mem_1')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    lyr = ds.CreateLayer('ogr_mem_2')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    lyr = ds.CreateLayer('ogr_mem_3')
+    # Empty layer
+
+    lyr = ds.CreateLayer('ogr_mem_4')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    f, l = ds.GetNextFeature()
+    if f is None or l.GetName() != 'ogr_mem_1':
+        gdaltest.post_reason('fail')
+        print(f)
+        print(l.GetName())
+        return 'fail'
+
+    f, l = ds.GetNextFeature()
+    if f is None or l.GetName() != 'ogr_mem_1':
+        gdaltest.post_reason('fail')
+        print(f)
+        print(l.GetName())
+        return 'fail'
+
+    f, l = ds.GetNextFeature()
+    if f is None or l.GetName() != 'ogr_mem_2':
+        gdaltest.post_reason('fail')
+        print(f)
+        print(l.GetName())
+        return 'fail'
+
+    f, l = ds.GetNextFeature()
+    if f is None or l.GetName() != 'ogr_mem_4':
+        gdaltest.post_reason('fail')
+        print(f)
+        print(l.GetName())
+        return 'fail'
+
+    f, l = ds.GetNextFeature()
+    if f is not None or l is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f, l = ds.GetNextFeature()
+    if f is not None or l is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.ResetReading()
+
+    f, l = ds.GetNextFeature()
+    if f is None or l.GetName() != 'ogr_mem_1':
+        gdaltest.post_reason('fail')
+        print(f)
+        print(l.GetName())
+        return 'fail'
+
+    ds.ResetReading()
+
+    f, lyr, pct = ds.GetNextFeature( include_pct = True )
+    if f is None or l.GetName() != 'ogr_mem_1' or pct != 0.25:
+        gdaltest.post_reason('fail')
+        print(f)
+        print(l.GetName())
+        print(pct)
+        return 'fail'
+
+    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    if f is None or pct != 0.50:
+        gdaltest.post_reason('fail')
+        print(f)
+        print(pct)
+        return 'fail'
+
+    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    if f is None or pct != 0.75:
+        gdaltest.post_reason('fail')
+        print(f)
+        print(pct)
+        return 'fail'
+
+    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    if f is None or pct != 1.0:
+        gdaltest.post_reason('fail')
+        print(f)
+        print(pct)
+        return 'fail'
+
+    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    if f is not None or pct != 1.0:
+        gdaltest.post_reason('fail')
+        print(f)
+        print(pct)
+        return 'fail'
+
+    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    if f is not None or pct != 1.0:
+        gdaltest.post_reason('fail')
+        print(f)
+        print(pct)
+        return 'fail'
+
+    ds.ResetReading()
+
+    f = ds.GetNextFeature( include_layer = False )
+    if f is None:
+        gdaltest.post_reason('fail')
+        print(f)
+        return 'fail'
+
+    return 'success'
+
 def ogr_mem_cleanup():
 
     if gdaltest.mem_ds is None:
@@ -740,6 +865,7 @@ gdaltest_list = [
     ogr_mem_14,
     ogr_mem_15,
     ogr_mem_16,
+    ogr_mem_17,
     ogr_mem_cleanup ]
 
 if __name__ == '__main__':

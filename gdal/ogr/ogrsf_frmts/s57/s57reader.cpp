@@ -138,7 +138,7 @@ char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
     if( RecodedString == NULL )
         RecodedString = CPLStrdup(SourceString);
 
-    return(RecodedString);
+    return RecodedString;
 }
 
 /************************************************************************/
@@ -2016,7 +2016,7 @@ GetIntSubfield( DDFField *poField,
                                 &nBytesRemaining,
                                 iSubfieldIndex );
 
-    return( poSFDefn->ExtractIntData( pachData, nBytesRemaining, NULL ) );
+    return poSFDefn->ExtractIntData( pachData, nBytesRemaining, NULL );
 }
 
 /************************************************************************/
@@ -2450,8 +2450,10 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
 
         for( int i = 0; i < nFDefnCount; i++ )
         {
-            if( EQUAL(papoFDefnList[i]->GetName(),
-                      poClassContentExplorer->GetAcronym()) )
+            const char* pszAcronym = poClassContentExplorer->GetAcronym();
+            if( pszAcronym != NULL &&
+                EQUAL(papoFDefnList[i]->GetName(),
+                      pszAcronym) )
                 return papoFDefnList[i];
         }
 

@@ -1821,7 +1821,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /* -------------------------------------------------------------------- */
         poDS->oOvManager.Initialize( poDS, pszFilename, papszSiblingFiles );
 
-        return( poDS );
+        return poDS;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1955,6 +1955,8 @@ int PCIDSK2Dataset::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
+        return eAccess == GA_Update;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return eAccess == GA_Update;
 
     return FALSE;

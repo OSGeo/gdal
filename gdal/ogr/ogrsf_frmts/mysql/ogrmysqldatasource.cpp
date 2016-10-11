@@ -360,6 +360,8 @@ int OGRMySQLDataSource::TestCapability( const char * pszCap )
         return TRUE;
     if( EQUAL(pszCap, ODsCDeleteLayer))
         return TRUE;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return TRUE;
     else
         return FALSE;
 }

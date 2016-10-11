@@ -153,7 +153,7 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
-    return( poDS );
+    return poDS;
 }
 
 BLXDataset::BLXDataset() :

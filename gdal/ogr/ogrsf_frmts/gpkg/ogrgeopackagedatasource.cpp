@@ -3554,6 +3554,20 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     return poLayer;
 }
 
+/************************************************************************/
+/*                          FindLayerIndex()                            */
+/************************************************************************/
+
+int GDALGeoPackageDataset::FindLayerIndex( const char *pszLayerName )
+
+{
+    for( int iLayer = 0; iLayer < m_nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,m_papoLayers[iLayer]->GetName()) )
+            return iLayer;
+    }
+    return -1;
+}
 
 /************************************************************************/
 /*                            DeleteLayer()                             */
@@ -3564,42 +3578,90 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
     if( !bUpdate || iLayer < 0 || iLayer >= m_nLayers )
         return OGRERR_FAILURE;
 
-    CPLString osLayerName = m_papoLayers[iLayer]->GetLayerDefn()->GetName();
+    m_papoLayers[iLayer]->ResetReading();
+    m_papoLayers[iLayer]->RunDeferredCreationIfNecessary();
+    m_papoLayers[iLayer]->CreateSpatialIndexIfNecessary();
+
+    CPLString osLayerName = m_papoLayers[iLayer]->GetName();
 
     CPLDebug( "GPKG", "DeleteLayer(%s)", osLayerName.c_str() );
+
+    SoftStartTransaction();
 
     if( m_papoLayers[iLayer]->HasSpatialIndex() )
         m_papoLayers[iLayer]->DropSpatialIndex();
 
-    /* Delete the layer object and remove the gap in the layers list */
-    delete m_papoLayers[iLayer];
-    memmove( m_papoLayers + iLayer, m_papoLayers + iLayer + 1,
-             sizeof(void *) * (m_nLayers - iLayer - 1) );
-    m_nLayers--;
-
-    if (osLayerName.size() == 0)
-        return OGRERR_NONE;
-
-    char *pszSQL = sqlite3_mprintf("DROP TABLE \"%s\"", osLayerName.c_str());
-
-    SQLCommand(hDB, pszSQL);
-    sqlite3_free(pszSQL);
-
-    pszSQL = sqlite3_mprintf(
+    char* pszSQL = sqlite3_mprintf(
             "DELETE FROM gpkg_geometry_columns WHERE table_name = '%q'",
              osLayerName.c_str());
-
-    SQLCommand(hDB, pszSQL);
+    OGRErr eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf(
-             "DELETE FROM gpkg_contents WHERE table_name = '%q'",
-              osLayerName.c_str());
+    if( eErr == OGRERR_NONE )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_contents WHERE table_name = '%q'",
+                osLayerName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
 
-    SQLCommand(hDB, pszSQL);
-    sqlite3_free(pszSQL);
+    if( eErr == OGRERR_NONE && HasExtensionsTable() )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_extensions WHERE table_name = '%q'",
+                osLayerName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
 
-    return OGRERR_NONE;
+    if( eErr == OGRERR_NONE && HasMetadataTables() )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_metadata_reference WHERE table_name = '%q'",
+                osLayerName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    if( eErr == OGRERR_NONE && HasDataColumnsTable() )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_data_columns WHERE table_name = '%q'",
+                osLayerName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    if( eErr == OGRERR_NONE )
+    {
+        pszSQL = sqlite3_mprintf("DROP TABLE '%q'", osLayerName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    // Check foreign key integrity
+    if ( eErr == OGRERR_NONE )
+    {
+        eErr = PragmaCheck("foreign_key_check", "", 0);
+    }
+
+    if( eErr == OGRERR_NONE )
+    {
+        /* Delete the layer object and remove the gap in the layers list */
+        delete m_papoLayers[iLayer];
+        memmove( m_papoLayers + iLayer, m_papoLayers + iLayer + 1,
+                sizeof(void *) * (m_nLayers - iLayer - 1) );
+        m_nLayers--;
+
+        SoftCommitTransaction();
+    }
+    else
+    {
+        SoftRollbackTransaction();
+    }
+
+    return eErr;
 }
 
 
@@ -3611,7 +3673,8 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 int GDALGeoPackageDataset::TestCapability( const char * pszCap )
 {
     if ( EQUAL(pszCap,ODsCCreateLayer) ||
-         EQUAL(pszCap,ODsCDeleteLayer) )
+         EQUAL(pszCap,ODsCDeleteLayer) ||
+         EQUAL(pszCap,"RenameLayer") )
     {
          return bUpdate;
     }
@@ -3619,7 +3682,22 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bUpdate;
+
     return OGRSQLiteBaseDataSource::TestCapability(pszCap);
+}
+
+/************************************************************************/
+/*                       ResetReadingAllLayers()                        */
+/************************************************************************/
+
+void GDALGeoPackageDataset::ResetReadingAllLayers()
+{
+    for( int i = 0; i < m_nLayers; i++ )
+    {
+        m_papoLayers[i]->ResetReading();
+    }
 }
 
 /************************************************************************/
@@ -3644,6 +3722,73 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     {
         m_papoLayers[i]->RunDeferredCreationIfNecessary();
         m_papoLayers[i]->CreateSpatialIndexIfNecessary();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case DELLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
+    {
+        const char *pszLayerName = pszSQLCommand + strlen("DELLAYER:");
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        int idx = FindLayerIndex( pszLayerName );
+        if( idx >= 0 )
+            DeleteLayer( idx );
+        else
+            CPLError(CE_Failure, CPLE_AppDefined, "Unknown layer: %s",
+                     pszLayerName);
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Intercept DROP TABLE                                            */
+/* -------------------------------------------------------------------- */
+    if( STARTS_WITH_CI(pszSQLCommand, "DROP TABLE ") )
+    {
+        const char *pszLayerName = pszSQLCommand + strlen("DROP TABLE ");
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        int idx = FindLayerIndex( SQLUnescapeDoubleQuote(pszLayerName) );
+        if( idx >= 0 )
+        {
+            DeleteLayer( idx );
+            return NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Intercept ALTER TABLE ... RENAME TO                             */
+/* -------------------------------------------------------------------- */
+    if( STARTS_WITH_CI(pszSQLCommand, "ALTER TABLE ") )
+    {
+        char **papszTokens = SQLTokenize( pszSQLCommand );
+        /* ALTER TABLE src_table RENAME TO dst_table */
+        if( CSLCount(papszTokens) == 6 && EQUAL(papszTokens[3], "RENAME") &&
+            EQUAL(papszTokens[4], "TO") )
+        {
+            const char* pszSrcTableName = papszTokens[2];
+            const char* pszDstTableName = papszTokens[5];
+            OGRGeoPackageTableLayer* poSrcLayer =
+                (OGRGeoPackageTableLayer*)GetLayerByName(
+                        SQLUnescapeDoubleQuote(pszSrcTableName));
+            if( poSrcLayer )
+            {
+                poSrcLayer->RenameTo( SQLUnescapeDoubleQuote(pszDstTableName) );
+                CSLDestroy(papszTokens);
+                return NULL;
+            }
+        }
+        CSLDestroy(papszTokens);
+    }
+
+    if( EQUAL(pszSQLCommand, "VACUUM") )
+    {
+        ResetReadingAllLayers();
     }
 
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
@@ -3721,24 +3866,6 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             /* VACUUM rewrites the DB, so we need to reset the application id */
             SetApplicationId();
             return NULL;
-        }
-
-        if( STARTS_WITH_CI(pszSQLCommand, "ALTER TABLE ") )
-        {
-            char **papszTokens = CSLTokenizeString( pszSQLCommand );
-            /* ALTER TABLE src_table RENAME TO dst_table */
-            if( CSLCount(papszTokens) == 6 && EQUAL(papszTokens[3], "RENAME") &&
-                EQUAL(papszTokens[4], "TO") )
-            {
-                const char* pszSrcTableName = papszTokens[2];
-                const char* pszDstTableName = papszTokens[5];
-                OGRGeoPackageTableLayer* poSrcLayer = (OGRGeoPackageTableLayer*)GetLayerByName(pszSrcTableName);
-                if( poSrcLayer )
-                {
-                    poSrcLayer->RenameTo( pszDstTableName );
-                }
-            }
-            CSLDestroy(papszTokens);
         }
 
         if( !STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
@@ -3999,6 +4126,21 @@ OGRErr GDALGeoPackageDataset::CreateExtensionsTableIfNecessary()
         ")";
 
     return SQLCommand(hDB, pszCreateGpkgExtensions);
+}
+
+/************************************************************************/
+/*                         HasDataColumnsTable()                        */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::HasDataColumnsTable()
+{
+    SQLResult oResultTable;
+    OGRErr err = SQLQuery(hDB,
+        "SELECT * FROM sqlite_master WHERE name = 'gpkg_data_columns' "
+        "AND type IN ('table', 'view')", &oResultTable);
+    bool bHasExtensionsTable = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
+    SQLResultFree(&oResultTable);
+    return bHasExtensionsTable;
 }
 
 /************************************************************************/

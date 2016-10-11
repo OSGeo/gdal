@@ -849,6 +849,33 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     return layer;
   }
 
+  void ResetReading()
+  {
+    GDALDatasetResetReading( self );
+  }
+
+#ifdef SWIGPYTHON
+%newobject GetNextFeature;
+%feature( "kwargs" ) GetNextFeature;
+  OGRFeatureShadow* GetNextFeature( bool include_layer = true,
+                                    bool include_pct = false,
+                                    OGRLayerShadow** ppoBelongingLayer = NULL,
+                                    double* pdfProgressPct = NULL,
+                                    GDALProgressFunc callback = NULL,
+                                    void* callback_data=NULL )
+  {
+    return GDALDatasetGetNextFeature( self, ppoBelongingLayer, pdfProgressPct,
+                                      callback, callback_data );
+  }
+#else
+    // FIXME: return layer
+%newobject GetNextFeature;
+  OGRFeatureShadow* GetNextFeature()
+  {
+    return GDALDatasetGetNextFeature( self, NULL, NULL, NULL, NULL );
+  }
+#endif
+
   bool TestCapability(const char * cap) {
     return (GDALDatasetTestCapability(self, cap) > 0);
   }

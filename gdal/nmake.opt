@@ -351,11 +351,11 @@ JPEG12_SUPPORTED = 1
 #EXPAT_LIB = $(EXPAT_DIR)/bin/libexpat.lib
 
 # Uncomment for Xerces based GML and ILI support.
-#XERCES_DIR =	c:\warmerda\supportlibs\xerces-c_2_6_0
+#XERCES_DIR =	c:\warmerda\supportlibs\xerces-c_3_1_3
 #XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
-#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_2.lib
+#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_3.lib
 
-# Uncomment the following for Interlis support.  Note that a Xercex 2.x
+# Uncomment the following for Interlis support.  Note that a Xercex 3.x
 # is also required (see above).  Also, Interlis support only works with
 # Visual Studio.NET or newer, not VC6.
 #ILI_ENABLED = YES

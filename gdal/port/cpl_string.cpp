@@ -2020,11 +2020,10 @@ char *CPLEscapeString( const char *pszInput, int nLength,
 
     const size_t nSizeAlloc = nLength * 6 + 1;
     char *pszOutput = static_cast<char *>( CPLMalloc( nSizeAlloc ) );
+    int iOut = 0;
 
     if( nScheme == CPLES_BackslashQuotable )
     {
-        int iOut = 0;
-
         for( int iIn = 0; iIn < nLength; iIn++ )
         {
             if( pszInput[iIn] == '\0' )
@@ -2050,12 +2049,10 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             else
                 pszOutput[iOut++] = pszInput[iIn];
         }
-        pszOutput[iOut] = '\0';
+        pszOutput[iOut++] = '\0';
     }
     else if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES )
     {
-        int iOut = 0;
-
         for( int iIn = 0; iIn < nLength; ++iIn )
         {
             if( pszInput[iIn] == '<' )
@@ -2116,13 +2113,11 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             else
                 pszOutput[iOut++] = pszInput[iIn];
         }
-        pszOutput[iOut] = '\0';
+        pszOutput[iOut++] = '\0';
     }
     else if( nScheme == CPLES_URL ) /* Untested at implementation */
     {
-        int iOut = 0, iIn;
-
-        for( iIn = 0; iIn < nLength; ++iIn )
+        for( int iIn = 0; iIn < nLength; ++iIn )
         {
             if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
                 || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
@@ -2143,12 +2138,10 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 iOut += 3;
             }
         }
-        pszOutput[iOut] = '\0';
+        pszOutput[iOut++] = '\0';
     }
     else if( nScheme == CPLES_SQL )
     {
-        int iOut = 0;
-
         for( int iIn = 0; iIn < nLength; ++iIn )
         {
             if( pszInput[iIn] == '\'' )
@@ -2159,24 +2152,18 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             else
                 pszOutput[iOut++] = pszInput[iIn];
         }
-        pszOutput[iOut] = '\0';
+        pszOutput[iOut++] = '\0';
     }
     else if( nScheme == CPLES_CSV )
     {
-        if( strchr( pszInput, '\"' ) == NULL
-            && strchr( pszInput, ',') == NULL
-            && strchr( pszInput, ';') == NULL
-            && strchr( pszInput, '\t') == NULL
-            && strchr( pszInput, 10) == NULL  // \n
-            && strchr( pszInput, 13) == NULL )  // \r
+        if( static_cast<int>(strcspn( pszInput, "\",;\t\n\r" )) == nLength )
         {
-            strcpy( pszOutput, pszInput );
+            memcpy( pszOutput, pszInput, nLength + 1 );
+            iOut = nLength + 1;
         }
         else
         {
-            int iOut = 1;
-
-            pszOutput[0] = '\"';
+            pszOutput[iOut++] = '\"';
 
             for( int iIn = 0; iIn < nLength; ++iIn )
             {
@@ -2194,17 +2181,15 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     }
     else
     {
-        pszOutput[0] = '\0';
+        pszOutput[iOut++] = '\0';
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Undefined escaping scheme (%d) in CPLEscapeString()",
                   nScheme );
     }
 
-    // TODO: Was pszShortOutput supposed to start part way through pszOutput?
-    char *pszShortOutput = CPLStrdup( pszOutput );
-    CPLFree( pszOutput );
-
-    return pszShortOutput;
+    if( iOut == nLength + 1 )
+        return pszOutput;
+    return reinterpret_cast<char*>(CPLRealloc( pszOutput, iOut ));
 }
 
 /************************************************************************/

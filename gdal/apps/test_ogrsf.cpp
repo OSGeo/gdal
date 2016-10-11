@@ -3160,7 +3160,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
             printf( "ERROR: ExecuteSQL() should have returned a layer without features.\n" );
         }
         OGRFeature::DestroyFeature(poSQLFeat);
- 
+
         LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
     }
     else

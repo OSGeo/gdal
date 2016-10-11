@@ -70,7 +70,9 @@ OGRPGDataSource::OGRPGDataSource() :
     bListAllTables(FALSE),
     bUseBinaryCursor(FALSE),
     bBinaryTimeFormatIsInt8(FALSE),
-    bUseEscapeStringSyntax(FALSE)
+    bUseEscapeStringSyntax(FALSE),
+    m_bHasGeometryColumns(true),
+    m_bHasSpatialRefSys(true)
 {
     sPostgreSQLVersion.nMajor = 0;
     sPostgreSQLVersion.nMinor = 0;
@@ -292,8 +294,7 @@ static void OGRPGFreeTableEntry(void * _psTableEntry)
     CPLFree(psTableEntry->pszTableName);
     CPLFree(psTableEntry->pszSchemaName);
     CPLFree(psTableEntry->pszDescription);
-    int i;
-    for(i=0;i<psTableEntry->nGeomColumnCount;i++)
+    for( int i = 0; i < psTableEntry->nGeomColumnCount; i++ )
     {
         CPLFree(psTableEntry->pasGeomColumns[i].pszName);
         CPLFree(psTableEntry->pasGeomColumns[i].pszGeomType);
@@ -778,6 +779,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         }
         OGRPGClearResult( hResult );
     }
+
+    m_bHasGeometryColumns = OGRPG_Check_Table_Exists(hPGConn, "geometry_columns");
+    m_bHasSpatialRefSys = OGRPG_Check_Table_Exists(hPGConn, "spatial_ref_sys");
 
 /* -------------------------------------------------------------------- */
 /*      Find out "unknown SRID" value                                   */
@@ -1986,6 +1990,8 @@ int OGRPGDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if ( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -2153,7 +2159,7 @@ OGRErr OGRPGDataSource::InitializeMetadataTables()
 OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 
 {
-    if( nId < 0 )
+    if( nId < 0 || !m_bHasSpatialRefSys )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -2225,7 +2231,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    if( poSRS == NULL )
+    if( poSRS == NULL || !m_bHasSpatialRefSys )
         return nUndefinedSRID;
 
     OGRSpatialReference oSRS(*poSRS);

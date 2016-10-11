@@ -180,6 +180,18 @@ def ogr_gpkg_5():
         gdaltest.post_reason( 'unexpected number of layers' )
         return 'fail'
 
+    with gdaltest.error_handler():
+        ret = gdaltest.gpkg_ds.DeleteLayer(-1)
+    if ret == 0:
+        gdaltest.post_reason( 'expected error' )
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = gdaltest.gpkg_ds.DeleteLayer(gdaltest.gpkg_ds.GetLayerCount())
+    if ret == 0:
+        gdaltest.post_reason( 'expected error' )
+        return 'fail'
+
     if gdaltest.gpkg_ds.DeleteLayer(1) != 0:
         gdaltest.post_reason( 'got error code from DeleteLayer(1)' )
         return 'fail'
@@ -2180,6 +2192,246 @@ def ogr_gpkg_test_ogrsf():
 
     return 'success'
 
+
+###############################################################################
+# Test rename and delete a layer registered in extensions, metadata, spatial index etc
+
+def ogr_gpkg_34():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    layer_name = """weird'layer"name"""
+
+    dbname = '/vsimem/ogr_gpkg_34.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer(layer_name, geom_type = ogr.wkbCurvePolygon )
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+    lyr.SetMetadataItem('FOO', 'BAR')
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
+  table_name TEXT NOT NULL,
+  column_name TEXT NOT NULL,
+  name TEXT UNIQUE,
+  title TEXT,
+  description TEXT,
+  mime_type TEXT,
+  constraint_name TEXT,
+  CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
+  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+)""")
+    ds.ExecuteSQL("INSERT INTO gpkg_data_columns VALUES('weird''layer\"name', 'foo', 'foo_constraints', NULL, NULL, NULL, NULL)")
+    ds = None
+
+    # Check that there are reference to the layer
+    f = gdal.VSIFOpenL(dbname, 'rb')
+    content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
+    gdal.VSIFCloseL(f)
+
+    if content.find(layer_name) < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.Open(dbname, update = 1)
+    new_layer_name = """weird2'layer"name"""
+    with gdaltest.error_handler():
+        ds.ExecuteSQL('ALTER TABLE "weird\'layer""name" RENAME TO gpkg_contents')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    ds.ExecuteSQL('ALTER TABLE "weird\'layer""name" RENAME TO "weird2\'layer""name"')
+    ds.ExecuteSQL('VACUUM')
+    ds = None
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(dbname, 'rb')
+    content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
+    gdal.VSIFCloseL(f)
+
+    if content.find(layer_name) >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    layer_name = new_layer_name
+
+    ds = ogr.Open(dbname, update = 1)
+    with gdaltest.error_handler():
+        ds.ExecuteSQL('DELLAYER:does_not_exist')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    ds.ExecuteSQL('DELLAYER:' + layer_name)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ExecuteSQL('VACUUM')
+    ds = None
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(dbname, 'rb')
+    content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
+    gdal.VSIFCloseL(f)
+
+    if content.find(layer_name) >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.gpkg_dr.DeleteDataSource(dbname)
+
+
+    # Try again with DROP TABLE syntax
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer(layer_name, geom_type = ogr.wkbCurvePolygon )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+    lyr.SetMetadataItem('FOO', 'BAR')
+    lyr = ds.CreateLayer('another_layer_name' )
+    ds = None
+
+    ds = ogr.Open(dbname, update = 1)
+    ds.ExecuteSQL('DROP TABLE "weird2\'layer""name"')
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ExecuteSQL('DROP TABLE another_layer_name')
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ds.ExecuteSQL('DROP TABLE "foobar"')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    ds.ExecuteSQL('VACUUM')
+    ds = None
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(dbname, 'rb')
+    content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
+    gdal.VSIFCloseL(f)
+
+    if content.find(layer_name) >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if content.find('another_layer_name') >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.gpkg_dr.DeleteDataSource(dbname)
+
+    return 'success'
+
+###############################################################################
+# Test DeleteField()
+
+def ogr_gpkg_35():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    dbname = '/vsimem/ogr_gpkg_35.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPolygon )
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateField( ogr.FieldDefn('bar_i_will_disappear', ogr.OFTString) )
+    lyr.CreateField( ogr.FieldDefn('baz', ogr.OFTString) )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(10)
+    f.SetField('foo', 'fooval')
+    f.SetField('bar_i_will_disappear', 'barval')
+    f.SetField('baz', 'bazval')
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+
+    lyr_nonspatial = ds.CreateLayer('test_nonspatial', geom_type = ogr.wkbNone )
+    lyr_nonspatial.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr_nonspatial.CreateField( ogr.FieldDefn('bar_i_will_disappear', ogr.OFTString) )
+    lyr_nonspatial.CreateField( ogr.FieldDefn('baz', ogr.OFTString) )
+    f = ogr.Feature(lyr_nonspatial.GetLayerDefn())
+    f.SetFID(10)
+    f.SetField('foo', 'fooval')
+    f.SetField('bar_i_will_disappear', 'barval')
+    f.SetField('baz', 'bazval')
+    lyr_nonspatial.CreateFeature(f)
+
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
+  table_name TEXT NOT NULL,
+  column_name TEXT NOT NULL,
+  name TEXT UNIQUE,
+  title TEXT,
+  description TEXT,
+  mime_type TEXT,
+  constraint_name TEXT,
+  CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
+  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+)""")
+    ds.ExecuteSQL("INSERT INTO gpkg_data_columns VALUES('test', 'bar_i_will_disappear', 'bar_constraints', NULL, NULL, NULL, NULL)")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'bar_i_will_disappear', 'extension_name', 'definition', 'scope')")
+
+    if lyr.TestCapability(ogr.OLCDeleteField) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(-1)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if lyr.DeleteField(1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 10 or f['foo'] != 'fooval' or f['baz'] != 'bazval' or \
+       f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    if lyr_nonspatial.DeleteField(1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr_nonspatial.ResetReading()
+    f = lyr_nonspatial.GetNextFeature()
+    if f.GetFID() != 10 or f['foo'] != 'fooval' or f['baz'] != 'bazval':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    ds.ExecuteSQL('VACUUM')
+
+    ds = None
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(dbname, 'rb')
+    content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
+    gdal.VSIFCloseL(f)
+
+    if content.find('bar_i_will_disappear') >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.gpkg_dr.DeleteDataSource(dbname)
+
+    return 'success'
+
 ###############################################################################
 # Remove the test db from the tmp directory
 
@@ -2233,6 +2485,8 @@ gdaltest_list = [
     ogr_gpkg_31,
     ogr_gpkg_32,
     ogr_gpkg_33,
+    ogr_gpkg_34,
+    ogr_gpkg_35,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

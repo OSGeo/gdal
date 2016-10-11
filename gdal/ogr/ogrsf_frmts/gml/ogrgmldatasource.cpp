@@ -1840,6 +1840,8 @@ int OGRGMLDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return bIsOutputGML3;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -2773,7 +2775,7 @@ bool OGRGMLDataSource::RemoveAppPrefix()
             papszCreateOptions, "STRIP_PREFIX", "FALSE")) )
         return true;
     const char* pszPrefix = GetAppPrefix();
-    return( pszPrefix[0] == '\0' );
+    return pszPrefix[0] == '\0';
 }
 
 /************************************************************************/

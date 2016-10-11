@@ -41,15 +41,15 @@ CPL_CVSID("$Id$");
 bool OGRDXFDataSource::ReadBlocksSection()
 
 {
-    char szLineBuf[257];
-    int nCode = 0;
     OGRDXFLayer *poReaderLayer = static_cast<OGRDXFLayer *>(
         GetLayerByName( "Entities" ));
-    int bMergeBlockGeometries = CPLTestBool(
+    const bool bMergeBlockGeometries = CPLTestBool(
         CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
 
     iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
 
+    char szLineBuf[257];
+    int nCode = 0;
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
            && !EQUAL(szLineBuf,"ENDSEC") )
     {
@@ -137,16 +137,58 @@ OGRGeometry *OGRDXFDataSource::SimplifyBlockGeometry(
     if( poCollection->getNumGeometries() == 1 )
     {
         OGRGeometry *poReturn = poCollection->getGeometryRef(0);
-        poCollection->removeGeometry(0,FALSE);
+        poCollection->removeGeometry(0, FALSE);
         delete poCollection;
         return poReturn;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Eventually we likely ought to have logic to convert to          */
-/*      polygon, multipolygon, multilinestring or multipoint but        */
-/*      I'll put that off till it would be meaningful.                  */
+/*      Convert to polygon, multipolygon, multilinestring or multipoint */
 /* -------------------------------------------------------------------- */
+
+    OGRwkbGeometryType eType =
+                wkbFlatten(poCollection->getGeometryRef(0)->getGeometryType());
+    int i;
+    for(i=1;i<poCollection->getNumGeometries();i++)
+    {
+        if (wkbFlatten(poCollection->getGeometryRef(i)->getGeometryType())
+            != eType)
+        {
+            eType = wkbUnknown;
+            break;
+        }
+    }
+    if (eType == wkbPoint || eType == wkbLineString)
+    {
+        OGRGeometryCollection* poNewColl;
+        if (eType == wkbPoint)
+            poNewColl = new OGRMultiPoint();
+        else
+            poNewColl = new OGRMultiLineString();
+        while(poCollection->getNumGeometries() > 0)
+        {
+            OGRGeometry *poGeom = poCollection->getGeometryRef(0);
+            poCollection->removeGeometry(0,FALSE);
+            poNewColl->addGeometryDirectly(poGeom);
+        }
+        delete poCollection;
+        return poNewColl;
+    }
+    else if (eType == wkbPolygon)
+    {
+        std::vector<OGRGeometry*> aosPolygons;
+        while(poCollection->getNumGeometries() > 0)
+        {
+            OGRGeometry *poGeom = poCollection->getGeometryRef(0);
+            poCollection->removeGeometry(0,FALSE);
+            aosPolygons.push_back(poGeom);
+        }
+        delete poCollection;
+        int bIsValidGeometry;
+        return OGRGeometryFactory::organizePolygons(
+            &aosPolygons[0], (int)aosPolygons.size(),
+            &bIsValidGeometry, NULL);
+    }
 
     return poCollection;
 }

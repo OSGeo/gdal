@@ -97,19 +97,19 @@ static const FieldDesc UKOOAP190Fields[] =
     { "DATETIME", OFTDateTime }
 };
 
-#define FIELD_LINENAME      0
-#define FIELD_VESSEL_ID     1
-#define FIELD_SOURCE_ID     2
-#define FIELD_OTHER_ID      3
-#define FIELD_POINTNUMBER   4
-#define FIELD_LONGITUDE     5
-#define FIELD_LATITUDE      6
-#define FIELD_EASTING       7
-#define FIELD_NORTHING      8
-#define FIELD_DEPTH         9
-#define FIELD_DAYOFYEAR     10
-#define FIELD_TIME          11
-#define FIELD_DATETIME      12
+static const int FIELD_LINENAME    = 0;
+static const int FIELD_VESSEL_ID   = 1;
+static const int FIELD_SOURCE_ID   = 2;
+static const int FIELD_OTHER_ID    = 3;
+// static const int FIELD_POINTNUMBER = 4;
+static const int FIELD_LONGITUDE   = 5;
+static const int FIELD_LATITUDE    = 6;
+static const int FIELD_EASTING     = 7;
+static const int FIELD_NORTHING    = 8;
+static const int FIELD_DEPTH       = 9;
+static const int FIELD_DAYOFYEAR   = 10;
+static const int FIELD_TIME        = 11;
+static const int FIELD_DATETIME    = 12;
 
 OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
                                       VSILFILE* fpIn ) :
@@ -227,7 +227,7 @@ void OGRUKOOAP190Layer::ParseHeaders()
                     int nVal = atoi(papszTokens[i]);
                     if (nVal >= 1900)
                     {
-                        if (nYear != 0 && nYear != nVal)
+                        if( nYear != 0 && nYear != nVal )
                         {
                             CPLDebug("SEGUKOOA",
                                      "Several years found in H0200. Ignoring them!");
@@ -259,6 +259,15 @@ void OGRUKOOAP190Layer::ResetReading()
 /************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
+
+static bool isleap( int y)
+{
+    return
+      (y % 4 == 0 &&
+       y % 100 != 0)
+      || y % 400 == 0;
+}
+
 
 OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
 {
@@ -400,29 +409,33 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
             ExtractField(szS, pszLine, 74-1+2+2, 2);
             poFeature->SetField(FIELD_TIME, 0, 0, 0, atoi(szH), atoi(szM), static_cast<float>(atoi(szS)) );
 
-            if (nYear != 0)
+            if( nYear != 0 )
             {
-                #define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
                 static const int mon_lengths[2][12] = {
                     {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
                     {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
                 } ;
-                int bIsLeap = isleap(nYear);
+                const bool bIsLeap = isleap(nYear);
                 int nMonth = 0;
                 int nDays = 0;
                 if ((bIsLeap && nDayOfYear >= 1 && nDayOfYear <= 366) ||
                     (!bIsLeap && nDayOfYear >= 1 && nDayOfYear <= 365))
                 {
-                    while(nDayOfYear > nDays + mon_lengths[bIsLeap][nMonth])
+                    static const int leap_offset = bIsLeap ? 0 : 1;
+                    while( nDayOfYear >
+                           nDays +
+                           mon_lengths[leap_offset][nMonth] )
                     {
-                        nDays += mon_lengths[bIsLeap][nMonth];
+                        nDays += mon_lengths[leap_offset][nMonth];
                         nMonth ++;
                     }
-                    int nDayOfMonth = nDayOfYear - nDays;
-                    nMonth ++;
+                    const int nDayOfMonth = nDayOfYear - nDays;
+                    nMonth++;
 
-                    poFeature->SetField(FIELD_DATETIME, nYear, nMonth, nDayOfMonth,
-                                        atoi(szH), atoi(szM), static_cast<float>(atoi(szS)) );
+                    poFeature->SetField(FIELD_DATETIME,
+                                        nYear, nMonth, nDayOfMonth,
+                                        atoi(szH), atoi(szM),
+                                        static_cast<float>(atoi(szS)) );
                 }
 
             }
@@ -454,17 +467,17 @@ static const FieldDesc SEGP1Fields[] =
 #endif
 };
 
-#define SEGP1_FIELD_LINENAME      0
-#define SEGP1_FIELD_POINTNUMBER   1
-#define SEGP1_FIELD_RESHOOTCODE   2
-#define SEGP1_FIELD_LONGITUDE     3
-#define SEGP1_FIELD_LATITUDE      4
-#define SEGP1_FIELD_EASTING       5
-#define SEGP1_FIELD_NORTHING      6
-#define SEGP1_FIELD_DEPTH         7
-#define SEGP1_FIELD_DAYOFYEAR     8
-#define SEGP1_FIELD_TIME          9
-#define SEGP1_FIELD_DATETIME      10
+static const int SEGP1_FIELD_LINENAME    = 0;
+static const int SEGP1_FIELD_POINTNUMBER = 1;
+static const int SEGP1_FIELD_RESHOOTCODE = 2;
+static const int SEGP1_FIELD_LONGITUDE   = 3;
+static const int SEGP1_FIELD_LATITUDE    = 4;
+static const int SEGP1_FIELD_EASTING     = 5;
+static const int SEGP1_FIELD_NORTHING    = 6;
+static const int SEGP1_FIELD_DEPTH       = 7;
+// static const int SEGP1_FIELD_DAYOFYEAR   = 8;
+// static const int SEGP1_FIELD_TIME        = 9;
+// static const int SEGP1_FIELD_DATETIME    = 10;
 
 OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
                               VSILFILE* fpIn,

@@ -316,6 +316,8 @@ typedef void signature_changed;
 
 //! A set of associated raster bands, usually from one file.
 
+class OGRFeature;
+
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
     friend GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
@@ -551,6 +553,12 @@ private:
     virtual OGRLayer    *GetLayer(int iLayer);
     virtual OGRLayer    *GetLayerByName(const char *);
     virtual OGRErr      DeleteLayer(int iLayer);
+
+    virtual void        ResetReading();
+    virtual OGRFeature* GetNextFeature( OGRLayer** ppoBelongingLayer,
+                                        double* pdfProgressPct,
+                                        GDALProgressFunc pfnProgress,
+                                        void* pProgressData );
 
     virtual int         TestCapability( const char * );
 

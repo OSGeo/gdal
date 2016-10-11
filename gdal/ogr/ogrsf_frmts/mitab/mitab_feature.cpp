@@ -6122,37 +6122,37 @@ void TABText:: SetFontStyleMIFValue(int nStyle, GBool bBGColorSet)
 int TABText::IsFontBGColorUsed()
 {
     // Font BG color is used only when BOX is set.
-    return (QueryFontStyle(TABFSBox));
+    return QueryFontStyle(TABFSBox);
 }
 
 int TABText::IsFontOColorUsed()
 {
     // Font outline color is used only when HALO is set.
-    return (QueryFontStyle(TABFSHalo));
+    return QueryFontStyle(TABFSHalo);
 }
 
 int TABText::IsFontSColorUsed()
 {
     // Font shadow color is used only when Shadow is set.
-    return (QueryFontStyle(TABFSShadow));
+    return QueryFontStyle(TABFSShadow);
 }
 
 int TABText::IsFontBold()
 {
     // Font bold is used only when Bold is set.
-    return (QueryFontStyle(TABFSBold));
+    return QueryFontStyle(TABFSBold);
 }
 
 int TABText::IsFontItalic()
 {
     // Font italic is used only when Italic is set.
-    return (QueryFontStyle(TABFSItalic));
+    return QueryFontStyle(TABFSItalic);
 }
 
 int TABText::IsFontUnderline()
 {
     // Font underline is used only when Underline is set.
-    return (QueryFontStyle(TABFSUnderline));
+    return QueryFontStyle(TABFSUnderline);
 }
 
 /**********************************************************************

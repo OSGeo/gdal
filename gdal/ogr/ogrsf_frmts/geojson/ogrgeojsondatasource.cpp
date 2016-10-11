@@ -192,18 +192,18 @@ OGRLayer* OGRGeoJSONDataSource::GetLayer( int nLayer )
 /************************************************************************/
 
 OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
-                                             OGRSpatialReference* poSRS,
-                                             OGRwkbGeometryType eGType,
-                                             char** papszOptions )
+                                              OGRSpatialReference* poSRS,
+                                              OGRwkbGeometryType eGType,
+                                              char** papszOptions )
 {
-    if ( NULL == fpOut_ )
+    if( NULL == fpOut_ )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GeoJSON driver doesn't support creating a layer on a read-only datasource");
         return NULL;
     }
 
-    if ( nLayers_ != 0 )
+    if( nLayers_ != 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GeoJSON driver doesn't support creating more than one layer");
@@ -257,11 +257,11 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         }
     }
 
-    if (poSRS)
+    if( poSRS )
     {
         const char* pszAuthority = poSRS->GetAuthorityName(NULL);
         const char* pszAuthorityCode = poSRS->GetAuthorityCode(NULL);
-        if (pszAuthority != NULL && pszAuthorityCode != NULL &&
+        if( pszAuthority != NULL && pszAuthorityCode != NULL &&
             EQUAL(pszAuthority, "EPSG") &&
             (bWriteCRSIfWGS84 || !EQUAL(pszAuthorityCode, "4326")) )
         {
@@ -271,7 +271,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             json_object* poObjProperties = json_object_new_object();
             json_object_object_add(poObjCRS, "properties", poObjProperties);
 
-            if (strcmp(pszAuthorityCode, "4326") == 0)
+            if( strcmp(pszAuthorityCode, "4326") == 0 )
             {
                 json_object_object_add(poObjProperties, "name",
                                     json_object_new_string("urn:ogc:def:crs:OGC:1.3:CRS84"));
@@ -289,7 +289,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         }
     }
 
-    if (bFpOutputIsSeekable_ && bWriteFC_BBOX)
+    if( bFpOutputIsSeekable_ && bWriteFC_BBOX )
     {
         nBBOXInsertLocation_ = (int) VSIFTellL( fpOut_ );
 
@@ -340,7 +340,7 @@ int OGRGeoJSONDataSource::Create( const char* pszName,
 {
     CPLAssert( NULL == fpOut_ );
 
-    if (strcmp(pszName, "/dev/stdout") == 0)
+    if( strcmp(pszName, "/dev/stdout") == 0 )
         pszName = "/vsistdout/";
 
     bFpOutputIsSeekable_ =  !(strcmp(pszName,"/vsistdout/") == 0 ||
@@ -488,7 +488,8 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
 
-    char* papsOptions[] = { (char*) "HEADERS=Accept: text/plain, application/json", NULL };
+    char* papsOptions[] =
+        { (char*) "HEADERS=Accept: text/plain, application/json", NULL };
 
     CPLHTTPResult* pResult
         = CPLHTTPFetch( pszSource, papsOptions );
@@ -517,7 +518,7 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 /* -------------------------------------------------------------------- */
     const char* pszData = reinterpret_cast<char*>(pResult->pabyData);
 
-    if ( eGeoJSONProtocolUnknown != GeoJSONGetProtocolType( pszData ) )
+    if( eGeoJSONProtocolUnknown != GeoJSONGetProtocolType( pszData ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "The data that was downloaded also starts with "
@@ -558,7 +559,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
     }
 
     const char* const apszPrefix[] = { "loadGeoJSON(", "jsonp(" };
-    for(size_t iP = 0; iP < sizeof(apszPrefix) / sizeof(apszPrefix[0]); iP++ )
+    for( size_t iP = 0; iP < sizeof(apszPrefix) / sizeof(apszPrefix[0]); iP++ )
     {
         if( strncmp(pszGeoData_, apszPrefix[iP], strlen(apszPrefix[iP])) == 0 )
         {
@@ -576,7 +577,7 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
     }
 
 
-    if ( !GeoJSONIsObject( pszGeoData_) )
+    if( !GeoJSONIsObject( pszGeoData_) )
     {
         CPLDebug( "GeoJSON", "No valid GeoJSON data found in source '%s'", pszName_ );
         return;
@@ -585,8 +586,8 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
 /* -------------------------------------------------------------------- */
 /*      Is it ESRI Feature Service data ?                               */
 /* -------------------------------------------------------------------- */
-    if ( strstr(pszGeoData_, "esriGeometry") ||
-         strstr(pszGeoData_, "esriFieldType") )
+    if( strstr(pszGeoData_, "esriGeometry") ||
+        strstr(pszGeoData_, "esriFieldType") )
     {
         OGRESRIJSONReader reader;
         OGRErr err = reader.Parse( pszGeoData_ );
@@ -609,8 +610,8 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
 /* -------------------------------------------------------------------- */
 /*      Is it TopoJSON data ?                                           */
 /* -------------------------------------------------------------------- */
-    if ( strstr(pszGeoData_, "\"type\"") &&
-         strstr(pszGeoData_, "\"Topology\"")  )
+    if( strstr(pszGeoData_, "\"type\"") &&
+        strstr(pszGeoData_, "\"Topology\"") )
     {
         OGRTopoJSONReader reader;
         OGRErr err = reader.Parse( pszGeoData_ );

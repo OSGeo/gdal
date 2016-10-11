@@ -811,7 +811,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

@@ -3103,7 +3103,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check for Xerces C++ Parser support.
 dnl ---------------------------------------------------------------------------
 
-XERCES_REQ_VERSION="2.7.0"
+XERCES_REQ_VERSION="3.1.0"
 AX_LIB_XERCES($XERCES_REQ_VERSION)
 
 if test "$HAVE_XERCES" = "yes"; then

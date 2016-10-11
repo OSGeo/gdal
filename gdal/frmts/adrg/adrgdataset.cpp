@@ -730,7 +730,11 @@ char **ADRGDataset::GetMetadata( const char *pszDomain )
 
 const char* ADRGDataset::GetProjectionRef()
 {
-    return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]" );
+    return
+        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
+        "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
+        "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
+        "AUTHORITY[\"EPSG\",\"4326\"]]";
 }
 
 /************************************************************************/

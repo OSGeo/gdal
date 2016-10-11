@@ -82,11 +82,12 @@ class OGRESRIFeatureServiceDataset: public GDALDataset
        ~OGRESRIFeatureServiceDataset();
 
         int GetLayerCount() { return 1; }
-        OGRLayer* GetLayer( int nLayer ) { return (nLayer == 0) ? poLayer : NULL; }
+        OGRLayer* GetLayer( int nLayer )
+            { return (nLayer == 0) ? poLayer : NULL; }
 
         OGRLayer* GetUnderlyingLayer() { return poCurrent->GetLayer(0); }
 
-        int ResetReading();
+        int MyResetReading();
         int LoadNextPage();
 
         const CPLString&                GetURL() { return osURL; }
@@ -132,7 +133,7 @@ OGRESRIFeatureServiceLayer::~OGRESRIFeatureServiceLayer()
 
 void OGRESRIFeatureServiceLayer::ResetReading()
 {
-    poDS->ResetReading();
+    poDS->MyResetReading();
     nFeaturesRead = 0;
     nLastFID = 0;
     bOtherPage = false;
@@ -174,10 +175,10 @@ OGRFeature* OGRESRIFeatureServiceLayer::GetNextFeature()
         nFeaturesRead ++;
         delete poSrcFeat;
 
-        if((m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature )) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
         }
@@ -317,10 +318,10 @@ OGRESRIFeatureServiceDataset::~OGRESRIFeatureServiceDataset()
 }
 
 /************************************************************************/
-/*                             ResetReading()                           */
+/*                           MyResetReading()                           */
 /************************************************************************/
 
-int OGRESRIFeatureServiceDataset::ResetReading()
+int OGRESRIFeatureServiceDataset::MyResetReading()
 {
     if( nLastOffset > nFirstOffset )
     {

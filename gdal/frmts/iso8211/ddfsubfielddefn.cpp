@@ -495,11 +495,11 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
           {
             case UInt:
               if( nFormatWidth == 1 )
-                  return( abyData[0] );
+                  return abyData[0];
               else if( nFormatWidth == 2 )
-                  return( *((GUInt16 *) pabyData) );
+                  return *((GUInt16 *) pabyData);
               else if( nFormatWidth == 4 )
-                  return( *((GUInt32 *) pabyData) );
+                  return *((GUInt32 *) pabyData);
               else
               {
                   // CPLAssert( false );
@@ -508,11 +508,11 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
 
             case SInt:
               if( nFormatWidth == 1 )
-                  return( *((signed char *) abyData) );
+                  return *((signed char *) abyData);
               else if( nFormatWidth == 2 )
-                  return( *((GInt16 *) pabyData) );
+                  return *((GInt16 *) pabyData);
               else if( nFormatWidth == 4 )
-                  return( *((GInt32 *) pabyData) );
+                  return *((GInt32 *) pabyData);
               else
               {
                   // CPLAssert( false );
@@ -521,9 +521,9 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
 
             case FloatReal:
               if( nFormatWidth == 4 )
-                  return( *((float *) pabyData) );
+                  return *((float *) pabyData);
               else if( nFormatWidth == 8 )
-                  return( *((double *) pabyData) );
+                  return *((double *) pabyData);
               else
               {
                   // CPLAssert( false );
@@ -631,11 +631,11 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
           {
             case UInt:
               if( nFormatWidth == 4 )
-                  return( (int) *((GUInt32 *) pabyData) );
+                  return (int) *((GUInt32 *) pabyData);
               else if( nFormatWidth == 1 )
-                  return( abyData[0] );
+                  return abyData[0];
               else if( nFormatWidth == 2 )
-                  return( *((GUInt16 *) pabyData) );
+                  return *((GUInt16 *) pabyData);
               else
               {
                   // CPLAssert( false );
@@ -644,11 +644,11 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
 
             case SInt:
               if( nFormatWidth == 4 )
-                  return( *((GInt32 *) pabyData) );
+                  return *((GInt32 *) pabyData);
               else if( nFormatWidth == 1 )
-                  return( *((signed char *) abyData) );
+                  return *((signed char *) abyData);
               else if( nFormatWidth == 2 )
-                  return( *((GInt16 *) pabyData) );
+                  return *((GInt16 *) pabyData);
               else
               {
                   // CPLAssert( false );
@@ -657,9 +657,9 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
 
             case FloatReal:
               if( nFormatWidth == 4 )
-                  return( (int) *((float *) pabyData) );
+                  return (int) *((float *) pabyData);
               else if( nFormatWidth == 8 )
-                  return( (int) *((double *) pabyData) );
+                  return (int) *((double *) pabyData);
               else
               {
                   // CPLAssert( false );

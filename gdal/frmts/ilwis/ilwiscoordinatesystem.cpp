@@ -246,15 +246,15 @@ static const IlwisEllips iwEllips[] =
 /*      Some "standard" strings.                                        */
 /* ==================================================================== */
 
-#define ILW_False_Easting "False Easting"
-#define ILW_False_Northing "False Northing"
-#define ILW_Central_Meridian "Central Meridian"
-#define ILW_Central_Parallel "Central Parallel"
-#define ILW_Standard_Parallel_1 "Standard Parallel 1"
-#define ILW_Standard_Parallel_2 "Standard Parallel 2"
-#define ILW_Scale_Factor "Scale Factor"
-#define ILW_Latitude_True_Scale "Latitude of True Scale"
-#define ILW_Height_Persp_Center "Height Persp. Center"
+static const char ILW_False_Easting[] = "False Easting";
+static const char ILW_False_Northing[] = "False Northing";
+static const char ILW_Central_Meridian[] = "Central Meridian";
+static const char ILW_Central_Parallel[] = "Central Parallel";
+static const char ILW_Standard_Parallel_1[] = "Standard Parallel 1";
+static const char ILW_Standard_Parallel_2[] = "Standard Parallel 2";
+static const char ILW_Scale_Factor[] = "Scale Factor";
+static const char ILW_Latitude_True_Scale[] = "Latitude of True Scale";
+static const char ILW_Height_Persp_Center[] = "Height Persp. Center";
 
 static double ReadPrjParms(string section, string entry, string filename)
 {

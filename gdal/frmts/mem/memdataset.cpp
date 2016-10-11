@@ -808,7 +808,7 @@ void *MEMDataset::GetInternalHandle( const char * pszRequest )
             if( RequestedRasterBand != NULL )
             {
                 // return the internal band data pointer
-                return(RequestedRasterBand->GetData());
+                return RequestedRasterBand->GetData();
             }
         }
     }

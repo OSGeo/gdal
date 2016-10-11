@@ -2292,7 +2292,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->TryLoadXML();
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -2303,7 +2303,7 @@ CPLErr WCSDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -2320,7 +2320,7 @@ const char *WCSDataset::GetProjectionRef()
     if ( pszProjection && strlen(pszProjection) > 0 )
         return pszProjection;
 
-    return( "" );
+    return "";
 }
 
 /************************************************************************/

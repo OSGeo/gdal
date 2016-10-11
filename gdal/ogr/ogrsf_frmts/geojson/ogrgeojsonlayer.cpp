@@ -181,7 +181,7 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
 
 void OGRGeoJSONLayer::DetectGeometryType()
 {
-    if (GetLayerDefn()->GetGeomType() != wkbUnknown)
+    if( GetLayerDefn()->GetGeomType() != wkbUnknown )
         return;
 
     ResetReading();

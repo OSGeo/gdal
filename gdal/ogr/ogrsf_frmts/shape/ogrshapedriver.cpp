@@ -112,7 +112,7 @@ static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGRShapeDataSource *poDS = new OGRShapeDataSource();
 
-    if( !poDS->Open( poOpenInfo, TRUE ) )
+    if( !poDS->Open( poOpenInfo, true ) )
     {
         delete poDS;
         return NULL;
@@ -182,7 +182,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
     OGRShapeDataSource  *poDS = new OGRShapeDataSource();
 
     GDALOpenInfo oOpenInfo( pszName, GA_Update );
-    if( !poDS->Open( &oOpenInfo, FALSE, bSingleNewFile ) )
+    if( !poDS->Open( &oOpenInfo, false, bSingleNewFile ) )
     {
         delete poDS;
         return NULL;
@@ -280,6 +280,7 @@ void RegisterOGRShape()
 "    <Value>FIRST_SHAPE</Value>"
 "    <Value>ALL_SHAPES</Value>"
 "  </Option>"
+"  <Option name='AUTO_REPACK' type='boolean' description='Whether the shapefile should be automatically repacked when needed' default='YES'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
@@ -311,6 +312,7 @@ void RegisterOGRShape()
 "  <Option name='RESIZE' type='boolean' description='To resize fields to their optimal size.' default='NO'/>"
 "  <Option name='SPATIAL_INDEX' type='boolean' description='To create a spatial index.' default='NO'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
+"  <Option name='AUTO_REPACK' type='boolean' description='Whether the shapefile should be automatically repacked when needed' default='YES'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,

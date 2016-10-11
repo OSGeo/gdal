@@ -125,7 +125,7 @@ void OGROSMLayer::ResetReading()
     if ( !bResetReadingAllowed || poDS->IsInterleavedReading() )
         return;
 
-    poDS->ResetReading();
+    poDS->MyResetReading();
 }
 
 /************************************************************************/
@@ -165,7 +165,7 @@ OGRErr OGROSMLayer::SetAttributeFilter( const char* pszAttrQuery )
     {
         if( !poDS->IsInterleavedReading() )
         {
-            poDS->ResetReading();
+            poDS->MyResetReading();
         }
     }
     else
@@ -198,18 +198,28 @@ GIntBig OGROSMLayer::GetFeatureCount( int bForce )
 
 OGRFeature *OGROSMLayer::GetNextFeature()
 {
+    OGROSMLayer* poNewCurLayer = NULL;
+    OGRFeature* poFeature = MyGetNextFeature(&poNewCurLayer, NULL, NULL);
+    poDS->SetCurrentLayer(poNewCurLayer);
+    return poFeature;
+}
+
+OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
+                                           GDALProgressFunc pfnProgress,
+                                           void* pProgressData )
+{
+    *ppoNewCurLayer = poDS->GetCurrentLayer();
     bResetReadingAllowed = true;
 
     if ( nFeatureArraySize == 0)
     {
         if ( poDS->IsInterleavedReading() )
         {
-            OGRLayer* poCurrentLayer = poDS->GetCurrentLayer();
-            if ( poCurrentLayer == NULL )
+            if ( *ppoNewCurLayer  == NULL )
             {
-                poDS->SetCurrentLayer(this);
+                 *ppoNewCurLayer = this;
             }
-            else if( poCurrentLayer != this )
+            else if( *ppoNewCurLayer  != this )
             {
                 return NULL;
             }
@@ -222,7 +232,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
                 if (poDS->papoLayers[i] != this &&
                     poDS->papoLayers[i]->nFeatureArraySize > SWITCH_THRESHOLD)
                 {
-                    poDS->SetCurrentLayer(poDS->papoLayers[i]);
+                    *ppoNewCurLayer = poDS->papoLayers[i];
                     CPLDebug("OSM", "Switching to '%s' as they are too many "
                                     "features in '%s'",
                              poDS->papoLayers[i]->GetName(),
@@ -232,7 +242,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
             }
 
             /* Read some more data and accumulate features */
-            poDS->ParseNextChunk(nIdxLayer);
+            poDS->ParseNextChunk(nIdxLayer, pfnProgress, pProgressData);
 
             if ( nFeatureArraySize == 0 )
             {
@@ -244,7 +254,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
                     if (poDS->papoLayers[i] != this &&
                         poDS->papoLayers[i]->nFeatureArraySize > 0)
                     {
-                        poDS->SetCurrentLayer(poDS->papoLayers[i]);
+                        *ppoNewCurLayer = poDS->papoLayers[i];
                         CPLDebug("OSM",
                                  "Switching to '%s' as they are no more feature in '%s'",
                                  poDS->papoLayers[i]->GetName(),
@@ -254,7 +264,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
                 }
 
                 /* Game over : no more data to read from the stream */
-                poDS->SetCurrentLayer(NULL);
+                *ppoNewCurLayer = NULL;
                 return NULL;
             }
         }
@@ -262,7 +272,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
         {
             while( true )
             {
-                int bRet = poDS->ParseNextChunk(nIdxLayer);
+                int bRet = poDS->ParseNextChunk(nIdxLayer, NULL, NULL);
                 if (nFeatureArraySize != 0)
                     break;
                 if (bRet == FALSE)

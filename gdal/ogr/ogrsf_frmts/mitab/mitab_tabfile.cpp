@@ -2269,7 +2269,7 @@ int TABFile::SetFieldIndexed( int nFieldId )
  ************************************************************************/
 GBool TABFile::IsFieldIndexed( int nFieldId )
 {
-    return (GetFieldIndexNumber(nFieldId) > 0 ? TRUE:FALSE);
+    return GetFieldIndexNumber(nFieldId) > 0 ? TRUE : FALSE;
 }
 
 

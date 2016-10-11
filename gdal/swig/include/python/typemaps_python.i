@@ -1931,3 +1931,51 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   }
   $result = t_output_helper($result,r);
 }
+
+%typemap(in,numinputs=0) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct) ( OGRLayerShadow* poBelongingLayer = NULL, double dfProgressPct = 0 )
+{
+  /* %typemap(in) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+  $1 = &poBelongingLayer;
+  $2 = &dfProgressPct;
+}
+
+%typemap(check) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)
+{
+   /* %typemap(check) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+  if( !arg3 )
+    $2 = NULL;
+}
+
+%typemap(argout) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)
+{
+   /* %typemap(argout) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+
+  if( arg2 )
+  {
+    if( $result == Py_None )
+    {
+        $result = PyList_New(1);
+        PyList_SetItem($result, 0, Py_None);
+    }
+
+    if ( !*$1 ) {
+        Py_INCREF(Py_None);
+        $result = SWIG_Python_AppendOutput($result, Py_None);
+    }
+    else {
+        $result = SWIG_Python_AppendOutput($result,
+            SWIG_NewPointerObj(SWIG_as_voidptr( *$1), SWIGTYPE_p_OGRLayerShadow, 0 ));
+    }
+  }
+
+  if( arg3 )
+  {
+    if( $result == Py_None )
+    {
+        $result = PyList_New(1);
+        PyList_SetItem($result, 0, Py_None);
+    }
+    $result = SWIG_Python_AppendOutput($result, PyFloat_FromDouble( *$2));
+  }
+
+}

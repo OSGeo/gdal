@@ -666,7 +666,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS )
         poDS->SetPamFlags(0);
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

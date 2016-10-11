@@ -33,8 +33,6 @@
 * limitations under the License.
 */
 
-
-  
 /*
  * JPEG band
  * JPEG page compression and decompression functions, gets compiled twice

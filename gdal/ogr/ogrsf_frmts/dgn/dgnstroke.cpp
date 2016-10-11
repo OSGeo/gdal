@@ -138,11 +138,16 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
 /* -------------------------------------------------------------------- */
 /*      Compute the Compute the slopes/distances of the segments.       */
 /* -------------------------------------------------------------------- */
-    double *padfMx = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
-    double *padfMy = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
-    double *padfD  = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
-    double *padfTx = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
-    double *padfTy = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
+    double *padfMx = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
+    double *padfMy = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
+    double *padfD  = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
+    double *padfTx = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
+    double *padfTy = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
 
     double dfTotalD = 0.0;
 

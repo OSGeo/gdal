@@ -514,7 +514,7 @@ void SDTSPolygonReader::Close()
 int SDTSPolygonReader::Open( const char * pszFilename )
 
 {
-    return( oDDFModule.Open( pszFilename ) );
+    return oDDFModule.Open( pszFilename );
 }
 
 /************************************************************************/
@@ -544,7 +544,7 @@ SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
 
     if( poRawPolygon->Read( poRecord ) )
     {
-        return( poRawPolygon );
+        return poRawPolygon;
     }
 
     delete poRawPolygon;

@@ -145,6 +145,11 @@ class OGROSMLayer : public OGRLayer
     virtual int         TestCapability( const char * );
 
     virtual OGRFeature *GetNextFeature();
+
+    OGRFeature*         MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
+                                          GDALProgressFunc pfnProgress,
+                                          void* pProgressData );
+
     virtual GIntBig     GetFeatureCount( int bForce );
 
     virtual OGRErr      SetAttributeFilter( const char* pszAttrQuery );
@@ -396,6 +401,10 @@ class OGROSMDataSource : public OGRDataSource
 
     bool                bNeedsToSaveWayInfo;
 
+    static const GIntBig FILESIZE_NOT_INIT = -2;
+    static const GIntBig FILESIZE_INVALID = -1;
+    GIntBig             m_nFileSize;
+
     int                 CompressWay (bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
                                      int nPoints, LonLat* pasLonLatPairs,
                                      OSMInfo* psInfo,
@@ -471,12 +480,18 @@ class OGROSMDataSource : public OGRDataSource
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
+    virtual void        ResetReading();
+    virtual OGRFeature* GetNextFeature( OGRLayer** ppoBelongingLayer,
+                                        double* pdfProgressPct,
+                                       GDALProgressFunc pfnProgress,
+                                        void* pProgressData );
 
     int                 Open ( const char* pszFilename, char** papszOpenOptions );
 
-    // TODO(schwehr): Should ResetReading be a virtual void like the other calls?
-    int                 ResetReading();
-    bool                ParseNextChunk(int nIdxLayer);
+    int                 MyResetReading();
+    bool                ParseNextChunk(int nIdxLayer,
+                                       GDALProgressFunc pfnProgress,
+                                       void* pProgressData);
     OGRErr              GetExtent( OGREnvelope *psExtent );
     int                 IsInterleavedReading();
 

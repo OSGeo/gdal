@@ -1925,7 +1925,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
                 return FALSE;
             ReadVarUInt64NoCheck(pabyCur, y);
             y --;
-            return( y >= nFilterYMin && y <= nFilterYMax );
+            return y >= nFilterYMin && y <= nFilterYMax;
         }
 
         case SHPT_MULTIPOINTZM:

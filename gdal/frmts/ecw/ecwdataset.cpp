@@ -2855,7 +2855,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         }
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

@@ -413,7 +413,7 @@ bool InitAttemptWithoutExtension(esriLicenseProductCode product)
 
   esriLicenseStatus status = esriLicenseFailure;
   ipInit->Initialize(product, &status);
-  return (status == esriLicenseCheckedOut);
+  return status == esriLicenseCheckedOut;
 }
 
 // Attempt to initialize with an extension
@@ -430,7 +430,7 @@ bool InitAttemptWithExtension(esriLicenseProductCode product,
     if (licenseStatus == esriLicenseCheckedOut)
       ipInit->CheckOutExtension(extension, &licenseStatus);
   }
-  return (licenseStatus == esriLicenseCheckedOut);
+  return licenseStatus == esriLicenseCheckedOut;
 }
 
 // Shutdown the driver and check-in the license if needed.

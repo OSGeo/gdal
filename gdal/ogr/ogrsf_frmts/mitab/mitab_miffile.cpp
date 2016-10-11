@@ -2039,7 +2039,7 @@ int MIFFile::SetSpatialRef( OGRSpatialReference * poSpatialRef )
         CPLFree(pszCoordSys);
     }
 
-    return( m_pszCoordSys != NULL );
+    return m_pszCoordSys != NULL;
 }
 
 
@@ -2087,7 +2087,7 @@ int MIFFile::SetMIFCoordSys(const char * pszMIFCoordSys)
     m_pszCoordSys = CPLStrdup(pszCoordSys);
     CPLFree(pszCoordSys);
 
-    return( m_pszCoordSys != NULL );
+    return m_pszCoordSys != NULL;
 }
 
 /************************************************************************/

@@ -155,7 +155,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
     poLabelPoint->setX((oEnv.MaxX + oEnv.MinX)/2.0);
     poLabelPoint->setY((oEnv.MaxY + oEnv.MinY)/2.0);
 
-    // if(get_centroid(p, lp, &miny, &maxy) == -1) return(-1);
+    // if( get_centroid(p, lp, &miny, &maxy) == -1 ) return -1;
 
     if(OGRIntersectPointPolygon(poLabelPoint, poPoly) == TRUE) /* cool, done */
         return OGRERR_NONE;
@@ -361,7 +361,7 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
     }
 
     if(total_len == 0)
-        return(OGRERR_FAILURE);
+        return OGRERR_FAILURE;
 
     poCentroid->setX( cent_weight_x / total_len );
     poCentroid->setY( cent_weight_y / total_len );

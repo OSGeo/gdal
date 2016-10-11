@@ -403,7 +403,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         papoLayers[4] = new OGRGPXLayer( pszName, "track_points", GPX_TRACK_POINT, this, FALSE );
     }
 
-    return (validity == GPX_VALIDITY_VALID);
+    return validity == GPX_VALIDITY_VALID;
 #else
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp)

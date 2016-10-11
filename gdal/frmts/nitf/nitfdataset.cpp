@@ -342,7 +342,7 @@ static char **ExtractEsriMD( char **papszMD )
         papszEsriMD = CSLAddNameValue( papszEsriMD, pEsriMDSunElevation,      pSunElevation );
     }
 
-    return (papszEsriMD);
+    return papszEsriMD;
 }
 
 /************************************************************************/
@@ -1667,7 +1667,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             ( reinterpret_cast<GDALPamRasterBand *>( poDS->GetRasterBand(1) ) )->
             GDALPamRasterBand::GetOverviewCount() == 0;
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

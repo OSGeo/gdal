@@ -84,4 +84,8 @@ OGRErr              GPkgEnvelopeToOGR(GByte *pabyGpkg, size_t szGpkg, OGREnvelop
 
 OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader);
 
+CPLString           SQLEscapeDoubleQuote(const char* pszStr);
+CPLString           SQLUnescapeDoubleQuote(const char* pszStr);
+char**              SQLTokenize( const char* pszSQL );
+
 #endif

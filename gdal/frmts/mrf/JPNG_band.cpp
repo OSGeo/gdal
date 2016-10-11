@@ -42,7 +42,7 @@ template<int N> static bool AllAlpha(const buf_mgr &src, const ILImage &img) {
     char *stop = src.buffer + img.pageSizeBytes;
     while (s < stop && N == static_cast<unsigned char>(*s))
         s += stride;
-    return (s >= stop);
+    return s >= stop;
 }
 
 // Fully opaque
