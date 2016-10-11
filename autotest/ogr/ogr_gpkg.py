@@ -2405,7 +2405,10 @@ def ogr_gpkg_35():
         f.DumpReadable()
         return 'fail'
 
-    if lyr_nonspatial.DeleteField(1) != 0:
+    lyr.StartTransaction()
+    ret = lyr_nonspatial.DeleteField(1)
+    lyr.CommitTransaction()
+    if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     lyr_nonspatial.ResetReading()
@@ -2419,6 +2422,16 @@ def ogr_gpkg_35():
 
     ds = None
 
+    # Try on read-only dataset
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(0)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
     # Check that there is no more any reference to the layer
     f = gdal.VSIFOpenL(dbname, 'rb')
     content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
@@ -2427,6 +2440,152 @@ def ogr_gpkg_35():
     if content.find('bar_i_will_disappear') >= 0:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    gdaltest.gpkg_dr.DeleteDataSource(dbname)
+
+    return 'success'
+
+###############################################################################
+# Test AlterFieldDefn()
+
+def ogr_gpkg_36():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    dbname = '/vsimem/ogr_gpkg_36.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPolygon )
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateField( ogr.FieldDefn('baz', ogr.OFTString) )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(10)
+    f.SetField('foo', 'value')
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
+  table_name TEXT NOT NULL,
+  column_name TEXT NOT NULL,
+  name TEXT UNIQUE,
+  title TEXT,
+  description TEXT,
+  mime_type TEXT,
+  constraint_name TEXT,
+  CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
+  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+)""")
+    ds.ExecuteSQL("INSERT INTO gpkg_data_columns VALUES('test', 'foo', 'constraint', NULL, NULL, NULL, NULL)")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'foo', 'extension_name', 'definition', 'scope')")
+    ds.ExecuteSQL("CREATE INDEX my_idx ON test(foo)")
+
+    if lyr.TestCapability(ogr.OLCAlterFieldDefn) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(-1, ogr.FieldDefn('foo'), ogr.ALTER_ALL_FLAG)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(1, ogr.FieldDefn('foo'), ogr.ALTER_ALL_FLAG)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn(lyr.GetGeometryColumn()), ogr.ALTER_ALL_FLAG)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn(lyr.GetFIDColumn()), ogr.ALTER_ALL_FLAG)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('baz'), ogr.ALTER_ALL_FLAG)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if lyr.AlterFieldDefn(0, ogr.FieldDefn('bar'), ogr.ALTER_ALL_FLAG) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 10 or f['bar'] != 'value' or \
+    f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr.StartTransaction()
+    if lyr.AlterFieldDefn(0, ogr.FieldDefn('baw'), ogr.ALTER_ALL_FLAG) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CommitTransaction()
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 10 or f['baw'] != 'value' or \
+       f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Check that index has been recreated
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE name = 'my_idx'")
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds.ExecuteSQL('VACUUM')
+
+    ds = None
+
+    # Try on read-only dataset
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('foo'), ogr.ALTER_ALL_FLAG)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(dbname, 'rb')
+    content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
+    gdal.VSIFCloseL(f)
+
+    if content.find('foo') >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.gpkg_dr.DeleteDataSource(dbname)
+
+    # Test failed DB re-opening
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPolygon )
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    # Unlink before AlterFieldDefn
+    gdal.Unlink(dbname)
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('bar'), ogr.ALTER_ALL_FLAG)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
@@ -2487,9 +2646,12 @@ gdaltest_list = [
     ogr_gpkg_33,
     ogr_gpkg_34,
     ogr_gpkg_35,
+    ogr_gpkg_36,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
+
+# gdaltest_list = [ ogr_gpkg_1, ogr_gpkg_36, ogr_gpkg_cleanup ]
 
 if __name__ == '__main__':
 

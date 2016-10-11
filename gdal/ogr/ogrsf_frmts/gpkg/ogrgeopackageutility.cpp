@@ -726,6 +726,19 @@ char** SQLTokenize( const char* pszStr )
             }
             bInSpace = true;
         }
+        else if( (*pszStr == '(' || *pszStr == ')' || *pszStr == ',')  && !bInQuote )
+        {
+            if( !bInSpace )
+            {
+                papszTokens = CSLAddString(papszTokens, osCurrentToken);
+                osCurrentToken.clear();
+            }
+            osCurrentToken.clear();
+            osCurrentToken += *pszStr;
+            papszTokens = CSLAddString(papszTokens, osCurrentToken);
+            osCurrentToken.clear();
+            bInSpace = true;
+        }
         else if( *pszStr == '"' || *pszStr == '\'' )
         {
             if( bInQuote && *pszStr == chQuoteChar && pszStr[1] == chQuoteChar )
