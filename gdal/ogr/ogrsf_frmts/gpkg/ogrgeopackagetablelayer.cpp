@@ -1797,7 +1797,8 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
          EQUAL(pszCap, OLCSequentialWrite) ||
          EQUAL(pszCap, OLCDeleteFeature) ||
          EQUAL(pszCap, OLCRandomWrite) ||
-         EQUAL(pszCap, OLCDeleteField) )
+         EQUAL(pszCap, OLCDeleteField) ||
+         EQUAL(pszCap, OLCAlterFieldDefn) )
     {
         return m_poDS->GetUpdate();
     }
@@ -1843,7 +1844,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 /*                       CreateSpatialIndex()                           */
 /************************************************************************/
 
-bool OGRGeoPackageTableLayer::CreateSpatialIndex()
+bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 {
     OGRErr err;
 
@@ -1869,7 +1870,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex()
     if( m_poDS->CreateExtensionsTableIfNecessary() != OGRERR_NONE )
         return false;
 
-    const char* pszT = m_pszTableName;
+    const char* pszT = (pszTableName) ? pszTableName : m_pszTableName;
     const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
     const char* pszI = GetFIDColumn();
 
@@ -2333,7 +2334,8 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
         return;
     }
 
-    m_poDS->SoftStartTransaction();
+    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
+        return;
 
     const bool bHasSpatialIndex = HasSpatialIndex();
     if( bHasSpatialIndex )
@@ -2414,17 +2416,19 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
         eErr = m_poDS->PragmaCheck("foreign_key_check", "", 0);
     }
 
-    if( eErr == OGRERR_NONE )
+    if( eErr == OGRERR_NONE)
     {
-        CPLFree(m_pszTableName);
-        m_pszTableName = CPLStrdup(pszDstTableName);
-
         if( bHasSpatialIndex )
         {
-            CreateSpatialIndex();
+            CreateSpatialIndex(pszDstTableName);
         }
 
-        m_poDS->SoftCommitTransaction();
+        eErr = m_poDS->SoftCommitTransaction();
+        if( eErr == OGRERR_NONE)
+        {
+            CPLFree(m_pszTableName);
+            m_pszTableName = CPLStrdup(pszDstTableName);
+        }
     }
     else
     {
@@ -2961,97 +2965,18 @@ CPLErr OGRGeoPackageTableLayer::SetMetadataItem( const char * pszName,
 }
 
 /************************************************************************/
-/*                             DeleteField()                            */
+/*                          RecreateTable()                             */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
+OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreate,
+                                              const CPLString& osFieldListForSelect)
 {
-    if ( !m_poDS->GetUpdate() )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteField");
-        return OGRERR_FAILURE;
-    }
-
-    if (iFieldToDelete < 0 || iFieldToDelete >= m_poFeatureDefn->GetFieldCount())
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Invalid field index");
-        return OGRERR_FAILURE;
-    }
-
-    ResetReading();
-    RunDeferredCreationIfNecessary();
-    CreateSpatialIndexIfNecessary();
-
-/* -------------------------------------------------------------------- */
-/*      Build list of old fields, and the list of new fields.           */
-/* -------------------------------------------------------------------- */
-    CPLString osFieldListForSelect;
-
-    char *pszSQL = NULL;
-    bool bNeedComma = false;
-
-    if( m_pszFidColumn != NULL )
-    {
-        pszSQL = sqlite3_mprintf("\"%w\"", m_pszFidColumn);
-        osFieldListForSelect += pszSQL;
-        sqlite3_free(pszSQL);
-        bNeedComma = true;
-    }
-
-    if( GetGeomType() != wkbNone )
-    {
-        if( bNeedComma )
-        {
-            osFieldListForSelect += ", ";
-        }
-        bNeedComma = true;
-
-        pszSQL = sqlite3_mprintf("\"%w\"", GetGeometryColumn());
-        osFieldListForSelect += pszSQL;
-        sqlite3_free(pszSQL);
-    }
-
-    std::vector<OGRFieldDefn*> apoFields;
-    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
-    {
-        if (iField == iFieldToDelete)
-            continue;
-
-        OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
-        apoFields.push_back(poFieldDefn);
-
-        if( bNeedComma )
-        {
-            osFieldListForSelect += ", ";
-        }
-        bNeedComma = true;
-
-        pszSQL = sqlite3_mprintf("\"%w\"", poFieldDefn->GetNameRef());
-        osFieldListForSelect += pszSQL;
-        sqlite3_free(pszSQL);
-    }
-
-    CPLString osColumnsForCreate( GetColumnsOfCreateTable(apoFields) );
-
-/* -------------------------------------------------------------------- */
-/*      Drop any iterator since we change the DB structure              */
-/* -------------------------------------------------------------------- */
-    m_poDS->ResetReadingAllLayers();
-
-/* -------------------------------------------------------------------- */
-/*      Recreate table in a transaction                                 */
-/* -------------------------------------------------------------------- */
-    m_poDS->SoftStartTransaction();
-
 /* -------------------------------------------------------------------- */
 /*      Save existing related triggers and index                        */
 /* -------------------------------------------------------------------- */
     sqlite3 *hDB = m_poDS->GetDB();
 
-    pszSQL = sqlite3_mprintf(
+    char* pszSQL = sqlite3_mprintf(
         "SELECT sql FROM sqlite_master WHERE type IN ('trigger','index') "
         "AND tbl_name='%q'",
         m_pszTableName );
@@ -3075,7 +3000,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
         pszSQL = sqlite3_mprintf(
                 "INSERT INTO \"%w_ogr_tmp\" SELECT %s FROM \"%w\"",
                 m_pszTableName,
-                    osFieldListForSelect.c_str(),
+                osFieldListForSelect.c_str(),
                 m_pszTableName);
         eErr = SQLCommand( hDB, pszSQL );
         sqlite3_free(pszSQL);
@@ -3116,17 +3041,155 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 
     SQLResultFree( &oTriggers );
 
+    return eErr;
+}
+
+/************************************************************************/
+/*                          BuildSelectFieldList()                      */
+/************************************************************************/
+
+CPLString OGRGeoPackageTableLayer::BuildSelectFieldList( int iFieldToDelete )
+{
+    CPLString osFieldListForSelect;
+
+    char *pszSQL = NULL;
+    bool bNeedComma = false;
+
+    if( m_pszFidColumn != NULL )
+    {
+        pszSQL = sqlite3_mprintf("\"%w\"", m_pszFidColumn);
+        osFieldListForSelect += pszSQL;
+        sqlite3_free(pszSQL);
+        bNeedComma = true;
+    }
+
+    if( GetGeomType() != wkbNone )
+    {
+        if( bNeedComma )
+        {
+            osFieldListForSelect += ", ";
+        }
+        bNeedComma = true;
+
+        pszSQL = sqlite3_mprintf("\"%w\"", GetGeometryColumn());
+        osFieldListForSelect += pszSQL;
+        sqlite3_free(pszSQL);
+    }
+
+    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        if (iField == iFieldToDelete)
+            continue;
+
+        if( bNeedComma )
+        {
+            osFieldListForSelect += ", ";
+        }
+        bNeedComma = true;
+
+        OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
+        pszSQL = sqlite3_mprintf("\"%w\"", poFieldDefn->GetNameRef());
+        osFieldListForSelect += pszSQL;
+        sqlite3_free(pszSQL);
+    }
+
+    return osFieldListForSelect;
+}
+
+/************************************************************************/
+/*                               IsTable()                              */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::IsTable()
+{
+    SQLResult oResultTable;
+    char* pszSQL = sqlite3_mprintf(
+        "SELECT * FROM sqlite_master WHERE name = '%q' AND type = 'table'",
+         m_pszTableName);
+    OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
+    const bool bIsTable = ( err == OGRERR_NONE &&
+                                  oResultTable.nRowCount == 1 );
+    SQLResultFree(&oResultTable);
+    return bIsTable;
+}
+
+/************************************************************************/
+/*                             DeleteField()                            */
+/************************************************************************/
+
+OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
+{
+    if ( !m_poDS->GetUpdate() )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "DeleteField");
+        return OGRERR_FAILURE;
+    }
+
+    if (iFieldToDelete < 0 || iFieldToDelete >= m_poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    ResetReading();
+    RunDeferredCreationIfNecessary();
+    CreateSpatialIndexIfNecessary();
+
+/* -------------------------------------------------------------------- */
+/*      Check that is a table and not a view                            */
+/* -------------------------------------------------------------------- */
+    if( !IsTable() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Layer %s is not a table",
+                 m_pszTableName);
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+    CPLString osFieldListForSelect( BuildSelectFieldList(iFieldToDelete) );
+
+    std::vector<OGRFieldDefn*> apoFields;
+    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        if (iField == iFieldToDelete)
+            continue;
+
+        OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
+        apoFields.push_back(poFieldDefn);
+    }
+
+    CPLString osColumnsForCreate( GetColumnsOfCreateTable(apoFields) );
+
+/* -------------------------------------------------------------------- */
+/*      Drop any iterator since we change the DB structure              */
+/* -------------------------------------------------------------------- */
+    m_poDS->ResetReadingAllLayers();
+
+/* -------------------------------------------------------------------- */
+/*      Recreate table in a transaction                                 */
+/* -------------------------------------------------------------------- */
+    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    OGRErr eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
+
 /* -------------------------------------------------------------------- */
 /*      Update gpkg_extensions if needed.                               */
 /* -------------------------------------------------------------------- */
     if( m_poDS->HasExtensionsTable() )
     {
-        pszSQL = sqlite3_mprintf(
+        char* pszSQL = sqlite3_mprintf(
             "DELETE FROM gpkg_extensions WHERE table_name = '%q' AND "
             "column_name = '%q'",
             m_pszTableName,
             m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef() );
-        eErr = SQLCommand( hDB, pszSQL );
+        eErr = SQLCommand( m_poDS->GetDB(), pszSQL );
         sqlite3_free(pszSQL);
     }
 
@@ -3135,12 +3198,12 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 /* -------------------------------------------------------------------- */
     if( m_poDS->HasDataColumnsTable() )
     {
-        pszSQL = sqlite3_mprintf(
+        char* pszSQL = sqlite3_mprintf(
             "DELETE FROM gpkg_data_columns WHERE table_name = '%q' AND "
             "column_name = '%q'",
             m_pszTableName,
             m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef() );
-        eErr = SQLCommand( hDB, pszSQL );
+        eErr = SQLCommand( m_poDS->GetDB(), pszSQL );
         sqlite3_free(pszSQL);
     }
 
@@ -3157,9 +3220,13 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 /* -------------------------------------------------------------------- */
     if( eErr == OGRERR_NONE)
     {
-        m_poDS->SoftCommitTransaction();
+        eErr = m_poDS->SoftCommitTransaction();
+        if( eErr == OGRERR_NONE)
+        {
+            eErr = m_poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
 
-        eErr = m_poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
+            ResetReading();
+        }
     }
     else
     {
@@ -3169,3 +3236,341 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
     return eErr;
 }
 
+/************************************************************************/
+/*                           AlterFieldDefn()                           */
+/************************************************************************/
+
+OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
+                                                OGRFieldDefn* poNewFieldDefn,
+                                                int nFlagsIn )
+{
+    if ( !m_poDS->GetUpdate() )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "AlterFieldDefn");
+        return OGRERR_FAILURE;
+    }
+
+    if (iFieldToAlter < 0 || iFieldToAlter >= m_poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Defered actions, reset state.                                   */
+/* -------------------------------------------------------------------- */
+    ResetReading();
+    RunDeferredCreationIfNecessary();
+    CreateSpatialIndexIfNecessary();
+
+/* -------------------------------------------------------------------- */
+/*      Check that is a table and not a view                            */
+/* -------------------------------------------------------------------- */
+    if( !IsTable() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Layer %s is not a table",
+                 m_pszTableName);
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check that the new column name is not a duplicate.              */
+/* -------------------------------------------------------------------- */
+
+    const CPLString osOldColName(
+            m_poFeatureDefn->GetFieldDefn(iFieldToAlter)->GetNameRef() );
+    const CPLString osNewColName( (nFlagsIn & ALTER_NAME_FLAG) ?
+                                  CPLString(poNewFieldDefn->GetNameRef()) :
+                                  osOldColName );
+
+    const bool bRenameCol =
+        (nFlagsIn & ALTER_NAME_FLAG) &&
+        strcmp(poNewFieldDefn->GetNameRef(), osOldColName) != 0;
+    if( bRenameCol )
+    {
+        if( (m_pszFidColumn &&
+             strcmp(poNewFieldDefn->GetNameRef(), m_pszFidColumn) == 0) ||
+            (GetGeomType() != wkbNone &&
+             strcmp(poNewFieldDefn->GetNameRef(),
+                    m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) == 0) ||
+            m_poFeatureDefn->GetFieldIndex(poNewFieldDefn->GetNameRef()) >= 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Field name %s is already used for another field",
+                      poNewFieldDefn->GetNameRef());
+            return OGRERR_FAILURE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+    std::vector<OGRFieldDefn*> apoFields;
+    OGRFieldDefn oTmpFieldDefn(m_poFeatureDefn->GetFieldDefn(iFieldToAlter));
+    if( (nFlagsIn & ALTER_NAME_FLAG) )
+        oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
+    if( (nFlagsIn & ALTER_TYPE_FLAG) )
+        oTmpFieldDefn.SetType(poNewFieldDefn->GetType());
+    if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
+    {
+        oTmpFieldDefn.SetWidth(poNewFieldDefn->GetWidth());
+        oTmpFieldDefn.SetPrecision(poNewFieldDefn->GetPrecision());
+    }
+    if( (nFlagsIn & ALTER_NULLABLE_FLAG) )
+    {
+        oTmpFieldDefn.SetNullable(poNewFieldDefn->IsNullable());
+    }
+    if( (nFlagsIn & ALTER_DEFAULT_FLAG) )
+    {
+        oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
+    }
+    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        OGRFieldDefn *poFieldDefn;
+        if (iField == iFieldToAlter)
+        {
+            poFieldDefn = &oTmpFieldDefn;
+        }
+        else
+        {
+            poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
+        }
+        apoFields.push_back(poFieldDefn);
+    }
+
+    const CPLString osColumnsForCreate( GetColumnsOfCreateTable(apoFields) );
+
+/* -------------------------------------------------------------------- */
+/*      Drop any iterator since we change the DB structure              */
+/* -------------------------------------------------------------------- */
+    m_poDS->ResetReadingAllLayers();
+
+    const bool bUseFastMethod = ( m_poDS->nSoftTransactionLevel == 0 );
+
+    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    sqlite3 *hDB = m_poDS->GetDB();
+    SQLResult oTriggers;
+    SQLResultInit(&oTriggers);
+    OGRErr eErr = OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Drop triggers and index that look like to be related to the     */
+/*      column if renaming. We re-install some indexes afterwards.      */
+/* -------------------------------------------------------------------- */
+    if( bRenameCol )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT name, type, sql FROM sqlite_master WHERE "
+            "type IN ('trigger','index') "
+            "AND tbl_name='%q' AND sql LIKE '%%%q%%'",
+            m_pszTableName,
+            SQLEscapeDoubleQuote(osOldColName).c_str() );
+        eErr = SQLQuery(hDB, pszSQL, &oTriggers);
+        sqlite3_free(pszSQL);
+
+        for( int i = 0; i < oTriggers.nRowCount && eErr == OGRERR_NONE ; i++)
+        {
+            pszSQL = sqlite3_mprintf("DROP %s \"%w\"",
+                                     SQLResultGetValue(&oTriggers, 1, i),
+                                     SQLResultGetValue(&oTriggers, 0, i));
+            eErr = SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+    }
+
+    if( !bUseFastMethod )
+    {
+/* -------------------------------------------------------------------- */
+/*      If we are withing a transaction, we cannot use the method       */
+/*      that consists in altering the database in a raw way.            */
+/* -------------------------------------------------------------------- */
+        const CPLString osFieldListForSelect( BuildSelectFieldList(-1) );
+
+        if( eErr == OGRERR_NONE )
+        {
+            eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
+        }
+    }
+    else
+    {
+/* -------------------------------------------------------------------- */
+/*      Rewrite schema in a transaction by altering the database        */
+/*      schema in a rather raw way, as discribed at bottom of           */
+/*      https://www.sqlite.org/lang_altertable.html                     */
+/* -------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------- */
+/*      Collect schema version number.                                  */
+/* -------------------------------------------------------------------- */
+        int nSchemaVersion = SQLGetInteger(hDB,
+                                        "PRAGMA schema_version",
+                                        &eErr);
+
+/* -------------------------------------------------------------------- */
+/*      Turn on writable schema.                                        */
+/* -------------------------------------------------------------------- */
+        if( eErr == OGRERR_NONE )
+        {
+            eErr = m_poDS->PragmaCheck( "writable_schema=ON", "", 0 );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Rewrite CREATE TABLE statement.                                 */
+/* -------------------------------------------------------------------- */
+        if( eErr == OGRERR_NONE )
+        {
+            char* psSQLCreateTable = sqlite3_mprintf("CREATE TABLE \"%w\" (%s)",
+                                    m_pszTableName,
+                                    osColumnsForCreate.c_str());
+            char* pszSQL = sqlite3_mprintf(
+                "UPDATE sqlite_master SET sql='%q' WHERE type='table' AND name='%q'",
+                psSQLCreateTable, m_pszTableName);
+            eErr = SQLCommand( hDB, pszSQL );
+            sqlite3_free(psSQLCreateTable);
+            sqlite3_free(pszSQL);
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Increment schema number.                                        */
+/* -------------------------------------------------------------------- */
+        if( eErr == OGRERR_NONE )
+        {
+            char* pszSQL = sqlite3_mprintf(
+                "PRAGMA schema_version = %d", nSchemaVersion + 1);
+            eErr = SQLCommand( hDB, pszSQL );
+            sqlite3_free(pszSQL);
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Turn off writable schema.                                        */
+/* -------------------------------------------------------------------- */
+        if( eErr == OGRERR_NONE )
+        {
+            eErr = m_poDS->PragmaCheck( "writable_schema=OFF", "", 0 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update gpkg_extensions if needed.                               */
+/* -------------------------------------------------------------------- */
+    if( bRenameCol && eErr == OGRERR_NONE && m_poDS->HasExtensionsTable() )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_extensions SET column_name = '%q' WHERE "
+            "table_name = '%q' AND column_name = '%q'",
+            poNewFieldDefn->GetNameRef(),
+            m_pszTableName,
+            osOldColName.c_str() );
+        eErr = SQLCommand( hDB, pszSQL );
+        sqlite3_free(pszSQL);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update gpkg_data_columns if needed.                             */
+/* -------------------------------------------------------------------- */
+    if( bRenameCol && eErr == OGRERR_NONE && m_poDS->HasDataColumnsTable() )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_data_columns SET column_name = '%q' WHERE "
+            "table_name = '%q' AND column_name = '%q'",
+            poNewFieldDefn->GetNameRef(),
+            m_pszTableName,
+            osOldColName.c_str() );
+        eErr = SQLCommand( hDB, pszSQL );
+        sqlite3_free(pszSQL);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Run integrity check.                                            */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE )
+    {
+        eErr = m_poDS->PragmaCheck("integrity_check", "ok", 1);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Finish                                                          */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE)
+    {
+        eErr = m_poDS->SoftCommitTransaction();
+
+        // We need to force database reopening due to schema change
+        if( eErr == OGRERR_NONE && bUseFastMethod && !m_poDS->ReOpenDB() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot reopen database");
+            eErr = OGRERR_FAILURE;
+        }
+        hDB = m_poDS->GetDB();
+
+/* -------------------------------------------------------------------- */
+/*      Recreate indices.                                               */
+/* -------------------------------------------------------------------- */
+        for( int i = 0; i < oTriggers.nRowCount && eErr == OGRERR_NONE ; i++)
+        {
+            if( EQUAL(SQLResultGetValue(&oTriggers, 1, i), "index") )
+            {
+                CPLString osSQL( SQLResultGetValue(&oTriggers, 2, i) );
+                // CREATE INDEX idx_name ON table_name(column_name)
+                char** papszTokens = SQLTokenize( osSQL );
+                if( CSLCount(papszTokens) == 8 &&
+                    EQUAL(papszTokens[0], "CREATE") &&
+                    EQUAL(papszTokens[1], "INDEX") &&
+                    EQUAL(papszTokens[3], "ON") &&
+                    EQUAL(papszTokens[5], "(") &&
+                    EQUAL(papszTokens[7], ")") )
+                {
+                    osSQL = "CREATE INDEX ";
+                    osSQL += papszTokens[2];
+                    osSQL += " ON ";
+                    osSQL += papszTokens[4];
+                    osSQL += "(\"";
+                    osSQL += SQLEscapeDoubleQuote(osNewColName);
+                    osSQL += "\")";
+                    eErr = SQLCommand(hDB, osSQL);
+                }
+                CSLDestroy(papszTokens);
+            }
+        }
+
+        if( eErr == OGRERR_NONE )
+        {
+            OGRFieldDefn* poFieldDefn =
+                m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
+
+            if (nFlagsIn & ALTER_TYPE_FLAG)
+            {
+                poFieldDefn->SetType(poNewFieldDefn->GetType());
+            }
+            if (nFlagsIn & ALTER_NAME_FLAG)
+            {
+                poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
+            }
+            if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
+            {
+                poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
+                poFieldDefn->SetPrecision(poNewFieldDefn->GetPrecision());
+            }
+            if (nFlagsIn & ALTER_NULLABLE_FLAG)
+                poFieldDefn->SetNullable(poNewFieldDefn->IsNullable());
+            if (nFlagsIn & ALTER_DEFAULT_FLAG)
+                poFieldDefn->SetDefault(poNewFieldDefn->GetDefault());
+
+            ResetReading();
+        }
+    }
+    else
+    {
+        m_poDS->SoftRollbackTransaction();
+    }
+
+    SQLResultFree(&oTriggers);
+
+    return eErr;
+}

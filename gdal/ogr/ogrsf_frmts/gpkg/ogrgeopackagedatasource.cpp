@@ -148,6 +148,21 @@ OGRErr GDALGeoPackageDataset::SetApplicationId()
 }
 
 
+bool GDALGeoPackageDataset::ReOpenDB()
+{
+    CPLAssert( hDB != NULL );
+    CPLAssert( m_pszFilename != NULL );
+
+#ifdef SPATIALITE_412_OR_LATER
+    FinishNewSpatialite();
+#endif
+    CloseDB();
+
+    /* And re-open the file */
+    return OpenOrCreateDB(SQLITE_OPEN_READWRITE);
+}
+
+
 /* Returns the first row of first column of SQL as integer */
 OGRErr GDALGeoPackageDataset::PragmaCheck(
     const char * pszPragma, const char * pszExpected, int nRowsExpected )
@@ -3586,7 +3601,8 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 
     CPLDebug( "GPKG", "DeleteLayer(%s)", osLayerName.c_str() );
 
-    SoftStartTransaction();
+    if( SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
 
     if( m_papoLayers[iLayer]->HasSpatialIndex() )
         m_papoLayers[iLayer]->DropSpatialIndex();
@@ -3648,13 +3664,15 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 
     if( eErr == OGRERR_NONE )
     {
-        /* Delete the layer object and remove the gap in the layers list */
-        delete m_papoLayers[iLayer];
-        memmove( m_papoLayers + iLayer, m_papoLayers + iLayer + 1,
-                sizeof(void *) * (m_nLayers - iLayer - 1) );
-        m_nLayers--;
-
-        SoftCommitTransaction();
+        eErr = SoftCommitTransaction();
+        if( eErr == OGRERR_NONE )
+        {
+            /* Delete the layer object and remove the gap in the layers list */
+            delete m_papoLayers[iLayer];
+            memmove( m_papoLayers + iLayer, m_papoLayers + iLayer + 1,
+                    sizeof(void *) * (m_nLayers - iLayer - 1) );
+            m_nLayers--;
+        }
     }
     else
     {
@@ -3663,8 +3681,6 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 
     return eErr;
 }
-
-
 
 /************************************************************************/
 /*                       TestCapability()                               */
@@ -3789,6 +3805,22 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     if( EQUAL(pszSQLCommand, "VACUUM") )
     {
         ResetReadingAllLayers();
+    }
+
+    if( EQUAL(pszSQLCommand, "BEGIN") )
+    {
+        SoftStartTransaction();
+        return NULL;
+    }
+    else if( EQUAL(pszSQLCommand, "COMMIT") )
+    {
+        SoftCommitTransaction();
+        return NULL;
+    }
+    else if( EQUAL(pszSQLCommand, "ROLLBACK") )
+    {
+        SoftRollbackTransaction();
+        return NULL;
     }
 
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
