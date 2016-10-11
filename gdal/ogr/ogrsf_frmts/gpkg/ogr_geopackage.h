@@ -371,6 +371,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
+    void                RecomputeExtent();
 
     OGRErr              ReadTableDefinition(bool bIsSpatial, bool bIsGpkgTable);
     void                SetCreationParameters( OGRwkbGeometryType eGType,

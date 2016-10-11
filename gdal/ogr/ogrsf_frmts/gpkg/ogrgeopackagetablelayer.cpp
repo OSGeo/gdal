@@ -1772,20 +1772,45 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     if ( bForce )
     {
         OGRErr err = OGRLayer::GetExtent(psExtent, bForce);
-        if ( err != OGRERR_NONE )
-            return err;
-
-        if ( ! m_poExtent )
+        delete m_poExtent;
+        m_poExtent = NULL;
+        if( err == OGRERR_NONE )
+        {
             m_poExtent = new OGREnvelope( *psExtent );
+            m_bExtentChanged = true;
+            SaveExtent();
+        }
         else
-            *m_poExtent = *psExtent;
-        return SaveExtent();
+        {
+            char *pszSQL = sqlite3_mprintf(
+                "UPDATE gpkg_contents SET "
+                "min_x = NULL, min_y = NULL, "
+                "max_x = NULL, max_y = NULL "
+                "WHERE table_name = '%q' AND "
+                "Lower(data_type) = 'features'",
+                m_pszTableName);
+            SQLCommand( m_poDS->GetDB(), pszSQL);
+            sqlite3_free(pszSQL);
+            m_bExtentChanged = false;
+        }
+        return err;
     }
 
     return OGRERR_FAILURE;
 }
 
+/************************************************************************/
+/*                      RecomputeExtent()                               */
+/************************************************************************/
 
+void OGRGeoPackageTableLayer::RecomputeExtent()
+{
+    m_bExtentChanged = true;
+    delete m_poExtent;
+    m_poExtent = NULL;
+    OGREnvelope sExtent;
+    GetExtent(&sExtent, true);
+}
 
 /************************************************************************/
 /*                      TestCapability()                                */
