@@ -1798,7 +1798,8 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
          EQUAL(pszCap, OLCDeleteFeature) ||
          EQUAL(pszCap, OLCRandomWrite) ||
          EQUAL(pszCap, OLCDeleteField) ||
-         EQUAL(pszCap, OLCAlterFieldDefn) )
+         EQUAL(pszCap, OLCAlterFieldDefn) ||
+         EQUAL(pszCap, OLCReorderFields) )
     {
         return m_poDS->GetUpdate();
     }
@@ -3048,7 +3049,7 @@ OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreat
 /*                          BuildSelectFieldList()                      */
 /************************************************************************/
 
-CPLString OGRGeoPackageTableLayer::BuildSelectFieldList( int iFieldToDelete )
+CPLString OGRGeoPackageTableLayer::BuildSelectFieldList(const std::vector<OGRFieldDefn*> apoFields)
 {
     CPLString osFieldListForSelect;
 
@@ -3076,18 +3077,15 @@ CPLString OGRGeoPackageTableLayer::BuildSelectFieldList( int iFieldToDelete )
         sqlite3_free(pszSQL);
     }
 
-    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    for( size_t iField = 0; iField < apoFields.size(); iField++ )
     {
-        if (iField == iFieldToDelete)
-            continue;
-
         if( bNeedComma )
         {
             osFieldListForSelect += ", ";
         }
         bNeedComma = true;
 
-        OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
+        OGRFieldDefn *poFieldDefn = apoFields[iField];
         pszSQL = sqlite3_mprintf("\"%w\"", poFieldDefn->GetNameRef());
         osFieldListForSelect += pszSQL;
         sqlite3_free(pszSQL);
@@ -3152,8 +3150,6 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
-    CPLString osFieldListForSelect( BuildSelectFieldList(iFieldToDelete) );
-
     std::vector<OGRFieldDefn*> apoFields;
     for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
     {
@@ -3164,6 +3160,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
         apoFields.push_back(poFieldDefn);
     }
 
+    CPLString osFieldListForSelect( BuildSelectFieldList(apoFields) );
     CPLString osColumnsForCreate( GetColumnsOfCreateTable(apoFields) );
 
 /* -------------------------------------------------------------------- */
@@ -3309,7 +3306,6 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
-    std::vector<OGRFieldDefn*> apoFields;
     OGRFieldDefn oTmpFieldDefn(m_poFeatureDefn->GetFieldDefn(iFieldToAlter));
     if( (nFlagsIn & ALTER_NAME_FLAG) )
         oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
@@ -3328,6 +3324,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     {
         oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
     }
+    std::vector<OGRFieldDefn*> apoFields;
+    std::vector<OGRFieldDefn*> apoFieldsOld;
     for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFieldDefn;
@@ -3340,6 +3338,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
             poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
         }
         apoFields.push_back(poFieldDefn);
+        apoFieldsOld.push_back(m_poFeatureDefn->GetFieldDefn(iField));
     }
 
     const CPLString osColumnsForCreate( GetColumnsOfCreateTable(apoFields) );
@@ -3390,7 +3389,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /*      If we are withing a transaction, we cannot use the method       */
 /*      that consists in altering the database in a raw way.            */
 /* -------------------------------------------------------------------- */
-        const CPLString osFieldListForSelect( BuildSelectFieldList(-1) );
+        const CPLString osFieldListForSelect( BuildSelectFieldList(apoFieldsOld) );
 
         if( eErr == OGRERR_NONE )
         {
@@ -3571,6 +3570,91 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     }
 
     SQLResultFree(&oTriggers);
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                           ReorderFields()                            */
+/************************************************************************/
+
+OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
+{
+    if ( !m_poDS->GetUpdate() )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "ReorderFields");
+        return OGRERR_FAILURE;
+    }
+
+    if (m_poFeatureDefn->GetFieldCount() == 0)
+        return OGRERR_NONE;
+
+    OGRErr eErr = OGRCheckPermutation(panMap, m_poFeatureDefn->GetFieldCount());
+    if (eErr != OGRERR_NONE)
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Defered actions, reset state.                                   */
+/* -------------------------------------------------------------------- */
+    ResetReading();
+    RunDeferredCreationIfNecessary();
+    CreateSpatialIndexIfNecessary();
+
+/* -------------------------------------------------------------------- */
+/*      Check that is a table and not a view                            */
+/* -------------------------------------------------------------------- */
+    if( !IsTable() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Layer %s is not a table",
+                 m_pszTableName);
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Drop any iterator since we change the DB structure              */
+/* -------------------------------------------------------------------- */
+    m_poDS->ResetReadingAllLayers();
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+    std::vector<OGRFieldDefn*> apoFields;
+    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(panMap[iField]);
+        apoFields.push_back(poFieldDefn);
+    }
+
+    const CPLString osFieldListForSelect( BuildSelectFieldList(apoFields) );
+    const CPLString osColumnsForCreate( GetColumnsOfCreateTable(apoFields) );
+
+/* -------------------------------------------------------------------- */
+/*      Recreate table in a transaction                                 */
+/* -------------------------------------------------------------------- */
+    if( m_poDS->SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
+
+/* -------------------------------------------------------------------- */
+/*      Finish                                                          */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE)
+    {
+        eErr = m_poDS->SoftCommitTransaction();
+
+        if( eErr == OGRERR_NONE )
+            eErr = m_poFeatureDefn->ReorderFieldDefns( panMap );
+
+        ResetReading();
+    }
+    else
+    {
+        m_poDS->SoftRollbackTransaction();
+    }
 
     return eErr;
 }
