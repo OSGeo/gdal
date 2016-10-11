@@ -34,6 +34,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 #include "cpl_minixml.h"
+#include "gmlutils.h"
 
 #include <vector>
 
@@ -322,6 +323,7 @@ class CPL_DLL IGMLReader
 IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
                             bool bInvertAxisOrderIfLatLong,
                             bool bConsiderEPSGAsURN,
+                            GMLSwapCoordinatesEnum eSwapCoordinates,
                             bool bGetSecondaryGeometryOption);
 
 

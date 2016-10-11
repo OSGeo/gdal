@@ -63,6 +63,7 @@ IGMLReader::~IGMLReader()
 IGMLReader *CreateGMLReader(bool /*bUseExpatParserPreferably*/,
                             bool /*bInvertAxisOrderIfLatLong*/,
                             bool /*bConsiderEPSGAsURN*/,
+                            GMLSwapCoordinatesEnum /* eSwapCoordinates */,
                             bool /*bGetSecondaryGeometryOption*/)
 {
     CPLError( CE_Failure, CPLE_AppDefined,
@@ -85,12 +86,14 @@ IGMLReader *CreateGMLReader(bool /*bUseExpatParserPreferably*/,
 IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
                             bool bInvertAxisOrderIfLatLong,
                             bool bConsiderEPSGAsURN,
+                            GMLSwapCoordinatesEnum eSwapCoordinates,
                             bool bGetSecondaryGeometryOption)
 
 {
     return new GMLReader(bUseExpatParserPreferably,
                          bInvertAxisOrderIfLatLong,
                          bConsiderEPSGAsURN,
+                         eSwapCoordinates,
                          bGetSecondaryGeometryOption);
 }
 
@@ -111,6 +114,7 @@ CPL_UNUSED
                      bool bUseExpatParserPreferably,
                      bool bInvertAxisOrderIfLatLong,
                      bool bConsiderEPSGAsURN,
+                     GMLSwapCoordinatesEnum eSwapCoordinates,
                      bool bGetSecondaryGeometryOption ) :
     m_bClassListLocked(false),
     m_nClassCount(0),
@@ -147,6 +151,7 @@ CPL_UNUSED
         CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"))),
     m_bInvertAxisOrderIfLatLong(bInvertAxisOrderIfLatLong),
     m_bConsiderEPSGAsURN(bConsiderEPSGAsURN),
+    m_eSwapCoordinates(eSwapCoordinates),
     m_bGetSecondaryGeometryOption(bGetSecondaryGeometryOption),
     m_pszGlobalSRSName(NULL),
     m_bCanUseGlobalSRSName(false),
@@ -1387,7 +1392,9 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
                 papsGeometry, true, m_bInvertAxisOrderIfLatLong,
-                NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption,
+                NULL, m_bConsiderEPSGAsURN,
+                m_eSwapCoordinates,
+                m_bGetSecondaryGeometryOption,
                 hCacheSRS, m_bFaceHoleNegative );
 
             if( poGeometry != NULL && poClass->GetGeometryPropertyCount() > 0 )
