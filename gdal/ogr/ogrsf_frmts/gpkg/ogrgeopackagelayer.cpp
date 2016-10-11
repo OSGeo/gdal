@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Implements OGRGeoPackageLayer class
@@ -32,6 +31,8 @@
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
 
+CPL_CVSID("$Id: ogrgeopackagelayer.cpp 35503 2016-09-23 18:22:45Z goatbar $");
+
 /************************************************************************/
 /*                      OGRGeoPackageLayer()                            */
 /************************************************************************/
@@ -41,13 +42,12 @@ OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) :
     m_poFeatureDefn(NULL),
     iNextShapeId(0),
     m_poQueryStatement(NULL),
-    bDoStep(TRUE),
+    bDoStep(true),
     m_pszFidColumn(NULL),
     iFIDCol(-1),
     iGeomCol(-1),
     panFieldOrdinals(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                      ~OGRGeoPackageLayer()                           */
@@ -103,8 +103,6 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 {
     for( ; true; )
     {
-        OGRFeature      *poFeature;
-
         if( m_poQueryStatement == NULL )
         {
             ResetStatement();
@@ -117,9 +115,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
     /* -------------------------------------------------------------------- */
         if( bDoStep )
         {
-            int rc;
-
-            rc = sqlite3_step( m_poQueryStatement );
+            int rc = sqlite3_step( m_poQueryStatement );
             if( rc != SQLITE_ROW )
             {
                 if ( rc != SQLITE_DONE )
@@ -136,9 +132,11 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
             }
         }
         else
-            bDoStep = TRUE;
+        {
+            bDoStep = true;
+        }
 
-        poFeature = TranslateFeature(m_poQueryStatement);
+        OGRFeature *poFeature = TranslateFeature(m_poQueryStatement);
         if( poFeature == NULL )
             return NULL;
 
@@ -159,7 +157,6 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 
 {
-
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
@@ -364,7 +361,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                 const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
                 GPkgHeader oHeader;
                 OGRGeometry* poGeom = NULL;
-                int nSRID;
+                int nSRID = 0;
                 if( GPkgHeaderFromWKB(pabyGpkg, nBytes, &oHeader) == OGRERR_NONE &&
                     (poGeom = GPkgGeometryToOGR(pabyGpkg, nBytes, NULL)) != NULL )
                 {
@@ -462,8 +459,9 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if (pszDeclType != NULL)
         {
             OGRFieldSubType eSubType;
-            int nMaxWidth;
-            OGRFieldType eFieldType = GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
+            int nMaxWidth = 0;
+            const OGRFieldType eFieldType =
+                GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
             if( (int)eFieldType <= OFTMaxType )
             {
                 oField.SetType(eFieldType);
