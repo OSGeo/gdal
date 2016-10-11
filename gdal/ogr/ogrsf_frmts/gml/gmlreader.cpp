@@ -66,6 +66,7 @@ IGMLReader::~IGMLReader()
 IGMLReader *CreateGMLReader(bool /*bUseExpatParserPreferably*/,
                             bool /*bInvertAxisOrderIfLatLong*/,
                             bool /*bConsiderEPSGAsURN*/,
+                            GMLSwapCoordinatesEnum /* eSwapCoordinates */,
                             bool /*bGetSecondaryGeometryOption*/)
 {
     CPLError( CE_Failure, CPLE_AppDefined,
@@ -88,12 +89,14 @@ IGMLReader *CreateGMLReader(bool /*bUseExpatParserPreferably*/,
 IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
                             bool bInvertAxisOrderIfLatLong,
                             bool bConsiderEPSGAsURN,
+                            GMLSwapCoordinatesEnum eSwapCoordinates,
                             bool bGetSecondaryGeometryOption)
 
 {
     return new GMLReader(bUseExpatParserPreferably,
                          bInvertAxisOrderIfLatLong,
                          bConsiderEPSGAsURN,
+                         eSwapCoordinates,
                          bGetSecondaryGeometryOption);
 }
 
@@ -114,6 +117,7 @@ CPL_UNUSED
                      bool bUseExpatParserPreferably,
                      bool bInvertAxisOrderIfLatLong,
                      bool bConsiderEPSGAsURN,
+                     GMLSwapCoordinatesEnum eSwapCoordinates,
                      bool bGetSecondaryGeometryOption)
 {
 #ifndef HAVE_XERCES
@@ -169,6 +173,7 @@ CPL_UNUSED
 
     m_bInvertAxisOrderIfLatLong = bInvertAxisOrderIfLatLong;
     m_bConsiderEPSGAsURN = bConsiderEPSGAsURN;
+    m_eSwapCoordinates = eSwapCoordinates;
     m_bGetSecondaryGeometryOption = bGetSecondaryGeometryOption;
 
     m_pszGlobalSRSName = NULL;
@@ -1417,7 +1422,9 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
                 papsGeometry, true, m_bInvertAxisOrderIfLatLong,
-                NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption,
+                NULL, m_bConsiderEPSGAsURN,
+                m_eSwapCoordinates,
+                m_bGetSecondaryGeometryOption,
                 hCacheSRS, m_bFaceHoleNegative );
 
             if( poGeometry != NULL && poClass->GetGeometryPropertyCount() > 0 )

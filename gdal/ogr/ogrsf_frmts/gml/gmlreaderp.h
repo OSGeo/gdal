@@ -41,6 +41,7 @@
 #include "ogr_api.h"
 #include "cpl_vsi.h"
 #include "cpl_multiproc.h"
+#include "gmlutils.h"
 
 #include <string>
 #include <vector>
@@ -431,6 +432,7 @@ private:
 
     bool          m_bInvertAxisOrderIfLatLong;
     bool          m_bConsiderEPSGAsURN;
+    GMLSwapCoordinatesEnum m_eSwapCoordinates;
     bool          m_bGetSecondaryGeometryOption;
 
     int           ParseFeatureType(CPLXMLNode *psSchemaNode,
@@ -463,7 +465,9 @@ private:
 
 public:
                 GMLReader(bool bExpatReader, bool bInvertAxisOrderIfLatLong,
-                          bool bConsiderEPSGAsURN, bool bGetSecondaryGeometryOption);
+                          bool bConsiderEPSGAsURN,
+                          GMLSwapCoordinatesEnum eSwapCoordinates,
+                          bool bGetSecondaryGeometryOption);
     virtual     ~GMLReader();
 
     bool             IsClassListLocked() const { return m_bClassListLocked; }

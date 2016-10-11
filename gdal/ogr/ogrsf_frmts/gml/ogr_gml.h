@@ -34,6 +34,7 @@
 
 #include "ogrsf_frmts.h"
 #include "gmlreader.h"
+#include "gmlutils.h"
 
 class OGRGMLDataSource;
 
@@ -147,6 +148,7 @@ class OGRGMLDataSource : public OGRDataSource
 
     bool                m_bInvertAxisOrderIfLatLong;
     bool                m_bConsiderEPSGAsURN;
+    GMLSwapCoordinatesEnum m_eSwapCoordinates;
     bool                m_bGetSecondaryGeometryOption;
 
     ReadMode            eReadMode;
@@ -199,6 +201,7 @@ class OGRGMLDataSource : public OGRDataSource
 
     bool                GetInvertAxisOrderIfLatLong() const { return m_bInvertAxisOrderIfLatLong; }
     bool                GetConsiderEPSGAsURN() const { return m_bConsiderEPSGAsURN; }
+    GMLSwapCoordinatesEnum GetSwapCoordinates() const { return m_eSwapCoordinates; }
     bool                GetSecondaryGeometryOption() const { return m_bGetSecondaryGeometryOption; }
 
     ReadMode            GetReadMode() const { return eReadMode; }
