@@ -3032,7 +3032,7 @@ OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreat
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < oTriggers.nRowCount && eErr == OGRERR_NONE; i++)
     {
-        const char* pszSQLTriggerIdx = SQLResultGetValue( &oTriggers, i, 0 );
+        const char* pszSQLTriggerIdx = SQLResultGetValue( &oTriggers, 0, i );
         if (pszSQLTriggerIdx != NULL && *pszSQLTriggerIdx != '\0')
         {
             eErr = SQLCommand( hDB, pszSQLTriggerIdx );
